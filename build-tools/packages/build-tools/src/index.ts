@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-export { GitRepo } from "./common/gitRepo";
-export type { Logger } from "./common/logging";
-export { MonoRepo } from "./common/monoRepo";
+export { GitRepo } from "./common/gitRepo.js";
+export type { Logger } from "./common/logging.js";
+export { MonoRepo } from "./common/monoRepo.js";
 export {
 	Package,
 	type PackageJson,
-} from "./common/npmPackage";
+} from "./common/npmPackage.js";
 /**
  * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
  * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
@@ -21,19 +21,19 @@ export type {
 	requireAssignableTo,
 	SkipUniqueSymbols,
 	TypeOnly,
-} from "./common/typeCompatibility";
-export { getTypeTestPreviousPackageDetails } from "./common/typeTests";
-export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig";
-export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata";
-export { FluidRepo } from "./fluidBuild/fluidRepo";
+} from "./common/typeCompatibility.js";
+export { getTypeTestPreviousPackageDetails } from "./common/typeTests.js";
+export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig.js";
+export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata.js";
+export { FluidRepo } from "./fluidBuild/fluidRepo.js";
 // For repo policy check
 export {
 	getTaskDefinitions,
 	normalizeGlobalTaskDefinitions,
-} from "./fluidBuild/fluidTaskDefinitions";
-export { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidBuild/fluidUtils";
+} from "./fluidBuild/fluidTaskDefinitions.js";
+export { getFluidBuildConfig, getResolvedFluidRoot } from "./fluidBuild/fluidUtils.js";
 export {
 	getApiExtractorConfigFilePath,
 	getEsLintConfigFilePath,
-} from "./fluidBuild/tasks/taskUtils";
-export * as TscUtils from "./fluidBuild/tscUtils";
+} from "./fluidBuild/tasks/taskUtils.js";
+export * as TscUtils from "./fluidBuild/tscUtils.js";

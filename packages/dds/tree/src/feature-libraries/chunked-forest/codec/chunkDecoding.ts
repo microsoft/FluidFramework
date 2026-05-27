@@ -9,6 +9,7 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
+import { isFinalId } from "@fluidframework/id-compressor/internal";
 import { v5 as uuidV5 } from "uuid";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
@@ -283,8 +284,10 @@ export function readValue(
 			const idCompressor = idDecodingContext.idCompressor;
 			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
 			// Due to a bug, we have some special casing for them (see below).
-			// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
-			if (idDecodingContext.isSummary === true && streamValue < 0) {
+			if (
+				idDecodingContext.isSummary === true &&
+				!isFinalId(streamValue as OpSpaceCompressedId)
+			) {
 				if (
 					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
 					idDecodingContext.sharedObjectId !== undefined

@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -79,8 +79,7 @@ export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements N
 					// This is not the case for forest summaries at the time of writing, so non-finalized ids are instead written using
 					// their long form (by falling through to the original cursor value).
 					// A scenario where such ids can appear in the summary is in the attach summary of a tree being attached to an already-attached container.
-					// TODO: isFinalId should probably be exported from id-compressor and that could be used to do the narrowing here.
-					if (!context.isSummary || opSpaceId >= 0) {
+					if (!context.isSummary || isFinalId(opSpaceId)) {
 						return opSpaceId;
 					}
 				}

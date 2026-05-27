@@ -18,7 +18,7 @@
 		"ci:eslint": "pnpm run -r --no-sort --stream --no-bail eslint",
 		"clean": "rimraf --glob dist \"**/*.tsbuildinfo\" \"**/*.build.log\"",
 		"format": "npm run prettier:fix",
-		"preinstall": "node scripts/only-pnpm.cjs",
+		"preinstall": "node ../../scripts/only-pnpm.cjs",
 		"lint": "npm run prettier && npm run ci:eslint",
 		"lint:fix": "npm run prettier:fix && pnpm run -r --stream --no-sort lint:fix",
 		"policy-check": "cd ../.. && npm run policy-check",

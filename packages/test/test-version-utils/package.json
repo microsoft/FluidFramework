@@ -43,7 +43,7 @@
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile",
+		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile --config.confirmModulesPurge=false",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
@@ -135,6 +135,9 @@
 		"uuid": "^11.1.0",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
+	},
+	"engines": {
+		"node": ">=22.22.2"
 	},
 	"fluidBuild": {
 		"tasks": {

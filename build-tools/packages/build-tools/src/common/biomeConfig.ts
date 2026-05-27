@@ -12,9 +12,9 @@ import { merge } from "ts-deepmerge";
 // Opaque is deprecated in newer type-fest versions (replaced by Tagged); we pin type-fest 2.x for current CommonJS
 import type { Opaque } from "type-fest";
 
-import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes";
-import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils";
-import type { GitRepo } from "./gitRepo";
+import type { Configuration as BiomeConfigRaw } from "./biomeConfigTypes.js";
+import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils.js";
+import type { GitRepo } from "./gitRepo.js";
 
 /**
  * Convenience type to represent a Biome config that has been loaded while following and merging the
