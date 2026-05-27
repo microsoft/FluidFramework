@@ -114,6 +114,15 @@ parameters:
     - none
     - sequential
 
+# Minimum pass rate (0–100) required for the stage to not hard-fail.
+# When all tests pass the stage succeeds normally.
+# When some tests fail but the pass rate meets or exceeds this threshold, the stage succeeds with issues (soft failure).
+# When the pass rate falls below this threshold, the stage hard-fails.
+# At 100 (the default), any test failure is a hard failure
+- name: passRateThreshold
+  type: number
+  default: 100
+
 # if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
 - name: runAgainstDocker
   type: boolean
@@ -423,7 +432,7 @@ stages:
         # run the test
         - task: Npm@1
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
-          continueOnError: ${{ parameters.continueOnError }}
+          continueOnError: ${{ or(parameters.continueOnError, lt(parameters.passRateThreshold, 100)) }}
           env:
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
@@ -474,6 +483,53 @@ stages:
               searchFolder: ${{ variables.testPackageDir }}/nyc
               mergeTestResults: false
             condition: succeededOrFailed()
+
+        - task: Bash@3
+          displayName: 'Check test pass rate (threshold: ${{ parameters.passRateThreshold }}%)'
+          condition: succeededOrFailed()
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              python3 << 'PYEOF'
+              import xml.etree.ElementTree as ET
+              import glob, sys, os
+
+              search_dir = "${{ variables.testPackageDir }}/nyc"
+              threshold_pct = ${{ parameters.passRateThreshold }}
+              threshold = threshold_pct / 100.0
+
+              xml_files = glob.glob(os.path.join(search_dir, '**', '*junit-report.xml'), recursive=True)
+
+              if not xml_files:
+                  print("##vso[task.complete result=Failed;]No JUnit XML files found — cannot evaluate pass rate")
+                  sys.exit(1)
+
+              total_tests = 0
+              total_failures = 0
+              for f in sorted(xml_files):
+                  try:
+                      root = ET.parse(f).getroot()
+                      for suite in root.iter('testsuite'):
+                          total_tests += int(suite.get('tests', 0))
+                          total_failures += int(suite.get('failures', 0)) + int(suite.get('errors', 0))
+                  except Exception as e:
+                      print(f"Warning: could not parse '{f}': {e}", file=sys.stderr)
+
+              if total_tests == 0:
+                  print("##vso[task.complete result=Failed;]No tests were counted in XML files — cannot evaluate pass rate")
+                  sys.exit(1)
+
+              total_passed = total_tests - total_failures
+              pass_rate = total_passed / total_tests
+              print(f"Test results: {total_passed}/{total_tests} passed ({pass_rate:.1%}), threshold: {threshold_pct:.0f}%")
+
+              if pass_rate < threshold:
+                  print(f"##vso[task.logissue type=error]Pass rate {pass_rate:.1%} is below the {threshold_pct:.0f}% threshold")
+                  sys.exit(1)
+              elif total_failures > 0:
+                  print(f"##vso[task.complete result=SucceededWithIssues;]Pass rate {pass_rate:.1%} meets the {threshold_pct:.0f}% threshold ({total_passed}/{total_tests} passed)")
+              PYEOF
 
         # Publish tinylicious log for troubleshooting
         - ${{ if or(contains(convertToJson(parameters.testCommand), 'tinylicious'), contains(convertToJson(parameters.testCommand), 't9s')) }}:

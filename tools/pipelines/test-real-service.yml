@@ -103,6 +103,7 @@ stages:
       artifactBuildId: $(resources.pipeline.client.runID)
       fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       continueOnError: true
+      passRateThreshold: 100
       timeoutInMinutes: 360
       testCommand: test:realsvc:r11s:docker
       splitTestVariants:
@@ -142,6 +143,7 @@ stages:
       fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
+      passRateThreshold: 100
       testCommand: test:realsvc:frs:report
       lockBehavior: sequential
       r11sSelfSignedCertSecureFile: wu2-tls-certificate.pem
@@ -176,6 +178,7 @@ stages:
       fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 360
       continueOnError: true
+      passRateThreshold: 100
       testCommand: test:realsvc:odsp:report
       splitTestVariants:
         - name: Non-compat
