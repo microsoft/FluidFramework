@@ -4,8 +4,17 @@
  */
 
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
+import {
+	buildFunc,
+	exposeMethodsSymbol,
+	type ExposedMethods,
+	type IExposedMethods,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "@fluidframework/type-factory/alpha";
+import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
 import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
@@ -13,8 +22,13 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-duplicates
-import type { TreeNode, WithType } from "../simple-tree/index.js";
+import type {
+	ArrayNodeDeltaOp,
+	ArrayNodeTreeChangedDeltaOp,
+	TreeNode,
+	WithType,
+	// eslint-disable-next-line import-x/no-duplicates
+} from "../simple-tree/index.js";
 // Add some unused imports which show up in the generated d.ts file.
 // This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
@@ -26,8 +40,67 @@ class TextNode
 	extends sf.object("Text", {
 		content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 	})
-	implements TextAsTree.Members
+	implements TextAsTree.Members, IExposedMethods
 {
+	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
+		methods.exposeMethod(
+			TextNode,
+			"insertAt",
+			buildFunc(
+				{
+					description:
+						"Insert characters into the text at the given character index (Unicode code points).",
+					returns: tf.void(),
+				},
+				["index", tf.number()],
+				["additionalCharacters", tf.string()],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"removeRange",
+			buildFunc(
+				{
+					description:
+						"Remove a range of characters from the text by character index (Unicode code points). startIndex defaults to 0 and endIndex defaults to the length of the text.",
+					returns: tf.void(),
+				},
+				["startIndex", tf.union([tf.number(), tf.undefined()])],
+				["endIndex", tf.union([tf.number(), tf.undefined()])],
+			),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"fullString",
+			buildFunc({
+				description: "Return a copy of this text node's content as a string.",
+				returns: tf.string(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"characterCount",
+			buildFunc({
+				description:
+					"Gets the number of characters (Unicode code points) currently in the text. Joined emojis and other grapheme clusters count as multiple characters.",
+				returns: tf.number(),
+			}),
+		);
+		methods.exposeMethod(
+			TextNode,
+			"charactersCopy",
+			buildFunc({
+				description:
+					"Returns all characters in the text as an array, where each element is a single Unicode code point. Joined emojis and other grapheme clusters are split into separate elements.",
+				returns: tf.array(tf.string()),
+			}),
+		);
+	}
+
+	public [exposeMethodsSymbol](methods: ExposedMethods): void {
+		TextNode[exposeMethodsSymbol](methods);
+	}
+
 	public insertAt(index: number, additionalCharacters: string): void {
 		this.content.insertAt(
 			index,
@@ -77,6 +150,14 @@ class TextNode
 		return [...this.content];
 	}
 
+	public onCharactersChanged(
+		callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+	): () => void {
+		return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+			processCharactersChangedDelta(delta, (i) => this.content[i], callback),
+		);
+	}
+
 	public static fromString(value: string): TextNode {
 		// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like its not necessary here,
 		// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
@@ -117,6 +198,63 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 	public fullString(): string {
 		return this.charactersCopy().join("");
 	}
+}
+
+/**
+ * Processes an array-node delta into a {@link TextAsTree.TextOp}[] and calls `callback`.
+ * @remarks
+ * Shared by both the plain `onCharactersChanged` (from `nodeChanged`) and formatted `onContentChanged`
+ * (from `treeChanged`) implementations.
+ * @param delta - The raw array-node delta, or `undefined` when no delta is available.
+ * When retain ops carry `subtreeChanged` (i.e. delta comes from a `treeChanged` event), the emitted
+ * retain ops include an explicit `formattingChanged: boolean`. Otherwise `formattingChanged` is omitted.
+ * @param getCharacter - Returns the character string at the given array index in the **post-edit** tree.
+ * Only invoked for insert ops, where it must read the inserted character at the given index of the tree
+ * after the edit has been applied. Passing an accessor that reads pre-edit content will silently produce wrong text.
+ * Return `undefined` if the tree is out of sync with the delta; this triggers a full-reread fallback.
+ * @param callback - The user-supplied callback to invoke with the translated ops.
+ */
+export function processCharactersChangedDelta(
+	delta: readonly (ArrayNodeDeltaOp | ArrayNodeTreeChangedDeltaOp)[] | undefined,
+	getCharacter: (index: number) => string | undefined,
+	callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+): void {
+	if (delta === undefined) {
+		callback(undefined);
+		return;
+	}
+	let readPosition = 0;
+	const ops: TextAsTree.TextOp[] = [];
+	for (const op of delta) {
+		if (op.type === "retain") {
+			// `subtreeChanged` is only present on retain ops from `treeChanged` deltas.
+			ops.push(
+				"subtreeChanged" in op
+					? { type: "retain", count: op.count, formattingChanged: op.subtreeChanged === true }
+					: { type: "retain", count: op.count },
+			);
+			readPosition += op.count;
+		} else if (op.type === "insert") {
+			// Accumulate into an array and join at the end to keep this O(n) for large inserts
+			// (paste of long text) instead of O(n^2) from repeated string concatenation.
+			const characters: string[] = [];
+			for (let i = 0; i < op.count; i++) {
+				const character = getCharacter(readPosition);
+				if (character === undefined) {
+					// Tree is out of sync with the delta — fall back to full re-read.
+					callback(undefined);
+					return;
+				}
+				characters.push(character);
+				readPosition++;
+			}
+			ops.push({ type: "insert", text: characters.join("") });
+		} else {
+			// Construct explicit remove op so internal fields on the source op don't leak.
+			ops.push({ type: "remove", count: op.count });
+		}
+	}
+	callback(ops);
 }
 
 /**
@@ -183,6 +321,71 @@ class StringArray extends sf.array("StringArray", SchemaFactory.string) {
  */
 export namespace TextAsTree {
 	/**
+	 * A retain op in a character-level delta — a span of unchanged characters that the consumer should skip over.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TextRetainOp {
+		/**
+		 * Discriminator identifying this op as a retain.
+		 */
+		readonly type: "retain";
+		/**
+		 * The number of Unicode code points to retain.
+		 */
+		readonly count: number;
+		/**
+		 * Whether at least one character in the retained range had a deep change.
+		 * @remarks
+		 * Present only on retain ops delivered by {@link @fluidframework/tree#FormattedTextAsTree.Members.onContentChanged};
+		 * always absent on retain ops delivered by {@link TextAsTree.Members.onCharactersChanged}.
+		 * When present, `true` indicates the retained range contained a formatting property update
+		 * or an atom content edit; `false` indicates no deep change.
+		 */
+		readonly formattingChanged?: boolean;
+	}
+
+	/**
+	 * An insert op in a character-level delta — characters newly added to the text.
+	 * @remarks
+	 * Carries the inserted text as a single string, which is more convenient for consumers than individual characters.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TextInsertOp {
+		/**
+		 * Discriminator identifying this op as an insert.
+		 */
+		readonly type: "insert";
+		/**
+		 * The newly inserted characters, concatenated into a single string.
+		 */
+		readonly text: string;
+	}
+
+	/**
+	 * A remove op in a character-level delta — a span of characters that has been deleted from the text.
+	 * @sealed
+	 * @alpha
+	 */
+	export interface TextRemoveOp {
+		/**
+		 * Discriminator identifying this op as a remove.
+		 */
+		readonly type: "remove";
+		/**
+		 * The number of Unicode code points removed.
+		 */
+		readonly count: number;
+	}
+
+	/**
+	 * A single operation in a character-level delta describing an insert, remove, or retain of text.
+	 * @alpha
+	 */
+	export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+
+	/**
 	 * Statics for text nodes.
 	 * @alpha
 	 */
@@ -209,6 +412,7 @@ export namespace TextAsTree {
 	 *
 	 * @see {@link TextAsTree.Statics.fromString} for construction.
 	 * @see {@link TextAsTree.(Tree:type)} for schema.
+	 * @sealed
 	 * @alpha
 	 */
 	export interface Members {
@@ -258,6 +462,22 @@ export namespace TextAsTree {
 		 * See {@link (TreeArrayNode:interface).removeRange} for more details on the behavior.
 		 */
 		removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+
+		/**
+		 * Subscribe to shallow character-level changes on this text node — inserts and removes only.
+		 * @param callback - Called after each change with a sequence of {@link TextAsTree.TextOp}s describing what changed,
+		 * or `undefined` when a delta could not be computed (e.g. during a schema upgrade).
+		 * @returns A cleanup function that unsubscribes the callback when called.
+		 * @remarks
+		 * Only fires on shallow changes — inserts and removes.
+		 * It does not fire on deep changes such as formatting property updates on existing characters.
+		 * For formatted text, use {@link @fluidframework/tree#FormattedTextAsTree.Members.onContentChanged} to also receive deep changes.
+		 *
+		 * All counts in the delivered ops are in Unicode code points, not UTF-16 code units.
+		 * For characters outside the Basic Multilingual Plane (e.g. emoji), one code point
+		 * corresponds to two UTF-16 code units — convert before using the counts as string indices.
+		 */
+		onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
 	}
 
 	/**

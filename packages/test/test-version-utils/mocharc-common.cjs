@@ -4,7 +4,8 @@
  */
 
 "use strict";
-const options = require("./dist/compatOptions.js");
+// Note: this uses Node 22+'s native TS support. See https://nodejs.org/learn/typescript/run-natively.
+const options = require("./src/compatOptions.ts");
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 function getFluidTestVariant() {

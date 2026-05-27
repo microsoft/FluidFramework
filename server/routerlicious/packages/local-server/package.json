@@ -12,14 +12,12 @@
 	"author": "Microsoft and contributors",
 	"sideEffects": false,
 	"main": "dist/index.js",
-	"module": "lib/index.js",
 	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "concurrently npm:build:compile npm:lint && npm run build:docs",
 		"build:commonjs": "npm run tsc && npm run typetests:gen && npm run build:test",
-		"build:compile": "concurrently npm:build:commonjs npm:build:esnext",
+		"build:compile": "npm run build:commonjs",
 		"build:docs": "api-extractor run --local && copyfiles -u 1 \"./_api-extractor-temp/doc-models/*\" ../../_api-extractor-temp/",
-		"build:esnext": "tsc --project ./tsconfig.esnext.json",
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:release-tags": "api-extractor run --config ./api-extractor-lint.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
@@ -33,8 +31,7 @@
 		"test": "mocha --recursive \"dist/test/**/*.spec.*js\"",
 		"test:coverage": "c8 npm test -- --reporter xunit --reporter-option output=nyc/junit-report.xml",
 		"tsc": "tsc",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -67,7 +64,7 @@
 		"@fluidframework/server-test-utils": "workspace:~",
 		"debug": "^4.3.4",
 		"events_pkg": "npm:events@^3.1.0",
-		"jsrsasign": "^11.0.0",
+		"jsrsasign": "^11.1.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
@@ -76,11 +73,11 @@
 		"@fluidframework/build-tools": "^0.63.0",
 		"@fluidframework/eslint-config-fluid": "^9.0.0",
 		"@fluidframework/server-local-server-previous": "npm:@fluidframework/server-local-server@7.0.0",
-		"@microsoft/api-extractor": "^7.45.1",
+		"@microsoft/api-extractor": "^7.58.1",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.1",
 		"@types/nock": "^9.3.0",
-		"@types/node": "^22",
+		"@types/node": "~22.19.17",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
 		"concurrently": "^9.2.1",

@@ -4,34 +4,58 @@
  */
 
 /**
- * Like TypeScript's built-in `Iterable` type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built-in `Iterable` type.
  *
- * @sealed @alpha
+ * @privateRemarks
+ * This exists to be unaffected by TypeScript's version and configuration options.
+ *
+ * @sealed @beta
  */
 export interface FluidIterable<T> {
+	/**
+	 * Returns an iterator over the elements in this iterable.
+	 *
+	 * @remarks Works like the built-in {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/iterator | \[Symbol.iterator\]} protocol.
+	 */
 	[Symbol.iterator](): FluidIterableIterator<T>;
 }
 
 /**
- * Like TypeScript's built-in iterable iterator type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built-in iterable iterator type.
  *
- * @sealed @alpha
+ * @privateRemarks
+ * The done branch uses `any` rather than `undefined` to match TypeScript's built-in IteratorReturnResult, which defaults to any for the same reason.
+ * Using `undefined` causes TypeScript to include it in type inference at call sites like `Array.from` which would infer `T | undefined` instead of `T`.
+ * The done value is rarely meaningful to callers since values are mainly consumed when done is false.
+ * Thus `any` is not particularly harmful here, and the unsafety is worth it as
+ * it interacts better with the existing TypeScript `IteratorResult` interfaces where `TReturn` defaults to any.
+ *
+ * @sealed @beta
  */
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
-	next(): { value: T; done?: false } | { value: undefined; done: true };
+	/**
+	 * Returns the next element in the iteration sequence.
+	 *
+	 * @remarks Works like the built-in {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterator_protocol | Iterator.next} method.
+	 * When there are remaining elements, returns `\{ value: T; done?: false \}`.
+	 * When the iteration is complete, returns `\{ value: any; done: true \}`.
+	 */
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	next(): { value: T; done?: false } | { value: any; done: true };
 }
 
 /**
- * Like TypeScript's built in `ReadonlyMap` type, except unaffected by TypeScript's version and configuration options.
- * Also, unlike the built in `ReadonlyMap`, this interface includes Symbol.toStringTag.
+ * Like TypeScript's built in `ReadonlyMap` type.
+ * Unlike the built in `ReadonlyMap`, this interface includes Symbol.toStringTag.
  *
- * @remarks
- * This exists so that Fluid has a `ReadonlyMap` type which is safe to implement that cannot be broken by changes to TypeScript's default ReadonlyMap type.
+ * @privateRemarks
+ * This exists so that Fluid has a `ReadonlyMap` type which is unaffected by TypeScript's version and configuration options,
+ * and safe to implement without being broken by changes to TypeScript's default ReadonlyMap type.
  * All behavior exposed through this interface should be compatible with the corresponding behavior of built in ReadonlyMaps,
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `ReadonlyMap` type.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidReadonlyMap<K, V> {
 	/**
@@ -86,15 +110,16 @@ export interface FluidReadonlyMap<K, V> {
 }
 
 /**
- * Like TypeScript's built in `Map` type, except unaffected by TypeScript's version and configuration options.
+ * Like TypeScript's built in `Map` type.
  *
- * @remarks
- * This exists so that Fluid has a `Map` type which is safe to implement that cannot be broken by changes to TypeScript's default Map type.
+ * @privateRemarks
+ * This exists so that Fluid has a `Map` type which is unaffected by TypeScript's version and configuration options,
+ * and safe to implement without being broken by changes to TypeScript's default Map type.
  * All behavior exposed through this interface should be compatible with the corresponding behavior of JavaScript Maps,
  * but it may lack some of the newer APIs,
  * and might express the type slightly different from how TypeScript does in its `Map` type.
  *
- * @sealed @alpha
+ * @sealed @beta
  */
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
 	/**

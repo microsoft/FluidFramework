@@ -10,7 +10,6 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -22,6 +21,11 @@ import type {
 	ISequencedMessageEnvelope,
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
@@ -41,7 +45,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 // testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha & {
+	IFluidDataStoreRuntime & {
 		contexts: Map<unknown, unknown>;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}
@@ -69,6 +73,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		// back-compat 0.38 - DataStoreRuntime looks in container runtime for certain properties that are unavailable
 		// in the data store context.
 		dataStoreContext.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		dataStoreContext.packagePath = [];
 		sharedObjectRegistry = {
 			get(type: string) {
 				return {
@@ -226,6 +231,81 @@ describe("FluidDataStoreRuntime Tests", () => {
 			(await dataStoreRuntime.entryPoint?.get()) === myObj,
 			"entryPoint was not initialized",
 		);
+	});
+
+	describe("entryPoint initialization failure", () => {
+		it("entryPoint provider is not invoked until entryPoint is consumed", () => {
+			let invoked = false;
+			createRuntime(dataStoreContext, sharedObjectRegistry, async () => {
+				invoked = true;
+				return {};
+			});
+			assert.strictEqual(
+				invoked,
+				false,
+				"entryPoint provider should not run during construction",
+			);
+		});
+
+		it("rejected entryPoint provider is wrapped and logged", async () => {
+			const mockLogger = new MockLogger();
+			const contextWithMockLogger = new MockFluidDataStoreContext(
+				"testDataStoreId",
+				false,
+				mockLogger.toTelemetryLogger(),
+			);
+			contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+			contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+			const dataStoreRuntime = createRuntime(
+				contextWithMockLogger,
+				sharedObjectRegistry,
+				async () => {
+					throw new Error("entryPoint failed");
+				},
+			);
+			await assert.rejects(
+				async () => dataStoreRuntime.entryPoint.get(),
+				(error: IErrorBase) => {
+					assert.strictEqual(
+						error.errorType,
+						ContainerErrorTypes.dataProcessingError,
+						"thrown error should be a DataProcessingError",
+					);
+					assert(isFluidError(error), "thrown error should be a Fluid error");
+					const props = error.getTelemetryProperties();
+					assert.deepStrictEqual(
+						props.fluidDataStoreId,
+						{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged fluidDataStoreId",
+					);
+					assert.deepStrictEqual(
+						props.fullPackageName,
+						{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged fullPackageName",
+					);
+					return true;
+				},
+			);
+			const failureEvent = mockLogger.events.find(
+				(event) =>
+					typeof event.eventName === "string" &&
+					event.eventName.endsWith("EntryPointInitializationFailure"),
+			);
+			assert(
+				failureEvent !== undefined,
+				"EntryPointInitializationFailure event should have been logged",
+			);
+			assert.deepStrictEqual(
+				failureEvent.fluidDataStoreId,
+				{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged fluidDataStoreId",
+			);
+			assert.deepStrictEqual(
+				failureEvent.fullPackageName,
+				{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged fullPackageName",
+			);
+		});
 	});
 });
 

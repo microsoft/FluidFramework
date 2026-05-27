@@ -300,7 +300,7 @@ export function mapSchema<
 	const persistedMetadata = nodeOptions.persistedMetadata;
 
 	class Schema extends CustomMapNodeBase<T> implements TreeMapNodeAlpha<T> {
-		public readonly [Symbol.toStringTag] = "MapSchema";
+		public readonly [Symbol.toStringTag] = "TreeMapNodeSchema";
 		public static override prepareInstance<T2>(
 			this: typeof TreeNodeValid<T2>,
 			instance: TreeNodeValid<T2>,

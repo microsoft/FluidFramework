@@ -137,10 +137,13 @@ export {
 	type ArrayNodeInsertOp,
 	type ArrayNodeRemoveOp,
 	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
 	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
@@ -275,6 +278,7 @@ export {
 	type NodeInDocumentConstraint,
 	type NoChangeConstraint,
 	type RunTransactionParams,
+	type RunTransactionSyncParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,
@@ -400,5 +404,10 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
-export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export {
+	TextAsTree,
+	FormattedTextAsTree,
+	codePointCount,
+	utf16LengthForCodePoints,
+} from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
