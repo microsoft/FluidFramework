@@ -309,6 +309,20 @@ stages:
               set -eu -o pipefail
               pnpm i --frozen-lockfile
 
+        # Make @ff-internal/aria-logger available to the test via the FluidFramework workspace's
+        # node_modules, so Node's standard ESM/CJS resolution finds it from the test working
+        # directory via the bare specifier. The package lives in ff_pipeline_host (an internal-only
+        # source), so we link it in rather than adding it to the FluidFramework lockfile.
+        - task: Bash@3
+          displayName: Link @ff-internal/aria-logger into FluidFramework node_modules
+          inputs:
+            targetType: 'inline'
+            script: |
+              set -eu -o pipefail
+              mkdir -p $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/node_modules/@ff-internal
+              ln -s $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@ff-internal/aria-logger \
+                    $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/node_modules/@ff-internal/aria-logger
+
         # Download the build output archive produced by the "Build - client packages" pipeline.
         # This contains the compiled output (lib/, dist/, etc.) needed to run tests without rebuilding.
         - task: DownloadPipelineArtifact@2
@@ -370,12 +384,12 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
+            # @ff-internal/aria-logger exports createTestLogger; it gets linked into FluidFramework's
+            # node_modules above, so the bare specifier resolves via Node's standard module resolution.
+            # Default first so a caller can still override via parameters.env if needed.
+            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger'
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
-            # @ff-internal/aria-logger is installed under ff_pipeline_host's node_modules, which is
-            # outside the FluidFramework workspace where the test runs. ESM dynamic import() does not
-            # consult NODE_PATH or walk up to ff_pipeline_host, so pass an absolute path to the package.
-            FLUID_TEST_LOGGER_PKG_SPECIFIER: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@ff-internal/aria-logger
             # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
             # and token__package__import__location as pipeline variables. The e2e test workload reads
             # those plus login__microsoft__clientId (sourced from prague-key-vault).
