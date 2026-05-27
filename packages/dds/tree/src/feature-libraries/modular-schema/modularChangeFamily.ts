@@ -3009,15 +3009,13 @@ class InvertNodeManagerI implements InvertNodeManager {
 			attachIdEntry.value,
 			countProcessed,
 		)) {
-			const offsetnewDetachId = offsetChangeAtomId(newDetachId, entry.offset);
+			const offsetNewDetachId = offsetChangeAtomId(newDetachId, entry.offset);
 			const offsetNewAttachId = offsetChangeAtomId(newAttachId, entry.offset);
 			if (entry.value) {
-				if (!areEqualChangeAtomIds(offsetnewDetachId, offsetNewAttachId)) {
+				if (!areEqualChangeAtomIds(offsetNewDetachId, offsetNewAttachId)) {
 					// We are inverting a detach is part of a move, where the detach and attach IDs of the move are different.
 					// We need to create a rename from the new detach ID to the new attach ID.
-					// XXX: This assumes that the field which inverts the attach uses the expected detach ID.
-					// This should be added to the contract of `invertAttach`.
-					this.table.attachToDetachId.set(offsetNewAttachId, entry.length, offsetnewDetachId);
+					this.table.attachToDetachId.set(offsetNewAttachId, entry.length, offsetNewDetachId);
 				}
 			} else {
 				const offsetOriginalAttachId = offsetChangeAtomId(attachIdEntry.value, entry.offset);
