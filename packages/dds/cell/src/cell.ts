@@ -335,6 +335,23 @@ export class SharedCell<T = any>
 	}
 
 	/**
+	 * Cell is last-write-wins: any pending op other than the latest is superseded.
+	 * We drop superseded ops entirely (no wire emission) and resubmit only the final pending op,
+	 * which by construction represents the cell's tip state.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		const cellOpMetadata = localOpMetadata as ICellLocalOpMetadata;
+		const lastPendingMessageId = this.pendingMessageIds[this.pendingMessageIds.length - 1];
+		if (cellOpMetadata.pendingMessageId === lastPendingMessageId) {
+			this.submitLocalMessage(content, localOpMetadata);
+		} else {
+			const index = this.pendingMessageIds.indexOf(cellOpMetadata.pendingMessageId);
+			assert(index !== -1, 0xd01 /* Pending message id missing from queue during squash */);
+			this.pendingMessageIds.splice(index, 1);
+		}
+	}
+
+	/**
 	 * Rollback a local op.
 	 *
 	 * @param content - The operation to rollback.
