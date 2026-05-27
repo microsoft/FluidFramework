@@ -208,6 +208,16 @@ export class SharedCounter
 	}
 
 	/**
+	 * Counter increments are commutative and additive — each pending increment carries the user's
+	 * intent to add that amount to the counter. No increment is "subsumed" by a later one (a later
+	 * `+3` doesn't cancel an earlier `+5`), so the squash on resubmit is the identity transform:
+	 * each pending increment is resubmitted unchanged.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 * @sealed
 	 */
