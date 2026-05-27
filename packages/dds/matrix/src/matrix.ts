@@ -821,6 +821,14 @@ export class SharedMatrix<T = any>
 	}
 
 	protected reSubmitCore(incoming: unknown, localOpMetadata: unknown): void {
+		this.reSubmitInternal(incoming, localOpMetadata, false);
+	}
+
+	private reSubmitInternal(
+		incoming: unknown,
+		localOpMetadata: unknown,
+		squash: boolean,
+	): void {
 		const originalRefSeq = this.inFlightRefSeqs.shift();
 		assert(
 			originalRefSeq !== undefined,
@@ -868,13 +876,13 @@ export class SharedMatrix<T = any>
 			switch (content.target) {
 				case SnapshotPath.cols: {
 					this.submitColMessage(
-						this.cols.regeneratePendingOp(content, localOpMetadata, false),
+						this.cols.regeneratePendingOp(content, localOpMetadata, squash),
 					);
 					break;
 				}
 				case SnapshotPath.rows: {
 					this.submitRowMessage(
-						this.rows.regeneratePendingOp(content, localOpMetadata, false),
+						this.rows.regeneratePendingOp(content, localOpMetadata, squash),
 					);
 					break;
 				}
