@@ -559,7 +559,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						branchId,
 						revision,
 					);
-					assert(revisionIndex !== undefined, 0xbdb /* revision must exist in local commits */);
+					assert(
+						revisionIndex !== undefined,
+						0xbdb /* revision must exist in local commits */,
+					);
 					return localCommits.slice(revisionIndex);
 				};
 
