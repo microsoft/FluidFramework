@@ -59,7 +59,7 @@ WORKDIR $ROUTERLICIOUS_ROOT
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY .npmrc ./
-COPY scripts/*.* ./scripts/
+COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 COPY patches/*.* ./patches/
 
 COPY packages/gitresources/package*.json packages/gitresources/
