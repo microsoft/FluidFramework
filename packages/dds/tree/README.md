@@ -16,6 +16,8 @@ and some of the implications of those goals for developers working on this packa
 
 ## Using Fluid Framework libraries
 
+dummy change
+
 When taking a dependency on a Fluid Framework library's public APIs, we recommend using a `^` (caret) version range, such as `^1.3.4`.
 While Fluid Framework libraries may use different ranges with interdependencies between other Fluid Framework libraries,
 library consumers should always prefer `^`.

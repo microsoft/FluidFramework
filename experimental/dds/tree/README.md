@@ -24,6 +24,8 @@ If using any of Fluid Framework's unstable APIs (for example, its `beta` APIs), 
 
 ## Installation
 
+dummy change
+
 To get started, install the package by running the following command:
 
 ```bash

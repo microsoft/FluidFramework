@@ -26,6 +26,8 @@ To get started, install the package by running the following command:
 npm i @fluidframework/merge-tree
 ```
 
+dummy change
+
 ## Importing from this package
 
 This package leverages [package.json exports](https://nodejs.org/api/packages.html#exports) to separate its APIs by support level.
