@@ -381,6 +381,14 @@ export type ILoadFrozenContainerFromPendingStateProps = IContainerHostProps & {
 
 const driverPropKeys = ["request", "urlResolver", "documentServiceFactory"] as const;
 
+// Recognizable opaque placeholder used as `request.url` for the offline form of
+// `loadFrozenContainerFromPendingState`. The synthesized `IUrlResolver` ignores
+// its argument and returns a `IResolvedUrl` derived from `pendingLocalState.url`,
+// so this string is never interpreted as a real URL by any downstream stage; it
+// only needs to be a fixed sentinel that won't collide with real request URLs.
+const offlineFrozenRequestPlaceholderUrl =
+	"frozen-load-from-pending-state://offline-placeholder";
+
 /**
  * Loads a frozen container from pending local state.
  * @param props - Properties required to load a frozen container from pending state.
@@ -445,9 +453,14 @@ export async function loadFrozenContainerFromPendingState(
 		};
 		return loadExistingContainer({
 			...props,
-			// `request.url` carries the resolved-form URL here. Nothing downstream
-			// inspects it between this entry point and the synthesized resolver above.
-			request: { url: pending.url, headers: {} },
+			// `request.url` is unused: `synthesizedUrlResolver.resolve()` returns
+			// `synthesizedResolvedUrl` regardless of input, and the identity
+			// guard in `Loader.resolveCore` compares the resolver's output URL
+			// against `pendingLocalState.url` — both equal `pending.url` here.
+			// Using a recognizable opaque placeholder instead of the resolved-form
+			// URL avoids implying that any downstream stage interprets it as a
+			// request-form URL.
+			request: { url: offlineFrozenRequestPlaceholderUrl, headers: {} },
 			urlResolver: synthesizedUrlResolver,
 			documentServiceFactory: createFrozenDocumentServiceFactory(undefined, readOnly),
 		});
@@ -543,6 +556,19 @@ export async function captureFullContainerState({
 	const resolvedUrl = await urlResolver.resolve(request);
 	if (resolvedUrl === undefined) {
 		throw new UsageError("Failed to resolve request to a Fluid URL");
+	}
+
+	// Validate the resolver's URL shape at capture time. The captured pending
+	// state is rehydrated later (possibly in a different process) via the
+	// offline form of `loadFrozenContainerFromPendingState`, which requires
+	// `tryParseCompatibleResolvedUrl` to succeed on `pendingLocalState.url`.
+	// Failing fast here turns "your captured artifact silently isn't
+	// rehydratable" into a same-call error a partner can act on, instead of
+	// surfacing as a `UsageError` at offline-load time in a different process.
+	if (tryParseCompatibleResolvedUrl(resolvedUrl.url) === undefined) {
+		throw new UsageError(
+			`${captureFullContainerState.name}: resolved URL is not in the shape required by tryParseCompatibleResolvedUrl (protocol://<string>/<tenantId>/<docId>?<querystring>); captured state would not rehydrate offline (${resolvedUrl.url})`,
+		);
 	}
 
 	const documentService = await documentServiceFactory.createDocumentService(

@@ -1284,6 +1284,38 @@ describe("loadFrozenContainerFromPendingState", () => {
 			);
 		});
 
+		it("rejects offline load when pendingLocalState.url is non-conforming", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const validPending = await getRequiredPendingLocalState(container);
+
+			// Mutate the captured pending state so its URL no longer satisfies
+			// tryParseCompatibleResolvedUrl's shape contract
+			// (`protocol://<string>/<tenantId>/<docId>(?...)`).
+			// Offline load must surface this as a UsageError naming the
+			// non-parseable URL rather than letting the failure manifest deeper
+			// in the load pipeline.
+			const parsedPending = JSON.parse(validPending) as { url: string };
+			parsedPending.url = "fluid://example.com/onlyonesegment";
+			const malformedPending = JSON.stringify(parsedPending);
+
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState({
+						codeLoader,
+						pendingLocalState: malformedPending,
+					}),
+				/pending state URL is not in a parseable form/,
+				"Expected offline load to reject a pending state whose URL fails tryParseCompatibleResolvedUrl",
+			);
+		});
+
 		it("rejects mixing offline and online props (only urlResolver supplied)", async () => {
 			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
 
