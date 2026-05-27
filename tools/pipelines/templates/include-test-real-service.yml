@@ -36,9 +36,11 @@ parameters:
   type: object
   default: Small-eastus2
 
-- name: testPackage
+# Path (relative to the FluidFramework repo root) to the package that contains the test
+# command to run. Tests are invoked from this directory via `npm run <testCommand>`, matching
+# how a local developer would run them.
+- name: testPackageDirectory
   type: string
-  default: "@fluid-private/test-end-to-end-tests"
 
 - name: timeoutInMinutes
   type: number
@@ -60,10 +62,6 @@ parameters:
 - name: continueOnError
   type: boolean
   default: false
-
-- name: testFileTarName
-  type: string
-  default: null
 
 # Id of the pipeline run that contains the artifacts to download.
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
@@ -114,7 +112,7 @@ parameters:
     - none
     - sequential
 
-# if true, the FluidFramework repo will be checked out and a docker-compose env will be spun up for testing
+# if true, a docker-compose env will be spun up for testing
 - name: runAgainstDocker
   type: boolean
   default: false
@@ -160,14 +158,10 @@ stages:
         - name: FORCE_COLOR
           value: 1
 
-        - name: testPackageDir
-          value: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}'
-        - name: testPackageFilePattern
-          value: ${{ replace(replace(parameters.testPackage, '@', '' ), '/', '-') }}-[0-9]*.tgz
-        # Note that this path must match the path that the packed packages are saved to in the build pipeline.
-        # It should be kept up to date with the path defined in scripts/pack-packages.sh.
-        - name: testPackagePathPattern
-          value: $(Pipeline.Workspace)/client/pack/tarballs/${{ variables.testPackageFilePattern }}
+        # Absolute path to the directory the test command runs in. Tests write their nyc/ output
+        # and tinylicious.log relative to this location.
+        - name: testWorkingDirectory
+          value: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/${{ parameters.testPackageDirectory }}'
         - name: skipComponentGovernanceDetection
           value: true
         - name: artifactPipeline
@@ -231,30 +225,32 @@ stages:
               echo "
               Pipeline Parameters:
                 poolBuild=${{ parameters.poolBuild }}
-                testPackage=${{ parameters.testPackage }}
+                testPackageDirectory=${{ parameters.testPackageDirectory }}
                 runAgainstDocker=${{ parameters.runAgainstDocker }}
 
               Pipeline Variables:
                 isTestBranch=${{ variables.isTestBranch }}
-                testPackageFilePattern=${{ variables.testPackageFilePattern }}
                 testCommand=${{ parameters.testCommand }}
                 continueOnError=${{ parameters.continueOnError }}
                 variant.flag=${{ variant.flags }}
-                testFileTarName=${{ parameters.testFileTarName }}
                 artifactPipeline=${{ variables.artifactPipeline }}
                 artifactBuildId=${{ parameters.artifactBuildId }}
                 FFPipelineHostDirectory=$(FFPipelineHostDirectory)
+                FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                testWorkingDirectory=${{ variables.testWorkingDirectory }}
               "
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(FFPipelineHostDirectory)
+            buildDirectory: $(FluidFrameworkDirectory)
             # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
             # whenever legacy package versions are added or removed. Including it in the pnpm store
             # cache key ensures a cache miss whenever the set of compat packages changes.
-            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
+            # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
+            # internal tooling dependencies change.
+            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -287,8 +283,12 @@ stages:
             env:
               DOCKER_COMPOSE_FILE: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/server/docker-compose.yml
 
+        # Install ff_pipeline_host dependencies (provides @ff-internal/aria-logger, trips-setup/cleanup, telemetry-generator).
+        # These tools are internal and not part of the FluidFramework lockfile. The test process resolves
+        # @ff-internal/aria-logger via NODE_PATH (set on the test invocation below).
         - task: Bash@3
-          displayName: Install base dependencies
+          displayName: Install ff_pipeline_host dependencies
+          retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
             workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
@@ -296,18 +296,29 @@ stages:
               set -eu -o pipefail
               pnpm install
 
-        # Download artifact
+        # Install FluidFramework dependencies from the committed lockfile.
+        - task: Bash@3
+          displayName: Install FluidFramework dependencies
+          retryCountOnTaskFailure: 4
+          inputs:
+            targetType: 'inline'
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+            script: |
+              set -eu -o pipefail
+              pnpm i --frozen-lockfile
+
+        # Download the build output archive produced by the "Build - client packages" pipeline.
+        # This contains the compiled output (lib/, dist/, etc.) needed to run tests without rebuilding.
         - task: DownloadPipelineArtifact@2
-          displayName: Download test package
+          displayName: Download build output archive
           inputs:
             source: specific
             project: internal
             pipeline: ${{ variables.artifactPipeline }}
             buildVersionToDownload: specific
             buildId: ${{ parameters.artifactBuildId }}
-            artifact: pack
-            patterns: "**/${{ variables.testPackageFilePattern }}"
-            path: $(Pipeline.Workspace)/client/pack
+            artifact: build_output_archive
+            path: $(Build.StagingDirectory)
             # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
             # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
             # It seems there's a bug and preferTriggeringPipeline is not respected.
@@ -315,81 +326,13 @@ stages:
             # - buildVersionToDownload: specific
             # - buildId: <the id of the triggering build>
             # preferTriggeringPipeline: true
-
         - task: Bash@3
-          name: Initialize
-          displayName: Initialize
+          displayName: Extract build output archive
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
             script: |
               set -eu -o pipefail
-              if [[ `ls -1 ${{ variables.testPackagePathPattern }} | wc -l` -eq 1 ]]; then
-                echo "##vso[task.setvariable variable=testPackageTgz;isOutput=true]`ls ${{ variables.testPackagePathPattern }}`"
-              else
-                ls -1 ${{ variables.testPackagePathPattern }}
-                echo "##vso[task.logissue type=error]Test package '${{ parameters.testPackage }}' not found, or there are more than one found"
-                exit -1
-              fi
-        # Install test package
-        - task: Bash@3
-          displayName: 'pnpm install test package'
-          # ADO feeds have latency on the order of minutes before packages are available downstream. See:
-          # https://learn.microsoft.com/en-us/azure/devops/artifacts/concepts/upstream-sources?view=azure-devops#upstream-sources-health-status
-          # This pipeline installs packages which were published very recently relative to its runtime, hence the rather high retry count here.
-          retryCountOnTaskFailure: 10
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
-            script: 'pnpm install $(Initialize.testPackageTgz)'
-
-        # Download Test Files & Install Extra Dependencies
-        # These steps are intended to include extra dependencies that are not available as
-        # part of the normal package .tgz installed previously in the pipeline.
-        - ${{ if ne(parameters.testFileTarName, 'null') }}:
-          # Download Artifact - Test Files
-          - task: DownloadPipelineArtifact@2
-            displayName: Download test files
-            inputs:
-              source: specific
-              project: internal
-              pipeline: ${{ variables.artifactPipeline }}
-              buildVersionToDownload: specific
-              buildId: ${{ parameters.artifactBuildId }}
-              artifact: test-files
-              path: $(Pipeline.Workspace)/test-files
-              # allowPartiallySucceededBuilds: true # No effect as long as we have buildVersionToDownload: specific
-              # branchName: $(Build.SourceBranch)   # No effect as long as we have buildVersionToDownload: specific
-              # It seems there's a bug and preferTriggeringPipeline is not respected.
-              # We force the behavior by explicitly specifying:
-              # - buildVersionToDownload: specific
-              # - buildId: <the id of the triggering build>
-              # preferTriggeringPipeline: true
-
-          # Unpack test files
-          - task: Bash@3
-            displayName: Unpack test files
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
-              script: |
-                set -eu -o pipefail
-
-                TAR_PATH=$(Pipeline.Workspace)/test-files/${{ parameters.testFileTarName }}.test-files.tar
-                echo "Unpacking test files for ${{ parameters.testPackage }} from file '$TAR_PATH' in '$(pwd)'"
-                # Note: we could skip the last argument and have it unpack everything at once, but if we later change
-                # the structure/contents of the tests tar file, the extraction could overwrite things we didn't intend to,
-                # so keeping the paths to extract explicit.
-                # Also, extracting is finicky with the exact format of the last argument, it needs to match how the
-                # tarfile was created (e.g. './lib/test' works here but 'lib/test' does not).
-                tar --extract --verbose --file $TAR_PATH ./lib/test
-                tar --extract --verbose --file $TAR_PATH ./dist/test
-                tar --extract --verbose --file $TAR_PATH ./src/test
-
-          - template: /tools/pipelines/templates/include-copy-dev-dependencies.yml@self
-            parameters:
-              sourcePackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
-              destPackageLocation: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              tar --extract --gzip --file $(Build.StagingDirectory)/build_output_archive.tar.gz --directory $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
 
         # Only check out tenants from the tenant pool if we are running tests against ODSP
         - ${{ if ne(parameters.odspTenantType, 'none') }}:
@@ -425,6 +368,8 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
+            # This allows node to resolve internal dependencies (such as @ff-internal/aria-logger) at test runtime.
+            NODE_PATH: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
             # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
@@ -437,7 +382,7 @@ stages:
               login__microsoft__clientId: $(login-microsoft-clientId)
           inputs:
             command: 'custom'
-            workingDir: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}
+            workingDir: ${{ variables.testWorkingDirectory }}
             customCommand: 'run ${{ parameters.testCommand }} -- ${{ variant.flags }}'
 
         - ${{ if eq(parameters.skipTestResultPublishing, false) }}:
@@ -447,22 +392,22 @@ stages:
             condition: succeededOrFailed()
             inputs:
               targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
+              workingDirectory: ${{ variables.testWorkingDirectory }}
               script: |
                 set -eu -o pipefail
 
-                if [[ -d ${{ variables.testPackageDir }}/nyc ]]; then
-                  echo "directory '${{ variables.testPackageDir }}/nyc' exists."
-                  cd ${{ variables.testPackageDir }}/nyc
+                if [[ -d ${{ variables.testWorkingDirectory }}/nyc ]]; then
+                  echo "directory '${{ variables.testWorkingDirectory }}/nyc' exists."
+                  cd ${{ variables.testWorkingDirectory }}/nyc
                   if ! [[ -z "$(ls -A .)" ]]; then
                     curdirfiles=`ls`
                     echo "report file(s) ${curdirfiles} found. Filtering skipped tests..."
                     for i in `ls`; do sed -i '/<skipped/d' $i; done
                   else
-                    echo "No report files found in '${{ variables.testPackageDir }}/nyc'"
+                    echo "No report files found in '${{ variables.testWorkingDirectory }}/nyc'"
                   fi
                 else
-                  echo "Directory '${{ variables.testPackageDir }}/nyc' not found"
+                  echo "Directory '${{ variables.testWorkingDirectory }}/nyc' not found"
                 fi
 
           # Upload results
@@ -471,7 +416,7 @@ stages:
             inputs:
               testResultsFormat: 'JUnit'
               testResultsFiles: '**/*junit-report.xml'
-              searchFolder: ${{ variables.testPackageDir }}/nyc
+              searchFolder: ${{ variables.testWorkingDirectory }}/nyc
               mergeTestResults: false
             condition: succeededOrFailed()
 
@@ -480,7 +425,7 @@ stages:
           - task: PublishPipelineArtifact@1
             displayName: Publish Artifact - Tinylicious Log
             inputs:
-              targetPath: '$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/${{ parameters.testPackage }}/tinylicious.log'
+              targetPath: '${{ variables.testWorkingDirectory }}/tinylicious.log'
               artifactName: 'tinyliciousLog_attempt-$(System.JobAttempt)'
               publishLocation: 'pipeline'
             condition: always()
