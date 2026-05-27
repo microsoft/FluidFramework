@@ -81,9 +81,16 @@ jobs:
               targetType: 'inline'
               workingDirectory: .
               script: |
+                set -eu -o pipefail
                 echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
                 npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
+                # fflate 0.8.3 changed the streaming Gunzip callback semantics in a way that breaks
+                # `flub publish tarballs`. Force-downgrade the fflate nested inside the globally-installed
+                # flub to 0.8.2 as a workaround.
+                npm explore --global @fluid-tools/build-cli -- npm install --no-save --package-lock=false fflate@0.8.2
+                npm explore --global @fluid-tools/build-cli -- node -e "const v=require('./node_modules/fflate/package.json').version; if (v !== '0.8.2') throw new Error('Expected fflate 0.8.2, got ' + v);"
 
                 # This can be removed once all builds tools are moved to the build-cli library
                 npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
