@@ -966,8 +966,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		segmentPosition: number,
 	): IMergeTreeDeltaOp | undefined {
 		assert(
-			segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) ===
-				true,
+			segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) === true,
 			0x036 /* "Segment has no pending properties" */,
 		);
 		// if the segment has been removed or obliterated, there's no need to send the annotate op
@@ -1018,10 +1017,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 				removeInfo.removes[0].type === "sliceRemove",
 				0xb5c /* Remove on insertion must be caused by obliterate. */,
 			);
-			errorIfOptionNotTrue(
-				this._mergeTree.options,
-				"mergeTreeEnableObliterateReconnect",
-			);
+			errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
 			// the segment was remotely obliterated, so is considered removed
 			// we set the seq to the universal seq and remove the local seq,
 			// so its length is not considered for subsequent local changes
