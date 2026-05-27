@@ -217,6 +217,12 @@ interface PendingKeySet {
 	path: string;
 	value: unknown;
 	subdir: SubDirectory;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets consumers
+	 * (e.g. rollback) locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding a linear scan over `pendingStorageData`.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -1269,6 +1275,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			path: this.absolutePath,
 			value,
 			subdir: this,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -2477,27 +2484,58 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			(directoryOp.type === "delete" || directoryOp.type === "set") &&
 			(localOpMetadata.type === "set" || localOpMetadata.type === "delete")
 		) {
-			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
-			// they were created, not when they were last modified.
-			const pendingEntryIndex = findLastIndex(
-				this.pendingStorageData,
-				(entry) => entry.type !== "clear" && entry.key === directoryOp.key,
-			);
-			const pendingEntry = this.pendingStorageData[pendingEntryIndex];
-			if (pendingEntry === undefined) {
-				// If we can't find a pending entry then it's possible that we deleted an ack'd subdir
-				// from a remote delete subdir op. If that's the case then there is nothing to rollback
-				// since the pending data was removed with the subdirectory deletion.
-				return;
-			}
-			assert(
-				pendingEntry.type === "delete" || pendingEntry.type === "lifetime",
-				0xc36 /* Unexpected pending data for set/delete op */,
-			);
-			if (pendingEntry.type === "delete") {
+			if (localOpMetadata.type === "set") {
+				// Fast path: the PendingKeySet carries a back-pointer to its containing lifetime,
+				// so we can locate the lifetime in O(1) without a linear scan over
+				// pendingStorageData. Only if removing the keySet leaves the lifetime empty do we
+				// need to find its position in pendingStorageData to splice it out.
+				const pendingEntry = localOpMetadata.lifetime;
+				const pendingKeySet = pendingEntry.keySets.pop();
+				assert(
+					pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
+					0xc0c /* Unexpected set rollback */,
+				);
+				if (pendingEntry.keySets.length === 0) {
+					const pendingEntryIndex = this.pendingStorageData.indexOf(pendingEntry);
+					if (pendingEntryIndex !== -1) {
+						this.pendingStorageData.splice(pendingEntryIndex, 1);
+					}
+				}
+				const event: IDirectoryValueChanged = {
+					key: directoryOp.key,
+					path: this.absolutePath,
+					previousValue: pendingKeySet.value,
+				};
+				this.directory.emit("valueChanged", event, true, this.directory);
+				const containedEvent: IValueChanged = {
+					key: directoryOp.key,
+					previousValue: pendingKeySet.value,
+				};
+				this.emit("containedValueChanged", containedEvent, true, this);
+			} else {
+				// Delete rollback: a pending delete may not be last in the list, as the
+				// lifetimes' order is based on when they were created, not when they were last
+				// modified.
+				const pendingEntryIndex = findLastIndex(
+					this.pendingStorageData,
+					(entry) => entry.type !== "clear" && entry.key === directoryOp.key,
+				);
+				const pendingEntry = this.pendingStorageData[pendingEntryIndex];
+				if (pendingEntry === undefined) {
+					// If we can't find a pending entry then it's possible that we deleted an ack'd
+					// subdir from a remote delete subdir op. If that's the case then there is
+					// nothing to rollback since the pending data was removed with the subdirectory
+					// deletion.
+					return;
+				}
+				assert(
+					pendingEntry.type === "delete",
+					0xc36 /* Unexpected pending data for set/delete op */,
+				);
 				assert(pendingEntry === localOpMetadata, 0xc0b /* Unexpected delete rollback */);
 				this.pendingStorageData.splice(pendingEntryIndex, 1);
-				// Only emit if rolling back the delete actually results in a value becoming visible.
+				// Only emit if rolling back the delete actually results in a value becoming
+				// visible.
 				if (this.getOptimisticValue(directoryOp.key) !== undefined) {
 					const event: IDirectoryValueChanged = {
 						key: directoryOp.key,
@@ -2511,26 +2549,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 					};
 					this.emit("containedValueChanged", containedEvent, true, this);
 				}
-			} else if (pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.pop();
-				assert(
-					pendingKeySet !== undefined && pendingKeySet === localOpMetadata,
-					0xc0c /* Unexpected set rollback */,
-				);
-				if (pendingEntry.keySets.length === 0) {
-					this.pendingStorageData.splice(pendingEntryIndex, 1);
-				}
-				const event: IDirectoryValueChanged = {
-					key: directoryOp.key,
-					path: this.absolutePath,
-					previousValue: pendingKeySet.value,
-				};
-				this.directory.emit("valueChanged", event, true, this.directory);
-				const containedEvent: IValueChanged = {
-					key: directoryOp.key,
-					previousValue: pendingKeySet.value,
-				};
-				this.emit("containedValueChanged", containedEvent, true, this);
 			}
 		} else if (
 			directoryOp.type === "createSubDirectory" &&

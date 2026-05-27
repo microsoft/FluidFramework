@@ -74,6 +74,12 @@ export type IMapDataObjectSerialized = Record<string, ISerializedValue>;
 interface PendingKeySet {
 	type: "set";
 	value: ILocalValue;
+	/**
+	 * Back-pointer to the {@link PendingKeyLifetime} that contains this keySet. Lets consumers
+	 * (e.g. rollback) locate the containing lifetime in O(1) given just the keySet metadata,
+	 * avoiding a linear scan over `pendingData`.
+	 */
+	lifetime: PendingKeyLifetime;
 }
 
 interface PendingKeyDelete {
@@ -425,6 +431,7 @@ export class MapKernel {
 		const pendingKeySet: PendingKeySet = {
 			type: "set",
 			value: localValue,
+			lifetime: latestPendingEntry,
 		};
 		latestPendingEntry.keySets.push(pendingKeySet);
 
@@ -655,43 +662,50 @@ export class MapKernel {
 					this.eventEmitter,
 				);
 			}
+		} else if (typedLocalOpMetadata.type === "set") {
+			// Fast path: the PendingKeySet carries a back-pointer to its containing lifetime, so
+			// we can locate the lifetime in O(1) without a linear scan over pendingData. Only if
+			// removing the keySet leaves the lifetime empty do we need to find its position in
+			// pendingData to splice it out.
+			const pendingEntry = typedLocalOpMetadata.lifetime;
+			const pendingKeySet = pendingEntry.keySets.pop();
+			assert(
+				pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
+				0xbf5 /* Unexpected set rollback */,
+			);
+			if (pendingEntry.keySets.length === 0) {
+				const pendingEntryIndex = this.pendingData.indexOf(pendingEntry);
+				assert(pendingEntryIndex !== -1, "lifetime must be present in pendingData");
+				this.pendingData.splice(pendingEntryIndex, 1);
+			}
+			this.eventEmitter.emit(
+				"valueChanged",
+				{ key: mapOp.key, previousValue: pendingKeySet.value.value },
+				true,
+				this.eventEmitter,
+			);
 		} else {
-			// A pending set/delete may not be last in the list, as the lifetimes' order is based on when
-			// they were created, not when they were last modified.
+			// Delete rollback: a pending delete may not be last in the list, as the lifetimes'
+			// order is based on when they were created, not when they were last modified.
 			const pendingEntryIndex = findLastIndex(
 				this.pendingData,
 				(entry) => entry.type !== "clear" && entry.key === mapOp.key,
 			);
 			const pendingEntry = this.pendingData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined &&
-					(pendingEntry.type === "delete" || pendingEntry.type === "lifetime"),
+				pendingEntry !== undefined && pendingEntry.type === "delete",
 				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
-			if (pendingEntry.type === "delete") {
-				assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
-				this.pendingData.splice(pendingEntryIndex, 1);
-				// Only emit if rolling back the delete actually results in a value becoming visible.
-				if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
-					this.eventEmitter.emit(
-						"valueChanged",
-						{ key: mapOp.key, previousValue: undefined },
-						true,
-						this.eventEmitter,
-					);
-				}
-			} else if (pendingEntry.type === "lifetime") {
-				const pendingKeySet = pendingEntry.keySets.pop();
-				assert(
-					pendingKeySet !== undefined && pendingKeySet === typedLocalOpMetadata,
-					0xbf5 /* Unexpected set rollback */,
-				);
-				if (pendingEntry.keySets.length === 0) {
-					this.pendingData.splice(pendingEntryIndex, 1);
-				}
+			assert(
+				pendingEntry === typedLocalOpMetadata,
+				0xbf4 /* Unexpected delete rollback */,
+			);
+			this.pendingData.splice(pendingEntryIndex, 1);
+			// Only emit if rolling back the delete actually results in a value becoming visible.
+			if (this.getOptimisticLocalValue(mapOp.key) !== undefined) {
 				this.eventEmitter.emit(
 					"valueChanged",
-					{ key: mapOp.key, previousValue: pendingKeySet.value.value },
+					{ key: mapOp.key, previousValue: undefined },
 					true,
 					this.eventEmitter,
 				);
