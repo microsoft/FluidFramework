@@ -240,7 +240,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public delete(index: number): void {
@@ -268,7 +268,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rearrangeToFront(values: T[]): void {
@@ -346,7 +346,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	/**
@@ -383,7 +383,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 	/**
 	 * Method to do undo/redo of move operation. All entries of the same payload/value are stored
@@ -422,7 +422,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 
 	public rollback(op: unknown, _localOpMetadata: unknown): void {
@@ -834,6 +834,10 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		this.emit("revertible", revertible);
 	}
 
+	private submitArrayOp(op: ISharedArrayOperation<T>): void {
+		this.submitLocalMessage(op);
+	}
+
 	private deleteCore(index: number): void {
 		const entry = this.sharedArray[index];
 		assert(entry !== undefined, 0xb94 /* Invalid index */);
@@ -1081,6 +1085,6 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 			}
 		}
 		this.pendingOps.push(this.buildPendingOp(op));
-		this.submitLocalMessage(op);
+		this.submitArrayOp(op);
 	}
 }
