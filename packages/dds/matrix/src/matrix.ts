@@ -225,18 +225,73 @@ type FirstWriterWinsPolicy =
 	  };
 
 /**
+ * Encapsulates the list of pending local changes for a single cell, plus the side-index from
+ * `localSeq` to the corresponding `DoublyLinkedList` node enabling O(1) lookup during reSubmit
+ * (instead of a linear `findIndex` scan).
+ *
+ * The list and the index are kept in lock-step: every mutator updates both.
+ */
+class PendingLocalCellChanges<T> {
+	private readonly list = new DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>();
+	private readonly index = new Map<
+		number,
+		ListNode<{ localSeq: number; value: MatrixItem<T> }>
+	>();
+
+	public get length(): number {
+		return this.list.length;
+	}
+
+	public get last(): ListNode<{ localSeq: number; value: MatrixItem<T> }> | undefined {
+		return this.list.last;
+	}
+
+	public push(localSeq: number, value: MatrixItem<T>): void {
+		assert(!this.index.has(localSeq), "duplicate localSeq in PendingLocalCellChanges");
+		const { first: node } = this.list.push({ localSeq, value });
+		// single-item push: first === last, both reference the newly inserted node.
+		this.index.set(localSeq, node);
+	}
+
+	public removeByLocalSeq(
+		localSeq: number,
+	): { localSeq: number; value: MatrixItem<T> } | undefined {
+		const node = this.index.get(localSeq);
+		if (node === undefined) {
+			return undefined;
+		}
+		this.list.remove(node);
+		this.index.delete(localSeq);
+		return node.data;
+	}
+
+	public shift(): { localSeq: number; value: MatrixItem<T> } | undefined {
+		const node = this.list.shift();
+		if (node === undefined) {
+			return undefined;
+		}
+		this.index.delete(node.data.localSeq);
+		return node.data;
+	}
+
+	public pop(): { localSeq: number; value: MatrixItem<T> } | undefined {
+		const node = this.list.pop();
+		if (node === undefined) {
+			return undefined;
+		}
+		this.index.delete(node.data.localSeq);
+		return node.data;
+	}
+}
+
+/**
  * Tracks pending local changes for a cell.
  */
 interface PendingCellChanges<T> {
 	/**
 	 * The local changes including the local seq, and the value set at that local seq.
 	 */
-	local: DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>;
-	/**
-	 * Side-map from localSeq to the corresponding node in `local`, enabling O(1) lookup
-	 * during reSubmit instead of a linear `findIndex` scan.
-	 */
-	localByLocalSeq: Map<number, ListNode<{ localSeq: number; value: MatrixItem<T> }>>;
+	local: PendingLocalCellChanges<T>;
 	/**
 	 * The latest consensus value across all clients.
 	 * this will either be a remote value or ack'd local
@@ -523,11 +578,9 @@ export class SharedMatrix<T = any>
 
 		this.submitLocalMessage(op, metadata);
 		const pendingCell: PendingCellChanges<T> = this.pending.getCell(rowHandle, colHandle) ?? {
-			local: new DoublyLinkedList<{ localSeq: number; value: MatrixItem<T> }>(),
-			localByLocalSeq: new Map<number, ListNode<{ localSeq: number; value: MatrixItem<T> }>>(),
+			local: new PendingLocalCellChanges<T>(),
 		};
-		const { first: node } = pendingCell.local.push({ localSeq, value });
-		pendingCell.localByLocalSeq.set(localSeq, node);
+		pendingCell.local.push(localSeq, value);
 		this.pending.setCell(rowHandle, colHandle, pendingCell);
 		return pendingCell;
 	}
@@ -854,13 +907,10 @@ export class SharedMatrix<T = any>
 
 			const pendingCell = this.pending.getCell(rowHandle, colHandle);
 			assert(pendingCell !== undefined, 0xba4 /* local operation must have a pending array */);
-			const { local, localByLocalSeq } = pendingCell;
+			const { local } = pendingCell;
 			assert(local !== undefined, 0xba5 /* local operation must have a pending array */);
-			const node = localByLocalSeq.get(localSeq);
-			assert(node !== undefined, 0xba6 /* local operation must have a pending entry */);
-			const change = node.data;
-			local.remove(node);
-			localByLocalSeq.delete(localSeq);
+			const change = local.removeByLocalSeq(localSeq);
+			assert(change !== undefined, 0xba6 /* local operation must have a pending entry */);
 			assert(change.localSeq === localSeq, 0xba7 /* must match */);
 
 			if (
@@ -919,9 +969,8 @@ export class SharedMatrix<T = any>
 				const pendingCell = this.pending.getCell(setMetadata.rowHandle, setMetadata.colHandle);
 				assert(pendingCell !== undefined, 0xba9 /* must have pending */);
 
-				const change = pendingCell.local.pop()?.data;
+				const change = pendingCell.local.pop();
 				assert(change?.localSeq === setMetadata.localSeq, 0xbaa /* must have change */);
-				pendingCell.localByLocalSeq.delete(setMetadata.localSeq);
 
 				const previous =
 					pendingCell.local.length > 0
@@ -1091,9 +1140,8 @@ export class SharedMatrix<T = any>
 					this.cols.removeLocalReferencePosition(colsRef);
 
 					const pendingCell = this.pending.getCell(rowHandle, colHandle);
-					const ackedChange = pendingCell?.local.shift()?.data;
+					const ackedChange = pendingCell?.local.shift();
 					assert(ackedChange?.localSeq === localSeq, 0xbab /* must match */);
-					pendingCell?.localByLocalSeq.delete(localSeq);
 					if (pendingCell?.local.length === 0) {
 						this.pending.setCell(rowHandle, colHandle, undefined);
 					}
