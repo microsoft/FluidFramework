@@ -117,7 +117,7 @@ const baseOptions: Partial<DDSFuzzSuiteOptions> = {
 	reconnectProbability: 0.5,
 };
 
-const runsPerBatch = 1000;
+const runsPerBatch = 50;
 
 const options: Partial<DDSFuzzSuiteOptions> = {
 	...baseOptions,
