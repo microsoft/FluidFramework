@@ -168,11 +168,11 @@ describe("compressedEncode", () => {
 						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
 						version,
 					);
-					const { encode, decode } = makeTestFieldBatchContexts({
+					const { encode, decode: decodeContext } = makeTestFieldBatchContexts({
 						encodeType: TreeCompressionStrategy.Compressed,
 					});
 					const result = codec.encode(input, encode);
-					const decoded = codec.decode(result, decode);
+					const decoded = codec.decode(result, decodeContext);
 					const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual([[jsonable]], decodedJson);
 

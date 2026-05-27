@@ -14,9 +14,9 @@ import type { CounterFilter } from "../../../../feature-libraries/chunked-forest
 // eslint-disable-next-line import-x/no-internal-modules
 import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { FieldBatchDecodingContext } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import { updateShapesAndIdentifiersEncoding } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { FieldBatchDecodingContext } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import type {
 	BufferFormat,
 	EncoderContext,

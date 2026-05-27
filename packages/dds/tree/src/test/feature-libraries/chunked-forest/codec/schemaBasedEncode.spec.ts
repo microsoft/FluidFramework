@@ -21,7 +21,6 @@ import type {
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	type FieldBatchEncodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,

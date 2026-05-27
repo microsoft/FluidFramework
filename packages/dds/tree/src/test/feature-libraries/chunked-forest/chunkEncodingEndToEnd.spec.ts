@@ -40,7 +40,6 @@ import { decode } from "../../../feature-libraries/chunked-forest/codec/chunkDec
 import { FieldBatchDecodingContext } from "../../../feature-libraries/chunked-forest/codec/codecs.js";
 import type {
 	EncodedFieldBatchV1OrV2,
-	FieldBatchEncodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/index.js";
 import {
