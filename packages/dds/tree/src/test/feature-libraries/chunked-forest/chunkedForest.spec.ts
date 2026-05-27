@@ -230,8 +230,9 @@ describe("ChunkedForest", () => {
 			visitor.exitField(rootFieldKey);
 			visitor.free();
 
-			// enterNode shatters the targeted UC(5) into 5 BasicChunks; the field's chunk
-			// count grows from 3 to 7, with the two flanking UniformChunks untouched.
+			// enterNode shatters the targeted UniformChunk (with top-level length 5) into 5 BasicChunks; the
+			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
+			// untouched.
 			const result = forest.roots.fields.get(rootFieldKey);
 			assert(result !== undefined);
 			assert.equal(result.length, 7);
