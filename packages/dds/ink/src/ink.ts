@@ -260,6 +260,15 @@ export class Ink extends SharedObject<IInkEvents> implements IInk {
 	}
 
 	/**
+	 * Ink ops (createStroke / stylus / clear) are append-style: each op records an intentional
+	 * user action and is never superseded by a later pending op. Squash is therefore the identity
+	 * transform — we just replay the original ops via reSubmitCore.
+	 */
+	protected override reSubmitSquashed(content: unknown, localOpMetadata: unknown): void {
+		this.reSubmitCore(content, localOpMetadata);
+	}
+
+	/**
 	 * Update the model for a clear operation.
 	 * @param operation - The operation object
 	 */
