@@ -4620,7 +4620,6 @@ function composeRevInfos(
 		revisions2?.length === 1 &&
 		revisions1[0]?.revision === revisions2[0]?.revision
 	) {
-		// XXX: Shouldn't this branch handle the case where there are multiple revisions in each array?
 		// This is a special case where we are composing two changesets from the same transaction.
 		// We return one of the input arrays to avoid duplicating revision entries.
 		return revisions1;
