@@ -14,7 +14,9 @@ import type { BatchStartInfo } from "../../opLifecycle/index.js";
 
 /**
  * Helper function to create (enough of) a BatchStartInfo for testing.
- * Inbound batch may have explicit batchId, or merely clientId and batchStartCsn and batchId must be computed - allow either as inputs
+ * Inbound batch may have explicit batchId, or merely clientId and batchStartCsn and batchId must be computed - allow either as inputs.
+ * Also allows specifying all three together (explicit batchId on a batch that also carries
+ * clientId + csn at the BatchStartInfo level) to model resubmits.
  */
 function makeBatch({
 	sequenceNumber,
@@ -22,10 +24,13 @@ function makeBatch({
 	batchId,
 	clientId,
 	batchStartCsn,
-}: { sequenceNumber: number; minimumSequenceNumber: number } & (
-	| { batchId: string; clientId?: undefined; batchStartCsn?: undefined }
-	| { batchId?: undefined; clientId: string; batchStartCsn: number }
-)): BatchStartInfo {
+}: {
+	sequenceNumber: number;
+	minimumSequenceNumber: number;
+	batchId?: string;
+	clientId?: string;
+	batchStartCsn?: number;
+}): BatchStartInfo {
 	return {
 		keyMessage: {
 			sequenceNumber,
@@ -43,7 +48,7 @@ type PatchedDuplicateBatchDetector = Patch<
 	DuplicateBatchDetector,
 	{
 		seqNumByBatchId: Map<string, number>;
-		batchIdsBySeqNum: Map<number, string>;
+		batchesBySeqNum: Map<number, { batchId: string }>;
 	}
 >;
 
@@ -62,8 +67,8 @@ describe("DuplicateBatchDetector", () => {
 	afterEach("validation", () => {
 		assert.deepEqual(
 			[...detector.seqNumByBatchId.keys()].sort(),
-			[...detector.batchIdsBySeqNum.values()].sort(),
-			"Invariant: seqNumByBatchId and batchIdsBySeqNum should be in sync",
+			[...detector.batchesBySeqNum.values()].map((r) => r.batchId).sort(),
+			"Invariant: seqNumByBatchId and batchesBySeqNum should be in sync",
 		);
 	});
 
@@ -109,15 +114,27 @@ describe("DuplicateBatchDetector", () => {
 			sequenceNumber: seqNum++, // 1
 			minimumSequenceNumber: 0,
 			batchId: "batch1",
+			clientId: "client1",
+			batchStartCsn: 10,
 		});
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2
 			minimumSequenceNumber: 0,
 			batchId: "batch1",
+			clientId: "client2",
+			batchStartCsn: 20,
 		});
 		detector.processInboundBatch(inboundBatch1);
 		const result = detector.processInboundBatch(inboundBatch2);
-		assert.deepEqual(result, { duplicate: true, otherSequenceNumber: 1 });
+		assert.deepEqual(result, {
+			duplicate: true,
+			otherSequenceNumber: 1,
+			otherBatchInfo: {
+				clientId: "client1",
+				batchStartCsn: 10,
+				batchIdExplicit: true,
+			},
+		});
 	});
 
 	it("Matching inbound batches, one with batchId one without, are duplicates", () => {
@@ -125,6 +142,8 @@ describe("DuplicateBatchDetector", () => {
 			sequenceNumber: seqNum++, // 1
 			minimumSequenceNumber: 0,
 			batchId: "clientId_[33]",
+			clientId: "resubmitter",
+			batchStartCsn: 99,
 		});
 		const inboundBatch2 = makeBatch({
 			sequenceNumber: seqNum++, // 2
@@ -134,7 +153,15 @@ describe("DuplicateBatchDetector", () => {
 		});
 		detector.processInboundBatch(inboundBatch1);
 		const result = detector.processInboundBatch(inboundBatch2);
-		assert.deepEqual(result, { duplicate: true, otherSequenceNumber: 1 });
+		assert.deepEqual(result, {
+			duplicate: true,
+			otherSequenceNumber: 1,
+			otherBatchInfo: {
+				clientId: "resubmitter",
+				batchStartCsn: 99,
+				batchIdExplicit: true,
+			},
+		});
 	});
 
 	it("Matching inbound batches are duplicates (roundtrip through summary)", () => {
@@ -156,7 +183,69 @@ describe("DuplicateBatchDetector", () => {
 			batchId: "batch1",
 		});
 		const result = detector2.processInboundBatch(inboundBatch2);
-		assert.deepEqual(result, { duplicate: true, otherSequenceNumber: 1 });
+		// The original came from a snapshot, so otherBatchInfo is `undefined` (and otherFromSnapshot
+		// would be `true` in the corresponding telemetry).
+		assert.deepEqual(result, {
+			duplicate: true,
+			otherSequenceNumber: 1,
+			otherBatchInfo: undefined,
+		});
+	});
+
+	it("Reports runtime info when duplicate's original was seen at runtime", () => {
+		// Original (fresh submit: no explicit batchId, just clientId + csn)
+		const original = makeBatch({
+			sequenceNumber: seqNum++, // 1
+			minimumSequenceNumber: 0,
+			clientId: "clientA",
+			batchStartCsn: 7,
+		});
+		// Duplicate arrives with the same effective batchId (clientA_[7]) but explicit metadata
+		const duplicate = makeBatch({
+			sequenceNumber: seqNum++, // 2
+			minimumSequenceNumber: 0,
+			batchId: "clientA_[7]",
+		});
+		detector.processInboundBatch(original);
+		const result = detector.processInboundBatch(duplicate);
+		assert.deepEqual(result, {
+			duplicate: true,
+			otherSequenceNumber: 1,
+			otherBatchInfo: {
+				clientId: "clientA",
+				batchStartCsn: 7,
+				batchIdExplicit: false,
+			},
+		});
+	});
+
+	it("Detects explicit batchId metadata as such (resubmit-style original)", () => {
+		// Original was a resubmit: wire stamped explicit batchId metadata.
+		const original = makeBatch({
+			sequenceNumber: seqNum++, // 1
+			minimumSequenceNumber: 0,
+			clientId: "resubmitter",
+			batchStartCsn: 42,
+			batchId: "originalSubmitter_[7]",
+		});
+		// Duplicate is the original submitter coming back fresh (no explicit batchId).
+		const duplicate = makeBatch({
+			sequenceNumber: seqNum++, // 2
+			minimumSequenceNumber: 0,
+			clientId: "originalSubmitter",
+			batchStartCsn: 7,
+		});
+		detector.processInboundBatch(original);
+		const result = detector.processInboundBatch(duplicate);
+		assert.deepEqual(result, {
+			duplicate: true,
+			otherSequenceNumber: 1,
+			otherBatchInfo: {
+				clientId: "resubmitter",
+				batchStartCsn: 42,
+				batchIdExplicit: true,
+			},
+		});
 	});
 
 	it("should clear old batchIds that are no longer at risk for duplicates", () => {
@@ -196,7 +285,7 @@ describe("DuplicateBatchDetector", () => {
 	describe("getStateForSummary", () => {
 		it("If empty, return undefined", () => {
 			assert.equal(
-				detector.batchIdsBySeqNum.size,
+				detector.batchesBySeqNum.size,
 				0,
 				"PRECONDITION: Expected detector to start empty",
 			);
