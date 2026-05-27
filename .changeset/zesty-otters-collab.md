@@ -1,6 +1,5 @@
 ---
 "@fluidframework/fluid-static": minor
-"fluid-framework": minor
 "__section": legacy
 ---
 createTreeContainerRuntimeFactory accepts a MinimumVersionForCollab SemVer and deprecates compatibilityMode with minVersionForCollabOverride
