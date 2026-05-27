@@ -10,6 +10,7 @@ export {
 	exceptionToResponse,
 	responseToException,
 	asLegacyAlpha,
+	dataStoreLoadTelemetryProps,
 } from "./dataStoreHelpers.js";
 export {
 	compareFluidHandles,
