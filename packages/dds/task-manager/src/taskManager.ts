@@ -70,6 +70,126 @@ function assertIsTaskManagerOperation(op: unknown): asserts op is ITaskManagerOp
 	);
 }
 
+/**
+ * Encapsulates a {@link DoublyLinkedList} together with a side-index `Map<K, ListNode<V>>` so that
+ * mutations to the list and the index cannot drift out of sync. The two structures were previously
+ * stored independently on {@link TaskManagerClass} and had to be kept byte-symmetric at every
+ * mutation site — an invariant only enforced by runtime asserts. By bundling them behind this
+ * private wrapper the invariant becomes unrepresentable.
+ *
+ * The wrapper exposes just the operations the call sites in this file actually need; iteration of
+ * nodes is delegated straight through to the inner list.
+ *
+ * @param keyOf - Extracts the index key from a value. Used by {@link IndexedList.shift} and
+ * {@link IndexedList.pop} to keep the index consistent with the list when a node is removed by
+ * position rather than by key.
+ */
+class IndexedList<K, V> implements Iterable<ListNode<V>> {
+	private readonly list = new DoublyLinkedList<V>();
+	private readonly index = new Map<K, ListNode<V>>();
+
+	public constructor(private readonly keyOf: (value: V) => K) {}
+
+	public get length(): number {
+		return this.list.length;
+	}
+
+	public get first(): ListNode<V> | undefined {
+		return this.list.first;
+	}
+
+	public get last(): ListNode<V> | undefined {
+		return this.list.last;
+	}
+
+	public has(key: K): boolean {
+		return this.index.has(key);
+	}
+
+	public getNode(key: K): ListNode<V> | undefined {
+		return this.index.get(key);
+	}
+
+	/**
+	 * Appends a value to the end of the list and indexes it under `key`.
+	 * @returns The newly inserted node.
+	 */
+	public push(key: K, value: V): ListNode<V> {
+		const { first } = this.list.push(value);
+		this.index.set(key, first);
+		return first;
+	}
+
+	/**
+	 * Inserts `value` immediately after `after` and indexes it under `key`.
+	 * @returns The newly inserted node.
+	 */
+	public insertAfter(after: ListNode<V>, key: K, value: V): ListNode<V> {
+		const { first } = this.list.insertAfter(after, value);
+		this.index.set(key, first);
+		return first;
+	}
+
+	/**
+	 * Removes the entry at the given key from both the list and the index.
+	 * @returns True if an entry was removed; false if the key was not present.
+	 */
+	public deleteByKey(key: K): boolean {
+		const node = this.index.get(key);
+		if (node === undefined) {
+			return false;
+		}
+		this.list.remove(node);
+		this.index.delete(key);
+		return true;
+	}
+
+	/**
+	 * Removes the given node from both the list and the index. Caller must have obtained `node`
+	 * from this list (e.g. via iteration or {@link IndexedList.getNode}).
+	 */
+	public removeNode(node: ListNode<V>): void {
+		this.list.remove(node);
+		this.index.delete(this.keyOf(node.data));
+	}
+
+	/**
+	 * Removes and returns the first node, also removing its index entry.
+	 */
+	public shift(): ListNode<V> | undefined {
+		const node = this.list.shift();
+		if (node !== undefined) {
+			this.index.delete(this.keyOf(node.data));
+		}
+		return node;
+	}
+
+	/**
+	 * Removes and returns the last node, also removing its index entry.
+	 */
+	public pop(): ListNode<V> | undefined {
+		const node = this.list.pop();
+		if (node !== undefined) {
+			this.index.delete(this.keyOf(node.data));
+		}
+		return node;
+	}
+
+	/**
+	 * Iterates the values' nodes in list order. Delegates straight through to the inner list.
+	 */
+	public [Symbol.iterator](): IterableIterator<ListNode<V>> {
+		return this.list[Symbol.iterator]();
+	}
+
+	/**
+	 * Maps each node to a new value, in list order. Delegates straight through to the inner list.
+	 */
+	public map<U>(callbackfn: (value: ListNode<V>) => U): Iterable<U> {
+		return this.list.map(callbackfn);
+	}
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -88,17 +208,13 @@ export class TaskManagerClass
 	implements ITaskManager
 {
 	/**
-	 * Mapping of taskId to a queue of clientIds that are waiting on the task.  Maintains the consensus state of the
+	 * Mapping of taskId to a queue of clientIds that are waiting on the task. Maintains the consensus state of the
 	 * queue, even if we know we've submitted an op that should eventually modify the queue.
+	 *
+	 * The {@link IndexedList} wrapper bundles the queue with a clientId -\> ListNode index, enabling O(1) lookup
+	 * and removal of a client without scanning the list while keeping the two structures inherently in sync.
 	 */
-	private readonly taskQueues = new Map<string, DoublyLinkedList<string>>();
-
-	/**
-	 * Side-lookup map paralleling {@link TaskManagerClass.taskQueues}: for each taskId, maps clientId to the
-	 * {@link ListNode} that holds that clientId in the corresponding queue. Enables O(1) lookup and removal of a
-	 * client from a queue without scanning the list. Must be kept symmetric with `taskQueues` at every mutation.
-	 */
-	private readonly taskQueueNodes = new Map<string, Map<string, ListNode<string>>>();
+	private readonly taskQueues = new Map<string, IndexedList<string, string>>();
 
 	// opWatcher emits for every op on this data store.  This is just a repackaging of processMessagesCore into events.
 	private readonly opWatcher: EventEmitter = new EventEmitter();
@@ -117,9 +233,11 @@ export class TaskManagerClass
 
 	private nextPendingMessageId: number = 0;
 	/**
-	 * Tracks the most recent pending op for a given task
+	 * Tracks the most recent pending op for a given task. The {@link IndexedList} wrapper indexes the
+	 * queue of pending ops by their messageId, which simplifies {@link TaskManagerClass.reSubmitCore}'s
+	 * lookup of a specific pending op from O(n) `find` to O(1) `getNode`.
 	 */
-	private readonly latestPendingOps = new Map<string, DoublyLinkedList<IPendingOp>>();
+	private readonly latestPendingOps = new Map<string, IndexedList<number, IPendingOp>>();
 
 	/**
 	 * Tracks tasks that are this client is currently subscribed to.
@@ -215,7 +333,6 @@ export class TaskManagerClass
 				}
 
 				this.taskQueues.delete(taskId);
-				this.taskQueueNodes.delete(taskId);
 				this.completedWatcher.emit("completed", taskId, messageId);
 				this.emit("completed", taskId);
 			},
@@ -266,12 +383,7 @@ export class TaskManagerClass
 			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		const latestPendingOps = this.latestPendingOps.get(taskId);
-		if (latestPendingOps === undefined) {
-			this.latestPendingOps.set(taskId, new DoublyLinkedList<IPendingOp>([pendingOp]));
-		} else {
-			latestPendingOps.push(pendingOp);
-		}
+		this.appendPendingOp(taskId, pendingOp);
 	}
 
 	private submitAbandonOp(taskId: string): void {
@@ -284,12 +396,7 @@ export class TaskManagerClass
 			messageId: this.nextPendingMessageId++,
 		};
 		this.submitLocalMessage(op, pendingOp.messageId);
-		const latestPendingOps = this.latestPendingOps.get(taskId);
-		if (latestPendingOps === undefined) {
-			this.latestPendingOps.set(taskId, new DoublyLinkedList<IPendingOp>([pendingOp]));
-		} else {
-			latestPendingOps.push(pendingOp);
-		}
+		this.appendPendingOp(taskId, pendingOp);
 	}
 
 	private submitCompleteOp(taskId: string): void {
@@ -303,12 +410,16 @@ export class TaskManagerClass
 		};
 
 		this.submitLocalMessage(op, pendingOp.messageId);
-		const latestPendingOps = this.latestPendingOps.get(taskId);
+		this.appendPendingOp(taskId, pendingOp);
+	}
+
+	private appendPendingOp(taskId: string, pendingOp: IPendingOp): void {
+		let latestPendingOps = this.latestPendingOps.get(taskId);
 		if (latestPendingOps === undefined) {
-			this.latestPendingOps.set(taskId, new DoublyLinkedList<IPendingOp>([pendingOp]));
-		} else {
-			latestPendingOps.push(pendingOp);
+			latestPendingOps = new IndexedList<number, IPendingOp>((op) => op.messageId);
+			this.latestPendingOps.set(taskId, latestPendingOps);
 		}
+		latestPendingOps.push(pendingOp.messageId, pendingOp);
 	}
 
 	/**
@@ -580,7 +691,7 @@ export class TaskManagerClass
 			return false;
 		}
 
-		return this.taskQueueNodes.get(taskId)?.has(this.clientId) ?? false;
+		return this.taskQueues.get(taskId)?.has(this.clientId) ?? false;
 	}
 
 	/**
@@ -602,7 +713,6 @@ export class TaskManagerClass
 		// we are attached. Additionally, we don't need to check if we are connected while detached.
 		if (this.isDetached()) {
 			this.taskQueues.delete(taskId);
-			this.taskQueueNodes.delete(taskId);
 			this.completedWatcher.emit("completed", taskId);
 			this.emit("completed", taskId);
 			return;
@@ -658,14 +768,11 @@ export class TaskManagerClass
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const content = await readAndParse<[string, string[]][]>(storage, snapshotFileName);
 		for (const [taskId, clientIdQueue] of content) {
-			const list = new DoublyLinkedList<string>();
-			const nodeMap = new Map<string, ListNode<string>>();
+			const list = new IndexedList<string, string>((clientId) => clientId);
 			for (const clientId of clientIdQueue) {
-				const range = list.push(clientId);
-				nodeMap.set(clientId, range.last);
+				list.push(clientId, clientId);
 			}
 			this.taskQueues.set(taskId, list);
-			this.taskQueueNodes.set(taskId, nodeMap);
 		}
 		this.scrubClientsNotInQuorum();
 	}
@@ -696,14 +803,12 @@ export class TaskManagerClass
 		assertIsTaskManagerOperation(content);
 		const pendingOps = this.latestPendingOps.get(content.taskId);
 		assert(pendingOps !== undefined, 0xc42 /* No pending ops for task on resubmit attempt */);
-		const pendingOpNode = pendingOps.find(
-			(node) => node.data.messageId === localOpMetadata && node.data.type === content.type,
-		);
+		const pendingOpNode = pendingOps.getNode(localOpMetadata);
 		assert(
-			pendingOpNode !== undefined,
+			pendingOpNode?.data.type === content.type,
 			0xc43 /* Could not match pending op on resubmit attempt */,
 		);
-		pendingOps.remove(pendingOpNode);
+		pendingOps.removeNode(pendingOpNode);
 		if (content.type === "volunteer" && pendingOps.last?.data.type !== "abandon") {
 			this.submitVolunteerOp(content.taskId);
 		}
@@ -778,17 +883,12 @@ export class TaskManagerClass
 		) {
 			// Create the queue if it doesn't exist, and push the client on the back.
 			let clientQueue = this.taskQueues.get(taskId);
-			let clientNodes = this.taskQueueNodes.get(taskId);
 			if (clientQueue === undefined) {
-				clientQueue = new DoublyLinkedList<string>();
+				clientQueue = new IndexedList<string, string>((cid) => cid);
 				this.taskQueues.set(taskId, clientQueue);
 			}
-			if (clientNodes === undefined) {
-				clientNodes = new Map<string, ListNode<string>>();
-				this.taskQueueNodes.set(taskId, clientNodes);
-			}
 
-			if (clientNodes.has(clientId)) {
+			if (clientQueue.has(clientId)) {
 				// We shouldn't re-add the client if it's already in the queue.
 				// This may be possible in scenarios where a client was added in
 				// while detached.
@@ -796,8 +896,7 @@ export class TaskManagerClass
 			}
 
 			const oldLockHolder = clientQueue.first?.data;
-			const range = clientQueue.push(clientId);
-			clientNodes.set(clientId, range.last);
+			clientQueue.push(clientId, clientId);
 			const newLockHolder = clientQueue.first?.data;
 			if (newLockHolder !== oldLockHolder) {
 				this.queueWatcher.emit("queueChange", taskId, oldLockHolder, newLockHolder);
@@ -810,19 +909,12 @@ export class TaskManagerClass
 		if (clientQueue === undefined) {
 			return;
 		}
-		const clientNodes = this.taskQueueNodes.get(taskId);
 
 		const oldLockHolder =
 			clientId === placeholderClientId ? placeholderClientId : clientQueue.first?.data;
-		const nodeToRemove = clientNodes?.get(clientId);
-		if (nodeToRemove !== undefined) {
-			clientQueue.remove(nodeToRemove);
-			clientNodes?.delete(clientId);
-			// Clean up the queue if there are no more clients in it.
-			if (clientQueue.length === 0) {
-				this.taskQueues.delete(taskId);
-				this.taskQueueNodes.delete(taskId);
-			}
+		// Clean up the queue if the removal leaves it empty.
+		if (clientQueue.deleteByKey(clientId) && clientQueue.length === 0) {
+			this.taskQueues.delete(taskId);
 		}
 		const newLockHolder = clientQueue.first?.data;
 		if (newLockHolder !== oldLockHolder) {
@@ -846,22 +938,15 @@ export class TaskManagerClass
 			0x475 /* this.runtime.clientId should be defined */,
 		);
 		const realClientId = this.runtime.clientId;
-		for (const [taskId, clientQueue] of this.taskQueues) {
-			const clientNodes = this.taskQueueNodes.get(taskId);
-			assert(clientNodes !== undefined, "taskQueueNodes side map missing entry for taskId");
-			const placeholderNode = clientNodes.get(placeholderClientId);
+		for (const clientQueue of this.taskQueues.values()) {
+			const placeholderNode = clientQueue.getNode(placeholderClientId);
 			if (placeholderNode !== undefined) {
-				if (clientNodes.has(realClientId)) {
-					// If the real clientId is already in the queue, just remove the placeholder.
-					clientQueue.remove(placeholderNode);
-					clientNodes.delete(placeholderClientId);
-				} else {
-					// Insert the real clientId at the placeholder's position, then remove the placeholder.
-					const range = clientQueue.insertAfter(placeholderNode, realClientId);
-					clientNodes.set(realClientId, range.last);
-					clientQueue.remove(placeholderNode);
-					clientNodes.delete(placeholderClientId);
+				if (!clientQueue.has(realClientId)) {
+					// Insert the real clientId at the placeholder's position before we remove the placeholder.
+					clientQueue.insertAfter(placeholderNode, realClientId, realClientId);
 				}
+				// Remove the placeholder; if the real clientId was already present we just drop the placeholder.
+				clientQueue.deleteByKey(placeholderClientId);
 			}
 		}
 	}
@@ -871,9 +956,6 @@ export class TaskManagerClass
 	private scrubClientsNotInQuorum(): void {
 		const quorum = this.runtime.getQuorum();
 		for (const [taskId, clientQueue] of this.taskQueues) {
-			const clientNodes = this.taskQueueNodes.get(taskId);
-			assert(clientNodes !== undefined, "taskQueueNodes side map missing entry for taskId");
-			let removed = false;
 			// Walk by collecting removable nodes first to avoid mutating during iteration.
 			const toRemove: ListNode<string>[] = [];
 			for (const node of clientQueue) {
@@ -881,18 +963,16 @@ export class TaskManagerClass
 					toRemove.push(node);
 				}
 			}
+			if (toRemove.length === 0) {
+				continue;
+			}
 			for (const node of toRemove) {
-				clientQueue.remove(node);
-				clientNodes.delete(node.data);
-				removed = true;
+				clientQueue.removeNode(node);
 			}
-			if (removed) {
-				if (clientQueue.length === 0) {
-					this.taskQueues.delete(taskId);
-					this.taskQueueNodes.delete(taskId);
-				}
-				this.queueWatcher.emit("queueChange", taskId);
+			if (clientQueue.length === 0) {
+				this.taskQueues.delete(taskId);
 			}
+			this.queueWatcher.emit("queueChange", taskId);
 		}
 	}
 
@@ -901,7 +981,7 @@ export class TaskManagerClass
 	 * for the latest pending ops.
 	 */
 	private queuedOptimistically(taskId: string): boolean {
-		const inQueue = this.taskQueueNodes.get(taskId)?.has(this.clientId) ?? false;
+		const inQueue = this.taskQueues.get(taskId)?.has(this.clientId) ?? false;
 		const latestPendingOps = this.latestPendingOps.get(taskId);
 
 		const latestPendingOp = latestPendingOps?.last?.data;
