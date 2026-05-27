@@ -17,8 +17,9 @@ import {
 	type IContainerRuntimeOptions,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// TODO:AB#6558: This should be provided based on the compatibility configuration.
-import { ISharedMap, SharedMap } from "@fluidframework/map/internal";
+// SharedMap is used as a fallback for the describeInstallVersions path which does not provide `apis`.
+// For describeCompat callers, the compat-version-aware factory is read from apis.dds.SharedMap below.
+import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
@@ -31,6 +32,7 @@ import {
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider, apis?): void => {
+	const SharedMapFactory = apis?.dds.SharedMap ?? SharedMap;
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -60,7 +62,7 @@ const compressionSuite = (getProvider, apis?): void => {
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 		): Promise<void> {
 			const containerConfig: ITestContainerConfig = {
-				registry: [["mapKey", SharedMap.getFactory()]],
+				registry: [["mapKey", SharedMapFactory.getFactory()]],
 				runtimeOptions,
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				minVersionForCollab,

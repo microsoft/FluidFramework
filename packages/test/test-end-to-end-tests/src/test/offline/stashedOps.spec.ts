@@ -30,9 +30,9 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	OperationType,
-	SharedArray,
+	SharedArray as SharedArrayCurrent,
 	SharedArrayRevertible,
-	SharedSignal,
+	SharedSignal as SharedSignalCurrent,
 	type IRevertible,
 	type ISharedArray,
 	type ISharedSignal,
@@ -135,7 +135,17 @@ const pendingBlobsFromPendingState = (pendingState: string): Record<string, any>
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
+	const {
+		SharedMap,
+		SharedDirectory,
+		SharedCounter,
+		SharedString,
+		SharedCell,
+		// SharedArray and SharedSignal were added recently and may not exist on apis.dds when
+		// running against older compat versions; fall back to the directly-imported current versions.
+		SharedArray = SharedArrayCurrent,
+		SharedSignal = SharedSignalCurrent,
+	} = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
 
 	const registry: ChannelFactoryRegistry = [
