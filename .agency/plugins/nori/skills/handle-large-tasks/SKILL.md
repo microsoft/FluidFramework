@@ -1,5 +1,5 @@
 ---
-name: Handle-Large-Tasks
+name: handle-large-tasks
 description: Use this skill to split large plans into smaller chunks. This skill manages your context window for large tasks. Use it when a task will take a long time and cause context issues.
 ---
 

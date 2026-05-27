@@ -25,35 +25,27 @@ _ensure_agency() {
 # before the -- separator so they reach agency, not Claude/Copilot directly.
 claude() {
 	_ensure_agency || return 1
-	{ repoverlay remove --all 2>/dev/null; true; }
 	agency claude --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
 }
 
 dev() {
 	_ensure_agency || return 1
-	repoverlay switch --copy nori
 	agency claude --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
 }
 
 dev-copilot() {
 	_ensure_agency || return 1
-	repoverlay switch --copy nori
 	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
 }
 
 copilot() {
 	_ensure_agency || return 1
-	{ repoverlay remove --all 2>/dev/null; true; }
 	agency copilot "$@"
 }
 
 oce() {
 	_ensure_agency || return 1
 	agency copilot --profile ff-oce "$@" -- --agent ff-oce:ff-oce
-}
-
-ai-reset() {
-	repoverlay remove --all
 }
 
 start() {
