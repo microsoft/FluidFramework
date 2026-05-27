@@ -990,7 +990,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+
 		this._disposed = true;
+		this.emit("dispose");
+		this.removeAllListeners();
 	}
 
 	public async getChannel(id: string): Promise<IChannel> {

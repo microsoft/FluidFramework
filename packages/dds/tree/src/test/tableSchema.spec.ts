@@ -2503,6 +2503,140 @@ describe("TableFactory unit tests", () => {
 				});
 			});
 
+			// These tests exercise ID-based lookups across structural mutations
+			// (insert / remove / reorder) on the columns and rows lists. They are
+			// intended to catch stale-state regressions in the ID → node lookup
+			// path, including the lazy ID caches inside Table.
+			describe("ID lookup after structural changes", () => {
+				it("getColumn by ID resolves a column inserted after a prior lookup", () => {
+					const table = create2x2Table();
+
+					// Prime any internal lookup state with an existing-ID query.
+					assert(table.getColumn("column-0") !== undefined);
+
+					table.insertColumns({
+						index: table.columns.length,
+						columns: [{ id: "column-2", props: {} }],
+					});
+
+					const inserted = table.getColumn("column-2");
+					assert(inserted !== undefined);
+					assert.strictEqual(inserted.id, "column-2");
+					// Existing IDs still resolve correctly.
+					assert.strictEqual(table.getColumn("column-0")?.id, "column-0");
+				});
+
+				it("getColumn by ID returns undefined for a column removed after a prior lookup", () => {
+					const table = create2x2Table();
+
+					// Prime any internal lookup state for both columns.
+					assert(table.getColumn("column-0") !== undefined);
+					assert(table.getColumn("column-1") !== undefined);
+
+					table.removeColumns(["column-0"]);
+
+					assert.strictEqual(table.getColumn("column-0"), undefined);
+					assert.strictEqual(table.getColumn("column-1")?.id, "column-1");
+				});
+
+				it("getColumn by ID resolves the moved node after a column reorder", () => {
+					const table = create2x2Table();
+
+					// Prime any internal lookup state.
+					assert(table.getColumn("column-1") !== undefined);
+
+					// Move column-1 to the start.
+					table.columns.moveToStart(1);
+
+					const after = table.getColumn("column-1");
+					assert(after !== undefined);
+					assert.strictEqual(after.id, "column-1");
+					// The other column still resolves.
+					assert.strictEqual(table.getColumn("column-0")?.id, "column-0");
+					// And the table order reflects the move.
+					assert.deepEqual(
+						[...table.columns].map((c) => c.id),
+						["column-1", "column-0"],
+					);
+				});
+
+				it("getRow by ID resolves a row inserted after a prior lookup", () => {
+					const table = create2x2Table();
+
+					assert(table.getRow("row-0") !== undefined);
+
+					table.insertRows({
+						index: table.rows.length,
+						rows: [{ id: "row-2", cells: {}, props: {} }],
+					});
+
+					const inserted = table.getRow("row-2");
+					assert(inserted !== undefined);
+					assert.strictEqual(inserted.id, "row-2");
+					assert.strictEqual(table.getRow("row-0")?.id, "row-0");
+				});
+
+				it("getRow by ID returns undefined for a row removed after a prior lookup", () => {
+					const table = create2x2Table();
+
+					assert(table.getRow("row-0") !== undefined);
+					assert(table.getRow("row-1") !== undefined);
+
+					table.removeRows(["row-0"]);
+
+					assert.strictEqual(table.getRow("row-0"), undefined);
+					assert.strictEqual(table.getRow("row-1")?.id, "row-1");
+				});
+
+				it("getRow by ID resolves the moved node after a row reorder", () => {
+					const table = create2x2Table();
+
+					assert(table.getRow("row-1") !== undefined);
+
+					table.rows.moveToStart(1);
+
+					const after = table.getRow("row-1");
+					assert(after !== undefined);
+					assert.strictEqual(after.id, "row-1");
+					assert.strictEqual(table.getRow("row-0")?.id, "row-0");
+					assert.deepEqual(
+						[...table.rows].map((r) => r.id),
+						["row-1", "row-0"],
+					);
+				});
+
+				it("setCell by ID targets the correct cell after rows and columns are mutated", () => {
+					const table = create2x2Table();
+
+					// Prime any internal lookup state.
+					assert(table.getRow("row-0") !== undefined);
+					assert(table.getColumn("column-0") !== undefined);
+
+					// Remove an ID and reuse it on a freshly inserted node.
+					// If a stale lookup leaked, setCell would target the removed node
+					// instead of the new one.
+					table.removeRows(["row-0"]);
+					table.insertRows({
+						index: 0,
+						rows: [{ id: "row-0", cells: {}, props: {} }],
+					});
+					table.removeColumns(["column-0"]);
+					table.insertColumns({
+						index: 0,
+						columns: [{ id: "column-0", props: {} }],
+					});
+
+					table.setCell({
+						key: { row: "row-0", column: "column-0" },
+						cell: { value: "0-0" },
+					});
+
+					const cell = table.getCell({ row: "row-0", column: "column-0" });
+					assert(cell !== undefined);
+					assertEqualTrees(cell, { value: "0-0" });
+				});
+			});
+
 			describe("Recursive tables", () => {
 				it("Can create table schema with recursive types", () => {
 					const mySchemaFactory = new SchemaFactoryBeta("test-recursive");

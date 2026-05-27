@@ -56,6 +56,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 					originatorId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
+					isSummary: false,
 				}),
 				originatorId,
 				changeset: changeCodec.encode(commit.change, {
@@ -63,6 +64,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 					schema: context.schema,
 					idCompressor: context.idCompressor,
 					revision: commit.revision,
+					isSummary: false,
 				}),
 				version,
 			};
@@ -77,6 +79,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 				originatorId,
 				revision: undefined,
 				idCompressor: context.idCompressor,
+				isSummary: false,
 			});
 
 			return {
@@ -88,6 +91,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 						originatorId,
 						revision,
 						idCompressor: context.idCompressor,
+						isSummary: false,
 					}),
 				},
 				sessionId: originatorId,

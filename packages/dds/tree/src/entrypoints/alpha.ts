@@ -242,6 +242,7 @@ export {
 	RevertibleAlpha, 
 	RevertibleAlphaFactory, 
 	RunTransactionParams, 
+	RunTransactionSyncParams, 
 	SchemaFactoryAlpha, 
 	SchemaStaticsAlpha, 
 	SchemaType, 

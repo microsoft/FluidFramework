@@ -87,6 +87,7 @@ export function testSnapshots(): void {
 
 const baseContext = {
 	originatorId: snapshotSessionId,
+	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };

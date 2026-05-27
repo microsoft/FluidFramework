@@ -54,6 +54,7 @@ const trunkCommits: SharedBranchSummaryData<TestChange>["trunk"] = [
 // Dummy context object created to pass through the codec.
 const dummyContext = {
 	originatorId: "dummySessionID" as SessionId,
+	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };

@@ -57,6 +57,7 @@ import type {
 	ITelemetryBaseLogger,
 	Listenable,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type {
 	IFluidHandleContext,
 	IFluidHandleInternal,
@@ -1335,7 +1336,12 @@ export class ContainerRuntime
 		targetClientId?: string,
 	) => void;
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
-	public readonly closeFn: (error?: ICriticalContainerError) => void;
+
+	/**
+	 * Initiate closing of the container due to a critical error.
+	 * @param error - The critical error that caused the container to close.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 
 	public get flushMode(): FlushMode {
 		return this._flushMode;
@@ -1917,6 +1923,7 @@ export class ContainerRuntime
 
 		this.garbageCollector = GarbageCollector.create({
 			runtime: this,
+			closeFn: this.closeFn,
 			gcOptions: runtimeOptions.gcOptions,
 			baseSnapshot,
 			baseLogger: this.mc.logger,
@@ -2133,13 +2140,6 @@ export class ContainerRuntime
 		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
 		this.deltaManager.on("op", () => this.flush());
 
-		// logging hardware telemetry
-		this.baseLogger.send({
-			category: "generic",
-			eventName: "DeviceSpec",
-			...getDeviceSpec(),
-		});
-
 		this.mc.logger.sendTelemetryEvent({
 			eventName: "ContainerLoadStats",
 			...this.createContainerMetadata,
@@ -2162,6 +2162,8 @@ export class ContainerRuntime
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
 			minVersionForCollab: this.minVersionForCollab,
+			// logging hardware telemetry
+			deviceSpec: { ...getDeviceSpec() },
 		});
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
@@ -2395,12 +2397,18 @@ export class ContainerRuntime
 		}
 	}
 
+	public close(): void {
+		this.garbageCollector.dispose();
+	}
+
 	public dispose(error?: Error): void {
 		if (this._disposed) {
 			return;
 		}
 		this._disposed = true;
 
+		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
+		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
 		this.mc.logger.sendTelemetryEvent(
 			{
 				eventName: "ContainerRuntimeDisposed",
@@ -2409,6 +2417,7 @@ export class ContainerRuntime
 				attachState: this.attachState,
 			},
 			error,
+			LogLevel.info,
 		);
 
 		if (this.summaryManager !== undefined) {
@@ -3132,11 +3141,26 @@ export class ContainerRuntime
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
+								batchIdExplicit: batchStart.batchId !== undefined,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
 								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								// Identifying info for the ORIGINAL occurrence of this batch, so we can
+								// disambiguate the duplicate's source (e.g. resubmit vs fresh submit, same
+								// vs different wire clientId). Undefined fields indicate the original was
+								// loaded from a summary snapshot rather than seen at runtime.
+								otherClientId: result.otherBatchInfo?.clientId,
+								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
+								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+								// For grouped batches, `keyMessage` is one of the sub-messages produced by
+								// `OpGroupingManager.ungroupOp`, which overwrites `clientSequenceNumber`
+								// with a synthetic counter (1, 2, 3, ...). Override with the real outer
+								// envelope's clientSequenceNumber so downstream telemetry doesn't get a
+								// misleading "fake csn" value.
+								messageClientSequenceNumber: batchStart.batchStartCsn,
 							},
 						},
 						error,

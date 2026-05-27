@@ -116,6 +116,7 @@ semverGroups:
       - "less"
       - "prettier"
       - "typescript"
+      - "typescript-*"
       - "vue"
       - "webpack-dev-server"
     packages:
@@ -145,7 +146,6 @@ semverGroups:
       - "@fluid-tools/build-infrastructure"
       - "@fluid-tools/version-tools"
       - "@fluidframework/build-tools"
-      - "@fluidframework/bundle-size-tools"
       - "@fluidframework/build-tools-bin"
     packages:
       - "**"

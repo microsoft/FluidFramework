@@ -20,7 +20,7 @@ import type { NodeMoveType } from "./crossFieldQueries.js";
 
 export type RebaseVersion = 1 | 2;
 
-export interface ModularChangeset extends HasFieldChanges {
+export interface ModularChangeset extends Readonly<HasFieldChanges> {
 	readonly rebaseVersion: RebaseVersion;
 
 	/**

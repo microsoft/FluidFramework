@@ -56,6 +56,7 @@ const commitInvalid = {
 
 const dummyContext = {
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 	revision: undefined,
 	idCompressor: testIdCompressor,
 };

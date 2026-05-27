@@ -138,6 +138,7 @@ export interface RunTransactionParams {
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
+
 	/**
 	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
 	 * @remarks
@@ -146,4 +147,22 @@ export interface RunTransactionParams {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
+}
+
+/**
+ * The parameters for the synchronous {@link RunTransaction | runTransaction} API.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionSyncParams extends RunTransactionParams {
+	/**
+	 * Set this to true to have the transaction's change events buffered and emitted only once the transaction completes.
+	 *
+	 * @remarks
+	 * If the transaction rolls back *during the transaction*, no buffered events are emitted (the tree is unchanged).
+	 * This does not apply to a later rollbacks (e.g. caused by post-sequencing constraint validation after `runTransaction` has returned).
+	 *
+	 * @defaultValue `false`
+	 */
+	readonly deferEvents?: boolean;
 }

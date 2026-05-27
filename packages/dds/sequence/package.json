@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/sequence",
-	"version": "2.101.0",
+	"version": "2.102.0",
 	"description": "Distributed sequence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -159,13 +159,13 @@
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
 		"@fluid-private/test-dds-utils": "workspace:~",
-		"@fluid-tools/benchmark": "^0.58.0",
+		"@fluid-tools/benchmark": "^0.59.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.92.0",
+		"@fluidframework/sequence-previous": "npm:@fluidframework/sequence@2.101.0",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
@@ -187,9 +187,13 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:cjs": [
 				"...",
-				"@fluidframework/merge-tree#build:test"
+				"@fluidframework/merge-tree#build:test:cjs"
+			],
+			"build:test:esm": [
+				"...",
+				"@fluidframework/merge-tree#build:test:esm"
 			]
 		}
 	},

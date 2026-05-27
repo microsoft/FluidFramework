@@ -1079,6 +1079,11 @@ export interface RunTransactionParams {
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
+// @alpha @input
+export interface RunTransactionSyncParams extends RunTransactionParams {
+    readonly deferEvents?: boolean;
+}
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1248,7 +1253,9 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 }
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {
@@ -1740,8 +1747,8 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     // (undocumented)
     fork(): TreeBranchAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionSyncParams): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionSyncParams): TransactionResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
     runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatus | void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }
@@ -1778,8 +1785,8 @@ export enum TreeCompressionStrategy {
 // @alpha
 export interface TreeContextAlpha {
     isBranch(): this is TreeBranchAlpha;
-    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParams): TransactionResultExt<TValue, TValue>;
-    runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionSyncParams): TransactionResultExt<TValue, TValue>;
+    runTransaction(transaction: () => void, params?: RunTransactionSyncParams): TransactionResult;
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TValue, TValue>>;
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParams): Promise<TransactionResult>;
 }

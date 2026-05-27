@@ -1318,6 +1318,7 @@ describe("ModularChangeFamily", () => {
 		const sessionId = "session1" as SessionId;
 		const context: ChangeEncodingContext = {
 			originatorId: sessionId,
+			isSummary: false,
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};

@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/presence-definitions",
-	"version": "2.101.0",
+	"version": "2.102.0",
 	"description": "Core type definitions and interfaces for Fluid Framework presence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -70,6 +70,7 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ./src/cjs/package.json ./dist",
+		"typetests:gen": "flub generate typetests --dir . -v",
 		"typetests:gen-disabled": "flub generate typetests --dir . -v"
 	},
 	"dependencies": {
@@ -79,7 +80,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/presence-definitions-previous": "npm:@fluidframework/presence@2.92.0",
+		"@fluid-internal/presence-definitions-previous": "npm:@fluid-internal/presence-definitions@2.101.0",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
@@ -104,14 +105,7 @@
 		}
 	},
 	"typeValidation": {
-		"entrypoint": "beta",
-		"broken": {
-			"Variable_getPresence": {
-				"backCompat": false
-			},
-			"Variable_StateFactory": {
-				"backCompat": false
-			}
-		}
+		"entrypoint": "public",
+		"broken": {}
 	}
 }

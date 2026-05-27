@@ -124,6 +124,7 @@ describe("sharedTreeChangeCodec", () => {
 				return decode(data, {
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
+					isSummary: false,
 				}).map((chunk) => chunk.cursor());
 			},
 			writeVersion: FieldBatchFormatVersion.v2,
@@ -142,6 +143,7 @@ describe("sharedTreeChangeCodec", () => {
 		const dummyTestSchema = new TreeStoredSchemaRepository();
 		const dummyContext = {
 			originatorId: "dummySessionID" as SessionId,
+			isSummary: false,
 			schema: { policy: defaultSchemaPolicy, schema: dummyTestSchema },
 			revision: undefined,
 			idCompressor: testIdCompressor,
