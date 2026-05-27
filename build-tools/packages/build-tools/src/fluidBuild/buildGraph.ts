@@ -9,15 +9,15 @@ import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
-import type { GitRepo } from "../common/gitRepo";
-import { defaultLogger } from "../common/logging";
-import type { Package } from "../common/npmPackage";
-import type { Timer } from "../common/timer";
-import type { BuildContext } from "./buildContext";
-import { BuildMetrics } from "./buildMetrics";
-import { BuildResult, summarizeBuildResult } from "./buildResult";
-import { FileHashCache } from "./fileHashCache";
-import type { IFluidBuildConfig } from "./fluidBuildConfig";
+import type { GitRepo } from "../common/gitRepo.js";
+import { defaultLogger } from "../common/logging.js";
+import type { Package } from "../common/npmPackage.js";
+import type { Timer } from "../common/timer.js";
+import type { BuildContext } from "./buildContext.js";
+import { BuildMetrics } from "./buildMetrics.js";
+import { BuildResult, summarizeBuildResult } from "./buildResult.js";
+import { FileHashCache } from "./fileHashCache.js";
+import type { IFluidBuildConfig } from "./fluidBuildConfig.js";
 import {
 	getDefaultTaskDefinition,
 	getTaskDefinitions,
@@ -26,11 +26,11 @@ import {
 	type TaskDefinitions,
 	type TaskDefinitionsOnDisk,
 	type TaskFileDependencies,
-} from "./fluidTaskDefinitions";
-import { options } from "./options";
-import { Task, type TaskExec } from "./tasks/task";
-import { TaskFactory } from "./tasks/taskFactory";
-import { WorkerPool } from "./tasks/workers/workerPool";
+} from "./fluidTaskDefinitions.js";
+import { options } from "./options.js";
+import { Task, type TaskExec } from "./tasks/task.js";
+import { TaskFactory } from "./tasks/taskFactory.js";
+import { WorkerPool } from "./tasks/workers/workerPool.js";
 
 const traceTaskDef = registerDebug("fluid-build:task:definition");
 const traceTaskDepTask = registerDebug("fluid-build:task:init:dep:task");

@@ -26,7 +26,7 @@ import {
 } from "@fluidframework/server-local-server";
 import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 function createDSFWithOutOfBandCreate({
 	deltaConnectionServer,

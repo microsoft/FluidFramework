@@ -1,5 +1,9 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [12.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v12.0.0)
+
+<!-- Add new changelog entries here. -->
+
 ## [11.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v11.0.0)
 
 ### Breaking: node 22 is now the minimum supported node version

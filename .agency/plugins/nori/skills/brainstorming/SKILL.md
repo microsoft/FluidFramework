@@ -1,5 +1,5 @@
 ---
-name: Brainstorming
+name: brainstorming
 description: IMMEDIATELY USE THIS SKILL when creating or develop anything and before writing code or implementation plans - refines rough ideas into fully-formed designs through structured Socratic questioning, alternative exploration, and incremental validation
 ---
 

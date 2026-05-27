@@ -100,50 +100,61 @@ catalogs:
     "@types/node": "~22.19.17"
 
 overrides:
-  # biome is overridden to make review of the upgrade easier. This can be removed once merged.
-  "@biomejs/biome": ~2.4.5
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
+
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
-  # fast-xml-parser is overridden to ^4.5.4 to resolve multiple CVEs in 4.5.3 (entity encoding bypass,
-  # DoS via entity expansion, stack overflow). Stays within @langchain/anthropic's declared ^4.4.1 range.
+
+  # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
+  # Stays within @langchain/anthropic's declared ^4.4.1 range.
   fast-xml-parser: ^4.5.4
-  # node-forge is overridden to ^1.4.0 to resolve known security vulnerabilities.
+
+  # Resolve known security vulnerabilities.
   node-forge: ^1.4.0
+
   # nodegit is replaced with an empty package here because it's currently only used by good-fences for
   # features we do not need, and has issues building when changing node versions.
-  # See https://github.com/smikula/good-fences/issues/105 for details. Note that using '-' to completely
-  # drop it results in build failures complaining about nodegit not being there.
+  # See https://github.com/smikula/good-fences/issues/105 for details.
+  # Note that using '-' to completely drop it results in build failures complaining about nodegit not being there.
   good-fences>nodegit: npm:empty-npm-package@1.0.0
-  # qs is overridden to ^6.15.0 to resolve a known vulnerability in older versions.
+
+  # Resolve a known vulnerability in older versions.
   qs: ^6.15.0
-  # overridden to resolve a CG alert.
+
+  # Resolve a CG alert.
   simple-git: ^3.32.3
-  # overridden to resolve command injection vulnerabilities.
+
+  # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
+
   # codemirror and marked overrides are because simplemde uses * versions, and the fully up-to-date
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
+
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
+
   # oclif includes some AWS-related features, but we don't use them, so we drop those dependencies.
   # This helps reduce lockfile churn since the deps release very frequently.
   oclif>@aws-sdk/client-cloudfront: "-"
   oclif>@aws-sdk/client-s3: "-"
+
   # axios pre-1.0 needs an override to stay current on a version with no reported CVEs.
   # Caret dependencies aren't enough on a pre-1.0 package.
   axios@<0.30.0: ^0.30.0
+
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
-  # minimatch: overridden to patched versions to resolve a known security vulnerability.
+
+  # Resolve a known security vulnerability.
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
   minimatch@>=6 <7: ^6.2.3
@@ -152,18 +163,20 @@ overrides:
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
 
-  # serialize-javascript is overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq.
+  # Resolve GHSA-5c6j-r48x-rmvq.
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
+
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
-  # picomatch is overridden to patched versions to resolve a known security vulnerability.
+
+  # Resolve a known security vulnerability.
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
-  # langsmith is overridden to ^0.5.15 to resolve a known security vulnerability.
+
+  # Resolve a known security vulnerability.
   # The consumer declares ^0.3.x so the override is needed to cross the minor version boundary.
   langsmith: ^0.5.15
-
 peerDependencyRules:
   # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
   # seem to be maintained and it works fine with React 18. TODO: AB#18876

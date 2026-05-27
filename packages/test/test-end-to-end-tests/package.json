@@ -148,11 +148,12 @@
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
+		"_tasks_comment": "test-driver-definitions CJS build is required for ESM builds as test-driver-definitions is globally imported via TypeScript \"types\" module which only resolves CJS types (at least as of TS 5.4).",
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
 				"build:genver",
-				"^tsc"
+				"@fluid-internal/test-driver-definitions#tsc"
 			]
 		}
 	},
