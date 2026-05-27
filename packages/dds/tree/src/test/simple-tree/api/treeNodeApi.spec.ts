@@ -2547,6 +2547,95 @@ describe("treeNodeApi", () => {
 			assert.equal(treeChanged, true, "'treeChanged' should have fired");
 		});
 
+		// The next block of tests pins down the cross-node ordering invariants of
+		// 'nodeChanged' and 'treeChanged' under normal (un-buffered) emission. These are the
+		// invariants buffered emission (`deferEvents` / `withBufferedTreeEvents`) should match.
+		//
+		// Summary of the invariants:
+		// 1. On a single node, 'nodeChanged' fires before 'treeChanged'.
+		// 2. Across nodes, events bubble up: descendant events fire before ancestor events.
+		//    Concretely, when a descendant changes, its 'nodeChanged' / 'treeChanged' fire
+		//    before any ancestor's 'treeChanged'.
+
+		it(`cross-node ordering: descendant events fire before ancestor events`, () => {
+			// Modifying a leaf field deep in the tree must fire the innermost node's events
+			// before the outer ancestor's 'treeChanged'.
+			const sf = new SchemaFactory("test");
+			class Inner extends sf.object("inner", { value: sf.number }) {}
+			class Outer extends sf.object("outer", { inner: Inner }) {}
+			class Root extends sf.object("root", { outer: Outer }) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({ outer: { inner: { value: 1 } } });
+
+			const log: string[] = [];
+			Tree.on(view.root, "treeChanged", () => log.push("root.treeChanged"));
+			Tree.on(view.root.outer, "treeChanged", () => log.push("outer.treeChanged"));
+			Tree.on(view.root.outer.inner, "nodeChanged", () => log.push("inner.nodeChanged"));
+			Tree.on(view.root.outer.inner, "treeChanged", () => log.push("inner.treeChanged"));
+
+			view.root.outer.inner.value = 2;
+
+			// Innermost first (nodeChanged then treeChanged on the same node),
+			// then ancestors in ascending order.
+			assert.deepEqual(log, [
+				"inner.nodeChanged",
+				"inner.treeChanged",
+				"outer.treeChanged",
+				"root.treeChanged",
+			]);
+		});
+
+		it(`cross-node ordering: array-content change fires child.nodeChanged before parent.treeChanged`, () => {
+			// This is the same scenario the buffered tests in treeCheckout.spec.ts exercise:
+			// modifying the contents of a child array. The natural (un-buffered) order is
+			// items.nodeChanged → items.treeChanged → root.treeChanged.
+			const sf = new SchemaFactory("test");
+			class Items extends sf.array("items", sf.string) {}
+			class Root extends sf.object("root", { items: Items }) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({ items: [] });
+
+			const log: string[] = [];
+			Tree.on(view.root, "treeChanged", () => log.push("root.treeChanged"));
+			Tree.on(view.root.items, "nodeChanged", () => log.push("items.nodeChanged"));
+			Tree.on(view.root.items, "treeChanged", () => log.push("items.treeChanged"));
+
+			view.root.items.insertAtEnd("A");
+
+			assert.deepEqual(log, [
+				"items.nodeChanged",
+				"items.treeChanged",
+				"root.treeChanged",
+			]);
+		});
+
+		it(`cross-node ordering: edits to sibling subtrees in one batch fire in document order`, () => {
+			// When sibling subtrees are both mutated in a single batch (e.g. via a merged
+			// fork), the descendants of each sibling fire before its own ancestor, and the
+			// siblings themselves fire in the order their subtrees appear in the parent.
+			const sf = new SchemaFactory("test");
+			class Inner extends sf.object("inner", { value: sf.number }) {}
+			class Root extends sf.object("root", { a: Inner, b: Inner }) {}
+
+			const view = getView(new TreeViewConfiguration({ schema: Root }));
+			view.initialize({ a: { value: 1 }, b: { value: 2 } });
+
+			const log: string[] = [];
+			Tree.on(view.root, "treeChanged", () => log.push("root.treeChanged"));
+			Tree.on(view.root.a, "nodeChanged", () => log.push("a.nodeChanged"));
+			Tree.on(view.root.b, "nodeChanged", () => log.push("b.nodeChanged"));
+
+			const { forkView, forkCheckout } = getViewForForkedBranch(view);
+			forkView.root.a.value = 10;
+			forkView.root.b.value = 20;
+			view.checkout.merge(forkCheckout);
+
+			// Both siblings' nodeChanged events fire before the shared ancestor's treeChanged.
+			assert.deepEqual(log, ["a.nodeChanged", "b.nodeChanged", "root.treeChanged"]);
+		});
+
 		it(`'nodeChanged' includes the names of changed properties (objectNode)`, () => {
 			const sf = new SchemaFactory("test");
 			class TestNode extends sf.object("root", {

@@ -1041,7 +1041,8 @@ describe("sharedTreeView", () => {
 					// items.nodeChanged fires once (two inserts coalesced).
 					// treeChanged fires once on root (subtree changed).
 					// nodeChanged does NOT fire on root (the "items" field was not reassigned).
-					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
+					// Order matches natural (un-buffered) cross-node order: descendant before ancestor.
+					assert.deepEqual(log, ["items.nodeChanged", "treeChanged"]);
 				},
 				{
 					initialContent: {
@@ -1070,12 +1071,118 @@ describe("sharedTreeView", () => {
 					);
 
 					// Both events fire (each exactly once) after the transaction, not during it.
-					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
+					// Order matches natural (un-buffered) cross-node order: descendant before ancestor.
+					assert.deepEqual(log, ["items.nodeChanged", "treeChanged"]);
 				},
 				{
 					initialContent: {
 						schema: BERoot,
 						initialTree: { items: [] },
+					},
+				},
+			);
+
+			// The following two tests pin down the cross-node ordering contract for
+			// `deferEvents`. `deferEvents` coalesces repeated events on the same node into
+			// one emission per scope, so the deferred sequence is *not* the same as the
+			// immediate sequence in general. But within the coalesced sequence, the order
+			// across nodes must match the natural single-batch ordering documented in
+			// `treeNodeApi.spec.ts > on > cross-node ordering`: descendant events before
+			// ancestor events, document order among siblings.
+
+			itView(
+				"deferEvents preserves natural cross-node order (descendant before ancestor)",
+				({ view }) => {
+					function run(deferEvents: boolean): string[] {
+						const log: string[] = [];
+						const root = view.root;
+						const offs = [
+							Tree.on(root, "treeChanged", () => log.push("root.treeChanged")),
+							Tree.on(root.items, "nodeChanged", () => log.push("items.nodeChanged")),
+							Tree.on(root.items, "treeChanged", () => log.push("items.treeChanged")),
+						];
+						view.runTransaction(
+							() => {
+								root.items.insertAtEnd("X");
+							},
+							{ deferEvents },
+						);
+						for (const off of offs) off();
+						root.items.removeRange(); // reset for the next run
+						return log;
+					}
+
+					// Single-mutation transaction: only one anchor batch, so coalescing has
+					// nothing to coalesce and the deferred sequence equals the immediate one.
+					const deferred = run(true);
+					const immediate = run(false);
+					assert.deepEqual(deferred, immediate);
+					assert.deepEqual(immediate, [
+						"items.nodeChanged",
+						"items.treeChanged",
+						"root.treeChanged",
+					]);
+				},
+				{
+					initialContent: {
+						schema: BERoot,
+						initialTree: { items: [] },
+					},
+				},
+			);
+
+			itView(
+				"deferEvents coalesces ancestor events and preserves descendant-before-ancestor order across sibling subtrees",
+				({ view }) => {
+					const sf = new SchemaFactory("sibling-order");
+					class Inner extends sf.object("inner", { value: sf.number }) {}
+					class TwoChildren extends sf.object("twoChildren", { a: Inner, b: Inner }) {}
+
+					function run(deferEvents: boolean): string[] {
+						const log: string[] = [];
+						const root = view.root as unknown as TwoChildren;
+						const offs = [
+							Tree.on(root, "treeChanged", () => log.push("root.treeChanged")),
+							Tree.on(root.a, "nodeChanged", () => log.push("a.nodeChanged")),
+							Tree.on(root.b, "nodeChanged", () => log.push("b.nodeChanged")),
+						];
+						view.runTransaction(
+							() => {
+								root.a.value = (root.a.value ?? 0) + 1;
+								root.b.value = (root.b.value ?? 0) + 1;
+							},
+							{ deferEvents },
+						);
+						for (const off of offs) off();
+						return log;
+					}
+
+					// Without buffering, each field-set produces its own anchor batch and
+					// `root.treeChanged` fires once per batch:
+					assert.deepEqual(run(false), [
+						"a.nodeChanged",
+						"root.treeChanged",
+						"b.nodeChanged",
+						"root.treeChanged",
+					]);
+					// With buffering, the two `root.treeChanged` firings coalesce into one
+					// emission. Across nodes, the resulting order matches the natural
+					// single-batch order from `treeNodeApi.spec.ts`: both descendants
+					// (in document order) before the ancestor.
+					assert.deepEqual(run(true), [
+						"a.nodeChanged",
+						"b.nodeChanged",
+						"root.treeChanged",
+					]);
+				},
+				{
+					initialContent: {
+						schema: (() => {
+							const sf = new SchemaFactory("sibling-order");
+							class Inner extends sf.object("inner", { value: sf.number }) {}
+							return sf.object("twoChildren", { a: Inner, b: Inner });
+						})(),
+						initialTree: { a: { value: 0 }, b: { value: 0 } },
 					},
 				},
 			);

@@ -310,6 +310,124 @@ describe("withBufferedTreeEvents", () => {
 			// no events should surface from it.
 			assert.deepEqual(lateLog, []);
 		});
+
+		// The next few tests pin down cross-buffer behavior under nesting: multiple kernels
+		// each get an independent buffer, and we verify (a) outermost flush ordering across
+		// those buffers, and (b) that nested merges correctly carry each buffer's accumulated
+		// state into the parent scope independently of every other buffer.
+		//
+		// The buffered flush order is **last-touch** order across a scope: each event
+		// repositions its buffer to the end of the scope's iteration order. For each kernel
+		// touched only once in the scope, last-touch order is simply the order it was first
+		// touched. The `treeNodeApi.spec.ts > on > cross-node ordering` tests pin down what
+		// the natural single-batch order is for related (parent/child/sibling) nodes; last-
+		// touch order in the kernel is chosen specifically because it reproduces that
+		// natural order (descendants before ancestors) on top of the underlying anchor set,
+		// which always fires descendant events before ancestor events within each batch.
+
+		/**
+		 * Helper for multi-kernel tests: returns two kernels and a single log into which
+		 * `nodeChanged` events from each are appended with a kernel-identifying prefix.
+		 */
+		function makeTwoSubjects(): {
+			a: MyObject;
+			b: MyObject;
+			log: string[];
+		} {
+			const a = new MyObject({ foo: "a", bar: true });
+			const b = new MyObject({ foo: "b", bar: true });
+			const log: string[] = [];
+			TreeBeta.on(a, "nodeChanged", ({ changedProperties }) =>
+				log.push(`a: ${JSON.stringify([...changedProperties.keys()].sort())}`),
+			);
+			TreeBeta.on(b, "nodeChanged", ({ changedProperties }) =>
+				log.push(`b: ${JSON.stringify([...changedProperties.keys()].sort())}`),
+			);
+			return { a, b, log };
+		}
+
+		it("outermost flush across multiple buffers fires in last-touch order", () => {
+			// `b` is mutated first (and only) in the scope, so it lands at position 1 of
+			// the scope's iteration order; `a` is mutated next, landing at position 2.
+			// Outermost flush walks the set in iteration order, emitting b then a.
+			const { a, b, log } = makeTwoSubjects();
+
+			withBufferedTreeEvents(() => {
+				b.foo = "B!";
+				a.foo = "A!";
+			});
+
+			assert.deepEqual(log, ['b: ["foo"]', 'a: ["foo"]']);
+		});
+
+		it("nested commit: buffers touched only in inner scope flush at outermost in last-touch order", () => {
+			// Neither buffer is touched in the outer scope. The inner scope touches `b`
+			// first and `a` second. After the inner commits, both buffers' states must
+			// propagate to the outer scope, preserving first-touch order.
+			const { a, b, log } = makeTwoSubjects();
+
+			withBufferedTreeEvents(() => {
+				withBufferedTreeEvents(() => {
+					b.foo = "B!";
+					a.foo = "A!";
+				});
+			});
+
+			assert.deepEqual(log, ['b: ["foo"]', 'a: ["foo"]']);
+		});
+
+		it("nested commit: outer-only and inner-only contributions merge independently per buffer", () => {
+			// `a` is touched only in the outer scope; `b` is touched only in the inner scope.
+			// On inner commit, `b`'s state must be promoted to the outer scope's tracking
+			// independently of `a`'s, and the outermost flush must emit both buffers exactly
+			// once with their respective changes. Order matches first-touch in the outer
+			// scope: `a` first (touched in outer), then `b` (promoted from inner).
+			const { a, b, log } = makeTwoSubjects();
+
+			withBufferedTreeEvents(() => {
+				a.foo = "A!";
+				withBufferedTreeEvents(() => {
+					b.foo = "B!";
+				});
+			});
+
+			assert.deepEqual(log, ['a: ["foo"]', 'b: ["foo"]']);
+		});
+
+		it("nested commit: per-buffer outer + inner contributions are unioned on flush", () => {
+			// Both buffers are touched in both scopes. Each buffer's outer and inner
+			// contributions must be unioned into a single nodeChanged event. Order matches
+			// first-touch in the outer scope: `a` (touched first in outer) before `b`.
+			const { a, b, log } = makeTwoSubjects();
+
+			withBufferedTreeEvents(() => {
+				a.foo = "A-outer";
+				b.foo = "B-outer";
+				withBufferedTreeEvents(() => {
+					a.bar = false;
+					b.bar = false;
+				});
+			});
+
+			assert.deepEqual(log, ['a: ["bar","foo"]', 'b: ["bar","foo"]']);
+		});
+
+		it("nested discard: an outer-touched buffer keeps its outer state when an inner buffer is dropped", () => {
+			// `a` is touched in the outer scope; `b` is touched only in the (discarded)
+			// inner scope. The inner discard must drop `b`'s contribution entirely without
+			// disturbing `a`'s outer-scope state.
+			const { a, b, log } = makeTwoSubjects();
+
+			withBufferedTreeEvents(() => {
+				a.foo = "A!";
+				withBufferedTreeEvents(() => {
+					b.foo = "B!";
+					return true;
+				});
+			});
+
+			assert.deepEqual(log, ['a: ["foo"]']);
+		});
 	});
 });
 

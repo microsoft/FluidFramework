@@ -334,8 +334,13 @@ const scopeStack: Scope[] = [];
  */
 interface Scope {
 	/**
-	 * Buffers that have received at least one event during this scope. Iteration order matches
-	 * first-touch order within the scope.
+	 * Buffers that have received at least one event during this scope. Iteration order is
+	 * **last-touch** order: each event re-positions its buffer to the end of the set, so the
+	 * flush order reflects the most recent batch that touched each buffer. Because the
+	 * underlying anchor set always fires descendant events before ancestor events within each
+	 * batch, last-touch order yields descendant-before-ancestor emission — matching the
+	 * natural (un-buffered) single-batch order documented by
+	 * `treeNodeApi.spec.ts > on > cross-node ordering`.
 	 */
 	readonly buffers: Set<KernelEventBuffer>;
 }
@@ -369,6 +374,8 @@ export function withBufferedTreeEvents(callback: () => boolean | void): void {
 		assert(popped === scope, "scopeStack out of sync");
 		// eslint-disable-next-line unicorn/prefer-at -- Array.at requires ES2022.
 		const parent = scopeStack.length > 0 ? scopeStack[scopeStack.length - 1] : undefined;
+		// First-touch order matches the natural un-buffered cross-node emission order, so iterate
+		// the scope's buffer set as-is for both nested merges and outermost flush.
 		for (const buffer of scope.buffers) {
 			buffer.endScope(discard, parent);
 		}
@@ -583,6 +590,14 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * Get the frame this buffer should write to for the current scope, allocating one (and
 	 * registering this buffer in the current scope) if needed. Returns `undefined` when no
 	 * scope is active, signalling the caller to emit immediately.
+	 *
+	 * @remarks
+	 * Each call also moves this buffer to the **end** of the current scope's `buffers` set,
+	 * producing last-touch iteration order at flush time. The underlying anchor set always
+	 * fires descendant events before ancestor events within each batch, so an ancestor's
+	 * buffer is touched after all of its descendants' buffers in every batch — and last-touch
+	 * ordering therefore yields descendant-before-ancestor emission. This matches the natural
+	 * single-batch ordering documented by `treeNodeApi.spec.ts > on > cross-node ordering`.
 	 */
 	#frameForCurrentScope(): BufferFrame | undefined {
 		if (scopeStack.length === 0) {
@@ -590,7 +605,12 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 		// eslint-disable-next-line unicorn/prefer-at -- Array.at requires ES2022.
 		const currentScope = scopeStack[scopeStack.length - 1] ?? fail("missing current scope");
-		if (!currentScope.buffers.has(this)) {
+		if (currentScope.buffers.has(this)) {
+			// Move to end of iteration order so the buffer's emission position reflects the
+			// most recent batch that touched it.
+			currentScope.buffers.delete(this);
+			currentScope.buffers.add(this);
+		} else {
 			currentScope.buffers.add(this);
 			this.#bufferStack.push(createEmptyBufferFrame());
 		}
@@ -676,13 +696,17 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			}
 		} else {
 			// Nested: bubble the inner scope's events up into the parent scope's frame.
-			if (!parent.buffers.has(this)) {
+			// Bump this buffer to the end of the parent scope's iteration order to preserve
+			// last-touch semantics (see Scope.buffers docs).
+			if (parent.buffers.has(this)) {
+				parent.buffers.delete(this);
+				parent.buffers.add(this);
+			} else {
 				parent.buffers.add(this);
 				this.#bufferStack.push(createEmptyBufferFrame());
 			}
 			// eslint-disable-next-line unicorn/prefer-at -- Array.at requires ES2022.
-			const parentFrame =
-				this.#bufferStack[this.#bufferStack.length - 1] ?? fail("missing parent frame");
+			const parentFrame = this.#bufferStack[this.#bufferStack.length - 1] ?? fail("missing parent frame");
 			mergeBufferFrameInto(parentFrame, top);
 		}
 	}
