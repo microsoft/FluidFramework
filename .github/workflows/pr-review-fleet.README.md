@@ -42,6 +42,7 @@ Four workflows compose the PR fleet review system:
 - **Trigger:** `pull_request` `labeled` (label must be `fleet-review`).
 - **Permissions:** `contents: read` only — it just stages context.
 - **What it does:** Writes `{pr_number, head_sha, base_ref}` to `dispatch/params.json` and uploads it as the `dispatch-params` artifact. No fleet trigger from here — the fleet workflow's `workflow_run` listener picks it up.
+- **Race behavior:** Adding the label does not cancel an already-running `auto-route` job because that workflow has a separate concurrency group; at worst, `auto-route` may finish and update the proposal comment once. Fleet runs themselves are keyed per PR, so a label-triggered fleet run cancels any in-progress fleet run for the same PR, and a later confirm/manual run cancels the label-triggered one.
 
 ## 4. `pr-review-fleet.yml` — The Reviewer Fleet
 
