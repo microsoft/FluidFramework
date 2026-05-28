@@ -13,6 +13,7 @@ export {
 	serializeIdCompressor,
 	toIdCompressorWithCore,
 } from "./idCompressor.js";
+export { type FinalCompressedId, isFinalId } from "./identifiers.js";
 export {
 	createSessionId,
 	assertIsStableId,

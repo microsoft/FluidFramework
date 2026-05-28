@@ -14,7 +14,7 @@ import {
 import type { TSchema } from "@sinclair/typebox";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type ICodecOptions,
 	type IJsonCodec,
 } from "../../../../codec/index.js";
@@ -108,7 +108,7 @@ function makeFieldBatchCodec(
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 > {
-	const builder = ClientVersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
+	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
 		{
 			minVersionForCollab: lowestMinVersionForCollab,
 			formatVersion: version,
