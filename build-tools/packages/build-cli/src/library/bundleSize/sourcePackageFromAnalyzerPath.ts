@@ -17,5 +17,7 @@ export function sourcePackageFromAnalyzerPath(relativePath: string): string | un
 	const normalized = relativePath.replace(/\\/g, "/");
 	if (!normalized.endsWith(analyzerJsonSuffix)) return undefined;
 	const sourcePackage = normalized.slice(0, -analyzerJsonSuffix.length);
+	// Defensive guard against an unexpected bare `/analyzer.json` — returning
+	// `""` would pollute the package-keyed Map.
 	return sourcePackage.length === 0 ? undefined : sourcePackage;
 }

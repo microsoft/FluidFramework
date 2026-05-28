@@ -11,40 +11,13 @@ import {
 } from "azure-devops-node-api/interfaces/BuildInterfaces.js";
 
 import { type ArtifactContents, downloadArtifact } from "./downloadArtifact.js";
+import { getBuilds } from "./utils.js";
 
 // Upper bound on builds fetched when searching for one matching a target commit.
 // ADO has no API to query builds by commit SHA, so this window size determines
 // how stale a target commit can be relative to the pipeline's recent activity
 // and still be findable.
 const recentBuildsToFetch = 100;
-
-/**
- * Wrapper around the unwieldy positional signature of ADO's `getBuilds`.
- */
-async function getRecentBuilds(
-	adoApi: WebApi,
-	project: string,
-	definitionId: number,
-): Promise<Build[]> {
-	const buildApi = await adoApi.getBuildApi();
-	return buildApi.getBuilds(
-		project,
-		[definitionId],
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		undefined,
-		recentBuildsToFetch,
-	);
-}
 
 /**
  * Find a usable build for `commit` in `builds` — one with an id, status
@@ -121,7 +94,11 @@ export async function getArtifactForCommit(
 ): Promise<ArtifactContents> {
 	const { adoApi, artifactName, commit, definitionId, project } = args;
 
-	const builds = await getRecentBuilds(adoApi, project, definitionId);
+	const builds = await getBuilds(adoApi, {
+		project,
+		definitions: [definitionId],
+		maxBuildsPerDefinition: recentBuildsToFetch,
+	});
 	const buildId = findBuildIdForCommit(builds, commit);
 
 	try {
