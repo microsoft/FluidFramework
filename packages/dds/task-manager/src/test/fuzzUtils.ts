@@ -163,6 +163,40 @@ interface LoggingInfo {
 	taskId: string;
 }
 
+/**
+ * Internal shape exposed only for test introspection.
+ *
+ * Mirrors the {@link IndexedList} wrapper added to `TaskManagerClass` so these helpers
+ * can traverse the queue without relying on the structural details of the wrapper.
+ */
+interface TaskQueueLike {
+	readonly length: number;
+	readonly first: { readonly data: string } | undefined;
+	[Symbol.iterator](): IterableIterator<{ readonly data: string }>;
+}
+
+/**
+ * Reads the private `taskQueues` map off a {@link ITaskManager} for test introspection,
+ * and returns the queue for `taskId` as an array of clientIds (in queue order).
+ *
+ * Centralizes the `as any` cast and shields the call sites from changes to the underlying
+ * data structure.
+ */
+function readTaskQueue(taskManager: ITaskManager, taskId: string): string[] | undefined {
+	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+	const queues: Map<string, TaskQueueLike> = (taskManager as any).taskQueues;
+	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
+	const queue = queues.get(taskId);
+	if (queue === undefined) {
+		return undefined;
+	}
+	const clientIds: string[] = [];
+	for (const node of queue) {
+		clientIds.push(node.data);
+	}
+	return clientIds;
+}
+
 function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 	for (const client of state.clients) {
 		const taskManager = client.channel;
@@ -171,8 +205,7 @@ function logCurrentState(state: FuzzTestState, loggingInfo: LoggingInfo): void {
 			console.log(
 				`TaskManager ${taskManager.id} (CanVolunteer: ${taskManager.canVolunteer()}):`,
 			);
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
-			console.log((taskManager as any).taskQueues.get(loggingInfo.taskId));
+			console.log(readTaskQueue(taskManager, loggingInfo.taskId));
 			console.log("\n");
 		}
 	}
@@ -235,24 +268,26 @@ function makeReducer(loggingInfo?: LoggingInfo): Reducer<Operation, FuzzTestStat
 
 function assertEqualTaskManagers(a: ITaskManager, b: ITaskManager): void {
 	/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
-	const queue1: Map<string, string[]> = (a as any).taskQueues;
-	const queue2: Map<string, string[]> = (b as any).taskQueues;
+	const queues1: Map<string, TaskQueueLike> = (a as any).taskQueues;
+	const queues2: Map<string, TaskQueueLike> = (b as any).taskQueues;
 	/* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any */
 
-	assert.strictEqual(queue1.size, queue2.size, "The number of tasks queues are not the same");
-	for (const [key, val] of queue1) {
-		const testVal = queue2.get(key);
-		if (testVal === undefined) {
-			assert(val === undefined, "Task queues are not both undefined");
+	assert.strictEqual(
+		queues1.size,
+		queues2.size,
+		"The number of tasks queues are not the same",
+	);
+	for (const key of queues1.keys()) {
+		const aQueue = readTaskQueue(a, key);
+		const bQueue = readTaskQueue(b, key);
+		if (bQueue === undefined) {
+			assert(aQueue === undefined, "Task queues are not both undefined");
 			continue;
 		}
-		assert.strictEqual(testVal.length, val.length, "Task queues are not the same size");
-		if (testVal.length > 0) {
-			const testValArr = testVal;
-			const valArr = val;
-			for (const [index, task] of testValArr.entries()) {
-				assert.strictEqual(task, valArr[index], `Task queues are not identical`);
-			}
+		assert(aQueue !== undefined, "Task queues are not both defined");
+		assert.strictEqual(bQueue.length, aQueue.length, "Task queues are not the same size");
+		for (const [index, task] of bQueue.entries()) {
+			assert.strictEqual(task, aQueue[index], `Task queues are not identical`);
 		}
 	}
 }
