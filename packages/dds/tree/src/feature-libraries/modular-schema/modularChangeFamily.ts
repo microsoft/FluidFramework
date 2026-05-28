@@ -4501,11 +4501,6 @@ function rebaseRename(
 			1,
 		).value;
 
-		if (baseOutputDetachLocation !== undefined) {
-			// XXX: Why is this necessary?
-			affectedBaseFields.set(fieldIdKeyFromFieldId(baseOutputDetachLocation), true);
-		}
-
 		const detachEntry = newRoots.detachLocations.getFirst(renameEntry.start, count);
 		count = detachEntry.length;
 
