@@ -3,10 +3,15 @@
 
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
-# Use the manifest digest's sha256 hash to ensure we are always using the same version of the base image.
-# That version of the base image must also be baked into the CI build agent by a repo maintainer.
-# This avoids throttling issues with Docker Hub by using an image baked into the pipeline build image.
-FROM alpine:3.12@sha256:c75ac27b49326926b803b9ed43bf088bc220d22556de1bc5f72d742c91398f69
+# The alpine base image is pulled from public Docker Hub by default so local builds and external
+# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY (via
+# additionalBuildArguments in tools/pipelines/server-gitssh.yml) to point at our internal mirror,
+# because 1ES network isolation policies (CfsClean/CfsClean2) block egress to registry-1.docker.io
+# from our build pool. The mirror is byte-for-byte identical to docker.io/library, so the same
+# manifest digest pin resolves correctly against either registry. See tools/pipelines/README.md for
+# how to maintain the mirror (upgrades, additions).
+ARG BASE_IMAGE_REGISTRY=docker.io
+FROM ${BASE_IMAGE_REGISTRY}/library/alpine:3.16@sha256:452e7292acee0ee16c332324d7de05fa2c99f9994ecc9f0779c602916a672ae4
 
 # Install Git and OpenSSH so we can run a git server
 RUN apk add --no-cache git

@@ -207,6 +207,41 @@ describe("ChunkedForest", () => {
 			assert.equal(nodeCount(remaining), 4);
 		});
 
+		it("enterNode resolves the correct chunk in a field with multiple multi-node chunks", () => {
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
+			const chunker = makeTreeChunker(
+				forestSchema,
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const forest = buildChunkedForest(chunker);
+			forest.roots.fields.set(rootFieldKey, [
+				new UniformChunk(numberShape.withTopLevelLength(2), [0, 1]),
+				new UniformChunk(numberShape.withTopLevelLength(5), [2, 3, 4, 5, 6]),
+				new UniformChunk(numberShape.withTopLevelLength(3), [7, 8, 9]),
+			]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(6);
+			visitor.exitNode(6);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			// enterNode shatters the targeted UniformChunk (with top-level length 5) into 5 BasicChunks; the
+			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
+			// untouched.
+			const result = forest.roots.fields.get(rootFieldKey);
+			assert(result !== undefined);
+			assert.equal(result.length, 7);
+			assert(result[0] instanceof UniformChunk);
+			assert.equal(result[0].topLevelLength, 2);
+			assert(result[6] instanceof UniformChunk);
+			assert.equal(result[6].topLevelLength, 3);
+		});
+
 		it("attaches a single node into the middle of a uniform chunk", () => {
 			const forest = setupForest();
 

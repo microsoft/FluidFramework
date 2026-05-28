@@ -7,7 +7,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	FluidClientVersion,
 	type ICodecOptions,
 } from "../../codec/index.js";
@@ -22,13 +22,8 @@ type BuildData = ICodecOptions & {
 	readonly idCompressor: IIdCompressor;
 };
 
-/**
- * Codec name used to identify the detachedFieldIndex codec, see {@link detachedFieldIndexCodecBuilder}.
- */
-export const detachedFieldIndexCodecName = "DetachedFieldIndex";
-
-export const detachedFieldIndexCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
-	detachedFieldIndexCodecName,
+export const detachedFieldIndexCodecBuilder = VersionDispatchingCodecBuilder.build(
+	"DetachedFieldIndex",
 	[
 		{
 			minVersionForCollab: lowestMinVersionForCollab,
