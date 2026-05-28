@@ -14,7 +14,10 @@ import { createIdCompressor, createSessionId } from "@fluidframework/id-compress
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type OriginatorDependentEncodedId,
 	type OriginatorlessEncodedId,
+	EncodedIdType,
+	encodePossiblyCompressedId,
 	decodeEncodedIdWithOriginator,
 	decodeOriginatorlessEncodedId,
 	decompressIdentifierIfNeeded,
@@ -40,6 +43,71 @@ function makeUnresolvableOpSpaceId(): {
 }
 
 describe("compressedIds", () => {
+	describe("encodePossiblyCompressedId", () => {
+		describe("Originatorless", () => {
+			it("returns a finalized op-space id when the stable UUID maps to a finalized compressed id", () => {
+				const compressedId = testIdCompressor.generateCompressedId();
+				const stableId = testIdCompressor.decompress(compressedId);
+				const result = encodePossiblyCompressedId(
+					stableId,
+					testIdCompressor,
+					EncodedIdType.Originatorless,
+				);
+				assert.equal(result, testIdCompressor.normalizeToOpSpace(compressedId));
+				assert.equal(typeof result, "number");
+			});
+
+			it("returns the original stable UUID when the compressed id is non-final", () => {
+				const compressor = createIdCompressor(createSessionId());
+				const localId = compressor.generateCompressedId();
+				const stableId = compressor.decompress(localId);
+				const result = encodePossiblyCompressedId(
+					stableId,
+					compressor,
+					EncodedIdType.Originatorless,
+				);
+				assert.equal(result, stableId);
+				assert.equal(typeof result, "string");
+			});
+		});
+
+		describe("OriginatorDependent", () => {
+			it("returns an op-space id even when the compressed id is non-final", () => {
+				const compressor = createIdCompressor(createSessionId());
+				const localId = compressor.generateCompressedId();
+				const stableId = compressor.decompress(localId);
+				const result = encodePossiblyCompressedId(
+					stableId,
+					compressor,
+					EncodedIdType.OriginatorDependent,
+				);
+				assert.equal(result, compressor.normalizeToOpSpace(localId));
+				assert.equal(typeof result, "number");
+			});
+		});
+
+		it("returns the original stable UUID when unknown to the compressor", () => {
+			const otherCompressor = createIdCompressor(createSessionId());
+			const stableId = otherCompressor.decompress(otherCompressor.generateCompressedId());
+			const result = encodePossiblyCompressedId(
+				stableId,
+				testIdCompressor,
+				EncodedIdType.Originatorless,
+			);
+			assert.equal(result, stableId);
+		});
+
+		it("passes through non-stable strings unchanged", () => {
+			const nonStable = "not-a-uuid";
+			const result = encodePossiblyCompressedId(
+				nonStable,
+				testIdCompressor,
+				EncodedIdType.OriginatorDependent,
+			);
+			assert.equal(result, nonStable);
+		});
+	});
+
 	describe("decodeOriginatorlessEncodedId", () => {
 		it("returns a session-space id for a finalized compressed id", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
@@ -213,7 +281,18 @@ describe("compressedIds", () => {
 		it("helper return types match the documented arms", () => {
 			const compressedId = testIdCompressor.generateCompressedId();
 			const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
+			const stableId = testIdCompressor.decompress(compressedId);
 
+			const z: OriginatorlessEncodedId | string = encodePossiblyCompressedId(
+				stableId,
+				testIdCompressor,
+				EncodedIdType.Originatorless,
+			);
+			const y: OriginatorDependentEncodedId | string = encodePossiblyCompressedId(
+				stableId,
+				testIdCompressor,
+				EncodedIdType.OriginatorDependent,
+			);
 			const a: SessionSpaceCompressedId = decodeOriginatorlessEncodedId(
 				opSpaceId as unknown as OriginatorlessEncodedId,
 				testIdCompressor,
@@ -238,6 +317,8 @@ describe("compressedIds", () => {
 			assert(c !== undefined);
 			assert(d !== undefined);
 			assert(e !== undefined);
+			assert(z !== undefined);
+			assert(y !== undefined);
 		});
 	});
 });

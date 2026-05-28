@@ -210,7 +210,7 @@ describe("chunkDecoding", () => {
 				// non-finalized op-space id during a summary load and healing is not
 				// available. See `chunkDecoding.ts`.
 				const nonFinalizedDuringSummaryError =
-					/Summary could not be loaded due incorrectly encoded identifier\./;
+					"Summary could not be loaded due to an incorrectly encoded identifier.";
 
 				it("throws when the heal flag is not enabled", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();

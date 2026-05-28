@@ -231,14 +231,10 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
 		const newSchema = schemaCodec.decode(options.content.schema);
 
-		// Step 4b will tighten the encode side of TreeAlpha.importCompressed /
-		// independentView so the payload only contains finalized ids, then this
-		// can move to `forSummary` (originatorless). For now we pass `forOp`
-		// with `localSessionId` to preserve current behavior (a known bug — the
-		// originator is fake; see docs/plan.md Step 4b).
-		const context = FieldBatchDecodingContext.forOp({
+		// TreeAlpha.exportCompressed encodes this payload in originatorless-safe form
+		// (finalized compressed ids or strings), so summary-style decode is correct.
+		const context = FieldBatchDecodingContext.forSummary({
 			idCompressor,
-			originatorId: idCompressor.localSessionId,
 		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,

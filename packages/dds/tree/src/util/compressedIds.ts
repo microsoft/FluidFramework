@@ -10,19 +10,89 @@ import type {
 	SessionId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
+import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
 import { v5 as uuidV5 } from "uuid";
 
 /**
  * An encoded identifier that can be decoded without an originator session id.
  * A finalized compressed id — the same numeric value in op-space and session-space.
+ * @remarks
+ * These are safe to use in contexts where the encoding id compressor is available to decode them,
+ * even when the session id of the encoding id compressor not known.
  */
 export type OriginatorlessEncodedId = SessionSpaceCompressedId & OpSpaceCompressedId;
 
 /**
  * An encoded identifier that may require an originator session id to decode.
  * Any op-space compressed id, either finalized or session-local.
+ * @remarks
+ * These are only safe to use in contexts where the encoding id compressor is available
+ * and the session id of the encoding id compressor is known.
+ * Currently the only such case is in ops, excluding attach summary ops.
  */
 export type OriginatorDependentEncodedId = OpSpaceCompressedId;
+
+/**
+ * Selects how identifiers are encoded for transport/persistence.
+ */
+export enum EncodedIdType {
+	/**
+	 * {@link OriginatorlessEncodedId}.
+	 */
+	Originatorless,
+	/**
+	 * {@link OriginatorDependentEncodedId}.
+	 */
+	OriginatorDependent,
+}
+
+export type EncodedId<T extends EncodedIdType> = T extends EncodedIdType.Originatorless
+	? OriginatorlessEncodedId
+	: T extends EncodedIdType.OriginatorDependent
+		? OriginatorDependentEncodedId
+		: OriginatorlessEncodedId | OriginatorDependentEncodedId;
+
+/**
+ * Context for encoding identifiers.
+ * @remarks
+ * See {@link FieldBatchDecodingContext} for the decoder.
+ */
+export interface IdEncodingContext {
+	encodePossiblyCompressedId(id: string): string | EncodedId<EncodedIdType>;
+}
+
+/**
+ * Encode a string identifier into a possibly compressed form based on the requested mode.
+ *
+ * @param id - The string identifier to encode.
+ * @param idCompressor - The ID compressor to use for compression.
+ * @param encodedIdType - The type of encoding to use. If the context doing the decoding will have the originator {@link SessionId},
+ * then {@link EncodedIdType.OriginatorDependent} can be used.
+ * Otherwise, {@link EncodedIdType.Originatorless} must be used.
+ *
+ * @privateRemarks
+ * Performance:
+ * When trying to optimize to avoid unnecessary identifier decompression, and store identifiers compressed in memory,
+ * this will likely need to be updated to allow in SessionSpaceCompressedIds.
+ */
+export function encodePossiblyCompressedId<T extends EncodedIdType>(
+	id: string,
+	idCompressor: IIdCompressor,
+	encodedIdType: T,
+): string | EncodedId<T> {
+	if (!isStableId(id)) {
+		return id;
+	}
+	const sessionSpaceCompressedId = idCompressor.tryRecompress(id);
+	if (sessionSpaceCompressedId === undefined) {
+		return id;
+	}
+	const opSpaceId = idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
+	if (encodedIdType === EncodedIdType.Originatorless) {
+		return isFinalId(opSpaceId) ? (opSpaceId as unknown as EncodedId<T>) : id;
+	}
+	return opSpaceId as unknown as EncodedId<T>;
+}
 
 /**
  * Namespace used for the deterministic UUIDv5 produced by the heal-on-decode workaround
@@ -134,7 +204,7 @@ export function forceDecodeEncodedIdWithoutSession(
  */
 export function decompressIdentifierIfNeeded(
 	id: SessionSpaceCompressedId | string,
-	idCompressor: IIdCompressor,
+	idCompressor: Pick<IIdCompressor, "decompress">,
 ): string {
 	if (typeof id === "string") {
 		return id;

@@ -489,7 +489,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				fieldBatchVersion,
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(incrementalFieldEncoder, context, []);
@@ -511,7 +511,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder(referenceIds),
 				fieldBatchVersion,
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(
@@ -556,7 +556,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				brand(FieldBatchFormatVersion.v1),
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			assert.throws(

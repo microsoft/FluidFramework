@@ -155,7 +155,7 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 		 */
 		private readonly hasOriginatorSessionId: boolean,
 
-		public readonly idCompressor: IIdCompressor,
+		public readonly idCompressor: Pick<IIdCompressor, "decompress">,
 
 		public readonly resolveEncodedId: (
 			id: OpSpaceCompressedId,
@@ -323,14 +323,7 @@ function makeFieldBatchCodecForVersion(
 			context: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(
-				data,
-				{
-					idCompressor: context.idCompressor,
-					resolveEncodedId: context.resolveEncodedId,
-				},
-				context.incrementalDecoder,
-			).map((chunk) => chunk.cursor());
+			return decode(data, context, context.incrementalDecoder).map((chunk) => chunk.cursor());
 		},
 		schema: encodedFieldBatchType,
 	};
