@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import type { ListNode } from "@fluidframework/core-utils/internal";
 import type { Serializable } from "@fluidframework/datastore-definitions/internal";
 import type { AttributionKey } from "@fluidframework/runtime-definitions/internal";
 import type {
@@ -125,13 +124,6 @@ export interface ICellLocalOpMetadata<T = any> {
 	 * Unique identifier for this local operation (op).
 	 */
 	pendingMessageId: number;
-
-	/**
-	 * The node in the pending message list corresponding to this operation (op).
-	 * Holding a direct reference to the node enables O(1) removal from arbitrary
-	 * positions in the pending list, which is required for future squash support.
-	 */
-	pendingNode: ListNode<number>;
 
 	/**
 	 * The value of the {@link ISharedCell} prior to this operation (op).
