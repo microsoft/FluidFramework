@@ -712,8 +712,7 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 						? op.changedToEntryId
 						: undefined;
 				assert(
-					acked !== undefined &&
-						acked.type === op.type &&
+					acked?.type === op.type &&
 						acked.entryId === op.entryId &&
 						acked.targetEntryId === ackedTargetEntryId,
 					0xb97 /* pendingOps head must match acked op shape */,
