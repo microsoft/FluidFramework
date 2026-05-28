@@ -336,10 +336,12 @@ export function withBufferedTreeEvents(callback: () => void): void {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
-			// Snapshot and clear before flushing so that any reentrant buffering started by listener
-			// code begins from a clean slate. Buffers are only ever added to this set while
-			// `bufferTreeEvents` is true, so flushing here (with the flag now false) will not
-			// re-enqueue any of them.
+			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
+			// calls made by listeners that fire during `buffer.flush()` below:
+			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
+			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
+			// - Clearing up front means the reentrant call starts from an empty set, so its own
+			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
 			const toFlush = [...activeBuffers];
 			activeBuffers.clear();
 			for (const buffer of toFlush) {
