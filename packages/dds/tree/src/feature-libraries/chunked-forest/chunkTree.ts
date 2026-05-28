@@ -428,7 +428,7 @@ export interface ChunkPolicy {
 	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
 	 * few extra intermediate chunks.
 	 *
-	 * Also caps chunks merged by {@link mergeAroundSplice}, so dynamic chunk sizes
+	 * Also caps chunks merged by {@link coalesceAroundSplice}, so dynamic chunk sizes
 	 * settle around this target.
 	 *
 	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
@@ -651,14 +651,14 @@ export function splitFieldAtIndex(
  *
  * @privateRemarks
  * Caps merged chunks at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}, matching the
- * bisect threshold used by {@link splitFieldAtIndex} so split-and-merge pairs don't oscillate.
+ * bisect threshold used by {@link splitFieldAtIndex} so split-and-coalesce pairs don't oscillate.
  *
  * @param field - The field's chunks array, modified in place.
  * @param spliceStart - The index passed to the originating `splice` call.
  * @param insertedCount - The number of chunks the splice inserted (0 for a pure detach).
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
  */
-export function mergeAroundSplice(
+export function coalesceAroundSplice(
 	field: TreeChunk[],
 	spliceStart: number,
 	insertedCount: number,
