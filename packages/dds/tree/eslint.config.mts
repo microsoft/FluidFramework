@@ -48,7 +48,7 @@ const config: Linter.Config[] = [
 			// Test files frequently use `as any` casts to access internal/hidden properties for testing
 			"@typescript-eslint/no-unsafe-member-access": "off",
 
-			//#region Lints disabled due to being slow and low value for tests
+			// #region Lints disabled due to being slow and low value for tests
 			// Since our build ignores "warn" level lints, but they might be useful to devs interactively (and thats not where we have perf issues),
 			// these are kept as "warn" instead of simply "off".
 			// Promise lint rules are useful in production paths but are disproportionately expensive in tests.
@@ -60,7 +60,7 @@ const config: Linter.Config[] = [
 			"import-x/namespace": "warn",
 			// Regex optimization suggestions are not important for test code paths.
 			"unicorn/better-regex": "warn",
-			//#endregion
+			// #endregion
 		},
 	},
 ];
