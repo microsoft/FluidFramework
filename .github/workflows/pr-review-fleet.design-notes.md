@@ -43,7 +43,7 @@ That way a malicious PR can't rewrite the instructions an authenticated agent is
 
 ## Output is untrusted too
 
-Model output is also untrusted. The consolidator regex-scrubs GitHub token patterns (`gh[pousr]_…`, `github_pat_…`) from the report before it's posted as a PR comment. It's defense-in-depth, but worth doing — the agent is denied shell tools, but its prose output still flows to a public-facing comment.
+Model output is also untrusted. The consolidator regex-scrubs GitHub token patterns (`gh[pousr]_…`, `github_pat_…`) from the report before it's posted as a PR comment. This is defense-in-depth, not a complete exfiltration boundary: a model could transform or split a token so it no longer matches the regex. The stronger boundary is that the agent is denied shell/git tools and does not receive persisted checkout credentials. Longer term, the ideal credential model is short-lived, least-privilege, per-run credentials rather than a reusable token.
 
 ## Credential handling
 
