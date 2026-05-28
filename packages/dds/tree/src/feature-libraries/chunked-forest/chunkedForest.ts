@@ -245,12 +245,12 @@ export class ChunkedForest implements IEditableForest {
 				let indexOfChunk = 0;
 				let chunk = chunks[indexOfChunk] ?? oob();
 				while (indexWithinChunk >= chunk.topLevelLength) {
-					chunk = chunks[indexOfChunk] ?? oob();
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail(0xaf7 /* missing edited node */);
 					}
+					chunk = chunks[indexOfChunk] ?? oob();
 				}
 				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {
