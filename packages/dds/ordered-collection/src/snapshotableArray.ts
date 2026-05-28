@@ -5,6 +5,14 @@
 
 import { assert, DoublyLinkedList } from "@fluidframework/core-utils/internal";
 
+/**
+ * Base class for a snapshotable, ordered collection.
+ *
+ * Note: the historical "Array" suffix predates the current `DoublyLinkedList` backing — the
+ * collection is no longer backed by (and does not extend) a JS Array. The name is retained to
+ * avoid a broader rename across consumers; iteration order is still the contract that callers
+ * (notably the snapshot path via {@link asArray}) rely on.
+ */
 export class SnapshotableArray<T> {
 	protected data: DoublyLinkedList<T> = new DoublyLinkedList<T>();
 
