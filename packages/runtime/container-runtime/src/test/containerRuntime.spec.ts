@@ -1651,8 +1651,44 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("throws, logs, and closes the container on submit during apply", async () => {
+			it("logs but does not throw by default on submit during apply", async () => {
 				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					0,
+					"closeFn should not have been invoked when throw is not enabled",
+				);
+			});
+
+			it("does not throw when the apply window is closed", async () => {
+				await createRuntime();
+				setApplyingStashedOps(false);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+			});
+
+			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() => submitBlobAttach());
+			});
+
+			it("on-switch throws, logs, and closes the container on submit during apply", async () => {
+				await createRuntime({
+					"Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow": true,
+				});
 				setApplyingStashedOps(true);
 				assert.throws(
 					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
@@ -1677,37 +1713,6 @@ describe("Runtime", () => {
 					ContainerErrorTypes.usageError,
 					"closeFn should have received the UsageError",
 				);
-			});
-
-			it("does not throw when the apply window is closed", async () => {
-				await createRuntime();
-				setApplyingStashedOps(false);
-				assert.doesNotThrow(() =>
-					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
-				);
-			});
-
-			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
-				await createRuntime();
-				setApplyingStashedOps(true);
-				assert.doesNotThrow(() => submitBlobAttach());
-			});
-
-			it("kill switch suppresses throw and logs error event", async () => {
-				await createRuntime({
-					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow": true,
-				});
-				setApplyingStashedOps(true);
-				assert.doesNotThrow(() =>
-					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
-				);
-				mockLogger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
-						category: "error",
-						messageType: ContainerMessageType.FluidDataStoreOp,
-					},
-				]);
 			});
 		});
 

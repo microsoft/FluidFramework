@@ -1619,7 +1619,7 @@ export class ContainerRuntime
 		private readonly runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
-		logger: ITelemetryBaseLogger,
+		baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
@@ -1673,7 +1673,7 @@ export class ContainerRuntime
 		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
 		this.baseLogger = createChildLogger({
-			logger,
+			logger: baseLogger,
 			properties: {
 				error: {
 					inStagingMode: () => this.inStagingMode,
@@ -2951,12 +2951,13 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (): void =>
-		// `channelCollection` may be undefined when invoked from the PSM's
-		// open hook, which fires from `new PendingStateManager(...)` earlier
-		// in this constructor than `channelCollection` is assigned. That's
-		// fine — DDSes created after this point will read the runtime's
-		// `isReadOnly()` aggregation and start out in the correct state.
+	// Boolean payload from the `"readonly"` delta-manager event is intentionally
+	// ignored — `isReadOnly()` aggregates delta-manager readonly with the PSM
+	// apply window, and that aggregation is the source of truth for fanout.
+	// `channelCollection?.` guards against future wiring changes; both callers
+	// today (the `"readonly"` listener and `onAfterStashedOpsApplied`) fire
+	// after `channelCollection` is assigned.
+	private readonly notifyReadOnlyState = (_readonly?: boolean): void =>
 		this.channelCollection?.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
@@ -4877,10 +4878,11 @@ export class ContainerRuntime
 		// at all; treating that assert as the single source of truth.
 		//
 		// Always surface the error event to telemetry on a bypass so we can
-		// attribute incidents regardless of the kill-switch state. The kill
-		// switch `DisableSubmitDuringStashedApplyThrow` only suppresses the
-		// throw + container close, leaving an off-switch if a first- or
-		// third-party DDS in production quietly bypasses the readonly gate.
+		// attribute incidents regardless of the on-switch state. The
+		// `EnableSubmitDuringStashedApplyThrow` config opts in to the
+		// throw + container close; by default we log only, so a first- or
+		// third-party DDS that quietly bypasses the readonly gate in
+		// production is observable without escalating to a fatal close.
 		if (
 			this.pendingStateManager.isApplyingStashedOps &&
 			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach
@@ -4891,8 +4893,8 @@ export class ContainerRuntime
 			this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
 			if (
 				this.mc.config.getBoolean(
-					"Fluid.ContainerRuntime.DisableSubmitDuringStashedApplyThrow",
-				) !== true
+					"Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow",
+				) === true
 			) {
 				// Close the container before throwing so the "throw + close"
 				// contract is enforced by this code path rather than by

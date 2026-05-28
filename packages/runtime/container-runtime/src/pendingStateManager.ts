@@ -147,10 +147,9 @@ export interface IRuntimeStateHandler {
  *
  * `onAfterStashedOpsApplied` fires synchronously the first time
  * `initialMessages` drains during `applyStashedOpsAt`, immediately after
- * `isApplyingStashedOps` flips to `false`. Fires at most once per PSM lifetime.
- *
- * Synchronous: fires from a `finally` block where async behavior would
- * complicate error propagation.
+ * `isApplyingStashedOps` flips to `false`. Fires at most once per PSM
+ * lifetime. If an apply throws, control never reaches the close site and
+ * the hook is not invoked — load is fatal in that case.
  *
  * No corresponding open hook is exposed. The apply window is opened eagerly
  * in the PSM constructor, but at that point `ContainerRuntime` has not yet
@@ -389,16 +388,17 @@ export class PendingStateManager implements IDisposable {
 	private readonly logger: ITelemetryLoggerExt;
 
 	/**
-	 * One-way lifecycle of the stashed-op apply window: `notStarted` → `applying` → `ended`.
+	 * One-way lifecycle of the stashed-op apply window: `ended` → `applying` → `ended`.
 	 *
-	 * Transitions are explicit and irreversible. `notStarted` → `applying` happens in the
-	 * constructor when stashed state is present (i.e. `initialMessages` is non-empty at
-	 * construction). The open is eager so the runtime is readonly from the moment any DDS
-	 * could possibly observe it. `applying` → `ended` happens the first time
-	 * {@link applyStashedOpsAt} drains `initialMessages`. After that, local edits are safe —
-	 * they queue FIFO behind any remaining `pendingMessages`, preserving server-side ordering.
+	 * Default is `ended` — no stashed state means there's nothing to apply, so the window is
+	 * closed before it ever opens. `ended` → `applying` happens in the constructor when
+	 * stashed state is present (i.e. `initialMessages` is non-empty at construction). The
+	 * open is eager so the runtime is readonly from the moment any DDS could possibly
+	 * observe it. `applying` → `ended` happens the first time {@link applyStashedOpsAt}
+	 * drains `initialMessages`. After that, local edits are safe — they queue FIFO behind
+	 * any remaining `pendingMessages`, preserving server-side ordering.
 	 *
-	 * The window never reopens. After `ended`, subsequent `applyStashedOpsAt` calls (e.g.
+	 * The window never reopens. After the close, subsequent `applyStashedOpsAt` calls (e.g.
 	 * from late `notifyOpReplay`s) early-return at the empty guard.
 	 *
 	 * `pendingMessages` state is intentionally NOT part of the close condition. Those
@@ -413,7 +413,7 @@ export class PendingStateManager implements IDisposable {
 	 * That's fine: an error here is fatal for the load, the container is unusable, and
 	 * there's no state to restore.
 	 */
-	private _applyLifecycle: "notStarted" | "applying" | "ended" = "notStarted";
+	private _applyLifecycle: "applying" | "ended" = "ended";
 	public get isApplyingStashedOps(): boolean {
 		return this._applyLifecycle === "applying";
 	}
