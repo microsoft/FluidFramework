@@ -14,29 +14,30 @@ import type { AnalyzerJsonByPackage } from "./types.js";
 const analyzerJsonGlob = "**/analyzer.json";
 
 /**
- * Check whether `rootPath` exists and contains any `analyzer.json` file.
- *
- * @returns `"ok"`, `"missing"` (rootPath doesn't exist), or `"noAnalyzerJson"`
- * (rootPath exists but the tree has none). Real failures (permission errors,
- * broken symlinks, …) propagate as-is rather than collapsing to a kind.
+ * Result of {@link readAnalyzerJsonsFromFileSystem}. `"missing"` signals that
+ * `rootPath` itself doesn't exist on disk; `"ok"` means it was walked
+ * successfully and `data` holds the per-package parsed reports.
  */
-export function checkLocalBundleAnalysisExists(
-	rootPath: string,
-): "ok" | "missing" | "noAnalyzerJson" {
-	if (statSync(rootPath, { throwIfNoEntry: false }) === undefined) {
-		return "missing";
-	}
-	return globSync(analyzerJsonGlob, { cwd: rootPath }).length > 0 ? "ok" : "noAnalyzerJson";
-}
+export type ReadAnalyzerJsonsResult =
+	| { kind: "ok"; data: AnalyzerJsonByPackage }
+	| { kind: "missing" };
 
 /**
- * Walks `rootPath`, finds every `analyzer.json` file, parses it, and keys the
- * results by source package.
+ * Walks `rootPath`, finds every `<package>/analyzer.json` file, parses it, and
+ * keys the results by source package.
+ *
+ * @remarks The result Map may be empty — either because the tree has no
+ * `analyzer.json` files at all, or because every match was at an unexpected
+ * depth (e.g. a bare `analyzer.json` with no package prefix). Callers decide
+ * whether emptiness is an error in their context.
  */
 export async function readAnalyzerJsonsFromFileSystem(
 	rootPath: string,
-): Promise<AnalyzerJsonByPackage> {
-	const result: AnalyzerJsonByPackage = new Map();
+): Promise<ReadAnalyzerJsonsResult> {
+	if (statSync(rootPath, { throwIfNoEntry: false }) === undefined) {
+		return { kind: "missing" };
+	}
+	const data: AnalyzerJsonByPackage = new Map();
 	await Promise.all(
 		globSync(analyzerJsonGlob, { cwd: rootPath }).map(async (relativePath) => {
 			const sourcePackage = sourcePackageFromAnalyzerPath(relativePath);
@@ -49,8 +50,8 @@ export async function readAnalyzerJsonsFromFileSystem(
 			} catch (e) {
 				throw new Error(`Failed to parse analyzer.json at "${fullPath}"`, { cause: e });
 			}
-			result.set(sourcePackage, parsed);
+			data.set(sourcePackage, parsed);
 		}),
 	);
-	return result;
+	return { kind: "ok", data };
 }

@@ -9,7 +9,6 @@ import { Flags } from "@oclif/core";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
-	checkLocalBundleAnalysisExists,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
 	type PackageComparison,
@@ -149,22 +148,22 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			);
 		}
 
-		const localCheck = checkLocalBundleAnalysisExists(localReportPath);
+		const localResult = await readAnalyzerJsonsFromFileSystem(localReportPath);
 		// Append the `pnpm bundle-analysis:collect` hint only on the default
 		// path — overrides are populated from some source we don't know about.
 		const hint =
 			localReportPath === defaultLocalReportPath
 				? " Run `pnpm bundle-analysis:collect` to populate it."
 				: "";
-		if (localCheck === "missing") {
+		if (localResult.kind === "missing") {
 			this.error(`Local bundle report directory not found at "${localReportPath}".${hint}`);
 		}
-		if (localCheck === "noAnalyzerJson") {
+		const compareJsons = localResult.data;
+		if (compareJsons.size === 0) {
 			this.error(
-				`Local bundle report directory "${localReportPath}" contains no analyzer.json files.${hint}`,
+				`Local bundle report directory "${localReportPath}" contains no analyzer.json files at the expected \`<package>/analyzer.json\` layout.${hint}`,
 			);
 		}
-		const compareJsons = await readAnalyzerJsonsFromFileSystem(localReportPath);
 
 		const comparison = compareJsonReportsByPackage(baselineJsons, compareJsons);
 		const changeLines = formatComparison(comparison);
