@@ -156,7 +156,7 @@ stages:
         - task: ComponentGovernanceComponentDetection@0
           displayName: Component Detection
           inputs:
-            sourceScanPath: docs
+            sourceScanPath: website
             verbosity: Verbose
             scanType: Register
             alertWarningLevel: High
@@ -173,14 +173,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             script: |
               set -eu -o pipefail
               pnpm i --frozen-lockfile
@@ -189,7 +189,7 @@ stages:
           displayName: npm run build
           inputs:
             command: 'custom'
-            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             customCommand: 'run build'
 
         # Run the tests
@@ -197,20 +197,20 @@ stages:
           displayName: Run tests
           inputs:
             command: 'custom'
-            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             customCommand: 'run test'
 
         - task: AzureArtifacts.manifest-generator-task.manifest-generator-task.ManifestGeneratorTask@0
           displayName: 'Generate SBOM'
           inputs:
-            BuildDropPath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build
+            BuildDropPath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website/build
             PackageName: 'fluidframework-docs'
             PackageVersion: '$(Build.BuildId)'
 
         - task: PublishPipelineArtifact@1
           displayName: 'Publish site build artifact'
           inputs:
-            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
+            targetPath: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website/build'
             artifactName: 'fluidframework-docs'
             publishLocation: 'pipeline'
 
@@ -263,7 +263,7 @@ stages:
           inputs:
             GdnBreakPolicyMinSev: Warning
             GdnBreakAllTools: true
-            GdnBreakBaselineFiles: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/.gdnbaselines'
+            GdnBreakBaselineFiles: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website/.gdnbaselines'
             GdnBreakGdnToolESLint: true
             GdnBreakGdnToolESLintSeverity: Warning
             GdnBreakPolicy: M365
@@ -298,14 +298,14 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
-            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            buildDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
 
         - task: Bash@3
           displayName: Install dependencies
           retryCountOnTaskFailure: 4
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             script: |
               set -eu -o pipefail
               # Ensure it's easy to tell which workspace this is running in by inspecting the logs
@@ -316,14 +316,14 @@ stages:
           displayName: Build
           inputs:
             command: 'custom'
-            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             customCommand: 'run build'
 
         - task: Npm@1
           displayName: Validate links
           inputs:
             command: 'custom'
-            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs
+            workingDir: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website
             customCommand: 'run ci:check-links'
 
 - stage: deploy
@@ -351,7 +351,7 @@ stages:
           inputs:
             source: current
             artifact: fluidframework-docs
-            path: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/docs/build'
+            path: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/website/build'
 
         - task: AzureStaticWebApp@0
           displayName: 'Deploy website to ASWA'
@@ -359,7 +359,7 @@ stages:
             skip_app_build: true # site was built in previous stage
             skip_api_build: true # api is written in js, no build needed
             cwd: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
-            app_location: 'docs/build'
-            api_location: 'docs/api'
+            app_location: 'website/build'
+            api_location: 'website/api'
             output_location: ''
             azure_static_web_apps_api_token: '${{ variables.deploymentToken }}'
