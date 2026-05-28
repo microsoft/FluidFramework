@@ -14,7 +14,7 @@ import {
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
-	ContainerRuntime,
+	type ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
 	ISummarizer,

@@ -12,7 +12,10 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ContainerRuntime, ISummarizer } from "@fluidframework/container-runtime/internal";
+import {
+	type ContainerRuntime,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName } from "@fluidframework/runtime-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";

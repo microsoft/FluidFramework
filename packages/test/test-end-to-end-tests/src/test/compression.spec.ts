@@ -19,6 +19,8 @@ import {
 } from "@fluidframework/container-runtime/internal";
 // SharedMap is used as a fallback for the describeInstallVersions path which does not provide `apis`.
 // For describeCompat callers, the compat-version-aware factory is read from apis.dds.SharedMap below.
+// TODO:AB#6558: Once describeInstallVersions supports `apis`, this fallback can be removed.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -32,7 +34,12 @@ import {
 import { pkgVersion } from "../packageVersion.js";
 
 const compressionSuite = (getProvider, apis?): void => {
-	const SharedMapFactory = apis?.dds.SharedMap ?? SharedMap;
+	// In cross-client compat, the local (creating) and remote (loading) clients may be different
+	// versions. Use the create-side factory for makeTestContainer and the load-side factory for
+	// loadTestContainer. Both fall back to the directly-imported SharedMap when apis is not
+	// available (describeInstallVersions path) or when ddsForLoading is not set (non-cross-client).
+	const SharedMapForCreate = apis?.dds.SharedMap ?? SharedMap;
+	const SharedMapForLoad = apis?.ddsForLoading?.SharedMap ?? apis?.dds.SharedMap ?? SharedMap;
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;
@@ -61,18 +68,22 @@ const compressionSuite = (getProvider, apis?): void => {
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
 			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
 		): Promise<void> {
-			const containerConfig: ITestContainerConfig = {
-				registry: [["mapKey", SharedMapFactory.getFactory()]],
+			const createContainerConfig: ITestContainerConfig = {
+				registry: [["mapKey", SharedMapForCreate.getFactory()]],
 				runtimeOptions,
 				fluidDataObjectType: DataObjectFactoryType.Test,
 				minVersionForCollab,
 			};
-			const localContainer = await provider.makeTestContainer(containerConfig);
+			const loadContainerConfig: ITestContainerConfig = {
+				...createContainerConfig,
+				registry: [["mapKey", SharedMapForLoad.getFactory()]],
+			};
+			const localContainer = await provider.makeTestContainer(createContainerConfig);
 			localDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(localContainer);
 			localMap = await localDataObject.getSharedObject<ISharedMap>("mapKey");
 
-			const remoteContainer = await provider.loadTestContainer(containerConfig);
+			const remoteContainer = await provider.loadTestContainer(loadContainerConfig);
 			const remoteDataObject =
 				await getContainerEntryPointBackCompat<ITestFluidObject>(remoteContainer);
 			remoteMap = await remoteDataObject.getSharedObject<ISharedMap>("mapKey");

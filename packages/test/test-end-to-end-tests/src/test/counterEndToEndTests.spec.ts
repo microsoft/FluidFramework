@@ -23,11 +23,22 @@ const counterId = "counterKey";
 
 describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
+	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
+	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
+	// loadTestContainer reconstructs DDS factories from the correct version.
+	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
 
-	const registry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
+	const createRegistry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
+	const loadRegistry: ChannelFactoryRegistry = [
+		[counterId, ddsForLoading.SharedCounter.getFactory()],
+	];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -51,13 +62,13 @@ describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 
 	// Create a container representing the first client
 	beforeEach("Create container", async () => {
-		container1 = await provider.makeTestContainer(testContainerConfig);
+		container1 = await provider.makeTestContainer(createContainerConfig);
 	});
 
 	// Load the container that was created by the first client
 	beforeEach("Load containers", async () => {
-		container2 = await provider.loadTestContainer(testContainerConfig);
-		container3 = await provider.loadTestContainer(testContainerConfig);
+		container2 = await provider.loadTestContainer(loadContainerConfig);
+		container3 = await provider.loadTestContainer(loadContainerConfig);
 	});
 
 	// Get all three data stores

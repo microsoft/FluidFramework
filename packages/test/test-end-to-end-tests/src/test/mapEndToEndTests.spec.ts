@@ -22,11 +22,20 @@ import {
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
+	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
+	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
+	// loadTestContainer reconstructs DDS factories from the correct version.
+	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
 	const mapId = "mapKey";
-	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
+	const createRegistry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
+	const loadRegistry: ChannelFactoryRegistry = [[mapId, ddsForLoading.SharedMap.getFactory()]];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -40,15 +49,15 @@ describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	let sharedMap3: ISharedMap;
 
 	beforeEach("createContainers", async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const container1 = await provider.makeTestContainer(createContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataObject1.getSharedObject<ISharedMap>(mapId);
 
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const container2 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedMap2 = await dataObject2.getSharedObject<ISharedMap>(mapId);
 
-		const container3 = await provider.loadTestContainer(testContainerConfig);
+		const container3 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedMap3 = await dataObject3.getSharedObject<ISharedMap>(mapId);
 

@@ -69,8 +69,10 @@ import {
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ITree } from "@fluidframework/tree";
+// Used only as a fallback for older compat versions where apis.dds.SharedTree may be undefined.
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
+import { SharedTree as SharedTreeCurrent } from "@fluidframework/tree/internal";
 
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
@@ -141,12 +143,14 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		SharedCounter,
 		SharedString,
 		SharedCell,
-		// SharedArray and SharedSignal were added recently and may not exist on apis.dds when
-		// running against older compat versions; fall back to the directly-imported current versions.
+		// SharedArray, SharedSignal, and SharedTree were added recently and may not exist on apis.dds
+		// when running against older compat versions; fall back to the directly-imported current versions.
 		SharedArray = SharedArrayCurrent,
 		SharedSignal = SharedSignalCurrent,
+		SharedTree = SharedTreeCurrent,
 	} = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
+	const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
 
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],

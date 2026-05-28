@@ -32,11 +32,22 @@ import {
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
+	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
+	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
+	// loadTestContainer reconstructs DDS factories from the correct version.
+	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
 	const directoryId = "directoryKey";
-	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
+	const createRegistry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const loadRegistry: ChannelFactoryRegistry = [
+		[directoryId, ddsForLoading.SharedDirectory.getFactory()],
+	];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -50,17 +61,17 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 
 	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const container1 = await provider.makeTestContainer(createContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const container2 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
+		const container3 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 

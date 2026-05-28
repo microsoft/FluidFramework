@@ -41,6 +41,11 @@ const testConfigs = generatePairwiseOptions({
 
 describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	// In cross-client compat, the validation loader (which loads the previously-created container)
+	// may be a different version than the init loader (which created the container). Use
+	// ddsForLoading (falling back to apis.dds when not cross-client) so the validation loader
+	// reconstructs SharedString factories from the load-side version.
+	const SharedStringForLoading = (apis.ddsForLoading ?? apis.dds).SharedString;
 	before(function () {
 		const provider = getTestObjectProvider();
 		switch (provider.driver.type) {
@@ -59,14 +64,19 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 			const provider = getTestObjectProvider();
 			let containerUrl: IResolvedUrl | undefined;
 			const sharedStringFactory = SharedString.getFactory();
-			const channelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+			const sharedStringFactoryForLoading = SharedStringForLoading.getFactory();
+			const createChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
 				[sharedStringFactory.type, sharedStringFactory],
 			];
-			const containerConfig = { registry: channelFactoryRegistry };
+			const loadChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+				[sharedStringFactoryForLoading.type, sharedStringFactoryForLoading],
+			];
+			const createContainerConfig = { registry: createChannelFactoryRegistry };
+			const loadContainerConfig = { registry: loadChannelFactoryRegistry };
 
 			// act code block
 			{
-				const initLoader = provider.makeTestLoader(containerConfig);
+				const initLoader = provider.makeTestLoader(createContainerConfig);
 
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
@@ -169,7 +179,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// validation code block
 			{
-				const validationLoader = provider.makeTestLoader(containerConfig);
+				const validationLoader = provider.makeTestLoader(loadContainerConfig);
 				const validationContainer = await validationLoader.resolve({
 					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
 				});

@@ -17,7 +17,7 @@ import {
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	AllowTombstoneRequestHeaderKey,
-	ContainerRuntime,
+	type ContainerRuntime,
 	IOnDemandSummarizeOptions,
 	ISummarizer,
 	TombstoneResponseHeaderKey,

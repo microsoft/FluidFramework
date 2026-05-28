@@ -33,7 +33,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreContext,
 	IRuntimeMessageCollection,

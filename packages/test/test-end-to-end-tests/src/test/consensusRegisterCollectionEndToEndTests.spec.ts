@@ -28,14 +28,26 @@ const mapId = "mapKey";
 describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, ConsensusRegisterCollection } = apis.dds;
 	const { ReadPolicy } = apis.dataRuntime.packages.registerCollection;
+	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
+	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
+	// loadTestContainer reconstructs DDS factories from the correct version.
+	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
 
-	const registry: ChannelFactoryRegistry = [
+	const createRegistry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
 		[undefined, ConsensusRegisterCollection.getFactory()],
 	];
-	const testContainerConfig: ITestContainerConfig = {
+	const loadRegistry: ChannelFactoryRegistry = [
+		[mapId, ddsForLoading.SharedMap.getFactory()],
+		[undefined, ddsForLoading.ConsensusRegisterCollection.getFactory()],
+	];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -50,17 +62,17 @@ describeCompat("ConsensusRegisterCollection", "FullCompat", (getTestObjectProvid
 
 	beforeEach("createSharedMaps", async () => {
 		// Create a Container for the first client.
-		container1 = await provider.makeTestContainer(testContainerConfig);
+		container1 = await provider.makeTestContainer(createContainerConfig);
 		dataStore1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedMap1 = await dataStore1.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const container2 = await provider.loadTestContainer(loadContainerConfig);
 		const dataStore2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedMap2 = await dataStore2.getSharedObject<ISharedMap>(mapId);
 
 		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
+		const container3 = await provider.loadTestContainer(loadContainerConfig);
 		const dataStore3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedMap3 = await dataStore3.getSharedObject<ISharedMap>(mapId);
 	});
