@@ -32,7 +32,7 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1,
-	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
@@ -64,8 +64,8 @@ export function compressedEncode(
 	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
-export type BufferFormat = BufferFormatGeneric<EncodedChunkShapeV1OrV2>;
-export type Shape = ShapeGeneric<EncodedChunkShapeV1OrV2>;
+export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
+export type Shape = ShapeGeneric<EncodedChunkShape>;
 
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
@@ -167,7 +167,7 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 /**
  * Encodes a chunk with {@link EncodedAnyShape} by prefixing the data with its shape.
  */
-export class AnyShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
+export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	private constructor() {
 		super();
 	}
@@ -272,7 +272,7 @@ export const anyFieldEncoder: FieldEncoder = {
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class InlineArrayEncoder
-	extends ShapeGeneric<EncodedChunkShapeV1OrV2>
+	extends ShapeGeneric<EncodedChunkShape>
 	implements NodesEncoder, FieldEncoder
 {
 	public static readonly empty: InlineArrayEncoder = new InlineArrayEncoder(0, {
@@ -356,7 +356,7 @@ export class InlineArrayEncoder
 /**
  * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
  */
-export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
 	 * @param innerShape - The shape of each item in this nested array.
 	 */
@@ -367,7 +367,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShapeV1OrV2 {
+	): EncodedChunkShape {
 		const shape: EncodedNestedArrayShape =
 			shapes.valueToIndex.get(this.innerShape) ??
 			fail(0xb4f /* index for shape not found in table */);
