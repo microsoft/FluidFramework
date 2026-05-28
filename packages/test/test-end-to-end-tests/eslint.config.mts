@@ -29,25 +29,25 @@ const config: Linter.Config[] = [
 						{
 							"group": ["@fluidframework/cell", "@fluidframework/cell/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
 							"group": ["@fluidframework/counter", "@fluidframework/counter/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
 							"group": ["@fluidframework/map", "@fluidframework/map/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
 							"group": ["@fluidframework/matrix", "@fluidframework/matrix/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -56,7 +56,7 @@ const config: Linter.Config[] = [
 								"@fluidframework/ordered-collection/*",
 							],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -65,13 +65,13 @@ const config: Linter.Config[] = [
 								"@fluidframework/register-collection/*",
 							],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
 							"group": ["@fluidframework/sequence", "@fluidframework/sequence/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -80,13 +80,13 @@ const config: Linter.Config[] = [
 								"@fluid-experimental/sequence-deprecated/*",
 							],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
 							"group": ["@fluidframework/datastore", "@fluidframework/datastore/*"],
 							"message":
-								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See \"How-to\" in the README for more information.",
+								"Rather than import this Fluid package directly, use the 'apis' argument of describeCompat. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						// --- Targeted restrictions ---
@@ -101,7 +101,7 @@ const config: Linter.Config[] = [
 								"DataObjectFactory",
 							],
 							"message":
-								"Use apis.dataRuntime.{DataObject,DataObjectFactory} / apis.containerRuntime.{BaseContainerRuntimeFactory,ContainerRuntimeFactoryWithDefaultDataStore} from describeCompat instead. Other aqueduct exports (e.g. TreeDataObject) are not compat-versioned and remain unrestricted.",
+								"Use apis.dataRuntime.{DataObject,DataObjectFactory} / apis.containerRuntime.{BaseContainerRuntimeFactory,ContainerRuntimeFactoryWithDefaultDataStore} from describeCompat instead. Other aqueduct exports (e.g. TreeDataObject) are not compat-versioned and remain unrestricted. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -111,7 +111,7 @@ const config: Linter.Config[] = [
 							],
 							"importNames": ["Loader"],
 							"message":
-								"Use apis.loader.Loader from describeCompat instead. Other container-loader exports (ConnectionState, LoaderHeader, ILoaderProps, waitContainerToCatchUp, etc.) are not compat-versioned and remain unrestricted.",
+								"Use apis.loader.Loader from describeCompat instead. Other container-loader exports (ConnectionState, LoaderHeader, ILoaderProps, waitContainerToCatchUp, etc.) are not compat-versioned and remain unrestricted. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -121,7 +121,7 @@ const config: Linter.Config[] = [
 							],
 							"importNames": ["ContainerRuntime"],
 							"message":
-								"Use apis.containerRuntime.ContainerRuntime from describeCompat instead. Other container-runtime exports (IContainerRuntimeOptions, CompressionAlgorithms, DefaultSummaryConfiguration, ContainerMessageType, IGCRuntimeOptions, ISummarizer, etc.) are not compat-versioned and remain unrestricted.",
+								"Use apis.containerRuntime.ContainerRuntime from describeCompat instead. Other container-runtime exports (IContainerRuntimeOptions, CompressionAlgorithms, DefaultSummaryConfiguration, ContainerMessageType, IGCRuntimeOptions, ISummarizer, etc.) are not compat-versioned and remain unrestricted. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 						{
@@ -133,7 +133,7 @@ const config: Linter.Config[] = [
 								"configuredSharedTree",
 							],
 							"message":
-								"Use apis.dds.SharedTree / apis.dataRuntime.packages.tree.{SchemaFactory,TreeViewConfiguration,configuredSharedTree} from describeCompat instead. Tree type exports (ITree, TreeView, ITreeAlpha, etc.) are not affected.",
+								"Use apis.dds.SharedTree / apis.dataRuntime.packages.tree.{SchemaFactory,TreeViewConfiguration,configuredSharedTree} from describeCompat instead. Tree type exports (ITree, TreeView, ITreeAlpha, etc.) are not affected. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
 							"allowTypeImports": true,
 						},
 					],
