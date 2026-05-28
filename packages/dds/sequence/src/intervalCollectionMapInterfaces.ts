@@ -25,8 +25,9 @@ export interface IntervalAddLocalMetadata {
 	endpointChangesNode?: ListNode<IntervalAddLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
 	/**
-	 * Set of user-defined property keys carried by this op's properties bag; populated when the op was submitted
-	 * (used to enable future squash optimizations).
+	 * Set of user-defined property keys present at submit (reserved keys such as the interval id
+	 * and range labels are excluded). Undefined when the op was submitted without any user-supplied
+	 * property bag. Populated to enable future squash optimizations.
 	 */
 	propertyKeys?: ReadonlySet<string>;
 }
@@ -36,8 +37,9 @@ export interface IntervalChangeLocalMetadata {
 	endpointChangesNode?: ListNode<IntervalChangeLocalMetadata | IntervalChangeLocalMetadata>;
 	interval: SequenceIntervalClass;
 	/**
-	 * Set of user-defined property keys carried by this op's properties bag; populated when the op was submitted
-	 * (used to enable future squash optimizations).
+	 * Set of user-defined property keys present at submit (reserved keys such as the interval id
+	 * and range labels are excluded). Undefined when the op was submitted without any user-supplied
+	 * property bag. Populated to enable future squash optimizations.
 	 */
 	propertyKeys?: ReadonlySet<string>;
 }

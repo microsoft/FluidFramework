@@ -1225,7 +1225,10 @@ export class IntervalCollection
 						type: "add",
 						localSeq,
 						interval,
-						propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
+						propertyKeys:
+							props === undefined
+								? undefined
+								: new Set(Object.keys(getSerializedProperties(serializedInterval).properties)),
 					},
 				);
 			}
@@ -1354,7 +1357,10 @@ export class IntervalCollection
 					type: "change",
 					localSeq,
 					interval: newInterval ?? interval,
-					propertyKeys: props === undefined ? undefined : new Set(Object.keys(props)),
+					propertyKeys:
+						props === undefined
+							? undefined
+							: new Set(Object.keys(getSerializedProperties(serializedInterval).properties)),
 				};
 
 				this.submitDelta(
