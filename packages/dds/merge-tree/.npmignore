@@ -7,8 +7,6 @@ src/test
 docs/
 .vscode/
 
-# These are large test files that we don't need to distribute.
-**/*.test-files.tar
 **/mergeTreeExample1.pdf
 
 # We technically don't need to distribute the compiled test code, but because it's imported in the sequence package,

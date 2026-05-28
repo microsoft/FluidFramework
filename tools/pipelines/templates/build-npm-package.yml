@@ -582,13 +582,6 @@ extends:
                       artifactName: pack
                       publishLocation: pipeline
 
-                    - output: pipelineArtifact
-                      displayName: Publish Artifact - Test Files
-                      targetPath: $(Build.ArtifactStagingDirectory)/test-files
-                      artifactName: test-files
-                      publishLocation: pipeline
-                      sbomEnabled: false
-
                 - ${{ if eq(parameters.taskBundleAnalysis, true) }}:
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analysis

@@ -123,7 +123,6 @@
 		"generate:entrypoint-sources": "scripts/generate-entrypoint-sources.sh",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"pack:tests": "tar -cf ./tree.test-files.tar ./src/test ./dist/test ./lib/test",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:memory": "cross-env FLUID_TEST_PERF_MODE=1 mocha --fgrep @Memory --parallel --jobs 6",
