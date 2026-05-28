@@ -47,6 +47,18 @@ const config: Linter.Config[] = [
 			"unicorn/consistent-function-scoping": "off",
 			// Test files frequently use `as any` casts to access internal/hidden properties for testing
 			"@typescript-eslint/no-unsafe-member-access": "off",
+
+			//#region Lints disabled due to being slow and low value for tests
+			// Promise lint rules are useful in production paths but are disproportionately expensive in tests.
+			"@typescript-eslint/no-misused-promises": "off",
+			"@typescript-eslint/no-floating-promises": "off",
+			// This is currently the largest lint hotspot in test files and adds limited value there.
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			// Import namespace validation is also expensive and low-value for test-only imports.
+			"import-x/namespace": "off",
+			// Regex optimization suggestions are not important for test code paths.
+			"unicorn/better-regex": "off",
+			//#endregion
 		},
 	},
 ];
