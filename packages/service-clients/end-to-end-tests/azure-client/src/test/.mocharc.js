@@ -9,4 +9,7 @@ import { getFluidTestMochaConfigWithCompat } from "@fluid-private/test-version-u
 
 const packageDir = path.resolve(import.meta.dirname, "../..");
 const config = getFluidTestMochaConfigWithCompat(packageDir);
-export default config;
+// mocha v12+ supports ESM config when default export is given via `export default config;`.
+// Prior to that synchronous ESM can be loaded with specifically configured
+// module.exports export containing the config.
+export { config as "module.exports" };

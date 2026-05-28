@@ -55,4 +55,7 @@ if (runningAgainstInternalRouterliciousCluster) {
 
 // TODO: ADO#34589: These tests leak memory and sometimes crash on CI. This is a workaround to increase the memory limit.
 config["node-option"] = [...config["node-option"], "max-old-space-size=8000"];
-export default config;
+// mocha v12+ supports ESM config when default export is given via `export default config;`.
+// Prior to that synchronous ESM can be loaded with specifically configured
+// module.exports export containing the config.
+export { config as "module.exports" };
