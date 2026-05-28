@@ -5,7 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
-import { assignChild, MergeBlock, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import {
+	assignChild,
+	MergeBlock,
+	type ISegmentLeaf,
+	type ISegmentPrivate,
+	type SegmentGroup,
+} from "../mergeTreeNodes.js";
 import { SegmentGroupCollection } from "../segmentGroupCollection.js";
 import { type IHasInsertionInfo, overwriteInfo } from "../segmentInfos.js";
 import { TextSegment } from "../textSegment.js";
@@ -59,6 +65,51 @@ describe("segmentGroupCollection", () => {
 		assert.equal(dequeuedSegmentGroup?.segments.length, 1);
 		assert.equal(dequeuedSegmentGroup.segments[0], segment);
 		assert.equal(dequeuedSegmentGroup, segmentGroup);
+	});
+
+	describe(".previousPropsForSegment", () => {
+		it("returns undefined when the group has no previousProps", () => {
+			const segmentGroup: SegmentGroup = { segments: [], localSeq: 1, refSeq: 0 };
+			segmentGroups.enqueue(segmentGroup);
+
+			assert.equal(segmentGroups.previousPropsForSegment(segmentGroup), undefined);
+		});
+
+		it("returns undefined when the segment has no entry in previousProps", () => {
+			const otherSegment = overwriteInfo<IHasInsertionInfo>(TextSegment.make("xyz"), {
+				insert: {
+					type: "insert",
+					clientId: 0,
+					seq: 1,
+				},
+			});
+			assignChild(parent, otherSegment, parent.childCount++);
+			const segmentGroup: SegmentGroup = {
+				segments: [],
+				localSeq: 1,
+				refSeq: 0,
+				previousProps: new WeakMap<ISegmentLeaf, { [key: string]: unknown }>(),
+			};
+			// Only the unrelated segment has an entry; `segment` does not.
+			segmentGroup.previousProps!.set(otherSegment as ISegmentLeaf, { foo: "bar" });
+			segmentGroups.enqueue(segmentGroup);
+
+			assert.equal(segmentGroups.previousPropsForSegment(segmentGroup), undefined);
+		});
+
+		it("returns the previousProps entry for the collection's segment", () => {
+			const expectedProps = { color: "blue" };
+			const segmentGroup: SegmentGroup = {
+				segments: [],
+				localSeq: 1,
+				refSeq: 0,
+				previousProps: new WeakMap<ISegmentLeaf, { [key: string]: unknown }>(),
+			};
+			segmentGroup.previousProps!.set(segment as ISegmentLeaf, expectedProps);
+			segmentGroups.enqueue(segmentGroup);
+
+			assert.equal(segmentGroups.previousPropsForSegment(segmentGroup), expectedProps);
+		});
 	});
 
 	it(".copyTo", () => {
