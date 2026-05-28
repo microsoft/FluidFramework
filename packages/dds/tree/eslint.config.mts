@@ -49,15 +49,17 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 
 			//#region Lints disabled due to being slow and low value for tests
+			// Since our build ignores "warn" level lints, but they might be useful to devs interactively (and thats not where we have perf issues),
+			// these are kept as "warn" instead of simply "off".
 			// Promise lint rules are useful in production paths but are disproportionately expensive in tests.
-			"@typescript-eslint/no-misused-promises": "off",
-			"@typescript-eslint/no-floating-promises": "off",
+			"@typescript-eslint/no-misused-promises": "warn",
+			"@typescript-eslint/no-floating-promises": "warn",
 			// This is currently the largest lint hotspot in test files and adds limited value there.
-			"@typescript-eslint/strict-boolean-expressions": "off",
+			"@typescript-eslint/strict-boolean-expressions": "warn",
 			// Import namespace validation is also expensive and low-value for test-only imports.
-			"import-x/namespace": "off",
+			"import-x/namespace": "warn",
 			// Regex optimization suggestions are not important for test code paths.
-			"unicorn/better-regex": "off",
+			"unicorn/better-regex": "warn",
 			//#endregion
 		},
 	},
