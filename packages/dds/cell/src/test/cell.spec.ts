@@ -504,19 +504,19 @@ describe("Cell", () => {
 			// This exercises the per-ACK pendingMessageIds.shift() path and would assert-fail
 			// (0x471 "Unexpected pending message received") if the pending list order or the
 			// pendingNode bookkeeping were wrong.
-			for (let i = 0; i < values.length; i++) {
+			for (const _ of values) {
 				containerRuntimeFactory.processSomeMessages(1);
 				// Local cell continues to reflect its latest local write throughout.
 				assert.equal(
 					cell1.get(),
-					values[values.length - 1],
+					values.at(-1),
 					"local cell should retain latest pending value while ACKs drain",
 				);
 			}
 
 			// After all ACKs, both cells must converge on the final value in order.
-			assert.equal(cell1.get(), values[values.length - 1], "cell1 final value");
-			assert.equal(cell2.get(), values[values.length - 1], "cell2 final value");
+			assert.equal(cell1.get(), values.at(-1), "cell1 final value");
+			assert.equal(cell2.get(), values.at(-1), "cell2 final value");
 		});
 
 		it("rolls back multiple pending sets in LIFO order against the expected pending id", () => {
