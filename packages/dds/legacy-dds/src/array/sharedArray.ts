@@ -431,6 +431,12 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 
 	public rollback(op: unknown, _localOpMetadata: unknown): void {
 		const arrayOp = op as ISharedArrayOperation<T>;
+		// Drop the matching record from the FIFO {@link pendingOps} ledger before applying
+		// the inverse mutation. Rollback runs LIFO and may target any in-flight op (not
+		// necessarily the head), so locate the matching entry by op-shape identity rather
+		// than shifting blindly. Doing this before the mutation also avoids leaving the
+		// ledger in an inconsistent state if the inverse mutation throws.
+		this.removeMatchingPendingOp(arrayOp);
 		switch (arrayOp.type) {
 			case OperationType.insertEntry: {
 				const liveEntry = this.getLiveEntry(arrayOp.entryId);
@@ -625,6 +631,29 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 		}
 	}
 
+	/**
+	 * Locate and remove the {@link pendingOps} ledger record that corresponds to
+	 * the supplied rolled-back op. The ledger is FIFO but rollback can target any
+	 * in-flight op, so we walk the list and match by op-shape: `type` + `entryId`,
+	 * plus `targetEntryId` for {@link OperationType.moveEntry} and
+	 * {@link OperationType.toggleMove}. Asserts exactly one match is removed so the
+	 * ledger stays in sync with the locally-applied op set.
+	 */
+	private removeMatchingPendingOp(op: ISharedArrayOperation<T>): void {
+		const expected = this.buildPendingOp(op);
+		const match = this.pendingOps.find(
+			(node) =>
+				node.data.type === expected.type &&
+				node.data.entryId === expected.entryId &&
+				node.data.targetEntryId === expected.targetEntryId,
+		);
+		assert(
+			match !== undefined,
+			"rollback target must have a matching pendingOps ledger entry",
+		);
+		this.pendingOps.remove(match);
+	}
+
 	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
 		const { envelope, local, messagesContent } = messagesCollection;
 		for (const messageContent of messagesContent) {
@@ -672,11 +701,22 @@ export class SharedArrayClass<T extends SerializableTypeForSharedArray>
 				}
 			}
 			if (local) {
-				// FIFO consume: the head of pendingOps is the ack target.
+				// FIFO consume: the head of pendingOps is the ack target. The head must
+				// match the acked op on `type`, `entryId`, and (for move/toggleMove) the
+				// `changedToEntryId` we recorded as `targetEntryId`. A mismatch indicates
+				// the ledger and ack stream are out of sync (e.g. a rollback failed to
+				// remove its ledger entry) and would propagate as corruption downstream.
 				const acked = this.pendingOps.shift()?.data;
+				const ackedTargetEntryId =
+					op.type === OperationType.moveEntry || op.type === OperationType.toggleMove
+						? op.changedToEntryId
+						: undefined;
 				assert(
-					acked !== undefined && acked.entryId === op.entryId,
-					"pendingOps head must match acked op entryId",
+					acked !== undefined &&
+						acked.type === op.type &&
+						acked.entryId === op.entryId &&
+						acked.targetEntryId === ackedTargetEntryId,
+					0xb97 /* pendingOps head must match acked op shape */,
 				);
 			} else {
 				this.emitValueChangedEvent(op, local);
