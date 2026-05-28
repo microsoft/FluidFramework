@@ -69,7 +69,6 @@ fluid-framework
 @fluidframework/task-manager
 @fluidframework/shared-summary-block
 @fluidframework/shared-object-base
-@fluidframework/claims
 @fluidframework/sequence
 @fluidframework/register-collection
 @fluid-experimental/pact-map
@@ -80,6 +79,7 @@ fluid-framework
 @fluidframework/legacy-dds
 @fluid-experimental/ink
 @fluidframework/counter
+@fluidframework/claims
 @fluidframework/cell
 @fluidframework/driver-definitions
 @fluidframework/core-utils
