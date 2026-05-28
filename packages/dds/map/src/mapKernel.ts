@@ -678,7 +678,7 @@ export class MapKernel {
 			const pendingEntry = typedLocalOpMetadata.lifetime;
 			const pendingKeySetNode = pendingEntry.keySets.pop();
 			assert(
-				pendingKeySetNode !== undefined && pendingKeySetNode.data === typedLocalOpMetadata,
+				pendingKeySetNode?.data === typedLocalOpMetadata,
 				0xbf5 /* Unexpected set rollback */,
 			);
 			if (pendingEntry.keySets.empty) {
@@ -701,7 +701,7 @@ export class MapKernel {
 			);
 			const pendingEntry = this.pendingData[pendingEntryIndex];
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "delete",
+				pendingEntry?.type === "delete",
 				0xbf3 /* Unexpected pending data for set/delete op */,
 			);
 			assert(pendingEntry === typedLocalOpMetadata, 0xbf4 /* Unexpected delete rollback */);
@@ -787,7 +787,7 @@ export class MapKernel {
 
 				if (local) {
 					assert(
-						localOpMetadata !== undefined && localOpMetadata.type === "delete",
+						localOpMetadata?.type === "delete",
 						"Got a local delete message we weren't expecting",
 					);
 					const pendingEntryIndex = this.pendingData.indexOf(localOpMetadata);
@@ -823,14 +823,14 @@ export class MapKernel {
 
 				if (local) {
 					assert(
-						localOpMetadata !== undefined && localOpMetadata.type === "set",
+						localOpMetadata?.type === "set",
 						"Got a local set message we weren't expecting",
 					);
 					// Locate the parent lifetime via the back-pointer on the PendingKeySet, avoiding a linear scan.
 					const pendingEntry = localOpMetadata.lifetime;
 					const pendingKeySetNode = pendingEntry.keySets.shift();
 					assert(
-						pendingKeySetNode !== undefined && pendingKeySetNode.data === localOpMetadata,
+						pendingKeySetNode?.data === localOpMetadata,
 						"Got a local set message we weren't expecting",
 					);
 					if (pendingEntry.keySets.empty) {

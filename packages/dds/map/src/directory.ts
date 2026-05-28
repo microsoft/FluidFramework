@@ -1099,7 +1099,7 @@ interface ICreateSubDirLocalOpMetadata {
 	 * Back-pointer to the {@link PendingSubDirectoryCreate} entry in
 	 * `parentSubdir.pendingSubDirectoryData` this metadata originated from. Lets resubmit
 	 * identify the exact entry by reference rather than name+type, which is ambiguous when
-	 * multiple same-name lifecycle ops are pending (e.g. delete->create->delete).
+	 * multiple same-name lifecycle ops are pending (e.g. delete-\>create-\>delete).
 	 */
 	pendingEntry: PendingSubDirectoryCreate;
 }
@@ -2401,6 +2401,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 						entry.key === op.key &&
 						// We also check that the keySets include the localOpMetadata. It's possible we have new
 						// pending key sets that are not the op we are looking for.
+						// eslint-disable-next-line unicorn/prefer-array-some -- DoublyLinkedList has no `some` method
 						entry.keySets.find((node) => node.data === (localOpMetadata as PendingKeySet)) !==
 							undefined
 				: entry.type === "delete" && entry.key === op.key;
