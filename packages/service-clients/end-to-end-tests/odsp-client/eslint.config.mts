@@ -9,6 +9,10 @@ import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 const config: Linter.Config[] = [
 	...recommended,
 	{
+		// eslint doesn't recognize renamed exports syntax (that is required for ESM config under v11 mocha)
+		ignores: ["src/test/.mocharc.js"],
+	},
+	{
 		rules: {
 			"prefer-arrow-callback": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
@@ -32,13 +36,6 @@ const config: Linter.Config[] = [
 					"fixMixedExportsWithInlineTypeSpecifier": true,
 				},
 			],
-		},
-	},
-	{
-		files: ["src/test/.mocharc.js"],
-		rules: {
-			"import-x/no-default-export": "off",
-			"import-x/no-internal-modules": "off",
 		},
 	},
 	{
