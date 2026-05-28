@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -215,19 +217,68 @@ export class RangeMap<K, V> {
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = a.clone();
-		for (const entryB of b.entries()) {
-			for (const entryA of a.getAll(entryB.start, entryB.length)) {
-				const key = b.offsetKey(entryB.start, entryA.offset);
-				const valueB = b.offsetValue(entryB.value, entryA.offset);
-				const mergedValue =
-					entryA.value === undefined ? valueB : mergeFunc(key, entryA.value, valueB);
+		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
-				merged.set(key, entryA.length, mergedValue);
-			}
-		}
+		// We first union the underlying B-trees, possibly resulting in a malformed range map.
+		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
+			a.tree,
+			b.tree,
+			(key, v1, v2) => v1,
+		);
+
+		// XXX: We can't call `merged.set` since `merged` might be malformed.
+		RangeMap.forEachIntersection(a, b, (key, length, valueA, valueB) =>
+			merged.set(key, length, mergeFunc(key, valueA, valueB)),
+		);
 
 		return merged;
+	}
+
+	private static forEachIntersection<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		callback: (key: K, length: number, valueA: V, valueB: V) => void,
+	): void {
+		let map1 = mapA;
+		let map2 = mapB;
+		const firstKeyA = map1.tree.minKey();
+		if (firstKeyA === undefined) {
+			return;
+		}
+
+		let entry1 = map1.tree.getPairOrNextLower(firstKeyA);
+		while (entry1 !== undefined) {
+			const [key1, { value: value1, length: length1 }] = entry1;
+			const entry2 = map2.tree.getPairOrNextLower(key1);
+			if (entry2 !== undefined) {
+				const [key2, { value: value2, length: length2 }] = entry2;
+				const offset = mapA.subtractKeys(key1, key2);
+				const intersectionLength = Math.min(length2 - offset, length1);
+				if (intersectionLength > 0) {
+					const value2Offset = mapA.offsetValue(value2, offset);
+					const [valueA, valueB] =
+						map1 === mapA ? [value1, value2Offset] : [value2Offset, value1];
+
+					callback(key1, intersectionLength, valueA, valueB);
+					entry1 = map1.tree.nextHigherPair(key1);
+					continue;
+				}
+			}
+
+			[map1, map2] = [map2, map1];
+			entry1 = map1.tree.nextHigherPair(key1);
+		}
+
+		return;
+	}
+
+	private getFirstEntry(): RangeMapEntry<K, V> | undefined {
+		const key = this.tree.minKey();
+		if (key === undefined) {
+			return undefined;
+		}
+		const entry = this.tree.get(key) ?? fail("Expected value for min key");
+		return { start: key, value: entry.value, length: entry.length };
 	}
 
 	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {
