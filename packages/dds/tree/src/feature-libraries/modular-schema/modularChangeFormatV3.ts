@@ -5,15 +5,10 @@
 
 import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
 
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../../core/index.js";
+import { EncodedChangeAtomId } from "../../core/index.js";
 
-import {
-	EncodedBuilds,
-	EncodedFieldChangeMap,
-	EncodedNodeChangeset,
-	EncodedRevisionInfo,
-} from "./modularChangeFormatV1.js";
-import { EncodedNoChangeConstraint } from "./modularChangeFormatV2.js";
+import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
+import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
@@ -41,26 +36,17 @@ const EncodedRootNodes = Type.Optional(
 
 export type EncodedRootNodes = Static<typeof EncodedRootNodes>;
 
-export const EncodedModularChangesetV3 = Type.Object(
-	{
-		maxId: Type.Optional(ChangesetLocalIdSchema),
-		fieldChanges: EncodedFieldChangeMap,
-		rootNodes: EncodedRootNodes,
-		nodeRenames: EncodedRenames,
-		revisions: Type.ReadonlyOptional(Type.Array(EncodedRevisionInfo)),
-		// TODO#8574: separating `builds` and `refreshers` here means that we encode their `EncodedBuilds.trees` separately.
-		// This can lead to a less efficient wire representation because of duplicated schema/shape information.
-		builds: Type.Optional(EncodedBuilds),
-		refreshers: Type.Optional(EncodedBuilds),
-
-		/**
-		 * The number of constraints within this changeset that are violated.
-		 */
-		violations: Type.Optional(Type.Number({ minimum: 0, multipleOf: 1 })),
-
-		/** Global no change constraint that gets violated whenever the changeset is rebased */
-		noChangeConstraint: Type.Optional(EncodedNoChangeConstraint),
-	},
+export const EncodedModularChangesetV3 = Type.Composite(
+	[
+		EncodedModularChangesetV2,
+		Type.Object(
+			{
+				rootNodes: EncodedRootNodes,
+				nodeRenames: EncodedRenames,
+			},
+			noAdditionalProps,
+		),
+	],
 	noAdditionalProps,
 );
 

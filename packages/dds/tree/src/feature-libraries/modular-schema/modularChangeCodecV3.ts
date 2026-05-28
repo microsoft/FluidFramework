@@ -351,11 +351,7 @@ export function makeModularChangeCodecV3(
 					change.revisions === undefined
 						? undefined
 						: encodeRevisionInfos(change.revisions, context, revisionTagCodec),
-				fieldChanges: encodeFieldChangesForJson(
-					change.fieldChanges,
-					undefined,
-					contextFactory,
-				),
+				changes: encodeFieldChangesForJson(change.fieldChanges, undefined, contextFactory),
 				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, context, encodeNode),
 				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),
 				builds: encodeDetachedNodes(
@@ -418,7 +414,7 @@ export function makeModularChangeCodecV3(
 			const decoded: Mutable<ModularChangeset> = {
 				rebaseVersion: 2,
 				fieldChanges: decodeFieldChangesFromJson(
-					encodedChange.fieldChanges,
+					encodedChange.changes,
 					undefined,
 					crossFieldKeys,
 					context,
