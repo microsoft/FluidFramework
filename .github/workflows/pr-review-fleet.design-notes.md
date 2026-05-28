@@ -2,7 +2,7 @@
 
 > Adapted from a transcript discussion, corrected against the actual Fleet Review workflows in this directory. See [`pr-review-fleet.README.md`](./pr-review-fleet.README.md) for the workflow reference.
 
-Understanding the difference between `pull_request` and `pull_request_target` is important for designing secure GitHub Actions workflows.
+Understanding the difference between the GitHub Actions `pull_request` and `pull_request_target` trigger events is important for designing secure workflows.
 
 At a high level, GitHub's documentation says that `pull_request` runs in the context of the PR's merge commit, while `pull_request_target` runs in the context of the base branch (and, since December 2025, the default branch is the workflow source for `pull_request_target`). Put more simply: when you use `pull_request`, the workflow is evaluating the proposed PR changes; when you use `pull_request_target`, the workflow definition comes from the trusted repository side instead.
 
