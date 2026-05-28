@@ -1,23 +1,5 @@
 # fluid-framework
 
-## 2.102.0
-
-### Minor Changes
-
-- Promote `onAssertionFailure` to `@beta` ([#27282](https://github.com/microsoft/FluidFramework/pull/27282)) [4191b82e41](https://github.com/microsoft/FluidFramework/commit/4191b82e418cdd908300350dcbde1b8b552f8186)
-
-  The `onAssertionFailure` hook, previously `@alpha`, has been promoted to `@beta`.
-  It allows registering a handler that is invoked when an assertion failure occurs, which is useful for capturing the first error in a sequence before subsequent failures obscure the root cause.
-
-  ```typescript
-  import { onAssertionFailure } from "@fluidframework/core-utils/beta";
-
-  let firstAssertion: Error | undefined;
-  const unregister = onAssertionFailure((error) => {
-    firstAssertion ??= error;
-  });
-  ```
-
 ## 2.101.0
 
 ### Minor Changes
