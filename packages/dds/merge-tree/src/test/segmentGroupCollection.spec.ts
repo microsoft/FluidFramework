@@ -84,14 +84,15 @@ describe("segmentGroupCollection", () => {
 				},
 			});
 			assignChild(parent, otherSegment, parent.childCount++);
+			const previousProps = new WeakMap<ISegmentLeaf, { [key: string]: unknown }>();
 			const segmentGroup: SegmentGroup = {
 				segments: [],
 				localSeq: 1,
 				refSeq: 0,
-				previousProps: new WeakMap<ISegmentLeaf, { [key: string]: unknown }>(),
+				previousProps,
 			};
 			// Only the unrelated segment has an entry; `segment` does not.
-			segmentGroup.previousProps!.set(otherSegment as ISegmentLeaf, { foo: "bar" });
+			previousProps.set(otherSegment as ISegmentLeaf, { foo: "bar" });
 			segmentGroups.enqueue(segmentGroup);
 
 			assert.equal(segmentGroups.previousPropsForSegment(segmentGroup), undefined);
@@ -99,13 +100,14 @@ describe("segmentGroupCollection", () => {
 
 		it("returns the previousProps entry for the collection's segment", () => {
 			const expectedProps = { color: "blue" };
+			const previousProps = new WeakMap<ISegmentLeaf, { [key: string]: unknown }>();
 			const segmentGroup: SegmentGroup = {
 				segments: [],
 				localSeq: 1,
 				refSeq: 0,
-				previousProps: new WeakMap<ISegmentLeaf, { [key: string]: unknown }>(),
+				previousProps,
 			};
-			segmentGroup.previousProps!.set(segment as ISegmentLeaf, expectedProps);
+			previousProps.set(segment as ISegmentLeaf, expectedProps);
 			segmentGroups.enqueue(segmentGroup);
 
 			assert.equal(segmentGroups.previousPropsForSegment(segmentGroup), expectedProps);
