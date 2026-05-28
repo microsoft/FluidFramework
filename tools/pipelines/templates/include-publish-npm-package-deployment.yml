@@ -81,9 +81,21 @@ jobs:
               targetType: 'inline'
               workingDirectory: .
               script: |
+                set -eu -o pipefail
                 echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
                 npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+
+                # fflate 0.8.3 changed the streaming Gunzip callback semantics in a way that breaks
+                # `flub publish tarballs`. Force-downgrade the fflate nested inside the globally-installed
+                # flub to 0.8.2 as a workaround. We point npm at flub's own install dir so it overwrites
+                # flub's nested copy that `require()` actually loads, rather than hoisting fflate to the
+                # top of the global node_modules. `--omit=dev` avoids reifying flub's devDependencies.
+                FLUB_DIR="$(npm root -g)/@fluid-tools/build-cli"
+                npm install --prefix "$FLUB_DIR" --no-save --no-package-lock --omit=dev fflate@0.8.2
+
+                ACTUAL_FFLATE=$(node -p "require('$FLUB_DIR/node_modules/fflate/package.json').version")
+                [ "$ACTUAL_FFLATE" = "0.8.2" ] || { echo "##[error]flub's nested fflate is $ACTUAL_FFLATE, expected 0.8.2"; exit 1; }
 
                 # This can be removed once all builds tools are moved to the build-cli library
                 npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
