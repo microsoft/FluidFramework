@@ -14,13 +14,19 @@ const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
-			// Nested changes
+			/**
+			 * Nested changes
+			 */
 			c: Type.Optional(tNodeChange),
 
-			// How to replace the current value of the field.
+			/**
+			 * How to replace the current value of the field.
+			 */
 			r: Type.Optional(EncodedReplace),
 
-			// Node detach
+			/**
+			 * The ID of the node-targeting detach, if any.
+			 */
 			d: Type.Optional(EncodedChangeAtomId),
 		},
 		noAdditionalProps,
@@ -32,12 +38,19 @@ export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
 
 const EncodedReplace = Type.Object(
 	{
-		// Whether the field is empty in the input context of this change.
+		/**
+		 * Whether the field is empty in the input context of this change.
+		 */
 		e: Type.Boolean(),
-		// The ID for the node to put in this field, or undefined if the field should be emptied.
-		// Will be "self" when the intention is to keep the current node in this field.
+
+		/**
+		 * The ID for the node to put in this field, or undefined if the field should be emptied.
+		 */
 		s: Type.Optional(EncodedChangeAtomId),
-		// An ID to associate with the node (if any) which is detached by this edit.
+
+		/**
+		 * An ID to associate with the node (if any) which is detached by this edit.
+		 */
 		d: EncodedChangeAtomId,
 	},
 	noAdditionalProps,

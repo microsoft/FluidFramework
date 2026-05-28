@@ -5,6 +5,7 @@
 
 import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import type { TAnySchema } from "@sinclair/typebox";
+import { EmptyBTree } from "@tylerbu/sorted-btree-es6";
 
 import {
 	extractJsonValidator,
@@ -601,7 +602,7 @@ export function makeFieldEncodingContextFactory(
 
 		return {
 			baseContext: context,
-			rootNodeChanges: rootChanges?.nodeChanges ?? newChangeAtomIdBTree(),
+			rootNodeChanges: rootChanges?.nodeChanges ?? brand(EmptyBTree),
 			rootRenames: rootChanges?.renames ?? newChangeAtomIdTransform(),
 
 			encodeNode,
