@@ -356,20 +356,12 @@ export function withBufferedTreeEvents(callback: () => void): void {
  * {@link withBufferedTreeEvents} window and therefore need to be flushed when it ends.
  *
  * @remarks
- * Storing the buffers directly (rather than subscribing each one to a global "flush" event)
- * avoids leaking buffers - and everything their listeners capture - in the case where a
- * {@link TreeNodeKernel} is dropped without being explicitly disposed. The set is empty
- * whenever no buffering window is in progress.
+ * The set should be empty whenever no buffering window is in progress.
  */
 const activeBuffers: Set<KernelEventBuffer> = new Set();
 
 /**
  * Test-only accessor for the current size of {@link activeBuffers}.
- *
- * @remarks
- * Exposed so regression tests can verify that {@link KernelEventBuffer}s are not retained
- * by module-level state outside an active {@link withBufferedTreeEvents} window.
- * Do not use outside of tests.
  */
 export function TEST_activeBufferCount(): number {
 	return activeBuffers.size;
