@@ -385,10 +385,10 @@ stages:
           displayName: '[test] ${{ parameters.testCommand }} ${{ variant.flags }}'
           continueOnError: ${{ parameters.continueOnError }}
           env:
-            # @ff-internal/aria-logger exports createTestLogger; it gets linked into FluidFramework's
-            # node_modules above, so the bare specifier resolves via Node's standard module resolution.
-            # Default first so a caller can still override via parameters.env if needed.
-            FLUID_TEST_LOGGER_PKG_SPECIFIER: '@ff-internal/aria-logger'
+            # Callers that want to use @ff-internal/aria-logger set FLUID_TEST_LOGGER_PKG_SPECIFIER
+            # to '@ff-internal/aria-logger' in their env. The package is linked into FluidFramework's
+            # node_modules above (regardless of whether this stage uses it), so the bare specifier
+            # resolves via Node's standard module resolution when set.
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
             # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
