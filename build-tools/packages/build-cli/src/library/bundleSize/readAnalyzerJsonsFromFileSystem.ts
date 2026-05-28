@@ -14,13 +14,13 @@ import type { AnalyzerJsonByPackage } from "./types.js";
 const analyzerJsonGlob = "**/analyzer.json";
 
 /**
- * Result of {@link readAnalyzerJsonsFromFileSystem}. `"missing"` signals that
- * `rootPath` itself doesn't exist on disk; `"ok"` means it was walked
- * successfully and `data` holds the per-package parsed reports.
+ * Result of {@link readAnalyzerJsonsFromFileSystem}. `"error"` signals
+ * `rootPath` can't be walked (doesn't exist, isn't a directory, …); `"ok"`
+ * means the walk succeeded and `data` holds the per-package parsed reports.
  */
 export type ReadAnalyzerJsonsResult =
 	| { kind: "ok"; data: AnalyzerJsonByPackage }
-	| { kind: "missing" };
+	| { kind: "error" };
 
 /**
  * Walks `rootPath`, finds every `<package>/analyzer.json` file, parses it, and
@@ -34,8 +34,9 @@ export type ReadAnalyzerJsonsResult =
 export async function readAnalyzerJsonsFromFileSystem(
 	rootPath: string,
 ): Promise<ReadAnalyzerJsonsResult> {
-	if (statSync(rootPath, { throwIfNoEntry: false }) === undefined) {
-		return { kind: "missing" };
+	const stat = statSync(rootPath, { throwIfNoEntry: false });
+	if (stat === undefined || !stat.isDirectory()) {
+		return { kind: "error" };
 	}
 	const data: AnalyzerJsonByPackage = new Map();
 	await Promise.all(

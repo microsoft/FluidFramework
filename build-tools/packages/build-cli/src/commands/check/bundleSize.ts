@@ -155,8 +155,10 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			localReportPath === defaultLocalReportPath
 				? " Run `pnpm bundle-analysis:collect` to populate it."
 				: "";
-		if (localResult.kind === "missing") {
-			this.error(`Local bundle report directory not found at "${localReportPath}".${hint}`);
+		if (localResult.kind === "error") {
+			this.error(
+				`Local bundle report path "${localReportPath}" is missing or not a directory.${hint}`,
+			);
 		}
 		const compareJsons = localResult.data;
 		if (compareJsons.size === 0) {
