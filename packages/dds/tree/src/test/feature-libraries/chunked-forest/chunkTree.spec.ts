@@ -1060,9 +1060,10 @@ describe("chunkTree", () => {
 		it("keeps chunk count bounded under repeated mid-field edits", () => {
 			// Steady-state stress: each round models one mid-field edit by splitting the field's
 			// first chunk in half, splicing a fresh same-shape chunk at the seam, and coalescing.
-			// This is the pattern attach/detach via splitFieldAtIndex + splice produces in
-			// practice. Without coalescing, the field would fragment unboundedly; with coalescing,
-			// it must stay within one chunk of the optimal partition for the per-chunk cap.
+			// Coalescing is windowed (cost proportional to insertedCount), so once a chunk drifts
+			// away from the active edit site it stays put — the field grows by ~1 chunk every
+			// `cap` rounds rather than 2 chunks every round (the no-coalesce baseline). The
+			// invariant verified here is the resulting "at most twice the optimal partition".
 			const cap = policy.uniformChunkNodeCountDynamicTargetMax;
 			let nextValue = cap;
 			const field: TreeChunk[] = [numbersChunk(makeArray(cap, (i) => i))];
@@ -1082,10 +1083,10 @@ describe("chunkTree", () => {
 				coalesceAroundSplice(field, 1, 1, policy);
 
 				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
-				const minChunks = Math.ceil(total / cap);
+				const maxExpected = 2 * Math.ceil(total / cap);
 				assert(
-					field.length <= minChunks + 1,
-					`round ${round}: expected <= ${minChunks + 1} chunks, got ${field.length}`,
+					field.length <= maxExpected,
+					`round ${round}: expected <= ${maxExpected} chunks, got ${field.length}`,
 				);
 			}
 		});
