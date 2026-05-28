@@ -2166,31 +2166,35 @@ export class ContainerRuntime
 		// (We have to call flush _before_ processing a runtime op, but after is ok for non-runtime op)
 		this.deltaManager.on("op", () => this.flush());
 
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "ContainerLoadStats",
-			...this.createContainerMetadata,
-			...this.channelCollection.containerLoadStats,
-			summaryNumber: loadSummaryNumber,
-			summaryFormatVersion: metadata?.summaryFormatVersion,
-			disableIsolatedChannels: metadata?.disableIsolatedChannels,
-			// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-			gcVersion: metadata?.gcFeature,
-			gcConfigs: this.garbageCollector.serializedConfigs,
-			options: JSON.stringify(runtimeOptions),
-			idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
-			idCompressorMode: this.sessionSchema.idCompressorMode,
-			sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
-			featureGates: JSON.stringify({
-				...featureGatesForTelemetry,
-				closeSummarizerDelayOverride,
-			}),
-			telemetryDocumentId: this.telemetryDocumentId,
-			groupedBatchingEnabled: this.groupedBatchingEnabled,
-			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-			minVersionForCollab: this.minVersionForCollab,
-			// logging hardware telemetry
-			deviceSpec: { ...getDeviceSpec() },
-		});
+		this.mc.logger.sendTelemetryEvent(
+			{
+				eventName: "ContainerLoadStats",
+				...this.createContainerMetadata,
+				...this.channelCollection.containerLoadStats,
+				summaryNumber: loadSummaryNumber,
+				summaryFormatVersion: metadata?.summaryFormatVersion,
+				disableIsolatedChannels: metadata?.disableIsolatedChannels,
+				// This is useful even for interactive clients since they track unreferenced nodes and log errors.
+				gcVersion: metadata?.gcFeature,
+				gcConfigs: this.garbageCollector.serializedConfigs,
+				options: JSON.stringify(runtimeOptions),
+				idCompressorModeMetadata: metadata?.documentSchema?.runtime?.idCompressorMode,
+				idCompressorMode: this.sessionSchema.idCompressorMode,
+				sessionRuntimeSchema: JSON.stringify(this.sessionSchema),
+				featureGates: JSON.stringify({
+					...featureGatesForTelemetry,
+					closeSummarizerDelayOverride,
+				}),
+				telemetryDocumentId: this.telemetryDocumentId,
+				groupedBatchingEnabled: this.groupedBatchingEnabled,
+				initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+				minVersionForCollab: this.minVersionForCollab,
+				// logging hardware telemetry
+				deviceSpec: { ...getDeviceSpec() },
+			},
+			undefined, // error
+			LogLevel.info,
+		);
 
 		ReportOpPerfTelemetry(this.clientId, this._deltaManager, this, this.baseLogger);
 		BindBatchTracker(this, this.baseLogger);

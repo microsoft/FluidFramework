@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LogLevel } from "@fluidframework/core-interfaces";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
@@ -63,11 +64,15 @@ export const toRedirectTable = (
 	const count = blobManagerLoadInfo.ids?.length ?? 0;
 	const redirectTableLength = blobManagerLoadInfo.redirectTable?.length ?? 0;
 	if (count > 0 || redirectTableLength > 0) {
-		logger.sendTelemetryEvent({
-			eventName: "AttachmentBlobsLoaded",
-			count,
-			redirectTable: redirectTableLength,
-		});
+		logger.sendTelemetryEvent(
+			{
+				eventName: "AttachmentBlobsLoaded",
+				count,
+				redirectTable: redirectTableLength,
+			},
+			undefined, // error
+			LogLevel.info,
+		);
 	}
 	const redirectTable = new Map<string, string>(blobManagerLoadInfo.redirectTable);
 	if (blobManagerLoadInfo.ids !== undefined) {
