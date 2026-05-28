@@ -20,7 +20,7 @@ export interface OptionalChangeset {
 
 	/**
 	 * If defined, this represents an intention to detach the node currently in this field, using `nodeDetach` as the detach ID.
-	 * If this node is moved elsewhere, this detach will follow it to the new location.
+	 * If this node is moved elsewhere by a concurrent change, this detach will follow it to the new location.
 	 * This detach will be applied before any detach in `valueReplace`.
 	 * This should be undefined if this field is empty in the input context of this changeset.
 	 */
