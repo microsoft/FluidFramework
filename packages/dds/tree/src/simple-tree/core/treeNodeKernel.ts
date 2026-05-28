@@ -336,29 +336,38 @@ export function withBufferedTreeEvents(callback: () => void): void {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
+			// Snapshot and clear before flushing so that any reentrant buffering started by listener
+			// code begins from a clean slate. Buffers are only ever added to this set while
+			// `bufferTreeEvents` is true, so flushing here (with the flag now false) will not
+			// re-enqueue any of them.
+			const toFlush = [...activeBuffers];
+			activeBuffers.clear();
+			for (const buffer of toFlush) {
+				buffer.flush();
+			}
 		}
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Set of {@link KernelEventBuffer}s that have accumulated buffered events during the current
+ * {@link withBufferedTreeEvents} window and therefore need to be flushed when it ends.
+ *
+ * @remarks
+ * Storing the buffers directly (rather than subscribing each one to a global "flush" event)
+ * avoids leaking buffers - and everything their listeners capture - in the case where a
+ * {@link TreeNodeKernel} is dropped without being explicitly disposed. The set is empty
+ * whenever no buffering window is in progress.
  */
-const flushEventsEmitter = createEmitter<{
-	flush: () => void;
-}>();
+const activeBuffers: Set<KernelEventBuffer> = new Set();
 
 /**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
+ * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
-
-	/**
-	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
-	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -501,6 +510,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
@@ -528,6 +538,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			this.#subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
@@ -565,12 +576,6 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			return;
 		}
 
-		assert(
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
-			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
-		);
-
-		this.#disposeOnFlushListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
@@ -582,6 +587,12 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#subTreeChangedBuffer = false;
 
 		this.#disposed = true;
+
+		assert(
+			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
+			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
+		);
+		assert(!activeBuffers.has(this), "Disposed buffer should be in activeBuffers.");
 	}
 }
 
