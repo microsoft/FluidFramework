@@ -362,6 +362,18 @@ export function withBufferedTreeEvents(callback: () => void): void {
 const activeBuffers: Set<KernelEventBuffer> = new Set();
 
 /**
+ * Test-only accessor for the current size of {@link activeBuffers}.
+ *
+ * @remarks
+ * Exposed so regression tests can verify that {@link KernelEventBuffer}s are not retained
+ * by module-level state outside an active {@link withBufferedTreeEvents} window.
+ * Do not use outside of tests.
+ */
+export function TEST_activeBufferCount(): number {
+	return activeBuffers.size;
+}
+
+/**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
  * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
  * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
