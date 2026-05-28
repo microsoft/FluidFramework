@@ -140,9 +140,9 @@ export const fieldKindConfigurations: ReadonlyMap<
 	[
 		ModularChangeFormatVersion.vDetachedRoots,
 		new Map<FieldKindIdentifier, FieldKindConfigurationEntry>([
-			[required.identifier, { kind: required, formatVersion: 2 }],
+			[required.identifier, { kind: required, formatVersion: 3 }],
 			[optional.identifier, { kind: optional, formatVersion: 3 }],
-			[sequence.identifier, { kind: sequence, formatVersion: 2 }],
+			[sequence.identifier, { kind: sequence, formatVersion: 3 }],
 			[forbidden.identifier, { kind: forbidden, formatVersion: 1 }],
 			[identifier.identifier, { kind: identifier, formatVersion: 1 }],
 		]),
