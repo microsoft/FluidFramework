@@ -846,6 +846,72 @@ export function testCorrectness(): void {
 					assert.equal(manager.getLongestBranchLength(), 2);
 				});
 			});
+
+			describe("getLocalCommitIndexByRevision", () => {
+				it("returns the correct index after all local commits are sequenced and new commits are appended", () => {
+					// This is a regression test for the side-map "headOffset drain-reset" branch.
+					// When all local commits have been sequenced (drained from the front), the head offset
+					// is reset to zero. New local commits appended afterward must still be locatable by
+					// revision.
+					const { manager } = testChangeEditManagerFactory({});
+					const local1 = applyLocalCommit(manager, [], 1);
+					const local2 = applyLocalCommit(manager, [1], 2);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local1.revision), 0);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local2.revision), 1);
+
+					// Sequence all local commits, draining the array and triggering the head-offset reset.
+					manager.addSequencedChanges([local1], local1.sessionId, brand(1), brand(0), "main");
+					manager.addSequencedChanges([local2], local2.sessionId, brand(2), brand(1), "main");
+					assert.deepEqual(manager.getLocalCommits("main"), []);
+					assert.equal(
+						manager.getLocalCommitIndexByRevision("main", local1.revision),
+						undefined,
+					);
+					assert.equal(
+						manager.getLocalCommitIndexByRevision("main", local2.revision),
+						undefined,
+					);
+
+					// Append new local commits. With the head offset reset to 0, the absolute indices
+					// stored for these commits should equal their actual array indices.
+					const local3 = applyLocalCommit(manager, [1, 2], 3);
+					const local4 = applyLocalCommit(manager, [1, 2, 3], 4);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local3.revision), 0);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local4.revision), 1);
+				});
+
+				it("returns the correct index after a non-append afterChange event rebuilds the side-map", () => {
+					// This is a regression test for the side-map "clear-and-rebuild" branch.
+					// A non-append afterChange event (e.g. one triggered by rebasing the local branch
+					// over incoming peer commits) clears the side-map and rebuilds it from the new
+					// local commit set. Lookups after such an event must still be accurate.
+					const { manager } = testChangeEditManagerFactory({});
+					const local1 = applyLocalCommit(manager, [], 1);
+					const local2 = applyLocalCommit(manager, [1], 2);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local1.revision), 0);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local2.revision), 1);
+
+					// A peer commit that the local commits must be rebased over triggers a non-append
+					// afterChange on the local branch.
+					const peerCommit1 = peerCommit(peer1, [], 10);
+					manager.addSequencedChanges(
+						[peerCommit1],
+						peerCommit1.sessionId,
+						brand(1),
+						brand(0),
+						"main",
+					);
+
+					// After the rebase, the local commits remain (with the same revisions) but the
+					// side-map has been cleared and rebuilt by the clear-and-rebuild branch.
+					const localCommitsAfterRebase = manager.getLocalCommits("main");
+					assert.equal(localCommitsAfterRebase.length, 2);
+					assert.equal(localCommitsAfterRebase[0].revision, local1.revision);
+					assert.equal(localCommitsAfterRebase[1].revision, local2.revision);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local1.revision), 0);
+					assert.equal(manager.getLocalCommitIndexByRevision("main", local2.revision), 1);
+				});
+			});
 		});
 
 		/**

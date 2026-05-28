@@ -99,8 +99,8 @@ export class SparseNode<TData> implements UpPath {
 		if (field === undefined) {
 			return undefined;
 		}
-		// TODO: should do more optimized search (ex: binary search or better) using index.
-		return field.find((c) => c.parentIndex === index);
+		const childIndex = binaryFindIndex(field, index);
+		return childIndex === -1 ? undefined : field[childIndex];
 	}
 
 	/**
