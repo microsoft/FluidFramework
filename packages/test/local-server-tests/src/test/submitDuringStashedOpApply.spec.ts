@@ -20,7 +20,7 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { TestFluidObjectFactory } from "@fluidframework/test-utils/internal";
 import type { ITestFluidObject } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 /**
  * NOTE — anti-pattern under test, do not copy.
@@ -135,9 +135,19 @@ describe("Submit during stashed-op apply (end-to-end)", () => {
 		//    submit guard (a different channel from the one in applyStashedOp,
 		//    so the channel-level stashedOpMd capture doesn't swallow it), and
 		//    the load rejects.
+		//
+		//    The submit-during-apply guard logs by default and only throws when
+		//    `Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow` is set
+		//    — turn the throw on here so the regression assertion has teeth.
 		await assert.rejects(
 			loadExistingContainer({
 				...reactingLoaderProps,
+				configProvider: {
+					getRawConfig: (name: string) =>
+						name === "Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow"
+							? true
+							: undefined,
+				},
 				request: { url },
 				pendingLocalState,
 			}),
