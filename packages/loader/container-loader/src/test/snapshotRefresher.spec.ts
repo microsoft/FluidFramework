@@ -60,6 +60,12 @@ function enableOfflineSnapshotRefresh(logger: ITelemetryBaseLogger): ITelemetryB
 	}).logger;
 }
 
+function enableOfflineFullOnly(logger: ITelemetryBaseLogger): ITelemetryBaseLogger {
+	return mixinMonitoringContext(logger, {
+		getRawConfig: (name) => (name === "Fluid.Container.enableOfflineFull" ? true : undefined),
+	}).logger;
+}
+
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBuffer>();
 	private snapshot: ISnapshotTree;
@@ -325,6 +331,23 @@ describe("SnapshotRefresher", () => {
 				mockStorage.getVersionsCallCount,
 				0,
 				"getVersions should not be called when snapshot refresh is not enabled",
+			);
+
+			refresher.dispose();
+		});
+
+		it("should not trigger refresh when only enableOfflineFull is set", () => {
+			const logger = enableOfflineFullOnly(mockLogger);
+			const timeout = 1000;
+			const refresher = createRefresher(true, () => true, timeout, logger);
+
+			refresher.startTimer();
+			clock.tick(timeout);
+
+			assert.strictEqual(
+				mockStorage.getVersionsCallCount,
+				0,
+				"getVersions should not be called when only enableOfflineFull is set (enableOfflineSnapshotRefresh must be opted in explicitly)",
 			);
 
 			refresher.dispose();
