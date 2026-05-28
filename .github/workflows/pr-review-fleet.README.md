@@ -15,7 +15,7 @@ Four workflows compose the PR fleet review system:
 
 - **Trigger:** `pull_request_target` on `opened` / `reopened` / `synchronize` (base branches `main`, `next`, `release/**/*`).
 - **Permissions:** `contents: read`, `pull-requests: write`.
-- **Context:** Runs from the **base branch** with a write token + secrets. Critical security invariant: never checks out the PR head; only diffs against it for stats (lines / files / packages). This is what makes it safe to use `pull_request_target` for fork PRs.
+- **Context:** Runs from the **base branch** with a write token + secrets. Critical security invariant: never checks out or executes the PR head; it only fetches the head commit and derives deterministic stats (lines / files / packages) from `git diff --numstat`. See [Security Notes](#security-notes) for the threat model.
 - **What it does:** Computes a recommended fleet tier (1 / 3 / 5 reviewers) from thresholds on lines, files, and packages, then posts a **sticky comment** (`<!-- pr-review-confirm -->` marker) with pre-checked reviewer checkboxes and a "Start review" checkbox. On `synchronize` it carries forward prior toggles and short-circuits if "Start review" is already checked. Skips entirely if the `fleet-review` label is set (label flow takes precedence).
 
 ### Sizing thresholds
@@ -78,8 +78,9 @@ Label "fleet-review" applied
 
 ## Security Notes
 
-- `auto-route` uses `pull_request_target` (gets secrets on fork PRs) but **never executes PR code** — it only reads numstat data. Scripts must live on the base branch.
-- `fleet` reads reviewer prompts from `origin/${BASE_REF}`, not the PR checkout — prevents PR authors from rewriting the reviewer instructions that an authenticated agent will execute.
-- Reviewer agents are credentialed with `COPILOT_GITHUB_TOKEN` but denied shell tools; git context is pre-materialized before the token is in scope (git aliases can shell out).
-- The consolidated report is regex-scrubbed for `gh[pousr]_…` and `github_pat_…` token patterns before posting, since the model output itself is untrusted.
+- `auto-route` uses `pull_request_target`, so fork PRs can trigger a workflow that has repository permissions and secrets. The danger is not the trigger by itself; the danger is combining that privileged context with attacker-controlled PR content. If this workflow checked out the PR head and ran scripts, installs, tests, Git aliases, or other PR-authored code, the PR author could shape that code to read tokens, call GitHub APIs, or influence privileged follow-up actions.
+- To avoid that, `auto-route` only uses trusted workflow code from the base branch. It fetches the PR head commit as data, reads deterministic `git diff --numstat` output, reduces that output to line / file / package counts, and posts a bot-authored proposal comment. The untrusted PR controls the numbers that feed the tiering decision, but not the command sequence, prompt text, posted comment template, or any executable code path.
+- `fleet` is a separate workflow that intentionally checks out the PR head for review context. That step is lower risk because checkout uses `persist-credentials: false`, reviewer prompts are loaded from `origin/${BASE_REF}` instead of the PR checkout, and all git-derived context is pre-materialized before `COPILOT_GITHUB_TOKEN` enters the reviewer step environment.
+- Reviewer agents are credentialed with `COPILOT_GITHUB_TOKEN`, and the PR diff is attacker-controlled text that is sent to an LLM. The model is therefore treated as exposed to prompt injection: it is allowed to read the prepared files and write its JSON review result, but it is denied shell and git tools (`--allow-tool=read --allow-tool=write` only). Without shell/git tools or persisted checkout credentials, a malicious diff can ask the model to exfiltrate or mutate repository state, but the agent has no approved tool path to run commands, invoke git, or push changes.
+- The consolidated report is regex-scrubbed for `gh[pousr]_…` and `github_pat_…` token patterns before posting, since model output itself is untrusted. This is defense-in-depth, not the primary boundary; the primary boundary is preventing PR-controlled content from gaining command execution or access to persisted credentials in the first place.
 - The confirm workflow needs `actions: write` because `GITHUB_TOKEN` can only dispatch workflows in its own repo when that permission is explicitly granted.
