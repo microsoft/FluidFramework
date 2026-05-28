@@ -3286,15 +3286,8 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 	}
 
 	public doesBaseAttachNodes(id: ChangeAtomId, count: number): RangeQueryResult<boolean> {
-		let countToProcess = count;
-		const attachEntry = getFirstAttachField(
-			this.table.baseChange.crossFieldKeys,
-			id,
-			countToProcess,
-		);
-
-		countToProcess = attachEntry.length;
-		return { value: attachEntry.value !== undefined, length: countToProcess };
+		const attachEntry = getFirstAttachField(this.table.baseChange.crossFieldKeys, id, count);
+		return { value: attachEntry.value !== undefined, length: attachEntry.length };
 	}
 
 	public doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
@@ -4509,6 +4502,7 @@ function rebaseRename(
 		).value;
 
 		if (baseOutputDetachLocation !== undefined) {
+			// XXX: Why is this necessary?
 			affectedBaseFields.set(fieldIdKeyFromFieldId(baseOutputDetachLocation), true);
 		}
 

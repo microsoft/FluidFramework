@@ -60,6 +60,7 @@ export interface InvertNodeManager {
 	 * The inverted field change must contain a detach using `this.getInvertedMoveId(attachId)` as its ID.
 	 * @param attachId - The ID of the attach to invert.
 	 * @param count - The number of nodes being attached.
+	 * @remarks If the length of the result is less than `count`, this must be called again for the remainder of the range.
 	 */
 	invertAttach(attachId: ChangeAtomId, count: number): RangeQueryResult<NodeId | undefined>;
 
@@ -72,6 +73,7 @@ export interface ComposeNodeManager {
 	 * This should be called for every detach in the base changeset.
 	 * @param baseDetachId - The ID of the detach in the base changeset.
 	 * @param count - The number of nodes being detached.
+	 * @remarks If the length of the result is less than `count`, this must be called again for the remainder of the range.
 	 */
 	getNewChangesForBaseDetach(
 		baseDetachId: ChangeAtomId,
@@ -118,13 +120,13 @@ export interface ComposeNodeManager {
 }
 
 export interface RebaseNodeManager {
-	// XXX: It's not clear whether the returned changes are already rebased or not.
 	/**
 	 * Must be called by a field kind when rebasing over an attach.
 	 * The returned child changes and detach intentions must be represented in the output changeset.
 	 * @param baseAttachId - The ID of the attach that is being rebased over.
 	 * @param count - The number of nodes attached by the base attach.
 	 * @returns The new nested changes and detach intentions associated with the node in the changeset being rebased.
+	 * @remarks If the length of the result is less than `count`, this must be called again for the remainder of the range.
 	 */
 	getNewChangesForBaseAttach(
 		baseAttachId: ChangeAtomId,
@@ -180,6 +182,6 @@ export interface RebaseNodeManager {
 }
 
 export interface DetachedNodeEntry {
-	nodeChange?: NodeId;
-	detachId?: ChangeAtomId;
+	readonly nodeChange?: NodeId;
+	readonly detachId?: ChangeAtomId;
 }

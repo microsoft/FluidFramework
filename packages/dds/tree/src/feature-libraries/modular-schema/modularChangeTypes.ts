@@ -120,14 +120,18 @@ export interface RootNodeTable {
 
 	/**
 	 * Maps from input context detach ID to the field where the node was last attached.
-	 * There should be an entry for every detach ID referenced in `oldToNewId` or `nodeChanges`.
+	 * If supporting encoding versions before `ModularChangeFormatVersion.vDetachedRoots`,
+	 * there should be an entry for every detach ID referenced in `oldToNewId` or `nodeChanges`.
+	 * This can be left empty if not supporting older formats.
 	 */
 	readonly detachLocations: ChangeAtomIdRangeMap<FieldId>;
 
 	/**
 	 * Maps from the output root ID of a node to the output detach location of that node.
-	 * This is only guaranteed to contain entries for nodes which have an output detach location
-	 * which is different from their location in the input context.
+	 * If supporting encoding versions before `ModularChangeFormatVersion.vDetachedRoots`,
+	 * this should contain an entry for each node which has an output detach location
+	 * which is different from its location in the input context.
+	 * This can be left empty if not supporting older formats.
 	 */
 	readonly outputDetachLocations: ChangeAtomIdRangeMap<FieldId>;
 }
