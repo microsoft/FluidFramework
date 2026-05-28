@@ -77,6 +77,11 @@ export interface FieldChangeHandler<
 
 	createEmpty(): TChangeset;
 
+	/**
+	 * Returns a potentially simplified version of this change.
+	 * The returned change must produce the same delta as `change`, but may have different rebasing behavior.
+	 * The returned change should be compatible with `rebaseVersion`.
+	 */
 	squash(
 		change: TChangeset,
 		rebaseVersion: RebaseVersion,
