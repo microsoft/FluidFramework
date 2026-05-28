@@ -395,7 +395,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncrementalEncoder,
 				brand(FieldBatchFormatVersion.v2), // Use v2 or higher for incremental encoding support
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const log: TreeFieldStoredSchema[] = [];
