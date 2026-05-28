@@ -29,7 +29,7 @@ So the isolation isn't "diff is passed across job boundaries from a privileged j
 2. Checkout uses `persist-credentials: false`, so the auth token isn't stashed in the local Git config for later steps to reuse.
 3. All git-derived context (the diff, the changed-files list, the reviewer prompt) is materialized **before** `COPILOT_GITHUB_TOKEN` enters the step's environment. Once that token is present, the model-influenced part of the job consumes fixed files instead of invoking git, resolving refs, or loading prompts through a path that attacker-controlled instructions could try to steer.
 
-This was the shape of a previous MSRC issue: earlier versions allowed arbitrary Git operations with persisted credentials, which could have been abused for exfiltration. Removing Git capabilities from the credentialed step closed that hole. The mitigation is "the agent can't reach git," not "git isn't used at all."
+This was the shape of a previous MSRC issue: earlier versions allowed arbitrary Git operations with persisted credentials, which could have been abused for exfiltration. Removing Git capabilities from the credentialed step closed that hole. Git is still used by deterministic workflow steps before the Copilot token is present; the boundary is that the later model-influenced step has no approved tool path to execute `git`.
 
 ## Prompt-injection: a second untrusted input
 
