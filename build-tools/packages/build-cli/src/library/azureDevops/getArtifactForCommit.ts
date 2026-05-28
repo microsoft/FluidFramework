@@ -87,7 +87,7 @@ export interface GetArtifactForCommitArgs {
  *
  * @returns The artifact's {@link ArtifactContents}. Throws with a
  * human-readable message when no usable build is found (missing, incomplete,
- * failed) or the artifact can't be downloaded.
+ * failed); download failures propagate directly from `downloadArtifact`.
  */
 export async function getArtifactForCommit(
 	args: GetArtifactForCommitArgs,
@@ -101,11 +101,5 @@ export async function getArtifactForCommit(
 	});
 	const buildId = findBuildIdForCommit(builds, commit);
 
-	try {
-		return await downloadArtifact(adoApi, project, buildId, artifactName);
-	} catch (e) {
-		throw new Error(`Could not download artifact "${artifactName}" for commit ${commit}`, {
-			cause: e,
-		});
-	}
+	return downloadArtifact(adoApi, project, buildId, artifactName);
 }
