@@ -114,13 +114,3 @@ steps:
       echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
-
-      # pnpm global operations (like the one below) error for pnpm 11 (not just warn) when its global bin directory is not in PATH.
-      _PNPM_GLOBAL_BIN="${PNPM_HOME:-$HOME/.local/share/pnpm}/bin"
-      export PATH="$_PNPM_GLOBAL_BIN:$PATH"
-      # Currently there are no other tasks which do pnpm global operations: if this changes, the line below should be uncommented to enable them.
-      # For now omitting this is preferred as it keeps the path slightly smaller which is nice for security.
-      # echo "##vso[task.prependpath]$_PNPM_GLOBAL_BIN"
-
-      # workspace-concurrency 0 means use the CPU core count. This is better than the default (4) for larger agents.
-      pnpm config set -g workspace-concurrency 0
