@@ -1365,7 +1365,7 @@ export interface ObservationResults<TResult> {
 // @public
 export type Off = () => void;
 
-// @alpha
+// @beta
 export function onAssertionFailure(handler: (error: Error) => void): () => void;
 
 // @alpha
@@ -2018,16 +2018,35 @@ export type TelemetryBaseEventPropertyType = string | number | boolean | undefin
 
 // @alpha
 export namespace TextAsTree {
+    // @sealed
     export interface Members {
         characterCount(): number;
         characters(): Iterable<string>;
         charactersCopy(): string[];
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
     export interface Statics {
         fromString(value: string): Tree;
+    }
+    // @sealed
+    export interface TextInsertOp {
+        readonly text: string;
+        readonly type: "insert";
+    }
+    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+    // @sealed
+    export interface TextRemoveOp {
+        readonly count: number;
+        readonly type: "remove";
+    }
+    // @sealed
+    export interface TextRetainOp {
+        readonly count: number;
+        readonly formattingChanged?: boolean;
+        readonly type: "retain";
     }
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
