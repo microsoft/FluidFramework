@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type { FieldKey } from "../schema-stored/index.js";
 
@@ -158,7 +158,9 @@ function binaryFindIndex<TData>(sorted: readonly SparseNode<TData>[], index: num
 
 	while (min !== max) {
 		const mid = Math.floor((min + max) / 2);
-		const found = sorted[mid]!.parentIndex;
+		// mid < max <= sorted.length, so this access is always defined.
+		const midNode = sorted[mid] ?? oob();
+		const found = midNode.parentIndex;
 		if (found === index) {
 			return mid;
 		} else if (found > index) {

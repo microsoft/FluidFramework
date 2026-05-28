@@ -690,7 +690,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	private readonly localCommits: GraphCommit<TChangeset>[] = [];
 
 	/**
-	 * Side-map for O(1) revision -> {@link localCommits} index lookup.
+	 * Side-map for O(1) revision -\> {@link localCommits} index lookup.
 	 * @remarks
 	 * Stored values are "absolute" indices that are NOT affected by shifts off the front of {@link localCommits}.
 	 * The actual array index is computed as `value - localCommitsHeadOffset`.
@@ -751,8 +751,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 				);
 				this.localCommitsByRevision.clear();
 				this.localCommitsHeadOffset = 0;
-				for (let i = 0; i < this.localCommits.length; i += 1) {
-					this.localCommitsByRevision.set(this.localCommits[i].revision, i);
+				for (const [i, commit] of this.localCommits.entries()) {
+					this.localCommitsByRevision.set(commit.revision, i);
 				}
 			}
 		});
