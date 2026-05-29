@@ -144,6 +144,7 @@ export interface IContainerHostProps {
  * The driver-services pair — `urlResolver` plus `documentServiceFactory` —
  * required to wire a container to a real driver at create or load time.
  *
+ * @remarks
  * Extracted as a reusable building block so the `request` field can be
  * added on top for load-time props (see {@link IContainerLoadDriverProps})
  * while create-time props that don't carry a request can compose just this
