@@ -170,6 +170,7 @@ export interface IContainerDriverServices {
  * The load-time driver wiring trio — `request`, `urlResolver`, and
  * `documentServiceFactory` together.
  *
+ * @remarks
  * Reused as the all-or-nothing group for entry points (e.g. the frozen-load
  * entry point) that accept either a full driver wiring (online form) or none
  * of it (offline form). See `AllOrNone` in `@fluidframework/core-interfaces`.
