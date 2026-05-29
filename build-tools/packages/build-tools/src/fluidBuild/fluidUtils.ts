@@ -9,6 +9,7 @@ import { realpath } from "node:fs/promises";
 import * as path from "node:path";
 import { getPackages } from "@manypkg/get-packages";
 import registerDebug from "debug";
+import { findUp } from "find-up";
 import fsExtra from "fs-extra";
 import { lilconfigSync } from "lilconfig";
 
@@ -21,9 +22,6 @@ import {
 } from "./fluidBuildConfig.js";
 
 const { readJson } = fsExtra;
-
-// switch to regular import once building ESM
-const findUp = import("find-up");
 
 const traceInit = registerDebug("fluid-build:init");
 
@@ -43,7 +41,7 @@ async function isFluidRootPackage(dir: string): Promise<boolean> {
 }
 
 async function inferRoot(buildRoot: boolean): Promise<string | undefined> {
-	const config = await (await findUp).findUp("fluidBuild.config.cjs", {
+	const config = await findUp("fluidBuild.config.cjs", {
 		cwd: process.cwd(),
 		type: "file",
 	});
