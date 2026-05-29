@@ -296,60 +296,72 @@ describeCompat("Summaries", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 	});
 
-	it("full initialization of data object should not happen by default", async () => {
-		const dataStoreFactory1 = new DataObjectFactory({
-			type: "@fluid-example/test-dataStore1",
-			ctor: TestDataObject1,
-		});
-		const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
-			[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
-		]);
-		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
-			defaultFactory: dataStoreFactory1,
-			registryEntries: registryStoreEntries,
-		});
-
-		// Create a container for the first client.
-		const container1 = await provider.createContainer(runtimeFactory);
-		await assert.doesNotReject(
-			container1.getEntryPoint(),
-			"Initial creation of container and data store should succeed.",
-		);
-
-		// Create a summarizer for the container and do a summary shouldn't throw.
-		const createSummarizerResult = await createSummarizerFromFactory(
-			provider,
-			container1,
-			dataStoreFactory1,
-			undefined,
-			ContainerRuntimeFactoryWithDefaultDataStore,
-			registryStoreEntries,
-		);
-		await assert.doesNotReject(
-			summarizeNow(createSummarizerResult.summarizer, "test"),
-			"Summarizing should not throw",
-		);
-
-		// In summarizer, load the data store should fail.
-		await assert.rejects(
-			async () => {
-				const runtime = (createSummarizerResult.summarizer as any).runtime as ContainerRuntime;
-				const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
-				await dsEntryPoint?.get();
+	itExpects(
+		"full initialization of data object should not happen by default",
+		[
+			{
+				eventName: "fluid:telemetry:FluidDataStoreRuntime:EntryPointInitializationFailure",
+				error: "Non interactive/summarizer client's data object should not be initialized",
 			},
-			(e: Error) =>
-				e.message ===
-				"Non interactive/summarizer client's data object should not be initialized",
-			"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
-		);
+		],
+		async () => {
+			const dataStoreFactory1 = new DataObjectFactory({
+				type: "@fluid-example/test-dataStore1",
+				ctor: TestDataObject1,
+			});
+			const registryStoreEntries = new Map<string, Promise<IFluidDataStoreFactory>>([
+				[dataStoreFactory1.type, Promise.resolve(dataStoreFactory1)],
+			]);
+			const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+				defaultFactory: dataStoreFactory1,
+				registryEntries: registryStoreEntries,
+			});
 
-		// Load second container, load the data store will also call initializingFromExisting and succeed.
-		const container2 = await provider.loadContainer(runtimeFactory);
-		await assert.doesNotReject(
-			container2.getEntryPoint(),
-			"Initial creation of container and data store should succeed.",
-		);
-	});
+			// Create a container for the first client.
+			const container1 = await provider.createContainer(runtimeFactory);
+			await assert.doesNotReject(
+				container1.getEntryPoint(),
+				"Initial creation of container and data store should succeed.",
+			);
+
+			// Create a summarizer for the container and do a summary.
+			// The DataStore is realized and loaded, but the entryPoint is not fully initialized so it shouldn't throw.
+			const createSummarizerResult = await createSummarizerFromFactory(
+				provider,
+				container1,
+				dataStoreFactory1,
+				undefined,
+				ContainerRuntimeFactoryWithDefaultDataStore,
+				registryStoreEntries,
+			);
+			await assert.doesNotReject(
+				summarizeNow(createSummarizerResult.summarizer, "test"),
+				"Summarizing should not throw",
+			);
+
+			// In summarizer, if we _force_ the data store to fully load, it should fail
+			// based on the test configuration.  This failure is accounted for in itExpects as well.
+			await assert.rejects(
+				async () => {
+					const runtime = (createSummarizerResult.summarizer as any)
+						.runtime as ContainerRuntime;
+					const dsEntryPoint = await runtime.getAliasedDataStoreEntryPoint("default");
+					await dsEntryPoint?.get();
+				},
+				(e: Error) =>
+					e.message ===
+					"Non interactive/summarizer client's data object should not be initialized",
+				"Loading data store in summarizer did not throw as it should, or threw an unexpected error.",
+			);
+
+			// Load second container, load the data store will also call initializingFromExisting and succeed.
+			const container2 = await provider.loadContainer(runtimeFactory);
+			await assert.doesNotReject(
+				container2.getEntryPoint(),
+				"Initial creation of container and data store should succeed.",
+			);
+		},
+	);
 
 	/**
 	 * This test validates that the first summary for a container by the first summarizer client does not violate
