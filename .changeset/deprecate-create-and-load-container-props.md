@@ -2,7 +2,7 @@
 "@fluidframework/container-loader": minor
 "__section": deprecation
 ---
-Deprecate `ICreateAndLoadContainerProps` in favor of composable building blocks
+Deprecate ICreateAndLoadContainerProps in favor of composable building blocks
 
 `ICreateAndLoadContainerProps` is now `@deprecated`. It remains as a structurally-identical alias and the props types that previously extended it (`ILoadExistingContainerProps`, `ICreateDetachedContainerProps`, `IRehydrateDetachedContainerProps`) now extend the building blocks directly, so no caller migration is required for those.
 
