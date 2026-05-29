@@ -286,7 +286,7 @@ export function readValue(
 			// Performance:
 			// Currently, we just fully expand the identifier here rather than keeping it in the SessionSpaceCompressedId format.
 			// Avoiding this expansion, and keeping the in memory format using SessionSpaceCompressedId would be a good optimization for the future.
-			// Keeping this optimization possible is why we resolveEncodedId doesn't simply return a string.
+			// Keeping this optimization possible is why `resolveEncodedId` doesn't simply return a string.
 			return decompressIdentifierIfNeeded(sessionIdOrString, idDecodingContext.idCompressor);
 		} else {
 			// EncodedCounter case:
