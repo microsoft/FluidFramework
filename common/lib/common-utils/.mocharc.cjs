@@ -5,7 +5,7 @@
 
 "use strict";
 
-const getFluidTestMochaConfig = require("./mocharc-common.cjs");
+const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
 module.exports = config;
