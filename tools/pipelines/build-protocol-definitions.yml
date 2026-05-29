@@ -55,7 +55,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 
@@ -82,7 +81,6 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 

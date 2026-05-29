@@ -45,7 +45,7 @@ import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 /**
  * A DataObject implementation that is used to test Staging Mode.

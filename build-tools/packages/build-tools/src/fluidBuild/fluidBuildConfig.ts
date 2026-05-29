@@ -8,7 +8,7 @@ import type {
 	GitIgnoreSetting,
 	TaskDefinitionsOnDisk,
 	TaskFileDependencies,
-} from "./fluidTaskDefinitions";
+} from "./fluidTaskDefinitions.js";
 
 /**
  * Token that can be used in file paths and globs to represent the repository root directory.

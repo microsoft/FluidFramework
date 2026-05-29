@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { WorkerExecResult, WorkerMessage } from "./worker";
+import type { WorkerExecResult, WorkerMessage } from "./worker.js";
 
 export async function lint(message: WorkerMessage): Promise<WorkerExecResult> {
 	const oldArgv = process.argv;
