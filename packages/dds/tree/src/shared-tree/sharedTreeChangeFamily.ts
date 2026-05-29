@@ -236,6 +236,10 @@ export class SharedTreeChangeFamily
 		);
 	}
 
+	public squash(change: SharedTreeChange): SharedTreeChange {
+		return mapDataChanges(change, (inner) => this.modularChangeFamily.rebaser.squash(inner));
+	}
+
 	public get rebaser(): ChangeRebaser<SharedTreeChange> {
 		return this;
 	}

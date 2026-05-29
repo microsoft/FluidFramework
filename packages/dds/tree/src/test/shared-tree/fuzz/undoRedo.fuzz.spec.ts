@@ -13,6 +13,7 @@ import {
 	type DDSFuzzTestState,
 	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import {
 	type Anchor,
@@ -22,6 +23,7 @@ import {
 	type UpPath,
 	type Value,
 } from "../../../core/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import {
 	SharedTreeTestFactory,
 	toJsonableTree,
@@ -54,19 +56,19 @@ interface UndoRedoFuzzTestState extends FuzzTestState {
 	unsubscribe?: (() => void)[];
 }
 
+const runsPerBatch = 20;
+const opsPerRun = 20;
+
+const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
+	set: 3,
+	clear: 1,
+	insert: 3,
+	remove: 1,
+	intraFieldMove: 1,
+	crossFieldMove: 1,
+};
+
 describe("Fuzz - revert", () => {
-	const runsPerBatch = 20;
-	const opsPerRun = 20;
-
-	const undoRedoWeights: Partial<EditGeneratorOpWeights> = {
-		set: 3,
-		clear: 1,
-		insert: 3,
-		remove: 1,
-		intraFieldMove: 1,
-		crossFieldMove: 1,
-	};
-
 	describe("revert sequenced commits last-to-first", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
@@ -77,7 +79,7 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+			factory: SharedTreeTestFactory.build(createOnCreate(populatedInitialState)),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -159,17 +161,23 @@ describe("Fuzz - revert", () => {
 		});
 	});
 
+	createRevertFirstToLastFuzzSuite(
+		SharedTreeTestFactory.build(createOnCreate(populatedInitialState)),
+	);
+});
+
+export function createRevertFirstToLastFuzzSuite(treeFactory: IChannelFactory<ISharedTree>) {
 	describe("revert unsequenced commits first-to-last", () => {
 		const generatorFactory = (): AsyncGenerator<Operation, UndoRedoFuzzTestState> =>
 			takeAsync(opsPerRun, makeOpGenerator(undoRedoWeights));
 
 		const model: DDSFuzzModel<
-			SharedTreeTestFactory,
+			IChannelFactory<ISharedTree>,
 			Operation,
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+			factory: treeFactory,
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -214,7 +222,7 @@ describe("Fuzz - revert", () => {
 			idCompressorFactory: deterministicIdCompressorFactory(0xdeadbeef),
 		});
 	});
-});
+}
 
 function init(state: UndoRedoFuzzTestState) {
 	const tree = viewFromState(state, state.clients[0]).checkout;

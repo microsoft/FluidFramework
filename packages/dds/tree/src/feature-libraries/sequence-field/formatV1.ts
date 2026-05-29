@@ -6,8 +6,11 @@
 import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import { RevisionTagSchema } from "../../core/index.js";
-import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
+import {
+	ChangesetLocalIdSchema,
+	EncodedChangeAtomId,
+	RevisionTagSchema,
+} from "../../core/index.js";
 
 export enum DetachIdOverrideType {
 	/**
