@@ -23,11 +23,8 @@ build-arg automatically via its `baseImageRegistry` parameter, which defaults to
 FQDN. Callers can override it if they need a different mirror (e.g. for testing).
 
 The mirror namespace `mirror/docker/library/<image>` is byte-identical to Docker Hub's path, so the
-same Dockerfile reference works against either registry. Anonymous pull is disabled on the mirror,
-so credentials for the `Fluid Public Mirror Container Registry` ADO service connection are flowed
-into the docker build step via `templateContext.authenticatedContainerRegistries` in
-[`templates/build-docker-service.yml`](./templates/build-docker-service.yml). Each ADO project has
-its own service connection (same name) backed by its own AcrPull-only service principal.
+same Dockerfile reference works against either registry. Anonymous pull is enabled on the mirror,
+so no credentials are needed for the base-image pulls.
 
 ### Upgrading a pinned base image
 
