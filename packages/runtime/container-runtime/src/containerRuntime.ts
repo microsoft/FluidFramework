@@ -1890,20 +1890,46 @@ export class ContainerRuntime
 			this.mc.config.getNumber("Fluid.ContainerRuntime.StagingModeAutoFlushThreshold") ??
 			runtimeOptions.stagingModeAutoFlushThreshold ??
 			defaultStagingModeAutoFlushThreshold;
-		this.batchIdTrackingEnabled =
-			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-			this.mc.config.getBoolean("Fluid.ContainerRuntime.enableBatchIdTracking") ??
-			false;
+		// BatchId tracking powers DuplicateBatchDetector (catching forked-container duplicates)
+		// and is also a prerequisite for the Offline Load feature. It is enabled by default
+		// when both TurnBased flush mode and grouped batching are active; the kill-switch
+		// below allows disabling it without a code change if a regression is observed.
+		// Grouped batching is required because resubmits can produce empty batches that must
+		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
+		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
+		// Offline Load requires all three prerequisites (TurnBased, grouped batching, and
+		// batchId tracking not killed by config), so a consumer that opts into it without
+		// them gets an explicit UsageError rather than silent degradation.
+		const offlineLoadRequested =
+			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
+		const disableBatchIdTracking =
+			this.mc.config.getBoolean("Fluid.ContainerRuntime.DisableBatchIdTracking") === true;
 
-		if (this.batchIdTrackingEnabled && this._flushMode !== FlushMode.TurnBased) {
+		if (offlineLoadRequested && this._flushMode !== FlushMode.TurnBased) {
 			const error = new UsageError("Offline mode is only supported in turn-based mode");
 			this.closeFn(error);
 			throw error;
 		}
+		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
+			const error = new UsageError("Offline mode requires grouped batching to be enabled");
+			this.closeFn(error);
+			throw error;
+		}
+		if (offlineLoadRequested && disableBatchIdTracking) {
+			const error = new UsageError(
+				"Offline mode requires batchId tracking; remove Fluid.ContainerRuntime.DisableBatchIdTracking",
+			);
+			this.closeFn(error);
+			throw error;
+		}
 
-		// DuplicateBatchDetection is only enabled if Offline Load is enabled
-		// It maintains a cache of all batchIds/sequenceNumbers within the collab window.
-		// Don't waste resources doing so if not needed.
+		this.batchIdTrackingEnabled =
+			!disableBatchIdTracking &&
+			this._flushMode === FlushMode.TurnBased &&
+			this.groupedBatchingEnabled;
+
+		// DuplicateBatchDetector maintains a cache of all batchIds/sequenceNumbers within the
+		// collab window. Skip allocating it when batchId tracking is off.
 		if (this.batchIdTrackingEnabled) {
 			this.duplicateBatchDetector = new DuplicateBatchDetector(recentBatchInfo);
 		}
@@ -3141,16 +3167,34 @@ export class ContainerRuntime
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
+								batchIdExplicit: batchStart.batchId !== undefined,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
 								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								// Identifying info for the ORIGINAL occurrence of this batch, so we can
+								// disambiguate the duplicate's source (e.g. resubmit vs fresh submit, same
+								// vs different wire clientId). Undefined fields indicate the original was
+								// loaded from a summary snapshot rather than seen at runtime.
+								otherClientId: result.otherBatchInfo?.clientId,
+								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
+								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+								// For grouped batches, `keyMessage` is one of the sub-messages produced by
+								// `OpGroupingManager.ungroupOp`, which overwrites `clientSequenceNumber`
+								// with a synthetic counter (1, 2, 3, ...). Override with the real outer
+								// envelope's clientSequenceNumber so downstream telemetry doesn't get a
+								// misleading "fake csn" value.
+								messageClientSequenceNumber: batchStart.batchStartCsn,
 							},
 						},
 						error,
 					);
-					throw error;
+					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
+					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
+					// or once we are able to identify batch duplication reason (forking vs service bug).
+					// throw error;
 				}
 			}
 
