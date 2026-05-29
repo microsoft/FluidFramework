@@ -151,7 +151,7 @@ export interface FieldBatchEncodingContext {
 export class FieldBatchDecodingContext implements IdDecodingContext {
 	private constructor(
 		/**
-		 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id which (which would be wrong in those chunks).
+		 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
 		 */
 		private readonly hasOriginatorSessionId: boolean,
 
@@ -197,10 +197,12 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 	 * strings. Incremental decoding is attached via {@link withIncrementalDecoder}.
 	 *
 	 * @privateRemarks
-	 * In the future, this may allow providing an originator ID to allow for session compressed identifiers.
-	 * If that is done, great care must be take with how that id is handled for incremental summaries as each incremental chunk would need its own correct session.
-	 * Since incremental summaries should never have session relative identifiers though, due to only being made by summary clients,
-	 * a reasonable approach would be to only ever is session relative identifiers in attachment summaries, and not support them at all in incremental chunks.
+	 * In the future (if adding a summary format which includes the session id),
+	 * this could allow providing an originator ID to allow for op-space compressed identifiers in attach summaries.
+	 * Non-attach summaries should only have finalized compressed identifiers (due to only being made by summary clients which never allocate identifiers since they never edit).
+	 * Since only non-attach summaries can be incremental, incremental summaries should never have non finalized identifiers.
+	 * `withIncrementalDecoder` has logic to guard against cases which expect session-relative identifiers in incremental chunks,
+	 * as does the encoding-side assert in the {@link EncoderContext}.
 	 */
 	public static forSummary(opts: {
 		readonly idCompressor: IIdCompressor;
