@@ -221,6 +221,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					}
 					return res.content;
 				},
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 		});
 		this.blobCache.setBlob(blobId, blob);
@@ -442,6 +445,9 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				});
 				return retrievedSnapshot;
 			},
+			undefined, // markers
+			undefined, // sampleThreshold
+			LogLevel.info,
 		);
 
 		const stTime = performanceNow();

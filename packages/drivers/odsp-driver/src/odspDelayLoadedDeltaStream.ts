@@ -5,6 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ISignalEnvelope } from "@fluidframework/core-interfaces/internal";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
@@ -158,12 +159,16 @@ export class OdspDelayLoadedDeltaStream {
 
 			// Log telemetry for join session attempt
 			if (this.firstConnectionAttempt) {
-				this.mc.logger.sendTelemetryEvent({
-					eventName: "FirstJoinSessionAttemptDetails",
-					details: {
-						requestWebsocketToken: requestWebsocketTokenFromJoinSession,
+				this.mc.logger.sendTelemetryEvent(
+					{
+						eventName: "FirstJoinSessionAttemptDetails",
+						details: {
+							requestWebsocketToken: requestWebsocketTokenFromJoinSession,
+						},
 					},
-				});
+					undefined, // error
+					LogLevel.info,
+				);
 			}
 
 			const joinSessionPromise = this.joinSession(

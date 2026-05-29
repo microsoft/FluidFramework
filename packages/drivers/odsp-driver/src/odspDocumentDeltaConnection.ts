@@ -5,6 +5,7 @@
 
 import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
@@ -651,10 +652,14 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 			.catch((error) => this.connectionInitializeDeferredP?.reject(error));
 
 		await this.connectionInitializeDeferredP.promise.finally(() => {
-			this.logger.sendTelemetryEvent({
-				eventName: "ConnectionAttemptInfo",
-				...this.getConnectionDetailsProps(),
-			});
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "ConnectionAttemptInfo",
+					...this.getConnectionDetailsProps(),
+				},
+				undefined, // error
+				LogLevel.info,
+			);
 		});
 	}
 

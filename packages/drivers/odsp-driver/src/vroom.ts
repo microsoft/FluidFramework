@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import type {
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
@@ -141,6 +142,9 @@ export const fetchJoinSession = mockify(
 
 				return response.content;
 			},
+			undefined, // markers
+			undefined, // sampleThreshold
+			LogLevel.info,
 		);
 	},
 );

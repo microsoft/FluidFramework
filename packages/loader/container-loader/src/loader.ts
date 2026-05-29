@@ -19,6 +19,7 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
@@ -312,12 +313,19 @@ export class Loader implements IHostLoader {
 
 	public async resolve(request: IRequest, pendingLocalState?: string): Promise<IContainer> {
 		const eventName = pendingLocalState === undefined ? "Resolve" : "ResolveWithPendingState";
-		return PerformanceEvent.timedExecAsync(this.mc.logger, { eventName }, async () => {
-			return this.resolveCore(
-				request,
-				getAttachedContainerStateFromSerializedContainer(pendingLocalState),
-			);
-		});
+		return PerformanceEvent.timedExecAsync(
+			this.mc.logger,
+			{ eventName },
+			async () => {
+				return this.resolveCore(
+					request,
+					getAttachedContainerStateFromSerializedContainer(pendingLocalState),
+				);
+			},
+			undefined, // markers
+			undefined, // sampleThreshold
+			LogLevel.info,
+		);
 	}
 
 	private async resolveCore(

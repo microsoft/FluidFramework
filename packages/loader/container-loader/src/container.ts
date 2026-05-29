@@ -1717,11 +1717,17 @@ export class Container
 					this.mc.logger,
 					{ eventName: "WaitOps" },
 					async () => opsBeforeReturnP,
+					undefined, // markers
+					undefined, // sampleThreshold
+					LogLevel.info,
 				);
 				await PerformanceEvent.timedExecAsync(
 					this.mc.logger,
 					{ eventName: "WaitOpProcessing" },
 					async () => this._deltaManager.inbound.waitTillProcessingDone(),
+					undefined, // markers
+					undefined, // sampleThreshold
+					LogLevel.info,
 				);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
