@@ -36,7 +36,7 @@
  * ```
  *
  * @input
- * @beta
+ * @public
  */
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`

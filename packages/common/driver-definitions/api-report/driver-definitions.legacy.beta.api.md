@@ -375,6 +375,7 @@ export interface IPersistedCache {
     put(entry: ICacheEntry, value: unknown): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
     removeEntry?(entry: ICacheEntry): Promise<void>;
+    update?(entry: ICacheEntry, updater: (existing: unknown, set: (value: unknown) => void) => void): Promise<boolean>;
 }
 
 // @beta @legacy (undocumented)

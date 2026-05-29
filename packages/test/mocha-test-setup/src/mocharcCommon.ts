@@ -3,44 +3,68 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 
-const path = require("path");
+/**
+ * Mocha configuration object returned by {@link getFluidTestMochaConfig}.
+ */
+export interface FluidTestMochaConfig {
+	recursive: boolean;
+	require: string[];
+	"unhandled-rejections": string;
+	"fail-zero": boolean;
+	ignore: string[];
+	"node-option": string[];
+	spec: string;
+	exit?: boolean;
+	timeout?: number | string;
+	fgrep?: string[];
+	reporter?: string;
+	reporterOptions?: string[];
+	"reporter-options"?: string[];
+	"forbid-only"?: boolean;
+}
 
 /**
  * Get the mocha configuration for running tests using the conventions followed in the Fluid Framework repository.
  *
- * @param {string} packageDir - the directory of the package, typically set using `__dirname`
- * @param {string[]} additionalRequiredModules - modules to require in addition to the standard set.
- * @param {string} testReportPrefix - prefix for the test output report file names.
+ * @param packageDir - the directory of the package, typically set using `__dirname`
+ * @param additionalRequiredModules - modules to require in addition to the standard set.
+ * @param testReportPrefix - prefix for the test output report file names.
  * @remarks
  * Additional configuration can be provided via environment variables: see {@link file://./README.md}.
  *
  * Users desiring exact control over the `spec` from the CLI should delete or replace the spec from the returned config, since mocha's behavior is to extend it, not override it.
  */
-function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testReportPrefix) {
+export function getFluidTestMochaConfig(
+	packageDir: string,
+	additionalRequiredModules?: string[],
+	testReportPrefix?: string,
+): FluidTestMochaConfig {
 	const requiredModules = [
 		// General mocha setup e.g. suppresses console.log,
 		// This has to be before others (except logger) so that registerMochaTestWrapperFuncs is available
 		"@fluid-internal/mocha-test-setup",
 		"source-map-support/register",
-		...(additionalRequiredModules ? additionalRequiredModules : []),
+		...(additionalRequiredModules ?? []),
 	];
 
-	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER) {
+	if (process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER !== undefined) {
 		// Inject implementation of createTestLogger, put it first before mocha-test-setup
 		requiredModules.unshift(process.env.FLUID_TEST_LOGGER_PKG_SPECIFIER);
 	}
 
+	let reportPrefix = testReportPrefix;
 	let defaultSpec = "lib/test";
 	if (process.env.FLUID_TEST_MODULE_SYSTEM === "CJS") {
 		defaultSpec = "dist/test";
 		const testVariant = process.env.FLUID_TEST_VARIANT;
 		process.env.FLUID_TEST_VARIANT = testVariant !== undefined ? `CJS,${testVariant}` : "CJS";
-		testReportPrefix = testReportPrefix !== undefined ? `${testReportPrefix}-CJS` : "CJS";
+		reportPrefix = reportPrefix !== undefined ? `${reportPrefix}-CJS` : "CJS";
 	}
 
-	const config = {
+	const config: FluidTestMochaConfig = {
 		"recursive": true,
 		"require": requiredModules,
 		"unhandled-rejections": "strict",
@@ -69,50 +93,52 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 	// For now, undefined, "1" and "true" should work consistently across all known use, and "1" is the main form we explicitly use.
 	// All these should be made to match, see AB#69054.
 	if (process.env.FLUID_TEST_PERF_MODE !== undefined) {
-		if (!process.env.SILENT_TEST_OUTPUT) {
+		if (process.env.SILENT_TEST_OUTPUT === undefined) {
 			console.log(`Running performance tests...`);
 		}
 
 		// Some perf tests are often quite slow, and we don't want to lose the data by hitting a timeout.
 		// This is 1000 seconds, so ~16 minutes.
 		// This can be overridden by setting FLUID_TEST_TIMEOUT to a different value if desired.
-		config["timeout"] = 1_000_000;
+		config.timeout = 1_000_000;
 
 		// If there is no filter specified, limit to benchmarks.
 		// If mocha allowed multiple filters to all be applied to further narrow results, we would do this unconditionally.
 		if (!(process.argv.includes("--fgrep") || process.argv.includes("--grep"))) {
-			config["fgrep"] = ["@Benchmark"];
+			config.fgrep = ["@Benchmark"];
 		}
 
-		config["reporter"] = "@fluid-tools/benchmark/dist/mocha/Reporter.js";
+		config.reporter = "@fluid-tools/benchmark/dist/mocha/Reporter.js";
 		if (!process.argv.includes("--reporterOptions")) {
 			// If report options were not specified, default to:
-			config["reporterOptions"] = ["reportFile=./benchmarkOutput.json"];
+			config.reporterOptions = ["reportFile=./benchmarkOutput.json"];
 		}
 	} else {
-		const packageJson = require(`${packageDir}/package.json`);
-		config["reporter"] = `mocha-multi-reporters`;
+		const packageJsonPath = path.join(packageDir, "package.json");
+		const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf8")) as {
+			name: string;
+		};
+		config.reporter = `mocha-multi-reporters`;
 		// See https://www.npmjs.com/package/mocha-multi-reporters#cmroutput-option
-		const outputFilePrefix = testReportPrefix !== undefined ? `${testReportPrefix}-` : "";
-		if (!process.env.SILENT_TEST_OUTPUT) {
+		const outputFilePrefix = reportPrefix !== undefined ? `${reportPrefix}-` : "";
+		if (process.env.SILENT_TEST_OUTPUT === undefined) {
 			console.log(
 				`Writing test results relative to package to nyc/${outputFilePrefix}junit-report.xml`,
 			);
 		}
 		const suiteName =
-			testReportPrefix !== undefined
-				? `${packageJson.name} - ${testReportPrefix}`
-				: packageJson.name;
+			reportPrefix !== undefined ? `${packageJson.name} - ${reportPrefix}` : packageJson.name;
 		config["reporter-options"] = [
 			`configFile=${path.join(
-				__dirname,
+				import.meta.dirname,
+				"..",
 				"test-config.json",
 			)},cmrOutput=xunit+output+${outputFilePrefix}:xunit+suiteName+${suiteName}`,
 		];
 	}
 
 	if (process.env.FLUID_TEST_TIMEOUT !== undefined) {
-		config["timeout"] = process.env.FLUID_TEST_TIMEOUT;
+		config.timeout = process.env.FLUID_TEST_TIMEOUT;
 	}
 
 	if (process.env.FLUID_TEST_FORBID_ONLY !== undefined) {
@@ -121,5 +147,3 @@ function getFluidTestMochaConfig(packageDir, additionalRequiredModules, testRepo
 
 	return config;
 }
-
-module.exports = getFluidTestMochaConfig;
