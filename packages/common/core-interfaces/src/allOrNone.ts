@@ -28,7 +28,7 @@
  * reviewers see the intent at the declaration site instead of re-deriving it
  * from a hand-rolled discriminated union. The mapped form
  * `{ [K in keyof T]?: never }` is mechanical, so downstream consumers do not
- * need an unusual TS feature to use it.
+ * need any unusual TS feature to use it.
  *
  * @legacy @alpha
  */
