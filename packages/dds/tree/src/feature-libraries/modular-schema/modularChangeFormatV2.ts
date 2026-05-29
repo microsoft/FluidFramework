@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Boolean as _typebox_Boolean, Composite as _typebox_Composite, Object as _typebox_Object, Optional as _typebox_Optional } from "@sinclair/typebox";
+const Type = { Boolean: _typebox_Boolean, Composite: _typebox_Composite, Object: _typebox_Object, Optional: _typebox_Optional };
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 

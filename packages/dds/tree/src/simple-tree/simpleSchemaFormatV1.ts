@@ -11,7 +11,8 @@
  * It may not include some details which impact maintenance of application enforced invariants (like persisted metadata or logic in view schema).
  */
 
-import { Type, type ObjectOptions, type Static } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, Boolean as _typebox_Boolean, Integer as _typebox_Integer, Literal as _typebox_Literal, Object as _typebox_Object, Optional as _typebox_Optional, Record as _typebox_Record, String as _typebox_String } from "@sinclair/typebox";
+const Type = { Boolean: _typebox_Boolean, Integer: _typebox_Integer, Literal: _typebox_Literal, Object: _typebox_Object, Optional: _typebox_Optional, Record: _typebox_Record, String: _typebox_String };
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

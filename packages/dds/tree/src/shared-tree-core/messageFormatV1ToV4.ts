@@ -4,7 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type TSchema, Type } from "@sinclair/typebox";
+import { type TSchema, Literal as _typebox_Literal, Object as _typebox_Object, Optional as _typebox_Optional, Union as _typebox_Union } from "@sinclair/typebox";
+const Type = { Literal: _typebox_Literal, Object: _typebox_Object, Optional: _typebox_Optional, Union: _typebox_Union };
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";

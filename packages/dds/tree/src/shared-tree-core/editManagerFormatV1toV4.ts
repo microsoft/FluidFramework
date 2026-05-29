@@ -4,7 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type TSchema, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type TSchema, Array as _typebox_Array, Literal as _typebox_Literal, Object as _typebox_Object, Tuple as _typebox_Tuple, Union as _typebox_Union } from "@sinclair/typebox";
+const Type = { Array: _typebox_Array, Literal: _typebox_Literal, Object: _typebox_Object, Tuple: _typebox_Tuple, Union: _typebox_Union };
 
 import { SessionIdSchema } from "../core/index.js";
 

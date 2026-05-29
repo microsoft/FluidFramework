@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Any as _typebox_Any, Array as _typebox_Array, Composite as _typebox_Composite, Literal as _typebox_Literal, Number as _typebox_Number, Object as _typebox_Object, String as _typebox_String, Union as _typebox_Union } from "@sinclair/typebox";
+const Type = { Any: _typebox_Any, Array: _typebox_Array, Composite: _typebox_Composite, Literal: _typebox_Literal, Number: _typebox_Number, Object: _typebox_Object, String: _typebox_String, Union: _typebox_Union };
 
 import type { FieldBatchFormatVersion } from "./versions.js";
 

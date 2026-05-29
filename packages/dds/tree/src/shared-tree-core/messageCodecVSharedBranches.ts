@@ -4,7 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type TAnySchema, Type } from "@sinclair/typebox";
+import { type TAnySchema, Any as _typebox_Any } from "@sinclair/typebox";
+const Type = { Any: _typebox_Any };
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {

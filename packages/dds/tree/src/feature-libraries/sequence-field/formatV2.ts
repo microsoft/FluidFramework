@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import { type ObjectOptions, type Static, type TSchema, Array as _typebox_Array, Composite as _typebox_Composite, Number as _typebox_Number, Object as _typebox_Object, Optional as _typebox_Optional, Tuple as _typebox_Tuple } from "@sinclair/typebox";
+const Type = { Array: _typebox_Array, Composite: _typebox_Composite, Number: _typebox_Number, Object: _typebox_Object, Optional: _typebox_Optional, Tuple: _typebox_Tuple };
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";

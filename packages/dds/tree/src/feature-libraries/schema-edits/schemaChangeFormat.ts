@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Object as _typebox_Object } from "@sinclair/typebox";
+const Type = { Object: _typebox_Object };
 
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 

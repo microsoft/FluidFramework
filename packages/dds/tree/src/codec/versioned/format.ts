@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Number as _typebox_Number, Object as _typebox_Object, String as _typebox_String, Union as _typebox_Union } from "@sinclair/typebox";
+const Type = { Number: _typebox_Number, Object: _typebox_Object, String: _typebox_String, Union: _typebox_Union };
 
 /**
  * A field to use in TypeBox schemas for the version field of a versioned format.

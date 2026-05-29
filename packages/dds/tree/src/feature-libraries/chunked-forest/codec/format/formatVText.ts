@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, Array as _typebox_Array, Null as _typebox_Null, Object as _typebox_Object, Optional as _typebox_Optional, Union as _typebox_Union } from "@sinclair/typebox";
+const Type = { Array: _typebox_Array, Null: _typebox_Null, Object: _typebox_Object, Optional: _typebox_Optional, Union: _typebox_Union };
 
 import { unionOptions } from "../../../../codec/index.js";
 

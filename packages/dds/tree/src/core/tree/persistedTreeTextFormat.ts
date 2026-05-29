@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Any as _typebox_Any, Array as _typebox_Array, Composite as _typebox_Composite, Object as _typebox_Object, Optional as _typebox_Optional, Readonly as _typebox_Readonly, Record as _typebox_Record, Recursive as _typebox_Recursive, String as _typebox_String } from "@sinclair/typebox";
+const Type = { Any: _typebox_Any, Array: _typebox_Array, Composite: _typebox_Composite, Object: _typebox_Object, Optional: _typebox_Optional, Readonly: _typebox_Readonly, Record: _typebox_Record, Recursive: _typebox_Recursive, String: _typebox_String };
 
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
