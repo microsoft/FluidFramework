@@ -1,5 +1,9 @@
 # @fluid-experimental/property-common
 
+## 2.102.0
+
+Dependency updates only.
+
 ## 2.101.0
 
 ### Minor Changes
