@@ -306,6 +306,7 @@ export async function loadExistingContainer(
 /**
  * Properties required to load a frozen container from pending state.
  *
+ * @remarks
  * Two forms are supported and selected by the presence of the driver-wiring
  * fields. **Online** form supplies `request`, `urlResolver`, and
  * `documentServiceFactory`; the supplied factory is wrapped in a frozen
