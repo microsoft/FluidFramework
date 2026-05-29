@@ -35,6 +35,10 @@ minimumReleaseAgeExclude: [
 ]
 
 overrides:
+  "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
+  "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
+  "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
+
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
