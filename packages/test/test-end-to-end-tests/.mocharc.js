@@ -3,11 +3,10 @@
  * Licensed under the MIT License.
  */
 
-"use strict";
+import { getFluidTestMochaConfigWithCompat } from "@fluid-private/test-version-utils/mocharc-common";
 
-const packageDir = __dirname;
-const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
-const config = getFluidTestMochaConfig(packageDir);
+const packageDir = import.meta.dirname;
+const config = getFluidTestMochaConfigWithCompat(packageDir);
 
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves.
 // AB#7856
@@ -56,4 +55,7 @@ if (runningAgainstInternalRouterliciousCluster) {
 
 // TODO: ADO#34589: These tests leak memory and sometimes crash on CI. This is a workaround to increase the memory limit.
 config["node-option"] = [...config["node-option"], "max-old-space-size=8000"];
-module.exports = config;
+// mocha v12+ supports ESM config when default export is given via `export default config;`.
+// Prior to that synchronous ESM can be loaded with specifically configured
+// module.exports export containing the config.
+export { config as "module.exports" };
