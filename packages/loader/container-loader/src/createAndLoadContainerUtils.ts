@@ -88,6 +88,7 @@ interface SummarizerLike {
  * Host-level container loader properties — the code loader plus all the
  * optional policy / observability fields that aren't tied to driver wiring.
  *
+ * @remarks
  * Extracted as a reusable building block so other props types (create,
  * rehydrate, load, frozen-load) can compose it without duplicating the
  * optional-fields surface.
