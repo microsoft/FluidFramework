@@ -330,7 +330,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	const deltaVersions: Map<string, string> = new Map();
 	const current = getCurrentCheckpoint(pkgVersion);
 	for (const c of getInWindowPriorCheckpoints(current)) {
-		const v = resolveVersion(checkpointResolutionRange(c), true);
+		const v = resolveRangeViaRegistry(checkpointResolutionRange(c));
 		deltaVersions.set(v, c.name);
 	}
 

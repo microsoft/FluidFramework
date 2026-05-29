@@ -58,14 +58,14 @@ export const checkpoints: readonly Checkpoint[] = [
 	{
 		name: "CC-3",
 		index: 3,
-		openingVersion: "2.60.0",
-		earliestDate: "2025-09-02",
+		openingVersion: "2.40.0",
+		earliestDate: "2025-05-12",
 	},
 	{
 		name: "CC-4",
 		index: 4,
-		openingVersion: "2.100.0",
-		earliestDate: "2026-04-28",
+		openingVersion: "2.80.0",
+		earliestDate: "2026-01-06",
 	},
 ];
 
