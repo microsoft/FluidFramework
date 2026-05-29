@@ -1363,17 +1363,13 @@ export class ContainerRuntime
 	/**
 	 * Whether local op submission is currently disallowed.
 	 *
-	 * This is `true` in two distinct situations:
-	 * 1. The delta manager reports a read-only connection (host/service-imposed permission or
-	 *    connection state — the historical meaning of `readOnly`).
-	 * 2. The {@link PendingStateManager} is replaying stashed ops (`isApplyingStashedOps`). During
-	 *    this window DDSes must not submit new local ops, as doing so would interleave fresh content
-	 *    ahead of the stashed pending stream and corrupt pending local state. Surfacing it through
-	 *    `isReadOnly()` lets DDSes that consult `readOnly` at realize time self-suppress; see the
-	 *    apply-lifecycle docs on {@link PendingStateManager} for the full rationale.
+	 * This is `true` in two distinct situations.
 	 *
-	 * Note this layers a third meaning ("transiently quiescing for stashed-op replay") onto the
-	 * `readOnly` predicate, which is broader than its host/connection-permission origin.
+	 * First: the delta manager reports a read-only connection (host/service-imposed permission or connection state — the historical meaning of `readOnly`).
+	 *
+	 * Second: the `PendingStateManager` is replaying stashed ops (`isApplyingStashedOps`). During this window DDSes must not submit new local ops, as doing so would interleave fresh content ahead of the stashed pending stream and corrupt pending local state. Surfacing it through `isReadOnly()` lets DDSes that consult `readOnly` at realize time self-suppress; see the apply-lifecycle docs on `PendingStateManager` for the full rationale.
+	 *
+	 * Note this layers a third meaning ("transiently quiescing for stashed-op replay") onto the `readOnly` predicate, which is broader than its host/connection-permission origin.
 	 */
 	public readonly isReadOnly = (): boolean =>
 		// `_deltaManager` and `pendingStateManager` are both assigned partway
