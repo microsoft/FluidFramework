@@ -112,7 +112,7 @@ function makeReducer(): Reducer<ClaimsOperation, FuzzTestState> {
 		cas: ({ client }, { key, newValue, expectedValue }) => {
 			const channel = client.channel as IClaims<string>;
 			try {
-				channel.trySetClaim(key, newValue, expectedValue);
+				channel.compareAndSetClaim(key, newValue, expectedValue);
 			} catch {
 				// Expected: may throw UsageError if detached/disconnected or
 				// if an operation for this key is already pending locally.

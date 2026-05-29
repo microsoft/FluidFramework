@@ -28,16 +28,24 @@ import type { ClaimConfirmation, ClaimResult, IClaims, IClaimsEvents } from "./i
 /**
  * Op format for Claims operations.
  */
-interface IClaimOperation {
-	type: "claim";
-	key: string;
-	value: unknown;
-	expectedValue?: unknown;
-}
+type IClaimOperation<T> =
+	| {
+			type: "claim";
+			key: string;
+			value: T;
+			mode: "writeOnce";
+	  }
+	| {
+			type: "claim";
+			key: string;
+			value: T;
+			mode: "cas";
+			expectedValue: T;
+	  };
 
 /**
  * Pending claim entry — stores the submitted value and a resolve function
- * for the deferred promise returned by trySetClaim.
+ * for the deferred promise returned by trySetClaim/compareAndSetClaim.
  */
 interface IPendingClaim<T> {
 	value: T;
@@ -50,7 +58,7 @@ const snapshotFileName = "header";
  * {@inheritDoc IClaims}
  * @internal
  */
-export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implements IClaims<T> {
+export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements IClaims<T> {
 	/**
 	 * Committed claims map — contains only acked, first-writer-wins values.
 	 */
@@ -81,47 +89,60 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 	/**
 	 * {@inheritDoc IClaims.trySetClaim}
 	 */
-	public trySetClaim(key: string, value: T, expectedValue?: T): ClaimResult<T> {
-		// Guard: must be attached and connected.
-		if (!this.isAttached()) {
-			throw new UsageError(
-				"Claims.trySetClaim cannot be called while the container is detached or in staging mode",
-			);
-		}
-		if (!this.runtime.connected) {
-			throw new UsageError(
-				"Claims.trySetClaim cannot be called while the container is disconnected",
-			);
+	public trySetClaim(key: string, value: T): ClaimResult<T> {
+		this.guardConnected();
+
+		// Write-once: reject if key already exists.
+		if (this.claims.has(key)) {
+			return { status: "AlreadyClaimed", currentValue: this.claims.get(key) };
 		}
 
-		// Check local state for fast-path rejection.
-		if (expectedValue === undefined) {
-			// Write-once: reject if key already exists.
-			if (this.claims.has(key)) {
-				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- guarded by .has()
-				return { status: "AlreadyClaimed", currentValue: this.claims.get(key)! };
-			}
-		} else {
-			// CAS: reject if key doesn't exist or current value doesn't match expected.
-			const currentValue = this.claims.get(key);
-			if (!this.claims.has(key) || currentValue !== expectedValue) {
-				return { status: "AlreadyClaimed", currentValue: currentValue as T };
-			}
+		return this.submitClaim(key, value, { type: "claim", key, value, mode: "writeOnce" });
+	}
+
+	/**
+	 * {@inheritDoc IClaims.compareAndSetClaim}
+	 */
+	public compareAndSetClaim(key: string, value: T, expectedValue: T): ClaimResult<T> {
+		this.guardConnected();
+
+		// CAS: reject if key doesn't exist or current value doesn't match expected.
+		const currentValue = this.claims.get(key);
+		if (!this.claims.has(key) || currentValue !== expectedValue) {
+			return { status: "AlreadyClaimed", currentValue };
 		}
 
-		// If there is already a pending local claim for this key, reject.
-		if (this.pendingClaims.has(key)) {
-			throw new UsageError(
-				`Claims.trySetClaim: a claim for key "${key}" is already pending locally`,
-			);
-		}
-
-		const op: IClaimOperation = {
+		return this.submitClaim(key, value, {
 			type: "claim",
 			key,
 			value,
+			mode: "cas",
 			expectedValue,
-		};
+		});
+	}
+
+	/**
+	 * Guards that the container is attached and connected.
+	 */
+	private guardConnected(): void {
+		if (!this.isAttached()) {
+			throw new UsageError(
+				"Claims cannot be modified while the container is detached or in staging mode",
+			);
+		}
+		if (!this.runtime.connected) {
+			throw new UsageError("Claims cannot be modified while the container is disconnected");
+		}
+	}
+
+	/**
+	 * Shared submit logic for both write-once and CAS operations.
+	 */
+	private submitClaim(key: string, value: T, op: IClaimOperation<T>): ClaimResult<T> {
+		// If there is already a pending local claim for this key, reject.
+		if (this.pendingClaims.has(key)) {
+			throw new UsageError(`Claims: a claim for key "${key}" is already pending locally`);
+		}
 
 		const promise = new Promise<ClaimConfirmation<T>>((resolve) => {
 			this.pendingClaims.set(key, { value, resolve });
@@ -176,17 +197,17 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
 		if (messageEnvelope.type === MessageType.Operation) {
-			const op = messageContent.contents as IClaimOperation;
+			const op = messageContent.contents as IClaimOperation<T>;
 
 			assert(op.type === "claim", "Claims: unexpected op type");
 
 			const isAccepted =
-				op.expectedValue === undefined
-					? !this.claims.has(op.key)
-					: this.claims.has(op.key) && this.claims.get(op.key) === op.expectedValue;
+				op.mode === "cas"
+					? this.claims.has(op.key) && this.claims.get(op.key) === op.expectedValue
+					: !this.claims.has(op.key);
 
 			if (isAccepted) {
-				this.claims.set(op.key, op.value as T);
+				this.claims.set(op.key, op.value);
 				this.emit("claimed", op.key);
 			}
 
@@ -213,9 +234,10 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 		if (isWinner) {
 			pending.resolve({ status: "Accepted", currentValue: pending.value });
 		} else {
-			const winnerValue = this.claims.get(key);
-			assert(winnerValue !== undefined, "Expected a committed value after losing claim race");
-			pending.resolve({ status: "AlreadyClaimed", currentValue: winnerValue });
+			// The current committed value for the key. May be undefined if the key
+			// was never claimed (e.g., a CAS op that failed because the key doesn't exist).
+			const currentValue = this.claims.get(key);
+			pending.resolve({ status: "AlreadyClaimed", currentValue });
 		}
 	}
 
@@ -252,7 +274,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
 	 */
 	protected rollback(content: unknown, _localOpMetadata: unknown): void {
-		const op = content as IClaimOperation;
+		const op = content as IClaimOperation<T>;
 		assert(op.type === "claim", "Claims: unexpected op type in rollback");
 		const pending = this.pendingClaims.get(op.key);
 		if (pending === undefined) {
@@ -270,12 +292,12 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents<T>> implemen
 	}
 
 	protected applyStashedOp(content: unknown): void {
-		const op = content as IClaimOperation;
+		const op = content as IClaimOperation<T>;
 		assert(op.type === "claim", "Claims: only claim ops should be stashed");
 		// Track stashed ops as pending so the key is guarded against duplicate
-		// trySetClaim calls and handles are visited by GC.
+		// trySetClaim/compareAndSetClaim calls and handles are visited by GC.
 		// No external caller awaits this promise, so resolve is a no-op.
-		this.pendingClaims.set(op.key, { value: op.value as T, resolve: () => {} });
+		this.pendingClaims.set(op.key, { value: op.value, resolve: () => {} });
 		this.submitLocalMessage(op);
 	}
 

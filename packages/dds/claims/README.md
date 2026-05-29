@@ -6,8 +6,8 @@ A distributed data structure (DDS) for first-writer-wins claim management with o
 
 The `Claims` DDS provides a key-value store with controlled write semantics:
 
--   **Write-once (claims):** Use `trySetClaim(key, value)` to claim a key. Once claimed, a key cannot be overwritten without providing the expected current value. This is useful for scenarios like aliasing, singleton creation, or task assignment where exactly one client should "win."
--   **Compare-and-swap (CAS):** Use `trySetClaim(key, newValue, expectedValue)` to update a key's value only if the current value matches `expectedValue`. This enables safe concurrent updates without overwriting changes from other clients.
+-   **Write-once (claims):** Use `trySetClaim(key, value)` to claim a key. Once claimed, a key cannot be overwritten. This is useful for scenarios like aliasing, singleton creation, or task assignment where exactly one client should "win."
+-   **Compare-and-swap (CAS):** Use `compareAndSetClaim(key, newValue, expectedValue)` to update a key's value only if the current value matches `expectedValue`. This enables safe concurrent updates without overwriting changes from other clients.
 
 Both modes are optimistic: a local op is submitted and a `"Pending"` result is returned with a promise that resolves once the server acknowledges the op.
 
@@ -34,7 +34,7 @@ if (result.status === "AlreadyClaimed") {
 
 ```typescript
 const current = claims.getClaim("config-key");
-const result = claims.trySetClaim("config-key", newConfig, current);
+const result = claims.compareAndSetClaim("config-key", newConfig, current);
 
 if (result.status === "Pending") {
 	const confirmation = await result.promise;
@@ -62,7 +62,7 @@ claims.on("claimed", (key: string) => {
 | Method                                                                        | Description                                                    |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `trySetClaim(key: string, value: T): ClaimResult<T>`                          | Write-once claim. Fails if key already exists.                 |
-| `trySetClaim(key: string, value: T, expectedValue: T): ClaimResult<T>`        | CAS update. Fails if current value ≠ expected.                 |
+| `compareAndSetClaim(key: string, value: T, expectedValue: T): ClaimResult<T>` | CAS update. Fails if current value ≠ expected.                 |
 | `getClaim(key: string): T \| undefined`                                       | Get the current committed value for a key.                     |
 
 ### Result types

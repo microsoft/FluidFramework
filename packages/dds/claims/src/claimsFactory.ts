@@ -63,8 +63,10 @@ export class ClaimsFactory implements IChannelFactory<IClaims> {
  *
  * @remarks
  * Claims acts as a scoped aliasing mechanism. Once a key is claimed, it cannot be
- * overwritten. The `trySetClaim` method returns a promise that resolves after the op
- * roundtrips, indicating whether the claim was accepted or if another client claimed it first.
+ * overwritten. The `trySetClaim` method returns a result that, when pending, includes a
+ * promise that resolves after the op roundtrips, indicating whether the claim was accepted
+ * or if another client claimed it first. Use `compareAndSetClaim` to update an existing
+ * key's value using compare-and-swap semantics.
  *
  * ### Creation
  *

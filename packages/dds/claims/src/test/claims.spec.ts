@@ -235,16 +235,16 @@ describe("Claims", () => {
 			claims = createConnectedClaims("claims", containerRuntimeFactory);
 		});
 
-		it("CAS with expectedValue=undefined acts like write-once", async () => {
-			const result = claims.trySetClaim("casKey", "firstValue", undefined);
-			assert.strictEqual(result.status, "Pending");
-			assert(result.status === "Pending");
-
-			containerRuntimeFactory.processAllMessages();
-			const confirmation = await result.promise;
-
-			assert.strictEqual(confirmation.status, "Accepted");
-			assert.strictEqual(claims.getClaim("casKey"), "firstValue");
+		it("CAS against unclaimed key returns AlreadyClaimed", () => {
+			// CAS requires the key to exist — it fails if the key hasn't been claimed.
+			const result = claims.compareAndSetClaim(
+				"casKey",
+				"firstValue",
+				undefined as unknown as string,
+			);
+			assert.strictEqual(result.status, "AlreadyClaimed");
+			assert(result.status === "AlreadyClaimed");
+			assert.strictEqual(result.currentValue, undefined);
 		});
 
 		it("CAS rejects when expectedValue doesn't match current", async () => {
@@ -255,7 +255,7 @@ describe("Claims", () => {
 			await firstResult.promise;
 
 			// CAS with wrong expected value should fail immediately.
-			const result = claims.trySetClaim("casKey", "secondValue", "wrongValue");
+			const result = claims.compareAndSetClaim("casKey", "secondValue", "wrongValue");
 			assert.strictEqual(result.status, "AlreadyClaimed");
 			assert(result.status === "AlreadyClaimed");
 			assert.strictEqual(result.currentValue, "firstValue");
@@ -269,7 +269,7 @@ describe("Claims", () => {
 			await firstResult.promise;
 
 			// CAS with correct expected value should succeed.
-			const result = claims.trySetClaim("casKey", "secondValue", "firstValue");
+			const result = claims.compareAndSetClaim("casKey", "secondValue", "firstValue");
 			assert.strictEqual(result.status, "Pending");
 			assert(result.status === "Pending");
 
@@ -291,8 +291,8 @@ describe("Claims", () => {
 			await claim1.promise;
 
 			// Both try CAS concurrently.
-			const cas1 = claims1.trySetClaim("casKey", "value1", "initialValue");
-			const cas2 = claims2.trySetClaim("casKey", "value2", "initialValue");
+			const cas1 = claims1.compareAndSetClaim("casKey", "value1", "initialValue");
+			const cas2 = claims2.compareAndSetClaim("casKey", "value2", "initialValue");
 			assert(cas1.status === "Pending");
 			assert(cas2.status === "Pending");
 
@@ -306,6 +306,145 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
 			assert.strictEqual(claims1.getClaim("casKey"), "value1");
 			assert.strictEqual(claims2.getClaim("casKey"), "value1");
+		});
+	});
+
+	describe("Rollback", () => {
+		it("Resolves pending promise as Aborted on rollback", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory({
+				flushMode: 1, // turn-based: messages are not auto-flushed
+			});
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			const containerRuntime =
+				containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = {
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+
+			const claims = new Claims("claims", dataStoreRuntime, ClaimsFactory.Attributes);
+			claims.connect(services);
+
+			const result = claims.trySetClaim("rollbackKey", "value");
+			assert(result.status === "Pending");
+
+			// Trigger rollback — rolls back the pending local message.
+			containerRuntime.rollback?.();
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+
+			const confirmation = await result.promise;
+			assert.strictEqual(confirmation.status, "Aborted");
+
+			// Key should not be committed.
+			assert.strictEqual(claims.getClaim("rollbackKey"), undefined);
+		});
+	});
+
+	describe("Dispose", () => {
+		it("Aborts all pending promises on runtime dispose", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const dataStoreRuntime = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
+			const services = {
+				deltaConnection: dataStoreRuntime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			};
+
+			const claims = new Claims("claims", dataStoreRuntime, ClaimsFactory.Attributes);
+			claims.connect(services);
+
+			const result1 = claims.trySetClaim("key1", "value1");
+			const result2 = claims.trySetClaim("key2", "value2");
+			assert(result1.status === "Pending");
+			assert(result2.status === "Pending");
+
+			// Dispose the runtime, which should abort all pending claims.
+			dataStoreRuntime.dispose();
+
+			const confirmation1 = await result1.promise;
+			const confirmation2 = await result2.promise;
+
+			assert.strictEqual(confirmation1.status, "Aborted");
+			assert.strictEqual(confirmation2.status, "Aborted");
+		});
+	});
+
+	describe("Event behavior", () => {
+		it("Does NOT emit 'claimed' when a claim is rejected", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims1 = createConnectedClaims("claims1", containerRuntimeFactory);
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+
+			// First client claims the key.
+			const firstResult = claims1.trySetClaim("eventKey", "firstValue");
+			assert(firstResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await firstResult.promise;
+
+			// Track events on client 2.
+			const emittedKeys: string[] = [];
+			claims2.on("claimed", (key: string) => {
+				emittedKeys.push(key);
+			});
+
+			// Client 2 tries to claim the same key — gets rejected locally.
+			const secondResult = claims2.trySetClaim("eventKey", "secondValue");
+			assert.strictEqual(secondResult.status, "AlreadyClaimed");
+
+			// No event should have been emitted for the rejection.
+			assert.strictEqual(emittedKeys.length, 0);
+		});
+	});
+
+	describe("CAS edge cases", () => {
+		it("CAS against a missing key returns AlreadyClaimed with undefined", () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			// CAS with a non-undefined expectedValue against a key that doesn't exist.
+			const result = claims.compareAndSetClaim("missingKey", "newValue", "expectedVal");
+			assert.strictEqual(result.status, "AlreadyClaimed");
+			assert(result.status === "AlreadyClaimed");
+			assert.strictEqual(result.currentValue, undefined);
+		});
+	});
+
+	describe("Summary round-trip with CAS", () => {
+		it("Can summarize and load CAS-updated claims", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			// Initial claim
+			const claimResult = claims.trySetClaim("casKey", "firstValue");
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			// CAS update
+			const casResult = claims.compareAndSetClaim("casKey", "secondValue", "firstValue");
+			assert(casResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			const casConfirmation = await casResult.promise;
+			assert.strictEqual(casConfirmation.status, "Accepted");
+
+			// Summarize
+			const summary = claims.getAttachSummary();
+
+			// Load into a new instance
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			// Should see the CAS-updated value.
+			assert.strictEqual(claims2.getClaim("casKey"), "secondValue");
 		});
 	});
 });
