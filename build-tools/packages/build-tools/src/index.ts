@@ -11,9 +11,7 @@ export {
 	type PackageJson,
 } from "./common/npmPackage.js";
 /**
- * The types defined here cannot be in build-cli because it is an ESM-only package, and these types are imported in
- * packages that are dual-emit or CJS-only. Long term these types should move to a shared library between build-cli and
- * build-tools.
+ * Long term these types should move to build-cli as there is no use in build-tools.
  */
 export type {
 	FullType,
@@ -23,8 +21,8 @@ export type {
 	TypeOnly,
 } from "./common/typeCompatibility.js";
 export { getTypeTestPreviousPackageDetails } from "./common/typeTests.js";
-export { type IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig.js";
-export { type IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata.js";
+export type { IFluidBuildConfig } from "./fluidBuild/fluidBuildConfig.js";
+export type { IFluidCompatibilityMetadata } from "./fluidBuild/fluidCompatMetadata.js";
 export { FluidRepo } from "./fluidBuild/fluidRepo.js";
 // For repo policy check
 export {

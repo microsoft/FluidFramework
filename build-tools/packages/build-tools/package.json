@@ -13,11 +13,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"default": "./dist/index.js"
+			"require": {
+				"types": "./index.d.cts"
+			},
+			"import": "./dist/index.js"
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"bin": {
 		"fluid-build": "bin/fluid-build.mjs",
 		"fluid-doc-stats": "bin/fluid-doc-stats.mjs",

@@ -14,65 +14,13 @@
 /**
  * Type compatibility utilities for generated type tests.
  *
- * ## Why this file is .cts (CommonJS TypeScript)
- *
- * This file uses the `.cts` extension to produce CommonJS output (`.cjs` and `.d.cts`) even though
- * the `@fluidframework/build-tools` package is ESM-only (`"type": "module"` in package.json).
- *
- * ### The Problem
- *
- * The generated type test files (e.g., `validateFooPrevious.generated.ts`) import these type utilities:
- *
- * ```ts
- * import type { TypeOnly, MinimalType, FullType, requireAssignableTo } from "@fluidframework/build-tools";
- * ```
- *
- * These test files are compiled twice: once as ESM (to `lib/`) and once as CJS (to `dist/`).
- * When TypeScript compiles them as CJS, it validates that `require()` calls would succeed at runtime.
- * Since `@fluidframework/build-tools` is ESM-only, TypeScript throws TS1479:
- *
- * > "The current file is a CommonJS module whose imports will produce 'require' calls;
- * > however, the referenced file is an ECMAScript module and cannot be imported with 'require'."
- *
- * ### The Solution
- *
- * By placing these types in a `.cts` file, TypeScript compiles them to:
- * - `typeCompatibility.cjs` - CommonJS JavaScript output
- * - `typeCompatibility.d.cts` - CommonJS type declarations
- *
- * The package.json exports are configured with conditional exports:
- *
- * ```json
- * "exports": {
- *   ".": {
- *     "import": { "types": "./dist/index.d.ts", "default": "./dist/index.js" },
- *     "require": { "types": "./dist/common/typeCompatibility.d.cts", "default": "./dist/common/typeCompatibility.cjs" }
- *   }
- * }
- * ```
- *
- * ### Why This Works (Type-Only Imports)
- *
- * This workaround ONLY works because the consuming code uses `import type`:
- *
- * ```ts
- * import type { TypeOnly, ... } from "@fluidframework/build-tools";
- * ```
- *
- * Type-only imports are erased during compilation - they produce NO runtime code. This means:
- *
- * 1. TypeScript sees the `require` condition in exports and finds valid CJS types (`.d.cts`)
- * 2. TypeScript is satisfied that the import COULD work at runtime (even though it won't be called)
- * 3. The compiled output contains no actual `require("@fluidframework/build-tools")` call
- *
- * If any consuming code tried to use a VALUE export (not just types) from the CJS entry point,
- * it would fail at runtime because the `.cjs` file doesn't actually export the full package API.
- *
- * ### Important Constraints
- *
- * - Only TYPE exports are available via the CJS entry point
- * - Runtime/value exports are only available via ESM (`import` from ESM contexts)
- * - Consumers must use `import type` (not `import`) when importing from CJS contexts
+ * These types must be available in CommonJS use case for consumers to type
+ * test against CommonJS build.
+ * As this package is ESM-only and TypeScript (as of 5.4.5) has not been
+ * configured to permit Node 22+ support of synchronous ESM load under CJS,
+ * a special workaround is needed. package.json exports list a special case
+ * for require+types referencing a simple .d.cts file re-exporting the
+ * ESM exports that are required.
  */
 
 /**
