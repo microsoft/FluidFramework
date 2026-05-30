@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Array as _typebox_Array, Composite as _typebox_Composite, Object as _typebox_Object, Optional as _typebox_Optional } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Composite: _typebox_Composite, Object: _typebox_Object, Optional: _typebox_Optional };
-
 import { unionOptions } from "../../codec/index.js";
+import { Type, type ObjectOptions, type Static, type TSchema } from "../../util/index.js";
 
 import {
 	CellId,

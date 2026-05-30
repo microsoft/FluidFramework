@@ -7,8 +7,8 @@ import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
-import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
+import type { Static, TAnySchema, TSchema } from "../util/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 /**

@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, type TSchema, Array as _typebox_Array, Object as _typebox_Object, Optional as _typebox_Optional } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Object: _typebox_Object, Optional: _typebox_Optional };
-
 import type { EncodedSchemaChange } from "../feature-libraries/index.js";
+import { Type, type Static, type TSchema } from "../util/index.js";
 import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

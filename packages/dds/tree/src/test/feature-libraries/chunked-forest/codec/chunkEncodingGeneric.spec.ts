@@ -5,9 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { type Static, Literal as _typebox_Literal, Object as _typebox_Object, Optional as _typebox_Optional, String as _typebox_String } from "@sinclair/typebox";
-const Type = { Literal: _typebox_Literal, Object: _typebox_Object, Optional: _typebox_Optional, String: _typebox_String };
-
 import { unionOptions } from "../../../../codec/index.js";
 import type {
 	Counter,
@@ -21,6 +18,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
+import { Type, type Static } from "../../../../util/index.js";
 import { brand } from "../../../../util/index.js";
 
 export const Constant = Type.Literal(0);

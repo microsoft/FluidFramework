@@ -4,8 +4,6 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type Static, type TSchema, Array as _typebox_Array, Composite as _typebox_Composite, Number as _typebox_Number, Object as _typebox_Object, Optional as _typebox_Optional, String as _typebox_String, Tuple as _typebox_Tuple } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Composite: _typebox_Composite, Number: _typebox_Number, Object: _typebox_Object, Optional: _typebox_Optional, String: _typebox_String, Tuple: _typebox_Tuple };
 
 import {
 	type EncodedRevisionTag,
@@ -13,6 +11,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
+import { Type, type ObjectOptions, type Static, type TSchema } from "../util/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";

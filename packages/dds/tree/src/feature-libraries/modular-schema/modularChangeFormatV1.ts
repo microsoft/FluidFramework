@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Array as _typebox_Array, Boolean as _typebox_Boolean, Number as _typebox_Number, Object as _typebox_Object, Optional as _typebox_Optional, Readonly as _typebox_Readonly, ReadonlyOptional as _typebox_ReadonlyOptional, Tuple as _typebox_Tuple, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Boolean: _typebox_Boolean, Number: _typebox_Number, Object: _typebox_Object, Optional: _typebox_Optional, Readonly: _typebox_Readonly, ReadonlyOptional: _typebox_ReadonlyOptional, Tuple: _typebox_Tuple, Union: _typebox_Union };
-
 import { type ChangesetLocalId, RevisionTagSchema, schemaFormatV1 } from "../../core/index.js";
+import { Type, type ObjectOptions, type Static } from "../../util/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlySchema,

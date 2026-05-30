@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Array as _typebox_Array, Null as _typebox_Null, Object as _typebox_Object, Optional as _typebox_Optional, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Null: _typebox_Null, Object: _typebox_Object, Optional: _typebox_Optional, Union: _typebox_Union };
-
 import { unionOptions } from "../../../../codec/index.js";
+import { Type, type Static } from "../../../../util/index.js";
 
 import { ShapeIndex } from "./formatGeneric.js";
 import { EncodedFieldShape, EncodedValueShape } from "./formatV1.js";

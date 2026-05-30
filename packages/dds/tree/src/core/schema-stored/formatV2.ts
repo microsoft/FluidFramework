@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Array as _typebox_Array, Composite as _typebox_Composite, Enum as _typebox_Enum, Object as _typebox_Object, Optional as _typebox_Optional, Record as _typebox_Record, String as _typebox_String, Unsafe as _typebox_Unsafe } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Composite: _typebox_Composite, Enum: _typebox_Enum, Object: _typebox_Object, Optional: _typebox_Optional, Record: _typebox_Record, String: _typebox_String, Unsafe: _typebox_Unsafe };
-
 import { unionOptions } from "../../codec/index.js";
-import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
-import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
+import {
+	Type,
+	type ObjectOptions,
+	type Static,
+	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlySchema,
+} from "../../util/index.js";
 
 import {
 	FieldKindIdentifierSchema,

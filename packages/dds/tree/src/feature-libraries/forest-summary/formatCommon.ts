@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Array as _typebox_Array, Object as _typebox_Object } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Object: _typebox_Object };
-
 import { versionField } from "../../codec/index.js";
 import { schemaFormatV1 } from "../../core/index.js";
+import { Type, type Static } from "../../util/index.js";
 import { strictEnum, type Values, JsonCompatibleReadOnlySchema } from "../../util/index.js";
 
 /**

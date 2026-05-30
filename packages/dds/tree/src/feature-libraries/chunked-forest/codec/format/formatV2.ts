@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Literal as _typebox_Literal, Object as _typebox_Object, Optional as _typebox_Optional } from "@sinclair/typebox";
-const Type = { Literal: _typebox_Literal, Object: _typebox_Object, Optional: _typebox_Optional };
-
 import { unionOptions } from "../../../../codec/index.js";
+import { Type, type Static } from "../../../../util/index.js";
 
 import { shapesV1 } from "./formatV1.js";
 

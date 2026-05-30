@@ -12,10 +12,10 @@ import {
 	type SemanticVersion,
 } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
-import type { TSchema } from "@sinclair/typebox";
 import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
+import type { TSchema } from "../../util/index.js";
 import {
 	JsonCompatibleReadOnlySchema,
 	type JsonCompatibleReadOnly,

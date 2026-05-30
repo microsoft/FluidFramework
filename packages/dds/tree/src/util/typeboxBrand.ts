@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type NumberOptions, type TUnsafe, Number as _typebox_Number, String as _typebox_String } from "@sinclair/typebox";
-const Type = { Number: _typebox_Number, String: _typebox_String };
+import { Type, type NumberOptions, type TUnsafe } from "./typebox.js";
 
 /**
  * Create a TypeBox string schema for a branded string type.

@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Union: _typebox_Union };
-
+import { Type, type Static } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
 

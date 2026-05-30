@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type Static, Any as _typebox_Any, Array as _typebox_Array, Boolean as _typebox_Boolean, Enum as _typebox_Enum, Literal as _typebox_Literal, Never as _typebox_Never, Object as _typebox_Object, Optional as _typebox_Optional, Tuple as _typebox_Tuple, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Any: _typebox_Any, Array: _typebox_Array, Boolean: _typebox_Boolean, Enum: _typebox_Enum, Literal: _typebox_Literal, Never: _typebox_Never, Object: _typebox_Object, Optional: _typebox_Optional, Tuple: _typebox_Tuple, Union: _typebox_Union };
-
 import { unionOptions } from "../../../../codec/index.js";
+import { Type, type Static } from "../../../../util/index.js";
 
 import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 

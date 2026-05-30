@@ -9,8 +9,6 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { Literal as _typebox_Literal, String as _typebox_String, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Literal: _typebox_Literal, String: _typebox_String, Union: _typebox_Union };
 
 import {
 	type Brand,
@@ -22,6 +20,7 @@ import {
 	brandedStringType,
 	comparePartialStrings,
 } from "../../util/index.js";
+import { Type } from "../../util/index.js";
 import type { RevertibleAlpha } from "../revertible.js";
 
 /**

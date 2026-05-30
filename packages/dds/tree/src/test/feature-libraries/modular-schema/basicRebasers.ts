@@ -5,8 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import type { TUnsafe } from "@sinclair/typebox";
-
 import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
 	makeDetachedNodeId,
@@ -22,6 +20,7 @@ import {
 	referenceFreeFieldChangeRebaser,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
+import type { TUnsafe } from "../../../util/index.js";
 import {
 	brandConst,
 	JsonCompatibleReadOnlySchema,

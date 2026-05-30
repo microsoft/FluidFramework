@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { Static } from "@sinclair/typebox";
-
+import type { Static } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 import { RevisionTagSchema } from "../rebase/index.js";
 

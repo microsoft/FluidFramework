@@ -4,10 +4,9 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type TSchema, Array as _typebox_Array, Literal as _typebox_Literal, Object as _typebox_Object, Optional as _typebox_Optional } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Literal: _typebox_Literal, Object: _typebox_Object, Optional: _typebox_Optional };
 
 import { SessionIdSchema } from "../core/index.js";
+import { Type, type ObjectOptions, type TSchema } from "../util/index.js";
 
 import { EncodedSharedBranch, EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 

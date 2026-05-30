@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Literal as _typebox_Literal, Object as _typebox_Object, Record as _typebox_Record, String as _typebox_String } from "@sinclair/typebox";
-const Type = { Literal: _typebox_Literal, Object: _typebox_Object, Record: _typebox_Record, String: _typebox_String };
-
 import { SchemaFormatVersion, schemaFormatV1 } from "../../core/index.js";
+import { Type, type ObjectOptions, type Static } from "../../util/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

@@ -6,11 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
-import { Number as _typebox_Number } from "@sinclair/typebox";
-const Type = { Number: _typebox_Number };
 
 import { type IJsonCodec, withSchemaValidation } from "../../codec/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
+import { Type } from "../../util/index.js";
 
 describe("Codec APIs", () => {
 	describe("withSchemaValidation", () => {

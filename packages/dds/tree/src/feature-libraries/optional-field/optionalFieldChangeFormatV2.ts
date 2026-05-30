@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Array as _typebox_Array, Boolean as _typebox_Boolean, Null as _typebox_Null, Object as _typebox_Object, Optional as _typebox_Optional, Tuple as _typebox_Tuple, Union as _typebox_Union } from "@sinclair/typebox";
-const Type = { Array: _typebox_Array, Boolean: _typebox_Boolean, Null: _typebox_Null, Object: _typebox_Object, Optional: _typebox_Optional, Tuple: _typebox_Tuple, Union: _typebox_Union };
-
+import { Type, type ObjectOptions, type Static, type TSchema } from "../../util/index.js";
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
