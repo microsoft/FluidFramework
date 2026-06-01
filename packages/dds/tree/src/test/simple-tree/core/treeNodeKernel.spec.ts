@@ -195,8 +195,6 @@ describe("withBufferedTreeEvents", () => {
 	// only reference buffers during an active withBufferedTreeEvents window.
 	describe("does not leak KernelEventBuffers", () => {
 		it("active-buffer count returns to baseline after a buffering window ends", () => {
-			const before = TEST_activeBufferCount();
-
 			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
 			TreeBeta.on(myObject, "nodeChanged", () => {});
 			TreeBeta.on(myObject, "treeChanged", () => {});
@@ -208,14 +206,12 @@ describe("withBufferedTreeEvents", () => {
 
 			assert.equal(
 				TEST_activeBufferCount(),
-				before,
+				0,
 				"Buffers must not be retained after the buffering window ends",
 			);
 		});
 
 		it("editing outside a buffering window never adds the buffer to module-level state", () => {
-			const before = TEST_activeBufferCount();
-
 			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
 			TreeBeta.on(myObject, "nodeChanged", () => {});
 			TreeBeta.on(myObject, "treeChanged", () => {});
@@ -225,14 +221,12 @@ describe("withBufferedTreeEvents", () => {
 
 			assert.equal(
 				TEST_activeBufferCount(),
-				before,
+				0,
 				"Unbuffered edits must not register the buffer with module-level state",
 			);
 		});
 
 		it("nested withBufferedTreeEvents windows release the buffer when the outer window ends", () => {
-			const before = TEST_activeBufferCount();
-
 			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
 			TreeBeta.on(myObject, "nodeChanged", () => {});
 
@@ -241,12 +235,12 @@ describe("withBufferedTreeEvents", () => {
 					myObject.foo = "hello";
 				});
 				// Inner window does not flush — buffer must still be tracked.
-				assert.equal(TEST_activeBufferCount(), before + 1);
+				assert.equal(TEST_activeBufferCount(), 1);
 			});
 
 			assert.equal(
 				TEST_activeBufferCount(),
-				before,
+				0,
 				"Buffers must not be retained after the outer buffering window ends",
 			);
 		});
