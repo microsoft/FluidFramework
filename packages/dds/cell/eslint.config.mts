@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// TODO: consider re-enabling once we have addressed how this rule conflicts with our error codes.
 			"unicorn/numeric-separators-style": "off",
 		},
 	},

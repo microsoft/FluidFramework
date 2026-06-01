@@ -28,11 +28,11 @@ const config: Linter.Config[] = [
 			"unicorn/filename-case": [
 				"error",
 				{
-					"cases": {
-						"camelCase": true,
-						"pascalCase": true,
+					cases: {
+						camelCase: true,
+						pascalCase: true,
 					},
-					"ignore": ["fluid-runner", "sample-executable"],
+					ignore: ["fluid-runner", "sample-executable"],
 				},
 			],
 			"unicorn/no-array-for-each": "off",
@@ -49,12 +49,15 @@ const config: Linter.Config[] = [
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
+					fixMixedExportsWithInlineTypeSpecifier: true,
 				},
 			],
+
+			// #endregion
 		},
 	},
 	{

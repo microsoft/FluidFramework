@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// This package is intended to be used in node.js environments
 			"import-x/no-nodejs-modules": "off",
 		},
 	},

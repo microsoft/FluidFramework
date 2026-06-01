@@ -19,6 +19,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
+
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 			"unicorn/no-null": "off",
 		},
 	},

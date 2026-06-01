@@ -8,7 +8,6 @@ import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
-	// Migrated from .eslintignore
 	{
 		ignores: ["test-d"],
 	},

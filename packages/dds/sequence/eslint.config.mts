@@ -10,6 +10,8 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			// #region TODO: Fix violations and remove these rule disables
+
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@typescript-eslint/explicit-function-return-type": "warn",
 			"@typescript-eslint/explicit-module-boundary-types": "off",
@@ -20,6 +22,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"@typescript-eslint/strict-boolean-expressions": "off",
 			"no-void": "off",
+
+			// #endregion
 			"unicorn/no-array-for-each": "off",
 			"unicorn/no-array-reduce": "off",
 			"unicorn/no-null": "off",

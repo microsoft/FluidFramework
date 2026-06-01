@@ -10,10 +10,11 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// Allow reaching into FluidFramework package paths that end with alpha, beta, legacy, or internal
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
+					allow: [
 						"@fluidframework/*/alpha",
 						"@fluidframework/*/beta",
 						"@fluidframework/*/legacy",
@@ -26,10 +27,11 @@ const config: Linter.Config[] = [
 	{
 		files: ["src/test/**/*"],
 		rules: {
+			// Test files can import from submodules for testing purposes
 			"import-x/no-internal-modules": [
 				"error",
 				{
-					"allow": [
+					allow: [
 						"*/index.js",
 						"@fluidframework/*/alpha",
 						"@fluidframework/*/beta",
@@ -38,6 +40,7 @@ const config: Linter.Config[] = [
 					],
 				},
 			],
+			// Allow unresolved for intentionally reaching into alpha/internal of other packages during integration tests
 			"import-x/no-unresolved": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",

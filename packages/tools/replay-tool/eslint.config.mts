@@ -10,10 +10,18 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			"@typescript-eslint/prefer-nullish-coalescing": "off", // requires strictNullChecks
+			"@typescript-eslint/strict-boolean-expressions": "off",
+			// This package often uses deprecated APIs because it's used to replay ops from older versions of the runtime
+			"import-x/no-deprecated": "off",
+			"import-x/no-nodejs-modules": "off",
+			"no-case-declarations": "off",
+
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-imports": [
 				"error",
 				{
-					"fixStyle": "inline-type-imports",
+					fixStyle: "inline-type-imports",
 				},
 			],
 			"@typescript-eslint/no-explicit-any": "off",
@@ -21,11 +29,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-argument": "off",
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
-			"@typescript-eslint/prefer-nullish-coalescing": "off",
-			"@typescript-eslint/strict-boolean-expressions": "off",
-			"import-x/no-deprecated": "off",
-			"import-x/no-nodejs-modules": "off",
-			"no-case-declarations": "off",
+			// #endregion
 			"unicorn/catch-error-name": "off",
 			"unicorn/explicit-length-check": "off",
 			"unicorn/no-array-for-each": "off",
@@ -46,12 +50,14 @@ const config: Linter.Config[] = [
 		files: ["**/*.{ts,tsx}"],
 		ignores: ["**/src/test/**", "**/tests/**", "**/*.spec.ts", "**/*.test.ts"],
 		rules: {
+			// #region TODO: remove these once this config has been updated to use our "recommended" base instead of our deprecated minimal one.
 			"@typescript-eslint/consistent-type-exports": [
 				"error",
 				{
-					"fixMixedExportsWithInlineTypeSpecifier": true,
+					fixMixedExportsWithInlineTypeSpecifier: true,
 				},
 			],
+			// #endregion
 		},
 	},
 ];

@@ -18,6 +18,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
 			"import-x/no-nodejs-modules": "off",
+
+			// Disabled because the rule is crashing on this package - AB#51780
+			"@typescript-eslint/unbound-method": "off",
 			"require-atomic-updates": "off",
 			"unicorn/catch-error-name": "off",
 			"unicorn/no-negated-condition": "off",

@@ -10,6 +10,7 @@ const config: Linter.Config[] = [
 	...recommended,
 	{
 		rules: {
+			// Many rules are disabled in PropertyDDS projects. See https://github.com/microsoft/FluidFramework/pull/10272
 			"@fluid-internal/fluid/no-unchecked-record-access": "warn",
 			"@rushstack/no-new-null": "off",
 			"@typescript-eslint/ban-ts-comment": "off",
@@ -43,10 +44,10 @@ const config: Linter.Config[] = [
 			"depend/ban-dependencies": [
 				"error",
 				{
-					"allowed": ["lodash", "traverse"],
+					allowed: ["lodash", "traverse"],
 				},
 			],
-			"eqeqeq": "off",
+			eqeqeq: "off",
 			"import-x/no-internal-modules": "off",
 			"jsdoc/require-description": "off",
 			"no-case-declarations": "off",

@@ -10,10 +10,15 @@ const config: Linter.Config[] = [
 	...strict,
 	{
 		rules: {
+			// Disabled because they conflict with Prettier.
 			"unicorn/no-nested-ternary": "off",
+
+			// Disabled because it is incompatible with API-Extractor.
 			"@typescript-eslint/no-namespace": "off",
 		},
 	},
+
+	// Overrides for test files
 	{
 		files: ["*.spec.ts", "*.test.ts", "src/test/**"],
 		rules: {
