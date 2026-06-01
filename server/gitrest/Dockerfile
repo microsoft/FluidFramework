@@ -64,8 +64,11 @@ RUN PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.pack
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
 # Using a cache mount for the pnpm store improves the incremental docker build.
+# pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set
+# (https://pnpm.io/settings#storedir), so the mount target /pnpm/store already
+# matches and no --store-dir flag is needed.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --unsafe-perm --registry="$NPM_REGISTRY" --store-dir=/pnpm/store
+    pnpm install --unsafe-perm --registry="$NPM_REGISTRY"
 
 COPY . .
 
