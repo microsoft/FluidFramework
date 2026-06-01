@@ -18,18 +18,27 @@ const packageRoot = resolve(scriptDirectory, "..");
 const bundleAnalysisDirectory = resolve(packageRoot, "bundleAnalysis");
 
 /**
- * Resolves a committish (branch, tag, or SHA) to the merge-base with the outer
- * repo's current HEAD. Returns the full SHA, or undefined if the rev cannot be
+ * Resolves the merge-base (best common ancestor) of two committishes (branch,
+ * tag, or SHA). Returns the full SHA, or undefined if either rev cannot be
  * resolved (e.g. unknown branch, detached state with no shared history).
  *
- * Using merge-base instead of the raw branch tip means the comparison is taken
+ * `otherRev` defaults to `HEAD`. The two-commit form of `git merge-base` is
+ * symmetric — per the git documentation, `git merge-base a b` outputs a commit
+ * reachable from both `a` and `b`, so argument order does not affect the result
+ * (order only matters for the 3+ commit and `--fork-point` forms, which we do
+ * not use here).
+ *
+ * Using merge-base instead of a raw branch tip means the comparison is taken
  * against the actual fork point, which is what users typically want — and it
  * works for worktree-based setups where `main` may not exist as a local branch
  * at the location they expect.
  */
-async function resolveMergeBase(rev: string): Promise<string | undefined> {
+async function resolveMergeBase(
+	rev: string,
+	otherRev = "HEAD",
+): Promise<string | undefined> {
 	try {
-		const output = await simpleGit(packageRoot).raw(["merge-base", "HEAD", rev]);
+		const output = await simpleGit(packageRoot).raw(["merge-base", rev, otherRev]);
 		const sha = output.trim();
 		return sha.length > 0 ? sha : undefined;
 	} catch {
@@ -50,11 +59,9 @@ async function resolveMergeBase(rev: string): Promise<string | undefined> {
  */
 function runScript(scriptName: string, scriptArgs: string[]): void {
 	const scriptPath = resolve(scriptDirectory, scriptName);
-	// Bump the V8 heap so compareBundles.ts can hold two decompressed webpack
-	// stats objects in memory without hitting the default ~4 GB OOM.
 	const result = spawnSync(
 		process.execPath,
-		["--max-old-space-size=8192", "--import", "jiti/register", scriptPath, ...scriptArgs],
+		["--import", "jiti/register", scriptPath, ...scriptArgs],
 		{
 			cwd: packageRoot,
 			stdio: "inherit",
@@ -159,17 +166,17 @@ class CollectAndCompareBundlesCommand extends Command {
 		}
 
 		// The inner repo is only ever checked out at a clean revision; its build
-		// output for a given SHA is deterministic, so cached stats from a prior
-		// run for the same SHA can be reused. We track the SHA used to produce
-		// the base stats in a sidecar revision.txt file.
+		// output for a given SHA is deterministic, so a cached base report from a
+		// prior run for the same SHA can be reused. We track the SHA used to produce
+		// the base report in a sidecar revision.txt file.
 		const baseLabelDirectory = resolve(bundleAnalysisDirectory, baseLabel);
-		const baseStatsPath = resolve(baseLabelDirectory, "bundleStats.msp.gz");
+		const baseAnalyzerPath = resolve(baseLabelDirectory, "analyzer.json");
 		const baseRevisionMarkerPath = resolve(baseLabelDirectory, "revision.txt");
 		const cachedBaseRevision = existsSync(baseRevisionMarkerPath)
 			? readFileSync(baseRevisionMarkerPath, "utf8").trim()
 			: undefined;
 		const baseStatsAreCached =
-			!forceCleanBuildFlag && existsSync(baseStatsPath) && cachedBaseRevision === baseRevision;
+			!forceCleanBuildFlag && existsSync(baseAnalyzerPath) && cachedBaseRevision === baseRevision;
 
 		try {
 			console.log(`\n${"=".repeat(80)}`);
@@ -188,7 +195,7 @@ class CollectAndCompareBundlesCommand extends Command {
 				console.log(
 					`Reusing cached base bundle (revision: ${baseRevision}, label: ${baseLabel}).`,
 				);
-				console.log(`  Stats: ${baseStatsPath}`);
+				console.log(`  Report: ${baseAnalyzerPath}`);
 				console.log("=".repeat(80));
 			} else {
 				console.log(
@@ -204,12 +211,12 @@ class CollectAndCompareBundlesCommand extends Command {
 					baseLabel,
 					...sharedCollectArgs,
 				]);
-				// Record the SHA that produced these stats so a subsequent run
+				// Record the SHA that produced this report so a subsequent run
 				// against the same merge-base can skip the rebuild.
 				mkdirSync(baseLabelDirectory, { recursive: true });
 				writeFileSync(baseRevisionMarkerPath, `${baseRevision}\n`);
 
-				// Delete the inner repo now that the stats are saved. It's a
+				// Delete the inner repo now that the report is saved. It's a
 				// shallow clone of the outer repo's `origin`, so re-creating it
 				// on the next run is cheap; keeping it around just consumes disk
 				// (hundreds of MB once dependencies are installed).

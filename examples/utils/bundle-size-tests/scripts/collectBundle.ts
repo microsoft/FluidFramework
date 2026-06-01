@@ -4,15 +4,7 @@
  */
 
 import { execSync } from "node:child_process";
-import {
-	copyFileSync,
-	cpSync,
-	existsSync,
-	mkdirSync,
-	rmSync,
-	unlinkSync,
-	writeFileSync,
-} from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -120,26 +112,28 @@ function buildBundles(packageRoot: string): void {
 }
 
 /**
- * Moves webpack's stats output and `build/` directory into the per-label directory
- * under the persistent analysis root.
+ * Saves webpack-bundle-analyzer's JSON report into the per-label directory under
+ * the persistent analysis root. This `analyzer.json` carries per-asset
+ * parsed/gzip sizes and entrypoint membership, which is everything
+ * compareBundles.ts needs — so the (large) webpack stats and `build/` outputs
+ * do not need to be retained.
  *
  * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
  * @param sourcePackageRoot - Package root that produced the webpack output.
  */
 function saveStats(label: string, sourcePackageRoot: string): void {
-	const webpackStatsOutputPath = resolve(
+	const analyzerJsonOutputPath = resolve(
 		sourcePackageRoot,
-		"bundleAnalysis",
-		"bundleStats.msp.gz",
+		"bundleAnalyzerJson",
+		"analyzer.json",
 	);
-	const webpackBuildOutputPath = resolve(sourcePackageRoot, "build");
 
 	const labelDirectory = resolve(bundleAnalysisDirectory, label);
-	const destStatsPath = resolve(labelDirectory, "bundleStats.msp.gz");
+	const destAnalyzerPath = resolve(labelDirectory, "analyzer.json");
 
-	if (!existsSync(webpackStatsOutputPath)) {
+	if (!existsSync(analyzerJsonOutputPath)) {
 		throw new Error(
-			`Bundle stats not found at ${webpackStatsOutputPath}. ` +
+			`Analyzer report not found at ${analyzerJsonOutputPath}. ` +
 				`Check that webpack ran successfully.`,
 		);
 	}
@@ -148,21 +142,9 @@ function saveStats(label: string, sourcePackageRoot: string): void {
 	// Use copy + unlink instead of renameSync because the source and destination
 	// may live on different drives (e.g. D: -> C:\Users\<user>\AppData\Local\Temp),
 	// which causes renameSync to fail with EXDEV on Windows.
-	copyFileSync(webpackStatsOutputPath, destStatsPath);
-	unlinkSync(webpackStatsOutputPath);
-	console.log(`Saved stats to: ${destStatsPath}`);
-
-	if (existsSync(webpackBuildOutputPath)) {
-		const destBuildPath = resolve(labelDirectory, "build");
-		rmSync(destBuildPath, { recursive: true, force: true });
-		cpSync(webpackBuildOutputPath, destBuildPath, { recursive: true });
-		console.log(`Saved build outputs to: ${destBuildPath}`);
-	} else {
-		console.warn(
-			`Warning: webpack build outputs not found at ${webpackBuildOutputPath}; ` +
-				`gzip sizes will be unavailable for label "${label}".`,
-		);
-	}
+	copyFileSync(analyzerJsonOutputPath, destAnalyzerPath);
+	unlinkSync(analyzerJsonOutputPath);
+	console.log(`Saved analyzer report to: ${destAnalyzerPath}`);
 }
 
 /**
