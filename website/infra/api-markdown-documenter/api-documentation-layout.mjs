@@ -60,7 +60,8 @@ const sealedNotice = createAdmonition(
 			children: [
 				{
 					type: "text",
-					value: 'This type is "sealed," meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members or make typing of readonly members more specific.',
+					value:
+						'This type is "sealed," meaning that code outside of the library defining it should not implement or extend it. Future versions of this type may add members or make typing of readonly members more specific.',
 				},
 			],
 		},
@@ -79,7 +80,8 @@ const inputNotice = createAdmonition(
 			children: [
 				{
 					type: "text",
-					value: 'This type is "input," meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members or make typing of members more general.',
+					value:
+						'This type is "input," meaning that code outside of the library defining it should not read from it. Future versions of this type may add optional members or make typing of members more general.',
 				},
 			],
 		},
@@ -274,7 +276,9 @@ export function layoutContent(apiItem, itemSpecificContent, config) {
 	addSection(LayoutUtilities.createRemarksSection(apiItem, config));
 
 	// Add examples (if any)
-	addSection(LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle));
+	addSection(
+		LayoutUtilities.createExamplesSection(apiItem, config, customExamplesSectionTitle),
+	);
 
 	// Add provided contents
 	// Flatten contents into this section
