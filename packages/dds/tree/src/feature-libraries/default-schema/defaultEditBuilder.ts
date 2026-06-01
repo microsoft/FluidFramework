@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
