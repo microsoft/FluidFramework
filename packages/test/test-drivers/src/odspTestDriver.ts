@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import os from "os";
 
 import { ITestDriver, OdspEndpoint } from "@fluid-internal/test-driver-definitions";
@@ -31,12 +30,6 @@ import {
 import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
-
-const passwordLoginCredentials = (username: string, password: string): LoginCredentials => ({
-	type: "password",
-	username,
-	password,
-});
 
 const ficLoginCredentials = (
 	username: string,
@@ -82,29 +75,6 @@ interface IOdspTestDriverConfig extends TokenConfig {
 	directory: string;
 	driveId: string;
 	options: HostStoragePolicy | undefined;
-}
-
-// specific a range of user name from <prefix><start> to <prefix><start + count - 1> all having the same password
-interface LoginTenantRange {
-	prefix: string;
-	start: number;
-	count: number;
-	password: string;
-}
-
-interface LoginTenants {
-	[tenant: string]: {
-		range: LoginTenantRange;
-		// add different format here
-	};
-}
-
-/**
- * A simplified version of the credentials returned by the tenant pool containing only username and password values.
- */
-export interface UserPassCredentials {
-	UserPrincipalName: string;
-	Password: string;
 }
 
 /**
@@ -179,98 +149,20 @@ export function getOdspCredentials(
 	odspEndpointName: OdspEndpoint,
 	tenantIndex: number,
 ): LoginCredentials[] {
-	const creds: { username: string; password: string }[] = [];
-	const loginTenants =
-		odspEndpointName === "odsp"
-			? process.env.login__odsp__test__tenants
-			: process.env.login__odspdf__test__tenants;
-
 	const ficAccounts = process.env.login__odsp__fic__test__users;
-	if (ficAccounts !== undefined) {
-		const { usernames } = JSON.parse(ficAccounts) as {
-			usernames: string[];
-		};
-
-		if (usernames.length === 0) {
-			throw new Error(
-				"login__odsp__fic__test__users was defined but does not have any valid usernames.",
-			);
-		}
-		return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
-	} else if (loginTenants !== undefined) {
-		/**
-		 * Parse login credentials using the new tenant format for e2e tests.
-		 * For the expected format of loginTenants, see {@link UserPassCredentials}
-		 */
-		if (loginTenants.includes("UserPrincipalName")) {
-			// Password-based credentials (ROPC OAuth flow)
-			const output: UserPassCredentials[] = JSON.parse(loginTenants);
-			if (output?.[tenantIndex] === undefined) {
-				throw new Error("No resources found in the login tenants");
-			}
-
-			// Return the set of accounts to choose from a single tenant
-
-			return output.map((account) =>
-				passwordLoginCredentials(account.UserPrincipalName, account.Password),
-			);
-		} else {
-			/**
-			 * Parse login credentials using the tenant format for stress tests.
-			 * For the expected format of loginTenants, see {@link LoginTenants}
-			 */
-			const tenants: LoginTenants = JSON.parse(loginTenants);
-			const tenantNames = Object.keys(tenants);
-			const tenant = tenantNames[tenantIndex % tenantNames.length];
-			if (tenant === undefined) {
-				throw new Error("tenant should not be undefined when getting odsp credentials");
-			}
-			const tenantInfo = tenants[tenant];
-			if (tenantInfo === undefined) {
-				throw new Error("tenantInfo should not be undefined when getting odsp credentials");
-			}
-			// Translate all the user from that user to the full user principal name by appending the tenant domain
-			const range = tenantInfo.range;
-
-			// Return the set of account to choose from a single tenant
-			for (let i = 0; i < range.count; i++) {
-				const username = `${range.prefix}${range.start + i}@${tenant}`;
-				creds.push({ username, password: range.password });
-			}
-		}
-	} else {
-		const loginAccounts =
-			odspEndpointName === "odsp"
-				? process.env.login__odsp__test__accounts
-				: process.env.login__odspdf__test__accounts;
-		if (loginAccounts === undefined) {
-			// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-			const inCi = !!process.env.TF_BUILD;
-			const odspOrOdspdf = odspEndpointName === "odsp" ? "odsp" : "odspdf";
-			assert.fail(
-				`Missing secrets from environment. At least one of login__${odspOrOdspdf}__test__tenants or login__${odspOrOdspdf}__test__accounts must be set.${
-					inCi ? "" : "\n\nRun getkeys to populate these environment variables."
-				}`,
-			);
-		}
-
-		// Expected format of login__odsp__test__accounts is simply string key-value pairs of username and password
-		const passwords: { [user: string]: string } = JSON.parse(loginAccounts);
-
-		// Need to choose one out of the set as these account might be from different tenant
-		const username = Object.keys(passwords)[0];
-		if (username === undefined) {
-			throw new Error("username should not be undefined when getting odsp credentials");
-		}
-		const userPass = passwords[username];
-		if (userPass === undefined) {
-			throw new Error(
-				"password for username should not be undefined when getting odsp credentials",
-			);
-		}
-		creds.push({ username, password: userPass });
+	if (ficAccounts === undefined) {
+		throw new Error("login__odsp__fic__test__users is not defined.");
 	}
-	return creds.map((c) => passwordLoginCredentials(c.username, c.password));
+	const { usernames } = JSON.parse(ficAccounts) as {
+		usernames: string[];
+	};
+
+	if (usernames.length === 0) {
+		throw new Error(
+			"login__odsp__fic__test__users was defined but does not have any valid usernames.",
+		);
+	}
+	return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
 }
 
 // Default token manager — shared across all OdspTestDriver instances that don't supply their own.
