@@ -96,7 +96,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.101.0",
+		"@fluidframework/driver-definitions-previous": "npm:@fluidframework/driver-definitions@2.102.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^9.2.1",
