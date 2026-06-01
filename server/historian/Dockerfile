@@ -58,6 +58,11 @@ ENV PNPM_HOME="/pnpm"
 # though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$HISTORIAN_ROOT/node_modules/.bin:$PATH"
 
+# Install the pnpm version pinned in package.json's "packageManager" field.
+# Mirrors the approach used by tools/pipelines/templates/include-install-pnpm.yml.
+RUN PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
+    && npm install -g "$PNPM_VERSION"
+
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
 # and be able to change them.
