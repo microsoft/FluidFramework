@@ -97,7 +97,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	containerId: string;
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
-	const { container } = await client.createContainer(containerSchema, "2");
+	const { container } = await client.createContainer(containerSchema, "2.0.0");
 
 	const treeView = asAlpha<typeof TextEditorRoot>(
 		container.initialObjects.tree.viewWith(treeConfig),
@@ -127,7 +127,7 @@ async function loadExistingContainer(
 	container: IFluidContainer<typeof containerSchema>;
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2");
+	const { container } = await client.getContainer(containerId, containerSchema, "2.0.0");
 	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
 	return {
 		container,

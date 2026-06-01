@@ -108,25 +108,21 @@ compat internally (see
 
 #### Configuring Cross-Client Compatibility (Declarative Model)
 
-If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is configured via the `CompatibilityMode` parameter. This is a required argument when creating or loading a container:
+If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is
+configured by passing a `minVersionForCollab` SemVer string when creating or loading a container:
 
 ```typescript
 // Creating a new container
-const { container } = await azureClient.createContainer(schema, compatibilityMode);
+const { container } = await azureClient.createContainer(schema, "2.0.0");
 
 // Loading an existing container
-const { container } = await azureClient.getContainer(id, schema, compatibilityMode);
+const { container } = await azureClient.getContainer(id, schema, "2.0.0");
 ```
 
-The client will map `CompatibilityMode` to a `minVersionForCollab` value (see [utils.ts](./packages/framework/fluid-static/src/utils.ts) for details) and automatically configure runtime options via [compatibilityConfiguration.ts](./packages/framework/fluid-static/src/compatibilityConfiguration.ts). This means you do not need to manage individual runtime options or version strings directly.
-
-Below is the mapping of `CompatibilityMode` values to `minVersionForCollab` at the time of writing. For the most up-to-date mapping, please refer to `compatibilityModeToMinVersionForCollab` in [utils.ts](./packages/framework/fluid-static/src/utils.ts).
-
-<!-- prettier-ignore -->
-| Mode | Meaning | Mapped `minVersionForCollab` |
-| --- | --- | --- |
-| `"1"` | Supports collaboration with 1.x clients. Uses a conservative set of runtime options. | `"1.0.0"` |
-| `"2"` | Supports collaboration with 2.x clients only. Enables newer features (e.g., runtime ID compressor for SharedTree support). | `"2.0.0"` |
+This sets the minimum Fluid version allowed to collaborate on the document and automatically configures
+runtime options to be compatible with that version (see
+[compatibilityConfiguration.ts](./packages/framework/fluid-static/src/compatibilityConfiguration.ts)).
+You do not need to manage individual runtime options directly.
 
 #### Configuring Cross-Client Compatibility (Encapsulated Model)
 
@@ -165,9 +161,9 @@ version your users are [saturated](#terminology) on. This will ensure:
 We recommend following the below pattern to ensure cross-client compatibility. Keeping your compatibility configuration up-to-date on an ongoing basis ensures you are always within a safe compatibility window.
 
 1. Observe the distribution of Fluid versions across your application's clients. See [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution) for how to do this using telemetry.
-2. Update your compatibility configuration to match the oldest deployed version that your clients are [saturated](#terminology) on:
-    - **Declarative model**: Set `CompatibilityMode` to the value corresponding to that saturated version.
-    - **Encapsulated model**: Set `minVersionForCollab` to the specific saturated version (e.g., `"2.10.0"`).
+2. Update your compatibility configuration to match the oldest deployed version that your clients are
+   [saturated](#terminology) on. In both the declarative and encapsulated models, set `minVersionForCollab`
+   to that saturated version (e.g., `"2.10.0"`).
 3. Verify that the configured compatibility checkpoint is within the supported compatibility window of the Fluid Framework version you want to upgrade to. If it is, bump your Fluid Framework dependencies and update your lock file (so a newer version isn't picked up implicitly); no further action is required. If not, wait for further saturation and return to step 1.
 4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients running a version older than the configured `minVersionForCollab` may be blocked from accessing the document.
 
@@ -180,6 +176,7 @@ The following are errors and telemetry warnings you may see during and following
 | --- | --- | --- | --- |
 | Telemetry Event | `MinVersionForCollabWarning` | Clients are joining with a version below your configured minimum, but are still able to understand the document's data format and therefore continue to collaborate. | If you see this warning message, it's likely a sign you updated `minVersionForCollab` too quickly. In future releases, ensure proper [saturation](#terminology) before updating. If these warning messages are ignored, you may risk seeing the below error in the future. |
 | `DataProcessingError` | `Document can't be opened with current version of the code` | An out-of-window client tried to join and was blocked due to being unable to collaborate with the newer client's document. | If this was unexpected, lower `minVersionForCollab` so newly-created documents will admit older clients. **Note:** documents whose schema has already been elevated by a higher-`minVersionForCollab` writer may continue to block older clients on those specific documents — lowering the configured value does not retroactively undo the elevation in the document's persisted schema. |
+| `DataCorruptionError` | `Summary metadata mismatch` | An older out-of-window client (before 2.0.0-rc.3.0.0) tried to join and was blocked due to being unable to collaborate with the newer client's document. | Update the affected client to 2.0 or later. This signal only affects very old clients; modern cross-client enforcement surfaces through `MinVersionForCollabWarning` and the `DataProcessingError` row above. |
 | `UsageError` | `Incompatible Runtime Option` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper [saturation](#terminology)). |
 | `UsageError` | `Runtime option <name>:<value> requires runtime version <X>` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper [saturation](#terminology)). |
 

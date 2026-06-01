@@ -2614,6 +2614,14 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * on the `@legacy @beta` surface. This interface is retained for callers that require the
+ * typed-required (non-optional) shape and will be removed in a future breaking release once
+ * `IContainer.getPendingLocalState` is made required.
+ *
  * @alpha @legacy @sealed
  */
 export interface ContainerAlpha extends IContainer {
@@ -2628,6 +2636,13 @@ export interface ContainerAlpha extends IContainer {
 
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer calling
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * directly on the `@legacy @beta` surface. This helper is retained for callers that need the
+ * typed-required shape and will be removed in a future breaking release.
+ *
  * @legacy @alpha
  */
 export function asLegacyAlpha(base: IContainer): ContainerAlpha {

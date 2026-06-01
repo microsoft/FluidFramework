@@ -1,5 +1,22 @@
 # @fluid-experimental/property-common
 
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Correct some PropertyDDS "MSG" error constant entries ([#26971](https://github.com/microsoft/FluidFramework/pull/26971)) [7aec5f11ea9](https://github.com/microsoft/FluidFramework/commit/7aec5f11ea97542a820f5d851d11051acaf496c5)
+
+  Several error constants referenced in other PropertyDDS packages did not exist and would produce errors with "undefined" (literal) in error message string.
+  In the past:
+  - `OVERRIDEN_PROP_MUST_HAVE_SAME_CONTEXT_AS_BASE_TYPE` use was replaced by `OVERRIDEN_PROP_MUST_HAVE_SAME_FIELD_VALUES_AS_BASE_TYPE` (but never defined).
+  - `CANNOT_INSERT_UNKNOWN_PROPERTY`, `MISMATCHING_PROPERTY_TYPEID`, and `CANNOT_REMOVE_NON_OPTIONAL_PROP` uses were added without defining them.
+
+  Those all are now defined `MSG` properties.
+
 ## 2.100.0
 
 ### Minor Changes

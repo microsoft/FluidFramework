@@ -8,6 +8,7 @@ import type { OpSpaceCompressedId, SessionSpaceCompressedId } from "./types/inde
 /**
  * A compressed ID that is stable and unique within the scope of network of compressors (i.e. a document).
  * It can only be used/decompressed in the context of the originating document.
+ * @internal
  */
 export type FinalCompressedId = number & {
 	readonly FinalCompressedId: "5d83d1e2-98b7-4e4e-a889-54c855cfa73d";
@@ -27,6 +28,15 @@ export type LocalCompressedId = number & {
 
 /**
  * Returns true if the supplied ID is a final ID.
+ * @internal
+ * @privateRemarks
+ * This should generally not be necessary to use outside of the id-compressor package. It is exported for backwards compatibility for format
+ * choices made in SharedTree (so they can more clearly document their intent).
+ * In general, users of IdCompressor should not care if their ids are finalized or not. They should persist short IDs with the context of the
+ * originator's session ID if it cannot be guaranteed that the ID is finalized.
+ *
+ * Note that the bad assumption that made exporting this function necessary is that all IDs in summaries are finalized. This is not necessarily
+ * the case when an attach summary is generated for a DDS attaching to an already-attached container.
  */
 export function isFinalId(
 	id: SessionSpaceCompressedId | OpSpaceCompressedId,

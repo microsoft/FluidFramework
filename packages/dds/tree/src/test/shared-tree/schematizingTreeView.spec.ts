@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { CommitKind, type TransactionLabels } from "../../core/index.js";
+import { CommitKind, type RevertibleAlpha, type TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -1480,6 +1480,211 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels.length, 1);
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
 			assert.equal(receivedLabels.tree.sublabels[1]?.label, "after");
+		});
+
+		it("revert commit inherits the original commit's label", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, testLabel);
+			assert.deepEqual(events[1]?.labels.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of revert reuses the original label tree", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; labels: TransactionLabels }[] = [];
+			const revertibles: RevertibleAlpha[] = [];
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, labels: meta.labels });
+					const r = getRevertible?.();
+					if (r !== undefined) {
+						revertibles.push(r);
+					}
+				}
+			});
+
+			const testLabel = "testLabel";
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			revertibles[0]?.revert(); // undo
+			revertibles[1]?.revert(); // redo
+
+			assert.deepEqual(
+				events.map((e) => e.kind),
+				[CommitKind.Default, CommitKind.Undo, CommitKind.Redo],
+			);
+
+			// All three commits share the same label tree — revert-of-revert does not introduce new nesting.
+			const expectedTree = { label: testLabel, sublabels: [] };
+			assert.deepEqual(events[0]?.labels.tree, expectedTree);
+			assert.deepEqual(events[1]?.labels.tree, expectedTree);
+			assert.deepEqual(events[2]?.labels.tree, expectedTree);
+		});
+
+		it("revert of an unlabeled edit produces empty labels", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(() => {
+				view.root.content = 1;
+			});
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			assert.equal(events[1]?.label, undefined);
+			assert.equal(events[1]?.labels.size, 0);
+		});
+
+		it("labelTreeNode is restored if revert apply throws", () => {
+			// Verify the finally in `revertRevertible` runs even when `apply` throws.
+			// If `labelTreeNode` weren't restored, the next labeled transaction would
+			// nest under the leftover state.
+			const view = getTestObjectView();
+
+			let revertible: RevertibleAlpha | undefined;
+			let lastLabel: unknown;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (!meta.isLocal) return;
+				if (meta.kind === CommitKind.Default) {
+					revertible ??= getRevertible?.();
+					lastLabel = meta.label;
+				}
+				if (meta.kind === CommitKind.Undo) {
+					throw new Error("simulated revert failure");
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.root.content = 1;
+				},
+				{ label: "first" },
+			);
+			assert(revertible !== undefined);
+			assert.throws(() => revertible?.revert());
+
+			view.runTransaction(
+				() => {
+					view.root.content = 2;
+				},
+				{ label: "second" },
+			);
+			assert.equal(lastLabel, "second");
+		});
+
+		it("cloned revertible inherits the original commit's labels", () => {
+			const sourceView = getTestObjectView();
+
+			let sourceRevertible: RevertibleAlpha | undefined;
+			sourceView.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default) {
+					sourceRevertible = getRevertible?.();
+				}
+			});
+
+			const testLabel = "testLabel";
+			sourceView.runTransaction(
+				() => {
+					sourceView.root.content = 1;
+				},
+				{ label: testLabel },
+			);
+
+			// Fork after the labeled commit so the cloned revertible's source commit is reachable on the target.
+			const targetView = sourceView.fork();
+			let undoLabels: TransactionLabels | undefined;
+			targetView.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Undo) {
+					undoLabels = meta.labels;
+				}
+			});
+
+			assert(sourceRevertible !== undefined);
+			sourceRevertible.clone(targetView).revert();
+
+			assert.deepEqual(undoLabels?.tree, { label: testLabel, sublabels: [] });
+		});
+
+		it("revert of a nested transaction preserves the nested label structure", () => {
+			const view = getTestObjectView();
+
+			const events: { kind: CommitKind; label: unknown; labels: TransactionLabels }[] = [];
+			let revertible: RevertibleAlpha | undefined;
+			view.checkout.events.on("changed", (meta, getRevertible) => {
+				if (meta.isLocal) {
+					events.push({ kind: meta.kind, label: meta.label, labels: meta.labels });
+					if (meta.kind === CommitKind.Default) {
+						revertible = getRevertible?.();
+					}
+				}
+			});
+
+			view.runTransaction(
+				() => {
+					view.runTransaction(
+						() => {
+							view.root.content = 1;
+						},
+						{ label: "inner" },
+					);
+				},
+				{ label: "outer" },
+			);
+
+			assert(revertible !== undefined);
+			revertible.revert();
+
+			assert.equal(events.length, 2);
+			assert.equal(events[1]?.kind, CommitKind.Undo);
+			// metadata.label is the outermost label; labels.tree captures the full nesting.
+			assert.equal(events[1]?.label, "outer");
+			assert.deepEqual(events[1]?.labels.tree, {
+				label: "outer",
+				sublabels: [{ label: "inner", sublabels: [] }],
+			});
 		});
 
 		it("inner labels are surfaced with undefined root when outer transaction has no label", () => {

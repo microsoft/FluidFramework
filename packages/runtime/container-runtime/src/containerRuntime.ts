@@ -1897,7 +1897,8 @@ export class ContainerRuntime
 		// Grouped batching is required because resubmits can produce empty batches that must
 		// still be sent on the wire as a placeholder grouped batch to preserve their batchId
 		// (see OpGroupingManager.createEmptyGroupedBatch / outbox.flushEmptyBatch).
-		// Offline Load requires both prerequisites, so a consumer that opts into it without
+		// Offline Load requires all three prerequisites (TurnBased, grouped batching, and
+		// batchId tracking not killed by config), so a consumer that opts into it without
 		// them gets an explicit UsageError rather than silent degradation.
 		const offlineLoadRequested =
 			this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") === true;
@@ -1911,6 +1912,13 @@ export class ContainerRuntime
 		}
 		if (offlineLoadRequested && !this.groupedBatchingEnabled) {
 			const error = new UsageError("Offline mode requires grouped batching to be enabled");
+			this.closeFn(error);
+			throw error;
+		}
+		if (offlineLoadRequested && disableBatchIdTracking) {
+			const error = new UsageError(
+				"Offline mode requires batchId tracking; remove Fluid.ContainerRuntime.DisableBatchIdTracking",
+			);
 			this.closeFn(error);
 			throw error;
 		}
@@ -3159,16 +3167,34 @@ export class ContainerRuntime
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
+								batchIdExplicit: batchStart.batchId !== undefined,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
 								duplicateBatchSequenceNumber: result.otherSequenceNumber,
+								// Identifying info for the ORIGINAL occurrence of this batch, so we can
+								// disambiguate the duplicate's source (e.g. resubmit vs fresh submit, same
+								// vs different wire clientId). Undefined fields indicate the original was
+								// loaded from a summary snapshot rather than seen at runtime.
+								otherClientId: result.otherBatchInfo?.clientId,
+								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
+								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
+								// For grouped batches, `keyMessage` is one of the sub-messages produced by
+								// `OpGroupingManager.ungroupOp`, which overwrites `clientSequenceNumber`
+								// with a synthetic counter (1, 2, 3, ...). Override with the real outer
+								// envelope's clientSequenceNumber so downstream telemetry doesn't get a
+								// misleading "fake csn" value.
+								messageClientSequenceNumber: batchStart.batchStartCsn,
 							},
 						},
 						error,
 					);
-					throw error;
+					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
+					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
+					// or once we are able to identify batch duplication reason (forking vs service bug).
+					// throw error;
 				}
 			}
 
