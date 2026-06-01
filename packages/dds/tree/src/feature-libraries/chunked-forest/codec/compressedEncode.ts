@@ -550,7 +550,7 @@ export class EncoderContext
 		public readonly isSummary: boolean,
 	) {
 		// Currently we never include originator-dependent identifiers in summaries
-		// (there was a bug which violated this for attach-summaries: it has been fixed, see `IdentifierHealingConfig`.
+		// (there was a bug which violated this for attach-summaries: it has been fixed, see `IdentifierHealingConfig`).
 		// If that ever changes (to allow better compressed attach summaries), we need to take special care with incremental summaries.
 		// This assert guards against data corruption leaking in via missing session information in incremental summaries,
 		// protecting from bugs of potential future optimizations to attach summaries applied to non-attach summaries.

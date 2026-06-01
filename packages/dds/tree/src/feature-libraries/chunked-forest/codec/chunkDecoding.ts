@@ -60,7 +60,7 @@ import {
  * @remarks
  * See {@link FieldBatchDecodingContext} for the production implementation of this.
  *
- * This intentionally avoids exposing anything which depends on the underlying id compressor's session id to avoid confusion with the session if of the compressor which encoded the data.
+ * This intentionally avoids exposing anything which depends on the underlying id compressor's session id to avoid confusion with the session id of the compressor which encoded the data.
  * If the session id of the encoder which encoded the data is known, that information is baked into `resolveEncodedId`.
  */
 export interface IdDecodingContext {
