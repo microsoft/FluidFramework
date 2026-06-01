@@ -332,6 +332,7 @@ export function withBufferedTreeEvents(callback: () => void): void {
 		callback();
 	} else {
 		bufferTreeEvents = true;
+		const toFlush: KernelEventBuffer[] = [];
 		try {
 			callback();
 		} finally {
@@ -342,11 +343,13 @@ export function withBufferedTreeEvents(callback: () => void): void {
 			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
 			// - Clearing up front means the reentrant call starts from an empty set, so its own
 			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
-			const toFlush = [...activeBuffers];
+			toFlush.push(...activeBuffers);
 			activeBuffers.clear();
-			for (const buffer of toFlush) {
-				buffer.flush();
-			}
+		}
+
+		// Don't flush/emit events in the case of an error
+		for (const buffer of toFlush) {
+			buffer.flush();
 		}
 	}
 }
