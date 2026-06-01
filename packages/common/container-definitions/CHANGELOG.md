@@ -1,5 +1,38 @@
 # @fluidframework/container-definitions
 
+## 2.102.0
+
+### Minor Changes
+
+- Add optional `getPendingLocalState` to `IContainer` ([#27269](https://github.com/microsoft/FluidFramework/pull/27269)) [1f12b8e36e](https://github.com/microsoft/FluidFramework/commit/1f12b8e36ec8e4a743a65905de8d5ccf5e9337a0)
+
+  `IContainer` now exposes `getPendingLocalState?(): Promise<string>`. The serialized blob can be passed back as `pendingLocalState` to `loadExistingContainer` (or `ILoader.resolve`) to rehydrate an attached container at the same position without data loss.
+
+  The member is optional during this minor release so external implementers of `IContainer` (test mocks, wrapper containers, partner runtimes) remain forward-compatible. A future breaking release will make it required.
+
+  The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
+
+  Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
+
+  Runtime behavior is unchanged.
+
+## 2.101.0
+
+### Minor Changes
+
+- GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
+
+  Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
+  `ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
+  without clearing tracked state.
+
+  This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
+  In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
+  This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
+
+  Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
+  Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
+
 ## 2.100.0
 
 ### Minor Changes

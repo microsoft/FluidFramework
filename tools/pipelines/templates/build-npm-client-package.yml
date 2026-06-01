@@ -33,13 +33,6 @@ parameters:
 - name: coverageTests
   type: object
 
-# A list of directories (under the buildDirectory) to run the PublishTestResults task on in separate steps.
-# Used to avoid the force merge limit of 100 result files.
-- name: testResultDirs
-  type: object
-  default:
-  - nyc
-
 - name: taskBundleAnalysis
   type: boolean
   default: false
@@ -271,7 +264,6 @@ extends:
                       PublishDocs=${{ parameters.publishDocs }}
                       Test=${{ convertToJson(parameters.taskTest) }}
                       TestCoverage=${{ parameters.testCoverage }}
-                      TestResultDirs=${{ convertToJson(parameters.testResultDirs) }}
 
                     Variables:
                       consistentSourcesDirectory=$(consistentSourcesDirectory)
@@ -424,11 +416,9 @@ extends:
                       sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleAnalysis'
                       targetFolder: $(Build.ArtifactStagingDirectory)/bundleAnalysis
 
-                  # bundleAnalyzerJson is a parallel artifact carrying analyzer.json
-                  # (consumed by `flub generate bundleSizeDiff`). It's separate from the
-                  # bundleAnalysis artifact so the FF-internal telemetry handler — which
-                  # walks every .json under bundleAnalysis — doesn't trip over a file
-                  # whose shape it doesn't recognize.
+                  # bundleAnalyzerJson is a parallel artifact for analyzer.json — kept
+                  # separate from bundleAnalysis so the FF-internal telemetry handler
+                  # (which walks every .json under that artifact) doesn't trip over it.
                   - task: CopyFiles@2
                     displayName: Copy bundle analyzer JSON files to artifact staging directory
                     inputs:
@@ -438,50 +428,6 @@ extends:
                   # At this point we want to publish the bundleAnalysis and
                   # bundleAnalyzerJson artifacts, but as part of 1ES migration that's
                   # now part of templateContext.outputs below.
-
-                  # Computes the bundle size diff against the baseline CI build (definitionId 48 in the public
-                  # project) and writes either artifacts/bundleSizeDiff/result.json (on success) or
-                  # artifacts/bundleSizeDiff/error.json (when no usable diff can be produced); that folder is
-                  # published as the bundleSizeDiff pipeline artifact below.
-                  # Invoked via Bash@3 (not Npm@1) so `flub` resolves through the system PATH to the
-                  # workspace-built binary (globally `npm link`ed by set-package-version's invocation of
-                  # include-install-build-tools earlier in the Build job). An `npm run` invocation would
-                  # prepend node_modules/.bin to PATH, which resolves to the catalog-pinned build-cli that
-                  # does not (yet) include `flub generate bundleSizeDiff`.
-                  - task: Bash@3
-                    displayName: (PR only) Generate bundle size diff
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    env:
-                      TARGET_BRANCH: '$(targetBranch)'
-                      PR_NUMBER: '$(System.PullRequest.PullRequestNumber)'
-                    inputs:
-                      targetType: inline
-                      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                      script: |
-                        set -eu -o pipefail
-                        flub generate bundleSizeDiff
-                        # Flub writes result.json (success) or error.json (failure — no usable baseline,
-                        # transient ADO API hiccup, etc.) and exits 0 in both cases; a non-zero exit is
-                        # reserved for misconfiguration such as missing env vars. Surface the error.json
-                        # case as a pipeline warning so the step turns yellow (succeededWithIssues)
-                        # without failing the pipeline run.
-                        if [ -f artifacts/bundleSizeDiff/error.json ]; then
-                          echo "##vso[task.logissue type=warning]bundleSizeDiff produced an error; see error.json in the bundleSizeDiff artifact."
-                        fi
-
-                  # Copy the generated bundleSizeDiff output folder under its own subfolder so it publishes
-                  # as a separate pipeline artifact from bundleAnalysis. The folder contains either
-                  # result.json or error.json. Source path must match the --outputDir default of
-                  # `flub generate bundleSizeDiff` (artifacts/bundleSizeDiff).
-                  - task: CopyFiles@2
-                    displayName: (PR only) Copy bundle size diff to artifact staging directory
-                    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
-                    inputs:
-                      sourceFolder: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}/artifacts/bundleSizeDiff'
-                      targetFolder: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
-
-                  # At this point we want to publish the bundleSizeDiff artifact,
-                  # but as part of 1ES migration that's now part of templateContext.outputs below.
 
               # Docs
               - ${{ if ne(parameters.taskBuildDocs, false) }}:
@@ -597,27 +543,15 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
-                    # Parallel artifact for analyzer.json. Kept separate from
-                    # bundleAnalysis so the FF-internal telemetry handler (which walks
-                    # every .json file under that artifact) doesn't pick this up.
-                    # Only published on non-PR (CI) builds so it can serve as the baseline
-                    # that PR builds compare against; PRs read their own analyzer.json
-                    # from artifacts/bundleAnalyzerJson locally and don't need to publish it.
+                    # PR runs feed the future GH-Actions diff workflow. Non-PR runs are
+                    # currently redundant with the dedicated `Build - Client bundle size
+                    # artifacts` pipeline (today's canonical baseline source); kept for
+                    # now as a possible future baseline source.
                     - output: pipelineArtifact
                       displayName: Publish Artifacts - bundle-analyzer-json
-                      condition: and( succeeded(), ne(variables['Build.Reason'], 'PullRequest') )
+                      condition: succeeded()
                       targetPath: $(Build.ArtifactStagingDirectory)/bundleAnalyzerJson
                       artifactName: bundleAnalyzerJson
-                      sbomEnabled: false
-                      publishLocation: pipeline
-
-                    # The artifactName is a public-facing pipeline contract; downstream consumers
-                    # download it by name. Any rename here requires updating those consumers in lockstep.
-                    - output: pipelineArtifact
-                      displayName: Publish Artifacts - bundle-size-diff
-                      condition: and( succeeded(), eq(variables['Build.Reason'], 'PullRequest') )
-                      targetPath: $(Build.ArtifactStagingDirectory)/bundleSizeDiff
-                      artifactName: bundleSizeDiff
                       sbomEnabled: false
                       publishLocation: pipeline
 
@@ -771,11 +705,15 @@ extends:
                     echo "Running code coverage comparison"
                     flub report codeCoverage --verbose
 
-            # Process test result, include publishing and logging
-              - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  testResultDirs: '${{ parameters.testResultDirs }}'
+              # Process test result, include publishing and logging
+              - task: PublishTestResults@2
+                displayName: Publish Test Results
+                inputs:
+                  testResultsFormat: 'JUnit'
+                  testResultsFiles: '**/*junit-report.xml'
+                  searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
+                  mergeTestResults: false
+                condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
             templateContext:
               outputParentDirectory: $(Build.ArtifactStagingDirectory)/codeCoverageAnalysis
@@ -918,10 +856,14 @@ extends:
                         fi
 
                 # Process test result, include publishing and logging
-                - template: /tools/pipelines/templates/include-process-test-results.yml@self
-                  parameters:
-                    buildDirectory: '${{ parameters.buildDirectory }}'
-                    testResultDirs: '${{ parameters.testResultDirs }}'
+                - task: PublishTestResults@2
+                  displayName: Publish Test Results
+                  inputs:
+                    testResultsFormat: 'JUnit'
+                    testResultsFiles: '**/*junit-report.xml'
+                    searchFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/nyc
+                    mergeTestResults: false
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
