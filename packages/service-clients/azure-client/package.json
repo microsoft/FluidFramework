@@ -130,7 +130,12 @@
 		"uuid": "^11.1.0"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_CompatibilityMode": {
+				"forwardCompat": false,
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

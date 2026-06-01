@@ -18,21 +18,6 @@ import type {
 import type { ITree } from "@fluidframework/tree";
 
 /**
- * Determines the set of runtime options that Fluid Framework will use when running.
- * In "1" mode we support full interop between 2.x clients and 1.x clients,
- * while in "2" mode we only support interop between 2.x clients.
- *
- * @deprecated Specify the minimum Fluid Framework version directly via the
- * `minVersionForCollab` parameter, which accepts a
- * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string. The
- * legacy mode "1" is equivalent to `minVersionForCollab: "1.0.0"`; mode "2" is
- * equivalent to `"2.0.0"`.
- *
- * @public
- */
-export type CompatibilityMode = "1" | "2";
-
-/**
  * A mapping of string identifiers to instantiated `DataObject`s or `SharedObject`s.
  */
 export type LoadableObjectRecord = Record<string, IFluidLoadable>;
