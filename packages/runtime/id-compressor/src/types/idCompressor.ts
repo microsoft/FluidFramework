@@ -274,6 +274,11 @@ export interface IIdCompressor {
 	 * non-final and therefore requires an originator session id to resolve.
 	 * @throws If `id` is final but is not known to this compressor (i.e. it refers to
 	 * a final id that has never been observed as finalized).
+	 * Note that it is possible (even likely) for a finalized id from another id compressor to pass this check,
+	 * and return an incorrect session-space ID.
+	 * This error is thrown only in cases where it is possible to detect the input is invalid,
+	 * and intended to help with catching bugs where invalid identifiers are being provided.
+	 * It cannot be relied upon for validation.
 	 *
 	 * @privateRemarks
 	 * Currently this is only used for data recovery in the case of lost session ids,
