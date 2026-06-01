@@ -36,6 +36,21 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-null": "off",
+			// Importing `@sinclair/typebox` defeats tree-shaking. Use the local
+			// `Type` subset re-exported from `src/util/typebox.ts` (via `src/util/index.ts`) instead.
+			// The single allowed entry point disables this rule via an inline override.
+			"no-restricted-imports": [
+				"error",
+				{
+					paths: [
+						{
+							name: "@sinclair/typebox",
+							message:
+								"Import `Type` and TypeBox types from the tree util barrel (`util/index.js`) instead. The local `util/typebox.ts` re-exports only the subset of TypeBox used by this package, which preserves tree-shaking. If you need a TypeBox kind not yet re-exported, add it to `util/typebox.ts`.",
+						},
+					],
+				},
+			],
 		},
 	},
 	{

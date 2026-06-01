@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// This file is the single allowed entry point for `@sinclair/typebox` in this package.
+// All other code must import the re-exported `Type` and types from `../util/index.js`,
+// which preserves tree-shaking by avoiding the full TypeBox `Type` namespace.
+/* eslint-disable no-restricted-imports */
+
 import {
 	Any,
 	Array,
