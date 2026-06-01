@@ -388,7 +388,14 @@ extends:
               dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
               context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base $(DockerBuildArgs.output)
+              # Pass the authenticated .npmrc set up by include-install-pnpm.yml as a BuildKit
+              # secret so the Dockerfile's npm/pnpm steps can install from our ADO npm mirror.
+              # The build container has no egress to registry.npmjs.org. Only emit --secret
+              # for pnpm release groups; gitssh and any future non-pnpm Dockerfiles don't need it.
+              ${{ if eq(parameters.packageManager, 'pnpm') }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              ${{ else }}:
+                buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -529,7 +536,13 @@ extends:
             dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
             context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: $(DockerBuildArgs.output)
+            # See note on the base-image build above for the rationale behind --secret.
+            # Passed here too because a cache miss could cause the base stage layers to
+            # re-execute during this build.
+            ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            ${{ else }}:
+              buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
