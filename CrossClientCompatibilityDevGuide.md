@@ -199,7 +199,7 @@ A new checkpoint should be designated no less than 6 months after the previous o
 
 **To designate a new checkpoint:**
 
-1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from [`packages/test/test-version-utils/src/checkpointsDoc.ts`](./packages/test/test-version-utils/src/checkpointsDoc.ts).
+1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from the `futureCheckpoints` array in the same file.
 2. From `packages/test/test-version-utils`, run `pnpm run generate-checkpoints-doc` to regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
 3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
 4. Include a changeset noting the new boundary so it appears in the release notes.
@@ -237,17 +237,17 @@ cross-client compatibility scenarios by using one version of the Fluid runtime f
 creating containers and a different version for loading containers.
 
 **Example:** With current build `2.101.0` (N) and in-window prior Compatibility
-Checkpoints `2.60.0` (CC-3), `2.0.9` (CC-2), and `1.4.0` (CC-1), a SharedCell
+Checkpoints `2.40.0` (CC-3), `2.0.9` (CC-2), and `1.4.0` (CC-1), a SharedCell
 test generates these cross-client variations:
 
 ```
-compat cross-client - create with 2.101.0 (N) + load with 2.60.0 (CC-3)
+compat cross-client - create with 2.101.0 (N) + load with 2.40.0 (CC-3)
   ✔ Example test
 compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC-2)
   ✔ Example test
 compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC-1)
   ✔ Example test
-compat cross-client - create with 2.60.0 (CC-3) + load with 2.101.0 (N)
+compat cross-client - create with 2.40.0 (CC-3) + load with 2.101.0 (N)
   ✔ Example test
 compat cross-client - create with 2.0.9 (CC-2) + load with 2.101.0 (N)
   ✔ Example test

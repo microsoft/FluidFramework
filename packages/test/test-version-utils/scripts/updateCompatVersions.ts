@@ -214,6 +214,9 @@ async function main(): Promise<void> {
 	const seenVersions = new Set<string>([oldestCompatibleVersion]);
 	for (const checkpoint of getInWindowPriorCheckpoints(currentCheckpoint)) {
 		const range = checkpointResolutionRange(checkpoint);
+		// Unlike the back-compat deltas below, designated checkpoints are expected to always
+		// resolve to a published version, so we let resolveRangeViaRegistry throw (rather than
+		// using tryResolveRangeViaRegistry) to surface a misconfigured checkpoint loudly.
 		const resolved = resolveRangeViaRegistry(range);
 		if (seenVersions.has(resolved)) {
 			console.log(`  ${checkpoint.name} (${range}): ${resolved} (duplicate, skipping)`);

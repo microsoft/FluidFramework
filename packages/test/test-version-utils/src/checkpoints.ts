@@ -177,16 +177,16 @@ function matchesRange(version: string, range: string): boolean {
 // Documentation table generation
 // ---------------------------------------------------------------------------
 
-/** Path of the documentation file relative to the repository root. @internal */
+/** Path of the documentation file, relative to the repository root. @internal */
 export const compatibilityCheckpointsDocRelativePath = "CompatibilityCheckpoints.md";
 
 const designatedSourceRelativePath = "packages/test/test-version-utils/src/checkpoints.ts";
 
-/** Sentinel: start of the auto-generated table block. @internal */
-export const TABLE_START_MARKER = "<!-- GENERATED-TABLE-START -->";
+/** Sentinel marking the start of the auto-generated table block. */
+const tableStartMarker = "<!-- GENERATED-TABLE-START -->";
 
-/** Sentinel: end of the auto-generated table block. @internal */
-export const TABLE_END_MARKER = "<!-- GENERATED-TABLE-END -->";
+/** Sentinel marking the end of the auto-generated table block. */
+const tableEndMarker = "<!-- GENERATED-TABLE-END -->";
 
 const doNotEditNotice = [
 	"<!-- NOTE: This table is automatically generated. Do not update it directly. -->",
@@ -318,9 +318,8 @@ function renderRow(c: DocumentedCheckpoint, i: number): string {
 
 /**
  * Renders the generated table block (do-not-edit notice + header + data rows).
- * @internal
  */
-export function renderCheckpointsTable(): string {
+function renderCheckpointsTable(): string {
 	const rows = documentedCheckpoints.map((c, i) => renderRow(c, i)).join("\n");
 	return [
 		doNotEditNotice,
@@ -333,20 +332,20 @@ export function renderCheckpointsTable(): string {
 }
 
 /**
- * Replaces the content between {@link TABLE_START_MARKER} and {@link TABLE_END_MARKER}
+ * Replaces the content between {@link tableStartMarker} and {@link tableEndMarker}
  * in `docContent` with the freshly rendered table, preserving all surrounding prose.
  * @internal
  */
 export function injectCheckpointsTable(docContent: string): string {
-	const start = docContent.indexOf(TABLE_START_MARKER);
-	const end = docContent.indexOf(TABLE_END_MARKER);
+	const start = docContent.indexOf(tableStartMarker);
+	const end = docContent.indexOf(tableEndMarker);
 	if (start === -1 || end === -1) {
 		throw new Error(
 			`Could not find table sentinels in ${compatibilityCheckpointsDocRelativePath}. ` +
-				`Expected both "${TABLE_START_MARKER}" and "${TABLE_END_MARKER}".`,
+				`Expected both "${tableStartMarker}" and "${tableEndMarker}".`,
 		);
 	}
-	const before = docContent.slice(0, start + TABLE_START_MARKER.length);
+	const before = docContent.slice(0, start + tableStartMarker.length);
 	const after = docContent.slice(end);
 	// A blank line before the END marker keeps output stable under Prettier.
 	return `${before}\n${renderCheckpointsTable()}\n\n${after}`;

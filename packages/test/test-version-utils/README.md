@@ -47,7 +47,7 @@ intended to test all layers of one version against all layers of another version
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
 loading the document. The matrix pairs the current build against every in-window prior **Compatibility Checkpoint**
 (see [`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with each prior
-checkpoint resolved to the **earliest minor** in its range (e.g. CC-3 → latest patch of `2.60.x`).
+checkpoint resolved to the **earliest minor** in its range (e.g. CC-3 → latest patch of `2.40.x`).
 
 The data driving the matrix lives in [`src/checkpoints.ts`](./src/checkpoints.ts).
 
