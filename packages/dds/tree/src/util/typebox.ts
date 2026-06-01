@@ -26,6 +26,15 @@ import {
 	Unsafe,
 } from "@sinclair/typebox";
 
+export type {
+	NumberOptions,
+	ObjectOptions,
+	Static,
+	TAnySchema,
+	TSchema,
+	TUnsafe,
+} from "@sinclair/typebox";
+
 /**
  * Subset of the TypeBox `Type` namespace that this package uses.
  *
@@ -39,15 +48,6 @@ import {
  * (and the corresponding granular import above) rather than importing
  * `Type` directly from `@sinclair/typebox`.
  */
-export type {
-	NumberOptions,
-	ObjectOptions,
-	Static,
-	TAnySchema,
-	TSchema,
-	TUnsafe,
-} from "@sinclair/typebox";
-
 export const Type = {
 	Any,
 	Array,
