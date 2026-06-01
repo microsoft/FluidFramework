@@ -944,9 +944,7 @@ export class TreeCheckout implements ITreeCheckout {
 		// outer's still-live label tree. `editLock` doesn't cover this path — it's only engaged
 		// around `nodeChanged`/`treeChanged` emissions in onAfterChange — so use a separate flag.
 		if (this.isEmittingChangedEvent) {
-			throw new UsageError(
-				"Running a transaction is forbidden during a changed event",
-			);
+			throw new UsageError("Running a transaction is forbidden during a changed event");
 		}
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
