@@ -675,7 +675,15 @@ export class MultiSinkLogger extends TelemetryLogger {
 export interface IPerformanceEventMarkers {
 	start?: true;
 	end?: true;
-	cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
+	cancel?: "generic" | "error"; // tells whether to issue "generic" or "error" category cancel event
+	/**
+	 * If specified, _end events whose duration is greater than this threshold are logged as essential.
+	 */
+	endEventEssentialDurationThresholdMs?: number;
+	/**
+	 * If specified, _cancel events are logged as essential while preserving the configured cancel category.
+	 */
+	logCancelAsEssential?: true;
 }
 
 /**
@@ -895,7 +903,27 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error, this.logLevel);
+		this.logger.sendPerformanceEvent(event, error, this.getLogLevel(eventNameSuffix, event));
+	}
+
+	private getLogLevel(
+		eventNameSuffix: string,
+		event: ITelemetryPerformanceEventExt,
+	): typeof LogLevel.verbose | typeof LogLevel.info | undefined {
+		if (eventNameSuffix === "cancel" && this.markers.logCancelAsEssential === true) {
+			return undefined;
+		}
+
+		if (
+			eventNameSuffix === "end" &&
+			event.duration !== undefined &&
+			this.markers.endEventEssentialDurationThresholdMs !== undefined &&
+			event.duration > this.markers.endEventEssentialDurationThresholdMs
+		) {
+			return undefined;
+		}
+
+		return this.logLevel;
 	}
 
 	private static readonly eventHits = new Map<string, number>();
