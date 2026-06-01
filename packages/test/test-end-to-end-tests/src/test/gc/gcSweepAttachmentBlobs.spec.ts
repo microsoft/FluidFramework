@@ -16,7 +16,7 @@ import {
 import { blobsTreeName } from "@fluidframework/container-runtime/internal/test/blobManager";
 import { ISweepMessage } from "@fluidframework/container-runtime/internal/test/gc";
 import {
-	ISummarizer,
+	type ISummarizer,
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
 } from "@fluidframework/container-runtime/internal/test/summary";

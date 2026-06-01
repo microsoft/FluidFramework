@@ -15,8 +15,8 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import {
-	type ContainerRuntime,
+import type {
+	ContainerRuntime,
 	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";

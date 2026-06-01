@@ -17,7 +17,7 @@ import {
 	type ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizer,
+	type ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
 import {
