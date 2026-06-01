@@ -72,8 +72,8 @@ function getMinVersionForCollab(
 ): MinimumVersionForCollab {
 	assertValidMinVersionForCollab(runtimeVersion);
 	assertValidMinVersionForCollab(runtimeVersionForLoading);
-	// If `containerRuntimeForLoading` is defined, we will use the lower of the two versions to ensure
-	// compatibility between the two runtimes.
+	// Use the lower of the two versions to ensure compatibility between the two runtimes.
+	// (Outside of cross-client compat the two versions are the same, so this is a no-op.)
 	return semver.compare(runtimeVersion, runtimeVersionForLoading) <= 0
 		? runtimeVersion
 		: runtimeVersionForLoading;
