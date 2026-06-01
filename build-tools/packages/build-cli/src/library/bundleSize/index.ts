@@ -6,6 +6,10 @@
 export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
+	bundleSizeArtifactsPipeline,
+	fluidframeworkAdoOrgUrl,
+} from "./pipelineConstants.js";
+export {
 	type ReadAnalyzerJsonsResult,
 	readAnalyzerJsonsFromFileSystem,
 } from "./readAnalyzerJsonsFromFileSystem.js";

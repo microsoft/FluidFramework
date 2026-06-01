@@ -9,8 +9,10 @@ import { Flags } from "@oclif/core";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
+	bundleSizeArtifactsPipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
+	fluidframeworkAdoOrgUrl,
 	type PackageComparison,
 	readAnalyzerJsonsFromFileSystem,
 } from "../../library/bundleSize/index.js";
@@ -129,16 +131,13 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		this.log(`Baseline commit: ${baselineCommit}`);
 
 		// Public ADO project — anonymous reads are fine at this command's scale.
-		const adoApi = getAzureDevopsApi(undefined, "https://dev.azure.com/fluidframework");
+		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
 		const artifactContents = await getArtifactForCommit({
 			adoApi,
-			// Published by the `Build - Client bundle size artifacts` pipeline.
-			artifactName: "bundleAnalyzerJson",
+			artifactName: bundleSizeArtifactsPipeline.bundleAnalyzerJsonArtifactName,
 			commit: baselineCommit,
-			// `Build - Client bundle size artifacts` in the `public` project.
-			// Source-of-truth: tools/pipelines/build-bundle-size-artifacts.yml.
-			definitionId: 48,
-			project: "public",
+			definitionId: bundleSizeArtifactsPipeline.definitionId,
+			project: bundleSizeArtifactsPipeline.project,
 		});
 
 		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
