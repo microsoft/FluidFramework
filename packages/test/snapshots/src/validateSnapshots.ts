@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { strict } from "assert";
-import fs from "fs";
+import { strict } from "node:assert";
+import fs from "node:fs";
 
 import {
 	compareWithReferenceSnapshot,
