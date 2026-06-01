@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecFamily } from "../../codec/index.js";
@@ -333,29 +333,28 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		} else {
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
+			/** The number of elements, starting from the root, that both paths have in common */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
-			// After the above loop, `sharedDepth` is the number of elements, starting from the root,
-			// that both paths have in common.
 			if (sharedDepth === detachPath.length) {
-				const attachField = attachPath[sharedDepth]?.parentField ?? destinationField.field;
-				if (attachField === sourceField.field) {
+				const firstDifferentAttachAncestor = attachPath[sharedDepth];
+				// The source and destination fields are different and the detach occurs under the lowest common ancestor,
+				// so the attach path must be at least one level deeper than the shared depth.
+				assert(firstDifferentAttachAncestor !== undefined, "Truncated attach path");
+				if (firstDifferentAttachAncestor.parentField === sourceField.field) {
 					// The detach occurs in an ancestor field of the field where the attach occurs.
-					let attachAncestorIndex = attachPath[sharedDepth]?.parentIndex ?? sourceIndex;
-					if (attachAncestorIndex < sourceIndex) {
+					if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
-					} else if (sourceIndex + count <= attachAncestorIndex) {
+					} else if (sourceIndex + count <= firstDifferentAttachAncestor.parentIndex) {
 						// The attach path runs through a node located after the detached nodes.
 						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
-						attachAncestorIndex -= count;
-						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
-						const parentField = attachPath[sharedDepth] ?? oob();
+						let parent = firstDifferentAttachAncestor.parent;
 						parent = {
 							parent,
-							parentIndex: attachAncestorIndex,
-							parentField: parentField.parentField,
+							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
+							parentField: firstDifferentAttachAncestor.parentField,
 						};
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {

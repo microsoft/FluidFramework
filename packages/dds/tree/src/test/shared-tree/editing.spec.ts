@@ -1627,11 +1627,66 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move a node out from a field and into a field under a sibling", () => {
-			const tree = makeTreeFromJsonSequence(["A", {}]);
-			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
+		it("can move a node out from a field and into a field under a sibling at a lower index", () => {
+			const tree = makeTreeFromJsonSequence([{}, "A"]);
+			tree.editor.move(rootField, 1, 1, { parent: rootNode, field: brand("foo") }, 0);
 			const expectedState: JsonCompatible = [{ foo: "A" }];
 			expectJsonTree(tree, expectedState);
+		});
+
+		describe("can move a node out from a field and into a field under a sibling at a higher index", () => {
+			it("no further ancestry, shallow destination", () => {
+				const tree = makeTreeFromJsonSequence(["A", {}]);
+				tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
+				const expectedState: JsonCompatible = [{ foo: "A" }];
+				expectJsonTree(tree, expectedState);
+			});
+
+			it("with further ancestry, shallow destination", () => {
+				const tree = makeTreeFromJsonSequence([{ foo: { bar: ["A", {}] } }]);
+				const fooNode: NormalizedUpPath = {
+					parent: rootNode,
+					parentField: brand("foo"),
+					parentIndex: 0,
+				};
+				const barArray: NormalizedUpPath = {
+					parent: fooNode,
+					parentField: brand("bar"),
+					parentIndex: 0,
+				};
+				tree.editor.move(
+					{ parent: barArray, field: EmptyKey },
+					0,
+					1,
+					{
+						parent: { parent: barArray, parentField: EmptyKey, parentIndex: 1 },
+						field: brand("baz"),
+					},
+					0,
+				);
+				const expectedState: JsonCompatible = [{ foo: { bar: [{ baz: "A" }] } }];
+				expectJsonTree(tree, expectedState);
+			});
+
+			it("no further ancestry, deep destination", () => {
+				const tree = makeTreeFromJsonSequence(["A", { foo: { bar: {} } }]);
+				tree.editor.move(
+					rootField,
+					0,
+					1,
+					{
+						parent: {
+							parent: { parent: rootNode2, parentField: brand("foo"), parentIndex: 0 },
+							parentField: brand("bar"),
+							parentIndex: 0,
+						},
+						field: brand("baz"),
+					},
+					0,
+				);
+				const expectedState: JsonCompatible = [{ foo: { bar: { baz: "A" } } }];
+				expectJsonTree(tree, expectedState);
+			});
 		});
 
 		it("can rebase a move over the deletion of the source parent", () => {
