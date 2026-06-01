@@ -365,6 +365,7 @@ const activeBuffers: Set<KernelEventBuffer> = new Set();
 
 /**
  * Test-only accessor for the current size of {@link activeBuffers}.
+ * @remarks Only exported for testing purposes. Not intended for any other use.
  */
 export function TEST_activeBufferCount(): number {
 	return activeBuffers.size;
