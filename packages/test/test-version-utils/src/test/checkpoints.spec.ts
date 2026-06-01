@@ -4,11 +4,17 @@
  */
 
 import { strict as assert } from "assert";
+import { readFileSync } from "node:fs";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 import {
 	checkpoints,
+	compatibilityCheckpointsDocRelativePath,
+	findRepoRoot,
 	getCurrentCheckpoint,
 	getInWindowPriorCheckpoints,
+	injectCheckpointsTable,
 } from "../checkpoints.js";
 
 describe("checkpoints", () => {
@@ -23,8 +29,9 @@ describe("checkpoints", () => {
 		it("maps a version between two openings to the lower checkpoint", () => {
 			assert.strictEqual(getCurrentCheckpoint("1.4.5").name, "CC-1");
 			assert.strictEqual(getCurrentCheckpoint("2.0.9").name, "CC-2");
-			assert.strictEqual(getCurrentCheckpoint("2.59.0").name, "CC-2");
-			assert.strictEqual(getCurrentCheckpoint("2.99.0").name, "CC-3");
+			assert.strictEqual(getCurrentCheckpoint("2.39.0").name, "CC-2");
+			assert.strictEqual(getCurrentCheckpoint("2.59.0").name, "CC-3");
+			assert.strictEqual(getCurrentCheckpoint("2.99.0").name, "CC-4");
 			assert.strictEqual(getCurrentCheckpoint("2.101.0").name, "CC-4");
 		});
 
@@ -80,6 +87,20 @@ describe("checkpoints", () => {
 			assert.deepStrictEqual(
 				getInWindowPriorCheckpoints(cc3).map((c) => c.name),
 				["CC-2", "CC-1"],
+			);
+		});
+	});
+
+	describe("CompatibilityCheckpoints.md", () => {
+		it("is up to date with the checkpoint data (single source of truth)", () => {
+			const repoRoot = findRepoRoot(fileURLToPath(import.meta.url));
+			const docPath = path.join(repoRoot, compatibilityCheckpointsDocRelativePath);
+			const committed = readFileSync(docPath, "utf8");
+			assert.strictEqual(
+				committed,
+				injectCheckpointsTable(committed),
+				`${compatibilityCheckpointsDocRelativePath} table is out of date. Regenerate it with ` +
+					"`pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc`.",
 			);
 		});
 	});

@@ -4,10 +4,20 @@
  */
 
 /**
- * Fluid Framework Compatibility Checkpoints.
+ * Fluid Framework Compatibility Checkpoints — single source of truth.
  *
- * For more information, see CrossClientCompatibility.md, CrossClientCompatibilityDevGuide.md, and CompatibilityCheckpoints.md.
+ * Designated checkpoints drive the runtime test matrix. Future / TBD checkpoints are
+ * listed below for documentation purposes only. Both sets populate the table in
+ * `CompatibilityCheckpoints.md` at the repo root; run
+ * `pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc`
+ * after any change to regenerate that table.
+ *
+ * For more information, see CrossClientCompatibility.md, CrossClientCompatibilityDevGuide.md,
+ * and CompatibilityCheckpoints.md.
  */
+
+import { existsSync } from "node:fs";
+import * as path from "node:path";
 
 import * as semver from "semver";
 
@@ -34,10 +44,9 @@ export interface Checkpoint {
 }
 
 /**
- * Hand-maintained list of designated compatibility checkpoints. Mirrors
- * the designated rows of the table in `CompatibilityCheckpoints.md` at
- * the repo root. Future / TBD checkpoints are intentionally not listed
- * here — append a new entry only once a checkpoint is officially designated.
+ * Designated compatibility checkpoints. Append a new entry here only once a
+ * checkpoint is officially designated, and remove the corresponding entry from
+ * {@link futureCheckpoints} below.
  *
  * @internal
  */
@@ -153,22 +162,209 @@ export function checkpointResolutionRange(checkpoint: Checkpoint): string {
 	return `~${checkpoint.openingVersion}`;
 }
 
-/**
- * Returns `true` iff `version` matches `range`. The wildcard-suffix form
- * (e.g., `2.0.0-internal*`) is handled before falling through to
- * `semver.satisfies`, because `semver.validRange("2.0.0-internal*")` silently
- * coerces to `"2.0.0-internal"` (dropping the trailing `*`) which would not
- * match any prerelease version like `2.0.0-internal.7.3.0`. Throws on a
- * malformed entry rather than silently returning `false`, so authoring
- * mistakes in `additionalRanges` fail loudly at the first call site.
- */
+/** Returns `true` iff `version` matches `range`, handling wildcard-suffix entries like `2.0.0-internal*`. */
 function matchesRange(version: string, range: string): boolean {
 	if (range.endsWith("*")) {
-		const prefix = range.slice(0, -1);
-		return version.startsWith(prefix);
+		return version.startsWith(range.slice(0, -1));
 	}
 	if (semver.validRange(range)) {
 		return semver.satisfies(version, range, { includePrerelease: true });
 	}
 	throw new Error(`Invalid additionalRanges entry: "${range}"`);
+}
+
+// ---------------------------------------------------------------------------
+// Documentation table generation
+// ---------------------------------------------------------------------------
+
+/** Path of the documentation file relative to the repository root. @internal */
+export const compatibilityCheckpointsDocRelativePath = "CompatibilityCheckpoints.md";
+
+const designatedSourceRelativePath = "packages/test/test-version-utils/src/checkpoints.ts";
+
+/** Sentinel: start of the auto-generated table block. @internal */
+export const TABLE_START_MARKER = "<!-- GENERATED-TABLE-START -->";
+
+/** Sentinel: end of the auto-generated table block. @internal */
+export const TABLE_END_MARKER = "<!-- GENERATED-TABLE-END -->";
+
+const doNotEditNotice = [
+	"<!-- NOTE: This table is automatically generated. Do not update it directly. -->",
+	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc\` -->`,
+].join("\n");
+
+/** A checkpoint as rendered in the documentation table. */
+interface DocumentedCheckpoint extends Checkpoint {
+	/** `"designated"` rows have real versions/dates; `"tbd"` rows are estimates. */
+	readonly status: "designated" | "tbd";
+	/**
+	 * Explicit upper bound (exclusive). When omitted, the upper bound is the next
+	 * checkpoint's opening version. Set for the last designated checkpoint and the
+	 * last checkpoint overall.
+	 */
+	readonly closingVersion?: string;
+}
+
+/**
+ * Future / TBD checkpoints for documentation purposes only. Move an entry to
+ * {@link checkpoints} once it is officially designated.
+ */
+const futureCheckpoints: readonly DocumentedCheckpoint[] = [
+	{
+		name: "CC-5",
+		index: 5,
+		openingVersion: "3.0.0",
+		earliestDate: "2026-07-06",
+		status: "tbd",
+	},
+	{
+		name: "CC-6",
+		index: 6,
+		openingVersion: "4.0.0",
+		earliestDate: "2027-01-06",
+		status: "tbd",
+	},
+	{
+		name: "CC-7",
+		index: 7,
+		openingVersion: "5.0.0",
+		earliestDate: "2027-07-06",
+		status: "tbd",
+		closingVersion: "6.0.0",
+	},
+];
+
+/**
+ * Explicit upper bounds for designated checkpoints whose range does not end at
+ * the next checkpoint's opening version.
+ */
+const designatedClosingVersions: Readonly<Record<string, string>> = { "CC-4": "2.101.0" };
+
+const documentedCheckpoints: readonly DocumentedCheckpoint[] = [
+	...checkpoints.map(
+		(c): DocumentedCheckpoint => ({
+			...c,
+			status: "designated",
+			closingVersion: designatedClosingVersions[c.name],
+		}),
+	),
+	...futureCheckpoints,
+].sort((a, b) => a.index - b.index);
+
+function escapeCell(value: string): string {
+	return value.replace(/\|/g, "\\|");
+}
+
+function closingVersionOf(checkpoint: DocumentedCheckpoint, index: number): string {
+	if (checkpoint.closingVersion !== undefined) return checkpoint.closingVersion;
+	const next = documentedCheckpoints[index + 1];
+	if (next === undefined) {
+		throw new Error(
+			`Checkpoint "${checkpoint.name}" has no following checkpoint and no closingVersion.`,
+		);
+	}
+	return next.openingVersion;
+}
+
+function renderName(c: DocumentedCheckpoint): string {
+	return c.status === "tbd" ? `${c.name} (TBD)` : c.name;
+}
+
+function renderDate(c: DocumentedCheckpoint): string {
+	return c.status === "tbd" ? `~${c.earliestDate}` : c.earliestDate;
+}
+
+function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
+	const closing = closingVersionOf(c, i);
+	const additional = (c.additionalRanges ?? []).map((r) => ` | ${r}`).join("");
+	const range = `\`>=${c.openingVersion} <${closing}${additional}\``;
+	return c.status === "tbd" ? `${range}(estimated)` : range;
+}
+
+function compatibleCheckpointsOf(c: DocumentedCheckpoint): DocumentedCheckpoint[] {
+	return documentedCheckpoints.filter((x) => Math.abs(x.index - c.index) <= windowRadius);
+}
+
+function renderCompatibleCheckpoints(c: DocumentedCheckpoint): string {
+	return compatibleCheckpointsOf(c)
+		.map((x) => x.name)
+		.join(", ");
+}
+
+function renderCompatibleSemanticVersions(c: DocumentedCheckpoint): string {
+	const window = compatibleCheckpointsOf(c);
+	const lowest = window[0];
+	const highest = window[window.length - 1];
+	const upper = closingVersionOf(highest, documentedCheckpoints.indexOf(highest));
+	const estimated = highest.status === "tbd" ? "(estimated)" : "";
+	const additionalRanges = window.flatMap((x) => x.additionalRanges ?? []);
+	// Wrap additional ranges in their own code span (e.g. `| 2.0.0-internal* | 2.0.0-rc*`),
+	// adjacent to the version range span. The `|` chars are escaped by escapeCell later.
+	const additionalPart =
+		additionalRanges.length > 0 ? `\` | ${additionalRanges.join(" | ")}\`` : "";
+	return `\`>=${lowest.openingVersion} <${upper}\`${estimated}${additionalPart}`;
+}
+
+function renderRow(c: DocumentedCheckpoint, i: number): string {
+	const cells = [
+		renderName(c),
+		renderVersionRange(c, i),
+		renderDate(c),
+		renderCompatibleCheckpoints(c),
+		renderCompatibleSemanticVersions(c),
+	].map(escapeCell);
+	return `| ${cells.join(" | ")} |`;
+}
+
+/**
+ * Renders the generated table block (do-not-edit notice + header + data rows).
+ * @internal
+ */
+export function renderCheckpointsTable(): string {
+	const rows = documentedCheckpoints.map((c, i) => renderRow(c, i)).join("\n");
+	return [
+		doNotEditNotice,
+		"",
+		"<!-- prettier-ignore -->",
+		"| Checkpoint | Version Range | Earliest Date | Compatible Checkpoints | Compatible Semantic Versions |",
+		"| --- | --- | --- | --- | --- |",
+		rows,
+	].join("\n");
+}
+
+/**
+ * Replaces the content between {@link TABLE_START_MARKER} and {@link TABLE_END_MARKER}
+ * in `docContent` with the freshly rendered table, preserving all surrounding prose.
+ * @internal
+ */
+export function injectCheckpointsTable(docContent: string): string {
+	const start = docContent.indexOf(TABLE_START_MARKER);
+	const end = docContent.indexOf(TABLE_END_MARKER);
+	if (start === -1 || end === -1) {
+		throw new Error(
+			`Could not find table sentinels in ${compatibilityCheckpointsDocRelativePath}. ` +
+				`Expected both "${TABLE_START_MARKER}" and "${TABLE_END_MARKER}".`,
+		);
+	}
+	const before = docContent.slice(0, start + TABLE_START_MARKER.length);
+	const after = docContent.slice(end);
+	// A blank line before the END marker keeps output stable under Prettier.
+	return `${before}\n${renderCheckpointsTable()}\n\n${after}`;
+}
+
+/**
+ * Walks up from `startDir` to locate the repository root (first ancestor directory
+ * containing a `.git` entry). Throws if none is found.
+ * @internal
+ */
+export function findRepoRoot(startDir: string): string {
+	let dir = path.resolve(startDir);
+	for (;;) {
+		if (existsSync(path.join(dir, ".git"))) return dir;
+		const parent = path.dirname(dir);
+		if (parent === dir) {
+			throw new Error(`Could not locate repository root from "${startDir}".`);
+		}
+		dir = parent;
+	}
 }

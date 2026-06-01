@@ -22,6 +22,10 @@ client running a checkpoint version is guaranteed to be compatible with. Upper
 bounds for in-window checkpoints are estimated and depend on when future
 checkpoints are designated.
 
+<!-- GENERATED-TABLE-START -->
+<!-- NOTE: This table is automatically generated. Do not update it directly. -->
+<!-- To modify this table, edit `packages/test/test-version-utils/src/checkpoints.ts` then run `pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc` -->
+
 <!-- prettier-ignore -->
 | Checkpoint | Version Range | Earliest Date | Compatible Checkpoints | Compatible Semantic Versions |
 | --- | --- | --- | --- | --- |
@@ -32,6 +36,8 @@ checkpoints are designated.
 | CC-5 (TBD) | `>=3.0.0 <4.0.0`(estimated) | ~2026-07-06 | CC-2, CC-3, CC-4, CC-5, CC-6, CC-7 | `>=2.0.0 <6.0.0`(estimated) |
 | CC-6 (TBD) | `>=4.0.0 <5.0.0`(estimated) | ~2027-01-06 | CC-3, CC-4, CC-5, CC-6, CC-7 | `>=2.40.0 <6.0.0`(estimated) |
 | CC-7 (TBD) | `>=5.0.0 <6.0.0`(estimated) | ~2027-07-06 | CC-4, CC-5, CC-6, CC-7 | `>=2.80.0 <6.0.0`(estimated) |
+
+<!-- GENERATED-TABLE-END -->
 
 > **Notes:**
 >

@@ -199,8 +199,8 @@ A new checkpoint should be designated no less than 6 months after the previous o
 
 **To designate a new checkpoint:**
 
-1. Update the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md).
-2. Update `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts).
+1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from [`packages/test/test-version-utils/src/checkpointsDoc.ts`](./packages/test/test-version-utils/src/checkpointsDoc.ts).
+2. From `packages/test/test-version-utils`, run `pnpm run generate-checkpoints-doc` to regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
 3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
 4. Include a changeset noting the new boundary so it appears in the release notes.
 
