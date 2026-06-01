@@ -8,7 +8,7 @@ import { strict as assert, fail } from "node:assert";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import type { TransactionLabels } from "../../core/index.js";
+import { CommitKind, type TransactionLabels } from "../../core/index.js";
 import { MockNodeIdentifierManager, TreeStatus } from "../../feature-libraries/index.js";
 import {
 	ForestTypeExpensiveDebug,
@@ -1339,6 +1339,34 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[0]?.sublabels[0]?.label, "deep");
 			assert.equal(receivedLabels.tree.sublabels[1]?.label, "middle2");
 			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
+		});
+
+		it("re-entrant runTransaction from a changed listener throws", () => {
+			const view = getTestObjectView();
+
+			// Re-entrant: when the outer commit fires, attempt to start a new `inner` transaction.
+			// The guard rejects this at mountTransaction, before any label-tree corruption.
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default && !meta.labels.has("inner")) {
+					view.runTransaction(
+						() => {
+							view.root.content = view.root.content + 1;
+						},
+						{ label: "inner" },
+					);
+				}
+			});
+
+			assert.throws(
+				() =>
+					view.runTransaction(
+						() => {
+							view.root.content = 1;
+						},
+						{ label: "outer" },
+					),
+				validateUsageError(/Running a transaction is forbidden during a changed event/),
+			);
 		});
 
 		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
