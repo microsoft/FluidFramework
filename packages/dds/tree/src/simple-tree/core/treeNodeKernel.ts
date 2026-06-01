@@ -582,10 +582,14 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			return;
 		}
 
-		debugAssert(() =>
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer || "Buffered kernel events should have been flushed before disposing.",
+		debugAssert(
+			() =>
+				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
+				"Buffered kernel events should have been flushed before disposing.",
 		);
-		debugAssert(() => !activeBuffers.has(this) || "Disposed buffer should not be in activeBuffers.");
+		debugAssert(
+			() => !activeBuffers.has(this) || "Disposed buffer should not be in activeBuffers.",
+		);
 
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
