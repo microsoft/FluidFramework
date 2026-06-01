@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
@@ -127,7 +129,7 @@ describe("simple-tree proxies", () => {
 
 		assert.throws(
 			() => TreeBeta.on(node, "nodeChanged", () => {}),
-			/Cannot register events on a disposed node/,
+			validateAssertionError(/Cannot register events on a disposed node/),
 		);
 	});
 });

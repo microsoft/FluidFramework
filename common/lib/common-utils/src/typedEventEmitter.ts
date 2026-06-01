@@ -442,7 +442,7 @@ export type IEventTransformer<TThis, TEvent extends IEvent> = TEvent extends {
  *
  * This type allow us to correctly handle either type
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export type EventEmitterEventType = EventEmitter extends { on(event: infer E, listener: any) }
@@ -450,7 +450,7 @@ export type EventEmitterEventType = EventEmitter extends { on(event: infer E, li
 	: never;
 
 /**
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export type TypedEventTransform<TThis, TEvent> =
@@ -471,7 +471,7 @@ export type TypedEventTransform<TThis, TEvent> =
 /**
  * Event Emitter helper class the supports emitting typed events
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export class TypedEventEmitter<TEvent>

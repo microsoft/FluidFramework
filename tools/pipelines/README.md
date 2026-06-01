@@ -6,29 +6,28 @@ releasing the Fluid Framework.
 ## Mirroring base container images for the server pipelines
 
 The `server-*` pipelines run on a 1ES build pool whose network isolation blocks egress to Docker
-Hub, so each server Dockerfile makes its base-image registry overridable and the matching pipeline
-points it at a mirrored copy on the internal container registry. Local builds default to Docker
-Hub and need no changes.
+Hub, so each server Dockerfile makes its base-image registry overridable via
+`ARG BASE_IMAGE_REGISTRY` and CI overrides it to a mirrored copy on a public-accessible ACR
+(`fluidpublicmirror-ccbba5fhdscnchft.azurecr.io`; the suffix is ACR's Domain Name Label (DNL)
+hash, added to the login-server FQDN to prevent subdomain-takeover attacks — `az acr` CLI
+commands still take the bare registry name `fluidpublicmirror`). The same mirror is used by both
+the `internal` and `public` ADO projects. Local builds default to Docker Hub and need no changes.
 
 ```dockerfile
 ARG BASE_IMAGE_REGISTRY=docker.io
 FROM ${BASE_IMAGE_REGISTRY}/library/node:22.22.2-bookworm-slim@sha256:f3a68cf4...
 ```
 
-```yaml
-extends:
-  template: /tools/pipelines/templates/build-docker-service.yml@self
-  parameters:
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      additionalBuildArguments: >-
-        --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
-```
+The pipeline doesn't need to set anything explicitly — `build-docker-service.yml` injects the
+build-arg automatically via its `baseImageRegistry` parameter, which defaults to the mirror's
+FQDN. Callers can override it if they need a different mirror (e.g. for testing).
 
-`$(containerRegistryUrl)` comes from the `container-registry-info` variable group, loaded at the
-pipeline root. The build-arg override is gated on the `internal` project because the public project
-has no access to the internal mirror; it falls back to the Dockerfile default of `docker.io`. The
-mirror namespace `mirror/docker/library/<image>` is byte-identical to Docker Hub's path, so the same
-Dockerfile reference works against either registry.
+The mirror namespace `mirror/docker/library/<image>` is byte-identical to Docker Hub's path, so the
+same Dockerfile reference works against either registry. Anonymous pull is disabled on the mirror,
+so credentials for the `Fluid Public Mirror Container Registry` ADO service connection are flowed
+into the docker build step via `templateContext.authenticatedContainerRegistries` in
+[`templates/build-docker-service.yml`](./templates/build-docker-service.yml). Each ADO project has
+its own service connection (same name) backed by its own AcrPull-only service principal.
 
 ### Upgrading a pinned base image
 
@@ -38,12 +37,11 @@ Dockerfile reference works against either registry.
      --format '{{json .Manifest.Digest}}'
    ```
 
-2. Import it into the mirror. The registry name is the value of `containerRegistryUrl` in the
-   variable group (drop the `.azurecr.io` suffix); the command requires permission to perform
-   `Microsoft.ContainerRegistry/registries/importImage/action` on the registry (held by the
-   `Contributor` role, but **not** by `AcrPush`):
+2. Import it into the mirror. The command requires permission to perform
+   `Microsoft.ContainerRegistry/registries/importImage/action` on `fluidpublicmirror` (held by the
+   `Contributor` role, but **not** by `AcrPull`):
    ```bash
-   az acr import --name "$ACR_NAME" \
+   az acr import --name fluidpublicmirror \
      --source "docker.io/library/node@<new digest>" \
      --image  "mirror/docker/library/node:<new tag>"
    ```
@@ -64,6 +62,5 @@ ARG BASE_IMAGE_REGISTRY=docker.io
 FROM ${BASE_IMAGE_REGISTRY}/library/<image>:<tag>@<digest>
 ```
 
-In the pipeline YAML, append `--build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker`
-to `additionalBuildArguments` (gated on `System.TeamProject == 'internal'`, as in the example above),
-using YAML's `>-` block scalar to keep multiple args readable.
+No pipeline YAML changes are needed — `build-docker-service.yml` will pass `BASE_IMAGE_REGISTRY`
+through to the build automatically.

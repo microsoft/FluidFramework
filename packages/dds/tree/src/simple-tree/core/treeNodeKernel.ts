@@ -234,7 +234,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		assert(!this.disposed, "Cannot register events on a disposed node");
+		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
 			const eventSource = isHydrated(this.#hydrationState)
