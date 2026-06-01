@@ -1,5 +1,31 @@
 # @fluidframework/map
 
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Add legacy beta map compatibility interfaces ([#27240](https://github.com/microsoft/FluidFramework/pull/27240)) [b765c6af343](https://github.com/microsoft/FluidFramework/commit/b765c6af34359d2500523483c6916feeef947a7a)
+
+  New legacy beta map interfaces make it possible to type legacy map-like DDS APIs against Fluid's stable map abstraction while preserving the legacy DDS `get` and `set` APIs.
+
+  ```typescript
+  import type {
+    FluidMapLegacy,
+    IDirectoryBeta,
+    ISharedMapBeta,
+  } from "@fluidframework/map/legacy";
+
+  declare const directory: IDirectoryBeta;
+  declare const sharedMap: ISharedMapBeta;
+
+  const directoryMap: FluidMapLegacy<string, unknown> = directory;
+  const sharedMapAsLegacyMap: FluidMapLegacy<string, unknown> = sharedMap;
+  ```
+
 ## 2.100.0
 
 ### Minor Changes

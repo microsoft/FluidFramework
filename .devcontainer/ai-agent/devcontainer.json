@@ -2,13 +2,12 @@
 {
 	"name": "AI-enabled",
 	// Bump this version to force a codespace prebuild rebuild. See .devcontainer/README.md.
-	// prebuild-version: 1.0.5
+	// prebuild-version: 1.0.6
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"args": {
-			"NODE_VERSION": "24",
+			"NODE_VERSION": "24"
 			// "INSTALL_AGENCY": "true",
-			"INSTALL_REPOVERLAY": "true"
 			// TODO: Figure out the playwright strategy
 			// "INSTALL_PLAYWRIGHT_CLI": "true"
 		}

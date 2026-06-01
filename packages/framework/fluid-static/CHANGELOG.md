@@ -1,5 +1,19 @@
 # @fluidframework/fluid-static
 
+## 2.102.0
+
+### Minor Changes
+
+- createTreeContainerRuntimeFactory accepts a MinimumVersionForCollab SemVer and deprecates compatibilityMode with minVersionForCollabOverride ([#27212](https://github.com/microsoft/FluidFramework/pull/27212)) [3e951b4abf](https://github.com/microsoft/FluidFramework/commit/3e951b4abfc61ea78a3e3e4a891e34e374c76efb)
+
+  A `minVersionForCollaboration` property on `createTreeContainerRuntimeFactory` accepts a [`MinimumVersionForCollab`](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias) SemVer string and replaces `compatibilityMode` ([`CompatibilityMode`](https://fluidframework.com/docs/api/fluid-static/compatibilitymode-typealias) values `"1"` and `"2"`) with optional `minVersionForCollabOverride`.
+
+  See [issue #27356](https://github.com/microsoft/FluidFramework/issues/27356) for migration details and removal tracking.
+
+## 2.101.0
+
+Dependency updates only.
+
 ## 2.100.0
 
 ### Minor Changes

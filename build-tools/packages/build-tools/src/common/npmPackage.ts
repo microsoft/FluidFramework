@@ -12,18 +12,18 @@ import { readJsonSync, writeJsonSync } from "fs-extra";
 import chalk from "picocolors";
 import sortPackageJson from "sort-package-json";
 import type { SetRequired, PackageJson as StandardPackageJson } from "type-fest";
-import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig";
-import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata";
-import { options } from "../fluidBuild/options";
-import { defaultLogger } from "./logging";
-import type { MonoRepo, PackageManager } from "./monoRepo";
+import type { IFluidBuildConfig } from "../fluidBuild/fluidBuildConfig.js";
+import type { IFluidCompatibilityMetadata } from "../fluidBuild/fluidCompatMetadata.js";
+import { options } from "../fluidBuild/options.js";
+import { defaultLogger } from "./logging.js";
+import type { MonoRepo, PackageManager } from "./monoRepo.js";
 import {
 	type ExecAsyncResult,
 	execWithErrorAsync,
 	isSameFileOrDir,
 	lookUpDirSync,
 	rimrafWithErrorAsync,
-} from "./utils";
+} from "./utils.js";
 
 const traceInit = registerDebug("fluid-build:init");
 

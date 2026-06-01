@@ -2367,8 +2367,10 @@ describe("Runtime", () => {
 				},
 			]) {
 				it(`DuplicateBatchDetector reflects batch-id tracking enablement (${variant.name})`, async () => {
+					const logger = new MockLogger();
 					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
+							logger,
 							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
@@ -2389,27 +2391,33 @@ describe("Runtime", () => {
 						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 						false,
 					);
-					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected = variant.expectDetection
-						? assert.throws
-						: assert.doesNotThrow;
-					const errorPredicate = (e: Error) =>
-						e.message === "Duplicate batch - The same batch was sequenced twice";
-					assertThrowsOnlyIfExpected(
-						() => {
-							containerRuntime.process(
-								{
-									sequenceNumber: 234,
-									type: MessageType.Operation,
-									contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-									metadata: { batchId: "batchId1" },
-								} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-								false,
-							);
-						},
-						errorPredicate,
-						"Expected duplicate batch detection to match enablement",
+					// Duplicate-batch handling is currently log-only (the DataCorruptionError throw is
+					// suppressed while a live service bug can produce duplicates). So processing the
+					// duplicate should never throw; we instead verify the DuplicateBatch telemetry
+					// event is emitted iff detection is enabled for this variant.
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
 					);
+					const duplicateEvent = { eventName: "ContainerRuntime:DuplicateBatch" };
+					if (variant.expectDetection) {
+						logger.assertMatchAny(
+							[duplicateEvent],
+							"Expected DuplicateBatch telemetry when tracking is enabled",
+						);
+					} else {
+						logger.assertMatchNone(
+							[duplicateEvent],
+							"DuplicateBatch telemetry should not fire when tracking is disabled",
+						);
+					}
 				});
 			}
 
@@ -2539,6 +2547,33 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
+			it("Offline Load opt-in errors when batchId tracking is disabled via kill-switch", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+							"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
@@ -2572,8 +2607,10 @@ describe("Runtime", () => {
 					// Hardcode readblob fn to return the blob contents put in the summary
 					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
 				};
+				const logger = new MockLogger();
 				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
+						logger,
 						baseSnapshot: {
 							trees: {},
 							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
@@ -2588,20 +2625,22 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// Process an op with a duplicate batchId to what was loaded with
-				assert.throws(
-					() => {
-						containerRuntime2.process(
-							{
-								sequenceNumber: 234,
-								type: MessageType.Operation,
-								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-								metadata: { batchId: "batchId1" },
-							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-							false,
-						);
-					},
-					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
+				// Process an op with a duplicate batchId to what was loaded with.
+				// Detection is currently log-only (the DataCorruptionError throw is suppressed),
+				// so verify via telemetry rather than an exception.
+				assert.doesNotThrow(() =>
+					containerRuntime2.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected duplicate batch detected after loading with recentBatchInfo",
 				);
 			});

@@ -6,19 +6,20 @@
 import { strict as assert } from "assert";
 
 import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	captureFullContainerState,
 	createDetachedContainer,
 	extractBlobAttachReferences,
 	loadFrozenContainerFromPendingState,
-	asLegacyAlpha,
-	type ContainerAlpha,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject } from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	LocalDocumentServiceFactory,
@@ -34,7 +35,7 @@ import {
 	type TestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 const toComparableArray = (map: ISharedMap): [string, unknown][] =>
 	[...map.entries()].map(([key, value]) => [
@@ -84,7 +85,7 @@ function makeFactoryWithFailingReadBlob(
 }
 
 const initialize = async (): Promise<{
-	container: ContainerAlpha;
+	container: IContainer;
 	testFluidObject: ITestFluidObject;
 	urlResolver: LocalResolver;
 	codeLoader: LocalCodeLoader;
@@ -94,9 +95,7 @@ const initialize = async (): Promise<{
 	const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
 		createLoader({ deltaConnectionServer });
 
-	const container = asLegacyAlpha(
-		await createDetachedContainer({ codeDetails, ...loaderProps }),
-	);
+	const container = await createDetachedContainer({ codeDetails, ...loaderProps });
 	const entryPoint: FluidObject<TestFluidObject> = (await container.getEntryPoint()) ?? {};
 	assert(
 		entryPoint.ITestFluidObject !== undefined,
@@ -509,5 +508,37 @@ describe("captureFullContainerState", () => {
 			.get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
+	});
+
+	it("rejects at capture time when the resolver emits a non-conforming URL shape", async () => {
+		const { documentServiceFactory } = await initialize();
+
+		// A resolver whose IResolvedUrl.url violates tryParseCompatibleResolvedUrl's
+		// required shape (`protocol://<string>/<tenantId>/<docId>(?...)`). The captured
+		// artifact would not be rehydratable via the offline form of
+		// loadFrozenContainerFromPendingState, so captureFullContainerState must fail
+		// fast at capture time rather than silently produce a poisoned artifact.
+		const malformedResolver: IUrlResolver = {
+			resolve: async (): Promise<IResolvedUrl> => ({
+				type: "fluid",
+				id: "no-segments",
+				// Single-segment path — fails the two-segment shape check.
+				url: "fluid://example.com/onlyonesegment",
+				tokens: {},
+				endpoints: {},
+			}),
+			getAbsoluteUrl: async (): Promise<string> => "",
+		};
+
+		await assert.rejects(
+			async () =>
+				captureFullContainerState({
+					urlResolver: malformedResolver,
+					documentServiceFactory,
+					request: { url: "https://example.com/anything" },
+				}),
+			/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
+			"Expected captureFullContainerState to reject a resolver emitting a non-conforming URL shape",
+		);
 	});
 });

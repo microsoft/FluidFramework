@@ -1,7 +1,7 @@
 {
   "$schema": "https://aka.ms/codetour-schema",
   "title": "AI-Enabled Codespace Tour",
-  "description": "A guided introduction to the AI tooling available in this codespace — agency, agent aliases, repoverlay, and how to use them for Fluid Framework development.",
+  "description": "A guided introduction to the AI tooling available in this codespace — agency, agent aliases, and how to use them for Fluid Framework development.",
   "isPrimary": true,
   "steps": [
     {
@@ -18,27 +18,27 @@
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 8,
+      "line": 26,
       "title": "Claude Aliases",
-      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** - Normal Claude Code\n- **`dev`** - Claude Code with Nori overlay\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
+      "description": "These aliases launch Claude Code via agency:\n\n- **`claude`** - Normal Claude Code\n- **`dev`** - Claude Code with the Nori profile\n\nBoth aliases use `agency claude` under the hood, which ensures consistent configuration and context."
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 37,
+      "line": 41,
       "title": "Copilot Aliases",
       "description": "These aliases launch GitHub Copilot:\n\n- **`copilot`** — Standard GitHub Copilot\n- **`oce`** — On-Call Engineer workflow (switches to ff-oce agent)"
     },
     {
       "file": "scripts/codespace-setup/agent-aliases.sh",
-      "line": 49,
-      "title": "Resetting Overlays",
-      "description": "If you need to reset your repoverlay state (remove all overlays and return to a clean repo state), run `ai-reset` in the terminal.\n\nThis runs `repoverlay remove --all` and is useful when switching between different workflows or troubleshooting overlay issues."
+      "line": 24,
+      "title": "Starting Agents",
+      "description": "Use `dev` for Nori-guided feature work, `claude` for general Claude Code sessions, `copilot` for standard GitHub Copilot, and `oce` for On-Call Engineer workflows."
     },
     {
       "file": ".devcontainer/ai-agent/devcontainer.json",
       "line": 1,
       "title": "Codespace Configuration",
-      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** and **Repoverlay** (installed via build args)\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
+      "description": "This devcontainer profile includes several additions beyond the Standard profile:\n\n- **Agency CLI** for managed agent sessions\n- **GitHub CLI** (`gh`) for PR workflows and SSH access\n- **SSH daemon** enabling `gh codespace ssh` from your local terminal\n- **32 CPUs / 64 GB RAM** (vs 16 CPUs for Standard)\n\n**Tip:** You can connect to this codespace from your local terminal with `gh codespace ssh` to run AI agents locally while using the codespace's compute."
     },
     {
       "file": ".devcontainer/ai-agent/GETTING_STARTED.md",
