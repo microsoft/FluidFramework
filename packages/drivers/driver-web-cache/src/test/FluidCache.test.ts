@@ -312,5 +312,336 @@ for (const immediateClose of [true, false]) {
 			const result = await fluidCache.get(cacheEntry);
 			assert.strictEqual(result, undefined);
 		});
+
+		describe("update", () => {
+			it("writes when the updater calls set with the entry absent", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateNew");
+				const proposed = { rev: 1 };
+
+				const seen: unknown[] = [];
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					seen.push(existing);
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(seen, [undefined]);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("passes the existing cached value to the updater", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateExisting");
+				const initial = { rev: 1 };
+				const proposed = { rev: 2 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				let observedExisting: unknown;
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					observedExisting = existing;
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(observedExisting, initial);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("supports read-modify-write derived from the existing value", async () => {
+				// The motivating case for the callback shape: deriving the new value
+				// from the existing one inside the atomic transaction.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateRmw");
+				await fluidCache.put(cacheEntry, { count: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					const prev = (existing as { count: number } | undefined)?.count ?? 0;
+					set({ count: prev + 1 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { count: 2 });
+			});
+
+			it("does not overwrite when the updater returns without calling set", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateNoSet");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					// updater inspects existing but chooses not to write
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("treats cross-partition existing entries as absent", async () => {
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("updateCrossPartition");
+				const otherPartitionValue = { rev: 99, from: "B" };
+				const proposed = { rev: 1, from: "A" };
+
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, otherPartitionValue);
+
+				let observedExisting: unknown = "sentinel";
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					observedExisting = existing;
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(observedExisting, undefined);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("set(undefined) removes the existing entry atomically", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefined");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					// Updater sees the existing value, decides to delete.
+					assert.deepEqual(existing, { rev: 1 });
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+
+				// The row should be gone from IDB, not just stored as undefined —
+				// verify by reading the raw IDB record.
+				const db = await getFluidCacheIndexedDbInstance();
+				const raw = await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry));
+				db.close();
+				assert.strictEqual(raw, undefined);
+			});
+
+			it("set(undefined) on an absent key is a no-op write that still returns true", async () => {
+				// `set` was called, so the contract says return `true` even though
+				// nothing actually changed at the key.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedAbsent");
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("set(undefined) deletes cross-partition rows under the partition's update", async () => {
+				// `update` already documents that `set` atomically replaces whatever
+				// sits at the key, including cross-partition rows. Same applies to
+				// the delete form.
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedCrossPartition");
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, { from: "B" });
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				// Both partitions now see the row as absent.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+				assert.strictEqual(await partitionBCache.get(cacheEntry), undefined);
+			});
+
+			it("returns false and does not write when the updater throws", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					throw new Error("updater failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("rejects an async updater that calls set then awaits and throws", async () => {
+				// An async updater is structurally allowed by the typed signature
+				// (`() => void` accepts `async () => Promise<void>`), but would
+				// otherwise let the synchronous `set` commit a write before the
+				// eventual rejection surfaced. Guard against this misuse: detect a
+				// thenable return after the updater returns, abort the transaction,
+				// and return false. The eventual async rejection is orphaned by
+				// design — the updater contract requires sync.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncSetThenThrow");
+				const initial = { rev: 1 };
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 99 });
+						await Promise.resolve();
+						throw new Error("async after-set failure");
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("rejects an async updater that returns a promise without throwing", async () => {
+				// Even a non-throwing async updater is misuse — the contract is sync.
+				// `set` may have been called before the awaited microtask; we still
+				// must not commit, because the updater is structurally telling us
+				// it intended to do more work after returning.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncNoThrow");
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 1 });
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("does not write when the updater calls set then throws", async () => {
+				// Throw-after-set should still abort: the updater's intent is ambiguous
+				// and preserving the existing row is the safer default.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetThenThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 99 });
+					throw new Error("after-set failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("multi-set: last value wins", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateMultiSet");
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 1 });
+					set({ rev: 2 });
+					set({ rev: 3 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 3 });
+			});
+
+			it("set called after the updater returned throws UsageError", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateLateSet");
+
+				let capturedSet: ((value: unknown) => void) | undefined;
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					capturedSet = set;
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.ok(capturedSet !== undefined);
+				assert.throws(() => capturedSet?.({ rev: 1 }), /set called after updater returned/);
+				// And the cache is still untouched.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("resolves concurrent update races deterministically via the updater", async () => {
+				// Two FluidCache instances racing to write to the same key, where each
+				// only writes if it has a higher revision than what is currently cached.
+				// The higher-revision writer must win regardless of scheduling order.
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const cacheEntry = getMockCacheEntry("updateRace");
+
+				const writeIfNewer = async (cache: FluidCache, rev: number): Promise<boolean> =>
+					cache.update(cacheEntry, (existing, set) => {
+						const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+						if (rev > existingRev) {
+							set({ rev });
+						}
+					});
+
+				const [wroteHigh, wroteLow] = await Promise.all([
+					writeIfNewer(fluidCache, 2),
+					writeIfNewer(otherCache, 1),
+				]);
+
+				// At least one of the two writes must succeed (the very first one),
+				// and the final state must reflect the higher revision regardless of order.
+				assert.ok(wroteHigh || wroteLow);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 2 });
+			});
+
+			it("treats existing entries older than maxCacheItemAge as absent", async () => {
+				const resetDateMock = setupDateMock(0);
+				try {
+					const maxAge = 5 * 60 * 1000;
+					fluidCache = new FluidCache({
+						partitionKey: mockPartitionKey,
+						maxCacheItemAge: maxAge,
+						closeDbAfterMs: immediateClose ? 0 : 100,
+					});
+
+					const cacheEntry = getMockCacheEntry("updateStale");
+					await fluidCache.put(cacheEntry, { rev: 1 });
+
+					// Advance well past maxCacheItemAge so the existing row is "stale"
+					// under the same rules `get` applies.
+					DateMock.mockTimeMs += maxAge * 2;
+
+					let observedExisting: unknown = "sentinel";
+					const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+						observedExisting = existing;
+						set({ rev: 2 });
+					});
+
+					assert.strictEqual(wrote, true);
+					assert.strictEqual(
+						observedExisting,
+						undefined,
+						"stale existing entries should be reported to the updater as undefined",
+					);
+				} finally {
+					resetDateMock();
+				}
+			});
+		});
 	});
 }
