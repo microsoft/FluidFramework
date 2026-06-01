@@ -26,6 +26,7 @@ import {
 	type ISignalMessage,
 	type ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import type { IConnectionStateChangeReason } from "./contracts.js";
@@ -165,7 +166,22 @@ class FrozenDocumentService
 }
 
 const frozenDocumentStorageServiceHandler = (): never => {
-	throw new Error("Operations are not supported on the FrozenDocumentStorageService.");
+	throw new UsageError("Operations are not supported on the FrozenDocumentStorageService.");
+};
+
+/**
+ * Distinct from {@link frozenDocumentStorageServiceHandler} because callers
+ * that hit this path are almost always exercising a fully-offline frozen load
+ * whose pending state was produced by {@link getPendingLocalState} (which omits
+ * inlined attachment blobs) rather than {@link captureFullContainerState}. A
+ * generic "operation not supported" is technically true but unhelpful; this
+ * message names the missing precondition and the API that produces it.
+ */
+const frozenReadBlobOfflineHandler = async (): Promise<never> => {
+	throw new UsageError(
+		"Attempted to read an attachment blob from a frozen-loaded container without a live storage service. " +
+			"Fully-offline frozen loads must use pending state produced by `captureFullContainerState`, which inlines all referenced attachment blobs.",
+	);
 };
 
 class FrozenDocumentStorageService implements IDocumentStorageService, IDisposable {
@@ -217,7 +233,7 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 	createBlob: IDocumentStorageService["createBlob"];
 	readBlob =
 		this.documentStorageService?.readBlob.bind(this.documentStorageService) ??
-		frozenDocumentStorageServiceHandler;
+		frozenReadBlobOfflineHandler;
 	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
 	downloadSummary = frozenDocumentStorageServiceHandler;
 
