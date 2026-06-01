@@ -683,8 +683,9 @@ export function coalesceAroundSplice(
 
 /**
  * Attempts to merge `field[i]` and `field[i + 1]` into a single {@link UniformChunk}. Skips if
- * either is not a {@link UniformChunk}, the shapes differ, or the combined topLevelLength would
- * exceed {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ * either is not a {@link UniformChunk}, the shapes differ, the chunks carry different non-undefined
+ * {@link UniformChunk.idCompressor}s, or the combined topLevelLength would exceed
+ * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
  *
  * @returns `true` if the merge occurred (and `field` was mutated), `false` otherwise.
  */
@@ -702,6 +703,19 @@ function tryMergeAt(field: TreeChunk[], i: number, policy: ChunkPolicy): boolean
 		return false;
 	}
 
+	// Refuse to merge chunks whose values were compressed under different idCompressors;
+	// the merged chunk can carry only one, so the other's compressed-id values would
+	// decompress to incorrect values when read.
+	const leftCompressor = left.idCompressor;
+	const rightCompressor = right.idCompressor;
+	if (
+		leftCompressor !== undefined &&
+		rightCompressor !== undefined &&
+		leftCompressor !== rightCompressor
+	) {
+		return false;
+	}
+
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
 	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
 		return false;
@@ -710,7 +724,7 @@ function tryMergeAt(field: TreeChunk[], i: number, policy: ChunkPolicy): boolean
 	const merged = new UniformChunk(
 		leftTreeShape.withTopLevelLength(combinedTopLevel),
 		[...left.values, ...right.values],
-		left.idCompressor ?? right.idCompressor,
+		leftCompressor ?? rightCompressor,
 	);
 	field.splice(i, 2, merged);
 	left.referenceRemoved();

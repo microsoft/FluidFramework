@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import {
 	CursorLocationType,
 	EmptyKey,
@@ -1055,6 +1057,31 @@ describe("chunkTree", () => {
 			assert.equal(field.length, 1);
 			assert(field[0] instanceof UniformChunk);
 			assert.equal(field[0].idCompressor, testIdCompressor);
+		});
+
+		it("does not merge when the two sides carry different idCompressors", () => {
+			// If the chunks were encoded under different compressors, the merged chunk
+			// (which can carry only one) would decompress the discarded side's compressed-id
+			// values to garbage. The merge must skip in that case.
+			const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+			const otherCompressor = createIdCompressor();
+			assert(testIdCompressor !== otherCompressor);
+			const leftWithCompressor = new UniformChunk(
+				stringShape.withTopLevelLength(1),
+				[testIdCompressor.generateCompressedId()],
+				testIdCompressor,
+			);
+			const rightWithOtherCompressor = new UniformChunk(
+				stringShape.withTopLevelLength(1),
+				[otherCompressor.generateCompressedId()],
+				otherCompressor,
+			);
+			const field: TreeChunk[] = [leftWithCompressor, rightWithOtherCompressor];
+			const snapshot = [...field];
+
+			coalesceAroundSplice(field, 1, 1, policy);
+
+			assertChunksUnchanged(field, snapshot);
 		});
 
 		it("keeps chunk count bounded under repeated mid-field edits", () => {
