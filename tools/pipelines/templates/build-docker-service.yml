@@ -392,7 +392,7 @@ extends:
               # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
               # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
               # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
-              # Dockerfiles (gitssh) don't consume it.
+              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
               ${{ if eq(parameters.packageManager, 'pnpm') }}:
                 buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
               ${{ else }}:
