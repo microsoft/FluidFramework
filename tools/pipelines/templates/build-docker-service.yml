@@ -90,6 +90,13 @@ parameters:
     type: string
     default: ""
 
+  # Registry (and namespace prefix) for the base image referenced by ${BASE_IMAGE_REGISTRY} in each
+  # server-* Dockerfile. The default points at our public-accessible mirror ACR, reachable from both
+  # internal and public 1ES build pools (egress to docker.io is blocked by network isolation policies).
+  - name: baseImageRegistry
+    type: string
+    default: 'fluidpublicmirror-ccbba5fhdscnchft.azurecr.io/mirror/docker'
+
   # If the build is running for a test branch
   - name: testBuild
     type: boolean
@@ -222,6 +229,7 @@ extends:
 
               Other parameters:
                 additionalBuildArguments=${{ parameters.additionalBuildArguments }}
+                baseImageRegistry=${{ parameters.baseImageRegistry }}
                 buildNumberInPatch=${{ parameters.buildNumberInPatch }}
                 buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
                 containerBaseDir=${{ parameters.containerBaseDir }}
@@ -344,16 +352,18 @@ extends:
               script: |
                 set -eu -o pipefail
                 echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
+                echo "BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
                 echo "SETVERSION_VERSION=$(SetVersion.version)"
                 echo "SETVERSION_CODEVERSION=$(SetVersion.codeversion)"
                 echo "INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }}"
                 echo "RELEASE_GROUP=${{ parameters.tagName }}"
-                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg SETVERSION_VERSION=$(SetVersion.version) --build-arg SETVERSION_CODEVERSION=$(SetVersion.codeversion) --build-arg INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }} --build-arg RELEASE_GROUP=${{ parameters.tagName }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }} --build-arg SETVERSION_VERSION=$(SetVersion.version) --build-arg SETVERSION_CODEVERSION=$(SetVersion.codeversion) --build-arg INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }} --build-arg RELEASE_GROUP=${{ parameters.tagName }}"
             ${{ else }}:
               script: |
                 set -eu -o pipefail
                 echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
-                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }}"
+                echo "BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
 
         # The 1ES.BuildContainerImage task apparently expects to see the CredScan suppressions file not in the root of
         # the repo, but in the folder used as its 'context' input. So we need to copy it there before building any images.
@@ -378,7 +388,15 @@ extends:
               dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
               context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base $(DockerBuildArgs.output)
+              # CI's build container has no egress to registry.npmjs.org under 1ES network
+              # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
+              # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
+              # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
+              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
+              ${{ if eq(parameters.packageManager, 'pnpm') }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              ${{ else }}:
+                buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -519,7 +537,12 @@ extends:
             dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
             context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: $(DockerBuildArgs.output)
+            # See the base-image build above for the rationale. Passed here too because
+            # a cache miss could re-execute the base stage layers during this build.
+            ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            ${{ else }}:
+              buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
@@ -568,12 +591,16 @@ extends:
                 pnpm store prune
 
         templateContext:
-          ${{ if eq(parameters.shouldPushDockerImage, true) }}:
+          # 'Fluid Public Mirror Container Registry' is required on every run for base-image pulls
+          # (anonymous pull disabled). The push connection $(containerRegistryConnection) is only
+          # added when pushing in the internal project (it's empty in the public project).
+          ${{ if and(eq(parameters.shouldPushDockerImage, true), eq(variables['System.TeamProject'], 'internal')) }}:
             authenticatedContainerRegistries:
-            # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
-            # specified as a runtime variable (variables from variable groups apparently are never available "statically"
-            # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
             - serviceConnection: $(containerRegistryConnection)
+            - serviceConnection: 'Fluid Public Mirror Container Registry'
+          ${{ else }}:
+            authenticatedContainerRegistries:
+            - serviceConnection: 'Fluid Public Mirror Container Registry'
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
           - ${{ if eq(parameters.pack, true) }}:

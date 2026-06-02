@@ -18,6 +18,8 @@ import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentStorageService,
+	IResolvedUrl,
+	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	LocalDocumentServiceFactory,
@@ -506,5 +508,37 @@ describe("captureFullContainerState", () => {
 			.get();
 		assert(retrievedBlob !== undefined, "Expected blob handle to resolve in frozen container");
 		assert.strictEqual(bufferToString(retrievedBlob, "utf8"), blobPayload);
+	});
+
+	it("rejects at capture time when the resolver emits a non-conforming URL shape", async () => {
+		const { documentServiceFactory } = await initialize();
+
+		// A resolver whose IResolvedUrl.url violates tryParseCompatibleResolvedUrl's
+		// required shape (`protocol://<string>/<tenantId>/<docId>(?...)`). The captured
+		// artifact would not be rehydratable via the offline form of
+		// loadFrozenContainerFromPendingState, so captureFullContainerState must fail
+		// fast at capture time rather than silently produce a poisoned artifact.
+		const malformedResolver: IUrlResolver = {
+			resolve: async (): Promise<IResolvedUrl> => ({
+				type: "fluid",
+				id: "no-segments",
+				// Single-segment path — fails the two-segment shape check.
+				url: "fluid://example.com/onlyonesegment",
+				tokens: {},
+				endpoints: {},
+			}),
+			getAbsoluteUrl: async (): Promise<string> => "",
+		};
+
+		await assert.rejects(
+			async () =>
+				captureFullContainerState({
+					urlResolver: malformedResolver,
+					documentServiceFactory,
+					request: { url: "https://example.com/anything" },
+				}),
+			/resolved URL is not in the shape required by tryParseCompatibleResolvedUrl/,
+			"Expected captureFullContainerState to reject a resolver emitting a non-conforming URL shape",
+		);
 	});
 });
