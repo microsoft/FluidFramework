@@ -4,6 +4,11 @@
 
 ```ts
 
+// @alpha @legacy
+export type AllOrNone<T> = T | {
+    [K in keyof T]?: never;
+};
+
 // @public
 export class BrandedType<out Brand> {
     static [Symbol.hasInstance](value: never): value is never;
@@ -478,7 +483,9 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
 
 // @public
 export interface LogLevelConst {
+    // @deprecated
     readonly default: 20;
+    // @deprecated
     readonly error: 30;
     readonly essential: 30;
     readonly info: 20;

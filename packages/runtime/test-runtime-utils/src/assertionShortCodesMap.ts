@@ -934,7 +934,6 @@ export const shortCodeMap = {
 	"0x71d": "Expected generative mark",
 	"0x722": "Cannot pop from empty queue",
 	"0x724": "Detach event must have a revision",
-	"0x726": "pendingLocalState should be defined",
 	"0x729": "Expected last evicted commit to be new trunk base",
 	"0x730": "expected number in stream",
 	"0x731": "expected boolean in stream",
@@ -1936,5 +1935,14 @@ export const shortCodeMap = {
 	"0xcf4": "must not be above root",
 	"0xcf5": "Unexpected indexOfChunkStack.length",
 	"0xcf6": "Unexpected indexWithinChunkStack.length",
-	"0xcf7": "Parent chunk not found in latest summary tracking"
+	"0xcf7": "Parent chunk not found in latest summary tracking",
+	"0xcf8": "detach range start must not exceed end",
+	"0xcf9": "nodeIndex exceeds total node count in field",
+	"0xcfa": "Cannot register events on a disposed node",
+	"0xcfb": "cyclic specialized node shape chain",
+	"0xcfc": "shape index out of bounds",
+	"0xcfd": "shape at index must be a concrete (c) or specialized (f) node shape",
+	"0xcfe": "duplicate field key in base node shape",
+	"0xcff": "duplicate field key in specialized node shape",
+	"0xd00": "expected existing field index"
 };

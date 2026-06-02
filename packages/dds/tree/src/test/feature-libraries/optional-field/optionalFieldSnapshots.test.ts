@@ -70,6 +70,7 @@ export function testSnapshots(): void {
 
 		const baseContext = {
 			originatorId: snapshotCompressor.localSessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};

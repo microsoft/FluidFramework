@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import {
+	CommitKind,
 	independentView,
 	type TreeBranchAlpha,
 	type TreeViewAlpha,
@@ -301,10 +302,11 @@ describe("createUndoRedo", () => {
 			fireChanged: (
 				isLocal: boolean,
 				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
+				kind?: CommitKind,
 			) => void;
 		} {
 			type Handler = (
-				data: { isLocal: boolean; labels: unknown[] },
+				data: { isLocal: boolean; kind: CommitKind; labels: unknown[] },
 				getRevertible: (() => { revert(): void; dispose(): void }) | undefined,
 			) => void;
 			const handlers: Handler[] = [];
@@ -321,8 +323,8 @@ describe("createUndoRedo", () => {
 			} as unknown as TreeBranchAlpha;
 			return {
 				branch,
-				fireChanged: (isLocal, getRevertible) => {
-					for (const h of handlers) h({ isLocal, labels: [] }, getRevertible);
+				fireChanged: (isLocal, getRevertible, kind = CommitKind.Default) => {
+					for (const h of handlers) h({ isLocal, kind, labels: [] }, getRevertible);
 				},
 			};
 		}
@@ -356,10 +358,10 @@ describe("createUndoRedo", () => {
 			};
 
 			// The undo revertible fires a changed event during its revert (as real SharedTree does),
-			// routing redoRevertible onto the redo stack.
+			// routing redoRevertible onto the redo stack via its CommitKind.Undo kind.
 			fireChanged(true, () => ({
 				revert() {
-					fireChanged(true, () => redoRevertible);
+					fireChanged(true, () => redoRevertible, CommitKind.Undo);
 				},
 				dispose() {},
 			}));
@@ -372,7 +374,7 @@ describe("createUndoRedo", () => {
 			manager.dispose();
 		});
 
-		it("clears pendingOperation after undo revert() throws so new commits land on undo stack (C1)", () => {
+		it("a new commit after a failed undo lands on the undo stack", () => {
 			const { branch, fireChanged } = createMockBranch();
 			const manager = createUndoRedo(branch);
 
@@ -384,15 +386,14 @@ describe("createUndoRedo", () => {
 			}));
 			assert.throws(() => manager.undo());
 
-			// A new user commit arriving after the failed undo must go to the undo stack,
-			// not the redo stack (which is what happens when #pendingOperation is stuck).
+			// A new user commit arriving after the failed undo must go to the undo stack.
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert(!manager.canRedo(), "redo stack should be empty — pendingOperation was cleared");
+			assert(!manager.canRedo(), "redo stack should be empty");
 			assert(manager.canUndo(), "new commit should be on the undo stack");
 			manager.dispose();
 		});
 
-		it("clears pendingOperation after redo revert() throws so new commits land on undo stack (C1)", () => {
+		it("a new commit after a failed redo lands on the undo stack", () => {
 			const { branch, fireChanged } = createMockBranch();
 			const manager = createUndoRedo(branch);
 
@@ -405,10 +406,10 @@ describe("createUndoRedo", () => {
 			};
 
 			// The undo revertible fires a changed event during its revert (as real SharedTree does),
-			// routing redoRevertible onto the redo stack.
+			// routing redoRevertible onto the redo stack via its CommitKind.Undo kind.
 			fireChanged(true, () => ({
 				revert() {
-					fireChanged(true, () => redoRevertible);
+					fireChanged(true, () => redoRevertible, CommitKind.Undo);
 				},
 				dispose() {},
 			}));
@@ -421,7 +422,7 @@ describe("createUndoRedo", () => {
 
 			// New user commit must land on the undo stack, not the redo stack.
 			fireChanged(true, () => ({ revert() {}, dispose() {} }));
-			assert(!manager.canRedo(), "pendingOperation was cleared after redo failure");
+			assert(!manager.canRedo(), "redo stack should be empty after failed redo");
 			manager.dispose();
 		});
 	});

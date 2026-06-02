@@ -106,6 +106,7 @@ function createForestSummarizer(args: {
 		encodeType,
 		idCompressor: testIdCompressor,
 		originatorId: testIdCompressor.localSessionId,
+		isSummary: false,
 		schema: { schema: initialContent.schema, policy: defaultSchemaPolicy },
 	};
 	return {
@@ -451,7 +452,7 @@ describe("ForestSummarizer", () => {
 					{
 						fooArray: new FooArray(["value1", "value2"]),
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 

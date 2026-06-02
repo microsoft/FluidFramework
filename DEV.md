@@ -220,7 +220,3 @@ Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the
 ### `enableWeakerNestedSandbox` ([Claude settings](.claude/settings.json))
 
 Even with the above flags, Docker still blocks mounting a fresh `/proc` filesystem inside a user namespace — a kernel-level restriction that `CAP_SYS_ADMIN` and AppArmor changes cannot override. Claude's full-strength sandbox requires this `/proc` mount. The `enableWeakerNestedSandbox` setting tells Claude to use a weaker sandbox variant that skips the `/proc` mount while still providing filesystem isolation via bwrap.
-
-### `--copy` flag for repoverlay ([`agent-aliases.sh`](scripts/codespace-setup/agent-aliases.sh))
-
-repoverlay defaults to applying overlays as symlinks. bwrap cannot follow symlinks when constructing its mount namespace — it bind-mounts individual paths, and a symlink at the source causes a "No such file or directory" error even when the target is within the same repo. The `--copy` flag in `agent-aliases.sh` forces repoverlay to copy files instead, avoiding this limitation.

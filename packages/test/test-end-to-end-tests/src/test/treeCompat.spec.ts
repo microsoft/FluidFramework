@@ -57,7 +57,7 @@ async function createContainerAndGetTreeView(provider: ITestObjectProvider, apis
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: extract schema definition and provide explicit return type
 async function loadContainerAndGetTreeView(provider: ITestObjectProvider, apis: CompatApis) {
-	const dataRuntimeApi = apis.dataRuntimeForLoading ?? apis.dataRuntime;
+	const dataRuntimeApi = apis.dataRuntimeForLoading;
 	const { SharedTree } = dataRuntimeApi.dds;
 	const testContainerConfig: ITestContainerConfig = {
 		...baseTestContainerConfig,
@@ -79,11 +79,7 @@ describeCompat(
 			// SharedTree was added in version 2.0.0. Skip all cross-client compat tests in this suite for older versions.
 			if (apis.mode === "CrossClientCompat") {
 				const version = apis.dataRuntime.version;
-				const versionForLoading = apis.dataRuntimeForLoading?.version;
-				assert(
-					versionForLoading !== undefined,
-					"Loading version must be defined for cross-client tests",
-				);
+				const versionForLoading = apis.dataRuntimeForLoading.version;
 				if (lt(version, "2.0.0") || lt(versionForLoading, "2.0.0")) {
 					this.skip();
 				}

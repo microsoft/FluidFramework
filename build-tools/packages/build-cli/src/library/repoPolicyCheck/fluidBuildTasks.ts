@@ -685,16 +685,17 @@ function getTscCommandDependencies(
 	command: string,
 	packageMap: ReadonlyMap<string, Package>,
 ): (string | string[])[] {
+	const tscUtils = TscUtils.getTscUtils(packageDir);
 	// If the project has a referenced project, depend on that instead of the default
-	const parsedCommand = TscUtils.parseCommandLine(command);
+	const parsedCommand = tscUtils.parseCommandLine(command);
 	if (!parsedCommand) {
 		throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 	}
-	const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
+	const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
 	if (configFile === undefined) {
 		throw new Error(`Could not find config file for script '${script}' in ${packageDir}`);
 	}
-	const configJson = TscUtils.readConfigFile(configFile) as TsConfigJson;
+	const configJson = tscUtils.readConfigFile(configFile) as TsConfigJson;
 	if (configJson === undefined) {
 		throw new Error(`Failed to load config file '${configFile}'`);
 	}
@@ -876,12 +877,13 @@ export const handlers: Handler[] = [
 				file,
 				root,
 				({ packageDir, script, command }: BuildDepsCallbackContext) => {
+					const tscUtils = TscUtils.getTscUtils(packageDir);
 					// If the project has a referenced project, depend on that instead of the default
-					const parsedCommand = TscUtils.parseCommandLine(command);
+					const parsedCommand = tscUtils.parseCommandLine(command);
 					if (!parsedCommand) {
 						throw new Error(`Error parsing tsc command for script '${script}': ${command}`);
 					}
-					const configFile = TscUtils.findConfigFile(packageDir, parsedCommand);
+					const configFile = tscUtils.findConfigFile(packageDir, parsedCommand);
 					if (configFile === undefined) {
 						throw new Error(
 							`Could not find config file for script '${script}' in ${packageDir}`,
