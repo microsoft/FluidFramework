@@ -37,9 +37,9 @@ const compressionSuite = (getProvider, apis?): void => {
 	// In cross-client compat, the local (creating) and remote (loading) clients may be different
 	// versions. Use the create-side factory for makeTestContainer and the load-side factory for
 	// loadTestContainer. Both fall back to the directly-imported SharedMap when apis is not
-	// available (describeInstallVersions path) or when ddsForLoading is not set (non-cross-client).
+	// available (describeInstallVersions path). (Outside cross-client compat ddsForLoading matches dds.)
 	const SharedMapForCreate = apis?.dds.SharedMap ?? SharedMap;
-	const SharedMapForLoad = apis?.ddsForLoading?.SharedMap ?? apis?.dds.SharedMap ?? SharedMap;
+	const SharedMapForLoad = apis?.ddsForLoading.SharedMap ?? SharedMap;
 	describe("Compression", () => {
 		let provider: ITestObjectProvider;
 		let localDataObject: ITestFluidObject;

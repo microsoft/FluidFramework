@@ -22,10 +22,10 @@ import {
 
 describeCompat("SharedMap", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap } = apis.dds;
-	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
-	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
-	// loadTestContainer reconstructs DDS factories from the correct version.
-	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
+	// In cross-client compat, the loading client may be a different version than the creating
+	// client. Use ddsForLoading to build the load-side registry so loadTestContainer reconstructs
+	// DDS factories from the correct version. (Outside cross-client compat it matches apis.dds.)
+	const ddsForLoading = apis.ddsForLoading;
 	const mapId = "mapKey";
 	const createRegistry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const loadRegistry: ChannelFactoryRegistry = [[mapId, ddsForLoading.SharedMap.getFactory()]];

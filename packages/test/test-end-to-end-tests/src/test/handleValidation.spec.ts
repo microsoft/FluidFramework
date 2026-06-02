@@ -50,8 +50,6 @@ import {
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-// Used only as a fallback for older compat versions where apis.dds.SharedTree may be undefined.
-import { SharedTree as SharedTreeCurrent } from "@fluidframework/tree/internal";
 /* eslint-enable @typescript-eslint/no-restricted-imports */
 
 const mapId = "map";
@@ -184,9 +182,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		SharedMatrix,
 		ConsensusRegisterCollection,
 		ConsensusQueue,
-		// SharedTree was added recently and may not exist on apis.dds when running against older
-		// compat versions; fall back to the directly-imported current version.
-		SharedTree = SharedTreeCurrent,
+		SharedTree,
 	} = apis.dds;
 
 	let provider: ITestObjectProvider;

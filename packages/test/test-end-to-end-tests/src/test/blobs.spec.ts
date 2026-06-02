@@ -103,10 +103,10 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 		"FullCompat",
 		(getTestObjectProvider, apis) => {
 			const { SharedString } = apis.dds;
-			// In cross-client compat, the loading client may be a different version. Use ddsForLoading
-			// (which falls back to apis.dds when not cross-client) so loadTestContainer reconstructs
-			// DDS factories from the correct version.
-			const ddsForLoading = apis.ddsForLoading ?? apis.dds;
+			// In cross-client compat, the loading client may be a different version than the creating
+			// client. Use ddsForLoading so loadTestContainer reconstructs DDS factories from the
+			// correct version. (Outside cross-client compat it matches apis.dds.)
+			const ddsForLoading = apis.ddsForLoading;
 			const createContainerConfig = makeTestContainerConfig(
 				[["sharedString", SharedString.getFactory()]],
 				createBlobPayloadPending,

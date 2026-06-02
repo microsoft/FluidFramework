@@ -43,9 +43,9 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 	const { SharedString } = apis.dds;
 	// In cross-client compat, the validation loader (which loads the previously-created container)
 	// may be a different version than the init loader (which created the container). Use
-	// ddsForLoading (falling back to apis.dds when not cross-client) so the validation loader
-	// reconstructs SharedString factories from the load-side version.
-	const SharedStringForLoading = (apis.ddsForLoading ?? apis.dds).SharedString;
+	// ddsForLoading so the validation loader reconstructs SharedString factories from the load-side
+	// version. (Outside cross-client compat it matches apis.dds.)
+	const SharedStringForLoading = apis.ddsForLoading.SharedString;
 	before(function () {
 		const provider = getTestObjectProvider();
 		switch (provider.driver.type) {

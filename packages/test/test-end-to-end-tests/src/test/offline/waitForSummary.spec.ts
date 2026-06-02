@@ -36,9 +36,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
-// Used only as a fallback for older compat versions where apis.dds.SharedTree may be undefined.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedTree as SharedTreeCurrent } from "@fluidframework/tree/internal";
 
 import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
 
@@ -70,9 +67,7 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const mapId = "map";
 		const treeId = "tree";
-		// SharedTree was added recently and may not exist on apis.dds when running against older
-		// compat versions; fall back to the directly-imported current version.
-		const { SharedMap, SharedTree = SharedTreeCurrent } = apis.dds;
+		const { SharedMap, SharedTree } = apis.dds;
 		const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
 		const registry: ChannelFactoryRegistry = [
 			[mapId, SharedMap.getFactory()],

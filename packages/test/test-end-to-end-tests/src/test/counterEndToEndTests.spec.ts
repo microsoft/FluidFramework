@@ -23,10 +23,10 @@ const counterId = "counterKey";
 
 describeCompat("SharedCounter", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter } = apis.dds;
-	// In cross-client compat, the loading client may be a different version. Use ddsForLoading
-	// (which falls back to apis.dds when not cross-client) to build the load-side registry so
-	// loadTestContainer reconstructs DDS factories from the correct version.
-	const ddsForLoading = apis.ddsForLoading ?? apis.dds;
+	// In cross-client compat, the loading client may be a different version than the creating
+	// client. Use ddsForLoading to build the load-side registry so loadTestContainer reconstructs
+	// DDS factories from the correct version. (Outside cross-client compat it matches apis.dds.)
+	const ddsForLoading = apis.ddsForLoading;
 
 	const createRegistry: ChannelFactoryRegistry = [[counterId, SharedCounter.getFactory()]];
 	const loadRegistry: ChannelFactoryRegistry = [

@@ -31,7 +31,7 @@ Fluid values used by an e2e test (DDS factories, `DataObject`, `Loader`, `Contai
 If a test imports one of the restricted symbols statically, ESLint's `@typescript-eslint/no-restricted-imports` rule will fail the build with a message like
 _"`SharedMap` import from `@fluidframework/map/internal` is restricted from being used by a pattern. Rather than import this Fluid package directly, use the 'apis' argument of describeCompat."_
 
-**For the patterns — using `apis`, the cross-client compat split (`apis.ddsForLoading` etc.), the fallback pattern for recently-added DDSes, and the legitimate exceptions where `eslint-disable` is appropriate — see [WritingCompatCorrectTests.md](./WritingCompatCorrectTests.md).**
+**For the patterns — using `apis`, the create vs. load API split (`apis.dds` / `apis.ddsForLoading` etc.) and the legitimate exceptions where `eslint-disable` is appropriate — see [WritingCompatCorrectTests.md](./WritingCompatCorrectTests.md).**
 
 For a worked example of an entire test file written this way, see [`sharedStringEndToEndTests.spec.ts`](src/test/sharedStringEndToEndTests.spec.ts). That same [directory](src/test) contains more complex examples too.
 

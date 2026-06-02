@@ -30,9 +30,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	OperationType,
-	SharedArray as SharedArrayCurrent,
 	SharedArrayRevertible,
-	SharedSignal as SharedSignalCurrent,
 	type IRevertible,
 	type ISharedArray,
 	type ISharedSignal,
@@ -70,9 +68,6 @@ import {
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
-// Used only as a fallback for older compat versions where apis.dds.SharedTree may be undefined.
-// eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedTree as SharedTreeCurrent } from "@fluidframework/tree/internal";
 
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
@@ -143,11 +138,9 @@ describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
 		SharedCounter,
 		SharedString,
 		SharedCell,
-		// SharedArray, SharedSignal, and SharedTree were added recently and may not exist on apis.dds
-		// when running against older compat versions; fall back to the directly-imported current versions.
-		SharedArray = SharedArrayCurrent,
-		SharedSignal = SharedSignalCurrent,
-		SharedTree = SharedTreeCurrent,
+		SharedArray,
+		SharedSignal,
+		SharedTree,
 	} = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
 	const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
