@@ -121,10 +121,9 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
-    # We need to install only the root dependencies; r11s has native deps that don't install in CI since we use Docker
-    # to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'pnpm install --workspace-root'
-    packageManager: pnpm
+    # Root-only install: r11s has native deps that don't install in CI; the real build runs in Docker.
+    # Root deps are still needed for the version-setting step.
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile --workspace-root'
     tagName: server
     isReleaseGroup: true
     pool: Large-eastus2

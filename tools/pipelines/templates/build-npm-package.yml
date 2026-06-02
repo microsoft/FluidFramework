@@ -75,7 +75,7 @@ parameters:
 
 - name: packageManager
   type: string
-  default: npm
+  default: pnpm
 
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
@@ -85,7 +85,7 @@ parameters:
 
 - name: packageManagerInstallCommand
   type: string
-  default: 'npm ci --unsafe-perm'
+  default: 'pnpm i --frozen-lockfile'
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
