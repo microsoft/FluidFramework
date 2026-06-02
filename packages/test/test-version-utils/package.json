@@ -1,7 +1,7 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.102.0",
-	"description": "End to end tests",
+	"version": "2.103.0",
+	"description": "End to end compatibility test infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
@@ -14,15 +14,12 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"types": "./lib/index.d.ts",
 			"import": "./lib/index.js"
 		},
 		"./mocharc-common": {
-			"require": "./mocharc-common.cjs"
+			"import": "./lib/mocharcCommon.js"
 		}
 	},
-	"main": "lib/index.js",
-	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
@@ -31,7 +28,7 @@
 		"build:genver": "gen-version",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./mocharc-common",
+		"check:are-the-types-wrong": "attw --pack . --profile esm-only",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
@@ -47,9 +44,9 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"test": "npm run test:mocha",
-		"test:mocha": "mocha --timeout=10000",
+		"test:mocha": "npm run test:mocha:esm",
+		"test:mocha:esm": "mocha --timeout=10000",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"update-compat-versions": "jiti scripts/updateCompatVersions.ts"
 	},
 	"c8": {
@@ -135,9 +132,6 @@
 		"uuid": "^11.1.0",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"
-	},
-	"engines": {
-		"node": ">=22.22.2"
 	},
 	"fluidBuild": {
 		"tasks": {

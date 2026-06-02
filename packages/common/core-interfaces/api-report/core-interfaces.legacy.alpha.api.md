@@ -4,6 +4,11 @@
 
 ```ts
 
+// @alpha @legacy
+export type AllOrNone<T> = T | {
+    [K in keyof T]?: never;
+};
+
 // @public
 export class BrandedType<out Brand> {
     static [Symbol.hasInstance](value: never): value is never;

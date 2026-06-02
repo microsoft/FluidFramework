@@ -530,8 +530,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
-				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
+				const maxTopLevelLength = Math.max(
+					1,
+					Math.floor(chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
@@ -636,7 +637,7 @@ export function splitFieldAtIndex(
 		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
 		chunk.referenceRemoved();
 	}
-	assert(remaining === 0, "nodeIndex exceeds total node count in field");
+	assert(remaining === 0, 0xcf9 /* nodeIndex exceeds total node count in field */);
 	return chunks.length;
 }
 
