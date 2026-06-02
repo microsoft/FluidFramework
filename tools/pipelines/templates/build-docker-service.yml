@@ -301,6 +301,11 @@ extends:
                 fi
               fi
 
+              if [[ "${{ parameters.packageManager }}" == "none" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]packageManager: 'none' is incompatible with setVersion: true (version-setting transitively requires a package manager)."
+                exit -1;
+              fi
+
         # for npm ci in component detection and set version
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
