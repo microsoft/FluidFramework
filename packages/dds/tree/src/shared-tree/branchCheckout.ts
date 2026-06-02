@@ -101,9 +101,12 @@ class BranchCheckoutFinalizationState {
 }
 
 /**
- * Side-table mapping each `BranchCheckout` to its finalization state, so external code (tests,
- * future telemetry hooks) can install an {@link BranchCheckoutFinalizationState.onFinalized}
- * callback without exposing private fields. Weakly keyed so this table does not retain checkouts.
+ * Associates each `BranchCheckout` with its finalization state via a weakly-keyed map, so external
+ * code (tests, future telemetry hooks) can install a
+ * {@link BranchCheckoutFinalizationState.onFinalized} callback without exposing private fields.
+ * The state is stored out-of-line (rather than on the checkout itself) so that the callback
+ * closure cannot accidentally retain the `BranchCheckout` it belongs to, which would prevent
+ * the finalizer from ever firing. Weakly keyed so this map does not retain checkouts.
  */
 const branchCheckoutFinalizationStates = new WeakMap<
 	BranchCheckout,
@@ -331,6 +334,9 @@ export function forkAsBranchCheckout(parent: TreeCheckout): BranchCheckout {
  * has ongoing cost (it keeps a forest up to date), so the lifetime semantics need to be revisited
  * before this graduates from `@alpha`.
  *
+ * @throws A `UsageError` if `view` was not produced by the Fluid Framework (e.g. an external
+ * implementation of `TreeBranchAlpha`).
+ *
  * @alpha
  */
 export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
@@ -360,8 +366,10 @@ export function getBranch(view: TreeBranchAlpha): TreeBranchAlpha {
  * Returns a view of the given branch using the provided schema configuration.
  *
  * @typeParam TSchema - The schema type of the tree view.
- * @param branch - A branch returned by {@link getBranch}. Passing any other object will throw a `UsageError` at runtime.
+ * @param branch - A branch returned by {@link getBranch}.
  * @param config - The schema configuration to use for the view.
+ *
+ * @throws A `UsageError` if `branch` was not returned by {@link getBranch}.
  *
  * @alpha
  */
