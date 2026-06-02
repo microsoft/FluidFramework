@@ -4,49 +4,33 @@
  */
 
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-import { Command, Flags } from "@oclif/core";
+import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
-import { maybePrintHelp } from "./oclifHelp.js";
-
-// Default to the persistent analysis root used by collectBundle.ts.
-// Lives under this package's `bundleAnalysis/` directory (gitignored).
-const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const defaultAnalysisDirectory = resolve(scriptDirectory, "..", "bundleAnalysis");
-
-// Comparison reports are written here, separate from the (large, gitignored)
-// bundleAnalysis stats so the human-readable outputs are easy to find and keep.
-const defaultOutputDirectory = resolve(scriptDirectory, "..", "compareBundlesOutput");
-
-// The current side is always written by collectBundle.ts in local mode. The
-// default label is "current", but the orchestrator (collectAndCompareBundles.ts)
-// passes a timestamped label like "current_<epoch>" via --current-label so that
-// successive runs with different uncommitted changes don't overwrite each other.
-const defaultBaseLabel = "main";
-const defaultCurrentLabel = "current";
+import { compareJsonReports } from "./compareJsonReports.js";
 
 /**
- * A node from webpack-bundle-analyzer's JSON report (`analyzerMode: "json"`).
- * Only the fields this script consumes are modeled. Each top-level node is an
- * emitted asset; `parsedSize`/`gzipSize` are the minified and gzipped sizes of
- * the asset as it ships, and `isInitialByEntrypoint` maps each entrypoint the
- * asset is an initial chunk of to `true`.
+ * A single node from webpack-bundle-analyzer's JSON report
+ * (`analyzerMode: "json"`). Each top-level node is an emitted asset;
+ * `parsedSize`/`gzipSize` are the minified and gzipped sizes of the asset as it
+ * ships, and `isInitialByEntrypoint` maps each entrypoint the asset is an
+ * initial chunk of to `true`.
  */
-interface AnalyzerNode {
-	label: string;
-	isAsset?: boolean;
-	parsedSize?: number;
-	gzipSize?: number;
-	isInitialByEntrypoint?: Record<string, boolean>;
-}
+type AnalyzerNode = BundleAnalyzerPlugin.JsonReportItem;
 
-interface Options {
-	analysisDirectory: string;
-	outputDirectory: string;
-	baseLabel: string;
-	currentLabel: string;
+/**
+ * Options for {@link compareBundles}.
+ */
+export interface CompareBundlesOptions {
+	/** Parent directory containing analyzer.json files at `{label}/analyzer.json`. */
+	readonly analysisDirectory: string;
+	/** Directory where the `.txt` and `.json` comparison reports are written. */
+	readonly outputDirectory: string;
+	/** Label subdirectory under {@link CompareBundlesOptions.analysisDirectory} holding the base-side bundle stats. */
+	readonly baseLabel: string;
+	/** Label subdirectory under {@link CompareBundlesOptions.analysisDirectory} holding the current-side bundle stats. */
+	readonly currentLabel: string;
 }
 
 interface AssetComparison {
@@ -89,8 +73,7 @@ interface ComparisonReport {
 }
 
 function sanitizeForFileName(value: string): string {
-	// eslint-disable-next-line unicorn/prefer-string-replace-all
-	return value.replace(/[^\w.-]/g, "_");
+	return value.replaceAll(/[^\w.-]/g, "_");
 }
 
 /**
@@ -109,9 +92,14 @@ function loadAnalyzer(analysisDirectory: string, label: string): AnalyzerNode[] 
 	return JSON.parse(readFileSync(analyzerFilePath, "utf8")) as AnalyzerNode[];
 }
 
+/** Whether an asset name is an emitted `.js` asset (excluding source maps). */
+function isJsAssetName(name: string): boolean {
+	return name.endsWith(".js") && !name.endsWith(".map");
+}
+
 /** Whether an analyzer node is an emitted `.js` asset (excluding source maps). */
 function isJsAsset(node: AnalyzerNode): boolean {
-	return node.label.endsWith(".js") && !node.label.endsWith(".map");
+	return isJsAssetName(node.label);
 }
 
 /**
@@ -136,27 +124,30 @@ function entrypointSizes(nodes: AnalyzerNode[]): Record<string, number> {
  * Pure data: reads each side's `analyzer.json` (webpack-bundle-analyzer's JSON
  * report) and does no other I/O. Parsed and gzip sizes come straight from that
  * report, so no webpack stats decompression or on-disk gzipping is needed.
+ *
+ * The per-asset size diff is produced by the shared {@link compareJsonReports}
+ * primitive; this function adds the JS-asset filter, gzip-changed rows, and
+ * per-entrypoint aggregation (which needs the raw `isInitialByEntrypoint` data
+ * not carried by the comparison's `BundleData`).
  */
-function computeComparison(options: Options): ComparisonReport {
+function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 	const { baseLabel, currentLabel, analysisDirectory } = options;
 
 	const baseNodes = loadAnalyzer(analysisDirectory, baseLabel);
 	const currentNodes = loadAnalyzer(analysisDirectory, currentLabel);
 
-	const baseAssets = Object.fromEntries(
-		baseNodes.filter(isJsAsset).map((node) => [node.label, node]),
-	);
-	const currentAssets = Object.fromEntries(
-		currentNodes.filter(isJsAsset).map((node) => [node.label, node]),
-	);
+	// Shared primitive: per-asset { base?, compare? } size data keyed by asset
+	// label. It filters to `isAsset` entries; we further restrict to JS assets
+	// (excluding source maps) below to match this report's scope.
+	const bundleComparison = compareJsonReports(baseNodes, currentNodes);
 
-	const assets: AssetComparison[] = [
-		...new Set([...Object.keys(baseAssets), ...Object.keys(currentAssets)]),
-	]
+	const assets: AssetComparison[] = Object.keys(bundleComparison)
+		.filter((name) => isJsAssetName(name))
 		.sort()
 		.map((name) => {
-			const baseStatSize = baseAssets[name]?.parsedSize ?? 0;
-			const currentStatSize = currentAssets[name]?.parsedSize ?? 0;
+			const { base, compare } = bundleComparison[name];
+			const baseStatSize = base?.parsedSize ?? 0;
+			const currentStatSize = compare?.parsedSize ?? 0;
 			return {
 				name,
 				baseStatSize,
@@ -171,8 +162,9 @@ function computeComparison(options: Options): ComparisonReport {
 			// Missing assets are treated as size 0: an asset present in only one revision
 			// (e.g. webpack auto-generated vendor chunks whose hash-based names change)
 			// represents a genuine delta, not missing data.
-			const baseGzipSize = baseAssets[row.name]?.gzipSize ?? 0;
-			const currentGzipSize = currentAssets[row.name]?.gzipSize ?? 0;
+			const { base, compare } = bundleComparison[row.name];
+			const baseGzipSize = base?.gzipSize ?? 0;
+			const currentGzipSize = compare?.gzipSize ?? 0;
 			return {
 				name: row.name,
 				baseGzipSize,
@@ -181,7 +173,9 @@ function computeComparison(options: Options): ComparisonReport {
 			};
 		});
 
-	// Sum each entrypoint's initial-chunk parsed sizes.
+	// Sum each entrypoint's initial-chunk parsed sizes. This reads the raw nodes
+	// directly because `isInitialByEntrypoint` is not part of the comparison's
+	// per-asset `BundleData`.
 	const baseEntrypoints = entrypointSizes(baseNodes);
 	const currentEntrypoints = entrypointSizes(currentNodes);
 	const entrypoints: EntrypointRow[] = [
@@ -320,63 +314,14 @@ function writeOutputFiles(
 	console.log(`  ${jsonOutputPath}`);
 }
 
-function runCompare(options: Options): void {
+/**
+ * Compares the two bundles previously collected into
+ * `{analysisDirectory}/{baseLabel}/analyzer.json` and
+ * `{analysisDirectory}/{currentLabel}/analyzer.json`, then writes human-readable
+ * `.txt` and structured `.json` comparison reports to `outputDirectory`.
+ */
+export function compareBundles(options: CompareBundlesOptions): void {
 	const report = computeComparison(options);
 	const textContent = renderAsText(report);
 	writeOutputFiles(options.outputDirectory, report, textContent);
-}
-
-class CompareBundlesCommand extends Command {
-	public static override readonly description =
-		"Compare the two bundles previously collected by collectBundle.ts " +
-		"(base = --base-label, current = --current-label).";
-
-	public static override readonly examples = [
-		"<%= config.bin %> <%= command.id %>",
-		"<%= config.bin %> <%= command.id %> --base-label some-revision",
-		"<%= config.bin %> <%= command.id %> --analysis-dir /some/other/path",
-	];
-
-	public static override readonly flags = {
-		"analysis-dir": Flags.string({
-			description:
-				"Parent directory containing bundleStats.msp.gz files at " +
-				"{label}/bundleStats.msp.gz.",
-			default: defaultAnalysisDirectory,
-		}),
-		"output-dir": Flags.string({
-			description:
-				"Directory where the .txt and .json comparison reports are written.",
-			default: defaultOutputDirectory,
-		}),
-		"base-label": Flags.string({
-			description:
-				"Label subdirectory under --analysis-dir holding the base-side " +
-				"bundle stats. Must match the --label passed to collectBundle.ts " +
-				"in revision mode.",
-			default: defaultBaseLabel,
-		}),
-		"current-label": Flags.string({
-			description:
-				"Label subdirectory under --analysis-dir holding the current-side " +
-				"bundle stats. Must match the --label passed to collectBundle.ts " +
-				"in local mode (the orchestrator passes a timestamped label like " +
-				"'current_<epoch>').",
-			default: defaultCurrentLabel,
-		}),
-	};
-
-	public async run(): Promise<void> {
-		const { flags } = await this.parse(CompareBundlesCommand);
-		runCompare({
-			analysisDirectory: resolve(flags["analysis-dir"]),
-			outputDirectory: resolve(flags["output-dir"]),
-			baseLabel: flags["base-label"],
-			currentLabel: flags["current-label"],
-		});
-	}
-}
-
-if (!maybePrintHelp(process.argv.slice(2), "compareBundles.ts", CompareBundlesCommand)) {
-	await CompareBundlesCommand.run(process.argv.slice(2), import.meta.url);
 }

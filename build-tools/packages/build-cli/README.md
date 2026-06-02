@@ -36,6 +36,7 @@ USAGE
 * [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
 * [`flub build-perf`](docs/build-perf.md) - Build performance observability commands for collecting, processing, and analyzing build metrics.
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
+* [`flub bundle`](docs/bundle.md) - Bundle commands collect and compare webpack bundle sizes across revisions.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
 * [`flub commands`](docs/commands.md) - List all flub commands.
 * [`flub exec`](docs/exec.md) - Run a shell command in the context of a package or release group.

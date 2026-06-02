@@ -6,21 +6,41 @@
 import { execSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 
-import { Command, Flags } from "@oclif/core";
 import { simpleGit } from "simple-git";
 
-import { maybePrintHelp } from "./oclifHelp.js";
-
-const scriptDirectory = dirname(fileURLToPath(import.meta.url));
-const outerPackageRoot = resolve(scriptDirectory, "..");
-
 /**
- * Workspace-relative path of this package, used to locate the same package
- * inside a freshly-cloned inner repo.
+ * Options for {@link collectBundle}.
  */
-const packageWorkspacePath = "examples/utils/bundle-size-tests";
+export interface CollectBundleOptions {
+	/**
+	 * `local`: collect from the outer enlistment that contains {@link CollectBundleOptions.packageDir}.
+	 * `revision`: collect from a separate inner enlistment checked out at {@link CollectBundleOptions.revision}.
+	 */
+	readonly mode: "local" | "revision";
+	/**
+	 * (revision mode only) Branch, tag, or commit SHA to check out in the inner repo before building.
+	 */
+	readonly revision?: string;
+	/**
+	 * Directory name (under {@link CollectBundleOptions.analysisDir}) to save the collected bundle
+	 * stats into. Sanitized for filesystem use before being applied.
+	 */
+	readonly label: string;
+	/**
+	 * Run the full workspace clean (`npm run clean` at the repo root) before building.
+	 */
+	readonly forceCleanBuild: boolean;
+	/**
+	 * Package root whose webpack bundles are built and whose `analyzer.json` is collected.
+	 */
+	readonly packageDir: string;
+	/**
+	 * Directory under which per-label analyzer stats are saved. The inner enlistment used for
+	 * revision mode lives at `<analysisDir>/base-repo`.
+	 */
+	readonly analysisDir: string;
+}
 
 /**
  * Gets the repository root directory for the given working directory.
@@ -30,37 +50,22 @@ async function getRepoRoot(cwd: string): Promise<string> {
 	return output.trim();
 }
 
-const outerRepoRoot = await getRepoRoot(outerPackageRoot);
-
 /**
- * Where saved bundle stats live, keyed by sanitized label.
- * `compareBundles.ts` reads from `<bundleAnalysisDirectory>/<label>/bundleStats.msp.gz`.
- *
- * Lives under this package's `bundleAnalysis/` directory, which is matched by
- * the repo-wide `.gitignore` entry for `bundleAnalysis`.
- *
- * Note: `npm run clean` in this package rimrafs `bundleAnalysis/`, so any state
- * here (including the inner repo clone) is wiped on clean. The inner repo is
- * re-cloned automatically on next use.
+ * Returns the path of the given directory relative to the root of the repo that contains it,
+ * e.g. `examples/utils/bundle-size-tests`. Used to locate the same package inside a
+ * freshly-cloned inner repo.
  */
-const bundleAnalysisDirectory = resolve(outerPackageRoot, "bundleAnalysis");
-
-/**
- * Persistent location of the inner FluidFramework enlistment used for
- * collecting bundles at arbitrary revisions. Cloned from the outer repo's
- * `origin` remote on first use and reused across runs.
- *
- * Only one inner repo is ever maintained — the unique name avoids collisions
- * with label subdirectories under {@link bundleAnalysisDirectory}.
- */
-const innerRepoRoot = resolve(bundleAnalysisDirectory, "base-repo");
+async function getPackageWorkspacePath(packageDir: string): Promise<string> {
+	const output = await simpleGit(packageDir).revparse(["--show-prefix"]);
+	// `--show-prefix` returns a trailing-slash-terminated path (or empty string at the repo root).
+	return output.trim().replace(/\/$/, "");
+}
 
 /**
  * Sanitizes a string for use as a filename.
  */
 function sanitizeForFileName(value: string): string {
-	// eslint-disable-next-line unicorn/prefer-string-replace-all -- Keep regex replacement for older TS lib targets.
-	return value.replace(/[^\w.-]/g, "_");
+	return value.replaceAll(/[^\w.-]/g, "_");
 }
 
 /**
@@ -120,15 +125,16 @@ function buildBundles(packageRoot: string): void {
  *
  * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
  * @param sourcePackageRoot - Package root that produced the webpack output.
+ * @param analysisDir - Directory under which per-label stats are saved.
  */
-function saveStats(label: string, sourcePackageRoot: string): void {
+function saveStats(label: string, sourcePackageRoot: string, analysisDir: string): void {
 	const analyzerJsonOutputPath = resolve(
 		sourcePackageRoot,
 		"bundleAnalyzerJson",
 		"analyzer.json",
 	);
 
-	const labelDirectory = resolve(bundleAnalysisDirectory, label);
+	const labelDirectory = resolve(analysisDir, label);
 	const destAnalyzerPath = resolve(labelDirectory, "analyzer.json");
 
 	if (!existsSync(analyzerJsonOutputPath)) {
@@ -154,8 +160,7 @@ function saveStats(label: string, sourcePackageRoot: string): void {
  * excluded (they're often noisy / random) but a warning is printed if any are
  * detected so the user can `git add` the relevant pieces and re-run.
  *
- * The patch is written as `staged-changes.patch` next to `bundleStats.msp.gz`
- * inside the per-label directory.
+ * The patch is written as `staged-changes.patch` inside the per-label directory.
  */
 async function captureLocalPatch(repoRoot: string, labelDirectory: string): Promise<void> {
 	const git = simpleGit(repoRoot);
@@ -165,7 +170,7 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
 		console.warn(
 			`Warning: unstaged changes detected in ${repoRoot}. They will NOT be ` +
 				`captured in the patch alongside this analysis. Stage all changes you ` +
-				`want recorded (e.g. "git add -u") before running collectBundle so the ` +
+				`want recorded (e.g. "git add -u") before collecting so the ` +
 				`patch faithfully describes what was bundled.`,
 		);
 	}
@@ -179,7 +184,7 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
  * Returns the URL of the outer repo's `origin` remote, used as the source
  * for cloning the inner repo.
  */
-async function getOuterOriginUrl(): Promise<string> {
+async function getOuterOriginUrl(outerRepoRoot: string): Promise<string> {
 	const { value } = await simpleGit(outerRepoRoot).getConfig("remote.origin.url");
 	if (value === null || value.length === 0) {
 		throw new Error(`Could not read remote.origin.url from ${outerRepoRoot}.`);
@@ -188,7 +193,7 @@ async function getOuterOriginUrl(): Promise<string> {
 }
 
 /**
- * Ensures the inner FluidFramework enlistment exists under {@link innerRepoRoot}
+ * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot`
  * and is checked out at the requested revision.
  *
  * On first call, performs a shallow clone of the outer repo's `origin` remote
@@ -199,9 +204,13 @@ async function getOuterOriginUrl(): Promise<string> {
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
-async function ensureInnerRepoAtRevision(revision: string): Promise<void> {
+async function ensureInnerRepoAtRevision(
+	revision: string,
+	outerRepoRoot: string,
+	innerRepoRoot: string,
+): Promise<void> {
 	if (!existsSync(resolve(innerRepoRoot, ".git"))) {
-		const originUrl = await getOuterOriginUrl();
+		const originUrl = await getOuterOriginUrl(outerRepoRoot);
 		mkdirSync(dirname(innerRepoRoot), { recursive: true });
 		console.log(`\nShallow-cloning inner repo from ${originUrl} into ${innerRepoRoot}...`);
 		// Clone shallow with no checkout: we'll fetch and check out the exact
@@ -239,101 +248,54 @@ async function ensureInnerRepoAtRevision(revision: string): Promise<void> {
  * Collects a single bundle from either the outer enlistment (local mode) or a
  * separate inner enlistment checked out to a specific revision (revision mode).
  *
- * In revision mode, the inner repo at {@link innerRepoRoot} is cloned from the
+ * In revision mode, the inner repo at `<analysisDir>/base-repo` is cloned from the
  * outer repo's `origin` remote on first use and reused thereafter. The outer
  * repo's working tree, branch, and stash are never modified.
  */
-class CollectBundleCommand extends Command {
-	public static override readonly description =
-		"Build and collect a bundle, either from the outer enlistment (local mode) or " +
-		"from a separate inner enlistment checked out to a specific revision (revision mode). " +
-		"The outer repo's working tree, branch, and stash are never modified.";
+export async function collectBundle(options: CollectBundleOptions): Promise<void> {
+	const { mode, revision, forceCleanBuild, packageDir, analysisDir } = options;
 
-	public static override readonly examples = [
-		"<%= config.bin %> <%= command.id %>",
-		"<%= config.bin %> <%= command.id %> --mode revision --revision main",
-		"<%= config.bin %> <%= command.id %> --mode revision --revision client_v2.100.0",
-	];
-
-	public static override readonly flags = {
-		mode: Flags.string({
-			description:
-				"local: collect from the outer enlistment. revision: collect from a separate " +
-				"inner enlistment checked out at --revision.",
-			options: ["local", "revision"] as const,
-			default: "local",
-		}),
-		revision: Flags.string({
-			description:
-				"(revision mode only, required) Branch, tag, or commit SHA to check out " +
-				"in the inner repo before building. Also used as the default label.",
-		}),
-		label: Flags.string({
-			description:
-				"Override the directory name under which bundle stats are saved. " +
-				'Defaults to the sanitized revision in revision mode, or "current" in local mode.',
-		}),
-		"force-clean-build": Flags.boolean({
-			description:
-				"Run the full workspace clean ('npm run clean' at the repo root) before " +
-				"building. Off by default; opt in when stale incremental build state from a " +
-				"previous revision may interfere with the current one.",
-			default: false,
-		}),
-	};
-
-	public async run(): Promise<void> {
-		const { flags } = await this.parse(CollectBundleCommand);
-
-		const mode = flags.mode as "local" | "revision";
-		const { revision } = flags;
-		const forceCleanBuild = flags["force-clean-build"];
-
-		if (mode === "revision" && (revision === undefined || revision.length === 0)) {
-			this.error("--mode revision requires --revision <rev>.", { exit: 1 });
-		}
-
-		const label = sanitizeForFileName(
-			flags.label ?? (mode === "revision" ? (revision as string) : "current"),
-		);
-
-		let activeRepoRoot: string;
-		let activePackageRoot: string;
-
-		if (mode === "local") {
-			activeRepoRoot = outerRepoRoot;
-			activePackageRoot = outerPackageRoot;
-			// Capture the staged diff up front, before any build steps. This way the
-			// patch is preserved even if the build subsequently fails.
-			await captureLocalPatch(outerRepoRoot, resolve(bundleAnalysisDirectory, label));
-		} else {
-			await ensureInnerRepoAtRevision(revision as string);
-			activeRepoRoot = innerRepoRoot;
-			activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
-			if (!existsSync(activePackageRoot)) {
-				this.error(
-					`Expected package not found in inner repo at ${activePackageRoot}. ` +
-						`The revision "${revision as string}" may predate this package.`,
-					{ exit: 1 },
-				);
-			}
-			installDependencies(activeRepoRoot);
-		}
-
-		if (forceCleanBuild) {
-			cleanWorkspace(activeRepoRoot);
-		}
-		buildWorkspace(activePackageRoot);
-		buildBundles(activePackageRoot);
-		saveStats(label, activePackageRoot);
-
-		console.log(`\n${"=".repeat(80)}`);
-		console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
-		console.log(`  Stats directory: ${resolve(bundleAnalysisDirectory, label)}`);
-		console.log("=".repeat(80));
+	if (mode === "revision" && (revision === undefined || revision.length === 0)) {
+		throw new Error("revision mode requires a revision.");
 	}
-}
 
-if (!maybePrintHelp(process.argv.slice(2), "collectBundle.ts", CollectBundleCommand)) {
-	await CollectBundleCommand.run(process.argv.slice(2), import.meta.url);
+	const label = sanitizeForFileName(options.label);
+
+	const outerRepoRoot = await getRepoRoot(packageDir);
+	const innerRepoRoot = resolve(analysisDir, "base-repo");
+
+	let activeRepoRoot: string;
+	let activePackageRoot: string;
+
+	if (mode === "local") {
+		activeRepoRoot = outerRepoRoot;
+		activePackageRoot = packageDir;
+		// Capture the staged diff up front, before any build steps. This way the
+		// patch is preserved even if the build subsequently fails.
+		await captureLocalPatch(outerRepoRoot, resolve(analysisDir, label));
+	} else {
+		const packageWorkspacePath = await getPackageWorkspacePath(packageDir);
+		await ensureInnerRepoAtRevision(revision as string, outerRepoRoot, innerRepoRoot);
+		activeRepoRoot = innerRepoRoot;
+		activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
+		if (!existsSync(activePackageRoot)) {
+			throw new Error(
+				`Expected package not found in inner repo at ${activePackageRoot}. ` +
+					`The revision "${revision as string}" may predate this package.`,
+			);
+		}
+		installDependencies(activeRepoRoot);
+	}
+
+	if (forceCleanBuild) {
+		cleanWorkspace(activeRepoRoot);
+	}
+	buildWorkspace(activePackageRoot);
+	buildBundles(activePackageRoot);
+	saveStats(label, activePackageRoot, analysisDir);
+
+	console.log(`\n${"=".repeat(80)}`);
+	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
+	console.log(`  Stats directory: ${resolve(analysisDir, label)}`);
+	console.log("=".repeat(80));
 }

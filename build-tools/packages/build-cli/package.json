@@ -225,6 +225,9 @@
 			"bump": {
 				"description": "Bump the version of packages, release groups, and their dependencies."
 			},
+			"bundle": {
+				"description": "Bundle commands collect and compare webpack bundle sizes across revisions."
+			},
 			"check": {
 				"description": "Check commands are used to verify repo state, apply policy, etc."
 			},
