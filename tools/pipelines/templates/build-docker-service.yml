@@ -73,10 +73,6 @@ parameters:
       - pnpm
       - none
 
-  - name: packageManagerInstallCommand
-    type: string
-    default: 'pnpm i --frozen-lockfile'
-
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
   - name: interdependencyRange
@@ -240,7 +236,6 @@ extends:
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
                 packageManager=${{ parameters.packageManager }}
-                packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -323,16 +318,6 @@ extends:
 
         # Set version
         - ${{ if eq(parameters.setVersion, true) }}:
-          - task: Bash@3
-            displayName: Install dependencies
-            retryCountOnTaskFailure: 4
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-              script: |
-                set -eu -o pipefail
-                ${{ parameters.packageManagerInstallCommand }}
-
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
