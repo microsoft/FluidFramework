@@ -99,16 +99,13 @@ RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
     && npm install -g "$PNPM_VERSION"
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
-# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
-# and be able to change them.
 # Using a cache mount for the pnpm store improves the incremental docker build.
 # pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set
 # (https://pnpm.io/settings#storedir), so the mount target /pnpm/store already
 # matches and no --store-dir flag is needed.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
     --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
-    pnpm install --unsafe-perm
+    pnpm install
 
 # And now copy over our actual code and build
 COPY . .
