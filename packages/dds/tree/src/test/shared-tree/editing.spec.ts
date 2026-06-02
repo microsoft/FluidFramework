@@ -1627,6 +1627,21 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
+		describe("can move a node to a different index in the same field", () => {
+			for (const srcElementIndex of [0, 1]) {
+				for (const dstGapIndex of [0, 1, 2]) {
+					it(`from index ${srcElementIndex} to gap ${dstGapIndex}`, () => {
+						const tree = makeTreeFromJsonSequence(["A", "B"]);
+						tree.editor.move(rootField, srcElementIndex, 1, rootField, dstGapIndex);
+						const vector = dstGapIndex - srcElementIndex;
+						const expectedState: JsonCompatible =
+							vector === 0 || vector === 1 ? ["A", "B"] : ["B", "A"];
+						expectJsonTree(tree, expectedState);
+					});
+				}
+			}
+		});
+
 		it("can move a node out from a field and into a field under a sibling at a lower index", () => {
 			const tree = makeTreeFromJsonSequence([{}, "A"]);
 			tree.editor.move(rootField, 1, 1, { parent: rootNode, field: brand("foo") }, 0);
