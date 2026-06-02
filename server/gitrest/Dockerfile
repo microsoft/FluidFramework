@@ -52,13 +52,14 @@ ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 # Install the pnpm version pinned in package.json's "packageManager" field.
 # Mirrors the approach used by tools/pipelines/templates/include-install-pnpm.yml.
 #
-# NPM_REGISTRY redirects pnpm/npm to a custom registry. CI overrides it to an
-# anonymous-readable internal mirror because the build container has no egress
-# to registry.npmjs.org under 1ES network isolation. Local builds use the
+# CI has no egress to registry.npmjs.org under 1ES network isolation, so it
+# provides an authenticated .npmrc (pointing at our ADO npm mirror) as a
+# BuildKit secret. The mount is marked required=false so local `docker build`
+# invocations that don't pass --secret still work, falling back to npm's
 # default public registry.
-ARG NPM_REGISTRY=https://registry.npmjs.org/
-RUN PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
-    && npm install -g "$PNPM_VERSION" --registry="$NPM_REGISTRY"
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
+    && npm install -g "$PNPM_VERSION"
 
 # Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
 # can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
@@ -68,7 +69,8 @@ RUN PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.pack
 # (https://pnpm.io/settings#storedir), so the mount target /pnpm/store already
 # matches and no --store-dir flag is needed.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --unsafe-perm --registry="$NPM_REGISTRY"
+    --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    pnpm install --unsafe-perm
 
 COPY . .
 

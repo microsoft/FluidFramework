@@ -389,11 +389,12 @@ extends:
               context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
               # CI's build container has no egress to registry.npmjs.org under 1ES network
-              # isolation, so override NPM_REGISTRY to our anonymous-readable ADO mirror.
-              # Only the pnpm Dockerfiles declare NPM_REGISTRY; non-pnpm ones (gitssh) don't
-              # consume it, so we skip the build-arg for them to avoid an "unused" warning.
+              # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
+              # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
+              # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
+              # Dockerfiles (gitssh) don't consume it.
               ${{ if eq(parameters.packageManager, 'pnpm') }}:
-                buildArguments: --target base $(DockerBuildArgs.output) --build-arg NPM_REGISTRY=$(ado-feeds-primary-registry)
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
               ${{ else }}:
                 buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
@@ -539,7 +540,7 @@ extends:
             # See the base-image build above for the rationale. Passed here too because
             # a cache miss could re-execute the base stage layers during this build.
             ${{ if eq(parameters.packageManager, 'pnpm') }}:
-              buildArguments: $(DockerBuildArgs.output) --build-arg NPM_REGISTRY=$(ado-feeds-primary-registry)
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
             ${{ else }}:
               buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
