@@ -186,8 +186,8 @@ describe("uniformChunk", () => {
 			assert.equal(yInfo.valueOffset, 1);
 			assert.equal(yInfo.indexOfParentPosition, 0);
 
-			// The prototype is pinned to the TreeShape and shared by identity across every chunk length,
-			// never copied per-chunk -- this is what lets the cursor derive positions instead of
+			// nodePositionInfo is pinned to the TreeShape and shared by identity across every chunk length,
+			// never copied per-chunk. This is what lets the cursor derive positions instead of
 			// storing a per-chunk array.
 			const pointCount = 10;
 			const shape = pointShape.withTopLevelLength(pointCount);
@@ -256,8 +256,7 @@ describe("uniformChunk", () => {
 			// Each enterNode() routes through moveToPosition. With a size-1 prototype this takes the
 			// nodeLength === 1 fast path (topLevelIndex = offset, no modulo/division) and selects the
 			// single shared prototype entry. Confirm navigation lands on the value we independently
-			// know occupies that flat slot: leaf i is at flat index i. We do NOT recompute the slot
-			// with the cursor's own formula.
+			// know occupies that flat slot: leaf i is at flat index i.
 			const cursor = chunk.cursor();
 			for (let i = 0; i < leafCount; i++) {
 				cursor.enterNode(i);
@@ -506,7 +505,7 @@ describe("uniformChunk", () => {
 							}
 							cursor.exitField();
 							// Return the sum so the loop's work isn't optimized away as dead code.
-							return x + y;
+							const _result = x + y;
 						});
 					},
 				}),

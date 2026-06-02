@@ -248,7 +248,7 @@ function clonePositions(
 }
 
 /**
- * The shape of a sequence of {@link topLevelLength} trees, all with the same {@link TreeShape}.
+ * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
  *
  * Paired with a value array, this lets a {@link UniformChunk} be traversed like a tree by an
  * {@link ITreeCursorSynchronous}. The {@link Cursor} derives each node's position info from the
@@ -329,12 +329,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 
 	// Shared position info for the current node: the same entry from the shape's per-tree
-	// `TreeShape.positions` is reused for every top-level instance of this shape, so fields
-	// that vary between instances must be adjusted rather than read directly. valueOffset and
-	// indexOfParentPosition are offset using `topLevelIndex`/`positionIndex`; for a top-level (root)
-	// node, parentIndex and topLevelLength are taken from `topLevelIndex` and the chunk instead (see
-	// `fieldIndex` and `siblingCount`). The remaining fields are constant across instances and read
-	// directly. Undefined when in the root field.
+	// `TreeShape.positions` is reused for every top-level instance of this shape.
+	// undefined when in root field.
 	private nodePositionInfo: NodePositionInfo | undefined;
 
 	// Which top-level node of the chunk the current position is within. Valid when nodePositionInfo !== undefined.
@@ -457,7 +453,10 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	 */
 	private nodeInfo(requiredMode: CursorLocationType): NodePositionInfo {
 		assert(this.mode === requiredMode, 0x4c8 /* tried to access cursor when in wrong mode */);
-		assert(this.nodePositionInfo !== undefined, 0x53e /* can not access nodeInfo in root field */);
+		assert(
+			this.nodePositionInfo !== undefined,
+			0x53e /* can not access nodeInfo in root field */,
+		);
 		return this.nodePositionInfo;
 	}
 
@@ -581,10 +580,10 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public readonly chunkStart: number = 0;
 
 	/**
-	 * Number of nodes in `info`'s field (i.e. its sibling count, including `info` itself).
+	 * Number of nodes in `info`'s field including `info` itself.
 	 *
 	 * @remarks
-	 * For top-level nodes (no parent) this is the chunk's `topLevelLength`, read from the chunk
+	 * For top-level nodes this is the chunk's `topLevelLength`, read from the chunk
 	 * rather than the node, so the shared per-tree {@link TreeShape.positions} stays independent of
 	 * chunk length; the root entry's own `topLevelLength` field is unused. Nested nodes use the
 	 * field length stored on the node.
@@ -624,7 +623,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public exitNode(): void {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
 		const withinTree = this.positionIndex - 1 - this.topLevelIndex * this.nodeLength;
-		// Top-level nodes (no parent in the prototype) exit to the root field at position 0;
+		// Top-level nodes (no parent) exit to the root field at position 0;
 		// nested nodes' parent is `indexOfParentPosition` within the same top-level instance.
 		this.indexOfField = info.indexOfParentField ?? 0;
 		this.fieldKey = info.parentField;
