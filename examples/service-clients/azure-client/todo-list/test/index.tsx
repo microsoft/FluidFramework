@@ -105,7 +105,7 @@ async function createContainerAndRenderInElement(
 		containerId,
 		createTreeContainerRuntimeFactory({
 			schema: todoListContainerSchema,
-			compatibilityMode: "2",
+			compatibilityMode: "2.0.0",
 		}),
 		createNewFlag,
 	);

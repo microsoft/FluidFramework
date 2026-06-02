@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export type CompatibilityMode = "1" | "2";
 
 // @public
@@ -17,6 +17,14 @@ export interface ContainerSchema {
 }
 
 // @beta @legacy
+export function createTreeContainerRuntimeFactory(props: {
+    readonly schema: TreeContainerSchema;
+    readonly minVersionForCollaboration: MinimumVersionForCollab;
+    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+}): IRuntimeFactory;
+
+// @beta @deprecated @legacy
 export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
     readonly compatibilityMode: CompatibilityMode;

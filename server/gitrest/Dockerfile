@@ -3,12 +3,11 @@
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
 # The node base image is pulled from public Docker Hub by default so local builds and external
-# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY (via
-# additionalBuildArguments in tools/pipelines/server-gitrest.yml) to point at our internal mirror,
-# because 1ES network isolation policies (CfsClean/CfsClean2) block egress to registry-1.docker.io
-# from our build pool. The mirror is byte-for-byte identical to docker.io/library, so the same
-# manifest digest pin resolves correctly against either registry. See tools/pipelines/README.md for
-# how to maintain the mirror (upgrades, additions).
+# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY to
+# point at our mirror ACR, because 1ES network isolation policies (CfsClean/CfsClean2) block egress
+# to registry-1.docker.io from our build pool. The mirror is byte-for-byte identical to
+# docker.io/library, so the same manifest digest pin resolves correctly against either registry.
+# See tools/pipelines/README.md for how to maintain the mirror (upgrades, additions).
 ARG BASE_IMAGE_REGISTRY=docker.io
 FROM ${BASE_IMAGE_REGISTRY}/library/node:22.22.2-bookworm-slim@sha256:f3a68cf41a855d227d1b0ab832bed9749469ef38cf4f58182fb8c893bc462383 AS runnerbase
 
@@ -40,8 +39,7 @@ WORKDIR $GITREST_ROOT
 COPY package*.json ./
 COPY pnpm*.yaml ./
 COPY .npmrc ./
-COPY scripts/*.* ./scripts/
-COPY .npmrc ./
+COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 
 COPY packages/gitrest/package*.json packages/gitrest/
 COPY packages/gitrest-base/package*.json packages/gitrest-base/

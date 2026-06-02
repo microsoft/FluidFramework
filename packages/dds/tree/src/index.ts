@@ -278,7 +278,6 @@ export {
 	type NodeInDocumentConstraint,
 	type NoChangeConstraint,
 	type RunTransactionParams,
-	type RunTransactionSyncParams,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,
@@ -404,5 +403,10 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
-export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export {
+	TextAsTree,
+	FormattedTextAsTree,
+	codePointCount,
+	utf16LengthForCodePoints,
+} from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
