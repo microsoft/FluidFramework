@@ -6,8 +6,8 @@ name: pr-bundle-size-report
 # Triggers:
 #   pull_request_target: handle the PR directly when it opens, synchronizes, or reopens.
 #   check_run:           fires when ADO publishes the `Build - Client bundle size artifacts` check on a commit.
-#                        The route job maps the check's SHA to affected PRs (PR-head match OR merge-base match)
-#                        and the compare job fans out via matrix.
+#                        The identify-targets job maps the check's SHA to affected PRs (PR-head match OR merge-base
+#                        match) and the compare job fans out via matrix.
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -26,7 +26,7 @@ permissions:
   pull-requests: read
 
 jobs:
-  route:
+  identify-targets:
     # Short-circuit check_run events that aren't the bundle-size pipeline completing successfully.
     # GitHub doesn't let us filter check_run events by name at the `on:` level, so we do it here.
     if: >-
@@ -87,11 +87,11 @@ jobs:
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
 
   compare:
-    needs: route
-    if: needs.route.outputs.prs != '[]'
+    needs: identify-targets
+    if: needs.identify-targets.outputs.prs != '[]'
     strategy:
       matrix:
-        pr: ${{ fromJSON(needs.route.outputs.prs) }}
+        pr: ${{ fromJSON(needs.identify-targets.outputs.prs) }}
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
