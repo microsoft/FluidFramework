@@ -46,7 +46,6 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type RunTransactionSyncParams,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -274,18 +273,18 @@ export class SchematizingSimpleTreeView<
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);

@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+import type { IncomingMessage } from "node:http";
 import type { WebApi } from "azure-devops-node-api";
 import { unzipSync } from "fflate";
 
@@ -42,6 +43,18 @@ export async function downloadArtifact(
 		artifactStream = await buildApi.getArtifactContentZip(project, buildId, artifactName);
 	} finally {
 		buildApi.createAcceptHeader = originalCreateAcceptHeader;
+	}
+
+	// The declared `ReadableStream` return type hides it, but the SDK actually
+	// returns an `http.IncomingMessage` and doesn't throw on non-2xx responses
+	// for this endpoint — a missing artifact comes back as a 404 with a
+	// non-zip body that would otherwise blow up inside `unzipSync` with a
+	// useless "invalid zip data" error.
+	const statusCode = (artifactStream as Partial<IncomingMessage>).statusCode;
+	if (statusCode !== undefined && (statusCode < 200 || statusCode >= 300)) {
+		throw new Error(
+			`Failed to download artifact "${artifactName}" from build ${buildId} (HTTP ${statusCode})`,
+		);
 	}
 
 	const unzipped = unzipSync(await readStreamAsUint8Array(artifactStream));
