@@ -38,14 +38,6 @@ jobs:
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
     steps:
-      # We need git history on `main` to compute merge-bases for the check_run path.
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
-        with:
-          ref: main
-          fetch-depth: "0"
-          persist-credentials: false
-
       - name: Collect affected PRs
         id: collect
         env:
@@ -64,29 +56,31 @@ jobs:
 
           # check_run case: map the check's SHA back to affected open PRs.
           # A PR is affected if either its head SHA matches (PR build finished)
-          # or its merge-base with main matches (baseline build finished).
+          # or its merge-base with its base branch matches (baseline build finished).
+          # Use `gh api .../compare` for merge-base lookups so we don't need a local
+          # git workspace and so each PR is evaluated against its actual base branch.
           SHA="${{ github.event.check_run.head_sha }}"
-          PRS_JSON=$(gh pr list --state open --base main \
+          PRS_JSON=$(gh pr list --state open \
             --json number,headRefOid,baseRefName --limit 200)
 
-          # PR-head match
-          HEAD_MATCH=$(echo "$PRS_JSON" | jq -c \
-            "[.[] | select(.headRefOid == \"$SHA\") | {number, head: .headRefOid, baseRef: .baseRefName}]")
-          if [ "$HEAD_MATCH" != "[]" ]; then
-            echo "prs=$HEAD_MATCH" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # Merge-base match: SHA is on main; find PRs whose divergence point is this SHA.
           AFFECTED='[]'
           while IFS= read -r pr; do
             PR_NUM=$(echo "$pr" | jq -r '.number')
             PR_HEAD=$(echo "$pr" | jq -r '.headRefOid')
-            # Make the PR head available locally so we can compute merge-base.
-            git fetch --quiet origin "refs/pull/$PR_NUM/head" 2>/dev/null || continue
-            MB=$(git merge-base "$PR_HEAD" HEAD 2>/dev/null || true)
-            if [ "$MB" = "$SHA" ]; then
-              AFFECTED=$(echo "$AFFECTED" | jq -c ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"main\"}]")
+            PR_BASE_REF=$(echo "$pr" | jq -r '.baseRefName')
+
+            MATCH=0
+            if [ "$PR_HEAD" = "$SHA" ]; then
+              MATCH=1
+            else
+              MB=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PR_BASE_REF...$PR_HEAD" \
+                --jq '.merge_base_commit.sha' 2>/dev/null || true)
+              [ "$MB" = "$SHA" ] && MATCH=1
+            fi
+
+            if [ $MATCH = 1 ]; then
+              AFFECTED=$(echo "$AFFECTED" | jq -c \
+                ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"$PR_BASE_REF\"}]")
             fi
           done < <(echo "$PRS_JSON" | jq -c '.[]')
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
