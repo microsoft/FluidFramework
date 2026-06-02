@@ -388,7 +388,15 @@ extends:
               dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
               context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base $(DockerBuildArgs.output)
+              # CI's build container has no egress to registry.npmjs.org under 1ES network
+              # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
+              # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
+              # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
+              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
+              ${{ if eq(parameters.packageManager, 'pnpm') }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              ${{ else }}:
+                buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -529,7 +537,12 @@ extends:
             dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
             context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: $(DockerBuildArgs.output)
+            # See the base-image build above for the rationale. Passed here too because
+            # a cache miss could re-execute the base stage layers during this build.
+            ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            ${{ else }}:
+              buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
