@@ -101,6 +101,10 @@ export async function collectAndCompareBundles(
 		);
 	}
 	const baseRevision = resolvedBaseRevision;
+	// The inner enlistment used to build the base bundle is a scratch clone, not
+	// report data, so it lives under the output directory rather than alongside
+	// the per-label analyzer reports in analysisDir.
+	const innerRepoRoot = resolve(outputDir, "base-repo");
 	// compareBundles reads from a fixed base label ("main"); pin the base
 	// bundle's directory name to that regardless of which revision we resolved.
 	const baseLabel = "main";
@@ -154,6 +158,7 @@ export async function collectAndCompareBundles(
 				forceCleanBuild,
 				packageDir,
 				analysisDir,
+				baseRepoDir: innerRepoRoot,
 			});
 			// Record the SHA that produced this report so a subsequent run
 			// against the same merge-base can skip the rebuild.
@@ -165,7 +170,6 @@ export async function collectAndCompareBundles(
 			// on the next run is cheap; keeping it around just consumes disk
 			// (hundreds of MB once dependencies are installed).
 			if (!keepBaseRepo) {
-				const innerRepoRoot = resolve(analysisDir, "base-repo");
 				if (existsSync(innerRepoRoot)) {
 					console.log(`Deleting inner base-repo at ${innerRepoRoot}...`);
 					rmSync(innerRepoRoot, { recursive: true, force: true });

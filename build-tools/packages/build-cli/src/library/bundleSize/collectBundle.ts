@@ -36,10 +36,14 @@ export interface CollectBundleOptions {
 	 */
 	readonly packageDir: string;
 	/**
-	 * Directory under which per-label analyzer stats are saved. The inner enlistment used for
-	 * revision mode lives at `<analysisDir>/base-repo`.
+	 * Directory under which per-label analyzer stats are saved.
 	 */
 	readonly analysisDir: string;
+	/**
+	 * (revision mode only) Directory where the inner enlistment is cloned and built. Defaults to
+	 * `<analysisDir>/base-repo` when not specified.
+	 */
+	readonly baseRepoDir?: string;
 }
 
 /**
@@ -248,9 +252,9 @@ async function ensureInnerRepoAtRevision(
  * Collects a single bundle from either the outer enlistment (local mode) or a
  * separate inner enlistment checked out to a specific revision (revision mode).
  *
- * In revision mode, the inner repo at `<analysisDir>/base-repo` is cloned from the
- * outer repo's `origin` remote on first use and reused thereafter. The outer
- * repo's working tree, branch, and stash are never modified.
+ * In revision mode, the inner repo (at {@link CollectBundleOptions.baseRepoDir}, defaulting to
+ * `<analysisDir>/base-repo`) is cloned from the outer repo's `origin` remote on first use and
+ * reused thereafter. The outer repo's working tree, branch, and stash are never modified.
  */
 export async function collectBundle(options: CollectBundleOptions): Promise<void> {
 	const { mode, revision, forceCleanBuild, packageDir, analysisDir } = options;
@@ -262,7 +266,7 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 	const label = sanitizeForFileName(options.label);
 
 	const outerRepoRoot = await getRepoRoot(packageDir);
-	const innerRepoRoot = resolve(analysisDir, "base-repo");
+	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
 
 	let activeRepoRoot: string;
 	let activePackageRoot: string;
