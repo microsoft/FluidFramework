@@ -10,7 +10,7 @@ import path from "path";
 
 import rewire from "rewire";
 
-import * as HashNode from "../../hashFileNode";
+import * as HashNode from "../../hashFileNode.js";
 
 // Use rewire to access private functions
 const HashBrowser = rewire("../../hashFileBrowser");
