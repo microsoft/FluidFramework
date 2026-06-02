@@ -8,7 +8,7 @@
  * exposing the entirely of Node's typings.  This should match the public interface
  * of the browser implementation, so any changes made in one should be made in both.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export declare class Buffer extends Uint8Array {
@@ -23,13 +23,13 @@ export declare class Buffer extends Uint8Array {
 }
 
 /**
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const IsoBuffer = Buffer;
 
 /**
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export type IsoBuffer = Buffer;
@@ -42,7 +42,7 @@ export type IsoBuffer = Buffer;
  * supported, with "utf8" being default.
  * @returns The converted string.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
@@ -54,7 +54,7 @@ export function Uint8ArrayToString(arr: Uint8Array, encoding?: string): string {
  * Convert base64 or utf8 string to array buffer.
  * @param encoding - The input string's encoding.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export function stringToBuffer(input: string, encoding: string): ArrayBufferLike {
@@ -74,7 +74,7 @@ export function stringToBuffer(input: string, encoding: string): ArrayBufferLike
  * @param encoding - Output string's encoding
  * @returns The blob in string format
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const bufferToString = (blob: ArrayBufferLike, encoding: string): string =>
