@@ -203,7 +203,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				assert(source.start <= source.end, "detach range start must not exceed end");
+				assert(source.start <= source.end, 0xcf8 /* detach range start must not exceed end */);
 
 				const policy: ChunkCompressor = {
 					policy: this.forest.chunker,
