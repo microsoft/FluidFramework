@@ -4,6 +4,7 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import * as Type from "@sinclair/typebox";
 
 import {
 	type EncodedRevisionTag,
@@ -11,7 +12,7 @@ import {
 	RevisionTagSchema,
 	SessionIdSchema,
 } from "../core/index.js";
-import { Type, type ObjectOptions, type Static, type TSchema } from "../util/index.js";
+import type { ObjectOptions, Static, TSchema } from "../util/index.js";
 import { type Brand, brandedNumberType, strictEnum, type Values } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";

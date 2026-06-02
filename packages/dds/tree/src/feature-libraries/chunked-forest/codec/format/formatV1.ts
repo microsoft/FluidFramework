@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as Type from "@sinclair/typebox";
+
 import { unionOptions } from "../../../../codec/index.js";
-import { Type, type Static } from "../../../../util/index.js";
+import type { Static } from "../../../../util/index.js";
 
 import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 

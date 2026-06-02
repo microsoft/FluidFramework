@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type ObjectOptions, type Static, type TSchema } from "../../util/index.js";
+import * as Type from "@sinclair/typebox";
+
+import type { ObjectOptions, Static, TSchema } from "../../util/index.js";
 import { EncodedChangeAtomId } from "../modular-schema/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };

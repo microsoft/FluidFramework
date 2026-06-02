@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as Type from "@sinclair/typebox";
+
 import { unionOptions } from "../../codec/index.js";
 import {
-	Type,
 	type ObjectOptions,
 	type Static,
 	type JsonCompatibleReadOnlyObject,

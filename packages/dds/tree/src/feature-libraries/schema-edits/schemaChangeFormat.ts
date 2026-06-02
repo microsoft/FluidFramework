@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type Static } from "../../util/index.js";
+import * as Type from "@sinclair/typebox";
+
+import type { Static } from "../../util/index.js";
 import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 
 export const EncodedSchemaChange = Type.Object({

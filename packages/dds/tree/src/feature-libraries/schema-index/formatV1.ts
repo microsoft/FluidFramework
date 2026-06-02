@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import * as Type from "@sinclair/typebox";
+
 import { SchemaFormatVersion, schemaFormatV1 } from "../../core/index.js";
-import { Type, type ObjectOptions, type Static } from "../../util/index.js";
+import type { ObjectOptions, Static } from "../../util/index.js";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

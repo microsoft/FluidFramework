@@ -21,15 +21,14 @@ export {
 	unbrand,
 } from "./brand.js";
 export { brandedNumberType, brandedStringType } from "./typeboxBrand.js";
-export {
-	Type,
-	type NumberOptions,
-	type ObjectOptions,
-	type Static,
-	type TAnySchema,
-	type TSchema,
-	type TUnsafe,
-} from "./typebox.js";
+export type {
+	NumberOptions,
+	ObjectOptions,
+	Static,
+	TAnySchema,
+	TSchema,
+	TUnsafe,
+} from "@sinclair/typebox";
 export {
 	brandOpaque,
 	extractFromOpaque,

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type ObjectOptions, type Static } from "../../util/index.js";
+import * as Type from "@sinclair/typebox";
+
+import type { ObjectOptions, Static } from "../../util/index.js";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 

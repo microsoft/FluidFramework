@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type Static } from "../../util/index.js";
+import * as Type from "@sinclair/typebox";
+
+import type { Static } from "../../util/index.js";
 
 /**
  * A field to use in TypeBox schemas for the version field of a versioned format.

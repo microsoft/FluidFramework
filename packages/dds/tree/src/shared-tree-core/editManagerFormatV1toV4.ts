@@ -4,9 +4,10 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
+import * as Type from "@sinclair/typebox";
 
 import { SessionIdSchema } from "../core/index.js";
-import { Type, type ObjectOptions, type TSchema } from "../util/index.js";
+import type { ObjectOptions, TSchema } from "../util/index.js";
 
 import {
 	EditManagerFormatVersion,

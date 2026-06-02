@@ -36,20 +36,20 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-null": "off",
-			// Importing the `Type` value from `@sinclair/typebox` defeats tree-shaking
-			// because it is a runtime namespace object that pulls in every TypeBox builder.
-			// Use the local `Type` subset re-exported from `src/util/typebox.ts` (via `src/util/index.ts`)
-			// instead. Type-only imports do not affect the bundle, but are routed through the same
-			// barrel for consistency and to keep `@sinclair/typebox` as a single, replaceable dependency.
-			// The single allowed entry point disables this rule via an inline override.
+			// Enforce the granular TypeBox import pattern: import the `Type` namespace
+			// directly via `import * as Type from "@sinclair/typebox"` so the bundler can
+			// tree-shake unused TypeBox builders. Importing the `Type` value from the
+			// `util/index.js` barrel re-introduces a runtime object that defeats
+			// tree-shaking, so it is forbidden here.
 			"no-restricted-imports": [
 				"error",
 				{
-					paths: [
+					patterns: [
 						{
-							name: "@sinclair/typebox",
+							group: ["**/util/index.js"],
+							importNames: ["Type"],
 							message:
-								"Import `Type` and TypeBox types from the tree util barrel (`util/index.js`) instead. The local `util/typebox.ts` re-exports only the subset of TypeBox used by this package; importing the full `Type` namespace defeats tree-shaking. Type-only imports are routed through the barrel for consistency. If you need a TypeBox kind not yet re-exported, add it to `util/typebox.ts`.",
+								'Import the TypeBox `Type` namespace directly via `import * as Type from "@sinclair/typebox"` instead of from the util barrel, so the bundler can tree-shake unused builders.',
 						},
 					],
 				},

@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { Type, type Static, type TSchema } from "../../util/index.js";
+import * as Type from "@sinclair/typebox";
+
+import type { Static, TSchema } from "../../util/index.js";
 import { schemaFormatV1 } from "../schema-stored/index.js";
 
 /**
