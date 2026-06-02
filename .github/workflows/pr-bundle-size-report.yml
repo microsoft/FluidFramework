@@ -1,26 +1,17 @@
-# pr-bundle-size-report.yml
-#
-# Runs the bundle-size comparison for a PR and (eventually) posts the result
-# back to the PR via a sticky comment, label, and check entry.
-#
-# This is the skeleton commit: trigger + setup + comparison only. Reporting
-# surfaces are added in follow-up commits.
-#
-# Trigger is `pull_request_target` (single workflow, not the repo's
-# pr-check-X / X-reporter split). The split's primary defense — preventing
-# PR-controlled code from running with write perms — doesn't apply here:
-# this workflow never executes PR-authored code. It only:
-#   - checks out the PR's BASE branch (not PR HEAD)
-#   - fetches the PR head as a git object (no execution)
-#   - runs base-branch flub against two ADO artifacts identified by SHA
-# No `pnpm install` from PR's lockfile, no PR scripts, no PR sources.
-
 name: pr-bundle-size-report
+
+# This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment,
+# label, and check entry.
+#
+# Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
+# split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
+# here because this workflow never executes PR-authored code: it checks out the PR's BASE branch (not PR HEAD),
+# fetches the PR head only as a git object, and runs base-branch flub against two ADO artifacts identified by SHA.
 
 on:
   pull_request_target:
     types: [opened, synchronize, reopened]
-    branches: [main, next, "release/**/*"]
+    branches: [main, "release/**/*"]
 
 permissions:
   contents: read
@@ -31,7 +22,7 @@ jobs:
     steps:
       # Check out the BASE branch (typically main) — never PR HEAD. We need
       # full history so `git merge-base` can find the common ancestor.
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.ref }}
@@ -50,10 +41,10 @@ jobs:
           echo "sha=$MERGE_BASE" >> "$GITHUB_OUTPUT"
           echo "Merge-base: $MERGE_BASE"
 
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc
