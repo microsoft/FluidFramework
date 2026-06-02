@@ -1,0 +1,77 @@
+# pr-bundle-size-report.yml
+#
+# Runs the bundle-size comparison for a PR and (eventually) posts the result
+# back to the PR via a sticky comment, label, and check entry.
+#
+# This is the skeleton commit: trigger + setup + comparison only. Reporting
+# surfaces are added in follow-up commits.
+#
+# Trigger is `pull_request_target` (single workflow, not the repo's
+# pr-check-X / X-reporter split). The split's primary defense — preventing
+# PR-controlled code from running with write perms — doesn't apply here:
+# this workflow never executes PR-authored code. It only:
+#   - checks out the PR's BASE branch (not PR HEAD)
+#   - fetches the PR head as a git object (no execution)
+#   - runs base-branch flub against two ADO artifacts identified by SHA
+# No `pnpm install` from PR's lockfile, no PR scripts, no PR sources.
+
+name: pr-bundle-size-report
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [main, next, "release/**/*"]
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the BASE branch (typically main) — never PR HEAD. We need
+      # full history so `git merge-base` can find the common ancestor.
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          fetch-depth: "0"
+          persist-credentials: false
+
+      # Fetch the PR head as an object so merge-base can resolve it. This
+      # doesn't check it out or execute anything from it.
+      - name: Fetch PR head
+        run: git fetch origin refs/pull/${{ github.event.pull_request.number }}/head
+
+      - name: Compute merge-base
+        id: merge-base
+        run: |
+          MERGE_BASE=$(git merge-base ${{ github.event.pull_request.head.sha }} HEAD)
+          echo "sha=$MERGE_BASE" >> "$GITHUB_OUTPUT"
+          echo "Merge-base: $MERGE_BASE"
+
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
+
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+          cache: "pnpm"
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install Fluid build tools
+        run: |
+          cd build-tools
+          pnpm install --frozen-lockfile
+          pnpm run build:compile
+          # Use npm link (not pnpm link) so flub lands on PATH with a proper shim.
+          cd packages/build-cli
+          npm link
+
+      - name: Compare bundle sizes
+        run: |
+          flub report comparePipelineBundleArtifacts \
+            --base ${{ steps.merge-base.outputs.sha }} \
+            --head ${{ github.event.pull_request.head.sha }} \
+            --json | tee bundle-comparison.json
