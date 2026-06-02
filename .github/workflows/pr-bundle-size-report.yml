@@ -11,8 +11,8 @@ name: pr-bundle-size-report
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
-# here because this workflow never executes PR-authored code: it checks out the PR's BASE branch (not PR HEAD),
-# fetches the PR head only as a git object, and runs base-branch flub against two ADO artifacts identified by SHA.
+# here because this workflow never executes PR-authored code: it doesn't check out PR HEAD and never references PR
+# sources or scripts, only its SHA (which is forwarded to ADO to fetch a server-side artifact).
 
 on:
   pull_request_target:
@@ -44,13 +44,28 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+
+          # Server-side merge-base lookup. Returns the SHA or empty on failure.
+          # Snapshotting here (rather than recomputing in `compare`) freezes the
+          # baseline against what identify-targets observed, so the compare job
+          # stays consistent even if main moves under the PR between jobs.
+          compute_mb() {
+            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
+              --jq '.merge_base_commit.sha' 2>/dev/null || true
+          }
+
           if [ "${{ github.event_name }}" = "pull_request_target" ]; then
             # Easy case: the event already names the PR.
+            PR_NUM='${{ github.event.pull_request.number }}'
+            HEAD_SHA='${{ github.event.pull_request.head.sha }}'
+            BASE_REF='${{ github.event.pull_request.base.ref }}'
+            MB=$(compute_mb "$BASE_REF" "$HEAD_SHA")
             PRS=$(jq -n -c \
-              --argjson n ${{ github.event.pull_request.number }} \
-              --arg h "${{ github.event.pull_request.head.sha }}" \
-              --arg b "${{ github.event.pull_request.base.ref }}" \
-              '[{number: $n, head: $h, baseRef: $b}]')
+              --argjson n "$PR_NUM" \
+              --arg h "$HEAD_SHA" \
+              --arg b "$BASE_REF" \
+              --arg mb "$MB" \
+              '[{number: $n, head: $h, baseRef: $b, mergeBase: $mb}]')
             echo "prs=$PRS" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -58,8 +73,6 @@ jobs:
           # check_run case: map the check's SHA back to affected open PRs.
           # A PR is affected if either its head SHA matches (PR build finished)
           # or its merge-base with its base branch matches (baseline build finished).
-          # Use `gh api .../compare` for merge-base lookups so we don't need a local
-          # git workspace and so each PR is evaluated against its actual base branch.
           SHA="${{ github.event.check_run.head_sha }}"
           PRS_JSON=$(gh pr list --state open \
             --json number,headRefOid,baseRefName --limit 200)
@@ -69,19 +82,11 @@ jobs:
             PR_NUM=$(echo "$pr" | jq -r '.number')
             PR_HEAD=$(echo "$pr" | jq -r '.headRefOid')
             PR_BASE_REF=$(echo "$pr" | jq -r '.baseRefName')
+            MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD")
 
-            MATCH=0
-            if [ "$PR_HEAD" = "$SHA" ]; then
-              MATCH=1
-            else
-              MB=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PR_BASE_REF...$PR_HEAD" \
-                --jq '.merge_base_commit.sha' 2>/dev/null || true)
-              [ "$MB" = "$SHA" ] && MATCH=1
-            fi
-
-            if [ $MATCH = 1 ]; then
+            if [ "$PR_HEAD" = "$SHA" ] || [ "$MB" = "$SHA" ]; then
               AFFECTED=$(echo "$AFFECTED" | jq -c \
-                ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"$PR_BASE_REF\"}]")
+                ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"$PR_BASE_REF\", mergeBase: \"$MB\"}]")
             fi
           done < <(echo "$PRS_JSON" | jq -c '.[]')
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
@@ -95,24 +100,15 @@ jobs:
       fail-fast: false
     runs-on: ubuntu-latest
     steps:
-      # Check out the PR's base branch — never PR HEAD. Full history for `git merge-base`.
+      # Check out the PR's base branch (never PR HEAD, since PR-authored code isn't trusted) just to get
+      # build-tools source so we can build flub. The comparison itself reads only ADO artifacts identified
+      # by SHA — no local git state is required.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           ref: ${{ matrix.pr.baseRef }}
-          fetch-depth: "0"
+          fetch-depth: "1"
           persist-credentials: false
-
-      # Fetch the PR head as an object so merge-base can resolve it. Never checks it out or executes anything from it.
-      - name: Fetch PR head
-        run: git fetch origin refs/pull/${{ matrix.pr.number }}/head
-
-      - name: Compute merge-base
-        id: merge-base
-        run: |
-          MERGE_BASE=$(git merge-base ${{ matrix.pr.head }} HEAD)
-          echo "sha=$MERGE_BASE" >> "$GITHUB_OUTPUT"
-          echo "Merge-base for PR #${{ matrix.pr.number }}: $MERGE_BASE"
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
@@ -136,6 +132,6 @@ jobs:
       - name: Compare bundle sizes
         run: |
           flub report comparePipelineBundleArtifacts \
-            --base ${{ steps.merge-base.outputs.sha }} \
+            --base ${{ matrix.pr.mergeBase }} \
             --head ${{ matrix.pr.head }} \
             --json | tee bundle-comparison.json
