@@ -5,8 +5,9 @@
 
 import { execSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 
+import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
 /**
@@ -44,25 +45,6 @@ export interface CollectBundleOptions {
 	 * `<analysisDir>/base-repo` when not specified.
 	 */
 	readonly baseRepoDir?: string;
-}
-
-/**
- * Gets the repository root directory for the given working directory.
- */
-async function getRepoRoot(cwd: string): Promise<string> {
-	const output = await simpleGit(cwd).revparse(["--show-toplevel"]);
-	return output.trim();
-}
-
-/**
- * Returns the path of the given directory relative to the root of the repo that contains it,
- * e.g. `examples/utils/bundle-size-tests`. Used to locate the same package inside a
- * freshly-cloned inner repo.
- */
-async function getPackageWorkspacePath(packageDir: string): Promise<string> {
-	const output = await simpleGit(packageDir).revparse(["--show-prefix"]);
-	// `--show-prefix` returns a trailing-slash-terminated path (or empty string at the repo root).
-	return output.trim().replace(/\/$/, "");
 }
 
 /**
@@ -265,7 +247,7 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 
 	const label = sanitizeForFileName(options.label);
 
-	const outerRepoRoot = await getRepoRoot(packageDir);
+	const outerRepoRoot = findGitRootSync(packageDir);
 	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
 
 	let activeRepoRoot: string;
@@ -278,7 +260,10 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 		// patch is preserved even if the build subsequently fails.
 		await captureLocalPatch(outerRepoRoot, resolve(analysisDir, label));
 	} else {
-		const packageWorkspacePath = await getPackageWorkspacePath(packageDir);
+		// Path of the package relative to the repo root, e.g.
+		// `examples/utils/bundle-size-tests`. Used to locate the same package
+		// inside the freshly-cloned inner repo.
+		const packageWorkspacePath = relative(outerRepoRoot, packageDir);
 		await ensureInnerRepoAtRevision(revision as string, outerRepoRoot, innerRepoRoot);
 		activeRepoRoot = innerRepoRoot;
 		activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
