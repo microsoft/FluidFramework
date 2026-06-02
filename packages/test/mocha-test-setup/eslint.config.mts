@@ -15,6 +15,7 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"@typescript-eslint/no-unsafe-call": "off",
 			"@typescript-eslint/no-unsafe-member-access": "off",
+			"import-x/no-nodejs-modules": "off",
 			"unicorn/no-negated-condition": "off",
 			"unicorn/no-null": "off",
 		},
