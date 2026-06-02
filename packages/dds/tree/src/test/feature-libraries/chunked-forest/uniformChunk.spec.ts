@@ -504,7 +504,6 @@ describe("uniformChunk", () => {
 								cursor.exitField();
 							}
 							cursor.exitField();
-							// Return the sum so the loop's work isn't optimized away as dead code.
 							const _result = x + y;
 						});
 					},
