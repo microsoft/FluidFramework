@@ -75,7 +75,7 @@ DESCRIPTION
 EXAMPLES
   Collect public (PR) build data.
 
-    $ flub build-perf collect --mode public --project public --buildDefId 11 --outputDir ./output --adoApiToken ^
+    $ flub build-perf collect --mode public --project public --buildDefId 11 --outputDir ./output --adoApiToken \
       $ADO_TOKEN
 ```
 
@@ -108,7 +108,7 @@ DESCRIPTION
 EXAMPLES
   Deploy dashboard for public mode.
 
-    $ flub build-perf deploy --mode public --aswaHostname myapp.azurestaticapps.net --dataDir ./data ^
+    $ flub build-perf deploy --mode public --aswaHostname myapp.azurestaticapps.net --dataDir ./data \
       --deploymentToken $SWA_TOKEN
 ```
 
