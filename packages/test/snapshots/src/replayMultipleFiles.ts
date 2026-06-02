@@ -3,37 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import fs from "fs";
-import nodePath from "path";
+import { strict as assert } from "node:assert";
+import fs from "node:fs";
+import nodePath from "node:path";
 
 import { ReplayArgs, ReplayTool } from "@fluid-internal/replay-tool";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { _dirname } from "./dirname.cjs";
 import { getMetadata, writeMetadataFile } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
 import { getTestContent } from "./testContent.js";
 import { validateSnapshots } from "./validateSnapshots.js";
 
-// Determine relative file locations
-function getFileLocations(): [string, string] {
+// Determine relative contents files location
+function getTestContentPath(): string {
 	// Correct if executing from working directory of package root
 	const testCollateral = getTestContent("snapshotTestContent");
-	let workerPath = "./lib/replayWorker.js";
-	if (fs.existsSync(workerPath) && testCollateral.exists) {
-		return [testCollateral.path, workerPath];
-	}
-	// Relative to this generated js file being executed
-	workerPath = nodePath.join(_dirname, "..", workerPath);
-	assert(
-		fs.existsSync(workerPath),
-		`Cannot find worker js or test content file: ${workerPath}, ${testCollateral.path}`,
-	);
-	return [testCollateral.path, workerPath];
+	assert(testCollateral.exists, `Cannot find test content file: ${testCollateral.path}`);
+	return testCollateral.path;
 }
-const [fileLocation, workerLocation] = getFileLocations();
+const fileLocation = getTestContentPath();
+
+// Relative to this generated js file being executed
+const workerLocation = nodePath.join(import.meta.dirname, "replayWorker.js");
+assert(fs.existsSync(workerLocation), `Cannot find worker file: ${workerLocation}`);
 
 const currentSnapshots = "current_snapshots";
 const srcSnapshots = "src_snapshots";
@@ -148,7 +142,7 @@ export async function processOneNode(args: IWorkerArgs): Promise<void> {
 	// The output snapshots to compare against are under "currentSnapshots" sub-directory.
 	replayArgs.outDirName = `${args.folder}/${currentSnapshots}`;
 	replayArgs.snapFreq = args.snapFreq;
-	replayArgs.testSummaries = args.testSummaries;
+	replayArgs.testSummaries = !!args.testSummaries;
 	replayArgs.write = args.mode === Mode.NewSnapshots || args.mode === Mode.UpdateSnapshots;
 	replayArgs.compare = args.mode === Mode.Compare;
 	// Make it easier to see problems in stress tests
@@ -238,8 +232,8 @@ export async function processContent(mode: Mode, concurrently = true): Promise<v
 			name: node.name,
 			folder,
 			mode,
-			snapFreq,
-			testSummaries,
+			...(snapFreq === undefined ? {} : { snapFreq }),
+			...(testSummaries === undefined ? {} : { testSummaries }),
 		} as const satisfies IWorkerArgs;
 
 		switch (mode) {
@@ -440,12 +434,13 @@ async function processNode(
 	limiter: ConcurrencyLimiter,
 ): Promise<void> {
 	// "worker_threads" does not resolve without --experimental-worker flag on command line
-	let threads: typeof import("worker_threads");
+	let threads: typeof import("worker_threads") | undefined;
 	try {
 		threads = await import("worker_threads");
 		threads.Worker.EventEmitter.defaultMaxListeners = 20;
 	} catch (err) {
 		// TODO: document why we are ignoring the error here
+		threads = undefined;
 	}
 
 	if (!concurrently || !threads) {
