@@ -75,7 +75,7 @@ const lazyBranchForViewMap = new WeakMap<
  * Per-{@link BranchCheckout} state passed to the {@link FinalizationRegistry} callback.
  *
  * @remarks
- * **Heap-snapshot tip:** named class so leaks of finalization state show up clearly.
+ * **Heap-snapshot tip:** this is a named class so leaks of finalization state show up clearly.
  *
  * **Critical invariant:** instances must not transitively reference the `BranchCheckout` they were
  * registered for. If they did, the registry's strong hold on this object would pin the checkout
@@ -84,7 +84,7 @@ const lazyBranchForViewMap = new WeakMap<
  *
  * The state intentionally holds **no** references to the checkout's resources (transaction, forest,
  * events, views, revertibles, ...). All those resources are part of a self-cycle with the
- * `BranchCheckout` itself; once nothing external retains the checkout, the JS GC collects the whole
+ * `BranchCheckout` itself; once nothing external retains the checkout, the JavaScript garbage collector collects the whole
  * cycle in one pass. The finalizer is therefore observational — it signals "the checkout was
  * collected" without performing any active cleanup.
  */
@@ -177,7 +177,6 @@ export function getBranchCheckout(
  * Lifecycle: a `BranchCheckout` is independent from any other checkout that observes the same data.
  * Disposing the parent of a {@link forkAsBranchCheckout} does not dispose the child, and vice versa;
  * merging is explicit via {@link TreeCheckout.merge}.
- *
  */
 export class BranchCheckout extends TreeCheckout {
 	public constructor(
