@@ -312,7 +312,7 @@ describeCompat(
 
 				makeChangeAtDepth(view, 1, 0);
 				await provider.ensureSynchronized();
-				const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
+				const { summaryVersion } = await summarizeNow(summarizer);
 
 				// A fresh container loaded from that summary must reflect the change.
 				const { view: loadedView } = await loadContainerAndGetTreeView(
