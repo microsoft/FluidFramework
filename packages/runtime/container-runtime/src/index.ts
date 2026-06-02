@@ -48,6 +48,11 @@ export type {
 	RuntimeMessagesContentFor,
 } from "./runtimeFeature.js";
 export type { IBlobManagerLoadInfo } from "./blobManager/index.js";
+export {
+	blobManagerBasePath,
+	blobsTreeName,
+	redirectTableBlobName,
+} from "./blobManager/index.js";
 export type { IDataStoreAliasMessage } from "./dataStore.js";
 export { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 export {

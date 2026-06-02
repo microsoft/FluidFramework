@@ -12,13 +12,13 @@ import registerDebug from "debug";
 import { readJson } from "fs-extra";
 import { lilconfigSync } from "lilconfig";
 
-import { defaultLogger } from "../common/logging";
-import { commonOptions } from "./commonOptions";
+import { defaultLogger } from "../common/logging.js";
+import { commonOptions } from "./commonOptions.js";
 import {
 	DEFAULT_FLUIDBUILD_CONFIG,
 	FLUIDBUILD_CONFIG_VERSION,
 	type IFluidBuildConfig,
-} from "./fluidBuildConfig";
+} from "./fluidBuildConfig.js";
 
 // switch to regular import once building ESM
 const findUp = import("find-up");

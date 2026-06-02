@@ -1,5 +1,36 @@
 # @fluidframework/tree
 
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Add SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode to recover documents with corrupted identifiers ([#27281](https://github.com/microsoft/FluidFramework/pull/27281)) [d9205ddcd6a](https://github.com/microsoft/FluidFramework/commit/d9205ddcd6a9f0ec11d5422b38e30a6a91a9258c)
+
+  A SharedTree bug can result in corrupted documents due to their attach summary compressing identifier-field values in a way that cannot be uncompressed.
+  This bug manifested as remote clients processing the op throwing an error with the message "Unknown op space ID.".
+
+  This change adds an option (`healUnresolvableIdentifiersOnDecode`) to `configuredSharedTreeBetaLegacy` which will allow documents affected by this bug to load again when enabled.
+  Enabling this option carries some risk, see documentation on the interface itself for more details.
+
+  #### Who is affected
+
+  Only SharedTrees attached to a container that was already attached can be impacted.
+  Furthermore, this bug only occurs when the attached tree contains [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) fields which contain implicitly generated default values.
+
+- Fix a SharedTree document corruption bug ([#27292](https://github.com/microsoft/FluidFramework/pull/27292)) [6f4cdcb7a0a](https://github.com/microsoft/FluidFramework/commit/6f4cdcb7a0a76ba215a361c7b3a12943750fe286)
+
+  A SharedTree bug which could corrupt documents when attaching them to containers has been fixed.
+  See `healUnresolvableIdentifiersOnDecode` on `configuredSharedTreeBetaLegacy` for a potential mitigation path for documents that were already corrupted by this bug.
+
+  #### Who is affected
+
+  Only SharedTrees attached to a container that was already attached can be impacted.
+  Furthermore, this bug only occurs when the attached tree contains [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) fields which contain implicitly generated default values.
+
 ## 2.100.0
 
 ### Minor Changes

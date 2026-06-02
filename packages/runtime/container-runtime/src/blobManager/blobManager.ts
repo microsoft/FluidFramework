@@ -238,6 +238,9 @@ interface IBlobManagerInternalEvents {
 
 const createAbortError = (): LoggingError => new LoggingError("uploadBlob aborted");
 
+/**
+ * @internal
+ */
 export const blobManagerBasePath = "_blobs";
 
 export class BlobManager implements IRuntimeFeature<ContainerMessageType.BlobAttach> {

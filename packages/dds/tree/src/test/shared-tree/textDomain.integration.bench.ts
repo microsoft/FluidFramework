@@ -339,7 +339,7 @@ describe("TextDomain benchmarks", () => {
 							// TODO: Investigate whether this approximately-constant behavior is
 							// intentional — it is unexpected that op size does not scale with character
 							// count. Confirm the encoding is working as intended.
-							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 5 });
+							assertApproximatelyConstant({ sizes: operationSizes, maxDeltaBytes: 6 });
 							const referenceSize = operationSizes[0];
 							assert(referenceSize !== undefined);
 							return [

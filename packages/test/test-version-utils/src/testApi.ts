@@ -75,17 +75,19 @@ export interface InstalledPackage {
  * Loads all layer APIs for the requested version. The compat workspace is expected to be
  * pre-installed via `pnpm install` (through the package `postinstall` hook).
  *
- * @remarks
- * This function no longer supports dynamically installing packages. If you need to reference a specific FF version, see explicit-versions.mjs in test-version-utils/compat-workspaces.
+ * @returns
+ * A promise that resolves when the requested version is loaded and can be accessed synchronously
+ * using the getters for each layer's API (e.g. `getLoaderApi`)
+ *
  * @internal
  */
-export const ensurePackageInstalled = async (
+export const ensureVersionLoaded = async (
 	baseVersion: string,
 	version: number | string,
-): Promise<InstalledPackage | undefined> => {
+): Promise<void> => {
 	const requestedStr = getRequestedVersion(baseVersion, version);
 	if (semver.satisfies(pkgVersion, requestedStr)) {
-		return undefined;
+		return;
 	}
 
 	await Promise.all([
@@ -94,9 +96,6 @@ export const ensurePackageInstalled = async (
 		loadLoader(baseVersion, version),
 		loadDriver(baseVersion, version),
 	]);
-
-	const { version: resolvedVersion, modulePath } = checkInstalled(requestedStr);
-	return { version: resolvedVersion, modulePath };
 };
 
 // This module supports synchronous functions to import packages once their install has been
@@ -540,10 +539,12 @@ export interface CompatApis {
 	driver: ReturnType<typeof getDriverApi>;
 	loader: ReturnType<typeof getLoaderApi>;
 
-	// Cross-Client Compat APIs
-	containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
-	dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
-	ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];
-	driverForLoading?: ReturnType<typeof getDriverApi>;
-	loaderForLoading?: ReturnType<typeof getLoaderApi>;
+	// APIs used for loading containers. Tests always use one set of APIs for creating containers
+	// and another for loading them. In cross-client compat mode these are different versions from the
+	// APIs above; in all other modes they are the same versions as the APIs above.
+	containerRuntimeForLoading: ReturnType<typeof getContainerRuntimeApi>;
+	dataRuntimeForLoading: ReturnType<typeof getDataRuntimeApi>;
+	ddsForLoading: ReturnType<typeof getDataRuntimeApi>["dds"];
+	driverForLoading: ReturnType<typeof getDriverApi>;
+	loaderForLoading: ReturnType<typeof getLoaderApi>;
 }

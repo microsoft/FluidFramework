@@ -9,8 +9,9 @@ import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/interna
 import type { TSchema } from "@sinclair/typebox";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
+	type VersionDispatchingCodec,
 	FluidClientVersion,
 } from "../../../codec/index.js";
 import {
@@ -106,12 +107,43 @@ export interface FieldBatchEncodingContext {
 	 * This will be defined if incremental encoding is supported and enabled.
 	 */
 	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
+	/**
+	 * `true` when encoding to or decoding from a summary blob. `false` for
+	 * op-stream encode/decode paths and for utility encoders that are not
+	 * tied to a persisted document. Healing behavior is gated on this flag.
+	 */
+	readonly isSummary: boolean;
+	/**
+	 * If `true`, when an op-space compressed ID encountered while decoding
+	 * cannot be resolved by the local id-compressor (e.g. the attach-summary
+	 * blob's originator session state was stripped), a deterministic stable
+	 * UUID derived from `sharedObjectId` is returned instead of throwing.
+	 * @remarks
+	 * Off by default. Used only to recover documents whose attach summary was
+	 * written with non-finalized op-space IDs before the encode-side fix
+	 * shipped. Only takes effect when `isSummary` is also `true`.
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * The SharedTree's shared-object id, used as input to the deterministic
+	 * UUID derivation when `healUnresolvableIdentifiersOnDecode` triggers. Required
+	 * for that path; ignored otherwise.
+	 * @remarks
+	 * This allows us to ensure that multiple attaches,
+	 * in the same or different documents, with the same session offsets, get different UUIDs.
+	 */
+	readonly sharedObjectId?: string;
 }
 /**
  * @remarks
  * Fields in this batch currently don't have field schema for the root, which limits optimizations.
  */
-export type FieldBatchCodec = ReturnType<typeof fieldBatchCodecBuilder.build>;
+export type FieldBatchCodec = VersionDispatchingCodec<
+	FieldBatch,
+	FieldBatchEncodingContext,
+	FieldBatchFormatVersion
+>;
 
 /**
  * Creates the encode/decode functions for a specific FieldBatch format version.
@@ -125,6 +157,7 @@ function makeFieldBatchCodecForVersion(
 		fieldBatch: FieldBatch,
 		idCompressor: IIdCompressor,
 		incrementalEncoder: IncrementalEncoder | undefined,
+		isSummary: boolean,
 	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
 ): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
@@ -167,6 +200,7 @@ function makeFieldBatchCodecForVersion(
 							data,
 							context.idCompressor,
 							incrementalEncoder,
+							context.isSummary,
 						);
 					}
 
@@ -190,6 +224,9 @@ function makeFieldBatchCodecForVersion(
 				{
 					idCompressor: context.idCompressor,
 					originatorId: context.originatorId,
+					isSummary: context.isSummary,
+					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
+					sharedObjectId: context.sharedObjectId,
 				},
 				context.incrementalEncoderDecoder,
 			).map((chunk) => chunk.cursor());
@@ -199,30 +236,27 @@ function makeFieldBatchCodecForVersion(
 }
 
 /**
- * {@link ClientVersionDispatchingCodecBuilder} for field batch codecs.
+ * {@link VersionDispatchingCodecBuilder} for field batch codecs.
  */
-export const fieldBatchCodecBuilder = ClientVersionDispatchingCodecBuilder.build(
-	"FieldBatch",
-	[
-		{
-			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: FieldBatchFormatVersion.v1,
-			codec: makeFieldBatchCodecForVersion(
-				FieldBatchFormatVersion.v1,
-				uncompressedEncodeV1,
-				schemaCompressedEncodeV1,
-				EncodedFieldBatchV1,
-			),
-		},
-		{
-			minVersionForCollab: FluidClientVersion.v2_73,
-			formatVersion: FieldBatchFormatVersion.v2,
-			codec: makeFieldBatchCodecForVersion(
-				FieldBatchFormatVersion.v2,
-				uncompressedEncodeV2,
-				schemaCompressedEncodeV2,
-				EncodedFieldBatchV2,
-			),
-		},
-	],
-);
+export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("FieldBatch", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: FieldBatchFormatVersion.v1,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.v1,
+			uncompressedEncodeV1,
+			schemaCompressedEncodeV1,
+			EncodedFieldBatchV1,
+		),
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_73,
+		formatVersion: FieldBatchFormatVersion.v2,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.v2,
+			uncompressedEncodeV2,
+			schemaCompressedEncodeV2,
+			EncodedFieldBatchV2,
+		),
+	},
+]);
