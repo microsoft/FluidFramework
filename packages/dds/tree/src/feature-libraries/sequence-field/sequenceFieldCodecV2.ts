@@ -4,6 +4,7 @@
  */
 
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import {
 	DiscriminatedUnionDispatcher,
@@ -18,7 +19,6 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import type { TAnySchema } from "../../util/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {

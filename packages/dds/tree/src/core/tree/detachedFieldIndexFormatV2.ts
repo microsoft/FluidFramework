@@ -4,8 +4,8 @@
  */
 
 import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
-import type { Static } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 import { RevisionTagSchema, StableIdSchema } from "../rebase/index.js";
 

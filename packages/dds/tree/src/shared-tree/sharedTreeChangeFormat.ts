@@ -4,9 +4,9 @@
  */
 
 import * as Type from "@sinclair/typebox";
+import type { Static, TSchema } from "@sinclair/typebox";
 
 import type { EncodedSchemaChange } from "../feature-libraries/index.js";
-import type { Static, TSchema } from "../util/index.js";
 import { JsonCompatibleReadOnlySchema } from "../util/index.js";
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

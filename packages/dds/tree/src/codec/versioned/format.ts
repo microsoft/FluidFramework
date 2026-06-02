@@ -4,8 +4,7 @@
  */
 
 import * as Type from "@sinclair/typebox";
-
-import type { Static } from "../../util/index.js";
+import type { Static } from "@sinclair/typebox";
 
 /**
  * A field to use in TypeBox schemas for the version field of a versioned format.

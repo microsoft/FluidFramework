@@ -6,6 +6,7 @@
 import { strict as assert, fail } from "node:assert";
 
 import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
 import type { ChunkedCursor } from "../../../../core/index.js";
@@ -30,7 +31,6 @@ import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
 } from "../../../../feature-libraries/index.js";
-import type { Static } from "../../../../util/index.js";
 import { brand, ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 

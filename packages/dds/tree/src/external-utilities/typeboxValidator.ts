@@ -3,12 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import type { Static, TSchema } from "@sinclair/typebox";
 // This export is documented as supported in typebox's documentation.
 // eslint-disable-next-line import-x/no-internal-modules
 import { TypeCompiler } from "@sinclair/typebox/compiler";
 
 import { toFormatValidator, type JsonValidator } from "../codec/index.js";
-import type { Static, TSchema } from "../util/index.js";
 
 /**
  * A {@link JsonValidator} implementation which uses TypeBox's JSON schema validator.

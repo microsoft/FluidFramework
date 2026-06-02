@@ -12,8 +12,7 @@
  */
 
 import * as Type from "@sinclair/typebox";
-
-import type { ObjectOptions, Static } from "../util/index.js";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 

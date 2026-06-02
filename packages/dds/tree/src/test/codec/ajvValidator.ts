@@ -8,11 +8,11 @@ import type { ISharedObjectHandle } from "@fluidframework/shared-object-base/int
 import { MockHandle } from "@fluidframework/test-runtime-utils/internal";
 // Based on ESM workaround from https://github.com/ajv-validator/ajv/issues/2047#issuecomment-1241470041 .
 // In ESM, this gets the module, in cjs, it gets the default export which is the Ajv class.
+import type { Static, TSchema } from "@sinclair/typebox";
 import ajvModuleOrClass from "ajv";
 import formats from "ajv-formats";
 
 import { toFormatValidator, type JsonValidator } from "../../codec/index.js";
-import type { Static, TSchema } from "../../util/index.js";
 import { mockSerializer } from "../mockSerializer.js";
 
 // The first case here covers the esm mode, and the second the cjs one.

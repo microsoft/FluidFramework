@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import type { Static, TSchema } from "@sinclair/typebox";
+
 import type { IJsonCodec } from "../../codec/index.js";
-import type { Static, TSchema } from "../../util/index.js";
 import { hasSingle } from "../../util/index.js";
 
 import {

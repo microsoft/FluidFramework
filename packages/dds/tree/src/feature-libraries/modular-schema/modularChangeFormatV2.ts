@@ -4,8 +4,7 @@
  */
 
 import * as Type from "@sinclair/typebox";
-
-import type { ObjectOptions, Static } from "../../util/index.js";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
 import { EncodedModularChangesetV1 } from "./modularChangeFormatV1.js";
 

@@ -4,6 +4,7 @@
  */
 
 import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import {
 	type ICodecOptions,
@@ -24,7 +25,6 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import type { TAnySchema } from "../../util/index.js";
 import {
 	type IdAllocator,
 	type JsonCompatibleReadOnly,

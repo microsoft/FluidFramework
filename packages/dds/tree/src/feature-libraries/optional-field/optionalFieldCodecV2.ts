@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { TAnySchema } from "@sinclair/typebox";
+
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
 	RevisionTagSchema,
@@ -10,7 +12,6 @@ import type {
 	ChangeEncodingContext,
 	RevisionTag,
 } from "../../core/index.js";
-import type { TAnySchema } from "../../util/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type {

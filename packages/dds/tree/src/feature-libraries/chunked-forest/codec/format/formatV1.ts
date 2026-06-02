@@ -4,9 +4,9 @@
  */
 
 import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
-import type { Static } from "../../../../util/index.js";
 
 import { Count, IdentifierOrIndex, ShapeIndex } from "./formatGeneric.js";
 

@@ -6,6 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
+import type { TSchema } from "@sinclair/typebox";
 
 import {
 	VersionDispatchingCodecBuilder,
@@ -21,7 +22,6 @@ import {
 	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import type { TSchema } from "../../../util/index.js";
 import { brandedNumberType, type Brand } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 

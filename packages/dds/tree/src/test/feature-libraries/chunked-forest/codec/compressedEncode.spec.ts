@@ -11,6 +11,7 @@ import {
 	MockHandle,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
+import type { TSchema } from "@sinclair/typebox";
 
 import {
 	VersionDispatchingCodecBuilder,
@@ -84,7 +85,6 @@ import {
 	jsonableTreeFromFieldCursor,
 	fieldBatchCodecBuilder,
 } from "../../../../feature-libraries/index.js";
-import type { TSchema } from "../../../../util/index.js";
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";

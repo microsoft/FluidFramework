@@ -5,9 +5,9 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 import * as Type from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
-import type { TSchema } from "../util/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EncodedBranchId } from "./branch.js";

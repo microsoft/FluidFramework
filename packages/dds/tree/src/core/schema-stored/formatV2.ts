@@ -3,12 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 import * as Type from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import {
-	type ObjectOptions,
-	type Static,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
 } from "../../util/index.js";

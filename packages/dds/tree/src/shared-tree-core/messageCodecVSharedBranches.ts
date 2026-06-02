@@ -5,6 +5,7 @@
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import * as Type from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -13,7 +14,6 @@ import type {
 	EncodedRevisionTag,
 	RevisionTag,
 } from "../core/index.js";
-import type { TAnySchema } from "../util/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";

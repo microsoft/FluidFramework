@@ -4,10 +4,10 @@
  */
 
 import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { RevisionTagSchema } from "../../core/index.js";
-import type { ObjectOptions, Static, TSchema } from "../../util/index.js";
 import { ChangesetLocalIdSchema, EncodedChangeAtomId } from "../modular-schema/index.js";
 
 export enum DetachIdOverrideType {

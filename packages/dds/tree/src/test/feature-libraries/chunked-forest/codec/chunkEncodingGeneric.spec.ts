@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../../../codec/index.js";
 import type {
@@ -20,7 +21,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import { FieldBatchFormatVersion } from "../../../../feature-libraries/index.js";
-import type { Static } from "../../../../util/index.js";
 import { brand } from "../../../../util/index.js";
 
 export const Constant = Type.Literal(0);

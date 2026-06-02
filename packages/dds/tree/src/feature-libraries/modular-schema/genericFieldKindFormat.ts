@@ -7,8 +7,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import * as Type from "@sinclair/typebox";
-
-import type { Static, TAnySchema, TSchema } from "../../util/index.js";
+import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
 export const EncodedGenericChange = <NodeChangesetSchema extends TSchema>(
 	tNodeChangeset: NodeChangesetSchema,

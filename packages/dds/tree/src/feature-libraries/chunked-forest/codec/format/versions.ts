@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { Static } from "../../../../util/index.js";
+import type { Static } from "@sinclair/typebox";
+
 import { strictEnum, type Values } from "../../../../util/index.js";
 
 import { EncodedFieldBatchGeneric } from "./formatGeneric.js";
