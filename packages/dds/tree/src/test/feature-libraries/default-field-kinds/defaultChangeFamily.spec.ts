@@ -824,6 +824,107 @@ describe("DefaultEditBuilder", () => {
 			assert.deepEqual(treeView, [expected]);
 		});
 
+		it("Can move nodes from before an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{
+					parent: {
+						parent: root,
+						parentField: fooKey,
+						parentIndex: 4,
+					},
+					field: fooKey,
+				},
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from after an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+				},
+			});
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root_foo0, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
 		it("Errors when attempting to move a node under itself", () => {
 			const statingState: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
