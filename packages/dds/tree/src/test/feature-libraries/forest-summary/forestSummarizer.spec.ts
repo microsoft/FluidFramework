@@ -452,7 +452,7 @@ describe("ForestSummarizer", () => {
 					{
 						fooArray: new FooArray(["value1", "value2"]),
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 

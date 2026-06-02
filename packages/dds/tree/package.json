@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.102.0",
+	"version": "2.103.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -116,8 +116,8 @@
 		"clean": "rimraf --glob dist lib {alpha,beta,internal,legacy}.d.ts \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"depcruise": "depcruise src/ --ignore-known",
 		"depcruise:regen-known-issues": "depcruise-baseline src",
-		"eslint": "eslint --quiet --format stylish src",
-		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src --concurrency 4",
+		"eslint:fix": "eslint --quiet --format stylish src --concurrency auto --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"generate:entrypoint-sources": "scripts/generate-entrypoint-sources.sh",

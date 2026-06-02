@@ -75,7 +75,7 @@ describe("OdspClient", () => {
 	 * be returned.
 	 */
 	it("can create new ODSP container successfully", async () => {
-		const resourcesP = client.createContainer(schema);
+		const resourcesP = client.createContainer(schema, "2.0.0");
 
 		await assert.doesNotReject(resourcesP, () => true, "container cannot be created in ODSP");
 	});
@@ -88,7 +88,7 @@ describe("OdspClient", () => {
 	 * be returned.
 	 */
 	it("created container is detached", async () => {
-		const { container } = await client.createContainer(schema);
+		const { container } = await client.createContainer(schema, "2.0.0");
 		assert.strictEqual(
 			container.attachState,
 			AttachState.Detached,
@@ -97,7 +97,10 @@ describe("OdspClient", () => {
 	});
 
 	it("GC is disabled by default", async () => {
-		const { container: container_defaultConfig } = await client.createContainer(schema);
+		const { container: container_defaultConfig } = await client.createContainer(
+			schema,
+			"2.0.0",
+		);
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		const { sweepEnabled, throwOnTombstoneLoad } =
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access

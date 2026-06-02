@@ -66,6 +66,63 @@ new FluidCache({
     for a cache entry to be used. This flag does not control when cached content is deleted since different scenarios and
     applications may have different staleness thresholds for the same data.
 
+## Atomic updates (`update`)
+
+`FluidCache` exposes an `update` method that performs an atomic read-modify-write. The currently-cached
+value is read and the updater callback decides whether — and what — to write, inside a single IndexedDB
+`readwrite` transaction. This gives consistent update semantics across consumers sharing the same
+underlying IndexedDB instance (e.g. multiple browser tabs racing to persist offline pending state).
+
+```typescript
+// Conditional overwrite (active tab wins): only write if our revision is higher.
+const wrote = await fluidCache.update(entry, (existing, set) => {
+	const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+	if (mine.rev > existingRev) {
+		set(mine);
+	}
+});
+
+// Read-modify-write: increment a counter atomically.
+await fluidCache.update(entry, (existing, set) => {
+	const prev = (existing as { count: number } | undefined)?.count ?? 0;
+	set({ count: prev + 1 });
+});
+```
+
+The `updater` callback is invoked with `(existing, set)`. `existing` is `undefined` when the cached
+row would be invisible to `get` — that is, no entry exists for the key, the existing entry belongs to
+a different partition, or the existing entry is older than `maxCacheItemAge`. To commit a write, call
+`set(value)`; to leave the cache untouched, return without calling `set`.
+
+Calling `set(undefined)` removes the row at the key (equivalent to `removeEntry` inside the same
+atomic transaction). `get` already collapses "no entry" and "entry stored as undefined" into the same
+observable result, so the delete-on-undefined semantics gives callers an atomic conditional-delete
+without ambiguity for any meaningful use case.
+
+The updater itself must be synchronous and `set` must be called from within it. IndexedDB
+transactions auto-close on any non-IDB await, which would silently break the atomicity that makes
+the update correct. Two guards make misuse loud rather than silent: calling `set` after the updater
+has returned throws a `UsageError` at the call site (so deferred-`set` patterns like invoking it
+from a `setTimeout` fail noisily); returning a thenable — for example, declaring the updater
+`async` — is detected after the updater returns, aborts the transaction, and is logged under
+`FluidCacheUpdateCallbackError`. If the updater calls `set` more than once, the last value wins.
+If the updater throws — including after calling `set` — the transaction is aborted and the existing
+row is preserved.
+
+When `set` is called, the write (or delete) atomically replaces whatever row exists at the key,
+including cross-partition or stale rows the updater saw as `undefined` (matching the unconditional
+overwrite behavior of `put`). Callers that must preserve cross-partition rows should not use
+`update`.
+
+`update` returns `true` if `set` was called and the write (or delete) committed, and `false` if the
+updater returned without calling `set`, threw, or an IDB error occurred.
+
+**Compare-and-set callers:** the `false` return collapses three distinct outcomes — the updater
+returned without calling `set` (a lost race), the updater threw (including the async-updater misuse
+case), and the IDB write itself failed. Callers that need to distinguish these must consult
+telemetry: updater-side failures log under `FluidCacheUpdateCallbackError`; IDB-write failures log
+under `FluidCachePutError`. A lost compare-and-set race is not logged.
+
 ## Clearing cache entries
 
 Whenever any Fluid content is loaded with the web cache enabled, a task is scheduled to clear out all "stale" cache
