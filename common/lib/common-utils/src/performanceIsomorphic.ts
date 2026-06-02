@@ -7,14 +7,14 @@
  * This type contains all browser performance properties as optional, and some
  * of the intersecting properties of node and browser performance as required.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export type IsomorphicPerformance = Partial<Performance> &
 	Pick<Performance, "clearMarks" | "mark" | "measure" | "now">;
 
 /**
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export const performance: IsomorphicPerformance = globalThis.performance;

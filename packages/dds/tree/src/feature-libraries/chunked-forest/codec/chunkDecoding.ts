@@ -9,6 +9,8 @@ import type {
 	OpSpaceCompressedId,
 	SessionId,
 } from "@fluidframework/id-compressor";
+import { isFinalId } from "@fluidframework/id-compressor/internal";
+import { v5 as uuidV5 } from "uuid";
 
 import { DiscriminatedUnionDispatcher } from "../../../codec/index.js";
 import type {
@@ -37,10 +39,11 @@ import {
 	decode as genericDecode,
 	readStreamIdentifier,
 } from "./chunkDecodingGeneric.js";
-import type { IncrementalDecoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalDecoder } from "./codecs.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedFieldBatchV2,
@@ -48,7 +51,9 @@ import {
 	type EncodedInlineArrayShape,
 	type EncodedNestedArrayShape,
 	type EncodedNodeShape,
+	type EncodedSpecializedNodeShape,
 	type EncodedValueShape,
+	type ShapeIndex,
 	SpecialField,
 	supportsIncrementalEncoding,
 } from "./format/index.js";
@@ -59,13 +64,32 @@ export interface IdDecodingContext {
 	 * The creator of any local Ids to be decoded.
 	 */
 	originatorId: SessionId;
+	/**
+	 * {@inheritdoc FieldBatchEncodingContext.isSummary}
+	 */
+	isSummary: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
+	 */
+	healUnresolvableIdentifiersOnDecode?: boolean;
+	/**
+	 * See {@link FieldBatchEncodingContext.sharedObjectId}.
+	 */
+	sharedObjectId?: string;
 }
+
+/**
+ * Random v4 UUID generated as a namespace for the "heal an unresolvable identifier into a stable UUID"
+ * path in {@link readValue}. This scheme requires consensus across all clients to function.
+ */
+const healingNamespace = "f8a89df3-6882-400f-b913-4c1f6f0157bd";
+
 /**
  * Decode `chunk` into a TreeChunk.
  */
 export function decode(
 	chunk: EncodedFieldBatchV1OrV2,
-	idDecodingContext: { idCompressor: IIdCompressor; originatorId: SessionId },
+	idDecodingContext: IdDecodingContext,
 	incrementalDecoder?: IncrementalDecoder,
 ): TreeChunk[] {
 	return genericDecode(
@@ -76,9 +100,137 @@ export function decode(
 	);
 }
 
+/**
+ * Resolves `shapeIndex` to a fully-resolved {@link EncodedNodeShape}, normalizing away any
+ * specialized node shapes (`f`) along the way by applying their overlays via
+ * {@link applySpecialization} until a concrete node shape is reached.
+ *
+ * @param input - The index of the shape to resolve, which must be a concrete or specialized node shape.
+ * @param context - The decoding context containing the shape definitions.
+ * @param pendingResolution - (Internal) A set of shape indices visited so far in the current resolution chain, used to detect cycles in the specialization chain. Most callers should not provide this argument.
+ *
+ * @remarks
+ * Exported for testing.
+ */
+export function normalizeToNodeShape(
+	input: EncodedNodeShape | EncodedSpecializedNodeShape,
+	context: DecoderContext<EncodedChunkShape>,
+	pendingResolution: Set<ShapeIndex> = new Set(),
+): EncodedNodeShape {
+	if (!("base" in input)) {
+		return input;
+	}
+
+	const baseIndex = input.base;
+	assert(!pendingResolution.has(baseIndex), 0xcfb /* cyclic specialized node shape chain */);
+	pendingResolution.add(baseIndex);
+	const encoded = context.shapes[baseIndex];
+	assert(encoded !== undefined, 0xcfc /* shape index out of bounds */);
+
+	const baseShape = encoded.c ?? ("f" in encoded ? encoded.f : undefined);
+	assert(
+		baseShape !== undefined,
+		0xcfd /* shape at index must be a concrete (c) or specialized (f) node shape */,
+	);
+
+	return applySpecialization(
+		normalizeToNodeShape(baseShape, context, pendingResolution),
+		input,
+		context,
+	);
+}
+
+/**
+ * Produces a specialized {@link EncodedNodeShape} by overlaying `overrides` onto `base`.
+ *
+ * See {@link EncodedSpecializedNodeShape} for the override/inherit/clear semantics.
+ *
+ * @remarks
+ * Exported for testing.
+ */
+export function applySpecialization(
+	base: EncodedNodeShape,
+	overrides: EncodedSpecializedNodeShape,
+	context: DecoderContext<EncodedChunkShape>,
+): EncodedNodeShape {
+	const fields = [...(base.fields ?? [])];
+	const indexFromKey = new Map<FieldKey, number>();
+	for (const [i, [keyEncoded]] of fields.entries()) {
+		const key = context.identifier<FieldKey>(keyEncoded);
+		assert(!indexFromKey.has(key), 0xcfe /* duplicate field key in base node shape */);
+		indexFromKey.set(key, i);
+	}
+
+	// Replace fields in base with overrides, append new keys in overrides in the order they are specified.
+	const seenOverrideKeys = new Set<FieldKey>();
+	for (const [keyEncoded, shapeIndex] of overrides.fields ?? []) {
+		const key = context.identifier<FieldKey>(keyEncoded);
+		assert(
+			!seenOverrideKeys.has(key),
+			0xcff /* duplicate field key in specialized node shape */,
+		);
+		seenOverrideKeys.add(key);
+		const existingIndex = indexFromKey.get(key);
+		if (existingIndex === undefined) {
+			fields.push([keyEncoded, shapeIndex]);
+		} else {
+			const index = fields[existingIndex];
+			assert(index !== undefined, 0xd00 /* expected existing field index */);
+			fields[existingIndex] = [index[0], shapeIndex];
+		}
+	}
+
+	return {
+		type: base.type,
+		value: resolveOverride(overrides.value, base.value),
+		fields: fields.length > 0 ? fields : undefined,
+		extraFields: resolveOverride(overrides.extraFields, base.extraFields),
+	};
+}
+
+/**
+ * Resolves an override against a base value.
+ *
+ * @param override - `undefined` means the override is absent (inherit from base); `null` is the
+ * explicit-clear sentinel needed because JSON.stringify drops `undefined`-valued properties, making
+ * property-presence indistinguishable from absent on the wire.
+ * @param baseValue - The value to inherit when the override is absent.
+ */
+function resolveOverride<T>(
+	// eslint-disable-next-line @rushstack/no-new-null
+	override: T | null | undefined,
+	baseValue: T | undefined,
+): T | undefined {
+	if (override === undefined) {
+		return baseValue;
+	}
+	if (override === null) {
+		return undefined;
+	}
+	return override;
+}
+
+/**
+ * Decoder for {@link EncodedSpecializedNodeShape}s.
+ * Applies the specialization's field overrides to the resolved base node shape, then delegates
+ * to a {@link NodeDecoder} built from the resulting shape.
+ */
+export class SpecializedNodeDecoder implements ChunkDecoder {
+	private readonly inner: NodeDecoder;
+	public constructor(
+		shape: EncodedSpecializedNodeShape,
+		context: DecoderContext<EncodedChunkShape>,
+	) {
+		this.inner = new NodeDecoder(normalizeToNodeShape(shape, context), context);
+	}
+	public decode(decoders: readonly ChunkDecoder[], stream: StreamCursor): TreeChunk {
+		return this.inner.decode(decoders, stream);
+	}
+}
+
 const decoderLibrary = new DiscriminatedUnionDispatcher<
-	EncodedChunkShapeV1OrV2,
-	[context: DecoderContext<EncodedChunkShapeV1OrV2>],
+	EncodedChunkShape,
+	[context: DecoderContext<EncodedChunkShape>],
 	ChunkDecoder
 >({
 	a(shape: EncodedNestedArrayShape, context): ChunkDecoder {
@@ -98,6 +250,9 @@ const decoderLibrary = new DiscriminatedUnionDispatcher<
 		context: DecoderContext<EncodedChunkShapeV2>,
 	): ChunkDecoder {
 		return new IncrementalChunkDecoder(context);
+	},
+	f(shape: EncodedSpecializedNodeShape, context): ChunkDecoder {
+		return new SpecializedNodeDecoder(shape, context);
 	},
 });
 
@@ -126,15 +281,45 @@ export function readValue(
 				typeof streamValue === "number" || typeof streamValue === "string",
 				0x997 /* identifier must be string or number. */,
 			);
+			if (typeof streamValue === "string") {
+				return streamValue;
+			}
 			const idCompressor = idDecodingContext.idCompressor;
-			return typeof streamValue === "number"
-				? idCompressor.decompress(
-						idCompressor.normalizeToSessionSpace(
-							streamValue as OpSpaceCompressedId,
-							idDecodingContext.originatorId,
-						),
-					)
-				: streamValue;
+			// OpSpaceCompressedIds are negative, and require a session-id to compute their value.
+			// Due to a bug, we have some special casing for them (see below).
+			if (
+				idDecodingContext.isSummary === true &&
+				!isFinalId(streamValue as OpSpaceCompressedId)
+			) {
+				if (
+					idDecodingContext.healUnresolvableIdentifiersOnDecode === true &&
+					idDecodingContext.sharedObjectId !== undefined
+				) {
+					// Documents written before the encode-side fix for non-finalized identifier
+					// values can persist negative op-space IDs that are no
+					// longer resolvable once the originating session's local state has been stripped.
+					// When loading such a summary with the heal-on-decode option on, synthesize a deterministic
+					// stable UUID so all readers of the same blob agree on the resulting value.
+					//
+					// The heal path is intentionally restricted to summary loads — an
+					// unresolvable ID encountered while applying an op should still surface as
+					// an error, since it indicates a real bug rather than a recoverable state.
+					return uuidV5(
+						`${idDecodingContext.sharedObjectId}|${streamValue}`,
+						healingNamespace,
+					);
+				}
+				// See `SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode` for details on this error.
+				throw new Error(
+					"Summary could not be loaded due incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",
+				);
+			}
+			return idCompressor.decompress(
+				idCompressor.normalizeToSessionSpace(
+					streamValue as OpSpaceCompressedId,
+					idDecodingContext.originatorId,
+				),
+			);
 		} else {
 			// EncodedCounter case:
 			unreachableCase(shape, "decoding values as deltas is not yet supported");
@@ -300,7 +485,7 @@ type BasicFieldDecoder = (
  * Get a decoder for fields of a provided (via `shape` and `context`).
  */
 function fieldDecoder(
-	context: DecoderContext<EncodedChunkShapeV1OrV2>,
+	context: DecoderContext<EncodedChunkShape>,
 	key: FieldKey,
 	shape: number,
 ): BasicFieldDecoder {
@@ -319,7 +504,7 @@ export class NodeDecoder implements ChunkDecoder {
 	private readonly fieldDecoders: readonly BasicFieldDecoder[];
 	public constructor(
 		private readonly shape: EncodedNodeShape,
-		private readonly context: DecoderContext<EncodedChunkShapeV1OrV2>,
+		private readonly context: DecoderContext<EncodedChunkShape>,
 	) {
 		this.type = shape.type === undefined ? undefined : context.identifier(shape.type);
 

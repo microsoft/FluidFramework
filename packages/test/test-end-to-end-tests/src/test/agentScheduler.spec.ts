@@ -26,14 +26,12 @@ const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
 
 describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => {
 	const getContainerRuntimeFactory = (forLoad: boolean): fluidEntryPoint => {
-		const runtime =
-			forLoad && apis.containerRuntimeForLoading !== undefined
-				? apis.containerRuntimeForLoading.ContainerRuntime
-				: apis.containerRuntime.ContainerRuntime;
-		const agentSchedulerFactory =
-			forLoad && apis.dataRuntimeForLoading !== undefined
-				? apis.dataRuntimeForLoading?.packages.agentScheduler.AgentSchedulerFactory
-				: apis.dataRuntime.packages.agentScheduler.AgentSchedulerFactory;
+		const runtime = forLoad
+			? apis.containerRuntimeForLoading.ContainerRuntime
+			: apis.containerRuntime.ContainerRuntime;
+		const agentSchedulerFactory = forLoad
+			? apis.dataRuntimeForLoading.packages.agentScheduler.AgentSchedulerFactory
+			: apis.dataRuntime.packages.agentScheduler.AgentSchedulerFactory;
 
 		const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(runtime);
 		return {

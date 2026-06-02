@@ -129,7 +129,8 @@
 			"serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).",
 			"express: overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.",
 			"@azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0 is API-compatible within the ^4.3.0 range it declares.",
-			"picomatch: overridden to patched versions to resolve a known security vulnerability."
+			"picomatch: overridden to patched versions to resolve a known security vulnerability.",
+			"lodash-es: overridden to ^4.18.1 to resolve a CG alert against lodash-es 4.17.21 (transitive via Docusaurus/quill)."
 		],
 		"overrides": {
 			"@azure/identity": "^4.13.0",
@@ -138,6 +139,7 @@
 			"js-yaml@<4": "^3.14.2",
 			"js-yaml@>=4": "^4.1.1",
 			"jws": "^3.2.3",
+			"lodash-es": "^4.18.1",
 			"mdast-util-to-hast": "^13.2.1",
 			"node-forge": "^1.4.0",
 			"qs": "^6.15.0",

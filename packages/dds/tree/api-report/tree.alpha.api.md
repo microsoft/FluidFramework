@@ -1247,7 +1247,9 @@ export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecW
 }
 
 // @beta @input
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+    readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 // @alpha @sealed
 export interface SimpleAllowedTypeAttributes<out Type extends SchemaType = SchemaType> {
@@ -1585,16 +1587,35 @@ export namespace TableSchema {
 
 // @alpha
 export namespace TextAsTree {
+    // @sealed
     export interface Members {
         characterCount(): number;
         characters(): Iterable<string>;
         charactersCopy(): string[];
         fullString(): string;
         insertAt(index: number, additionalCharacters: string): void;
+        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
         removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
     }
     export interface Statics {
         fromString(value: string): Tree;
+    }
+    // @sealed
+    export interface TextInsertOp {
+        readonly text: string;
+        readonly type: "insert";
+    }
+    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+    // @sealed
+    export interface TextRemoveOp {
+        readonly count: number;
+        readonly type: "remove";
+    }
+    // @sealed
+    export interface TextRetainOp {
+        readonly count: number;
+        readonly formattingChanged?: boolean;
+        readonly type: "retain";
     }
     const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
     export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
