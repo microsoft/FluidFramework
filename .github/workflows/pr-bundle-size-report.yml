@@ -3,6 +3,12 @@ name: pr-bundle-size-report
 # This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment,
 # label, and check entry.
 #
+# Triggers:
+#   pull_request_target: handle the PR directly when it opens, synchronizes, or reopens.
+#   check_run:           fires when ADO publishes the `Build - Client bundle size artifacts` check on a commit.
+#                        The route job maps the check's SHA to affected PRs (PR-head match OR merge-base match)
+#                        and the compare job fans out via matrix.
+#
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
 # here because this workflow never executes PR-authored code: it checks out the PR's BASE branch (not PR HEAD),
@@ -12,34 +18,106 @@ on:
   pull_request_target:
     types: [opened, synchronize, reopened]
     branches: [main, "release/**/*"]
+  check_run:
+    types: [completed]
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
-  compare:
+  route:
+    # Short-circuit check_run events that aren't the bundle-size pipeline completing successfully.
+    # GitHub doesn't let us filter check_run events by name at the `on:` level, so we do it here.
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      (github.event_name == 'check_run' &&
+       github.event.check_run.name == 'Build - Client bundle size artifacts' &&
+       github.event.check_run.conclusion == 'success')
     runs-on: ubuntu-latest
+    outputs:
+      prs: ${{ steps.collect.outputs.prs }}
     steps:
-      # Check out the BASE branch (typically main) — never PR HEAD. We need
-      # full history so `git merge-base` can find the common ancestor.
+      # We need git history on `main` to compute merge-bases for the check_run path.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
+          ref: main
           fetch-depth: "0"
           persist-credentials: false
 
-      # Fetch the PR head as an object so merge-base can resolve it. This
-      # doesn't check it out or execute anything from it.
+      - name: Collect affected PRs
+        id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
+            # Easy case: the event already names the PR.
+            printf 'prs=[{"number":%d,"head":"%s","baseRef":"%s"}]\n' \
+              "${{ github.event.pull_request.number }}" \
+              "${{ github.event.pull_request.head.sha }}" \
+              "${{ github.event.pull_request.base.ref }}" \
+              >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # check_run case: map the check's SHA back to affected open PRs.
+          # A PR is affected if either its head SHA matches (PR build finished)
+          # or its merge-base with main matches (baseline build finished).
+          SHA="${{ github.event.check_run.head_sha }}"
+          PRS_JSON=$(gh pr list --state open --base main \
+            --json number,headRefOid,baseRefName --limit 200)
+
+          # PR-head match
+          HEAD_MATCH=$(echo "$PRS_JSON" | jq -c \
+            "[.[] | select(.headRefOid == \"$SHA\") | {number, head: .headRefOid, baseRef: .baseRefName}]")
+          if [ "$HEAD_MATCH" != "[]" ]; then
+            echo "prs=$HEAD_MATCH" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Merge-base match: SHA is on main; find PRs whose divergence point is this SHA.
+          AFFECTED='[]'
+          while IFS= read -r pr; do
+            PR_NUM=$(echo "$pr" | jq -r '.number')
+            PR_HEAD=$(echo "$pr" | jq -r '.headRefOid')
+            # Make the PR head available locally so we can compute merge-base.
+            git fetch --quiet origin "refs/pull/$PR_NUM/head" 2>/dev/null || continue
+            MB=$(git merge-base "$PR_HEAD" HEAD 2>/dev/null || true)
+            if [ "$MB" = "$SHA" ]; then
+              AFFECTED=$(echo "$AFFECTED" | jq -c ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"main\"}]")
+            fi
+          done < <(echo "$PRS_JSON" | jq -c '.[]')
+          echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
+
+  compare:
+    needs: route
+    if: needs.route.outputs.prs != '[]'
+    strategy:
+      matrix:
+        pr: ${{ fromJSON(needs.route.outputs.prs) }}
+      fail-fast: false
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the PR's base branch — never PR HEAD. Full history for `git merge-base`.
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+        with:
+          ref: ${{ matrix.pr.baseRef }}
+          fetch-depth: "0"
+          persist-credentials: false
+
+      # Fetch the PR head as an object so merge-base can resolve it. Never checks it out or executes anything from it.
       - name: Fetch PR head
-        run: git fetch origin refs/pull/${{ github.event.pull_request.number }}/head
+        run: git fetch origin refs/pull/${{ matrix.pr.number }}/head
 
       - name: Compute merge-base
         id: merge-base
         run: |
-          MERGE_BASE=$(git merge-base ${{ github.event.pull_request.head.sha }} HEAD)
+          MERGE_BASE=$(git merge-base ${{ matrix.pr.head }} HEAD)
           echo "sha=$MERGE_BASE" >> "$GITHUB_OUTPUT"
-          echo "Merge-base: $MERGE_BASE"
+          echo "Merge-base for PR #${{ matrix.pr.number }}: $MERGE_BASE"
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
@@ -64,5 +142,5 @@ jobs:
         run: |
           flub report comparePipelineBundleArtifacts \
             --base ${{ steps.merge-base.outputs.sha }} \
-            --head ${{ github.event.pull_request.head.sha }} \
+            --head ${{ matrix.pr.head }} \
             --json | tee bundle-comparison.json
