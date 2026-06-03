@@ -163,7 +163,7 @@ export async function renderApiDocumentation(inputDir, outputDir, uriRootDir, ap
 				// TODO: Also skip `@fluid-internal` packages once we no longer have public, user-facing APIs that reference their contents.
 				if (
 					["@fluid-example", "@fluid-experimental", "@fluid-private"].includes(
-						packageScope
+						packageScope,
 					)
 				) {
 					return true;
