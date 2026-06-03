@@ -2187,6 +2187,14 @@ export class ContainerRuntime
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+			// Number of ops since the last summary that this client is aware of (including ops still
+			// queued for processing). Computed as the gap between the latest known op sequence number
+			// and the sequence number of the message at which the last summary was taken (per snapshot
+			// metadata). Falls back to lastKnownSeqNumber when no prior summary message is recorded
+			// (e.g. new container or older snapshot without metadata).
+			numUnsummarizedOps:
+				this.deltaManager.lastKnownSeqNumber -
+				(this.messageAtLastSummary?.sequenceNumber ?? 0),
 			minVersionForCollab: this.minVersionForCollab,
 			// logging hardware telemetry
 			deviceSpec: { ...getDeviceSpec() },
