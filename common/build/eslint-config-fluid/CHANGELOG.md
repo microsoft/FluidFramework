@@ -1,6 +1,6 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## vNext
+## [13.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v13.0.0)
 
 ### Restrict the named `Type` import from `@sinclair/typebox`
 
