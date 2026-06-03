@@ -36,10 +36,9 @@ on:
         required: true
         type: number
       repo:
-        description: Repository the PR lives in (full slug, e.g. microsoft/FluidFramework). Defaults to the current repo, but can be overridden when testing from a fork.
+        description: Repository the PR lives in (full slug, e.g. microsoft/FluidFramework). Leave blank to use the current repo; override when testing from a fork.
         required: false
         type: string
-        default: ${{ github.repository }}
 
 # Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
 # in-progress runs in the same group so the latest event wins on the sticky comment.
@@ -163,6 +162,11 @@ jobs:
           set -euo pipefail
           PR_NUM='${{ github.event.inputs.pr_number }}'
           REPO='${{ github.event.inputs.repo }}'
+          # Fall back to the current repo when the input is blank — `${{ github.* }}` expressions
+          # aren't allowed in workflow_dispatch.inputs.default, so we handle the default here.
+          if [ -z "$REPO" ]; then
+            REPO="$GITHUB_REPOSITORY"
+          fi
           PR_INFO=$(gh pr view "$PR_NUM" --repo "$REPO" --json headRefOid,baseRefName)
           PR_HEAD=$(echo "$PR_INFO" | jq -r '.headRefOid')
           PR_BASE_REF=$(echo "$PR_INFO" | jq -r '.baseRefName')
