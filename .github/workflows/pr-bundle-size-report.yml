@@ -182,22 +182,60 @@ jobs:
             --head ${{ matrix.pr.head }} \
             --json | tee bundle-comparison.json
 
-      - name: Post results (stub)
+      # Format the JSON into the markdown body the sticky comment would post. Done here (not in flub) so
+      # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
+      # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
+      # would contain without actually posting it.
+      - name: Render results (stub)
         run: |
           set -euo pipefail
-          echo "PR #${{ matrix.pr.number }}: would post bundle-size results sticky here, sourced from bundle-comparison.json."
+          jq -r '
+            def fmt_delta($d):
+              if $d > 0 then "+\($d)" else "\($d)" end;
+            . as $root
+            | [
+                "## Bundle size comparison",
+                "",
+                "Base commit: `\($root.baseCommit)`",
+                "Head commit: `\($root.headCommit)`",
+                ""
+              ]
+              + (
+                  [
+                    $root.comparison | to_entries[]
+                    | .key as $pkg
+                    | .value
+                    | [
+                        to_entries[]
+                        | .key as $bundle
+                        | .value as $cmp
+                        | if ($cmp.base == null and $cmp.compare != null) then
+                            "- `\($bundle)`: **added** (parsed \($cmp.compare.parsedSize), gzip \($cmp.compare.gzipSize))"
+                          elif ($cmp.compare == null and $cmp.base != null) then
+                            "- `\($bundle)`: **removed** (was parsed \($cmp.base.parsedSize), gzip \($cmp.base.gzipSize))"
+                          elif ($cmp.base.parsedSize != $cmp.compare.parsedSize or $cmp.base.gzipSize != $cmp.compare.gzipSize) then
+                            ($cmp.compare.parsedSize - $cmp.base.parsedSize) as $dp
+                            | ($cmp.compare.gzipSize - $cmp.base.gzipSize) as $dg
+                            | "- `\($bundle)`: parsed " + fmt_delta($dp) + ", gzip " + fmt_delta($dg)
+                          else empty end
+                      ] as $lines
+                    | if ($lines | length) > 0 then
+                        ["### `\($pkg)`", ""] + $lines + [""]
+                      else empty end
+                  ]
+                  | add // ["No bundle-size changes."]
+                )
+            | .[]
+          ' bundle-comparison.json > bundle-comparison.md
+
+          echo "PR #${{ matrix.pr.number }}: would post the following body as a sticky comment."
           echo
-          echo "Base commit: ${{ matrix.pr.mergeBase }}"
-          echo "Head commit: ${{ matrix.pr.head }}"
-          echo
-          echo "Comparison JSON:"
-          jq '.' bundle-comparison.json
+          echo "--- bundle-comparison.md ---"
+          cat bundle-comparison.md
+          echo "--- end ---"
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
       #     header: bundle-size-report
       #     number: ${{ matrix.pr.number }}
-      #     # `path:` makes the action read the message body from a file, so we can render the formatted
-      #     # comparison from the JSON in a preceding step (TBD — `flub` may grow a `format` subcommand
-      #     # or the rendering may live inline in YAML/jq).
       #     path: ${{ github.workspace }}/bundle-comparison.md
