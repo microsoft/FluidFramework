@@ -4,7 +4,9 @@ name: pr-bundle-size-report
 # label, and check entry.
 #
 # Triggers:
-#   pull_request_target: handle the PR directly when it opens, synchronizes, or reopens.
+#   pull_request_target: kept as a trigger so a future "acknowledge-pr" job can post the initial sticky comment
+#                        ("comparison pending build…") on PR open/sync/reopen. The comparison itself can't run on
+#                        this event because the PR-side ADO build will have just kicked off.
 #   check_run:           fires when ADO publishes either of the two bundle-publishing checks on a commit.
 #                        `Build - Client bundle size artifacts` runs on main/release pushes (baseline-side bundle
 #                        becomes available). `Build - client packages` runs on PR commits (head-side bundle becomes
@@ -34,15 +36,37 @@ permissions:
   pull-requests: read
 
 jobs:
+  # Acknowledge the PR on open/sync/reopen with the initial "comparison pending" sticky comment. The actual sticky
+  # post is stubbed out below until comment-posting wiring lands — for now this job only logs the intent so the
+  # workflow has a visible per-event signal that the pull_request_target trigger is firing as expected.
+  acknowledge-pr:
+    if: github.event_name == 'pull_request_target'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Acknowledge (stub)
+        run: |
+          echo "PR #${{ github.event.pull_request.number }} (${{ github.event.action }}) — would post initial 'comparison pending' sticky here."
+      # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+      # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+      #   with:
+      #     header: bundle-size-report
+      #     number: ${{ github.event.pull_request.number }}
+      #     message: |
+      #       ## Bundle size comparison
+      #
+      #       Waiting for the ADO bundle-size build to complete. Will update with results when available.
+
   identify-targets:
-    # Short-circuit check_run events that aren't one of the two bundle-publishing pipelines completing
-    # successfully. GitHub doesn't let us filter check_run events by name at the `on:` level, so we do it here.
+    # Only fires on check_run completions for one of the two bundle-publishing pipelines. GitHub doesn't let us filter
+    # check_run events by name at the `on:` level, so we do it here. pull_request_target intentionally skips this job
+    # (compare auto-skips downstream as a result).
     if: >-
-      github.event_name == 'pull_request_target' ||
-      (github.event_name == 'check_run' &&
-       (github.event.check_run.name == 'Build - Client bundle size artifacts' ||
-        github.event.check_run.name == 'Build - client packages') &&
-       github.event.check_run.conclusion == 'success')
+      github.event_name == 'check_run' &&
+      (github.event.check_run.name == 'Build - Client bundle size artifacts' ||
+       github.event.check_run.name == 'Build - client packages') &&
+      github.event.check_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
@@ -68,32 +92,10 @@ jobs:
             echo "$mb"
           }
 
-          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
-            # Easy case: the event already names the PR.
-            PR_NUM='${{ github.event.pull_request.number }}'
-            HEAD_SHA='${{ github.event.pull_request.head.sha }}'
-            BASE_REF='${{ github.event.pull_request.base.ref }}'
-            MB=$(compute_mb "$BASE_REF" "$HEAD_SHA")
-            if [ -z "$MB" ]; then
-              echo "Could not compute merge-base for PR #$PR_NUM (base=$BASE_REF, head=$HEAD_SHA); skipping." >&2
-              echo "prs=[]" >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            PRS=$(jq -n -c \
-              --argjson n "$PR_NUM" \
-              --arg h "$HEAD_SHA" \
-              --arg b "$BASE_REF" \
-              --arg mb "$MB" \
-              '[{number: $n, head: $h, baseRef: $b, mergeBase: $mb}]')
-            echo "prs=$PRS" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          # check_run case: map the check's SHA back to affected open PRs.
-          # A PR is affected if either its head SHA matches (PR build finished)
-          # or its merge-base with its base branch matches (baseline build finished).
-          # Only consider PRs targeting branches the pull_request_target trigger also covers,
-          # so the two trigger surfaces agree on which PRs are in scope.
+          # Map the check's SHA back to affected open PRs. A PR is affected if either its head SHA matches (PR build
+          # finished) or its merge-base with its base branch matches (baseline build finished). Only consider PRs
+          # targeting branches the pull_request_target trigger also covers, so the two trigger surfaces agree on which
+          # PRs are in scope.
           SHA="${{ github.event.check_run.head_sha }}"
           PR_LIST_LIMIT=500
           PRS_JSON=$(gh pr list --state open \
@@ -131,6 +133,8 @@ jobs:
 
   compare:
     needs: identify-targets
+    # Auto-skips when identify-targets is skipped (e.g. on pull_request_target events) per GitHub Actions'
+    # default `needs:` behavior. The `prs != '[]'` guard handles the check_run case where no PRs are affected.
     if: needs.identify-targets.outputs.prs != '[]'
     strategy:
       matrix:
