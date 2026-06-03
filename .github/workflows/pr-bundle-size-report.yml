@@ -35,6 +35,11 @@ on:
         description: PR number to compare (manual testing)
         required: true
         type: number
+      repo:
+        description: Repository the PR lives in (full slug, e.g. microsoft/FluidFramework). Defaults to the current repo, but can be overridden when testing from a fork.
+        required: false
+        type: string
+        default: ${{ github.repository }}
 
 # Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
 # in-progress runs in the same group so the latest event wins on the sticky comment.
@@ -157,16 +162,17 @@ jobs:
         run: |
           set -euo pipefail
           PR_NUM='${{ github.event.inputs.pr_number }}'
-          PR_INFO=$(gh pr view "$PR_NUM" --json headRefOid,baseRefName)
+          REPO='${{ github.event.inputs.repo }}'
+          PR_INFO=$(gh pr view "$PR_NUM" --repo "$REPO" --json headRefOid,baseRefName)
           PR_HEAD=$(echo "$PR_INFO" | jq -r '.headRefOid')
           PR_BASE_REF=$(echo "$PR_INFO" | jq -r '.baseRefName')
-          MB=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PR_BASE_REF...$PR_HEAD" \
+          MB=$(gh api "repos/$REPO/compare/$PR_BASE_REF...$PR_HEAD" \
             --jq '.merge_base_commit.sha' 2>/dev/null || true)
           if [ "$MB" = "null" ]; then
             MB=""
           fi
           if [ -z "$MB" ]; then
-            echo "Could not compute merge-base for PR #$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
+            echo "Could not compute merge-base for PR $REPO#$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
             echo "prs=[]" >> "$GITHUB_OUTPUT"
             exit 0
           fi
