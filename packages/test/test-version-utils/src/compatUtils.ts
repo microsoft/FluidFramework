@@ -13,10 +13,7 @@ import { FluidTestDriverConfig, createFluidTestDriver } from "@fluid-private/tes
 import { FluidObject, IFluidLoadable, IRequest } from "@fluidframework/core-interfaces";
 import { IFluidHandleContext, type IResponse } from "@fluidframework/core-interfaces/internal";
 import { unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	IFluidDataStoreRuntime,
-	IChannelFactory,
-} from "@fluidframework/datastore-definitions/internal";
+import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	IContainerRuntimeBase,
@@ -27,7 +24,6 @@ import {
 import {
 	ITestContainerConfig,
 	DataObjectFactoryType,
-	ChannelFactoryRegistry,
 	createTestContainerRuntimeFactory,
 	TestObjectProvider,
 	TestObjectProviderWithVersionedLoad,
@@ -114,32 +110,8 @@ function createGetDataStoreFactoryFunction(
 		}
 	}
 
-	const registryMapping = {};
-	for (const value of Object.values(api.dds)) {
-		/**
-		 * Skip dds that may not be available in this version of the api.
-		 * Not all versions have all dds. See {@link PackageToInstall} for details.
-		 */
-		if (value?.getFactory === undefined) {
-			continue;
-		}
-		registryMapping[value.getFactory().type] = value.getFactory();
-	}
-
-	function convertRegistry(registry: ChannelFactoryRegistry = []): ChannelFactoryRegistry {
-		const oldRegistry: [string | undefined, IChannelFactory][] = [];
-		for (const [key, factory] of registry) {
-			const oldFactory = registryMapping[factory.type];
-			if (oldFactory === undefined) {
-				throw Error(`Invalid or unimplemented channel factory: ${factory.type}`);
-			}
-			oldRegistry.push([key, oldFactory]);
-		}
-		return oldRegistry;
-	}
-
 	return function (containerOptions?: ITestContainerConfig): IFluidDataStoreFactory {
-		const registry = convertRegistry(containerOptions?.registry);
+		const registry = containerOptions?.registry ?? [];
 		const fluidDataObjectType = containerOptions?.fluidDataObjectType;
 		switch (fluidDataObjectType) {
 			case undefined:

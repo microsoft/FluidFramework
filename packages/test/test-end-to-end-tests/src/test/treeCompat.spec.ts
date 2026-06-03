@@ -15,7 +15,6 @@ import {
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 import type { ITree } from "@fluidframework/tree";
-import { lt } from "semver";
 
 const treeId = "sharedTree";
 const baseTestContainerConfig: ITestContainerConfig = {
@@ -76,13 +75,13 @@ describeCompat(
 
 		beforeEach(function () {
 			provider = getTestObjectProvider();
-			// SharedTree was added in version 2.0.0. Skip all cross-client compat tests in this suite for older versions.
-			if (apis.mode === "CrossClientCompat") {
-				const version = apis.dataRuntime.version;
-				const versionForLoading = apis.dataRuntimeForLoading.version;
-				if (lt(version, "2.0.0") || lt(versionForLoading, "2.0.0")) {
-					this.skip();
-				}
+			// SharedTree was added in version 2.0.0. In previous versions, it is not available.
+			// If either the creating or loading version APIs don't have the tree package, skip the test.
+			if (
+				apis.dataRuntime.packages.tree === undefined ||
+				apis.dataRuntimeForLoading.packages.tree === undefined
+			) {
+				this.skip();
 			}
 		});
 
