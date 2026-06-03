@@ -122,3 +122,5 @@ steps:
       # Disable minimum release age checks in CI to avoid false positives.
       echo "Disabling pnpm minimumReleaseAge check as workaround for npm mirror publish time issues"
       echo "##vso[task.setvariable variable=PNPM_CONFIG_MINIMUM_RELEASE_AGE]0"
+      # workspace-concurrency 0 means use the CPU core count. This is better than the default (4) for larger agents.
+      pnpm config set -g workspace-concurrency 0
