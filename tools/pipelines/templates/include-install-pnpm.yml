@@ -118,7 +118,7 @@ steps:
       # Disable pnpm trust downgrade checks in CI as a workaround.
       echo "Disabling pnpm trust policy as workaround for npm mirror limitations"
       echo "##vso[task.setvariable variable=PNPM_CONFIG_TRUST_POLICY]off"
-      # Some mirrored registries also have unreliable publish timestamps.
+      # Our mirrored registries also have unreliable publish timestamps.
       # Disable minimum release age checks in CI to avoid false positives.
       echo "Disabling pnpm minimumReleaseAge check as workaround for npm mirror publish time issues"
       echo "##vso[task.setvariable variable=PNPM_CONFIG_MINIMUM_RELEASE_AGE]0"
