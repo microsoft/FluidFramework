@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { BenchmarkType, benchmark } from "@fluid-tools/benchmark";
+import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import { EmptyKey, type ITreeCursorSynchronous } from "../../../core/index.js";
@@ -66,6 +66,27 @@ describe("uniformChunk", () => {
 				validateShape(tree.dataFactory().shape);
 			});
 		}
+
+		it("withTopLevelLength caches ChunkShapes for small topLevelLength values", () => {
+			const shape = new TreeShape(brand(numberSchema.identifier), true, []);
+			// Small values (< 8) should return the same cached instance
+			const a1 = shape.withTopLevelLength(1);
+			const a2 = shape.withTopLevelLength(1);
+			assert.equal(a1, a2);
+
+			const b1 = shape.withTopLevelLength(7);
+			const b2 = shape.withTopLevelLength(7);
+			assert.equal(b1, b2);
+
+			// Different topLevelLength values should return different instances
+			assert.notEqual(a1, b1);
+
+			// Large values (>= 8) should not be cached
+			const c1 = shape.withTopLevelLength(8);
+			const c2 = shape.withTopLevelLength(8);
+			assert.notEqual(c1, c2);
+		});
+
 		it("shape with mayContainCompressedIds flag set to true fails if it is not a string leaf node.", () => {
 			const validShapeWithFlag = new TreeShape(brand(stringSchema.identifier), true, [], true);
 			// Test that a non string leaf node shape with mayContainCompressedIds set to true fails.
@@ -177,46 +198,47 @@ describe("uniformChunk", () => {
 
 	for (const { name: cursorName, factory } of cursorSources) {
 		describe(`${cursorName} bench`, () => {
-			let cursor: ITreeCursorSynchronous;
 			for (const { name, dataFactory: data } of testData) {
-				benchmark({
-					type: BenchmarkType.Measurement,
+				benchmarkIt({
 					title: `Sum: '${name}'`,
-					before: () => {
-						cursor = factory(data());
-					},
-					benchmarkFn: () => {
-						sum(cursor);
-					},
+					...benchmarkDuration({
+						benchmarkFnCustom: async (state) => {
+							const cursor = factory(data());
+							state.timeAllBatches(() => {
+								sum(cursor);
+							});
+						},
+					}),
 				});
 			}
 
-			benchmark({
-				type: BenchmarkType.Measurement,
+			benchmarkIt({
 				title: "Polygon access",
-				before: () => {
-					cursor = polygonTree.dataFactory().cursor();
-					cursor.enterNode(0);
-				},
-				benchmarkFn: () => {
-					let x = 0;
-					let y = 0;
-					cursor.enterField(EmptyKey);
-					for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
-						cursor.enterField(xField);
+				...benchmarkDuration({
+					benchmarkFnCustom: async (state) => {
+						const cursor = polygonTree.dataFactory().cursor();
 						cursor.enterNode(0);
-						x += cursor.value as number;
-						cursor.exitNode();
-						cursor.exitField();
-						cursor.enterField(yField);
-						cursor.enterNode(0);
-						y += cursor.value as number;
-						cursor.exitNode();
-						cursor.exitField();
-					}
-					cursor.exitField();
-					const _result = x + y;
-				},
+						state.timeAllBatches(() => {
+							let x = 0;
+							let y = 0;
+							cursor.enterField(EmptyKey);
+							for (let inNodes = cursor.firstNode(); inNodes; inNodes = cursor.nextNode()) {
+								cursor.enterField(xField);
+								cursor.enterNode(0);
+								x += cursor.value as number;
+								cursor.exitNode();
+								cursor.exitField();
+								cursor.enterField(yField);
+								cursor.enterNode(0);
+								y += cursor.value as number;
+								cursor.exitNode();
+								cursor.exitField();
+							}
+							cursor.exitField();
+							const _result = x + y;
+						});
+					},
+				}),
 			});
 		});
 	}

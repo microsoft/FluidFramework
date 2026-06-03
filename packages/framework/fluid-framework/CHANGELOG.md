@@ -1,5 +1,58 @@
 # fluid-framework
 
+## 2.102.0
+
+### Minor Changes
+
+- Promote `onAssertionFailure` to `@beta` ([#27282](https://github.com/microsoft/FluidFramework/pull/27282)) [4191b82e41](https://github.com/microsoft/FluidFramework/commit/4191b82e418cdd908300350dcbde1b8b552f8186)
+
+  The `onAssertionFailure` hook, previously `@alpha`, has been promoted to `@beta`.
+  It allows registering a handler that is invoked when an assertion failure occurs, which is useful for capturing the first error in a sequence before subsequent failures obscure the root cause.
+
+  ```typescript
+  import { onAssertionFailure } from "@fluidframework/core-utils/beta";
+
+  let firstAssertion: Error | undefined;
+  const unregister = onAssertionFailure((error) => {
+    firstAssertion ??= error;
+  });
+  ```
+
+## 2.101.0
+
+### Minor Changes
+
+- Add SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode to recover documents with corrupted identifiers ([#27281](https://github.com/microsoft/FluidFramework/pull/27281)) [d9205ddcd6a](https://github.com/microsoft/FluidFramework/commit/d9205ddcd6a9f0ec11d5422b38e30a6a91a9258c)
+
+  A SharedTree bug can result in corrupted documents due to their attach summary compressing identifier-field values in a way that cannot be uncompressed.
+  This bug manifested as remote clients processing the op throwing an error with the message "Unknown op space ID.".
+
+  This change adds an option (`healUnresolvableIdentifiersOnDecode`) to `configuredSharedTreeBetaLegacy` which will allow documents affected by this bug to load again when enabled.
+  Enabling this option carries some risk, see documentation on the interface itself for more details.
+
+  #### Who is affected
+
+  Only SharedTrees attached to a container that was already attached can be impacted.
+  Furthermore, this bug only occurs when the attached tree contains [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) fields which contain implicitly generated default values.
+
+- Fix a SharedTree document corruption bug ([#27292](https://github.com/microsoft/FluidFramework/pull/27292)) [6f4cdcb7a0a](https://github.com/microsoft/FluidFramework/commit/6f4cdcb7a0a76ba215a361c7b3a12943750fe286)
+
+  A SharedTree bug which could corrupt documents when attaching them to containers has been fixed.
+  See `healUnresolvableIdentifiersOnDecode` on `configuredSharedTreeBetaLegacy` for a potential mitigation path for documents that were already corrupted by this bug.
+
+  #### Who is affected
+
+  Only SharedTrees attached to a container that was already attached can be impacted.
+  Furthermore, this bug only occurs when the attached tree contains [`identifier`](https://fluidframework.com/docs/api/tree/schemafactory-class#identifier-property) fields which contain implicitly generated default values.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 ### Minor Changes
@@ -21,6 +74,22 @@
 
   `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
   This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
+
+- Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c118](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
+
+  The following APIs have been promoted from `@alpha` to `@beta`:
+  - `TreeIndex`
+  - `TreeIndexKey`
+  - `TreeIndexNodes`
+  - `createTreeIndex`
+  - `IdentifierIndex`
+  - `createIdentifierIndex`
+
+  Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
+  - `FluidReadonlyMap`
+  - `FluidIterable`
+  - `FluidIterableIterator`
+  - `FluidMap`
 
 ## 2.92.0
 

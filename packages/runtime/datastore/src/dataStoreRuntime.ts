@@ -29,7 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -64,7 +63,6 @@ import {
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
 	type MinimumVersionForCollab,
-	asLegacyAlpha,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -80,22 +78,26 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { type IChannelContext, summarizeChannel } from "./channelContext.js";
@@ -354,7 +356,7 @@ export class FluidDataStoreRuntime
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
-		return this.mc.logger;
+		return toITelemetryLoggerExt(this.mc.logger);
 	}
 
 	/**
@@ -422,7 +424,10 @@ export class FluidDataStoreRuntime
 			namespace: "FluidDataStoreRuntime",
 			properties: {
 				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-				error: { inStagingMode: () => this.inStagingMode, isDirty: () => this.isDirty },
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
 			},
 		});
 
@@ -502,7 +507,28 @@ export class FluidDataStoreRuntime
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
-			new LazyPromise(async () => provideEntryPoint(this)),
+			new LazyPromise(async () =>
+				provideEntryPoint(this).catch((error) => {
+					let packagePath: readonly string[] = [];
+					try {
+						packagePath = this.dataStoreContext.packagePath;
+					} catch {
+						// `packagePath` may not be available during early load failures.
+					}
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"entryPointInitialization",
+					);
+					errorWrapped.addTelemetryProperties(
+						dataStoreLoadTelemetryProps({ id: this.dataStoreContext.id, packagePath }),
+					);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "EntryPointInitializationFailure" },
+						errorWrapped,
+					);
+					throw errorWrapped;
+				}),
+			),
 			"",
 			this.objectsRoutingContext,
 		);
@@ -542,16 +568,16 @@ export class FluidDataStoreRuntime
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	private get inStagingMode(): IFluidDataStoreRuntimeAlpha["inStagingMode"] {
-		return asLegacyAlpha(this.dataStoreContext.containerRuntime)?.inStagingMode;
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeAlpha.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	private get isDirty(): IFluidDataStoreRuntimeAlpha["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -725,7 +751,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
@@ -743,7 +769,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			tree,
@@ -834,7 +860,7 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		raiseConnectedEvent(extractTelemetryLoggerExt(this.logger), this, connected, clientId);
 	}
 
 	private _readonly: boolean;

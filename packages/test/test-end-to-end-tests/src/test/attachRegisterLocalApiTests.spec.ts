@@ -11,7 +11,7 @@ import type {
 	IContainer,
 	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
@@ -57,6 +57,7 @@ describeCompat(
 	"NoCompat" /* 2.0.0-internal.8.0.0 */,
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
+		const { Loader } = apis.loader;
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
 			config: {},

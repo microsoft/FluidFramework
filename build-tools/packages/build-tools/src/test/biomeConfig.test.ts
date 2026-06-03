@@ -9,19 +9,19 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
-import { Biome2ConfigReader } from "../common/biome2Config";
+import { Biome2ConfigReader } from "../common/biome2Config.js";
 import {
 	BiomeConfigReaderV1,
 	type BiomeConfigResolved,
 	getBiomeFormattedFilesFromDirectory,
 	getSettingValuesFromBiomeConfig,
 	loadBiomeConfig,
-} from "../common/biomeConfig";
-import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes";
-import { createBiomeConfigReader } from "../common/biomeConfigUtils";
-import { GitRepo } from "../common/gitRepo";
-import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils";
-import { testDataPath } from "./init";
+} from "../common/biomeConfig.js";
+import type { Configuration as BiomeConfigOnDisk } from "../common/biomeConfigTypes.js";
+import { createBiomeConfigReader } from "../common/biomeConfigUtils.js";
+import { GitRepo } from "../common/gitRepo.js";
+import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils.js";
+import { testDataPath } from "./init.js";
 
 describe("Biome config loading", () => {
 	describe("BiomeConfigReaderV1 class", () => {

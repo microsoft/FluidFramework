@@ -8,7 +8,6 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
 import {
 	ITestObjectProvider,
 	LoaderContainerTracker,
@@ -21,7 +20,8 @@ import {
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
 describe("Pong", () => {
-	describeCompat("Pong", "NoCompat", (getTestObjectProvider) => {
+	describeCompat("Pong", "NoCompat", (getTestObjectProvider, apis) => {
+		const { Loader } = apis.loader;
 		let provider: ITestObjectProvider;
 		const loaderContainerTracker = new LoaderContainerTracker();
 

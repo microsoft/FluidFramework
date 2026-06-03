@@ -73,7 +73,12 @@ export interface ClonableSchemaAndPolicy extends SchemaAndPolicy {
 	schema: TreeStoredSchemaRepository;
 }
 
-export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {}
+export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
+	/**
+	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 export interface EnrichmentConfig<TChange> {
 	readonly enricher: ChangeEnricher<TChange>;
@@ -192,6 +197,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.idCompressor,
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
+				options.healUnresolvableIdentifiersOnDecode,
+				sharedObject.id,
 			),
 			...summarizables,
 		];

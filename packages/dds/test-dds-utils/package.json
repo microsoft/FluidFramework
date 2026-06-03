@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-dds-utils",
-	"version": "2.93.0",
+	"version": "2.103.0",
 	"description": "Fluid DDS test utilities",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -121,11 +121,11 @@
 		"tasks": {
 			"build:test:cjs": [
 				"...",
-				"@fluid-private/stochastic-test-utils#build:test"
+				"@fluid-private/stochastic-test-utils#build:test:cjs"
 			],
 			"build:test:esm": [
 				"...",
-				"@fluid-private/stochastic-test-utils#build:test"
+				"@fluid-private/stochastic-test-utils#build:test:esm"
 			]
 		}
 	},

@@ -60,13 +60,13 @@ importers:
     devDependencies:
       '@changesets/cli':
         specifier: ^2.27.8
-        version: 2.29.8
+        version: 2.29.8(@types/node@22.19.17)
       '@fluid-private/changelog-generator-wrapper':
         specifier: file:../../packages/tools/changelog-generator-wrapper
-        version: file:../../packages/tools/changelog-generator-wrapper
+        version: file:../../packages/tools/changelog-generator-wrapper(@types/node@22.19.17)
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
-        version: 0.63.0(encoding@0.1.13)
+        version: 0.63.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -84,7 +84,7 @@ importers:
         version: 10.1.3
       changesets-format-with-issue-links:
         specifier: ^0.3.0
-        version: 0.3.0(@changesets/cli@2.29.8)
+        version: 0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17))
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -114,7 +114,7 @@ importers:
     devDependencies:
       '@fluid-tools/build-cli':
         specifier: ^0.63.0
-        version: 0.63.0(encoding@0.1.13)
+        version: 0.63.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -225,8 +225,8 @@ importers:
         specifier: ^3.2.2
         version: 3.2.6
       axios:
-        specifier: ^1.8.4
-        version: 1.12.2
+        specifier: ^1.15.0
+        version: 1.15.0
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -240,7 +240,7 @@ importers:
         specifier: ^5.0.1
         version: 5.0.1
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       nconf:
         specifier: ^0.12.0
@@ -361,7 +361,7 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       nconf:
         specifier: ^0.12.0
@@ -573,7 +573,7 @@ importers:
         specifier: ^3.1.0
         version: 3.3.0
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       sillyname:
         specifier: ^0.1.0
@@ -888,7 +888,7 @@ importers:
         specifier: ^9.0.0
         version: 9.0.2
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       nconf:
         specifier: ^0.12.0
@@ -1051,8 +1051,8 @@ importers:
         specifier: ^0.10.2
         version: 0.10.3
       axios:
-        specifier: ^1.8.4
-        version: 1.12.2(debug@4.4.3)
+        specifier: ^1.15.0
+        version: 1.15.0(debug@4.4.3)
       debug:
         specifier: ^4.3.4
         version: 4.4.3(supports-color@8.1.1)
@@ -1063,14 +1063,14 @@ importers:
         specifier: ^5.6.1
         version: 5.6.1
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       lru-cache:
         specifier: ^6.0.0
         version: 6.0.0
       mongodb:
-        specifier: ^5.9.2
-        version: 5.9.2
+        specifier: ^6.21.0
+        version: 6.21.0(socks@2.8.3)
       nconf:
         specifier: ^0.12.0
         version: 0.12.1
@@ -1169,8 +1169,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       axios:
-        specifier: ^1.8.4
-        version: 1.12.2(debug@4.4.3)
+        specifier: ^1.15.0
+        version: 1.15.0(debug@4.4.3)
       crc-32:
         specifier: 1.2.0
         version: 1.2.0
@@ -1228,7 +1228,7 @@ importers:
         version: 22.19.17
       axios-mock-adapter:
         specifier: ^1.19.0
-        version: 1.21.5(axios@1.12.2(debug@4.4.3))
+        version: 1.21.5(axios@1.15.0(debug@4.4.3))
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -1600,7 +1600,7 @@ importers:
         specifier: ^5.6.1
         version: 5.6.1
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       nconf:
         specifier: ^0.12.0
@@ -1667,8 +1667,8 @@ importers:
         specifier: ^2.0.5
         version: 2.0.12
       axios:
-        specifier: ^1.8.4
-        version: 1.12.2(debug@4.4.3)
+        specifier: ^1.15.0
+        version: 1.15.0(debug@4.4.3)
       c8:
         specifier: ^10.1.3
         version: 10.1.3
@@ -1930,7 +1930,7 @@ importers:
         specifier: ^8.9.0
         version: 8.9.0(@types/ioredis-mock@8.2.6(ioredis@5.6.1))(ioredis@5.6.1)
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       string-hash:
         specifier: ^1.1.3
@@ -2042,8 +2042,8 @@ importers:
         specifier: ^4.2.1
         version: 4.3.0
       axios:
-        specifier: ^1.8.4
-        version: 1.12.2
+        specifier: ^1.15.0
+        version: 1.15.0
       body-parser:
         specifier: ^1.20.3
         version: 1.20.3
@@ -2078,7 +2078,7 @@ importers:
         specifier: 6.6.4
         version: 6.6.4
       lodash:
-        specifier: ^4.17.21
+        specifier: ^4.18.1
         version: 4.18.1
       morgan:
         specifier: ^1.8.1
@@ -2834,7 +2834,7 @@ packages:
     resolution: {integrity: sha512-cae7mzluplsjSdgFA6ACLygb5jC8alO0UUnFPyu0E7tNRPrL+q/f8VcSXp+cjZQ7l5CMpDpi2G1+IQvkOiL1Lw==}
     engines: {node: '>=23.5.0 || ^22.13.0 || ^21.7.0 || ^20.12.0'}
     peerDependencies:
-      '@types/node': ~20.19.30
+      '@types/node': '>=18'
     peerDependenciesMeta:
       '@types/node':
         optional: true
@@ -2915,6 +2915,9 @@ packages:
 
   '@mongodb-js/saslprep@1.1.1':
     resolution: {integrity: sha512-t7c5K033joZZMspnHg/gWPE4kandgc2OxE74aYOtGKfgB9VPuVJPix0H6fhmm2erj5PBJ21mqcx34lpIGtUCsQ==}
+
+  '@mongodb-js/saslprep@1.4.11':
+    resolution: {integrity: sha512-o9rAHc0IpIjuPSxRutWpE1F62x7n+4mVS4rCNHkzhIUMQcc18bb6xEq5wd2NdN0WjepIyXIppRshYI2kQDOZVA==}
 
   '@napi-rs/wasm-runtime@0.2.12':
     resolution: {integrity: sha512-ZVWUcfwY4E/yPitQJl481FjFo3K22D6qF0DuFH6Y/nbnE11GY5uguDxZMGXPQ8WQ0128MXQD7TnfHyK4oWoIJQ==}
@@ -3429,6 +3432,9 @@ packages:
 
   '@types/webidl-conversions@7.0.3':
     resolution: {integrity: sha512-CiJJvcRtIgzadHCYXw7dqEnMNRjhGZlYK05Mj9OyktqV8uVT8fD2BFOB7S1uwBE3Kj2Z+4UyPmFw/Ixgw/LAlA==}
+
+  '@types/whatwg-url@11.0.5':
+    resolution: {integrity: sha512-coYR071JRaHa+xoEvvYqvnIHaVqaYrLPbsufM9BF63HkwI5Lgmy2QR8Q5K/lYDYo5AK82wOvSOS0UsLTpTG7uQ==}
 
   '@types/whatwg-url@8.2.2':
     resolution: {integrity: sha512-FtQu10RWgn3D9U4aazdwIE2yzphmTJREDqNdODHrbrZmmMqI0vMheC/6NE/J1Yveaj8H+ela+YwWTjq5PGmuhA==}
@@ -3992,8 +3998,8 @@ packages:
     peerDependencies:
       axios: '>= 0.17.0'
 
-  axios@1.12.2:
-    resolution: {integrity: sha512-vMJzPewAlRyOgxV2dU0Cuz2O8zzzx9VYtbJOaBgXFeLc4IV/Eg50n4LowmehOOR61S8ZMpc2K5Sa7g6A4jfkUw==}
+  axios@1.15.0:
+    resolution: {integrity: sha512-wWyJDlAatxk30ZJer+GeCWS209sA42X+N5jU2jy6oHTp7ufw8uzUTVFBX9+wTfAlhiJXGS0Bq7X6efruWjuK9Q==}
 
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -4103,9 +4109,9 @@ packages:
     resolution: {integrity: sha512-Ry9wCtIZ5kGqkJoi6aD8KjxFZEx78guTQDnpXWiNthsxzrxAK/i8E6pCHAIZTbaEFWcOCvbecMukfK7XUvyLpQ==}
     engines: {node: '>=6.9.0'}
 
-  bson@5.5.1:
-    resolution: {integrity: sha512-ix0EwukN2EpC0SRWIj/7B5+A6uQMQy6KMREI9qQqvgpkV2frH63T0UDVd1SYedL6dNCmDBYB3QtXi4ISk9YT+g==}
-    engines: {node: '>=14.20.1'}
+  bson@6.10.4:
+    resolution: {integrity: sha512-WIsKqkSC0ABoBJuT1LEX+2HEvNmNKKgnTAyd0fL8qzK4SH2i9NXg+t08YtdZp/V9IZ33cxe3iV4yM0qg8lMQng==}
+    engines: {node: '>=16.20.1'}
 
   buffer-alloc-unsafe@1.1.0:
     resolution: {integrity: sha512-TEM2iMIEQdJ2yjPJoSIsldnleVaAk1oW3DBVUykyOLsEsFmEc9kn+SFFPz+gl54KQNxlDnAwCXosOS9Okx2xAg==}
@@ -5236,8 +5242,8 @@ packages:
   fn.name@1.1.0:
     resolution: {integrity: sha512-GRnmB5gPyJpAhTQdSZTSp9uaPSvl09KoYcMQtsB9rQoOmzs9dH6ffeccH+Z+cv6P68Hu5bC6JjRh4Ah/mHSNRw==}
 
-  follow-redirects@1.15.6:
-    resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
+  follow-redirects@1.15.11:
+    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -5261,8 +5267,8 @@ packages:
     resolution: {integrity: sha512-jqdObeR2rxZZbPSGL+3VckHMYtu+f9//KXBsVny6JSX/pa38Fy+bGjuG8eW/H6USNQWhLi8Num++cU2yOCNz4A==}
     engines: {node: '>= 0.12'}
 
-  form-data@4.0.4:
-    resolution: {integrity: sha512-KrGhL9Q4zjj0kiUt5OO4Mr/A/jlI2jDYs5eHBpYHPcBEVSiipAvn2Ko2HnPe20rmcuuvMHNdZFp+4IlGTMF0Ow==}
+  form-data@4.0.5:
+    resolution: {integrity: sha512-8RipRLol37bNs2bhoV67fiTEvdTrbMUYcFTiy3+wuuOnUog2QBHCZWXDRijWQfAkhBj2Uf5UnVaiWwA5vdd82w==}
     engines: {node: '>= 6'}
 
   formidable@1.2.6:
@@ -6663,29 +6669,38 @@ packages:
   mongodb-connection-string-url@2.6.0:
     resolution: {integrity: sha512-WvTZlI9ab0QYtTYnuMLgobULWhokRjtC7db9LtcVfJ+Hsnyr5eo6ZtNAt3Ly24XZScGMelOcGtm7lSn0332tPQ==}
 
+  mongodb-connection-string-url@3.0.2:
+    resolution: {integrity: sha512-rMO7CGo/9BFwyZABcKAWL8UJwH/Kc2x0g72uhDWzG48URRax5TCIcJ7Rc3RZqffZzO/Gwff/jyKwCU9TN8gehA==}
+
   mongodb@4.17.1:
     resolution: {integrity: sha512-MBuyYiPUPRTqfH2dV0ya4dcr2E5N52ocBuZ8Sgg/M030nGF78v855B3Z27mZJnp8PxjnUquEnAtjOsphgMZOlQ==}
     engines: {node: '>=12.9.0'}
 
-  mongodb@5.9.2:
-    resolution: {integrity: sha512-H60HecKO4Bc+7dhOv4sJlgvenK4fQNqqUIlXxZYQNbfEWSALGAwGoyJd/0Qwk4TttFXUOHJ2ZJQe/52ScaUwtQ==}
-    engines: {node: '>=14.20.1'}
+  mongodb@6.21.0:
+    resolution: {integrity: sha512-URyb/VXMjJ4da46OeSXg+puO39XH9DeQpWCslifrRn9JWugy0D+DvvBvkm2WxmHe61O/H19JM66p1z7RHVkZ6A==}
+    engines: {node: '>=16.20.1'}
     peerDependencies:
       '@aws-sdk/credential-providers': '*'
-      '@mongodb-js/zstd': ^1.0.0
-      kerberos: ^1.0.0 || ^2.0.0
-      mongodb-client-encryption: '>=2.3.0 <3'
-      snappy: ^7.2.2
+      '@mongodb-js/zstd': ^1.1.0 || ^2.0.0
+      gcp-metadata: ^5.2.0
+      kerberos: ^2.0.1
+      mongodb-client-encryption: '>=6.0.0 <7'
+      snappy: ^7.3.2
+      socks: ^2.7.1
     peerDependenciesMeta:
       '@aws-sdk/credential-providers':
         optional: true
       '@mongodb-js/zstd':
+        optional: true
+      gcp-metadata:
         optional: true
       kerberos:
         optional: true
       mongodb-client-encryption:
         optional: true
       snappy:
+        optional: true
+      socks:
         optional: true
 
   morgan@1.10.0:
@@ -7158,12 +7173,11 @@ packages:
     resolution: {integrity: sha512-oWyT4gICAu+kaA7QWk/jvCHWarMKNs6pXOGWKDTr7cw4IGcUbW+PeTfbaQiLGheFRpjo6O9J0PmyMfQPjH71oA==}
     engines: {node: 20 || >=22}
 
-  path-to-regexp@0.1.12:
-    resolution: {integrity: sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==}
+  path-to-regexp@0.1.13:
+    resolution: {integrity: sha512-A/AGNMFN3c8bOlvV9RreMdrv7jsmF9XIfDeCd87+I8RNg6s78BhJxMu69NEMHBSJFxKidViTEdruRwEk/WIKqA==}
 
-  path-to-regexp@8.2.0:
-    resolution: {integrity: sha512-TdrF7fW9Rphjq4RjrW0Kp2AW0Ahwu9sRGTkS6bvDi0SCwZlEZYmcfDbEsTz8RVk0EHIS/Vd1bv3JhG+1xZuAyQ==}
-    engines: {node: '>=16'}
+  path-to-regexp@8.4.2:
+    resolution: {integrity: sha512-qRcuIdP69NPm4qbACK+aDogI5CBDMi1jKe0ry5rSQJz8JVLsC7jV8XpiJjGRLLol3N+R5ihGYcrPLTno6pAdBA==}
 
   path-type@4.0.0:
     resolution: {integrity: sha512-gDKb8aZMDeD/tZWs9P6+q0J9Mwkdl6xMV8TjnGP3qJVJ06bdMgkbBlLU8IdfOsIsFz2BW1rNVT3XuNEl8zPAvw==}
@@ -7341,6 +7355,10 @@ packages:
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
+
+  proxy-from-env@2.1.0:
+    resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
+    engines: {node: '>=10'}
 
   prr@1.0.1:
     resolution: {integrity: sha512-yPw4Sng1gWghHQWj0B3ZggWUm4qVbPwPFcRG8KyxiU7J2OHFSoEHKS+EZ3fv5l1t9CyCiop6l/ZYeWbrgoQejw==}
@@ -7586,6 +7604,11 @@ packages:
 
   resolve@1.22.11:
     resolution: {integrity: sha512-RfqAvLnMl313r7c9oclB1HhUEAezcpLjz95wFH4LVuhk9JF/r22qmVP9AMmOU4vMX7Q8pN8jwNg/CSpdFnMjTQ==}
+    engines: {node: '>= 0.4'}
+    hasBin: true
+
+  resolve@1.22.12:
+    resolution: {integrity: sha512-TyeJ1zif53BPfHootBGwPRYT1RUt6oGWsaQr8UyZW/eAm9bKoijtvruSDEmZHm92CwS9nj7/fWttqPCgzep8CA==}
     engines: {node: '>= 0.4'}
     hasBin: true
 
@@ -8217,6 +8240,10 @@ packages:
     resolution: {integrity: sha512-l7FvfAHlcmulp8kr+flpQZmVwtu7nfRV7NZujtN0OqES8EL4O4e0qqzL0DC5gAvx/ZC/9lk6rhcUwYvkBnBnYA==}
     engines: {node: '>=12'}
 
+  tr46@5.1.1:
+    resolution: {integrity: sha512-hdF5ZgjTqgAntKkklYw0R03MG2x/bSzTtkxmIRw/sTNV8YXsCJ1tfLAX23lhxhHJlEf3CRCOCGGWw3vI3GaSPw==}
+    engines: {node: '>=18'}
+
   traverse@0.3.9:
     resolution: {integrity: sha512-iawgk0hLP3SxGKDfnDJf8wTz4p2qImnyihM5Hh/sGvQ3K37dPi/w8sRhdNIxYA1TwFwc5mDhIJq+O0RsvXBKdQ==}
 
@@ -8570,6 +8597,10 @@ packages:
   whatwg-url@11.0.0:
     resolution: {integrity: sha512-RKT8HExMpoYx4igMiVMY83lN6UeITKJlBQ+vR/8ZJ8OCdSiN3RwCq+9gH0+Xzj0+5IrM6i4j/6LuvzbZIQgEcQ==}
     engines: {node: '>=12'}
+
+  whatwg-url@14.2.0:
+    resolution: {integrity: sha512-De72GdQZzNTUBBChsXueQUnPKDkg/5A5zp7pFDuQAj5UFoENpiACU0wlCvzpAGnTkj++ihpKwKyYewn/XNUbKw==}
+    engines: {node: '>=18'}
 
   whatwg-url@5.0.0:
     resolution: {integrity: sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw==}
@@ -8933,7 +8964,7 @@ snapshots:
     dependencies:
       '@changesets/types': 6.1.0
 
-  '@changesets/cli@2.29.8':
+  '@changesets/cli@2.29.8(@types/node@22.19.17)':
     dependencies:
       '@changesets/apply-release-plan': 7.0.14
       '@changesets/assemble-release-plan': 6.0.9
@@ -9161,92 +9192,17 @@ snapshots:
       '@fluidframework/core-interfaces': 2.0.5
       '@fluidframework/driver-definitions': 2.0.5
 
-  '@fluid-private/changelog-generator-wrapper@file:../../packages/tools/changelog-generator-wrapper':
+  '@fluid-private/changelog-generator-wrapper@file:../../packages/tools/changelog-generator-wrapper(@types/node@22.19.17)':
     dependencies:
-      '@changesets/cli': 2.29.8
+      '@changesets/cli': 2.29.8(@types/node@22.19.17)
       '@changesets/types': 6.1.0
-      changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.29.8)
+      changesets-format-with-issue-links: 0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17))
       typescript: 5.4.5
     transitivePeerDependencies:
       - '@types/node'
       - supports-color
 
   '@fluid-tools/build-cli@0.63.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)':
-    dependencies:
-      '@andrewbranch/untar.js': 1.0.3
-      '@fluid-tools/build-infrastructure': 0.63.0(@types/node@22.19.17)
-      '@fluid-tools/version-tools': 0.63.0(@types/node@22.19.17)
-      '@fluidframework/build-tools': 0.63.0(@types/node@22.19.17)
-      '@fluidframework/bundle-size-tools': 0.63.0(webpack-cli@5.1.4)
-      '@inquirer/prompts': 8.0.2(@types/node@22.19.17)
-      '@microsoft/api-extractor': 7.58.1(patch_hash=22afac8d849140413bab21c8bca49a9e20e928ab61666feccf3b088cb5d45832)(@types/node@22.19.17)
-      '@oclif/core': 4.8.0
-      '@oclif/plugin-autocomplete': 3.2.39
-      '@oclif/plugin-commands': 4.1.38
-      '@oclif/plugin-help': 6.2.36
-      '@oclif/plugin-not-found': 3.2.73(@types/node@22.19.17)
-      '@octokit/core': 7.0.6
-      '@octokit/rest': 22.0.1
-      '@rushstack/node-core-library': 5.21.0(@types/node@22.19.17)
-      async: 3.2.6
-      azure-devops-node-api: 11.2.0
-      change-case: 5.4.4
-      danger: 13.0.5(encoding@0.1.13)
-      date-fns: 3.6.0
-      debug: 4.4.3(supports-color@8.1.1)
-      execa: 5.1.1
-      fflate: 0.8.2
-      fs-extra: 11.3.2
-      github-slugger: 2.0.0
-      globby: 11.1.0
-      gray-matter: 4.0.3
-      human-id: 4.1.3
-      issue-parser: 7.0.1
-      json5: 2.2.3
-      jssm: 5.104.2
-      jszip: 3.10.1
-      latest-version: 9.0.0
-      lilconfig: 3.1.3
-      mdast: 3.0.0
-      mdast-util-heading-range: 4.0.0
-      mdast-util-to-string: 4.0.0
-      minimatch: 10.2.4
-      npm-check-updates: 16.14.20
-      oclif: 4.22.52(@types/node@22.19.17)
-      picocolors: 1.1.1
-      prettier: 3.2.5
-      prompts: 2.4.2
-      read-pkg-up: 7.0.1
-      remark: 15.0.1
-      remark-gfm: 4.0.1
-      remark-github: 12.0.0
-      remark-github-beta-blockquote-admonitions: 3.1.1
-      remark-toc: 9.0.0
-      replace-in-file: 7.2.0
-      resolve.exports: 2.0.3
-      semver: 7.7.4
-      simple-git: 3.32.3
-      sort-json: 2.0.1
-      sort-package-json: 1.57.0
-      strip-ansi: 7.1.2
-      table: 6.9.0
-      ts-morph: 22.0.0
-      unist-util-visit: 5.0.0
-      xml2js: 0.6.2
-    transitivePeerDependencies:
-      - '@swc/core'
-      - '@types/node'
-      - bluebird
-      - bufferutil
-      - encoding
-      - esbuild
-      - react-devtools-core
-      - supports-color
-      - uglify-js
-      - utf-8-validate
-      - webpack-cli
-
-  '@fluid-tools/build-cli@0.63.0(encoding@0.1.13)':
     dependencies:
       '@andrewbranch/untar.js': 1.0.3
       '@fluid-tools/build-infrastructure': 0.63.0(@types/node@22.19.17)
@@ -9509,7 +9465,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.12.2
+      axios: 1.15.0
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -9538,7 +9494,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.12.2(debug@4.4.3)
+      axios: 1.15.0(debug@4.4.3)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -9648,7 +9604,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.0
       '@fluidframework/protocol-base': 7.0.0
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.12.2(debug@4.4.3)
+      axios: 1.15.0(debug@4.4.3)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
@@ -9784,7 +9740,7 @@ snapshots:
       '@socket.io/redis-emitter': 4.1.1
       '@types/lodash': 4.14.202
       amqplib: 0.10.3
-      axios: 1.12.2(debug@4.4.3)
+      axios: 1.15.0(debug@4.4.3)
       debug: 4.4.3(supports-color@8.1.1)
       events: 3.3.0
       ioredis: 5.6.1
@@ -10253,6 +10209,10 @@ snapshots:
     dependencies:
       sparse-bitfield: 3.0.3
     optional: true
+
+  '@mongodb-js/saslprep@1.4.11':
+    dependencies:
+      sparse-bitfield: 3.0.3
 
   '@napi-rs/wasm-runtime@0.2.12':
     dependencies:
@@ -10921,6 +10881,10 @@ snapshots:
 
   '@types/webidl-conversions@7.0.3': {}
 
+  '@types/whatwg-url@11.0.5':
+    dependencies:
+      '@types/webidl-conversions': 7.0.3
+
   '@types/whatwg-url@8.2.2':
     dependencies:
       '@types/node': 22.19.17
@@ -11534,25 +11498,25 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios-mock-adapter@1.21.5(axios@1.12.2(debug@4.4.3)):
+  axios-mock-adapter@1.21.5(axios@1.15.0(debug@4.4.3)):
     dependencies:
-      axios: 1.12.2(debug@4.4.3)
+      axios: 1.15.0(debug@4.4.3)
       fast-deep-equal: 3.1.3
       is-buffer: 2.0.5
 
-  axios@1.12.2:
+  axios@1.15.0:
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.4)
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
+      follow-redirects: 1.15.11(debug@4.3.4)
+      form-data: 4.0.5
+      proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
 
-  axios@1.12.2(debug@4.4.3):
+  axios@1.15.0(debug@4.4.3):
     dependencies:
-      follow-redirects: 1.15.6(debug@4.4.3)
-      form-data: 4.0.4
-      proxy-from-env: 1.1.0
+      follow-redirects: 1.15.11(debug@4.4.3)
+      form-data: 4.0.5
+      proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
 
@@ -11684,7 +11648,7 @@ snapshots:
     dependencies:
       buffer: 5.7.1
 
-  bson@5.5.1: {}
+  bson@6.10.4: {}
 
   buffer-alloc-unsafe@1.1.0: {}
 
@@ -11854,9 +11818,9 @@ snapshots:
 
   change-case@5.4.4: {}
 
-  changesets-format-with-issue-links@0.3.0(@changesets/cli@2.29.8):
+  changesets-format-with-issue-links@0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17)):
     dependencies:
-      '@changesets/cli': 2.29.8
+      '@changesets/cli': 2.29.8(@types/node@22.19.17)
       gitlog: 4.0.8
       lodash: 4.18.1
     transitivePeerDependencies:
@@ -12601,7 +12565,7 @@ snapshots:
     dependencies:
       debug: 3.2.7
       is-core-module: 2.16.1
-      resolve: 1.22.11
+      resolve: 1.22.12
     transitivePeerDependencies:
       - supports-color
     optional: true
@@ -12872,7 +12836,7 @@ snapshots:
       methods: 1.1.2
       on-finished: 2.4.1
       parseurl: 1.3.3
-      path-to-regexp: 0.1.12
+      path-to-regexp: 0.1.13
       proxy-addr: 2.0.7
       qs: 6.15.0
       range-parser: 1.2.1
@@ -12897,7 +12861,7 @@ snapshots:
 
   extrareqp2@1.0.0(debug@4.3.4):
     dependencies:
-      follow-redirects: 1.15.6(debug@4.3.4)
+      follow-redirects: 1.15.11(debug@4.3.4)
     transitivePeerDependencies:
       - debug
 
@@ -13022,11 +12986,11 @@ snapshots:
 
   fn.name@1.1.0: {}
 
-  follow-redirects@1.15.6(debug@4.3.4):
+  follow-redirects@1.15.11(debug@4.3.4):
     optionalDependencies:
       debug: 4.3.4
 
-  follow-redirects@1.15.6(debug@4.4.3):
+  follow-redirects@1.15.11(debug@4.4.3):
     optionalDependencies:
       debug: 4.4.3(supports-color@8.1.1)
 
@@ -13050,7 +13014,7 @@ snapshots:
       mime-types: 2.1.35
       safe-buffer: 5.2.1
 
-  form-data@4.0.4:
+  form-data@4.0.5:
     dependencies:
       asynckit: 0.4.0
       combined-stream: 1.0.8
@@ -14337,8 +14301,7 @@ snapshots:
     dependencies:
       '@octokit/rest': 22.0.1
 
-  memory-pager@1.5.0:
-    optional: true
+  memory-pager@1.5.0: {}
 
   merge-descriptors@1.0.3: {}
 
@@ -14682,6 +14645,11 @@ snapshots:
       '@types/whatwg-url': 8.2.2
       whatwg-url: 11.0.0
 
+  mongodb-connection-string-url@3.0.2:
+    dependencies:
+      '@types/whatwg-url': 11.0.5
+      whatwg-url: 14.2.0
+
   mongodb@4.17.1:
     dependencies:
       bson: 4.7.2
@@ -14690,13 +14658,13 @@ snapshots:
     optionalDependencies:
       '@mongodb-js/saslprep': 1.1.1
 
-  mongodb@5.9.2:
+  mongodb@6.21.0(socks@2.8.3):
     dependencies:
-      bson: 5.5.1
-      mongodb-connection-string-url: 2.6.0
-      socks: 2.8.3
+      '@mongodb-js/saslprep': 1.4.11
+      bson: 6.10.4
+      mongodb-connection-string-url: 3.0.2
     optionalDependencies:
-      '@mongodb-js/saslprep': 1.1.1
+      socks: 2.8.3
 
   morgan@1.10.0:
     dependencies:
@@ -14781,7 +14749,7 @@ snapshots:
       '@sinonjs/fake-timers': 13.0.5
       '@sinonjs/text-encoding': 0.7.3
       just-extend: 6.2.0
-      path-to-regexp: 8.2.0
+      path-to-regexp: 8.4.2
 
   no-case@3.0.4:
     dependencies:
@@ -15281,9 +15249,9 @@ snapshots:
       lru-cache: 11.2.4
       minipass: 7.1.2
 
-  path-to-regexp@0.1.12: {}
+  path-to-regexp@0.1.13: {}
 
-  path-to-regexp@8.2.0: {}
+  path-to-regexp@8.4.2: {}
 
   path-type@4.0.0: {}
 
@@ -15492,6 +15460,8 @@ snapshots:
       - supports-color
 
   proxy-from-env@1.1.0: {}
+
+  proxy-from-env@2.1.0: {}
 
   prr@1.0.1: {}
 
@@ -15805,6 +15775,14 @@ snapshots:
       is-core-module: 2.16.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
+
+  resolve@1.22.12:
+    dependencies:
+      es-errors: 1.3.0
+      is-core-module: 2.16.1
+      path-parse: 1.0.7
+      supports-preserve-symlinks-flag: 1.0.0
+    optional: true
 
   resolve@2.0.0-next.5:
     dependencies:
@@ -16229,7 +16207,6 @@ snapshots:
   sparse-bitfield@3.0.3:
     dependencies:
       memory-pager: 1.5.0
-    optional: true
 
   spawn-please@2.0.2:
     dependencies:
@@ -16561,6 +16538,10 @@ snapshots:
   tr46@0.0.3: {}
 
   tr46@3.0.0:
+    dependencies:
+      punycode: 2.3.1
+
+  tr46@5.1.1:
     dependencies:
       punycode: 2.3.1
 
@@ -16979,6 +16960,11 @@ snapshots:
   whatwg-url@11.0.0:
     dependencies:
       tr46: 3.0.0
+      webidl-conversions: 7.0.0
+
+  whatwg-url@14.2.0:
+    dependencies:
+      tr46: 5.1.1
       webidl-conversions: 7.0.0
 
   whatwg-url@5.0.0:

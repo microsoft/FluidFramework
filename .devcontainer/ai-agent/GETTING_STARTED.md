@@ -1,6 +1,6 @@
 # Getting Started with AI-Enabled Codespace
 
-This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), [repoverlay](https://github.com/tylerbutler/repoverlay), GitHub CLI, and SSH access.
+This codespace is pre-configured for AI-agent-assisted development of the Fluid Framework. It includes [agency](https://aka.ms/agency), GitHub CLI, and SSH access.
 
 > For full documentation, see the [AI-enabled Codespace wiki page](https://github.com/microsoft/FluidFramework/wiki/AI%E2%80%90enabled-Codespace).
 
@@ -31,6 +31,10 @@ pnpm build
 pnpm fluid-build .
 ```
 
+## Not sure which agent to use?
+
+Run `start` — an interactive assistant that asks what you want to do and launches the right agent for you.
+
 ## AI Agent Aliases
 
 These aliases are available in all terminal sessions (after installing agency):
@@ -39,15 +43,15 @@ These aliases are available in all terminal sessions (after installing agency):
 
 | Alias | Command | Purpose |
 |---|---|---|
-| `dev` | `repoverlay switch --copy nori && agency claude ... -- --model opus` | Launch Claude optimized for feature work and debugging |
-| `claude` | `repoverlay remove --all && agency claude ... -- --model opus` | General purpose Claude Code agent |
+| `dev` | `agency claude --profile nori ... -- --model opus` | Launch Claude optimized for feature work and debugging |
+| `claude` | `agency claude ... -- --model opus` | General purpose Claude Code agent |
 
 ### Copilot
 
 | Alias | Command | Purpose |
 |---|---|---|
 | `copilot` | `agency copilot` | Standard GitHub Copilot |
-| `oce` | `repoverlay switch --copy ff-oce && agency copilot -- --agent ff-oce` | On-Call Engineer workflows |
+| `oce` | `agency copilot --profile ff-oce -- --agent ff-oce:ff-oce` | On-Call Engineer workflows |
 
 ### Custom MCP Servers
 
@@ -67,12 +71,6 @@ claude --mcp 'sharepoint'
 > The **Kusto** MCP server must only be used with **Copilot**, not Claude, for compliance reasons.
 
 > Run `agency mcp --help` to see all available MCP servers and their options.
-
-### Utility
-
-| Alias | Command | Purpose |
-|---|---|---|
-| `ai-reset` | `repoverlay remove --all` | Remove all repoverlay overlays and reset to clean state |
 
 ## More Information
 

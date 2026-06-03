@@ -4,11 +4,13 @@
 Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check bundleSize`](#flub-check-bundlesize)
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
+* [`flub check trustPolicy`](#flub-check-trustpolicy)
 
 ## `flub check buildVersion`
 
@@ -64,6 +66,38 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check bundleSize`
+
+Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a human-readable summary by default; pass --json for the structured result.
+
+```
+USAGE
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--target <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
+                             produced by `flub generate bundleStats`).
+  --target=<value>           Target ref — the ref you'd be PRing against. Typically `<remote>/<branch>` (e.g.
+                             'upstream/main', 'origin/release/2.x'), but accepts any ref `git merge-base` understands.
+                             Skips auto-detection of the canonical remote. The bundles aren't compared against this ref
+                             directly — the baseline commit is `git merge-base <target> HEAD`.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target
+  ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where
+  `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a
+  human-readable summary by default; pass --json for the structured result.
+```
+
+_See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
 
 ## `flub check changeset`
 
@@ -210,3 +244,35 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/prApproval.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/prApproval.ts)_
+
+## `flub check trustPolicy`
+
+Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+```
+USAGE
+  $ flub check trustPolicy [--json] [-v | --quiet] [--keep] [--path <value>] [--tempDir <value>]
+
+FLAGS
+  --keep             Do not delete the scratch workspace after running.
+  --path=<value>     Path inside the workspace to audit. The most specific workspace (e.g. a release group like
+                     `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the
+                     current working directory.
+  --tempDir=<value>  Scratch workspace directory (default: <workspace>/.trust-audit-temp).
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+  Materializes a scratch workspace under `.trust-audit-temp/` containing one leaf project per pinned dependency, then
+  runs `pnpm install --trust-policy no-downgrade` and iteratively excludes each violation until pnpm either succeeds or
+  stops surfacing new violations. Reports the full list of trust-downgrade violations.
+```
+
+_See code: [src/commands/check/trustPolicy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/trustPolicy.ts)_

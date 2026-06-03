@@ -9,15 +9,16 @@ import {
 	type BenchmarkDescription,
 	type BenchmarkFunction,
 } from "../Configuration.js";
+import { assertProperUse } from "../assert.js";
 import { stripUndefined } from "../benchmarkAuthoringUtilities.js";
 import { ValueType, type CollectedData } from "../reportTypes.js";
 import { getArrayStatistics } from "../sampling.js";
-import { type Timer, timer, timerWithResolution } from "../timer.js";
+import { type Timer, timer as defaultTimer, timerWithResolution } from "../timer.js";
 import {
 	isCustomBenchmark,
 	validateBenchmarkArguments,
 	type DurationBenchmark,
-	type BenchmarkTimer,
+	type BatchedDurationTimer,
 	type BenchmarkTimingOptions,
 	type DurationBenchmarkSync,
 	type DurationBenchmarkAsync,
@@ -68,6 +69,9 @@ export const correctnessTestTimingOptions: Required<BenchmarkTimingOptions> = {
  * @remarks
  * When not in performance testing mode (i.e. without `--perfMode`), runs only a single iteration
  * and returns inaccurate data. Use {@link isInPerformanceTestingMode} to check the current mode.
+ *
+ * If using this inside a {@link BenchmarkFunction}, consider using {@link benchmarkDuration} instead,
+ * or manually tagging the associated {@link BenchmarkDescription.testType} as {@link TestType.ExecutionTime}.
  * @public
  */
 export async function collectDurationData(args: DurationBenchmark): Promise<CollectedData> {
@@ -76,7 +80,7 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 		: correctnessTestTimingOptions;
 
 	if (isCustomBenchmark(args)) {
-		const state = new BenchmarkState(timer, timingArgs);
+		const state = new BenchmarkState(defaultTimer, timingArgs);
 		await args.benchmarkFnCustom(state);
 		return state.computeData();
 	}
@@ -88,8 +92,6 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 	};
 	const { isAsync, benchmarkFn } = validateBenchmarkArguments(args);
 
-	await options.before?.();
-
 	let data: CollectedData;
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (isAsync) {
@@ -100,18 +102,18 @@ export async function collectDurationData(args: DurationBenchmark): Promise<Coll
 	} else {
 		data = runBenchmarkSync({ ...options, benchmarkFn });
 	}
-	await options.after?.();
 	return data;
 }
 
-class BenchmarkState<T> implements BenchmarkTimer<T> {
+export class BenchmarkState<T> implements BatchedDurationTimer<T> {
 	/**
 	 * Duration for each batch, in seconds.
 	 */
 	private readonly samples: number[];
-	private readonly options: Readonly<Required<BenchmarkTimingOptions>>;
+	public readonly options: Readonly<Required<BenchmarkTimingOptions>>;
 	private readonly startTime: T;
 	private phase: Phase;
+	private collectionComplete = false;
 	public iterationsPerBatch: number;
 	public constructor(
 		public readonly timer: Timer<T>,
@@ -133,23 +135,36 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	public recordBatch(duration: number): boolean {
+		assertProperUse(
+			!this.collectionComplete,
+			"recordBatch() called after data collection is already complete.",
+		);
+		let keepGoing: boolean;
 		switch (this.phase) {
 			case Phase.WarmUp: {
 				this.phase = Phase.AdjustIterationPerBatch;
-				return true;
+				keepGoing = true;
+				break;
 			}
 			case Phase.AdjustIterationPerBatch: {
-				if (!this.growBatchSize(duration)) {
+				if (this.growBatchSize(duration)) {
+					keepGoing = true;
+				} else {
 					this.phase = Phase.CollectData;
 					// Since batch is big enough, include it in data collection.
-					return this.addSample(duration);
+					keepGoing = this.addSample(duration);
 				}
-				return true;
+				break;
 			}
 			default: {
-				return this.addSample(duration);
+				keepGoing = this.addSample(duration);
+				break;
 			}
 		}
+		if (!keepGoing) {
+			this.collectionComplete = true;
+		}
+		return keepGoing;
 	}
 
 	/**
@@ -197,6 +212,10 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	public computeData(): CollectedData {
+		assertProperUse(
+			this.collectionComplete,
+			"Data collection is not complete. Either call a batch recording method (e.g. recordBatch(), timeBatch()) in a loop until it returns false, or use a method that records all batches at once (e.g. timeAllBatches(), timeAllBatchesAsync()).",
+		);
 		const stats = getArrayStatistics(this.samples.map((v) => v / this.iterationsPerBatch));
 		const data: CollectedData = [
 			{
@@ -235,28 +254,43 @@ class BenchmarkState<T> implements BenchmarkTimer<T> {
 	}
 
 	public timeBatch(callback: () => void): boolean {
-		let counter = this.iterationsPerBatch;
+		let i = this.iterationsPerBatch;
 		const before = this.timer.now();
-		while (counter--) {
+		while (i--) {
 			callback();
 		}
 		const after = this.timer.now();
-		const duration = this.timer.toSeconds(before, after);
-		return this.recordBatch(duration);
+		return this.recordBatch(this.timer.toSeconds(before, after));
+	}
+
+	public async timeBatchAsync(callback: () => Promise<unknown>): Promise<boolean> {
+		let i = this.iterationsPerBatch;
+		const before = this.timer.now();
+		while (i--) {
+			await callback();
+		}
+		const after = this.timer.now();
+		return this.recordBatch(this.timer.toSeconds(before, after));
+	}
+
+	public timeAllBatches(callback: () => void): void {
+		while (this.timeBatch(callback));
+	}
+
+	public async timeAllBatchesAsync(callback: () => Promise<unknown>): Promise<void> {
+		while (await this.timeBatchAsync(callback));
 	}
 }
 
 /**
  * Runs a synchronous duration benchmark and returns the collected timing measurements.
+ * @remarks
+ * A more limited, synchronous, version of {@link collectDurationData}.
  * @public
  */
 export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
-	const state = new BenchmarkState(timer, args);
-	while (
-		state.recordBatch(doBatch(state.iterationsPerBatch, args.benchmarkFn, args.beforeEachBatch))
-	) {
-		// No-op
-	}
+	const state = new BenchmarkState(defaultTimer, args);
+	state.timeAllBatches(args.benchmarkFn);
 	return state.computeData();
 }
 
@@ -264,55 +298,9 @@ export function runBenchmarkSync(args: DurationBenchmarkSync): CollectedData {
  * Runs an asynchronous duration benchmark and returns the collected timing measurements.
  */
 export async function runBenchmarkAsync(args: DurationBenchmarkAsync): Promise<CollectedData> {
-	const state = new BenchmarkState(timer, args);
-	while (
-		state.recordBatch(
-			await doBatchAsync(
-				state.iterationsPerBatch,
-				args.benchmarkFnAsync,
-				args.beforeEachBatch,
-			),
-		)
-	) {
-		// No-op
-	}
+	const state = new BenchmarkState(defaultTimer, args);
+	await state.timeAllBatchesAsync(args.benchmarkFnAsync);
 	return state.computeData();
-}
-
-/**
- * Returns time to run `f` `iterationCount` times in seconds.
- */
-function doBatch(
-	iterationCount: number,
-	f: () => void,
-	beforeEachBatch: undefined | (() => void),
-): number {
-	beforeEachBatch?.();
-	let i = iterationCount;
-	const before = timer.now();
-	while (i--) {
-		f();
-	}
-	const after = timer.now();
-	return timer.toSeconds(before, after);
-}
-
-/**
- * Returns time to run `f` `iterationCount` times in seconds.
- */
-async function doBatchAsync(
-	iterationCount: number,
-	f: () => Promise<unknown>,
-	beforeEachBatch: undefined | (() => void),
-): Promise<number> {
-	beforeEachBatch?.();
-	let i = iterationCount;
-	const before = timer.now();
-	while (i--) {
-		await f();
-	}
-	const after = timer.now();
-	return timer.toSeconds(before, after);
 }
 
 /**

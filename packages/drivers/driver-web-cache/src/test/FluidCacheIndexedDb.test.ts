@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import { openDB } from "idb";
+import sinon from "sinon";
 
 import {
 	CurrentCacheVersion,
@@ -14,59 +17,61 @@ import {
 } from "../FluidCacheIndexedDb.js";
 import { FluidCacheErrorEvent } from "../fluidCacheTelemetry.js";
 
-// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
-require("fake-indexeddb/auto");
-
 class MockLogger {
-	NamespaceLogger = this;
-	send = jest.fn();
+	public readonly NamespaceLogger = this;
+	public readonly send = sinon.stub();
 }
 
 const versions = Object.keys(oldVersionNameMapping);
 
 // Dynamically get the test cases for successful upgrades to run though all old versions
-const getUpgradeTestCases = (versionsArray: string[]): any[] => {
-	const testCases: any[] = [];
-	versionsArray.map((value: string) => {
-		testCases.push([
-			`upgrades successfully without an error for version number ${value}`,
-			{ oldVersionNumber: Number.parseInt(value, 10 /* base10 */) },
-		]);
-	});
-	return testCases;
-};
+const getUpgradeTestCases = (
+	versionsArray: string[],
+): [string, { oldVersionNumber: number }][] =>
+	versionsArray.map((value: string) => [
+		`upgrades successfully without an error for version number ${value}`,
+		{ oldVersionNumber: Number.parseInt(value, 10 /* base10 */) },
+	]);
+
 const upgradeTestCases = getUpgradeTestCases(versions);
 
 describe("getFluidCacheIndexedDbInstance", () => {
+	let db: Awaited<ReturnType<typeof getFluidCacheIndexedDbInstance>> | undefined;
+
 	beforeEach(() => {
 		// Reset the indexed db before each test so that it starts off in an empty state
 		// eslint-disable-next-line @typescript-eslint/no-require-imports, import-x/no-internal-modules
 		const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
-		(window.indexedDB as any) = new FDBFactory();
+		(window.indexedDB as unknown) = new FDBFactory();
 	});
 
-	// The jest types in the FF repo are old, so it doesn't have the each signature.
-	// This typecast can be removed when the types are bumped.
-	(it as any).each(upgradeTestCases)("%s", async (_, { oldVersionNumber }) => {
-		// Arrange
-		// Create a database with the old version number
-		const oldDb = await openDB(FluidDriverCacheDBName, oldVersionNumber, {
-			upgrade: (dbToUpgrade) => {
-				// Create the old object to simulate what state we would be in
-				dbToUpgrade.createObjectStore(oldVersionNameMapping[oldVersionNumber]!);
-			},
+	afterEach(() => {
+		db?.close();
+		db = undefined;
+	});
+
+	for (const [name, { oldVersionNumber }] of upgradeTestCases) {
+		it(name, async () => {
+			// Arrange
+			// Create a database with the old version number
+			const oldDb = await openDB(FluidDriverCacheDBName, oldVersionNumber, {
+				upgrade: (dbToUpgrade) => {
+					// Create the old object to simulate what state we would be in
+					dbToUpgrade.createObjectStore(oldVersionNameMapping[oldVersionNumber]!);
+				},
+			});
+			oldDb.close(); // Close so the upgrade won't be blocked
+
+			// Act
+			// Now attempt to get the FluidCache instance, which will run the upgrade function
+			db = await getFluidCacheIndexedDbInstance();
+
+			// Assert
+			assert.deepEqual([...db.objectStoreNames], [FluidDriverObjectStoreName]);
+			assert.strictEqual(db.name, FluidDriverCacheDBName);
+			assert.strictEqual(db.version, CurrentCacheVersion);
 		});
-		oldDb.close(); // Close so the upgrade won't be blocked
-
-		// Act
-		// Now attempt to get the FluidCache instance, which will run the upgrade function
-		const db = await getFluidCacheIndexedDbInstance();
-
-		// Assert
-		expect(db.objectStoreNames).toEqual([FluidDriverObjectStoreName]);
-		expect(db.name).toEqual(FluidDriverCacheDBName);
-		expect(db.version).toEqual(CurrentCacheVersion);
-	});
+	}
 
 	it("if error thrown in deletion of old database, is swallowed and logged", async () => {
 		// Arrange
@@ -77,22 +82,22 @@ describe("getFluidCacheIndexedDbInstance", () => {
 		oldDb.close(); // Close so the upgrade won't be blocked
 
 		const logger = new MockLogger();
-		const sendSpy = jest.spyOn(logger, "send");
 
 		// Act
 		// Now attempt to get the FluidCache instance, which will run the upgrade function
-		const db = await getFluidCacheIndexedDbInstance(logger);
+		db = await getFluidCacheIndexedDbInstance(logger);
 
 		// Assert
 		// We catch the error and send it to the logger
-		expect(sendSpy.mock.calls).toHaveLength(1);
-		expect(sendSpy.mock.calls[0][0].eventName).toEqual(
+		assert.strictEqual(logger.send.callCount, 1);
+		assert.strictEqual(
+			logger.send.args[0][0].eventName,
 			FluidCacheErrorEvent.FluidCacheDeleteOldDbError,
 		);
 
 		// The cache was still created as expected
-		expect(db.objectStoreNames).toEqual([FluidDriverObjectStoreName]);
-		expect(db.name).toEqual(FluidDriverCacheDBName);
-		expect(db.version).toEqual(CurrentCacheVersion);
+		assert.deepEqual([...db.objectStoreNames], [FluidDriverObjectStoreName]);
+		assert.strictEqual(db.name, FluidDriverCacheDBName);
+		assert.strictEqual(db.version, CurrentCacheVersion);
 	});
 });

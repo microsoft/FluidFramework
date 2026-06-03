@@ -64,6 +64,17 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
+		"compile:esm": {
+			dependsOn: ["compile:esm:packages", "build:test:esm"],
+			script: false,
+		},
+		"compile:esm:packages": {
+			// Note that "api-extractor:esnext" is included as "compile" intends
+			// to build complete packages and "api-extractor:esnext" currently
+			// generates package entrypoint files.
+			dependsOn: ["build:esnext", "api-extractor:esnext", "build:copy"],
+			script: false,
+		},
 		"commonjs": {
 			dependsOn: ["tsc", "build:test"],
 			script: false,
@@ -87,13 +98,27 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
-		"build:esnext": [...tscDependsOn, "^build:esnext"],
+		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
 		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test:cjs": [
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^tsc",
+			"^api-extractor:commonjs",
+		],
+		"build:test:esm": [
+			"typetests:gen",
+			"build:esnext",
+			"api-extractor:esnext",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^build:esnext",
+			"^api-extractor:esnext",
+		],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
@@ -159,8 +184,8 @@ module.exports = {
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": ["^tsc", "^build:esnext"],
-		"webpack:profile": ["^tsc", "^build:esnext"],
+		"webpack": ["^api-extractor:esnext", "^build:esnext"],
+		"webpack:profile": ["^api-extractor:esnext", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},
@@ -192,7 +217,7 @@ module.exports = {
 		},
 	},
 
-	multiCommandExecutables: ["oclif", "syncpack", "tsx"],
+	multiCommandExecutables: ["jiti", "oclif", "syncpack", "tsx"],
 	declarativeTasks: {
 		// fluid-build lowercases the executable name, so we need to use buildversion instead of buildVersion.
 		"flub check buildversion": {
@@ -226,8 +251,15 @@ module.exports = {
 			gitignore: ["input", "output"],
 		},
 		// eslint-config-fluid specific declarative task to print configs
-		"tsx scripts/print-configs.ts printed-configs": {
-			inputGlobs: ["scripts/print-configs.ts", "src/**/*.ts", "src/**/*.tsx", "*.js"],
+		"jiti scripts/print-configs.ts printed-configs": {
+			inputGlobs: [
+				"scripts/print-configs.ts",
+				"flat.mts",
+				"library/**/*.{mts,ts,mjs}",
+				"src/**/*.ts",
+				"src/**/*.tsx",
+				"*.js",
+			],
 			outputGlobs: ["printed-configs/*.json"],
 			gitignore: ["input", "output"],
 		},
@@ -390,6 +422,10 @@ module.exports = {
 
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
+
+				// Mocha configs are okay to match package.json (help migrate to simple ESM all the time)
+				// (Just under client packages for now)
+				"^packages/.+/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
 				"docs/static/trusted-types-policy.js",

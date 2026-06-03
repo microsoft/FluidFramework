@@ -84,7 +84,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	GenericError,
 	type IFluidErrorBase,
@@ -94,6 +94,7 @@ import {
 	connectedEventName,
 	createChildLogger,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	formatTick,
 	normalizeError,
 	raiseConnectedEvent,
@@ -101,7 +102,6 @@ import {
 	loggerToMonitoringContext,
 	type ITelemetryErrorEventExt,
 } from "@fluidframework/telemetry-utils/internal";
-import structuredClone from "@ungap/structured-clone";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -430,7 +430,7 @@ export class Container
 	private readonly codeLoader: ICodeDetailsLoader;
 	private readonly options: ILoaderOptions;
 	private readonly scope: FluidObject;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly detachedBlobStorage: MemoryDetachedBlobStorage | undefined;
 	private readonly protocolHandlerBuilder: InternalProtocolHandlerBuilder;
 	private readonly signalAudience = new Audience();
@@ -859,7 +859,7 @@ export class Container
 				logger: this.mc.logger,
 				// WARNING: logger on this context should not including getters like containerConnectionState above (on this.subLogger),
 				// as that will result in attempt to dereference this.connectionStateHandler from this call while it's still undefined.
-				mc: loggerToMonitoringContext(subLogger),
+				mc: loggerToMonitoringContext(extractTelemetryLoggerExt(subLogger)),
 				connectionStateChanged: (value, oldState, reason) => {
 					this.logConnectionStateChangeTelemetry(value, oldState, reason);
 					if (this.loaded) {
@@ -1070,6 +1070,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 				this.serializedStateManager.dispose();
+				this._runtime?.close?.();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1104,6 +1105,8 @@ export class Container
 						eventName: "ContainerDispose",
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
+						isDirty: this.isDirty,
+						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
 				);
@@ -1589,6 +1592,7 @@ export class Container
 		version: string | undefined;
 		dmLastProcessedSeqNumber: number;
 		dmLastKnownSeqNumber: number;
+		numUnsummarizedOps: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
@@ -1610,7 +1614,11 @@ export class Container
 			this.connectToDeltaStream(connectionArgs);
 		}
 
-		this.storageAdapter.connectToService(this.service);
+		// When DisableLoadConnectionRetries is enabled, use no internal retries.
+		// The consumer will own the retry policy.
+		const disableLoadRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
+		this.storageAdapter.connectToService(this.service, disableLoadRetries ? 0 : undefined);
 
 		this.attachmentData = {
 			state: AttachState.Attached,
@@ -1752,6 +1760,12 @@ export class Container
 			version: version?.id,
 			dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
 			dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
+			// Ops known since the last summary (including queued/unprocessed). The loaded snapshot's
+			// sequence number corresponds to the last summary's reference sequence number under normal
+			// "latest" load paths (the runtime asserts this match unless pendingLocalState is used or
+			// sequence number verification is bypassed), so this approximates numUnsummarizedOps at
+			// the loader level without requiring access to runtime summary metadata.
+			numUnsummarizedOps: this._deltaManager.lastKnownSeqNumber - attributes.sequenceNumber,
 		};
 	}
 
@@ -1995,6 +2009,8 @@ export class Container
 
 	private createDeltaManager(): DeltaManager<ConnectionManager> {
 		const serviceProvider = (): IDocumentService | undefined => this.service;
+		const disableLoadConnectionRetries =
+			this.mc.config.getBoolean("Fluid.Container.DisableLoadConnectionRetries") === true;
 		const deltaManager = new DeltaManager<ConnectionManager>(
 			serviceProvider,
 			createChildLogger({ logger: this.subLogger, namespace: "DeltaManager" }),
@@ -2007,6 +2023,7 @@ export class Container
 					this._canReconnect,
 					createChildLogger({ logger: this.subLogger, namespace: "ConnectionManager" }),
 					props,
+					disableLoadConnectionRetries ? 1 : undefined /* maxInitialConnectionAttempts */,
 				),
 		);
 
@@ -2387,6 +2404,9 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 
 			this._loadedModule = {
@@ -2601,6 +2621,14 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * on the `@legacy @beta` surface. This interface is retained for callers that require the
+ * typed-required (non-optional) shape and will be removed in a future breaking release once
+ * `IContainer.getPendingLocalState` is made required.
+ *
  * @alpha @legacy @sealed
  */
 export interface ContainerAlpha extends IContainer {
@@ -2615,6 +2643,13 @@ export interface ContainerAlpha extends IContainer {
 
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer calling
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * directly on the `@legacy @beta` surface. This helper is retained for callers that need the
+ * typed-required shape and will be removed in a future breaking release.
+ *
  * @legacy @alpha
  */
 export function asLegacyAlpha(base: IContainer): ContainerAlpha {

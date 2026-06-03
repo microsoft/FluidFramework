@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
@@ -93,6 +95,42 @@ describe("simple-tree proxies", () => {
 		assert.equal(anchors.find(path), undefined);
 		assert(anchors.isEmpty());
 	});
+
+	it("can hydrate a node with existing event listeners", () => {
+		// Listeners registered before hydration must continue to fire after the
+		// kernel migrates its event source from the unhydrated inner node to the
+		// hydrated anchor node.
+		const node = new ChildSchema({ content: 1 });
+
+		const log: string[] = [];
+		TreeBeta.on(node, "nodeChanged", ({ changedProperties }) => {
+			log.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`);
+		});
+
+		// Mutating before hydration: listener fires from the unhydrated event source.
+		node.content = 2;
+		assert.deepEqual(log, ['nodeChanged: ["content"]']);
+
+		hydrate(ChildSchema, node);
+
+		// Mutating after hydration: listener must continue firing, now from the anchor-node source.
+		node.content = 3;
+		assert.deepEqual(log, ['nodeChanged: ["content"]', 'nodeChanged: ["content"]']);
+	});
+
+	it("registering event listeners on a disposed kernel throws", () => {
+		// Once a kernel has been disposed (e.g. via afterDestroy on its anchor node),
+		// accessing its events to subscribe must fail loudly rather than silently
+		// allocating a fresh buffer on a defunct kernel.
+		const node = new ChildSchema({ content: 1 });
+		hydrate(ChildSchema, node);
+		getKernel(node).dispose();
+
+		assert.throws(
+			() => TreeBeta.on(node, "nodeChanged", () => {}),
+			validateAssertionError(/Cannot register events on a disposed node/),
+		);
+	});
 });
 
 describe("withBufferedTreeEvents", () => {
@@ -159,11 +197,10 @@ describe("array node delta in nodeChanged", () => {
 	const schemaFactory = new SchemaFactory("test");
 	const MyArray = schemaFactory.array("myArray", schemaFactory.number);
 
-	describeHydration("delta presence", (init, hydrated) => {
-		it("delta is undefined for unhydrated arrays, defined for hydrated arrays", () => {
-			// Unhydrated nodes are not visited by the delta pipeline, so no field marks are
-			// available and delta is always undefined.  Hydrated nodes have marks and delta
-			// is always defined (for a single unbuffered edit).
+	describeHydration("delta presence", (init) => {
+		it("delta is defined for both hydrated and unhydrated arrays", () => {
+			// Both hydrated and unhydrated nodes produce a defined delta for a single
+			// unbuffered insert: the unhydrated sequence-field editor now synthesises marks.
 			const myArray = init(MyArray, [1, 2, 3]);
 
 			const deltas: (readonly ArrayNodeDeltaOp[] | undefined)[] = [];
@@ -174,15 +211,7 @@ describe("array node delta in nodeChanged", () => {
 			myArray.insertAtEnd(4);
 
 			assert.equal(deltas.length, 1);
-			if (hydrated) {
-				assert.notEqual(deltas[0], undefined, "hydrated array should have a defined delta");
-			} else {
-				assert.equal(
-					deltas[0],
-					undefined,
-					"unhydrated array delta should be undefined — no delta pipeline",
-				);
-			}
+			assert.notEqual(deltas[0], undefined, "delta should be defined");
 		});
 	});
 

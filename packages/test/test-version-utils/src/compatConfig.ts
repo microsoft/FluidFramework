@@ -19,12 +19,11 @@ import {
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	reinstall,
 	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled } from "./testApi.js";
-import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
+import { ensureVersionLoaded } from "./testApi.js";
+import { getRequestedVersion, resolveRangeViaRegistry } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -63,6 +62,8 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
+export const oldestCompatibleVersion = resolveRangeViaRegistry("2.0.0-internal.5.4.2");
+
 /**
  * The default versions to be used for generating configurations for layer compat testing.
  */
@@ -70,7 +71,7 @@ const defaultVersionsForLayerCompat = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
 	// This is the oldest compatible version (OCV) for Loader and Driver layers.
-	oldestCompatibleVersion: [resolveVersion("2.0.0-internal.5.4.2", false)],
+	oldestCompatibleVersion: [oldestCompatibleVersion],
 };
 
 /**
@@ -84,6 +85,8 @@ const defaultVersionsForCrossClientCompat = {
 // This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
 // Currently we only want to support 2.0.0.internal.3.y.z. and above
 const defaultNumOfDriverVersionsAboveV2Int1 = 2;
+
+const currentVersionStr = `${baseVersion} (N)`;
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -110,52 +113,52 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
-			name: `compat ${compatVersionStr} - old loader`,
+			name: `compat - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new loader`,
+			name: `compat - loader ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewLoader,
 			compatVersion,
 			...allOld,
 			loader: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old driver`,
+			name: `compat - driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Driver,
 			compatVersion,
 			driver: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new driver`,
+			name: `compat - driver ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDriver,
 			compatVersion,
 			...allOld,
 			driver: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old container runtime`,
+			name: `compat - container runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.ContainerRuntime,
 			compatVersion,
 			containerRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new container runtime`,
+			name: `compat - container runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewContainerRuntime,
 			compatVersion,
 			...allOld,
 			containerRuntime: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old data runtime`,
+			name: `compat - data store runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.DataRuntime,
 			compatVersion,
 			dataRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new data runtime`,
+			name: `compat - data store runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDataRuntime,
 			compatVersion,
 			...allOld,
@@ -167,13 +170,13 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 const genOldestCompatibleConfig = (compatVersion: number | string): CompatConfig[] => {
 	return [
 		{
-			name: `compat OCV ${compatVersion} - old loader`,
+			name: `compat - loader ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat OCV ${compatVersion} - old loader + old driver`,
+			name: `compat - loader & driver ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -190,7 +193,7 @@ const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader`,
+			name: `compat back - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
@@ -205,7 +208,7 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader + older driver`,
+			name: `compat back - loader & driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -214,14 +217,17 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	];
 };
 
+/**
+ * We have 8 internal and 5 RC versions.
+ */
+export const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
+
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
 	const semverVersion = semver.parse(codeVersion);
 	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
-	// We have 8 internal and 5 RC versions.
 	// We want to generate back compat configs for all of them because they are all considered major releases.
 	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
-	const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
 	// This allows us to increase our oldest compatible version (OCV) support for certain versions above
 	// 2.0.0.internal.1.y.z, where we don't want to go that far.
 	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
@@ -505,19 +511,20 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  * @internal
  */
 export async function mochaGlobalSetup(): Promise<void> {
-	const versions = new Set(configList.value.map((value) => value.compatVersion));
-	if (versions.size === 0) {
+	const configs = configList.value;
+	if (configs.length === 0) {
 		return;
 	}
 
-	// Make sure we wait for all before returning, even if one of them has error.
-	const installP = Array.from(versions.values()).map(async (value) => {
+	// Load all versioned packages concurrently.
+	const versions = new Set(configs.map((value) => value.compatVersion));
+	const loadPromises = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
-		return ensurePackageInstalled(version, value, reinstall);
+		return ensureVersionLoaded(version, value);
 	});
 
 	let error: unknown;
-	for (const p of installP) {
+	for (const p of loadPromises) {
 		try {
 			await p;
 		} catch (e) {
