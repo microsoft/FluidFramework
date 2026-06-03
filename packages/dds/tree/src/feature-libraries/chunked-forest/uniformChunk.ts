@@ -114,8 +114,12 @@ export class TreeShape {
 	public readonly valuesPerTopLevelNode: number;
 
 	/**
-	 * Position info for the nodes of a single top-level tree of this shape, shared by every chunk
-	 * that uses this shape. The cursor derives each node's actual position info from this shared
+	 * Information about every node in this shape.
+	 * The root is first, and all indexes it uses to refer to other nodes are indexes into this array.
+	 * Beyond that the ordering is an implementation detail of this shape.
+	 * @remarks
+	 * Use of this in contexts where there might be multiple top-level nodes requires some additional care.
+	 * For example {@link Cursor} derives each node's actual position info from this shared
 	 * array plus the node's top-level index within the chunk.
 	 */
 	public readonly positions: readonly NodePositionInfo[];
