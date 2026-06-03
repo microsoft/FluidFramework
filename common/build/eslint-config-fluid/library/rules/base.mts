@@ -18,7 +18,6 @@ import {
 	restrictedImportPaths,
 	restrictedImportPatternsForProductionCode,
 	permittedImports,
-	restrictedSyntax,
 } from "../constants.mjs";
 
 /**
@@ -401,7 +400,30 @@ export const baseRules = {
 	"no-param-reassign": "error",
 	"no-redeclare": "off", // Superseded by @typescript-eslint/no-redeclare
 	"no-regex-spaces": "error",
-	"no-restricted-syntax": ["error", ...restrictedSyntax],
+	"no-restricted-syntax": [
+		"error",
+		{
+			selector: "ExportAllDeclaration",
+			message:
+				"Exporting * is not permitted. You should export only named items you intend to export.",
+		},
+		"ForInStatement",
+		// Enforce the granular TypeBox import pattern. The named `Type` export of
+		// `@sinclair/typebox` is the monolithic `TypeBuilder` aggregate; importing
+		// it (`import { Type } from "@sinclair/typebox"`) pulls in every builder
+		// and defeats tree-shaking. Instead, bind the namespace with
+		// `import * as Type from "@sinclair/typebox"` so member access like
+		// `Type.Object(...)` lets the bundler prune unused builders. This can't be
+		// expressed with `no-restricted-imports`/`importNames`, since that also
+		// reports the desired `import * as Type` namespace form; a syntax selector
+		// targets only the named specifier.
+		{
+			selector:
+				'ImportDeclaration[source.value="@sinclair/typebox"] > ImportSpecifier[imported.name="Type"]',
+			message:
+				'Import the TypeBox `Type` namespace via `import * as Type from "@sinclair/typebox"` instead of the named `Type` value export, which pulls in the entire builder and defeats tree-shaking.',
+		},
+	],
 	"no-sequences": "error",
 	"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 	"no-sparse-arrays": "error",

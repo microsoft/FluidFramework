@@ -31,16 +31,3 @@ const strict = [...fullStrictConfig] as const;
 const strictBiome = [...fullStrictBiomeConfig] as const;
 
 export { base, recommended, strict, strictBiome };
-
-/**
- * Re-exported building blocks for downstream configs that need to extend, rather than
- * replace, Fluid's shared rule options.
- *
- * @remarks
- * ESLint replaces (rather than merges) the options of a rule when multiple configs in the
- * resolved chain set it. A downstream config that sets `no-restricted-syntax` therefore needs
- * to re-include Fluid's base selectors to avoid silently dropping them. Spread
- * {@link restrictedSyntax} into your own selector list, e.g.
- * `"no-restricted-syntax": ["error", ...restrictedSyntax, myExtraSelector]`.
- */
-export { restrictedSyntax } from "./library/constants.mjs";

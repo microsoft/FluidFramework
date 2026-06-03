@@ -10,7 +10,6 @@
  * - permittedImports: Allowed import patterns for the import-x/no-internal-modules rule
  * - restrictedImportPaths: Import paths that should be restricted
  * - restrictedImportPatternsForProductionCode: Import patterns restricted in production code
- * - restrictedSyntax: Selectors for the no-restricted-syntax rule
  * - testFilePatterns: Glob patterns for identifying test files
  * - globalIgnores: Global ignore patterns for ESLint
  */
@@ -72,26 +71,6 @@ export const restrictedImportPatternsForProductionCode = [
 		message:
 			"Importing from a parent index file tends to cause cyclic dependencies. Import from a more specific sibling file instead.",
 	},
-] as const;
-
-/**
- * Restricted syntax selectors for the `no-restricted-syntax` rule.
- *
- * @remarks
- * ESLint does not merge multiple `no-restricted-syntax` configurations: when more than one
- * config in the resolved chain sets the rule, only the last one wins (its options array replaces
- * earlier ones rather than concatenating). Packages that need to add their own selectors must
- * therefore re-include these base selectors alongside their additions. Exporting them here lets
- * downstream configs spread them in (`[...restrictedSyntax, myExtraSelector]`) instead of
- * hand-copying.
- */
-export const restrictedSyntax = [
-	{
-		selector: "ExportAllDeclaration",
-		message:
-			"Exporting * is not permitted. You should export only named items you intend to export.",
-	},
-	"ForInStatement",
 ] as const;
 
 /**
