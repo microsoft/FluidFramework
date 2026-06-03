@@ -250,6 +250,7 @@ function clonePositions(
 /**
  * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
  *
+ * @remarks
  * Paired with a value array, this lets a {@link UniformChunk} be traversed like a tree by an
  * {@link ITreeCursorSynchronous}. The {@link Cursor} derives each node's position info from the
  * shared {@link TreeShape.positions} plus the node's top-level index.
@@ -293,8 +294,6 @@ class OffsetShape {
 
 /**
  * Information about a node at a specific position within one top-level tree of a {@link TreeShape}.
- * One instance per position is created when the {@link TreeShape} is built, and shared by every
- * chunk of that shape.
  */
 class NodePositionInfo implements UpPath {
 	/**
@@ -322,25 +321,24 @@ class NodePositionInfo implements UpPath {
 /**
  * The cursor implementation for `UniformChunk`.
  *
+ * @remarks
  * Tracks a flat `positionIndex` and derives each node's position info from the shape's shared
  * {@link TreeShape.positions} plus the node's top-level index.
  */
 class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
 
-	// Shared position info for the current node: the same entry from the shape's per-tree
-	// `TreeShape.positions` is reused for every top-level instance of this shape.
-	// undefined when in root field.
+	/** Position info for the current node, or `undefined` when in root field. */
 	private nodePositionInfo: NodePositionInfo | undefined;
 
-	// Which top-level node of the chunk the current position is within. Valid when nodePositionInfo !== undefined.
+	/** Which top-level node of the chunk the current position is within. Valid when nodePositionInfo !== undefined. */
 	private topLevelIndex: number = 0;
 
 	// Cached constants for faster access.
-	private readonly shape: ChunkShape;
-	private readonly treeShape: TreeShape; // The chunk's per-tree shape (shape of each top-level tree).
-	private readonly nodeLength: number; // Number of positions in one top-level tree (treeShape.positions.length).
-	private readonly stride: number; // Number of values per top-level node (treeShape.valuesPerTopLevelNode).
+	private readonly shape: ChunkShape; /** */
+	private readonly treeShape: TreeShape; /** The chunk's per-tree shape (shape of each top-level tree). */
+	private readonly nodeLength: number; /** Number of positions in one top-level tree (treeShape.positions.length). */
+	private readonly stride: number; /** Number of values per top-level node (treeShape.valuesPerTopLevelNode). */
 
 	public mode: CursorLocationType = CursorLocationType.Fields;
 
@@ -387,12 +385,15 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	/**
-	 * Change the current node within the chunk by flat position index, decomposing it into the
-	 * top-level instance ({@link Cursor.topLevelIndex}) and the shared per-tree entry
-	 * ({@link Cursor.nodePositionInfo}). See `nodeInfo` for getting data about the current node.
+	 * Change the current node within the chunk.
 	 *
 	 * @param positionIndex - flat position index of the newly selected node. This is NOT an index
 	 * within a field, and is not bounds checked.
+	 *
+	 * @remarks
+	 * Decomposes the index into {@link Cursor.topLevelIndex} and {@link Cursor.nodePositionInfo}.
+	 * See `nodeInfo` for getting data about the current node.
+	 *
 	 */
 	private moveToPosition(positionIndex: number): void {
 		this.positionIndex = positionIndex;
@@ -414,10 +415,11 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	/**
-	 * Build a standalone {@link UpPath} for the node at `positionIndex` by walking the shared
-	 * per-tree {@link TreeShape.positions} and applying the top-level index at each level. O(depth)
-	 * allocation; only used by {@link Cursor.getPath}/{@link Cursor.getFieldPath} (mirrors how the
-	 * `BasicChunk` cursor allocates paths).
+	 * Build a standalone {@link UpPath} for the node at `positionIndex`. O(depth) allocation.
+	 *
+	 * @remarks
+	 * walks the shared per-tree {@link TreeShape.positions} and applies the top-level index
+	 * at each level. Mirrors how the `BasicChunk` cursor allocates paths.
 	 */
 	private materializePath(positionIndex: number): UpPath | undefined {
 		if (positionIndex === 0) {
