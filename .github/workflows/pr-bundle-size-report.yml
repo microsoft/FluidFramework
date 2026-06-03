@@ -206,13 +206,15 @@ jobs:
     # permissions:
     #   pull-requests: write
     steps:
-      # Check out the PR's base branch (never PR HEAD, since PR-authored code isn't trusted) just to get
-      # build-tools source so we can build flub. The comparison itself reads only ADO artifacts identified
-      # by SHA — no local git state is required.
+      # Check out the source the workflow file itself came from (never PR HEAD — PR-authored code isn't
+      # trusted). For workflow_dispatch this is the dispatched ref (so the build-tools source matches the
+      # workflow file, including any new flub commands the workflow relies on); for organic triggers it's
+      # the PR's base branch. The comparison itself reads only ADO artifacts identified by SHA — no local
+      # git state is required.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ matrix.pr.baseRef }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || matrix.pr.baseRef }}
           fetch-depth: "1"
           persist-credentials: false
 
