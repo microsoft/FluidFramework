@@ -9,7 +9,7 @@ import { Flags } from "@oclif/core";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
-	bundleSizeArtifactsPipeline,
+	bundleSizeArtifactsBaselinePipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
 	fluidframeworkAdoOrgUrl,
@@ -134,10 +134,10 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
 		const artifactContents = await getArtifactForCommit({
 			adoApi,
-			artifactName: bundleSizeArtifactsPipeline.bundleAnalyzerJsonArtifactName,
+			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
 			commit: baselineCommit,
-			definitionId: bundleSizeArtifactsPipeline.definitionId,
-			project: bundleSizeArtifactsPipeline.project,
+			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
+			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
 
 		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);

@@ -8,7 +8,8 @@ import { Flags } from "@oclif/core";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
-	bundleSizeArtifactsPipeline,
+	bundleSizeArtifactsBaselinePipeline,
+	bundleSizeArtifactsPrPipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
 	fluidframeworkAdoOrgUrl,
@@ -29,7 +30,7 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 	typeof ComparePipelineBundleArtifacts
 > {
 	static readonly description =
-		`Download the bundle-size artifacts published by the \`Build - Client bundle size artifacts\` ADO pipeline for two commits and emit their per-package, per-bundle differences as JSON. Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use \`check bundleSize\` instead.`;
+		`Download ADO bundle-size artifacts for two commits and emit their per-package, per-bundle differences as JSON. Base-side artifacts come from the \`Build - Client bundle size artifacts\` pipeline (runs on main/release pushes); head-side artifacts come from the \`Build - client packages\` pipeline (runs on PR commits). Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use \`check bundleSize\` instead.`;
 
 	static readonly enableJsonFlag = true;
 
@@ -54,10 +55,10 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 
 		const baseArtifact = await getArtifactForCommit({
 			adoApi,
-			artifactName: bundleSizeArtifactsPipeline.bundleAnalyzerJsonArtifactName,
+			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
 			commit: base,
-			definitionId: bundleSizeArtifactsPipeline.definitionId,
-			project: bundleSizeArtifactsPipeline.project,
+			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
+			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
 		const baseJsons = extractAnalyzerJsonsFromArtifact(baseArtifact);
 		if (baseJsons.size === 0) {
@@ -66,10 +67,10 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 
 		const headArtifact = await getArtifactForCommit({
 			adoApi,
-			artifactName: bundleSizeArtifactsPipeline.bundleAnalyzerJsonArtifactName,
+			artifactName: bundleSizeArtifactsPrPipeline.bundleAnalyzerJsonArtifactName,
 			commit: head,
-			definitionId: bundleSizeArtifactsPipeline.definitionId,
-			project: bundleSizeArtifactsPipeline.project,
+			definitionId: bundleSizeArtifactsPrPipeline.definitionId,
+			project: bundleSizeArtifactsPrPipeline.project,
 		});
 		const headJsons = extractAnalyzerJsonsFromArtifact(headArtifact);
 		if (headJsons.size === 0) {

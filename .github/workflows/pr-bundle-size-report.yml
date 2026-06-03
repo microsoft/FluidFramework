@@ -5,9 +5,11 @@ name: pr-bundle-size-report
 #
 # Triggers:
 #   pull_request_target: handle the PR directly when it opens, synchronizes, or reopens.
-#   check_run:           fires when ADO publishes the `Build - Client bundle size artifacts` check on a commit.
-#                        The identify-targets job maps the check's SHA to affected PRs (PR-head match OR merge-base
-#                        match) and the compare job fans out via matrix.
+#   check_run:           fires when ADO publishes either of the two bundle-publishing checks on a commit.
+#                        `Build - Client bundle size artifacts` runs on main/release pushes (baseline-side bundle
+#                        becomes available). `Build - client packages` runs on PR commits (head-side bundle becomes
+#                        available). The identify-targets job maps the check's SHA to affected PRs (PR-head match OR
+#                        merge-base match) and the compare job fans out via matrix.
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -33,12 +35,13 @@ permissions:
 
 jobs:
   identify-targets:
-    # Short-circuit check_run events that aren't the bundle-size pipeline completing successfully.
-    # GitHub doesn't let us filter check_run events by name at the `on:` level, so we do it here.
+    # Short-circuit check_run events that aren't one of the two bundle-publishing pipelines completing
+    # successfully. GitHub doesn't let us filter check_run events by name at the `on:` level, so we do it here.
     if: >-
       github.event_name == 'pull_request_target' ||
       (github.event_name == 'check_run' &&
-       github.event.check_run.name == 'Build - Client bundle size artifacts' &&
+       (github.event.check_run.name == 'Build - Client bundle size artifacts' ||
+        github.event.check_run.name == 'Build - client packages') &&
        github.event.check_run.conclusion == 'success')
     runs-on: ubuntu-latest
     outputs:

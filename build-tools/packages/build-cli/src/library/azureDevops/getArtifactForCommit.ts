@@ -25,12 +25,25 @@ const recentBuildsToFetch = 100;
  * (manual re-run, partial-success retry, …), so scan all matches rather than
  * locking onto the first one ADO returned.
  *
+ * Both `sourceVersion` and `triggerInfo['pr.sourceSha']` are checked. PR builds
+ * record the GitHub-generated test-merge SHA on `sourceVersion` and the actual
+ * PR HEAD SHA on `triggerInfo['pr.sourceSha']`; main builds carry the commit
+ * SHA on `sourceVersion` directly with no `triggerInfo`.
+ *
  * @returns The build id. Throws with a human-readable message when no usable
  * build is found, prioritizing "not yet completed" over "did not succeed"
  * since retrying later might help.
  */
 function findBuildIdForCommit(builds: Build[], commit: string): number {
-	const candidates = builds.filter((b) => b.sourceVersion === commit);
+	const candidates = builds.filter(
+		(b) =>
+			b.sourceVersion === commit ||
+			// `triggerInfo` is not in azure-devops-node-api's `Build` type but is
+			// included in the REST response for PR-triggered builds.
+			(b as unknown as { triggerInfo?: Record<string, string> }).triggerInfo?.[
+				"pr.sourceSha"
+			] === commit,
+	);
 
 	if (candidates.length === 0) {
 		throw new Error(`No build found for commit ${commit}`);
