@@ -36,6 +36,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/no-unsafe-assignment": "off",
 			"jsdoc/require-description": "warn",
 			"unicorn/no-null": "off",
+			// TODO:AB#74822: Remove the no-restricted-syntax block once updated to eslint-config-fluid@13.0.0
+			// which includes the TypeBox rule.
+			//
 			// ESLint applies a single `no-restricted-syntax` configuration per file rather
 			// than combining several, so this list must contain every selector for this
 			// package: the general selectors plus the tree-specific TypeBox selector.
