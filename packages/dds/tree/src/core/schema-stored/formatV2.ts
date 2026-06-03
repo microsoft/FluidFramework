@@ -7,10 +7,8 @@ import type { ObjectOptions, Static } from "@sinclair/typebox";
 import * as Type from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
-import {
-	type JsonCompatibleReadOnlyObject,
-	JsonCompatibleReadOnlySchema,
-} from "../../util/index.js";
+import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
+import { JsonCompatibleReadOnlySchema } from "../../util/index.js";
 
 import {
 	FieldKindIdentifierSchema,
