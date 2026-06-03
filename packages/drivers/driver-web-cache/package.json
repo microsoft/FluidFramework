@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/driver-web-cache",
-	"version": "2.102.0",
+	"version": "2.103.0",
 	"description": "Implementation of the driver caching API for a web browser",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -121,7 +121,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Class_FluidCache": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

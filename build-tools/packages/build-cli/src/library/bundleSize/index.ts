@@ -3,28 +3,16 @@
  * Licensed under the MIT License.
  */
 
+export { compareJsonReportsByPackage } from "./compareJsonReports.js";
+export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
-	ADOSizeComparator,
-	BundleFileData,
-	GetBundleSummariesFromAnalyzerArgs,
-	getAnalyzerFilePathsFromFolder,
-	getAnalyzerJsonFromContents,
-	getAnalyzerJsonFromFileSystem,
-	getAnalyzerPathsFromFileSystem,
-	getBundleSummariesFromAnalyzer,
-	IADOConstants,
-	SizeComparison,
-} from "./ADO/index.js";
-export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
+	type ReadAnalyzerJsonsResult,
+	readAnalyzerJsonsFromFileSystem,
+} from "./readAnalyzerJsonsFromFileSystem.js";
+export { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
 export {
-	BundleComparison,
-	BundleMetric,
-	BundleMetricSet,
-	BundleSummaries,
+	AnalyzerJsonByPackage,
+	BundleData,
+	BundlesComparison,
+	PackageComparison,
 } from "./types.js";
-export {
-	GetBuildOptions,
-	getAllFilesInDirectory,
-	getBuilds,
-	pickFreshestCanonicalRemote,
-} from "./utilities/index.js";

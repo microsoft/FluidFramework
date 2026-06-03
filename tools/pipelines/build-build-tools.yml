@@ -102,8 +102,6 @@ extends:
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/build-tools
     tagName: build-tools
