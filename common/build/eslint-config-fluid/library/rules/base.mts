@@ -18,6 +18,7 @@ import {
 	restrictedImportPaths,
 	restrictedImportPatternsForProductionCode,
 	permittedImports,
+	restrictedSyntax,
 } from "../constants.mjs";
 
 /**
@@ -400,15 +401,7 @@ export const baseRules = {
 	"no-param-reassign": "error",
 	"no-redeclare": "off", // Superseded by @typescript-eslint/no-redeclare
 	"no-regex-spaces": "error",
-	"no-restricted-syntax": [
-		"error",
-		{
-			selector: "ExportAllDeclaration",
-			message:
-				"Exporting * is not permitted. You should export only named items you intend to export.",
-		},
-		"ForInStatement",
-	],
+	"no-restricted-syntax": ["error", ...restrictedSyntax],
 	"no-sequences": "error",
 	"no-shadow": "off", // Superseded by @typescript-eslint/no-shadow
 	"no-sparse-arrays": "error",
