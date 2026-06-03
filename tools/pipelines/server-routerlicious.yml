@@ -121,10 +121,9 @@ extends:
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
-    # We need to install only the root dependencies; r11s has native deps that don't install in CI since we use Docker
-    # to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'pnpm install --workspace-root'
-    packageManager: pnpm
+    # Root-only install: r11s has native deps that don't install in CI; the real build runs in Docker.
+    # Root deps are still needed for the version-setting step.
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile --workspace-root'
     tagName: server
     isReleaseGroup: true
     pool: Large-eastus2
@@ -141,15 +140,5 @@ extends:
     - check:versions
     - generate:packageList
     # The --build-context is needed because the Dockerfile copies files from the repo root.
-    # On the internal project, also override the default docker.io registry in the Dockerfile to pull the base
-    # image from our internal mirror, since 1ES network isolation policies (CfsClean/CfsClean2) block egress
-    # to registry-1.docker.io from our build pool. containerRegistryUrl comes from the container-registry-info
-    # variable group. See tools/pipelines/README.md. The public project falls back to the
-    # Dockerfile default of docker.io because it has no access to the internal mirror.
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      additionalBuildArguments: >-
-        --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
-        --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
-    ${{ else }}:
-      additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     enableDockerImagePull: false

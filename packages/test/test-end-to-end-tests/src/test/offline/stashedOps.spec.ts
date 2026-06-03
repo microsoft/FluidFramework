@@ -30,9 +30,7 @@ import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	OperationType,
-	SharedArray,
 	SharedArrayRevertible,
-	SharedSignal,
 	type IRevertible,
 	type ISharedArray,
 	type ISharedSignal,
@@ -69,8 +67,7 @@ import {
 	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ITree } from "@fluidframework/tree";
 
 import { generatePendingState, loadContainerOffline } from "./offlineTestsUtils.js";
 
@@ -135,8 +132,18 @@ const pendingBlobsFromPendingState = (pendingState: string): Record<string, any>
 // Introduced in 0.37
 // REVIEW: enable compat testing
 describeCompat("stashed ops", "NoCompat", (getTestObjectProvider, apis) => {
-	const { SharedMap, SharedDirectory, SharedCounter, SharedString, SharedCell } = apis.dds;
+	const {
+		SharedMap,
+		SharedDirectory,
+		SharedCounter,
+		SharedString,
+		SharedCell,
+		SharedArray,
+		SharedSignal,
+		SharedTree,
+	} = apis.dds;
 	const { getTextAndMarkers } = apis.dataRuntime.packages.sequence;
+	const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
 
 	const registry: ChannelFactoryRegistry = [
 		[mapId, SharedMap.getFactory()],
