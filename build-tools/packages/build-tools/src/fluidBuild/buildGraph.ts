@@ -4,15 +4,18 @@
  */
 
 import * as assert from "assert";
+
 import type { AsyncPriorityQueue } from "async";
 import registerDebug from "debug";
 import chalk from "picocolors";
 import { Spinner } from "picospinner";
 import * as semver from "semver";
+
 import type { GitRepo } from "../common/gitRepo.js";
 import { defaultLogger } from "../common/logging.js";
 import type { Package } from "../common/npmPackage.js";
 import type { Timer } from "../common/timer.js";
+
 import type { BuildContext } from "./buildContext.js";
 import { BuildMetrics } from "./buildMetrics.js";
 import { BuildResult, summarizeBuildResult } from "./buildResult.js";

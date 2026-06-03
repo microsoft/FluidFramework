@@ -4,19 +4,19 @@
  */
 
 import {
-	Uint8ArrayToString,
 	performanceNow,
 	stringToBuffer,
+	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData, promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
+	ICreateBlobResponse,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	ISummaryContext,
-	ICreateBlobResponse,
 	ISnapshotTree,
+	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -24,8 +24,8 @@ import type {
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	PerformanceEvent,
 	createChildMonitoringContext,
+	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICache } from "./cache.js";

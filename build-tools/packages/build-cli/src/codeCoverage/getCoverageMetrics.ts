@@ -4,6 +4,7 @@
  */
 
 import { Parser } from "xml2js";
+
 import type { ArtifactContents } from "../library/azureDevops/downloadArtifact.js";
 import type { CommandLogger } from "../logging.js";
 

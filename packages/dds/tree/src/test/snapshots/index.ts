@@ -4,10 +4,10 @@
  */
 
 export {
+	regenerateSnapshots,
+	snapshotCodecFormats,
 	takeJsonSnapshot,
 	takeSnapshot,
-	useSnapshotDirectory,
-	regenerateSnapshots,
 	testSchemaCompatibilitySnapshots,
-	snapshotCodecFormats,
+	useSnapshotDirectory,
 } from "./snapshotTools.js";

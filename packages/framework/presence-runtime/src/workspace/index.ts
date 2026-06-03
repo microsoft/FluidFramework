@@ -8,5 +8,4 @@ export {
 	mergeUntrackedDatastore,
 	mergeValueDirectory,
 } from "./presenceStates.js";
-
 export { datastoreFromHandle } from "./stateDatastore.js";

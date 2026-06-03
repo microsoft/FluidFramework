@@ -10,11 +10,12 @@ export type {
 	ContainerExtensionId,
 	ExtensionCompatibilityDetails,
 } from "@fluidframework/runtime-definitions/internal";
+
 export type {
 	ClientConnectionId,
+	ContainerExtension,
 	ContainerExtensionFactory,
 	ContainerExtensionStore,
-	ContainerExtension,
 	ExtensionHost,
 	ExtensionHostEvents,
 	ExtensionInstantiationResult,
@@ -36,8 +37,8 @@ export type {
 	IContainerRuntimeEvents,
 	IContainerRuntimeInternal,
 	IContainerRuntimeWithResolveHandle_Deprecated,
-	SummarizerStopReason,
 	ISummarizeEventProps,
-	ISummarizerObservabilityProps,
 	ISummarizerEvents,
+	ISummarizerObservabilityProps,
+	SummarizerStopReason,
 } from "./containerRuntime.js";

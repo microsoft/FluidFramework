@@ -10,19 +10,19 @@ import { take } from "@fluid-private/stochastic-test-utils";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	IdCompressor,
 	createIdCompressor,
 	deserializeIdCompressor,
+	IdCompressor,
 	serializeIdCompressor,
 	toIdCompressorWithCore,
 } from "../idCompressor.js";
 import type {
 	OpSpaceCompressedId,
 	SerializedIdCompressorWithNoSession,
+	SerializedIdCompressorWithOngoingSession,
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
-	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
 import { createSessionId } from "../utilities.js";
 
@@ -30,21 +30,21 @@ import {
 	Client,
 	CompressorFactory,
 	DestinationClient,
-	IdCompressorTestNetwork,
-	MetaClient,
 	expectSerializes,
 	getClusterSize,
+	IdCompressorTestNetwork,
+	MetaClient,
 	makeOpGenerator,
 	performFuzzActions,
 	roundtrip,
 	sessionIds,
 } from "./idCompressorTestUtilities.js";
 import {
-	type LocalCompressedId,
 	fail,
 	incrementStableId,
 	isFinalId,
 	isLocalId,
+	type LocalCompressedId,
 } from "./testCommon.js";
 
 describe("IdCompressor", () => {

@@ -13,10 +13,10 @@ import type { ISharedCounter, SharedCounter } from "@fluidframework/counter/inte
 import {
 	ChannelFactoryRegistry,
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 const counterId = "counterKey";

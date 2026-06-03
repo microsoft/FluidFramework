@@ -5,22 +5,22 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
+	devtoolsMessageSource,
 	type IDevtoolsMessage,
 	type IMessageRelay,
 	type IMessageRelayEvents,
 	type ISourcedDevtoolsMessage,
-	devtoolsMessageSource,
 	isDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 
 import { browser } from "./Globals.js";
 import {
 	type DevToolsInitMessage,
-	type TypedPortConnection,
 	devToolsInitAcknowledgementType,
 	devToolsInitMessageType,
 	extensionPopupMessageSource,
 	extensionViewMessageSource,
+	type TypedPortConnection,
 } from "./messaging/index.js";
 
 /**

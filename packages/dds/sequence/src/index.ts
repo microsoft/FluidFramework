@@ -3,6 +3,31 @@
  * Licensed under the MIT License.
  */
 
+export {
+	BaseSegment,
+	type InteriorSequencePlace,
+	type ISegment,
+	type LocalReferencePosition,
+	type MapLike,
+	Marker,
+	MergeTreeDeltaType,
+	type PropertySet,
+	type ReferencePosition,
+	ReferenceType,
+	reservedMarkerIdKey,
+	reservedRangeLabelsKey,
+	reservedTileLabelsKey,
+	type SequencePlace,
+	Side,
+	TextSegment,
+	TrackingGroup,
+} from "@fluidframework/merge-tree/internal";
+
+export type {
+	DeserializeCallback,
+	ISequenceIntervalCollection,
+	ISequenceIntervalCollectionEvents,
+} from "./intervalCollection.js";
 /**
  * Supports distributed data structures which are list-like.
  *
@@ -17,27 +42,22 @@
  */
 export type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
+	createEndpointIndex,
+	createOverlappingIntervalsIndex,
+	type IEndpointIndex,
+	type ISequenceOverlappingIntervalsIndex,
+	type SequenceIntervalIndex,
+	type SequenceIntervalIndexes,
+} from "./intervalIndex/index.js";
+export {
 	type IInterval,
 	IntervalOpType,
+	IntervalStickiness,
 	IntervalType,
 	type ISerializedInterval,
 	type SequenceInterval,
 	type SerializedIntervalDelta,
-	IntervalStickiness,
 } from "./intervals/index.js";
-export type {
-	DeserializeCallback,
-	ISequenceIntervalCollection,
-	ISequenceIntervalCollectionEvents,
-} from "./intervalCollection.js";
-export {
-	type SequenceIntervalIndex,
-	type SequenceIntervalIndexes,
-	type ISequenceOverlappingIntervalsIndex,
-	type IEndpointIndex,
-	createOverlappingIntervalsIndex,
-	createEndpointIndex,
-} from "./intervalIndex/index.js";
 export {
 	appendAddIntervalToRevertibles,
 	appendChangeIntervalToRevertibles,
@@ -50,9 +70,9 @@ export {
 	type SharedStringRevertible,
 } from "./revertibles.js";
 export {
+	type ISharedSegmentSequence,
 	type ISharedSegmentSequenceEvents,
 	SharedSegmentSequence,
-	type ISharedSegmentSequence,
 } from "./sequence.js";
 export type {
 	ISequenceDeltaRange,
@@ -61,30 +81,10 @@ export type {
 	SequenceMaintenanceEvent,
 } from "./sequenceDeltaEvent.js";
 export { SharedString } from "./sequenceFactory.js";
+export { type IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 export {
 	getTextAndMarkers,
 	type ISharedString,
-	type SharedStringSegment,
 	SharedStringClass,
+	type SharedStringSegment,
 } from "./sharedString.js";
-export { type IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
-
-export {
-	type ISegment,
-	Marker,
-	BaseSegment,
-	type ReferencePosition,
-	ReferenceType,
-	type PropertySet,
-	type MapLike,
-	TextSegment,
-	MergeTreeDeltaType,
-	reservedMarkerIdKey,
-	reservedTileLabelsKey,
-	reservedRangeLabelsKey,
-	TrackingGroup,
-	type LocalReferencePosition,
-	Side,
-	type InteriorSequencePlace,
-	type SequencePlace,
-} from "@fluidframework/merge-tree/internal";

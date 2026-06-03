@@ -5,7 +5,7 @@
 
 import { assert } from '@fluidframework/core-utils/internal';
 
-import { ReplaceRecursive, assertNotUndefined } from '../Common.js';
+import { assertNotUndefined, ReplaceRecursive } from '../Common.js';
 import type {
 	Definition,
 	DetachedSequenceId,

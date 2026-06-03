@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type ChunkedCursor,
 	EmptyKey,
 	type FieldKey,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
 	type JsonableTree,
-	type ChunkedCursor,
 } from "../../../core/index.js";
 import {
 	BasicChunk,
@@ -21,8 +21,8 @@ import {
 import {
 	basicChunkTree,
 	basicOnlyChunkPolicy,
-	chunkField,
 	type ChunkCompressor,
+	chunkField,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -35,14 +35,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type TreeChunk,
 	chunkTree,
 	cursorForJsonableTreeNode,
 	jsonableTreeFromCursor,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { numberSchema } from "../../../simple-tree/index.js";
-import { ReferenceCountedBase, brand } from "../../../util/index.js";
+import { brand, ReferenceCountedBase } from "../../../util/index.js";
 import {
 	type TestField,
 	testGeneralPurposeTreeCursor,

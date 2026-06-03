@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type PropTreeNode,
-	unwrapPropTreeNode,
 	type TextEditorProps,
 	type UndoRedo,
+	unwrapPropTreeNode,
 } from "@fluidframework/react/internal";
 import {
 	codePointCount,
@@ -17,7 +17,9 @@ import {
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
+
 export { FormattedTextAsTree } from "@fluidframework/tree/internal";
+
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
 import {

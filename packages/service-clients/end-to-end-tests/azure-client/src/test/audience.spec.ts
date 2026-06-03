@@ -19,7 +19,7 @@ import {
 	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, waitForMember, getTestMatrix, currentVersion } from "./utils.js";
+import { configProvider, currentVersion, getTestMatrix, waitForMember } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {

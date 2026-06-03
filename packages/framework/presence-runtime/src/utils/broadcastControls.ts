@@ -4,8 +4,8 @@
  */
 
 import type {
-	BroadcastControls,
 	BroadcastControlSettings,
+	BroadcastControls,
 } from "@fluid-internal/presence-definitions";
 
 class ForcedRefreshControl

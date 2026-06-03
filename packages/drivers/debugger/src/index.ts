@@ -4,5 +4,5 @@
  */
 
 export { FluidDebugger } from "./fluidDebugger.js";
-export { type debuggerUIFactory, DebugReplayController } from "./fluidDebuggerController.js";
+export { DebugReplayController, type debuggerUIFactory } from "./fluidDebuggerController.js";
 export { DebuggerUI, type IDebuggerController, type IDebuggerUI } from "./fluidDebuggerUi.js";

@@ -8,7 +8,6 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	VersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecVersion,
 	type DependentFormatVersion,
@@ -17,6 +16,7 @@ import {
 	type ICodecOptions,
 	type IJsonCodec,
 	makeDiscontinuedCodecAndSchema,
+	VersionDispatchingCodecBuilder,
 } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,

@@ -53,7 +53,9 @@ import {
 	driverPackageEntries,
 	loaderPackageEntries,
 } from "./compatPackageList.js";
+
 export type { PackageToInstall } from "./compatPackageList.js";
+
 import type { PackageToInstall } from "./compatPackageList.js";
 import { pkgVersion } from "./packageVersion.js";
 import {

@@ -10,16 +10,16 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import {
+	type FluidObject,
 	IFluidHandle,
 	IFluidLoadable,
-	type FluidObject,
 } from "@fluidframework/core-interfaces";
 import { isObject } from "@fluidframework/core-utils/internal";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedMap, ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { ISharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
 import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
@@ -32,9 +32,9 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
-	ITestContainerConfig,
-	DataObjectFactoryType,
 	createAndAttachContainer,
+	DataObjectFactoryType,
+	ITestContainerConfig,
 	ITestFluidObject,
 	type ITestObjectProvider,
 	timeoutAwait,
@@ -47,9 +47,10 @@ import {
 import {
 	ITree,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeView,
+	TreeViewConfiguration,
 } from "@fluidframework/tree";
+
 /* eslint-enable @typescript-eslint/no-restricted-imports */
 
 const mapId = "map";

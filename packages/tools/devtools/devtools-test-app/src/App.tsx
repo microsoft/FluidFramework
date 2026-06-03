@@ -5,13 +5,13 @@
 
 import {
 	type BrandVariants,
+	createLightTheme,
 	FluentProvider,
+	makeStyles,
 	Spinner,
+	shorthands,
 	Text,
 	type Theme,
-	createLightTheme,
-	makeStyles,
-	shorthands,
 } from "@fluentui/react-components";
 import {
 	CollaborativeTextArea,
@@ -21,10 +21,10 @@ import {
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import {
 	type ContainerKey,
+	createDevtoolsLogger,
 	type HasContainerKey,
 	type IDevtoolsLogger,
 	type IFluidDevtools,
-	createDevtoolsLogger,
 	initializeDevtools,
 } from "@fluidframework/devtools-core/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";

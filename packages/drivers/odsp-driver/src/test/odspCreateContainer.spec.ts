@@ -12,7 +12,7 @@ import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError, MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { LocalPersistentCache } from "../odspCache.js";

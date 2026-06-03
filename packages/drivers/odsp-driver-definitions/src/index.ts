@@ -17,12 +17,12 @@ export type {
 } from "./factory.js";
 export {
 	type CacheContentType,
+	type ICacheEntry,
+	type IEntry,
+	type IFileEntry,
+	type IPersistedCache,
 	snapshotKey,
 	snapshotWithLoadingGroupIdKey,
-	type ICacheEntry,
-	type IPersistedCache,
-	type IFileEntry,
-	type IEntry,
 } from "./odspCache.js";
 export {
 	type IOdspResolvedUrl,
@@ -33,18 +33,6 @@ export {
 	SharingLinkRole,
 	SharingLinkScope,
 } from "./resolvedUrl.js";
-export {
-	type IdentityType,
-	type InstrumentedStorageTokenFetcher,
-	type InstrumentedTokenFetcher,
-	isTokenFromCache,
-	type OdspResourceTokenFetchOptions,
-	type TokenFetcher,
-	type TokenFetchOptions,
-	authHeaderFromTokenResponse,
-	tokenFromResponse,
-	type TokenResponse,
-} from "./tokenFetch.js";
 export type {
 	IProvideSessionAwareDriverFactory,
 	IRelaySessionAwareDriverFactory,
@@ -52,3 +40,15 @@ export type {
 	ISensitivityLabelsInfo,
 	ISocketStorageDiscovery,
 } from "./sessionProvider.js";
+export {
+	authHeaderFromTokenResponse,
+	type IdentityType,
+	type InstrumentedStorageTokenFetcher,
+	type InstrumentedTokenFetcher,
+	isTokenFromCache,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
+	type TokenFetchOptions,
+	type TokenResponse,
+	tokenFromResponse,
+} from "./tokenFetch.js";

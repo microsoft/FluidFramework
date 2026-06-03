@@ -9,9 +9,9 @@ import {
 	ContainerStateHistory,
 	GetContainerState,
 	type HasContainerKey,
-	type ISourcedDevtoolsMessage,
-	type InboundHandlers,
 	handleIncomingMessage,
+	type InboundHandlers,
+	type ISourcedDevtoolsMessage,
 } from "@fluidframework/devtools-core/internal";
 import { type ReactElement, useEffect, useState } from "react";
 

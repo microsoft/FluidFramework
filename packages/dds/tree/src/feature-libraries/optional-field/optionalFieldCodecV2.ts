@@ -7,16 +7,16 @@ import type { TAnySchema } from "@sinclair/typebox";
 
 import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
-	RevisionTagSchema,
 	ChangeAtomId,
 	ChangeEncodingContext,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { Mutable } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import type {
-	FieldChangeEncodingContext,
 	EncodedChangeAtomId,
+	FieldChangeEncodingContext,
 } from "../modular-schema/index.js";
 import { EncodedNodeChangeset } from "../modular-schema/index.js";
 

@@ -6,11 +6,13 @@
 import { existsSync } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
+
 import ignore from "ignore";
 
 import type { BuildContext } from "../../buildContext.js";
 import type { BuildPackage } from "../../buildGraph.js";
 import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils.js";
+
 import { LeafWithDoneFileTask } from "./leafTask.js";
 
 export class PrettierTask extends LeafWithDoneFileTask {

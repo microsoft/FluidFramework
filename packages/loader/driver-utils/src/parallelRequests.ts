@@ -9,9 +9,9 @@ import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import type {
 	IDeltasFetchResult,
+	ISequencedDocumentMessage,
 	IStream,
 	IStreamResult,
-	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";

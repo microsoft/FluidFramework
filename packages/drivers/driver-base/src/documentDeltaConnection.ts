@@ -9,23 +9,23 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import type {
 	IAnyDriverError,
-	IDocumentDeltaConnection,
-	IDocumentDeltaConnectionEvents,
 	IClientConfiguration,
 	IConnect,
 	IConnected,
+	IDocumentDeltaConnection,
+	IDocumentDeltaConnectionEvents,
 	IDocumentMessage,
 	ISentSignalMessage,
-	ISignalClient,
-	ITokenClaims,
 	ISequencedDocumentMessage,
+	ISignalClient,
 	ISignalMessage,
+	ITokenClaims,
 } from "@fluidframework/driver-definitions/internal";
 import { ScopeType } from "@fluidframework/driver-definitions/internal";
 import {
-	UsageError,
 	createGenericNetworkError,
 	type DriverErrorTelemetryProps,
+	UsageError,
 } from "@fluidframework/driver-utils/internal";
 import type {
 	IFluidErrorBase,
@@ -33,8 +33,8 @@ import type {
 	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
-	EventEmitterWithErrorHandling,
 	createChildMonitoringContext,
+	EventEmitterWithErrorHandling,
 	extractLogSafeErrorProperties,
 	getCircularReplacer,
 	isFluidError,

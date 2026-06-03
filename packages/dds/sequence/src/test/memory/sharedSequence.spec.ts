@@ -4,8 +4,8 @@
  */
 
 import {
-	benchmarkIt,
 	BenchmarkMode,
+	benchmarkIt,
 	benchmarkMemoryUse,
 	currentBenchmarkMode,
 	memoryAddedBy,

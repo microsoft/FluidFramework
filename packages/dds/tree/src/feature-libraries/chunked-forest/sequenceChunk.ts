@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ChunkedCursor, type TreeChunk, dummyRoot } from "../../core/index.js";
+import { type ChunkedCursor, dummyRoot, type TreeChunk } from "../../core/index.js";
 import { ReferenceCountedBase } from "../../util/index.js";
 
 import { BasicChunkCursor } from "./basicChunk.js";

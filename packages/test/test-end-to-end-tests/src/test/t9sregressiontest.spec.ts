@@ -10,11 +10,11 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
 	ITestContainerConfig,
 	ITestFluidObject,
 	toIDeltaManagerFull,
-	createAndAttachContainer,
 } from "@fluidframework/test-utils/internal";
 
 const mapId = "map";

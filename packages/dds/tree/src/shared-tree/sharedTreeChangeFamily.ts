@@ -12,28 +12,28 @@ import {
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
+	mapTaggedChange,
 	type RevisionMetadataSource,
 	type RevisionReplacer,
 	type RevisionTag,
 	type RevisionTagCodec,
 	type TaggedChange,
-	mapTaggedChange,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
-	ModularChangeFamily,
-	type ModularChangeset,
-	type TreeChunk,
-	type TreeCompressionStrategy,
 	fieldKindConfigurations,
 	fieldKinds,
+	ModularChangeFamily,
+	type ModularChangeset,
 	makeModularChangeCodecFamily,
+	type TreeChunk,
+	type TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 import {
-	type Mutable,
-	type NestedSet,
 	addToNestedSet,
 	hasSingle,
+	type Mutable,
+	type NestedSet,
 	nestedSetContains,
 } from "../util/index.js";
 

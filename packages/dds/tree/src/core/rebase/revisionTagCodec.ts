@@ -9,7 +9,7 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { JsonCodecPart } from "../../codec/index.js";
 import type { ChangeEncodingContext } from "../change-family/index.js";
 
-import { RevisionTagSchema, type EncodedRevisionTag, type RevisionTag } from "./types.js";
+import { type EncodedRevisionTag, type RevisionTag, RevisionTagSchema } from "./types.js";
 
 export class RevisionTagCodec
 	implements JsonCodecPart<RevisionTag, typeof RevisionTagSchema, ChangeEncodingContext>

@@ -17,18 +17,18 @@ import { gt } from "semver-ts";
 
 import { pkgVersion } from "../../packageVersion.js";
 import {
-	JsonCompatibleReadOnlySchema,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
+	JsonCompatibleReadOnlySchema,
 } from "../../util/index.js";
 import {
+	type CodecName,
+	type CodecTree,
+	type CodecWriteOptions,
+	type FormatVersion,
 	type ICodecOptions,
 	type IJsonCodec,
 	withSchemaValidation,
-	type FormatVersion,
-	type CodecWriteOptions,
-	type CodecName,
-	type CodecTree,
 } from "../codec.js";
 
 import { Versioned } from "./format.js";

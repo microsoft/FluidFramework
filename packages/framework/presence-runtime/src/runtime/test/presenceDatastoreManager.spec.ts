@@ -9,6 +9,17 @@ import type {
 	ClientConnectionId,
 	PresenceWithNotifications,
 } from "@fluid-internal/presence-definitions";
+import type { ProcessSignalFunction } from "@fluid-internal/presence-runtime/internal/test-utils";
+import {
+	assertFinalExpectations,
+	attendeeId1,
+	createSpecificAttendeeId,
+	initialLocalClientConnectionId,
+	localAttendeeId,
+	MockEphemeralRuntime,
+	prepareConnectedPresence,
+} from "@fluid-internal/presence-runtime/internal/test-utils";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 import type {
 	InboundExtensionMessage,
 	RawInboundExtensionMessage,
@@ -17,19 +28,7 @@ import type { JsonSerializable, TypedMessage } from "@fluidframework/core-interf
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers, spy } from "sinon";
-
-import type { ProcessSignalFunction } from "@fluid-internal/presence-runtime/internal/test-utils";
-import {
-	assertFinalExpectations,
-	attendeeId1,
-	initialLocalClientConnectionId,
-	localAttendeeId,
-	createSpecificAttendeeId,
-	MockEphemeralRuntime,
-	prepareConnectedPresence,
-} from "@fluid-internal/presence-runtime/internal/test-utils";
-import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
+import { spy, useFakeTimers } from "sinon";
 
 import { broadcastJoinResponseDelaysMs } from "../presenceDatastoreManager.js";
 import { createPresenceManager } from "../presenceManager.js";

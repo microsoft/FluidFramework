@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
@@ -11,12 +11,12 @@ import {
 	type FieldKey,
 	type FieldKindData,
 	type FieldKindIdentifier,
+	forEachNode,
 	type ITreeCursorSynchronous,
 	type TreeChunk,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
 	type Value,
-	forEachNode,
 } from "../../../core/index.js";
 import { getOrCreate } from "../../../util/index.js";
 
@@ -31,8 +31,8 @@ import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js"
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
-	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
+	type EncodedChunkShapeV1,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,

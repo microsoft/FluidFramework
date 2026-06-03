@@ -9,82 +9,80 @@
  * @packageDocumentation
  */
 
-export {
-	SharedTreeSemanticAgent,
-	createContext,
-	createTreeAgent,
-	executeSemanticEditing,
-} from "./agent.js";
 export type {
-	// New API
-	TreeAgent,
-	TreeAgentChatMessage,
-	TreeAgentSystemMessage,
-	TreeAgentUserMessage,
-	TreeAgentAssistantMessage,
-	TreeAgentToolCallMessage,
-	TreeAgentToolResultMessage,
-	TreeAgentChatResponse,
-	TreeAgentOptions,
-	ExecuteSemanticEditingOptions,
-	// Existing API
-	EditResult,
-	SharedTreeChatModel,
-	SharedTreeChatQuery,
-	Logger,
-	SemanticAgentOptions,
-	SynchronousEditor,
-	AsynchronousEditor,
-	TreeView,
-	ViewOrTree,
-	Context,
-} from "./api.js";
-export { llmDefault } from "./utils.js";
-export { type BindableSchema } from "./methodBinding.js";
-export { typeFactory } from "./treeAgentTypes.js";
-
-// Re-export APIs that were moved to @fluidframework/type-factory to avoid breaking changes.
-export {
-	buildFunc,
-	exposeMethodsSymbol,
-	isTypeFactoryType,
-	type ExposedMethods,
-	type Arg,
-	type ArgsTuple,
-	type FunctionDef,
-	type MethodKeys,
-	type Ctor,
-	type IExposedMethods,
-	type ExposedProperties,
-	type IExposedProperties,
-	type exposePropertiesSymbol,
-} from "@fluidframework/type-factory/alpha";
-
-export { type PropertyDef } from "./propertyBinding.js";
-
-export type {
-	TypeFactoryType,
-	TypeFactoryTypeKind,
-	TypeFactoryString,
-	TypeFactoryNumber,
+	TypeFactoryArray,
 	TypeFactoryBoolean,
 	TypeFactoryDate,
-	TypeFactoryVoid,
-	TypeFactoryUndefined,
-	TypeFactoryNull,
-	TypeFactoryUnknown,
-	TypeFactoryArray,
-	TypeFactoryPromise,
-	TypeFactoryObject,
-	TypeFactoryRecord,
-	TypeFactoryMap,
-	TypeFactoryTuple,
-	TypeFactoryUnion,
-	TypeFactoryIntersection,
-	TypeFactoryLiteral,
-	TypeFactoryOptional,
-	TypeFactoryReadonly,
 	TypeFactoryFunction,
 	TypeFactoryFunctionParameter,
 	TypeFactoryInstanceOf,
+	TypeFactoryIntersection,
+	TypeFactoryLiteral,
+	TypeFactoryMap,
+	TypeFactoryNull,
+	TypeFactoryNumber,
+	TypeFactoryObject,
+	TypeFactoryOptional,
+	TypeFactoryPromise,
+	TypeFactoryReadonly,
+	TypeFactoryRecord,
+	TypeFactoryString,
+	TypeFactoryTuple,
+	TypeFactoryType,
+	TypeFactoryTypeKind,
+	TypeFactoryUndefined,
+	TypeFactoryUnion,
+	TypeFactoryUnknown,
+	TypeFactoryVoid,
 } from "@fluidframework/type-factory/alpha";
+// Re-export APIs that were moved to @fluidframework/type-factory to avoid breaking changes.
+export {
+	type Arg,
+	type ArgsTuple,
+	buildFunc,
+	type Ctor,
+	type ExposedMethods,
+	type ExposedProperties,
+	exposeMethodsSymbol,
+	type exposePropertiesSymbol,
+	type FunctionDef,
+	type IExposedMethods,
+	type IExposedProperties,
+	isTypeFactoryType,
+	type MethodKeys,
+} from "@fluidframework/type-factory/alpha";
+
+export {
+	createContext,
+	createTreeAgent,
+	executeSemanticEditing,
+	SharedTreeSemanticAgent,
+} from "./agent.js";
+export type {
+	AsynchronousEditor,
+	Context,
+	// Existing API
+	EditResult,
+	ExecuteSemanticEditingOptions,
+	Logger,
+	SemanticAgentOptions,
+	SharedTreeChatModel,
+	SharedTreeChatQuery,
+	SynchronousEditor,
+	// New API
+	TreeAgent,
+	TreeAgentAssistantMessage,
+	TreeAgentChatMessage,
+	TreeAgentChatResponse,
+	TreeAgentOptions,
+	TreeAgentSystemMessage,
+	TreeAgentToolCallMessage,
+	TreeAgentToolResultMessage,
+	TreeAgentUserMessage,
+	TreeView,
+	ViewOrTree,
+} from "./api.js";
+export { type BindableSchema } from "./methodBinding.js";
+export { type PropertyDef } from "./propertyBinding.js";
+export { typeFactory } from "./treeAgentTypes.js";
+export { llmDefault } from "./utils.js";

@@ -7,9 +7,9 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	VersionDispatchingCodecBuilder,
 	FluidClientVersion,
 	type ICodecOptions,
+	VersionDispatchingCodecBuilder,
 } from "../../codec/index.js";
 import type { RevisionTagCodec } from "../rebase/index.js";
 

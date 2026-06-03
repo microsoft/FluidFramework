@@ -6,7 +6,7 @@
 import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 
-import { TestString, loadSnapshot } from "./snapshot.utils.js";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 describe("MergeTree snapshots", () => {
 	for (const summarySize of [10, 50, 100, 500, 1000, 5000, 10_000]) {

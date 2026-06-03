@@ -7,12 +7,14 @@ import * as assert from "node:assert";
 import { type BigIntStats, existsSync, lstatSync, type Stats } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import isEqual from "lodash.isequal";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
 
 import { getTscUtils, type TscUtil } from "../../tscUtils.js";
 import { getInstalledPackageVersion } from "../taskUtils.js";
+
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask.js";
 
 type tsTypes = typeof ts54Types | typeof ts59Types;

@@ -7,16 +7,16 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
 	type CodecWriteOptions,
-	type VersionDispatchingCodec,
 	FluidClientVersion,
+	type VersionDispatchingCodec,
+	VersionDispatchingCodecBuilder,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
 import {
-	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
+	fieldBatchCodecBuilder,
 } from "../chunked-forest/index.js";
 
 import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";

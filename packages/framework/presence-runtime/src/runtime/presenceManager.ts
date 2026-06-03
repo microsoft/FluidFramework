@@ -5,8 +5,8 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type {
-	AttendeesEvents,
 	AttendeeId,
+	AttendeesEvents,
 	BroadcastControlSettings,
 	ClientConnectionId,
 	NotificationsWorkspace,

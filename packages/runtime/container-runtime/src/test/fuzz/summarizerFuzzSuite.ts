@@ -12,15 +12,15 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AsyncGenerator,
 	type AsyncReducer,
-	type BaseFuzzTestState,
-	type SaveInfo,
 	asyncGeneratorFromArray,
+	type BaseFuzzTestState,
 	createFuzzDescribe,
 	defaultOptions,
 	getSaveDirectory,
 	getSaveInfo,
 	makeRandom,
 	performFuzzActionsAsync,
+	type SaveInfo,
 } from "@fluid-private/stochastic-test-utils";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 

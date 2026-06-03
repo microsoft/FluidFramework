@@ -10,7 +10,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useEffect, useReducer, useRef } from "react";
 
-import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
+import { type PropTreeNode, unwrapPropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 
 import { syncTextToTree } from "./plainUtils.js";

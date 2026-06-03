@@ -15,13 +15,13 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
 	DataObjectFactoryType,
+	getRequiredPendingLocalState,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
 	LocalCodeLoader,
-	createAndAttachContainer,
-	getRequiredPendingLocalState,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

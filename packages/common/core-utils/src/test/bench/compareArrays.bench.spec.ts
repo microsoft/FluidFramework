@@ -4,7 +4,6 @@
  */
 
 import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
-
 import { compareArrays } from "@fluidframework/core-utils/internal";
 
 const a4 = Array.from({ length: 4 }).fill(0);

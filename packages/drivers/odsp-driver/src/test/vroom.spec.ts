@@ -6,9 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import type {
+	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
-	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger, MockLogger } from "@fluidframework/telemetry-utils/internal";
 

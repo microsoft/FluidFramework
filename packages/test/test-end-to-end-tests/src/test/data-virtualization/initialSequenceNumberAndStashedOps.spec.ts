@@ -8,8 +8,8 @@ import { strict as assert } from "assert";
 import { describeCompat, type ITestDataObject } from "@fluid-private/test-version-utils";
 import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import {
-	ITestContainerConfig,
 	getRequiredPendingLocalState,
+	ITestContainerConfig,
 	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 

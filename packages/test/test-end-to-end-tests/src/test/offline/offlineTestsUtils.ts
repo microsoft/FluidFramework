@@ -17,10 +17,10 @@ import type {
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	getRequiredPendingLocalState,
-	toIDeltaManagerFull,
 	type ITestContainerConfig,
 	type ITestFluidObject,
 	type ITestObjectProvider,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

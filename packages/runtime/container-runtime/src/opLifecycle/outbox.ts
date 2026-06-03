@@ -10,11 +10,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	DataProcessingError,
-	UsageError,
 	createChildLogger,
+	DataProcessingError,
 	type IFluidErrorBase,
 	type ITelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
@@ -24,19 +24,19 @@ import type {
 } from "../pendingStateManager.js";
 
 import {
+	addBatchMetadata,
+	type BatchId,
 	BatchManager,
 	type BatchSequenceNumbers,
 	sequenceNumbersMatch,
-	type BatchId,
-	addBatchMetadata,
 } from "./batchManager.js";
 import type {
-	LocalBatchMessage,
 	IBatchCheckpoint,
+	LocalBatch,
+	LocalBatchMessage,
+	OutboundBatch,
 	OutboundBatchMessage,
 	OutboundSingletonBatch,
-	LocalBatch,
-	OutboundBatch,
 } from "./definitions.js";
 import type { OpCompressor } from "./opCompressor.js";
 import type { OpGroupingManager } from "./opGroupingManager.js";

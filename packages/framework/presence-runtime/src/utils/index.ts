@@ -4,7 +4,6 @@
  */
 
 export { OptionalBroadcastControl, RequiredBroadcastControl } from "./broadcastControls.js";
-
 export {
 	asDeeplyReadonly,
 	asDeeplyReadonlyDeserializedJson,
@@ -18,7 +17,5 @@ export {
 	revealOpaqueJson,
 	toOpaqueJson,
 } from "./internalUtils.js";
-
 export { TimerManager } from "./timerManager.js";
-
 export { brandIVM, unbrandIVM } from "./valueManager.js";

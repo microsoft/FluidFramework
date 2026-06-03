@@ -15,37 +15,37 @@ import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index
 import { BasicChunk } from "../../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
 	type ChunkDecoder,
-	type StreamCursor,
 	readStream,
+	type StreamCursor,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	type IdDecodingContext,
-	InlineArrayDecoder,
-	IncrementalChunkDecoder,
-	NestedArrayDecoder,
-	NodeDecoder,
-	SpecializedNodeDecoder,
 	aggregateChunks,
 	anyDecoder,
 	applySpecialization,
 	deaggregateChunks,
 	decode,
+	type IdDecodingContext,
+	IncrementalChunkDecoder,
+	InlineArrayDecoder,
+	NestedArrayDecoder,
+	NodeDecoder,
 	normalizeToNodeShape,
 	readValue,
+	SpecializedNodeDecoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkDecoding.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
+	fieldBatchCodecBuilder,
 	type IncrementalDecoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
-	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
+	type EncodedChunkShapeV1,
 	type EncodedChunkShapeVTextExperimental,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNodeShape,
@@ -61,7 +61,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
+import { brand, type ReferenceCountedBase } from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 

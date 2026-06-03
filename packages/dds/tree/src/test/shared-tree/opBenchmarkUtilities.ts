@@ -5,7 +5,7 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { ValueType, type CollectedData } from "@fluid-tools/benchmark";
+import { type CollectedData, ValueType } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {

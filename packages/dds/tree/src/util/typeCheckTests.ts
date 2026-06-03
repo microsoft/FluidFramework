@@ -10,16 +10,16 @@
 /* eslint-disable @typescript-eslint/no-extraneous-class */
 
 import type {
-	Contravariant,
-	Covariant,
-	Invariant,
-	MakeNominal,
 	areOnlyKeys,
 	areSafelyAssignable,
+	Contravariant,
+	Covariant,
 	eitherIsAny,
+	Invariant,
 	isAny,
 	isAssignableTo,
 	isStrictSubset,
+	MakeNominal,
 	requireFalse,
 	requireTrue,
 } from "./typeCheck.js";

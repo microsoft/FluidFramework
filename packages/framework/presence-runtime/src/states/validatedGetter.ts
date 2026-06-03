@@ -5,13 +5,12 @@
 
 import type { StateSchemaValidator } from "@fluid-internal/presence-definitions";
 import type { ValidatableRequiredState } from "@fluid-internal/presence-definitions/internal";
+import { asDeeplyReadonlyDeserializedJson } from "@fluid-internal/presence-runtime/utils";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
 	OpaqueJsonDeserialized,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
-
-import { asDeeplyReadonlyDeserializedJson } from "@fluid-internal/presence-runtime/utils";
 
 type StateSchemaValidatorToOpaque<T> = (
 	rawData: OpaqueJsonDeserialized<T>,

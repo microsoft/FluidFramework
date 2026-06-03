@@ -7,25 +7,25 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import type { ImplicitAllowedTypes } from "../core/index.js";
 import {
-	FieldKind,
-	getDefaultProvider,
 	createFieldSchema,
-	type FieldProps,
 	type DefaultProvider,
+	FieldKind,
+	type FieldProps,
 	type FieldPropsAlpha,
 	type FieldSchema,
 	type FieldSchemaAlpha,
+	getDefaultProvider,
 } from "../fieldSchema.js";
 import type { LeafSchema } from "../leafNodeSchema.js";
 import {
-	stringSchema,
-	numberSchema,
 	booleanSchema,
-	nullSchema,
 	handleSchema,
+	nullSchema,
+	numberSchema,
+	stringSchema,
 } from "../leafNodeSchema.js";
 
-import type { System_Unsafe, FieldSchemaAlphaUnsafe } from "./typesUnsafe.js";
+import type { FieldSchemaAlphaUnsafe, System_Unsafe } from "./typesUnsafe.js";
 
 /**
  * Stateless APIs exposed via {@link SchemaFactory} as both instance properties and as statics.

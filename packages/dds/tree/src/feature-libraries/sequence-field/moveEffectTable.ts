@@ -6,7 +6,7 @@
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 
 import type { ChangeAtomId, RevisionTag, TaggedChange } from "../../core/index.js";
-import { type RangeQueryResult, brand } from "../../util/index.js";
+import { brand, type RangeQueryResult } from "../../util/index.js";
 import {
 	type CrossFieldManager,
 	CrossFieldTarget,

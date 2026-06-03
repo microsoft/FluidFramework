@@ -6,6 +6,7 @@
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 import type { ArtifactContents } from "../azureDevops/downloadArtifact.js";
+
 import { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
 import type { AnalyzerJsonByPackage } from "./types.js";
 

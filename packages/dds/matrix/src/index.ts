@@ -3,10 +3,9 @@
  * Licensed under the MIT License.
  */
 
-export type { ISharedMatrixEvents, ISharedMatrix } from "./matrix.js";
+export type { ISharedMatrix, ISharedMatrixEvents } from "./matrix.js";
 export type { MatrixItem } from "./ops.js";
-export { SharedMatrixFactory, SharedMatrix } from "./runtime.js";
-
+export { SharedMatrix, SharedMatrixFactory } from "./runtime.js";
 // TODO: We temporarily duplicate these contracts from 'framework/undo-redo' to unblock development
 //       of SharedMatrix undo while we decide on the correct layering for undo.
-export type { IUndoConsumer, IRevertible } from "./types.js";
+export type { IRevertible, IUndoConsumer } from "./types.js";

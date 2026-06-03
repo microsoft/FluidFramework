@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject, itExpects } from "@fluid-private/test-version-utils";
 import type {
 	ISummaryAckMessage,
 	ISummaryOpMessage,
@@ -14,17 +14,17 @@ import type {
 } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
-	MessageType,
 	type ISequencedDocumentMessage,
 	type ISummaryAck,
 	type ISummaryContent,
+	MessageType,
 } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
-	ITestContainerConfig,
-	ITestObjectProvider,
 	createSummarizer,
 	createTestConfigProvider,
+	ITestContainerConfig,
+	ITestObjectProvider,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 import { createSandbox, SinonSandbox } from "sinon";

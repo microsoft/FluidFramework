@@ -6,16 +6,16 @@
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, isPromiseLike } from "@fluidframework/core-utils/internal";
 import type {
-	IPersistedCache,
-	IFileEntry,
 	ICacheEntry,
+	IFileEntry,
+	IPersistedCache,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
 	maximumCacheDurationMs,
 } from "@fluidframework/driver-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { IDBPDatabase } from "idb";
 
 import type { FluidCacheDBSchema } from "./FluidCacheIndexedDb.js";

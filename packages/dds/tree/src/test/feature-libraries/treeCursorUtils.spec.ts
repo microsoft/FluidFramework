@@ -7,11 +7,11 @@ import { strict as assert } from "node:assert";
 
 import {
 	CursorLocationType,
+	compareFieldUpPaths,
 	type DetachedField,
 	type FieldUpPath,
 	type TreeNodeSchemaIdentifier,
 	type UpPath,
-	compareFieldUpPaths,
 } from "../../core/index.js";
 import {
 	PrefixedPath,

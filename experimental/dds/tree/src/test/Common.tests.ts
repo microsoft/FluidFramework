@@ -6,13 +6,13 @@
 import { expect } from 'chai';
 
 import {
-	RestOrArray,
 	filter,
 	find,
 	getOrCreate,
 	identity,
 	map,
 	memoizeGetter,
+	RestOrArray,
 	reduce,
 	unwrapRestOrArray,
 } from '../Common.js';

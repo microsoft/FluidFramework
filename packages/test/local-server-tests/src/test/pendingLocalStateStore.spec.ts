@@ -11,15 +11,15 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
+	type ILoaderProps,
 	loadFrozenContainerFromPendingState,
 	PendingLocalStateStore,
-	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { LocalResolver } from "@fluidframework/local-driver/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	ITestFluidObject,
 	getRequiredPendingLocalState,
+	ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";

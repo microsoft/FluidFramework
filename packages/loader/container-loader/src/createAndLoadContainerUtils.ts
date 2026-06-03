@@ -4,10 +4,10 @@
  */
 
 import type {
-	IContainer,
 	ICodeDetailsLoader,
-	IFluidCodeDetails,
+	IContainer,
 	IContainerPolicies,
+	IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
@@ -30,26 +30,26 @@ import type {
 import { DriverHeader, FetchSource } from "@fluidframework/driver-definitions/internal";
 import { getSnapshotTree } from "@fluidframework/driver-utils/internal";
 import {
-	GenericError,
-	UsageError,
-	normalizeError,
 	createChildMonitoringContext,
-	mixinMonitoringContext,
-	sessionStorageConfigProvider,
-	PerformanceEvent,
+	GenericError,
 	isFluidError,
+	mixinMonitoringContext,
+	normalizeError,
+	PerformanceEvent,
+	sessionStorageConfigProvider,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
 	captureReferencedAttachmentBlobs,
 	extractBlobAttachReferences,
+	type IBlobAttachReference,
 	inlineAttachmentBlobsByReference,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
-	type IBlobAttachReference,
 } from "./captureReferencedContents.js";
 import { DebugLogger } from "./debugLogger.js";
 import { createFrozenDocumentServiceFactory } from "./frozenServices.js";

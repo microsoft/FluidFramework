@@ -14,7 +14,7 @@ import type { ISharedString } from "fluid-framework/legacy";
 import { type ChangeEvent, type FC, type FormEvent, useEffect, useRef, useState } from "react";
 
 import { createTodoItem, type TodoListContainerSchema } from "./fluid.js";
-import type { TodoList, TodoItem } from "./schema.js";
+import type { TodoItem, TodoList } from "./schema.js";
 
 // eslint-disable-next-line import-x/no-unassigned-import
 import "./style.css";

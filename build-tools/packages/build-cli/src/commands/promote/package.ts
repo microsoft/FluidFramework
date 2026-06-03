@@ -4,6 +4,7 @@
  */
 
 import { Flags } from "@oclif/core";
+
 import { semverFlag } from "../../flags.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import { readLines } from "../../library/text.js";

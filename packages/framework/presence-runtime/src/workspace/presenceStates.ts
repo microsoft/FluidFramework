@@ -32,8 +32,6 @@ import type {
 	LocalStateUpdateOptions,
 	StateDatastore,
 } from "@fluid-internal/presence-definitions/internal/workspace-states";
-import { assert } from "@fluidframework/core-utils/internal";
-
 import type { RecordEntryTypes } from "@fluid-internal/presence-runtime/utils";
 import {
 	getOrCreateRecord,
@@ -41,6 +39,7 @@ import {
 	RequiredBroadcastControl,
 	unbrandIVM,
 } from "@fluid-internal/presence-runtime/utils";
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { handleFromDatastore } from "./stateDatastore.js";
 

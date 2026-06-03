@@ -21,14 +21,14 @@ import {
 // For describeCompat callers, the compat-version-aware factory is read from apis.dds.SharedMap below.
 // TODO:AB#6558: Once describeInstallVersions supports `apis`, this fallback can be removed.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
 
 import { pkgVersion } from "../packageVersion.js";

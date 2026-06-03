@@ -13,13 +13,13 @@ import {
 	type IJsonCodec,
 } from "../../codec/index.js";
 import {
-	type IdAllocator,
-	type JsonCompatibleReadOnly,
-	type NestedMap,
 	brand,
 	deleteFromNestedMap,
 	forEachInNestedMap,
+	type IdAllocator,
 	idAllocatorFromMaxId,
+	type JsonCompatibleReadOnly,
+	type NestedMap,
 	populateNestedMap,
 	setInNestedMap,
 	tryGetFromNestedMap,

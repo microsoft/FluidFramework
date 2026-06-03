@@ -17,9 +17,9 @@ import {
 	createContainerFromPayload,
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
-import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix, mapWait, currentVersion } from "./utils.js";
+import { CounterTestDataObject, TestDataObject } from "./TestDataObject.js";
+import { currentVersion, getTestMatrix, mapWait } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {

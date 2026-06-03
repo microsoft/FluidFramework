@@ -4,34 +4,34 @@
  */
 
 export type {
+	EncodedFieldBatchGeneric,
+	IdentifierOrIndex,
+	ShapeIndex,
+} from "./formatGeneric.js";
+export type {
 	EncodedChunkShapeV1,
+	EncodedFieldShape,
 	EncodedInlineArrayShape,
 	EncodedNestedArrayShape,
 	EncodedNodeShape,
 	EncodedValueShape,
-	EncodedFieldShape,
 } from "./formatV1.js";
 export {
 	EncodedAnyShape,
 	SpecialField,
 } from "./formatV1.js";
-export { EncodedIncrementalChunkShape, EncodedChunkShapeV2 } from "./formatV2.js";
+export { EncodedChunkShapeV2, EncodedIncrementalChunkShape } from "./formatV2.js";
 export {
 	EncodedChunkShapeVTextExperimental,
 	EncodedSpecializedNodeShape,
 } from "./formatVText.js";
 export {
-	FieldBatchFormatVersion,
+	type EncodedChunkShape,
 	EncodedFieldBatchV1,
+	type EncodedFieldBatchV1AndV2,
+	type EncodedFieldBatchV1OrV2,
 	EncodedFieldBatchV2,
 	EncodedFieldBatchVTextExperimental,
+	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
-	type EncodedFieldBatchV1OrV2,
-	type EncodedFieldBatchV1AndV2,
-	type EncodedChunkShape,
 } from "./versions.js";
-export type {
-	ShapeIndex,
-	IdentifierOrIndex,
-	EncodedFieldBatchGeneric,
-} from "./formatGeneric.js";

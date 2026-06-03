@@ -8,6 +8,8 @@ import { strict as assert } from "node:assert";
 import {
 	type Anchor,
 	AnchorSet,
+	anchorSlot,
+	clonePath,
 	type DeltaDetachedNodeId,
 	type DeltaFieldChanges,
 	type DeltaFieldMap,
@@ -16,16 +18,14 @@ import {
 	type DetachedField,
 	type FieldKey,
 	type FieldUpPath,
-	type INormalizedUpPath,
-	type JsonableTree,
-	type UpPath,
-	anchorSlot,
-	clonePath,
 	getDetachedFieldContainingPath,
+	type INormalizedUpPath,
 	isDetachedUpPath,
+	type JsonableTree,
 	keyAsDetachedField,
 	makeDetachedFieldIndex,
 	rootFieldKey,
+	type UpPath,
 } from "../../../core/index.js";
 import { stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";

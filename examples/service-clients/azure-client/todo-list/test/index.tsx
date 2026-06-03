@@ -25,10 +25,10 @@ import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server"
 import { createRoot } from "react-dom/client";
 
 import {
-	todoListContainerSchema,
 	initializeAppForNewContainer,
 	loadAppFromExistingContainer,
 	type TodoListContainerSchema,
+	todoListContainerSchema,
 } from "../src/fluid.js";
 import type { TodoList } from "../src/schema.js";
 import { TodoListAppView } from "../src/view.js";

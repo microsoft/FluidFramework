@@ -6,12 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import type { ClientConnectionId } from "@fluid-internal/presence-definitions";
+import type { IEphemeralRuntime } from "@fluid-internal/presence-runtime/internal/test";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockAudience, MockQuorumClients } from "@fluidframework/test-runtime-utils/internal";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-
-import type { IEphemeralRuntime } from "@fluid-internal/presence-runtime/internal/test";
 
 /**
  * Mock {@link ClientConnectionId} for the local client in tests.

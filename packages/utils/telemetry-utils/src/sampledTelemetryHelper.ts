@@ -11,8 +11,8 @@ import { assert } from "@fluidframework/core-utils/internal";
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	TelemetryLoggerExt,
 } from "./telemetryTypesUndeprecated.js";
 
 /**

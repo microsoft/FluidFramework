@@ -8,25 +8,25 @@ import { strict as assert } from "node:assert";
 import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	MockLogger,
 	type MonitoringContext,
-	TelemetryDataTag,
-	createChildLogger,
 	mixinMonitoringContext,
+	TelemetryDataTag,
 	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 import { type SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { blobManagerBasePath } from "../../blobManager/index.js";
 import {
+	cloneGCData,
+	defaultSessionExpiryDurationMs,
 	GCNodeType,
 	GCTelemetryTracker,
 	type IGarbageCollectorConfigs,
-	UnreferencedStateTracker,
-	cloneGCData,
-	defaultSessionExpiryDurationMs,
 	oneDayMs,
 	stableGCVersion,
+	UnreferencedStateTracker,
 } from "../../gc/index.js";
 import { pkgVersion } from "../../packageVersion.js";
 

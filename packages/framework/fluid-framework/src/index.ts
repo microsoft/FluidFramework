@@ -21,6 +21,41 @@ export type {
 export { AttachState } from "@fluidframework/container-definitions";
 export { ConnectionState } from "@fluidframework/container-loader";
 export type {
+	ErasedType,
+	FluidObject, // Linked in doc comment
+	FluidObjectProviderKeys, // Used by FluidObject
+	IDisposable,
+	IErrorBase,
+	IErrorEvent,
+	IEvent,
+	IEventProvider,
+	IEventThisPlaceHolder,
+	IEventTransformer,
+	IFluidHandle,
+	IFluidHandleErased,
+	IFluidLoadable,
+	IProvideFluidLoadable,
+	IsListener,
+	ITelemetryBaseProperties,
+	Listenable,
+	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
+	Listeners,
+	Off,
+	ReplaceIEventThisPlaceHolder,
+	Tagged,
+	TelemetryBaseEventPropertyType,
+	TransformedEvent,
+	/* eslint-enable import-x/export */
+} from "@fluidframework/core-interfaces";
+export type {
+	ErasedBaseType,
+	FluidIterable,
+	FluidIterableIterator,
+	FluidMap,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
+export { onAssertionFailure } from "@fluidframework/core-utils/internal";
+export type {
 	ContainerAttachProps,
 	ContainerSchema,
 	IConnection,
@@ -34,45 +69,8 @@ export type {
 	Myself,
 } from "@fluidframework/fluid-static";
 export { getPresence, getPresenceAlpha } from "@fluidframework/fluid-static/internal";
-export type { SharedObjectKind } from "@fluidframework/shared-object-base";
-export type {
-	IErrorBase,
-	IEventProvider,
-	IDisposable,
-	IEvent,
-	IEventThisPlaceHolder,
-	IErrorEvent,
-	ErasedType,
-	IFluidHandle,
-	IFluidLoadable,
-	ITelemetryBaseProperties,
-	IEventTransformer,
-	IProvideFluidLoadable,
-	IFluidHandleErased,
-	TransformedEvent,
-	TelemetryBaseEventPropertyType,
-	Tagged,
-	ReplaceIEventThisPlaceHolder,
-	FluidObject, // Linked in doc comment
-	FluidObjectProviderKeys, // Used by FluidObject
-	/* eslint-disable import-x/export -- The event APIs are known to conflict, and this is intended as the exports via `@fluidframework/core-interfaces` are preferred over the deprecated ones from `@fluidframework/tree`. */
-	Listeners,
-	IsListener,
-	Listenable,
-	Off,
-	/* eslint-enable import-x/export */
-} from "@fluidframework/core-interfaces";
-export type {
-	ErasedBaseType,
-	FluidIterable,
-	FluidIterableIterator,
-	FluidMap,
-	FluidReadonlyMap,
-} from "@fluidframework/core-interfaces/internal";
-export { onAssertionFailure } from "@fluidframework/core-utils/internal";
-
 export type { isFluidHandle } from "@fluidframework/runtime-utils";
-
+export type { SharedObjectKind } from "@fluidframework/shared-object-base";
 // Let the tree package manage its own API surface.
 // Note: this only surfaces the `@public, @beta and @alpha` API items from the tree package.
 /* eslint-disable-next-line
@@ -144,6 +142,11 @@ export function configuredSharedTree(options: SharedTreeOptions): SharedObjectKi
 // #region Legacy exports
 
 export type {
+	IBranchOrigin, // Required for ISequencedDocumentMessage
+	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
+	ITrace, // Required for ISequencedDocumentMessage
+} from "@fluidframework/driver-definitions/internal";
+export type {
 	IDirectory,
 	IDirectoryEvents,
 	IDirectoryValueChanged,
@@ -153,47 +156,34 @@ export type {
 	ISharedMapEvents,
 	IValueChanged,
 } from "@fluidframework/map/internal";
-
 export { SharedDirectory, SharedMap } from "@fluidframework/map/internal";
-
 export type {
 	DeserializeCallback,
-	InteriorSequencePlace,
 	IInterval,
+	InteriorSequencePlace,
 	IntervalStickiness,
+	IntervalType,
 	ISequenceDeltaRange,
-	ISerializedInterval,
-	ISharedSegmentSequenceEvents,
-	ISharedString,
-	SequencePlace,
-	SharedStringSegment,
-	Side,
-	ISharedSegmentSequence,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
-	SequenceIntervalIndex,
-} from "@fluidframework/sequence/internal";
-
-export type {
-	IntervalType,
+	ISerializedInterval,
+	ISharedSegmentSequence,
+	ISharedSegmentSequenceEvents,
+	ISharedString,
 	SequenceDeltaEvent,
 	SequenceEvent,
 	SequenceInterval,
+	SequenceIntervalIndex,
 	SequenceMaintenanceEvent,
+	SequencePlace,
+	SharedStringSegment,
+	Side,
 } from "@fluidframework/sequence/internal";
-
 export { SharedString } from "@fluidframework/sequence/internal";
-
 export type {
 	ISharedObject,
 	ISharedObjectEvents,
 	ISharedObjectKind,
 } from "@fluidframework/shared-object-base/internal";
-
-export type {
-	ISequencedDocumentMessage, // Leaked via ISharedObjectEvents
-	IBranchOrigin, // Required for ISequencedDocumentMessage
-	ITrace, // Required for ISequencedDocumentMessage
-} from "@fluidframework/driver-definitions/internal";
 
 // #endregion Legacy exports

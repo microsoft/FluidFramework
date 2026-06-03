@@ -11,7 +11,7 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { LogLevel } from "@fluidframework/core-interfaces";
 
-import { type MultiSinkLogger, createChildLogger, createMultiSinkLogger } from "../logger.js";
+import { createChildLogger, createMultiSinkLogger, type MultiSinkLogger } from "../logger.js";
 import { MockLogger } from "../mockLogger.js";
 
 interface RecordedEntry {

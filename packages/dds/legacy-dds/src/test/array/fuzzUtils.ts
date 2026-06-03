@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import {
 	type AcceptanceCondition,
-	type Reducer,
 	combineReducers,
 	createWeightedGenerator,
+	type Reducer,
 	takeAsync,
 } from "@fluid-private/stochastic-test-utils";
 import type {

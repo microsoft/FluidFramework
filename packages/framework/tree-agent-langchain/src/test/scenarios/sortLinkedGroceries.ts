@@ -4,7 +4,7 @@
  */
 
 import { Grocery } from "../domains/index.js";
-import { scoreSymbol, type LLMIntegrationTest, type ScorableVerboseTree } from "../utils.js";
+import { type LLMIntegrationTest, type ScorableVerboseTree, scoreSymbol } from "../utils.js";
 
 import {
 	alphabeticalGroceries,

@@ -6,15 +6,27 @@
 import { compareArrays, debugAssert } from "@fluidframework/core-utils/internal";
 import {
 	buildFunc,
-	exposeMethodsSymbol,
 	type ExposedMethods,
+	exposeMethodsSymbol,
 	type IExposedMethods,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/type-factory/alpha";
 import { typeFactory as tf } from "@fluidframework/type-factory/internal";
 
-import { EmptyKey, mapCursorField, type ITreeCursorSynchronous } from "../core/index.js";
+import { EmptyKey, type ITreeCursorSynchronous, mapCursorField } from "../core/index.js";
 import { TreeAlpha } from "../shared-tree/index.js";
+// Add some unused imports which show up in the generated d.ts file.
+// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
+import type {
+	ArrayNodeDeltaOp,
+	ArrayNodeTreeChangedDeltaOp,
+	NodeKind,
+	TreeNode,
+	TreeNodeSchema,
+	WithType,
+	// eslint-disable-next-line import-x/no-duplicates
+} from "../simple-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
@@ -22,17 +34,6 @@ import {
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 } from "../simple-tree/index.js";
-import type {
-	ArrayNodeDeltaOp,
-	ArrayNodeTreeChangedDeltaOp,
-	TreeNode,
-	WithType,
-	// eslint-disable-next-line import-x/no-duplicates
-} from "../simple-tree/index.js";
-// Add some unused imports which show up in the generated d.ts file.
-// This prevents them from getting inline imports generated, cleaning up the d.ts file and API reports.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
-import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 

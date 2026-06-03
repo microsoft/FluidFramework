@@ -8,9 +8,9 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	LoggingError,
 	createChildLogger,
 	extractTelemetryLoggerExt,
+	LoggingError,
 } from "@fluidframework/telemetry-utils/internal";
 // eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
@@ -18,9 +18,9 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy
 import { FinalSpace } from "./finalSpace.js";
 import {
 	type FinalCompressedId,
+	isFinalId,
 	type LocalCompressedId,
 	type NumericUuid,
-	isFinalId,
 } from "./identifiers.js";
 import {
 	type Index,
@@ -33,18 +33,18 @@ import {
 } from "./persistanceUtilities.js";
 import { SessionSpaceNormalizer } from "./sessionSpaceNormalizer.js";
 import {
-	type IdCluster,
-	Session,
-	Sessions,
 	getAlignedFinal,
 	getAlignedLocal,
+	type IdCluster,
 	lastFinalizedFinal,
 	lastFinalizedLocal,
+	Session,
+	Sessions,
 } from "./sessions.js";
 import type {
+	IdCreationRange,
 	IIdCompressor,
 	IIdCompressorCore,
-	IdCreationRange,
 	OpSpaceCompressedId,
 	SerializedIdCompressor,
 	SerializedIdCompressorWithNoSession,

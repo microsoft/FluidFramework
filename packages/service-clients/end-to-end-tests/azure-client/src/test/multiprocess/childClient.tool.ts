@@ -20,10 +20,10 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import { getPresence } from "@fluidframework/fluid-static";
 import {
 	type Attendee,
+	type LatestMapRaw,
+	type LatestRaw,
 	type Presence,
 	StateFactory,
-	type LatestRaw,
-	type LatestMapRaw,
 	type StatesWorkspace,
 } from "@fluidframework/presence";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
@@ -34,10 +34,10 @@ import { TestDataObject } from "../TestDataObject.js";
 import { currentVersion } from "../utils.js";
 
 import type {
-	MessageFromChild as MessageToParent,
-	MessageToChild as MessageFromParent,
-	UserIdAndName,
 	EventEntry,
+	MessageToChild as MessageFromParent,
+	MessageFromChild as MessageToParent,
+	UserIdAndName,
 } from "./messageTypes.js";
 
 const testLabel = process.argv[2];

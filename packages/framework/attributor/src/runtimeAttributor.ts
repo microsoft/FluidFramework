@@ -8,9 +8,9 @@ import type { IDeltaManager } from "@fluidframework/container-definitions/intern
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IDocumentMessage,
-	ISnapshotTree,
-	ISequencedDocumentMessage,
 	IQuorumClients,
+	ISequencedDocumentMessage,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	AttributionInfo,
@@ -19,8 +19,8 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
-import { OpStreamAttributor, type IAttributor } from "./attributor.js";
-import { opBlobName, type IRuntimeAttributor } from "./attributorContracts.js";
+import { type IAttributor, OpStreamAttributor } from "./attributor.js";
+import { type IRuntimeAttributor, opBlobName } from "./attributorContracts.js";
 import { AttributorSerializer, chain, deltaEncoder, type Encoder } from "./encoders.js";
 import { makeLZ4Encoder } from "./lz4Encoder.js";
 

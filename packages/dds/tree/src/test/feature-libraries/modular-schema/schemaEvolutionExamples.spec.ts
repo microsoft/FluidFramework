@@ -12,8 +12,8 @@ import { getDiscrepanciesInAllowedContent } from "../../../simple-tree/api/discr
 import {
 	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
-	TreeViewConfigurationAlpha,
 	schemaStatics,
+	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository } from "../../utils.js";

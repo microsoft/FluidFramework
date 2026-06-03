@@ -11,8 +11,8 @@ import type { ISharedCell } from "@fluidframework/cell/internal";
 import {
 	IContainer,
 	IHostLoader,
-	LoaderHeader,
 	type ILoaderHeader,
+	LoaderHeader,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
 import {
@@ -29,17 +29,17 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	OperationType,
-	SharedArrayRevertible,
 	type IRevertible,
 	type ISharedArray,
 	type ISharedSignal,
 	type IToggleOperation,
+	OperationType,
+	SharedArrayRevertible,
 } from "@fluidframework/legacy-dds/internal";
 import type {
 	ISharedDirectory,
-	SharedDirectory,
 	ISharedMap,
+	SharedDirectory,
 } from "@fluidframework/map/internal";
 import {
 	ReferenceType,
@@ -55,13 +55,13 @@ import type {
 import { SharedObject } from "@fluidframework/shared-object-base/internal";
 import {
 	ChannelFactoryRegistry,
+	createAndAttachContainer,
+	createDocumentId,
 	DataObjectFactoryType,
+	getRequiredPendingLocalState,
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	createAndAttachContainer,
-	createDocumentId,
-	getRequiredPendingLocalState,
 	timeoutAwait,
 	timeoutPromise,
 	toIDeltaManagerFull,

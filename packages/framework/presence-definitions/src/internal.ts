@@ -4,11 +4,8 @@
  */
 
 export type { InternalTypes } from "./exposedInternalTypes.js";
-
 export type { PostUpdateAction, ValueManager } from "./statesManagerTypes.js";
-
 export type { AnyWorkspace } from "./types.js";
-
 export type {
 	ValidatableOptionalState,
 	ValidatableRequiredState,

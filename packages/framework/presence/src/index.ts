@@ -17,8 +17,8 @@ export type {
 	Attendee,
 	AttendeeId,
 	AttendeesEvents,
-	BroadcastControls,
 	BroadcastControlSettings,
+	BroadcastControls,
 	ClientConnectionId,
 	InternalPresenceTypes,
 	InternalPresenceUtilityTypes,
@@ -49,10 +49,10 @@ export type {
 	LatestRawEvents,
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationSubscriberSignatures,
 	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationSubscriberSignatures,
 	NotificationsWithSubscriptionsConfiguration,
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,
@@ -71,7 +71,6 @@ export type {
 	WorkspaceAddress,
 } from "@fluid-internal/presence-definitions";
 export { AttendeeStatus } from "@fluid-internal/presence-definitions";
-
 // Re-export from presence-runtime
 export {
 	Notifications,

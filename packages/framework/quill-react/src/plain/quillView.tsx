@@ -4,10 +4,10 @@
  */
 
 import {
-	syncTextToTree,
-	unwrapPropTreeNode,
 	type PropTreeNode,
+	syncTextToTree,
 	type TextEditorProps,
+	unwrapPropTreeNode,
 } from "@fluidframework/react/internal";
 import {
 	type TextAsTree,

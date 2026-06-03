@@ -15,14 +15,14 @@ import type {
 import {
 	captureReferencedAttachmentBlobs,
 	extractBlobAttachReferences,
+	type IBlobAttachReference,
+	type IGcSnapshotData,
 	inlineAttachmentBlobsByReference,
 	mapWithConcurrency,
 	parseGcSnapshotData,
 	readReferencedSnapshotBlobs,
 	snapshotHasLoadingGroups,
 	unreferencedAttachmentBlobLocalIds,
-	type IBlobAttachReference,
-	type IGcSnapshotData,
 } from "../captureReferencedContents.js";
 
 /** Minimal storage shim whose readBlob is backed by an id → string map. */

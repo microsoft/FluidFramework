@@ -6,25 +6,25 @@
 import { strict as assert } from "node:assert";
 
 import {
+	type AsyncGenerator,
 	createWeightedGenerator,
 	done,
 	takeAsync,
-	type AsyncGenerator,
 } from "@fluid-private/stochastic-test-utils";
 import {
 	type Client,
+	createDDSFuzzSuite,
 	type DDSFuzzModel,
 	type DDSFuzzSuiteOptions,
 	type DDSFuzzTestState,
-	createDDSFuzzSuite,
 } from "@fluid-private/test-dds-utils";
 
 import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
 	type ArrayNodeDeltaOp,
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../../../simple-tree/index.js";
 import { getOrCreate } from "../../../util/index.js";
 import { SharedTreeTestFactory } from "../../utils.js";

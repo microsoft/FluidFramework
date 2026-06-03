@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type ITreeCursor, forEachField, forEachNode } from "../../../core/index.js";
+import { forEachField, forEachNode, type ITreeCursor } from "../../../core/index.js";
 import type {
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnlyObject,

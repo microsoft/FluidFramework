@@ -5,9 +5,9 @@
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type {
+	InstrumentedStorageTokenFetcher,
 	IOdspUrlParts,
 	ISocketStorageDiscovery,
-	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type ITelemetryLoggerExt,

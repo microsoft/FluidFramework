@@ -17,9 +17,9 @@ import {
 	compatKind,
 	compatVersions,
 	driver,
+	odspEndpointName,
 	r11sEndpointName,
 	tenantIndex,
-	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensureVersionLoaded } from "./testApi.js";

@@ -13,9 +13,9 @@ import {
 
 import {
 	type ChangeFamily,
+	type ChangeFamilyEditor,
 	type RevisionTag,
 	rootFieldKey,
-	type ChangeFamilyEditor,
 } from "../../../core/index.js";
 import {
 	DefaultChangeFamily,

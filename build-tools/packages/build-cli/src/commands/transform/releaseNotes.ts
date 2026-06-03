@@ -4,6 +4,7 @@
  */
 
 import { readFile, writeFile } from "node:fs/promises";
+
 import { Flags } from "@oclif/core";
 import { format as prettier } from "prettier";
 import { remark } from "remark";

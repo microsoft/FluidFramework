@@ -6,9 +6,9 @@
 import {
 	Dropdown,
 	Link,
+	makeStyles,
 	Option,
 	Switch,
-	makeStyles,
 	teamsHighContrastTheme,
 	webDarkTheme,
 	webLightTheme,
