@@ -22,7 +22,6 @@ import type {
 } from "@fluid-private/test-dds-utils";
 
 import { ClaimsFactory } from "../claimsFactory.js";
-import type { IClaims } from "../interfaces.js";
 
 import { _dirname } from "./dirname.cjs";
 
@@ -35,6 +34,11 @@ interface ClaimOperation {
 	type: "claim";
 	key: string;
 	value: string;
+}
+
+interface ClaimHandleOperation {
+	type: "claimHandle";
+	key: string;
 }
 
 interface CasOperation {
@@ -52,7 +56,11 @@ interface GetClaimOperation {
 /**
  * All operations that can be generated during fuzz testing.
  */
-export type ClaimsOperation = ClaimOperation | CasOperation | GetClaimOperation;
+export type ClaimsOperation =
+	| ClaimOperation
+	| ClaimHandleOperation
+	| CasOperation
+	| GetClaimOperation;
 
 /**
  * Pool of keys used by the fuzz generator. Using a small key space
@@ -73,14 +81,24 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 		};
 	}
 
+	async function claimWithHandle(state: FuzzTestState): Promise<ClaimHandleOperation> {
+		return {
+			type: "claimHandle",
+			key: randomKey(state),
+		};
+	}
+
 	async function cas(state: FuzzTestState): Promise<CasOperation> {
 		const key = randomKey(state);
-		const currentValue = (state.client.channel as IClaims<string>).getClaim(key);
+		const currentValue = state.client.channel.getClaim(key);
+		// Only CAS on string values — handles are not JSON-serializable for replay.
+		const expected =
+			typeof currentValue === "string" ? currentValue : `v${state.random.integer(0, 100)}`;
 		return {
 			type: "cas",
 			key,
 			newValue: `v${state.random.integer(0, 100)}`,
-			expectedValue: currentValue ?? `v${state.random.integer(0, 100)}`,
+			expectedValue: expected,
 		};
 	}
 
@@ -92,7 +110,8 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 	}
 
 	return createWeightedGenerator<ClaimsOperation, FuzzTestState>([
-		[claim, 5],
+		[claim, 3],
+		[claimWithHandle, 5],
 		[cas, 3],
 		[getClaim, 2],
 	]);
@@ -101,41 +120,50 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 function makeReducer(): Reducer<ClaimsOperation, FuzzTestState> {
 	return combineReducers<ClaimsOperation, FuzzTestState>({
 		claim: ({ client }, { key, value }) => {
-			const channel = client.channel as IClaims<string>;
 			try {
-				channel.trySetClaim(key, value);
+				client.channel.trySetClaim(key, value);
 			} catch {
-				// Expected: may throw UsageError if detached/disconnected or
-				// if a claim for this key is already pending locally.
+				// Expected: may throw UsageError if a claim for this key is already pending locally.
+			}
+		},
+		claimHandle: ({ client }, { key }) => {
+			try {
+				client.channel.trySetClaim(key, client.channel.handle);
+			} catch {
+				// Expected: may throw UsageError if a claim for this key is already pending locally.
 			}
 		},
 		cas: ({ client }, { key, newValue, expectedValue }) => {
-			const channel = client.channel as IClaims<string>;
 			try {
-				channel.compareAndSetClaim(key, newValue, expectedValue);
+				client.channel.compareAndSetClaim(key, newValue, expectedValue);
 			} catch {
-				// Expected: may throw UsageError if detached/disconnected or
-				// if an operation for this key is already pending locally.
+				// Expected: may throw UsageError if an operation for this key is already pending locally.
 			}
 		},
 		getClaim: ({ client }, { key }) => {
-			const channel = client.channel as IClaims<string>;
 			// Read-only operation — just exercises the read path.
-			channel.getClaim(key);
+			client.channel.getClaim(key);
 		},
 	});
 }
 
 function assertConsistentClaims(a: Client<ClaimsFactory>, b: Client<ClaimsFactory>): void {
-	const claimsA = a.channel as IClaims<string>;
-	const claimsB = b.channel as IClaims<string>;
-
 	for (const key of keyPool) {
-		const valueA = claimsA.getClaim(key);
-		const valueB = claimsB.getClaim(key);
-		if (valueA !== valueB) {
+		const valueA = a.channel.getClaim(key);
+		const valueB = b.channel.getClaim(key);
+		// For handles (objects with absolutePath), compare by path since
+		// references differ across clients after deserialization.
+		const resolvedA =
+			typeof valueA === "object" && valueA !== null && "absolutePath" in valueA
+				? (valueA as { absolutePath: string }).absolutePath
+				: valueA;
+		const resolvedB =
+			typeof valueB === "object" && valueB !== null && "absolutePath" in valueB
+				? (valueB as { absolutePath: string }).absolutePath
+				: valueB;
+		if (resolvedA !== resolvedB) {
 			throw new Error(
-				`Inconsistent claims for key "${key}": client A has "${valueA}", client B has "${valueB}"`,
+				`Inconsistent claims for key "${key}": client A has "${String(resolvedA)}", client B has "${String(resolvedB)}"`,
 			);
 		}
 	}

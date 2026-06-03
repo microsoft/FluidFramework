@@ -27,21 +27,16 @@ import type { ClaimConfirmation, ClaimResult, IClaims, IClaimsEvents } from "./i
 
 /**
  * Op format for Claims operations.
+ *
+ * Both write-once and compare-and-swap share the same op shape.
+ * `expectedValue` of `undefined` means "set only if key is unset".
  */
-type IClaimOperation<T> =
-	| {
-			type: "claim";
-			key: string;
-			value: T;
-			mode: "writeOnce";
-	  }
-	| {
-			type: "claim";
-			key: string;
-			value: T;
-			mode: "cas";
-			expectedValue: T;
-	  };
+interface IClaimOperation<T> {
+	type: "claim";
+	key: string;
+	value: T;
+	expectedValue: T | undefined;
+}
 
 /**
  * Pending claim entry — stores the submitted value and a resolve function
@@ -90,49 +85,54 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	 * {@inheritDoc IClaims.trySetClaim}
 	 */
 	public trySetClaim(key: string, value: T): ClaimResult<T> {
-		this.guardConnected();
-
 		// Write-once: reject if key already exists.
 		if (this.claims.has(key)) {
 			return { status: "AlreadyClaimed", currentValue: this.claims.get(key) };
 		}
 
-		return this.submitClaim(key, value, { type: "claim", key, value, mode: "writeOnce" });
-	}
-
-	/**
-	 * {@inheritDoc IClaims.compareAndSetClaim}
-	 */
-	public compareAndSetClaim(key: string, value: T, expectedValue: T): ClaimResult<T> {
-		this.guardConnected();
-
-		// CAS: reject if key doesn't exist or current value doesn't match expected.
-		const currentValue = this.claims.get(key);
-		if (!this.claims.has(key) || currentValue !== expectedValue) {
-			return { status: "AlreadyClaimed", currentValue };
+		// Detached: apply directly, no op needed (no other clients exist).
+		if (!this.isAttached()) {
+			this.claims.set(key, value);
+			return { status: "Accepted", currentValue: value };
 		}
 
 		return this.submitClaim(key, value, {
 			type: "claim",
 			key,
 			value,
-			mode: "cas",
-			expectedValue,
+			expectedValue: undefined,
 		});
 	}
 
 	/**
-	 * Guards that the container is attached and connected.
+	 * {@inheritDoc IClaims.compareAndSetClaim}
+	 *
+	 * @experimental
 	 */
-	private guardConnected(): void {
+	public compareAndSetClaim(
+		key: string,
+		value: T,
+		expectedValue: T | undefined,
+	): ClaimResult<T> {
+		// CAS: reject if the current value doesn't match expected.
+		// When expectedValue is undefined, this allows "set only if unset" semantics.
+		const currentValue = this.claims.get(key);
+		if (this.claims.has(key) ? currentValue !== expectedValue : expectedValue !== undefined) {
+			return { status: "AlreadyClaimed", currentValue };
+		}
+
+		// Detached: apply directly, no op needed (no other clients exist).
 		if (!this.isAttached()) {
-			throw new UsageError(
-				"Claims cannot be modified while the container is detached or in staging mode",
-			);
+			this.claims.set(key, value);
+			return { status: "Accepted", currentValue: value };
 		}
-		if (!this.runtime.connected) {
-			throw new UsageError("Claims cannot be modified while the container is disconnected");
-		}
+
+		return this.submitClaim(key, value, {
+			type: "claim",
+			key,
+			value,
+			expectedValue,
+		});
 	}
 
 	/**
@@ -158,6 +158,13 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	 */
 	public getClaim(key: string): T | undefined {
 		return this.claims.get(key);
+	}
+
+	/**
+	 * {@inheritDoc IClaims.has}
+	 */
+	public has(key: string): boolean {
+		return this.claims.has(key);
 	}
 
 	// #region SharedObject overrides
@@ -201,10 +208,9 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 
 			assert(op.type === "claim", "Claims: unexpected op type");
 
-			const isAccepted =
-				op.mode === "cas"
-					? this.claims.has(op.key) && this.claims.get(op.key) === op.expectedValue
-					: !this.claims.has(op.key);
+			const isAccepted = this.claims.has(op.key)
+				? this.claims.get(op.key) === op.expectedValue
+				: op.expectedValue === undefined;
 
 			if (isAccepted) {
 				this.claims.set(op.key, op.value);
@@ -282,13 +288,6 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 		}
 		this.pendingClaims.delete(op.key);
 		pending.resolve({ status: "Aborted" });
-	}
-
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObjectCore.reSubmitCore}
-	 */
-	protected reSubmitCore(content: unknown, _localOpMetadata: unknown): void {
-		this.submitLocalMessage(content);
 	}
 
 	protected applyStashedOp(content: unknown): void {

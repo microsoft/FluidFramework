@@ -49,14 +49,21 @@ describe("Claims", () => {
 			assert.strictEqual(claims.getClaim("foo"), undefined);
 		});
 
-		it("trySetClaim throws UsageError when detached", () => {
-			assert.throws(
-				() => claims.trySetClaim("key", "value"),
-				(error: Error) => {
-					assert(error.message.includes("detached"), `Unexpected error: ${error.message}`);
-					return true;
-				},
-			);
+		it("trySetClaim succeeds immediately when detached", () => {
+			const result = claims.trySetClaim("key", "value");
+			assert.strictEqual(result.status, "Accepted");
+			assert(result.status === "Accepted");
+			assert.strictEqual(result.currentValue, "value");
+			assert.strictEqual(claims.getClaim("key"), "value");
+		});
+
+		it("has() returns false for unclaimed key", () => {
+			assert.strictEqual(claims.has("foo"), false);
+		});
+
+		it("has() returns true after detached trySetClaim", () => {
+			claims.trySetClaim("key", "value");
+			assert.strictEqual(claims.has("key"), true);
 		});
 	});
 
@@ -235,13 +242,21 @@ describe("Claims", () => {
 			claims = createConnectedClaims("claims", containerRuntimeFactory);
 		});
 
-		it("CAS against unclaimed key returns AlreadyClaimed", () => {
-			// CAS requires the key to exist — it fails if the key hasn't been claimed.
-			const result = claims.compareAndSetClaim(
-				"casKey",
-				"firstValue",
-				undefined as unknown as string,
-			);
+		it("CAS with undefined expectedValue succeeds on unclaimed key", async () => {
+			// CAS with expectedValue=undefined means "set only if unset".
+			const result = claims.compareAndSetClaim("casKey", "firstValue", undefined);
+			assert.strictEqual(result.status, "Pending");
+			assert(result.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+			const confirmation = await result.promise;
+			assert.strictEqual(confirmation.status, "Accepted");
+			assert.strictEqual(claims.getClaim("casKey"), "firstValue");
+		});
+
+		it("CAS with non-undefined expectedValue against unclaimed key returns AlreadyClaimed", () => {
+			// CAS with a non-undefined expectedValue against a key that doesn't exist.
+			const result = claims.compareAndSetClaim("casKey", "firstValue", "wrongValue");
 			assert.strictEqual(result.status, "AlreadyClaimed");
 			assert(result.status === "AlreadyClaimed");
 			assert.strictEqual(result.currentValue, undefined);
@@ -398,7 +413,7 @@ describe("Claims", () => {
 	});
 
 	describe("CAS edge cases", () => {
-		it("CAS against a missing key returns AlreadyClaimed with undefined", () => {
+		it("CAS with non-undefined expectedValue against a missing key returns AlreadyClaimed", () => {
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			const claims = createConnectedClaims("claims", containerRuntimeFactory);
 
@@ -445,6 +460,171 @@ describe("Claims", () => {
 
 			// Should see the CAS-updated value.
 			assert.strictEqual(claims2.getClaim("casKey"), "secondValue");
+		});
+	});
+
+	describe("Garbage collection", () => {
+		it("getGCData reports committed handle references", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			const handle = claims.handle;
+			const result = claims.trySetClaim("gcKey", handle);
+			assert(result.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await result.promise;
+
+			const gcData = claims.getGCData();
+			const outboundRoutes = gcData.gcNodes["/"];
+			assert(outboundRoutes !== undefined, "GC node should exist");
+			assert(
+				outboundRoutes.includes(handle.absolutePath),
+				`Committed handle path "${handle.absolutePath}" should appear in outbound routes`,
+			);
+		});
+
+		it("getGCData reports pending handle references", () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			const handle = claims.handle;
+			const result = claims.trySetClaim("pendingGcKey", handle);
+			assert.strictEqual(result.status, "Pending");
+
+			// Before processing, the handle is only in pendingClaims.
+			const gcData = claims.getGCData();
+			const outboundRoutes = gcData.gcNodes["/"];
+			assert(outboundRoutes !== undefined, "GC node should exist");
+			assert(
+				outboundRoutes.includes(handle.absolutePath),
+				`Pending handle path "${handle.absolutePath}" should appear in outbound routes`,
+			);
+
+			// Clean up to avoid unhandled promise.
+			containerRuntimeFactory.processAllMessages();
+		});
+
+		it("getGCData reports both committed and pending handle references", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+
+			// Commit one handle.
+			const committedHandle = claims.handle;
+			const firstResult = claims.trySetClaim("committed", committedHandle);
+			assert(firstResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await firstResult.promise;
+
+			// Submit a second handle that remains pending.
+			const pendingHandle = claims2.handle;
+			const secondResult = claims.trySetClaim("pending", pendingHandle);
+			assert.strictEqual(secondResult.status, "Pending");
+
+			const gcData = claims.getGCData();
+			const outboundRoutes = gcData.gcNodes["/"];
+			assert(outboundRoutes !== undefined, "GC node should exist");
+			assert(
+				outboundRoutes.includes(committedHandle.absolutePath),
+				"Committed handle should appear in outbound routes",
+			);
+			assert(
+				outboundRoutes.includes(pendingHandle.absolutePath),
+				"Pending handle should appear in outbound routes",
+			);
+
+			containerRuntimeFactory.processAllMessages();
+		});
+	});
+
+	describe("Handle values", () => {
+		let claims: Claims;
+		let containerRuntimeFactory: MockContainerRuntimeFactory;
+
+		beforeEach(() => {
+			containerRuntimeFactory = new MockContainerRuntimeFactory();
+			claims = createConnectedClaims("claims", containerRuntimeFactory);
+		});
+
+		it("Can claim a key with a handle value", async () => {
+			const handle = claims.handle;
+			const result = claims.trySetClaim("handleKey", handle);
+			assert.strictEqual(result.status, "Pending");
+			assert(result.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+			const confirmation = await result.promise;
+
+			assert.strictEqual(confirmation.status, "Accepted");
+			assert(confirmation.status === "Accepted");
+			assert.strictEqual(confirmation.currentValue, handle);
+			// After roundtrip, getClaim returns deserialized handle — compare by path.
+			const stored = claims.getClaim("handleKey") as { absolutePath: string };
+			assert.strictEqual(stored.absolutePath, handle.absolutePath);
+		});
+
+		it("has() returns true for handle-valued claims", async () => {
+			const handle = claims.handle;
+			const result = claims.trySetClaim("handleKey", handle);
+			assert(result.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+			await result.promise;
+
+			assert.strictEqual(claims.has("handleKey"), true);
+		});
+
+		it("First-writer-wins works with handle values across clients", async () => {
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+
+			const handle1 = claims.handle;
+			const handle2 = claims2.handle;
+
+			const result1 = claims.trySetClaim("handleRace", handle1);
+			const result2 = claims2.trySetClaim("handleRace", handle2);
+			assert(result1.status === "Pending");
+			assert(result2.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+
+			const confirmation1 = await result1.promise;
+			const confirmation2 = await result2.promise;
+
+			assert.strictEqual(confirmation1.status, "Accepted");
+			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
+			// After roundtrip, handles are deserialized — compare by path.
+			const localHandle = claims.getClaim("handleRace") as { absolutePath: string };
+			assert.strictEqual(localHandle.absolutePath, handle1.absolutePath);
+			const remoteHandle = claims2.getClaim("handleRace") as { absolutePath: string };
+			assert.strictEqual(remoteHandle.absolutePath, handle1.absolutePath);
+		});
+
+		it("Handle values survive summary round-trip", async () => {
+			const handle = claims.handle;
+			const result = claims.trySetClaim("handlePersist", handle);
+			assert(result.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await result.promise;
+
+			// Summarize
+			const summary = claims.getAttachSummary();
+
+			// Load into a new instance
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			// The loaded value should be a handle (not undefined).
+			const loadedValue = claims2.getClaim("handlePersist");
+			assert(loadedValue !== undefined, "Handle value should survive summary round-trip");
+			assert.strictEqual(claims2.has("handlePersist"), true);
 		});
 	});
 });

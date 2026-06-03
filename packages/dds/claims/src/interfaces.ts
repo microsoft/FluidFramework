@@ -53,13 +53,8 @@ export type ClaimConfirmation<T = unknown> =
 export type ClaimResult<T = unknown> =
 	| {
 			/**
-			 * The claim was accepted synchronously (e.g., in detached or staging mode).
-			 *
-			 * @remarks
-			 * This status is reserved for future use. Currently, `trySetClaim` and
-			 * `compareAndSetClaim` require an attached, connected container and will
-			 * always return `"Pending"` on success. This variant will be used when
-			 * detached or staging mode support is added.
+			 * The claim was accepted synchronously (e.g., in detached mode where no
+			 * other clients exist and the value can be applied immediately).
 			 */
 			readonly status: "Accepted";
 
@@ -126,9 +121,8 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 	 * @param key - The claim key to reserve.
 	 * @param value - The value to associate with the claim.
 	 * @returns The claim result — synchronous for known states, or "Pending" with a promise.
-	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if the
-	 * container is not attached and connected, or if a claim for this key is already
-	 * pending locally.
+	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
+	 * for this key is already pending locally.
 	 */
 	trySetClaim(key: string, value: T): ClaimResult<T>;
 
@@ -141,16 +135,20 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 	 * primitive values (strings, numbers, booleans). For object or handle values, CAS
 	 * will compare by reference, which is unlikely to match across distributed clients.
 	 *
+	 * This API is experimental and may change to use sequence-number-based comparison
+	 * (ETag semantics) in the future to avoid object equality issues and handle
+	 * A→B→A edge cases more conservatively.
+	 *
+	 * @experimental
 	 * @param key - The claim key to update.
 	 * @param value - The new value to set.
 	 * @param expectedValue - The expected current value. The update only succeeds if the
-	 * committed value matches this exactly.
+	 * committed value matches this exactly. Pass `undefined` to set only if the key is unset.
 	 * @returns The claim result — synchronous for known states, or "Pending" with a promise.
-	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if the
-	 * container is not attached and connected, or if a claim for this key is already
-	 * pending locally.
+	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
+	 * for this key is already pending locally.
 	 */
-	compareAndSetClaim(key: string, value: T, expectedValue: T): ClaimResult<T>;
+	compareAndSetClaim(key: string, value: T, expectedValue: T | undefined): ClaimResult<T>;
 
 	/**
 	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.
@@ -159,4 +157,15 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 	 * @returns The claimed value, or `undefined` if unclaimed.
 	 */
 	getClaim(key: string): T | undefined;
+
+	/**
+	 * Returns whether a claim exists for the given key.
+	 *
+	 * @remarks
+	 * This distinguishes "key was never set" from "key was set to `undefined`".
+	 *
+	 * @param key - The claim key to check.
+	 * @returns `true` if the key has been claimed, `false` otherwise.
+	 */
+	has(key: string): boolean;
 }
