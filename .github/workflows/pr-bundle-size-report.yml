@@ -141,6 +141,9 @@ jobs:
         pr: ${{ fromJSON(needs.identify-targets.outputs.prs) }}
       fail-fast: false
     runs-on: ubuntu-latest
+    # When comment-posting is wired up, grant write so the marocchino step below can edit the sticky.
+    # permissions:
+    #   pull-requests: write
     steps:
       # Check out the PR's base branch (never PR HEAD, since PR-authored code isn't trusted) just to get
       # build-tools source so we can build flub. The comparison itself reads only ADO artifacts identified
@@ -178,3 +181,16 @@ jobs:
             --base ${{ matrix.pr.mergeBase }} \
             --head ${{ matrix.pr.head }} \
             --json | tee bundle-comparison.json
+
+      - name: Post results (stub)
+        run: |
+          echo "PR #${{ matrix.pr.number }}: would post bundle-size results sticky here, sourced from bundle-comparison.json."
+      # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+      # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+      #   with:
+      #     header: bundle-size-report
+      #     number: ${{ matrix.pr.number }}
+      #     # `path:` makes the action read the message body from a file, so we can render the formatted
+      #     # comparison from the JSON in a preceding step (TBD — `flub` may grow a `format` subcommand
+      #     # or the rendering may live inline in YAML/jq).
+      #     path: ${{ github.workspace }}/bundle-comparison.md
