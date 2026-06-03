@@ -90,8 +90,6 @@ extends:
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/build/build-common
     tagName: build-common
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
     taskBuild: false
     taskBuildDocs: false

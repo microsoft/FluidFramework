@@ -86,8 +86,6 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/tools/api-markdown-documenter
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
     tagName: api-markdown-documenter
     taskBuild: build

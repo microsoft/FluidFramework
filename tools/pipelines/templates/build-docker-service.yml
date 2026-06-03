@@ -65,13 +65,17 @@ parameters:
     type: string
     default: repo
 
+  # The package manager (if any) used by this pipeline.
   - name: packageManager
     type: string
-    default: npm
+    default: pnpm
+    values:
+      - pnpm
+      - none
 
   - name: packageManagerInstallCommand
     type: string
-    default: 'npm ci --unsafe-perm'
+    default: 'pnpm i --frozen-lockfile'
 
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
@@ -295,6 +299,11 @@ extends:
                   echo "##vso[task.logissue type=error]'$(release)' is set but pipeline isn't declared to allow release image."
                   exit -1;
                 fi
+              fi
+
+              if [[ "${{ parameters.packageManager }}" == "none" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]packageManager: 'none' is incompatible with setVersion: true (version-setting transitively requires a package manager)."
+                exit -1;
               fi
 
         # for npm ci in component detection and set version
