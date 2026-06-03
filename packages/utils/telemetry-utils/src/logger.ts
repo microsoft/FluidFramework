@@ -680,10 +680,6 @@ export interface IPerformanceEventMarkers {
 	 * If specified, _end events whose duration is greater than this threshold are logged as essential.
 	 */
 	endEventEssentialDurationThresholdMs?: number;
-	/**
-	 * If specified, _cancel events are logged as essential while preserving the configured cancel category.
-	 */
-	logCancelAsEssential?: true;
 }
 
 /**
@@ -910,7 +906,7 @@ export class PerformanceEvent {
 		eventNameSuffix: string,
 		event: ITelemetryPerformanceEventExt,
 	): typeof LogLevel.verbose | typeof LogLevel.info | undefined {
-		if (eventNameSuffix === "cancel" && this.markers.logCancelAsEssential === true) {
+		if (eventNameSuffix === "cancel") {
 			return undefined;
 		}
 

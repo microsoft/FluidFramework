@@ -149,7 +149,6 @@ describe("PerformanceEvent", () => {
 				{ eventName: "EssentialCancel" },
 				{
 					cancel: "generic",
-					logCancelAsEssential: true,
 				},
 				true,
 				LogLevel.info,
