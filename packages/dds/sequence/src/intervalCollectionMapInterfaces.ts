@@ -13,8 +13,8 @@ import type {
 	ISerializedIntervalCollectionV2,
 } from "./intervalCollection.js";
 import type {
-	ISerializedInterval,
 	IntervalDeltaOpType,
+	ISerializedInterval,
 	SequenceIntervalClass,
 	SerializedIntervalDelta,
 } from "./intervals/index.js";

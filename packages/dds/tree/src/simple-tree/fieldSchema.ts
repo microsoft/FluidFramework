@@ -10,25 +10,25 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type { FieldKey } from "../core/index.js";
 import type { FlexTreeHydratedContextMinimal } from "../feature-libraries/index.js";
 import {
-	type MakeNominal,
-	brand,
-	type UnionToIntersection,
-	compareSets,
-	type requireTrue,
 	type areOnlyKeys,
+	brand,
+	compareSets,
 	type JsonCompatibleReadOnlyObject,
+	type MakeNominal,
+	type requireTrue,
+	type UnionToIntersection,
 } from "../util/index.js";
 
 import type {
-	TreeNodeSchema,
-	TreeNode,
-	UnhydratedFlexTreeNode,
-	ImplicitAllowedTypes,
-	TreeNodeFromImplicitAllowedTypes,
-	TreeLeafValue,
-	InsertableTreeNodeFromImplicitAllowedTypes,
 	AllowedTypesFull,
+	ImplicitAllowedTypes,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 	SchemaUpgrade,
+	TreeLeafValue,
+	TreeNode,
+	TreeNodeFromImplicitAllowedTypes,
+	TreeNodeSchema,
+	UnhydratedFlexTreeNode,
 } from "./core/index.js";
 import { AnnotatedAllowedTypesInternal, normalizeAllowedTypes } from "./core/index.js";
 import type {

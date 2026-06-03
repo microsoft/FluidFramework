@@ -3,30 +3,26 @@
  * Licensed under the MIT License.
  */
 
-// The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
-// eslint-disable-next-line no-restricted-syntax
-export * from "./main.js";
-
 export {
 	createChildMonitoringContext,
-	type MonitoringContext,
-	sessionStorageConfigProvider,
-	mixinMonitoringContext,
+	createConfigBasedOptionsProxy,
 	type IConfigProvider,
 	loggerToMonitoringContext,
-	wrapConfigProviderWithDefaults,
-	createConfigBasedOptionsProxy,
+	type MonitoringContext,
+	mixinMonitoringContext,
 	type OptionConfigReaders,
+	sessionStorageConfigProvider,
+	wrapConfigProviderWithDefaults,
 } from "./config.js";
 export {
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
 	GenericError,
-	UsageError,
-	validatePrecondition,
 	LayerIncompatibilityError,
 	type MessageLike,
+	UsageError,
+	validatePrecondition,
 } from "./error.js";
 export {
 	extractLogSafeErrorProperties,
@@ -56,10 +52,11 @@ export {
 	isFluidError,
 	isLayerIncompatibilityError,
 } from "./fluidErrorBase.js";
+export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 export {
-	eventNamespaceSeparator,
 	createChildLogger,
 	createMultiSinkLogger,
+	eventNamespaceSeparator,
 	extractTelemetryLoggerExt,
 	formatTick,
 	type IPerformanceEventMarkers,
@@ -67,41 +64,43 @@ export {
 	numberFromString,
 	PerformanceEvent,
 	TaggedLoggerAdapter,
-	tagData,
-	tagCodeArtifacts,
 	TelemetryDataTag,
+	tagCodeArtifacts,
+	tagData,
 	toITelemetryLoggerExt,
 } from "./logger.js";
+// The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
+// eslint-disable-next-line no-restricted-syntax
+export * from "./main.js";
 export {
 	createMockLoggerExt,
 	type IMockLoggerExt,
 	MockLogger,
 } from "./mockLogger.js";
-export { ThresholdCounter } from "./thresholdCounter.js";
 export {
-	SampledTelemetryHelper,
 	type CustomMetrics,
 	type ICustomData,
 	type MeasureReturnType,
+	SampledTelemetryHelper,
 } from "./sampledTelemetryHelper.js";
+export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
+export type {
+	ITelemetryEventExt,
+	TelemetryLoggerExt,
+} from "./telemetryTypes.js";
+export type {
+	ITelemetryErrorEventExt,
+	ITelemetryGenericEventExt,
+	ITelemetryPerformanceEventExt,
+	TelemetryEventCategory,
+} from "./telemetryTypesUndeprecated.js";
+export { ThresholdCounter } from "./thresholdCounter.js";
 export {
 	createSampledLogger,
 	type IEventSampler,
 	type ISampledTelemetryLogger,
 	measure,
 } from "./utils.js";
-export type {
-	ITelemetryEventExt,
-	TelemetryLoggerExt,
-} from "./telemetryTypes.js";
-export type {
-	ITelemetryGenericEventExt,
-	ITelemetryErrorEventExt,
-	ITelemetryPerformanceEventExt,
-	TelemetryEventCategory,
-} from "./telemetryTypesUndeprecated.js";
-export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
-export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
 
 import type { TelemetryLoggerExt } from "./telemetryTypes.js";
 

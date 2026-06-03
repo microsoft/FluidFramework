@@ -11,10 +11,10 @@ import { deepFreeze } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChangeEncodingContext,
 	type FieldKey,
+	makeAnonChange,
 	type RevisionMetadataSource,
 	type RevisionTag,
 	type TaggedChange,
-	makeAnonChange,
 	tagChange,
 } from "../core/index.js";
 import { brand } from "../util/index.js";

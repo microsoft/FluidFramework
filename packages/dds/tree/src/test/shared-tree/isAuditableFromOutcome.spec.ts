@@ -18,8 +18,8 @@ import { forbidden } from "../../feature-libraries/default-schema/defaultFieldKi
 import type { ModularChangeset, SchemaChange } from "../../feature-libraries/index.js";
 import {
 	DefaultEditBuilder,
-	ModularChangeFamily,
 	fieldKinds,
+	ModularChangeFamily,
 } from "../../feature-libraries/index.js";
 import type { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -33,12 +33,13 @@ import type {
 // #region Test imports
 import { ajvValidator } from "../codec/index.js";
 import {
-	TestTreeProviderLite,
 	chunkFromJsonTrees,
 	failCodecFamily,
 	getView,
 	mintRevisionTag,
+	TestTreeProviderLite,
 } from "../utils.js";
+
 // #endregion
 
 describe("isAuditableFromOutcome", () => {

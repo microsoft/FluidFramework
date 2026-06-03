@@ -19,14 +19,14 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
 import {
-	RateLimiter,
 	getDocAttributesFromProtocolSummary,
 	getQuorumValuesFromProtocolSummary,
 	isCombinedAppAndProtocolSummary,
+	RateLimiter,
 } from "@fluidframework/driver-utils/internal";
 import type { ISession } from "@fluidframework/server-services-client";
 import { convertSummaryTreeToWholeSummaryTree } from "@fluidframework/server-services-client";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICache } from "./cache.js";
 import { InMemoryCache, NullCache } from "./cache.js";

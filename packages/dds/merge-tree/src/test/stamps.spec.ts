@@ -6,8 +6,8 @@
 import { strict as assert } from "node:assert";
 
 import { UnassignedSequenceNumber } from "../constants.js";
-import * as opstampUtils from "../stamps.js";
 import type { OperationStamp } from "../stamps.js";
+import * as opstampUtils from "../stamps.js";
 
 function lessThan(a: OperationStamp, b: OperationStamp): boolean {
 	const result = opstampUtils.lessThan(a, b);

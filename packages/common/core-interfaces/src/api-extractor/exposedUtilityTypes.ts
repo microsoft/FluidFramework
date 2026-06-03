@@ -11,8 +11,7 @@
 
 /* eslint-disable no-restricted-syntax */
 
+export type * from "../exposedUtilityTypes.js";
 // The "internal" exports are a superset of the standard ones. So, we want to export everything from the standard barrel file.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 export type * from "../index.js";
-
-export type * from "../exposedUtilityTypes.js";

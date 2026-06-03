@@ -12,23 +12,22 @@ import type {
 	NotificationsWorkspace,
 	PresenceWithNotifications,
 } from "@fluid-internal/presence-definitions";
+import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
+import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
 import type { SinonFakeTimers } from "sinon";
 import { useFakeTimers } from "sinon";
-
-import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
-import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
 	assertIdenticalTypes,
-	initialLocalClientConnectionId,
 	createInstanceOf,
 	createSpecificAttendeeId,
-	prepareConnectedPresence,
+	initialLocalClientConnectionId,
 	localAttendeeId,
+	prepareConnectedPresence,
 } from "./testUtils.js";
 
 const attendeeId3 = createSpecificAttendeeId("attendeeId-3");

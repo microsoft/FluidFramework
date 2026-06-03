@@ -6,10 +6,10 @@
 import type { SequencePlace } from "@fluidframework/merge-tree/internal";
 import { endpointPosAndSide } from "@fluidframework/merge-tree/internal";
 
+import type { BaseSequenceInterval, SequenceInterval } from "../intervals/index.js";
+import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { IntervalNode } from "../intervalTree.js";
 import { IntervalTree } from "../intervalTree.js";
-import type { SequenceInterval, BaseSequenceInterval } from "../intervals/index.js";
-import { createTransientIntervalFromSequence } from "../intervals/index.js";
 import type { ISharedSegmentSequence } from "../sequence.js";
 import type { ISharedString } from "../sharedString.js";
 

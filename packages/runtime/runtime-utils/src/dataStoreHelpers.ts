@@ -15,8 +15,8 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	generateErrorWithStack,
-	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {

@@ -9,7 +9,7 @@ import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
 import { schemaCodecBuilder } from "../../feature-libraries/index.js";
 import type { JsonCompatible } from "../../util/index.js";
 import type { SchemaUpgrade } from "../core/index.js";
-import { normalizeFieldSchema, type ImplicitFieldSchema } from "../fieldSchema.js";
+import { type ImplicitFieldSchema, normalizeFieldSchema } from "../fieldSchema.js";
 import { toStoredSchema } from "../toStoredSchema.js";
 
 import { TreeViewConfigurationAlpha } from "./configuration.js";

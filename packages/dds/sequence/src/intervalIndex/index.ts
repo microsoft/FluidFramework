@@ -3,22 +3,22 @@
  * Licensed under the MIT License.
  */
 
-export type { SequenceIntervalIndex } from "./intervalIndex.js";
-export { type IIdIntervalIndex, createIdIntervalIndex } from "./idIntervalIndex.js";
-export { type IEndpointIndex, createEndpointIndex, EndpointIndex } from "./endpointIndex.js";
+export { createEndpointIndex, EndpointIndex, type IEndpointIndex } from "./endpointIndex.js";
 export {
-	type IEndpointInRangeIndex,
 	createEndpointInRangeIndex,
 	EndpointInRangeIndex,
+	type IEndpointInRangeIndex,
 } from "./endpointInRangeIndex.js";
-export {
-	type IStartpointInRangeIndex,
-	createStartpointInRangeIndex,
-	StartpointInRangeIndex,
-} from "./startpointInRangeIndex.js";
-export type { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
+export { createIdIntervalIndex, type IIdIntervalIndex } from "./idIntervalIndex.js";
+export type { SequenceIntervalIndex } from "./intervalIndex.js";
 export {
 	createOverlappingIntervalsIndex,
-	OverlappingIntervalsIndex,
 	type ISequenceOverlappingIntervalsIndex,
+	OverlappingIntervalsIndex,
 } from "./overlappingIntervalsIndex.js";
+export type { SequenceIntervalIndexes } from "./sequenceIntervalIndexes.js";
+export {
+	createStartpointInRangeIndex,
+	type IStartpointInRangeIndex,
+	StartpointInRangeIndex,
+} from "./startpointInRangeIndex.js";

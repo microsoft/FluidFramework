@@ -25,14 +25,14 @@ import type {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
-	timeoutPromise,
 	type ITestFluidObject,
 	type LocalCodeLoader,
 	type TestFluidObject,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";

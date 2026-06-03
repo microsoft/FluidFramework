@@ -25,9 +25,9 @@ import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	createSummarizerFromFactory,
 	getRequiredPendingLocalState,
+	type ITestObjectProvider,
 	summarizeNow,
 	toIDeltaManagerFull,
-	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";

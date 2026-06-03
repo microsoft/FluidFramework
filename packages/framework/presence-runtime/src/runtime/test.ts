@@ -8,9 +8,7 @@
  */
 
 export { broadcastJoinResponseDelaysMs } from "./presenceDatastoreManager.js";
-
 export { createPresenceManager } from "./presenceManager.js";
-
 export type {
 	GeneralDatastoreMessageContent,
 	InboundClientJoinMessage,
@@ -19,5 +17,4 @@ export type {
 	OutboundClientJoinMessage,
 	OutboundDatastoreUpdateMessage,
 } from "./protocol.js";
-
 export type { IEphemeralRuntime } from "./runtimeTypes.js";

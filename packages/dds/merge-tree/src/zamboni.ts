@@ -9,18 +9,18 @@ import { UnassignedSequenceNumber } from "./constants.js";
 import type { MergeTree } from "./mergeTree.js";
 import { MergeTreeMaintenanceType } from "./mergeTreeDeltaCallback.js";
 import {
-	type MergeBlock,
 	assignChild,
 	getMinSeqStamp,
 	type IMergeNode,
 	type ISegmentPrivate,
 	Marker,
 	MaxNodesInBlock,
+	type MergeBlock,
 } from "./mergeTreeNodes.js";
 import { matchProperties } from "./properties.js";
-import { toRemovalInfo, removeMergeNodeInfo } from "./segmentInfos.js";
-import * as opstampUtils from "./stamps.js";
+import { removeMergeNodeInfo, toRemovalInfo } from "./segmentInfos.js";
 import type { OperationStamp } from "./stamps.js";
+import * as opstampUtils from "./stamps.js";
 
 export const zamboniSegmentsMax = 2;
 function underflow(node: MergeBlock): boolean {

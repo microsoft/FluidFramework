@@ -4,6 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
+
 import { bumpVersionScheme, detectVersionScheme } from "@fluid-tools/version-tools";
 import { FluidRepo, MonoRepo } from "@fluidframework/build-tools";
 import type { Machine } from "jssm";
@@ -15,6 +16,7 @@ import { difference } from "../library/sets.js";
 import type { CommandLogger } from "../logging.js";
 import type { MachineState } from "../machines/types.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
+
 import type { FluidReleaseStateHandlerData } from "./fluidReleaseStateHandler.js";
 import { BaseStateHandler, type StateHandlerFunction } from "./stateHandlers.js";
 

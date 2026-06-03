@@ -16,10 +16,10 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { CompressionAlgorithms } from "../../compressionDefinitions.js";
 import type { ContainerRuntimeChunkedOpMessage } from "../../messageTypes.js";
 import {
-	type OutboundBatchMessage,
 	type IChunkedOp,
-	OpSplitter,
 	isChunkedMessage,
+	OpSplitter,
+	type OutboundBatchMessage,
 	splitOp,
 } from "../../opLifecycle/index.js";
 

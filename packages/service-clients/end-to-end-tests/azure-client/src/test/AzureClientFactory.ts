@@ -23,9 +23,9 @@ import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import {
-	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
+	type MockLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { v4 as uuid } from "uuid";

@@ -7,8 +7,8 @@ import { strict as assert } from "assert";
 
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	IGarbageCollectionState,
 	concatGarbageCollectionStates,
+	IGarbageCollectionState,
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	IFluidHandleContext,

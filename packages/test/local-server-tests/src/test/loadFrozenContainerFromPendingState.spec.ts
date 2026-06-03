@@ -12,28 +12,28 @@ import {
 	captureFullContainerState,
 	createDetachedContainer,
 	createFrozenDocumentServiceFactory,
+	type ILoaderProps,
 	loadExistingContainer,
 	loadFrozenContainerFromPendingState,
-	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, ILocalFluidHandle } from "@fluidframework/core-interfaces/internal";
 import type {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import { type ISharedMap, SharedMap } from "@fluidframework/map/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
+	LocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import {
-	TestFluidObjectFactory,
 	getRequiredPendingLocalState,
-	timeoutPromise,
 	type ITestFluidObject,
 	type LocalCodeLoader,
 	type TestFluidObject,
+	TestFluidObjectFactory,
+	timeoutPromise,
 } from "@fluidframework/test-utils/internal";
 
 import { createLoader } from "./utils.js";

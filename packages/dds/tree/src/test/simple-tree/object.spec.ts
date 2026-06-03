@@ -7,9 +7,9 @@ import { strict as assert } from "node:assert";
 
 import {
 	type ImplicitFieldSchema,
+	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
 	SchemaFactory,
-	type InsertableField,
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 

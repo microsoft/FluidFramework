@@ -6,16 +6,16 @@
 import { fail } from "@fluidframework/core-utils/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
-import { VersionDispatchingCodecBuilder, FluidClientVersion } from "../../codec/index.js";
+import { FluidClientVersion, VersionDispatchingCodecBuilder } from "../../codec/index.js";
 import {
-	SchemaFormatVersion,
-	type TreeNodeSchemaIdentifier,
-	type TreeNodeStoredSchema,
-	type TreeStoredSchema,
 	decodeFieldSchema,
 	encodeFieldSchemaV1,
 	encodeFieldSchemaV2,
+	SchemaFormatVersion,
 	storedSchemaDecodeDispatcher,
+	type TreeNodeSchemaIdentifier,
+	type TreeNodeStoredSchema,
+	type TreeStoredSchema,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 

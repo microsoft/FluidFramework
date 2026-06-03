@@ -8,11 +8,11 @@ import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { MergeTreeDeltaType } from "../ops.js";
 import { PriorPerspective } from "../perspective.js";
 import {
-	type MergeTreeDeltaRevertible,
 	appendToMergeTreeDeltaRevertibles,
+	type MergeTreeDeltaRevertible,
 } from "../revertibles.js";
 
-import { TestString, loadSnapshot } from "./snapshot.utils.js";
+import { loadSnapshot, TestString } from "./snapshot.utils.js";
 
 describe("MergeTree remove", () => {
 	benchmarkIt({

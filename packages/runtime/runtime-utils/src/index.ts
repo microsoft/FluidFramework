@@ -3,15 +3,40 @@
  * Licensed under the MIT License.
  */
 
+export type {
+	ConfigMap,
+	ConfigMapEntry,
+	ConfigValidationMap,
+	MinimumMinorSemanticVersion,
+	SemanticVersion,
+} from "./compatibilityBase.js";
+export {
+	cleanedPackageVersion,
+	configValueToMinVersionForCollab,
+	defaultMinVersionForCollab,
+	getConfigForMinVersionForCollab,
+	getConfigForMinVersionForCollabIterable,
+	getConfigsForMinVersionForCollab,
+	isValidMinVersionForCollab,
+	lowestMinVersionForCollab,
+	selectVersionRoundedDown,
+	validateConfigMapOverrides,
+	validateMinimumVersionForCollab,
+} from "./compatibilityBase.js";
 export { generateHandleContextPath } from "./dataStoreHandleContextUtils.js";
 export {
+	asLegacyAlpha,
 	create404Response,
 	createResponseError,
+	dataStoreLoadTelemetryProps,
 	exceptionToResponse,
 	responseToException,
-	asLegacyAlpha,
-	dataStoreLoadTelemetryProps,
 } from "./dataStoreHelpers.js";
+export {
+	toDeltaManagerErased,
+	toDeltaManagerInternal,
+} from "./deltaManager.js";
+export type { ISerializedHandle } from "./handles.js";
 export {
 	compareFluidHandles,
 	encodeHandleForSerialization,
@@ -25,7 +50,6 @@ export {
 	toFluidHandleErased,
 	toFluidHandleInternal,
 } from "./handles.js";
-export type { ISerializedHandle } from "./handles.js";
 export { ObjectStoragePartition } from "./objectstoragepartition.js";
 export {
 	getNormalizedObjectStoragePathParts,
@@ -34,6 +58,7 @@ export {
 export { RemoteFluidObjectHandle } from "./remoteFluidObjectHandle.js";
 export { RequestParser } from "./requestParser.js";
 export { RuntimeFactoryHelper } from "./runtimeFactoryHelper.js";
+export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
 export {
 	addBlobToSummary,
 	addSummarizeResultToSummary,
@@ -51,34 +76,9 @@ export {
 	utf8ByteLength,
 } from "./summaryUtils.js";
 export { unpackChildNodesUsedRoutes } from "./unpackUsedRoutes.js";
+export type { ReadAndParseBlob } from "./utils.js";
 export {
+	encodeCompactIdToString,
 	RuntimeHeaders,
 	seqFromTree,
-	encodeCompactIdToString,
 } from "./utils.js";
-export type { ReadAndParseBlob } from "./utils.js";
-export { isSnapshotFetchRequiredForLoadingGroupId } from "./snapshotUtils.js";
-export {
-	toDeltaManagerErased,
-	toDeltaManagerInternal,
-} from "./deltaManager.js";
-export {
-	configValueToMinVersionForCollab,
-	defaultMinVersionForCollab,
-	validateConfigMapOverrides,
-	getConfigForMinVersionForCollab,
-	getConfigsForMinVersionForCollab,
-	isValidMinVersionForCollab,
-	validateMinimumVersionForCollab,
-	lowestMinVersionForCollab,
-	getConfigForMinVersionForCollabIterable,
-	cleanedPackageVersion,
-	selectVersionRoundedDown,
-} from "./compatibilityBase.js";
-export type {
-	ConfigMap,
-	ConfigMapEntry,
-	ConfigValidationMap,
-	MinimumMinorSemanticVersion,
-	SemanticVersion,
-} from "./compatibilityBase.js";

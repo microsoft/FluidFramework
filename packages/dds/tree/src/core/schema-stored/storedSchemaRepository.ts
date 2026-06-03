@@ -12,10 +12,10 @@ import { compareStrings } from "../../util/index.js";
 import type { TreeNodeSchemaIdentifier } from "./formatV1.js";
 import {
 	type StoredSchemaCollection,
+	storedEmptyFieldSchema,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
-	storedEmptyFieldSchema,
 } from "./schema.js";
 
 /**

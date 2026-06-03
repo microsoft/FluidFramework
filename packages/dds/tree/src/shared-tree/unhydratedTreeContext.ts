@@ -6,11 +6,11 @@
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type {
-	TreeContextAlpha,
-	TreeBranchAlpha,
 	RunTransactionParams,
 	TransactionResult,
 	TransactionResultExt,
+	TreeBranchAlpha,
+	TreeContextAlpha,
 	WithValue,
 } from "../simple-tree/index.js";
 

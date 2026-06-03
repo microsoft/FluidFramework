@@ -13,9 +13,9 @@ import type { SimpleNodeSchemaBase } from "./simpleNodeSchemaBase.js";
 import { inPrototypeChain, privateToken, TreeNode } from "./treeNode.js";
 import {
 	getSimpleNodeSchemaFromInnerNode,
+	type InnerNode,
 	isTreeNode,
 	TreeNodeKernel,
-	type InnerNode,
 } from "./treeNodeKernel.js";
 import {
 	NodeKind,

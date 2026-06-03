@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { TreeViewConfiguration } from "@fluidframework/tree";
-import { independentView, FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextAsTree, independentView } from "@fluidframework/tree/internal";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
 

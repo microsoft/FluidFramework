@@ -10,23 +10,23 @@ import type { Listenable } from "@fluidframework/core-interfaces";
 import {
 	type Anchor,
 	type AnchorNode,
+	type AnchorSetRootEvents,
 	type IForestSubscription,
 	type JsonableTree,
+	type TaggedChange,
 	type TreeStoredSchema,
 	TreeStoredSchemaRepository,
-	type AnchorSetRootEvents,
-	type TaggedChange,
 } from "../../core/index.js";
 import {
-	FieldKinds,
 	allowsRepoSuperset,
 	defaultSchemaPolicy,
+	FieldKinds,
 	type ModularChangeset,
 } from "../../feature-libraries/index.js";
 import type {
-	ITreeCheckout,
 	CheckoutEvents,
 	ISharedTreeEditor,
+	ITreeCheckout,
 } from "../../shared-tree/index.js";
 import {
 	canInitialize,
@@ -36,12 +36,12 @@ import {
 } from "../../shared-tree/schematizeTree.js";
 import type { Transactor } from "../../shared-tree-core/index.js";
 import {
-	SchemaFactory,
 	type ImplicitFieldSchema,
+	SchemaFactory,
 	type TreeView,
 	type TreeViewConfiguration,
+	toInitialSchema,
 } from "../../simple-tree/index.js";
-import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
 import { fieldJsonCursor } from "../json/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

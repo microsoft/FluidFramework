@@ -10,8 +10,8 @@ import { DriverErrorTypes, MessageType } from "@fluidframework/driver-definition
 import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/internal";
 import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
-	isFluidError,
 	type ITelemetryLoggerExt,
+	isFluidError,
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -26,8 +26,8 @@ import type {
 	SummaryGeneratorTelemetry,
 } from "../summarizerTypes.js";
 import {
-	RetriableSummaryError,
 	getFailMessage,
+	RetriableSummaryError,
 	raceTimer,
 	type SummarizeErrorCode,
 } from "../summarizerUtils.js";

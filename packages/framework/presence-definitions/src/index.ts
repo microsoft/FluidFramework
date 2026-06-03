@@ -4,13 +4,9 @@
  */
 
 export type { ClientConnectionId } from "./baseTypes.js";
-
-export type { BroadcastControls, BroadcastControlSettings } from "./broadcastControlsTypes.js";
-
+export type { BroadcastControlSettings, BroadcastControls } from "./broadcastControlsTypes.js";
 export type { InternalTypes as InternalPresenceTypes } from "./exposedInternalTypes.js";
-
 export type { InternalUtilityTypes as InternalPresenceUtilityTypes } from "./exposedUtilityTypes.js";
-
 export type {
 	KeySchemaValidator,
 	LatestMap,
@@ -27,7 +23,6 @@ export type {
 	LatestMapRawEvents,
 	StateMap,
 } from "./latestMapTypes.js";
-
 export type {
 	Latest,
 	LatestArguments,
@@ -39,7 +34,6 @@ export type {
 	LatestRawConfiguration,
 	LatestRawEvents,
 } from "./latestTypes.js";
-
 export type {
 	Accessor,
 	LatestClientData,
@@ -50,17 +44,15 @@ export type {
 	StateSchemaValidator,
 	ValueAccessor,
 } from "./latestValueTypes.js";
-
 export type {
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationSubscriberSignatures,
 	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationSubscriberSignatures,
 	NotificationsWithSubscriptionsConfiguration,
 } from "./notificationsManagerTypes.js";
-
 export type {
 	Attendee,
 	AttendeeId,
@@ -70,7 +62,6 @@ export type {
 	PresenceWithNotifications,
 } from "./presence.js";
 export { AttendeeStatus } from "./presence.js";
-
 export type {
 	NotificationsWorkspace,
 	NotificationsWorkspaceSchema,

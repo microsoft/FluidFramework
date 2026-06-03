@@ -8,9 +8,9 @@
 import { strict as assert } from "node:assert";
 
 import {
+	createWeightedGenerator,
 	type Generator,
 	type IRandom,
-	createWeightedGenerator,
 	makeRandom,
 	performFuzzActions,
 	take,

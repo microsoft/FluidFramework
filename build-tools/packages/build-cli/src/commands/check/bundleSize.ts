@@ -4,6 +4,7 @@
  */
 
 import { execFileSync } from "node:child_process";
+
 import { Flags } from "@oclif/core";
 
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";

@@ -14,10 +14,10 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/quill-react/internal";
 import {
-	toPropTreeNode,
 	createUndoRedo,
-	type UndoRedo,
 	PlainTextMainView,
+	toPropTreeNode,
+	type UndoRedo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/react/internal";
 /**
@@ -34,6 +34,7 @@ import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
+
 import { type CSSProperties, type FC, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";

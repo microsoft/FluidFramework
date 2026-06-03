@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+
 import { updatePackageJsonFile } from "@fluid-tools/build-infrastructure";
 import {
 	detectVersionScheme,
@@ -26,6 +27,7 @@ import { readJsonSync } from "fs-extra/esm";
 import latestVersion from "latest-version";
 import ncu from "npm-check-updates";
 import * as semver from "semver";
+
 import {
 	AllPackagesSelectionCriteria,
 	type PackageSelectionCriteria,
@@ -33,6 +35,7 @@ import {
 	selectAndFilterPackages,
 } from "../filter.js";
 import { isReleaseGroup, type ReleaseGroup, type ReleasePackage } from "../releaseGroups.js";
+
 import type { DependencyUpdateType } from "./bump.js";
 import { zip } from "./collections.js";
 import type { Context, VersionDetails } from "./context.js";

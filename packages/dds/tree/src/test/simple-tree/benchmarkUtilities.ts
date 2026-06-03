@@ -7,8 +7,8 @@ import { strict as assert } from "node:assert";
 
 import { Tree } from "../../shared-tree/index.js";
 import {
-	SchemaFactory,
 	type NodeFromSchema,
+	SchemaFactory,
 	type Unhydrated,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";

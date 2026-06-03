@@ -15,8 +15,8 @@ import { SampledTelemetryHelper } from "../sampledTelemetryHelper.js";
 import type {
 	ITelemetryErrorEventExt,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
+	TelemetryLoggerExt,
 } from "../telemetryTypesUndeprecated.js";
 
 /**

@@ -5,15 +5,15 @@
 
 import {
 	type IAppState,
+	type IBubble,
 	type IClient,
 	makeBubble,
 	makeClient,
 	type SimpleClient,
-	type IBubble,
 } from "@fluid-example/bubblebench-common";
 import type { Change, SharedTree } from "@fluid-experimental/tree";
 
-import { type TreeArrayProxy, TreeObjectProxy, fromJson } from "./proxy/index.js";
+import { fromJson, type TreeArrayProxy, TreeObjectProxy } from "./proxy/index.js";
 
 interface IApp {
 	readonly clients: SimpleClient[];

@@ -4,8 +4,8 @@
  */
 
 import {
-	ModelContainerRuntimeFactory,
 	getDataStoreEntryPoint,
+	ModelContainerRuntimeFactory,
 } from "@fluid-example/example-utils";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/legacy";
 import { ConnectionState } from "@fluidframework/container-loader";

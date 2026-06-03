@@ -10,9 +10,9 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
-	TreeViewConfiguration,
 	type TreeView,
 	type TreeViewAlpha,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import type { requireAssignableTo } from "../../util/index.js";
 import { getView } from "../utils.js";

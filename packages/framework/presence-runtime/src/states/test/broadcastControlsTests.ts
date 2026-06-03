@@ -6,11 +6,10 @@
 import { strict as assert } from "node:assert";
 
 import type {
-	BroadcastControls,
 	BroadcastControlSettings,
+	BroadcastControls,
 	Presence,
 } from "@fluid-internal/presence-definitions";
-
 import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";

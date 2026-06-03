@@ -17,14 +17,14 @@ import {
 
 import { FlowDocument } from "../document/index.js";
 import {
-	Dom,
-	TagName,
 	clamp,
+	Dom,
 	done,
 	emptyObject,
 	getSegmentRange,
 	hasTagName,
 	isTextNode,
+	TagName,
 } from "../util/index.js";
 import { extractRef, updateRef } from "../util/localref.js";
 

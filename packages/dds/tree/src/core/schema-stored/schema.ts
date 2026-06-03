@@ -7,12 +7,12 @@ import { fail } from "@fluidframework/core-utils/internal";
 
 import { DiscriminatedUnionDispatcher } from "../../codec/index.js";
 import {
-	type JsonCompatibleReadOnlyObject,
-	type MakeNominal,
-	type Values,
 	brandConst,
 	invertMap,
+	type JsonCompatibleReadOnlyObject,
+	type MakeNominal,
 	strictEnum,
+	type Values,
 } from "../../util/index.js";
 
 import {
@@ -26,8 +26,8 @@ import {
 import type {
 	FieldSchemaFormat as FieldSchemaFormatV2,
 	PersistedMetadataFormat,
-	TreeNodeSchemaUnionFormat,
 	TreeNodeSchemaDataFormat as TreeNodeSchemaDataFormatV2,
+	TreeNodeSchemaUnionFormat,
 } from "./formatV2.js";
 import type { Multiplicity } from "./multiplicity.js";
 

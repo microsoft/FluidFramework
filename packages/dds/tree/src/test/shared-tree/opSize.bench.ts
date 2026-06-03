@@ -9,13 +9,13 @@ import { BenchmarkMode, benchmarkIt, currentBenchmarkMode } from "@fluid-tools/b
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 import type { Value } from "../../core/index.js";
-import { Tree, type ITreePrivate } from "../../shared-tree/index.js";
+import { type ITreePrivate, Tree } from "../../shared-tree/index.js";
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type ITree,
+	SchemaFactory,
 	type TreeView,
+	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
 import { getOrAddEmptyToMap } from "../../util/index.js";
 

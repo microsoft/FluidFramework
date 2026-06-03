@@ -10,15 +10,15 @@ import {
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
 	type DeltaRoot,
-	type RevisionTag,
 	emptyDelta,
+	type RevisionTag,
 } from "../../../core/index.js";
 import { type Commit, EditManager } from "../../../shared-tree-core/index.js";
-import { type RecursiveReadonly, brand, makeArray } from "../../../util/index.js";
+import { brand, makeArray, type RecursiveReadonly } from "../../../util/index.js";
 import {
+	asDelta,
 	TestChange,
 	type TestChangeFamily,
-	asDelta,
 	testChangeFamilyFactory,
 } from "../../testChange.js";
 import { mintRevisionTag, testIdCompressor } from "../../utils.js";

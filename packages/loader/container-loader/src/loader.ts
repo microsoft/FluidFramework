@@ -26,10 +26,10 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type MonitoringContext,
-	PerformanceEvent,
 	createChildMonitoringContext,
+	type MonitoringContext,
 	mixinMonitoringContext,
+	PerformanceEvent,
 	sessionStorageConfigProvider,
 	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";

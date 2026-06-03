@@ -5,8 +5,8 @@
 
 export {
 	type IProtocolHandler as IBaseProtocolHandler,
-	ProtocolOpHandler,
 	type IScribeProtocolState,
+	ProtocolOpHandler,
 } from "./protocol.js";
 export {
 	type IQuorumSnapshot,

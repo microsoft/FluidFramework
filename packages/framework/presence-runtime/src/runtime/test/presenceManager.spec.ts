@@ -11,23 +11,22 @@ import type {
 	Presence,
 } from "@fluid-internal/presence-definitions";
 import { AttendeeStatus } from "@fluid-internal/presence-definitions";
-import type { IClient } from "@fluidframework/driver-definitions";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers } from "sinon";
-import { useFakeTimers } from "sinon";
-
 import { createPresenceManager } from "@fluid-internal/presence-runtime/internal/test";
 import type { ProcessSignalFunction } from "@fluid-internal/presence-runtime/internal/test-utils";
 import {
 	assertFinalExpectations,
-	initialLocalClientConnectionId,
-	localAttendeeId,
 	createSpecificAttendeeId,
 	generateBasicClientJoin,
+	initialLocalClientConnectionId,
+	localAttendeeId,
 	MockEphemeralRuntime,
 	prepareConnectedPresence,
 	prepareDisconnectedPresence,
 } from "@fluid-internal/presence-runtime/internal/test-utils";
+import type { IClient } from "@fluidframework/driver-definitions";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import type { SinonFakeTimers } from "sinon";
+import { useFakeTimers } from "sinon";
 
 const collateralSessionId = createSpecificAttendeeId("collateral-id");
 /**

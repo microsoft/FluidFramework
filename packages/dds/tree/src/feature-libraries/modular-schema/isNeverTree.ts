@@ -8,12 +8,12 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
 	LeafNodeStoredSchema,
 	MapNodeStoredSchema,
+	Multiplicity,
 	ObjectNodeStoredSchema,
+	type SchemaPolicy,
 	type TreeFieldStoredSchema,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
-	Multiplicity,
-	type SchemaPolicy,
 } from "../../core/index.js";
 
 export function isNeverField(

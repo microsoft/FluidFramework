@@ -9,10 +9,10 @@ import type {
 	InternalPresenceUtilityTypes,
 	NotificationEmitter,
 	NotificationListenable,
+	NotificationSubscriberSignatures,
 	NotificationsConfiguration,
 	NotificationsManager,
 	NotificationsManagerEvents,
-	NotificationSubscriberSignatures,
 	NotificationsWithSubscriptionsConfiguration,
 	PresenceWithNotifications as Presence,
 } from "@fluid-internal/presence-definitions";
@@ -22,15 +22,14 @@ import type {
 	ValueManager,
 } from "@fluid-internal/presence-definitions/internal";
 import type { StateDatastore } from "@fluid-internal/presence-definitions/internal/workspace-states";
-import type { Listeners } from "@fluidframework/core-interfaces";
-import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
-
 import {
 	brandIVM,
 	revealOpaqueJson,
 	toOpaqueJson,
 } from "@fluid-internal/presence-runtime/utils";
 import { datastoreFromHandle } from "@fluid-internal/presence-runtime/workspace";
+import type { Listeners } from "@fluidframework/core-interfaces";
+import type { JsonTypeWith } from "@fluidframework/core-interfaces/internal";
 
 /**
  * Object.keys retyped to support specific records keys and

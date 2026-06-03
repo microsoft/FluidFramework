@@ -6,11 +6,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { TreeNodeSchema } from "@fluidframework/tree";
 import {
-	exposePropertiesSymbol,
-	isTypeFactoryType,
 	type Ctor,
 	type ExposedProperties,
+	exposePropertiesSymbol,
 	type IExposedProperties,
+	isTypeFactoryType,
 	type TypeFactoryType,
 } from "@fluidframework/type-factory/internal";
 

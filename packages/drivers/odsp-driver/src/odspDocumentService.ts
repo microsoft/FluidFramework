@@ -19,14 +19,14 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	HostStoragePolicy,
-	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
+	IOdspResolvedUrl,
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildMonitoringContext,
 	type ITelemetryLoggerExt,
 	type MonitoringContext,
-	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";

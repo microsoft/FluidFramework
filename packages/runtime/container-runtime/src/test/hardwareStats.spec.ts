@@ -8,9 +8,9 @@ import { strict as assert } from "node:assert";
 import type { IContainerContext } from "@fluidframework/container-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	MockAudience,
 	MockDeltaManager,
 	MockQuorumClients,
-	MockAudience,
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ContainerRuntime, getDeviceSpec } from "../containerRuntime.js";

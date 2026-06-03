@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 import {
 	BenchmarkType,
 	benchmarkIt,
+	type CollectedData,
 	isInPerformanceTestingMode,
 	ValueType,
-	type CollectedData,
 } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
-import { Tree, TreeAlpha, createIndependentTreeAlpha } from "../../shared-tree/index.js";
+import { createIndependentTreeAlpha, Tree, TreeAlpha } from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,

@@ -10,8 +10,8 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
-	loadExistingContainer,
 	type ILoaderProps,
+	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
@@ -20,10 +20,10 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	ContainerSchema,
-	IFluidContainer,
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
+	ContainerSchema,
+	IFluidContainer,
 } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
@@ -35,13 +35,13 @@ import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicio
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
+	createTinyliciousCreateNewRequest,
 	InsecureTinyliciousTokenProvider,
 	InsecureTinyliciousUrlResolver,
-	createTinyliciousCreateNewRequest,
 } from "@fluidframework/tinylicious-driver/internal";
 
-import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 import type { TinyliciousClientProps, TinyliciousContainerServices } from "./interfaces.js";
+import { createTinyliciousAudienceMember } from "./TinyliciousAudience.js";
 
 /**
  * Provides the ability to have a Fluid object backed by a Tinylicious service.

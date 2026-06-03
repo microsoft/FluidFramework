@@ -21,11 +21,11 @@ import type { ISharedMap } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
-	DataObjectFactoryType,
-	ITestFluidObject,
 	createAndAttachContainer,
 	createDocumentId,
+	DataObjectFactoryType,
 	getRequiredPendingLocalState,
+	ITestFluidObject,
 	timeoutAwait,
 	timeoutPromise,
 	waitForContainerConnection,

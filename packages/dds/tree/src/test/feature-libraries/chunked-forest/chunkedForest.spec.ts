@@ -7,25 +7,25 @@ import { strict as assert } from "node:assert";
 
 import {
 	type FieldKey,
+	rootFieldKey,
 	type TreeChunk,
 	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchemaSubscription,
 	TreeStoredSchemaRepository,
-	rootFieldKey,
+	type TreeStoredSchemaSubscription,
 } from "../../../core/index.js";
-import {
-	Chunker,
-	type IChunker,
-	type ShapeInfo,
-	defaultChunkPolicy,
-	makeTreeChunker,
-	polymorphic,
-	tryShapeFromNodeSchema,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 // Allow importing from this specific file which is being tested:
 // eslint-disable-next-line import-x/no-internal-modules
 import { buildChunkedForest } from "../../../feature-libraries/chunked-forest/chunkedForest.js";
+import {
+	Chunker,
+	defaultChunkPolicy,
+	type IChunker,
+	makeTreeChunker,
+	polymorphic,
+	type ShapeInfo,
+	tryShapeFromNodeSchema,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../../feature-libraries/chunked-forest/chunkTree.js";
 import {
 	TreeShape,
 	UniformChunk,
@@ -35,7 +35,7 @@ import {
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
-import { SchemaFactory, numberSchema, toInitialSchema } from "../../../simple-tree/index.js";
+import { numberSchema, SchemaFactory, toInitialSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { testForest } from "../../forestTestSuite.js";
 

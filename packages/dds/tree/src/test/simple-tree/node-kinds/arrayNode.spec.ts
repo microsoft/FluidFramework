@@ -12,17 +12,17 @@ import {
 
 import { asAlpha } from "../../../api.js";
 import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeArrayNode,
-	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
 	type InsertableTypedNode,
 	type NodeBuilderData,
 	type NodeFromSchema,
+	SchemaFactory,
+	type TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type TreeFieldFromImplicitField,
 	type TreeNodeFromImplicitAllowedTypes,
+	TreeViewConfiguration,
 	type ValidateRecursiveSchema,
 } from "../../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules

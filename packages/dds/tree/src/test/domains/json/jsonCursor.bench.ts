@@ -19,8 +19,8 @@ import {
 	type FieldKey,
 	type ITreeCursor,
 	type JsonableTree,
-	TreeStoredSchemaRepository,
 	moveToDetachedField,
+	TreeStoredSchemaRepository,
 } from "../../../core/index.js";
 import {
 	basicChunkTree,

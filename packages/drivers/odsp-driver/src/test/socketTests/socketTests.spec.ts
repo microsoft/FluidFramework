@@ -13,7 +13,7 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
-import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import { isFluidError, MockLogger } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";

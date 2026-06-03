@@ -5,18 +5,18 @@
 
 import { strict as assert } from "assert";
 
-import { describeCompat, type CompatApis } from "@fluid-private/test-version-utils";
+import { type CompatApis, describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type {
 	IContainerRuntimeBase,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	ITestObjectProvider,
+	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 	createContainerRuntimeFactoryWithDefaultDataStore,
 	createSummarizerFromFactory,
+	ITestObjectProvider,
 	summarizeNow,
-	type ContainerRuntimeFactoryWithDefaultDataStoreProps,
 } from "@fluidframework/test-utils/internal";
 import type { TreeView } from "@fluidframework/tree";
 import type { ITree, ITreeAlpha } from "@fluidframework/tree/alpha";

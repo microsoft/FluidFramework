@@ -27,8 +27,8 @@ import type {
 	ITelemetryEventExt,
 	ITelemetryLoggerExt,
 	ITelemetryPropertiesExt,
-	TelemetryLoggerExt,
 	TelemetryEventPropertyTypeExt,
+	TelemetryLoggerExt,
 } from "./telemetryTypes.js";
 import type {
 	ITelemetryErrorEventExt,

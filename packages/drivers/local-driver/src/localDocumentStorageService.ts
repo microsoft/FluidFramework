@@ -4,10 +4,10 @@
  */
 
 import {
-	IsoBuffer,
-	Uint8ArrayToString,
 	bufferToString,
+	IsoBuffer,
 	stringToBuffer,
+	Uint8ArrayToString,
 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";

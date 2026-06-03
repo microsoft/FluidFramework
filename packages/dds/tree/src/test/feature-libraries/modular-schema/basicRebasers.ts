@@ -9,9 +9,9 @@ import type { TUnsafe } from "@sinclair/typebox";
 
 import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
 import {
-	makeDetachedNodeId,
-	Multiplicity,
 	type FieldKindIdentifier,
+	Multiplicity,
+	makeDetachedNodeId,
 } from "../../../core/index.js";
 import {
 	type FieldChangeDelta,

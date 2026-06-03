@@ -16,11 +16,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { readAndParseSnapshotBlob } from "../util/index.js";
 
 import {
-	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 	type Summarizable,
 	type SummaryElementParser,
 	type SummaryElementStringifier,
+	summarizablesMetadataKey,
 } from "./summaryTypes.js";
 
 /**

@@ -5,6 +5,6 @@
 
 export { DocumentWriter } from "./DocumentWriter.js";
 export {
-	renderDocument as renderDocumentAsMarkdown,
 	type RenderMarkdownConfiguration,
+	renderDocument as renderDocumentAsMarkdown,
 } from "./markdown-renderer/index.js";

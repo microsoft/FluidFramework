@@ -8,22 +8,22 @@ import { Tree } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/internal";
 import {
 	type FC,
-	memo,
 	type MemoExoticComponent,
+	memo,
 	type ReactNode,
 	useEffect,
 	useState,
 } from "react";
 
 import {
-	unwrapPropTreeNode,
-	unwrapPropTreeRecord,
 	type PropTreeNodeRecord,
 	type PropTreeValue,
 	type UnwrapPropTreeNodeRecord,
+	unwrapPropTreeNode,
+	unwrapPropTreeRecord,
 	type WrapNodes,
 } from "./propNode.js";
-import { useObservation, type ObservationOptions } from "./useObservation.js";
+import { type ObservationOptions, useObservation } from "./useObservation.js";
 
 /**
  * Custom hook which invalidates a React Component when there is a change in the subtree defined by `subtreeRoot`.

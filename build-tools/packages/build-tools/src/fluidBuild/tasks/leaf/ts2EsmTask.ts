@@ -5,10 +5,12 @@
 
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
 import * as JSON5 from "json5";
 import type { TsConfigJson } from "type-fest";
 
 import { globFn } from "../taskUtils.js";
+
 import { LeafWithFileStatDoneFileTask } from "./leafTask.js";
 
 export class Ts2EsmTask extends LeafWithFileStatDoneFileTask {

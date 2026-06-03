@@ -4,8 +4,8 @@
  */
 
 import {
-	benchmarkDuration,
 	BenchmarkMode,
+	benchmarkDuration,
 	benchmarkIt,
 	currentBenchmarkMode,
 } from "@fluid-tools/benchmark";

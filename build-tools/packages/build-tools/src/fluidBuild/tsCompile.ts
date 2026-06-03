@@ -4,9 +4,12 @@
  */
 
 import path from "path";
+
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+
 import { defaultLogger } from "../common/logging.js";
+
 import type { UnionToIntersection } from "./tscUtils.js";
 import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
 

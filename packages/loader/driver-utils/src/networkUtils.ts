@@ -8,7 +8,7 @@ import type {
 	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-import { OnlineStatus, canRetryOnError, isOnline } from "./network.js";
+import { canRetryOnError, isOnline, OnlineStatus } from "./network.js";
 
 /**
  * Logs a network failure with additional context about online status and retry capability for the provided event.

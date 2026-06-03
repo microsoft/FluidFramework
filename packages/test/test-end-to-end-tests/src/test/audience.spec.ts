@@ -10,9 +10,9 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import {
+	getContainerEntryPointBackCompat,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	getContainerEntryPointBackCompat,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import type { IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfaces/internal";
+import { type ConfigTypes, FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
@@ -15,12 +15,12 @@ import type {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	createChildLogger,
 	isFluidError,
 	MockLogger,
-	wrapConfigProviderWithDefaults,
 	mixinMonitoringContext,
-	createChildLogger,
 	toITelemetryLoggerExt,
+	wrapConfigProviderWithDefaults,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

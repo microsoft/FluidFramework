@@ -6,18 +6,18 @@
 import { DocumentType, DocumentTypeInfo } from "@fluid-private/test-version-utils";
 import {
 	BenchmarkMode,
-	MemoryUseCallbacks,
-	Phase,
 	benchmarkDuration,
 	benchmarkIt,
 	benchmarkMemoryUse,
 	currentBenchmarkMode,
+	MemoryUseCallbacks,
+	Phase,
 } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
-	ITelemetryLoggerExt,
 	createChildLogger,
+	ITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 

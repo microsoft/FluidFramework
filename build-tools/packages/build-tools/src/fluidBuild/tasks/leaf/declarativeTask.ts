@@ -11,6 +11,7 @@ import {
 	replaceRepoRootTokens,
 } from "../../fluidBuildConfig.js";
 import type { GitIgnoreSetting } from "../../fluidTaskDefinitions.js";
+
 import { LeafWithGlobInputOutputDoneFileTask } from "./leafTask.js";
 
 export class DeclarativeLeafTask extends LeafWithGlobInputOutputDoneFileTask {

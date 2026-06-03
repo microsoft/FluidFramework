@@ -13,25 +13,24 @@ import type {
 	PresenceWithNotifications,
 	WorkspaceAddress,
 } from "@fluid-internal/presence-definitions";
-import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
-import type { SinonFakeTimers, SinonSpy } from "sinon";
-import { useFakeTimers, spy } from "sinon";
-
 import type {
 	GeneralDatastoreMessageContent,
 	InternalWorkspaceAddress,
 } from "@fluid-internal/presence-runtime/internal/test";
 import { Notifications, StateFactory } from "@fluid-internal/presence-runtime/states";
 import { toOpaqueJson } from "@fluid-internal/presence-runtime/utils";
+import { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import type { SinonFakeTimers, SinonSpy } from "sinon";
+import { spy, useFakeTimers } from "sinon";
 
 import { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
 import type { ProcessSignalFunction } from "./testUtils.js";
 import {
 	assertFinalExpectations,
-	prepareConnectedPresence,
 	attendeeId1,
-	localAttendeeId,
 	initialLocalClientConnectionId,
+	localAttendeeId,
+	prepareConnectedPresence,
 } from "./testUtils.js";
 
 const datastoreUpdateType = "Pres:DatastoreUpdate";

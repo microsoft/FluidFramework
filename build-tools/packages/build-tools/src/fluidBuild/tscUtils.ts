@@ -5,8 +5,10 @@
 
 import * as fs from "fs";
 import * as path from "path";
+
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+
 import { sha256 } from "./hash.js";
 
 type tsTypes = typeof ts54Types | typeof ts59Types;

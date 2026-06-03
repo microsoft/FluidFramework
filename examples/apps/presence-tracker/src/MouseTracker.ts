@@ -5,7 +5,7 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent } from "@fluidframework/core-interfaces";
-import type { Presence, Attendee, LatestRaw, StatesWorkspace } from "@fluidframework/presence";
+import type { Attendee, LatestRaw, Presence, StatesWorkspace } from "@fluidframework/presence";
 import { AttendeeStatus, StateFactory } from "@fluidframework/presence";
 
 /**

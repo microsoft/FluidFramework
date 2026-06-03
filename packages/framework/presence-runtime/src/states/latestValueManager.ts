@@ -25,23 +25,22 @@ import type {
 	ValueManager,
 } from "@fluid-internal/presence-definitions/internal";
 import type { StateDatastore } from "@fluid-internal/presence-definitions/internal/workspace-states";
+import type { FlattenUnionWithOptionals } from "@fluid-internal/presence-runtime/utils";
+import {
+	asDeeplyReadonly,
+	asDeeplyReadonlyDeserializedJson,
+	brandIVM,
+	OptionalBroadcastControl,
+	objectEntries,
+	toOpaqueJson,
+} from "@fluid-internal/presence-runtime/utils";
+import { datastoreFromHandle } from "@fluid-internal/presence-runtime/workspace";
 import type {
 	DeepReadonly,
 	JsonDeserialized,
 	JsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
 import { shallowCloneObject } from "@fluidframework/core-utils/internal";
-
-import type { FlattenUnionWithOptionals } from "@fluid-internal/presence-runtime/utils";
-import {
-	asDeeplyReadonly,
-	asDeeplyReadonlyDeserializedJson,
-	brandIVM,
-	objectEntries,
-	OptionalBroadcastControl,
-	toOpaqueJson,
-} from "@fluid-internal/presence-runtime/utils";
-import { datastoreFromHandle } from "@fluid-internal/presence-runtime/workspace";
 
 import { createValidatedGetter } from "./validatedGetter.js";
 

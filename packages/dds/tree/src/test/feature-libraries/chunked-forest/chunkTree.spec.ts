@@ -10,28 +10,28 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
-	TreeStoredSchemaRepository,
-	type TreeNodeSchemaIdentifier,
-	type Value,
 	mapCursorField,
+	type TreeNodeSchemaIdentifier,
+	TreeStoredSchemaRepository,
 	tryGetChunk,
+	type Value,
 } from "../../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { BasicChunk } from "../../../feature-libraries/chunked-forest/basicChunk.js";
 import {
-	type ChunkPolicy,
-	type FieldSchemaWithContext,
-	type ShapeFromSchemaParameters,
-	type ShapeInfo,
 	basicOnlyChunkPolicy,
+	type ChunkPolicy,
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
 	combineChunks,
 	defaultChunkPolicy,
+	type FieldSchemaWithContext,
 	insertValues,
 	makeTreeChunker,
 	polymorphic,
+	type ShapeFromSchemaParameters,
+	type ShapeInfo,
 	splitFieldAtIndex,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
@@ -48,13 +48,13 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	type TreeChunk,
 	cursorForJsonableTreeField,
 	cursorForJsonableTreeNode,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
+	type TreeChunk,
 } from "../../../feature-libraries/index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import {
@@ -65,8 +65,8 @@ import {
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	stringSchema,
-	toInitialSchema,
 	TreeViewConfigurationAlpha,
+	toInitialSchema,
 } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";

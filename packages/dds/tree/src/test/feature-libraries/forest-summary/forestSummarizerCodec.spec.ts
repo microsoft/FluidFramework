@@ -11,9 +11,9 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import {
+	type CodecWriteOptions,
 	currentVersion,
 	FluidClientVersion,
-	type CodecWriteOptions,
 } from "../../../codec/index.js";
 import { rootFieldKey } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -30,14 +30,14 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/forest-summary/codec.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { FormatCommon } from "../../../feature-libraries/forest-summary/formatCommon.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ForestFormatVersion } from "../../../feature-libraries/forest-summary/formatCommon.js";
 import {
-	FieldBatchFormatVersion,
-	TreeCompressionStrategy,
 	cursorForJsonableTreeField,
+	FieldBatchFormatVersion,
 	fieldBatchCodecBuilder,
+	TreeCompressionStrategy,
 } from "../../../feature-libraries/index.js";
 import { brand } from "../../../util/index.js";
 import { EmptyObject } from "../../cursorTestSuite.js";

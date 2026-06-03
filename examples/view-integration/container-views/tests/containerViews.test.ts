@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 import puppeteer, { Browser, Page } from "puppeteer";
+
 import { globals } from "../jest.config.cjs";
 import type { IDiceRoller } from "../src/container/diceRoller/index.js";
-import type { IFluidMountableViewEntryPoint } from "@fluid-example/example-utils";
 
 describe("app-integration-container-views", () => {
 	let browser: Browser;

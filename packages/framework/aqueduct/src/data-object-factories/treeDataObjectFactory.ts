@@ -8,8 +8,8 @@ import { SharedTree } from "@fluidframework/tree/internal";
 import type { DataObjectTypes, TreeDataObject } from "../data-objects/index.js";
 
 import {
-	PureDataObjectFactory,
 	type DataObjectFactoryProps,
+	PureDataObjectFactory,
 } from "./pureDataObjectFactory.js";
 
 /**

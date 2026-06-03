@@ -11,8 +11,6 @@ import { newEdit, newEditId } from '../EditUtilities.js';
 import { convertStableRangeIds } from '../IdConversion.js';
 import { DetachedSequenceId, OpSpaceNodeId } from '../Identifiers.js';
 import { ContextualizedNodeIdNormalizer, scopeIdNormalizer } from '../NodeIdUtilities.js';
-import { MutableStringInterner, StringInterner } from '../StringInterner.js';
-import { InterningTreeCompressor, TreeCompressor } from '../TreeCompressor.js';
 import {
 	BuildInternal,
 	ChangeInternal,
@@ -27,6 +25,8 @@ import {
 	PlaceholderTree,
 	SetValueInternal,
 } from '../persisted-types/index.js';
+import { MutableStringInterner, StringInterner } from '../StringInterner.js';
+import { InterningTreeCompressor, TreeCompressor } from '../TreeCompressor.js';
 
 import { makeNodeIdContext, setUpTestTree } from './utilities/TestUtilities.js';
 

@@ -11,35 +11,35 @@ import type {
 } from "@fluidframework/tree";
 import { NodeKind, TreeNode } from "@fluidframework/tree";
 import type {
-	ReadableField,
 	FactoryContentObject,
 	InsertableContent,
+	ReadableField,
 	ReadSchema,
 } from "@fluidframework/tree/alpha";
 import { ObjectNodeSchema, Tree, TreeAlpha } from "@fluidframework/tree/alpha";
 
 import type {
-	SharedTreeChatModel,
-	TreeAgentChatMessage,
-	TreeAgent,
-	TreeAgentOptions,
-	ExecuteSemanticEditingOptions,
-	EditResult,
-	SemanticAgentOptions,
-	Logger,
 	AsynchronousEditor,
 	Context,
+	EditResult,
+	ExecuteSemanticEditingOptions,
+	Logger,
+	SemanticAgentOptions,
+	SharedTreeChatModel,
 	SynchronousEditor,
+	TreeAgent,
+	TreeAgentChatMessage,
+	TreeAgentOptions,
 	ViewOrTree,
 } from "./api.js";
 import { getPrompt, stringifyTree } from "./prompt.js";
 import { Subtree } from "./subtree.js";
 import {
-	llmDefault,
 	findSchemas,
+	isNamedSchema,
+	llmDefault,
 	toErrorString,
 	unqualifySchema,
-	isNamedSchema,
 } from "./utils.js";
 
 /**

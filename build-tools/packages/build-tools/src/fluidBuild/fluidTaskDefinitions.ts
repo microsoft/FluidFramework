@@ -4,6 +4,7 @@
  */
 
 import type { PackageJson } from "../common/npmPackage.js";
+
 import { isConcurrentlyCommand, parseConcurrentlyCommand } from "./parseCommands.js";
 
 /**

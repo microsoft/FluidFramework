@@ -18,9 +18,9 @@ import {
 import { iterationSettings } from "./memory/utils.js";
 import {
 	Column,
+	createTableTree,
 	Row,
 	type TableBenchmarkOptions,
-	createTableTree,
 } from "./tablePerformanceTestUtilities.js";
 import { configureBenchmarkHooks } from "./utils.js";
 

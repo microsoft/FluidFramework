@@ -4,6 +4,7 @@
  */
 
 import { readFile } from "fs/promises";
+
 import { sha256 } from "./hash.js";
 
 type hashFn = (buffer: Buffer) => string;

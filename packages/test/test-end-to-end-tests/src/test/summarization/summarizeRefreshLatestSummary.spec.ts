@@ -5,7 +5,7 @@
 
 import { strict as assert } from "assert";
 
-import { ITestDataObject, describeCompat } from "@fluid-private/test-version-utils";
+import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import {
 	DefaultSummaryConfiguration,
 	ISummaryAckMessage,
@@ -15,9 +15,9 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
+	createTestConfigProvider,
 	ITestContainerConfig,
 	ITestObjectProvider,
-	createTestConfigProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

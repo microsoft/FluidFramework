@@ -5,16 +5,16 @@
 
 import {
 	IFluidHandle,
+	type IFluidLoadable,
 	IRequest,
 	IResponse,
-	type IFluidLoadable,
 } from "@fluidframework/core-interfaces";
 import { fail } from "@fluidframework/core-utils/internal";
 import { FluidObjectHandle } from "@fluidframework/datastore/internal";
 import {
+	type IChannel,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
-	type IChannel,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	IFluidDataStoreChannel,

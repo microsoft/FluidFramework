@@ -6,12 +6,12 @@
 import { strict as assert } from "node:assert";
 
 import {
-	IMergeTreeDeltaCallbackArgs,
-	PropertySet,
-	TextSegment,
 	createAnnotateRangeOp,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+	IMergeTreeDeltaCallbackArgs,
+	PropertySet,
+	TextSegment,
 } from "@fluidframework/merge-tree/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 

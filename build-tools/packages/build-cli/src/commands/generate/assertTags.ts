@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
+
 import type { FluidRepo, Package } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import { lilconfig } from "lilconfig";
@@ -18,6 +19,7 @@ import {
 	type StringLiteral,
 	SyntaxKind,
 } from "ts-morph";
+
 import { PackageCommand } from "../../BasePackageCommand.js";
 import type { PackageKind, PackageWithKind } from "../../filter.js";
 

@@ -5,7 +5,6 @@
 
 // eslint-disable-next-line no-restricted-syntax
 export * from "./main.js";
-
 // Additional APIs that are deprecated and thus left out of the common export set.
 export type {
 	ITelemetryErrorEventExt,

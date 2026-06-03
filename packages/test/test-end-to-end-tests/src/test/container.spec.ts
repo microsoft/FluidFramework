@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 
 import { MockDocumentDeltaConnection } from "@fluid-private/test-loader-utils";
 import {
-	ITestDataObject,
-	TestDataObjectType,
 	describeCompat,
 	getDataStoreFactory,
+	ITestDataObject,
 	itExpects,
+	TestDataObjectType,
 } from "@fluid-private/test-version-utils";
 import {
 	ContainerErrorTypes,
@@ -30,14 +30,12 @@ import { Deferred } from "@fluidframework/core-utils/internal";
 import { IClient } from "@fluidframework/driver-definitions";
 import {
 	DriverErrorTypes,
-	IAnyDriverError,
-	ISnapshotTree,
-} from "@fluidframework/driver-definitions/internal";
-import {
 	FiveDaysMs,
-	IDocumentServiceFactory,
-	IDocumentService,
+	IAnyDriverError,
 	type IDocumentDeltaConnection,
+	IDocumentService,
+	IDocumentServiceFactory,
+	ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	DeltaStreamConnectionForbiddenError,
@@ -46,13 +44,13 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import { DataCorruptionError } from "@fluidframework/telemetry-utils/internal";
 import {
+	getRequiredPendingLocalState,
 	ITestObjectProvider,
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	TestContainerRuntimeFactory,
 	TestFluidObjectFactory,
 	TestObjectProvider,
-	getRequiredPendingLocalState,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";

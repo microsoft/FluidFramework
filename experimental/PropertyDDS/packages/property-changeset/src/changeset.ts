@@ -7,7 +7,7 @@
  * @fileoverview Serialized representation of the changes in a repository
  */
 
-import { constants, ConsoleUtils, joinPaths } from "@fluid-experimental/property-common";
+import { ConsoleUtils, constants, joinPaths } from "@fluid-experimental/property-common";
 import cloneDeep from "lodash/cloneDeep.js";
 import each from "lodash/each.js";
 import extend from "lodash/extend.js";

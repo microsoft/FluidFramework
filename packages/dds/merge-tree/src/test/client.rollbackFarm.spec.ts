@@ -8,15 +8,15 @@
 import { makeRandom } from "@fluid-private/stochastic-test-utils";
 
 import {
-	type TestOperation,
 	annotateRange,
 	applyMessages,
 	doOverRanges,
 	generateOperationMessagesForClients,
 	insertAtRefPos,
 	removeRange,
+	type TestOperation,
 } from "./mergeTreeOperationRunner.js";
-import { TestClientLogger, createClientsAtInitialState } from "./testClientLogger.js";
+import { createClientsAtInitialState, TestClientLogger } from "./testClientLogger.js";
 
 const allOperations: TestOperation[] = [removeRange, annotateRange, insertAtRefPos];
 

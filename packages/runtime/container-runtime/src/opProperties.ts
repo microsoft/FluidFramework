@@ -4,8 +4,8 @@
  */
 
 import type {
-	ISequencedDocumentSystemMessage,
 	ISequencedDocumentMessage,
+	ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 
 export const opSize = (op: ISequencedDocumentMessage): number => {

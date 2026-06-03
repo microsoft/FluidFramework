@@ -12,9 +12,9 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import {
 	createDetachedContainer,
+	type ILoaderProps,
 	loadContainerPaused,
 	loadExistingContainer,
-	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type {
 	IConfigProviderBase,
@@ -27,10 +27,10 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { applyStorageCompression } from "@fluidframework/driver-utils/internal";
 import type {
-	ContainerSchema,
-	IFluidContainer,
 	// eslint-disable-next-line import-x/no-deprecated
 	CompatibilityMode,
+	ContainerSchema,
+	IFluidContainer,
 } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,

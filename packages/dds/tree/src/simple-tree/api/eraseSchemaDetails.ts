@@ -4,9 +4,9 @@
  */
 
 import type {
+	NodeKind,
 	TreeNode,
 	TreeNodeSchema,
-	NodeKind,
 	TreeNodeSchemaClass,
 	WithType,
 } from "../core/index.js";

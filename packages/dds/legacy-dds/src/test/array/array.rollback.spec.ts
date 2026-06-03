@@ -7,10 +7,10 @@ import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import {
+	type MockContainerRuntime,
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-	type MockContainerRuntime,
 } from "@fluidframework/test-runtime-utils/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -18,11 +18,12 @@ import type { IRevertible, ISharedArray } from "../../array/interfaces.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SharedArrayFactory } from "../../array/sharedArrayFactory.js";
 import {
-	OperationType,
-	SharedArrayRevertible,
 	type ISharedArrayOperation,
 	type IToggleOperation,
+	OperationType,
+	SharedArrayRevertible,
 } from "../../index.js";
+
 interface RollbackTestSetup {
 	sharedArray: ISharedArray<number>;
 	dataStoreRuntime: MockFluidDataStoreRuntime;

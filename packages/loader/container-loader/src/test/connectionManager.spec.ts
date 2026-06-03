@@ -20,7 +20,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
-import { stub, type SinonFakeTimers, useFakeTimers } from "sinon";
+import { type SinonFakeTimers, stub, useFakeTimers } from "sinon";
 
 import { ConnectionManager } from "../connectionManager.js";
 import { type IConnectionManagerFactoryArgs, ReconnectMode } from "../contracts.js";

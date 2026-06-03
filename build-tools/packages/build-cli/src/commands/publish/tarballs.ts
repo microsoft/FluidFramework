@@ -6,12 +6,14 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { gunzipSync } from "node:zlib";
+
 import { untar } from "@andrewbranch/untar.js";
 import type { Logger, PackageJson } from "@fluidframework/build-tools";
 import { Flags } from "@oclif/core";
 import execa from "execa";
 import globby from "globby";
 import latestVersion from "latest-version";
+
 import { BaseCommand } from "../../library/commands/base.js";
 import { getTarballName } from "../../library/package.js";
 import { readLines } from "../../library/text.js";

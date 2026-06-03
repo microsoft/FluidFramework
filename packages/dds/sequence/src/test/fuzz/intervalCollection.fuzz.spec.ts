@@ -6,7 +6,7 @@
 import { createDDSFuzzSuite } from "@fluid-private/test-dds-utils";
 import { FlushMode } from "@fluidframework/runtime-definitions/internal";
 
-import { defaultFuzzOptions, baseIntervalModel } from "./fuzzUtils.js";
+import { baseIntervalModel, defaultFuzzOptions } from "./fuzzUtils.js";
 
 describe("IntervalCollection fuzz testing", () => {
 	const model = {

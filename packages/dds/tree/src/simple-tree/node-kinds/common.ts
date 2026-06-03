@@ -10,14 +10,14 @@ import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
 import {
 	createField,
-	type UnhydratedFlexTreeField,
-	normalizeAllowedTypes,
 	type FlexContent,
+	normalizeAllowedTypes,
+	type UnhydratedFlexTreeField,
 } from "../core/index.js";
 import { getUnhydratedContext } from "../createContext.js";
 import {
-	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
+	unhydratedFlexTreeFromInsertableNode,
 } from "../unhydratedFlexTreeFromInsertable.js";
 
 import type { MapNodeSchema } from "./map/index.js";

@@ -11,6 +11,7 @@ import {
 	type IBuildMetrics,
 } from "../library/azureDevops/getBaselineBuildMetrics.js";
 import type { CommandLogger } from "../logging.js";
+
 import { type CodeCoverageComparison, compareCodeCoverage } from "./compareCodeCoverage.js";
 import { getCoverageMetricsFromArtifact } from "./getCoverageMetrics.js";
 

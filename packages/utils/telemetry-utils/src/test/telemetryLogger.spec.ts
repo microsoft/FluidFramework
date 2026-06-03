@@ -9,10 +9,10 @@ import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interface
 import { LogLevel } from "@fluidframework/core-interfaces";
 
 import {
+	convertToBasePropertyType,
 	type ITelemetryLoggerPropertyBag,
 	type ITelemetryLoggerPropertyBags,
 	TelemetryLogger,
-	convertToBasePropertyType,
 } from "../logger.js";
 import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 

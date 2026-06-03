@@ -8,16 +8,16 @@ import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-defini
 import {
 	type FetchSource,
 	type FiveDaysMs,
+	type ICreateBlobResponse,
 	type IDocumentStorageService,
 	type IDocumentStorageServicePolicies,
+	type ISequencedDocumentMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
-	type ISummaryContext,
-	LoaderCachingPolicy,
 	type ISnapshotTree,
-	type ICreateBlobResponse,
+	type ISummaryContext,
 	type IVersion,
-	type ISequencedDocumentMessage,
+	LoaderCachingPolicy,
 } from "@fluidframework/driver-definitions/internal";
 import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";

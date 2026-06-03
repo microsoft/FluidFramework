@@ -4,5 +4,4 @@
  */
 
 export { Notifications } from "./notificationsManager.js";
-
 export { StateFactory } from "./stateFactory.js";

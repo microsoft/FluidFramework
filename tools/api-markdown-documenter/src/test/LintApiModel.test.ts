@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 import { ApiModel } from "@microsoft/api-extractor-model";
 import { expect } from "chai";
 
-import { lintApiModel, type LinterErrors } from "../LintApiModel.js";
+import { type LinterErrors, lintApiModel } from "../LintApiModel.js";
 import { loadModel } from "../LoadModel.js";
 
 const dirname = Path.dirname(fileURLToPath(import.meta.url));

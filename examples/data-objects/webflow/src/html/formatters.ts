@@ -8,7 +8,7 @@ import { Marker, TextSegment } from "@fluidframework/sequence/legacy";
 
 import { DocSegmentKind, getCss, getDocSegmentKind } from "../document/index.js";
 import { getAttrs, syncAttrs } from "../util/attr.js";
-import { TagName, emptyObject } from "../util/index.js";
+import { emptyObject, TagName } from "../util/index.js";
 import { Formatter, IFormatterState, RootFormatter } from "../view/formatter.js";
 import { Layout } from "../view/layout.js";
 

@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { segmentIsRemoved, type ISegmentPrivate } from "../mergeTreeNodes.js";
+import { type ISegmentPrivate, segmentIsRemoved } from "../mergeTreeNodes.js";
 import { TextSegment } from "../textSegment.js";
 
 import { TestClient } from "./testClient.js";

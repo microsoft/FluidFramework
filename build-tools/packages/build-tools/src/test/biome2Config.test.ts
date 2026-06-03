@@ -9,6 +9,7 @@
 
 import { strict as assert } from "node:assert/strict";
 import path from "node:path";
+
 import {
 	Biome2ConfigReader,
 	getBiome2FormattedFilesFromDirectory,
@@ -17,6 +18,7 @@ import {
 } from "../common/biome2Config.js";
 import { GitRepo } from "../common/gitRepo.js";
 import { getResolvedFluidRoot } from "../fluidBuild/fluidUtils.js";
+
 import { testDataPath } from "./init.js";
 
 describe("Biome 2.x config loading", () => {

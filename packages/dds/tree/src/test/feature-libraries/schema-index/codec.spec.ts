@@ -8,13 +8,13 @@ import { strict as assert } from "node:assert";
 // Allow importing from this specific file which is being tested:
 
 import {
+	type CodecWriteOptions,
 	currentVersion,
 	makeCodecFamily,
-	type CodecWriteOptions,
 } from "../../../codec/index.js";
 import {
-	SchemaFormatVersion,
 	type FieldKindIdentifier,
+	SchemaFormatVersion,
 	type TreeStoredSchema,
 } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";

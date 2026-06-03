@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/react/internal";
+import { createUndoRedo, toPropTreeNode, type UndoRedo } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
 import { independentView, TextAsTree } from "@fluidframework/tree/internal";
@@ -14,13 +14,13 @@ import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
 
 import {
+	buildDeltaFromTree,
 	clipboardFormatMatcher,
-	FormattedTextAsTree,
 	FormattedMainView,
+	FormattedTextAsTree,
 	parseCssFontFamily,
 	parseCssFontSize,
 	parseLineTag,
-	buildDeltaFromTree,
 	// Allow import of files being tested
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../formatted/quillFormattedView.js";

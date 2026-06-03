@@ -14,8 +14,8 @@ import {
 
 import { FluidClientVersion, Versioned } from "../../../codec/index.js";
 import {
-	VersionDispatchingCodecBuilder,
 	type CodecAndSchema,
+	VersionDispatchingCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../codec/versioned/codec.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";

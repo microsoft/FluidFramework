@@ -4,6 +4,7 @@
  */
 
 import type { CommandLogger } from "../logging.js";
+
 import type { CoverageMetric } from "./getCoverageMetrics.js";
 
 // List of packages to be ignored from code coverage analysis. These are just prefixes. Reason is that when the package src code contains different

@@ -6,9 +6,9 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import { Serializable } from "@fluidframework/datastore-definitions/internal";
 import {
-	PropertySet,
 	createInsertSegmentOp,
 	createRemoveRangeOp,
+	PropertySet,
 } from "@fluidframework/merge-tree/internal";
 import { TestClient } from "@fluidframework/merge-tree/internal/test";
 

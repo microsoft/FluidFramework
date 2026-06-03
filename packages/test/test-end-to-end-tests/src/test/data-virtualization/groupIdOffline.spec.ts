@@ -16,8 +16,8 @@ import {
 	createSummarizerFromFactory,
 	createTestConfigProvider,
 	getRequiredPendingLocalState,
-	summarizeNow,
 	type ITestObjectProvider,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";

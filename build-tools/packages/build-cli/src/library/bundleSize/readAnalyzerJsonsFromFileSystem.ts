@@ -6,6 +6,7 @@
 import { globSync, statSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+
 import type { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
 
 import { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";

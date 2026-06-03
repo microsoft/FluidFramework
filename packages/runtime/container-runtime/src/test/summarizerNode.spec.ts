@@ -15,9 +15,9 @@ import {
 	type ISummarizerNodeConfig,
 } from "@fluidframework/runtime-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
-import { TelemetryDataTag, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { createChildLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 
-import { type IRootSummarizerNode, createRootSummarizerNode } from "../summary/index.js";
+import { createRootSummarizerNode, type IRootSummarizerNode } from "../summary/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { ValidateSummaryResult } from "../summary/summarizerNode/index.js";
 

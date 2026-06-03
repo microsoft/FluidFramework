@@ -14,7 +14,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
 
-import type { MatrixItem, ISharedMatrix, SharedMatrix } from "../index.js";
+import type { ISharedMatrix, MatrixItem, SharedMatrix } from "../index.js";
 
 import { TestConsumer } from "./testconsumer.js";
 import { UndoRedoStackManager } from "./undoRedoStackManager.js";

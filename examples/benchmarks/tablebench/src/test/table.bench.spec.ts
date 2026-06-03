@@ -4,13 +4,13 @@
  */
 
 import {
-	BenchmarkType,
-	type CollectedData,
-	ValueType,
 	BenchmarkMode,
+	BenchmarkType,
 	benchmarkDuration,
 	benchmarkIt,
+	type CollectedData,
 	currentBenchmarkMode,
+	ValueType,
 } from "@fluid-tools/benchmark";
 import { IChannel } from "@fluidframework/datastore-definitions/legacy";
 import { SharedMatrix } from "@fluidframework/matrix/legacy";
@@ -22,7 +22,7 @@ import {
 } from "@fluidframework/tree/alpha";
 import { SharedTree } from "@fluidframework/tree/legacy";
 
-import { Table, generateTable } from "../index.js";
+import { generateTable, Table } from "../index.js";
 
 import { create, measureAttachmentSummary, measureEncodedLength } from "./utils.js";
 

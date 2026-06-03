@@ -8,19 +8,19 @@ import { strict as assert } from "node:assert";
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
 import {
 	getSimpleSchema,
+	type ImplicitFieldSchema,
+	type InsertableField,
 	independentView,
 	SchemaFactory,
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
-	type ImplicitFieldSchema,
-	type InsertableField,
 } from "@fluidframework/tree/internal";
 import {
 	buildFunc,
-	exposeMethodsSymbol,
-	exposePropertiesSymbol,
 	type ExposedMethods,
 	type ExposedProperties,
+	exposeMethodsSymbol,
+	exposePropertiesSymbol,
 } from "@fluidframework/type-factory/alpha";
 
 import { fluidHandleTypeName } from "../prompt.js";

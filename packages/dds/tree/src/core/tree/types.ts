@@ -6,11 +6,11 @@
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 
 import {
+	type _InlineTrick,
 	type Brand,
-	type Opaque,
 	brand,
 	extractFromOpaque,
-	type _InlineTrick,
+	type Opaque,
 } from "../../util/index.js";
 import type {
 	FieldKey,

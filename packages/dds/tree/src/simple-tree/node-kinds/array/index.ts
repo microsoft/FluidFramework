@@ -4,14 +4,14 @@
  */
 
 export {
+	type ArrayPlaceAnchor,
 	arraySchema,
 	asIndex,
-	IterableTreeArrayContent,
-	TreeArrayNode,
-	type ReadonlyArrayNode,
-	type ArrayPlaceAnchor,
-	type TreeArrayNodeAlpha,
 	createArrayInsertionAnchor,
+	IterableTreeArrayContent,
+	type ReadonlyArrayNode,
+	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 } from "./arrayNode.js";
 export {
 	type ArrayNodeCustomizableSchema,

@@ -11,10 +11,10 @@ import { IContainer } from "@fluidframework/container-definitions/internal";
 import { delay } from "@fluidframework/core-utils/internal";
 
 import {
-	IBenchmarkParameters,
-	IDocumentLoader,
 	benchmarkAll,
 	createDocument,
+	IBenchmarkParameters,
+	IDocumentLoader,
 } from "./DocumentCreator.js";
 
 describeE2EDocs("Load Document", (getTestObjectProvider, getDocumentInfo) => {

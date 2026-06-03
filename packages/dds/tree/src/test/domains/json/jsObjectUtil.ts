@@ -4,11 +4,11 @@
  */
 
 import {
+	isReadonlyArray,
 	type JsonCompatible,
 	type JsonCompatibleObject,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
-	isReadonlyArray,
 } from "../../../util/index.js";
 
 function cloneObject(

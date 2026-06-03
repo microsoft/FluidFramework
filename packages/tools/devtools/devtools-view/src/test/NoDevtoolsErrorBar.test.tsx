@@ -8,7 +8,7 @@ import { userEvent } from "@testing-library/user-event";
 
 import "@testing-library/jest-dom";
 
-import { NoDevtoolsErrorBar, coreErrorMessage, docsLinkUrl } from "../components/index.js";
+import { coreErrorMessage, docsLinkUrl, NoDevtoolsErrorBar } from "../components/index.js";
 
 describe("NoDevtoolsErrorBar component tests", () => {
 	it("Displays expected text and contains expected link", async (): Promise<void> => {

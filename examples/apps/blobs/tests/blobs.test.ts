@@ -4,6 +4,7 @@
  */
 
 import puppeteer, { Browser, Page } from "puppeteer";
+
 import { globals } from "../jest.config.cjs";
 import type { IBlobCollection } from "../src/container/index.js";
 

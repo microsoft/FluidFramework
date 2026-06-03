@@ -10,22 +10,22 @@ import { describeCompat } from "@fluid-private/test-version-utils";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import type {
-	IFluidHandle,
 	ConfigTypes,
 	IConfigProviderBase,
+	IFluidHandle,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	DataObjectFactoryType,
-	ITestFluidObject,
+	type ChannelFactoryRegistry,
 	createAndAttachContainer,
+	DataObjectFactoryType,
 	getRequiredPendingLocalState,
+	ITestFluidObject,
+	type ITestObjectProvider,
 	timeoutAwait,
 	timeoutPromise,
-	type ChannelFactoryRegistry,
-	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 

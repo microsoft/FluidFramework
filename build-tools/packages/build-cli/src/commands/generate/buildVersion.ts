@@ -4,6 +4,7 @@
  */
 
 import * as fs from "node:fs";
+
 import { getIsLatest, getSimpleVersion } from "@fluid-tools/version-tools";
 import { Flags } from "@oclif/core";
 
