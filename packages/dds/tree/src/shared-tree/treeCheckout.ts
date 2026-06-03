@@ -486,18 +486,6 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private mostRecentlyClosedLabelNode: LabelTree | undefined;
 
-	/**
-	 * True while a `changed` event is being emitted from {@link TreeCheckout.onAfterBranchChange}.
-	 * Used by {@link TreeCheckout.mountTransaction} to forbid re-entrant transactions started
-	 * from `changed` listeners — those would push label frames onto the outer transaction's
-	 * (not-yet-cleared) label tree, corrupting it.
-	 *
-	 * @remarks
-	 * The `editLock` only covers `nodeChanged`/`treeChanged` emissions inside `onAfterChange`.
-	 * `changed` fires from `onAfterBranchChange` outside that window, so a separate flag is needed.
-	 */
-	private isEmittingChangedEvent: boolean = false;
-
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
@@ -803,28 +791,40 @@ export class TreeCheckout implements ITreeCheckout {
 					labels: buildLabelsSet(this.labelTreeNode),
 				};
 
-				this.isEmittingChangedEvent = true;
-				try {
+				this.emitChangedLocked(() => {
 					this.#events.emit("changed", metadata, getRevertible);
-				} finally {
-					this.isEmittingChangedEvent = false;
-				}
+				});
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.isEmittingChangedEvent = true;
-			try {
+			this.emitChangedLocked(() => {
 				this.#events.emit("changed", {
 					isLocal: false,
 					kind: CommitKind.Default,
 					labels: new Set<unknown>(),
 				});
-			} finally {
-				this.isEmittingChangedEvent = false;
-			}
+			});
 		}
 	};
+
+	/**
+	 * Hold the `editLock` for the duration of `emit`, so that re-entrant edits, transactions,
+	 * branch operations, etc. attempted from inside a `changed` listener throw the canonical
+	 * "forbidden during a change event" {@link UsageError} via {@link EditLock.checkUnlocked}.
+	 *
+	 * @remarks
+	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
+	 * The `try`/`finally` ensures the lock is released even if a listener throws.
+	 */
+	private emitChangedLocked(emit: () => void): void {
+		this.editLock.lock();
+		try {
+			emit();
+		} finally {
+			this.editLock.unlock();
+		}
+	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
 		this.editLock.lock();
@@ -933,19 +933,12 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.checkNotDisposed();
-		// Starting a transaction during a nodeChanged/treeChanged event is forbidden for the same
-		// reason direct edits are: it would push a label frame and (typically) commit edits while
-		// the tree's invariants are mid-flight. Without this guard, nested transactions started
-		// from a listener leak label frames into the running outer transaction's label tree.
+		// Starting a transaction during a change-event listener is forbidden for the same reason
+		// direct edits are: it would push a label frame and (typically) commit edits while the
+		// tree's invariants are mid-flight. The lock window covers `nodeChanged`/`treeChanged`
+		// (set in `onAfterChange`) and `changed` (set in `onAfterBranchChange` via
+		// `emitChangedLocked`), so any of those listeners will see this throw.
 		this.editLock.checkUnlocked("Running a transaction");
-		// Same concern for `changed` event listeners: `labelTreeNode` is still set when the
-		// `changed` event fires (the cleanup in runWithTransactionLabel's finally block runs
-		// after the emit), so a re-entrant runTransaction would push its label frame onto the
-		// outer's still-live label tree. `editLock` doesn't cover this path — it's only engaged
-		// around `nodeChanged`/`treeChanged` emissions in onAfterChange — so use a separate flag.
-		if (this.isEmittingChangedEvent) {
-			throw new UsageError("Running a transaction is forbidden during a changed event");
-		}
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -1722,8 +1715,9 @@ class EditLock {
 			// These type assertions ensure that the event name strings used here match the actual event names
 			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
 			const treeChanged: keyof TreeChangeEvents = "treeChanged";
+			const changed: keyof CheckoutEvents = "changed";
 			throw new UsageError(
-				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
+				`${action} is forbidden during a ${nodeChanged}, ${treeChanged}, or ${changed} event`,
 			);
 		}
 	}

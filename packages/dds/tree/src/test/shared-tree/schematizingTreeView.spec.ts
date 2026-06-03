@@ -1365,7 +1365,30 @@ describe("SchematizingSimpleTreeView", () => {
 						},
 						{ label: "outer" },
 					),
-				validateUsageError(/Running a transaction is forbidden during a changed event/),
+				validateUsageError(
+					/Running a transaction is forbidden during a nodeChanged, treeChanged, or changed event/,
+				),
+			);
+		});
+
+		it("direct (non-transaction) edit from a changed listener throws", () => {
+			// Engaging `editLock` around `changed` emissions means the lock check on the editor
+			// proxy also fires for direct edits — not just transactions. Without this, a consumer
+			// could bypass the transaction-time check by writing tree state directly inside a
+			// `changed` listener, with the same corruption potential.
+			const view = getTestObjectView();
+
+			view.checkout.events.on("changed", (meta) => {
+				if (meta.isLocal && meta.kind === CommitKind.Default) {
+					view.root.content = view.root.content + 1;
+				}
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError(
+					/Editing the tree is forbidden during a nodeChanged, treeChanged, or changed event/,
+				),
 			);
 		});
 
