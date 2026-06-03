@@ -12,6 +12,9 @@ name: pr-bundle-size-report
 #                        becomes available). `Build - client packages` runs on PR commits (head-side bundle becomes
 #                        available). The identify-targets job maps the check's SHA to affected PRs (PR-head match OR
 #                        merge-base match) and the compare job fans out via matrix.
+#   workflow_dispatch:   manual trigger for testing the compare flow against a chosen PR without waiting for an
+#                        organic check_run completion. Routes through `dispatch-target` instead of `identify-targets`,
+#                        but converges on the same `compare` job.
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -24,6 +27,14 @@ on:
     branches: [main, "release/**/*"]
   check_run:
     types: [completed]
+  # Manual trigger for testing the comparison flow against a chosen PR without waiting for an organic
+  # check_run completion. Fans out via the same compare job as the organic path.
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: PR number to compare (manual testing)
+        required: true
+        type: number
 
 # Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
 # in-progress runs in the same group so the latest event wins on the sticky comment.
@@ -131,14 +142,54 @@ jobs:
           done <<< "$PR_LINES"
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
 
+  # Resolves the manually-supplied PR number into the same matrix-entry shape identify-targets produces,
+  # so the compare job can consume either upstream uniformly.
+  dispatch-target:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      prs: ${{ steps.collect.outputs.prs }}
+    steps:
+      - name: Resolve dispatched PR
+        id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PR_NUM='${{ github.event.inputs.pr_number }}'
+          PR_INFO=$(gh pr view "$PR_NUM" --json headRefOid,baseRefName)
+          PR_HEAD=$(echo "$PR_INFO" | jq -r '.headRefOid')
+          PR_BASE_REF=$(echo "$PR_INFO" | jq -r '.baseRefName')
+          MB=$(gh api "repos/$GITHUB_REPOSITORY/compare/$PR_BASE_REF...$PR_HEAD" \
+            --jq '.merge_base_commit.sha' 2>/dev/null || true)
+          if [ "$MB" = "null" ]; then
+            MB=""
+          fi
+          if [ -z "$MB" ]; then
+            echo "Could not compute merge-base for PR #$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
+            echo "prs=[]" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          PRS=$(jq -n -c \
+            --argjson n "$PR_NUM" \
+            --arg h "$PR_HEAD" \
+            --arg b "$PR_BASE_REF" \
+            --arg mb "$MB" \
+            '[{number: $n, head: $h, baseRef: $b, mergeBase: $mb}]')
+          echo "prs=$PRS" >> "$GITHUB_OUTPUT"
+
   compare:
-    needs: identify-targets
-    # Auto-skips when identify-targets is skipped (e.g. on pull_request_target events) per GitHub Actions'
-    # default `needs:` behavior. The `prs != '[]'` guard handles the check_run case where no PRs are affected.
-    if: needs.identify-targets.outputs.prs != '[]'
+    needs: [identify-targets, dispatch-target]
+    # Either upstream produces the matrix; the other will be skipped per event type. Without
+    # `!cancelled()`, GitHub Actions auto-skips a job whose `needs:` had any skipped entry.
+    if: |
+      !cancelled() && (
+        needs.identify-targets.result == 'success' ||
+        needs.dispatch-target.result == 'success'
+      )
     strategy:
       matrix:
-        pr: ${{ fromJSON(needs.identify-targets.outputs.prs) }}
+        pr: ${{ fromJSON(needs.identify-targets.outputs.prs || needs.dispatch-target.outputs.prs || '[]') }}
       fail-fast: false
     runs-on: ubuntu-latest
     # When comment-posting is wired up, grant write so the marocchino step below can edit the sticky.
