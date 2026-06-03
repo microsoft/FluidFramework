@@ -51,7 +51,7 @@
 		"checks:fix": "fluid-build --task checks:fix",
 		"ci:build": "fluid-build --task ci:build",
 		"ci:build:docs": "fluid-build --task ci:build:docs",
-		"ci:check:are-the-types-wrong": "pnpm run -r --parallel --no-bail --color=always check:are-the-types-wrong",
+		"ci:check:are-the-types-wrong": "pnpm run -r --parallel --no-bail --color check:are-the-types-wrong",
 		"ci:test:jest": "npm run test:jest:report",
 		"ci:test:jest:coverage": "c8 --no-clean npm run test:jest:report",
 		"ci:test:mocha": "npm run test:mocha",
@@ -192,10 +192,10 @@
 		"type-fest": "^2.19.0",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@11.5.0+sha512.dbfcc4f81cf48597afd4bc391ffdf12c11f1a9fb83a395bfa6b0a2d9cc2fd8ffebafdb1ccbd529632153f793904c2615b7f09fe1a345473fd1c35845172a8eb1",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
 	"engines": {
 		"node": ">=22.22.2",
-		"pnpm": "11"
+		"pnpm": "10"
 	},
 	"fluidBuild": {
 		"tasks": {
@@ -351,5 +351,43 @@
 				"script": false
 			}
 		}
+	},
+	"pnpm": {
+		"peerDependencyComments": [
+			"The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't seem to be maintained and it works fine with React 18. TODO: AB#18876",
+			"@types/node is ignored because it is usually not needed by packages, and if it is, then the package will hit a compilation failure.",
+			"Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency; we expect a customer using some packages to install it as a dependency.",
+			"markdown-magic is provided by another dependency so is ignored here.",
+			"oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer dependencies."
+		],
+		"peerDependencyRules": {
+			"allowedVersions": {
+				"react": "18.3.1",
+				"react-dom": "18.3.1"
+			},
+			"ignoreMissing": [
+				"@types/node",
+				"fluid-framework",
+				"markdown-magic",
+				"@aws-sdk/*"
+			]
+		},
+		"patchedDependencies": {
+			"@microsoft/api-extractor@7.58.1": "patches/@microsoft__api-extractor@7.58.1.patch"
+		},
+		"onlyBuiltDependencies": [
+			"@azure/msal-node-extensions",
+			"@azure/msal-node-runtime",
+			"@biomejs/biome",
+			"@parcel/watcher",
+			"@vvago/vale",
+			"classic-level",
+			"core-js",
+			"esbuild",
+			"keytar",
+			"msgpackr-extract",
+			"puppeteer",
+			"unrs-resolver"
+		]
 	}
 }
