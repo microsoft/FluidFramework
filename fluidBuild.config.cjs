@@ -423,6 +423,10 @@ module.exports = {
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
 
+				// Mocha configs are okay to match package.json (help migrate to simple ESM all the time)
+				// (Just under client packages for now)
+				"^packages/.+/.mocharc.js$",
+
 				// Avoids MIME-type issues in the browser.
 				"website/static/trusted-types-policy.js",
 				"website/static/dompurify/purify.min.js",

@@ -217,7 +217,7 @@ export class TscTask extends LeafTask {
 			}
 		} catch (e) {
 			this.traceTrigger(
-				`Unable to get installed package version for typescript from ${this.node.pkg.directory}`,
+				`Unable to get installed package version for typescript from ${this.node.pkg.directory}: ${e}`,
 			);
 			return false;
 		}
@@ -532,8 +532,11 @@ export abstract class TscDependentTask extends LeafWithDoneFileTask {
 				tsBuildInfoFiles,
 			});
 		} catch (e) {
+			// Re-throw so that the user-visible warning in markExecDone surfaces the real
+			// cause (e.g. a ReferenceError from missing tooling). Returning undefined here
+			// would silently mark the task as non-incremental with no actionable detail.
 			this.traceError(`error generating done file content ${e}`);
-			return undefined;
+			throw e;
 		}
 	}
 

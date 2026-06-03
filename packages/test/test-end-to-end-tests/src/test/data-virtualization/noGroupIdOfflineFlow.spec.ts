@@ -10,7 +10,7 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { SharedCounter } from "@fluidframework/counter/internal";
+import type { SharedCounter } from "@fluidframework/counter/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
 	getRequiredPendingLocalState,
@@ -20,6 +20,7 @@ import {
 describeCompat("Offline Attach Ops", "NoCompat", (getTestObjectProvider, apis) => {
 	const { DataObjectFactory, DataObject } = apis.dataRuntime;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
+	const { SharedCounter } = apis.dds;
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {

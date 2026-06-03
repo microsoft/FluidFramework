@@ -10,7 +10,7 @@ import {
 	ContainerErrorTypes,
 	IContainer,
 } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -28,7 +28,8 @@ import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
