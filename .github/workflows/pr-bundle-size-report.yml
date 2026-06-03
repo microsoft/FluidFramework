@@ -184,7 +184,14 @@ jobs:
 
       - name: Post results (stub)
         run: |
+          set -euo pipefail
           echo "PR #${{ matrix.pr.number }}: would post bundle-size results sticky here, sourced from bundle-comparison.json."
+          echo
+          echo "Base commit: ${{ matrix.pr.mergeBase }}"
+          echo "Head commit: ${{ matrix.pr.head }}"
+          echo
+          echo "Comparison JSON:"
+          jq '.' bundle-comparison.json
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
