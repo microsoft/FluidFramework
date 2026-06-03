@@ -33,6 +33,7 @@ declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
 
 /*
@@ -42,6 +43,7 @@ declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "ClassStatics_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
 
 /*
@@ -240,6 +242,7 @@ declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ILoaderServices": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
 
 /*

@@ -6,13 +6,11 @@
 // eslint-disable-next-line no-restricted-syntax
 export * from "./main.js";
 
-// Additional APIs that are deprecated and thus left out of the common export set.
+// Additional APIs that are special and thus left out of the common export set.
 export type {
-	ITelemetryErrorEventExt,
-	ITelemetryGenericEventExt,
+	// ITelemetryLoggerExt is temporarily set to an alias of `TelemetryLoggerExt` when imported from "/internal".
+	// Add it to "/legacy" export set here.
 	ITelemetryLoggerExt,
-	ITelemetryPerformanceEventExt,
-	TelemetryEventCategory,
 } from "./telemetryTypes.js";
 
 // ----------------------------------------------------------------------------
