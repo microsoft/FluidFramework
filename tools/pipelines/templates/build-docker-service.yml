@@ -311,11 +311,6 @@ extends:
               buildDirectory: ${{ parameters.buildDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-            parameters:
-              buildDirectory: ${{ parameters.buildDirectory }}
-
         # Set version
         - ${{ if eq(parameters.setVersion, true) }}:
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
@@ -572,17 +567,6 @@ extends:
             inputs:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
-
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-          # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-          - task: Bash@3
-            displayName: Prune pnpm store
-            inputs:
-              targetType: 'inline'
-              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-              script: |
-                set -eu -o pipefail
-                pnpm store prune
 
         templateContext:
           # 'Fluid Public Mirror Container Registry' is required on every run for base-image pulls

@@ -27,7 +27,6 @@ steps:
       parameters:
         buildDirectory: $(FluidFrameworkDirectory)/build-tools
         pnpmStorePath: ${{ parameters.pnpmStorePath }}
-        enableCache: false
 
     - task: Bash@3
       name: InstallBuildTools
