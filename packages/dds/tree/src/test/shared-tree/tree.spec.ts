@@ -771,7 +771,8 @@ describe("treeApi", () => {
 			assert(rootParent instanceof DocumentRootParent);
 
 			assert.equal(TreeAlpha.child(rootParent, undefined), root);
-			assert.equal(TreeAlpha.child(rootParent, "foo"), undefined);
+			// A ParentObject's only child is keyed by `undefined`; any other key is an error.
+			assert.throws(() => TreeAlpha.child(rootParent, "foo"));
 
 			const childrenResult = [...TreeAlpha.children(rootParent)];
 			assert.equal(childrenResult.length, 1);

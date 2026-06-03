@@ -52,9 +52,9 @@ export interface ParentObject extends ErasedBaseType<"@fluidframework/tree.Paren
  * This enables the invariant:
  * `TreeAlpha.child(TreeAlpha.parent2(node), TreeAlpha.key2(node)) === node`
  *
- * - {@link TreeNode}: The node has a regular parent node in the tree hierarchy.
- * - {@link ParentObject}: The node has no TreeNode parent (e.g., it is a root node,
- * was removed from the tree, or was newly created and not yet inserted).
+ * When this is a {@link TreeNode}, then the node has a regular parent node in the tree hierarchy.
+ * When this is a {@link ParentObject}, then the node has no `TreeNode` parent (e.g., it is a root node,
+ * it was removed from the tree, or it is newly created and not yet inserted).
  *
  * @alpha
  */
@@ -63,7 +63,7 @@ export type TreeNodeParent = TreeNode | ParentObject;
 /**
  * Abstract base class for all {@link ParentObject} implementations.
  *
- * @remarks
+ * @privateRemarks
  * This is the single implementation of {@link ErasedTypeImplementation} for {@link ParentObject},
  * satisfying the one-implementation-per-erased-type constraint. Concrete subclasses
  * ({@link DocumentRootParent}, {@link RemovedRootParent}, {@link UnhydratedParent})
@@ -75,8 +75,10 @@ export abstract class ParentObjectBase
 {
 	/**
 	 * Gets the child at the given key under this parent.
-	 * @param propertyKey - Must be `undefined` for ParentObject parents.
-	 * @returns The child node or leaf value, or `undefined` if no child exists.
+	 * @param propertyKey - The property key under this parent for which the child is being requested.
+	 * A {@link ParentObject} holds at most a single child (the root/detached/unhydrated node), which is
+	 * keyed by `undefined`. Must be `undefined`: passing any other key is an error.
+	 * @returns The child node or leaf value, or `undefined` if no child currently exists at that location.
 	 */
 	public abstract getChild(
 		propertyKey: string | number | undefined,
@@ -112,48 +114,58 @@ export abstract class ParentObjectBase
  * Root replacement itself fires only `treeChanged`, not `nodeChanged`.
  */
 export class DocumentRootParent extends ParentObjectBase {
+	/**
+	 * Cache keyed by the {@link TreeBranch} this is the document root parent of.
+	 * @remarks
+	 * Each branch has exactly one {@link DocumentRootParent}, so caching here ensures that
+	 * {@link (TreeAlpha:interface).parent2} returns the same instance for all root nodes of the same branch.
+	 * Using a {@link WeakMap} ensures entries are cleaned up when the branch is garbage collected.
+	 */
 	private static readonly cache = new WeakMap<TreeBranch, DocumentRootParent>();
 
-	private constructor(private readonly branch: TreeBranch) {
+	private constructor(
+		private readonly branch: SchematizingSimpleTreeView<ImplicitFieldSchema>,
+	) {
 		super();
 	}
 
 	/**
-	 * Gets or creates a cached DocumentRootParent for the given branch.
+	 * Gets or creates a cached {@link DocumentRootParent} for the given branch.
 	 * @remarks
-	 * Each TreeBranch has exactly one DocumentRootParent, ensuring that `parent2()` returns
-	 * the same instance for all root nodes of the same branch.
+	 * Each {@link TreeBranch} has exactly one {@link DocumentRootParent}, ensuring that
+	 * {@link (TreeAlpha:interface).parent2} returns the same instance for all root nodes of the same branch.
+	 * @param branch - The branch whose document root parent is being requested. Must be a
+	 * {@link SchematizingSimpleTreeView}, which is the only implementation of {@link TreeBranch}.
 	 */
 	public static getOrCreate(branch: TreeBranch): DocumentRootParent {
+		// Validate (and narrow) the branch type up front so failures surface here, at creation,
+		// rather than on later access, and so subsequent access does not have to re-check.
+		assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
+		// instanceof loses the generic parameter; the cast restores it. This is safe because
+		// TreeBranch is always created as SchematizingSimpleTreeView<ImplicitFieldSchema>.
+		const viewableBranch = branch as SchematizingSimpleTreeView<ImplicitFieldSchema>;
 		let rootParent = DocumentRootParent.cache.get(branch);
 		if (rootParent === undefined) {
-			rootParent = new DocumentRootParent(branch);
+			rootParent = new DocumentRootParent(viewableBranch);
 			DocumentRootParent.cache.set(branch, rootParent);
 		}
 		return rootParent;
 	}
 
 	/**
-	 * Narrows the branch to {@link SchematizingSimpleTreeView} and asserts schema compatibility.
+	 * Returns the branch, asserting it is currently viewable (schema compatible).
 	 */
 	private getViewableBranch(): SchematizingSimpleTreeView<ImplicitFieldSchema> {
-		const branch = this.branch;
-		assert(branch instanceof SchematizingSimpleTreeView, "Unexpected branch implementation");
-		if (!branch.compatibility.canView) {
+		if (!this.branch.compatibility.canView) {
 			throw new UsageError("Cannot access a DocumentRootParent with incompatible schema");
 		}
-		// The assert narrows to SchematizingSimpleTreeView<any> because instanceof
-		// loses the generic parameter. This is safe because TreeBranch is always
-		// created as SchematizingSimpleTreeView<ImplicitFieldSchema>.
-		return branch as SchematizingSimpleTreeView<ImplicitFieldSchema>;
+		return this.branch;
 	}
 
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		if (propertyKey !== undefined) {
-			return undefined;
-		}
+		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
 		const root = this.getViewableBranch().root;
 		if (root === undefined || isTreeNode(root)) {
 			return root;
@@ -165,6 +177,10 @@ export class DocumentRootParent extends ParentObjectBase {
 		[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]
 	> {
 		const root = this.getViewableBranch().root;
+		// `root` is `undefined` when the document's optional root field currently holds no value:
+		// either it was never set, or it was cleared after this parent object was created (recall that
+		// this parent is a location, not a node, so it outlives the node that was at the root).
+		// An empty location has no child, so we return an empty iterable.
 		if (root === undefined) {
 			return [];
 		}
@@ -177,11 +193,17 @@ export class DocumentRootParent extends ParentObjectBase {
 	): () => void {
 		const branch = this.getViewableBranch();
 
+		// Whether this subscription is still active (cleared by the returned unsubscribe function).
 		let isSubscribed = true;
+		// Unsubscribe handle for the listener currently attached to the root node (if the root is a TreeNode).
 		let currentNodeUnsubscribe: (() => void) | undefined;
+		// The root node identity we last subscribed to, used to detect actual root replacements.
 		let lastRootNode: unknown;
 
 		const subscribeToRoot = (): void => {
+			// Skip (re-)subscribing if the caller has already unsubscribed (this is also invoked from the
+			// "rootChanged" handler below), or if the branch's schema is not currently viewable, in which
+			// case `branch.root` cannot be safely accessed.
 			if (!isSubscribed || !branch.compatibility.canView) {
 				return;
 			}
@@ -242,26 +264,45 @@ export class DocumentRootParent extends ParentObjectBase {
  */
 export class RemovedRootParent extends ParentObjectBase {
 	/**
-	 * Cache keyed by the detached TreeNode itself. A node can only be in one detached field
-	 * at a time, so keying by node is sufficient. Using WeakMap ensures entries are
+	 * Cache keyed by the detached {@link TreeNode} itself. A node can only be in one detached field
+	 * at a time, so keying by node is sufficient. Using {@link WeakMap} ensures entries are
 	 * cleaned up when the node is garbage collected.
 	 *
 	 * Entries are created/updated lazily by {@link RemovedRootParent.getOrCreate}.
 	 * Stale entries (where the node was re-inserted then removed again, getting a new
-	 * DetachedField) are detected and replaced on access.
+	 * {@link DetachedField}) are detected and replaced on access.
 	 */
 	private static readonly cache = new WeakMap<TreeNode, RemovedRootParent>();
 
 	private constructor(
+		/**
+		 * The hydrated context (checkout) that the detached field belongs to.
+		 * @remarks
+		 * Used to subscribe to `afterBatch` so status transitions are observed only after the tree is consistent.
+		 */
 		private readonly context: FlexTreeHydratedContext,
+		/**
+		 * The detached field this node was in when this parent object was created.
+		 * @remarks
+		 * Used to detect stale cache entries: if the node is later re-inserted and removed again it gets a
+		 * new detached field, which no longer matches this one.
+		 */
 		private readonly detachedField: DetachedField,
+		/**
+		 * The node which was in this detached field when this parent object was created.
+		 * @remarks
+		 * Invalidated when this field no longer contains this node.
+		 */
 		private readonly detachedNode: TreeNode,
 	) {
 		super();
 	}
 
 	/**
-	 * Gets or creates a cached RemovedRootParent for the given detached node.
+	 * Gets or creates a cached {@link RemovedRootParent} for the given detached node.
+	 * @param context - The hydrated context (checkout) the detached field belongs to.
+	 * @param detachedField - The detached field the node currently resides in.
+	 * @param detachedNode - The removed node this parent object represents the location of.
 	 */
 	public static getOrCreate(
 		context: FlexTreeHydratedContext,
@@ -282,9 +323,7 @@ export class RemovedRootParent extends ParentObjectBase {
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		if (propertyKey !== undefined) {
-			return undefined;
-		}
+		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
 		return this.detachedNode;
 	}
 
@@ -376,9 +415,7 @@ export class UnhydratedParent extends ParentObjectBase {
 	public override getChild(
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined {
-		if (propertyKey !== undefined) {
-			return undefined;
-		}
+		assert(propertyKey === undefined, "Children of a ParentObject are keyed by undefined");
 		return this.getTreeNode();
 	}
 

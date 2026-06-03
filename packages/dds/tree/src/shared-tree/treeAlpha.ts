@@ -145,8 +145,6 @@ identifier.create = (branch: TreeBranch): string => {
 
 Object.freeze(identifier);
 
-export { type ParentObject, type TreeNodeParent } from "./parentObject.js";
-
 /**
  * A utility interface for manipulating node identifiers.
  * @remarks
@@ -268,15 +266,15 @@ export interface TreeAlpha {
 	): () => void;
 
 	/**
-	 * Register an event listener on the given parent ({@link TreeNode} or {@link ParentObject}).
+	 * Register an event listener on the given node ({@link TreeNode} or {@link ParentObject}).
 	 *
-	 * @param parent - The parent to listen on.
+	 * @param node - The node to listen on.
 	 * @param eventName - The event to listen for (`"nodeChanged"` or `"treeChanged"`).
 	 * @param listener - The callback to invoke when the event fires.
 	 * @returns A function that, when called, removes the listener.
 	 *
 	 * @remarks
-	 * When the parent is a {@link ParentObject}, the behavior depends on the kind of parent:
+	 * When the node is a {@link ParentObject}, the behavior depends on the kind of `ParentObject`:
 	 *
 	 * - For root parents, the listener fires on content changes to the root node
 	 * and automatically re-subscribes when the root is replaced.
@@ -294,7 +292,7 @@ export interface TreeAlpha {
 	 * the unsafe casts needed to invoke the listener with no arguments for status events.
 	 */
 	on<K extends keyof TreeChangeEvents>(
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): () => void;
@@ -468,35 +466,35 @@ export interface TreeAlpha {
 	key2(node: TreeNode): string | number | undefined;
 
 	/**
-	 * Gets the child of the given parent with the given property key if a child exists under that key.
+	 * Gets the child of the given node with the given property key if a child exists under that key.
 	 *
 	 * @remarks {@link ObjectSchemaOptions.allowUnknownOptionalFields | Unknown optional fields} of Object nodes will not be returned by this method.
 	 *
-	 * @param parent - The parent (TreeNode or ParentObject) whose child is being requested.
-	 * @param key - The property key under the parent under which the child is being requested.
+	 * @param node - The {@link TreeNodeParent} whose child is being requested.
+	 * @param key - The property key under the node for which the child is being requested.
 	 * For Object nodes, this is the developer-facing "property key", not the "{@link SimpleObjectFieldSchema.storedKey | stored keys}".
 	 * For ParentObject parents, use `undefined` to get the root/detached/unhydrated child.
 	 *
 	 * @returns The child node or leaf value under the given key, or `undefined` if no such child exists.
 	 *
-	 * @throws A usage error if the parent is a DocumentRootParent
-	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
+	 * @throws A usage error if a `DocumentRootParent` with incompatible
+	 * schema ({@link SchemaCompatibilityStatus.canView} is false) is provided.
 	 *
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
 	// TODO: Consider using overloads to preserve stricter types for TreeNode callers:
-	//   child(parent: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-	//   child(parent: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
+	//   child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+	//   child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
 	// The current single signature widens `key` to `string | number | undefined` for all callers,
 	// even though `undefined` is only valid for ParentObject parents.
 	child(
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 		key: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined;
 
 	/**
-	 * Gets the children of the provided parent, paired with their property keys under the parent.
+	 * Gets the children of the provided node, paired with their property keys under the node.
 	 *
 	 * @remarks
 	 * No guarantees are made regarding the order of the children in the returned iterable.
@@ -510,10 +508,10 @@ export interface TreeAlpha {
 	 * For ParentObject parents (root, detached, unhydrated), returns a single child with key `undefined`.
 	 * Returns empty results if no child exists (e.g., optional root with no value).
 	 *
-	 * @throws A usage error if the parent is a DocumentRootParent
-	 * with incompatible schema ({@link SchemaCompatibilityStatus.canView} is false).
+	 * @throws A usage error if a `DocumentRootParent` with incompatible
+	 * schema ({@link SchemaCompatibilityStatus.canView} is false) is provided.
 	 *
-	 * @param parent - The parent (TreeNode or ParentObject) whose children are being requested.
+	 * @param node - The {@link TreeNodeParent} whose children are being requested.
 	 *
 	 * @returns
 	 * An iterable of pairs of the form `[propertyKey, child]`.
@@ -529,7 +527,7 @@ export interface TreeAlpha {
 	// TODO: Consider using overloads to return `[string | number, ...]` for TreeNode parents
 	// and `[undefined, ...]` for ParentObject parents, so TreeNode callers keep the stricter key type.
 	children(
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
 
 	/**
@@ -1076,15 +1074,15 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	child: (
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 		propertyKey: string | number | undefined,
 	): TreeNode | TreeLeafValue | undefined => {
 		// Handle ParentObject cases via polymorphic dispatch
-		if (parent instanceof ParentObjectBase) {
-			return parent.getChild(propertyKey);
+		if (node instanceof ParentObjectBase) {
+			return node.getChild(propertyKey);
 		}
 
-		if (!isTreeNode(parent)) {
+		if (!isTreeNode(node)) {
 			fail("Unknown ParentObject type");
 		}
 
@@ -1093,12 +1091,12 @@ export const TreeAlpha: TreeAlpha = {
 			return undefined;
 		}
 
-		const flexNode = getInnerNode(parent);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
 
-		const schema = treeNodeApi.schema(parent);
+		const schema = treeNodeApi.schema(node);
 
 		switch (schema.kind) {
 			case NodeKind.Array: {
@@ -1164,24 +1162,24 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	children(
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
 		// Handle ParentObject cases via polymorphic dispatch
-		if (parent instanceof ParentObjectBase) {
-			return parent.getChildren();
+		if (node instanceof ParentObjectBase) {
+			return node.getChildren();
 		}
 
-		if (!isTreeNode(parent)) {
+		if (!isTreeNode(node)) {
 			fail("Unknown ParentObject type");
 		}
 
 		// Handle TreeNode case
-		const flexNode = getInnerNode(parent);
+		const flexNode = getInnerNode(node);
 		debugAssert(
 			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
 		);
 
-		const schema = treeNodeApi.schema(parent);
+		const schema = treeNodeApi.schema(node);
 
 		const result: [string | number | undefined, TreeNode | TreeLeafValue][] = [];
 		switch (schema.kind) {
@@ -1291,17 +1289,17 @@ export const TreeAlpha: TreeAlpha = {
 	},
 
 	on<K extends keyof TreeChangeEvents>(
-		parent: TreeNodeParent,
+		node: TreeNodeParent,
 		eventName: K,
 		listener: TreeChangeEvents[K],
 	): () => void {
 		// Handle ParentObject cases via polymorphic dispatch
-		if (parent instanceof ParentObjectBase) {
-			return parent.subscribe(eventName, listener);
+		if (node instanceof ParentObjectBase) {
+			return node.subscribe(eventName, listener);
 		}
 
-		if (isTreeNode(parent)) {
-			return treeNodeApi.on(parent, eventName, listener);
+		if (isTreeNode(node)) {
+			return treeNodeApi.on(node, eventName, listener);
 		}
 
 		fail("Unknown ParentObject type");
