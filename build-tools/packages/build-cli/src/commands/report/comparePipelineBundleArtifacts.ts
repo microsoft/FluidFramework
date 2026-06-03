@@ -29,7 +29,7 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 	typeof ComparePipelineBundleArtifacts
 > {
 	static readonly description =
-		`Download the bundle-size artifacts published by the \`Build - client bundle size artifacts\` ADO pipeline for two commits and emit their per-package, per-bundle differences as JSON. Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use \`check bundleSize\` instead.`;
+		`Download the bundle-size artifacts published by the \`Build - Client bundle size artifacts\` ADO pipeline for two commits and emit their per-package, per-bundle differences as JSON. Intended for the PR-comment CI workflow; for local inner-dev-loop comparisons use \`check bundleSize\` instead.`;
 
 	static readonly enableJsonFlag = true;
 
@@ -77,8 +77,6 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 		}
 
 		const comparison = compareJsonReportsByPackage(baseJsons, headJsons);
-
-		this.log(`Compared base=${base} head=${head}.`);
 
 		return { baseCommit: base, headCommit: head, comparison };
 	}

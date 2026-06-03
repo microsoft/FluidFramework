@@ -11,6 +11,7 @@ import {
 } from "../../codeCoverage/compareCodeCoverage.js";
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
 import type { IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
+import { fluidframeworkAdoOrgUrl } from "../../library/bundleSize/index.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import {
 	createOrUpdateCommentOnPr,
@@ -78,7 +79,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 
 		const artifactNamePrefix = "Code Coverage Report";
 		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
-			orgUrl: "https://dev.azure.com/fluidframework",
+			orgUrl: fluidframeworkAdoOrgUrl,
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
 			artifactName: artifactNamePrefix,
@@ -87,7 +88,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		};
 
 		const codeCoverageConstantsForPR: IAzureDevopsBuildCoverageConstants = {
-			orgUrl: "https://dev.azure.com/fluidframework",
+			orgUrl: fluidframeworkAdoOrgUrl,
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
 			artifactName: artifactNamePrefix,

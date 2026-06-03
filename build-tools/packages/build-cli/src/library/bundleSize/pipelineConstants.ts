@@ -4,7 +4,7 @@
  */
 
 /**
- * Identifiers for the ADO `Build - client bundle size artifacts` pipeline.
+ * Identifiers for the ADO `Build - Client bundle size artifacts` pipeline.
  * Source-of-truth: `tools/pipelines/build-bundle-size-artifacts.yml`.
  */
 export const bundleSizeArtifactsPipeline = {
