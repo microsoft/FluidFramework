@@ -143,13 +143,11 @@ describe("PerformanceEvent", () => {
 			}
 		});
 
-		it("Logs cancel events as essential when configured", () => {
+		it("Logs cancel events as essential by default", () => {
 			const perfEvent = PerformanceEvent.start(
 				logger,
 				{ eventName: "EssentialCancel" },
-				{
-					cancel: "generic",
-				},
+				undefined,
 				true,
 				LogLevel.info,
 			);
@@ -159,23 +157,6 @@ describe("PerformanceEvent", () => {
 			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
 			assert.equal(logger.events[0]?.eventName, "EssentialCancel_cancel");
 			assert.equal(logger.events[0]?.category, "generic");
-		});
-
-		it("Preserves scalar LogLevel.info behavior when marker escalation is not configured", () => {
-			const perfEvent = PerformanceEvent.start(
-				logger,
-				{ eventName: "InfoCancel" },
-				{
-					cancel: "generic",
-				},
-				true,
-				LogLevel.info,
-			);
-
-			perfEvent.cancel();
-
-			assert.deepStrictEqual(logger.logLevels, [LogLevel.info]);
-			assert.equal(logger.events[0]?.eventName, "InfoCancel_cancel");
 		});
 
 		it("Continues to log error-category performance events as essential", () => {
