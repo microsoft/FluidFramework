@@ -1,10 +1,59 @@
 # @fluidframework/eslint-config-fluid Changelog
 
-## vNext
+## [12.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v12.0.0)
 
-### ⚠ BREAKING CHANGES
+<!-- Add new changelog entries here. -->
 
-- Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+## [11.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v11.0.0)
+
+### Breaking: node 22 is now the minimum supported node version
+
+Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reached end-of-life on April 30, 2026.
+
+### Breaking: import-x/order disabled
+
+The `import-x/order` rule has been disabled. Prefer using formatting tools like Biome to handle import sorting.
+
+### Breaking: ESLint 8 legacy configs no longer exported
+
+This package now uses ESLint flat config format exclusively. The legacy `.eslintrc` format is no longer supported.
+The package root now exports the named flat and server configs directly from `@fluidframework/eslint-config-fluid`.
+
+**Requirements:**
+
+- ESLint 9 (recommended), or
+- ESLint 8.21+ with `ESLINT_USE_FLAT_CONFIG=true` environment variable
+
+**Migration:**
+
+Replace your `.eslintrc.cjs`:
+
+```javascript
+// OLD - .eslintrc.cjs (no longer supported)
+module.exports = { extends: ["@fluidframework/eslint-config-fluid/strict"] };
+```
+
+With `eslint.config.mts`:
+
+```javascript
+// NEW - eslint.config.mts
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
+
+For ESLint 8.21+ users, set the environment variable:
+
+```bash
+ESLINT_USE_FLAT_CONFIG=true eslint .
+```
+
+**Removed files:**
+
+- `base.js`, `minimal-deprecated.js`, `recommended.js`, `strict.js`, `strict-biome.js`, `index.js`
+
+**Removed dependency:**
+
+- `@eslint/eslintrc` (FlatCompat no longer needed)
 
 ### Restrict the named `Type` import from `@sinclair/typebox`
 

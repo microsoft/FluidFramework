@@ -22,6 +22,10 @@
 			// Webpack output
 			"**/webpack/**",
 
+			// compat-workspaces — machine-generated, not subject to formatting
+			"!**/test-version-utils/compat-workspaces/**/package.json",
+			"!**/test-version-utils/compat-workspaces/generated-versions.cjs",
+
 			// test collateral
 			"!**/_package.json",
 			"!**/fluid-runner/src/test/localOdspSnapshots/**",

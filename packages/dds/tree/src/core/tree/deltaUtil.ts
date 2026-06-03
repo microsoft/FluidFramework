@@ -60,7 +60,7 @@ export function areDetachedNodeIdsEqual(a: DetachedNodeId, b: DetachedNodeId): b
 }
 
 /**
- * Returns true if a delta field map contains any changes that would be visible in the document (eg, an insert, move, edit)
+ * Returns true if a delta field map contains any changes that would be visible in the document (i.e., a detach or an attach)
  * @param fields - Delta FieldMap to check for visible changes
  * @returns True if change map contains any changes that would be visible in the document, false otherwise
  */
@@ -77,7 +77,7 @@ export function deltaFieldMapHasVisibleChanges(fields: FieldMap | undefined): bo
 }
 
 /**
- * Returns true if the given field changes contains any changes that would be visible in the document (eg, an insert, move, edit)
+ * Returns true if the given field changes contains any changes that would be visible in the document (i.e., a detach or an attach)
  * @param fieldChanges - Field changes to check for visible changes
  * @returns True if the field changes contain any changes that would be visible in the document, false otherwise
  */

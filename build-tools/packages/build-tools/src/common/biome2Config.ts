@@ -11,9 +11,9 @@ import multimatch from "multimatch";
 import { merge } from "ts-deepmerge";
 import type { Opaque } from "type-fest";
 
-import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes";
-import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils";
-import type { GitRepo } from "./gitRepo";
+import type { Configuration as Biome2ConfigRaw } from "./biome2ConfigTypes.js";
+import { getClosestBiomeConfigPath, loadRawBiomeConfigFile } from "./biomeConfigUtils.js";
+import type { GitRepo } from "./gitRepo.js";
 
 /**
  * Convenience type to represent a Biome 2.x config that has been loaded while following and merging the
