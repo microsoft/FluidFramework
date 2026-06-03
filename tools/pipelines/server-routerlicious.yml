@@ -122,6 +122,7 @@ extends:
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
     tagName: server
+    passNpmrcToDockerBuild: true
     isReleaseGroup: true
     pool: Large-eastus2
     pack: true

@@ -106,6 +106,7 @@ extends:
     containerName: fluidframework/routerlicious/gitrest
     test: test
     tagName: gitrest
+    passNpmrcToDockerBuild: true
     lint: true
     pack: true
     enableDockerImagePull: false

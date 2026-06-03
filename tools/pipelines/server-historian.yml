@@ -105,6 +105,7 @@ extends:
     additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     test: test
     tagName: historian
+    passNpmrcToDockerBuild: true
     lint: true
     pack: true
     enableDockerImagePull: false
