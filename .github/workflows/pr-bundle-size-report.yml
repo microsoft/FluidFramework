@@ -21,6 +21,12 @@ on:
   check_run:
     types: [completed]
 
+# Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
+# in-progress runs in the same group so the latest event wins on the sticky comment.
+concurrency:
+  group: pr-bundle-size-${{ github.event.pull_request.number || github.event.check_run.head_sha || github.run_id }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
   pull-requests: read
@@ -45,13 +51,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Server-side merge-base lookup. Returns the SHA or empty on failure.
-          # Snapshotting here (rather than recomputing in `compare`) freezes the
-          # baseline against what identify-targets observed, so the compare job
-          # stays consistent even if main moves under the PR between jobs.
+          # Server-side merge-base lookup. Returns the SHA, or empty on failure / disjoint history.
+          # GitHub's compare API returns success with `merge_base_commit: null` for refs that share
+          # no history, and `jq '.merge_base_commit.sha'` emits the literal string "null" — collapse
+          # that to empty so callers only have one failure shape to handle.
           compute_mb() {
-            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-              --jq '.merge_base_commit.sha' 2>/dev/null || true
+            local mb
+            mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
+              --jq '.merge_base_commit.sha' 2>/dev/null || true)
+            if [ "$mb" = "null" ]; then
+              mb=""
+            fi
+            echo "$mb"
           }
 
           if [ "${{ github.event_name }}" = "pull_request_target" ]; then
@@ -60,6 +71,11 @@ jobs:
             HEAD_SHA='${{ github.event.pull_request.head.sha }}'
             BASE_REF='${{ github.event.pull_request.base.ref }}'
             MB=$(compute_mb "$BASE_REF" "$HEAD_SHA")
+            if [ -z "$MB" ]; then
+              echo "Could not compute merge-base for PR #$PR_NUM (base=$BASE_REF, head=$HEAD_SHA); skipping." >&2
+              echo "prs=[]" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             PRS=$(jq -n -c \
               --argjson n "$PR_NUM" \
               --arg h "$HEAD_SHA" \
@@ -73,10 +89,20 @@ jobs:
           # check_run case: map the check's SHA back to affected open PRs.
           # A PR is affected if either its head SHA matches (PR build finished)
           # or its merge-base with its base branch matches (baseline build finished).
+          # Only consider PRs targeting branches the pull_request_target trigger also covers,
+          # so the two trigger surfaces agree on which PRs are in scope.
           SHA="${{ github.event.check_run.head_sha }}"
+          PR_LIST_LIMIT=500
           PRS_JSON=$(gh pr list --state open \
-            --json number,headRefOid,baseRefName --limit 200)
+            --json number,headRefOid,baseRefName --limit "$PR_LIST_LIMIT")
+          PR_COUNT=$(echo "$PRS_JSON" | jq 'length')
+          if [ "$PR_COUNT" -ge "$PR_LIST_LIMIT" ]; then
+            echo "WARNING: gh pr list returned the maximum $PR_LIST_LIMIT PRs; some open PRs may not have been considered." >&2
+          fi
+          PRS_JSON=$(echo "$PRS_JSON" | jq -c \
+            '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))]')
 
+          PR_LINES=$(echo "$PRS_JSON" | jq -c '.[]')
           AFFECTED='[]'
           while IFS= read -r pr; do
             PR_NUM=$(echo "$pr" | jq -r '.number')
@@ -85,10 +111,19 @@ jobs:
             MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD")
 
             if [ "$PR_HEAD" = "$SHA" ] || [ "$MB" = "$SHA" ]; then
-              AFFECTED=$(echo "$AFFECTED" | jq -c \
-                ". + [{number: $PR_NUM, head: \"$PR_HEAD\", baseRef: \"$PR_BASE_REF\", mergeBase: \"$MB\"}]")
+              if [ -z "$MB" ]; then
+                echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
+                continue
+              fi
+              ENTRY=$(jq -n -c \
+                --argjson n "$PR_NUM" \
+                --arg h "$PR_HEAD" \
+                --arg b "$PR_BASE_REF" \
+                --arg mb "$MB" \
+                '{number: $n, head: $h, baseRef: $b, mergeBase: $mb}')
+              AFFECTED=$(echo "$AFFECTED" | jq -c --argjson e "$ENTRY" '. + [$e]')
             fi
-          done < <(echo "$PRS_JSON" | jq -c '.[]')
+          done <<< "$PR_LINES"
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
 
   compare:
@@ -131,6 +166,7 @@ jobs:
 
       - name: Compare bundle sizes
         run: |
+          set -euo pipefail
           flub report comparePipelineBundleArtifacts \
             --base ${{ matrix.pr.mergeBase }} \
             --head ${{ matrix.pr.head }} \
