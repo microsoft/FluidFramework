@@ -3,9 +3,8 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { strict } from "assert";
-import fs from "fs";
+import { strict } from "node:assert";
+import fs from "node:fs";
 
 import {
 	compareWithReferenceSnapshot,
@@ -15,6 +14,7 @@ import {
 	uploadSummary,
 } from "@fluid-internal/replay-tool";
 import { IContainer } from "@fluidframework/container-definitions/internal";
+import type { ISummaryMetadataMessage } from "@fluidframework/container-runtime/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	TreeEntry,
@@ -155,7 +155,10 @@ export async function validateSnapshots(
 			// validate that snapshot with the destination snapshot.
 			const onSnapshotCb = (snapshot: IFileSnapshot): void => {
 				const produced = getNormalizedFileSnapshot(
-					addSummaryMessage(snapshot, seqToMessage, container.deltaManager.lastSequenceNumber),
+					addSummaryMessage(
+						snapshot,
+						seqToMessage.get(container.deltaManager.lastSequenceNumber),
+					),
 				);
 				if (sourceLacksRecentBatchInfo) {
 					compareIgnoringBlob(
@@ -206,34 +209,35 @@ export async function validateSnapshots(
 }
 
 /**
- * Add summary messgage to the "metadata" blob of older snapshots. This is the last message processed when generating
+ * Add summary message to the "metadata" blob of older snapshots. This is the last message processed when generating
  * summary. In the back compat tests, we do not process any messages before summarizing, so the summary message will be
  * undefined. Add the message corresponding to the sequence number at the time of summary.
  */
 function addSummaryMessage(
 	snapshot: IFileSnapshot,
-	seqToMessage: Map<number, ISequencedDocumentMessage>,
-	summaryMessageSequenceNumber: number,
+	backCompatSummaryMetadataMessage: ISequencedDocumentMessage | undefined,
 ): IFileSnapshot {
 	const treeEntries = snapshot.tree.entries;
+	// Copy over fields from the message as per the properties in ISummaryMetadataMessage. If the test fail
+	// because ISummaryMetadataMessage changed, update the fields being copied here.
+	const summaryMetadataMessage = backCompatSummaryMetadataMessage
+		? ({
+				clientId: backCompatSummaryMetadataMessage.clientId,
+				clientSequenceNumber: backCompatSummaryMetadataMessage.clientSequenceNumber,
+				minimumSequenceNumber: backCompatSummaryMetadataMessage.minimumSequenceNumber,
+				referenceSequenceNumber: backCompatSummaryMetadataMessage.referenceSequenceNumber,
+				sequenceNumber: backCompatSummaryMetadataMessage.sequenceNumber,
+				timestamp: backCompatSummaryMetadataMessage.timestamp,
+				type: backCompatSummaryMetadataMessage.type,
+			} satisfies ISummaryMetadataMessage)
+		: {};
 	for (const entry of treeEntries) {
 		if (entry.path === metadataBlobName && entry.type === TreeEntry.Blob) {
 			const metadata = JSON.parse(entry.value.contents);
 			if (metadata.message === undefined) {
-				const referenceMessage = seqToMessage.get(summaryMessageSequenceNumber);
-				// Copy over fields from the message as per the properties in ISummaryMetadataMessage. If the test fail
-				// because ISummaryMetadataMessage changed, update the fields being copied here.
-				metadata.message = {
-					clientId: referenceMessage.clientId,
-					clientSequenceNumber: referenceMessage.clientSequenceNumber,
-					minimumSequenceNumber: referenceMessage.minimumSequenceNumber,
-					referenceSequenceNumber: referenceMessage.referenceSequenceNumber,
-					sequenceNumber: referenceMessage.sequenceNumber,
-					timestamp: referenceMessage.timestamp,
-					type: referenceMessage.type,
-				};
+				metadata.message = summaryMetadataMessage;
+				entry.value.contents = JSON.stringify(metadata);
 			}
-			entry.value.contents = JSON.stringify(metadata);
 		}
 	}
 	return snapshot;
