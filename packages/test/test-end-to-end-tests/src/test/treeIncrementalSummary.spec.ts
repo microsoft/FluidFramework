@@ -21,7 +21,6 @@ import {
 import {
 	FluidClientVersion,
 	ForestTypeOptimized,
-	incrementalEncodingPolicyForAllowedTypes,
 	TreeCompressionStrategy,
 	type ITree,
 } from "@fluidframework/tree/alpha";
@@ -54,6 +53,7 @@ async function make4DepthTreeView(
 		TreeViewConfigurationAlpha,
 		incrementalSummaryHint,
 		configuredSharedTree,
+		incrementalEncodingPolicyForAllowedTypes,
 	} = dataRuntimeApi.packages.tree;
 
 	const sf = new SchemaFactoryAlpha("incrementalSummary4DepthE2E");
@@ -101,7 +101,7 @@ async function make4DepthTreeView(
 	const SharedTree = configuredSharedTree({
 		forest: ForestTypeOptimized,
 		treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
-		minVersionForCollab: FluidClientVersion.v2_74,
+		minVersionForCollab: FluidClientVersion.v2_80,
 		shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
 	});
 
@@ -255,7 +255,7 @@ async function loadContainerAndGetTreeView(
 	summaryVersion?: string,
 ) {
 	return make4DepthTreeView(
-		apis.dataRuntimeForLoading ?? apis.dataRuntime,
+		apis.dataRuntimeForLoading,
 		provider,
 		"load",
 		undefined,
@@ -283,178 +283,129 @@ async function createTestSummarizer(
 }
 
 describeCompat(
-	"SharedTree incremental summary 4-depth schema",
+	"SharedTree incremental summary smoke tests",
+	"FullCompat",
+	(getTestObjectProvider, apis) => {
+		let provider: ITestObjectProvider;
+
+		beforeEach("getTestObjectProvider", async function () {
+			provider = getTestObjectProvider({ syncSummarizer: true });
+			if (
+				apis.dataRuntime.packages.tree === undefined ||
+				apis.dataRuntimeForLoading.packages.tree === undefined
+			) {
+				this.skip();
+			}
+		});
+		// This smoke test runs against all services to confirm the incremental summary feature works
+		// end-to-end on real services.
+		it("new container and summarizer can load from incremental summary", async () => {
+			const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
+				provider,
+				apis,
+			);
+			const summarizer = await createTestSummarizer(provider, container, testContainerConfig);
+
+			// First summary encodes every chunk as a full tree (no handles yet).
+			await provider.ensureSynchronized();
+			await summarizeNow(summarizer);
+
+			makeChangeAtDepth(view, 1, 0);
+			await provider.ensureSynchronized();
+			const { summaryVersion } = await summarizeNow(summarizer);
+
+			// A fresh container loaded from that summary must reflect the change.
+			const { view: loadedView } = await loadContainerAndGetTreeView(
+				provider,
+				apis,
+				summaryVersion,
+			);
+			assert.deepStrictEqual(
+				readState(loadedView),
+				readState(view),
+				"Loaded document should match the summarized document",
+			);
+
+			summarizer.close();
+			const newSummarizer = await createTestSummarizer(
+				provider,
+				container,
+				testContainerConfig,
+				summaryVersion,
+			);
+			await assert.doesNotReject(
+				summarizeNow(newSummarizer),
+				"New summarizer should be able to summarize the document",
+			);
+		});
+	},
+);
+
+describeCompat(
+	"Shared tree incremental summary 4-depth schema",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		let provider: ITestObjectProvider;
 
 		beforeEach("getTestObjectProvider", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
-		});
 
-		describe("Smoke tests", () => {
-			// This smoke test runs against all services to confirm the incremental summary feature works
-			// end-to-end on real services.
-			it("new container and summarizer can load from incremental summary", async () => {
-				const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
-					provider,
-					apis,
-				);
-				const summarizer = await createTestSummarizer(
-					provider,
-					container,
-					testContainerConfig,
-				);
-
-				// First summary encodes every chunk as a full tree (no handles yet).
-				await provider.ensureSynchronized();
-				await summarizeNow(summarizer);
-
-				makeChangeAtDepth(view, 1, 0);
-				await provider.ensureSynchronized();
-				const { summaryVersion } = await summarizeNow(summarizer);
-
-				// A fresh container loaded from that summary must reflect the change.
-				const { view: loadedView } = await loadContainerAndGetTreeView(
-					provider,
-					apis,
-					summaryVersion,
-				);
-				assert.deepStrictEqual(
-					readState(loadedView),
-					readState(view),
-					"Loaded document should match the summarized document",
-				);
-
-				summarizer.close();
-				const newSummarizer = await createTestSummarizer(
-					provider,
-					container,
-					testContainerConfig,
-					summaryVersion,
-				);
-				await assert.doesNotReject(
-					summarizeNow(newSummarizer),
-					"New summarizer should be able to summarize the document",
-				);
-			});
-		});
-
-		describe("4-depth schema", () => {
-			beforeEach("getTestObjectProvider", async function () {
-				// These tests only run on local service.
-				// They are exhaustive tests of the incremental summary feature. Running on all
-				// services is expensive and takes a long time.
-				if (provider.driver.type !== "local") {
-					this.skip();
-				}
-			});
-
-			/**
-			 * Ordered sequences of depth changes, mirroring the parameterized unit test cases. Each change
-			 * drives a new summary round; together they exercise different combinations of chunk re-encoding
-			 * and handle reuse, including the stale-handle-path and copy-propagation scenarios.
-			 */
-			const fourDepthChangeSequences: {
-				name: string;
-				changeDepths: readonly (0 | 1 | 2 | 3 | 4)[];
-			}[] = [
-				{ name: "ascending depths 0→1→2→3→4", changeDepths: [0, 1, 2, 3, 4] },
-				{ name: "descending depths 4→3→2→1", changeDepths: [4, 3, 2, 1] },
-				{ name: "shallow then deep: depth 1 then 3", changeDepths: [1, 3] },
-				{ name: "deep then shallow: depth 3 then 1", changeDepths: [3, 1] },
-				{ name: "non-sequential: depth 2 then 4 then 1", changeDepths: [2, 4, 1] },
-				// The following exercise the stale-handle-path bug: when a parent chunk is re-encoded in
-				// summary S(i), child handles inside it reference a summaryPath recorded when the child was
-				// last encoded as a full tree. In S(i+1) those handles are nested inside the newly-re-encoded
-				// parent, so their path must resolve in (i), not in an older summary.
-				{ name: "same shallow depth twice: depth 1 then 1", changeDepths: [1, 1] },
-				{ name: "same depth twice: depth 2 then 2", changeDepths: [2, 2] },
-				{ name: "same depth three times: depth 1 then 1 then 1", changeDepths: [1, 1, 1] },
-				{
-					name: "shallow then same shallow twice: depth 2 then 1 then 1",
-					changeDepths: [2, 1, 1],
-				},
-				{
-					name: "deep then same shallow twice: depth 3 then 1 then 1",
-					changeDepths: [3, 1, 1],
-				},
-				{
-					name: "repeated shallow with deep interleaved: depth 1 then 2 then 1",
-					changeDepths: [1, 2, 1],
-				},
-				// The next test exercises the completeSummary copy-propagation path: a depth-0 change turns all
-				// incremental chunks into handles whose tracking entries (including stale summaryPaths) are
-				// copied forward; the following deeper change gives the parent a new referenceId so a
-				// copied-forward child handle would point at a key that no longer exists in the preceding summary.
-				{
-					name: "stale path via copy propagation: depth 2, depth 0, depth 2",
-					changeDepths: [2, 0, 2],
-				},
-			];
-
-			for (const { name, changeDepths } of fourDepthChangeSequences) {
-				it(`summarizes across rounds and loads correctly with ${name}`, async () => {
-					const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
-						provider,
-						apis,
-					);
-					const summarizer = await createTestSummarizer(
-						provider,
-						container,
-						testContainerConfig,
-					);
-
-					// Initial summary (no changes yet → no handles).
-					await provider.ensureSynchronized();
-					await summarizeNow(summarizer);
-
-					const validateContainerLoad = async (summaryVersion: string): Promise<void> => {
-						const { view: loadedView } = await loadContainerAndGetTreeView(
-							provider,
-							apis,
-							summaryVersion,
-						);
-						assert.deepStrictEqual(
-							readState(loadedView),
-							readState(view),
-							"Loaded document should reflect the latest mutation",
-						);
-					};
-
-					// Each round mutates at the specified depth and takes an incremental summary. Every
-					// summary must succeed — before the handle-path fix, re-encoding a parent chunk left
-					// child handles pointing at a stale summaryPath and the summary threw.
-					for (let round = 0; round < changeDepths.length; round++) {
-						const changeDepth = changeDepths[round];
-						makeChangeAtDepth(view, changeDepth, round);
-						await provider.ensureSynchronized();
-
-						let summaryInfo: SummaryInfo | undefined;
-						await assert.doesNotReject(
-							summarizeNow(summarizer).then((info) => {
-								summaryInfo = info;
-							}),
-							`Summary for round ${round} (depth ${changeDepth}) should succeed`,
-						);
-						assert(summaryInfo !== undefined, `Round ${round} should produce a summary`);
-						await assert.doesNotReject(
-							validateContainerLoad(summaryInfo.summaryVersion),
-							`Loading of summary version ${summaryInfo.summaryVersion} should succeed`,
-						);
-					}
-				});
+			// These tests only run on local service.
+			// They are exhaustive tests of the incremental summary feature. Running on all
+			// services is expensive and takes a long time.
+			if (provider.driver.type !== "local") {
+				this.skip();
 			}
+		});
 
-			it("simultaneous sibling and descendant handles when only one section's items change", async () => {
-				// Doc1 has two sections (Sec1 and Sec2). Changing Item1.itemName in Sec1 (a depth-3
-				// change) re-encodes the documents, Doc1.sections, and Sec1.items chunks, while Sec2.items
-				// (a sibling at depth 3) and Item1.tags (a descendant at depth 4) become handles in the
-				// same summary. Repeating the change exercises the stale-path bug for both handles.
+		/**
+		 * Ordered sequences of depth changes, mirroring the parameterized unit test cases. Each change
+		 * drives a new summary round; together they exercise different combinations of chunk re-encoding
+		 * and handle reuse, including the stale-handle-path and copy-propagation scenarios.
+		 */
+		const fourDepthChangeSequences: {
+			name: string;
+			changeDepths: readonly (0 | 1 | 2 | 3 | 4)[];
+		}[] = [
+			{ name: "ascending depths 0→1→2→3→4", changeDepths: [0, 1, 2, 3, 4] },
+			{ name: "descending depths 4→3→2→1", changeDepths: [4, 3, 2, 1] },
+			{ name: "shallow then deep: depth 1 then 3", changeDepths: [1, 3] },
+			{ name: "deep then shallow: depth 3 then 1", changeDepths: [3, 1] },
+			{ name: "non-sequential: depth 2 then 4 then 1", changeDepths: [2, 4, 1] },
+			// The following exercise the stale-handle-path bug: when a parent chunk is re-encoded in
+			// summary S(i), child handles inside it reference a summaryPath recorded when the child was
+			// last encoded as a full tree. In S(i+1) those handles are nested inside the newly-re-encoded
+			// parent, so their path must resolve in (i), not in an older summary.
+			{ name: "same shallow depth twice: depth 1 then 1", changeDepths: [1, 1] },
+			{ name: "same depth twice: depth 2 then 2", changeDepths: [2, 2] },
+			{ name: "same depth three times: depth 1 then 1 then 1", changeDepths: [1, 1, 1] },
+			{
+				name: "shallow then same shallow twice: depth 2 then 1 then 1",
+				changeDepths: [2, 1, 1],
+			},
+			{
+				name: "deep then same shallow twice: depth 3 then 1 then 1",
+				changeDepths: [3, 1, 1],
+			},
+			{
+				name: "repeated shallow with deep interleaved: depth 1 then 2 then 1",
+				changeDepths: [1, 2, 1],
+			},
+			// The next test exercises the completeSummary copy-propagation path: a depth-0 change turns all
+			// incremental chunks into handles whose tracking entries (including stale summaryPaths) are
+			// copied forward; the following deeper change gives the parent a new referenceId so a
+			// copied-forward child handle would point at a key that no longer exists in the preceding summary.
+			{
+				name: "stale path via copy propagation: depth 2, depth 0, depth 2",
+				changeDepths: [2, 0, 2],
+			},
+		];
+
+		for (const { name, changeDepths } of fourDepthChangeSequences) {
+			it(`summarizes across rounds and loads correctly with ${name}`, async () => {
 				const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
 					provider,
 					apis,
-					"double",
 				);
 				const summarizer = await createTestSummarizer(
 					provider,
@@ -479,8 +430,12 @@ describeCompat(
 					);
 				};
 
-				for (let round = 0; round < 3; round++) {
-					makeChangeAtDepth(view, 3, round);
+				// Each round mutates at the specified depth and takes an incremental summary. Every
+				// summary must succeed — before the handle-path fix, re-encoding a parent chunk left
+				// child handles pointing at a stale summaryPath and the summary threw.
+				for (let round = 0; round < changeDepths.length; round++) {
+					const changeDepth = changeDepths[round];
+					makeChangeAtDepth(view, changeDepth, round);
 					await provider.ensureSynchronized();
 
 					let summaryInfo: SummaryInfo | undefined;
@@ -488,7 +443,7 @@ describeCompat(
 						summarizeNow(summarizer).then((info) => {
 							summaryInfo = info;
 						}),
-						`Summary for round ${round} should succeed`,
+						`Summary for round ${round} (depth ${changeDepth}) should succeed`,
 					);
 					assert(summaryInfo !== undefined, `Round ${round} should produce a summary`);
 					await assert.doesNotReject(
@@ -497,6 +452,54 @@ describeCompat(
 					);
 				}
 			});
+		}
+
+		it("simultaneous sibling and descendant handles when only one section's items change", async () => {
+			// Doc1 has two sections (Sec1 and Sec2). Changing Item1.itemName in Sec1 (a depth-3
+			// change) re-encodes the documents, Doc1.sections, and Sec1.items chunks, while Sec2.items
+			// (a sibling at depth 3) and Item1.tags (a descendant at depth 4) become handles in the
+			// same summary. Repeating the change exercises the stale-path bug for both handles.
+			const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
+				provider,
+				apis,
+				"double",
+			);
+			const summarizer = await createTestSummarizer(provider, container, testContainerConfig);
+
+			// Initial summary (no changes yet → no handles).
+			await provider.ensureSynchronized();
+			await summarizeNow(summarizer);
+
+			const validateContainerLoad = async (summaryVersion: string): Promise<void> => {
+				const { view: loadedView } = await loadContainerAndGetTreeView(
+					provider,
+					apis,
+					summaryVersion,
+				);
+				assert.deepStrictEqual(
+					readState(loadedView),
+					readState(view),
+					"Loaded document should reflect the latest mutation",
+				);
+			};
+
+			for (let round = 0; round < 3; round++) {
+				makeChangeAtDepth(view, 3, round);
+				await provider.ensureSynchronized();
+
+				let summaryInfo: SummaryInfo | undefined;
+				await assert.doesNotReject(
+					summarizeNow(summarizer).then((info) => {
+						summaryInfo = info;
+					}),
+					`Summary for round ${round} should succeed`,
+				);
+				assert(summaryInfo !== undefined, `Round ${round} should produce a summary`);
+				await assert.doesNotReject(
+					validateContainerLoad(summaryInfo.summaryVersion),
+					`Loading of summary version ${summaryInfo.summaryVersion} should succeed`,
+				);
+			}
 		});
 	},
 );

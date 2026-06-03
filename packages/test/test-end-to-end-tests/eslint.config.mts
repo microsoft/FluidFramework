@@ -131,6 +131,8 @@ const config: Linter.Config[] = [
 								"SharedTree",
 								"TreeViewConfiguration",
 								"configuredSharedTree",
+								"incrementalSummaryHint",
+								"incrementalEncodingPolicyForAllowedTypes",
 							],
 							"message":
 								"Use apis.dds.SharedTree / apis.dataRuntime.packages.tree.{SchemaFactory,TreeViewConfiguration,configuredSharedTree} from describeCompat instead. Tree type exports (ITree, TreeView, ITreeAlpha, etc.) are not affected. See WritingCompatCorrectTests.md (in this package) for the patterns and rationale.",
