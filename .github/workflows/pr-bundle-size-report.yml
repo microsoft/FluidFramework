@@ -238,12 +238,27 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
+        # `flub … --json` swallows error messages in oclif's --json mode (renders `{"error":{}}` to
+        # stdout, nothing on stderr). When the command fails, re-run without --json so the operator
+        # gets a visible message in the action log. Follow-up: fix at the oclif / command level so the
+        # JSON path emits the message too (adjacent to AB#74372).
         run: |
-          set -euo pipefail
+          set -uo pipefail
+          set +e
           flub report comparePipelineBundleArtifacts \
             --base ${{ matrix.pr.mergeBase }} \
             --head ${{ matrix.pr.head }} \
-            --json | tee bundle-comparison.json
+            --json > bundle-comparison.json
+          EC=$?
+          cat bundle-comparison.json
+          if [ "$EC" -ne 0 ]; then
+            echo
+            echo "flub --json exited $EC; re-running without --json so the error message is visible:"
+            flub report comparePipelineBundleArtifacts \
+              --base ${{ matrix.pr.mergeBase }} \
+              --head ${{ matrix.pr.head }} 2>&1 || true
+            exit "$EC"
+          fi
 
       # Format the JSON into the markdown body the sticky comment would post. Done here (not in flub) so
       # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
