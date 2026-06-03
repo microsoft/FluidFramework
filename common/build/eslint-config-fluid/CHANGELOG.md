@@ -6,6 +6,18 @@
 
 - Node 22 is now the minimum supported Node.js version. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
 
+### `no-restricted-syntax` selectors exported as a shared constant
+
+The base selectors for the `no-restricted-syntax` rule (`ExportAllDeclaration` and `ForInStatement`) are now exported as
+a `restrictedSyntax` constant from the package's shared constants. This is an internal refactor with no change to the
+generated configs.
+
+Downstream packages that add their own `no-restricted-syntax` selectors previously had to hand-copy the base selectors,
+because ESLint does not merge multiple `no-restricted-syntax` configurations — the last config in the resolved chain
+wins, replacing earlier selector lists rather than concatenating them. Such packages can now spread the exported
+constant alongside their own additions (`["error", ...restrictedSyntax, myExtraSelector]`) instead of duplicating the
+base selectors.
+
 ## [10.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v10.0.0)
 
 ### eslint-plugin-react replaced by @eslint-react/eslint-plugin
