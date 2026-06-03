@@ -173,9 +173,6 @@ peerDependencyRules:
 # Hoist these dependencies to the root workspace
 publicHoistPattern:
   - '@arethetypeswrong/cli'
-  # ['*eslint*', '*prettier*'] is the default, so we add those as well
-  - '*eslint*'
-  - '*prettier*'
 
 resolutionMode: highest
 
