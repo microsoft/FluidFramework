@@ -843,9 +843,11 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move(
+				// Path to root.foo.
 				{ parent: root, field: fooKey },
 				1,
 				3,
+				// Path to root.foo[4].foo, which is after the moved nodes in their original location.
 				{
 					parent: {
 						parent: root,
@@ -897,9 +899,11 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move(
+				// Path to root.foo.
 				{ parent: root, field: fooKey },
 				1,
 				3,
+				// Path to root.foo[0].foo, which is before the moved nodes in their original location.
 				{ parent: root_foo0, field: fooKey },
 				1,
 			);
