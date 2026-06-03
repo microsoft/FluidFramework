@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { LogLevel, type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import sinon from "sinon";
 
 import { PerformanceEvent, TelemetryLogger } from "../logger.js";
 import type { TelemetryLoggerExt } from "../telemetryTypes.js";
@@ -38,10 +39,6 @@ describe("PerformanceEvent", () => {
 	const callback = (): void => {
 		callbackCalls++;
 	};
-	const delay = async (): Promise<void> =>
-		new Promise<void>((resolve) => {
-			setTimeout(resolve, 1);
-		});
 	const asyncCallback = async (event: PerformanceEvent): Promise<string | void> => {
 		const outerPromise = new Promise<string>((resolve, reject) => {
 			Promise.resolve("A")
@@ -122,23 +119,28 @@ describe("PerformanceEvent", () => {
 			assert.equal(logger.events[0]?.eventName, "BelowThreshold_end");
 		});
 
-		it("Logs above-threshold end events as essential", async () => {
-			const perfEvent = PerformanceEvent.start(
-				logger,
-				{ eventName: "AboveThreshold" },
-				{
-					end: true,
-					endEventEssentialDurationThresholdMs: 0,
-				},
-				true,
-				LogLevel.info,
-			);
+		it("Logs above-threshold end events as essential", () => {
+			const clock = sinon.useFakeTimers();
+			try {
+				const perfEvent = PerformanceEvent.start(
+					logger,
+					{ eventName: "AboveThreshold" },
+					{
+						end: true,
+						endEventEssentialDurationThresholdMs: 0,
+					},
+					true,
+					LogLevel.info,
+				);
 
-			await delay();
-			perfEvent.end();
+				clock.tick(1);
+				perfEvent.end();
 
-			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
-			assert.equal(logger.events[0]?.eventName, "AboveThreshold_end");
+				assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+				assert.equal(logger.events[0]?.eventName, "AboveThreshold_end");
+			} finally {
+				clock.restore();
+			}
 		});
 
 		it("Logs cancel events as essential when configured", () => {
