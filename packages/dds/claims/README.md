@@ -7,7 +7,7 @@ A distributed data structure (DDS) for first-writer-wins claim management with o
 The `Claims` DDS provides a key-value store with controlled write semantics:
 
 -   **Write-once (claims):** Use `trySetClaim(key, value)` to claim a key. Once claimed, a key cannot be overwritten. This is useful for scenarios like aliasing, singleton creation, or task assignment where exactly one client should "win."
--   **Compare-and-swap (CAS):** Use `compareAndSetClaim(key, newValue, expectedValue)` to update a key's value only if the current value matches `expectedValue`. This enables safe concurrent updates without overwriting changes from other clients.
+-   **Compare-and-swap (CAS):** Use `compareAndSetClaim(key, newValue, expectedValue)` to update a key's value only if the current value matches `expectedValue`. The `expectedValue` serves as a local guard (checked via `===`); on the wire, the DDS uses per-key sequence numbers for conflict resolution, so concurrent writes are detected even when object identity cannot be compared across clients.
 
 Both modes are optimistic: when attached, a local op is submitted and a `"Pending"` result is returned with a promise that resolves once the server acknowledges the op. In detached mode, values are applied immediately and return an `"Accepted"` result. Operations are also permitted while disconnected — they are queued and resubmitted on reconnect.
 
@@ -62,7 +62,7 @@ claims.on("claimed", (key: string) => {
 | Method                                                                        | Description                                                    |
 | ----------------------------------------------------------------------------- | -------------------------------------------------------------- |
 | `trySetClaim(key: string, value: T): ClaimResult<T>`                          | Write-once claim. Fails if key already exists.                 |
-| `compareAndSetClaim(key: string, value: T, expectedValue: T \| undefined): ClaimResult<T>` | CAS update. Fails if current value ≠ expected. Pass `undefined` for "set only if unset." |
+| `compareAndSetClaim(key: string, value: T, expectedValue: T \| undefined): ClaimResult<T>` | CAS update. Local pre-check rejects if current value ≠ expected; on the wire, uses per-key sequence numbers for conflict resolution. Pass `undefined` for "set only if unset." |
 | `getClaim(key: string): T \| undefined`                                       | Get the current committed value for a key.                     |
 | `has(key: string): boolean`                                                   | Check whether a key has been claimed (distinguishes unset from `undefined` values). |
 

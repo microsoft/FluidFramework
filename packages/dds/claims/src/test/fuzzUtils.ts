@@ -48,6 +48,11 @@ interface CasOperation {
 	expectedValue: string;
 }
 
+interface CasHandleOperation {
+	type: "casHandle";
+	key: string;
+}
+
 interface GetClaimOperation {
 	type: "getClaim";
 	key: string;
@@ -60,6 +65,7 @@ export type ClaimsOperation =
 	| ClaimOperation
 	| ClaimHandleOperation
 	| CasOperation
+	| CasHandleOperation
 	| GetClaimOperation;
 
 /**
@@ -102,6 +108,13 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 		};
 	}
 
+	async function casHandle(state: FuzzTestState): Promise<CasHandleOperation> {
+		return {
+			type: "casHandle",
+			key: randomKey(state),
+		};
+	}
+
 	async function getClaim(state: FuzzTestState): Promise<GetClaimOperation> {
 		return {
 			type: "getClaim",
@@ -113,6 +126,7 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 		[claim, 3],
 		[claimWithHandle, 5],
 		[cas, 3],
+		[casHandle, 3],
 		[getClaim, 2],
 	]);
 }
@@ -136,6 +150,16 @@ function makeReducer(): Reducer<ClaimsOperation, FuzzTestState> {
 		cas: ({ client }, { key, newValue, expectedValue }) => {
 			try {
 				client.channel.compareAndSetClaim(key, newValue, expectedValue);
+			} catch {
+				// Expected: may throw UsageError if an operation for this key is already pending locally.
+			}
+		},
+		casHandle: ({ client }, { key }) => {
+			try {
+				// CAS the current value (whatever it is) to this client's handle.
+				// The expectedValue is read at reduce time so it doesn't need to be serializable in the op.
+				const currentValue = client.channel.getClaim(key);
+				client.channel.compareAndSetClaim(key, client.channel.handle, currentValue);
 			} catch {
 				// Expected: may throw UsageError if an operation for this key is already pending locally.
 			}

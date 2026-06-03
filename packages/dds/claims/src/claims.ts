@@ -29,13 +29,25 @@ import type { ClaimConfirmation, ClaimResult, IClaims, IClaimsEvents } from "./i
  * Op format for Claims operations.
  *
  * Both write-once and compare-and-swap share the same op shape.
- * `expectedValue` of `undefined` means "set only if key is unset".
+ * `refSeq` of `undefined` means "set only if key is unset" (trySetClaim).
+ * `refSeq` as a number is the per-key sequence number that the caller observed
+ * when initiating a CAS — the update succeeds only if no newer write has been
+ * sequenced for that key since that point.
  */
 interface IClaimOperation<T> {
 	type: "claim";
 	key: string;
 	value: T;
-	expectedValue: T | undefined;
+	refSeq: number | undefined;
+}
+
+/**
+ * Per-key state — stores the committed value and the sequence number of
+ * the op that last set it.
+ */
+interface IClaimEntry<T> {
+	value: T;
+	sequenceNumber: number;
 }
 
 /**
@@ -55,9 +67,9 @@ const snapshotFileName = "header";
  */
 export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements IClaims<T> {
 	/**
-	 * Committed claims map — contains only acked, first-writer-wins values.
+	 * Committed claims map — contains only acked values with their sequence numbers.
 	 */
-	private readonly claims = new Map<string, T>();
+	private readonly claims = new Map<string, IClaimEntry<T>>();
 
 	/**
 	 * Pending local claims keyed by claim key. Each entry holds the submitted
@@ -86,13 +98,14 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	 */
 	public trySetClaim(key: string, value: T): ClaimResult<T> {
 		// Write-once: reject if key already exists.
-		if (this.claims.has(key)) {
-			return { status: "AlreadyClaimed", currentValue: this.claims.get(key) };
+		const existing = this.claims.get(key);
+		if (existing !== undefined) {
+			return { status: "AlreadyClaimed", currentValue: existing.value };
 		}
 
 		// Detached: apply directly, no op needed (no other clients exist).
 		if (!this.isAttached()) {
-			this.claims.set(key, value);
+			this.claims.set(key, { value, sequenceNumber: 0 });
 			return { status: "Accepted", currentValue: value };
 		}
 
@@ -100,7 +113,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 			type: "claim",
 			key,
 			value,
-			expectedValue: undefined,
+			refSeq: undefined,
 		});
 	}
 
@@ -114,24 +127,30 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 		value: T,
 		expectedValue: T | undefined,
 	): ClaimResult<T> {
-		// CAS: reject if the current value doesn't match expected.
+		// CAS: reject locally if the current value doesn't match expected.
 		// When expectedValue is undefined, this allows "set only if unset" semantics.
-		const currentValue = this.claims.get(key);
-		if (this.claims.has(key) ? currentValue !== expectedValue : expectedValue !== undefined) {
+		const entry = this.claims.get(key);
+		const currentValue = entry?.value;
+		const isMatch =
+			entry === undefined ? expectedValue === undefined : currentValue === expectedValue;
+		if (!isMatch) {
 			return { status: "AlreadyClaimed", currentValue };
 		}
 
 		// Detached: apply directly, no op needed (no other clients exist).
 		if (!this.isAttached()) {
-			this.claims.set(key, value);
+			this.claims.set(key, { value, sequenceNumber: 0 });
 			return { status: "Accepted", currentValue: value };
 		}
 
+		// When expectedValue is undefined, this is "set only if unset" — use
+		// refSeq: undefined (same semantics as trySetClaim). Otherwise use the
+		// key's own sequence number for precise per-key conflict resolution.
 		return this.submitClaim(key, value, {
 			type: "claim",
 			key,
 			value,
-			expectedValue,
+			refSeq: entry === undefined ? undefined : entry.sequenceNumber,
 		});
 	}
 
@@ -157,7 +176,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	 * {@inheritDoc IClaims.getClaim}
 	 */
 	public getClaim(key: string): T | undefined {
-		return this.claims.get(key);
+		return this.claims.get(key)?.value;
 	}
 
 	/**
@@ -170,7 +189,9 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	// #region SharedObject overrides
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const entries = [...this.claims.entries()];
+		const entries = [...this.claims.entries()].map(
+			([key, entry]) => [key, entry.value, entry.sequenceNumber] as [string, T, number],
+		);
 		return createSingleBlobSummary(
 			snapshotFileName,
 			serializer.stringify(entries, this.handle),
@@ -180,9 +201,9 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob(snapshotFileName);
 		const content = new TextDecoder().decode(blob);
-		const entries = this.serializer.parse(content) as [string, T][];
-		for (const [key, value] of entries) {
-			this.claims.set(key, value);
+		const entries = this.serializer.parse(content) as [string, T, number][];
+		for (const [key, value, sequenceNumber] of entries) {
+			this.claims.set(key, { value, sequenceNumber });
 		}
 	}
 
@@ -208,12 +229,17 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 
 			assert(op.type === "claim", "Claims: unexpected op type");
 
-			const isAccepted = this.claims.has(op.key)
-				? this.claims.get(op.key) === op.expectedValue
-				: op.expectedValue === undefined;
+			const entry = this.claims.get(op.key);
+			const isAccepted =
+				op.refSeq === undefined
+					? entry === undefined // trySetClaim: key must not exist
+					: op.refSeq === entry?.sequenceNumber; // CAS: writer saw latest
 
 			if (isAccepted) {
-				this.claims.set(op.key, op.value);
+				this.claims.set(op.key, {
+					value: op.value,
+					sequenceNumber: messageEnvelope.sequenceNumber,
+				});
 				this.emit("claimed", op.key);
 			}
 
@@ -241,8 +267,8 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 			pending.resolve({ status: "Accepted", currentValue: pending.value });
 		} else {
 			// The current committed value for the key. May be undefined if the key
-			// was never claimed (e.g., a CAS op that failed because the key doesn't exist).
-			const currentValue = this.claims.get(key);
+			// was never claimed (e.g., a trySetClaim op that lost the race).
+			const currentValue = this.claims.get(key)?.value;
 			pending.resolve({ status: "AlreadyClaimed", currentValue });
 		}
 	}
@@ -265,7 +291,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	protected override processGCDataCore(serializer: IFluidSerializer): void {
 		// Visit committed claim values so their handles are tracked.
 		if (this.claims.size > 0) {
-			const committedValues = [...this.claims.values()];
+			const committedValues = [...this.claims.values()].map((entry) => entry.value);
 			serializer.stringify(committedValues, this.handle);
 		}
 

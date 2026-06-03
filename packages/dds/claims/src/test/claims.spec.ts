@@ -305,7 +305,7 @@ describe("Claims", () => {
 			containerRuntimeFactory.processAllMessages();
 			await claim1.promise;
 
-			// Both try CAS concurrently.
+			// Both try CAS concurrently — both see "initialValue" locally.
 			const cas1 = claims1.compareAndSetClaim("casKey", "value1", "initialValue");
 			const cas2 = claims2.compareAndSetClaim("casKey", "value2", "initialValue");
 			assert(cas1.status === "Pending");
@@ -316,11 +316,60 @@ describe("Claims", () => {
 			const confirmation1 = await cas1.promise;
 			const confirmation2 = await cas2.promise;
 
-			// Client 1 submitted first, so it wins.
+			// Client 1 submitted first, so it wins. Client 2 loses because
+			// its refSeq is older than the sequence number of client 1's write.
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
 			assert.strictEqual(claims1.getClaim("casKey"), "value1");
 			assert.strictEqual(claims2.getClaim("casKey"), "value1");
+		});
+
+		it("CAS rejects when refSeq is greater than entry sequenceNumber", async () => {
+			const claims1 = createConnectedClaims("claims1", containerRuntimeFactory);
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+
+			// Client 1 claims a key; both clients see the initial value.
+			const initial = claims1.trySetClaim("casKey", "initialValue");
+			assert(initial.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await initial.promise;
+
+			// Client 1 does a CAS to update the key to "value1".
+			const cas1 = claims1.compareAndSetClaim("casKey", "value1", "initialValue");
+			assert(cas1.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			const confirmation1 = await cas1.promise;
+			assert.strictEqual(confirmation1.status, "Accepted");
+
+			// Client 1 immediately does another CAS — it sees the latest
+			// value "value1" and its op captures the current sequenceNumber.
+			// This op is submitted (and therefore sequenced) first.
+			const cas2 = claims1.compareAndSetClaim("casKey", "value1again", "value1");
+			assert(cas2.status === "Pending");
+
+			// Client 2 also sees "value1" and submits a competing CAS. Its
+			// refSeq also references the sequenceNumber from the first CAS
+			// write. Because cas2 was submitted first, it will be sequenced
+			// before cas3, advancing the entry's sequenceNumber. When cas3 is
+			// processed, its refSeq will be *less than* the entry's new
+			// sequenceNumber and must be rejected. With the old >= check, a
+			// refSeq greater than the entry's sequenceNumber could have been
+			// incorrectly accepted.
+			const cas3 = claims2.compareAndSetClaim("casKey", "value2", "value1");
+			assert(cas3.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+
+			const confirmation2 = await cas2.promise;
+			const confirmation3 = await cas3.promise;
+
+			// Client 1's CAS (cas2) was sequenced first, so it wins.
+			// Client 2's CAS (cas3) is rejected because the entry was updated
+			// after client 2 read it.
+			assert.strictEqual(confirmation2.status, "Accepted");
+			assert.strictEqual(confirmation3.status, "AlreadyClaimed");
+			assert.strictEqual(claims1.getClaim("casKey"), "value1again");
+			assert.strictEqual(claims2.getClaim("casKey"), "value1again");
 		});
 	});
 
@@ -353,6 +402,34 @@ describe("Claims", () => {
 
 			// Key should not be committed.
 			assert.strictEqual(claims.getClaim("rollbackKey"), undefined);
+		});
+	});
+
+	describe("Stashed ops", () => {
+		it("Stashed op is re-submitted and resolved after rehydration", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			// Simulate stashing: directly call applyStashedOp with a claim op.
+			// eslint-disable-next-line @typescript-eslint/dot-notation
+			claims["applyStashedOp"]({
+				type: "claim",
+				key: "stashedKey",
+				value: "stashedValue",
+				refSeq: undefined,
+			});
+
+			// The key should now be in pendingClaims (guarded against duplicate submissions).
+			assert.throws(
+				() => claims.trySetClaim("stashedKey", "otherValue"),
+				(error: Error) => error.message.includes("already pending"),
+			);
+
+			// Process the re-submitted message.
+			containerRuntimeFactory.processAllMessages();
+
+			// The claim should be committed.
+			assert.strictEqual(claims.getClaim("stashedKey"), "stashedValue");
 		});
 	});
 
@@ -625,6 +702,61 @@ describe("Claims", () => {
 			const loadedValue = claims2.getClaim("handlePersist");
 			assert(loadedValue !== undefined, "Handle value should survive summary round-trip");
 			assert.strictEqual(claims2.has("handlePersist"), true);
+		});
+
+		it("CAS succeeds with handle values", async () => {
+			const handle1 = claims.handle;
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+			const handle2 = claims2.handle;
+
+			// First, claim the key with handle1.
+			const claimResult = claims.trySetClaim("handleCas", handle1);
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			// CAS to replace handle1 with handle2.
+			const stored = claims.getClaim("handleCas");
+			const casResult = claims.compareAndSetClaim("handleCas", handle2, stored);
+			assert(casResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			const confirmation = await casResult.promise;
+
+			assert.strictEqual(confirmation.status, "Accepted");
+			const updated = claims.getClaim("handleCas") as { absolutePath: string };
+			assert.strictEqual(updated.absolutePath, handle2.absolutePath);
+		});
+
+		it("Concurrent CAS with handle values: first writer wins", async () => {
+			const claims2 = createConnectedClaims("claims2", containerRuntimeFactory);
+
+			const handle1 = claims.handle;
+			const handle2 = claims2.handle;
+
+			// Both clients see the initial string value.
+			const claimResult = claims.trySetClaim("handleCasRace", "initial");
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			// Both try CAS concurrently with handle values.
+			const cas1 = claims.compareAndSetClaim("handleCasRace", handle1, "initial");
+			const cas2 = claims2.compareAndSetClaim("handleCasRace", handle2, "initial");
+			assert(cas1.status === "Pending");
+			assert(cas2.status === "Pending");
+
+			containerRuntimeFactory.processAllMessages();
+
+			const confirmation1 = await cas1.promise;
+			const confirmation2 = await cas2.promise;
+
+			assert.strictEqual(confirmation1.status, "Accepted");
+			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
+
+			const result1 = claims.getClaim("handleCasRace") as { absolutePath: string };
+			const result2 = claims2.getClaim("handleCasRace") as { absolutePath: string };
+			assert.strictEqual(result1.absolutePath, handle1.absolutePath);
+			assert.strictEqual(result2.absolutePath, handle1.absolutePath);
 		});
 	});
 });

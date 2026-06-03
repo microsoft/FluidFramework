@@ -28,7 +28,8 @@ export type ClaimConfirmation<T = unknown> =
 	| {
 			/**
 			 * Another client already claimed this key, or a CAS operation failed
-			 * because the current value did not match the expected value.
+			 * because a concurrent write was detected (the key's sequence number
+			 * advanced since this client last observed it).
 			 */
 			readonly status: "AlreadyClaimed";
 
@@ -66,7 +67,8 @@ export type ClaimResult<T = unknown> =
 	| {
 			/**
 			 * Another client already claimed this key, or a CAS operation failed
-			 * because the current value did not match the expected value.
+			 * because the local expected value did not match, indicating a
+			 * concurrent write has occurred.
 			 */
 			readonly status: "AlreadyClaimed";
 
@@ -109,7 +111,9 @@ export interface IClaimsEvents extends ISharedObjectEvents {
  * Claims acts as a scoped aliasing mechanism. {@link IClaims.trySetClaim} provides
  * write-once semantics — once a key is claimed, it cannot be overwritten.
  * {@link IClaims.compareAndSetClaim} provides compare-and-swap semantics —
- * the key is only updated if the current value matches the expected value.
+ * the caller supplies an expected value for a local pre-check, while the
+ * underlying conflict resolution uses per-key sequence numbers to determine
+ * whether a concurrent write has occurred.
  *
  * @internal
  */
@@ -130,20 +134,12 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 	 * Attempts to update an existing claim using compare-and-swap (CAS) semantics.
 	 * Only succeeds if the current value for the key matches `expectedValue`.
 	 *
-	 * @remarks
-	 * CAS comparison uses strict equality (`===`). This means CAS is only reliable for
-	 * primitive values (strings, numbers, booleans). For object or handle values, CAS
-	 * will compare by reference, which is unlikely to match across distributed clients.
-	 *
-	 * This API is experimental and may change to use sequence-number-based comparison
-	 * (ETag semantics) in the future to avoid object equality issues and handle
-	 * A→B→A edge cases more conservatively.
-	 *
 	 * @experimental
 	 * @param key - The claim key to update.
 	 * @param value - The new value to set.
-	 * @param expectedValue - The expected current value. The update only succeeds if the
-	 * committed value matches this exactly. Pass `undefined` to set only if the key is unset.
+	 * @param expectedValue - The expected current value. The update is only submitted
+	 * if the committed value matches this exactly. Pass `undefined` to set only if
+	 * the key is unset.
 	 * @returns The claim result — synchronous for known states, or "Pending" with a promise.
 	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
 	 * for this key is already pending locally.
