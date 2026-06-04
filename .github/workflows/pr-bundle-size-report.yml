@@ -179,9 +179,9 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
-        # Upstream oclif bug: in `--json` mode, thrown errors render as `{"error":{}}` to stdout and nothing to
-        # stderr — the message is lost. On non-zero exit we re-run without `--json` so the failure reason is
-        # visible in the action log.
+        # Upstream oclif bug (oclif/core#1608): in `--json` mode, thrown errors render as `{"error":{}}` to
+        # stdout and nothing to stderr — the message is lost. On non-zero exit we re-run without `--json` so
+        # the failure reason is visible in the action log.
         run: |
           set -uo pipefail
           set +e
