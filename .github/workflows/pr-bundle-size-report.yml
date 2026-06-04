@@ -1,20 +1,15 @@
 name: "PR Bundle Size Comments"
 
-# This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment,
-# label, and check entry.
+# This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment.
 #
 # Triggers:
-#   pull_request_target: kept as a trigger so a future "acknowledge-pr" job can post the initial sticky comment
-#                        ("comparison pending build…") on PR open/sync/reopen. The comparison itself can't run on
-#                        this event because the PR-side ADO build will have just kicked off.
+#   pull_request_target: posts an initial "comparison pending" sticky comment on PR open/sync/reopen, ahead of any
+#                        ADO build completing. Handled by the acknowledge-pr job.
 #   check_run:           fires when ADO publishes either of the two bundle-publishing checks on a commit.
 #                        `Build - Client bundle size artifacts` runs on main/release pushes (baseline-side bundle
 #                        becomes available). `Build - client packages` runs on PR commits (head-side bundle becomes
 #                        available). The identify-targets job maps the check's SHA to affected PRs (PR-head match OR
 #                        merge-base match) and the compare job fans out via matrix.
-#   workflow_dispatch:   manual trigger for testing the compare flow against a chosen PR without waiting for an
-#                        organic check_run completion. Routes through `dispatch-target` instead of `identify-targets`,
-#                        but converges on the same `compare` job.
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -27,18 +22,6 @@ on:
     branches: [main, "release/**/*"]
   check_run:
     types: [completed]
-  # Manual trigger for testing the comparison flow against a chosen PR without waiting for an organic
-  # check_run completion. Fans out via the same compare job as the organic path.
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: PR number to compare (manual testing)
-        required: true
-        type: number
-      repo:
-        description: Repository the PR lives in (full slug, e.g. microsoft/FluidFramework). Leave blank to use the current repo; override when testing from a fork.
-        required: false
-        type: string
 
 # Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
 # in-progress runs in the same group so the latest event wins on the sticky comment.
@@ -51,27 +34,35 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Acknowledge the PR on open/sync/reopen with the initial "comparison pending" sticky comment. The actual sticky
-  # post is stubbed out below until comment-posting wiring lands — for now this job only logs the intent so the
-  # workflow has a visible per-event signal that the pull_request_target trigger is firing as expected.
+  # Acknowledges the PR on open/sync/reopen with the initial "comparison pending" sticky comment.
   acknowledge-pr:
     if: github.event_name == 'pull_request_target'
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
+    # Uncomment to enable comment posting after bake-in.
+    # permissions:
+    #   pull-requests: write
     steps:
-      - name: Acknowledge (stub)
+      - name: Render initial comment body
         run: |
-          echo "PR #${{ github.event.pull_request.number }} (${{ github.event.action }}) — would post initial 'comparison pending' sticky here."
+          set -euo pipefail
+          cat > acknowledge.md <<'EOF'
+          ## Bundle size comparison
+
+          Waiting for the ADO bundle-size build to complete. Will update with results when available.
+          EOF
+          echo "PR #${{ github.event.pull_request.number }} (${{ github.event.action }}): would post the following body as a sticky comment."
+          echo
+          echo "--- acknowledge.md ---"
+          cat acknowledge.md
+          echo "--- end ---"
+
+      # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
       #     header: bundle-size-report
       #     number: ${{ github.event.pull_request.number }}
-      #     message: |
-      #       ## Bundle size comparison
-      #
-      #       Waiting for the ADO bundle-size build to complete. Will update with results when available.
+      #     path: ${{ github.workspace }}/acknowledge.md
 
   identify-targets:
     # Only fires on check_run completions for one of the two bundle-publishing pipelines. GitHub doesn't let us filter
@@ -146,75 +137,25 @@ jobs:
           done <<< "$PR_LINES"
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
 
-  # Resolves the manually-supplied PR number into the same matrix-entry shape identify-targets produces,
-  # so the compare job can consume either upstream uniformly.
-  dispatch-target:
-    if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    outputs:
-      prs: ${{ steps.collect.outputs.prs }}
-    steps:
-      - name: Resolve dispatched PR
-        id: collect
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          PR_NUM='${{ github.event.inputs.pr_number }}'
-          REPO='${{ github.event.inputs.repo }}'
-          # Fall back to the current repo when the input is blank — `${{ github.* }}` expressions
-          # aren't allowed in workflow_dispatch.inputs.default, so we handle the default here.
-          if [ -z "$REPO" ]; then
-            REPO="$GITHUB_REPOSITORY"
-          fi
-          PR_INFO=$(gh pr view "$PR_NUM" --repo "$REPO" --json headRefOid,baseRefName)
-          PR_HEAD=$(echo "$PR_INFO" | jq -r '.headRefOid')
-          PR_BASE_REF=$(echo "$PR_INFO" | jq -r '.baseRefName')
-          MB=$(gh api "repos/$REPO/compare/$PR_BASE_REF...$PR_HEAD" \
-            --jq '.merge_base_commit.sha' 2>/dev/null || true)
-          if [ "$MB" = "null" ]; then
-            MB=""
-          fi
-          if [ -z "$MB" ]; then
-            echo "Could not compute merge-base for PR $REPO#$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
-            echo "prs=[]" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          PRS=$(jq -n -c \
-            --argjson n "$PR_NUM" \
-            --arg h "$PR_HEAD" \
-            --arg b "$PR_BASE_REF" \
-            --arg mb "$MB" \
-            '[{number: $n, head: $h, baseRef: $b, mergeBase: $mb}]')
-          echo "prs=$PRS" >> "$GITHUB_OUTPUT"
-
   compare:
-    needs: [identify-targets, dispatch-target]
-    # Either upstream produces the matrix; the other will be skipped per event type. Without
-    # `!cancelled()`, GitHub Actions auto-skips a job whose `needs:` had any skipped entry.
-    if: |
-      !cancelled() && (
-        needs.identify-targets.result == 'success' ||
-        needs.dispatch-target.result == 'success'
-      )
+    needs: identify-targets
+    if: needs.identify-targets.outputs.prs != '[]'
     strategy:
       matrix:
-        pr: ${{ fromJSON(needs.identify-targets.outputs.prs || needs.dispatch-target.outputs.prs || '[]') }}
+        pr: ${{ fromJSON(needs.identify-targets.outputs.prs) }}
       fail-fast: false
     runs-on: ubuntu-latest
-    # When comment-posting is wired up, grant write so the marocchino step below can edit the sticky.
+    # Uncomment to enable comment posting after bake-in.
     # permissions:
     #   pull-requests: write
     steps:
-      # Check out the source the workflow file itself came from (never PR HEAD — PR-authored code isn't
-      # trusted). For workflow_dispatch this is the dispatched ref (so the build-tools source matches the
-      # workflow file, including any new flub commands the workflow relies on); for organic triggers it's
-      # the PR's base branch. The comparison itself reads only ADO artifacts identified by SHA — no local
+      # Check out the PR's base branch (never PR HEAD — PR-authored code isn't trusted) just to get build-tools
+      # source so we can build flub. The comparison itself reads only ADO artifacts identified by SHA — no local
       # git state is required.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.ref_name || matrix.pr.baseRef }}
+          ref: ${{ matrix.pr.baseRef }}
           fetch-depth: "1"
           persist-credentials: false
 
@@ -238,10 +179,9 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
-        # `flub … --json` swallows error messages in oclif's --json mode (renders `{"error":{}}` to
-        # stdout, nothing on stderr). When the command fails, re-run without --json so the operator
-        # gets a visible message in the action log. Follow-up: fix at the oclif / command level so the
-        # JSON path emits the message too (adjacent to AB#74372).
+        # Upstream oclif bug: in `--json` mode, thrown errors render as `{"error":{}}` to stdout and nothing to
+        # stderr — the message is lost. On non-zero exit we re-run without `--json` so the failure reason is
+        # visible in the action log.
         run: |
           set -uo pipefail
           set +e
@@ -264,7 +204,7 @@ jobs:
       # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
       # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
       # would contain without actually posting it.
-      - name: Render results (stub)
+      - name: Render bundle-size comment body
         run: |
           set -euo pipefail
           jq -r '
@@ -311,6 +251,8 @@ jobs:
           echo "--- bundle-comparison.md ---"
           cat bundle-comparison.md
           echo "--- end ---"
+
+      # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
