@@ -47,6 +47,21 @@ interface GzipRow {
 	diff: number;
 }
 
+/**
+ * One row of the entrypoint totals table. Unlike the synthetic composition
+ * buckets ({@link ComparisonReport.packageBuckets}), every row here corresponds
+ * to a *real* webpack entrypoint — i.e. an actual bundle a consumer downloads,
+ * with shared modules deduplicated within that single bundle. `entrypointName`
+ * is the webpack entry key (e.g. `sharedTree`, `azureClient`, or the aggregate
+ * `fluidFrameworkAll`), and the sizes are that bundle's total parsed bytes.
+ *
+ * Because each row is a self-contained shipped bundle, these sizes are
+ * tree-shaking-honest: a module dropped from an entrypoint shrinks that row even
+ * if other entrypoints still ship it. The flip side is that rows intentionally
+ * overlap (a module shared by N entrypoints is counted in all N), so the rows
+ * must NOT be summed to get a bundle-wide total — use the dedicated
+ * `fluidFrameworkAll` aggregate entrypoint for a single real total instead.
+ */
 interface EntrypointRow {
 	entrypointName: string;
 	baseSize: number;
@@ -80,7 +95,12 @@ interface ComparisonReport {
 	assets: AssetComparison[];
 	/** Gzip size comparison rows for assets whose parsed size changed */
 	gzipChangedAssets: GzipRow[];
-	/** Per-entrypoint total parsed-size comparison rows */
+	/**
+	 * Per-entrypoint total parsed-size comparison rows. Each row maps to a real
+	 * webpack entrypoint (a real shipped bundle); see {@link EntrypointRow}. Rows
+	 * overlap and must not be summed — the aggregate `fluidFrameworkAll`
+	 * entrypoint provides the single deduplicated bundle-wide total.
+	 */
 	entrypoints: EntrypointRow[];
 	/**
 	 * Four-row headline split of the bundle's parsed bytes, all bundle-wide:
@@ -146,6 +166,31 @@ function entrypointSizes(nodes: AnalyzerNode[]): Record<string, number> {
 }
 
 /**
+ * Strips webpack's module-concatenation (scope-hoisting) wrapper prefix from a
+ * module `path`, returning the path of the *real* module.
+ *
+ * When webpack concatenates modules, every concatenated leaf's `path` is
+ * prefixed with the concatenation root, e.g.:
+ *
+ * ```
+ * ./../../packages/framework/fluid-framework/lib/index.js + 268 modules (concatenated)/../../packages/dds/tree/lib/treeFactory.js
+ * ```
+ *
+ * The text before the last `(concatenated)/` is the wrapper (the barrel that
+ * pulled the module in); the text after it is the real module. Naively reading
+ * the package from such a path picks up the wrapper (here `fluid-framework`)
+ * instead of the true owner (`tree`), so all hoisted modules collapse onto the
+ * barrel package. Anchoring on the last `(concatenated)/` recovers the real
+ * module path. Paths without the marker are returned unchanged.
+ */
+function stripConcatenationWrapper(modulePath: string): string {
+	const normalized = modulePath.replace(/\\/g, "/");
+	const marker = "(concatenated)/";
+	const markerIndex = normalized.lastIndexOf(marker);
+	return markerIndex >= 0 ? normalized.slice(markerIndex + marker.length) : normalized;
+}
+
+/**
  * Extracts the owning npm package name from a webpack-bundle-analyzer module
  * `path`. Handles the three shapes that appear in this repo's bundles:
  *
@@ -157,9 +202,13 @@ function entrypointSizes(nodes: AnalyzerNode[]): Record<string, number> {
  *   Fluid Framework source packages, published as `@fluidframework/<name>`.
  * - **App/entry code:** anything else (e.g. the bundle-size-tests harness's own
  *   `./src/*.ts` entry modules) is grouped under `(app/entry)`.
+ *
+ * Concatenated-module wrapper prefixes are stripped first (see
+ * {@link stripConcatenationWrapper}) so scope-hoisted modules are attributed to
+ * their true owning package rather than the concatenating barrel.
  */
 function packageFromModulePath(modulePath: string): string {
-	const normalized = modulePath.replace(/\\/g, "/");
+	const normalized = stripConcatenationWrapper(modulePath);
 	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
 	if (nodeModulesIndex >= 0) {
 		const rest = normalized.slice(nodeModulesIndex + "node_modules/".length);
@@ -179,11 +228,13 @@ function packageFromModulePath(modulePath: string): string {
  * Produces a stable identity for a module so the same source module reached via
  * different entrypoints (webpack prefixes the path with the concatenating
  * entry, e.g. `./src/sharedTree.ts + 384 modules (concatenated)/...`) collapses
- * to a single key. Anchoring at `node_modules/` or `packages/` strips that
- * per-entry prefix, giving "unique module" dedup semantics.
+ * to a single key. The concatenation wrapper prefix is stripped first (see
+ * {@link stripConcatenationWrapper}), then anchoring at `node_modules/` or
+ * `packages/` removes any remaining per-entry prefix, giving "unique module"
+ * dedup semantics.
  */
 function canonicalModuleKey(modulePath: string): string {
-	const normalized = modulePath.replace(/\\/g, "/");
+	const normalized = stripConcatenationWrapper(modulePath);
 	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
 	if (nodeModulesIndex >= 0) return normalized.slice(nodeModulesIndex);
 	const packagesIndex = normalized.indexOf("packages/");
@@ -192,12 +243,12 @@ function canonicalModuleKey(modulePath: string): string {
 }
 
 /**
- * Walks each asset's `groups` module tree and sums parsed sizes per owning
- * package. Modules are deduplicated by {@link canonicalModuleKey}, so a module
- * shared across multiple entrypoints is counted exactly once (whole-bundle
- * "unique module size" semantics).
+ * Walks a set of asset nodes' `groups` module trees and sums parsed sizes per
+ * owning package. Modules are deduplicated by {@link canonicalModuleKey} using
+ * a single shared `seen` set, so a module reached more than once within this
+ * asset set is counted exactly once.
  */
-function packageSizes(nodes: AnalyzerNode[]): Map<string, number> {
+function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 	const perPackage = new Map<string, number>();
 	const seen = new Set<string>();
 
@@ -215,10 +266,19 @@ function packageSizes(nodes: AnalyzerNode[]): Map<string, number> {
 		perPackage.set(packageName, (perPackage.get(packageName) ?? 0) + (node.parsedSize ?? 0));
 	};
 
-	for (const node of nodes.filter(isJsAsset)) {
+	for (const node of assets) {
 		visit(node);
 	}
 	return perPackage;
+}
+
+/**
+ * Whole-bundle per-package parsed sizes: dedupes modules across every `.js`
+ * asset, so a module shared across multiple entrypoints is counted exactly once
+ * ("unique module size" semantics).
+ */
+function packageSizes(nodes: AnalyzerNode[]): Map<string, number> {
+	return accumulatePackageSizes(nodes.filter(isJsAsset));
 }
 
 /** Diffs two per-package size maps into sorted {@link PackageSizeRow}s. */
@@ -462,7 +522,11 @@ function renderAsText(report: ComparisonReport): string {
 	}
 
 	emit();
-	emit("=== Named entrypoint total asset sizes ===");
+	// Every row in this table is a REAL webpack entrypoint (a real shipped
+	// bundle, shared modules deduped within it), unlike the synthetic composition
+	// buckets below. Rows overlap and must not be summed; the `fluidFrameworkAll`
+	// aggregate entrypoint gives the single deduplicated bundle-wide total.
+	emit("=== Named entrypoint total asset sizes (each row is a real entrypoint) ===");
 	emit(
 		"Entrypoint".padEnd(30) +
 			"Base".padStart(12) +
