@@ -514,7 +514,7 @@ describeCompat(
 			});
 		}
 
-		it("a depth-3 change produces sibling and descendant handles in the same summary", async () => {
+		it("a depth-3 change produces same-depth and descendant handles in the same summary", async () => {
 			// Doc1 has two sections (Sec1 and Sec2). Changing Item1.itemName in Sec1 (a depth-3
 			// change) re-encodes the documents, Doc1.sections, and Sec1.items chunks, while Sec2.items
 			// (a sibling at depth 3) and Item1.tags (a descendant at depth 4) become handles in the
