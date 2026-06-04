@@ -933,12 +933,6 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.checkNotDisposed();
-		// Starting a transaction during a change-event listener is forbidden for the same reason
-		// direct edits are: it would push a label frame and (typically) commit edits while the
-		// tree's invariants are mid-flight. The lock window covers `nodeChanged`/`treeChanged`
-		// (set in `onAfterChange`) and `changed` (set in `onAfterBranchChange` via
-		// `emitChangedLocked`), so any of those listeners will see this throw.
-		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",

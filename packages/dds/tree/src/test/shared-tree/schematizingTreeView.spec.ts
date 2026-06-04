@@ -1341,36 +1341,6 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
 		});
 
-		it("re-entrant runTransaction from a changed listener throws", () => {
-			const view = getTestObjectView();
-
-			// Re-entrant: when the outer commit fires, attempt to start a new `inner` transaction.
-			// The guard rejects this at mountTransaction, before any label-tree corruption.
-			view.checkout.events.on("changed", (meta) => {
-				if (meta.isLocal && meta.kind === CommitKind.Default && !meta.labels.has("inner")) {
-					view.runTransaction(
-						() => {
-							view.root.content = view.root.content + 1;
-						},
-						{ label: "inner" },
-					);
-				}
-			});
-
-			assert.throws(
-				() =>
-					view.runTransaction(
-						() => {
-							view.root.content = 1;
-						},
-						{ label: "outer" },
-					),
-				validateUsageError(
-					/Running a transaction is forbidden during a nodeChanged, treeChanged, or changed event/,
-				),
-			);
-		});
-
 		it("direct (non-transaction) edit from a changed listener throws", () => {
 			// Engaging `editLock` around `changed` emissions means the lock check on the editor
 			// proxy also fires for direct edits — not just transactions. Without this, a consumer
