@@ -17,6 +17,7 @@ import {
 
 import type { IBatchMetadata } from "./metadata.js";
 import { pkgVersion } from "./packageVersion.js";
+import type { IRuntimeFeature } from "./runtimeFeature.js";
 
 type IRuntimeMessageMetadata =
 	| undefined
@@ -28,16 +29,16 @@ type IRuntimeMessageMetadata =
  * This class ensures that we aggregate a complete batch of incoming ops before processing them. It basically ensures
  * that we never start processing ops in a batch IF we do not have all ops in the batch.
  */
-export class InboundBatchAggregator {
+export class InboundBatchAggregator implements IRuntimeFeature<never> {
 	private pauseSequenceNumber: number | undefined;
 	private currentBatchClientId: string | undefined;
 	private localPaused = false;
 	private timePaused = 0;
 	private batchCount = 0;
+	private currentClientId: string | undefined;
 
 	constructor(
 		private readonly deltaManager: IDeltaManagerFull,
-		private readonly getClientId: () => string | undefined,
 		private readonly logger: ITelemetryLoggerExt,
 	) {
 		// Listen for updates and peek at the inbound
@@ -52,6 +53,10 @@ export class InboundBatchAggregator {
 		// If we do not observe system ops, we are likely to hit an error when system ops
 		// precedes start of incomplete batch.
 		this.deltaManager.on("op", this.afterOpProcessing);
+	}
+
+	public setConnectionState(_canSendOps: boolean, clientId: string | undefined): void {
+		this.currentClientId = clientId;
 	}
 
 	public dispose(): void {
@@ -142,7 +147,7 @@ export class InboundBatchAggregator {
 							// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 							this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 						pauseSequenceNumber: this.pauseSequenceNumber,
-						localBatch: this.currentBatchClientId === this.getClientId(),
+						localBatch: this.currentBatchClientId === this.currentClientId,
 						messageType: message.type,
 					},
 				);
@@ -178,8 +183,8 @@ export class InboundBatchAggregator {
 					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
 					this.currentBatchClientId === null ? "null" : this.currentBatchClientId,
 				pauseSequenceNumber: this.pauseSequenceNumber,
-				localBatch: this.currentBatchClientId === this.getClientId(),
-				localMessage: message.clientId === this.getClientId(),
+				localBatch: this.currentBatchClientId === this.currentClientId,
+				localMessage: message.clientId === this.currentClientId,
 				...extractSafePropertiesFromMessage(message),
 			});
 		}

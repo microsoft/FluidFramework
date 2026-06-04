@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
@@ -15,11 +16,15 @@ import {
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
 
-import { isContainerMessageDirtyable } from "./containerRuntime.js";
+import {
+	getUnknownMessageTypeError,
+	isContainerMessageDirtyable,
+} from "./containerRuntime.js";
 import type {
 	InboundContainerRuntimeMessage,
 	InboundSequencedContainerRuntimeMessage,
 	LocalContainerRuntimeMessage,
+	UnknownContainerRuntimeMessage,
 } from "./messageTypes.js";
 import { asBatchMetadata, asEmptyBatchLocalOpMetadata } from "./metadata.js";
 import {
@@ -32,6 +37,7 @@ import {
 	type LocalEmptyBatchPlaceholder,
 	type BatchResubmitInfo,
 } from "./opLifecycle/index.js";
+import type { RuntimeFeatureCollection } from "./runtimeFeatureCollection.js";
 
 /**
  * This represents a message that has been submitted and is added to the pending queue when `submit` is called on the
@@ -133,13 +139,13 @@ export interface PendingBatchResubmitMetadata extends BatchResubmitInfo {
 export interface IRuntimeStateHandler {
 	connected(): boolean;
 	clientId(): string | undefined;
-	applyStashedOp(serializedOp: string): Promise<unknown>;
 	reSubmitBatch(
 		batch: PendingMessageResubmitData[],
 		metadata: PendingBatchResubmitMetadata,
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+	closeFn: (error?: ICriticalContainerError) => void;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
@@ -370,6 +376,7 @@ export class PendingStateManager implements IDisposable {
 
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
+		private readonly features: Pick<RuntimeFeatureCollection, "applyStashedOp">,
 		stashedLocalState: IPendingLocalState | undefined,
 		logger: ITelemetryBaseLogger,
 	) {
@@ -377,6 +384,30 @@ export class PendingStateManager implements IDisposable {
 		if (stashedLocalState?.pendingStates) {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
 		}
+	}
+
+	/**
+	 * Parse a serialized stashed op and dispatch it to the feature that owns
+	 * its type. Equivalent to ContainerRuntime's submit/parse round-trip in
+	 * reverse — the runtime no longer carries an applyStashedOp wrapper.
+	 */
+	private async dispatchStashedOp(serializedOpContent: string): Promise<unknown> {
+		assert(serializedOpContent !== undefined, 0x6d5 /* content must be defined */);
+		const opContents = JSON.parse(serializedOpContent) as LocalContainerRuntimeMessage;
+		assert(opContents.type !== undefined, 0x6d6 /* incorrect op content format */);
+
+		const claimed = await this.features.applyStashedOp(opContents);
+		if (claimed !== undefined) {
+			return claimed.result;
+		}
+
+		// No feature owns this op type — close and fail.
+		const error = getUnknownMessageTypeError(
+			opContents.type as UnknownContainerRuntimeMessage["type"],
+			"applyStashedOp" /* codePath */,
+		);
+		this.stateHandler.closeFn(error);
+		throw error;
 	}
 
 	public get disposed(): boolean {
@@ -477,7 +508,7 @@ export class PendingStateManager implements IDisposable {
 					continue;
 				}
 				// applyStashedOp will cause the DDS to behave as if it has sent the op but not actually send it
-				const localOpMetadata = await this.stateHandler.applyStashedOp(nextMessage.content);
+				const localOpMetadata = await this.dispatchStashedOp(nextMessage.content);
 				if (this.stateHandler.isAttached()) {
 					nextMessage.localOpMetadata = localOpMetadata;
 					// NOTE: This runtimeOp has been roundtripped through string, which is technically lossy.

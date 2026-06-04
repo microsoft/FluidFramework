@@ -36,6 +36,7 @@ export {
 	type GarbageCollectionMessage,
 	GarbageCollectionMessageType,
 	type ISweepMessage,
+	type ITombstoneLoadedMessage,
 } from "./gcDefinitions.js";
 export {
 	cloneGCData,

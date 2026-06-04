@@ -113,6 +113,7 @@ export {
 	type IDocumentSchemaChangeMessageOutgoing,
 	type IDocumentSchemaFeatures,
 } from "./documentSchema.js";
+export { SummarizerSubsystem } from "./summarizerSubsystem.js";
 export {
 	getFailMessage,
 	RetriableSummaryError,

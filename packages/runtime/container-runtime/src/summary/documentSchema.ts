@@ -9,7 +9,13 @@ import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/intern
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
+import { ContainerMessageType } from "../messageTypes.js";
 import { pkgVersion } from "../packageVersion.js";
+import type {
+	InboundRuntimeMessageFor,
+	IRuntimeFeature,
+	RuntimeMessagesContentFor,
+} from "../runtimeFeature.js";
 
 /**
  * Descripe allowed type for properties in document schema.
@@ -590,7 +596,9 @@ function arrayToProp(arr: string[]): string[] | undefined {
  * @internal
  * @sealed
  */
-export class DocumentsSchemaController {
+export class DocumentsSchemaController
+	implements IRuntimeFeature<ContainerMessageType.DocumentSchemaChange>
+{
 	private explicitSchemaControl: boolean;
 
 	/**
@@ -806,6 +814,33 @@ export class DocumentsSchemaController {
 	 * @param sequenceNumber - sequence number of the op
 	 * @returns true if schema was accepted, otherwise false (rejected due to failed CAS)
 	 */
+	public readonly supportedOps = [ContainerMessageType.DocumentSchemaChange] as const;
+
+	public handleOp(
+		message: InboundRuntimeMessageFor<ContainerMessageType.DocumentSchemaChange>,
+		messagesContent: RuntimeMessagesContentFor<ContainerMessageType.DocumentSchemaChange>[],
+		local: boolean,
+	): void {
+		const contents = messagesContent.map((c) => c.contents);
+		this.processDocumentSchemaMessages(contents, local, message.sequenceNumber);
+	}
+
+	public applyStashedOp(): { result: unknown } {
+		// Schema-change ops are intentionally dropped on stash — schema is regenerated on resubmit.
+		return { result: undefined };
+	}
+
+	public reSubmitOp(): void {
+		// Don't directly resubmit due to compare-and-swap semantics; schema regenerates from scratch
+		// before other ops are submitted.
+		this.pendingOpNotAcked();
+	}
+
+	public rollbackStagedOp(): void {
+		// Schema-change ops are not committed yet; allow regeneration on next propose.
+		this.pendingOpNotAcked();
+	}
+
 	public processDocumentSchemaMessages(
 		contents: IDocumentSchemaChangeMessageIncoming[],
 		local: boolean,

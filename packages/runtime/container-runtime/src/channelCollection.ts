@@ -106,14 +106,18 @@ import {
 import { DataStoreContexts } from "./dataStoreContexts.js";
 import { FluidDataStoreRegistry } from "./dataStoreRegistry.js";
 import { GCNodeType, type IGCNodeUpdatedProps, urlToGCNodePath } from "./gc/index.js";
-import type {
-	ContainerRuntimeAliasMessage,
-	ContainerRuntimeDataStoreOpMessage,
-	OutboundContainerRuntimeAttachMessage,
+import {
+	ContainerMessageType,
+	type ContainerRuntimeAliasMessage,
+	type ContainerRuntimeDataStoreOpMessage,
+	type InboundSequencedContainerRuntimeMessage,
+	type LocalContainerRuntimeMessage,
+	type OutboundContainerRuntimeAttachMessage,
 } from "./messageTypes.js";
-import { ContainerMessageType, type LocalContainerRuntimeMessage } from "./messageTypes.js";
+import type { IRuntimeFeature } from "./runtimeFeature.js";
 import { StorageServiceWithAttachBlobs } from "./storageServiceWithAttachBlobs.js";
 import {
+	aliasBlobName,
 	type IContainerRuntimeMetadata,
 	nonDataStorePaths,
 	rootHasIsolatedChannels,
@@ -317,7 +321,14 @@ export function getLocalDataStoreType(localDataStore: LocalFluidDataStoreContext
  * @internal
  */
 export class ChannelCollection
-	implements Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">, IDisposable
+	implements
+		Omit<IFluidDataStoreChannel, "entryPoint" | "reSubmit" | "rollback">,
+		IDisposable,
+		IRuntimeFeature<
+			| ContainerMessageType.FluidDataStoreOp
+			| ContainerMessageType.Attach
+			| ContainerMessageType.Alias
+		>
 {
 	// Stores tracked by the Domain
 	private readonly pendingAttach = new Map<string, IAttachMessage>();
@@ -849,20 +860,24 @@ export class ChannelCollection
 		context.rollback(envelope.contents, localOpMetadata);
 	};
 
-	public async applyStashedOp(content: unknown): Promise<unknown> {
-		const opContents = content as LocalContainerRuntimeMessage;
+	public async applyStashedOp(
+		opContents:
+			| ContainerRuntimeDataStoreOpMessage
+			| OutboundContainerRuntimeAttachMessage
+			| ContainerRuntimeAliasMessage,
+	): Promise<{ result: unknown } | undefined> {
 		switch (opContents.type) {
 			case ContainerMessageType.Attach: {
-				return this.applyStashedAttachOp(opContents.contents);
+				return { result: await this.applyStashedAttachOp(opContents.contents) };
 			}
 			case ContainerMessageType.Alias: {
-				return;
+				return { result: undefined };
 			}
 			case ContainerMessageType.FluidDataStoreOp: {
-				return this.applyStashedChannelChannelOp(opContents.contents);
+				return { result: await this.applyStashedChannelChannelOp(opContents.contents) };
 			}
 			default: {
-				assert(false, 0x908 /* unknon type of op */);
+				return undefined;
 			}
 		}
 	}
@@ -922,6 +937,55 @@ export class ChannelCollection
 			// detached client don't send ops, so should not expect and ack.
 			this.pendingAttach.set(id, message);
 		}
+	}
+
+	public readonly supportedOps = [
+		ContainerMessageType.FluidDataStoreOp,
+		ContainerMessageType.Attach,
+		ContainerMessageType.Alias,
+	] as const;
+
+	public handleOp(
+		message: Omit<InboundSequencedContainerRuntimeMessage, "contents">,
+		messagesContent: IRuntimeMessagesContent[],
+		local: boolean,
+	): void {
+		this.processMessages({ envelope: message, messagesContent, local });
+	}
+
+	public contributeSummary(summaryTree: ISummaryTreeWithStats): void {
+		if (this.aliases.size > 0) {
+			addBlobToSummary(summaryTree, aliasBlobName, JSON.stringify([...this.aliases]));
+		}
+	}
+
+	public reSubmitOp(
+		message: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+		_opMetadata: unknown,
+		squash: boolean,
+	): void {
+		this.reSubmitContainerMessage(
+			message as
+				| ContainerRuntimeDataStoreOpMessage
+				| OutboundContainerRuntimeAttachMessage
+				| ContainerRuntimeAliasMessage,
+			localOpMetadata,
+			squash,
+		);
+	}
+
+	public rollbackStagedOp(
+		message: LocalContainerRuntimeMessage,
+		localOpMetadata: unknown,
+	): void {
+		// rollback only applies to FluidDataStoreOp; the dispatcher claims all three
+		// supported types but only this one rolls back. Schema-change/Alias should never
+		// reach this path (they aren't staged), so just guard.
+		if (message.type !== ContainerMessageType.FluidDataStoreOp) {
+			return;
+		}
+		this.rollbackDataStoreOp(message.contents, localOpMetadata);
 	}
 
 	/**
