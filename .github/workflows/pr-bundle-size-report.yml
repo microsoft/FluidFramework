@@ -27,7 +27,7 @@ on:
 # Deduplicate runs for the same upstream check SHA. Cancel earlier in-progress runs in the same group so the
 # latest event wins on the sticky comment.
 concurrency:
-  group: pr-bundle-size-${{ github.event.check_run.head_sha || github.run_id }}
+  group: pr-bundle-size-${{ github.event.check_run.head_sha }}
   cancel-in-progress: true
 
 permissions:
