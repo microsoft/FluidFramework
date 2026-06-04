@@ -2,14 +2,18 @@ name: "PR Bundle Size Comments"
 
 # This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment.
 #
-# Triggers:
-#   pull_request_target: posts an initial "comparison pending" sticky comment on PR open/sync/reopen, ahead of any
-#                        ADO build completing. Handled by the acknowledge-pr job.
-#   check_run:           fires when ADO publishes either of the two bundle-publishing checks on a commit.
-#                        `Build - Client bundle size artifacts` runs on main/release pushes (baseline-side bundle
-#                        becomes available). `Build - client packages` runs on PR commits (head-side bundle becomes
-#                        available). The identify-targets job maps the check's SHA to affected PRs (PR-head match OR
-#                        merge-base match) and the compare job fans out via matrix.
+# Triggers are all `check_run`. We use the lifecycle of ADO's own published checks to decide what to do:
+#
+#   check_run.created:    when ADO creates the `Build - client packages` check on a commit (at build queue time),
+#                         acknowledge-build posts an initial "pending" sticky on the matching open PR. PRs that
+#                         don't trigger a client-packages build (e.g. server-only PRs) never get a sticky, by
+#                         construction — ADO is the source of truth for which PRs need a comparison.
+#   check_run.completed:  when ADO updates either of the two bundle-publishing checks to a successful conclusion,
+#                         identify-targets maps the check's SHA back to affected PRs and the compare job fans out
+#                         via matrix.
+#                         `Build - Client bundle size artifacts` runs on main/release pushes (baseline bundle just
+#                         became available). `Build - client packages` runs on PR commits (head-side bundle just
+#                         became available).
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -17,16 +21,13 @@ name: "PR Bundle Size Comments"
 # sources or scripts, only its SHA (which is forwarded to ADO to fetch a server-side artifact).
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    branches: [main, "release/**/*"]
   check_run:
-    types: [completed]
+    types: [created, completed]
 
-# Deduplicate runs for the same PR (pull_request_target) or the same upstream check SHA (check_run). Cancel earlier
-# in-progress runs in the same group so the latest event wins on the sticky comment.
+# Deduplicate runs for the same upstream check SHA. Cancel earlier in-progress runs in the same group so the
+# latest event wins on the sticky comment.
 concurrency:
-  group: pr-bundle-size-${{ github.event.pull_request.number || github.event.check_run.head_sha || github.run_id }}
+  group: pr-bundle-size-${{ github.event.check_run.head_sha || github.run_id }}
   cancel-in-progress: true
 
 permissions:
@@ -34,23 +35,47 @@ permissions:
   pull-requests: read
 
 jobs:
-  # Acknowledges the PR on open/sync/reopen with the initial "comparison pending" sticky comment.
-  acknowledge-pr:
-    if: github.event_name == 'pull_request_target'
+  # Posts the initial "build pending" sticky comment when ADO queues the `Build - client packages` check
+  # for a PR commit. Non-client PRs never trigger that check, so they correctly receive no sticky.
+  acknowledge-build:
+    if: >-
+      github.event.action == 'created' &&
+      github.event.check_run.name == 'Build - client packages'
     runs-on: ubuntu-latest
     # Uncomment to enable comment posting after bake-in.
     # permissions:
     #   pull-requests: write
     steps:
+      - name: Resolve PR for check SHA
+        id: find_pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          SHA="${{ github.event.check_run.head_sha }}"
+          # Find the open PR whose head SHA matches this check, scoped to PRs targeting branches we care about.
+          # The first match wins; the same SHA typically belongs to at most one open PR.
+          PR_NUM=$(gh pr list --state open --json number,headRefOid,baseRefName --limit 500 \
+            | jq -r --arg sha "$SHA" '
+                [ .[]
+                  | select(.headRefOid == $sha)
+                  | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))
+                ][0].number // empty')
+          if [ -z "$PR_NUM" ]; then
+            echo "No matching open PR for SHA $SHA on a covered base branch; nothing to do." >&2
+          fi
+          echo "pr_num=$PR_NUM" >> "$GITHUB_OUTPUT"
+
       - name: Render initial comment body
+        if: steps.find_pr.outputs.pr_num != ''
         run: |
           set -euo pipefail
           cat > acknowledge.md <<'EOF'
           ## Bundle size comparison
 
-          Waiting for the ADO bundle-size build to complete. Will update with results when available.
+          Pending — `Build - client packages` is running. Results will appear here when the build completes.
           EOF
-          echo "PR #${{ github.event.pull_request.number }} (${{ github.event.action }}): would post the following body as a sticky comment."
+          echo "PR #${{ steps.find_pr.outputs.pr_num }}: would post the following body as a sticky comment."
           echo
           echo "--- acknowledge.md ---"
           cat acknowledge.md
@@ -58,18 +83,19 @@ jobs:
 
       # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+      # - if: steps.find_pr.outputs.pr_num != ''
+      #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
       #     header: bundle-size-report
-      #     number: ${{ github.event.pull_request.number }}
+      #     number: ${{ steps.find_pr.outputs.pr_num }}
       #     path: ${{ github.workspace }}/acknowledge.md
 
   identify-targets:
-    # Only fires on check_run completions for one of the two bundle-publishing pipelines. GitHub doesn't let us filter
-    # check_run events by name at the `on:` level, so we do it here. pull_request_target intentionally skips this job
-    # (compare auto-skips downstream as a result).
+    # Only fires on successful completions of either bundle-publishing pipeline. GitHub doesn't let us filter
+    # check_run events by name at the `on:` level, so we do it here. acknowledge-build handles `created` events;
+    # this job handles `completed`+success.
     if: >-
-      github.event_name == 'check_run' &&
+      github.event.action == 'completed' &&
       (github.event.check_run.name == 'Build - Client bundle size artifacts' ||
        github.event.check_run.name == 'Build - client packages') &&
       github.event.check_run.conclusion == 'success'
@@ -100,8 +126,7 @@ jobs:
 
           # Map the check's SHA back to affected open PRs. A PR is affected if either its head SHA matches (PR build
           # finished) or its merge-base with its base branch matches (baseline build finished). Only consider PRs
-          # targeting branches the pull_request_target trigger also covers, so the two trigger surfaces agree on which
-          # PRs are in scope.
+          # targeting branches the workflow is scoped to.
           SHA="${{ github.event.check_run.head_sha }}"
           PR_LIST_LIMIT=500
           PRS_JSON=$(gh pr list --state open \
