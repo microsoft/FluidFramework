@@ -156,12 +156,7 @@ export class OdspTokenManager {
 			// Don't solely rely on tokenCache lock, ensure serialized execution of
 			// cache update to avoid multiple fetch.
 			return this.cacheMutex.runExclusive(async () => {
-				return this.getTokensCore(
-					isPush,
-					credentials,
-					forceRefresh,
-					forceReauth,
-				);
+				return this.getTokensCore(isPush, credentials, forceRefresh, forceReauth);
 			});
 		};
 		if (!forceReauth && !forceRefresh) {
