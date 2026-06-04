@@ -104,16 +104,12 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Server-side merge-base lookup. Returns the SHA, or empty on failure / disjoint history.
+          # Server-side merge-base lookup. Stdout is the SHA on shared history, empty on disjoint history.
+          # Exit code is gh's: 0 for any successful HTTP response, non-zero for HTTP/network/rate-limit
+          # failure — propagated so the caller can distinguish "no shared history" (legitimate) from
+          # "API call failed" (often actionable, e.g. a rate limit).
           compute_mb() {
-            local mb
-            # Gate on the gh exit code rather than the stdout content: on HTTP failure (e.g. 404, rate
-            # limit, transient 5xx) gh writes the raw error response body to stdout, bypassing --jq —
-            # without this guard, that body would propagate as if it were a SHA.
-            if mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-                --jq '.merge_base_commit.sha // empty'); then
-              echo "$mb"
-            fi
+            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" --jq '.merge_base_commit.sha // empty'
           }
 
           # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
@@ -128,9 +124,15 @@ jobs:
             PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
             PR_HEAD=$(echo "$PR_JSON" | jq -r '.headRefOid')
             PR_BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefName')
-            MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD")
+
+            # gh failure is fatal here — this job had exactly one PR to handle. Disjoint history (empty
+            # MB on success) is a legitimate state; emit no matrix entry and the workflow stays green.
+            if ! MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD"); then
+              echo "Merge-base lookup failed for PR #$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD); see gh error above." >&2
+              exit 1
+            fi
             if [ -z "$MB" ]; then
-              echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
+              echo "PR #$PR_NUM has no shared history with $PR_BASE_REF; nothing to compare."
             else
               ENTRY=$(jq -n -c \
                 --argjson n "$PR_NUM" \
@@ -162,14 +164,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          # See identify-from-pr-build for the contract.
           compute_mb() {
-            local mb
-            mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-              --jq '.merge_base_commit.sha' || true)
-            if [ "$mb" = "null" ]; then
-              mb=""
-            fi
-            echo "$mb"
+            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" --jq '.merge_base_commit.sha // empty'
           }
 
           # Map the check's SHA back to affected open PRs via merge-base match.
@@ -188,13 +185,18 @@ jobs:
             PR_NUM=$(echo "$pr" | jq -r '.number')
             PR_HEAD=$(echo "$pr" | jq -r '.headRefOid')
             PR_BASE_REF=$(echo "$pr" | jq -r '.baseRefName')
-            MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD")
 
-            if [ "$PR_HEAD" = "$SHA" ] || [ "$MB" = "$SHA" ]; then
-              if [ -z "$MB" ]; then
-                echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
-                continue
-              fi
+            # gh failure here is per-PR — log and continue so a transient hit doesn't abort the whole
+            # scan. Disjoint history (empty MB on success) naturally falls through the match check below.
+            if ! MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD"); then
+              echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD); see gh error above." >&2
+              continue
+            fi
+
+            # A PR matches either by head SHA (rare: the baseline check fired for a SHA that's also a PR
+            # head) or by merge-base. The MB-empty guard catches the edge case of PR_HEAD == SHA on a PR
+            # whose history is disjoint from its base — we have no useful baseline to compare against.
+            if [ -n "$MB" ] && { [ "$PR_HEAD" = "$SHA" ] || [ "$MB" = "$SHA" ]; }; then
               ENTRY=$(jq -n -c \
                 --argjson n "$PR_NUM" \
                 --arg h "$PR_HEAD" \
