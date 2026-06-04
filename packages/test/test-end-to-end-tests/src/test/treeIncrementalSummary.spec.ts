@@ -347,6 +347,7 @@ describeCompat(
 			}
 			// Stale-handle-path bug (fixed by {@link https://github.com/microsoft/FluidFramework/pull/26990 | PR #26990})
 			// was released in version 2.100.0. Any version before that will have the bug, so skip running it.
+			// AB#74859 is tracking the removal of this workaround.
 			if (
 				semver.lt(apis.dataRuntime.version, "2.100.0") ||
 				semver.lt(apis.dataRuntimeForLoading.version, "2.100.0")
