@@ -308,7 +308,8 @@ class NodePositionInfo implements UpPath {
 	 * @param indexOfParentPosition - Index of this node's parent in {@link TreeShape.positions}
 	 * @param shape - Shape of the top level sequence this node is part of
 	 * @param topLevelLength - Number of siblings in this node's field. For a root this is unused
-	 * @param valueOffset - Offset of this node's value within one top-level tree's slice of the chunk's flat `values` array
+	 * @param valueOffset - Offset of this node's value within one top-level tree's slice of the chunk's flat `values` array;
+	 * only valid when `shape.hasValue` (otherwise it's where the value would have gone, and should not be used to read a value).
 	 */
 	public constructor(
 		public readonly parent: NodePositionInfo | undefined, // TODO; general UpPath to allow prefixing here?
@@ -339,10 +340,14 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private topLevelIndex: number = 0;
 
 	// Cached constants for faster access.
-	private readonly shape: ChunkShape; /** */
-	private readonly treeShape: TreeShape; /** The chunk's per-tree shape (shape of each top-level tree). */
-	private readonly nodeLength: number; /** Number of positions in one top-level tree (treeShape.positions.length). */
-	private readonly stride: number; /** Number of values per top-level node (treeShape.valuesPerTopLevelNode). */
+	/** The chunk's shape. */
+	private readonly shape: ChunkShape;
+	/** The chunk's per-tree shape (shape of each top-level tree). */
+	private readonly treeShape: TreeShape;
+	/** Number of positions in one top-level tree (treeShape.positions.length). */
+	private readonly nodeLength: number;
+	/** Number of values per top-level node (treeShape.valuesPerTopLevelNode). */
+	private readonly stride: number;
 
 	public mode: CursorLocationType = CursorLocationType.Fields;
 
@@ -406,16 +411,29 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 			assert(this.mode === CursorLocationType.Fields, 0x562 /* expected root to be a field */);
 			return;
 		}
+		const decoded = this.decodePosition(positionIndex);
+		this.topLevelIndex = decoded.topLevelIndex;
+		this.nodePositionInfo = decoded.info;
+	}
+
+	/**
+	 * Decode a flat `positionIndex` into its components.
+	 *
+	 * @param positionIndex - flat position index of the node to decode. Must be greater than 0;
+	 * @returns the node's index within {@link TreeShape.positions} (`withinTree`), which top-level
+	 * tree holds it (`topLevelIndex`), and the corresponding shared {@link NodePositionInfo} (`info`).
+	 */
+	private decodePosition(positionIndex: number): {
+		withinTree: number;
+		topLevelIndex: number;
+		info: NodePositionInfo;
+	} {
 		const offset = positionIndex - 1;
-		if (this.nodeLength === 1) {
-			// Single-node-shape (leaf) fast path: no division needed.
-			this.topLevelIndex = offset;
-			this.nodePositionInfo = this.treeShape.positions[0];
-		} else {
-			const withinTree = offset % this.nodeLength;
-			this.topLevelIndex = (offset - withinTree) / this.nodeLength;
-			this.nodePositionInfo = this.treeShape.positions[withinTree] ?? oob();
-		}
+		// Find the node's index within treeShape.positions, then which top-level tree holds it.
+		const withinTree = offset % this.nodeLength; // remainder
+		const topLevelIndex = (offset - withinTree) / this.nodeLength; // quotient
+		const info = this.treeShape.positions[withinTree] ?? oob();
+		return { withinTree, topLevelIndex, info };
 	}
 
 	/**
@@ -429,11 +447,7 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		if (positionIndex === 0) {
 			return undefined;
 		}
-		const offset = positionIndex - 1;
-		const withinTree = this.nodeLength === 1 ? 0 : offset % this.nodeLength;
-		const topLevelIndex =
-			this.nodeLength === 1 ? offset : (offset - withinTree) / this.nodeLength;
-		const info = this.treeShape.positions[withinTree] ?? oob();
+		const { withinTree, topLevelIndex, info } = this.decodePosition(positionIndex);
 		if (info.parent === undefined) {
 			// Top-level node: its parent is the (prefixed) chunk root.
 			return { parent: undefined, parentField: info.parentField, parentIndex: topLevelIndex };

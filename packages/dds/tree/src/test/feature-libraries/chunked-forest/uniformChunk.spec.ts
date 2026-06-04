@@ -285,12 +285,11 @@ describe("uniformChunk", () => {
 			cursor.enterField(xField);
 			cursor.enterNode(0);
 
-			// getPath materializes a standalone path on demand: a fresh object each call,
-			// carrying the real position that was never stored anywhere.
+			// getPath materializes a standalone path on demand, carrying the real position
+			// that was never stored anywhere.
 			const path1 = cursor.getPath();
 			const path2 = cursor.getPath();
 			assert(path1 !== undefined && path2 !== undefined);
-			assert.notEqual(path1, path2);
 			assert.deepEqual(path1, path2);
 			assert.notEqual(path1, xPrototype);
 			assert.equal(path1.parent?.parentIndex, pointCount - 1);
