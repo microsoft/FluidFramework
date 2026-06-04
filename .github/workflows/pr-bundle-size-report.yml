@@ -54,13 +54,11 @@ jobs:
           set -euo pipefail
           SHA="${{ github.event.check_run.head_sha }}"
           # Find the open PR whose head SHA matches this check, scoped to PRs targeting branches we care about.
-          # The first match wins; the same SHA typically belongs to at most one open PR.
-          PR_NUM=$(gh pr list --state open --json number,headRefOid,baseRefName --limit 500 \
-            | jq -r --arg sha "$SHA" '
-                [ .[]
-                  | select(.headRefOid == $sha)
-                  | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))
-                ][0].number // empty')
+          # `head-sha:` is a GitHub search qualifier that does the head-SHA match server-side, so we only need
+          # to filter the base branch client-side.
+          PR_NUM=$(gh pr list --state open --search "head-sha:$SHA" \
+            --json number,baseRefName \
+            --jq '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))][0].number // empty')
           if [ -z "$PR_NUM" ]; then
             echo "No matching open PR for SHA $SHA on a covered base branch; nothing to do." >&2
           fi
@@ -90,14 +88,12 @@ jobs:
       #     number: ${{ steps.find_pr.outputs.pr_num }}
       #     path: ${{ github.workspace }}/acknowledge.md
 
-  identify-targets:
-    # Only fires on successful completions of either bundle-publishing pipeline. GitHub doesn't let us filter
-    # check_run events by name at the `on:` level, so we do it here. acknowledge-build handles `created` events;
-    # this job handles `completed`+success.
+  # Reacts to a PR's own `Build - client packages` build completing. The check SHA is a PR head SHA, so we
+  # produce at most one matrix entry — the PR whose head matches.
+  identify-from-pr-build:
     if: >-
       github.event.action == 'completed' &&
-      (github.event.check_run.name == 'Build - Client bundle size artifacts' ||
-       github.event.check_run.name == 'Build - client packages') &&
+      github.event.check_run.name == 'Build - client packages' &&
       github.event.check_run.conclusion == 'success'
     runs-on: ubuntu-latest
     outputs:
@@ -114,6 +110,63 @@ jobs:
           # GitHub's compare API returns success with `merge_base_commit: null` for refs that share
           # no history, and `jq '.merge_base_commit.sha'` emits the literal string "null" — collapse
           # that to empty so callers only have one failure shape to handle.
+          compute_mb() {
+            local mb
+            mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
+              --jq '.merge_base_commit.sha' 2>/dev/null || true)
+            if [ "$mb" = "null" ]; then
+              mb=""
+            fi
+            echo "$mb"
+          }
+
+          # Find the open PR whose head SHA matches this check, scoped to PRs targeting branches we care about.
+          # `head-sha:` is a GitHub search qualifier that does the head-SHA match server-side, so we only need
+          # to filter the base branch client-side. At most one PR is expected.
+          SHA="${{ github.event.check_run.head_sha }}"
+          PR_JSON=$(gh pr list --state open --search "head-sha:$SHA" \
+            --json number,headRefOid,baseRefName \
+            --jq '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))][0]')
+
+          AFFECTED='[]'
+          if [ -n "$PR_JSON" ] && [ "$PR_JSON" != "null" ]; then
+            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
+            PR_HEAD=$(echo "$PR_JSON" | jq -r '.headRefOid')
+            PR_BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefName')
+            MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD")
+            if [ -z "$MB" ]; then
+              echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD)." >&2
+            else
+              ENTRY=$(jq -n -c \
+                --argjson n "$PR_NUM" \
+                --arg h "$PR_HEAD" \
+                --arg b "$PR_BASE_REF" \
+                --arg mb "$MB" \
+                '{number: $n, head: $h, baseRef: $b, mergeBase: $mb}')
+              AFFECTED=$(echo "$AFFECTED" | jq -c --argjson e "$ENTRY" '. + [$e]')
+            fi
+          fi
+          echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
+
+  # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
+  # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
+  # equals this SHA — typically 0–few PRs.
+  identify-from-baseline-build:
+    if: >-
+      github.event.action == 'completed' &&
+      github.event.check_run.name == 'Build - Client bundle size artifacts' &&
+      github.event.check_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      prs: ${{ steps.collect.outputs.prs }}
+    steps:
+      - name: Collect affected PRs
+        id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
           compute_mb() {
             local mb
             mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
@@ -163,11 +216,17 @@ jobs:
           echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
 
   compare:
-    needs: identify-targets
-    if: needs.identify-targets.outputs.prs != '[]'
+    needs: [identify-from-pr-build, identify-from-baseline-build]
+    # Either upstream produces the matrix; the other will be skipped per event type. Without
+    # `!cancelled()`, GitHub Actions auto-skips a job whose `needs:` had any skipped entry.
+    if: |
+      !cancelled() && (
+        (needs.identify-from-pr-build.result == 'success' && needs.identify-from-pr-build.outputs.prs != '[]') ||
+        (needs.identify-from-baseline-build.result == 'success' && needs.identify-from-baseline-build.outputs.prs != '[]')
+      )
     strategy:
       matrix:
-        pr: ${{ fromJSON(needs.identify-targets.outputs.prs) }}
+        pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
       fail-fast: false
     runs-on: ubuntu-latest
     # Uncomment to enable comment posting after bake-in.
