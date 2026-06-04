@@ -158,7 +158,7 @@ describe("Tree node API benchmarks", () => {
 								benchmarkFnCustom: async (state) => {
 									const node = init(ObjectRoot, createObjectRootContent());
 									for (let i = 0; i < listenerCount; i++) {
-										Tree.on(node, "treeChanged", noopNodeChanged);
+										Tree.on(node, "treeChanged", noopTreeChanged);
 									}
 									state.timeAllBatches(() => {
 										node.inner.x = node.inner.x + 1;
