@@ -74,7 +74,8 @@ describe("Tree node API benchmarks", () => {
 								benchmarkFnCustom: async (state) => {
 									const node = makeNode();
 									state.timeAllBatches(() => {
-										Tree.on(node, eventName, listener);
+										const off = Tree.on(node, eventName, listener);
+										off();
 									});
 								},
 							}),
@@ -94,7 +95,8 @@ describe("Tree node API benchmarks", () => {
 									Tree.on(node, "nodeChanged", noopNodeChanged);
 								}
 								state.timeAllBatches(() => {
-									Tree.on(node, "nodeChanged", noopNodeChanged);
+									const off = Tree.on(node, "nodeChanged", noopNodeChanged);
+									off();
 								});
 							},
 						}),
@@ -112,8 +114,12 @@ describe("Tree node API benchmarks", () => {
 								benchmarkFnCustom: async (state) => {
 									const node = init(ObjectRoot, createObjectRootContent());
 									state.timeAllBatches(() => {
+										const offs: (() => void)[] = [];
 										for (let i = 0; i < n; i++) {
-											Tree.on(node, "nodeChanged", noopNodeChanged);
+											offs.push(Tree.on(node, "nodeChanged", noopNodeChanged));
+										}
+										for (const off of offs) {
+											off();
 										}
 									});
 								},
