@@ -45,7 +45,7 @@ describe("Tree node API benchmarks", () => {
 		} => ({ a: 0, b: 0, c: "", inner: new Inner({ x: 0, y: 0 }) });
 
 		describe("Runtime", () => {
-			describeHydration("Tree.on - subscribe", (init) => {
+			describeHydration("Tree.on - subscribe + unsubscribe round-trip", (init) => {
 				interface Scenario {
 					readonly title: string;
 					readonly makeNode: () => TreeNode;
