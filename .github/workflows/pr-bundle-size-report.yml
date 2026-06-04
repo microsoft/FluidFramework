@@ -53,14 +53,12 @@ jobs:
         run: |
           set -euo pipefail
           SHA="${{ github.event.check_run.head_sha }}"
-          # Find the open PR whose head SHA matches this check, scoped to PRs targeting branches we care about.
-          # `head-sha:` is a GitHub search qualifier that does the head-SHA match server-side, so we only need
-          # to filter the base branch client-side.
-          PR_NUM=$(gh pr list --state open --search "head-sha:$SHA" \
-            --json number,baseRefName \
-            --jq '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))][0].number // empty')
+          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
+          # that does the match server-side. At most one PR is expected.
+          PR_NUM=$(gh pr list --state open --search "head-sha:$SHA" --json number \
+            --jq '.[0].number // empty')
           if [ -z "$PR_NUM" ]; then
-            echo "No matching open PR for SHA $SHA on a covered base branch; nothing to do." >&2
+            echo "No matching open PR for SHA $SHA; nothing to do." >&2
           fi
           echo "pr_num=$PR_NUM" >> "$GITHUB_OUTPUT"
 
@@ -120,13 +118,12 @@ jobs:
             echo "$mb"
           }
 
-          # Find the open PR whose head SHA matches this check, scoped to PRs targeting branches we care about.
-          # `head-sha:` is a GitHub search qualifier that does the head-SHA match server-side, so we only need
-          # to filter the base branch client-side. At most one PR is expected.
+          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
+          # that does the match server-side. At most one PR is expected.
           SHA="${{ github.event.check_run.head_sha }}"
           PR_JSON=$(gh pr list --state open --search "head-sha:$SHA" \
             --json number,headRefOid,baseRefName \
-            --jq '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))][0]')
+            --jq '.[0]')
 
           AFFECTED='[]'
           if [ -n "$PR_JSON" ] && [ "$PR_JSON" != "null" ]; then
@@ -177,9 +174,7 @@ jobs:
             echo "$mb"
           }
 
-          # Map the check's SHA back to affected open PRs. A PR is affected if either its head SHA matches (PR build
-          # finished) or its merge-base with its base branch matches (baseline build finished). Only consider PRs
-          # targeting branches the workflow is scoped to.
+          # Map the check's SHA back to affected open PRs via merge-base match.
           SHA="${{ github.event.check_run.head_sha }}"
           PR_LIST_LIMIT=500
           PRS_JSON=$(gh pr list --state open \
@@ -188,8 +183,6 @@ jobs:
           if [ "$PR_COUNT" -ge "$PR_LIST_LIMIT" ]; then
             echo "WARNING: gh pr list returned the maximum $PR_LIST_LIMIT PRs; some open PRs may not have been considered." >&2
           fi
-          PRS_JSON=$(echo "$PRS_JSON" | jq -c \
-            '[.[] | select(.baseRefName == "main" or (.baseRefName | startswith("release/")))]')
 
           PR_LINES=$(echo "$PRS_JSON" | jq -c '.[]')
           AFFECTED='[]'
