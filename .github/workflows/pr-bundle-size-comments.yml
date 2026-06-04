@@ -48,34 +48,45 @@ jobs:
     steps:
       - name: Resolve PR for check SHA
         id: find_pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          SHA="${{ github.event.check_run.head_sha }}"
-          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
-          # that does the match server-side. At most one PR is expected.
-          PR_NUM=$(gh pr list --state open --search "head-sha:$SHA" --json number \
-            --jq '.[0].number // empty')
-          if [ -z "$PR_NUM" ]; then
-            echo "No matching open PR for SHA $SHA; nothing to do."
-          fi
-          echo "pr_num=$PR_NUM" >> "$GITHUB_OUTPUT"
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        with:
+          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier that
+          # does the match server-side. At most one PR is expected. REST search returns the PR number directly,
+          # which is all this job needs; identify-from-pr-build uses GraphQL instead because it also needs the
+          # head SHA and base ref name.
+          script: |
+            const sha = context.payload.check_run.head_sha;
+            const { data } = await github.rest.search.issuesAndPullRequests({
+              q: `type:pr is:open repo:${context.repo.owner}/${context.repo.repo} head-sha:${sha}`,
+            });
+            const prNumber = data.items[0]?.number ?? "";
+            if (!prNumber) {
+              core.info(`No matching open PR for SHA ${sha}; nothing to do.`);
+            }
+            core.setOutput("pr_num", prNumber);
 
       - name: Render initial comment body
         if: steps.find_pr.outputs.pr_num != ''
-        run: |
-          set -euo pipefail
-          cat > acknowledge.md <<'EOF'
-          ## Bundle size comparison
-
-          Pending — `Build - client packages` is running. Results will appear here when the build completes.
-          EOF
-          echo "PR #${{ steps.find_pr.outputs.pr_num }}: would post the following body as a sticky comment."
-          echo
-          echo "--- acknowledge.md ---"
-          cat acknowledge.md
-          echo "--- end ---"
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          PR_NUM: ${{ steps.find_pr.outputs.pr_num }}
+        with:
+          script: |
+            const fs = require("fs");
+            const body = [
+              "## Bundle size comparison",
+              "",
+              "Pending — `Build - client packages` is running. Results will appear here when the build completes.",
+              "",
+            ].join("\n");
+            fs.writeFileSync("acknowledge.md", body);
+            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
+            core.info("");
+            core.info("--- acknowledge.md ---");
+            core.info(body);
+            core.info("--- end ---");
 
       # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
@@ -99,51 +110,61 @@ jobs:
     steps:
       - name: Collect affected PRs
         id: collect
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.check_run.head_sha;
 
-          # Server-side merge-base lookup. Stdout is the SHA on shared history, empty on disjoint history.
-          # Exit code is gh's: 0 for any successful HTTP response, non-zero for HTTP/network/rate-limit
-          # failure — propagated so the caller can distinguish "no shared history" (legitimate) from
-          # "API call failed" (often actionable, e.g. a rate limit).
-          compute_mb() {
-            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" --jq '.merge_base_commit.sha // empty'
-          }
+            // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
+            // PR number, head SHA, and base ref in one round-trip; the REST search API would return
+            // only the number, requiring a follow-up pulls.get() call.
+            const { search } = await github.graphql(
+              `query($q: String!) {
+                 search(query: $q, type: ISSUE, first: 1) {
+                   nodes {
+                     ... on PullRequest {
+                       number
+                       headRefOid
+                       baseRefName
+                     }
+                   }
+                 }
+               }`,
+              { q: `type:pr is:open repo:${owner}/${repo} head-sha:${sha}` },
+            );
+            const pr = search.nodes[0];
 
-          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
-          # that does the match server-side. At most one PR is expected.
-          SHA="${{ github.event.check_run.head_sha }}"
-          PR_JSON=$(gh pr list --state open --search "head-sha:$SHA" \
-            --json number,headRefOid,baseRefName \
-            --jq '.[0] // empty')
-
-          AFFECTED='[]'
-          if [ -n "$PR_JSON" ]; then
-            PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
-            PR_HEAD=$(echo "$PR_JSON" | jq -r '.headRefOid')
-            PR_BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefName')
-
-            # gh failure is fatal here — this job had exactly one PR to handle. Disjoint history (empty
-            # MB on success) is a legitimate state; emit no matrix entry and the workflow stays green.
-            if ! MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD"); then
-              echo "Merge-base lookup failed for PR #$PR_NUM (base=$PR_BASE_REF, head=$PR_HEAD); see gh error above." >&2
-              exit 1
-            fi
-            if [ -z "$MB" ]; then
-              echo "PR #$PR_NUM has no shared history with $PR_BASE_REF; nothing to compare."
-            else
-              ENTRY=$(jq -n -c \
-                --argjson n "$PR_NUM" \
-                --arg h "$PR_HEAD" \
-                --arg b "$PR_BASE_REF" \
-                --arg mb "$MB" \
-                '{number: $n, head: $h, baseRef: $b, mergeBase: $mb}')
-              AFFECTED=$(echo "$AFFECTED" | jq -c --argjson e "$ENTRY" '. + [$e]')
-            fi
-          fi
-          echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
+            let affected = [];
+            if (pr) {
+              // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or null
+              // on disjoint history) for any successful HTTP response, and throws for HTTP/network/rate-limit
+              // failure — distinguishing "no shared history" (legitimate, emit no entry and stay green) from
+              // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal because
+              // this job had exactly one PR to handle.
+              let mb;
+              try {
+                const { data } = await github.rest.repos.compareCommits({
+                  owner, repo, base: pr.baseRefName, head: pr.headRefOid,
+                });
+                mb = data.merge_base_commit?.sha ?? null;
+              } catch (err) {
+                core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
+                throw err;
+              }
+              if (!mb) {
+                core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to compare.`);
+              } else {
+                affected.push({
+                  number: pr.number,
+                  head: pr.headRefOid,
+                  baseRef: pr.baseRefName,
+                  mergeBase: mb,
+                });
+              }
+            }
+            core.setOutput("prs", JSON.stringify(affected));
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
   # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
@@ -159,54 +180,49 @@ jobs:
     steps:
       - name: Collect affected PRs
         id: collect
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.check_run.head_sha;
 
-          # See identify-from-pr-build for the contract.
-          compute_mb() {
-            gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" --jq '.merge_base_commit.sha // empty'
-          }
+            // paginate() returns every open PR, eliminating the `--limit 500` silent-truncation risk the
+            // bash version carries.
+            const prs = await github.paginate(github.rest.pulls.list, {
+              owner, repo, state: "open", per_page: 100,
+            });
 
-          # Map the check's SHA back to affected open PRs via merge-base match.
-          SHA="${{ github.event.check_run.head_sha }}"
-          PR_LIST_LIMIT=500
-          PRS_JSON=$(gh pr list --state open \
-            --json number,headRefOid,baseRefName --limit "$PR_LIST_LIMIT")
-          PR_COUNT=$(echo "$PRS_JSON" | jq 'length')
-          if [ "$PR_COUNT" -ge "$PR_LIST_LIMIT" ]; then
-            echo "WARNING: gh pr list returned the maximum $PR_LIST_LIMIT PRs; some open PRs may not have been considered." >&2
-          fi
+            const affected = [];
+            for (const pr of prs) {
+              // Server-side merge-base lookup. Resolves to the SHA on shared history (or null on disjoint
+              // history) for any successful HTTP response, and throws for HTTP/network/rate-limit failure.
+              // Per-PR API failure is logged and skipped so a transient hit doesn't abort the whole scan;
+              // disjoint history naturally falls through the match check below.
+              let mb;
+              try {
+                const { data } = await github.rest.repos.compareCommits({
+                  owner, repo, base: pr.base.ref, head: pr.head.sha,
+                });
+                mb = data.merge_base_commit?.sha ?? null;
+              } catch (err) {
+                core.warning(`Skipping PR #${pr.number}: merge-base lookup failed (base=${pr.base.ref}, head=${pr.head.sha}): ${err.message}`);
+                continue;
+              }
 
-          PR_LINES=$(echo "$PRS_JSON" | jq -c '.[]')
-          AFFECTED='[]'
-          while IFS= read -r pr; do
-            PR_NUM=$(echo "$pr" | jq -r '.number')
-            PR_HEAD=$(echo "$pr" | jq -r '.headRefOid')
-            PR_BASE_REF=$(echo "$pr" | jq -r '.baseRefName')
-
-            # gh failure here is per-PR — log and continue so a transient hit doesn't abort the whole
-            # scan. Disjoint history (empty MB on success) naturally falls through the match check below.
-            if ! MB=$(compute_mb "$PR_BASE_REF" "$PR_HEAD"); then
-              echo "Skipping PR #$PR_NUM: merge-base lookup failed (base=$PR_BASE_REF, head=$PR_HEAD); see gh error above." >&2
-              continue
-            fi
-
-            # A PR matches either by head SHA (rare: the baseline check fired for a SHA that's also a PR
-            # head) or by merge-base. The MB-empty guard catches the edge case of PR_HEAD == SHA on a PR
-            # whose history is disjoint from its base — we have no useful baseline to compare against.
-            if [ -n "$MB" ] && { [ "$PR_HEAD" = "$SHA" ] || [ "$MB" = "$SHA" ]; }; then
-              ENTRY=$(jq -n -c \
-                --argjson n "$PR_NUM" \
-                --arg h "$PR_HEAD" \
-                --arg b "$PR_BASE_REF" \
-                --arg mb "$MB" \
-                '{number: $n, head: $h, baseRef: $b, mergeBase: $mb}')
-              AFFECTED=$(echo "$AFFECTED" | jq -c --argjson e "$ENTRY" '. + [$e]')
-            fi
-          done <<< "$PR_LINES"
-          echo "prs=$AFFECTED" >> "$GITHUB_OUTPUT"
+              // A PR matches either by head SHA (rare: the baseline check fired for a SHA that's also a
+              // PR head) or by merge-base. The mb-truthy guard catches the edge case of head-SHA match on
+              // a PR whose history is disjoint from its base — no useful baseline to compare against.
+              if (mb && (pr.head.sha === sha || mb === sha)) {
+                affected.push({
+                  number: pr.number,
+                  head: pr.head.sha,
+                  baseRef: pr.base.ref,
+                  mergeBase: mb,
+                });
+              }
+            }
+            core.setOutput("prs", JSON.stringify(affected));
 
   compare:
     needs: [identify-from-pr-build, identify-from-baseline-build]
@@ -282,52 +298,60 @@ jobs:
       # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
       # would contain without actually posting it.
       - name: Render bundle-size comment body
-        run: |
-          set -euo pipefail
-          jq -r '
-            def fmt_delta($d):
-              if $d > 0 then "+\($d)" else "\($d)" end;
-            . as $root
-            | [
-                "## Bundle size comparison",
-                "",
-                "Base commit: `\($root.baseCommit)`",
-                "Head commit: `\($root.headCommit)`",
-                ""
-              ]
-              + (
-                  [
-                    $root.comparison | to_entries[]
-                    | .key as $pkg
-                    | .value
-                    | [
-                        to_entries[]
-                        | .key as $bundle
-                        | .value as $cmp
-                        | if ($cmp.base == null and $cmp.compare != null) then
-                            "- `\($bundle)`: **added** (parsed \($cmp.compare.parsedSize), gzip \($cmp.compare.gzipSize))"
-                          elif ($cmp.compare == null and $cmp.base != null) then
-                            "- `\($bundle)`: **removed** (was parsed \($cmp.base.parsedSize), gzip \($cmp.base.gzipSize))"
-                          elif ($cmp.base.parsedSize != $cmp.compare.parsedSize or $cmp.base.gzipSize != $cmp.compare.gzipSize) then
-                            ($cmp.compare.parsedSize - $cmp.base.parsedSize) as $dp
-                            | ($cmp.compare.gzipSize - $cmp.base.gzipSize) as $dg
-                            | "- `\($bundle)`: parsed " + fmt_delta($dp) + ", gzip " + fmt_delta($dg)
-                          else empty end
-                      ] as $lines
-                    | if ($lines | length) > 0 then
-                        ["### `\($pkg)`", ""] + $lines + [""]
-                      else empty end
-                  ]
-                  | add // ["No bundle-size changes."]
-                )
-            | .[]
-          ' bundle-comparison.json > bundle-comparison.md
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        env:
+          PR_NUM: ${{ matrix.pr.number }}
+        with:
+          script: |
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync("bundle-comparison.json", "utf8"));
 
-          echo "PR #${{ matrix.pr.number }}: would post the following body as a sticky comment."
-          echo
-          echo "--- bundle-comparison.md ---"
-          cat bundle-comparison.md
-          echo "--- end ---"
+            const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
+
+            const lines = [
+              "## Bundle size comparison",
+              "",
+              `Base commit: \`${data.baseCommit}\``,
+              `Head commit: \`${data.headCommit}\``,
+              "",
+            ];
+
+            const packageSections = [];
+            for (const [pkg, bundles] of Object.entries(data.comparison)) {
+              const bundleLines = [];
+              for (const [bundle, cmp] of Object.entries(bundles)) {
+                if (cmp.base == null && cmp.compare != null) {
+                  bundleLines.push(`- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`);
+                } else if (cmp.compare == null && cmp.base != null) {
+                  bundleLines.push(`- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`);
+                } else if (
+                  cmp.base.parsedSize !== cmp.compare.parsedSize ||
+                  cmp.base.gzipSize !== cmp.compare.gzipSize
+                ) {
+                  const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
+                  const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
+                  bundleLines.push(`- \`${bundle}\`: parsed ${fmtDelta(dp)}, gzip ${fmtDelta(dg)}`);
+                }
+              }
+              if (bundleLines.length > 0) {
+                packageSections.push(`### \`${pkg}\``, "", ...bundleLines, "");
+              }
+            }
+
+            if (packageSections.length > 0) {
+              lines.push(...packageSections);
+            } else {
+              lines.push("No bundle-size changes.");
+            }
+
+            const body = lines.join("\n") + "\n";
+            fs.writeFileSync("bundle-comparison.md", body);
+            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
+            core.info("");
+            core.info("--- bundle-comparison.md ---");
+            core.info(body);
+            core.info("--- end ---");
 
       # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
