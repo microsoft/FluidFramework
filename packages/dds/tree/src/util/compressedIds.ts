@@ -18,7 +18,7 @@ import { v5 as uuidV5 } from "uuid";
  * A finalized compressed id — the same numeric value in op-space and session-space.
  * @remarks
  * These are safe to use in contexts where the encoding id compressor is available to decode them,
- * even when the session id of the encoding id compressor not known.
+ * even when the session id of the encoding id compressor is not known.
  */
 export type OriginatorlessEncodedId = SessionSpaceCompressedId & OpSpaceCompressedId;
 
