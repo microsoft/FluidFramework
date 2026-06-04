@@ -18,7 +18,7 @@ USAGE
 
 FLAGS
   --analysis-dir=<value>  Directory under which per-label analyzer stats are saved. Defaults to
-                          <package-dir>/bundleAnalysis.
+                          <package-dir>/compareBundlesOutput/analysis.
   --force-clean-build     Run the full workspace clean ('npm run clean' at the repo root) before building. Off by
                           default; opt in when stale incremental build state from a previous revision may interfere with
                           the current one.
@@ -60,8 +60,8 @@ USAGE
     [--analysis-dir <value>] [--output-dir <value>] [--skip-compare] [--force-clean-build] [--keep-base-repo]
 
 FLAGS
-  --analysis-dir=<value>   Directory under which per-label analyzer stats are saved. Defaults to
-                           <package-dir>/bundleAnalysis.
+  --analysis-dir=<value>   Directory under which per-label analyzer stats are saved. Defaults to an 'analysis'
+                           subdirectory of the output directory (e.g. <package-dir>/compareBundlesOutput/analysis).
   --base-revision=<value>  [default: main] Revision to use as the comparison baseline (branch, tag, or commit SHA). The
                            actual base used is the merge-base of HEAD and this revision (the fork point), so
                            worktree-based setups where 'main' is in an unusual location still produce the expected
@@ -112,7 +112,7 @@ USAGE
     [--current-label <value>]
 
 FLAGS
-  --analysis-dir=<value>   [default: ./bundleAnalysis] Parent directory containing analyzer.json files at
+  --analysis-dir=<value>   [default: ./compareBundlesOutput/analysis] Parent directory containing analyzer.json files at
                            {label}/analyzer.json.
   --base-label=<value>     [default: main] Label subdirectory under --analysis-dir holding the base-side bundle stats.
                            Must match the --label passed to 'flub bundle collect' in revision mode.

@@ -50,8 +50,9 @@ export default class BundleCollectAndCompare extends BaseCommand<
 		}),
 		"analysis-dir": Flags.string({
 			description:
-				"Directory under which per-label analyzer stats are saved. Defaults to " +
-				"<package-dir>/bundleAnalysis.",
+				"Directory under which per-label analyzer stats are saved. Defaults to an " +
+				"'analysis' subdirectory of the output directory (e.g. " +
+				"<package-dir>/compareBundlesOutput/analysis).",
 		}),
 		"output-dir": Flags.string({
 			description:
@@ -84,14 +85,14 @@ export default class BundleCollectAndCompare extends BaseCommand<
 		const { flags } = this;
 
 		const packageDir = resolve(flags["package-dir"]);
-		const analysisDir =
-			flags["analysis-dir"] === undefined
-				? resolve(packageDir, "bundleAnalysis")
-				: resolve(flags["analysis-dir"]);
 		const outputDir =
 			flags["output-dir"] === undefined
 				? resolve(packageDir, "compareBundlesOutput")
 				: resolve(flags["output-dir"]);
+		const analysisDir =
+			flags["analysis-dir"] === undefined
+				? resolve(outputDir, "analysis")
+				: resolve(flags["analysis-dir"]);
 
 		await collectAndCompareBundles({
 			baseRevision: flags["base-revision"],

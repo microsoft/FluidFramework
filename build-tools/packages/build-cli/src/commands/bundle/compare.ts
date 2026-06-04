@@ -28,7 +28,7 @@ export default class BundleCompare extends BaseCommand<typeof BundleCompare> {
 	public static readonly flags = {
 		"analysis-dir": Flags.string({
 			description: "Parent directory containing analyzer.json files at {label}/analyzer.json.",
-			default: "./bundleAnalysis",
+			default: "./compareBundlesOutput/analysis",
 		}),
 		"output-dir": Flags.string({
 			description: "Directory where the .txt and .json comparison reports are written.",

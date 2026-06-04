@@ -53,7 +53,7 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 		"analysis-dir": Flags.string({
 			description:
 				"Directory under which per-label analyzer stats are saved. Defaults to " +
-				"<package-dir>/bundleAnalysis.",
+				"<package-dir>/compareBundlesOutput/analysis.",
 		}),
 		"force-clean-build": Flags.boolean({
 			description:
@@ -77,7 +77,7 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 		const packageDir = resolve(flags["package-dir"]);
 		const analysisDir =
 			flags["analysis-dir"] === undefined
-				? resolve(packageDir, "bundleAnalysis")
+				? resolve(packageDir, "compareBundlesOutput", "analysis")
 				: resolve(flags["analysis-dir"]);
 		const label = flags.label ?? (mode === "revision" ? (revision as string) : "current");
 
