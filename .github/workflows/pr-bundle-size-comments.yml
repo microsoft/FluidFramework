@@ -105,17 +105,15 @@ jobs:
           set -euo pipefail
 
           # Server-side merge-base lookup. Returns the SHA, or empty on failure / disjoint history.
-          # GitHub's compare API returns success with `merge_base_commit: null` for refs that share
-          # no history, and `jq '.merge_base_commit.sha'` emits the literal string "null" — collapse
-          # that to empty so callers only have one failure shape to handle.
           compute_mb() {
             local mb
-            mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-              --jq '.merge_base_commit.sha' || true)
-            if [ "$mb" = "null" ]; then
-              mb=""
+            # Gate on the gh exit code rather than the stdout content: on HTTP failure (e.g. 404, rate
+            # limit, transient 5xx) gh writes the raw error response body to stdout, bypassing --jq —
+            # without this guard, that body would propagate as if it were a SHA.
+            if mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
+                --jq '.merge_base_commit.sha // empty'); then
+              echo "$mb"
             fi
-            echo "$mb"
           }
 
           # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier
