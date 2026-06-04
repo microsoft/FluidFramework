@@ -1308,14 +1308,16 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => {
 					view.root.number = 4;
 				},
-				error: "Editing the tree is forbidden during a nodeChanged, treeChanged, or changed event",
+				error:
+					"Editing the tree is forbidden during a nodeChanged, treeChanged, or changed event",
 			});
 		});
 
 		it("create a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.fork(),
-				error: ".*Branching is forbidden during a nodeChanged, treeChanged, or changed event.*",
+				error:
+					".*Branching is forbidden during a nodeChanged, treeChanged, or changed event.*",
 			});
 		});
 
@@ -1345,7 +1347,8 @@ describe("sharedTreeView", () => {
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
 				duringEdit: () => revertible?.revert(),
-				error: "Reverting a commit is forbidden during a nodeChanged, treeChanged, or changed event",
+				error:
+					"Reverting a commit is forbidden during a nodeChanged, treeChanged, or changed event",
 			});
 		});
 
@@ -1354,7 +1357,8 @@ describe("sharedTreeView", () => {
 			expectErrorDuringEdit({
 				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
 				duringEdit: (view) => view.dispose(),
-				error: "Disposing a view is forbidden during a nodeChanged, treeChanged, or changed event",
+				error:
+					"Disposing a view is forbidden during a nodeChanged, treeChanged, or changed event",
 			});
 		});
 
@@ -1367,7 +1371,8 @@ describe("sharedTreeView", () => {
 					view.runTransaction(() => {
 						view.root.number = 4;
 					}),
-				error: "Running a transaction is forbidden during a nodeChanged, treeChanged, or changed event",
+				error:
+					"Running a transaction is forbidden during a nodeChanged, treeChanged, or changed event",
 			});
 		});
 
