@@ -71,3 +71,8 @@ CLAUDE.local.md
 
 # Output from benchmarks
 **/benchmark*Output.json
+
+# npm configuration: Currently only used by CI to redirect to an alternative registry.
+# Once all workspaces are updated to pnpm ll and thus have moved the pnpm config out of these files,
+# this can be made global (remove the leading slash)
+/.npmrc

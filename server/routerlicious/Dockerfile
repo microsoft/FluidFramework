@@ -87,18 +87,25 @@ ENV PNPM_HOME="/pnpm"
 # though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$ROUTERLICIOUS_ROOT/node_modules/.bin:$PATH"
 
-# Note: `npm install -g corepack` was added as a temporary workaround in response to https://github.com/nodejs/corepack/issues/612.
-# The NPM registry recently rotated some keys but non-latest corepack versions (like those distributed with Node18)
-# have hardcoded references to the old keys and thus fail to install packages that were signed with the new keys.
-# So install the latest corepack globally to work around the problem.
-RUN npm install -g corepack && corepack enable
+# Install the pnpm version pinned in package.json's "packageManager" field.
+# Mirrors the approach used by tools/pipelines/templates/include-install-pnpm.yml.
+#
+# CI has no egress to registry.npmjs.org under 1ES network isolation, so it
+# provides an authenticated .npmrc (pointing at our ADO npm mirror) as a
+# BuildKit secret. The mount is marked required=false so local `docker build`
+# invocations that don't pass --secret still work, falling back to npm's
+# default public registry.
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
+    && npm install -g "$PNPM_VERSION"
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
-# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
-# and be able to change them.
 # Using a cache mount for the pnpm store improves the incremental docker build.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
-    pnpm install --unsafe-perm
+# pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set
+# (https://pnpm.io/settings#storedir), so the mount target /pnpm/store already
+# matches and no --store-dir flag is needed.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    pnpm install
 
 # And now copy over our actual code and build
 COPY . .
