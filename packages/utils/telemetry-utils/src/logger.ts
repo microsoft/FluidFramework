@@ -902,6 +902,14 @@ export class PerformanceEvent {
 		this.logger.sendPerformanceEvent(event, error, this.getLogLevel(eventNameSuffix, event));
 	}
 
+	/**
+	 * Get the LogLevel for performance events.
+	 * @param eventNameSuffix - The suffix of the event name.
+	 * @param event - The telemetry performance event.
+	 * @returns The log level for the event.
+	 *
+	 * If undefined is returned then the LogLevel will be set as essential. See {@link ChildLogger.send}
+	 */
 	private getLogLevel(
 		eventNameSuffix: string,
 		event: ITelemetryPerformanceEventExt,
