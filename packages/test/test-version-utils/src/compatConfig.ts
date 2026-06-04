@@ -83,6 +83,8 @@ const defaultVersionsForLayerCompat = {
 // Currently we only want to support 2.0.0.internal.3.y.z. and above
 const defaultNumOfDriverVersionsAboveV2Int1 = 2;
 
+const currentVersionStr = `${baseVersion} (N)`;
+
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
 		return [
@@ -108,52 +110,52 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
-			name: `compat ${compatVersionStr} - old loader`,
+			name: `compat - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new loader`,
+			name: `compat - loader ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewLoader,
 			compatVersion,
 			...allOld,
 			loader: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old driver`,
+			name: `compat - driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Driver,
 			compatVersion,
 			driver: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new driver`,
+			name: `compat - driver ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDriver,
 			compatVersion,
 			...allOld,
 			driver: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old container runtime`,
+			name: `compat - container runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.ContainerRuntime,
 			compatVersion,
 			containerRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new container runtime`,
+			name: `compat - container runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewContainerRuntime,
 			compatVersion,
 			...allOld,
 			containerRuntime: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old data runtime`,
+			name: `compat - data store runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.DataRuntime,
 			compatVersion,
 			dataRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new data runtime`,
+			name: `compat - data store runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDataRuntime,
 			compatVersion,
 			...allOld,
@@ -165,13 +167,13 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 const genOldestCompatibleConfig = (compatVersion: number | string): CompatConfig[] => {
 	return [
 		{
-			name: `compat OCV ${compatVersion} - old loader`,
+			name: `compat - loader ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat OCV ${compatVersion} - old loader + old driver`,
+			name: `compat - loader & driver ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -188,7 +190,7 @@ const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader`,
+			name: `compat back - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
@@ -203,7 +205,7 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader + older driver`,
+			name: `compat back - loader & driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
