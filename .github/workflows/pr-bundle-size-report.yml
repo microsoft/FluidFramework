@@ -1,4 +1,4 @@
-name: pr-bundle-size-report
+name: "PR Bundle Size Comments"
 
 # This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment,
 # label, and check entry.
