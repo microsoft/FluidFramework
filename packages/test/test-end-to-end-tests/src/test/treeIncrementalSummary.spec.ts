@@ -70,15 +70,12 @@ import * as semver from "semver";
  * is `"load"`.
  * @returns The `container`, the strongly-typed `view` over the `Workspace` schema, and the
  * `testContainerConfig` used (so callers can spin up a matching summarizer).
- *
- * @privateRemarks
- * An explicit return type is intentionally omitted: the returned `view`'s type references the
- * `Workspace`/`Document`/`Section`/... node schema classes, which are defined locally inside this
- * function and therefore cannot be named at module scope. {@link WorkspaceView} recovers the type
- * via `ReturnType` for the helpers that consume the view.
  */
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+// The returned `view`'s type references the `Workspace`/`Document`/`Section`/... node schema
+// classes, which are defined locally inside this function and therefore cannot be named at module
+// scope. `WorkspaceView` recovers the type via `ReturnType` for the helpers that consume the view.
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Return type is too complex to be reasonable to specify
 async function make4DepthTreeView(
 	dataRuntimeApi: CompatApis["dataRuntime"],
 	provider: ITestObjectProvider,
