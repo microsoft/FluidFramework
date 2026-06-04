@@ -111,7 +111,7 @@ jobs:
           compute_mb() {
             local mb
             mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-              --jq '.merge_base_commit.sha' 2>/dev/null || true)
+              --jq '.merge_base_commit.sha' || true)
             if [ "$mb" = "null" ]; then
               mb=""
             fi
@@ -167,7 +167,7 @@ jobs:
           compute_mb() {
             local mb
             mb=$(gh api "repos/$GITHUB_REPOSITORY/compare/$1...$2" \
-              --jq '.merge_base_commit.sha' 2>/dev/null || true)
+              --jq '.merge_base_commit.sha' || true)
             if [ "$mb" = "null" ]; then
               mb=""
             fi
