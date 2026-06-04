@@ -58,7 +58,7 @@ jobs:
           PR_NUM=$(gh pr list --state open --search "head-sha:$SHA" --json number \
             --jq '.[0].number // empty')
           if [ -z "$PR_NUM" ]; then
-            echo "No matching open PR for SHA $SHA; nothing to do." >&2
+            echo "No matching open PR for SHA $SHA; nothing to do."
           fi
           echo "pr_num=$PR_NUM" >> "$GITHUB_OUTPUT"
 
