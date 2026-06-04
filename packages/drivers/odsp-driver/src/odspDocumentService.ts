@@ -24,7 +24,7 @@ import type {
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	type MonitoringContext,
 	createChildMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
@@ -80,7 +80,7 @@ export class OdspDocumentService
 		getAuthHeader: InstrumentedStorageTokenFetcher,
 		// eslint-disable-next-line @rushstack/no-new-null
 		getWebsocketToken: ((options: TokenFetchOptions) => Promise<string | null>) | undefined,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		epochTracker: EpochTracker,
@@ -128,7 +128,7 @@ export class OdspDocumentService
 		private readonly getWebsocketToken:
 			| ((options: TokenFetchOptions) => Promise<string | null>)
 			| undefined,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly cache: IOdspCache,
 		hostPolicy: HostStoragePolicy,
 		private readonly epochTracker: EpochTracker,

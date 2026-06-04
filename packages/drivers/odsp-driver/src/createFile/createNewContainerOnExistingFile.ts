@@ -11,7 +11,7 @@ import type {
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -46,7 +46,7 @@ import {
 export async function createNewContainerOnExistingFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,
