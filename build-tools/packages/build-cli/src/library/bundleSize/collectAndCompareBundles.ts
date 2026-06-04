@@ -16,10 +16,18 @@ import { compareBundles } from "./compareBundles.js";
  */
 export interface CollectAndCompareBundlesOptions {
 	/**
-	 * Revision to use as the comparison baseline (branch, tag, or commit SHA). The actual base
-	 * used is the merge-base of HEAD and this revision (the fork point).
+	 * Revision to use as the comparison baseline (branch, tag, or commit SHA). By default the
+	 * actual base used is the merge-base of HEAD and this revision (the fork point). When
+	 * {@link CollectAndCompareBundlesOptions.exactBase} is set, this revision is used as-is
+	 * (no merge-base).
 	 */
 	readonly baseRevision: string;
+	/**
+	 * Use {@link CollectAndCompareBundlesOptions.baseRevision} as-is (resolved via `rev-parse`)
+	 * instead of taking the merge-base with HEAD. Useful for comparing the working tree against an
+	 * exact commit (e.g. "current vs. its parent") rather than the fork point.
+	 */
+	readonly exactBase?: boolean;
 	/** Collect both bundles, but skip the comparison step. */
 	readonly skipCompare: boolean;
 	/** Run the full workspace clean before each build. */
@@ -65,12 +73,38 @@ async function resolveMergeBase(
 }
 
 /**
- * Orchestrates: {@link collectBundle} (local), then {@link collectBundle} (revision merge-base),
- * then {@link compareBundles}.
+ * Resolves a committish (branch, tag, or SHA) to its full commit SHA via
+ * `git rev-parse <rev>^{commit}`. Unlike {@link resolveMergeBase}, the revision
+ * is used exactly as given (no fork-point computation). Throws if the revision
+ * cannot be resolved locally, with guidance to fetch it first.
+ *
+ * The `^{commit}` peel ensures annotated tags resolve to the underlying commit
+ * rather than the tag object.
+ */
+async function resolveSha(packageDir: string, rev: string): Promise<string> {
+	try {
+		const output = await simpleGit(packageDir).raw(["rev-parse", `${rev}^{commit}`]);
+		const sha = output.trim();
+		if (sha.length > 0) return sha;
+	} catch {
+		// Fall through to the shared error below.
+	}
+	throw new Error(
+		`Could not resolve revision "${rev}" to a commit. ` +
+			`Ensure it exists locally (e.g. "git fetch origin ${rev}").`,
+	);
+}
+
+/**
+ * Orchestrates: {@link collectBundle} (local working tree), then
+ * {@link collectBundle} (base revision), then {@link compareBundles}.
+ *
+ * The base revision is taken as the merge-base of HEAD and `baseRevision` by
+ * default, or used as-is when `exactBase` is set.
  *
  * Labels (used as analysis subdirectory names) are determined automatically:
  * the local bundle is saved under a timestamped "current_<epoch>" label and the
- * base bundle under "main", regardless of the resolved revision SHA, so that
+ * base bundle under "main", regardless of which revision we resolved, so that
  * {@link compareBundles} can find both directories.
  *
  * The outer repo's working tree, branch, and stash are never modified.
@@ -80,6 +114,7 @@ export async function collectAndCompareBundles(
 ): Promise<void> {
 	const {
 		baseRevision: baseRevisionInput,
+		exactBase = false,
 		skipCompare,
 		forceCleanBuild,
 		keepBaseRepo,
@@ -88,19 +123,31 @@ export async function collectAndCompareBundles(
 		outputDir,
 	} = options;
 
-	const resolvedBaseRevision = await resolveMergeBase(packageDir, baseRevisionInput);
-	if (resolvedBaseRevision === undefined) {
-		throw new Error(
-			`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +
-				`Ensure the revision exists locally (e.g. "git fetch origin ${baseRevisionInput}").`,
-		);
+	// Resolve the base revision. By default we take the merge-base of HEAD and
+	// the requested revision (the fork point); with --exact-base we use the
+	// revision exactly as given (e.g. to compare against a specific parent
+	// commit rather than the fork point).
+	let baseRevision: string;
+	if (exactBase) {
+		baseRevision = await resolveSha(packageDir, baseRevisionInput);
+		if (baseRevision !== baseRevisionInput) {
+			console.log(`Resolved base revision "${baseRevisionInput}" to ${baseRevision}.`);
+		}
+	} else {
+		const resolvedBaseRevision = await resolveMergeBase(packageDir, baseRevisionInput);
+		if (resolvedBaseRevision === undefined) {
+			throw new Error(
+				`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +
+					`Ensure the revision exists locally (e.g. "git fetch origin ${baseRevisionInput}").`,
+			);
+		}
+		if (resolvedBaseRevision !== baseRevisionInput) {
+			console.log(
+				`Resolved base revision "${baseRevisionInput}" to merge-base ${resolvedBaseRevision}.`,
+			);
+		}
+		baseRevision = resolvedBaseRevision;
 	}
-	if (resolvedBaseRevision !== baseRevisionInput) {
-		console.log(
-			`Resolved base revision "${baseRevisionInput}" to merge-base ${resolvedBaseRevision}.`,
-		);
-	}
-	const baseRevision = resolvedBaseRevision;
 	// The inner enlistment used to build the base bundle is a scratch clone, not
 	// report data, so it lives under the output directory rather than alongside
 	// the per-label analyzer reports in analysisDir.

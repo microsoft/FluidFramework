@@ -56,8 +56,8 @@ Collect the local bundle and the base-revision (merge-base) bundle, then compare
 
 ```
 USAGE
-  $ flub bundle collect-and-compare [-v | --quiet] [--base-revision <value>] [--package-dir <value>] [--analysis-dir <value>]
-    [--output-dir <value>] [--skip-compare] [--force-clean-build] [--keep-base-repo]
+  $ flub bundle collect-and-compare [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
+    [--analysis-dir <value>] [--output-dir <value>] [--skip-compare] [--force-clean-build] [--keep-base-repo]
 
 FLAGS
   --analysis-dir=<value>   Directory under which per-label analyzer stats are saved. Defaults to
@@ -65,7 +65,10 @@ FLAGS
   --base-revision=<value>  [default: main] Revision to use as the comparison baseline (branch, tag, or commit SHA). The
                            actual base used is the merge-base of HEAD and this revision (the fork point), so
                            worktree-based setups where 'main' is in an unusual location still produce the expected
-                           comparison.
+                           comparison. Pass --exact-base to use the revision as-is instead.
+  --exact-base             Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking the
+                           merge-base with HEAD. Useful for comparing the working tree against a specific commit, e.g.
+                           the current commit's parent.
   --force-clean-build      Run the full workspace clean before each build. Off by default; opt in when stale incremental
                            build state may interfere with the current revision.
   --keep-base-repo         For debugging only: keep the inner base-repo clone after collecting the base bundle. By
@@ -91,6 +94,8 @@ EXAMPLES
   $ flub bundle collect-and-compare --base-revision main
 
   $ flub bundle collect-and-compare --base-revision client_v2.100.0
+
+  $ flub bundle collect-and-compare --base-revision 18062854f25 --exact-base
 
   $ flub bundle collect-and-compare --force-clean-build --skip-compare
 ```

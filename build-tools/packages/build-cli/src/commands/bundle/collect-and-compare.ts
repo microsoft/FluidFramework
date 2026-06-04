@@ -24,6 +24,7 @@ export default class BundleCollectAndCompare extends BaseCommand<
 		"<%= config.bin %> <%= command.id %>",
 		"<%= config.bin %> <%= command.id %> --base-revision main",
 		"<%= config.bin %> <%= command.id %> --base-revision client_v2.100.0",
+		"<%= config.bin %> <%= command.id %> --base-revision 18062854f25 --exact-base",
 		"<%= config.bin %> <%= command.id %> --force-clean-build --skip-compare",
 	];
 
@@ -33,8 +34,15 @@ export default class BundleCollectAndCompare extends BaseCommand<
 				"Revision to use as the comparison baseline (branch, tag, or commit SHA). The " +
 				"actual base used is the merge-base of HEAD and this revision (the fork point), so " +
 				"worktree-based setups where 'main' is in an unusual location still produce the " +
-				"expected comparison.",
+				"expected comparison. Pass --exact-base to use the revision as-is instead.",
 			default: "main",
+		}),
+		"exact-base": Flags.boolean({
+			description:
+				"Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking " +
+				"the merge-base with HEAD. Useful for comparing the working tree against a specific " +
+				"commit, e.g. the current commit's parent.",
+			default: false,
 		}),
 		"package-dir": Flags.string({
 			description: "Package root whose webpack bundles are built and compared.",
@@ -87,6 +95,7 @@ export default class BundleCollectAndCompare extends BaseCommand<
 
 		await collectAndCompareBundles({
 			baseRevision: flags["base-revision"],
+			exactBase: flags["exact-base"],
 			skipCompare: flags["skip-compare"],
 			forceCleanBuild: flags["force-clean-build"],
 			keepBaseRepo: flags["keep-base-repo"],
