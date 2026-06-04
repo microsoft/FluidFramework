@@ -75,11 +75,7 @@ interface DiceRollerCardProps {
 /**
  * A single dice-roller view within a styled card.
  */
-function DiceRollerCard({
-	diceValue,
-	containerId,
-	onClick,
-}: DiceRollerCardProps): ReactElement {
+function DiceRollerCard({ diceValue, containerId, onClick }: DiceRollerCardProps): ReactElement {
 	const imageUrl = `https://storage.fluidframework.com/static/images/website/dice/${diceValue}.png`;
 	return (
 		<CardWithBlur>
