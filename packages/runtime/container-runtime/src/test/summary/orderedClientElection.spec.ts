@@ -9,18 +9,15 @@ import type { ISequencedClient } from "@fluidframework/driver-definitions";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
-	type IOrderedClientCollection,
 	type IOrderedClientElection,
 	type ISerializedElection,
 	type ITrackedClient,
-	OrderedClientCollection,
 	OrderedClientElection,
 } from "../../summary/index.js";
 
 import { TestQuorumClients } from "./testQuorumClients.js";
 
 describe("Ordered Client Collection", () => {
-	let orderedClients: IOrderedClientCollection;
 	const mockLogger = new MockLogger();
 	const testQuorum = new TestQuorumClients();
 
@@ -47,73 +44,11 @@ describe("Ordered Client Collection", () => {
 		currentSequenceNumber += opCount;
 		testQuorum.removeClient(clientId);
 	}
-	function createOrderedClientCollection(
-		initialClients: [id: string, seq: number, int: boolean][] = [],
-	): IOrderedClientCollection {
-		for (const [id, seq, int] of initialClients) {
-			addClient(id, seq, int);
-		}
-		orderedClients = new OrderedClientCollection(mockLogger, testDeltaManager, testQuorum);
-		return orderedClients;
-	}
-	function assertCollectionState(expectedCount: number, message = "") {
-		const prefix = message ? `${message} - ` : "";
-		assert.strictEqual(
-			orderedClients.count,
-			expectedCount,
-			`${prefix}Invalid client count: ${orderedClients.count} !== ${expectedCount}`,
-		);
-	}
-	function assertOrderedClientIds(...expectedIds: string[]) {
-		const actualIds = orderedClients.getAllClients();
-		assert.strictEqual(
-			actualIds.length,
-			expectedIds.length,
-			`Unexpected count of ordered client ids: ${actualIds.length} !== ${expectedIds.length}`,
-		);
-		for (let i = 0; i < actualIds.length; i++) {
-			assert.strictEqual(
-				actualIds[i].clientId,
-				expectedIds[i],
-				`Unexpected ordered client id at index ${i}: ${actualIds[i].clientId} !== ${expectedIds[i]}`,
-			);
-		}
-	}
 
 	afterEach(() => {
 		mockLogger.clear();
 		testQuorum.reset();
 		currentSequenceNumber = 0;
-	});
-
-	describe("Initialize", () => {
-		it("Should initialize with empty quorum", () => {
-			createOrderedClientCollection();
-			assertCollectionState(0);
-			assertOrderedClientIds();
-		});
-
-		it("Should initialize with correct count", () => {
-			createOrderedClientCollection([
-				["a", 1, true],
-				["b", 2, true],
-				["s", 5, false],
-				["c", 9, true],
-			]);
-			assertCollectionState(4);
-			assertOrderedClientIds("a", "b", "s", "c");
-		});
-
-		it("Should initialize in correct order", () => {
-			createOrderedClientCollection([
-				["c", 9, true],
-				["b", 2, true],
-				["a", 1, true],
-				["s", 5, false],
-			]);
-			assertCollectionState(4);
-			assertOrderedClientIds("a", "b", "s", "c");
-		});
 	});
 
 	describe("Ordered Client Election", () => {
@@ -123,7 +58,9 @@ describe("Ordered Client Collection", () => {
 			initialClients: [id: string, seq: number, int: boolean][] = [],
 			initialState?: ISerializedElection,
 		): IOrderedClientElection {
-			createOrderedClientCollection(initialClients);
+			for (const [id, seq, int] of initialClients) {
+				addClient(id, seq, int);
+			}
 			if (
 				initialState !== undefined &&
 				initialState.electionSequenceNumber > currentSequenceNumber
@@ -132,7 +69,8 @@ describe("Ordered Client Collection", () => {
 			}
 			election = new OrderedClientElection(
 				mockLogger.toTelemetryLogger(),
-				orderedClients,
+				testDeltaManager,
+				testQuorum,
 				initialState ?? currentSequenceNumber,
 				(c: ITrackedClient) => c.client.details.capabilities.interactive,
 			);
@@ -146,13 +84,11 @@ describe("Ordered Client Collection", () => {
 			election.resetElectedClient(sequenceNumber);
 		}
 		function assertElectionState(
-			expectedTotalCount: number,
 			expectedEligibleCount: number,
 			expectedElectedClientId: string | undefined,
 			expectedElectionSequenceNumber: number,
 			message = "",
 		) {
-			assertCollectionState(expectedTotalCount, message);
 			const prefix = message ? `${message} - ` : "";
 			assert.strictEqual(
 				election.eligibleCount,
@@ -198,15 +134,9 @@ describe("Ordered Client Collection", () => {
 		});
 
 		describe("Initialize", () => {
-			const emptySerializedElection = {
-				electedClientId: undefined,
-				electedParentId: undefined,
-				electionSequenceNumber: 101,
-			};
-
 			it("Should initialize with empty quorum", () => {
 				createOrderedClientElection();
-				assertElectionState(0, 0, undefined, 0);
+				assertElectionState(0, undefined, 0);
 				assertOrderedEligibleClientIds();
 			});
 
@@ -217,28 +147,24 @@ describe("Ordered Client Collection", () => {
 					["s", 5, false],
 					["c", 9, true],
 				]);
-				assertElectionState(4, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 
 			it("Should initialize with empty quorum at specific sequence number", () => {
 				currentSequenceNumber = 99;
 				createOrderedClientElection();
-				assertElectionState(0, 0, undefined, 99);
+				assertElectionState(0, undefined, 99);
 				assertOrderedEligibleClientIds();
 			});
 
 			it("Should initialize with empty quorum and initial state", () => {
-				createOrderedClientElection(undefined, emptySerializedElection);
-				assertElectionState(0, 0, undefined, 101);
-				assertOrderedEligibleClientIds();
-			});
-
-			it("Should log error with empty quorum and initially elected client", () => {
-				const clientId = "x";
-				createOrderedClientElection(undefined, emptySerializedElection);
-				assertElectionState(0, 0, undefined, 101);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId }]);
+				createOrderedClientElection(undefined, {
+					electedClientId: undefined,
+					electedParentId: undefined,
+					electionSequenceNumber: 101,
+				});
+				assertElectionState(0, undefined, 101);
 				assertOrderedEligibleClientIds();
 			});
 
@@ -252,7 +178,7 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "b", electedParentId: "b", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, "b", 4321);
+				assertElectionState(3, "b", 4321);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 
@@ -267,11 +193,12 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(5, 3, "c", 4321);
+				assertElectionState(3, "c", 4321);
 				mockLogger.matchEvents([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: "c",
 					},
 				]);
@@ -288,11 +215,12 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 2, undefined, 4321);
+				assertElectionState(2, undefined, 4321);
 				mockLogger.matchEvents([
 					{
 						eventName: "InitialElectedClientIneligible",
-						clientId: "s",
+						electionSequenceNumber: 4321,
+						expectedClientId: "s",
 						electedClientId: undefined,
 					},
 				]);
@@ -309,8 +237,16 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "x", electedParentId: "x", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, undefined, 4321);
-				mockLogger.matchEvents([{ eventName: "InitialElectedClientNotFound", clientId: "x" }]);
+				assertElectionState(3, undefined, 4321);
+				mockLogger.matchEvents([
+					{
+						eventName: "InitialElectedClientNotFound",
+						electionSequenceNumber: 4321,
+						expectedClientId: "x",
+						electedClientId: undefined,
+						clientCount: 4,
+					},
+				]);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
 		});
@@ -324,7 +260,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 100, false);
-				assertElectionState(5, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
@@ -332,7 +268,7 @@ describe("Ordered Client Collection", () => {
 			it("Should add ineligible client to empty quorum without impacting eligible clients", () => {
 				createOrderedClientElection();
 				addClient("n", 100, false);
-				assertElectionState(1, 0, undefined, 0);
+				assertElectionState(0, undefined, 0);
 				assertEvents(0);
 				assertOrderedEligibleClientIds();
 			});
@@ -340,7 +276,7 @@ describe("Ordered Client Collection", () => {
 			it("Should add and elect eligible client to empty quorum", () => {
 				createOrderedClientElection();
 				addClient("n", 100);
-				assertElectionState(1, 1, "n", 100);
+				assertElectionState(1, "n", 100);
 				assertEvents(1);
 				assertOrderedEligibleClientIds("n");
 			});
@@ -353,7 +289,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 100);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c", "n");
 			});
@@ -367,7 +303,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 3);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "n", "c");
 			});
@@ -381,38 +317,13 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				addClient("n", 0);
-				assertElectionState(5, 4, "a", 9);
+				assertElectionState(4, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("n", "a", "b", "c");
 			});
 		});
 
 		describe("Remove Client", () => {
-			it("Should log error when removing a client from empty quorum", () => {
-				createOrderedClientElection();
-				const clientId = "x";
-				removeClient(clientId);
-				mockLogger.matchEvents([{ eventName: "ClientNotFound", clientId }]);
-				assertElectionState(0, 0, undefined, 0);
-				assertEvents(0);
-				assertOrderedEligibleClientIds();
-			});
-
-			it("Should log error when removing a client that doesn't exist", () => {
-				createOrderedClientElection([
-					["a", 1, true],
-					["b", 2, true],
-					["s", 5, false],
-					["c", 9, true],
-				]);
-				const clientId = "x";
-				removeClient(clientId);
-				mockLogger.matchEvents([{ eventName: "ClientNotFound", clientId }]);
-				assertElectionState(4, 3, "a", 9);
-				assertEvents(0);
-				assertOrderedEligibleClientIds("a", "b", "c");
-			});
-
 			it("Should remove ineligible client", () => {
 				createOrderedClientElection([
 					["a", 1, true],
@@ -421,7 +332,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("s", 5);
-				assertElectionState(3, 3, "a", 9);
+				assertElectionState(3, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b", "c");
 			});
@@ -434,7 +345,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("c", 5);
-				assertElectionState(3, 2, "a", 9);
+				assertElectionState(2, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "b");
 			});
@@ -447,7 +358,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("b", 5);
-				assertElectionState(3, 2, "a", 9);
+				assertElectionState(2, "a", 9);
 				assertEvents(0);
 				assertOrderedEligibleClientIds("a", "c");
 			});
@@ -460,7 +371,7 @@ describe("Ordered Client Collection", () => {
 					["c", 9, true],
 				]);
 				removeClient("a", 5);
-				assertElectionState(3, 2, "b", 14);
+				assertElectionState(2, "b", 14);
 				assertEvents(1);
 				assertOrderedEligibleClientIds("b", "c");
 			});
@@ -476,9 +387,9 @@ describe("Ordered Client Collection", () => {
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
 				removeClient("s", 1111);
-				assertElectionState(3, 3, "c", 4321);
+				assertElectionState(3, "c", 4321);
 				removeClient("c", 1111);
-				assertElectionState(2, 2, "a", 6543);
+				assertElectionState(2, "a", 6543);
 				assertEvents(1);
 			});
 		});
@@ -494,9 +405,9 @@ describe("Ordered Client Collection", () => {
 					],
 					{ electedClientId: "s", electedParentId: "s", electionSequenceNumber: 4321 },
 				);
-				assertElectionState(4, 3, "b", 4321);
+				assertElectionState(3, "b", 4321);
 				resetElectedClient(7777);
-				assertElectionState(4, 3, "a", 7777);
+				assertElectionState(3, "a", 7777);
 				assertEvents(1);
 			});
 		});
