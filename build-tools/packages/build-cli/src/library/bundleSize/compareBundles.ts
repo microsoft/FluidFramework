@@ -35,8 +35,8 @@ export interface CompareBundlesOptions {
 
 interface AssetComparison {
 	name: string;
-	baseStatSize: number;
-	currentStatSize: number;
+	baseParsedSize: number;
+	currentParsedSize: number;
 	diff: number;
 }
 
@@ -57,7 +57,7 @@ interface EntrypointRow {
 /**
  * Per-package parsed-size comparison row. `name` is the owning npm package of
  * the contributing modules (e.g. `@fluidframework/tree`, `@sinclair/typebox`),
- * or a synthetic bucket label (e.g. `other @fluidframework/*`).
+ * or a synthetic bucket label (e.g. `Fluid Framework (incl. tree)`).
  */
 interface PackageSizeRow {
 	name: string;
@@ -83,9 +83,11 @@ interface ComparisonReport {
 	/** Per-entrypoint total parsed-size comparison rows */
 	entrypoints: EntrypointRow[];
 	/**
-	 * Three-row headline split of the whole bundle's parsed bytes:
-	 * `@fluidframework/tree`, `other @fluidframework/* + @fluid-*`, and
-	 * `third-party`. Answers "how much of the bundle is tree" at a glance.
+	 * Four-row headline split of the bundle's parsed bytes, all bundle-wide:
+	 * `@fluidframework/tree + 3rd-party deps`, `@fluidframework/tree`,
+	 * `Fluid Framework + 3rd-party deps`, and `Fluid Framework`. Lets you read
+	 * tree and all of Fluid Framework both with and without their third-party
+	 * dependencies. App/entry harness code is excluded.
 	 */
 	packageBuckets: PackageSizeRow[];
 	/**
@@ -234,33 +236,71 @@ function diffPackageSizes(
 		.sort((a, b) => b.currentSize - a.currentSize || a.name.localeCompare(b.name));
 }
 
+/** Whether a package name belongs to Fluid Framework (any `@fluidframework/*` or `@fluid-*`). */
+function isFluidPackage(name: string): boolean {
+	return name.startsWith("@fluidframework/") || name.startsWith("@fluid-");
+}
+
+/** Running parsed-size accumulator (base/current/diff) for a bucket. */
+interface SizeAccumulator {
+	baseSize: number;
+	currentSize: number;
+	diff: number;
+}
+
+function addInto(acc: SizeAccumulator, row: PackageSizeRow): void {
+	acc.baseSize += row.baseSize;
+	acc.currentSize += row.currentSize;
+	acc.diff += row.diff;
+}
+
+function combineBucket(name: string, ...parts: SizeAccumulator[]): PackageSizeRow {
+	return {
+		name,
+		baseSize: parts.reduce((sum, part) => sum + part.baseSize, 0),
+		currentSize: parts.reduce((sum, part) => sum + part.currentSize, 0),
+		diff: parts.reduce((sum, part) => sum + part.diff, 0),
+	};
+}
+
 /**
- * Collapses per-package rows into the three headline buckets:
- * `@fluidframework/tree`, `other @fluidframework/* + @fluid-*`, and `third-party`.
+ * Collapses per-package rows into four headline buckets, all computed
+ * bundle-wide (no webpack entrypoints):
+ *
+ * - `@fluidframework/tree + 3rd-party deps` — tree's own bytes plus every
+ *   third-party package in the bundle.
+ * - `@fluidframework/tree` — tree's own bytes only.
+ * - `Fluid Framework + 3rd-party deps` — all Fluid Framework library bytes
+ *   (`@fluidframework/*` and `@fluid-*`, including tree) plus every third-party
+ *   package in the bundle.
+ * - `Fluid Framework` — all Fluid Framework library bytes only.
+ *
+ * Third-party bytes are attributed in full to both `+ deps` rows: the flat
+ * per-package data carries no per-library dependency graph, so shared
+ * third-party deps cannot be split between tree and the other Fluid libraries.
+ * App/entry harness code (the bundle-size-tests `./src/*` entries) is excluded
+ * from every bucket.
  */
 function bucketPackageSizes(rows: PackageSizeRow[]): PackageSizeRow[] {
-	const buckets: Record<string, PackageSizeRow> = {
-		tree: { name: "@fluidframework/tree", baseSize: 0, currentSize: 0, diff: 0 },
-		otherFluid: {
-			name: "other @fluidframework/* + @fluid-*",
-			baseSize: 0,
-			currentSize: 0,
-			diff: 0,
-		},
-		thirdParty: { name: "third-party", baseSize: 0, currentSize: 0, diff: 0 },
-	};
+	const treeOwn: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
+	const fluidOwn: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
+	const thirdParty: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
+
 	for (const row of rows) {
-		const bucket =
-			row.name === "@fluidframework/tree"
-				? buckets.tree
-				: row.name.startsWith("@fluidframework/") || row.name.startsWith("@fluid-")
-					? buckets.otherFluid
-					: buckets.thirdParty;
-		bucket.baseSize += row.baseSize;
-		bucket.currentSize += row.currentSize;
-		bucket.diff += row.diff;
+		if (row.name === "@fluidframework/tree") addInto(treeOwn, row);
+		if (isFluidPackage(row.name)) {
+			addInto(fluidOwn, row);
+		} else if (row.name !== "(app/entry)") {
+			addInto(thirdParty, row);
+		}
 	}
-	return [buckets.tree, buckets.otherFluid, buckets.thirdParty];
+
+	return [
+		combineBucket("@fluidframework/tree + 3rd-party deps", treeOwn, thirdParty),
+		combineBucket("@fluidframework/tree", treeOwn),
+		combineBucket("Fluid Framework + 3rd-party deps", fluidOwn, thirdParty),
+		combineBucket("Fluid Framework", fluidOwn),
+	];
 }
 
 /**
@@ -290,13 +330,13 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 		.sort()
 		.map((name) => {
 			const { base, compare } = bundleComparison[name];
-			const baseStatSize = base?.parsedSize ?? 0;
-			const currentStatSize = compare?.parsedSize ?? 0;
+			const baseParsedSize = base?.parsedSize ?? 0;
+			const currentParsedSize = compare?.parsedSize ?? 0;
 			return {
 				name,
-				baseStatSize,
-				currentStatSize,
-				diff: currentStatSize - baseStatSize,
+				baseParsedSize,
+				currentParsedSize,
+				diff: currentParsedSize - baseParsedSize,
 			};
 		});
 
@@ -378,7 +418,7 @@ function renderAsText(report: ComparisonReport): string {
 	emit();
 	emit(`=== Bundle Size Comparison: ${report.baseLabel} -> ${report.currentLabel} ===`);
 	emit();
-	emit("All assets (stat/parsed size in bytes):");
+	emit("All assets (parsed size in bytes):");
 	emit(
 		"Asset".padEnd(40) +
 			"Base".padStart(12) +
@@ -389,13 +429,13 @@ function renderAsText(report: ComparisonReport): string {
 	emit("-".repeat(88));
 	for (const row of report.assets) {
 		const percentChange =
-			row.baseStatSize > 0 && row.diff !== 0
-				? `${((row.diff / row.baseStatSize) * 100).toFixed(1)}%`
+			row.baseParsedSize > 0 && row.diff !== 0
+				? `${((row.diff / row.baseParsedSize) * 100).toFixed(1)}%`
 				: "";
 		emit(
 			(row.name + (row.diff === 0 ? "" : " *")).padEnd(40) +
-				String(row.baseStatSize).padStart(12) +
-				String(row.currentStatSize).padStart(12) +
+				String(row.baseParsedSize).padStart(12) +
+				String(row.currentParsedSize).padStart(12) +
 				formatDiff(row.diff).padStart(12) +
 				percentChange.padStart(10),
 		);
