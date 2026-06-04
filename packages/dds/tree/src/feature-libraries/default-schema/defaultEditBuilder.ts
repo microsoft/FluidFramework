@@ -341,7 +341,6 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			 */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
-			// If the attach path runs through the field where the detach occurs...
 			if (sharedDepth === detachPath.length) {
 				const fieldOnDetachPathUnderLCA = sourceField.field;
 				const fieldOnAttachPathUnderLCA =
