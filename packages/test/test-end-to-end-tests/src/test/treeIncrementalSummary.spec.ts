@@ -20,10 +20,32 @@ import {
 } from "@fluidframework/test-utils/internal";
 import {
 	FluidClientVersion,
-	ForestTypeOptimized,
 	TreeCompressionStrategy,
 	type ITree,
 } from "@fluidframework/tree/alpha";
+import * as semver from "semver";
+
+/**
+ * End-to-end tests for SharedTree incremental summarization.
+ *
+ * Incremental summarization splits the forest into independently-encoded chunks (opted in via
+ * `incrementalSummaryHint`). When a chunk's content is unchanged across summaries it is written as
+ * a summary handle pointing at that chunk's blob in the previous summary, instead of being
+ * re-encoded into the new summary.
+ *
+ * Stale-handle-path bug (fixed by {@link https://github.com/microsoft/FluidFramework/pull/26990 | PR #26990}):
+ * When a parent chunk was re-encoded with a new `referenceId`, child chunks that became handles
+ * still held a `summaryPath` string referencing the parent's *old* `referenceId`. On the next
+ * summary, those handle URLs pointed at keys that no longer existed in the preceding summary tree,
+ * so the summary (or a subsequent load) threw.
+ * Many of the change sequences below exist specifically to exercise that bug; it is also why incremental
+ * summarization requires tree version 2.100.0+ in compat runs (see the version gate in the smoke test below).
+ *
+ * @remarks
+ * The change sequences and the `makeChangeAtDepth` helper here mirror the unit tests in
+ * `packages/dds/tree/src/test/feature-libraries/forest-summary/forestSummarizer.spec.ts`.
+ * Changes to the scenarios in one module should be mirrored in the other.
+ */
 
 /**
  * A 4-depth nested schema where each level's map field carries `incrementalSummaryHint`,
@@ -35,9 +57,25 @@ import {
  *
  * The root field `version` (depth 0) is non-incremental and does not belong to any chunk.
  *
+ * @param dataRuntimeApi - The (possibly back-compat) data-runtime APIs used to build the schema
+ * and configure the tree. All tree types are sourced from here so the schema and the
+ * incremental-encoding policy come from the same package version.
+ * @param provider - The test object provider used to create or load the container.
+ * @param createOrLoad - `"create"` makes a new container and initializes the tree; `"load"` loads
+ * an existing container from the summary identified by `summaryVersion`.
  * @param variant - `"single"` initializes one document/section/item/tag; `"double"` adds a
  * second sibling section (`Sec2`) so that sibling chunks become handles alongside descendant
- * handles in the same summary.
+ * handles in the same summary. Only relevant when `createOrLoad` is `"create"`.
+ * @param summaryVersion - The summary version to load from. Only relevant when `createOrLoad`
+ * is `"load"`.
+ * @returns The `container`, the strongly-typed `view` over the `Workspace` schema, and the
+ * `testContainerConfig` used (so callers can spin up a matching summarizer).
+ *
+ * @privateRemarks
+ * An explicit return type is intentionally omitted: the returned `view`'s type references the
+ * `Workspace`/`Document`/`Section`/... node schema classes, which are defined locally inside this
+ * function and therefore cannot be named at module scope. {@link WorkspaceView} recovers the type
+ * via `ReturnType` for the helpers that consume the view.
  */
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -54,6 +92,7 @@ async function make4DepthTreeView(
 		incrementalSummaryHint,
 		configuredSharedTree,
 		incrementalEncodingPolicyForAllowedTypes,
+		ForestTypeOptimized,
 	} = dataRuntimeApi.packages.tree;
 
 	const sf = new SchemaFactoryAlpha("incrementalSummary4DepthE2E");
@@ -101,7 +140,10 @@ async function make4DepthTreeView(
 	const SharedTree = configuredSharedTree({
 		forest: ForestTypeOptimized,
 		treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
-		minVersionForCollab: FluidClientVersion.v2_80,
+		// Incremental summarization only takes effect when the tree writes the incremental-capable
+		// forest summary format (ForestSummaryFormatVersion.v3), which is selected when
+		// minVersionForCollab is at least 2.74.
+		minVersionForCollab: FluidClientVersion.v2_74,
 		shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(viewConfig),
 	});
 
@@ -110,6 +152,9 @@ async function make4DepthTreeView(
 		fluidDataObjectType: DataObjectFactoryType.Test,
 		runtimeOptions: {
 			enableRuntimeIdCompressor: "on",
+			// Disable the runtime's automatic summarizer so the test controls exactly when summaries
+			// happen (via `summarizeNow` on a dedicated summarizer). This keeps each incremental
+			// summary deterministic and prevents background summaries from racing the assertions.
 			summaryOptions: {
 				summaryConfigOverrides: { state: "disabled" },
 			},
@@ -271,6 +316,8 @@ async function createTestSummarizer(
 ): Promise<ISummarizer> {
 	const summarizerContainerConfig: ITestContainerConfig = {
 		...testContainerConfig,
+		// Clear the `state: "disabled"` summary override applied to the main container above so the
+		// dedicated summarizer runs with default summary behavior and can summarize on demand.
 		runtimeOptions: { ...testContainerConfig.runtimeOptions, summaryOptions: undefined },
 	};
 	const { summarizer } = await createSummarizer(
@@ -290,13 +337,24 @@ describeCompat(
 
 		beforeEach("getTestObjectProvider", async function () {
 			provider = getTestObjectProvider({ syncSummarizer: true });
+			// The Compat APIs didn't have the tree package available in all versions. Skip the test
+			// in version combination where it's not available.
 			if (
 				apis.dataRuntime.packages.tree === undefined ||
 				apis.dataRuntimeForLoading.packages.tree === undefined
 			) {
 				this.skip();
 			}
+			// Stale-handle-path bug (fixed by {@link https://github.com/microsoft/FluidFramework/pull/26990 | PR #26990})
+			// was released in version 2.100.0. Any version before that will have the bug, so skip running it.
+			if (
+				semver.lt(apis.dataRuntime.version, "2.100.0") ||
+				semver.lt(apis.dataRuntimeForLoading.version, "2.100.0")
+			) {
+				this.skip();
+			}
 		});
+
 		// This smoke test runs against all services to confirm the incremental summary feature works
 		// end-to-end on real services.
 		it("new container and summarizer can load from incremental summary", async () => {
@@ -431,8 +489,9 @@ describeCompat(
 				};
 
 				// Each round mutates at the specified depth and takes an incremental summary. Every
-				// summary must succeed — before the handle-path fix, re-encoding a parent chunk left
-				// child handles pointing at a stale summaryPath and the summary threw.
+				// summary must succeed — before the stale-handle-path fix (PR #26990; see the module
+				// header), re-encoding a parent chunk left child handles pointing at a stale
+				// summaryPath and the summary threw.
 				for (let round = 0; round < changeDepths.length; round++) {
 					const changeDepth = changeDepths[round];
 					makeChangeAtDepth(view, changeDepth, round);
@@ -454,11 +513,12 @@ describeCompat(
 			});
 		}
 
-		it("simultaneous sibling and descendant handles when only one section's items change", async () => {
+		it("a depth-3 change produces sibling and descendant handles in the same summary", async () => {
 			// Doc1 has two sections (Sec1 and Sec2). Changing Item1.itemName in Sec1 (a depth-3
 			// change) re-encodes the documents, Doc1.sections, and Sec1.items chunks, while Sec2.items
 			// (a sibling at depth 3) and Item1.tags (a descendant at depth 4) become handles in the
-			// same summary. Repeating the change exercises the stale-path bug for both handles.
+			// same summary. Repeating the change exercises the stale-handle-path bug (see the module
+			// header / PR #26990) for both handles.
 			const { container, view, testContainerConfig } = await createContainerAndGetTreeView(
 				provider,
 				apis,
