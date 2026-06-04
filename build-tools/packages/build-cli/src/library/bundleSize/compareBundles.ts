@@ -54,6 +54,18 @@ interface EntrypointRow {
 	diff: number;
 }
 
+/**
+ * Per-package parsed-size comparison row. `name` is the owning npm package of
+ * the contributing modules (e.g. `@fluidframework/tree`, `@sinclair/typebox`),
+ * or a synthetic bucket label (e.g. `other @fluidframework/*`).
+ */
+interface PackageSizeRow {
+	name: string;
+	baseSize: number;
+	currentSize: number;
+	diff: number;
+}
+
 /** Structured comparison report written to the JSON output file. */
 interface ComparisonReport {
 	/** ISO timestamp of when the comparison was generated */
@@ -70,6 +82,18 @@ interface ComparisonReport {
 	gzipChangedAssets: GzipRow[];
 	/** Per-entrypoint total parsed-size comparison rows */
 	entrypoints: EntrypointRow[];
+	/**
+	 * Three-row headline split of the whole bundle's parsed bytes:
+	 * `@fluidframework/tree`, `other @fluidframework/* + @fluid-*`, and
+	 * `third-party`. Answers "how much of the bundle is tree" at a glance.
+	 */
+	packageBuckets: PackageSizeRow[];
+	/**
+	 * Full per-package parsed-size breakdown (one row per owning package),
+	 * sorted by current size descending. Sizes are deduplicated by module so a
+	 * module shared across entrypoints is counted once.
+	 */
+	packages: PackageSizeRow[];
 }
 
 function sanitizeForFileName(value: string): string {
@@ -117,6 +141,126 @@ function entrypointSizes(nodes: AnalyzerNode[]): Record<string, number> {
 		}
 	}
 	return totals;
+}
+
+/**
+ * Extracts the owning npm package name from a webpack-bundle-analyzer module
+ * `path`. Handles the three shapes that appear in this repo's bundles:
+ *
+ * - **Third-party (pnpm):** `.../node_modules/.pnpm/<key>/node_modules/<pkg>/...`
+ *   — the name after the *last* `node_modules/` is used, so a package's own
+ *   nested dependencies are attributed to themselves. Scoped packages keep
+ *   their `@scope/name`.
+ * - **Workspace packages:** `.../packages/<group>/<name>/...` — these are the
+ *   Fluid Framework source packages, published as `@fluidframework/<name>`.
+ * - **App/entry code:** anything else (e.g. the bundle-size-tests harness's own
+ *   `./src/*.ts` entry modules) is grouped under `(app/entry)`.
+ */
+function packageFromModulePath(modulePath: string): string {
+	const normalized = modulePath.replace(/\\/g, "/");
+	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
+	if (nodeModulesIndex >= 0) {
+		const rest = normalized.slice(nodeModulesIndex + "node_modules/".length);
+		const parts = rest.split("/");
+		return parts[0].startsWith("@") ? `${parts[0]}/${parts[1]}` : parts[0];
+	}
+	const packagesIndex = normalized.indexOf("packages/");
+	if (packagesIndex >= 0) {
+		// Workspace layout: packages/<group>/<name>/lib/...
+		const parts = normalized.slice(packagesIndex + "packages/".length).split("/");
+		if (parts.length >= 2) return `@fluidframework/${parts[1]}`;
+	}
+	return "(app/entry)";
+}
+
+/**
+ * Produces a stable identity for a module so the same source module reached via
+ * different entrypoints (webpack prefixes the path with the concatenating
+ * entry, e.g. `./src/sharedTree.ts + 384 modules (concatenated)/...`) collapses
+ * to a single key. Anchoring at `node_modules/` or `packages/` strips that
+ * per-entry prefix, giving "unique module" dedup semantics.
+ */
+function canonicalModuleKey(modulePath: string): string {
+	const normalized = modulePath.replace(/\\/g, "/");
+	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
+	if (nodeModulesIndex >= 0) return normalized.slice(nodeModulesIndex);
+	const packagesIndex = normalized.indexOf("packages/");
+	if (packagesIndex >= 0) return normalized.slice(packagesIndex);
+	return normalized;
+}
+
+/**
+ * Walks each asset's `groups` module tree and sums parsed sizes per owning
+ * package. Modules are deduplicated by {@link canonicalModuleKey}, so a module
+ * shared across multiple entrypoints is counted exactly once (whole-bundle
+ * "unique module size" semantics).
+ */
+function packageSizes(nodes: AnalyzerNode[]): Map<string, number> {
+	const perPackage = new Map<string, number>();
+	const seen = new Set<string>();
+
+	const visit = (node: AnalyzerNode): void => {
+		if (node.groups !== undefined && node.groups.length > 0) {
+			for (const child of node.groups) visit(child);
+			return;
+		}
+		// Leaf module node.
+		if (node.path === undefined) return;
+		const key = canonicalModuleKey(node.path);
+		if (seen.has(key)) return;
+		seen.add(key);
+		const packageName = packageFromModulePath(node.path);
+		perPackage.set(packageName, (perPackage.get(packageName) ?? 0) + (node.parsedSize ?? 0));
+	};
+
+	for (const node of nodes.filter(isJsAsset)) {
+		visit(node);
+	}
+	return perPackage;
+}
+
+/** Diffs two per-package size maps into sorted {@link PackageSizeRow}s. */
+function diffPackageSizes(
+	base: Map<string, number>,
+	current: Map<string, number>,
+): PackageSizeRow[] {
+	return [...new Set([...base.keys(), ...current.keys()])]
+		.map((name) => {
+			// Missing on a side is treated as size 0 (added/removed package).
+			const baseSize = base.get(name) ?? 0;
+			const currentSize = current.get(name) ?? 0;
+			return { name, baseSize, currentSize, diff: currentSize - baseSize };
+		})
+		.sort((a, b) => b.currentSize - a.currentSize || a.name.localeCompare(b.name));
+}
+
+/**
+ * Collapses per-package rows into the three headline buckets:
+ * `@fluidframework/tree`, `other @fluidframework/* + @fluid-*`, and `third-party`.
+ */
+function bucketPackageSizes(rows: PackageSizeRow[]): PackageSizeRow[] {
+	const buckets: Record<string, PackageSizeRow> = {
+		tree: { name: "@fluidframework/tree", baseSize: 0, currentSize: 0, diff: 0 },
+		otherFluid: {
+			name: "other @fluidframework/* + @fluid-*",
+			baseSize: 0,
+			currentSize: 0,
+			diff: 0,
+		},
+		thirdParty: { name: "third-party", baseSize: 0, currentSize: 0, diff: 0 },
+	};
+	for (const row of rows) {
+		const bucket =
+			row.name === "@fluidframework/tree"
+				? buckets.tree
+				: row.name.startsWith("@fluidframework/") || row.name.startsWith("@fluid-")
+					? buckets.otherFluid
+					: buckets.thirdParty;
+		bucket.baseSize += row.baseSize;
+		bucket.currentSize += row.currentSize;
+		bucket.diff += row.diff;
+	}
+	return [buckets.tree, buckets.otherFluid, buckets.thirdParty];
 }
 
 /**
@@ -194,6 +338,13 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 			};
 		});
 
+	// Per-package parsed-size breakdown. Walks each side's module tree (the
+	// `groups` already parsed into `*Nodes`), dedupes modules, and diffs the
+	// resulting per-package maps — then rolls those rows up into the three
+	// headline buckets.
+	const packages = diffPackageSizes(packageSizes(baseNodes), packageSizes(currentNodes));
+	const packageBuckets = bucketPackageSizes(packages);
+
 	return {
 		comparedAt: new Date().toISOString(),
 		baseLabel,
@@ -202,6 +353,8 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 		assets,
 		gzipChangedAssets,
 		entrypoints,
+		packageBuckets,
+		packages,
 	};
 }
 
@@ -285,6 +438,38 @@ function renderAsText(report: ComparisonReport): string {
 				formatDiff(row.diff).padStart(12),
 		);
 	}
+
+	const emitPackageRows = (rows: PackageSizeRow[], nameWidth: number): void => {
+		emit(
+			"Package".padEnd(nameWidth) +
+				"Base".padStart(12) +
+				"Current".padStart(12) +
+				"Diff".padStart(12) +
+				"% Change".padStart(10),
+		);
+		emit("-".repeat(nameWidth + 46));
+		for (const row of rows) {
+			const percentChange =
+				row.baseSize > 0 && row.diff !== 0
+					? `${((row.diff / row.baseSize) * 100).toFixed(1)}%`
+					: "";
+			emit(
+				row.name.padEnd(nameWidth) +
+					String(row.baseSize).padStart(12) +
+					String(row.currentSize).padStart(12) +
+					formatDiff(row.diff).padStart(12) +
+					percentChange.padStart(10),
+			);
+		}
+	};
+
+	emit();
+	emit("=== Bundle composition by category (parsed size in bytes) ===");
+	emitPackageRows(report.packageBuckets, 40);
+
+	emit();
+	emit("=== Per-package parsed-size comparison ===");
+	emitPackageRows(report.packages, 40);
 
 	return `${lines.join("\n")}\n`;
 }
