@@ -123,10 +123,10 @@ jobs:
           SHA="${{ github.event.check_run.head_sha }}"
           PR_JSON=$(gh pr list --state open --search "head-sha:$SHA" \
             --json number,headRefOid,baseRefName \
-            --jq '.[0]')
+            --jq '.[0] // empty')
 
           AFFECTED='[]'
-          if [ -n "$PR_JSON" ] && [ "$PR_JSON" != "null" ]; then
+          if [ -n "$PR_JSON" ]; then
             PR_NUM=$(echo "$PR_JSON" | jq -r '.number')
             PR_HEAD=$(echo "$PR_JSON" | jq -r '.headRefOid')
             PR_BASE_REF=$(echo "$PR_JSON" | jq -r '.baseRefName')
