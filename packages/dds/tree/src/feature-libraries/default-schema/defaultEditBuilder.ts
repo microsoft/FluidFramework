@@ -340,44 +340,41 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			 * This defines the lowest common ancestor node (LCA) of the source and destination fields.
 			 */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
-			const fieldOnDetachPathUnderLCA =
-				detachPath[sharedDepth]?.parentField ?? sourceField.field;
-			const fieldOnAttachPathUnderLCA =
-				attachPath[sharedDepth]?.parentField ?? destinationField.field;
 			let adjustedAttachField = destinationField;
 			// If the attach path runs through the field where the detach occurs...
-			if (
-				sharedDepth === detachPath.length &&
-				fieldOnDetachPathUnderLCA === fieldOnAttachPathUnderLCA
-			) {
-				const firstDifferentAttachAncestor = attachPath[sharedDepth];
-				// We know that the attach path runs deeper because both paths would otherwise bottom-out in the same field,
-				// which is handled in a separate code path above.
-				assert(firstDifferentAttachAncestor !== undefined, "Unexpected identical paths");
-				if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
-					// The attach path runs through a node located before the detached nodes.
-					// No need to adjust the attach path.
-				} else if (sourceIndex + count <= firstDifferentAttachAncestor.parentIndex) {
-					// The attach path runs through a node located after the detached nodes.
-					// Adjust the index for the node at that depth of the path, so that it is interpreted correctly
-					// in the composition performed by `submitChanges`.
-					let parent = firstDifferentAttachAncestor.parent;
-					parent = {
-						parent,
-						parentIndex: firstDifferentAttachAncestor.parentIndex - count,
-						parentField: firstDifferentAttachAncestor.parentField,
-					};
-					for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
+			if (sharedDepth === detachPath.length) {
+				const fieldOnDetachPathUnderLCA = sourceField.field;
+				const fieldOnAttachPathUnderLCA =
+					attachPath[sharedDepth]?.parentField ?? destinationField.field;
+				if (fieldOnDetachPathUnderLCA === fieldOnAttachPathUnderLCA) {
+					// We know that the attach path runs deeper because both paths would otherwise bottom-out in the same field,
+					// which is handled in a separate code path above.
+					const firstDifferentAttachAncestor = attachPath[sharedDepth] ?? oob();
+					if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
+						// The attach path runs through a node located before the detached nodes.
+						// No need to adjust the attach path.
+					} else if (sourceIndex + count <= firstDifferentAttachAncestor.parentIndex) {
+						// The attach path runs through a node located after the detached nodes.
+						// Adjust the index for the node at that depth of the path, so that it is interpreted correctly
+						// in the composition performed by `submitChanges`.
+						let parent = firstDifferentAttachAncestor.parent;
 						parent = {
-							...(attachPath[i] ?? oob()),
 							parent,
+							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
+							parentField: firstDifferentAttachAncestor.parentField,
 						};
+						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
+							parent = {
+								...(attachPath[i] ?? oob()),
+								parent,
+							};
+						}
+						adjustedAttachField = { parent, field: destinationField.field };
+					} else {
+						throw new UsageError(
+							"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
+						);
 					}
-					adjustedAttachField = { parent, field: destinationField.field };
-				} else {
-					throw new UsageError(
-						"Invalid move operation: the destination is located under one of the moved elements. Consider using the Tree.contains API to detect this.",
-					);
 				}
 			}
 			const moveOut = sequence.changeHandler.editor.moveOut(
