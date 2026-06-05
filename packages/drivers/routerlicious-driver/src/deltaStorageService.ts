@@ -18,7 +18,7 @@ import {
 	requestOps,
 	streamObserver,
 } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import type { DocumentStorageService } from "./documentStorageService.js";
@@ -42,7 +42,7 @@ export class DocumentDeltaStorageService implements IDocumentDeltaStorageService
 		private readonly id: string,
 		private readonly deltaStorageService: IDeltaStorageService,
 		private readonly documentStorageService: DocumentStorageService,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		this.logtailSha = documentStorageService.logTailSha;
 	}
@@ -138,7 +138,7 @@ export class DeltaStorageService implements IDeltaStorageService {
 	constructor(
 		private readonly url: string,
 		private readonly restWrapper: RestWrapper,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly getRestWrapper: () => Promise<RestWrapper> = async () => this.restWrapper,
 		private readonly getDeltaStorageUrl: () => string = () => this.url,
 	) {}

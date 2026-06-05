@@ -13,7 +13,7 @@ import type {
 import { LogLevel } from "@fluidframework/core-interfaces";
 import type { InternalCoreInterfacesUtilityTypes } from "@fluidframework/core-interfaces/internal";
 
-import type { ITelemetryLoggerExt as ITelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt as TelemetryLoggerExtInternal } from "@fluidframework/telemetry-utils/internal";
 import type { ITelemetryLoggerExt as ITelemetryLoggerExtExternal } from "@fluidframework/telemetry-utils/legacy";
 
 import { mixinMonitoringContext } from "../config.js";
@@ -35,12 +35,12 @@ function assertIdenticalTypes<T, U>(
 }
 
 /**
- * This is exported but never called - tests that internal and external ITelemetryLoggerExt types are identical.
+ * This is exported but never called - tests that internal TelemetryLoggerExt and external ITelemetryLoggerExt types are identical.
  * At this time the only difference allowed is for the external version to have `@deprecated` tags on it methods.
  * To be removed when external type is erased and the types are permitted to diverge.
  */
 export function checkIdenticalLoggers(
-	internal: ITelemetryLoggerExtInternal,
+	internal: TelemetryLoggerExtInternal,
 	external: ITelemetryLoggerExtExternal,
 ): void {
 	assertIdenticalTypes(internal, external);

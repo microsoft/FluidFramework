@@ -9,7 +9,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
@@ -38,7 +38,7 @@ export class InboundBatchAggregator {
 	constructor(
 		private readonly deltaManager: IDeltaManagerFull,
 		private readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		// Listen for updates and peek at the inbound
 		this.deltaManager.inbound.on("push", this.trackPending);

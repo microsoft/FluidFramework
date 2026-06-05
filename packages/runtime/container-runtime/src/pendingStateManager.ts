@@ -6,7 +6,7 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	extractSafePropertiesFromMessage,
@@ -366,7 +366,7 @@ export class PendingStateManager implements IDisposable {
 		};
 	}
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,

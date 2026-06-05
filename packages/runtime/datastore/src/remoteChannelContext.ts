@@ -24,7 +24,7 @@ import type {
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -52,7 +52,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
