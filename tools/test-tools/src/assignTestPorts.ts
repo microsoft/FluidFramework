@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { spawnSync } from "child_process";
-import fs from "fs";
-import os from "os";
-import path from "path";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
+/**
+ * Package metadata returned by `pnpm recursive list --json`.
+ */
 export interface PackageInfo {
 	name: string;
 	version: string;
@@ -40,11 +43,14 @@ export function getPackageInfo(): PackageInfo[] {
 	}
 }
 
+/**
+ * Writes package-to-port mappings to a temp file for tests to consume.
+ */
 export function writePortMapFile(initialPort: number): void {
 	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
-	const portMap: { [pkgName: string]: number } = {};
+	const portMap: Record<string, number> = {};
 	let port = initialPort;
 	for (const pkg of info) {
 		if (pkg.name === undefined) {
