@@ -302,7 +302,9 @@ function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
 }
 
 function compatibleCheckpointsOf(c: DocumentedCheckpoint): DocumentedCheckpoint[] {
-	return documentedCheckpoints.filter((x) => Math.abs(x.index - c.index) <= fullCompatibilityWindowSize);
+	return documentedCheckpoints.filter(
+		(x) => Math.abs(x.index - c.index) <= fullCompatibilityWindowSize,
+	);
 }
 
 function renderCompatibleCheckpoints(c: DocumentedCheckpoint): string {
