@@ -16,9 +16,6 @@
  * and CompatibilityCheckpoints.md.
  */
 
-import { existsSync } from "node:fs";
-import * as path from "node:path";
-
 import * as semver from "semver";
 
 /**
@@ -371,21 +368,4 @@ export function injectCheckpointsTable(docContent: string): string {
 	const after = docContent.slice(end);
 	// A blank line before the END marker keeps output stable under Prettier.
 	return `${before}\n${renderCheckpointsTable()}\n\n${after}`;
-}
-
-/**
- * Walks up from `startDir` to locate the repository root (first ancestor directory
- * containing a `.git` entry). Throws if none is found.
- * @internal
- */
-export function findRepoRoot(startDir: string): string {
-	let dir = path.resolve(startDir);
-	for (;;) {
-		if (existsSync(path.join(dir, ".git"))) return dir;
-		const parent = path.dirname(dir);
-		if (parent === dir) {
-			throw new Error(`Could not locate repository root from "${startDir}".`);
-		}
-		dir = parent;
-	}
 }

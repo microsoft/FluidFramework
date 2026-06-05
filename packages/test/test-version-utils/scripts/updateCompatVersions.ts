@@ -45,6 +45,7 @@ import {
 import * as path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
+import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import * as semver from "semver";
 
 // Re-use version arithmetic and package list from the main source to keep them in sync.
@@ -62,7 +63,6 @@ import {
 import {
 	checkpointResolutionRange,
 	compatibilityCheckpointsDocRelativePath,
-	findRepoRoot,
 	getCurrentCheckpoint,
 	getInWindowPriorCheckpoints,
 	injectCheckpointsTable,
@@ -74,9 +74,7 @@ import {
 
 const scriptDir = fileURLToPath(new URL(".", import.meta.url));
 const pkgRoot = path.resolve(scriptDir, "..");
-const gitRoot = execSync("git rev-parse --show-toplevel", { encoding: "utf8", cwd: pkgRoot })
-	.trim()
-	.replace(/\\/g, "/");
+const gitRoot = findGitRootSync(pkgRoot);
 const compatWorkspacesDir = path.join(pkgRoot, "compat-workspaces");
 const generatedVersionsCjsPath = path.join(compatWorkspacesDir, "generated-versions.cjs");
 
@@ -329,13 +327,12 @@ async function main(): Promise<void> {
 	}
 
 	// Regenerate the checkpoints table in CompatibilityCheckpoints.md.
-	const repoRoot = findRepoRoot(scriptDir);
-	const docPath = path.join(repoRoot, compatibilityCheckpointsDocRelativePath);
+	const docPath = path.join(gitRoot, compatibilityCheckpointsDocRelativePath);
 	const original = readFileSync(docPath, "utf8");
 	const updated = injectCheckpointsTable(original);
 	if (updated !== original) {
 		writeFileSync(docPath, updated, "utf8");
-		console.log(`\nUpdated table in ${path.relative(repoRoot, docPath)}`);
+		console.log(`\nUpdated table in ${path.relative(gitRoot, docPath)}`);
 	} else {
 		console.log(`\n${compatibilityCheckpointsDocRelativePath} table is already up to date.`);
 	}

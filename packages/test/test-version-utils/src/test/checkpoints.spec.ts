@@ -4,8 +4,7 @@
  */
 
 import { strict as assert } from "assert";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -15,7 +14,6 @@ import {
 	checkpointResolutionRange,
 	checkpoints,
 	compatibilityCheckpointsDocRelativePath,
-	findRepoRoot,
 	fullCompatibilityWindowSize,
 	getCurrentCheckpoint,
 	getInWindowPriorCheckpoints,
@@ -171,34 +169,18 @@ describe("checkpoints", () => {
 		});
 	});
 
-	describe("findRepoRoot", () => {
-		it("locates an ancestor directory containing `.git`", () => {
-			const tmp = mkdtempSync(path.join(tmpdir(), "ff-findroot-"));
-			try {
-				const root = path.join(tmp, "repo");
-				const nested = path.join(root, "a", "b", "c");
-				mkdirSync(nested, { recursive: true });
-				writeFileSync(path.join(root, ".git"), "");
-				assert.strictEqual(findRepoRoot(nested), root);
-				assert.strictEqual(findRepoRoot(root), root);
-			} finally {
-				rmSync(tmp, { recursive: true, force: true });
-			}
-		});
-
-		it("throws when no ancestor contains `.git`", () => {
-			const tmp = mkdtempSync(path.join(tmpdir(), "ff-findroot-"));
-			try {
-				assert.throws(() => findRepoRoot(tmp));
-			} finally {
-				rmSync(tmp, { recursive: true, force: true });
-			}
-		});
-	});
-
 	describe("CompatibilityCheckpoints.md", () => {
 		it("is up to date with the checkpoint data (single source of truth)", () => {
-			const repoRoot = findRepoRoot(fileURLToPath(import.meta.url));
+			// This test file compiles to lib/test/checkpoints.spec.js; the repo root
+			// is five levels up: lib/test → lib → test-version-utils → test → packages → root.
+			const repoRoot = path.resolve(
+				path.dirname(fileURLToPath(import.meta.url)),
+				"..",
+				"..",
+				"..",
+				"..",
+				"..",
+			);
 			const docPath = path.join(repoRoot, compatibilityCheckpointsDocRelativePath);
 			const committed = readFileSync(docPath, "utf8");
 			assert.strictEqual(
