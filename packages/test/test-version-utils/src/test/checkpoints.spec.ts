@@ -4,20 +4,54 @@
  */
 
 import { strict as assert } from "assert";
-import { readFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import * as semver from "semver";
+
 import {
+	checkpointResolutionRange,
 	checkpoints,
 	compatibilityCheckpointsDocRelativePath,
 	findRepoRoot,
+	fullCompatibilityWindowSize,
 	getCurrentCheckpoint,
 	getInWindowPriorCheckpoints,
 	injectCheckpointsTable,
 } from "../checkpoints.js";
 
 describe("checkpoints", () => {
+	describe("data", () => {
+		it("has unique, contiguous 1-based indexes with matching names", () => {
+			checkpoints.forEach((c, i) => {
+				assert.strictEqual(c.index, i + 1, `${c.name} index`);
+				assert.strictEqual(c.name, `CC-${c.index}`, `${c.name} name`);
+			});
+		});
+
+		it("has valid semver openingVersions in strictly increasing order", () => {
+			checkpoints.forEach((c, i) => {
+				assert.ok(semver.valid(c.openingVersion), `${c.name} semver`);
+				if (i > 0) {
+					const prev = checkpoints[i - 1];
+					assert.ok(prev !== undefined, "prev defined");
+					assert.ok(
+						semver.gt(c.openingVersion, prev.openingVersion),
+						`${c.name} > ${prev.name}`,
+					);
+				}
+			});
+		});
+
+		it("has ISO YYYY-MM-DD startDates", () => {
+			for (const c of checkpoints) {
+				assert.match(c.startDate, /^\d{4}-\d{2}-\d{2}$/, `${c.name} startDate`);
+			}
+		});
+	});
+
 	describe("getCurrentCheckpoint", () => {
 		it("maps an exact opening version to its checkpoint", () => {
 			assert.strictEqual(getCurrentCheckpoint("1.4.0").name, "CC-1");
@@ -61,6 +95,12 @@ describe("checkpoints", () => {
 			assert.throws(() => getCurrentCheckpoint("not-a-version"));
 			assert.throws(() => getCurrentCheckpoint("2"));
 		});
+
+		it("round-trips each checkpoint's openingVersion to itself", () => {
+			for (const c of checkpoints) {
+				assert.strictEqual(getCurrentCheckpoint(c.openingVersion).name, c.name);
+			}
+		});
 	});
 
 	describe("getInWindowPriorCheckpoints", () => {
@@ -88,6 +128,71 @@ describe("checkpoints", () => {
 				getInWindowPriorCheckpoints(cc3).map((c) => c.name),
 				["CC-2", "CC-1"],
 			);
+		});
+
+		it("returns indexes strictly descending, contiguous, and below current", () => {
+			for (const current of checkpoints) {
+				const priors = getInWindowPriorCheckpoints(current);
+				assert.ok(priors.length <= fullCompatibilityWindowSize, `${current.name} length`);
+				priors.forEach((p, i) => {
+					assert.strictEqual(p.index, current.index - (i + 1), `${current.name} prior[${i}]`);
+				});
+			}
+		});
+	});
+
+	describe("checkpointResolutionRange", () => {
+		it("returns a tilde range pinned to the checkpoint's openingVersion", () => {
+			for (const c of checkpoints) {
+				assert.strictEqual(checkpointResolutionRange(c), `~${c.openingVersion}`);
+			}
+		});
+	});
+
+	describe("injectCheckpointsTable", () => {
+		const start = "<!-- GENERATED-TABLE-START -->";
+		const end = "<!-- GENERATED-TABLE-END -->";
+
+		it("replaces only the content between the sentinels and preserves surrounding prose", () => {
+			const doc = `# Title\n\nbefore prose\n\n${start}\nold contents\n${end}\n\nafter prose\n`;
+			const updated = injectCheckpointsTable(doc);
+			assert.ok(updated.startsWith("# Title\n\nbefore prose\n\n"), "prose before preserved");
+			assert.ok(updated.endsWith("\n\nafter prose\n"), "prose after preserved");
+			assert.ok(updated.includes(start) && updated.includes(end), "sentinels preserved");
+			assert.ok(!updated.includes("old contents"), "old contents replaced");
+			// Running again produces the same output.
+			assert.strictEqual(injectCheckpointsTable(updated), updated);
+		});
+
+		it("throws if either sentinel is missing", () => {
+			assert.throws(() => injectCheckpointsTable(`no markers here`));
+			assert.throws(() => injectCheckpointsTable(`only ${start} here`));
+			assert.throws(() => injectCheckpointsTable(`only ${end} here`));
+		});
+	});
+
+	describe("findRepoRoot", () => {
+		it("locates an ancestor directory containing `.git`", () => {
+			const tmp = mkdtempSync(path.join(tmpdir(), "ff-findroot-"));
+			try {
+				const root = path.join(tmp, "repo");
+				const nested = path.join(root, "a", "b", "c");
+				mkdirSync(nested, { recursive: true });
+				writeFileSync(path.join(root, ".git"), "");
+				assert.strictEqual(findRepoRoot(nested), root);
+				assert.strictEqual(findRepoRoot(root), root);
+			} finally {
+				rmSync(tmp, { recursive: true, force: true });
+			}
+		});
+
+		it("throws when no ancestor contains `.git`", () => {
+			const tmp = mkdtempSync(path.join(tmpdir(), "ff-findroot-"));
+			try {
+				assert.throws(() => findRepoRoot(tmp));
+			} finally {
+				rmSync(tmp, { recursive: true, force: true });
+			}
 		});
 	});
 
