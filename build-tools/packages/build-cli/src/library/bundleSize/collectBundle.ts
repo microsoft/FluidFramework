@@ -17,6 +17,10 @@ export interface CollectBundleOptions {
 	/**
 	 * `local`: collect from the outer enlistment that contains {@link CollectBundleOptions.packageDir}.
 	 * `revision`: collect from a separate inner enlistment checked out at {@link CollectBundleOptions.revision}.
+	 *
+	 * In `local` mode the outer enlistment is built exactly as it sits on disk: its git state
+	 * (working tree, branch, and revision) is never modified. All checkout/fetch happens only in
+	 * the inner repo used by `revision` mode.
 	 */
 	readonly mode: "local" | "revision";
 	/**
@@ -146,6 +150,10 @@ function saveStats(label: string, sourcePackageRoot: string, analysisDir: string
  * excluded (they're often noisy / random) but a warning is printed if any are
  * detected so the user can `git add` the relevant pieces and re-run.
  *
+ * This is purely a record: the patch is never applied, and the outer repo's
+ * working tree and revision are left untouched. Local mode builds the enlistment
+ * exactly as it sits on disk.
+ *
  * The patch is written as `staged-changes.patch` inside the per-label directory.
  */
 async function captureLocalPatch(repoRoot: string, labelDirectory: string): Promise<void> {
@@ -256,8 +264,12 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 	if (mode === "local") {
 		activeRepoRoot = outerRepoRoot;
 		activePackageRoot = packageDir;
-		// Capture the staged diff up front, before any build steps. This way the
-		// patch is preserved even if the build subsequently fails.
+		// Local mode builds the outer enlistment exactly as it sits on disk: we
+		// never check out, stash, or otherwise mutate its working tree or revision.
+		// The captured patch is therefore only a reproducibility record of what was
+		// staged at collection time — it is never applied. Capture it up front,
+		// before any build steps, so the patch is preserved even if the build
+		// subsequently fails.
 		await captureLocalPatch(outerRepoRoot, resolve(analysisDir, label));
 	} else {
 		// Path of the package relative to the repo root, e.g.

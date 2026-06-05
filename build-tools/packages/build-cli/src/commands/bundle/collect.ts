@@ -30,8 +30,8 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 	public static readonly flags = {
 		mode: Flags.string({
 			description:
-				"local: collect from the outer enlistment. revision: collect from a separate " +
-				"inner enlistment checked out at --revision.",
+				"local: collect from the outer enlistment (its git state is never modified). " +
+				"revision: collect from a separate inner enlistment checked out at --revision.",
 			options: ["local", "revision"] as const,
 			default: "local",
 		}),
