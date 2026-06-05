@@ -103,17 +103,17 @@ interface ComparisonReport {
 	 */
 	entrypoints: EntrypointRow[];
 	/**
-	 * Four-row headline split of the bundle's parsed bytes, all bundle-wide:
-	 * `@fluidframework/tree + 3rd-party deps`, `@fluidframework/tree`,
-	 * `Fluid Framework + 3rd-party deps`, and `Fluid Framework`. Lets you read
-	 * tree and all of Fluid Framework both with and without their third-party
-	 * dependencies. App/entry harness code is excluded.
+	 * Headline buckets, each pinned to a real entrypoint (never summed across
+	 * entrypoints): SharedTree from `sharedTree`, Fluid Framework from
+	 * `fluidFrameworkAll`, each available with and without third-party deps.
+	 * Defined by {@link bucketDefinitions}.
 	 */
 	packageBuckets: PackageSizeRow[];
 	/**
 	 * Full per-package parsed-size breakdown (one row per owning package),
-	 * sorted by current size descending. Sizes are deduplicated by module so a
-	 * module shared across entrypoints is counted once.
+	 * sorted by current size descending. Scoped to the `fluidFrameworkAll`
+	 * aggregate entrypoint and deduplicated by module, so each package is counted
+	 * once as it appears in that single real bundle.
 	 */
 	packages: PackageSizeRow[];
 }
@@ -272,13 +272,26 @@ function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 	return perPackage;
 }
 
+/** Entrypoint asset for the full deduplicated Fluid Framework footprint (`bundle-size-tests/src/fluidFrameworkAll.ts`). */
+const aggregateEntrypointAsset = "fluidFrameworkAll.js";
+
+/** Entrypoint asset for SharedTree's own bundle (`bundle-size-tests/src/sharedTree.ts`). */
+const treeEntrypointAsset = "sharedTree.js";
+
 /**
- * Whole-bundle per-package parsed sizes: dedupes modules across every `.js`
- * asset, so a module shared across multiple entrypoints is counted exactly once
- * ("unique module size" semantics).
+ * Per-package parsed sizes for a single named entrypoint asset. Walks only that
+ * one asset's module tree, deduping shared modules within it, so every package
+ * is counted exactly once as it actually appears in that real bundle. Returns an
+ * empty map (and warns) if the asset is missing, rather than falling back to a
+ * misleading whole-bundle total.
  */
-function packageSizes(nodes: AnalyzerNode[]): Map<string, number> {
-	return accumulatePackageSizes(nodes.filter(isJsAsset));
+function packageSizesForAsset(nodes: AnalyzerNode[], assetLabel: string): Map<string, number> {
+	const asset = nodes.find((node) => node.label === assetLabel);
+	if (asset === undefined) {
+		console.warn(`Warning: entrypoint asset "${assetLabel}" not found; reporting it as size 0.`);
+		return new Map();
+	}
+	return accumulatePackageSizes([asset]);
 }
 
 /** Diffs two per-package size maps into sorted {@link PackageSizeRow}s. */
@@ -314,53 +327,75 @@ function addInto(acc: SizeAccumulator, row: PackageSizeRow): void {
 	acc.diff += row.diff;
 }
 
-function combineBucket(name: string, ...parts: SizeAccumulator[]): PackageSizeRow {
-	return {
-		name,
-		baseSize: parts.reduce((sum, part) => sum + part.baseSize, 0),
-		currentSize: parts.reduce((sum, part) => sum + part.currentSize, 0),
-		diff: parts.reduce((sum, part) => sum + part.diff, 0),
-	};
+/** Whether a package's bytes are third-party (not a Fluid library, not harness code). */
+function isThirdPartyPackage(name: string): boolean {
+	return !isFluidPackage(name) && name !== "(app/entry)";
 }
 
 /**
- * Collapses per-package rows into four headline buckets, all computed
- * bundle-wide (no webpack entrypoints):
- *
- * - `@fluidframework/tree + 3rd-party deps` — tree's own bytes plus every
- *   third-party package in the bundle.
- * - `@fluidframework/tree` — tree's own bytes only.
- * - `Fluid Framework + 3rd-party deps` — all Fluid Framework library bytes
- *   (`@fluidframework/*` and `@fluid-*`, including tree) plus every third-party
- *   package in the bundle.
- * - `Fluid Framework` — all Fluid Framework library bytes only.
- *
- * Third-party bytes are attributed in full to both `+ deps` rows: the flat
- * per-package data carries no per-library dependency graph, so shared
- * third-party deps cannot be split between tree and the other Fluid libraries.
- * App/entry harness code (the bundle-size-tests `./src/*` entries) is excluded
- * from every bucket.
+ * One headline bucket: which entrypoint to measure, and whether to fold in that
+ * bundle's third-party deps on top of its Fluid Framework bytes. Add a row to
+ * {@link bucketDefinitions} to add a bucket — the rendering is fully
+ * data-driven.
  */
-function bucketPackageSizes(rows: PackageSizeRow[]): PackageSizeRow[] {
-	const treeOwn: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
-	const fluidOwn: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
-	const thirdParty: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
+interface BucketDefinition {
+	label: string;
+	/** Entrypoint asset whose deduplicated module tree this bucket is measured from. */
+	asset: string;
+	/** Whether to also include every third-party package in the same bundle. */
+	withThirdParty: boolean;
+}
 
-	for (const row of rows) {
-		if (row.name === "@fluidframework/tree") addInto(treeOwn, row);
-		if (isFluidPackage(row.name)) {
-			addInto(fluidOwn, row);
-		} else if (row.name !== "(app/entry)") {
-			addInto(thirdParty, row);
+/**
+ * Headline buckets, each pinned to a real entrypoint — never summed across
+ * entrypoints, which would double-count shared modules. SharedTree is measured
+ * from its own `sharedTree` bundle; Fluid Framework from the `fluidFrameworkAll`
+ * aggregate bundle. Each bucket counts every Fluid Framework package in its
+ * bundle (the entrypoint's full Fluid footprint, not just one package); a
+ * `+ 3rd-party deps` row also folds in every third-party package in that same
+ * bundle. Third-party bytes can't be split between libraries (the flat
+ * per-package data has no dependency graph). Harness code is always excluded
+ * (see {@link isThirdPartyPackage}).
+ */
+const bucketDefinitions: readonly BucketDefinition[] = [
+	{
+		label: "SharedTree + 3rd-party deps",
+		asset: treeEntrypointAsset,
+		withThirdParty: true,
+	},
+	{
+		label: "SharedTree",
+		asset: treeEntrypointAsset,
+		withThirdParty: false,
+	},
+	{
+		label: "Fluid Framework + 3rd-party deps",
+		asset: aggregateEntrypointAsset,
+		withThirdParty: true,
+	},
+	{
+		label: "Fluid Framework",
+		asset: aggregateEntrypointAsset,
+		withThirdParty: false,
+	},
+];
+
+/**
+ * Computes the headline buckets from {@link bucketDefinitions}. `rowsForAsset`
+ * returns the entrypoint-scoped, diffed per-package rows for a given asset.
+ */
+function bucketPackageSizes(
+	rowsForAsset: (asset: string) => PackageSizeRow[],
+): PackageSizeRow[] {
+	return bucketDefinitions.map((def) => {
+		const acc: SizeAccumulator = { baseSize: 0, currentSize: 0, diff: 0 };
+		for (const row of rowsForAsset(def.asset)) {
+			if (isFluidPackage(row.name) || (def.withThirdParty && isThirdPartyPackage(row.name))) {
+				addInto(acc, row);
+			}
 		}
-	}
-
-	return [
-		combineBucket("@fluidframework/tree + 3rd-party deps", treeOwn, thirdParty),
-		combineBucket("@fluidframework/tree", treeOwn),
-		combineBucket("Fluid Framework + 3rd-party deps", fluidOwn, thirdParty),
-		combineBucket("Fluid Framework", fluidOwn),
-	];
+		return { name: def.label, ...acc };
+	});
 }
 
 /**
@@ -438,12 +473,24 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 			};
 		});
 
-	// Per-package parsed-size breakdown. Walks each side's module tree (the
-	// `groups` already parsed into `*Nodes`), dedupes modules, and diffs the
-	// resulting per-package maps — then rolls those rows up into the three
-	// headline buckets.
-	const packages = diffPackageSizes(packageSizes(baseNodes), packageSizes(currentNodes));
-	const packageBuckets = bucketPackageSizes(packages);
+	// Per-package parsed-size breakdowns, each scoped to a single real
+	// entrypoint (not a sum over entrypoints). Cached per asset because each
+	// entrypoint feeds more than one headline bucket. Each walk dedupes modules
+	// within its asset before the two sides are diffed.
+	const rowsByAsset = new Map<string, PackageSizeRow[]>();
+	const rowsForAsset = (asset: string): PackageSizeRow[] => {
+		let rows = rowsByAsset.get(asset);
+		if (rows === undefined) {
+			rows = diffPackageSizes(
+				packageSizesForAsset(baseNodes, asset),
+				packageSizesForAsset(currentNodes, asset),
+			);
+			rowsByAsset.set(asset, rows);
+		}
+		return rows;
+	};
+	const packageBuckets = bucketPackageSizes(rowsForAsset);
+	const packages = rowsForAsset(aggregateEntrypointAsset);
 
 	return {
 		comparedAt: new Date().toISOString(),
