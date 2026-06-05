@@ -341,14 +341,25 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			 */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
+			// Check that the detach parent (location of detach) is along the
+			// attach path, and thus might need to be adjusted.
+			// (This is synonymous with checking that the attach parent is below
+			// or the same as the detach parent.)
+			// If the attach parent is above the detach parent, then the move
+			// does not need to be adjusted, as the attach path will not be
+			// affected by the detach.
 			if (sharedDepth === detachPath.length) {
 				const fieldOnDetachPathUnderLCA = sourceField.field;
-				const fieldOnAttachPathUnderLCA =
-					attachPath[sharedDepth]?.parentField ?? destinationField.field;
-				if (fieldOnDetachPathUnderLCA === fieldOnAttachPathUnderLCA) {
-					// We know that the attach path runs deeper because both paths would otherwise bottom-out in the same field,
-					// which is handled in a separate code path above.
-					const firstDifferentAttachAncestor = attachPath[sharedDepth] ?? oob();
+				const firstDifferentAttachAncestor = attachPath[sharedDepth];
+				// Check that the detach location uses the same field as in
+				// the attach path.
+				// Note that when `firstDifferentAttachAncestor` is undefined,
+				// that means the parents are the same. Since earlier call
+				// to `compareFieldUpPaths` returned false, we know that the
+				// fields must be different AND thus no adjustment is needed.
+				if (fieldOnDetachPathUnderLCA === firstDifferentAttachAncestor?.parentField) {
+					// Now working at the level where detach happens along the
+					// attach path.
 					if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
@@ -356,12 +367,16 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 						// The attach path runs through a node located after the detached nodes.
 						// Adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
+						// Start with path to root that remains intact.
 						let parent = firstDifferentAttachAncestor.parent;
+						// Extend with index-adjusted parent.
 						parent = {
 							parent,
 							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
 							parentField: firstDifferentAttachAncestor.parentField,
 						};
+						// Extend with the rest of the attach path, which is unaffected
+						// apart from parentage replacements.
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
 								...(attachPath[i] ?? oob()),
