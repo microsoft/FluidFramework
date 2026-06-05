@@ -341,17 +341,19 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 			 */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
-			// Check that the detach parent (location of detach) is along the
-			// attach path, and thus might need to be adjusted.
-			// (This is synonymous with checking that the attach parent is below
-			// or the same as the detach parent.)
-			// If the attach parent is above the detach parent, then the move
-			// does not need to be adjusted, as the attach path will not be
-			// affected by the detach.
+			// Check if the detach parent
+			// (the node directly above the location of detach)
+			// is along the attach path,
+			// in which case the attach path might need to be adjusted.
+			// This is synonymous with checking if the attach parent
+			// (the node directly above the location of attach)
+			// is either below or the same as the detach parent.
+			// If not, then the move does not need to be adjusted
+			// as the attach path will not be affected by the detach.
 			if (sharedDepth === detachPath.length) {
 				const fieldOnDetachPathUnderLCA = sourceField.field;
 				const firstDifferentAttachAncestor = attachPath[sharedDepth];
-				// Check that the detach location uses the same field as in
+				// Check if the detach location uses the same field as in
 				// the attach path.
 				// Note that when `firstDifferentAttachAncestor` is undefined,
 				// that means the parents are the same. Since earlier call
