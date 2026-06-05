@@ -45,6 +45,11 @@ import { createLoader } from "./utils.js";
  * channel goes through the normal submit path — which is exactly the
  * "event handler on map A writes to map B" shape that reaches the
  * runtime guard in production.
+ *
+ * This is not a general-purpose wrapper: it is tightly coupled to the
+ * test below and assumes the `inner` factory exposes two SharedMaps with
+ * channel ids `"primary"` and `"secondary"` (see the `TestFluidObjectFactory`
+ * constructed in the test).
  */
 class ReactingMapFactory implements IFluidDataStoreFactory {
 	public constructor(private readonly inner: IFluidDataStoreFactory) {}
@@ -70,6 +75,8 @@ class ReactingMapFactory implements IFluidDataStoreFactory {
 		const runtimeWithChannels = channel as IFluidDataStoreChannel & {
 			getChannel(id: string): Promise<unknown>;
 		};
+		// "primary" / "secondary" are the channel ids the test's inner
+		// TestFluidObjectFactory is constructed with below.
 		const primary = (await runtimeWithChannels.getChannel("primary")) as ISharedMap;
 		const secondary = (await runtimeWithChannels.getChannel("secondary")) as ISharedMap;
 		primary.on("valueChanged", (changed) => {

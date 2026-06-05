@@ -2850,6 +2850,15 @@ export class ContainerRuntime
 		// and the submit guard at `submit()` would catch a runtime-internal
 		// resubmit (`Rejoin`, `GC`, `FluidDataStoreOp`) for an op type
 		// outside the apply-window allowlist.
+		//
+		// The precondition is held by the load sequence: `loadRuntime2`
+		// awaits `pendingStateManager.applyStashedOpsAt(...)` before
+		// returning the runtime, and the loader gates `setLoaded` on that
+		// completion before any write-capable connection edge fires. A
+		// maintainer reordering either sequence (or adding a new
+		// `canSendOps` edge that fires before the apply resolves) is what
+		// would trip this assert.
+		// @see {@link ContainerRuntime.loadRuntime2} (awaits `applyStashedOpsAt`)
 		assert(
 			!this.pendingStateManager.isApplyingStashedOps,
 			"replayPendingStates must not be called during stashed-op apply window",
