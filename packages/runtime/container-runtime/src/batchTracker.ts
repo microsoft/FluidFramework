@@ -9,14 +9,14 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 type BatchTrackerMessage = Pick<ISequencedDocumentMessage, "sequenceNumber">;
 
 export class BatchTracker {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private startBatchSequenceNumber: number | undefined;
 	private trackedBatchCount: number = 0;
 	private batchProcessingStartTimeStamp: number | undefined;
@@ -75,7 +75,7 @@ export class BatchTracker {
  * Track batch sizes in terms of op counts and processing times
  *
  * @param batchEventEmitter - event emitter which tracks the lifecycle of batch operations
- * @param logger - See {@link @fluidframework/core-interfaces#ITelemetryLoggerExt}
+ * @param logger - See {@link @fluidframework/core-interfaces#TelemetryLoggerExt}
  * @param batchLengthThreshold - threshold for the length of a batch when to send an error event
  * @param batchCountSamplingRate - rate for batches for which to send an event with its characteristics
  */

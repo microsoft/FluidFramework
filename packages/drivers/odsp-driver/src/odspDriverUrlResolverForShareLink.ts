@@ -16,7 +16,7 @@ import type {
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { type OdspFluidDataStoreLocator, SharingLinkHeader } from "./contractsPublic.js";
 import { createOdspUrl } from "./createOdspUrl.js";
@@ -58,7 +58,7 @@ export interface ShareLinkFetcherProps {
  * @beta
  */
 export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private readonly sharingLinkCache = new PromiseCache<string, string>();
 	private readonly shareLinkFetcherProps: ShareLinkFetcherProps | undefined;
 

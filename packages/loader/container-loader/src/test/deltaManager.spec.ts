@@ -20,7 +20,7 @@ import {
 	type IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	MockLogger,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -36,7 +36,7 @@ describe("Loader", () => {
 		describe("Delta Manager", () => {
 			let clock: SinonFakeTimers;
 			let deltaManager: DeltaManager<ConnectionManager>;
-			let logger: ITelemetryLoggerExt;
+			let logger: TelemetryLoggerExt;
 			let deltaConnection: MockDocumentDeltaConnection;
 			let clientSeqNumber = 0;
 			let emitter: EventEmitter;
@@ -51,7 +51,7 @@ describe("Loader", () => {
 
 			async function startDeltaManager(
 				reconnectAllowed = true,
-				dmLogger: ITelemetryLoggerExt = logger,
+				dmLogger: TelemetryLoggerExt = logger,
 				deltaStorageFactory?: () => IDocumentDeltaStorageService,
 			): Promise<void> {
 				const service = new MockDocumentService(deltaStorageFactory, () => {

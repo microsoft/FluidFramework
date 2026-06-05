@@ -13,7 +13,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	loggerToMonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -30,7 +30,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 	private snapshotTreeId: string | undefined;
 
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly localSnapshot: Uint8Array | string,
 	) {
 		super(loggerToMonitoringContext(logger).config);

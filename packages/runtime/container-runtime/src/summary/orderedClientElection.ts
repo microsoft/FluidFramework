@@ -19,7 +19,7 @@ import type {
 	ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
@@ -135,7 +135,7 @@ export class OrderedClientCollection
 	 * Pointer to end of linked list, for optimized client adds.
 	 */
 	private _youngestClient: LinkNode = this.rootNode;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	public get count(): number {
 		return this.clientMap.size;
@@ -413,7 +413,7 @@ export class OrderedClientElection
 	}
 
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly orderedClientCollection: IOrderedClientCollection,
 		/**
 		 * Serialized state from summary or current sequence number at time of load if new.

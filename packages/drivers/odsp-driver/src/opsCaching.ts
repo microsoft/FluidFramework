@@ -4,7 +4,7 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 // ISequencedDocumentMessage
 export interface IMessage {
@@ -34,7 +34,7 @@ export class OpsCache {
 
 	constructor(
 		startingSequenceNumber: number,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly cache: ICache,
 		private readonly batchSize: number,
 		private readonly timerGranularity: number,

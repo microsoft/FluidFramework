@@ -7,7 +7,7 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createContext,
 	type Dispatch,
@@ -24,15 +24,15 @@ import {
  * receives; it should only pass them to the logger provided via {@link DevtoolsPanelProps.usageTelemetryLogger | the
  * usageTelemetryLogger prop for DevtoolsPanel} instead (if any).
  */
-export const LoggerContext = createContext<ITelemetryLoggerExt | undefined>(undefined);
+export const LoggerContext = createContext<TelemetryLoggerExt | undefined>(undefined);
 
 /**
- * Gets the {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} provided through an {@link LoggerContext}.
+ * Gets the {@link @fluidframework/telemetry-utils#TelemetryLoggerExt} provided through an {@link LoggerContext}.
  *
  * @returns
  * The logger from the context, or undefined is no logger was provided.
  */
-export function useLogger(): ITelemetryLoggerExt | undefined {
+export function useLogger(): TelemetryLoggerExt | undefined {
 	return useContext(LoggerContext);
 }
 
