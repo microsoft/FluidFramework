@@ -423,7 +423,12 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
+				//* COPILOT: Make this shape match EntryPointInitializationFailure props
+				all: {
+					dataStoreId: dataStoreContext.id,
+					dataStoreVersion: pkgVersion,
+					fullPackagePath: dataStoreContext.packagePath.join("/"),
+				},
 				error: {
 					inStagingMode: () => this.inStagingMode,
 					isDirty: () => this.isDirty,

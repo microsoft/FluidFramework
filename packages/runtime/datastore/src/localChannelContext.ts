@@ -19,9 +19,12 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
 	type ITelemetryLoggerExt,
 	DataProcessingError,
+	createChildLogger,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -221,6 +224,19 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
 	) {
+		const subLogger = createChildLogger({
+			logger,
+			namespace: "RehydratedLocalChannelContext",
+			properties: {
+				all: {
+					...dataStoreLoadTelemetryProps({
+						id: dataStoreContext.id,
+						packagePath: dataStoreContext.packagePath,
+					}),
+					...tagCodeArtifacts({ channelId: id }),
+				},
+			},
+		});
 		super(
 			id,
 			runtime,
@@ -241,7 +257,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					this.dirtyFn,
 					() => this.isGloballyVisible,
 					storageService,
-					logger,
+					subLogger,
 					clonedSnapshotTree,
 					blobMap,
 				);
@@ -259,7 +275,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						attributes,
 						factory,
 						this.services.value,
-						logger,
+						subLogger,
 						this.id,
 					);
 					// Send all pending messages to the channel
@@ -268,11 +284,13 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					}
 					return channel;
 				} catch (error) {
-					throw DataProcessingError.wrapIfUnrecognized(
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 						error,
-						"rehydratedLocalChannelContextFailedToLoadChannel",
+						"rehydratedLocalChannelContextChannelLoad",
 						undefined,
 					);
+					subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
+					throw errorWrapped;
 				}
 			}),
 		);

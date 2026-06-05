@@ -23,10 +23,13 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
+	DataProcessingError,
 	type ITelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -58,6 +61,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
+		//* Replace with property bag with only the needed props
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
@@ -74,6 +78,16 @@ export class RemoteChannelContext implements IChannelContext {
 		this.subLogger = createChildLogger({
 			logger: runtime.logger,
 			namespace: "RemoteChannelContext",
+			//* Don't need to do this since runtime.logger already adds them
+			properties: {
+				all: {
+					...dataStoreLoadTelemetryProps({
+						id: dataStoreContext.id,
+						packagePath: dataStoreContext.packagePath,
+					}),
+					...tagCodeArtifacts({ channelId: this.id }),
+				},
+			},
 		});
 
 		this.services = createChannelServiceEndpoints(
@@ -88,44 +102,54 @@ export class RemoteChannelContext implements IChannelContext {
 		);
 
 		this.channelP = new LazyPromise<IChannel>(async () => {
-			const { attributes, factory } = await loadChannelFactoryAndAttributes(
-				dataStoreContext,
-				this.services,
-				this.id,
-				registry,
-				attachMessageType,
-			);
+			try {
+				const { attributes, factory } = await loadChannelFactoryAndAttributes(
+					dataStoreContext,
+					this.services,
+					this.id,
+					registry,
+					attachMessageType,
+				);
 
-			const channel = await loadChannel(
-				runtime,
-				attributes,
-				factory,
-				this.services,
-				this.subLogger,
-				this.id,
-			);
+				const channel = await loadChannel(
+					runtime,
+					attributes,
+					factory,
+					this.services,
+					this.subLogger,
+					this.id,
+				);
 
-			assert(
-				this.pendingMessagesState !== undefined,
-				0xa6c /* pending messages state is undefined */,
-			);
-			for (const messageCollection of this.pendingMessagesState.messageCollections) {
-				this.services.deltaConnection.processMessages(messageCollection);
+				assert(
+					this.pendingMessagesState !== undefined,
+					0xa6c /* pending messages state is undefined */,
+				);
+				for (const messageCollection of this.pendingMessagesState.messageCollections) {
+					this.services.deltaConnection.processMessages(messageCollection);
+				}
+				this.thresholdOpsCounter.send(
+					"ProcessPendingOps",
+					this.pendingMessagesState.pendingCount,
+				);
+
+				// Commit changes.
+				this.channel = channel;
+				this.pendingMessagesState = undefined;
+				this.isLoaded = true;
+
+				// Because have some await between we created the service and here, the connection state might have changed
+				// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
+				this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
+				return this.channel;
+			} catch (error) {
+				//* Decorate the error with ID and PKG
+				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+					error,
+					"remoteChannelContextChannelLoad",
+				);
+				this.subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
+				throw errorWrapped;
 			}
-			this.thresholdOpsCounter.send(
-				"ProcessPendingOps",
-				this.pendingMessagesState.pendingCount,
-			);
-
-			// Commit changes.
-			this.channel = channel;
-			this.pendingMessagesState = undefined;
-			this.isLoaded = true;
-
-			// Because have some await between we created the service and here, the connection state might have changed
-			// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-			this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
-			return this.channel;
 		});
 
 		this.summarizerNode = createSummarizerNode(

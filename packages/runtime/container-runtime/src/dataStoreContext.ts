@@ -272,6 +272,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get baseLogger(): ITelemetryBaseLogger {
+		//* This should say DataStoreContext and have public props like ID and PKG
 		return this.parentContext.baseLogger;
 	}
 

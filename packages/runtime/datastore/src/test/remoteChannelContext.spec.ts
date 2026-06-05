@@ -5,12 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
+import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
+import type { IErrorBase } from "@fluidframework/core-interfaces";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
+	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
+import {
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
@@ -63,6 +71,136 @@ describe("RemoteChannelContext Tests", () => {
 			codeBlock,
 			validateAssertionError("Channel context ID cannot contain slashes"),
 			"Expected exception was not thrown",
+		);
+	});
+
+	it("first await on getChannel() logs ChannelLoadFailure with tagged props when load fails", async () => {
+		const channelId = "ddsId";
+		const mockLogger = new MockLogger();
+		const contextWithMockLogger = new MockFluidDataStoreContext(
+			"testDataStoreId",
+			false,
+			mockLogger.toTelemetryLogger(),
+		);
+		contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+
+		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
+
+		// Registry returns undefined so loadChannelFactoryAndAttributes throws
+		// `channelFactoryNotRegisteredForGivenType` inside the LazyPromise body.
+		const failingRegistry: ISharedObjectRegistry = {
+			get: () => undefined,
+		};
+
+		const noopSummarizerNode = {
+			invalidate: () => {},
+			summarize: async () => ({ summary: {}, stats: {} }),
+			getGCData: async () => ({ gcNodes: {} }),
+			updateUsedRoutes: () => {},
+		} as unknown as ISummarizerNodeWithGC;
+		const createSummarizerNode: CreateChildSummarizerNodeFn = () => noopSummarizerNode;
+
+		const remoteChannelContext = new RemoteChannelContext(
+			dataStoreRuntime,
+			contextWithMockLogger,
+			contextWithMockLogger.storage,
+			() => {},
+			() => {},
+			channelId,
+			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
+			failingRegistry,
+			undefined /* extraBlobs */,
+			createSummarizerNode,
+			"SomeAttachMessageType",
+		);
+
+		await assert.rejects(
+			async () => remoteChannelContext.getChannel(),
+			(error: IErrorBase) => {
+				assert.strictEqual(
+					error.errorType,
+					ContainerErrorTypes.dataProcessingError,
+					"thrown error should be a DataProcessingError",
+				);
+				assert(isFluidError(error), "thrown error should be a Fluid error");
+				return true;
+			},
+		);
+
+		const failureEvents = mockLogger.events.filter(
+			(event) =>
+				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
+		);
+		assert.strictEqual(
+			failureEvents.length,
+			1,
+			"ChannelLoadFailure should be logged exactly once",
+		);
+		const failureEvent = failureEvents[0];
+		assert(failureEvent !== undefined);
+		assert.deepStrictEqual(
+			failureEvent.fluidDataStoreId,
+			{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+			"event should include tagged fluidDataStoreId",
+		);
+		assert.deepStrictEqual(
+			failureEvent.fullPackageName,
+			{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+			"event should include tagged fullPackageName",
+		);
+		assert.deepStrictEqual(
+			failureEvent.channelId,
+			{ value: channelId, tag: TelemetryDataTag.CodeArtifact },
+			"event should include tagged channelId",
+		);
+	});
+
+	it("subsequent awaits on getChannel() do not re-log ChannelLoadFailure", async () => {
+		const channelId = "ddsId";
+		const mockLogger = new MockLogger();
+		const contextWithMockLogger = new MockFluidDataStoreContext(
+			"testDataStoreId",
+			false,
+			mockLogger.toTelemetryLogger(),
+		);
+		contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+
+		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
+		const failingRegistry: ISharedObjectRegistry = { get: () => undefined };
+		const noopSummarizerNode = {
+			invalidate: () => {},
+			summarize: async () => ({ summary: {}, stats: {} }),
+			getGCData: async () => ({ gcNodes: {} }),
+			updateUsedRoutes: () => {},
+		} as unknown as ISummarizerNodeWithGC;
+
+		const remoteChannelContext = new RemoteChannelContext(
+			dataStoreRuntime,
+			contextWithMockLogger,
+			contextWithMockLogger.storage,
+			() => {},
+			() => {},
+			channelId,
+			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
+			failingRegistry,
+			undefined,
+			() => noopSummarizerNode,
+			"SomeAttachMessageType",
+		);
+
+		await assert.rejects(async () => remoteChannelContext.getChannel());
+		await assert.rejects(async () => remoteChannelContext.getChannel());
+
+		const failureEvents = mockLogger.events.filter(
+			(event) =>
+				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
+		);
+		assert.strictEqual(
+			failureEvents.length,
+			1,
+			"ChannelLoadFailure should only be logged once even across multiple awaits",
 		);
 	});
 });
