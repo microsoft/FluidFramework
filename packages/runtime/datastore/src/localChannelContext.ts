@@ -20,8 +20,8 @@ import type {
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type TelemetryLoggerExt,
 	DataProcessingError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {

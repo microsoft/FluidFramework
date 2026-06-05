@@ -18,12 +18,12 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type MonitoringContext,
-	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
+	type MonitoringContext,
 	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";

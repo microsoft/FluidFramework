@@ -24,9 +24,9 @@ import type {
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	createChildLogger,
 	type TelemetryLoggerExt,
 	ThresholdCounter,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
