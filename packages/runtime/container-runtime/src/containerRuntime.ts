@@ -974,7 +974,6 @@ export class ContainerRuntime
 			logger: passLogger,
 			properties: {
 				all: {
-					//* FUTURE: Any other props here?  Like inStagingMode
 					runtimeVersion: pkgVersion,
 				},
 			},

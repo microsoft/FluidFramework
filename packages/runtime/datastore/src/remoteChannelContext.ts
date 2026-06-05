@@ -61,7 +61,6 @@ export class RemoteChannelContext implements IChannelContext {
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
-		//* FUTURE: Replace with property bag with only the needed props
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
@@ -102,7 +101,6 @@ export class RemoteChannelContext implements IChannelContext {
 
 		this.channelP = new LazyPromise<IChannel>(async () => {
 			try {
-				//* FUTURE: factor this into a realize fn simiklar to DataStoreContext
 				const { attributes, factory } = await loadChannelFactoryAndAttributes(
 					dataStoreContext,
 					this.services,
@@ -111,7 +109,6 @@ export class RemoteChannelContext implements IChannelContext {
 					attachMessageType,
 				);
 
-				//* FUTURE: Move the error handling into loadChannel? Rationalize with the idea to do a realize fn
 				const channel = await loadChannel(
 					runtime,
 					attributes,
@@ -147,7 +144,6 @@ export class RemoteChannelContext implements IChannelContext {
 					error,
 					"remoteChannelContextFailedToLoadChannel",
 				);
-				//* FUTURE: Let telemetry props be pulled wholesale off a given logger
 				errorWrapped.addTelemetryProperties({
 					...dataStoreLoadTelemetryProps({
 						id: dataStoreContext.id,
