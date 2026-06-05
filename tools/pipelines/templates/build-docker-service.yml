@@ -99,7 +99,7 @@ parameters:
   # internal and public 1ES build pools (egress to docker.io is blocked by network isolation policies).
   - name: baseImageRegistry
     type: string
-    default: 'fluidpublicmirror-ccbba5fhdscnchft.azurecr.io/mirror/docker'
+    default: 'fluidmirror-a5dqhgefbwhmbtag.azurecr.io/mirror/docker'
 
   # If the build is running for a test branch
   - name: testBuild
