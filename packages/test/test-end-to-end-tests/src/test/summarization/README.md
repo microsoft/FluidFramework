@@ -13,7 +13,6 @@ load from a specific `summaryVersion`, and the rules that keep these tests deter
 (`syncSummarizer: true`, calling `ensureSynchronized()` before summarizing, closing one
 summarizer before starting another, etc.).
 
-For worked examples, see the specs in this folder — for instance
+For working examples, see the specs in this folder — for instance
 [summarizeIncrementally.spec.ts](summarizeIncrementally.spec.ts) and
-[summaries.spec.ts](summaries.spec.ts) — as well as the GC tests under
-[../gc/](../gc/) and [treeIncrementalSummary.spec.ts](../treeIncrementalSummary.spec.ts).
+[summaries.spec.ts](summaries.spec.ts).
