@@ -18,7 +18,8 @@ export default class BundleCollectAndCompare extends BaseCommand<
 > {
 	public static readonly description =
 		"Collect the local bundle and the base-revision (merge-base) bundle, then compare them. " +
-		"The outer repo's working tree, branch, and stash are never modified.";
+		"The outer repo's working tree, branch, and stash are never modified.\n\n" +
+		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md";
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",

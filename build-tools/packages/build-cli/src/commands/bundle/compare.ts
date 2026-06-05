@@ -17,7 +17,8 @@ import { BaseCommand } from "../../library/commands/base.js";
 export default class BundleCompare extends BaseCommand<typeof BundleCompare> {
 	public static readonly description =
 		"Compare the two bundles previously collected by 'flub bundle collect' " +
-		"(base = --base-label, current = --current-label).";
+		"(base = --base-label, current = --current-label).\n\n" +
+		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md";
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",

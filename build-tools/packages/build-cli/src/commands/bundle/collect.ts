@@ -19,7 +19,8 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 	public static readonly description =
 		"Build and collect a bundle, either from the outer enlistment (local mode) or from a " +
 		"separate inner enlistment checked out to a specific revision (revision mode). The outer " +
-		"repo's working tree, branch, and stash are never modified.";
+		"repo's working tree, branch, and stash are never modified.\n\n" +
+		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md";
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",

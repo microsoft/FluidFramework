@@ -24,8 +24,8 @@ FLAGS
                           the current one.
   --label=<value>         Override the directory name under which bundle stats are saved. Defaults to the sanitized
                           revision in revision mode, or "current" in local mode.
-  --mode=<option>         [default: local] local: collect from the outer enlistment. revision: collect from a separate
-                          inner enlistment checked out at --revision.
+  --mode=<option>         [default: local] local: collect from the outer enlistment (its git state is never modified).
+                          revision: collect from a separate inner enlistment checked out at --revision.
                           <options: local|revision>
   --package-dir=<value>   [default: .] Package root whose webpack bundles are built and whose analyzer.json is
                           collected.
@@ -39,6 +39,9 @@ LOGGING FLAGS
 DESCRIPTION
   Build and collect a bundle, either from the outer enlistment (local mode) or from a separate inner enlistment checked
   out to a specific revision (revision mode). The outer repo's working tree, branch, and stash are never modified.
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md
 
 EXAMPLES
   $ flub bundle collect
@@ -88,6 +91,9 @@ DESCRIPTION
   Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree,
   branch, and stash are never modified.
 
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md
+
 EXAMPLES
   $ flub bundle collect-and-compare
 
@@ -129,6 +135,9 @@ LOGGING FLAGS
 DESCRIPTION
   Compare the two bundles previously collected by 'flub bundle collect' (base = --base-label, current =
   --current-label).
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md
 
 EXAMPLES
   $ flub bundle compare
