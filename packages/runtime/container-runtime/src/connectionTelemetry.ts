@@ -297,7 +297,7 @@ class OpPerfTelemetry {
 			}
 		});
 
-		containerRuntimeEvents.on("connected", (newClientId) => {
+		containerRuntimeEvents.on("connected", (newClientId: string) => {
 			this.clientId = newClientId;
 		});
 	}

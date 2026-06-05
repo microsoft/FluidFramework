@@ -341,6 +341,19 @@ export class ChannelCollection
 		Promise<AliasResult>
 	>();
 
+	/**
+	 * InternalIds whose attach was rolled back via `discardChanges` on the
+	 * staging-on-rehydration path. The data store context stays in
+	 * {@link contexts} (DDSes, listeners, etc. are not torn down) but is hidden
+	 * from host-facing lookups via {@link getDataStoreIfAvailable} and friends.
+	 *
+	 * The hidden state is cleared when an inbound op for the internalId arrives
+	 * (the server clearly thinks the data store exists, so we surface it again).
+	 * This is the "limbo until a remote op resurrects me" semantics for
+	 * potentially-acked attaches that the local user discarded.
+	 */
+	private readonly rolledBackAttachIds = new Set<string>();
+
 	protected readonly contexts: DataStoreContexts;
 	private readonly aliasedDataStores: Set<string>;
 
@@ -455,6 +468,14 @@ export class ChannelCollection
 		const { envelope, messagesContent, local } = messageCollection;
 		for (const { contents } of messagesContent) {
 			const attachMessage = contents as InboundAttachMessage;
+			// Wake up any rolled-back attach: the server has the data store, so
+			// it should once again be visible locally. The hidden flag is
+			// cleared *before* the regular processing path runs so the data
+			// store is surfaced atomically with the ack. We also remember that
+			// this id was rolled back so the duplicate-id checks below don't
+			// fire — the existing (hidden) context *is* the data store the
+			// server is acking.
+			const wakingFromRollback = this.rolledBackAttachIds.delete(attachMessage.id);
 			// We need to process the GC Data for both local and remote attach messages
 			const foundGCData = processAttachMessageGCData(
 				attachMessage.snapshot ?? undefined,
@@ -489,6 +510,16 @@ export class ChannelCollection
 				);
 				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 				this.pendingAttach.delete(attachMessage.id);
+				continue;
+			}
+
+			// Wake-up path: an inbound attach for an id we just hid via
+			// `rollbackAttach`. The existing (hidden) context is the data store
+			// the server is acking — finalize its attach state and skip the
+			// duplicate-id collision checks below, which would otherwise fire
+			// for a context still present in `contexts`.
+			if (wakingFromRollback) {
+				this.contexts.get(attachMessage.id)?.setAttachState(AttachState.Attached);
 				continue;
 			}
 
@@ -985,6 +1016,11 @@ export class ChannelCollection
 			const address = contentsEnvelope.address;
 			const context = this.contexts.get(address);
 
+			// Wake up any rolled-back attach: an op routed to this address means
+			// the server has the data store, so it should once again be visible
+			// locally. Cleared atomically with op processing.
+			this.rolledBackAttachIds.delete(address);
+
 			// If the data store has been deleted, log an error and ignore this message. This helps prevent document
 			// corruption in case a deleted data store accidentally submitted an op.
 			if (this.checkAndLogIfDeleted(address, context, "Changed", "processFluidDataStoreOp")) {
@@ -1066,6 +1102,15 @@ export class ChannelCollection
 			);
 		}
 
+		// If the attach was rolled back via discardChanges on the staging-on-
+		// rehydration path, the data store is locally hidden until a remote op
+		// resurrects it. Hide it from request-URL routing too so handle paths
+		// see the same view as `getDataStoreIfAvailable`.
+		if (this.rolledBackAttachIds.has(id)) {
+			const request: IRequest = { url: id };
+			throw responseToException(create404Response(request), request);
+		}
+
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			// The requested data store does not exits. Throw a 404 response exception.
@@ -1094,12 +1139,62 @@ export class ChannelCollection
 		) {
 			return undefined;
 		}
+		// If the attach was rolled back via discardChanges on the staging-on-
+		// rehydration path, the data store is locally hidden until a remote op
+		// resurrects it. Hide it from host-facing lookups.
+		if (this.rolledBackAttachIds.has(id)) {
+			return undefined;
+		}
 		const headerData = { ...defaultRuntimeHeaderData, ...requestHeaderData };
 		const context = await this.contexts.getBoundOrRemoted(id, headerData.wait);
 		if (context === undefined) {
 			return undefined;
 		}
 		return context;
+	}
+
+	/**
+	 * Rollback an `Attach` that was staged at apply time. The data store's
+	 * in-memory state stays intact — this is just a visibility flag so host-
+	 * facing lookups skip it. Wake-up happens in {@link processAttachMessages}
+	 * and {@link processChannelMessages} when an inbound op routes to the
+	 * hidden internalId.
+	 *
+	 * Per the rollback contract this is only invoked from
+	 * `popStagedBatches` in LIFO order, so any DDS ops that referenced this
+	 * data store have already been popped before we get here.
+	 */
+	public rollbackAttach(message: IAttachMessage): void {
+		this.rolledBackAttachIds.add(message.id);
+		// If this attach was un-acked, we recorded it in pendingAttach during
+		// applyStashedOp. Clearing it ensures we don't error if a delayed ack
+		// arrives — the wake-up path in processAttachMessages re-establishes
+		// pendingAttach if needed.
+		this.pendingAttach.delete(message.id);
+	}
+
+	/**
+	 * Rollback an `Alias` that was staged at apply time. The underlying data
+	 * store stays addressable by internalId; only the alias→internalId mapping
+	 * is removed. A subsequent inbound `Alias` op (e.g. the previous-session
+	 * resubmit's delayed ack) re-establishes the mapping naturally.
+	 *
+	 * Also remove the internalId from `aliasedDataStores` (the GC root set)
+	 * unless another live alias still maps to the same internalId — leaving it
+	 * would advertise the discarded data store as a permanent GC root.
+	 */
+	public rollbackAlias(message: IDataStoreAliasMessage): void {
+		this.aliasMap.delete(message.alias);
+		let stillAliased = false;
+		for (const internalId of this.aliasMap.values()) {
+			if (internalId === message.internalId) {
+				stillAliased = true;
+				break;
+			}
+		}
+		if (!stillAliased) {
+			this.aliasedDataStores.delete(message.internalId);
+		}
 	}
 
 	/**
@@ -1375,6 +1470,13 @@ export class ChannelCollection
 		telemetryProps: ITelemetryPropertiesExt,
 	): Promise<void> {
 		for (const [contextId, context] of this.contexts) {
+			// Skip data stores whose Attach was rolled back via discardChanges
+			// on the staging-on-rehydration path. They are not on the server,
+			// so a summarizer running between rollback and wake-up must not
+			// write them into the next snapshot.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			// Summarizer client and hence GC works only with clients with no local changes. A data store in
 			// attaching state indicates an op was sent to attach a local data store, and the the attach op
 			// had not yet round tripped back to the client.
@@ -1576,6 +1678,12 @@ export class ChannelCollection
 		const outboundRoutes: string[] = [];
 		// Getting this information is a performance optimization that reduces network calls for virtualized datastores
 		for (const [contextId, context] of this.contexts) {
+			// Rolled-back attaches are hidden from GC outbound routes so they
+			// aren't kept alive by self-references that won't appear in the
+			// next summary either.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			const isRootDataStore = await context.isRoot(this.aliasedDataStores);
 			if (isRootDataStore) {
 				outboundRoutes.push(`/${contextId}`);

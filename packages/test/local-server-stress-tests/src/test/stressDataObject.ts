@@ -14,8 +14,10 @@ import {
 	loadContainerRuntime,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
-// eslint-disable-next-line import-x/no-deprecated
-import type { IContainerRuntimeWithResolveHandle_Deprecated } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	// eslint-disable-next-line import-x/no-deprecated
+	IContainerRuntimeWithResolveHandle_Deprecated,
+} from "@fluidframework/container-runtime-definitions/internal";
 import type {
 	IFluidHandle,
 	FluidObject,
@@ -299,6 +301,20 @@ export class DefaultStressDataObject extends StressDataObject {
 		this.containerObjectMap = (await this.runtime.getChannel(
 			"containerObjectMap",
 		)) as any as ISharedMap;
+	}
+
+	protected override async hasInitialized(): Promise<void> {
+		await super.hasInitialized();
+
+		// When this client is loaded from pending state with stashed ops to replay,
+		// enter staging mode in the pre-apply window so the replayed ops are
+		// reviewable. The harness's existing ExitStagingMode operation will commit
+		// or discard. Exercises the new pendingStateApplyStart event path under stress.
+		this.context.containerRuntime.on("pendingStateApplyStart", () => {
+			if (!this.inStagingMode()) {
+				this.enterStagingMode();
+			}
+		});
 	}
 
 	/**

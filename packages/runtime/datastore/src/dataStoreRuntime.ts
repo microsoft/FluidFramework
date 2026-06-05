@@ -336,6 +336,13 @@ export class FluidDataStoreRuntime
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly localChannelContextQueue = new Map<string, LocalChannelContextBase>();
 	private readonly notBoundedChannelContextSet = new Set<string>();
+	// Channel ids whose `Attach` op was rolled back via `discardChanges` on the
+	// staging-on-rehydration path. The channel context stays in `contexts`
+	// (any user-held `IChannel` references remain functional locally) but is
+	// hidden from new `getChannel` lookups. The hidden state is cleared when an
+	// inbound `Attach` for the same id arrives — the previous-session attach
+	// was acked despite the local discard, so the channel surfaces again.
+	private readonly rolledBackAttachIds = new Set<string>();
 	private _attachState: AttachState;
 	public visibilityState: VisibilityState;
 	// A list of handles that are bound when the data store is not visible. We have to make them visible when the data
@@ -621,8 +628,11 @@ export class FluidDataStoreRuntime
 			}
 
 			if (id !== undefined) {
-				// Check for a data type reference first
-				const context = this.contexts.get(id);
+				// Check for a data type reference first. Skip ids whose attach was
+				// rolled back via `discardChanges` on the staging-on-rehydration
+				// path so request-by-handle sees the same hidden state as
+				// `getChannel`.
+				const context = this.rolledBackAttachIds.has(id) ? undefined : this.contexts.get(id);
 				if (context !== undefined && parser.isLeaf(1)) {
 					try {
 						const channel = await context.getChannel();
@@ -647,7 +657,10 @@ export class FluidDataStoreRuntime
 		this.verifyNotClosed();
 
 		const context = this.contexts.get(id);
-		if (context === undefined) {
+		// A channel whose attach was rolled back via `discardChanges` on the
+		// staging-on-rehydration path is hidden from new lookups until an
+		// inbound Attach for the same id resurrects it.
+		if (context === undefined || this.rolledBackAttachIds.has(id)) {
 			throw new LoggingError("Channel does not exist");
 		}
 
@@ -964,6 +977,12 @@ export class FluidDataStoreRuntime
 				sendBunchedMessages();
 			}
 
+			// Wake up any rolled-back DDS attach: an inbound op routed to
+			// this address means the server has the channel, so it should
+			// once again be visible locally. Cleared atomically with op
+			// processing — symmetric to processAttachMessages's wake-up.
+			this.rolledBackAttachIds.delete(contentsEnvelope.address);
+
 			currentMessagesContent.push({
 				contents: contentsEnvelope.contents,
 				...restOfMessagesContent,
@@ -981,12 +1000,22 @@ export class FluidDataStoreRuntime
 			const attachMessage = contents as IAttachMessage;
 			const id = attachMessage.id;
 
+			// If this id was rolled back via `discardChanges` on the
+			// staging-on-rehydration path, the inbound op resurrects the
+			// hidden context — leave the existing local context in place.
+			const wakingFromRollback = this.rolledBackAttachIds.delete(id);
+
 			// We need to process the GC Data for both local and remote attach messages
 			processAttachMessageGCData(attachMessage.snapshot, (nodeId, toPath) => {
 				// Note: nodeId will be "/" unless and until we support sub-DDS GC Nodes
 				const fromPath = `/${this.id}/${id}${nodeId === "/" ? "" : nodeId}`;
 				this.dataStoreContext.addedGCOutboundRoute(fromPath, toPath, envelope.timestamp);
 			});
+
+			if (wakingFromRollback) {
+				// Existing context is restored to visibility; nothing else to do.
+				continue;
+			}
 
 			// If a non-local operation then go and create the object
 			// Otherwise mark it as officially attached.
@@ -1077,6 +1106,12 @@ export class FluidDataStoreRuntime
 	private getOutboundRoutes(): string[] {
 		const outboundRoutes: string[] = [];
 		for (const [contextId] of this.contexts) {
+			// Rolled-back attaches are hidden from GC outbound routes so
+			// they aren't kept alive by self-references that won't be in
+			// the next summary anyway.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			outboundRoutes.push(`${this.absolutePath}/${contextId}`);
 		}
 		return outboundRoutes;
@@ -1232,6 +1267,13 @@ export class FluidDataStoreRuntime
 		visitor: (contextId: string, context: IChannelContext) => Promise<void>,
 	): Promise<void> {
 		for (const [contextId, context] of this.contexts) {
+			// Skip channels whose Attach was rolled back via discardChanges on
+			// the staging-on-rehydration path. They are not on the server, so
+			// a summarizer running between rollback and wake-up must not write
+			// them into the next snapshot.
+			if (this.rolledBackAttachIds.has(contextId)) {
+				continue;
+			}
 			const isAttached = this.isChannelAttached(contextId);
 			// We are not expecting local dds! Summary / GC data may not capture local state.
 			assert(isAttached, 0x17f /* "Not expecting detached channels during summarize" */);
@@ -1450,6 +1492,16 @@ export class FluidDataStoreRuntime
 					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
 					channelContext.rollback(envelope.contents, localOpMetadata);
+					break;
+				}
+				case DataStoreMessageType.Attach: {
+					// Hide the channel from new lookups but keep the context so
+					// any user-held `IChannel` references remain functional. If
+					// the previous-session attach was acked we will resurrect
+					// the channel when the inbound op arrives.
+					const attachMessage = content as IAttachMessage;
+					this.rolledBackAttachIds.add(attachMessage.id);
+					this.pendingAttach.delete(attachMessage.id);
 					break;
 				}
 				default: {

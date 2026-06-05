@@ -526,6 +526,65 @@ for (const createBlobPayloadPending of [false, true]) {
 				});
 			});
 
+			describe("rollbackAttach", () => {
+				it("rejects malformed metadata via assert", () => {
+					const { blobManager } = createTestMaterial({ createBlobPayloadPending });
+					assert.throws(
+						() => blobManager.rollbackAttach(undefined),
+						(error: Error) =>
+							error.message.includes("Expected blob metadata for a BlobAttach rollback"),
+						"undefined metadata must trigger the assert",
+					);
+					assert.throws(
+						() => blobManager.rollbackAttach({ localId: "x" }),
+						(error: Error) =>
+							error.message.includes("Expected blob metadata for a BlobAttach rollback"),
+						"missing blobId must trigger the assert",
+					);
+					assert.throws(
+						() => blobManager.rollbackAttach({ blobId: "y" }),
+						(error: Error) =>
+							error.message.includes("Expected blob metadata for a BlobAttach rollback"),
+						"missing localId must trigger the assert",
+					);
+				});
+
+				it("reverts an attaching blob to localOnly so the attach won't fire on resubmit", async () => {
+					const { mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					mockOrderingService.pause();
+
+					// Drive the blob into "attaching" state: createBlob → upload → BlobAttach
+					// op is sent and queued in the mock service while paused.
+					const handleP = blobManager.createBlob(textToBlob("rollback-me"));
+					if (createBlobPayloadPending) {
+						const _h = await handleP;
+						_h.attachGraph();
+					}
+					await mockOrderingService.waitMessageAvailable();
+					const inflight = mockOrderingService.unprocessedMessages[0];
+					assert(inflight !== undefined, "BlobAttach must be in flight");
+					const metadata = inflight.metadata as { localId: string; blobId: string };
+
+					// Roll back. The pending in-memory state must clean up so a future
+					// resubmit does not re-fire the attach.
+					blobManager.rollbackAttach(metadata);
+
+					// Drop the in-flight message to simulate the discard path. A subsequent
+					// reconnection round-trip must not produce a new BlobAttach for the
+					// same localId — `pendingBlobsWithAttachedHandles` was cleared.
+					const messagesBefore = mockOrderingService.messagesReceived;
+					await mockOrderingService.waitDropOne();
+					await mockOrderingService.unpause();
+					assert.strictEqual(
+						mockOrderingService.messagesReceived,
+						messagesBefore,
+						"no BlobAttach should be re-sent for the rolled-back localId",
+					);
+				});
+			});
+
 			describe("Abort", () => {
 				it("Can abort before blob upload", async () => {
 					const { blobManager } = createTestMaterial({ createBlobPayloadPending });

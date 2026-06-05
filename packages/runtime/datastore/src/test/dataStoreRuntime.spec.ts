@@ -520,6 +520,98 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
 	});
+
+	describe("Attach rollback + wake-up", () => {
+		const attachMessage = {
+			id: "attachId",
+			type: "SomeType",
+			snapshot: { entries: [] },
+		};
+
+		// Build an envelope+messagesContent matching what processMessages expects for an Attach.
+		const attachMessageCollection = (local: boolean): IRuntimeMessageCollection => ({
+			envelope: {
+				type: DataStoreMessageType.Attach,
+				sequenceNumber: 1,
+				timestamp: 0,
+			} satisfies Partial<ISequencedMessageEnvelope> as ISequencedMessageEnvelope,
+			local,
+			messagesContent: [
+				{
+					contents: attachMessage,
+					clientSequenceNumber: 1,
+					localOpMetadata: undefined,
+				},
+			],
+		});
+
+		it("rolling back an Attach hides the channel from getChannel and clears isDirty", async () => {
+			const runtime = createRuntime("rollbackAttach");
+			assert(typeof runtime.rollback === "function", "rollback must be present");
+			// Stand in for the LocalChannelContext that submit() would create.
+			sinon
+				.stub(runtime, "contexts")
+				.get(() => new Map([[attachMessage.id, { getChannel: () => ({}) }]]));
+
+			runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
+			assert.strictEqual(runtime.isDirty, true, "Runtime should be dirty after attach op");
+
+			runtime.rollback(
+				DataStoreMessageType.Attach,
+				attachMessage,
+				/* localOpMetadata: */ undefined,
+			);
+			assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+
+			await assert.rejects(
+				runtime.getChannel(attachMessage.id),
+				(error: Error) => error.message === "Channel does not exist",
+				"Rolled-back attach id must be hidden from getChannel",
+			);
+		});
+
+		it("wakes a hidden channel when an inbound Attach for the same id arrives", async () => {
+			const runtime = createRuntime("wakeFromRollback");
+			assert(typeof runtime.rollback === "function", "rollback must be present");
+			const channelStub = {} as unknown as IChannel;
+			sinon
+				.stub(runtime, "contexts")
+				.get(() => new Map([[attachMessage.id, { getChannel: () => channelStub }]]));
+
+			runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
+			runtime.rollback(DataStoreMessageType.Attach, attachMessage, undefined);
+
+			// A non-local inbound Attach for the same id resurrects the local context.
+			runtime.processMessages(attachMessageCollection(/* local */ false));
+
+			const channel = await runtime.getChannel(attachMessage.id);
+			assert.strictEqual(
+				channel,
+				channelStub,
+				"Existing context should be restored after wake-up",
+			);
+		});
+
+		it("request() also hides rolled-back attach ids (handle path)", async () => {
+			const runtime = createRuntime("rollbackAttachRequest");
+			assert(typeof runtime.rollback === "function", "rollback must be present");
+			sinon
+				.stub(runtime, "contexts")
+				.get(() => new Map([[attachMessage.id, { getChannel: () => ({}) }]]));
+
+			runtime.submit(DataStoreMessageType.Attach, attachMessage, undefined);
+			runtime.rollback(DataStoreMessageType.Attach, attachMessage, undefined);
+
+			// Request-by-handle must also see the hidden state, otherwise the
+			// rollback contract is bypassed for handle-resolution paths.
+			const response = await runtime.request({ url: attachMessage.id });
+			assert.strictEqual(
+				response.status,
+				404,
+				"request() must return 404 for a rolled-back attach id",
+			);
+		});
+	});
 });
 
 describe("LegacyTypeAwareRegistry", () => {
