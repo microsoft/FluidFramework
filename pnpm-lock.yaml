@@ -9,6 +9,9 @@ catalogs:
     '@fluid-tools/build-cli':
       specifier: ^0.65.0
       version: 0.65.0
+    '@fluid-tools/build-infrastructure':
+      specifier: ^0.65.0
+      version: 0.65.0
     '@fluid-tools/version-tools':
       specifier: ^0.65.0
       version: 0.65.0
@@ -5305,6 +5308,9 @@ importers:
       typescript-5.9:
         specifier: npm:typescript@~5.9.2
         version: typescript@5.9.3
+      typescript-6.0:
+        specifier: npm:typescript@~6.0.3
+        version: typescript@6.0.3
 
   examples/utils/webpack-fluid-loader:
     dependencies:
@@ -15774,6 +15780,9 @@ importers:
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
+      '@fluid-tools/build-infrastructure':
+        specifier: catalog:buildTools
+        version: 0.65.0(@types/node@22.19.17)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -15854,7 +15863,7 @@ importers:
         version: 0.65.0(@types/node@22.19.17)
       jest-environment-puppeteer:
         specifier: ^10.1.3
-        version: 10.1.4(typescript@5.9.3)
+        version: 10.1.4(typescript@6.0.3)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -27243,6 +27252,11 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  typescript@6.0.3:
+    resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
+    engines: {node: '>=14.17'}
+    hasBin: true
+
   typeson-registry@1.0.0-alpha.39:
     resolution: {integrity: sha512-NeGDEquhw+yfwNhguLPcZ9Oj0fzbADiX4R0WxvoY8nGhy98IbzQy1sezjoEFWOywOboj/DWehI+/aUlRVrJnnw==}
     engines: {node: '>=10.0.0'}
@@ -34828,14 +34842,14 @@ snapshots:
     optionalDependencies:
       typescript: 5.4.5
 
-  cosmiconfig@8.3.6(typescript@5.9.3):
+  cosmiconfig@8.3.6(typescript@6.0.3):
     dependencies:
       import-fresh: 3.3.1
       js-yaml: 4.1.1
       parse-json: 5.2.0
       path-type: 4.0.0
     optionalDependencies:
-      typescript: 5.9.3
+      typescript: 6.0.3
 
   cosmiconfig@9.0.0(typescript@5.4.5):
     dependencies:
@@ -37346,10 +37360,10 @@ snapshots:
       - supports-color
       - typescript
 
-  jest-environment-puppeteer@10.1.4(typescript@5.9.3):
+  jest-environment-puppeteer@10.1.4(typescript@6.0.3):
     dependencies:
       chalk: 4.1.2
-      cosmiconfig: 8.3.6(typescript@5.9.3)
+      cosmiconfig: 8.3.6(typescript@6.0.3)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.4
       jest-environment-node: 29.7.0
@@ -41573,6 +41587,8 @@ snapshots:
   typescript@5.8.3: {}
 
   typescript@5.9.3: {}
+
+  typescript@6.0.3: {}
 
   typeson-registry@1.0.0-alpha.39:
     dependencies:

@@ -20,7 +20,7 @@ import type {
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataProcessingError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -215,7 +215,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly snapshotTree: ISnapshotTree,
@@ -328,7 +328,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 	) {

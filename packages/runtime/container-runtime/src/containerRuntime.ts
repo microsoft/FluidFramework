@@ -152,7 +152,7 @@ import type {
 	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -735,7 +735,7 @@ function lastMessageFromMetadata(
  * to understand if/when it is hit.
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
-export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+export let getSingleUseLegacyLogCallback = (logger: TelemetryLoggerExt, type: string) => {
 	return (codePath: string): void => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
@@ -4086,7 +4086,7 @@ export class ContainerRuntime
 		/**
 		 * Logger to use for correlated summary events
 		 */
-		summaryLogger?: ITelemetryLoggerExt;
+		summaryLogger?: TelemetryLoggerExt;
 		/**
 		 * True to run garbage collection before summarizing; defaults to true
 		 */
@@ -4295,7 +4295,7 @@ export class ContainerRuntime
 			/**
 			 * Logger to use for logging GC events
 			 */
-			logger?: ITelemetryLoggerExt;
+			logger?: TelemetryLoggerExt;
 			/**
 			 * True to run GC sweep phase after the mark phase
 			 */
@@ -4726,7 +4726,7 @@ export class ContainerRuntime
 	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
 	 */
 	private async shouldFailSummaryOnPendingOps(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		referenceSequenceNumber: number,
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
@@ -5236,7 +5236,7 @@ export class ContainerRuntime
 	private async fetchLatestSnapshotAndMaybeClose(
 		targetRefSeq: number,
 		targetAckHandle: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): Promise<void> {
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
