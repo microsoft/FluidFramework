@@ -214,7 +214,7 @@ async function main(): Promise<void> {
 	console.log("\nResolving in-window compatibility checkpoints...");
 	const currentCheckpoint = getCurrentCheckpoint(pkgVer);
 	console.log(
-		`  Current: ${currentCheckpoint.name} (opens at ${currentCheckpoint.openingVersion})`,
+		`  Current: ${currentCheckpoint.name} (>= ${currentCheckpoint.lowerBoundVersion})`,
 	);
 
 	const checkpointVersions: string[] = [];

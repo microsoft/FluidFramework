@@ -31,14 +31,14 @@ describe("checkpoints", () => {
 			});
 		});
 
-		it("has valid semver openingVersions in strictly increasing order", () => {
+		it("has valid semver lowerBoundVersions in strictly increasing order", () => {
 			checkpoints.forEach((c, i) => {
-				assert.ok(semver.valid(c.openingVersion), `${c.name} semver`);
+				assert.ok(semver.valid(c.lowerBoundVersion), `${c.name} semver`);
 				if (i > 0) {
 					const prev = checkpoints[i - 1];
 					assert.ok(prev !== undefined, "prev defined");
 					assert.ok(
-						semver.gt(c.openingVersion, prev.openingVersion),
+						semver.gt(c.lowerBoundVersion, prev.lowerBoundVersion),
 						`${c.name} > ${prev.name}`,
 					);
 				}
@@ -53,14 +53,14 @@ describe("checkpoints", () => {
 	});
 
 	describe("getCurrentCheckpoint", () => {
-		it("maps an exact opening version to its checkpoint", () => {
+		it("maps an exact lowerBoundVersion to its checkpoint", () => {
 			assert.strictEqual(getCurrentCheckpoint("1.4.0").name, "CC-1");
 			assert.strictEqual(getCurrentCheckpoint("2.0.0").name, "CC-2");
 			assert.strictEqual(getCurrentCheckpoint("2.60.0").name, "CC-3");
 			assert.strictEqual(getCurrentCheckpoint("2.100.0").name, "CC-4");
 		});
 
-		it("maps a version between two openings to the lower checkpoint", () => {
+		it("maps a version between two lower bounds to the lower checkpoint", () => {
 			assert.strictEqual(getCurrentCheckpoint("1.4.5").name, "CC-1");
 			assert.strictEqual(getCurrentCheckpoint("2.0.9").name, "CC-2");
 			assert.strictEqual(getCurrentCheckpoint("2.39.0").name, "CC-2");
@@ -76,7 +76,7 @@ describe("checkpoints", () => {
 			assert.strictEqual(getCurrentCheckpoint("2.0.0-rc.5.0.8").name, "CC-1");
 		});
 
-		it("maps a prerelease at an opening MMP to that checkpoint (boundary)", () => {
+		it("maps a prerelease at a lowerBoundVersion MMP to that checkpoint (boundary)", () => {
 			assert.strictEqual(getCurrentCheckpoint("2.100.0-rc.0").name, "CC-4");
 			assert.strictEqual(getCurrentCheckpoint("2.100.0-12345-test").name, "CC-4");
 			assert.strictEqual(getCurrentCheckpoint("2.60.0-rc.0").name, "CC-3");
@@ -96,9 +96,9 @@ describe("checkpoints", () => {
 			assert.throws(() => getCurrentCheckpoint("2"));
 		});
 
-		it("round-trips each checkpoint's openingVersion to itself", () => {
+		it("round-trips each checkpoint's lowerBoundVersion to itself", () => {
 			for (const c of checkpoints) {
-				assert.strictEqual(getCurrentCheckpoint(c.openingVersion).name, c.name);
+				assert.strictEqual(getCurrentCheckpoint(c.lowerBoundVersion).name, c.name);
 			}
 		});
 	});
@@ -142,9 +142,9 @@ describe("checkpoints", () => {
 	});
 
 	describe("checkpointResolutionRange", () => {
-		it("returns a tilde range pinned to the checkpoint's openingVersion", () => {
+		it("returns a tilde range pinned to the checkpoint's lowerBoundVersion", () => {
 			for (const c of checkpoints) {
-				assert.strictEqual(checkpointResolutionRange(c), `~${c.openingVersion}`);
+				assert.strictEqual(checkpointResolutionRange(c), `~${c.lowerBoundVersion}`);
 			}
 		});
 	});

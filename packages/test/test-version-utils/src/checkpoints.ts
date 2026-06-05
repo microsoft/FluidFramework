@@ -42,10 +42,10 @@ export interface Checkpoint {
 	/**
 	 * Inclusive lower bound of this checkpoint's version range.
 	 */
-	readonly openingVersion: string;
+	readonly lowerBoundVersion: string;
 	/**
 	 * ISO `YYYY-MM-DD` date. For designated checkpoints, the release date of
-	 * `openingVersion`. For TBD entries in {@link futureCheckpoints}, the estimated
+	 * `lowerBoundVersion`. For TBD entries in {@link futureCheckpoints}, the estimated
 	 * earliest date the checkpoint could be designated (6-month-cadence floor).
 	 */
 	readonly startDate: string;
@@ -66,7 +66,7 @@ interface DocumentedCheckpoint extends Checkpoint {
 	readonly status: "designated" | "tbd";
 	/**
 	 * Explicit upper bound (exclusive). When omitted, the upper bound is the next
-	 * checkpoint's opening version. Set for the last designated checkpoint and the
+	 * checkpoint's `lowerBoundVersion`. Set for the last designated checkpoint and the
 	 * last checkpoint overall.
 	 */
 	readonly closingVersion?: string;
@@ -83,26 +83,26 @@ export const checkpoints: readonly Checkpoint[] = [
 	{
 		name: "CC-1",
 		index: 1,
-		openingVersion: "1.4.0",
+		lowerBoundVersion: "1.4.0",
 		startDate: "2024-04-09",
 		additionalRanges: ["2.0.0-internal*", "2.0.0-rc*"],
 	},
 	{
 		name: "CC-2",
 		index: 2,
-		openingVersion: "2.0.0",
+		lowerBoundVersion: "2.0.0",
 		startDate: "2024-06-26",
 	},
 	{
 		name: "CC-3",
 		index: 3,
-		openingVersion: "2.40.0",
+		lowerBoundVersion: "2.40.0",
 		startDate: "2025-05-12",
 	},
 	{
 		name: "CC-4",
 		index: 4,
-		openingVersion: "2.80.0",
+		lowerBoundVersion: "2.80.0",
 		startDate: "2026-01-06",
 	},
 ];
@@ -118,21 +118,21 @@ const futureCheckpoints: readonly DocumentedCheckpoint[] = [
 	{
 		name: "CC-5",
 		index: 5,
-		openingVersion: "3.0.0",
+		lowerBoundVersion: "3.0.0",
 		startDate: "2026-07-06",
 		status: "tbd",
 	},
 	{
 		name: "CC-6",
 		index: 6,
-		openingVersion: "4.0.0",
+		lowerBoundVersion: "4.0.0",
 		startDate: "2027-01-06",
 		status: "tbd",
 	},
 	{
 		name: "CC-7",
 		index: 7,
-		openingVersion: "5.0.0",
+		lowerBoundVersion: "5.0.0",
 		startDate: "2027-07-06",
 		status: "tbd",
 		closingVersion: "6.0.0",
@@ -150,7 +150,7 @@ const futureCheckpoints: readonly DocumentedCheckpoint[] = [
 export const fullCompatibilityWindowSize = 3;
 
 /**
- * Returns the highest checkpoint whose `openingVersion` is at or below
+ * Returns the highest checkpoint whose `lowerBoundVersion` is at or below
  * `version`.
  *
  * @internal
@@ -159,10 +159,10 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 	if (!semver.valid(version)) {
 		throw new Error(`Invalid version: "${version}"`);
 	}
-	// `additionalRanges` entries override the standard `openingVersion`
+	// `additionalRanges` entries override the standard `lowerBoundVersion`
 	// comparison. They exist for legacy prereleases (e.g. `2.0.0-internal*`)
 	// that should map to an earlier checkpoint despite sorting at or above a
-	// later one's opening version under semver rules.
+	// later one's lower bound version under semver rules.
 	for (const c of checkpoints) {
 		if (c.additionalRanges?.some((r) => matchesRange(version, r))) {
 			return c;
@@ -171,20 +171,20 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 	const parsed = semver.parse(version);
 	const sorted = [...checkpoints].sort((a, b) => b.index - a.index);
 	for (const c of sorted) {
-		if (semver.gte(version, c.openingVersion)) {
+		if (semver.gte(version, c.lowerBoundVersion)) {
 			return c;
 		}
-		// A prerelease whose `major.minor.patch` equals a checkpoint's opening
-		// version belongs to that checkpoint — `2.100.0-rc.0` is the
+		// A prerelease whose `major.minor.patch` equals a checkpoint's
+		// `lowerBoundVersion` belongs to that checkpoint — `2.100.0-rc.0` is the
 		// release-candidate of CC-4, not the tail end of CC-3, even though
 		// `semver.gte("2.100.0-rc.0", "2.100.0")` is `false`.
 		if (parsed !== null && parsed.prerelease.length > 0) {
-			const opening = semver.parse(c.openingVersion);
+			const lowerBound = semver.parse(c.lowerBoundVersion);
 			if (
-				opening !== null &&
-				parsed.major === opening.major &&
-				parsed.minor === opening.minor &&
-				parsed.patch === opening.patch
+				lowerBound !== null &&
+				parsed.major === lowerBound.major &&
+				parsed.minor === lowerBound.minor &&
+				parsed.patch === lowerBound.patch
 			) {
 				return c;
 			}
@@ -220,7 +220,7 @@ export function getInWindowPriorCheckpoints(current: Checkpoint): Checkpoint[] {
  * @internal
  */
 export function checkpointResolutionRange(checkpoint: Checkpoint): string {
-	return `~${checkpoint.openingVersion}`;
+	return `~${checkpoint.lowerBoundVersion}`;
 }
 
 /** Returns `true` iff `version` matches `range`, handling wildcard-suffix entries like `2.0.0-internal*`. */
@@ -256,7 +256,7 @@ const doNotEditNotice = [
 
 /**
  * Explicit upper bounds for designated checkpoints whose range does not end at
- * the next checkpoint's opening version.
+ * the next checkpoint's `lowerBoundVersion`.
  */
 const designatedClosingVersions: Readonly<Record<string, string>> = { "CC-4": "2.101.0" };
 
@@ -283,7 +283,7 @@ function closingVersionOf(checkpoint: DocumentedCheckpoint, index: number): stri
 			`Checkpoint "${checkpoint.name}" has no following checkpoint and no closingVersion.`,
 		);
 	}
-	return next.openingVersion;
+	return next.lowerBoundVersion;
 }
 
 function renderName(c: DocumentedCheckpoint): string {
@@ -297,7 +297,7 @@ function renderDate(c: DocumentedCheckpoint): string {
 function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
 	const closing = closingVersionOf(c, i);
 	const additional = (c.additionalRanges ?? []).map((r) => ` | ${r}`).join("");
-	const range = `\`>=${c.openingVersion} <${closing}${additional}\``;
+	const range = `\`>=${c.lowerBoundVersion} <${closing}${additional}\``;
 	return c.status === "tbd" ? `${range}(estimated)` : range;
 }
 
@@ -322,7 +322,7 @@ function renderCompatibleSemanticVersions(c: DocumentedCheckpoint): string {
 	// adjacent to the version range span. The `|` chars are escaped by escapeCell later.
 	const additionalPart =
 		additionalRanges.length > 0 ? `\` | ${additionalRanges.join(" | ")}\`` : "";
-	return `\`>=${lowest.openingVersion} <${upper}\`${estimated}${additionalPart}`;
+	return `\`>=${lowest.lowerBoundVersion} <${upper}\`${estimated}${additionalPart}`;
 }
 
 function renderRow(c: DocumentedCheckpoint, i: number): string {
