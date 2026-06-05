@@ -161,6 +161,24 @@ function stripConcatenationWrapper(modulePath: string): string {
 }
 
 /**
+ * Locates the path segment that identifies a module's owning package: the
+ * *last* `node_modules/` (so a package's own nested dependencies are attributed
+ * to themselves), or failing that the *first* `packages/` (the workspace source
+ * layout). Returns the matched marker and its index, or `undefined` for paths
+ * belonging to neither (e.g. the synthetic entrypoint's own modules). Both
+ * {@link packageFromModulePath} and {@link canonicalModuleKey} anchor here.
+ */
+function moduleAnchor(
+	modulePath: string,
+): { marker: "node_modules/" | "packages/"; index: number } | undefined {
+	const nodeModulesIndex = modulePath.lastIndexOf("node_modules/");
+	if (nodeModulesIndex >= 0) return { marker: "node_modules/", index: nodeModulesIndex };
+	const packagesIndex = modulePath.indexOf("packages/");
+	if (packagesIndex >= 0) return { marker: "packages/", index: packagesIndex };
+	return undefined;
+}
+
+/**
  * Extracts the owning npm package name from a webpack-bundle-analyzer module
  * `path`. Handles the three shapes that appear in this repo's bundles:
  *
@@ -170,8 +188,8 @@ function stripConcatenationWrapper(modulePath: string): string {
  *   their `@scope/name`.
  * - **Workspace packages:** `.../packages/<group>/<name>/...` — these are the
  *   Fluid Framework source packages, published as `@fluidframework/<name>`.
- * - **App/entry code:** anything else (e.g. the bundle-size-tests harness's own
- *   `./src/*.ts` entry modules) is grouped under `(app/entry)`.
+ * - **App/entry code:** anything else (e.g. the bundle-size-tests synthetic
+ *   entrypoint's own `./src/*.ts` modules) is grouped under `(app/entry)`.
  *
  * Concatenated-module wrapper prefixes are stripped first (see
  * {@link stripConcatenationWrapper}) so scope-hoisted modules are attributed to
@@ -179,19 +197,14 @@ function stripConcatenationWrapper(modulePath: string): string {
  */
 function packageFromModulePath(modulePath: string): string {
 	const normalized = stripConcatenationWrapper(modulePath);
-	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
-	if (nodeModulesIndex >= 0) {
-		const rest = normalized.slice(nodeModulesIndex + "node_modules/".length);
-		const parts = rest.split("/");
+	const anchor = moduleAnchor(normalized);
+	if (anchor === undefined) return "(app/entry)";
+	const parts = normalized.slice(anchor.index + anchor.marker.length).split("/");
+	if (anchor.marker === "node_modules/") {
 		return parts[0].startsWith("@") ? `${parts[0]}/${parts[1]}` : parts[0];
 	}
-	const packagesIndex = normalized.indexOf("packages/");
-	if (packagesIndex >= 0) {
-		// Workspace layout: packages/<group>/<name>/lib/...
-		const parts = normalized.slice(packagesIndex + "packages/".length).split("/");
-		if (parts.length >= 2) return `@fluidframework/${parts[1]}`;
-	}
-	return "(app/entry)";
+	// Workspace layout: packages/<group>/<name>/lib/...
+	return parts.length >= 2 ? `@fluidframework/${parts[1]}` : "(app/entry)";
 }
 
 /**
@@ -199,17 +212,14 @@ function packageFromModulePath(modulePath: string): string {
  * different entrypoints (webpack prefixes the path with the concatenating
  * entry, e.g. `./src/sharedTree.ts + 384 modules (concatenated)/...`) collapses
  * to a single key. The concatenation wrapper prefix is stripped first (see
- * {@link stripConcatenationWrapper}), then anchoring at `node_modules/` or
- * `packages/` removes any remaining per-entry prefix, giving "unique module"
- * dedupe semantics.
+ * {@link stripConcatenationWrapper}), then anchoring at the owning-package
+ * segment (see {@link moduleAnchor}) removes any remaining per-entry prefix,
+ * giving "unique module" dedupe semantics.
  */
 function canonicalModuleKey(modulePath: string): string {
 	const normalized = stripConcatenationWrapper(modulePath);
-	const nodeModulesIndex = normalized.lastIndexOf("node_modules/");
-	if (nodeModulesIndex >= 0) return normalized.slice(nodeModulesIndex);
-	const packagesIndex = normalized.indexOf("packages/");
-	if (packagesIndex >= 0) return normalized.slice(packagesIndex);
-	return normalized;
+	const anchor = moduleAnchor(normalized);
+	return anchor === undefined ? normalized : normalized.slice(anchor.index);
 }
 
 /**
@@ -290,7 +300,7 @@ function isFluidPackage(name: string): boolean {
 	return name.startsWith("@fluidframework/") || name.startsWith("@fluid-");
 }
 
-/** Whether a package's bytes are third-party (not a Fluid library, not harness code). */
+/** Whether a package's bytes are third-party (not a Fluid library, not synthetic entrypoint code). */
 function isThirdPartyPackage(name: string): boolean {
 	return !isFluidPackage(name) && name !== "(app/entry)";
 }
@@ -317,8 +327,8 @@ interface BucketDefinition {
  * bundle (the entrypoint's full Fluid footprint, not just one package); a
  * `+ 3rd-party deps` row also folds in every third-party package in that same
  * bundle. Third-party bytes can't be split between libraries (the flat
- * per-package data has no dependency graph). Harness code is always excluded
- * (see {@link isThirdPartyPackage}).
+ * per-package data has no dependency graph). Synthetic entrypoint code is always
+ * excluded (see {@link isThirdPartyPackage}).
  */
 const bucketDefinitions: readonly BucketDefinition[] = [
 	{

@@ -156,7 +156,7 @@ This attribution is deliberately careful:
 - **Module -> package.** Each module's path is mapped to its owning package:
   third-party packages by the name after the last `node_modules/`, Fluid source
   packages by their `packages/<group>/<name>` workspace path (reported as
-  `@fluidframework/<name>`), and the harness's own entry modules as `(app/entry)`.
+  `@fluidframework/<name>`), and the synthetic entrypoint's own modules as `(app/entry)`.
 - **Scope-hoisting is undone.** When webpack concatenates (scope-hoists) modules
   it prefixes each module's path with the concatenating barrel. That prefix is
   stripped before attribution so hoisted modules are credited to their _real_
@@ -175,7 +175,7 @@ headline buckets. For each pinned entrypoint it reports the bundle's total Fluid
 Framework bytes, and a companion `+ 3rd-party deps` row that also folds in every
 third-party package in that same bundle. (Third-party bytes can't be split
 between the Fluid libraries that pull them in, because the flat per-package data
-carries no dependency graph; harness code is always excluded.)
+carries no dependency graph; synthetic entrypoint code is always excluded.)
 
 The _Per-package parsed-size comparison_ table is the full breakdown for the
 `fluidFrameworkAll` aggregate bundle: one row per owning package, sorted by
