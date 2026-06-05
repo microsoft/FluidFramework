@@ -908,13 +908,13 @@ export class PerformanceEvent {
 	 * @param event - The telemetry performance event.
 	 * @returns The log level for the event.
 	 *
-	 * If undefined is returned then the LogLevel will be set as essential. See {@link ChildLogger.send}
 	 */
 	private getLogLevel(
 		eventNameSuffix: string,
 		event: ITelemetryPerformanceEventExt,
 	): typeof LogLevel.verbose | typeof LogLevel.info | undefined {
 		if (eventNameSuffix === "cancel") {
+			// 	When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
 			return undefined;
 		}
 
@@ -924,6 +924,7 @@ export class PerformanceEvent {
 			this.markers.endEventEssentialDurationThresholdMs !== undefined &&
 			event.duration > this.markers.endEventEssentialDurationThresholdMs
 		) {
+			// When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
 			return undefined;
 		}
 
