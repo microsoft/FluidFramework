@@ -5,7 +5,7 @@
 Add originatorless normalization for op-space IDs in id-compressor
 
 `IIdCompressor` now includes `tryNormalizeToSessionSpaceWithoutSession(id)`.
-This API supports recovery scenarios where an op-space identifier must be decoded
+This API supports recovery scenarios where an [op-space identifier](https://fluidframework.com/docs/api/id-compressor/opspacecompressedid-typealias) must be decoded
 without the originating session id.
 
 For finalized IDs, the method returns the correct session-space form.

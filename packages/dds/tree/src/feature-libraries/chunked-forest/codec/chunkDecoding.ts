@@ -60,8 +60,8 @@ import {
  * @remarks
  * See {@link FieldBatchDecodingContext} for the production implementation of this.
  *
- * This intentionally avoids exposing anything which depends on the underlying id compressor's session id to avoid confusion with the session id of the compressor which encoded the data.
- * If the session id of the encoder which encoded the data is known, that information is baked into `resolveEncodedId`.
+ * This intentionally avoids exposing anything which depends on the underlying id-compressor's session ID to avoid confusion with the session ID of the compressor which encoded the data.
+ * If the session ID of the encoder which encoded the data is known, that information is baked into `resolveEncodedId`.
  */
 export interface IdDecodingContext {
 	/**
@@ -69,7 +69,7 @@ export interface IdDecodingContext {
 	 */
 	readonly idCompressor: Pick<IIdCompressor, "decompress">;
 	/**
-	 * Resolves an encoded op-space identifier to either a session-space id
+	 * Resolves an encoded op-space identifier to either a session-space ID
 	 * (which {@link idCompressor} can decompress if needed)
 	 * or a string (which passes through unchanged).
 	 * @remarks
