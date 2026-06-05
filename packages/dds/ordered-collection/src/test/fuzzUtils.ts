@@ -60,7 +60,7 @@ export const defaultOptions: Partial<DDSFuzzSuiteOptions> = {
 	saveFailures: { directory: path.join(_dirname, "../../src/test/results") },
 };
 
-type FuzzTestState = DDSFuzzTestState<ConsensusQueueFactory>;
+type FuzzTestState = DDSFuzzTestState<ConsensusQueueFactory<string>>;
 
 export interface AddOperation {
 	type: "add";
@@ -180,7 +180,7 @@ function assertEqualConsensusOrderedCollections(
  * Base fuzz model for ConsensusOrderedCollection
  */
 export const baseConsensusOrderedCollectionModel: DDSFuzzModel<
-	ConsensusQueueFactory,
+	ConsensusQueueFactory<unknown>,
 	ConsensusOrderedCollectionOperation,
 	FuzzTestState
 > = {

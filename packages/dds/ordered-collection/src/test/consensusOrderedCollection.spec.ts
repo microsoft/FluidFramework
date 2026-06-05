@@ -6,23 +6,25 @@
 import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
-import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
-import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/legacy";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/legacy";
+import type { SharedObjectCore } from "@fluidframework/shared-object-base/legacy";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
 	type MockContainerRuntimeForReconnection,
 	MockFluidDataStoreRuntime,
 	MockStorage,
-} from "@fluidframework/test-runtime-utils/internal";
+} from "@fluidframework/test-runtime-utils/legacy";
 
-import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
-import {
-	ConsensusQueueFactory,
-	type ConsensusQueue,
-} from "../consensusOrderedCollectionFactory.js";
+import type {
+	IConsensusOrderedCollection,
+	IConsensusOrderedCollectionEvents,
+} from "@fluidframework/ordered-collection/legacy";
+import { ConsensusResult } from "@fluidframework/ordered-collection/legacy";
+
+import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
 import { ConsensusQueueClass } from "../consensusQueue.js";
-import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";
 import {
 	acquireAndComplete,
 	acquireAndRelease,
@@ -32,7 +34,7 @@ import {
 /**
  * Test class that exposes protected applyStashedOp method for testing
  */
-class TestConsensusQueue extends ConsensusQueueClass {
+class TestConsensusQueue extends ConsensusQueueClass<unknown> {
 	public testApplyStashedOp(content: unknown): void {
 		this.applyStashedOp(content);
 	}
@@ -41,7 +43,8 @@ class TestConsensusQueue extends ConsensusQueueClass {
 function createConnectedCollection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): ConsensusQueue {
+): IConsensusOrderedCollection<unknown> &
+	SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -52,12 +55,15 @@ function createConnectedCollection(
 	const factory = new ConsensusQueueFactory();
 	const testCollection = factory.create(dataStoreRuntime, id);
 	testCollection.connect(services);
-	return testCollection as ConsensusQueue;
+	return testCollection;
 }
 
-function createLocalCollection(id: string): ConsensusQueue {
+function createLocalCollection(
+	id: string,
+): IConsensusOrderedCollection<unknown> &
+	SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>> {
 	const factory = new ConsensusQueueFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusQueue;
+	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
 
 function createCollectionForReconnection(
@@ -104,10 +110,12 @@ describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: unknown[],
 		output: unknown[],
-		creator: () => ConsensusOrderedCollection,
+		creator: () => IConsensusOrderedCollection &
+			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>,
 		processMessages: () => void,
 	): void {
-		let testCollection: ConsensusOrderedCollection;
+		let testCollection: IConsensusOrderedCollection &
+			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>;
 
 		async function removeItem(): Promise<unknown> {
 			const resP = acquireAndComplete(testCollection);
@@ -155,7 +163,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
 
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-				const dataStore = (await handle.get()) as ConsensusQueue;
+				const dataStore = (await handle.get()) as ConsensusQueueClass<unknown>;
 				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
 				assert.strictEqual(await removeItem(), undefined);
