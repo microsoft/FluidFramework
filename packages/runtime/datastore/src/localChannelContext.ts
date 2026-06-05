@@ -229,10 +229,6 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 			namespace: "RehydratedLocalChannelContext",
 			properties: {
 				all: {
-					...dataStoreLoadTelemetryProps({
-						id: dataStoreContext.id,
-						packagePath: dataStoreContext.packagePath,
-					}),
 					...tagCodeArtifacts({ channelId: id }),
 				},
 			},
@@ -286,9 +282,16 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 				} catch (error) {
 					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 						error,
-						"rehydratedLocalChannelContextChannelLoad",
-						undefined,
+						"rehydratedLocalChannelContextFailedToLoadChannel",
 					);
+					errorWrapped.addTelemetryProperties({
+						...dataStoreLoadTelemetryProps({
+							id: dataStoreContext.id,
+							packagePath: dataStoreContext.packagePath,
+						}),
+						...tagCodeArtifacts({ channelId: id }),
+					});
+
 					subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
 					throw errorWrapped;
 				}

@@ -61,7 +61,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 	constructor(
 		runtime: IFluidDataStoreRuntime,
-		//* Replace with property bag with only the needed props
+		//* FUTURE: Replace with property bag with only the needed props
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
@@ -78,13 +78,8 @@ export class RemoteChannelContext implements IChannelContext {
 		this.subLogger = createChildLogger({
 			logger: runtime.logger,
 			namespace: "RemoteChannelContext",
-			//* Don't need to do this since runtime.logger already adds them
 			properties: {
 				all: {
-					...dataStoreLoadTelemetryProps({
-						id: dataStoreContext.id,
-						packagePath: dataStoreContext.packagePath,
-					}),
 					...tagCodeArtifacts({ channelId: this.id }),
 				},
 			},
@@ -142,11 +137,18 @@ export class RemoteChannelContext implements IChannelContext {
 				this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
 				return this.channel;
 			} catch (error) {
-				//* Decorate the error with ID and PKG
 				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 					error,
-					"remoteChannelContextChannelLoad",
+					"remoteChannelContextFailedToLoadChannel",
 				);
+				errorWrapped.addTelemetryProperties({
+					...dataStoreLoadTelemetryProps({
+						id: dataStoreContext.id,
+						packagePath: dataStoreContext.packagePath,
+					}),
+					...tagCodeArtifacts({ channelId: id }),
+				});
+
 				this.subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
 				throw errorWrapped;
 			}

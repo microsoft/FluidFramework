@@ -423,13 +423,9 @@ export class FluidDataStoreRuntime
 			logger: dataStoreContext.baseLogger,
 			namespace: "FluidDataStoreRuntime",
 			properties: {
-				//* COPILOT: Make this shape match EntryPointInitializationFailure props
 				all: {
-					dataStoreId: dataStoreContext.id,
 					dataStoreVersion: pkgVersion,
-					fullPackagePath: dataStoreContext.packagePath.join("/"),
-				},
-				error: {
+					...dataStoreLoadTelemetryProps(dataStoreContext),
 					inStagingMode: () => this.inStagingMode,
 					isDirty: () => this.isDirty,
 				},
@@ -1579,8 +1575,6 @@ export class FluidDataStoreRuntime
 			...tagCodeArtifacts({
 				channelType,
 				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
 			}),
 			stack: generateStack(30),
 		});
