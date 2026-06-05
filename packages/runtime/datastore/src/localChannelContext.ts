@@ -229,7 +229,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 			namespace: "RehydratedLocalChannelContext",
 			properties: {
 				all: {
-					...tagCodeArtifacts({ channelId: id }),
+					...tagCodeArtifacts({ channelId: id }), //* CPLT: Add channelType similar to remoteChannelContext
 				},
 			},
 		});
@@ -289,10 +289,11 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 							id: dataStoreContext.id,
 							packagePath: dataStoreContext.packagePath,
 						}),
-						...tagCodeArtifacts({ channelId: id }),
+						...tagCodeArtifacts({ channelId: id }), //* CPLT: include channelType too
 					});
 
-					subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
+					//* CPLT Add similar comment to other class
+					subLogger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 					throw errorWrapped;
 				}
 			}),

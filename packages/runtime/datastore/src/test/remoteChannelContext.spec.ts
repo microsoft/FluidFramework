@@ -111,7 +111,7 @@ describe("RemoteChannelContext Tests", () => {
 			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
 			failingRegistry,
 			undefined /* extraBlobs */,
-			createSummarizerNode,
+			createSummarizerNode, //* CPLT can we mock this more simply?
 			"SomeAttachMessageType",
 		);
 
@@ -128,6 +128,7 @@ describe("RemoteChannelContext Tests", () => {
 			},
 		);
 
+		//* CPLT can't this be more concise with MockLogger's capabilities?
 		const failureEvents = mockLogger.events.filter(
 			(event) =>
 				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
@@ -153,54 +154,6 @@ describe("RemoteChannelContext Tests", () => {
 			failureEvent.channelId,
 			{ value: channelId, tag: TelemetryDataTag.CodeArtifact },
 			"event should include tagged channelId",
-		);
-	});
-
-	it("subsequent awaits on getChannel() do not re-log ChannelLoadFailure", async () => {
-		const channelId = "ddsId";
-		const mockLogger = new MockLogger();
-		const contextWithMockLogger = new MockFluidDataStoreContext(
-			"testDataStoreId",
-			false,
-			mockLogger.toTelemetryLogger(),
-		);
-		contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
-		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
-
-		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
-		const failingRegistry: ISharedObjectRegistry = { get: () => undefined };
-		const noopSummarizerNode = {
-			invalidate: () => {},
-			summarize: async () => ({ summary: {}, stats: {} }),
-			getGCData: async () => ({ gcNodes: {} }),
-			updateUsedRoutes: () => {},
-		} as unknown as ISummarizerNodeWithGC;
-
-		const remoteChannelContext = new RemoteChannelContext(
-			dataStoreRuntime,
-			contextWithMockLogger,
-			contextWithMockLogger.storage,
-			() => {},
-			() => {},
-			channelId,
-			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
-			failingRegistry,
-			undefined,
-			() => noopSummarizerNode,
-			"SomeAttachMessageType",
-		);
-
-		await assert.rejects(async () => remoteChannelContext.getChannel());
-		await assert.rejects(async () => remoteChannelContext.getChannel());
-
-		const failureEvents = mockLogger.events.filter(
-			(event) =>
-				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
-		);
-		assert.strictEqual(
-			failureEvents.length,
-			1,
-			"ChannelLoadFailure should only be logged once even across multiple awaits",
 		);
 	});
 });

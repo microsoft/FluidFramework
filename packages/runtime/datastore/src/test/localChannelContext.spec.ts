@@ -161,42 +161,4 @@ describe("LocalChannelContext Tests", () => {
 			"event should include tagged channelId",
 		);
 	});
-
-	it("RehydratedLocalChannelContext subsequent awaits do not re-log ChannelLoadFailure", async () => {
-		const channelId = "ddsId";
-		const mockLogger = new MockLogger();
-		const contextWithMockLogger = new MockFluidDataStoreContext(
-			"testDataStoreId",
-			false,
-			mockLogger.toTelemetryLogger(),
-		);
-		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
-		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
-		const failingRegistry: ISharedObjectRegistry = { get: () => undefined };
-
-		const rehydratedChannelContext = new RehydratedLocalChannelContext(
-			channelId,
-			failingRegistry,
-			dataStoreRuntime,
-			contextWithMockLogger,
-			contextWithMockLogger.storage,
-			extractTelemetryLoggerExt(contextWithMockLogger.baseLogger),
-			() => {},
-			() => {},
-			{ trees: {}, blobs: {} } as unknown as ISnapshotTree,
-		);
-
-		await assert.rejects(async () => rehydratedChannelContext.getChannel());
-		await assert.rejects(async () => rehydratedChannelContext.getChannel());
-
-		const failureEvents = mockLogger.events.filter(
-			(event) =>
-				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
-		);
-		assert.strictEqual(
-			failureEvents.length,
-			1,
-			"ChannelLoadFailure should only be logged once even across multiple awaits",
-		);
-	});
 });

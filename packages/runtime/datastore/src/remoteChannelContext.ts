@@ -80,7 +80,11 @@ export class RemoteChannelContext implements IChannelContext {
 			namespace: "RemoteChannelContext",
 			properties: {
 				all: {
-					...tagCodeArtifacts({ channelId: this.id }),
+					...tagCodeArtifacts({
+						channelId: this.id,
+						//* CPLT pull this into a local let variable and then set it below once we get attributes in the LazyPromise callback
+						channelType: undefined,
+					}),
 				},
 			},
 		});
@@ -98,6 +102,7 @@ export class RemoteChannelContext implements IChannelContext {
 
 		this.channelP = new LazyPromise<IChannel>(async () => {
 			try {
+				//* FUTURE: factor this into a realize fn simiklar to DataStoreContext
 				const { attributes, factory } = await loadChannelFactoryAndAttributes(
 					dataStoreContext,
 					this.services,
@@ -106,6 +111,7 @@ export class RemoteChannelContext implements IChannelContext {
 					attachMessageType,
 				);
 
+				//* FUTURE: Move the error handling into loadChannel? Rationalize with the idea to do a realize fn
 				const channel = await loadChannel(
 					runtime,
 					attributes,
@@ -141,15 +147,17 @@ export class RemoteChannelContext implements IChannelContext {
 					error,
 					"remoteChannelContextFailedToLoadChannel",
 				);
+				//* FUTURE: Let telemetry props be pulled wholesale off a given logger
 				errorWrapped.addTelemetryProperties({
 					...dataStoreLoadTelemetryProps({
 						id: dataStoreContext.id,
 						packagePath: dataStoreContext.packagePath,
 					}),
-					...tagCodeArtifacts({ channelId: id }),
+					...tagCodeArtifacts({ channelId: id }), //* CPLT include channelType too
 				});
 
-				this.subLogger.sendErrorEvent({ eventName: "ChannelLoadFailure" }, errorWrapped);
+				// "Realize" is another name for instantiating the channel for a context
+				this.subLogger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 				throw errorWrapped;
 			}
 		});

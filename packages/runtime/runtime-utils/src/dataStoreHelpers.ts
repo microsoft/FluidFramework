@@ -157,8 +157,8 @@ export function dataStoreLoadTelemetryProps(props: {
 	const { id, packagePath } = props;
 	const fullPackageName = packagePath.length > 0 ? packagePath.join("/") : undefined;
 	return tagCodeArtifacts({
-		fullPackageName,
-		fluidDataStoreId: id,
+		fullPackageName, //* dataStorePackagePath
+		fluidDataStoreId: id, //* dataStoreId
 	});
 }
 

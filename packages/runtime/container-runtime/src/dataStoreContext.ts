@@ -272,7 +272,7 @@ export abstract class FluidDataStoreContext
 	}
 
 	public get baseLogger(): ITelemetryBaseLogger {
-		//* FUTURE: This should say DataStoreContext and have public props like ID and PKG
+		//* FUTURE: This should have public props like ID and PKG
 		return this.parentContext.baseLogger;
 	}
 
@@ -592,6 +592,7 @@ export abstract class FluidDataStoreContext
 				errorWrapped.addTelemetryProperties(
 					dataStoreLoadTelemetryProps({ id: this.id, packagePath: this.pkg ?? [] }),
 				);
+				//* FUTURE: Rename this to ChannelLoadError to match DDS.
 				this.mc.logger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 				throw errorWrapped;
 			});
