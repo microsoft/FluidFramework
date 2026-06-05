@@ -9,10 +9,10 @@ import path from "path";
 import { getOdspCredentials } from "@fluid-private/test-drivers";
 import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	LoginCredentials,
 	OdspTokenManager,
+	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import Axios from "axios";
@@ -27,19 +27,6 @@ import { RouteOptions } from "./loader.js";
 const tokenManager = new OdspTokenManager(odspTokensCache);
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
-
-function getPublicClientConfig(): IPublicClientConfig {
-	const clientId = process.env.local__testing__clientId;
-	if (!clientId) {
-		// See the "SharePoint" section of webpack-fluid-loader's README for prerequisites to running examples against odsp.
-		throw new Error(
-			"Client ID environment variable not set: local__testing__clientId. Did you run the getkeys tool?",
-		);
-	}
-	return {
-		clientId,
-	};
-}
 
 function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 	credentials: LoginCredentials;
@@ -167,7 +154,7 @@ const makeAfterMiddlewares = (
 	if (options.mode === "spo-df" || options.mode === "spo") {
 		const { credentials, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
-		const clientConfig = getPublicClientConfig();
+		const clientConfig = getMicrosoftConfiguration();
 
 		readyP = async (req: express.Request, res: express.Response) => {
 			if (req.baseUrl === "/favicon.ico") {
@@ -236,7 +223,7 @@ const makeAfterMiddlewares = (
 				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
 				const tokens = await tokenManager.getOdspTokens(
 					server,
-					getPublicClientConfig(),
+					getMicrosoftConfiguration(),
 					tokenConfig,
 					undefined /* forceRefresh */,
 					true /* forceReauth */,
@@ -259,7 +246,7 @@ const makeAfterMiddlewares = (
 				options.pushAccessToken = (
 					await tokenManager.getPushTokens(
 						server,
-						getPublicClientConfig(),
+						getMicrosoftConfiguration(),
 						tokenConfig,
 						undefined /* forceRefresh */,
 						true /* forceReauth */,
