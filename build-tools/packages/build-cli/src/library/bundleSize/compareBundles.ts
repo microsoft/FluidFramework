@@ -66,7 +66,7 @@ interface ComparisonReport {
 	analysisDirectory: string;
 	/** Parsed-size rows for every emitted JS asset (changed or not). */
 	assets: ComparisonRow[];
-	/** Gzip-size rows, limited to assets whose parsed size changed. */
+	/** Gzip-size rows, limited to assets whose gzip size changed. */
 	gzipChangedAssets: ComparisonRow[];
 	/**
 	 * Per-entrypoint total parsed-size rows. Each row is a real shipped bundle;
@@ -201,7 +201,7 @@ function packageFromModulePath(modulePath: string): string {
  * to a single key. The concatenation wrapper prefix is stripped first (see
  * {@link stripConcatenationWrapper}), then anchoring at `node_modules/` or
  * `packages/` removes any remaining per-entry prefix, giving "unique module"
- * dedup semantics.
+ * dedupe semantics.
  */
 function canonicalModuleKey(modulePath: string): string {
 	const normalized = stripConcatenationWrapper(modulePath);
@@ -223,6 +223,10 @@ function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 	const seen = new Set<string>();
 
 	const visit = (node: AnalyzerNode): void => {
+		// A node with children is an aggregate (asset, directory, or concatenated
+		// wrapper) whose parsedSize is just the sum of its descendants. Recurse into
+		// the children and skip the parent so those bytes are not double-counted;
+		// only childless leaf modules carry a real path and standalone size.
 		if (node.groups !== undefined && node.groups.length > 0) {
 			for (const child of node.groups) visit(child);
 			return;
@@ -244,11 +248,13 @@ function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 
 // --- Composition buckets ---
 
-/** Entrypoint asset for the full deduplicated Fluid Framework footprint (`bundle-size-tests/src/fluidFrameworkAll.ts`). */
-const aggregateEntrypointAsset = "fluidFrameworkAll.js";
-
-/** Entrypoint asset for SharedTree's own bundle (`bundle-size-tests/src/sharedTree.ts`). */
-const treeEntrypointAsset = "sharedTree.js";
+/** Named entrypoint assets the buckets and per-package breakdown are measured from. */
+const entrypointAssets = {
+	/** Entrypoint asset for the full deduplicated Fluid Framework footprint (`bundle-size-tests/src/fluidFrameworkAll.ts`). */
+	fluidFrameworkAll: "fluidFrameworkAll.js",
+	/** Entrypoint asset for SharedTree's own bundle (`bundle-size-tests/src/sharedTree.ts`). */
+	sharedTree: "sharedTree.js",
+} as const;
 
 /**
  * Per-package parsed sizes for a single named entrypoint asset. Walks only that
@@ -268,7 +274,7 @@ function packageSizesForAsset(nodes: AnalyzerNode[], assetLabel: string): Map<st
 	return accumulatePackageSizes([asset]);
 }
 
-/** Diffs two per-package size maps into {@link ComparisonRow}s, largest first. */
+/** Diffs two per-package size maps into {@link ComparisonRow}s, sorted by current size descending (ties broken by name). */
 function diffPackageSizes(
 	base: Map<string, number>,
 	current: Map<string, number>,
@@ -317,35 +323,57 @@ interface BucketDefinition {
 const bucketDefinitions: readonly BucketDefinition[] = [
 	{
 		label: "SharedTree + 3rd-party deps",
-		asset: treeEntrypointAsset,
+		asset: entrypointAssets.sharedTree,
 		withThirdParty: true,
 	},
 	{
 		label: "SharedTree",
-		asset: treeEntrypointAsset,
+		asset: entrypointAssets.sharedTree,
 		withThirdParty: false,
 	},
 	{
 		label: "Fluid Framework + 3rd-party deps",
-		asset: aggregateEntrypointAsset,
+		asset: entrypointAssets.fluidFrameworkAll,
 		withThirdParty: true,
 	},
 	{
 		label: "Fluid Framework",
-		asset: aggregateEntrypointAsset,
+		asset: entrypointAssets.fluidFrameworkAll,
 		withThirdParty: false,
 	},
 ];
 
 /**
- * Computes the headline buckets from {@link bucketDefinitions}. `rowsForAsset`
- * returns the entrypoint-scoped, diffed per-package rows for a given asset; each
- * bucket sums its bundle's Fluid packages (plus third-party deps when asked).
+ * Computes the per-package outputs from the raw nodes: the headline composition
+ * buckets ({@link bucketDefinitions}) and the full per-package breakdown for the
+ * `fluidFrameworkAll` aggregate entrypoint. Both derive from the same
+ * entrypoint-scoped, diffed per-package rows, so each asset's rows are computed
+ * once (memoized) and reused across every bucket that references it and the full
+ * breakdown. Each bucket sums its bundle's Fluid packages (plus third-party deps
+ * when asked).
  */
-function bucketPackageSizes(
-	rowsForAsset: (asset: string) => ComparisonRow[],
-): ComparisonRow[] {
-	return bucketDefinitions.map((def) => {
+function comparePackages(
+	baseNodes: AnalyzerNode[],
+	currentNodes: AnalyzerNode[],
+): { packageBuckets: ComparisonRow[]; packages: ComparisonRow[] } {
+	// Per-package rows are each scoped to a single real entrypoint (not a sum
+	// over entrypoints), deduping modules within that asset before diffing.
+	// Memoized because each entrypoint feeds more than one headline bucket as
+	// well as the full per-package breakdown.
+	const rowsByAsset = new Map<string, ComparisonRow[]>();
+	const rowsForAsset = (asset: string): ComparisonRow[] => {
+		let rows = rowsByAsset.get(asset);
+		if (rows === undefined) {
+			rows = diffPackageSizes(
+				packageSizesForAsset(baseNodes, asset),
+				packageSizesForAsset(currentNodes, asset),
+			);
+			rowsByAsset.set(asset, rows);
+		}
+		return rows;
+	};
+
+	const packageBuckets = bucketDefinitions.map((def) => {
 		let base = 0;
 		let current = 0;
 		for (const row of rowsForAsset(def.asset)) {
@@ -356,40 +384,32 @@ function bucketPackageSizes(
 		}
 		return makeRow(def.label, base, current);
 	});
+
+	return {
+		packageBuckets,
+		packages: rowsForAsset(entrypointAssets.fluidFrameworkAll),
+	};
 }
 
 // --- Comparison computation ---
 
 /**
- * Parsed-size rows for every emitted JS asset (source maps excluded). Sizes come
- * straight from the shared {@link compareJsonReports} primitive; an asset
- * present on only one side is treated as size 0 on the other.
+ * Per-asset rows for one size field of every emitted JS asset (source maps
+ * excluded), sorted by name. Sizes come straight from the shared
+ * {@link compareJsonReports} primitive; an asset present on only one side is
+ * treated as size 0 on the other. Drives both the parsed-size and gzip-size
+ * asset tables.
  */
-function compareAssetSizes(bundleComparison: BundlesComparison): ComparisonRow[] {
+function compareAssetField(
+	bundleComparison: BundlesComparison,
+	field: "parsedSize" | "gzipSize",
+): ComparisonRow[] {
 	return Object.keys(bundleComparison)
-		.filter((name) => isJsAssetName(name))
+		.filter(isJsAssetName)
 		.sort()
 		.map((name) => {
 			const { base, compare } = bundleComparison[name];
-			return makeRow(name, base?.parsedSize ?? 0, compare?.parsedSize ?? 0);
-		});
-}
-
-/**
- * Gzip-size rows for the assets whose parsed size changed. A missing side is
- * size 0: an asset present in only one revision (e.g. webpack auto-generated
- * vendor chunks whose hash-based names change) is a genuine delta, not missing
- * data.
- */
-function compareGzipChangedAssets(
-	assets: ComparisonRow[],
-	bundleComparison: BundlesComparison,
-): ComparisonRow[] {
-	return assets
-		.filter((row) => row.diff !== 0)
-		.map((row) => {
-			const { base, compare } = bundleComparison[row.name];
-			return makeRow(row.name, base?.gzipSize ?? 0, compare?.gzipSize ?? 0);
+			return makeRow(name, base?.[field] ?? 0, compare?.[field] ?? 0);
 		});
 }
 
@@ -418,12 +438,12 @@ function compareEntrypointTotals(
  * report, so no webpack stats decompression or on-disk gzipping is needed. Each
  * output set is produced by its own focused helper:
  *
- * - {@link compareAssetSizes} / {@link compareGzipChangedAssets} — per-asset.
+ * - {@link compareAssetField} — per-asset (parsed and gzip).
  * - {@link compareEntrypointTotals} — per real entrypoint.
- * - {@link bucketPackageSizes} / `packages` — per-package, scoped to a single
- *   entrypoint via the memoized `rowsForAsset` below.
+ * - {@link comparePackages} — the headline buckets and full per-package
+ * breakdown, sharing one memoized per-asset row computation.
  */
-function computeComparison(options: CompareBundlesOptions): ComparisonReport {
+function computeBundleComparison(options: CompareBundlesOptions): ComparisonReport {
 	const { baseLabel, currentLabel, analysisDirectory } = options;
 
 	const baseNodes = loadAnalyzer(analysisDirectory, baseLabel);
@@ -432,23 +452,14 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 	// Shared primitive: per-asset { base?, compare? } size data keyed by asset
 	// label, restricted to JS assets (excluding source maps) by the helpers below.
 	const bundleComparison = compareJsonReports(baseNodes, currentNodes);
-	const assets = compareAssetSizes(bundleComparison);
+	const assets = compareAssetField(bundleComparison, "parsedSize");
 
-	// Per-package rows are each scoped to a single real entrypoint (not a sum
-	// over entrypoints), deduping modules within that asset before diffing.
-	// Memoized because each entrypoint feeds more than one headline bucket.
-	const rowsByAsset = new Map<string, ComparisonRow[]>();
-	const rowsForAsset = (asset: string): ComparisonRow[] => {
-		let rows = rowsByAsset.get(asset);
-		if (rows === undefined) {
-			rows = diffPackageSizes(
-				packageSizesForAsset(baseNodes, asset),
-				packageSizesForAsset(currentNodes, asset),
-			);
-			rowsByAsset.set(asset, rows);
-		}
-		return rows;
-	};
+	// The gzip table reports only the assets whose gzip size actually changed.
+	const gzipChangedAssets = compareAssetField(bundleComparison, "gzipSize").filter(
+		(row) => row.diff !== 0,
+	);
+
+	const { packageBuckets, packages } = comparePackages(baseNodes, currentNodes);
 
 	return {
 		comparedAt: new Date().toISOString(),
@@ -456,10 +467,10 @@ function computeComparison(options: CompareBundlesOptions): ComparisonReport {
 		currentLabel,
 		analysisDirectory,
 		assets,
-		gzipChangedAssets: compareGzipChangedAssets(assets, bundleComparison),
+		gzipChangedAssets,
 		entrypoints: compareEntrypointTotals(baseNodes, currentNodes),
-		packageBuckets: bucketPackageSizes(rowsForAsset),
-		packages: rowsForAsset(aggregateEntrypointAsset),
+		packageBuckets,
+		packages,
 	};
 }
 
@@ -614,7 +625,7 @@ function writeOutputFiles(
  * `.txt` and structured `.json` comparison reports to `outputDirectory`.
  */
 export function compareBundles(options: CompareBundlesOptions): void {
-	const report = computeComparison(options);
+	const report = computeBundleComparison(options);
 	const textContent = renderAsText(report);
 	writeOutputFiles(options.outputDirectory, report, textContent);
 }

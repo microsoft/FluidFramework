@@ -99,6 +99,89 @@ rebuild.
 
 Both directories are removed by `npm run clean`.
 
+### Understanding the report
+
+The comparison report is emitted in two forms with identical data: a
+human-readable `.txt` table dump and a structured `.json` file. Every table is a
+list of rows, and each row reports the same three numbers for one named thing — a
+`Base` size, a `Current` size, and their `Diff` (`Current - Base`, so negative
+means smaller). Some tables add a base-relative `% Change` column.
+
+Two different size _measurements_ appear in the report, both read straight from
+webpack-bundle-analyzer's `analyzer.json` (no separate gzipping or stats
+decompression is done):
+
+- **Parsed size** — the minified bytes of the code as it ships, before transport
+  compression. This is the default unit for every table except the gzip one.
+- **Gzip size** — the gzipped bytes, i.e. what actually goes over the wire.
+
+The report measures the bundle at four different _granularities_, each answering a
+different question:
+
+| Table                                        | Granularity | Unit   | What it answers                                                       |
+| -------------------------------------------- | ----------- | ------ | -------------------------------------------------------------------- |
+| All assets                                   | Asset       | Parsed | How did each emitted `.js` file change?                              |
+| Gzip sizes for changed assets                | Asset       | Gzip   | For the assets whose gzip size moved, what is the over-the-wire delta?|
+| Named entrypoint total asset sizes           | Entrypoint  | Parsed | How big is each shipped entrypoint bundle in total?                  |
+| Bundle composition by category               | Package set | Parsed | How is a bundle split between Fluid Framework and third-party code?  |
+| Per-package parsed-size comparison           | Package     | Parsed | Which individual package contributed each chunk of bytes?           |
+
+#### Asset tables
+
+An **asset** is a single file webpack emits (e.g. `sharedTree.js`). The _All
+assets_ table lists every emitted `.js` asset (source maps excluded) whether it
+changed or not, marking changed rows with a trailing `*`; it is the canonical
+"here is everything that ships" inventory.
+
+The _Gzip sizes for changed assets_ table is a focused supplement: it lists only
+the assets whose **gzip** size actually changed, so it stays short and signal-only.
+Note its filter is on the gzip delta itself — an asset can move in parsed size but
+not gzip (compression absorbs the change), or vice versa, so this table is not
+simply the changed rows of the parsed table re-expressed in gzip bytes.
+
+#### Entrypoint table
+
+An **entrypoint** is a bundle a consumer actually loads. Its total is the sum of
+the parsed sizes of the assets that are initial chunks of that entrypoint (per
+analyzer.json's `isInitialByEntrypoint`). These rows **overlap and must not be
+summed**: many entrypoints share the same underlying packages, so adding them
+double-counts shared code. The `fluidFrameworkAll` entrypoint is the single
+deduplicated whole-framework total.
+
+#### Package-level tables
+
+The last two tables attribute bytes to the npm package that owns each module.
+This attribution is deliberately careful:
+
+- **Module -> package.** Each module's path is mapped to its owning package:
+  third-party packages by the name after the last `node_modules/`, Fluid source
+  packages by their `packages/<group>/<name>` workspace path (reported as
+  `@fluidframework/<name>`), and the harness's own entry modules as `(app/entry)`.
+- **Scope-hoisting is undone.** When webpack concatenates (scope-hoists) modules
+  it prefixes each module's path with the concatenating barrel. That prefix is
+  stripped before attribution so hoisted modules are credited to their _real_
+  owning package rather than collapsing onto the barrel.
+- **Deduplicated per bundle.** Within a given entrypoint, a module reached more
+  than once is counted exactly once.
+
+Because shared modules can't be split across entrypoints without double-counting,
+each package-level measurement is **pinned to a single real entrypoint** rather
+than summed across the whole report. SharedTree is measured from its own
+`sharedTree` bundle; the framework-wide numbers are measured from the
+`fluidFrameworkAll` aggregate bundle.
+
+The _Bundle composition by category_ table rolls those per-package sizes up into
+headline buckets. For each pinned entrypoint it reports the bundle's total Fluid
+Framework bytes, and a companion `+ 3rd-party deps` row that also folds in every
+third-party package in that same bundle. (Third-party bytes can't be split
+between the Fluid libraries that pull them in, because the flat per-package data
+carries no dependency graph; harness code is always excluded.)
+
+The _Per-package parsed-size comparison_ table is the full breakdown for the
+`fluidFrameworkAll` aggregate bundle: one row per owning package, sorted by
+current size descending, so the biggest contributors — and the biggest movers —
+are easy to find.
+
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
 <!-- prettier-ignore-start -->
