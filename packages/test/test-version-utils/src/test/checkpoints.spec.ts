@@ -64,7 +64,7 @@ describe("checkpoints", () => {
 	});
 
 	describe("getInWindowPriorCheckpoints", () => {
-		it("returns up to windowRadius prior checkpoints, newest first", () => {
+		it("returns up to fullCompatibilityWindowSize prior checkpoints, newest first", () => {
 			const cc4 = checkpoints.find((c) => c.name === "CC-4");
 			assert(cc4 !== undefined, "CC-4 expected in checkpoints");
 			const priors = getInWindowPriorCheckpoints(cc4);
@@ -74,7 +74,7 @@ describe("checkpoints", () => {
 			);
 		});
 
-		it("returns fewer than windowRadius entries near the start of the list", () => {
+		it("returns fewer than fullCompatibilityWindowSize entries near the start of the list", () => {
 			const cc1 = checkpoints.find((c) => c.name === "CC-1");
 			const cc2 = checkpoints.find((c) => c.name === "CC-2");
 			const cc3 = checkpoints.find((c) => c.name === "CC-3");

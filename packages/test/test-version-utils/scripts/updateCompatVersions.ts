@@ -211,6 +211,8 @@ async function main(): Promise<void> {
 	);
 
 	const checkpointVersions: string[] = [];
+	// Used to ensure versions are only installed once across all types of compat testing.
+	// `oldestCompatibleVersion` is added at the start to ensure it is installed.
 	const seenVersions = new Set<string>([oldestCompatibleVersion]);
 	for (const checkpoint of getInWindowPriorCheckpoints(currentCheckpoint)) {
 		const range = checkpointResolutionRange(checkpoint);
@@ -230,7 +232,8 @@ async function main(): Promise<void> {
 
 	// Resolve the layer-compat adjacent-minor version (N-1). Used by `defaultVersionsForLayerCompat`,
 	// which keeps adjacent-minor semantics because Fluid's intra-client layer-compat checks are
-	// stricter than the cross-client window.
+	// stricter than the cross-client window. N-1 and OCV are the only versions layer-compat needs;
+	// cross-client version will come from the checkpoints (resolved above).
 	console.log("\nResolving layer-compat (N-1)...");
 	const nMinus1 = resolveVersionForMinorDelta(pkgVer, -1);
 	if (nMinus1 === undefined) {

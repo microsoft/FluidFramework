@@ -27,7 +27,7 @@ checkpoints are designated.
 <!-- To modify this table, edit `packages/test/test-version-utils/src/checkpoints.ts` then run `pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc` -->
 
 <!-- prettier-ignore -->
-| Checkpoint | Version Range | Earliest Date | Compatible Checkpoints | Compatible Semantic Versions |
+| Checkpoint | Version Range | Start Date | Compatible Checkpoints | Compatible Semantic Versions |
 | --- | --- | --- | --- | --- |
 | CC-1 | `>=1.4.0 <2.0.0 \| 2.0.0-internal* \| 2.0.0-rc*` | 2024-04-09 | CC-1, CC-2, CC-3, CC-4 | `>=1.4.0 <2.101.0`` \| 2.0.0-internal* \| 2.0.0-rc*` |
 | CC-2 | `>=2.0.0 <2.40.0` | 2024-06-26 | CC-1, CC-2, CC-3, CC-4, CC-5 | `>=1.4.0 <4.0.0`(estimated)` \| 2.0.0-internal* \| 2.0.0-rc*` |

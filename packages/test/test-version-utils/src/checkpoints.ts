@@ -22,25 +22,54 @@ import * as path from "node:path";
 import * as semver from "semver";
 
 /**
- * Schema for a compatibility checkpoint.
+ * A designated compatibility checkpoint. Drives both the cross-client e2e test
+ * matrix (via {@link getInWindowPriorCheckpoints}) and the generated table in
+ * `CompatibilityCheckpoints.md` at the repo root.
  *
  * @internal
  */
 export interface Checkpoint {
+	/**
+	 * Identifier for the checkpoint (i.e."CC-3").
+	 */
 	readonly name: string;
+	/**
+	 * Position in the checkpoint sequence (i.e. 1, 2, 3, ...). Must be unique and
+	 * contiguous across {@link checkpoints} and {@link futureCheckpoints}.
+	 * Used to determine which checkpoints are within the cross-client compat range.
+	 */
 	readonly index: number;
 	/**
-	 * Lower bound of the CC range.
+	 * Inclusive lower bound of this checkpoint's version range.
 	 */
 	readonly openingVersion: string;
-	/** ISO date (YYYY-MM-DD). */
-	readonly earliestDate: string;
 	/**
-	 * Extra semver range fragments outside the `>=opening <next.opening`
-	 * shape. Used by `getCurrentCheckpoint` to map versions like
-	 * `2.0.0-rc.5.0.0` back to CC-1.
+	 * ISO `YYYY-MM-DD` date. For designated checkpoints, the release date of
+	 * `openingVersion`. For TBD entries in {@link futureCheckpoints}, the estimated
+	 * earliest date the checkpoint could be designated (6-month-cadence floor).
+	 */
+	readonly startDate: string;
+	/**
+	 * Extra semver ranges for versions that generic semver ranges do not
+	 * capture (i.e. the `2.0.0-internal.x.y.z` releases for CC-1).
 	 */
 	readonly additionalRanges?: readonly string[];
+}
+
+/**
+ * A {@link Checkpoint} extended with fields used only when rendering the
+ * generated table in `CompatibilityCheckpoints.md`. Not used by any runtime
+ * or test-matrix logic.
+ */
+interface DocumentedCheckpoint extends Checkpoint {
+	/** `"designated"` rows have real versions/dates; `"tbd"` rows are estimates. */
+	readonly status: "designated" | "tbd";
+	/**
+	 * Explicit upper bound (exclusive). When omitted, the upper bound is the next
+	 * checkpoint's opening version. Set for the last designated checkpoint and the
+	 * last checkpoint overall.
+	 */
+	readonly closingVersion?: string;
 }
 
 /**
@@ -55,38 +84,70 @@ export const checkpoints: readonly Checkpoint[] = [
 		name: "CC-1",
 		index: 1,
 		openingVersion: "1.4.0",
-		earliestDate: "2024-04-09",
+		startDate: "2024-04-09",
 		additionalRanges: ["2.0.0-internal*", "2.0.0-rc*"],
 	},
 	{
 		name: "CC-2",
 		index: 2,
 		openingVersion: "2.0.0",
-		earliestDate: "2024-06-26",
+		startDate: "2024-06-26",
 	},
 	{
 		name: "CC-3",
 		index: 3,
 		openingVersion: "2.40.0",
-		earliestDate: "2025-05-12",
+		startDate: "2025-05-12",
 	},
 	{
 		name: "CC-4",
 		index: 4,
 		openingVersion: "2.80.0",
-		earliestDate: "2026-01-06",
+		startDate: "2026-01-06",
 	},
 ];
 
 /**
- * Width of the cross-client compatibility window in either direction. Two
- * clients are guaranteed compatible iff their checkpoints are within
- * `windowRadius` indexes of each other (currently 3, ~18 months given
+ * Forecast of upcoming checkpoints, for documentation purposes only. Included so
+ * the generated `CompatibilityCheckpoints.md` table shows any planned future checkpoints.
+ * These are not consumed by any runtime or test-matrix logic.
+ * When a checkpoint is officially designated, move its entry from here into
+ * {@link checkpoints} above (and update its `startDate` to the actual release date).
+ */
+const futureCheckpoints: readonly DocumentedCheckpoint[] = [
+	{
+		name: "CC-5",
+		index: 5,
+		openingVersion: "3.0.0",
+		startDate: "2026-07-06",
+		status: "tbd",
+	},
+	{
+		name: "CC-6",
+		index: 6,
+		openingVersion: "4.0.0",
+		startDate: "2027-01-06",
+		status: "tbd",
+	},
+	{
+		name: "CC-7",
+		index: 7,
+		openingVersion: "5.0.0",
+		startDate: "2027-07-06",
+		status: "tbd",
+		closingVersion: "6.0.0",
+	},
+];
+
+/**
+ * Size of the cross-client compatibility window in both directions (older and newer).
+ * Two clients are guaranteed compatible if their checkpoints are within
+ * `fullCompatibilityWindowSize` indexes of each other (currently 3, ~18 months given
  * the 6-month cadence).
  *
  * @internal
  */
-export const windowRadius = 3;
+export const fullCompatibilityWindowSize = 3;
 
 /**
  * Returns the highest checkpoint whose `openingVersion` is at or below
@@ -135,7 +196,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 
 /**
  * Returns the prior in-window checkpoints relative to `current` from newest
- * to oldest. May return fewer than `windowRadius` entries when `current`
+ * to oldest. May return fewer than `fullCompatibilityWindowSize` entries when `current`
  * is near the start of the checkpoint list (e.g., `current === CC-1` returns
  * `[]`).
  *
@@ -143,7 +204,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
  */
 export function getInWindowPriorCheckpoints(current: Checkpoint): Checkpoint[] {
 	const result: Checkpoint[] = [];
-	for (let i = 1; i <= windowRadius; i++) {
+	for (let i = 1; i <= fullCompatibilityWindowSize; i++) {
 		const target = checkpoints.find((c) => c.index === current.index - i);
 		if (target) {
 			result.push(target);
@@ -193,47 +254,6 @@ const doNotEditNotice = [
 	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc\` -->`,
 ].join("\n");
 
-/** A checkpoint as rendered in the documentation table. */
-interface DocumentedCheckpoint extends Checkpoint {
-	/** `"designated"` rows have real versions/dates; `"tbd"` rows are estimates. */
-	readonly status: "designated" | "tbd";
-	/**
-	 * Explicit upper bound (exclusive). When omitted, the upper bound is the next
-	 * checkpoint's opening version. Set for the last designated checkpoint and the
-	 * last checkpoint overall.
-	 */
-	readonly closingVersion?: string;
-}
-
-/**
- * Future / TBD checkpoints for documentation purposes only. Move an entry to
- * {@link checkpoints} once it is officially designated.
- */
-const futureCheckpoints: readonly DocumentedCheckpoint[] = [
-	{
-		name: "CC-5",
-		index: 5,
-		openingVersion: "3.0.0",
-		earliestDate: "2026-07-06",
-		status: "tbd",
-	},
-	{
-		name: "CC-6",
-		index: 6,
-		openingVersion: "4.0.0",
-		earliestDate: "2027-01-06",
-		status: "tbd",
-	},
-	{
-		name: "CC-7",
-		index: 7,
-		openingVersion: "5.0.0",
-		earliestDate: "2027-07-06",
-		status: "tbd",
-		closingVersion: "6.0.0",
-	},
-];
-
 /**
  * Explicit upper bounds for designated checkpoints whose range does not end at
  * the next checkpoint's opening version.
@@ -271,7 +291,7 @@ function renderName(c: DocumentedCheckpoint): string {
 }
 
 function renderDate(c: DocumentedCheckpoint): string {
-	return c.status === "tbd" ? `~${c.earliestDate}` : c.earliestDate;
+	return c.status === "tbd" ? `~${c.startDate}` : c.startDate;
 }
 
 function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
@@ -282,7 +302,7 @@ function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
 }
 
 function compatibleCheckpointsOf(c: DocumentedCheckpoint): DocumentedCheckpoint[] {
-	return documentedCheckpoints.filter((x) => Math.abs(x.index - c.index) <= windowRadius);
+	return documentedCheckpoints.filter((x) => Math.abs(x.index - c.index) <= fullCompatibilityWindowSize);
 }
 
 function renderCompatibleCheckpoints(c: DocumentedCheckpoint): string {
@@ -325,7 +345,7 @@ function renderCheckpointsTable(): string {
 		doNotEditNotice,
 		"",
 		"<!-- prettier-ignore -->",
-		"| Checkpoint | Version Range | Earliest Date | Compatible Checkpoints | Compatible Semantic Versions |",
+		"| Checkpoint | Version Range | Start Date | Compatible Checkpoints | Compatible Semantic Versions |",
 		"| --- | --- | --- | --- | --- |",
 		rows,
 	].join("\n");

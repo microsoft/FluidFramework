@@ -224,10 +224,6 @@ To tighten runtime enforcement:
    (e.g., `2.x` → `3.x`), also narrow the `MinimumVersionForCollab` type in
    [compatibilityDefinitions.ts](./packages/runtime/runtime-definitions/src/compatibilityDefinitions.ts)
    to drop the now-unsupported major from its definition.
-3. **Update the e2e test matrix:** The `FullCompat` and cross-client matrices
-   are derived from the in-repo Compatibility Checkpoints data and follow
-   whichever checkpoints are currently in the supported window automatically;
-   see [Designating a New Compatibility Checkpoint](#designating-a-new-compatibility-checkpoint).
 
 ## Testing
 
