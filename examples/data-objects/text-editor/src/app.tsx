@@ -64,10 +64,6 @@ function getTinyliciousEndpoint(): string {
 
 /**
  * SharedTree configured to use the optimized "chunked" forest.
- * @remarks
- * The text domain stores text as long sequences of single-character nodes, which the chunked
- * forest keeps in compact uniform chunks rather than one allocation per character. This opts the
- * text editor into that in-memory representation instead of the default reference (object) forest.
  */
 const SharedTree = configuredSharedTreeAlpha({ forest: ForestTypeOptimized });
 
