@@ -40,7 +40,6 @@
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
-		"generate-checkpoints-doc": "jiti scripts/generateCheckpointsDoc.ts",
 		"postinstall": "pnpm --dir compat-workspaces/full install --frozen-lockfile --config.confirmModulesPurge=false",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",

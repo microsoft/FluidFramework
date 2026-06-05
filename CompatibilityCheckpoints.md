@@ -24,7 +24,7 @@ checkpoints are designated.
 
 <!-- GENERATED-TABLE-START -->
 <!-- NOTE: This table is automatically generated. Do not update it directly. -->
-<!-- To modify this table, edit `packages/test/test-version-utils/src/checkpoints.ts` then run `pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc` -->
+<!-- To modify this table, edit `packages/test/test-version-utils/src/checkpoints.ts` then run `pnpm --filter @fluid-private/test-version-utils run update-compat-versions` -->
 
 <!-- prettier-ignore -->
 | Checkpoint | Version Range | Start Date | Compatible Checkpoints | Compatible Semantic Versions |

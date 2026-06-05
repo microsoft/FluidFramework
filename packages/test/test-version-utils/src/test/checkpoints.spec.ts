@@ -100,7 +100,7 @@ describe("checkpoints", () => {
 				committed,
 				injectCheckpointsTable(committed),
 				`${compatibilityCheckpointsDocRelativePath} table is out of date. Regenerate it with ` +
-					"`pnpm --filter @fluid-private/test-version-utils run generate-checkpoints-doc`.",
+					"`pnpm --filter @fluid-private/test-version-utils run update-compat-versions`.",
 			);
 		});
 	});
