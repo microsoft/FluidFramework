@@ -27,10 +27,14 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	asAlpha,
+	configuredSharedTreeAlpha,
+	ForestTypeOptimized,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -57,6 +61,15 @@ function getTinyliciousEndpoint(): string {
 
 	return `http://localhost:${tinyliciousPort}`;
 }
+
+/**
+ * SharedTree configured to use the optimized "chunked" forest.
+ * @remarks
+ * The text domain stores text as long sequences of single-character nodes, which the chunked
+ * forest keeps in compact uniform chunks rather than one allocation per character. This opts the
+ * text editor into that in-memory representation instead of the default reference (object) forest.
+ */
+const SharedTree = configuredSharedTreeAlpha({ forest: ForestTypeOptimized });
 
 const containerSchema = {
 	initialObjects: {
