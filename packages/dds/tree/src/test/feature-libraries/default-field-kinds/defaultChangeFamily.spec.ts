@@ -732,6 +732,56 @@ describe("DefaultEditBuilder", () => {
 			assert.deepEqual(treeView, [expected]);
 		});
 
+		it("Can move nodes from field to a nested field under a sibling field of the same parent", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root_bar0, field: barKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
 		it("Can move nodes before an ancestor of the moved node", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: brand(JsonAsTree.JsonObject.identifier),
