@@ -119,7 +119,7 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 	table.insertColumns({ index: 0, columns });
 
 	// Pre populate each row's cells at construction time so the entire dense table is initialized
-	// by a single `insertRows` op. O(n)
+	// by a single `insertRows` op.
 	const columnIds = table.columns.map((column) => column.id);
 	const rows = Array.from({ length: tableSize }, () => {
 		const cells: Record<string, string> = {};
