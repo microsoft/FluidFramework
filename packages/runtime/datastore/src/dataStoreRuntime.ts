@@ -1575,6 +1575,9 @@ export class FluidDataStoreRuntime
 			...tagCodeArtifacts({
 				channelType,
 				channelId,
+				// Properties renamed in 2.103.0 (present via logger common props):
+				// fluidDataStoreId -> dataStoreId
+				// fluidDataStorePackagePath -> dataStorePackagePath
 			}),
 			stack: generateStack(30),
 		});

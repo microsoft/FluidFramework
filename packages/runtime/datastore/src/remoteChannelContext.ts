@@ -149,10 +149,7 @@ export class RemoteChannelContext implements IChannelContext {
 					"remoteChannelContextFailedToLoadChannel",
 				);
 				errorWrapped.addTelemetryProperties({
-					...dataStoreLoadTelemetryProps({
-						id: dataStoreContext.id,
-						packagePath: dataStoreContext.packagePath,
-					}),
+					...dataStoreLoadTelemetryProps(dataStoreContext),
 					...tagCodeArtifacts({ channelId: id, channelType }),
 				});
 

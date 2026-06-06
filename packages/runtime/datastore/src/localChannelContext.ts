@@ -290,10 +290,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						"rehydratedLocalChannelContextFailedToLoadChannel",
 					);
 					errorWrapped.addTelemetryProperties({
-						...dataStoreLoadTelemetryProps({
-							id: dataStoreContext.id,
-							packagePath: dataStoreContext.packagePath,
-						}),
+						...dataStoreLoadTelemetryProps(dataStoreContext),
 						...tagCodeArtifacts({ channelId: id, channelType }),
 					});
 
