@@ -9,6 +9,7 @@ import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import type { IContainer } from "@fluidframework/container-definitions/internal";
 import {
+	captureFullContainerState,
 	createDetachedContainer,
 	createFrozenDocumentServiceFactory,
 	loadExistingContainer,
@@ -1198,4 +1199,303 @@ describe("loadFrozenContainerFromPendingState", () => {
 			});
 		});
 	}
+
+	describe("offline (no driver wiring)", () => {
+		it("loads from pending state without request, urlResolver, or documentServiceFactory", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			for (let i = 0; i < 5; i++) {
+				ITestFluidObject.root.set(`attached-${i}`, i);
+			}
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			for (let i = 0; i < 3; i++) {
+				ITestFluidObject.root.set(`disconnected-${i}`, i);
+			}
+
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			// No request, urlResolver, or documentServiceFactory supplied — fully offline.
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				true,
+				"Expected offline frozen container to be readonly",
+			);
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.storageOnly,
+				true,
+				"Expected offline frozen container to be storage-only",
+			);
+
+			// `IContainer.resolvedUrl.id` must match the single-doc-id-segment
+			// shape that production resolvers emit (see localResolver.ts:58,
+			// odspDriverUrlResolver.ts:167, etc.), so downstream consumers
+			// keyed on `resolvedUrl.id` for telemetry / cache keys can't tell
+			// online and offline loads apart by shape. The source container
+			// was attached to the local resolver with `createCreateNewRequest`
+			// for "test", so the expected single-segment id is "test".
+			assert.strictEqual(
+				frozenContainer.resolvedUrl?.id,
+				"test",
+				"Expected offline frozen container's resolvedUrl.id to be the single doc-id segment",
+			);
+
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected offline frozen container entrypoint to be a valid TestFluidObject",
+			);
+			assert.deepEqual(
+				toComparableArray(frozenEntryPoint.ITestFluidObject.root),
+				toComparableArray(ITestFluidObject.root),
+				"Expected offline frozen container's data to match the source container's pending state",
+			);
+		});
+
+		it("throws from IContainer.getAbsoluteUrl on an offline-loaded container", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+
+			await assert.rejects(
+				async () => frozenContainer.getAbsoluteUrl(""),
+				/getAbsoluteUrl requires/,
+				"Expected getAbsoluteUrl on an offline-loaded container to throw",
+			);
+		});
+
+		it("rejects offline load when pendingLocalState.url is non-conforming", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const validPending = await getRequiredPendingLocalState(container);
+
+			// Mutate the captured pending state so its URL no longer satisfies
+			// tryParseCompatibleResolvedUrl's shape contract
+			// (`protocol://<string>/<tenantId>/<docId>(?...)`).
+			// Offline load must surface this as a UsageError naming the
+			// non-parseable URL rather than letting the failure manifest deeper
+			// in the load pipeline.
+			const parsedPending = JSON.parse(validPending) as { url: string };
+			parsedPending.url = "fluid://example.com/onlyonesegment";
+			const malformedPending = JSON.stringify(parsedPending);
+
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState({
+						codeLoader,
+						pendingLocalState: malformedPending,
+					}),
+				/pending state URL is not in a parseable form/,
+				"Expected offline load to reject a pending state whose URL fails tryParseCompatibleResolvedUrl",
+			);
+		});
+
+		it("rejects mixing offline and online props (only urlResolver supplied)", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("k", "v");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const pendingLocalState = await getRequiredPendingLocalState(container);
+
+			// Build the props in a loosely-typed bag so the discriminated-union
+			// type can be bypassed for the test, then route through a single
+			// variable-level assertion (object-literal assertions trip
+			// @typescript-eslint/consistent-type-assertions). The point of
+			// the test is exactly that this mixed shape — which the type
+			// system refuses to construct directly — gets caught at runtime.
+			const mixedProps: Record<string, unknown> = {
+				codeLoader,
+				pendingLocalState,
+				urlResolver,
+			};
+
+			await assert.rejects(
+				async () =>
+					loadFrozenContainerFromPendingState(
+						mixedProps as unknown as Parameters<typeof loadFrozenContainerFromPendingState>[0],
+					),
+				/must all be provided or all omitted/,
+				"Expected mixed driver wiring to throw a usage error",
+			);
+		});
+
+		// captureFullContainerState inlines referenced attachment blobs into
+		// the captured artifact, which is the documented precondition for an
+		// offline frozen load that has any blob in its referenced graph. The
+		// previous "loads from pending state without driver wiring" test sets
+		// only primitive DDS values, so this gap was not exercised — the
+		// `frozenReadBlobOfflineHandler` UsageError path only matters when
+		// the runtime actually dereferences an attachment blob during load.
+		it("round-trips an attachment blob through captureFullContainerState → offline frozen load", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader, documentServiceFactory } =
+				await initialize();
+
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			const blobPayload = "captured-offline-payload";
+			const blobHandle = await ITestFluidObject.runtime.uploadBlob(
+				stringToBuffer(blobPayload, "utf8"),
+			);
+			ITestFluidObject.root.set("blobHandle", blobHandle);
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+
+			const url = await container.getAbsoluteUrl("");
+			assert(url !== undefined, "Expected container to provide a valid absolute URL");
+
+			// captureFullContainerState uses driver-level services only —
+			// container/runtime are not instantiated here. The captured
+			// artifact is what a real offline-relay scenario would carry.
+			const pendingLocalState = await captureFullContainerState({
+				urlResolver,
+				documentServiceFactory,
+				request: { url },
+			});
+
+			// No driver wiring: this is the fully-offline form. If the
+			// captured artifact were missing inlined blob contents, the
+			// runtime's attempt to dereference `blobHandle` during load
+			// would hit `frozenReadBlobOfflineHandler` and surface a
+			// UsageError. The assertion that the blob round-trips is the
+			// positive-side proof that capture's inlining is wired in.
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState,
+			});
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected offline frozen container entrypoint to be a valid TestFluidObject",
+			);
+			const retrievedBlob = await frozenEntryPoint.ITestFluidObject.root
+				.get("blobHandle")
+				.get();
+			assert(retrievedBlob !== undefined, "Expected blob handle to resolve");
+			assert.strictEqual(
+				bufferToString(retrievedBlob, "utf8"),
+				blobPayload,
+				"Captured artifact must inline the blob; offline load has no live storage to fall back to",
+			);
+		});
+
+		// Capture-and-relay round-trip through a writable-offline load. The
+		// offline form's JSDoc explicitly supports `readOnly: false` for this
+		// use case: local DDS submissions accrue in the runtime's pending-state
+		// manager and are recoverable via `getPendingLocalState` for a later
+		// online replay. The online counterpart is "captures local writes in
+		// getPendingLocalState() and round-trips through a second frozen load"
+		// in the `readOnly: false` describe block — this is the same contract
+		// without any driver wiring on either load. Locks in the invariant
+		// that the synthesized offline driver wiring does not interfere with
+		// the runtime's pending-state accumulation.
+		it("captures local writes in getPendingLocalState() and round-trips through a second offline frozen load with readOnly: false", async () => {
+			const { container, ITestFluidObject, urlResolver, codeLoader } = await initialize();
+			await container.attach(urlResolver.createCreateNewRequest("test"));
+			ITestFluidObject.root.set("seed", "value");
+			if (container.isDirty) {
+				await timeoutPromise((resolve) => container.once("saved", () => resolve()));
+			}
+			container.disconnect();
+			const initialPending = await getRequiredPendingLocalState(container);
+
+			// First offline writable load — accept local writes with no driver wiring.
+			const frozenContainer = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: initialPending,
+				readOnly: false,
+			});
+			assert.strictEqual(
+				frozenContainer.readOnlyInfo.readonly,
+				false,
+				"Expected writable offline frozen container to report readonly === false",
+			);
+			const frozenEntryPoint: FluidObject<TestFluidObject> =
+				await frozenContainer.getEntryPoint();
+			assert(
+				frozenEntryPoint.ITestFluidObject !== undefined,
+				"Expected writable offline frozen container entrypoint to be a valid TestFluidObject",
+			);
+
+			for (let i = 0; i < 5; i++) {
+				frozenEntryPoint.ITestFluidObject.root.set(`pending-${i}`, i);
+			}
+
+			// Capture pending state from the writable-offline container. The
+			// load-bearing invariant: edits made post-load must round-trip
+			// through getPendingLocalState() even when the underlying driver
+			// wiring is fully synthesized.
+			const layeredPending = await getRequiredPendingLocalState(frozenContainer);
+			assert.notStrictEqual(
+				layeredPending,
+				initialPending,
+				"Expected getPendingLocalState() to capture additional ops from the writable offline frozen container",
+			);
+
+			// Second offline writable load from the layered pending state —
+			// still no driver wiring. The layered edits must be visible.
+			const secondFrozen = await loadFrozenContainerFromPendingState({
+				codeLoader,
+				pendingLocalState: layeredPending,
+				readOnly: false,
+			});
+			const secondEntryPoint: FluidObject<TestFluidObject> =
+				await secondFrozen.getEntryPoint();
+			assert(
+				secondEntryPoint.ITestFluidObject !== undefined,
+				"Expected second offline frozen entrypoint to be a valid TestFluidObject",
+			);
+			for (let i = 0; i < 5; i++) {
+				assert.strictEqual(
+					secondEntryPoint.ITestFluidObject.root.get(`pending-${i}`),
+					i,
+					`Expected pending-${i} from layered pending state to be visible in second offline frozen load`,
+				);
+			}
+			assert.strictEqual(
+				secondEntryPoint.ITestFluidObject.root.get("seed"),
+				"value",
+				"Expected seed from original snapshot to remain visible in second offline frozen load",
+			);
+		});
+
+		// Negative counterpart for the inlined-blob precondition is at the
+		// storage-layer unit-test level (frozenServices.spec.ts): when no
+		// inner factory is provided and the runtime ultimately calls
+		// `readBlob`, `frozenReadBlobOfflineHandler` throws a `UsageError`
+		// that names `captureFullContainerState`. The runtime caches blob
+		// bytes locally after a successful upload, so re-asserting it via
+		// `handle.get()` here would be racy across capture timing — the
+		// storage-layer assertion is the durable contract.
+	});
 });

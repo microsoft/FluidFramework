@@ -30,7 +30,7 @@ import {
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	type MonitoringContext,
 	raiseConnectedEvent,
 	createChildMonitoringContext,
@@ -94,7 +94,7 @@ export class RuntimeAttributorDataStoreChannel
 	public visibilityState: VisibilityState;
 	private readonly deferredAttached = new Deferred<void>();
 	private readonly mc: MonitoringContext;
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): TelemetryLoggerExt {
 		return this.mc.logger;
 	}
 

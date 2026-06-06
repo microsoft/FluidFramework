@@ -26,7 +26,7 @@ import type {
 import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
 	DataProcessingError,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	ThresholdCounter,
 	createChildLogger,
 	tagCodeArtifacts,
@@ -55,7 +55,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 

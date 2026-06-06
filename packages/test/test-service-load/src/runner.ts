@@ -21,7 +21,7 @@ import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/in
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import { getRetryDelayFromError } from "@fluidframework/driver-utils/internal";
 import { IInboundSignalMessage } from "@fluidframework/runtime-definitions/internal";
-import { GenericError, ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { GenericError, TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { getRequiredPendingLocalState } from "@fluidframework/test-utils/internal";
 import commander from "commander";
 
@@ -579,7 +579,7 @@ async function scheduleOffline(
 
 async function setupOpsMetrics(
 	container: IContainer,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	progressIntervalMs: number,
 	testRuntime: IFluidDataStoreRuntime,
 ): Promise<() => void> {

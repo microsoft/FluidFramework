@@ -152,7 +152,7 @@ import type {
 	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -735,7 +735,7 @@ function lastMessageFromMetadata(
  * to understand if/when it is hit.
  * We only want to log this once, to avoid spamming telemetry if we are wrong and these cases are hit commonly.
  */
-export let getSingleUseLegacyLogCallback = (logger: ITelemetryLoggerExt, type: string) => {
+export let getSingleUseLegacyLogCallback = (logger: TelemetryLoggerExt, type: string) => {
 	return (codePath: string): void => {
 		logger.sendTelemetryEvent({
 			eventName: "LegacyMessageFormat",
@@ -1360,7 +1360,25 @@ export class ContainerRuntime
 		return this._getAttachState();
 	}
 
-	public readonly isReadOnly = (): boolean => this.deltaManager.readOnlyInfo.readonly === true;
+	/**
+	 * Whether local op submission is currently disallowed.
+	 *
+	 * This is `true` in two distinct situations.
+	 *
+	 * First: the delta manager reports a read-only connection (host/service-imposed permission or connection state — the historical meaning of `readOnly`).
+	 *
+	 * Second: the `PendingStateManager` is replaying stashed ops (`isApplyingStashedOps`). During this window DDSes must not submit new local ops, as doing so would interleave fresh content ahead of the stashed pending stream and corrupt pending local state. Surfacing it through `isReadOnly()` lets DDSes that consult `readOnly` at realize time self-suppress; see the apply-lifecycle docs on `PendingStateManager` for the full rationale.
+	 *
+	 * Note this layers a third meaning ("transiently quiescing for stashed-op replay") onto the `readOnly` predicate, which is broader than its host/connection-permission origin.
+	 */
+	public readonly isReadOnly = (): boolean =>
+		// `_deltaManager` and `pendingStateManager` are both assigned partway
+		// through the constructor; `baseLogger` is built earlier and stamps
+		// `isReadOnly` on every error event (e.g. layer-compat failures
+		// during construction), so this can be called before either is
+		// assigned. Optional chains keep that window safe.
+		this._deltaManager?.readOnlyInfo.readonly === true ||
+		this.pendingStateManager?.isApplyingStashedOps === true;
 
 	/**
 	 * Current session schema - defines what options are on & off.
@@ -1597,6 +1615,8 @@ export class ContainerRuntime
 
 	private readonly extensions = new Map<ContainerExtensionId, ExtensionEntry>();
 
+	public readonly baseLogger: ITelemetryBaseLogger;
+
 	/***/
 	protected constructor(
 		context: IContainerContext,
@@ -1610,7 +1630,7 @@ export class ContainerRuntime
 		private readonly runtimeOptions: Readonly<ContainerRuntimeOptionsInternal>,
 		private readonly containerScope: FluidObject,
 		// Create a custom ITelemetryBaseLogger to output telemetry events.
-		public readonly baseLogger: ITelemetryBaseLogger,
+		baseLogger: ITelemetryBaseLogger,
 		existing: boolean,
 
 		blobManagerLoadInfo: IBlobManagerLoadInfo,
@@ -1663,14 +1683,19 @@ export class ContainerRuntime
 
 		this.isSnapshotInstanceOfISnapshot = snapshotWithContents !== undefined;
 
+		this.baseLogger = createChildLogger({
+			logger: baseLogger,
+			properties: {
+				error: {
+					inStagingMode: () => this.inStagingMode,
+					isApplyingStashedOps: () => this.pendingStateManager?.isApplyingStashedOps,
+					isReadOnly: () => this.isReadOnly(),
+				},
+			},
+		});
 		this.mc = createChildMonitoringContext({
 			logger: this.baseLogger,
 			namespace: "ContainerRuntime",
-			properties: {
-				all: {
-					inStagingMode: this.inStagingMode,
-				},
-			},
 		});
 
 		// Validate that the Loader is compatible with this Runtime.
@@ -1840,6 +1865,18 @@ export class ContainerRuntime
 			},
 			pendingRuntimeState?.pending,
 			this.baseLogger,
+			{
+				// PSM has cleared `isApplyingStashedOps`; `isReadOnly()` now
+				// reflects the network-readonly state again. Fan out so DDSes
+				// know they can submit once more. No open hook is needed —
+				// the apply window opens before `channelCollection` exists,
+				// so a fanout there would be a no-op; data stores instead
+				// pick up the initial readonly state from `isReadOnly()`
+				// when they're first asked.
+				onAfterStashedOpsApplied: () => {
+					this.notifyReadOnlyState();
+				},
+			},
 		);
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
@@ -2187,6 +2224,14 @@ export class ContainerRuntime
 			telemetryDocumentId: this.telemetryDocumentId,
 			groupedBatchingEnabled: this.groupedBatchingEnabled,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
+			// Number of ops since the last summary that this client is aware of (including ops still
+			// queued for processing). Computed as the gap between the latest known op sequence number
+			// and the sequence number of the message at which the last summary was taken (per snapshot
+			// metadata). Falls back to lastKnownSeqNumber when no prior summary message is recorded
+			// (e.g. new container or older snapshot without metadata).
+			numUnsummarizedOps:
+				this.deltaManager.lastKnownSeqNumber -
+				(this.messageAtLastSummary?.sequenceNumber ?? 0),
 			minVersionForCollab: this.minVersionForCollab,
 			// logging hardware telemetry
 			deviceSpec: { ...getDeviceSpec() },
@@ -2805,6 +2850,28 @@ export class ContainerRuntime
 			return;
 		}
 
+		// Invariant: the canSendOps edge in `setConnectionStateCore` — the
+		// only caller of this method — cannot fire while
+		// `applyStashedOpsAt` is in flight, because the loader awaits the
+		// apply before transitioning the runtime to a write-capable
+		// connection. If this assert ever fires, that contract has changed
+		// and the submit guard at `submit()` would catch a runtime-internal
+		// resubmit (`Rejoin`, `GC`, `FluidDataStoreOp`) for an op type
+		// outside the apply-window allowlist.
+		//
+		// The precondition is held by the load sequence: `loadRuntime2`
+		// awaits `pendingStateManager.applyStashedOpsAt(...)` before
+		// returning the runtime, and the loader gates `setLoaded` on that
+		// completion before any write-capable connection edge fires. A
+		// maintainer reordering either sequence (or adding a new
+		// `canSendOps` edge that fires before the apply resolves) is what
+		// would trip this assert.
+		// @see {@link ContainerRuntime.loadRuntime2} (awaits `applyStashedOpsAt`)
+		assert(
+			!this.pendingStateManager.isApplyingStashedOps,
+			"replayPendingStates must not be called during stashed-op apply window",
+		);
+
 		// Replaying is an internal operation and we don't want to generate noise while doing it.
 		// So temporarily disable dirty state change events, and save the old state.
 		// When we're done, we'll emit the event if the state changed.
@@ -2920,8 +2987,14 @@ export class ContainerRuntime
 		}
 	}
 
-	private readonly notifyReadOnlyState = (readonly: boolean): void =>
-		this.channelCollection.notifyReadOnlyState(readonly);
+	// Boolean payload from the `"readonly"` delta-manager event is intentionally
+	// ignored — `isReadOnly()` aggregates delta-manager readonly with the PSM
+	// apply window, and that aggregation is the source of truth for fanout.
+	// `channelCollection?.` guards against future wiring changes; both callers
+	// today (the `"readonly"` listener and `onAfterStashedOpsApplied`) fire
+	// after `channelCollection` is assigned.
+	private readonly notifyReadOnlyState = (_readonly?: boolean): void =>
+		this.channelCollection?.notifyReadOnlyState(this.isReadOnly());
 
 	public setConnectionState(canSendOps: boolean, clientId?: string): void {
 		this.setConnectionStateToConnectedOrDisconnected(canSendOps, clientId);
@@ -4078,7 +4151,7 @@ export class ContainerRuntime
 		/**
 		 * Logger to use for correlated summary events
 		 */
-		summaryLogger?: ITelemetryLoggerExt;
+		summaryLogger?: TelemetryLoggerExt;
 		/**
 		 * True to run garbage collection before summarizing; defaults to true
 		 */
@@ -4287,7 +4360,7 @@ export class ContainerRuntime
 			/**
 			 * Logger to use for logging GC events
 			 */
-			logger?: ITelemetryLoggerExt;
+			logger?: TelemetryLoggerExt;
 			/**
 			 * True to run GC sweep phase after the mark phase
 			 */
@@ -4718,7 +4791,7 @@ export class ContainerRuntime
 	 * @returns failed summarize result (IBaseSummarizeResult) if summary should be failed, undefined otherwise.
 	 */
 	private async shouldFailSummaryOnPendingOps(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		referenceSequenceNumber: number,
 		minimumSequenceNumber: number,
 		finalAttempt: boolean,
@@ -4839,6 +4912,52 @@ export class ContainerRuntime
 		metadata?: { localId: string; blobId?: string },
 	): void {
 		this.verifyNotClosed();
+
+		// Nothing should be submitting while we're replaying stashed ops.
+		// The runtime is readonly during the apply window (see
+		// `PendingStateManager._applyLifecycle`), so a compliant DDS skips
+		// submits. If we land here anyway, a DDS bypassed the readonly gate
+		// (e.g. a realize-time write that doesn't consult `readOnly`) and
+		// produced a local op that has no counterpart in the saved-op
+		// replay — we cannot reconcile the mismatch, so fail fatally. We
+		// check here (rather than at flush) because outbox flushes are
+		// deferred and the apply window could close before the offending op
+		// reaches the pending queue.
+		//
+		// Allowlist: `BlobAttach` is a runtime-internal op type that may
+		// legitimately fire during apply — produced by `sharePendingBlobs`,
+		// which is invoked from `loadRuntime2` before `applyStashedOpsAt`
+		// resolves. `IdAllocation` is not in this allowlist because the
+		// assert at 0x9a5 below enforces that it never reaches `submit()`
+		// at all; treating that assert as the single source of truth.
+		//
+		// Always surface the error event to telemetry on a bypass so we can
+		// attribute incidents regardless of the on-switch state. The
+		// `EnableSubmitDuringStashedApplyThrow` config opts in to the
+		// throw + container close; by default we log only, so a first- or
+		// third-party DDS that quietly bypasses the readonly gate in
+		// production is observable without escalating to a fatal close.
+		if (
+			this.pendingStateManager.isApplyingStashedOps &&
+			containerRuntimeMessage.type !== ContainerMessageType.BlobAttach
+		) {
+			const error = new UsageError("Local op submitted during stashed-op apply window", {
+				messageType: containerRuntimeMessage.type,
+			});
+			this.mc.logger.sendErrorEvent({ eventName: "SubmitDuringStashedOpApply" }, error);
+			if (
+				this.mc.config.getBoolean(
+					"Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow",
+				) === true
+			) {
+				// Close the container before throwing so the "throw + close"
+				// contract is enforced by this code path rather than by
+				// whichever caller happens to wrap the throw in `.catch(closeFn)`.
+				// `closeFn` is idempotent; a caller that also closes won't double-close.
+				this.closeFn(error);
+				throw error;
+			}
+		}
 
 		// There should be no ops in detached container state!
 		assert(
@@ -5228,7 +5347,7 @@ export class ContainerRuntime
 	private async fetchLatestSnapshotAndMaybeClose(
 		targetRefSeq: number,
 		targetAckHandle: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): Promise<void> {
 		const fetchedSnapshotRefSeq = await PerformanceEvent.timedExecAsync(
 			logger,
