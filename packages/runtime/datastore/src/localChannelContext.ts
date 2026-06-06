@@ -224,12 +224,16 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
 	) {
+		// `channelType` is not known until the LazyPromise body runs `loadChannelFactoryAndAttributes`.
+		// Pass a getter to `tagCodeArtifacts` so events log the type as soon as it's available.
+		let channelType: string | undefined;
+
 		const subLogger = createChildLogger({
 			logger,
 			namespace: "RehydratedLocalChannelContext",
 			properties: {
 				all: {
-					...tagCodeArtifacts({ channelId: id }), //* CPLT: Add channelType similar to remoteChannelContext
+					...tagCodeArtifacts({ channelId: id, channelType: () => channelType }),
 				},
 			},
 		});
@@ -266,6 +270,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.id,
 						registry,
 					);
+					channelType = attributes.type;
 					const channel = await loadChannel(
 						runtime,
 						attributes,
@@ -289,10 +294,10 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 							id: dataStoreContext.id,
 							packagePath: dataStoreContext.packagePath,
 						}),
-						...tagCodeArtifacts({ channelId: id }), //* CPLT: include channelType too
+						...tagCodeArtifacts({ channelId: id, channelType }),
 					});
 
-					//* CPLT Add similar comment to other class
+					// "Realize" is another name for instantiating the channel for a context
 					subLogger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
 					throw errorWrapped;
 				}

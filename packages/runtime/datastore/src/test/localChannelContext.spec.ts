@@ -134,31 +134,16 @@ describe("LocalChannelContext Tests", () => {
 			},
 		);
 
-		const failureEvents = mockLogger.events.filter(
-			(event) =>
-				typeof event.eventName === "string" && event.eventName.endsWith("ChannelLoadFailure"),
-		);
-		assert.strictEqual(
-			failureEvents.length,
-			1,
-			"ChannelLoadFailure should be logged exactly once",
-		);
-		const failureEvent = failureEvents[0];
-		assert(failureEvent !== undefined);
-		assert.deepStrictEqual(
-			failureEvent.fluidDataStoreId,
-			{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
-			"event should include tagged fluidDataStoreId",
-		);
-		assert.deepStrictEqual(
-			failureEvent.fullPackageName,
-			{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
-			"event should include tagged fullPackageName",
-		);
-		assert.deepStrictEqual(
-			failureEvent.channelId,
-			{ value: channelId, tag: TelemetryDataTag.CodeArtifact },
-			"event should include tagged channelId",
+		mockLogger.assertMatchAny(
+			[
+				{
+					eventName: "RehydratedLocalChannelContext:RealizeError",
+					fluidDataStoreId: { value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+					fullPackageName: { value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+					channelId: { value: channelId, tag: TelemetryDataTag.CodeArtifact },
+				},
+			],
+			"Expected one RealizeError event with tagged data-store and channel props",
 		);
 	});
 });

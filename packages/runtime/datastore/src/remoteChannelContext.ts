@@ -74,6 +74,10 @@ export class RemoteChannelContext implements IChannelContext {
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
+		// `channelType` is not known until the LazyPromise body runs `loadChannelFactoryAndAttributes`.
+		// Pass a getter to `tagCodeArtifacts` so events log the type as soon as it's available.
+		let channelType: string | undefined;
+
 		this.subLogger = createChildLogger({
 			logger: runtime.logger,
 			namespace: "RemoteChannelContext",
@@ -81,8 +85,7 @@ export class RemoteChannelContext implements IChannelContext {
 				all: {
 					...tagCodeArtifacts({
 						channelId: this.id,
-						//* CPLT pull this into a local let variable and then set it below once we get attributes in the LazyPromise callback
-						channelType: undefined,
+						channelType: () => channelType,
 					}),
 				},
 			},
@@ -108,6 +111,7 @@ export class RemoteChannelContext implements IChannelContext {
 					registry,
 					attachMessageType,
 				);
+				channelType = attributes.type;
 
 				const channel = await loadChannel(
 					runtime,
@@ -149,7 +153,7 @@ export class RemoteChannelContext implements IChannelContext {
 						id: dataStoreContext.id,
 						packagePath: dataStoreContext.packagePath,
 					}),
-					...tagCodeArtifacts({ channelId: id }), //* CPLT include channelType too
+					...tagCodeArtifacts({ channelId: id, channelType }),
 				});
 
 				// "Realize" is another name for instantiating the channel for a context
