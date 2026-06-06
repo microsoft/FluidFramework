@@ -155,10 +155,10 @@ export function dataStoreLoadTelemetryProps(props: {
 	packagePath: readonly string[];
 }): ITelemetryPropertiesExt {
 	const { id, packagePath } = props;
-	const fullPackageName = packagePath.length > 0 ? packagePath.join("/") : undefined;
+	const dataStorePackagePath = packagePath.length > 0 ? packagePath.join("/") : undefined;
 	return tagCodeArtifacts({
-		fullPackageName, //* dataStorePackagePath
-		fluidDataStoreId: id, //* dataStoreId
+		dataStorePackagePath, // aka fullPackageName, before 2.103.0
+		dataStoreId: id, // aka fluidDataStoreId, before 2.103.0
 	});
 }
 
