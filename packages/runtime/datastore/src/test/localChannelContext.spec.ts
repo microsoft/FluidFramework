@@ -138,8 +138,8 @@ describe("LocalChannelContext Tests", () => {
 			[
 				{
 					eventName: "RehydratedLocalChannelContext:RealizeError",
-					fluidDataStoreId: { value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
-					fullPackageName: { value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+					dataStoreId: { value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+					dataStorePackagePath: { value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
 					channelId: { value: channelId, tag: TelemetryDataTag.CodeArtifact },
 				},
 			],
