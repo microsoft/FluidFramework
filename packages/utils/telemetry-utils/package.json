@@ -150,7 +150,27 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_ITelemetryErrorEventExt": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ITelemetryGenericEventExt": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_ITelemetryLoggerExt": {
+				"backCompat": false
+			},
+			"Interface_ITelemetryPerformanceEventExt": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_TelemetryEventCategory": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
