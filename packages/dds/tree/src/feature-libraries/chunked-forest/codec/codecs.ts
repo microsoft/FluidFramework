@@ -30,13 +30,22 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
 	EncodedFieldBatchV2,
+	EncodedFieldBatchVTextExperimental,
 	FieldBatchFormatVersion,
 	supportsIncrementalEncoding,
 	type EncodedFieldBatchV1OrV2,
 } from "./format/index.js";
 import type { IncrementalEncodingPolicy } from "./incrementalEncodingPolicy.js";
-import { schemaCompressedEncodeV1, schemaCompressedEncodeV2 } from "./schemaBasedEncode.js";
-import { uncompressedEncodeV1, uncompressedEncodeV2 } from "./uncompressedEncode.js";
+import {
+	schemaCompressedEncodeV1,
+	schemaCompressedEncodeV2,
+	schemaCompressedEncodeVTextExperimental,
+} from "./schemaBasedEncode.js";
+import {
+	uncompressedEncodeV1,
+	uncompressedEncodeV2,
+	uncompressedEncodeVTextExperimental,
+} from "./uncompressedEncode.js";
 
 /**
  * Reference ID for a chunk that is incrementally encoded.
@@ -257,6 +266,16 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 			uncompressedEncodeV2,
 			schemaCompressedEncodeV2,
 			EncodedFieldBatchV2,
+		),
+	},
+	{
+		minVersionForCollab: undefined,
+		formatVersion: FieldBatchFormatVersion.vTextExperimental,
+		codec: makeFieldBatchCodecForVersion(
+			FieldBatchFormatVersion.vTextExperimental,
+			uncompressedEncodeVTextExperimental,
+			schemaCompressedEncodeVTextExperimental,
+			EncodedFieldBatchVTextExperimental,
 		),
 	},
 ]);

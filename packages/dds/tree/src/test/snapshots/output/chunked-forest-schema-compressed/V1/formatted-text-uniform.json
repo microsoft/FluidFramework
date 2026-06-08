@@ -1,0 +1,259 @@
+{
+  "version": 2,
+  "identifiers": [
+    ""
+  ],
+  "shapes": [
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.boolean",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.string",
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            5
+          ]
+        ]
+      }
+    },
+    {
+      "a": 6
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            7
+          ],
+          [
+            "format",
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.CharacterFormat",
+        "value": false,
+        "fields": [
+          [
+            "bold",
+            1
+          ],
+          [
+            "italic",
+            1
+          ],
+          [
+            "underline",
+            1
+          ],
+          [
+            "size",
+            9
+          ],
+          [
+            "font",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true
+      }
+    }
+  ],
+  "data": [
+    [
+      3,
+      [
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial",
+        0,
+        "a",
+        false,
+        false,
+        false,
+        12,
+        "Arial"
+      ]
+    ]
+  ]
+}

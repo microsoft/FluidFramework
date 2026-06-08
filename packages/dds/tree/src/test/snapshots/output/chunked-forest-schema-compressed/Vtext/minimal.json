@@ -1,0 +1,17 @@
+{
+  "version": "text",
+  "identifiers": [],
+  "shapes": [
+    {
+      "c": {
+        "type": "test.minimal",
+        "value": false
+      }
+    }
+  ],
+  "data": [
+    [
+      0
+    ]
+  ]
+}

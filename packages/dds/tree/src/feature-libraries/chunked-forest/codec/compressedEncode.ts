@@ -53,6 +53,7 @@ export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
 ): EncodedFieldBatchV1OrV2 {
+	context.beginBatch(fieldBatch);
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -61,7 +62,9 @@ export function compressedEncode(
 		anyFieldEncoder.encodeField(cursor, context, buffer);
 		batchBuffer.push(buffer);
 	}
-	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
+	const result = updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
+	context.endBatch();
+	return result;
 }
 
 export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
@@ -540,7 +543,41 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 * See {@link FieldBatchEncodingContext.isSummary}.
 		 */
 		public readonly isSummary: boolean,
+		/**
+		 * Optional hook invoked by {@link beginBatch} at the start of every {@link compressedEncode}
+		 * call (including the recursive sub-chunk calls made by {@link incrementalFieldEncoder}).
+		 * Lets an encoder policy set up state scoped to a single batch. The VText encoder
+		 * pushes a fresh per-batch specialization state and runs its counting pass. Paired with
+		 * {@link onEndBatch}.
+		 * @remarks
+		 * The per-batch state is owned and typed by the policy, not by this generic context;
+		 * keeping it off the encoder instances is what lets recursive sub-chunk encodes get their
+		 * own state with no snapshot/restore.
+		 */
+		private readonly onBeginBatch:
+			| ((fieldBatch: FieldBatch, context: EncoderContext) => void)
+			| undefined = undefined,
+		/**
+		 * Optional hook invoked by {@link endBatch} when a {@link compressedEncode} call completes,
+		 * to tear down the per-batch state set up by {@link onBeginBatch}.
+		 */
+		private readonly onEndBatch: (() => void) | undefined = undefined,
 	) {}
+
+	/**
+	 * Invoke the {@link onBeginBatch} hook (if any) at the start of a {@link compressedEncode}
+	 * call. No-op for encoders with no per-batch state (e.g. V1/V2).
+	 */
+	public beginBatch(fieldBatch: FieldBatch): void {
+		this.onBeginBatch?.(fieldBatch, this);
+	}
+
+	/**
+	 * Invoke the {@link onEndBatch} hook (if any) when a {@link compressedEncode} call completes.
+	 */
+	public endBatch(): void {
+		this.onEndBatch?.();
+	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>

@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "leaf": 2
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "com.fluidframework.text.formatted.CharacterFormat": {
+      "object": {
+        "bold": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        },
+        "font": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        },
+        "italic": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        },
+        "size": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "underline": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.StringArray": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.text.formatted.StringAtom"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.StringAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.StringLineAtom",
+            "com.fluidframework.text.formatted.StringTextAtom"
+          ]
+        },
+        "format": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.CharacterFormat"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.StringLineAtom": {
+      "object": {
+        "indent": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "tag": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.lineTag.blockquote",
+            "com.fluidframework.text.formatted.lineTag.checked",
+            "com.fluidframework.text.formatted.lineTag.codeBlock",
+            "com.fluidframework.text.formatted.lineTag.h1",
+            "com.fluidframework.text.formatted.lineTag.h2",
+            "com.fluidframework.text.formatted.lineTag.h3",
+            "com.fluidframework.text.formatted.lineTag.h4",
+            "com.fluidframework.text.formatted.lineTag.h5",
+            "com.fluidframework.text.formatted.lineTag.li",
+            "com.fluidframework.text.formatted.lineTag.ol",
+            "com.fluidframework.text.formatted.lineTag.unchecked"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.Text": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.StringArray"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.lineTag.blockquote": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.checked": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.codeBlock": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.h1": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.h2": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.h3": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.h4": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.h5": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.li": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.ol": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.lineTag.unchecked": {
+      "object": {}
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.formatted.Text"
+    ]
+  }
+}
