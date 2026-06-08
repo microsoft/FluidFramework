@@ -720,7 +720,6 @@ export const shortCodeMap = {
 	"0x55e": "nested offset requires nested cursor",
 	"0x55f": "indexes should match if at root",
 	"0x560": "expect valid field key",
-	"0x561": "expected root at start",
 	"0x562": "expected root to be a field",
 	"0x563": "can not exit root field",
 	"0x56e": "summary upload manager should have been initialized",
@@ -1523,8 +1522,6 @@ export const shortCodeMap = {
 	"0xb07": "empty cursor has no nodes",
 	"0xb08": "empty cursor has no nodes",
 	"0xb09": "not in a field",
-	"0xb0a": "navigation up to root field not yet supported",
-	"0xb0b": "navigation up to root field not yet supported",
 	"0xb0c": "children should have parents",
 	"0xb0d": "Child changes not supported",
 	"0xb0e": "Unknown TreeNodeStoredSchema type",
@@ -1788,7 +1785,6 @@ export const shortCodeMap = {
 	"0xc4e": "attach should happen in a node",
 	"0xc4f": "Should not have a dispose function without listeners",
 	"0xc51": "Event handler disposed.",
-	"0xc52": "Buffered kernel events should have been flushed before disposing.",
 	"0xc53": "Couldn't find a matching storage ID",
 	"0xc54": "Unexpected leaf value",
 	"0xc55": "Cannot switch branches during a transaction",
@@ -1944,5 +1940,6 @@ export const shortCodeMap = {
 	"0xcfd": "shape at index must be a concrete (c) or specialized (f) node shape",
 	"0xcfe": "duplicate field key in base node shape",
 	"0xcff": "duplicate field key in specialized node shape",
-	"0xd00": "expected existing field index"
+	"0xd00": "expected existing field index",
+	"0xd01": "replayPendingStates must not be called during stashed-op apply window"
 };
