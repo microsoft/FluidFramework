@@ -212,33 +212,33 @@ stages:
                 displayName: 'Upload JSON'
                 continueOnError: true
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --verbose
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n $(Build.SourceVersion).tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --verbose
 
               - task: AzureCLI@2
                 displayName: 'Upload JSON as latest.tar.gz'
                 continueOnError: true
                 condition: eq(variables['Build.SourceBranchName'], 'main')
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest.tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --overwrite --verbose
 
               - task: AzureCLI@2
                 displayName: 'Upload JSON as latest-v*.tar.gz'
                 continueOnError: true
                 condition: eq(variables.isLatestMinorOfMajorTrain, true)
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
-                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT) --auth-mode login --overwrite --verbose
+                    az storage blob upload -f '$(Pipeline.Workspace)/$(Build.SourceVersion).tar.gz' -c 'api-extractor-json' -n latest-v$(majorVersion).tar.gz --account-name $(STORAGE_ACCOUNT_NEW) --auth-mode login --overwrite --verbose
 
 # Runs TriggerBuild@4 to trigger the deploy-website pipeline
 # this stage runs depending on the check_branch_version stage and deployOverride parameter

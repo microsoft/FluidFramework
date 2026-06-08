@@ -16,7 +16,7 @@ steps:
   displayName: Upload release reports
   continueOnError: true
   inputs:
-    azureSubscription: 'fluid-docs'
+    azureSubscription: 'fluid-docs-torus'
     scriptType: bash
     workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
     scriptLocation: inlineScript
@@ -40,7 +40,7 @@ steps:
         # for manifest files for a particular build (immutable) or for those for a particular
         # release (updates with our release cycle), but using a shorter TTL for all risks only small
         # perf losses while remaining simple.
-        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
+        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT_NEW) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
       done
       # Delete generate_release_reports and upload_release_reports folder
       rm -rf generate_release_reports upload_release_reports
