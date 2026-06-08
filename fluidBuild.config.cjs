@@ -7,6 +7,8 @@
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
 
+const { buildProject } = require("./_buildProject.config.cjs");
+
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
 
 // release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
@@ -30,6 +32,7 @@ const releaseGroupPackageJsonGlobs = [
  */
 module.exports = {
 	version: 1,
+	buildProject,
 	tasks: {
 		"ci:build": {
 			dependsOn: [
@@ -299,43 +302,6 @@ module.exports = {
 			],
 			gitignore: ["input", "output"],
 		},
-	},
-
-	// This defines the layout of the repo for fluid-build. It applies to the whole repo.
-	repoPackages: {
-		// Release groups
-		"client": {
-			directory: "",
-			ignoredDirs: [],
-			defaultInterdependencyRange: "workspace:~",
-		},
-		"build-tools": {
-			directory: "build-tools",
-		},
-		"server": {
-			directory: "server/routerlicious",
-		},
-		"gitrest": {
-			directory: "server/gitrest",
-		},
-		"historian": {
-			directory: "server/historian",
-		},
-
-		// Independent packages
-		"build-common": "common/build/build-common",
-		"eslint-config-fluid": "common/build/eslint-config-fluid",
-		"eslint-plugin-fluid": "common/build/eslint-plugin-fluid",
-		"common-utils": "common/lib/common-utils",
-		"protocol-def": "common/lib/protocol-definitions",
-
-		// Tools
-		"tools": [
-			"tools/api-markdown-documenter",
-			"tools/benchmark",
-			"tools/getkeys",
-			"tools/test-tools",
-		],
 	},
 
 	// `flub check policy` config. It applies to the whole repo.
