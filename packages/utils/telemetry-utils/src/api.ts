@@ -6,13 +6,6 @@
 // eslint-disable-next-line no-restricted-syntax
 export * from "./main.js";
 
-// Additional APIs that are special and thus left out of the common export set.
-export type {
-	// ITelemetryLoggerExt is temporarily set to an alias of `TelemetryLoggerExt` when imported from "/internal".
-	// Add it to "/legacy" export set here.
-	ITelemetryLoggerExt,
-} from "./telemetryTypes.js";
-
 // ----------------------------------------------------------------------------
 // Export `createChildLogger` helper without internal `TelemetryLoggerExt`
 
