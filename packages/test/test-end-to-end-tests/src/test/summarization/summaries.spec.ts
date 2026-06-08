@@ -13,10 +13,10 @@ import {
 	itExpects,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import {
+import type {
 	ContainerRuntime,
 	ISummarizeResults,
-	type ISummarizer,
+	ISummarizer,
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryBlob, ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { ISummaryContext } from "@fluidframework/driver-definitions/internal";

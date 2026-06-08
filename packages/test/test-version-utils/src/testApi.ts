@@ -539,10 +539,12 @@ export interface CompatApis {
 	driver: ReturnType<typeof getDriverApi>;
 	loader: ReturnType<typeof getLoaderApi>;
 
-	// Cross-Client Compat APIs
-	containerRuntimeForLoading?: ReturnType<typeof getContainerRuntimeApi>;
-	dataRuntimeForLoading?: ReturnType<typeof getDataRuntimeApi>;
-	ddsForLoading?: ReturnType<typeof getDataRuntimeApi>["dds"];
-	driverForLoading?: ReturnType<typeof getDriverApi>;
-	loaderForLoading?: ReturnType<typeof getLoaderApi>;
+	// APIs used for loading containers. Tests always use one set of APIs for creating containers
+	// and another for loading them. In cross-client compat mode these are different versions from the
+	// APIs above; in all other modes they are the same versions as the APIs above.
+	containerRuntimeForLoading: ReturnType<typeof getContainerRuntimeApi>;
+	dataRuntimeForLoading: ReturnType<typeof getDataRuntimeApi>;
+	ddsForLoading: ReturnType<typeof getDataRuntimeApi>["dds"];
+	driverForLoading: ReturnType<typeof getDriverApi>;
+	loaderForLoading: ReturnType<typeof getLoaderApi>;
 }

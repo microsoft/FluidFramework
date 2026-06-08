@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/mocha-test-setup",
-	"version": "2.102.0",
+	"version": "2.110.0",
 	"description": "Utilities for Fluid tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,21 +14,13 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
+			"default": "./lib/index.js"
 		},
 		"./mocharc-common": {
-			"require": "./mocharc-common.cjs"
+			"require": "./mocharc-common-cjswrapper.cjs",
+			"default": "./lib/mocharcCommon.js"
 		}
 	},
-	"main": "dist/index.js",
-	"types": "dist/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:commonjs": "fluid-build . --task commonjs",
@@ -37,11 +29,10 @@
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./mocharc-common",
+		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./mocharc-common",
 		"check:biome": "biome check .",
 		"check:exports": "concurrently \"npm:check:exports:*\"",
 		"check:exports:bundle-release-tags": "api-extractor run --config api-extractor/api-extractor-lint-bundle.json",
-		"check:exports:cjs:index": "api-extractor run --config api-extractor/api-extractor-lint-index.cjs.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
 		"ci:build:docs": "api-extractor run",
@@ -51,8 +42,7 @@
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
-		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
+		"lint:fix": "fluid-build . --task eslint:fix --task format"
 	},
 	"dependencies": {
 		"@fluid-internal/test-driver-definitions": "workspace:~",
@@ -78,12 +68,14 @@
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
-		"_tasks_comment": "build:esnext is configured to depend on tsc task as all consumers configure mocha using CommonJS. Building CommonJS when ESM is requested ensures the CommonJS expectation is satisfied.",
+		"_tasks_comment": "tsc is configured to depend on build:esnext task as all CommonJS consumers expect mocha support which is implemented in ESM. Building ESM when CommonJS is requested ensures the implementation expectation is satisfied.",
 		"tasks": {
-			"build:esnext": [
-				"...",
-				"tsc"
-			]
+			"tsc": {
+				"dependsOn": [
+					"build:esnext"
+				],
+				"script": false
+			}
 		}
 	},
 	"typeValidation": {

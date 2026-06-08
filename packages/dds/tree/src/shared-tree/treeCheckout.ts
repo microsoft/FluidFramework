@@ -8,10 +8,7 @@ import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/i
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -97,7 +94,6 @@ import {
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type RunTransactionSyncParams,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -105,7 +101,6 @@ import {
 	customFromCursorStored,
 	type CustomTreeValue,
 	type CustomTreeNode,
-	withBufferedTreeEvents,
 } from "../simple-tree/index.js";
 import {
 	Breakable,
@@ -311,7 +306,7 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: ITelemetryLoggerExt;
+		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
@@ -530,7 +525,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor,
 		),
 		/** Optional logger for telemetry. */
-		private readonly logger?: ITelemetryLoggerExt,
+		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
@@ -870,11 +865,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
@@ -882,30 +877,11 @@ export class TreeCheckout implements ITreeCheckout {
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const transactionCore = ():
-			| TransactionResultExt<TSuccessValue, TFailureValue>
-			| TransactionResult => {
-			this.mountTransaction(params, false);
-			const transactionCallbackStatus = transaction();
-			return this.unmountTransaction(transactionCallbackStatus, params);
-		};
-		if (params?.deferEvents !== true) {
-			return transactionCore();
-		}
-
-		let result:
-			| TransactionResultExt<TSuccessValue, TFailureValue>
-			| TransactionResult
-			| undefined;
-		withBufferedTreeEvents(() => {
-			result = transactionCore();
-			// On rollback, the tree is restored to its starting state, so any buffered events
-			// represent net-zero changes and should not be surfaced to listeners.
-			return !result.success;
-		});
-		return result ?? fail("withBufferedTreeEvents should have invoked its callback");
+		this.mountTransaction(params, false);
+		const transactionCallbackStatus = transaction();
+		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(

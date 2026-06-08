@@ -50,7 +50,7 @@ const waitForDataCorruption = async (container: IFluidContainer): Promise<void> 
 		}),
 	);
 
-for (const compatibilityMode of ["1", "2"] as const) {
+for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, function () {
 		let tinyliciousClient: TinyliciousClient;
 		const schema = {

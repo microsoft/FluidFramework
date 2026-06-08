@@ -10,7 +10,7 @@ import type {
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICacheAndTracker } from "../epochTracker.js";
 import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore.js";
@@ -25,7 +25,7 @@ import { LocalOdspDocumentService } from "./localOdspDocumentService.js";
  * content directly.
  */
 export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryCore {
-	private readonly logger: ITelemetryLoggerExt = createOdspLogger();
+	private readonly logger: TelemetryLoggerExt = createOdspLogger();
 
 	constructor(private readonly localSnapshot: Uint8Array | string) {
 		super(
@@ -57,7 +57,7 @@ export class LocalOdspDocumentServiceFactory extends OdspDocumentServiceFactoryC
 
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
-		odspLogger: ITelemetryLoggerExt,
+		odspLogger: TelemetryLoggerExt,
 		_cacheAndTrackerArg?: ICacheAndTracker,
 		_clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
