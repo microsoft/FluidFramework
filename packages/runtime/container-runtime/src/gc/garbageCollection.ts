@@ -19,7 +19,7 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataProcessingError,
 	type MonitoringContext,
 	PerformanceEvent,
@@ -498,7 +498,7 @@ export class GarbageCollector implements IGarbageCollector {
 			/**
 			 * Logger to use for logging GC events
 			 */
-			logger?: ITelemetryLoggerExt;
+			logger?: TelemetryLoggerExt;
 			/**
 			 * True to run GC sweep phase after the mark phase
 			 */
@@ -605,7 +605,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -796,7 +796,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
 		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear

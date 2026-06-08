@@ -14,7 +14,7 @@ import {
 	UsageError,
 	createChildLogger,
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";
@@ -194,7 +194,7 @@ export const estimateSocketSize = (batch: OutboundBatch): number => {
  * to support slight variation in semantics for each batch (e.g. support for rebasing or grouping).
  */
 export class Outbox {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private readonly mainBatch: BatchManager;
 	private readonly blobAttachBatch: BatchManager;
 	private batchRebasesToReport = 5;

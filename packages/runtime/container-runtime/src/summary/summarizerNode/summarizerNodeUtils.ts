@@ -6,7 +6,7 @@
 import type { SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -67,7 +67,7 @@ export type ValidateSummaryResult =
 export interface ISummarizerNodeRootContract {
 	startSummary(
 		referenceSequenceNumber: number,
-		summaryLogger: ITelemetryLoggerExt,
+		summaryLogger: TelemetryLoggerExt,
 		latestSummaryRefSeqNum: number,
 	): IStartSummaryResult;
 	validateSummary(): ValidateSummaryResult;
