@@ -120,8 +120,8 @@ describe("RemoteChannelContext Tests", () => {
 			(error: IErrorBase) => {
 				assert.strictEqual(
 					error.errorType,
-					ContainerErrorTypes.dataProcessingError,
-					"thrown error should be a DataProcessingError",
+					ContainerErrorTypes.dataCorruptionError,
+					"thrown error should be a DataCorruptionError",
 				);
 				assert(isFluidError(error), "thrown error should be a Fluid error");
 				return true;
@@ -131,7 +131,7 @@ describe("RemoteChannelContext Tests", () => {
 		mockLogger.assertMatchAny(
 			[
 				{
-					eventName: "RemoteChannelContext:RealizeError",
+					eventName: "FluidDataStoreRuntime:RemoteChannelContext:RealizeError",
 					dataStoreId: { value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
 					dataStorePackagePath: { value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
 					channelId: { value: channelId, tag: TelemetryDataTag.CodeArtifact },

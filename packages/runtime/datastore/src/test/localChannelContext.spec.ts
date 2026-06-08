@@ -126,8 +126,8 @@ describe("LocalChannelContext Tests", () => {
 			(error: IErrorBase) => {
 				assert.strictEqual(
 					error.errorType,
-					ContainerErrorTypes.dataProcessingError,
-					"thrown error should be a DataProcessingError",
+					ContainerErrorTypes.dataCorruptionError,
+					"thrown error should be a DataCorruptionError",
 				);
 				assert(isFluidError(error), "thrown error should be a Fluid error");
 				return true;
