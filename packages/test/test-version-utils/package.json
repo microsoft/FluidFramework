@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.103.0",
+	"version": "2.110.0",
 	"description": "End to end compatibility test infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
