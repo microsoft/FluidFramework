@@ -417,7 +417,7 @@ stages:
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                pnpm exec tenant-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }}
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -427,7 +427,7 @@ stages:
           env:
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
-            # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
+            # The ODSP tenant setup script (tenant-setup) sets login__odsp__fic__test__users
             # and token__package__import__location as pipeline variables. The e2e test workload reads
             # those plus login__microsoft__clientId (sourced from prague-key-vault).
             ${{ if or(eq(parameters.odspTenantType, 'dogfood'), eq(parameters.odspTenantType, 'prod')) }}:
@@ -515,7 +515,7 @@ stages:
               workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
-                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                pnpm exec tenant-cleanup --odspEndpoint=${{ parameters.odspTenantType }}
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Stop the docker environment if running against it
