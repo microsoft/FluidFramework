@@ -22,21 +22,25 @@
 
 ## Introduction
 
-This document explains the pattern for writing end-to-end (e2e) tests that generate **summaries**. The canonical examples live under [`src/test/summarization/`](./src/test/summarization/).
+This document explains the pattern for writing end-to-end (e2e) tests that generate **summaries**.
+The canonical examples live under [`src/test/summarization/`](./src/test/summarization/).
 
 ## Why a dedicated summarizer
 
-In production, summaries are produced by a single elected **summarizer client** - a non-interactive container that the runtime spins up in the background and generates summaries based on heuristics. In a test you want to control _exactly when_ a summary happens and _what_ goes into it, so you:
+In production, summaries are produced by a single elected **summarizer client** - a non-interactive container that the runtime spins up in the background and generates summaries based on heuristics.
+In a test you want to control _exactly when_ a summary happens and _what_ goes into it, so you:
 
 1. Create your normal interactive container(s) with the runtime's automatic summarizer **disabled**, so nothing summarizes behind your back.
 2. Create a separate **summarizer container** that summarizes only when you call `summarizeNow` on it.
 3. Synchronize all clients before each summary so the summary is deterministic.
 
-This separation is the heart of the pattern. Everything below follows from it.
+This separation is the heart of the pattern.
+Everything below follows from it.
 
 ## How to configure the regular (interactive) containers
 
-Every interactive container the test creates or loads must have the runtime's automatic summarizer turned **off**. Otherwise a background summary can race your `summarizeNow` calls and your assertions, making the test flaky.
+Every interactive container the test creates or loads must have the runtime's automatic summarizer turned **off**.
+Otherwise a background summary can race your `summarizeNow` calls and your assertions, making the test flaky.
 
 Disable it via `summaryConfigOverrides: { state: "disabled" }` in the container config:
 
@@ -57,13 +61,15 @@ Use this config for **every** interactive container — both the one you create 
 
 ## How to configure and create the dedicated summarizer
 
-The summarizer must _not_ inherit the `state: "disabled"` override from the interactive container's config; it needs to be able to summarize when asked. The simplest form lets `createSummarizer` apply a sensible default summary config for you (`state: "disableHeuristics"`, etc.):
+The summarizer must _not_ inherit the `state: "disabled"` override from the interactive container's config; it needs to be able to summarize when asked.
+The simplest form lets `createSummarizer` apply a sensible default summary config for you (`state: "disableHeuristics"`, etc.):
 
 ```ts
 const { summarizer } = await createSummarizer(provider, container);
 ```
 
-If your test creates a custom `testContainerConfig` for interactive containers, the summarizer should resuse it otherwise config mimatch can lead to issues. It should however **supply a `disableHeuristics` summary config** or **clear its summary override**:
+If your test creates a custom `testContainerConfig` for interactive containers, the summarizer should reuse it otherwise config mismatch can lead to issues.
+It should however **supply a `disableHeuristics` summary config** or **clear its summary override**:
 
 ```ts
 const summarizerContainerConfig: ITestContainerConfig = {
@@ -83,11 +89,13 @@ Either way, the rule is the same: the summarizer must not carry `state: "disable
 `createSummarizer(provider, container, config?, summaryVersion?, logger?)` returns `{ container, summarizer }`.
 The `summarizer` is the `ISummarizer` you call `summarizeNow` on and the returned `container` is the summarizer's own container (useful for reconnect/election below).
 
-> If your data store needs a custom registry/factory, use `createSummarizerFromFactory` instead - it takes the data store factory and (optionally) a container-runtime factory directly. See its uses in [`summaries.spec.ts`](./src/test/summarization/summaries.spec.ts).
+> If your data store needs a custom registry/factory, use `createSummarizerFromFactory` instead - it takes the data store factory and (optionally) a container-runtime factory directly.
+> See its uses in [`summaries.spec.ts`](./src/test/summarization/summaries.spec.ts).
 
 ## How to take a summary and inspect its result
 
-Use the `summarizeNow` helper from `@fluidframework/test-utils/internal`. It drives the full submit → broadcast → ack/nack handshake, throws on failure, and returns a `SummaryInfo`:
+Use the `summarizeNow` helper from `@fluidframework/test-utils/internal`.
+It drives the full submit → broadcast → ack/nack handshake, throws on failure, and returns a `SummaryInfo`:
 
 ```ts
 interface SummaryInfo {
@@ -97,7 +105,7 @@ interface SummaryInfo {
 }
 ```
 
-The minimal round looks like this:
+The minimal round looks like the following. A full example is shown later in the document which has details on terms like "dataObject", "provider", "summarizeNow", etc.
 
 ```ts
 // 1. Make whatever changes you want captured.
@@ -115,7 +123,8 @@ const { summaryTree, summaryVersion } = await summarizeNow(summarizer);
 ### Inspecting the summary result
 
 The result of the `summarizeNow` (or `summarizeOnDemand`) contains the generated summary tree (`ISummaryTree`).
-Tests can inspect the summary tree if needed. However, it should be careful to not rely on the summary tree structure as that can change.
+Tests can inspect the summary tree if needed.
+However, it should be careful to not rely on the summary tree structure as that can change.
 
 If you only care that summarizing succeeds, assert against the promise directly:
 
@@ -156,11 +165,14 @@ A summarizer started from a given summary will produce its next summary incremen
 
 ## The rules that keep these tests deterministic
 
-These are the things that, if skipped, make summarization tests flaky or wrong. Treat them as a checklist.
+These are the things that, if skipped, make summarization tests flaky or wrong.
+Treat them as a checklist.
 
 ### 1. Use `syncSummarizer: true`
 
-Get the provider with `getTestObjectProvider({ syncSummarizer: true })`. This ensures that when you call `provider.ensureSynchronized()`, the summarizer is also brought up to the latest state along with the other clients. Without it, `ensureSynchronized` does not wait for the summarizer, so a subsequent `summarizeNow` may run before the summarizer has processed your latest ops.
+Get the provider with `getTestObjectProvider({ syncSummarizer: true })`.
+This ensures that when you call `provider.ensureSynchronized()`, the summarizer is also brought up to the latest state along with the other clients.
+Without it, `ensureSynchronized` does not wait for the summarizer, so a subsequent `summarizeNow` may run before the summarizer has processed your latest ops.
 
 ```ts
 beforeEach("getTestObjectProvider", async function () {
@@ -170,7 +182,8 @@ beforeEach("getTestObjectProvider", async function () {
 
 ### 2. Disable automatic summaries on every interactive container
 
-As covered above — `summaryConfigOverrides: { state: "disabled" }`. If a regular container is allowed to summarize, a background summary can land between your changes and your `summarizeNow`, and your assertions about what's in the summary become non-deterministic.
+As covered above — `summaryConfigOverrides: { state: "disabled" }`.
+If a regular container is allowed to summarize, a background summary can land between your changes and your `summarizeNow`, and your assertions about what's in the summary become non-deterministic.
 
 ### 3. Call `ensureSynchronized()` before every summary
 
@@ -179,15 +192,19 @@ await provider.ensureSynchronized();
 await summarizeNow(summarizer);
 ```
 
-`summarizeNow` summarizes whatever the summarizer has processed _so far_. If you don't synchronize first, ops you just sent may not have reached the summarizer yet, and they'll silently be excluded from the summary. Always synchronize first.
+`summarizeNow` summarizes whatever the summarizer has processed _so far_.
+If you don't synchronize first, ops you just sent may not have reached the summarizer yet, and they'll silently be excluded from the summary.
+Always synchronize first.
 
 ### 4. Use `summaryVersion` to chain loads
 
-When you load a container or summarizer to validate a summary, load it from that summary's `summaryVersion` (see above) — don't rely on "latest". On real services the latest summary may differ from the one you intend to test (or may have been replaced), so be explicit.
+When you load a container or summarizer to validate a summary, load it from that summary's `summaryVersion` (see above) — don't rely on "latest".
+On real services the latest summary may differ from the one you intend to test (or may have been replaced), so be explicit.
 
 ### 5. Close one summarizer before starting another
 
-Two live summarizers fight over election and can interfere with each other. When you're done with a summarizer and want a fresh one (e.g. to load from a newer summary), **close the old one first**:
+Two live summarizers fight over election and can interfere with each other.
+When you're done with a summarizer and want a fresh one (e.g. to load from a newer summary), **close the old one first**:
 
 ```ts
 summarizer.close();
@@ -202,10 +219,40 @@ await summarizeNow(summarizer2);
 
 ## A complete minimal example
 
-Putting it together — create, summarize, load-and-validate, then summarize from a new summarizer:
+Putting it together — create, summarize, load-and-validate, then summarize from a new summarizer.
+This is a real, runnable test ([summarizeSmokeTest.spec.ts](src/test/summarization/summarizeSmokeTest.spec.ts)) embedded here via markdown-magic, so it stays in sync with code that actually compiles and passes:
 
-```ts
-describeCompat("My summarization test", "NoCompat", (getTestObjectProvider) => {
+<!-- AUTO-GENERATED-CONTENT:START (INCLUDE_CODE:path=./src/test/summarization/summarizeSmokeTest.spec.ts&language=typescript&start=5) -->
+
+<!-- prettier-ignore-start -->
+<!-- NOTE: This section is automatically generated by embedding the referenced file contents. Do not update these generated contents directly. -->
+
+```typescript
+import { strict as assert } from "assert";
+
+import { describeCompat } from "@fluid-private/test-version-utils";
+import { LoaderHeader } from "@fluidframework/container-definitions/internal";
+import {
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	createSummarizer,
+	getContainerEntryPointBackCompat,
+	summarizeNow,
+	waitForContainerConnection,
+} from "@fluidframework/test-utils/internal";
+
+/**
+ * Minimal end-to-end smoke test for the summarization pattern: create an interactive container,
+ * take a summary with a dedicated summarizer, load a fresh container from that summary, and
+ * validate the change round-tripped.
+ *
+ * @remarks This test is embedded into `WritingTestsThatTakeSummaries.md` via markdown-magic; run
+ * `npm run build:readme` from the repo root after changing it to keep the docs in sync.
+ */
+describeCompat("Summarization smoke test", "NoCompat", (getTestObjectProvider) => {
+	// Interactive containers disable the runtime's automatic summarizer so the test controls
+	// exactly when summaries happen (via summarizeNow on a dedicated summarizer).
 	const testContainerConfig: ITestContainerConfig = {
 		runtimeOptions: {
 			summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
@@ -223,7 +270,8 @@ describeCompat("My summarization test", "NoCompat", (getTestObjectProvider) => {
 		const dataObject = await getContainerEntryPointBackCompat<ITestFluidObject>(container);
 		await waitForContainerConnection(container);
 
-		// 2. Create a dedicated summarizer.
+		// 2. Create a dedicated summarizer. Pass no config so createSummarizer applies its default
+		// summary config (state: "disableHeuristics") rather than inheriting state: "disabled".
 		const { summarizer } = await createSummarizer(provider, container);
 
 		// 3. Make a change, synchronize, summarize.
@@ -243,13 +291,17 @@ describeCompat("My summarization test", "NoCompat", (getTestObjectProvider) => {
 		const { summarizer: summarizer2 } = await createSummarizer(
 			provider,
 			container,
-			undefined,
+			undefined /* config */,
 			summaryVersion,
 		);
 		await assert.doesNotReject(summarizeNow(summarizer2));
 	});
 });
 ```
+
+<!-- prettier-ignore-end -->
+
+<!-- AUTO-GENERATED-CONTENT:END -->
 
 ## Reference: key imports
 
