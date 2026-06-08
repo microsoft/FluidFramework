@@ -582,7 +582,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 			cursor.exitNode();
 			cursor.exitField();
 		}
-		return parts.join("|");
+		return JSON.stringify(parts);
 	}
 
 	/** Returns a stable numeric ID for `shape`, assigning one on first access. */

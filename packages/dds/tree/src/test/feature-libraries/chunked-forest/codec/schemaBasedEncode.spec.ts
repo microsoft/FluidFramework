@@ -740,6 +740,115 @@ describe("schemaBasedEncoding", () => {
 			);
 		});
 
+		it("specializes two distinct above-threshold tuples into separate shapes", () => {
+			const sf = new SchemaFactoryAlpha("vtext-multi-tuple");
+			class Format extends sf.object("Format", {
+				bold: sf.boolean,
+				italic: sf.boolean,
+			}) {}
+
+			const storedSchema = toStoredSchema(Format, restrictiveStoredSchemaGenerationOptions);
+			const idCompressor = makeTestIdCompressor();
+
+			const makeFormat = (bold: boolean, italic: boolean): JsonableTree => ({
+				type: brand<TreeNodeSchemaIdentifier>(Format.identifier),
+				fields: {
+					bold: [
+						{ type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier), value: bold },
+					],
+					italic: [
+						{
+							type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier),
+							value: italic,
+						},
+					],
+				},
+			});
+
+			const minOccurrencesForSpecialization = 2;
+			const tree = [
+				...Array.from({ length: 2 }, () => makeFormat(true, false)),
+				...Array.from({ length: 2 }, () => makeFormat(false, true)),
+			];
+
+			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				idCompressor,
+				undefined,
+				false,
+				minOccurrencesForSpecialization,
+			);
+
+			assert.equal(
+				countSpecializedShapes(encoded),
+				2,
+				"both tuples should produce a specialized shape",
+			);
+
+			const decoded = decodeRoundTrip(encoded, idCompressor);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			assert.deepEqual(jsonableTreeFromFieldCursor(firstChunk.cursor()), tree);
+		});
+
+		it("nested subShape specialization exercises multi-iteration counting", () => {
+			const sf = new SchemaFactoryAlpha("vtext-nested");
+			class Inner extends sf.object("Inner", {
+				flag: sf.boolean,
+			}) {}
+			class Outer extends sf.object("Outer", {
+				child: Inner,
+			}) {}
+
+			const storedSchema = toStoredSchema(Outer, restrictiveStoredSchemaGenerationOptions);
+			const idCompressor = makeTestIdCompressor();
+
+			const minOccurrencesForSpecialization = 2;
+			const tree: JsonableTree[] = Array.from({ length: 2 }, () => ({
+				type: brand<TreeNodeSchemaIdentifier>(Outer.identifier),
+				fields: {
+					child: [
+						{
+							type: brand<TreeNodeSchemaIdentifier>(Inner.identifier),
+							fields: {
+								flag: [
+									{
+										type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier),
+										value: true,
+									},
+								],
+							},
+						},
+					],
+				},
+			}));
+
+			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				idCompressor,
+				undefined,
+				false,
+				minOccurrencesForSpecialization,
+			);
+
+			// Inner's (flag:true) tuple crosses threshold.
+			// Outer's (child:Inner-specialized) tuple also crosses threshold.
+			// The second specialization requires iteration 2+ of the counting loop,
+			// because Outer's cohort key changes once Inner's shape is resolved as specialized.
+			assert.equal(
+				countSpecializedShapes(encoded),
+				2,
+				"both Inner and Outer should produce specialized shapes",
+			);
+
+			const decoded = decodeRoundTrip(encoded, idCompressor);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			assert.deepEqual(jsonableTreeFromFieldCursor(firstChunk.cursor()), tree);
+		});
+
 		it("does not specialize a boolean field that the incremental policy marks as incremental", () => {
 			// Regression: getNodeEncoderVText used to include all required boolean leaves in
 			// boolFields without consulting the incremental policy. If a policy marked a
