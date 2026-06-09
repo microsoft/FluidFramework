@@ -39,7 +39,8 @@ permissions:
 
 jobs:
   # Posts the initial "build pending" sticky comment when ADO queues the `Build - client packages` check
-  # for a PR commit. Non-client PRs never trigger that check, so they correctly receive no sticky.
+  # for a PR commit. We only measure bundle size on client packages today, so PRs that don't trigger that
+  # check (server-only, docs-only) receive no sticky.
   acknowledge-build:
     if: >-
       github.event.action == 'created' &&
@@ -55,9 +56,11 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         with:
           # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier that
-          # does the match server-side. At most one PR is expected. REST search returns the PR number directly,
-          # which is all this job needs; identify-from-pr-build uses GraphQL instead because it also needs the
-          # head SHA and base ref name.
+          # does the match server-side. At most one PR is expected in practice. Two open PRs *can* share a
+          # head SHA (same branch PR'd against two base refs), in which case only the first one matched here
+          # gets a sticky — accepted limitation. REST search returns the PR number directly, which is all this
+          # job needs; identify-from-pr-build uses GraphQL instead because it also needs the head SHA and base
+          # ref name.
           script: |
             const sha = context.payload.check_run.head_sha;
             const { data } = await github.rest.search.issuesAndPullRequests({
@@ -70,6 +73,7 @@ jobs:
             core.setOutput("pr_num", prNumber);
 
       - name: Render initial comment body
+        id: render
         if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
@@ -93,7 +97,7 @@ jobs:
 
       # Uncomment to enable comment posting after bake-in.
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      # - if: steps.find_pr.outputs.pr_num != ''
+      # - if: steps.render.outcome == 'success'
       #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
       #     header: bundle-size-report
@@ -122,7 +126,9 @@ jobs:
 
             // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
             // PR number, head SHA, and base ref in one round-trip; the REST search API would return
-            // only the number, requiring a follow-up pulls.get() call.
+            // only the number, requiring a follow-up pulls.get() call. At most one PR is expected in
+            // practice. Two open PRs *can* share a head SHA (same branch PR'd against two base refs),
+            // in which case only the first one matched here gets a comparison — accepted limitation.
             //
             // Also acts as the cross-SHA staleness guard: an event for a stale SHA (e.g. push A then
             // B, A's build completes anyway) finds no open PR with head A and emits no matrix entry.
