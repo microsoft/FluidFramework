@@ -129,6 +129,10 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
  */
 export function resolveRangeViaManifest(rangeSpec: string): string {
+	if (semver.valid(rangeSpec)) {
+		return rangeSpec;
+	}
+
 	validateRangeSpec(rangeSpec);
 	const manifest = readVersionsManifest();
 	const matching = manifest.versions

@@ -12,6 +12,7 @@ import {
 	calculateRequestedRange,
 	getRequestedVersion,
 	readVersionsManifest,
+	resolveRangeViaManifest,
 	versionHasMovedSparsedMatrix,
 } from "../versionUtils.js";
 
@@ -214,6 +215,11 @@ describe("versionUtils", () => {
 	});
 
 	describe("manifest-backed resolution", () => {
+		it("returns exact versions directly when resolving via manifest", () => {
+			const exactVersion = "9.9.9";
+			assert.strictEqual(resolveRangeViaManifest(exactVersion), exactVersion);
+		});
+
 		it("returns baseVersion for current-version requests without manifest lookup", () => {
 			const baseVersion = "2.110.0-405442";
 			assert.strictEqual(getRequestedVersion({ baseVersion, requested: 0 }), baseVersion);
