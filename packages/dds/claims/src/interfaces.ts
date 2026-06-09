@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	ISharedObject,
-	ISharedObjectEvents,
-} from "@fluidframework/shared-object-base/internal";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
+import type { ISharedObject } from "@fluidframework/shared-object-base/internal";
 
 /**
  * The confirmed result of a pending claim, resolved after the op roundtrips.
@@ -95,12 +93,12 @@ export type ClaimResult<T = unknown> =
  *
  * @internal
  */
-export interface IClaimsEvents extends ISharedObjectEvents {
+export interface IClaimsEvents {
 	/**
 	 * Notifies when a claim has been accepted for a key.
-	 * Use {@link IClaims.getClaim} to retrieve the committed value.
+	 * Use {@link IClaims.get} to retrieve the committed value.
 	 */
-	(event: "claimed", listener: (key: string) => void): void;
+	claimed(key: string): void;
 }
 
 /**
@@ -117,7 +115,11 @@ export interface IClaimsEvents extends ISharedObjectEvents {
  *
  * @internal
  */
-export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
+export interface IClaims<T = unknown> extends ISharedObject {
+	/**
+	 * Event emitter for claims events.
+	 */
+	readonly events: Listenable<IClaimsEvents>;
 	/**
 	 * Attempts to claim a key with the given value using first-writer-wins semantics.
 	 * Only succeeds if the key has not already been claimed.
@@ -132,19 +134,18 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 
 	/**
 	 * Attempts to update an existing claim using compare-and-swap (CAS) semantics.
-	 * Only succeeds if the current value for the key matches `expectedValue`.
+	 * The update succeeds only if no concurrent write has occurred since the caller
+	 * last observed the key's value. Conflict detection uses per-key sequence
+	 * numbers internally — the caller does not need to supply an expected value.
 	 *
 	 * @experimental
 	 * @param key - The claim key to update.
 	 * @param value - The new value to set.
-	 * @param expectedValue - The expected current value. The update is only submitted
-	 * if the committed value matches this exactly. Pass `undefined` to set only if
-	 * the key is unset.
 	 * @returns The claim result — synchronous for known states, or "Pending" with a promise.
 	 * @throws Will throw a {@link @fluidframework/telemetry-utils#UsageError} if a claim
 	 * for this key is already pending locally.
 	 */
-	compareAndSetClaim(key: string, value: T, expectedValue: T | undefined): ClaimResult<T>;
+	compareAndSetClaim(key: string, value: T): ClaimResult<T>;
 
 	/**
 	 * Gets the current claimed value for a key, or `undefined` if the key has not been claimed.
@@ -152,7 +153,7 @@ export interface IClaims<T = unknown> extends ISharedObject<IClaimsEvents> {
 	 * @param key - The claim key to look up.
 	 * @returns The claimed value, or `undefined` if unclaimed.
 	 */
-	getClaim(key: string): T | undefined;
+	get(key: string): T | undefined;
 
 	/**
 	 * Returns whether a claim exists for the given key.

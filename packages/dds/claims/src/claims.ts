@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { createEmitter } from "@fluid-internal/client-utils";
+import type { Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
@@ -65,7 +67,10 @@ const snapshotFileName = "header";
  * {@inheritDoc IClaims}
  * @internal
  */
-export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements IClaims<T> {
+export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
+	private readonly _events = createEmitter<IClaimsEvents>();
+	public readonly events: Listenable<IClaimsEvents> = this._events;
+
 	/**
 	 * Committed claims map — contains only acked values with their sequence numbers.
 	 */
@@ -103,18 +108,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 			return { status: "AlreadyClaimed", currentValue: existing.value };
 		}
 
-		// Detached: apply directly, no op needed (no other clients exist).
-		if (!this.isAttached()) {
-			this.claims.set(key, { value, sequenceNumber: 0 });
-			return { status: "Accepted", currentValue: value };
-		}
-
-		return this.submitClaim(key, value, {
-			type: "claim",
-			key,
-			value,
-			refSeq: undefined,
-		});
+		return this.compareAndSetClaim(key, value);
 	}
 
 	/**
@@ -122,20 +116,8 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	 *
 	 * @experimental
 	 */
-	public compareAndSetClaim(
-		key: string,
-		value: T,
-		expectedValue: T | undefined,
-	): ClaimResult<T> {
-		// CAS: reject locally if the current value doesn't match expected.
-		// When expectedValue is undefined, this allows "set only if unset" semantics.
+	public compareAndSetClaim(key: string, value: T): ClaimResult<T> {
 		const entry = this.claims.get(key);
-		const currentValue = entry?.value;
-		const isMatch =
-			entry === undefined ? expectedValue === undefined : currentValue === expectedValue;
-		if (!isMatch) {
-			return { status: "AlreadyClaimed", currentValue };
-		}
 
 		// Detached: apply directly, no op needed (no other clients exist).
 		if (!this.isAttached()) {
@@ -143,9 +125,6 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 			return { status: "Accepted", currentValue: value };
 		}
 
-		// When expectedValue is undefined, this is "set only if unset" — use
-		// refSeq: undefined (same semantics as trySetClaim). Otherwise use the
-		// key's own sequence number for precise per-key conflict resolution.
 		return this.submitClaim(key, value, {
 			type: "claim",
 			key,
@@ -173,9 +152,9 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	}
 
 	/**
-	 * {@inheritDoc IClaims.getClaim}
+	 * {@inheritDoc IClaims.get}
 	 */
-	public getClaim(key: string): T | undefined {
+	public get(key: string): T | undefined {
 		return this.claims.get(key)?.value;
 	}
 
@@ -189,9 +168,11 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	// #region SharedObject overrides
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
-		const entries = [...this.claims.entries()].map(
-			([key, entry]) => [key, entry.value, entry.sequenceNumber] as [string, T, number],
-		);
+		const entries = [...this.claims.entries()].map(([key, entry]) => ({
+			k: key,
+			v: entry.value,
+			s: entry.sequenceNumber,
+		}));
 		return createSingleBlobSummary(
 			snapshotFileName,
 			serializer.stringify(entries, this.handle),
@@ -201,13 +182,11 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 	protected async loadCore(storage: IChannelStorageService): Promise<void> {
 		const blob = await storage.readBlob(snapshotFileName);
 		const content = new TextDecoder().decode(blob);
-		const entries = this.serializer.parse(content) as [string, T, number][];
-		for (const [key, value, sequenceNumber] of entries) {
-			this.claims.set(key, { value, sequenceNumber });
+		const entries = this.serializer.parse(content) as { k: string; v: T; s: number }[];
+		for (const { k, v, s } of entries) {
+			this.claims.set(k, { value: v, sequenceNumber: s });
 		}
 	}
-
-	protected initializeLocalCore(): void {}
 
 	protected onDisconnect(): void {}
 
@@ -240,7 +219,7 @@ export class Claims<T = unknown> extends SharedObject<IClaimsEvents> implements 
 					value: op.value,
 					sequenceNumber: messageEnvelope.sequenceNumber,
 				});
-				this.emit("claimed", op.key);
+				this._events.emit("claimed", op.key);
 			}
 
 			if (local) {

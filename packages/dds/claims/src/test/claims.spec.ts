@@ -45,8 +45,8 @@ describe("Claims", () => {
 			assert(claims !== undefined, "Could not create Claims");
 		});
 
-		it("getClaim returns undefined for unclaimed key", () => {
-			assert.strictEqual(claims.getClaim("foo"), undefined);
+		it("get returns undefined for unclaimed key", () => {
+			assert.strictEqual(claims.get("foo"), undefined);
 		});
 
 		it("trySetClaim succeeds immediately when detached", () => {
@@ -54,7 +54,7 @@ describe("Claims", () => {
 			assert.strictEqual(result.status, "Accepted");
 			assert(result.status === "Accepted");
 			assert.strictEqual(result.currentValue, "value");
-			assert.strictEqual(claims.getClaim("key"), "value");
+			assert.strictEqual(claims.get("key"), "value");
 		});
 
 		it("has() returns false for unclaimed key", () => {
@@ -91,7 +91,7 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation.status, "Accepted");
 			assert(confirmation.status === "Accepted");
 			assert.strictEqual(confirmation.currentValue, "myValue");
-			assert.strictEqual(claims.getClaim("myKey"), "myValue");
+			assert.strictEqual(claims.get("myKey"), "myValue");
 		});
 
 		it("Returns AlreadyClaimed when claiming an already-committed key", async () => {
@@ -110,7 +110,7 @@ describe("Claims", () => {
 
 		it("Emits 'claimed' event when claim is accepted", async () => {
 			let emittedKey: string | undefined;
-			claims.on("claimed", (key: string) => {
+			claims.events.on("claimed", (key: string) => {
 				emittedKey = key;
 			});
 
@@ -121,7 +121,7 @@ describe("Claims", () => {
 
 			assert.strictEqual(emittedKey, "eventKey");
 			// Value can be looked up from the DDS directly.
-			assert.strictEqual(claims.getClaim("eventKey"), "eventValue");
+			assert.strictEqual(claims.get("eventKey"), "eventValue");
 		});
 
 		it("Rejects duplicate pending claim for the same key", async () => {
@@ -177,8 +177,8 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation2.currentValue, "value1");
 
 			// Both clients should see the same committed value.
-			assert.strictEqual(claims1.getClaim("raceKey"), "value1");
-			assert.strictEqual(claims2.getClaim("raceKey"), "value1");
+			assert.strictEqual(claims1.get("raceKey"), "value1");
+			assert.strictEqual(claims2.get("raceKey"), "value1");
 		});
 
 		it("Independent keys do not conflict", async () => {
@@ -195,10 +195,10 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert.strictEqual(confirmation2.status, "Accepted");
 
-			assert.strictEqual(claims1.getClaim("key1"), "value1");
-			assert.strictEqual(claims1.getClaim("key2"), "value2");
-			assert.strictEqual(claims2.getClaim("key1"), "value1");
-			assert.strictEqual(claims2.getClaim("key2"), "value2");
+			assert.strictEqual(claims1.get("key1"), "value1");
+			assert.strictEqual(claims1.get("key2"), "value2");
+			assert.strictEqual(claims2.get("key1"), "value1");
+			assert.strictEqual(claims2.get("key2"), "value2");
 		});
 	});
 
@@ -228,8 +228,124 @@ describe("Claims", () => {
 			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
 			await claims2.load(services2);
 
-			assert.strictEqual(claims2.getClaim("persistKey"), "persistValue");
-			assert.strictEqual(claims2.getClaim("nonExistent"), undefined);
+			assert.strictEqual(claims2.get("persistKey"), "persistValue");
+			assert.strictEqual(claims2.get("nonExistent"), undefined);
+		});
+
+		it("Can round-trip null value", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			// eslint-disable-next-line unicorn/no-null
+			const claimResult = claims.trySetClaim("nullKey", null);
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			const summary = claims.getAttachSummary();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			// eslint-disable-next-line unicorn/no-null
+			assert.strictEqual(claims2.get("nullKey"), null);
+			assert.strictEqual(claims2.has("nullKey"), true);
+		});
+
+		it("Can round-trip undefined value", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			const claimResult = claims.trySetClaim("undefKey", undefined);
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			const summary = claims.getAttachSummary();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			assert.strictEqual(claims2.get("undefKey"), undefined);
+			assert.strictEqual(claims2.has("undefKey"), true);
+		});
+
+		it("Can round-trip number value", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			const claimResult = claims.trySetClaim("numKey", 42);
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			const summary = claims.getAttachSummary();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			assert.strictEqual(claims2.get("numKey"), 42);
+		});
+
+		it("Can round-trip object value", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			const claimResult = claims.trySetClaim("objKey", { nested: "data", count: 3 });
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			const summary = claims.getAttachSummary();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			assert.deepStrictEqual(claims2.get("objKey"), { nested: "data", count: 3 });
+		});
+
+		it("Can round-trip array value", async () => {
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			const claims = createConnectedClaims("claims", containerRuntimeFactory);
+
+			// eslint-disable-next-line unicorn/no-null
+			const claimResult = claims.trySetClaim("arrKey", [1, "two", null]);
+			assert(claimResult.status === "Pending");
+			containerRuntimeFactory.processAllMessages();
+			await claimResult.promise;
+
+			const summary = claims.getAttachSummary();
+			const dataStoreRuntime2 = new MockFluidDataStoreRuntime();
+			containerRuntimeFactory.createContainerRuntime(dataStoreRuntime2);
+			const services2 = {
+				deltaConnection: dataStoreRuntime2.createDeltaConnection(),
+				objectStorage: MockStorage.createFromSummary(summary.summary),
+			};
+			const claims2 = new Claims("claims2", dataStoreRuntime2, ClaimsFactory.Attributes);
+			await claims2.load(services2);
+
+			// eslint-disable-next-line unicorn/no-null
+			assert.deepStrictEqual(claims2.get("arrKey"), [1, "two", null]);
 		});
 	});
 
@@ -242,41 +358,18 @@ describe("Claims", () => {
 			claims = createConnectedClaims("claims", containerRuntimeFactory);
 		});
 
-		it("CAS with undefined expectedValue succeeds on unclaimed key", async () => {
-			// CAS with expectedValue=undefined means "set only if unset".
-			const result = claims.compareAndSetClaim("casKey", "firstValue", undefined);
+		it("CAS succeeds on unclaimed key", async () => {
+			const result = claims.compareAndSetClaim("casKey", "firstValue");
 			assert.strictEqual(result.status, "Pending");
 			assert(result.status === "Pending");
 
 			containerRuntimeFactory.processAllMessages();
 			const confirmation = await result.promise;
 			assert.strictEqual(confirmation.status, "Accepted");
-			assert.strictEqual(claims.getClaim("casKey"), "firstValue");
+			assert.strictEqual(claims.get("casKey"), "firstValue");
 		});
 
-		it("CAS with non-undefined expectedValue against unclaimed key returns AlreadyClaimed", () => {
-			// CAS with a non-undefined expectedValue against a key that doesn't exist.
-			const result = claims.compareAndSetClaim("casKey", "firstValue", "wrongValue");
-			assert.strictEqual(result.status, "AlreadyClaimed");
-			assert(result.status === "AlreadyClaimed");
-			assert.strictEqual(result.currentValue, undefined);
-		});
-
-		it("CAS rejects when expectedValue doesn't match current", async () => {
-			// First, claim the key.
-			const firstResult = claims.trySetClaim("casKey", "firstValue");
-			assert(firstResult.status === "Pending");
-			containerRuntimeFactory.processAllMessages();
-			await firstResult.promise;
-
-			// CAS with wrong expected value should fail immediately.
-			const result = claims.compareAndSetClaim("casKey", "secondValue", "wrongValue");
-			assert.strictEqual(result.status, "AlreadyClaimed");
-			assert(result.status === "AlreadyClaimed");
-			assert.strictEqual(result.currentValue, "firstValue");
-		});
-
-		it("CAS succeeds when expectedValue matches current", async () => {
+		it("CAS succeeds when no concurrent write has occurred", async () => {
 			// First, claim the key.
 			const firstResult = claims.trySetClaim("casKey", "firstValue");
 			assert(firstResult.status === "Pending");
@@ -284,7 +377,7 @@ describe("Claims", () => {
 			await firstResult.promise;
 
 			// CAS with correct expected value should succeed.
-			const result = claims.compareAndSetClaim("casKey", "secondValue", "firstValue");
+			const result = claims.compareAndSetClaim("casKey", "secondValue");
 			assert.strictEqual(result.status, "Pending");
 			assert(result.status === "Pending");
 
@@ -292,7 +385,7 @@ describe("Claims", () => {
 			const confirmation = await result.promise;
 
 			assert.strictEqual(confirmation.status, "Accepted");
-			assert.strictEqual(claims.getClaim("casKey"), "secondValue");
+			assert.strictEqual(claims.get("casKey"), "secondValue");
 		});
 
 		it("Concurrent CAS: first writer wins", async () => {
@@ -306,8 +399,8 @@ describe("Claims", () => {
 			await claim1.promise;
 
 			// Both try CAS concurrently — both see "initialValue" locally.
-			const cas1 = claims1.compareAndSetClaim("casKey", "value1", "initialValue");
-			const cas2 = claims2.compareAndSetClaim("casKey", "value2", "initialValue");
+			const cas1 = claims1.compareAndSetClaim("casKey", "value1");
+			const cas2 = claims2.compareAndSetClaim("casKey", "value2");
 			assert(cas1.status === "Pending");
 			assert(cas2.status === "Pending");
 
@@ -320,8 +413,8 @@ describe("Claims", () => {
 			// its refSeq is older than the sequence number of client 1's write.
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
-			assert.strictEqual(claims1.getClaim("casKey"), "value1");
-			assert.strictEqual(claims2.getClaim("casKey"), "value1");
+			assert.strictEqual(claims1.get("casKey"), "value1");
+			assert.strictEqual(claims2.get("casKey"), "value1");
 		});
 
 		it("CAS rejects when refSeq is greater than entry sequenceNumber", async () => {
@@ -335,7 +428,7 @@ describe("Claims", () => {
 			await initial.promise;
 
 			// Client 1 does a CAS to update the key to "value1".
-			const cas1 = claims1.compareAndSetClaim("casKey", "value1", "initialValue");
+			const cas1 = claims1.compareAndSetClaim("casKey", "value1");
 			assert(cas1.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			const confirmation1 = await cas1.promise;
@@ -344,7 +437,7 @@ describe("Claims", () => {
 			// Client 1 immediately does another CAS — it sees the latest
 			// value "value1" and its op captures the current sequenceNumber.
 			// This op is submitted (and therefore sequenced) first.
-			const cas2 = claims1.compareAndSetClaim("casKey", "value1again", "value1");
+			const cas2 = claims1.compareAndSetClaim("casKey", "value1again");
 			assert(cas2.status === "Pending");
 
 			// Client 2 also sees "value1" and submits a competing CAS. Its
@@ -355,7 +448,7 @@ describe("Claims", () => {
 			// sequenceNumber and must be rejected. With the old >= check, a
 			// refSeq greater than the entry's sequenceNumber could have been
 			// incorrectly accepted.
-			const cas3 = claims2.compareAndSetClaim("casKey", "value2", "value1");
+			const cas3 = claims2.compareAndSetClaim("casKey", "value2");
 			assert(cas3.status === "Pending");
 
 			containerRuntimeFactory.processAllMessages();
@@ -368,8 +461,8 @@ describe("Claims", () => {
 			// after client 2 read it.
 			assert.strictEqual(confirmation2.status, "Accepted");
 			assert.strictEqual(confirmation3.status, "AlreadyClaimed");
-			assert.strictEqual(claims1.getClaim("casKey"), "value1again");
-			assert.strictEqual(claims2.getClaim("casKey"), "value1again");
+			assert.strictEqual(claims1.get("casKey"), "value1again");
+			assert.strictEqual(claims2.get("casKey"), "value1again");
 		});
 	});
 
@@ -401,7 +494,7 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation.status, "Aborted");
 
 			// Key should not be committed.
-			assert.strictEqual(claims.getClaim("rollbackKey"), undefined);
+			assert.strictEqual(claims.get("rollbackKey"), undefined);
 		});
 	});
 
@@ -429,7 +522,7 @@ describe("Claims", () => {
 			containerRuntimeFactory.processAllMessages();
 
 			// The claim should be committed.
-			assert.strictEqual(claims.getClaim("stashedKey"), "stashedValue");
+			assert.strictEqual(claims.get("stashedKey"), "stashedValue");
 		});
 	});
 
@@ -476,7 +569,7 @@ describe("Claims", () => {
 
 			// Track events on client 2.
 			const emittedKeys: string[] = [];
-			claims2.on("claimed", (key: string) => {
+			claims2.events.on("claimed", (key: string) => {
 				emittedKeys.push(key);
 			});
 
@@ -486,19 +579,6 @@ describe("Claims", () => {
 
 			// No event should have been emitted for the rejection.
 			assert.strictEqual(emittedKeys.length, 0);
-		});
-	});
-
-	describe("CAS edge cases", () => {
-		it("CAS with non-undefined expectedValue against a missing key returns AlreadyClaimed", () => {
-			const containerRuntimeFactory = new MockContainerRuntimeFactory();
-			const claims = createConnectedClaims("claims", containerRuntimeFactory);
-
-			// CAS with a non-undefined expectedValue against a key that doesn't exist.
-			const result = claims.compareAndSetClaim("missingKey", "newValue", "expectedVal");
-			assert.strictEqual(result.status, "AlreadyClaimed");
-			assert(result.status === "AlreadyClaimed");
-			assert.strictEqual(result.currentValue, undefined);
 		});
 	});
 
@@ -514,7 +594,7 @@ describe("Claims", () => {
 			await claimResult.promise;
 
 			// CAS update
-			const casResult = claims.compareAndSetClaim("casKey", "secondValue", "firstValue");
+			const casResult = claims.compareAndSetClaim("casKey", "secondValue");
 			assert(casResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			const casConfirmation = await casResult.promise;
@@ -536,7 +616,7 @@ describe("Claims", () => {
 			await claims2.load(services2);
 
 			// Should see the CAS-updated value.
-			assert.strictEqual(claims2.getClaim("casKey"), "secondValue");
+			assert.strictEqual(claims2.get("casKey"), "secondValue");
 		});
 	});
 
@@ -635,8 +715,8 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation.status, "Accepted");
 			assert(confirmation.status === "Accepted");
 			assert.strictEqual(confirmation.currentValue, handle);
-			// After roundtrip, getClaim returns deserialized handle — compare by path.
-			const stored = claims.getClaim("handleKey") as { absolutePath: string };
+			// After roundtrip, get returns deserialized handle — compare by path.
+			const stored = claims.get("handleKey") as { absolutePath: string };
 			assert.strictEqual(stored.absolutePath, handle.absolutePath);
 		});
 
@@ -670,9 +750,9 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
 			// After roundtrip, handles are deserialized — compare by path.
-			const localHandle = claims.getClaim("handleRace") as { absolutePath: string };
+			const localHandle = claims.get("handleRace") as { absolutePath: string };
 			assert.strictEqual(localHandle.absolutePath, handle1.absolutePath);
-			const remoteHandle = claims2.getClaim("handleRace") as { absolutePath: string };
+			const remoteHandle = claims2.get("handleRace") as { absolutePath: string };
 			assert.strictEqual(remoteHandle.absolutePath, handle1.absolutePath);
 		});
 
@@ -699,7 +779,7 @@ describe("Claims", () => {
 			await claims2.load(services2);
 
 			// The loaded value should be a handle (not undefined).
-			const loadedValue = claims2.getClaim("handlePersist");
+			const loadedValue = claims2.get("handlePersist");
 			assert(loadedValue !== undefined, "Handle value should survive summary round-trip");
 			assert.strictEqual(claims2.has("handlePersist"), true);
 		});
@@ -716,14 +796,13 @@ describe("Claims", () => {
 			await claimResult.promise;
 
 			// CAS to replace handle1 with handle2.
-			const stored = claims.getClaim("handleCas");
-			const casResult = claims.compareAndSetClaim("handleCas", handle2, stored);
+			const casResult = claims.compareAndSetClaim("handleCas", handle2);
 			assert(casResult.status === "Pending");
 			containerRuntimeFactory.processAllMessages();
 			const confirmation = await casResult.promise;
 
 			assert.strictEqual(confirmation.status, "Accepted");
-			const updated = claims.getClaim("handleCas") as { absolutePath: string };
+			const updated = claims.get("handleCas") as { absolutePath: string };
 			assert.strictEqual(updated.absolutePath, handle2.absolutePath);
 		});
 
@@ -740,8 +819,8 @@ describe("Claims", () => {
 			await claimResult.promise;
 
 			// Both try CAS concurrently with handle values.
-			const cas1 = claims.compareAndSetClaim("handleCasRace", handle1, "initial");
-			const cas2 = claims2.compareAndSetClaim("handleCasRace", handle2, "initial");
+			const cas1 = claims.compareAndSetClaim("handleCasRace", handle1);
+			const cas2 = claims2.compareAndSetClaim("handleCasRace", handle2);
 			assert(cas1.status === "Pending");
 			assert(cas2.status === "Pending");
 
@@ -753,8 +832,8 @@ describe("Claims", () => {
 			assert.strictEqual(confirmation1.status, "Accepted");
 			assert.strictEqual(confirmation2.status, "AlreadyClaimed");
 
-			const result1 = claims.getClaim("handleCasRace") as { absolutePath: string };
-			const result2 = claims2.getClaim("handleCasRace") as { absolutePath: string };
+			const result1 = claims.get("handleCasRace") as { absolutePath: string };
+			const result2 = claims2.get("handleCasRace") as { absolutePath: string };
 			assert.strictEqual(result1.absolutePath, handle1.absolutePath);
 			assert.strictEqual(result2.absolutePath, handle1.absolutePath);
 		});

@@ -45,7 +45,6 @@ interface CasOperation {
 	type: "cas";
 	key: string;
 	newValue: string;
-	expectedValue: string;
 }
 
 interface CasHandleOperation {
@@ -54,7 +53,7 @@ interface CasHandleOperation {
 }
 
 interface GetClaimOperation {
-	type: "getClaim";
+	type: "get";
 	key: string;
 }
 
@@ -96,15 +95,10 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 
 	async function cas(state: FuzzTestState): Promise<CasOperation> {
 		const key = randomKey(state);
-		const currentValue = state.client.channel.getClaim(key);
-		// Only CAS on string values — handles are not JSON-serializable for replay.
-		const expected =
-			typeof currentValue === "string" ? currentValue : `v${state.random.integer(0, 100)}`;
 		return {
 			type: "cas",
 			key,
 			newValue: `v${state.random.integer(0, 100)}`,
-			expectedValue: expected,
 		};
 	}
 
@@ -115,9 +109,9 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 		};
 	}
 
-	async function getClaim(state: FuzzTestState): Promise<GetClaimOperation> {
+	async function get(state: FuzzTestState): Promise<GetClaimOperation> {
 		return {
-			type: "getClaim",
+			type: "get",
 			key: randomKey(state),
 		};
 	}
@@ -127,7 +121,7 @@ function makeOperationGenerator(): Generator<ClaimsOperation, FuzzTestState> {
 		[claimWithHandle, 5],
 		[cas, 3],
 		[casHandle, 3],
-		[getClaim, 2],
+		[get, 2],
 	]);
 }
 
@@ -147,34 +141,31 @@ function makeReducer(): Reducer<ClaimsOperation, FuzzTestState> {
 				// Expected: may throw UsageError if a claim for this key is already pending locally.
 			}
 		},
-		cas: ({ client }, { key, newValue, expectedValue }) => {
+		cas: ({ client }, { key, newValue }) => {
 			try {
-				client.channel.compareAndSetClaim(key, newValue, expectedValue);
+				client.channel.compareAndSetClaim(key, newValue);
 			} catch {
 				// Expected: may throw UsageError if an operation for this key is already pending locally.
 			}
 		},
 		casHandle: ({ client }, { key }) => {
 			try {
-				// CAS the current value (whatever it is) to this client's handle.
-				// The expectedValue is read at reduce time so it doesn't need to be serializable in the op.
-				const currentValue = client.channel.getClaim(key);
-				client.channel.compareAndSetClaim(key, client.channel.handle, currentValue);
+				client.channel.compareAndSetClaim(key, client.channel.handle);
 			} catch {
 				// Expected: may throw UsageError if an operation for this key is already pending locally.
 			}
 		},
-		getClaim: ({ client }, { key }) => {
+		get: ({ client }, { key }) => {
 			// Read-only operation — just exercises the read path.
-			client.channel.getClaim(key);
+			client.channel.get(key);
 		},
 	});
 }
 
 function assertConsistentClaims(a: Client<ClaimsFactory>, b: Client<ClaimsFactory>): void {
 	for (const key of keyPool) {
-		const valueA = a.channel.getClaim(key);
-		const valueB = b.channel.getClaim(key);
+		const valueA = a.channel.get(key);
+		const valueB = b.channel.get(key);
 		// For handles (objects with absolutePath), compare by path since
 		// references differ across clients after deserialization.
 		const resolvedA =
