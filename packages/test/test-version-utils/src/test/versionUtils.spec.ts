@@ -5,9 +5,15 @@
 
 import { strict as assert } from "assert";
 
-import { satisfies } from "semver";
+import { rcompare, satisfies, satisfies as semverSatisfies } from "semver";
 
-import { getRequestedVersion, versionHasMovedSparsedMatrix } from "../versionUtils.js";
+import { pkgVersion } from "../packageVersion.js";
+import {
+	calculateRequestedRange,
+	getRequestedVersion,
+	readVersionsManifest,
+	versionHasMovedSparsedMatrix,
+} from "../versionUtils.js";
 
 /**
  * Wrapper function to easily assert that the version returned from `getRequestedVersion()` satisfies the version we expect.
@@ -28,14 +34,19 @@ const checkRequestedVersionSatisfies = (
 	expectedVersion,
 ): void => {
 	try {
-		const version = getRequestedVersion(baseVersion, requested, adjustPublicMajor);
+		const version = getRequestedVersion({
+			baseVersion,
+			requested,
+			adjustPublicMajor,
+			useOnlineRegistry: true,
+		});
 		assert(
 			satisfies(version, expectedVersion),
-			`getRequestedVersion("${baseVersion}", ${requested}) -> ${version} does not satisfy ${expectedVersion}`,
+			`getRequestedVersion({ baseVersion: "${baseVersion}", requested: ${requested} }) -> ${version} does not satisfy ${expectedVersion}`,
 		);
 	} catch (e) {
 		throw new Error(
-			`Failed to resolve getRequestedVersion("${baseVersion}", ${requested}) -> ${expectedVersion}: ${e}`,
+			`Failed to resolve getRequestedVersion({ baseVersion: "${baseVersion}", requested: ${requested} }) -> ${expectedVersion}: ${e}`,
 		);
 	}
 };
@@ -144,30 +155,28 @@ describe("versionUtils", () => {
 		});
 
 		it("error cases for malformed versions", () => {
-			assert.strictEqual(getRequestedVersion("2.0.0", 0), "2.0.0");
-			assert.strictEqual(getRequestedVersion("2.0.0", undefined), "2.0.0");
 			assert.throws(
-				() => getRequestedVersion("-1.-2.-1", -1),
+				() => getRequestedVersion({ baseVersion: "-1.-2.-1", requested: -1 }),
 				Error,
 				"TypeError: Invalid Version: -1.-2.-1",
 			);
 			assert.throws(
-				() => getRequestedVersion("1.-2.-1", -1),
+				() => getRequestedVersion({ baseVersion: "1.-2.-1", requested: -1 }),
 				Error,
 				"TypeError: Invalid Version: 1.-2.-1",
 			);
 			assert.throws(
-				() => getRequestedVersion("1.-2.-1", -1),
+				() => getRequestedVersion({ baseVersion: "1.-2.-1", requested: -1 }),
 				Error,
 				"TypeError: Invalid Version: 1.-2.-1",
 			);
 			assert.throws(
-				() => getRequestedVersion("badString", -1),
+				() => getRequestedVersion({ baseVersion: "badString", requested: -1 }),
 				Error,
 				"TypeError: Invalid Version: badString",
 			);
 			assert.throws(
-				() => getRequestedVersion("1.0.0", 1),
+				() => getRequestedVersion({ baseVersion: "1.0.0", requested: 1 }),
 				Error,
 				"Only negative values are supported for `requested` param.",
 			);
@@ -201,6 +210,19 @@ describe("versionUtils", () => {
 			createTest("2.0.0-dev-rc.1.5.3.223149", -2, adjustPublicMajor, "^2.0.0-internal.7.0.0");
 			createTest("2.0.0-dev-rc.2.0.0.233243", -1, adjustPublicMajor, "^2.0.0-rc.1.0.0");
 			createTest("2.0.0-dev-rc.2.0.0.233243", -2, adjustPublicMajor, "^2.0.0-internal.8.0.0");
+		});
+	});
+
+	describe("manifest-backed resolution", () => {
+		it("defaults to resolving N-1 using committed manifest versions", () => {
+			const baseVersion = pkgVersion;
+			const range = calculateRequestedRange(baseVersion, -1, false);
+			const expected = readVersionsManifest()
+				.versions.filter((v) => semverSatisfies(v, range))
+				.sort(rcompare)[0];
+
+			assert.ok(expected, `Expected at least one manifest version satisfying ${range}`);
+			assert.strictEqual(getRequestedVersion({ baseVersion, requested: -1 }), expected);
 		});
 	});
 

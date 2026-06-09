@@ -128,7 +128,7 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
  * Throws if the currently installed compat workspace does not include any version that matches the spec.
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
  */
-function resolveRangeViaManifest(rangeSpec: string): string {
+export function resolveRangeViaManifest(rangeSpec: string): string {
 	validateRangeSpec(rangeSpec);
 	const manifest = readVersionsManifest();
 	const matching = manifest.versions
@@ -349,57 +349,95 @@ export function calculateRequestedRange(
 }
 
 /**
- * Given a version, returns the most recently released version. The version provided can be
- * adjusted to the next or previous major versions by providing positive/negative integers in the
- * `requested` parameter.
+ * Options for {@link getRequestedVersion}.
  *
- * @param baseVersion - The base version to move from (eg. "0.60.0")
- * @param requested - If the value is a negative number, the baseVersion will be adjusted down.
- * If the value is a string then it will be returned as-is. Throws on positive number.
- * @param adjustPublicMajor - If `baseVersion` is a Fluid internal version, then this boolean controls whether the
- * public or internal version is adjusted by the `requested` value. This parameter has no effect if `requested` is a
- * string value or if `baseVersion` is not a Fluid internal version.
+ * @internal
+ */
+export interface GetRequestedVersionOptions {
+	/** The base version to move from (eg. "0.60.0"). */
+	baseVersion: string;
+	/**
+	 * If the value is a negative number, the base version will be adjusted down.
+	 * If the value is a string then it will be returned as-is. Throws on positive number.
+	 */
+	requested?: number | string;
+	/**
+	 * If `baseVersion` is a Fluid internal version, this controls whether the public or internal
+	 * version is adjusted by `requested`.
+	 */
+	adjustPublicMajor?: boolean;
+	/**
+	 * When `true`, resolve against the npm registry. Defaults to `false`, which resolves against the
+	 * committed compat versions manifest.
+	 */
+	useOnlineRegistry?: boolean;
+}
+
+/**
+ * Given a version, returns the most recently resolved version for the requested range.
+ *
+ * By default, this resolves against the committed compat versions manifest so test selection stays
+ * stable for a given lockfile. Set `useOnlineRegistry` to `true` to opt into npm registry
+ * resolution for workflows like regenerating the compat manifest.
  *
  * @remarks
  *
- * In typical use, the `requested` values are negative values to return ranges for previous versions (e.g. "-1").
+ * In typical use, `requested` is a negative value to ask for a previous version (e.g. `-1`).
  *
  * @example
  * ```typescript
- * const newVersion = getRequestedVersion("2.3.5", -1); // "^1.0.0"
+ * const newVersion = getRequestedVersion({ baseVersion: "2.3.5", requested: -1 });
  * ```
  *
  * @example
  * ```typescript
- * const newVersion = getRequestedVersion("2.3.5", -2); // "^0.59.0"
+ * const newVersion = getRequestedVersion({
+ *   baseVersion: "2.3.5",
+ *   requested: -2,
+ *   useOnlineRegistry: true,
+ * });
  * ```
  *
  * @internal
  */
-export function getRequestedVersion(
-	baseVersion: string,
-	requested?: number | string,
-	adjustPublicMajor: boolean = false,
-): string {
+export function getRequestedVersion({
+	baseVersion,
+	requested,
+	adjustPublicMajor = false,
+	useOnlineRegistry = false,
+}: GetRequestedVersionOptions): string {
 	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
+	const cacheKey = JSON.stringify({ calculatedRange, useOnlineRegistry });
+	const cachedResolution = resolutionCache.get(cacheKey);
+	if (cachedResolution !== undefined) {
+		return cachedResolution;
+	}
+
+	const resolveRange = useOnlineRegistry ? resolveRangeViaRegistry : resolveRangeViaManifest;
 	try {
 		// Returns the exact version that was requested (i.e. 2.0.0-rc.2.0.2).
 		// Will throw if the requested version range is not valid.
-		return resolveRangeViaRegistry(calculatedRange);
+		const resolvedVersion = resolveRange(calculatedRange);
+		resolutionCache.set(cacheKey, resolvedVersion);
+		return resolvedVersion;
 	} catch (err: any) {
 		// If we tried fetching N-1 and it failed, try N-2. It is possible that we are trying to bump the current branch
-		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in it's place.
+		// to a new version. If that is the case, then N-1 may not be published yet, and we should try to use N-2 in its place.
 		if (requested === -1) {
-			const resolvedVersion = getRequestedVersion(baseVersion, -2, adjustPublicMajor);
+			const resolvedVersion = getRequestedVersion({
+				baseVersion,
+				requested: -2,
+				adjustPublicMajor,
+				useOnlineRegistry,
+			});
 			// Here we cache the result so we don't have to enter the try/catch flow again.
 			// Note: This will cache the resolved version range (i.e. >=2.0.0-rc.4.0.0 <2.0.0-rc.5.0.0). Because of this,
-			// it will not cause any conflicts when trying to fetch the current version
-			// i.e. `getRequestedVersion("2.0.0-rc.5.0.0", 0, false)` will still return "2.0.0-rc.5.0.0".
-			resolutionCache.set(calculatedRange, resolvedVersion);
+			// it will not cause any conflicts when trying to fetch the current version —
+			// i.e. `getRequestedVersion({ baseVersion: "2.0.0-rc.5.0.0" })` will still return "2.0.0-rc.5.0.0".
+			resolutionCache.set(cacheKey, resolvedVersion);
 			return resolvedVersion;
-		} else {
-			throw new Error(`Error trying to getRequestedVersion: ${err}`);
 		}
+		throw new Error(`Error trying to getRequestedVersion: ${err}`);
 	}
 }
 
