@@ -509,7 +509,7 @@ describe("Claims", () => {
 				type: "claim",
 				key: "stashedKey",
 				value: "stashedValue",
-				refSeq: undefined,
+				refSeq: 0,
 			});
 
 			// The key should now be in pendingClaims (guarded against duplicate submissions).

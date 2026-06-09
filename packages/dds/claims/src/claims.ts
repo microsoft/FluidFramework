@@ -31,16 +31,17 @@ import type { ClaimConfirmation, ClaimResult, IClaims, IClaimsEvents } from "./i
  * Op format for Claims operations.
  *
  * Both write-once and compare-and-swap share the same op shape.
- * `refSeq` of `undefined` means "set only if key is unset" (trySetClaim).
- * `refSeq` as a number is the per-key sequence number that the caller observed
- * when initiating a CAS — the update succeeds only if no newer write has been
- * sequenced for that key since that point.
+ * `refSeq` is captured from `deltaManager.lastSequenceNumber` at op-creation
+ * time when no entry exists for the key (trySetClaim), or from the per-key
+ * sequence number that the caller observed when initiating a CAS — the update
+ * succeeds only if no newer write has been sequenced for that key since that
+ * point.
  */
 interface IClaimOperation<T> {
 	type: "claim";
 	key: string;
 	value: T;
-	refSeq: number | undefined;
+	refSeq: number;
 }
 
 /**
@@ -129,7 +130,7 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 			type: "claim",
 			key,
 			value,
-			refSeq: entry === undefined ? undefined : entry.sequenceNumber,
+			refSeq: entry?.sequenceNumber ?? this.deltaManager.lastSequenceNumber,
 		});
 	}
 
@@ -209,10 +210,9 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 			assert(op.type === "claim", "Claims: unexpected op type");
 
 			const entry = this.claims.get(op.key);
-			const isAccepted =
-				op.refSeq === undefined
-					? entry === undefined // trySetClaim: key must not exist
-					: op.refSeq === entry?.sequenceNumber; // CAS: writer saw latest
+			// Accept if the key is unclaimed (trySetClaim) or if the caller's
+			// snapshot matches the current per-key sequence number (CAS).
+			const isAccepted = entry === undefined || op.refSeq === entry.sequenceNumber;
 
 			if (isAccepted) {
 				this.claims.set(op.key, {
