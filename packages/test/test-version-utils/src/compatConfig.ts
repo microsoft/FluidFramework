@@ -254,12 +254,13 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 
 /**
  * Returns true if compat test version is below the one provided as minimum version.
- * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * It helps to filter out lower versions configs that the ones intended to be tested on a
  * particular suite.
  */
 export function isCompatVersionBelowMinVersion(
 	minVersion: string,
 	config: CompatConfig,
+	useOnlineRegistry: boolean = false,
 ): boolean {
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
@@ -272,14 +273,9 @@ export function isCompatVersionBelowMinVersion(
 	const compatVersion = getRequestedVersion({
 		baseVersion: baseVersionForMinCompat,
 		requested: lowerVersion,
-		useOnlineRegistry: true,
+		useOnlineRegistry,
 	});
-	const minReqVersion = getRequestedVersion({
-		baseVersion: testBaseVersion(minVersion),
-		requested: minVersion,
-		useOnlineRegistry: true,
-	});
-	return semver.compare(compatVersion, minReqVersion) < 0;
+	return semver.compare(compatVersion, minVersion) < 0;
 }
 
 /**
