@@ -379,7 +379,7 @@ jobs:
                 ) {
                   const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
                   const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
-                  bundleLines.push(`- \`${bundle}\`: parsed ${fmtDelta(dp)}, gzip ${fmtDelta(dg)}`);
+                  bundleLines.push(`- \`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`);
                 }
               }
               if (bundleLines.length > 0) {

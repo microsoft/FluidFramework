@@ -42,7 +42,7 @@ function formatComparison(comparison: PackageComparison): string[] {
 	const fmt = (before: number, after: number): string => {
 		const delta = after - before;
 		const sign = delta > 0 ? "+" : "";
-		return `${before} -> ${after} (${sign}${delta})`;
+		return `${before} → ${after} (${sign}${delta})`;
 	};
 
 	const lines: string[] = [];
