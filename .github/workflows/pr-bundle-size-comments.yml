@@ -187,35 +187,37 @@ jobs:
               { q: `type:pr is:open repo:${owner}/${repo} head-sha:${sha}` },
             );
             const pr = search.nodes[0];
-
-            let affected = [];
-            if (pr) {
-              // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or null
-              // on disjoint history) for any successful HTTP response, and throws for HTTP/network/rate-limit
-              // failure — distinguishing "no shared history" (legitimate, emit no entry and stay green) from
-              // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal.
-              let mb;
-              try {
-                const { data } = await github.rest.repos.compareCommits({
-                  owner, repo, base: pr.baseRefName, head: pr.headRefOid,
-                });
-                mb = data.merge_base_commit?.sha ?? undefined;
-              } catch (err) {
-                core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
-                throw err;
-              }
-              if (!mb) {
-                core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to compare.`);
-              } else {
-                affected.push({
-                  number: pr.number,
-                  head: pr.headRefOid,
-                  baseRef: pr.baseRefName,
-                  mergeBase: mb,
-                });
-              }
+            if (!pr) {
+              core.setOutput("prs", "[]");
+              return;
             }
-            core.setOutput("prs", JSON.stringify(affected));
+
+            // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or null
+            // on disjoint history) for any successful HTTP response, and throws for HTTP/network/rate-limit
+            // failure — distinguishing "no shared history" (legitimate, emit no entry and stay green) from
+            // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal.
+            let mb;
+            try {
+              const { data } = await github.rest.repos.compareCommits({
+                owner, repo, base: pr.baseRefName, head: pr.headRefOid,
+              });
+              mb = data.merge_base_commit?.sha ?? undefined;
+            } catch (err) {
+              core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
+              throw err;
+            }
+            if (!mb) {
+              core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to compare.`);
+              core.setOutput("prs", "[]");
+              return;
+            }
+
+            core.setOutput("prs", JSON.stringify([{
+              number: pr.number,
+              head: pr.headRefOid,
+              baseRef: pr.baseRefName,
+              mergeBase: mb,
+            }]));
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
   # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
