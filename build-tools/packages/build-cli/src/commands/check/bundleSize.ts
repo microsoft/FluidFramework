@@ -135,7 +135,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		const artifactContents = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
-			commit: baselineCommit,
+			match: { kind: "commit", sha: baselineCommit },
 			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
 			project: bundleSizeArtifactsBaselinePipeline.project,
 		});

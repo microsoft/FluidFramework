@@ -56,7 +56,7 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 		const baseArtifact = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
-			commit: base,
+			match: { kind: "commit", sha: base },
 			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
 			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
@@ -68,7 +68,7 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 		const headArtifact = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsPrPipeline.bundleAnalyzerJsonArtifactName,
-			commit: head,
+			match: { kind: "prHead", sha: head },
 			definitionId: bundleSizeArtifactsPrPipeline.definitionId,
 			project: bundleSizeArtifactsPrPipeline.project,
 		});

@@ -20,33 +20,54 @@ import { getBuilds } from "./utils.js";
 const recentBuildsToFetch = 100;
 
 /**
- * Find a usable build for `commit` in `builds` — one with an id, status
- * Completed, and result Succeeded. A commit can have more than one ADO build
+ * How to identify the ADO build for a SHA.
+ *
+ * - `commit`: match `Build.sourceVersion` directly. Use for builds queued
+ *   against a real commit on a branch/tag (main, release branches, …).
+ * - `prHead`: match `Build.triggerInfo['pr.sourceSha']`. PR-triggered builds
+ *   record the GitHub-generated test-merge SHA on `sourceVersion` (opaque,
+ *   ephemeral) and the actual PR HEAD SHA on `triggerInfo['pr.sourceSha']` —
+ *   so use this kind when the caller knows the PR HEAD, not the test-merge.
+ */
+export type BuildMatch = { kind: "commit"; sha: string } | { kind: "prHead"; sha: string };
+
+/** Human-readable label for the SHA `match` is keyed by, used in error messages. */
+function describeMatch(match: BuildMatch): string {
+	return match.kind === "commit" ? `commit ${match.sha}` : `PR HEAD ${match.sha}`;
+}
+
+/**
+ * `true` if `b` is the build `match` identifies — see {@link BuildMatch}.
+ */
+function buildMatches(b: Build, match: BuildMatch): boolean {
+	if (match.kind === "commit") {
+		return b.sourceVersion === match.sha;
+	}
+	// `triggerInfo` is not in azure-devops-node-api's `Build` type but is
+	// included in the REST response for PR-triggered builds.
+	return (
+		(b as unknown as { triggerInfo?: Record<string, string> }).triggerInfo?.[
+			"pr.sourceSha"
+		] === match.sha
+	);
+}
+
+/**
+ * Find a usable build matching `match` in `builds` — one with an id, status
+ * Completed, and result Succeeded. A SHA can map to more than one ADO build
  * (manual re-run, partial-success retry, …), so scan all matches rather than
  * locking onto the first one ADO returned.
- *
- * Both `sourceVersion` and `triggerInfo['pr.sourceSha']` are checked. PR builds
- * record the GitHub-generated test-merge SHA on `sourceVersion` and the actual
- * PR HEAD SHA on `triggerInfo['pr.sourceSha']`; main builds carry the commit
- * SHA on `sourceVersion` directly with no `triggerInfo`.
  *
  * @returns The build id. Throws with a human-readable message when no usable
  * build is found, prioritizing "not yet completed" over "did not succeed"
  * since retrying later might help.
  */
-function findBuildIdForCommit(builds: Build[], commit: string): number {
-	const candidates = builds.filter(
-		(b) =>
-			b.sourceVersion === commit ||
-			// `triggerInfo` is not in azure-devops-node-api's `Build` type but is
-			// included in the REST response for PR-triggered builds.
-			(b as unknown as { triggerInfo?: Record<string, string> }).triggerInfo?.[
-				"pr.sourceSha"
-			] === commit,
-	);
+function findBuildId(builds: Build[], match: BuildMatch): number {
+	const candidates = builds.filter((b) => buildMatches(b, match));
+	const subject = describeMatch(match);
 
 	if (candidates.length === 0) {
-		throw new Error(`No build found for commit ${commit}`);
+		throw new Error(`No build found for ${subject}`);
 	}
 
 	const usable = candidates.find(
@@ -67,18 +88,16 @@ function findBuildIdForCommit(builds: Build[], commit: string): number {
 		b.status === BuildStatus.InProgress ||
 		b.status === BuildStatus.Postponed;
 	if (candidates.some(isActivelyRunning)) {
-		throw new Error(
-			`Found an in-progress build for commit ${commit}; none have succeeded yet.`,
-		);
+		throw new Error(`Found an in-progress build for ${subject}; none have succeeded yet.`);
 	}
 	if (candidates.every((b) => b.result !== BuildResult.Succeeded)) {
-		throw new Error(`All builds for commit ${commit} have completed but none succeeded.`);
+		throw new Error(`All builds for ${subject} have completed but none succeeded.`);
 	}
 	// Reaching here means at least one candidate Succeeded but is missing an
 	// `id` (possibly alongside other failed candidates) — an ADO state anomaly
 	// that shouldn't happen in practice, but the `id` field is typed
 	// `number | undefined` so we surface it explicitly.
-	throw new Error(`No build for commit ${commit} has a usable build id.`);
+	throw new Error(`No build for ${subject} has a usable build id.`);
 }
 
 export interface GetArtifactForCommitArgs {
@@ -86,8 +105,8 @@ export interface GetArtifactForCommitArgs {
 	adoApi: WebApi;
 	/** Name of the pipeline artifact to fetch. */
 	artifactName: string;
-	/** Commit whose build to look up. */
-	commit: string;
+	/** Which SHA — and on which field — to identify the build by. */
+	match: BuildMatch;
 	/** ID of the ADO pipeline whose builds to search. */
 	definitionId: number;
 	/** The ADO project name. */
@@ -95,8 +114,8 @@ export interface GetArtifactForCommitArgs {
 }
 
 /**
- * Look up the build for `commit` on the given ADO pipeline and return the
- * contents of one of its artifacts.
+ * Look up the build identified by `match` on the given ADO pipeline and
+ * return the contents of one of its artifacts.
  *
  * @returns The artifact's {@link ArtifactContents}. Throws with a
  * human-readable message when no usable build is found (missing, incomplete,
@@ -105,14 +124,14 @@ export interface GetArtifactForCommitArgs {
 export async function getArtifactForCommit(
 	args: GetArtifactForCommitArgs,
 ): Promise<ArtifactContents> {
-	const { adoApi, artifactName, commit, definitionId, project } = args;
+	const { adoApi, artifactName, match, definitionId, project } = args;
 
 	const builds = await getBuilds(adoApi, {
 		project,
 		definitions: [definitionId],
 		maxBuildsPerDefinition: recentBuildsToFetch,
 	});
-	const buildId = findBuildIdForCommit(builds, commit);
+	const buildId = findBuildId(builds, match);
 
 	return downloadArtifact(adoApi, project, buildId, artifactName);
 }
