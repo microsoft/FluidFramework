@@ -262,6 +262,10 @@ export function isCompatVersionBelowMinVersion(
 	config: CompatConfig,
 	useOnlineRegistry: boolean = false,
 ): boolean {
+	if (!semver.valid(minVersion)) {
+		throw new Error(`Invalid version: "${minVersion}"`);
+	}
+
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
