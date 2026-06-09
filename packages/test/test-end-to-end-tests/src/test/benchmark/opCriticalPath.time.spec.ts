@@ -14,7 +14,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
 	CompressionAlgorithms,
-	ContainerRuntime,
+	type ContainerRuntime,
 } from "@fluidframework/container-runtime/internal";
 import {
 	toIDeltaManagerFull,

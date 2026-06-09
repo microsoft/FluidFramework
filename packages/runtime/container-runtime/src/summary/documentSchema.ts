@@ -5,7 +5,7 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { SemanticVersion } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import { gt, lt, parse } from "semver-ts";
 
@@ -633,7 +633,7 @@ export class DocumentsSchemaController {
 		features: IDocumentSchemaFeatures,
 		private readonly onSchemaChange: (schema: IDocumentSchemaCurrent) => void,
 		info: IDocumentSchemaInfo,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly disableSchemaUpgrade: boolean,
 	) {
 		// For simplicity, let's only support new schema features for explicit schema control mode
