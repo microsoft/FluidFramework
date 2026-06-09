@@ -118,15 +118,15 @@ export function normalizeToNodeShape(
 	}
 
 	const baseIndex = input.base;
-	assert(!pendingResolution.has(baseIndex), "cyclic specialized node shape chain");
+	assert(!pendingResolution.has(baseIndex), 0xcfb /* cyclic specialized node shape chain */);
 	pendingResolution.add(baseIndex);
 	const encoded = context.shapes[baseIndex];
-	assert(encoded !== undefined, "shape index out of bounds");
+	assert(encoded !== undefined, 0xcfc /* shape index out of bounds */);
 
 	const baseShape = encoded.c ?? ("f" in encoded ? encoded.f : undefined);
 	assert(
 		baseShape !== undefined,
-		"shape at index must be a concrete (c) or specialized (f) node shape",
+		0xcfd /* shape at index must be a concrete (c) or specialized (f) node shape */,
 	);
 
 	return applySpecialization(
@@ -153,7 +153,7 @@ export function applySpecialization(
 	const indexFromKey = new Map<FieldKey, number>();
 	for (const [i, [keyEncoded]] of fields.entries()) {
 		const key = context.identifier<FieldKey>(keyEncoded);
-		assert(!indexFromKey.has(key), "duplicate field key in base node shape");
+		assert(!indexFromKey.has(key), 0xcfe /* duplicate field key in base node shape */);
 		indexFromKey.set(key, i);
 	}
 
@@ -161,14 +161,17 @@ export function applySpecialization(
 	const seenOverrideKeys = new Set<FieldKey>();
 	for (const [keyEncoded, shapeIndex] of overrides.fields ?? []) {
 		const key = context.identifier<FieldKey>(keyEncoded);
-		assert(!seenOverrideKeys.has(key), "duplicate field key in specialized node shape");
+		assert(
+			!seenOverrideKeys.has(key),
+			0xcff /* duplicate field key in specialized node shape */,
+		);
 		seenOverrideKeys.add(key);
 		const existingIndex = indexFromKey.get(key);
 		if (existingIndex === undefined) {
 			fields.push([keyEncoded, shapeIndex]);
 		} else {
 			const index = fields[existingIndex];
-			assert(index !== undefined, "expected existing field index");
+			assert(index !== undefined, 0xd00 /* expected existing field index */);
 			fields[existingIndex] = [index[0], shapeIndex];
 		}
 	}

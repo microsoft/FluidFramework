@@ -4,12 +4,11 @@
 # DisableDockerDetector "No feasible secure solution for OSS repos yet"
 
 # The node base image is pulled from public Docker Hub by default so local builds and external
-# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY (via
-# additionalBuildArguments in tools/pipelines/server-historian.yml) to point at our internal mirror,
-# because 1ES network isolation policies (CfsClean/CfsClean2) block egress to registry-1.docker.io
-# from our build pool. The mirror is byte-for-byte identical to docker.io/library, so the same
-# manifest digest pin resolves correctly against either registry. See tools/pipelines/README.md for
-# how to maintain the mirror (upgrades, additions).
+# contributors get the canonical upstream image. Our CI pipeline overrides BASE_IMAGE_REGISTRY to
+# point at our mirror ACR, because 1ES network isolation policies (CfsClean/CfsClean2) block egress
+# to registry-1.docker.io from our build pool. The mirror is byte-for-byte identical to
+# docker.io/library, so the same manifest digest pin resolves correctly against either registry.
+# See tools/pipelines/README.md for how to maintain the mirror (upgrades, additions).
 ARG BASE_IMAGE_REGISTRY=docker.io
 FROM ${BASE_IMAGE_REGISTRY}/library/node:22.22.2-bookworm-slim@sha256:f3a68cf41a855d227d1b0ab832bed9749469ef38cf4f58182fb8c893bc462383 AS runnerbase
 
@@ -59,18 +58,25 @@ ENV PNPM_HOME="/pnpm"
 # though it's not leveraged currently.
 ENV PATH="$PNPM_HOME:$HISTORIAN_ROOT/node_modules/.bin:$PATH"
 
-# Note: `npm install -g corepack` was added as a temporary workaround in response to https://github.com/nodejs/corepack/issues/612.
-# The NPM registry recently rotated some keys but non-latest corepack versions (like those distributed with Node18)
-# have hardcoded references to the old keys and thus fail to install packages that were signed with the new keys.
-# So install the latest corepack globally to work around the problem.
-RUN npm install -g corepack && corepack enable
+# Install the pnpm version pinned in package.json's "packageManager" field.
+# Mirrors the approach used by tools/pipelines/templates/include-install-pnpm.yml.
+#
+# CI has no egress to registry.npmjs.org under 1ES network isolation, so it
+# provides an authenticated .npmrc (pointing at our ADO npm mirror) as a
+# BuildKit secret. The mount is marked required=false so local `docker build`
+# invocations that don't pass --secret still work, falling back to npm's
+# default public registry.
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
+    && npm install -g "$PNPM_VERSION"
 
-# Need to set the --unsafe-perm flag since we are doing the install as root. Consider adding an 'app' account so we
-# can do the install as node but then switch to 'app' to run. As app we won't be able to write to installed files
-# and be able to change them.
 # Using a cache mount for the pnpm store improves the incremental docker build.
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store\
-    pnpm install --unsafe-perm
+# pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set
+# (https://pnpm.io/settings#storedir), so the mount target /pnpm/store already
+# matches and no --store-dir flag is needed.
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
+    pnpm install
 
 COPY . .
 

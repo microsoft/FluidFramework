@@ -13,10 +13,7 @@ import type {
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type CodecTree,
@@ -203,7 +200,7 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {

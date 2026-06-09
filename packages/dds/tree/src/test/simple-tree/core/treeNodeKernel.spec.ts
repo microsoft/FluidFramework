@@ -5,9 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
+	TEST_activeBufferCount,
 	getKernel,
 	isTreeNode,
 	withBufferedTreeEvents,
@@ -126,7 +129,7 @@ describe("simple-tree proxies", () => {
 
 		assert.throws(
 			() => TreeBeta.on(node, "nodeChanged", () => {}),
-			/Cannot register events on a disposed node/,
+			validateAssertionError(/Cannot register events on a disposed node/),
 		);
 	});
 });
@@ -185,6 +188,62 @@ describe("withBufferedTreeEvents", () => {
 			assert.equal(eventCounter, 0);
 		});
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
+	});
+
+	// Regression tests for a leak where KernelEventBuffers were retained indefinitely
+	// by a module-level emitter subscription. After the fix, module-level state should
+	// only reference buffers during an active withBufferedTreeEvents window.
+	describe("does not leak KernelEventBuffers", () => {
+		it("active-buffer count returns to baseline after a buffering window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				myObject.foo = "hello";
+				myObject.baz = 5;
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the buffering window ends",
+			);
+		});
+
+		it("editing outside a buffering window never adds the buffer to module-level state", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			myObject.foo = "hello";
+			myObject.baz = 5;
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Unbuffered edits must not register the buffer with module-level state",
+			);
+		});
+
+		it("nested withBufferedTreeEvents windows release the buffer when the outer window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				withBufferedTreeEvents(() => {
+					myObject.foo = "hello";
+				});
+				// Inner window does not flush — buffer must still be tracked.
+				assert.equal(TEST_activeBufferCount(), 1);
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the outer buffering window ends",
+			);
+		});
 	});
 });
 

@@ -6,7 +6,7 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -68,7 +68,7 @@ export class DataStoreContexts
 		}
 	});
 
-	private readonly _logger: ITelemetryLoggerExt;
+	private readonly _logger: TelemetryLoggerExt;
 
 	constructor(baseLogger: ITelemetryBaseLogger) {
 		this._logger = createChildLogger({ logger: baseLogger });

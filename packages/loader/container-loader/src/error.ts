@@ -8,7 +8,7 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	LoggingError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
@@ -40,7 +40,7 @@ export class ThrottlingWarning
 	public static wrap(
 		error: unknown,
 		retryAfterSeconds: number,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): IThrottlingWarning {
 		const newErrorFn = (errMsg: string): ThrottlingWarning =>
 			new ThrottlingWarning(errMsg, retryAfterSeconds);

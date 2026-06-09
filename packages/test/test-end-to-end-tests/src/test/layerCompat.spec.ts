@@ -34,6 +34,9 @@ import {
 	FluidErrorTypes,
 	type ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces/internal";
+// This file tests the layer-compat infrastructure itself, so it imports the compat-detail symbols
+// directly from each layer rather than via apis (the apis abstraction is the thing under test).
+// eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import {
 	dataStoreCompatDetailsForRuntime,
 	dataStoreCoreCompatDetails,

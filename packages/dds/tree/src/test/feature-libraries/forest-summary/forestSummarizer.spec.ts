@@ -451,7 +451,7 @@ describe("ForestSummarizer", () => {
 					{
 						fooArray: new FooArray(["value1", "value2"]),
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 
@@ -809,6 +809,10 @@ describe("ForestSummarizer", () => {
 			});
 		});
 
+		// NOTE: The 4-depth schema, `makeChangeAtDepth` helper, and the parameterized change
+		// sequences below are mirrored by the end-to-end tests in
+		// `packages/test/test-end-to-end-tests/src/test/treeIncrementalSummary.spec.ts`.
+		// Changes to the scenarios here should be mirrored there (and vice versa).
 		describe("4-depth schema with parameterized incremental summarization", () => {
 			/**
 			 * A 4-depth nested schema where each level's map field carries

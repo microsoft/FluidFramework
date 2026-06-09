@@ -12,7 +12,7 @@ import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -57,12 +57,12 @@ export class SnapshotLegacy {
 	private header: SnapshotHeader | undefined;
 	private seq: number | undefined;
 	private segments: ISegmentPrivate[] | undefined;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private readonly chunkSize: number;
 
 	constructor(
 		public mergeTree: MergeTree,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		public filename?: string,
 		public onCompletion?: () => void,
 	) {
