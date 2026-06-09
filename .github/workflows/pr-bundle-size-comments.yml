@@ -369,9 +369,9 @@ jobs:
             for (const [pkg, bundles] of Object.entries(data.comparison)) {
               const bundleLines = [];
               for (const [bundle, cmp] of Object.entries(bundles)) {
-                if (cmp.base == null && cmp.compare != null) {
+                if (cmp.base === undefined && cmp.compare !== undefined) {
                   bundleLines.push(`- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`);
-                } else if (cmp.compare == null && cmp.base != null) {
+                } else if (cmp.compare === undefined && cmp.base !== undefined) {
                   bundleLines.push(`- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`);
                 } else if (
                   cmp.base.parsedSize !== cmp.compare.parsedSize ||
