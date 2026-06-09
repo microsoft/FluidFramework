@@ -28,7 +28,7 @@ import {
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
 import { ensureVersionLoaded } from "./testApi.js";
-import { getRequestedVersion, resolveRangeViaRegistry } from "./versionUtils.js";
+import { getRequestedVersion, resolveRangeViaManifest } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -67,7 +67,7 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
-export const oldestCompatibleVersion = resolveRangeViaRegistry("2.0.0-internal.5.4.2");
+export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.0-internal.5.4.2");
 
 /**
  * The default versions to be used for generating configurations for layer compat testing.
@@ -107,7 +107,7 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 	return [
 		{
 			name: `compat - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
@@ -186,7 +186,7 @@ const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 
 	return [
 		{
@@ -202,7 +202,7 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 	return [
 		{
 			name: `compat back - loader & driver ${compatVersionStr}, other layers ${currentVersionStr}`,
@@ -254,13 +254,18 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 
 /**
  * Returns true if compat test version is below the one provided as minimum version.
- * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * It helps to filter out lower versions configs that the ones intended to be tested on a
  * particular suite.
  */
 export function isCompatVersionBelowMinVersion(
 	minVersion: string,
 	config: CompatConfig,
+	useOnlineRegistry: boolean = false,
 ): boolean {
+	if (!semver.valid(minVersion)) {
+		throw new Error(`Invalid version: "${minVersion}"`);
+	}
+
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
@@ -269,9 +274,12 @@ export function isCompatVersionBelowMinVersion(
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
-	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
-	return semver.compare(compatVersion, minReqVersion) < 0;
+	const compatVersion = getRequestedVersion({
+		baseVersion: baseVersionForMinCompat,
+		requested: lowerVersion,
+		useOnlineRegistry,
+	});
+	return semver.compare(compatVersion, minVersion) < 0;
 }
 
 /**
@@ -324,7 +332,9 @@ function genCompatConfig(versionDetails: {
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(pkgVersion, 0, false /* adjustMajorPublic */);
+	// Current-version APIs come from the in-repo build, so we should use pkgVersion directly
+	// instead of resolving through the compat manifest/registry.
+	const currentVersion = pkgVersion;
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
@@ -332,7 +342,7 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	const deltaVersions: Map<string, string> = new Map();
 	const current = getCurrentCheckpoint(pkgVersion);
 	for (const c of getInWindowPriorCheckpoints(current)) {
-		const v = resolveRangeViaRegistry(checkpointResolutionRange(c));
+		const v = resolveRangeViaManifest(checkpointResolutionRange(c));
 		deltaVersions.set(v, c.name);
 	}
 
