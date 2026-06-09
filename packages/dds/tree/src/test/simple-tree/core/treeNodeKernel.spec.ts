@@ -5,9 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
+import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
+
 import { rootFieldKey, type UpPath } from "../../../core/index.js";
 import { TreeAlpha } from "../../../shared-tree/index.js";
 import {
+	TEST_activeBufferCount,
 	getKernel,
 	isTreeNode,
 	withBufferedTreeEvents,
@@ -93,6 +96,42 @@ describe("simple-tree proxies", () => {
 		assert.equal(anchors.find(path), undefined);
 		assert(anchors.isEmpty());
 	});
+
+	it("can hydrate a node with existing event listeners", () => {
+		// Listeners registered before hydration must continue to fire after the
+		// kernel migrates its event source from the unhydrated inner node to the
+		// hydrated anchor node.
+		const node = new ChildSchema({ content: 1 });
+
+		const log: string[] = [];
+		TreeBeta.on(node, "nodeChanged", ({ changedProperties }) => {
+			log.push(`nodeChanged: ${JSON.stringify([...changedProperties.keys()].sort())}`);
+		});
+
+		// Mutating before hydration: listener fires from the unhydrated event source.
+		node.content = 2;
+		assert.deepEqual(log, ['nodeChanged: ["content"]']);
+
+		hydrate(ChildSchema, node);
+
+		// Mutating after hydration: listener must continue firing, now from the anchor-node source.
+		node.content = 3;
+		assert.deepEqual(log, ['nodeChanged: ["content"]', 'nodeChanged: ["content"]']);
+	});
+
+	it("registering event listeners on a disposed kernel throws", () => {
+		// Once a kernel has been disposed (e.g. via afterDestroy on its anchor node),
+		// accessing its events to subscribe must fail loudly rather than silently
+		// allocating a fresh buffer on a defunct kernel.
+		const node = new ChildSchema({ content: 1 });
+		hydrate(ChildSchema, node);
+		getKernel(node).dispose();
+
+		assert.throws(
+			() => TreeBeta.on(node, "nodeChanged", () => {}),
+			validateAssertionError(/Cannot register events on a disposed node/),
+		);
+	});
 });
 
 describe("withBufferedTreeEvents", () => {
@@ -149,6 +188,62 @@ describe("withBufferedTreeEvents", () => {
 			assert.equal(eventCounter, 0);
 		});
 		assert.equal(eventCounter, 1); // Only a single event should have been raised.
+	});
+
+	// Regression tests for a leak where KernelEventBuffers were retained indefinitely
+	// by a module-level emitter subscription. After the fix, module-level state should
+	// only reference buffers during an active withBufferedTreeEvents window.
+	describe("does not leak KernelEventBuffers", () => {
+		it("active-buffer count returns to baseline after a buffering window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				myObject.foo = "hello";
+				myObject.baz = 5;
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the buffering window ends",
+			);
+		});
+
+		it("editing outside a buffering window never adds the buffer to module-level state", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+			TreeBeta.on(myObject, "treeChanged", () => {});
+
+			myObject.foo = "hello";
+			myObject.baz = 5;
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Unbuffered edits must not register the buffer with module-level state",
+			);
+		});
+
+		it("nested withBufferedTreeEvents windows release the buffer when the outer window ends", () => {
+			const myObject = hydrate(MyObject, new MyObject({ foo: "hi", bar: true }));
+			TreeBeta.on(myObject, "nodeChanged", () => {});
+
+			withBufferedTreeEvents(() => {
+				withBufferedTreeEvents(() => {
+					myObject.foo = "hello";
+				});
+				// Inner window does not flush — buffer must still be tracked.
+				assert.equal(TEST_activeBufferCount(), 1);
+			});
+
+			assert.equal(
+				TEST_activeBufferCount(),
+				0,
+				"Buffers must not be retained after the outer buffering window ends",
+			);
+		});
 	});
 });
 

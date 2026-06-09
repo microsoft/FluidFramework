@@ -45,14 +45,11 @@ are generated (empty entries are current versions):
 In addition to the layer version combinations seen above, this package also provides functions to generate variations
 intended to test all layers of one version against all layers of another version in tests that feature more than one client.
 The intention is to simulate scenarios where the client that created a document was using a different version than the client
-loading the document. These variations are applied in our cross-client tests where we test the current version against the
-most recent **public** release.
+loading the document. The matrix pairs the current build against every in-window prior **Compatibility Checkpoint**
+(see [`CompatibilityCheckpoints.md`](../../../CompatibilityCheckpoints.md)) in both directions, with each prior
+checkpoint resolved to the **earliest minor** in its range (e.g. CC-3 → latest patch of `2.40.x`).
 
-For example, at the time of writing, main is on version `2.0.0-internal.7.3.0` and the latest **public** release is `1.3.7`.
-Therefore, we would test the following combinations:
-
--   Client A is running `2.0.0-internal.7.3.0` across **all** layers and Client B is running `1.3.7` across **all** layers.
--   Client A is running `1.3.7` across **all** layers and Client B is running `2.0.0-internal.7.3.0` across **all** layers.
+The data driving the matrix lives in [`src/checkpoints.ts`](./src/checkpoints.ts).
 
 ### Mocha test setup with layer version combinations
 
@@ -74,8 +71,9 @@ to enable compat testing easily in the future just by changing the compatVersion
 
 ### Legacy version defaults and installation
 
-By default, N-1 (public release), N-1 (internal release), N-2 (internal release), and LTS (hard coded) test variants are
-generated. The versions can be specified using command line (see below) to run the test against any two versions. This
+By default, the cross-client checkpoint matrix described above is generated, a layer-compat permutation against
+the most recent prior in-window checkpoint, and a hard-coded "Oldest Compatible Version" (OCV) for Loader / Driver
+layer-compat. The versions can be specified using command line (see below) to run the test against any two versions. This
 package includes a `mocha` global hook that will install legacy packages at the beginning of the package based on the
 `compatVersion` settings.
 
@@ -126,8 +124,7 @@ We also accept some of the flags via environment variables.
 
 This bypasses any configuration of version used by the describe\* functions and provides direct access to the versioned APIs.
 
-First make sure to call `ensurePackageInstalled` before running the tests to make sure the necessary legacy version are
-installed.
+First make sure to call `ensureVersionLoaded` before running the tests to make sure the necessary legacy versions are available.
 
 The main entry point is `getVersionedTestObjectProvider` to get a `TestObjectProvider` for a specific version combinations
 and driver config. Additionally, you can get versioned API for specific layers using these API.
@@ -146,13 +143,39 @@ resolve the latest version that matches it.
 OPEN ISSUE: while these API can be used directly, currently the default global mocha hook will still run and install the
 default set of legacy versions whether it is necessary or not.
 
+## Updating compat versions
+
+After a Fluid Framework version bump or after a new compatibility checkpoint is designated, run from this package's
+directory:
+
+```
+pnpm run update-compat-versions
+```
+
+The script (`scripts/updateCompatVersions.ts`) does the following:
+
+1. Reads the current package version from `src/packageVersion.ts`.
+2. Maps that version to a checkpoint via [`src/checkpoints.ts`](./src/checkpoints.ts) and queries the npm registry to
+   resolve every in-window prior checkpoint, plus the full back-compat versions, to exact versions.
+3. Writes `compat-workspaces/generated-versions.cjs` with the resolved exact versions.
+4. Creates or updates per-version `package.json` files in `compat-workspaces/full/`.
+5. Removes version directories that are no longer needed.
+6. Runs `pnpm install --no-frozen-lockfile` in the workspace to regenerate the committed lockfile.
+
+Commit all files produced by the script: `generated-versions.cjs`, per-version `package.json` files, and
+`compat-workspaces/full/pnpm-lock.yaml`.
+
+### Adding pinned versions for specific tests
+
+When adding a test that uses `describeInstallVersions({ requestAbsoluteVersions: [...] })` for some pinned version,
+add that version to `compat-workspaces/explicit-versions.mjs`. Then re-run `update-compat-versions` and commit the changes.
+
 ## Implementation notes
 
-The legacy version are installed in their own version folder
-`./../node_modules/.legacy/<version>` (current package root's node_module directory).
-
-Legacy versions of all packages in all categories are installed regardless of what compat combination is requested.
-(See `packageList` in `src/testApi.ts`).
+Legacy packages are installed in a committed pnpm sub-workspace at `compat-workspaces/full/`.
+The workspace is installed automatically when `pnpm install` is run from the repo root (via the
+`postinstall` hook in this package's `package.json`), so no runtime installation step is required
+in tests.
 
 For now, the current versions are statically bound to also provide typings.
 This is a lie since the public API of a package may change over time: `ContainerRuntime` in FF@10.0.0 will not have the

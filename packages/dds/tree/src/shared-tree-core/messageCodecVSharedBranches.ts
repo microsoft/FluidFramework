@@ -4,7 +4,8 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { type TAnySchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { TAnySchema } from "@sinclair/typebox";
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
 import type {
@@ -47,6 +48,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						schema: context.schema,
 						idCompressor: context.idCompressor,
 						revision: message.commit.revision,
+						isSummary: false,
 					};
 
 					return {
@@ -54,6 +56,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 							originatorId: message.sessionId,
 							idCompressor: context.idCompressor,
 							revision: undefined,
+							isSummary: false,
 						}),
 						originatorId: message.sessionId,
 						changeset: changeCodec.encode(message.commit.change, changeContext),
@@ -84,10 +87,11 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				branchId: encodedBranchId,
 			} = encoded;
 
-			const changeContext = {
+			const changeContext: ChangeEncodingContext = {
 				originatorId,
 				revision: undefined,
 				idCompressor: context.idCompressor,
+				isSummary: false,
 			};
 
 			const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
@@ -107,6 +111,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 						originatorId,
 						revision,
 						idCompressor: context.idCompressor,
+						isSummary: false,
 					}),
 				},
 				branchId,

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.100.0",
+	"version": "2.110.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -124,16 +124,9 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:esnext": [
-				"^api",
-				"^build:esnext"
-			],
 			"eslint": [
-				"api-extractor:esnext"
-			],
-			"tsc": [
-				"^api",
-				"^tsc"
+				"^build:esnext",
+				"^api-extractor:esnext"
 			]
 		}
 	},

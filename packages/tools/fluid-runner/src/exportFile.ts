@@ -13,7 +13,10 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	type TelemetryLoggerExt,
+	PerformanceEvent,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
@@ -139,7 +142,7 @@ export async function exportFile(
 export async function createFluidRunnerContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	baseLogger: ITelemetryBaseLogger,
+	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch: boolean = false,

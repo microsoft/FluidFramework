@@ -1070,6 +1070,7 @@ export class Container
 
 				this.connectionStateHandler.dispose();
 				this.serializedStateManager.dispose();
+				this._runtime?.close?.();
 			} catch (newError) {
 				this.mc.logger.sendErrorEvent({ eventName: "ContainerCloseException" }, newError);
 			}
@@ -1104,6 +1105,8 @@ export class Container
 						eventName: "ContainerDispose",
 						// Only log error if container isn't closed
 						category: !this.closed && error !== undefined ? "error" : "generic",
+						isDirty: this.isDirty,
+						lastSequenceNumber: this._deltaManager.lastSequenceNumber,
 					},
 					error,
 				);
@@ -1589,6 +1592,7 @@ export class Container
 		version: string | undefined;
 		dmLastProcessedSeqNumber: number;
 		dmLastKnownSeqNumber: number;
+		numUnsummarizedOps: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
@@ -1756,6 +1760,12 @@ export class Container
 			version: version?.id,
 			dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
 			dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
+			// Ops known since the last summary (including queued/unprocessed). The loaded snapshot's
+			// sequence number corresponds to the last summary's reference sequence number under normal
+			// "latest" load paths (the runtime asserts this match unless pendingLocalState is used or
+			// sequence number verification is bypassed), so this approximates numUnsummarizedOps at
+			// the loader level without requiring access to runtime summary metadata.
+			numUnsummarizedOps: this._deltaManager.lastKnownSeqNumber - attributes.sequenceNumber,
 		};
 	}
 
@@ -2394,6 +2404,9 @@ export class Container
 				this.subLogger,
 				{ eventName: "CodeLoad" },
 				async () => this.codeLoader.load(codeDetails),
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 
 			this._loadedModule = {
@@ -2608,6 +2621,14 @@ export class Container
 
 /**
  * IContainer interface that includes experimental features still under development.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * on the `@legacy @beta` surface. This interface is retained for callers that require the
+ * typed-required (non-optional) shape and will be removed in a future breaking release once
+ * `IContainer.getPendingLocalState` is made required.
+ *
  * @alpha @legacy @sealed
  */
 export interface ContainerAlpha extends IContainer {
@@ -2622,6 +2643,13 @@ export interface ContainerAlpha extends IContainer {
 
 /**
  * Converts types to their alpha counterparts to expose alpha functionality.
+ *
+ * @remarks
+ * For `getPendingLocalState`, prefer calling
+ * {@link @fluidframework/container-definitions#IContainer.getPendingLocalState | IContainer.getPendingLocalState}
+ * directly on the `@legacy @beta` surface. This helper is retained for callers that need the
+ * typed-required shape and will be removed in a future breaking release.
+ *
  * @legacy @alpha
  */
 export function asLegacyAlpha(base: IContainer): ContainerAlpha {

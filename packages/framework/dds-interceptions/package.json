@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/dds-interceptions",
-	"version": "2.100.0",
+	"version": "2.110.0",
 	"description": "Distributed Data Structures that support an interception callback",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -57,8 +57,7 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS mocha",
 		"test:mocha:esm": "mocha",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v"
+		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist"
 	},
 	"c8": {
 		"all": true,

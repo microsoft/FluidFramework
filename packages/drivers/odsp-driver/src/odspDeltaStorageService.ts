@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import { validateMessages } from "@fluidframework/driver-base/internal";
 import type {
@@ -15,7 +16,7 @@ import type {
 import { requestOps, streamObserver } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -33,7 +34,7 @@ export class OdspDeltaStorageService {
 		private readonly deltaFeedUrl: string,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
 		private readonly epochTracker: EpochTracker,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {}
 
 	/**
@@ -139,7 +140,7 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 	public constructor(
 		private snapshotOps: ISequencedDocumentMessage[] | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly batchSize: number,
 		private readonly concurrency: number,
 		private readonly getFromStorage: (
@@ -246,13 +247,17 @@ export class OdspDeltaStorageWithCache implements IDocumentDeltaStorageService {
 
 		return streamObserver(stream, (result) => {
 			if (result.done && opsFromSnapshot + opsFromCache + opsFromStorage !== 0) {
-				this.logger.sendPerformanceEvent({
-					eventName: "CacheOpsRetrieved",
-					opsFromSnapshot,
-					opsFromCache,
-					opsFromStorage,
-					reason: fetchReason,
-				});
+				this.logger.sendPerformanceEvent(
+					{
+						eventName: "CacheOpsRetrieved",
+						opsFromSnapshot,
+						opsFromCache,
+						opsFromStorage,
+						reason: fetchReason,
+					},
+					undefined, // error
+					LogLevel.info,
+				);
 			}
 		});
 	}

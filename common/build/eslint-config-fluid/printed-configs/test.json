@@ -1247,29 +1247,6 @@
 		"import-x/no-unused-modules": [
 			"error"
 		],
-		"import-x/order": [
-			"error",
-			{
-				"groups": [
-					"builtin",
-					"external",
-					"internal",
-					"parent",
-					"sibling",
-					"index"
-				],
-				"newlines-between": "always",
-				"alphabetize": {
-					"order": "asc",
-					"caseInsensitive": false,
-					"orderImportKind": "ignore"
-				},
-				"distinctGroup": true,
-				"sortTypesGroup": false,
-				"named": false,
-				"warnOnUnassignedImports": false
-			}
-		],
 		"indent": [
 			"off"
 		],
@@ -1622,7 +1599,11 @@
 				"selector": "ExportAllDeclaration",
 				"message": "Exporting * is not permitted. You should export only named items you intend to export."
 			},
-			"ForInStatement"
+			"ForInStatement",
+			{
+				"selector": "ImportDeclaration[source.value=\"@sinclair/typebox\"] > ImportSpecifier[imported.name=\"Type\"]",
+				"message": "Import the TypeBox `Type` namespace via `import * as Type from \"@sinclair/typebox\"` instead of the named `Type` value export, which pulls in the entire builder and defeats tree-shaking."
+			}
 		],
 		"no-self-assign": [
 			"error",

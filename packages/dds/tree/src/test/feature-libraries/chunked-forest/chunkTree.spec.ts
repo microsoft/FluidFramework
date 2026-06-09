@@ -10,6 +10,7 @@ import {
 	EmptyKey,
 	type FieldKey,
 	type JsonableTree,
+	TreeStoredSchemaRepository,
 	type TreeNodeSchemaIdentifier,
 	type Value,
 	mapCursorField,
@@ -29,7 +30,9 @@ import {
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
+	makeTreeChunker,
 	polymorphic,
+	splitFieldAtIndex,
 	tryShapeFromFieldSchema,
 	tryShapeFromNodeSchema,
 	uniformChunkFromCursor,
@@ -41,6 +44,7 @@ import { emptyChunk } from "../../../feature-libraries/chunked-forest/emptyChunk
 import { SequenceChunk } from "../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import {
 	TreeShape,
+	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
@@ -64,7 +68,7 @@ import {
 	toInitialSchema,
 	TreeViewConfigurationAlpha,
 } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, makeArray } from "../../../util/index.js";
 import { fieldJsonCursor, singleJsonCursor } from "../../json/index.js";
 import { testIdCompressor } from "../../utils.js";
 
@@ -219,6 +223,39 @@ describe("chunkTree", () => {
 			assert.deepEqual(chunk.values, [compressedId]);
 		});
 	});
+	describe("uniformChunks", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+
+		// Chunks should have a max top level length of 4.
+		const batchedUniformPolicy: ChunkPolicy = {
+			sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+			sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCount: 4,
+			uniformChunkNodeCountDynamicTargetMax: 0,
+			shapeFromSchema: (t): ShapeInfo => (t === numberType ? numberShape : polymorphic),
+		};
+
+		it("batches uniform shaped nodes into chunks of uniformChunkNodeCount", () => {
+			const fieldData = numberSequenceField(10);
+			const cursor = cursorForJsonableTreeField(fieldData);
+			cursor.firstNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: batchedUniformPolicy, idCompressor: undefined },
+				10,
+				true,
+			);
+			assert.equal(chunks.length, 3);
+			assert(chunks[0] instanceof UniformChunk);
+			assert(chunks[1] instanceof UniformChunk);
+			assert(chunks[2] instanceof UniformChunk);
+			assert.equal(chunks[0].topLevelLength, 4);
+			assert.equal(chunks[1].topLevelLength, 4);
+			assert.equal(chunks[2].topLevelLength, 2);
+			assertChunkCursorEquals(new SequenceChunk(chunks), fieldData);
+		});
+	});
 
 	describe("chunkRange", () => {
 		it("single basic chunk", () => {
@@ -281,6 +318,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -330,6 +368,7 @@ describe("chunkTree", () => {
 						sequenceChunkSplitThreshold: threshold,
 						sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 						uniformChunkNodeCount: 0,
+						uniformChunkNodeCountDynamicTargetMax: 0,
 						shapeFromSchema: () => polymorphic,
 					};
 					const field = numberSequenceField(fieldLength);
@@ -440,6 +479,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -483,6 +523,81 @@ describe("chunkTree", () => {
 			assert.equal(chunks[0], basicChunk);
 			assert(basicChunk.isShared());
 		});
+
+		it("chunks 10 points into UniformChunks of topLevelLength 4 and reads values via the cursor", () => {
+			const xField: FieldKey = brand("x");
+			const yField: FieldKey = brand("y");
+
+			// A point is a JsonObject with two number children: 3 nodes total per point.
+			const numberShape = new TreeShape(brand(numberSchema.identifier), true, []);
+			const pointShape = new TreeShape(brand(JsonAsTree.JsonObject.identifier), false, [
+				[xField, numberShape, 1],
+				[yField, numberShape, 1],
+			]);
+			assert.equal(pointShape.positions.length, 3);
+
+			// uniformChunkNodeCount caps total nodes per UniformChunk. With 3 nodes per point,
+			// floor(12 / 3) = 4, so the chunker caps each UniformChunk at topLevelLength 4.
+			const policy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 12,
+				uniformChunkNodeCountDynamicTargetMax: 4,
+				shapeFromSchema: (type) =>
+					type === JsonAsTree.JsonObject.identifier ? pointShape : polymorphic,
+			};
+
+			// 10 points, point i with x = 2i and y = 2i + 1.
+			const pointCount = 10;
+			const fieldData: JsonableTree[] = makeArray(pointCount, (i) => ({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					x: [{ type: brand(numberSchema.identifier), value: 2 * i }],
+					y: [{ type: brand(numberSchema.identifier), value: 2 * i + 1 }],
+				},
+			}));
+
+			const cursor = cursorForJsonableTreeField(fieldData);
+			const chunks = chunkField(cursor, { policy, idCompressor: undefined });
+
+			// 10 points capped at 4 per chunk -> [4, 4, 2].
+			assert.equal(chunks.length, 3);
+			const expectedLengths = [4, 4, 2];
+			let globalIndex = 0;
+			for (const [chunkIndex, chunk] of chunks.entries()) {
+				assert(chunk instanceof UniformChunk);
+				assert.equal(chunk.topLevelLength, expectedLengths[chunkIndex]);
+
+				// The chunker reused the exact shape instance the policy handed it, so the `positions` array
+				// is pinned and shared across all chunks, not re-materialized.
+				assert.equal(chunk.shape.treeShape, pointShape);
+				assert.equal(chunk.shape.treeShape.positions, pointShape.positions);
+
+				// Walk the chunk: each enterNode routes through moveToPosition.
+				// Confirm the cursor lands on the value at the known flat slot: local
+				// point j has x at flat index 2j and y at 2j + 1.
+				const chunkCursor = chunk.cursor();
+				for (let j = 0; j < chunk.topLevelLength; j++) {
+					chunkCursor.enterNode(j);
+
+					chunkCursor.enterField(xField);
+					chunkCursor.enterNode(0);
+					assert.equal(chunkCursor.value, chunk.values[2 * j]);
+					chunkCursor.exitNode();
+					chunkCursor.exitField();
+
+					chunkCursor.enterField(yField);
+					chunkCursor.enterNode(0);
+					assert.equal(chunkCursor.value, chunk.values[2 * j + 1]);
+					chunkCursor.exitNode();
+					chunkCursor.exitField();
+
+					chunkCursor.exitNode();
+					globalIndex++;
+				}
+			}
+			assert.equal(globalIndex, pointCount);
+		});
 	});
 
 	describe("chunkFieldSingle", () => {
@@ -525,6 +640,7 @@ describe("chunkTree", () => {
 				sequenceChunkSplitThreshold: 2,
 				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 				uniformChunkNodeCount: 0,
+				uniformChunkNodeCountDynamicTargetMax: 0,
 				shapeFromSchema: () => polymorphic,
 			};
 
@@ -753,6 +869,165 @@ describe("chunkTree", () => {
 				fieldSchemaWithContext,
 			);
 			assert(infoNonIncremental !== undefined);
+		});
+	});
+
+	describe("splitFieldAtIndex", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+
+		// Schema-aware default chunker so chunkRange (used by splitFieldAtIndex) can
+		// rebuild each half of a split uniform chunk as a uniform chunk.
+		const forestSchema = new TreeStoredSchemaRepository(toInitialSchema(builder.number));
+		const chunker = makeTreeChunker(
+			forestSchema,
+			defaultSchemaPolicy,
+			defaultIncrementalEncodingPolicy,
+		);
+		const compressor = { policy: chunker, idCompressor: undefined };
+
+		function assertChunksUnchanged(chunks: TreeChunk[], snapshot: readonly TreeChunk[]): void {
+			assert.equal(chunks.length, snapshot.length);
+			for (let i = 0; i < snapshot.length; i++) {
+				assert.equal(chunks[i], snapshot[i]);
+			}
+		}
+
+		function assertChunksUnshared(chunks: readonly TreeChunk[]): void {
+			for (const chunk of chunks) {
+				assert.equal(chunk.isShared(), false);
+			}
+		}
+
+		it("bisects a max-length uniform chunk when removing a node", () => {
+			// Build a uniform chunk at the policy's max top-level length (10) and split at
+			// the 4th node (index 3). With uniformChunkNodeCountDynamicTargetMax = 2, the
+			// chunk is recursively bisected (10 → 5/5 → 2/3 → 1/2) until index 3 lands on
+			// a chunk boundary, leaving the field divided into chunks of length [2, 1, 2, 5].
+			// This test assumes no remerging of chunks after a split.
+			const bisectingPolicy: ChunkPolicy = {
+				sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+				sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+				uniformChunkNodeCount: 10,
+				uniformChunkNodeCountDynamicTargetMax: 2,
+				shapeFromSchema: (t): ShapeInfo => (t === numberType ? numberShape : polymorphic),
+			};
+
+			const values = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+			const removalIndex = 3;
+			const fieldData: JsonableTree[] = values.map((value) => ({
+				type: numberType,
+				value,
+			}));
+			const cursor = cursorForJsonableTreeField(fieldData);
+			cursor.firstNode();
+			const chunks = chunkRange(
+				cursor,
+				{ policy: bisectingPolicy, idCompressor: undefined },
+				fieldData.length,
+				true,
+			);
+			assert.equal(chunks.length, 1);
+			assert(chunks[0] instanceof UniformChunk);
+			assert.equal(chunks[0].topLevelLength, values.length);
+
+			splitFieldAtIndex(chunks, removalIndex, {
+				policy: bisectingPolicy,
+				idCompressor: undefined,
+			});
+
+			// splitFieldAtIndex correctly bisected the uniform chunk. Assumes no re-merging
+			assert.deepEqual(
+				chunks.map((c) => c.topLevelLength),
+				[2, 1, 2, 5],
+			);
+
+			// confirm all node values are correct
+			assertChunkCursorEquals(
+				new SequenceChunk(chunks),
+				values.map((value) => ({ type: numberType, value })),
+			);
+		});
+
+		it("splits a uniform chunk sandwiched between basic chunks at a middle index", () => {
+			// Build a field containing three chunks:
+			// [basic(1 node), uniform(5 nodes), basic(1 node)] -> total 7 nodes, global indices 0..6
+			// The uniform chunk occupies global indices 1..5, and its middle node is global index 3.
+			const leadingBasic = new BasicChunk(numberType, new Map(), 0);
+			const uniform = new UniformChunk(numberShape.withTopLevelLength(5), [1, 2, 3, 4, 5]);
+			const trailingBasic = new BasicChunk(numberType, new Map(), 6);
+			const chunks: TreeChunk[] = [leadingBasic, uniform, trailingBasic];
+
+			// Hold an extra ref to the uniform chunk so we can inspect its refcount after the
+			// split (without it, referenceRemoved would drive the refcount to 0 and reuse risks
+			// observing a destroyed object).
+			uniform.referenceAdded();
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 3, compressor);
+
+			// The chunks preceding boundaryIndex must hold exactly the first 3 nodes,
+			// i.e. the split landed on the requested node boundary.
+			let nodesBeforeBoundary = 0;
+			for (let i = 0; i < boundaryIndex; i++) {
+				nodesBeforeBoundary += chunks[i].topLevelLength;
+			}
+			assert.equal(nodesBeforeBoundary, 3);
+
+			// The chunk at boundaryIndex starts with the node that was at global index 3.
+			const boundaryCursor = chunks[boundaryIndex].cursor();
+			boundaryCursor.firstNode();
+			assert.deepEqual(jsonableTreeFromCursor(boundaryCursor), {
+				type: numberSchema.identifier,
+				value: 3,
+			});
+
+			// Each resulting chunk should be the sole owner of its slot.
+			assertChunksUnshared(chunks);
+			// The original uniform chunk's array-slot ref was released; only our test ref remains.
+			assert.equal(uniform.isShared(), false);
+			uniform.referenceRemoved();
+		});
+
+		it("does not mutate the array when the index falls on an existing chunk boundary", () => {
+			// Index 1 lands on the boundary between the BasicChunk and the UniformChunk,
+			// so splitFieldAtIndex should return without touching the array.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 1, compressor);
+
+			assert.equal(boundaryIndex, 1);
+			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
+		});
+
+		it("returns chunks.length when the index equals the total node count", () => {
+			// Splicing at the end of the array (e.g. attach appended to the end of a field)
+			// is a valid splice point that should not mutate any chunk.
+			const chunks: TreeChunk[] = [
+				new BasicChunk(numberType, new Map(), 0),
+				new UniformChunk(numberShape.withTopLevelLength(3), [1, 2, 3]),
+			];
+			const snapshot = [...chunks];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 4, compressor);
+
+			assert.equal(boundaryIndex, chunks.length);
+			assertChunksUnchanged(chunks, snapshot);
+			assertChunksUnshared(chunks);
+		});
+
+		it("returns 0 for an empty chunks array at index 0", () => {
+			// Covers both the empty-array case and the index-0 early-return path.
+			const chunks: TreeChunk[] = [];
+
+			const boundaryIndex = splitFieldAtIndex(chunks, 0, compressor);
+
+			assert.equal(boundaryIndex, 0);
+			assert.equal(chunks.length, 0);
 		});
 	});
 });

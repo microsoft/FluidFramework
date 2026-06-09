@@ -1,5 +1,21 @@
 # @fluid-experimental/inventory-app
 
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+Dependency updates only.
+
 ## 2.93.0
 
 Dependency updates only.

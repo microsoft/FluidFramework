@@ -8,10 +8,7 @@ import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/i
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -132,6 +129,20 @@ function* collectTreeLabels(node: LabelTree): IterableIterator<unknown> {
 	for (const child of node.sublabels) {
 		yield* collectTreeLabels(child);
 	}
+}
+
+/**
+ * Deep-clones a {@link LabelTree} so the result is independent of the source.
+ * @remarks
+ * Used when capturing the label tree on a revertible so that subsequent mutations
+ * (by the framework or by external listeners reading {@link TransactionLabels.tree})
+ * cannot affect the labels the revertible will emit.
+ */
+function cloneLabelTree(tree: LabelTree): LabelTree {
+	return {
+		label: tree.label,
+		sublabels: tree.sublabels.map(cloneLabelTree),
+	};
 }
 
 /**
@@ -295,7 +306,7 @@ export function createTreeCheckout(
 		fieldBatchCodec?: FieldBatchCodec;
 		removedRoots?: DetachedFieldIndex;
 		chunkCompressionStrategy?: TreeCompressionStrategy;
-		logger?: ITelemetryLoggerExt;
+		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
 		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
@@ -514,7 +525,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor,
 		),
 		/** Optional logger for telemetry. */
-		private readonly logger?: ITelemetryLoggerExt,
+		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
 		public readonly disposeForksAfterTransaction = true,
 	) {
@@ -713,6 +724,12 @@ export class TreeCheckout implements ITreeCheckout {
 				const kind = event.type === "append" ? event.kind : CommitKind.Default;
 				const { change, revision } = commit;
 
+				// Snapshot the label tree for this commit before any listener runs, so the captured
+				// value is stable against mutations to `metadata.labels.tree` (which aliases the
+				// live `labelTreeNode`).
+				const commitLabelTree =
+					this.labelTreeNode === undefined ? undefined : cloneLabelTree(this.labelTreeNode);
+
 				const getRevertible = hasSchemaChange(change)
 					? undefined
 					: (onRevertibleDisposed?: (revertible: RevertibleAlpha) => void) => {
@@ -731,6 +748,7 @@ export class TreeCheckout implements ITreeCheckout {
 								kind,
 								this,
 								onRevertibleDisposed,
+								commitLabelTree,
 							);
 							this.revertibleCommitBranches.set(
 								revision,
@@ -750,6 +768,7 @@ export class TreeCheckout implements ITreeCheckout {
 							idCompressor: this.idCompressor,
 							originatorId: this.idCompressor.localSessionId,
 							revision,
+							isSummary: false,
 						};
 						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 
@@ -820,6 +839,7 @@ export class TreeCheckout implements ITreeCheckout {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
 			revision,
+			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
@@ -1008,6 +1028,8 @@ export class TreeCheckout implements ITreeCheckout {
 	 * @param kind - The {@link CommitKind} that produced this revertible (e.g., Default, Undo, Redo).
 	 * @param checkout - The {@link TreeCheckout} instance this revertible belongs to.
 	 * @param onRevertibleDisposed - Callback function that will be called when the revertible is disposed.
+	 * @param labelTree - The {@link LabelTree} (if any) active when the original commit was produced.
+	 * The revert commit inherits these labels so that commits and their reverts can be associated.
 	 * @returns A {@link RevertibleAlpha} object.
 	 */
 	private createRevertible(
@@ -1015,6 +1037,7 @@ export class TreeCheckout implements ITreeCheckout {
 		kind: CommitKind,
 		checkout: TreeCheckout,
 		onRevertibleDisposed: ((revertible: RevertibleAlpha) => void) | undefined,
+		labelTree: LabelTree | undefined,
 	): RevertibleAlpha {
 		const commitBranches = checkout.revertibleCommitBranches;
 
@@ -1030,7 +1053,7 @@ export class TreeCheckout implements ITreeCheckout {
 					throw new UsageError("Unable to revert a revertible that has been disposed.");
 				}
 
-				const revertMetrics = checkout.revertRevertible(revision, kind);
+				const revertMetrics = checkout.revertRevertible(revision, kind, labelTree);
 				checkout.logger?.sendTelemetryEvent({
 					eventName: TreeCheckout.revertTelemetryEventName,
 					...revertMetrics,
@@ -1060,7 +1083,13 @@ export class TreeCheckout implements ITreeCheckout {
 
 				targetCheckout.revertibleCommitBranches.set(revision, revertibleBranch.fork());
 
-				return this.createRevertible(revision, kind, targetCheckout, onRevertibleDisposed);
+				return this.createRevertible(
+					revision,
+					kind,
+					targetCheckout,
+					onRevertibleDisposed,
+					labelTree,
+				);
 			},
 			dispose: () => {
 				if (revertible.status === RevertibleStatus.Disposed) {
@@ -1321,7 +1350,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.revertibles.delete(revertible);
 	}
 
-	private revertRevertible(revision: RevisionTag, kind: CommitKind): RevertMetrics {
+	private revertRevertible(
+		revision: RevisionTag,
+		kind: CommitKind,
+		labelTree: LabelTree | undefined,
+	): RevertMetrics {
 		this.editLock.checkUnlocked("Reverting a commit");
 		if (this.transaction.size > 0) {
 			throw new UsageError("Undo is not yet supported during transactions.");
@@ -1364,12 +1397,21 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 
-		this.#transaction.activeBranch.apply(
-			change,
-			kind === CommitKind.Default || kind === CommitKind.Redo
-				? CommitKind.Undo
-				: CommitKind.Redo,
-		);
+		// Install the original commit's label tree so the revert commit's metadata inherits
+		// the same labels. Reusing the captured tree (rather than wrapping it) ensures
+		// revert-of-revert does not introduce new nesting.
+		const previousLabelTreeNode = this.labelTreeNode;
+		this.labelTreeNode = labelTree;
+		try {
+			this.#transaction.activeBranch.apply(
+				change,
+				kind === CommitKind.Default || kind === CommitKind.Redo
+					? CommitKind.Undo
+					: CommitKind.Redo,
+			);
+		} finally {
+			this.labelTreeNode = previousLabelTreeNode;
+		}
 
 		// Derive some stats about the reversion to return to the caller.
 		let revertAge = 0;

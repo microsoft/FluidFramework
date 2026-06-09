@@ -1,5 +1,39 @@
 # @fluidframework/core-interfaces
 
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Deprecate LogLevel.default and LogLevel.error ([#27207](https://github.com/microsoft/FluidFramework/pull/27207)) [77ef3355fdf](https://github.com/microsoft/FluidFramework/commit/77ef3355fdf9611524cad86f00b1ce8ba3263861)
+
+  `LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
+
+  #### Migration
+
+  The recommended replacement for `LogLevel.default` depends on how the value is used:
+  - For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+  - For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
+
+  The replacement for `LogLevel.error` should always be `LogLevel.essential`.
+
+  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
 ## 2.93.0
 
 ### Minor Changes

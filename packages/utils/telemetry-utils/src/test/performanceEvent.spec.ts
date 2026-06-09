@@ -5,7 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { LogLevel, type ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import sinon from "sinon";
 
 import { PerformanceEvent, TelemetryLogger } from "../logger.js";
 import type { TelemetryLoggerExt } from "../telemetryTypes.js";
@@ -13,17 +14,21 @@ import type { TelemetryLoggerExt } from "../telemetryTypes.js";
 class MockLogger extends TelemetryLogger implements TelemetryLoggerExt {
 	public errorsLogged: number = 0;
 	public eventsLogged: number = 0;
+	public readonly events: ITelemetryBaseEvent[] = [];
+	public readonly logLevels: (LogLevel | undefined)[] = [];
 
 	public constructor() {
 		super();
 	}
 
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		if (event.category === "error") {
 			++this.errorsLogged;
 		}
 
 		++this.eventsLogged;
+		this.events.push(event);
+		this.logLevels.push(logLevel);
 	}
 }
 
@@ -93,6 +98,85 @@ describe("PerformanceEvent", () => {
 			2,
 			"Should have logged a start and cancel event (not with error category)",
 		);
+	});
+
+	describe("Log level escalation", () => {
+		it("Logs below-threshold end events at the configured log level", () => {
+			const perfEvent = PerformanceEvent.start(
+				logger,
+				{ eventName: "BelowThreshold" },
+				{
+					end: true,
+					endEventEssentialDurationThresholdMs: Number.MAX_SAFE_INTEGER,
+				},
+				true,
+				LogLevel.info,
+			);
+
+			perfEvent.end();
+
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.info]);
+			assert.equal(logger.events[0]?.eventName, "BelowThreshold_end");
+		});
+
+		it("Logs above-threshold end events as essential", () => {
+			const clock = sinon.useFakeTimers();
+			try {
+				const perfEvent = PerformanceEvent.start(
+					logger,
+					{ eventName: "AboveThreshold" },
+					{
+						end: true,
+						endEventEssentialDurationThresholdMs: 0,
+					},
+					true,
+					LogLevel.info,
+				);
+
+				clock.tick(1);
+				perfEvent.end();
+
+				assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+				assert.equal(logger.events[0]?.eventName, "AboveThreshold_end");
+			} finally {
+				clock.restore();
+			}
+		});
+
+		it("Logs cancel events as essential by default", () => {
+			const perfEvent = PerformanceEvent.start(
+				logger,
+				{ eventName: "EssentialCancel" },
+				undefined,
+				true,
+				LogLevel.info,
+			);
+
+			perfEvent.cancel();
+
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+			assert.equal(logger.events[0]?.eventName, "EssentialCancel_cancel");
+			assert.equal(logger.events[0]?.category, "generic");
+		});
+
+		it("Continues to log error-category performance events as essential", () => {
+			const perfEvent = PerformanceEvent.start(
+				logger,
+				{ eventName: "ErrorCategory", category: "error" },
+				{
+					end: true,
+					endEventEssentialDurationThresholdMs: Number.MAX_SAFE_INTEGER,
+				},
+				true,
+				LogLevel.info,
+			);
+
+			perfEvent.end();
+
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+			assert.equal(logger.events[0]?.eventName, "ErrorCategory_end");
+			assert.equal(logger.events[0]?.category, "error");
+		});
 	});
 
 	describe("Event sampling", () => {

@@ -16,7 +16,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { mergeStats } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 	raiseConnectedEvent,
 } from "@fluidframework/telemetry-utils/internal";
@@ -286,7 +286,7 @@ class MockConnectedState
 	public connected: boolean = false;
 
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		public clientId: string,
 	) {
 		super();
