@@ -486,9 +486,9 @@ export class TreeCheckout implements ITreeCheckout {
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
-	 * Set of revertibles maintained for automatic disposal
+	 * Revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<RevertibleAlpha>();
+	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -754,7 +754,7 @@ export class TreeCheckout implements ITreeCheckout {
 								revision,
 								this.#transaction.activeBranch.fork(commit),
 							);
-							this.revertibles.add(revertible);
+							this.revertibles.set(revision, revertible);
 							return revertible;
 						};
 
@@ -790,6 +790,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 				this.#events.emit("changed", metadata, getRevertible);
 				withinEventContext = false;
+			}
+		} else if (event.type === "remove") {
+			// Commits that are rolled back should no longer be revertible
+			for (const commit of event.removedCommits) {
+				this.revertibleCommitBranches.delete(commit.revision);
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
@@ -1097,7 +1102,7 @@ export class TreeCheckout implements ITreeCheckout {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				checkout.disposeRevertible(revertible, revision);
+				checkout.disposeRevertible(revision);
 				onRevertibleDisposed?.(revertible);
 			},
 		};
@@ -1339,15 +1344,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private purgeRevertibles(): void {
-		for (const revertible of this.revertibles) {
+		for (const revertible of this.revertibles.values()) {
 			revertible.dispose();
 		}
 	}
 
-	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
+	private disposeRevertible(revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
-		this.revertibles.delete(revertible);
+		this.revertibles.delete(revision);
 	}
 
 	private revertRevertible(

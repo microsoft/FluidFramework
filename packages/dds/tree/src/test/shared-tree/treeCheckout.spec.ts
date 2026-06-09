@@ -1848,6 +1848,29 @@ describe("sharedTreeView", () => {
 			fork1.dispose();
 		});
 	});
+
+	it("Rolled back commits cannot be reverted", () => {
+		const sf = new SchemaFactory("Enrichment Schema");
+		class Node extends sf.object("Node", { id: sf.string }) {}
+		const NodeArray = sf.array(Node);
+		const provider = new TestTreeProviderLite(1);
+		const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+		const view = provider.trees[0].kernel.viewWith(config);
+		view.initialize([]);
+		const init = view.checkout.mainBranch.getHead();
+
+		const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+		view.root.insertAtEnd({ id: "A" });
+		view.root[0].id = "B";
+		assert.equal(undoStack.length, 2);
+
+		view.checkout.mainBranch.removeAfter(init);
+		assert.equal(view.root.length, 0);
+		assert.equal(undoStack.length, 2);
+		assert.equal(undoStack[0].status, RevertibleStatus.Disposed);
+		assert.equal(undoStack[1].status, RevertibleStatus.Disposed);
+		unsubscribe();
+	});
 });
 
 const defaultSf = new SchemaFactory("Checkout and view test schema");
