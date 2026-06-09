@@ -136,8 +136,8 @@ jobs:
             core.info("--- end ---");
 
       # Uncomment to enable comment posting after bake-in.
-      # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - if: steps.render.outcome == 'success'
+      #   # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
       #     header: bundle-size-report
