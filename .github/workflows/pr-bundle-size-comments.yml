@@ -337,7 +337,7 @@ jobs:
             echo "flub --json exited $EC; re-running without --json so the error message is visible:"
             flub report comparePipelineBundleArtifacts \
               --base ${{ matrix.pr.mergeBase }} \
-              --head ${{ matrix.pr.head }} 2>&1 || true
+              --head ${{ matrix.pr.head }} 2>&1
             exit "$EC"
           fi
 
