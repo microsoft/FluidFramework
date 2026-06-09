@@ -214,6 +214,18 @@ describe("versionUtils", () => {
 	});
 
 	describe("manifest-backed resolution", () => {
+		it("returns baseVersion for current-version requests without manifest lookup", () => {
+			const baseVersion = "2.110.0-405442";
+			assert.strictEqual(getRequestedVersion({ baseVersion, requested: 0 }), baseVersion);
+			assert.strictEqual(getRequestedVersion({ baseVersion }), baseVersion);
+		});
+
+		it("returns explicit string requests without manifest lookup", () => {
+			const baseVersion = "2.110.0";
+			const requested = "2.110.0-405442";
+			assert.strictEqual(getRequestedVersion({ baseVersion, requested }), requested);
+		});
+
 		it("defaults to resolving N-1 using committed manifest versions", () => {
 			const baseVersion = pkgVersion;
 			const range = calculateRequestedRange(baseVersion, -1, false);

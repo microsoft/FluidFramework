@@ -406,6 +406,17 @@ export function getRequestedVersion({
 	adjustPublicMajor = false,
 	useOnlineRegistry = false,
 }: GetRequestedVersionOptions): string {
+	// Current-version requests should stay pinned to the caller-provided base version.
+	// This avoids requiring the current version to exist in the compat manifest/registry.
+	if (requested === undefined || requested === 0) {
+		return baseVersion;
+	}
+
+	// Explicit version strings are already concrete requests, so return them directly.
+	if (typeof requested === "string") {
+		return requested;
+	}
+
 	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
 	const cacheKey = JSON.stringify({ calculatedRange, useOnlineRegistry });
 	const cachedResolution = resolutionCache.get(cacheKey);

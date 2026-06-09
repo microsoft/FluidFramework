@@ -328,11 +328,9 @@ function genCompatConfig(versionDetails: {
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion({
-		baseVersion: pkgVersion,
-		requested: 0,
-		adjustPublicMajor: false,
-	});
+	// Current-version APIs come from the in-repo build, so we should use pkgVersion directly
+	// instead of resolving through the compat manifest/registry.
+	const currentVersion = pkgVersion;
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
