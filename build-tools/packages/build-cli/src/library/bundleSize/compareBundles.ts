@@ -183,7 +183,7 @@ function moduleAnchor(
  * `path`. Handles the three shapes that appear in this repo's bundles:
  *
  * - **Third-party (pnpm):** `.../node_modules/.pnpm/<key>/node_modules/<pkg>/...`
- *   — the name after the *last* `node_modules/` is used, so a package's own
+ *   the name after the *last* `node_modules/` is used, so a package's own
  *   nested dependencies are attributed to themselves. Scoped packages keep
  *   their `@scope/name`.
  * - **Workspace packages:** `.../packages/<group>/<name>/...` — these are the
