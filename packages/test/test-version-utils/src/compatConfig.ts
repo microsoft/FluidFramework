@@ -272,10 +272,12 @@ export function isCompatVersionBelowMinVersion(
 	const compatVersion = getRequestedVersion({
 		baseVersion: baseVersionForMinCompat,
 		requested: lowerVersion,
+		useOnlineRegistry: true,
 	});
 	const minReqVersion = getRequestedVersion({
 		baseVersion: testBaseVersion(minVersion),
 		requested: minVersion,
+		useOnlineRegistry: true,
 	});
 	return semver.compare(compatVersion, minReqVersion) < 0;
 }
