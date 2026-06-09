@@ -55,22 +55,57 @@ jobs:
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         with:
-          # Find the open PR whose head SHA matches this check. `head-sha:` is a GitHub search qualifier that
-          # does the match server-side. At most one PR is expected in practice. Two open PRs *can* share a
-          # head SHA (same branch PR'd against two base refs), in which case only the first one matched here
-          # gets a sticky — accepted limitation. REST search returns the PR number directly, which is all this
-          # job needs; identify-from-pr-build uses GraphQL instead because it also needs the head SHA and base
-          # ref name.
           script: |
+            const { owner, repo } = context.repo;
             const sha = context.payload.check_run.head_sha;
-            const { data } = await github.rest.search.issuesAndPullRequests({
-              q: `type:pr is:open repo:${context.repo.owner}/${context.repo.repo} head-sha:${sha}`,
-            });
-            const prNumber = data.items[0]?.number ?? "";
-            if (!prNumber) {
+
+            // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
+            // PR number, head SHA, and base ref in one round-trip (we use all three: number to address
+            // the sticky, head + base to compute merge-base for the pending body). At most one PR is
+            // expected in practice. Two open PRs *can* share a head SHA (same branch PR'd against two
+            // base refs), in which case only the first one matched here gets a sticky — accepted
+            // limitation.
+            const { search } = await github.graphql(
+              `query($q: String!) {
+                 search(query: $q, type: ISSUE, first: 1) {
+                   nodes {
+                     ... on PullRequest {
+                       number
+                       headRefOid
+                       baseRefName
+                     }
+                   }
+                 }
+               }`,
+              { q: `type:pr is:open repo:${owner}/${repo} head-sha:${sha}` },
+            );
+            const pr = search.nodes[0];
+            if (!pr) {
               core.info(`No matching open PR for SHA ${sha}; nothing to do.`);
+              return;
             }
-            core.setOutput("pr_num", prNumber);
+
+            // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or
+            // null on disjoint history) for any successful HTTP response, and throws for HTTP/network/
+            // rate-limit failure. API failure here is fatal.
+            let mb;
+            try {
+              const { data } = await github.rest.repos.compareCommits({
+                owner, repo, base: pr.baseRefName, head: pr.headRefOid,
+              });
+              mb = data.merge_base_commit?.sha ?? undefined;
+            } catch (err) {
+              core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
+              throw err;
+            }
+            if (!mb) {
+              core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to do.`);
+              return;
+            }
+
+            core.setOutput("pr_num", pr.number);
+            core.setOutput("head_sha", pr.headRefOid);
+            core.setOutput("merge_base", mb);
 
       - name: Render initial comment body
         id: render
@@ -79,11 +114,16 @@ jobs:
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         env:
           PR_NUM: ${{ steps.find_pr.outputs.pr_num }}
+          HEAD_SHA: ${{ steps.find_pr.outputs.head_sha }}
+          MERGE_BASE: ${{ steps.find_pr.outputs.merge_base }}
         with:
           script: |
             const fs = require("fs");
             const body = [
               "## Bundle size comparison",
+              "",
+              `Base commit: \`${process.env.MERGE_BASE}\``,
+              `Head commit: \`${process.env.HEAD_SHA}\``,
               "",
               "Pending — `Build - client packages` is running. Results will appear here when the build completes.",
               "",
@@ -153,14 +193,13 @@ jobs:
               // Server-side merge-base lookup. compareCommits resolves to the SHA on shared history (or null
               // on disjoint history) for any successful HTTP response, and throws for HTTP/network/rate-limit
               // failure — distinguishing "no shared history" (legitimate, emit no entry and stay green) from
-              // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal because
-              // this job had exactly one PR to handle.
+              // "API call failed" (often actionable, e.g. a rate limit). API failure here is fatal.
               let mb;
               try {
                 const { data } = await github.rest.repos.compareCommits({
                   owner, repo, base: pr.baseRefName, head: pr.headRefOid,
                 });
-                mb = data.merge_base_commit?.sha ?? null;
+                mb = data.merge_base_commit?.sha ?? undefined;
               } catch (err) {
                 core.error(`Merge-base lookup failed for PR #${pr.number} (base=${pr.baseRefName}, head=${pr.headRefOid}): ${err.message}`);
                 throw err;
@@ -216,7 +255,7 @@ jobs:
                 const { data } = await github.rest.repos.compareCommits({
                   owner, repo, base: pr.base.ref, head: pr.head.sha,
                 });
-                mb = data.merge_base_commit?.sha ?? null;
+                mb = data.merge_base_commit?.sha ?? undefined;
               } catch (err) {
                 core.warning(`Skipping PR #${pr.number}: merge-base lookup failed (base=${pr.base.ref}, head=${pr.head.sha}): ${err.message}`);
                 continue;
