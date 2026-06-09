@@ -373,6 +373,11 @@ export interface GetRequestedVersionOptions {
 	/**
 	 * When `true`, resolve against the npm registry. Defaults to `false`, which resolves against the
 	 * committed compat versions manifest.
+	 * @privateRemarks
+	 * Likely a better design for expressing what set of versions to consider would be to decouple the discovery of the set of versions from the resolution logic.
+	 * This could be done by creating a type which holds a set of versions to consider, and passing it into the resolution functions.
+	 * Then we simply need a function to create this type from the manifest, and one to create it from the registry.
+	 * We can then make the registry version package internal and only used by the update logic to help ensure registry dependency is avoided in other cases.
 	 */
 	useOnlineRegistry?: boolean;
 }
