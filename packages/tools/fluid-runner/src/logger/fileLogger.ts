@@ -49,3 +49,10 @@ export interface IFileLoggerTelemetryOptions {
 	/** Number of telemetry events per flush to telemetry file */
 	eventsPerFlush?: number;
 }
+
+/**
+ * Options to provide upon creation of IFileLogger
+ * @deprecated Use {@link IFileLoggerTelemetryOptions}.
+ * @internal
+ */
+export type ITelemetryOptions = IFileLoggerTelemetryOptions;

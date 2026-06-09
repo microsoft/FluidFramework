@@ -6,17 +6,19 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { createChildLogger, PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import {
 	type IExportFileResponse,
-	createFluidRunnerContainerAndExecute,
+	// eslint-disable-next-line import-x/no-deprecated
+	createContainerAndExecute,
 } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
 import {
-	createFluidRunnerLogger,
+	// eslint-disable-next-line import-x/no-deprecated
+	createLogger,
 	getTelemetryFileValidationError,
 } from "./logger/loggerUtils.js";
 /* eslint-enable import-x/no-internal-modules */
@@ -44,11 +46,8 @@ export async function parseBundleAndExportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	const { fileLogger, logger: baseLogger } = createFluidRunnerLogger(
-		telemetryFile,
-		telemetryOptions,
-	);
-	const logger = createChildLogger({ logger: baseLogger });
+	// eslint-disable-next-line import-x/no-deprecated
+	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
 
 	try {
 		return await PerformanceEvent.timedExecAsync(
@@ -86,7 +85,8 @@ export async function parseBundleAndExportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					await createFluidRunnerContainerAndExecute(
+					// eslint-disable-next-line import-x/no-deprecated
+					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
 						logger,

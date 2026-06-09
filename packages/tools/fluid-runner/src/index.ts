@@ -6,6 +6,7 @@
 /* eslint-disable import-x/no-internal-modules */
 export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
+	createContainerAndExecute,
 	createFluidRunnerContainerAndExecute,
 	exportFile,
 	type IExportFileResponse,
@@ -17,9 +18,11 @@ export {
 	OutputFormat,
 	type IFileLoggerTelemetryOptions,
 	type IFileLogger,
+	type ITelemetryOptions,
 } from "./logger/fileLogger.js";
 export {
 	createFluidRunnerLogger,
+	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
 } from "./logger/loggerUtils.js";
