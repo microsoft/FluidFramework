@@ -5,15 +5,15 @@ name: "PR Bundle Size Comments"
 # Triggers are all `check_run`. We use the lifecycle of ADO's own published checks to decide what to do:
 #
 #   check_run.created:    when ADO creates the `Build - client packages` check on a commit (at build queue time),
-#                         acknowledge-build posts an initial "pending" sticky on the matching open PR. PRs that
-#                         don't trigger a client-packages build (e.g. server-only PRs) never get a sticky, by
-#                         construction — ADO is the source of truth for which PRs need a comparison.
-#   check_run.completed:  when ADO updates either of the two bundle-publishing checks to a successful conclusion,
-#                         identify-targets maps the check's SHA back to affected PRs and the compare job fans out
-#                         via matrix.
-#                         `Build - Client bundle size artifacts` runs on main/release pushes (baseline bundle just
-#                         became available). `Build - client packages` runs on PR commits (head-side bundle just
-#                         became available).
+#                         acknowledge-build posts an initial "pending" sticky on the matching open PR. Today the
+#                         `Build - client packages` pipeline is the only producer of PR-side bundle artifacts, so
+#                         PRs that don't trigger it (e.g. server-only PRs) don't get a sticky — that scope would
+#                         widen if we ever publish bundle artifacts from another pipeline.
+#   check_run.completed:  when a bundle-publishing pipeline's check completes successfully, identify-targets maps
+#                         the check's SHA back to affected PRs and the compare job fans out via matrix. Today there
+#                         are two such pipelines:
+#                           - `Build - Client bundle size artifacts`: main/release pushes (baseline bundle).
+#                           - `Build - client packages`: PR commits (head-side bundle).
 #
 # Unlike the pr-check-changeset / changeset-reporter pair, this is a single workflow rather than the worker/reporter
 # split. The split's primary defense — preventing PR-controlled code from running with write perms — doesn't apply
@@ -24,8 +24,11 @@ on:
   check_run:
     types: [created, completed]
 
-# Deduplicate runs for the same upstream check SHA. Cancel earlier in-progress runs in the same group so the
-# latest event wins on the sticky comment.
+# Use concurrency to ensure the completed event wins over the created event for a given SHA — so the
+# results sticky is never clobbered by a still-running "pending" handler. Cross-SHA staleness on the PR
+# path (push A then B, then A's build completes anyway) is handled in identify-from-pr-build: it searches
+# for an open PR whose current head SHA matches the just-completed build, so an event for a stale SHA
+# finds no PR and can't write anything.
 concurrency:
   group: pr-bundle-size-${{ github.event.check_run.head_sha }}
   cancel-in-progress: true
@@ -120,6 +123,9 @@ jobs:
             // Find the open PR whose head SHA matches this check. A single GraphQL query returns the
             // PR number, head SHA, and base ref in one round-trip; the REST search API would return
             // only the number, requiring a follow-up pulls.get() call.
+            //
+            // Also acts as the cross-SHA staleness guard: an event for a stale SHA (e.g. push A then
+            // B, A's build completes anyway) finds no open PR with head A and emits no matrix entry.
             const { search } = await github.graphql(
               `query($q: String!) {
                  search(query: $q, type: ISSUE, first: 1) {
