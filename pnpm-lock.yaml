@@ -8018,7 +8018,7 @@ importers:
         version: link:../test-dds-utils
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
-        version: 0.65.0(@types/node@22.19.17)(encoding@0.1.13)(webpack-cli@5.1.4)
+        version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
