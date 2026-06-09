@@ -46,7 +46,7 @@ jobs:
       github.event.action == 'created' &&
       github.event.check_run.name == 'Build - client packages'
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in.
+    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
     # permissions:
     #   pull-requests: write
     steps:
@@ -135,7 +135,7 @@ jobs:
             core.info(body);
             core.info("--- end ---");
 
-      # Uncomment to enable comment posting after bake-in.
+      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
       # - if: steps.render.outcome == 'success'
       #   # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
@@ -274,8 +274,8 @@ jobs:
 
   compare:
     needs: [identify-from-pr-build, identify-from-baseline-build]
-    # Either upstream produces the matrix; the other will be skipped per event type. Without
-    # `!cancelled()`, GitHub Actions auto-skips a job whose `needs:` had any skipped entry.
+    # One of the identify-* jobs produces the matrix; the other will be skipped per event type.
+    # Without `!cancelled()`, GitHub Actions auto-skips a job whose `needs:` had any skipped entry.
     if: |
       !cancelled() && (
         (needs.identify-from-pr-build.result == 'success' && needs.identify-from-pr-build.outputs.prs != '[]') ||
@@ -286,7 +286,7 @@ jobs:
         pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
       fail-fast: false
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in.
+    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
     # permissions:
     #   pull-requests: write
     steps:
@@ -401,7 +401,7 @@ jobs:
             core.info(body);
             core.info("--- end ---");
 
-      # Uncomment to enable comment posting after bake-in.
+      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
       # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
       #   with:
