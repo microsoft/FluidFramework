@@ -879,7 +879,7 @@ describe("IdCompressor", () => {
 					sessionSpaceId,
 					compressor.normalizeToSessionSpace(opSpaceId, compressor.localSessionId),
 				);
-				// And specifically, it maps back to the original local id, not the final id.
+				// Specifically, it maps back to the original local id, not the final id.
 				assert.equal(sessionSpaceId, localId);
 			});
 
