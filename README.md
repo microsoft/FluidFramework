@@ -3,6 +3,10 @@
 The Fluid Framework is a library for building distributed, real-time collaborative web
 applications using JavaScript or TypeScript.
 
+> 📚 **New to the internals?** Start with [**CONCEPTS.md**](./CONCEPTS.md) — a high‑level,
+> navigable tour of how the framework works (layers, compatibility, op processing, summarization,
+> garbage collection, testing) with links into the relevant code.
+
 ## Getting started using the Fluid Framework
 
 You may be here because you want to...
