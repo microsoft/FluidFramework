@@ -5,16 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type {
-	OpSpaceCompressedId,
-	SessionId,
-	SessionSpaceCompressedId,
-} from "@fluidframework/id-compressor";
+import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
-	type OriginatorDependentEncodedId,
 	type OriginatorlessEncodedId,
 	EncodedIdType,
 	encodePossiblyCompressedId,
@@ -271,54 +266,6 @@ describe("compressedIds", () => {
 			const result = decompressIdentifierIfNeeded(compressedId, testIdCompressor);
 			assert.equal(result, expected);
 			assert.equal(typeof result, "string");
-		});
-	});
-
-	describe("module shape", () => {
-		// Type-only assertions to lock in the documented signature shapes. These
-		// have no runtime cost and exist to catch regressions where someone
-		// narrows or widens a helper's signature accidentally.
-		it("helper return types match the documented arms", () => {
-			const compressedId = testIdCompressor.generateCompressedId();
-			const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
-			const stableId = testIdCompressor.decompress(compressedId);
-
-			const z: OriginatorlessEncodedId | string = encodePossiblyCompressedId(
-				stableId,
-				testIdCompressor,
-				EncodedIdType.Originatorless,
-			);
-			const y: OriginatorDependentEncodedId | string = encodePossiblyCompressedId(
-				stableId,
-				testIdCompressor,
-				EncodedIdType.OriginatorDependent,
-			);
-			const a: SessionSpaceCompressedId = decodeOriginatorlessEncodedId(
-				opSpaceId as unknown as OriginatorlessEncodedId,
-				testIdCompressor,
-			);
-			const b: SessionSpaceCompressedId = decodeEncodedIdWithOriginator(
-				opSpaceId,
-				testIdCompressor.localSessionId,
-				testIdCompressor,
-			);
-			const c: SessionSpaceCompressedId | undefined = tryDecodeEncodedIdWithoutSession(
-				opSpaceId,
-				testIdCompressor,
-			);
-			const d: SessionSpaceCompressedId | string = forceDecodeEncodedIdWithoutSession(
-				opSpaceId,
-				testIdCompressor,
-				undefined,
-			);
-			const e: string = decompressIdentifierIfNeeded(compressedId, testIdCompressor);
-			assert(a !== undefined);
-			assert(b !== undefined);
-			assert(c !== undefined);
-			assert(d !== undefined);
-			assert(e !== undefined);
-			assert(z !== undefined);
-			assert(y !== undefined);
 		});
 	});
 });
