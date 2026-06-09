@@ -240,8 +240,6 @@ jobs:
             const { owner, repo } = context.repo;
             const sha = context.payload.check_run.head_sha;
 
-            // paginate() returns every open PR, eliminating the `--limit 500` silent-truncation risk the
-            // bash version carries.
             const prs = await github.paginate(github.rest.pulls.list, {
               owner, repo, state: "open", per_page: 100,
             });
@@ -263,10 +261,7 @@ jobs:
                 continue;
               }
 
-              // A PR matches either by head SHA (rare: the baseline check fired for a SHA that's also a
-              // PR head) or by merge-base. The mb-truthy guard catches the edge case of head-SHA match on
-              // a PR whose history is disjoint from its base — no useful baseline to compare against.
-              if (mb && (pr.head.sha === sha || mb === sha)) {
+              if (mb === sha) {
                 affected.push({
                   number: pr.number,
                   head: pr.head.sha,
