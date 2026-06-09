@@ -182,14 +182,13 @@ function moduleAnchor(
  * Extracts the owning npm package name from a webpack-bundle-analyzer module
  * `path`. Handles the three shapes that appear in this repo's bundles:
  *
- * - **Third-party (pnpm):** `.../node_modules/.pnpm/<key>/node_modules/<pkg>/...`
- *   the name after the *last* `node_modules/` is used, so a package's own
- *   nested dependencies are attributed to themselves. Scoped packages keep
- *   their `@scope/name`.
+ * - **Third-party (pnpm):** `.../node_modules/.pnpm/<key>/node_modules/<pkg>/...` —
+ * the name after the *last* `node_modules/` is used, so a package's own nested
+ * dependencies are attributed to themselves. Scoped packages keep their `@scope/name`.
  * - **Workspace packages:** `.../packages/<group>/<name>/...` — these are the
- *   Fluid Framework source packages, published as `@fluidframework/<name>`.
+ * Fluid Framework source packages, published as `@fluidframework/<name>`.
  * - **App/entry code:** anything else (e.g. the bundle-size-tests synthetic
- *   entrypoint's own `./src/*.ts` modules) is grouped under `(app/entry)`.
+ * entrypoint's own `./src/*.ts` modules) is grouped under `(app/entry)`.
  *
  * Concatenated-module wrapper prefixes are stripped first (see
  * {@link stripConcatenationWrapper}) so scope-hoisted modules are attributed to
