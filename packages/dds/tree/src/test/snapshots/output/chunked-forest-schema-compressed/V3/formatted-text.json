@@ -1,0 +1,269 @@
+{
+  "version": 3,
+  "identifiers": [
+    "",
+    "format",
+    "bold",
+    "italic",
+    "underline",
+    "size",
+    "font",
+    "com.fluidframework.leaf.string",
+    "com.fluidframework.leaf.number",
+    "com.fluidframework.leaf.boolean"
+  ],
+  "shapes": [
+    {
+      "f": {
+        "base": 6,
+        "fields": [
+          [
+            0,
+            7
+          ],
+          [
+            1,
+            8
+          ]
+        ]
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": 9,
+        "value": [
+          false
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 9,
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": 7,
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.Text",
+        "value": false,
+        "fields": [
+          [
+            0,
+            13
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
+        "fields": [
+          [
+            0,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "f": {
+        "base": 9,
+        "fields": [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            10
+          ],
+          [
+            6,
+            11
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.CharacterFormat",
+        "value": false,
+        "fields": [
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            12
+          ],
+          [
+            6,
+            4
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 8,
+        "value": [
+          12
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 7,
+        "value": [
+          "Arial"
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 8,
+        "value": true
+      }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            14
+          ]
+        ]
+      }
+    },
+    {
+      "a": 1
+    }
+  ],
+  "data": [
+    [
+      1,
+      5,
+      [
+        0,
+        "H",
+        0,
+        "e",
+        0,
+        "l",
+        0,
+        "l",
+        0,
+        "o",
+        0,
+        ",",
+        0,
+        " ",
+        0,
+        "w",
+        0,
+        "o",
+        0,
+        "r",
+        0,
+        "l",
+        0,
+        "d",
+        0,
+        "!",
+        0,
+        " ",
+        0,
+        "T",
+        0,
+        "h",
+        0,
+        "i",
+        0,
+        "s",
+        0,
+        " ",
+        0,
+        "i",
+        0,
+        "s",
+        0,
+        " ",
+        0,
+        "f",
+        0,
+        "o",
+        0,
+        "r",
+        0,
+        "m",
+        0,
+        "a",
+        0,
+        "t",
+        0,
+        "t",
+        0,
+        "e",
+        0,
+        "d",
+        0,
+        " ",
+        0,
+        "t",
+        0,
+        "e",
+        0,
+        "x",
+        0,
+        "t",
+        0,
+        "."
+      ]
+    ]
+  ]
+}

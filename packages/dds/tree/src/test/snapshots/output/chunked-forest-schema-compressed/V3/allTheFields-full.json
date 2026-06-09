@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "identifiers": [],
+  "shapes": [
+    {
+      "a": 1
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.leaf.number",
+        "value": true
+      }
+    },
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "test.allTheFields",
+        "value": false,
+        "fields": [
+          [
+            "optional",
+            0
+          ],
+          [
+            "valueField",
+            1
+          ],
+          [
+            "sequence",
+            0
+          ]
+        ]
+      }
+    }
+  ],
+  "data": [
+    [
+      2,
+      3,
+      [
+        5
+      ],
+      5,
+      [
+        5
+      ]
+    ]
+  ]
+}

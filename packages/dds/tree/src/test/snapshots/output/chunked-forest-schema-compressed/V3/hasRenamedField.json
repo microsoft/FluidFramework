@@ -1,0 +1,33 @@
+{
+  "version": 3,
+  "identifiers": [],
+  "shapes": [
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "test.hasRenamedField",
+        "value": false,
+        "fields": [
+          [
+            "stored-name",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.minimal",
+        "value": false
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      1
+    ]
+  ]
+}

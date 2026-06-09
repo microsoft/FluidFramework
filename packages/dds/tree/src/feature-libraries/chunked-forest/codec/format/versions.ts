@@ -33,7 +33,7 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	/**
 	 * Experimental codec with optimizations for text.
 	 */
-	vTextExperimental: "text",
+	vTextExperimental: 3,
 });
 
 /**
