@@ -354,7 +354,7 @@ export function calculateRequestedRange(
  * @internal
  */
 export interface GetRequestedVersionOptions {
-	/** The base version to move from (eg. "0.60.0"). */
+	/** The base version to move from (eg. "2.60.0"). */
 	baseVersion: string;
 	/**
 	 * If the value is a negative number, the base version will be adjusted down.
