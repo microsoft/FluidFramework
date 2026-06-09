@@ -77,7 +77,16 @@ steps:
         # perf losses while remaining simple.
         az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT_NEW) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
       done
-      # Delete generate_release_reports and upload_release_reports folder
+
+# Clean up the working folders unconditionally so a failed/dual upload task can't leave stale
+# directories behind for the next run on a self-hosted agent.
+- task: Bash@3
+  displayName: Clean up release report working folders
+  condition: always()
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
       rm -rf generate_release_reports upload_release_reports
 
 - task: 1ES.PublishPipelineArtifact@1
