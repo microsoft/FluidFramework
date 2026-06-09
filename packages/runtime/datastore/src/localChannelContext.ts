@@ -19,9 +19,12 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataProcessingError,
+	createChildLogger,
+	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -215,12 +218,25 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 		private readonly snapshotTree: ISnapshotTree,
 		extraBlob?: Map<string, ArrayBufferLike>,
 	) {
+		// `channelType` is not known until the LazyPromise body runs `loadChannelFactoryAndAttributes`.
+		// Pass a getter to `tagCodeArtifacts` so events log the type as soon as it's available.
+		let channelType: string | undefined;
+
+		const subLogger = createChildLogger({
+			logger,
+			namespace: "RehydratedLocalChannelContext",
+			properties: {
+				all: {
+					...tagCodeArtifacts({ channelId: id, channelType: () => channelType }),
+				},
+			},
+		});
 		super(
 			id,
 			runtime,
@@ -241,7 +257,7 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					this.dirtyFn,
 					() => this.isGloballyVisible,
 					storageService,
-					logger,
+					subLogger,
 					clonedSnapshotTree,
 					blobMap,
 				);
@@ -254,12 +270,13 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 						this.id,
 						registry,
 					);
+					channelType = attributes.type;
 					const channel = await loadChannel(
 						runtime,
 						attributes,
 						factory,
 						this.services.value,
-						logger,
+						subLogger,
 						this.id,
 					);
 					// Send all pending messages to the channel
@@ -268,11 +285,18 @@ export class RehydratedLocalChannelContext extends LocalChannelContextBase {
 					}
 					return channel;
 				} catch (error) {
-					throw DataProcessingError.wrapIfUnrecognized(
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
 						error,
 						"rehydratedLocalChannelContextFailedToLoadChannel",
-						undefined,
 					);
+					errorWrapped.addTelemetryProperties({
+						...dataStoreLoadTelemetryProps(dataStoreContext),
+						...tagCodeArtifacts({ channelId: id, channelType }),
+					});
+
+					// "Realize" is another name for instantiating the channel for a context
+					subLogger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+					throw errorWrapped;
 				}
 			}),
 		);
@@ -328,7 +352,7 @@ export class LocalChannelContext extends LocalChannelContextBase {
 		runtime: IFluidDataStoreRuntime,
 		dataStoreContext: IFluidDataStoreContext,
 		storageService: IRuntimeStorageService,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		submitFn: (content: unknown, localOpMetadata: unknown) => void,
 		dirtyFn: (address: string) => void,
 	) {

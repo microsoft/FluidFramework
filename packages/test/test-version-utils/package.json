@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-private/test-version-utils",
-	"version": "2.103.0",
+	"version": "2.110.0",
 	"description": "End to end compatibility test infrastructure",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -109,6 +109,7 @@
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
+		"@fluid-tools/build-infrastructure": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",

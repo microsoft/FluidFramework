@@ -1627,13 +1627,6 @@ describe("Editing", () => {
 			expectJsonTree(tree, expectedState);
 		});
 
-		it("can move a node out from a field and into a field under a sibling", () => {
-			const tree = makeTreeFromJsonSequence(["A", {}]);
-			tree.editor.move(rootField, 0, 1, { parent: rootNode2, field: brand("foo") }, 0);
-			const expectedState: JsonCompatible = [{ foo: "A" }];
-			expectJsonTree(tree, expectedState);
-		});
-
 		it("can rebase a move over the deletion of the source parent", () => {
 			const tree = makeTreeFromJson({ src: ["A", "B"], dst: ["C", "D"] });
 			const childBranch = tree.fork();

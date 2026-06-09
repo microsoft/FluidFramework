@@ -6,7 +6,7 @@
 import type { Tagged } from "@fluidframework/core-interfaces";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	type MonitoringContext,
 	generateStack,
 	tagCodeArtifacts,
@@ -350,7 +350,7 @@ export class GCTelemetryTracker {
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): void {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
@@ -395,7 +395,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt): Promise<void> {
+	public async logPendingEvents(logger: TelemetryLoggerExt): Promise<void> {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:

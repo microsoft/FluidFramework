@@ -99,7 +99,7 @@ parameters:
   # internal and public 1ES build pools (egress to docker.io is blocked by network isolation policies).
   - name: baseImageRegistry
     type: string
-    default: 'fluidpublicmirror-ccbba5fhdscnchft.azurecr.io/mirror/docker'
+    default: 'fluidmirror-a5dqhgefbwhmbtag.azurecr.io/mirror/docker'
 
   # If the build is running for a test branch
   - name: testBuild
@@ -600,16 +600,11 @@ extends:
                 pnpm store prune
 
         templateContext:
-          # 'Fluid Public Mirror Container Registry' is required on every run for base-image pulls
-          # (anonymous pull disabled). The push connection $(containerRegistryConnection) is only
-          # added when pushing in the internal project (it's empty in the public project).
+          # The push connection $(containerRegistryConnection) is only added when pushing in the
+          # internal project (it's empty in the public project).
           ${{ if and(eq(parameters.shouldPushDockerImage, true), eq(variables['System.TeamProject'], 'internal')) }}:
             authenticatedContainerRegistries:
             - serviceConnection: $(containerRegistryConnection)
-            - serviceConnection: 'Fluid Public Mirror Container Registry'
-          ${{ else }}:
-            authenticatedContainerRegistries:
-            - serviceConnection: 'Fluid Public Mirror Container Registry'
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
           - ${{ if eq(parameters.pack, true) }}:
