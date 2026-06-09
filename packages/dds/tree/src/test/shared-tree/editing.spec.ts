@@ -3212,7 +3212,7 @@ describe("Editing", () => {
 				stack.unsubscribe();
 			});
 
-			it("inverse node existence constraint not violated by unrelated change on moved node", () => {
+			it("inverse node existence constraint on moved node not violated by unrelated change", () => {
 				const tree = makeTreeFromJsonSequence(["A", "B"]);
 				const branch = tree.fork();
 				const stack = createTestUndoRedoStacks(tree.events);
