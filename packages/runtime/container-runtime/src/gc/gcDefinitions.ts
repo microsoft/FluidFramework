@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import type { ReadAndParseBlob } from "@fluidframework/runtime-utils/internal";
 import type {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -396,7 +396,7 @@ export interface IGarbageCollector {
 	 */
 	collectGarbage(
 		options: {
-			logger?: ITelemetryLoggerExt;
+			logger?: TelemetryLoggerExt;
 			runSweep?: boolean;
 			fullGC?: boolean;
 		},
@@ -505,7 +505,7 @@ export interface IGarbageCollectorCreateParams {
 	readonly closeFn: (error: ICriticalContainerError) => void;
 
 	readonly gcOptions: IGCRuntimeOptions;
-	readonly baseLogger: ITelemetryLoggerExt;
+	readonly baseLogger: TelemetryLoggerExt;
 	readonly existing: boolean;
 
 	readonly metadata: IContainerRuntimeMetadata | undefined;

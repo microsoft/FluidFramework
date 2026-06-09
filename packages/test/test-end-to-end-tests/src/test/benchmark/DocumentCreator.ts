@@ -16,7 +16,7 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
@@ -34,7 +34,7 @@ export interface IDocumentCreatorProps {
 }
 
 export interface IDocumentProps extends IDocumentCreatorProps {
-	logger: ITelemetryLoggerExt | undefined;
+	logger: TelemetryLoggerExt | undefined;
 }
 
 export interface ISummarizeResult {
@@ -45,7 +45,7 @@ export interface ISummarizeResult {
 
 export interface IDocumentLoader {
 	mainContainer: IContainer | undefined;
-	logger: ITelemetryLoggerExt | undefined;
+	logger: TelemetryLoggerExt | undefined;
 	initializeDocument(): Promise<void>;
 	loadDocument(): Promise<IContainer>;
 }

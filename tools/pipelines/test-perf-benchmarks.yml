@@ -145,17 +145,13 @@ stages:
         # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
-            packageManager: pnpm
             buildDirectory: $(FFPipelineHostDirectory)
-            packageManagerInstallCommand: pnpm install
             primaryRegistry: $(ado-feeds-ff-download-only)
 
         # Install FluidFramework dependencies
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
-            packageManager: pnpm
             buildDirectory: $(FluidFrameworkDirectory)
-            packageManagerInstallCommand: pnpm install
             primaryRegistry: $(ado-feeds-ff-download-only)
 
         # Build the workspace so compiled test code is available for benchmarks

@@ -11,7 +11,7 @@ import {
 	DataCorruptionError,
 	createChildLogger,
 	extractSafePropertiesFromMessage,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -45,7 +45,7 @@ function isChunkedContents(contents: unknown): contents is IChunkedContents {
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
 	private readonly chunkMap: Map<string, string[]>;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		chunks: [string, string[]][],

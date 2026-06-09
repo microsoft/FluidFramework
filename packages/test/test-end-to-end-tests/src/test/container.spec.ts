@@ -22,7 +22,6 @@ import {
 import {
 	ConnectionState,
 	type ILoaderProps,
-	Loader,
 	waitContainerToCatchUp,
 } from "@fluidframework/container-loader/internal";
 import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
@@ -68,7 +67,8 @@ const codeDetails: IFluidCodeDetails = { package: "test" };
 const timeoutMs = 500;
 
 // REVIEW: enable compat testing?
-describeCompat("Container", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Container", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	let provider: ITestObjectProvider;
 	const loaderContainerTracker = new LoaderContainerTracker();
 	before(function () {

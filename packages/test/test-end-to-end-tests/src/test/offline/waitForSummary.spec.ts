@@ -35,8 +35,7 @@ import {
 	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ITree } from "@fluidframework/tree";
 
 import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
 
@@ -68,7 +67,8 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const mapId = "map";
 		const treeId = "tree";
-		const { SharedMap } = apis.dds;
+		const { SharedMap, SharedTree } = apis.dds;
+		const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
 		const registry: ChannelFactoryRegistry = [
 			[mapId, SharedMap.getFactory()],
 			[treeId, SharedTree.getFactory()],

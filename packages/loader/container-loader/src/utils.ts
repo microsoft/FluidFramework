@@ -81,7 +81,18 @@ export interface IParsedUrl {
  * @legacy @beta
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = new URL(url);
+	// `new URL(...)` throws `TypeError` for any string that isn't a well-formed
+	// absolute URL. The `try*` name in this function's identifier implies a
+	// non-throwing contract on bad input, and callers all gate on `=== undefined`
+	// to surface their own errors — letting the built-in throw escape here would
+	// bypass those caller-supplied error messages for the broadest class of bad
+	// URLs ("not absolute", "invalid characters", etc.).
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return undefined;
+	}
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
