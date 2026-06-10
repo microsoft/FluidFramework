@@ -41,7 +41,7 @@ import {
 	type TransactionConstraintAlpha,
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./simple-tree/index.js";
-import { validateIndex, validateIndexRange } from "./util/index.js";
+import { collectContiguousRanges, validateIndex, validateIndexRange } from "./util/index.js";
 
 // Future improvement TODOs:
 // - Omit `cells` property from Row insertion type.
@@ -832,16 +832,11 @@ export namespace System_TableSchema {
 						columnsToRemove.add(this.#getColumn(columnOrIdToRemove));
 					}
 
-					// Locate each column-to-remove's index in a single backward pass over the column array.
-					// Iterating in reverse means `indicesDescending` is already sorted descending,
-					// so subsequent `removeAt` calls don't shift the indices of yet-to-remove items.
-					// Avoids an O(n * m) cost of calling `indexOf` per column-to-remove.
-					const indicesDescending: number[] = [];
-					for (let i = this.table.columns.length - 1; i >= 0; i--) {
-						if (columnsToRemove.has(this.table.columns[i] as ColumnValueType)) {
-							indicesDescending.push(i);
-						}
-					}
+					// Collect contiguous runs of columns-to-remove as [start, end) ranges so they can be
+					// removed via a small number of `removeRange` calls below.
+					const ranges = collectContiguousRanges(this.table.columns, (column) =>
+						columnsToRemove.has(column as ColumnValueType),
+					);
 
 					// Note, throwing an error within a transaction will abort the entire transaction.
 					// So if we throw an error here for any column, no columns will be removed.
@@ -857,10 +852,11 @@ export namespace System_TableSchema {
 								}
 							}
 
-							// Remove column nodes. Indices were captured descending so each removal
-							// keeps the remaining target indices valid.
-							for (const index of indicesDescending) {
-								this.table.columns.removeAt(index);
+							// Remove column nodes. Ranges are iterated in reverse so each `removeRange`
+							// call doesn't shift the indices of yet-to-remove ranges at lower positions.
+							for (let r = ranges.length - 1; r >= 0; r--) {
+								const { start, end } = ranges[r] as { start: number; end: number };
+								this.table.columns.removeRange(start, end);
 							}
 						},
 						preconditions,
@@ -927,23 +923,21 @@ export namespace System_TableSchema {
 					rowsToRemove.add(this.#getRow(rowToRemove));
 				}
 
-				// Locate each row-to-remove's index in a single backward pass over the row array.
-				// Iterating in reverse means `indicesDescending` is already sorted descending,
-				// so subsequent `removeAt` calls don't shift the indices of yet-to-remove items.
-				// Avoids an O(n * m) cost of calling `indexOf` per row-to-remove.
-				const indicesDescending: number[] = [];
-				for (let i = this.table.rows.length - 1; i >= 0; i--) {
-					if (rowsToRemove.has(this.table.rows[i] as RowValueType)) {
-						indicesDescending.push(i);
-					}
-				}
+				// Collect contiguous runs of rows-to-remove as [start, end) ranges so they can be
+				// removed via a small number of `removeRange` calls below.
+				const ranges = collectContiguousRanges(this.table.rows, (row) =>
+					rowsToRemove.has(row as RowValueType),
+				);
 
 				// Note, throwing an error within a transaction will abort the entire transaction.
 				// So if we throw an error here for any row, no rows will be removed.
 				this.#applyEditsInBatch({
 					applyEdits: () => {
-						for (const index of indicesDescending) {
-							this.table.rows.removeAt(index);
+						// Ranges are iterated in reverse so each `removeRange` call doesn't shift
+						// the indices of yet-to-remove ranges at lower positions.
+						for (let r = ranges.length - 1; r >= 0; r--) {
+							const { start, end } = ranges[r] as { start: number; end: number };
+							this.table.rows.removeRange(start, end);
 						}
 					},
 					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
