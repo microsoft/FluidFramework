@@ -10,6 +10,8 @@ parameters:
 - name: buildDirectory
   type: string
 
+# The version of the build tools to install, or "repo" to install the one from the repository.
+# If "repo" is selected, this includes a global install of what ever version of pnpm build-tools uses.
 - name: buildToolsVersionToInstall
   type: string
   default: repo
