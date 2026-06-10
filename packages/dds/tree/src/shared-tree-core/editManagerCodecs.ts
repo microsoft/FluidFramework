@@ -24,7 +24,6 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -62,21 +61,6 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 		EncodedRevisionTag,
 		ChangeEncodingContext
 	>;
-}
-
-export function editManagerFormatVersionSelectorForSharedBranches(
-	clientVersion: MinimumVersionForCollab,
-): EditManagerFormatVersion {
-	return brand(EditManagerFormatVersion.vSharedBranches);
-}
-
-/**
- * Returns the version that should be used for testing shared branches.
- */
-export function editManagerFormatVersionSelectorForDetachedRootEditing(
-	clientVersion: MinimumVersionForCollab,
-): EditManagerFormatVersion {
-	return brand(EditManagerFormatVersion.vDetachedRoots);
 }
 
 /**

@@ -45,8 +45,6 @@ export { type ChangeEnricher } from "./changeEnricher.js";
 export {
 	makeEditManagerCodecBuilder,
 	getCodecTreeForEditManagerFormatWithChange,
-	editManagerFormatVersionSelectorForSharedBranches,
-	editManagerFormatVersionSelectorForDetachedRootEditing,
 	editManagerCodecName,
 } from "./editManagerCodecs.js";
 export {
@@ -71,8 +69,6 @@ export type {
 export type { DecodedMessage } from "./messageTypes.js";
 export {
 	getCodecTreeForMessageFormatWithChange,
-	messageFormatVersionSelectorForSharedBranches,
-	messageFormatVersionSelectorForDetachedRootEditing,
 	makeMessageCodecBuilder,
 	messageCodecName,
 	type MessageEncodingContext,

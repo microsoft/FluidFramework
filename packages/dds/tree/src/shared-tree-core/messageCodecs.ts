@@ -24,7 +24,6 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { brand } from "../util/index.js";
 
 import { makeV1ToV4CodecWithVersion } from "./messageCodecV1ToV4.js";
 import { makeSharedBranchesCodecWithVersion } from "./messageCodecVSharedBranches.js";
@@ -40,25 +39,6 @@ export interface MessageEncodingContext {
  * Codec name used to identify the message codec, see {@link makeMessageCodecBuilder}.
  */
 export const messageCodecName = "Message";
-
-/**
- * Options for constructing a message codec, see {@link makeMessageCodecBuilder}.
- */
-export function messageFormatVersionSelectorForSharedBranches(
-	clientVersion: MinimumVersionForCollab,
-): MessageFormatVersion {
-	return brand(MessageFormatVersion.vSharedBranches);
-}
-
-/**
- * Returns the version that should be used for testing detached root editing.
- */
-export function messageFormatVersionSelectorForDetachedRootEditing(
-	clientVersion: MinimumVersionForCollab,
-): MessageFormatVersion {
-	return brand(MessageFormatVersion.vDetachedRoots);
-}
-
 /**
  * Options for constructing a message codec, see {@link makeMessageCodecBuilder}.
  */
