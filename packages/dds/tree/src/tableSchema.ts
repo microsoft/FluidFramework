@@ -619,12 +619,12 @@ export namespace System_TableSchema {
 					return undefined;
 				}
 
-				const column = this.#tryGetColumn(columnOrIdOrIndex);
-				if (column === undefined) {
+				const columnId = this.#tryGetColumnId(columnOrIdOrIndex);
+				if (columnId === undefined) {
 					return undefined;
 				}
 
-				return (row as RowValueInternalType).cells[column.id];
+				return (row as RowValueInternalType).cells[columnId];
 			}
 
 			public insertColumns({
@@ -1078,6 +1078,19 @@ export namespace System_TableSchema {
 					}
 				}
 				return cache;
+			}
+
+			/**
+			 * Attempts to resolve the provided Column node, ID, or index to the corresponding Column ID.
+			 * Returns `undefined` if there is no match.
+			 */
+			#tryGetColumnId(
+				columnOrIdOrIndex: ColumnValueType | string | number,
+			): string | undefined {
+				if (typeof columnOrIdOrIndex === "string") {
+					return columnOrIdOrIndex;
+				}
+				return this.#tryGetColumn(columnOrIdOrIndex)?.id;
 			}
 
 			/**
