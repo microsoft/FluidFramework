@@ -5309,7 +5309,7 @@ importers:
         specifier: npm:typescript@~6.0.3
         version: typescript@6.0.3
       typescript-7.0:
-        specifier: npm:@typescript/native-preview@7.0.0-dev.20260602.1
+        specifier: npm:@typescript/native-preview@~7.0.0-dev.20260602.1
         version: '@typescript/native-preview@7.0.0-dev.20260602.1'
 
   examples/utils/webpack-fluid-loader:
