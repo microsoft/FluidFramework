@@ -19,8 +19,8 @@ if [ -f ".releaseGroup" ]; then
   if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
     flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "pnpm --if-present pack:tests"
   fi
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack" && \
-  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz" && \
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "$PACKAGE_MANAGER pack"
+  flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz"
   flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
   # Clean up generated files that are listed in a package's "files" array (e.g. oclif.manifest.json) after packing.
@@ -34,7 +34,8 @@ else
   if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
     pnpm --if-present pack:tests
   fi
-  $PACKAGE_MANAGER pack && mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz
+  $PACKAGE_MANAGER pack
+  mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz
 fi
 
 # This saves a list of the packages in the working directory in topological order to a temporary file.
