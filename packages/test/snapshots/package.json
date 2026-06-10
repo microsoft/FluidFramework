@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/test-snapshots",
-	"version": "2.103.0",
+	"version": "2.110.0",
 	"private": true,
 	"description": "Comprehensive test of snapshot logic.",
 	"homepage": "https://fluidframework.com",
@@ -32,10 +32,10 @@
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm test",
 		"test:mocha": "npm run test:mocha:esm",
-		"test:mocha:esm": "mocha",
+		"test:mocha:esm": "mocha --ignore \"lib/test/generate/**/*\" \"lib/test/**/*.spec.*js\"",
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:mocha",
-		"test:new": "mocha --experimental-worker \"lib/test/generate/new.spec.*js\"",
-		"test:update": "mocha --experimental-worker \"lib/test/generate/update.spec.*js\""
+		"test:new": "mocha \"lib/test/generate/new.spec.*js\"",
+		"test:update": "mocha \"lib/test/generate/update.spec.*js\""
 	},
 	"c8": {
 		"all": true,

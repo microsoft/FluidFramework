@@ -14,7 +14,7 @@ import {
 	RestLessClient,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
 import safeStringify from "json-stringify-safe";
 
@@ -118,7 +118,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 	private readonly retryCounter = new Map<string, number>();
 
 	constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -318,7 +318,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -342,7 +342,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	public static load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -377,7 +377,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -400,7 +400,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
 	public static load(
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -430,7 +430,7 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tenantId: string,
 	documentId: string | undefined,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
@@ -457,7 +457,7 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tenantId: string,
 	documentId: string,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(

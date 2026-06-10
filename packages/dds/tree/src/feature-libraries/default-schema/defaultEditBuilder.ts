@@ -316,6 +316,7 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 		const detachCellId = this.modularBuilder.generateId(count);
 		const attachCellId: CellId = { localId: this.modularBuilder.generateId(count), revision };
 		if (compareFieldUpPaths(sourceField, destinationField)) {
+			// The source and destination fields are the same.
 			const change = sequence.changeHandler.editor.move(
 				sourceIndex,
 				count,
@@ -331,32 +332,53 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 				revision,
 			);
 		} else {
+			// The source and destination fields are different.
 			const detachPath = topDownPath(sourceField.parent);
 			const attachPath = topDownPath(destinationField.parent);
+			/**
+			 * The number of elements, starting from the root, that both paths have in common.
+			 * This defines the lowest common ancestor node (LCA) of the source and destination fields.
+			 */
 			const sharedDepth = getSharedPrefixLength(detachPath, attachPath);
 			let adjustedAttachField = destinationField;
-			// After the above loop, `sharedDepth` is the number of elements, starting from the root,
-			// that both paths have in common.
+			// Check if the detach parent
+			// (the node directly above the location of detach)
+			// is along the attach path,
+			// in which case the attach path might need to be adjusted.
+			// This is synonymous with checking if the attach parent
+			// (the node directly above the location of attach)
+			// is either below or the same as the detach parent.
+			// If not, then the move does not need to be adjusted
+			// as the attach path will not be affected by the detach.
 			if (sharedDepth === detachPath.length) {
-				const attachField = attachPath[sharedDepth]?.parentField ?? destinationField.field;
-				if (attachField === sourceField.field) {
-					// The detach occurs in an ancestor field of the field where the attach occurs.
-					let attachAncestorIndex = attachPath[sharedDepth]?.parentIndex ?? sourceIndex;
-					if (attachAncestorIndex < sourceIndex) {
+				const fieldOnDetachPathUnderLCA = sourceField.field;
+				const firstDifferentAttachAncestor = attachPath[sharedDepth];
+				// Check if the detach location uses the same field as in
+				// the attach path.
+				// Note that when `firstDifferentAttachAncestor` is undefined,
+				// that means the parents are the same. Since earlier call
+				// to `compareFieldUpPaths` returned false, we know that the
+				// fields must be different AND thus no adjustment is needed.
+				if (fieldOnDetachPathUnderLCA === firstDifferentAttachAncestor?.parentField) {
+					// Now working at the level where detach happens along the
+					// attach path.
+					if (firstDifferentAttachAncestor.parentIndex < sourceIndex) {
 						// The attach path runs through a node located before the detached nodes.
 						// No need to adjust the attach path.
-					} else if (sourceIndex + count <= attachAncestorIndex) {
+					} else if (sourceIndex + count <= firstDifferentAttachAncestor.parentIndex) {
 						// The attach path runs through a node located after the detached nodes.
-						// adjust the index for the node at that depth of the path, so that it is interpreted correctly
+						// Adjust the index for the node at that depth of the path, so that it is interpreted correctly
 						// in the composition performed by `submitChanges`.
-						attachAncestorIndex -= count;
-						let parent: UpPath | undefined = attachPath[sharedDepth - 1];
-						const parentField = attachPath[sharedDepth] ?? oob();
+						// Start with path to root that remains intact.
+						let parent = firstDifferentAttachAncestor.parent;
+						// Extend with index-adjusted parent.
 						parent = {
 							parent,
-							parentIndex: attachAncestorIndex,
-							parentField: parentField.parentField,
+							parentIndex: firstDifferentAttachAncestor.parentIndex - count,
+							parentField: firstDifferentAttachAncestor.parentField,
 						};
+						// Extend with the rest of the attach path, which is unaffected
+						// apart from parentage replacements.
 						for (let i = sharedDepth + 1; i < attachPath.length; i += 1) {
 							parent = {
 								...(attachPath[i] ?? oob()),
