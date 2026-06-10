@@ -20,11 +20,8 @@ const recentBuildsToFetch = 100;
 /**
  * How to identify the ADO build for a SHA.
  *
- * - `commit`: match `Build.sourceVersion`. For builds queued against a real
- *   commit on a branch (main, release/*).
- * - `prHead`: match `Build.triggerInfo['pr.sourceSha']`. For PR builds, where
- *   `sourceVersion` is the ephemeral test-merge SHA and the PR HEAD lives on
- *   `triggerInfo['pr.sourceSha']`.
+ * - `commit`: match `Build.sourceVersion`. For builds queued against a real commit on a branch (main, release/*).
+ * - `prHead`: match `Build.triggerInfo['pr.sourceSha']`. For PR builds, where `sourceVersion` is the ephemeral test-merge SHA and the PR HEAD lives on `triggerInfo['pr.sourceSha']`.
  */
 export type BuildMatch = { kind: "commit"; sha: string } | { kind: "prHead"; sha: string };
 
