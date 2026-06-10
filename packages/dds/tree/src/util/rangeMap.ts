@@ -243,8 +243,8 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Calls provided handlers on intersecting portions of `mapA` and `mapB`.
-	 * @param intersectionCallback - called once for each key which has an entry in both `mapA` and `mapB`.
-	 * @param residualCallback - called for each key which only has an entry in one of the input maps,
+	 * @param intersectionCallback - called once for each key range which has an entry in both `mapA` and `mapB`.
+	 * @param residualCallback - called for each key range which only has an entry in one of the input maps,
 	 * but which is part of a range entry that overlaps an entry in the other map.
 	 * This may also be called for entries which are not part of an overlapping range.
 	 */
