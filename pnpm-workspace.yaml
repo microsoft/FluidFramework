@@ -35,7 +35,7 @@ catalogs:
     "@fluidframework/build-tools": ^0.65.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^9.0.0"
+    "@fluidframework/eslint-config-fluid": "^13.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -51,9 +51,7 @@ linkWorkspacePackages: true
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
 minimumReleaseAge: 1440
-minimumReleaseAgeExclude: [
-  # Temporary exceptions go here as needed.
-]
+minimumReleaseAgeExclude: [ '@fluidframework/eslint-config-fluid@13.0.0' ] # Temporary exceptions go here as needed.
 
 overrides:
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
