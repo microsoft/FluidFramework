@@ -24,7 +24,7 @@
 		"typescript-5.8": "npm:typescript@~5.8.3",
 		"typescript-5.9": "npm:typescript@~5.9.2",
 		"typescript-6.0": "npm:typescript@~6.0.3",
-		"typescript-7.0": "npm:@typescript/native-preview@7.0.0-dev.20260602.1"
+		"typescript-7.0": "npm:@typescript/native-preview@~7.0.0-dev.20260602.1"
 	},
 	"typeValidation": {
 		"disabled": true
