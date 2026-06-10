@@ -502,15 +502,9 @@ function squash(
 	rebaseVersion: RebaseVersion,
 	getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
 ): OptionalChangeset {
-	if (
-		rebaseVersion < 2 &&
-		change.nodeDetach !== undefined &&
-		(change.valueReplace?.src === undefined ||
-			!areEqualChangeAtomIds(
-				getInputRootId(change.valueReplace.src, 1).value,
-				change.nodeDetach,
-			))
-	) {
+	if (rebaseVersion < 2 && change.nodeDetach !== undefined && !isPin(change, getInputRootId)) {
+		// Node detach is not supported before rebase version 2, except when representing a pin.
+		// We convert it to a clear instead.
 		const squashed = { ...change };
 		delete squashed.nodeDetach;
 		const replace: Mutable<Replace> = { isEmpty: false, dst: change.nodeDetach };
@@ -523,6 +517,19 @@ function squash(
 	}
 
 	return change;
+}
+
+function isPin(
+	change: OptionalChangeset,
+	getInputRootId: (id: ChangeAtomId, count: number) => RangeQueryResult<ChangeAtomId>,
+): boolean {
+	return (
+		change.valueReplace?.src !== undefined &&
+		areEqualChangeAtomIdOpts(
+			getInputRootId(change.valueReplace.src, 1).value,
+			change.nodeDetach,
+		)
+	);
 }
 
 function getCrossFieldKeys(change: OptionalChangeset): CrossFieldKeyRange[] {
