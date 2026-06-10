@@ -9,10 +9,18 @@ import * as path from "node:path";
 import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
-import { type IExportFileResponse, createContainerAndExecute } from "./exportFile.js";
+import {
+	type IExportFileResponse,
+	// eslint-disable-next-line import-x/no-deprecated
+	createContainerAndExecute,
+} from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
-import type { ITelemetryOptions } from "./logger/fileLogger.js";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
+import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
+import {
+	// eslint-disable-next-line import-x/no-deprecated
+	createLogger,
+	getTelemetryFileValidationError,
+} from "./logger/loggerUtils.js";
 /* eslint-enable import-x/no-internal-modules */
 import { getArgsValidationError, getSnapshotFileContent } from "./utils.js";
 
@@ -29,7 +37,7 @@ export async function parseBundleAndExportFile(
 	outputFile: string,
 	telemetryFile: string,
 	options?: string,
-	telemetryOptions?: ITelemetryOptions,
+	telemetryOptions?: IFileLoggerTelemetryOptions,
 	timeout?: number,
 	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
@@ -38,6 +46,7 @@ export async function parseBundleAndExportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
+	// eslint-disable-next-line import-x/no-deprecated
 	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
 
 	try {
@@ -76,6 +85,7 @@ export async function parseBundleAndExportFile(
 
 				fs.writeFileSync(
 					outputFile,
+					// eslint-disable-next-line import-x/no-deprecated
 					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
