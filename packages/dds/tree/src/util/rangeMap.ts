@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 // eslint-disable-next-line import-x/no-internal-modules
 import { union } from "@tylerbu/sorted-btree-es6/extended/union";
