@@ -1866,9 +1866,7 @@ describe("sharedTreeView", () => {
 
 		view.checkout.mainBranch.removeAfter(init);
 		assert.equal(view.root.length, 0);
-		assert.equal(undoStack.length, 2);
-		assert.equal(undoStack[0].status, RevertibleStatus.Disposed);
-		assert.equal(undoStack[1].status, RevertibleStatus.Disposed);
+		assert.equal(undoStack.length, 0);
 		unsubscribe();
 	});
 });

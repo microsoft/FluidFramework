@@ -794,7 +794,7 @@ export class TreeCheckout implements ITreeCheckout {
 		} else if (event.type === "remove") {
 			// Commits that are rolled back should no longer be revertible
 			for (const commit of event.removedCommits) {
-				this.revertibleCommitBranches.delete(commit.revision);
+				this.revertibles.get(commit.revision)?.dispose();
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
