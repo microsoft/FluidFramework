@@ -10,8 +10,10 @@ import {
 	isCodeCoverageCriteriaPassed,
 } from "../../codeCoverage/compareCodeCoverage.js";
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
-import type { IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
-import { fluidframeworkAdoOrgUrl } from "../../library/bundleSize/index.js";
+import {
+	fluidframeworkAdoOrgUrl,
+	type IAzureDevopsBuildCoverageConstants,
+} from "../../library/azureDevops/constants.js";
 import { BaseCommand } from "../../library/commands/base.js";
 import {
 	createOrUpdateCommentOnPr,

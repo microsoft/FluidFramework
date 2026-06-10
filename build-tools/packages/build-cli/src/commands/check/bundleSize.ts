@@ -6,13 +6,13 @@
 import { execFileSync } from "node:child_process";
 import { Flags } from "@oclif/core";
 
+import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
 	bundleSizeArtifactsBaselinePipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
-	fluidframeworkAdoOrgUrl,
 	type PackageComparison,
 	readAnalyzerJsonsFromFileSystem,
 } from "../../library/bundleSize/index.js";

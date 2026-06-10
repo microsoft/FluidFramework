@@ -5,6 +5,7 @@
 
 import { Flags } from "@oclif/core";
 
+import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
 import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
@@ -12,7 +13,6 @@ import {
 	bundleSizeArtifactsPrPipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
-	fluidframeworkAdoOrgUrl,
 	type PackageComparison,
 } from "../../library/bundleSize/index.js";
 import { BaseCommand } from "../../library/commands/base.js";

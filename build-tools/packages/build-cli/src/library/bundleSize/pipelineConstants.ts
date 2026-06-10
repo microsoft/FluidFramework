@@ -25,6 +25,3 @@ export const bundleSizeArtifactsPrPipeline = {
 	definitionId: 11,
 	bundleAnalyzerJsonArtifactName: "bundleAnalyzerJson",
 } as const;
-
-/** ADO organization URL hosting the pipelines. */
-export const fluidframeworkAdoOrgUrl = "https://dev.azure.com/fluidframework";
