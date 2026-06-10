@@ -782,7 +782,6 @@ const dummyComposeManager: ComposeNodeManager = {
 	},
 
 	composeAttachDetach: unsupportedFunc,
-	composeDetachAttach: unsupportedFunc,
 	sendNewChangesToBaseSourceLocation: unsupportedFunc,
 };
 

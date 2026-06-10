@@ -223,13 +223,6 @@ function compose(
 
 	sendNewChildChanges(change1, change2, nodeManager);
 
-	if (
-		change1.nodeDetach !== undefined &&
-		areEqualChangeAtomIdOpts(change1.nodeDetach, change2.valueReplace?.src)
-	) {
-		nodeManager.composeDetachAttach(change1.nodeDetach, change1.nodeDetach, 1);
-	}
-
 	return makeChangeset(composedReplace, composedDetach, composedChildChange);
 }
 

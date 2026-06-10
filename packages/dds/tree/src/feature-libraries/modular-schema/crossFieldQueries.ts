@@ -104,19 +104,6 @@ export interface ComposeNodeManager {
 	 * @param newChanges - The ID of the nested changes associated with this node in the new changeset.
 	 */
 	sendNewChangesToBaseSourceLocation(baseAttachId: ChangeAtomId, newChanges: NodeId): void;
-
-	// XXX: It doesn't seem like it should be mandatory to call this if you don't want the rename to be removed (e.g., optional field pin).
-	/**
-	 * Must be called by a field kind when composing a detach in the base changeset with an attach of the same nodes in the new changeset.
-	 * @param baseDetachId - The ID of the detach in the base changeset.
-	 * @param newAttachId - The ID of the attach in the new changeset.
-	 * @param count - The number of nodes being detached then attached.
-	 */
-	composeDetachAttach(
-		baseDetachId: ChangeAtomId,
-		newAttachId: ChangeAtomId,
-		count: number,
-	): void;
 }
 
 export interface RebaseNodeManager {

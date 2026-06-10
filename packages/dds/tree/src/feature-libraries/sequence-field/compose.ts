@@ -226,9 +226,6 @@ function composeMarksIgnoreChild(
 		assert(baseMark.type === "Detach", "Unexpected mark type");
 		assert(newMark.type === "Attach", "Unexpected mark type");
 		const detachId = getDetachedRootId(baseMark);
-		const attachId = getAttachedRootId(newMark);
-
-		moveEffects.composeDetachAttach(detachId, attachId, baseMark.count);
 
 		// The composition has no net effect, but we preserve the intention to pin the nodes here.
 		const composedMark = { ...newMark, detachId };

@@ -3469,8 +3469,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (!hasNewAttachWithBaseAttachId) {
 			// The new attach may still exist in the composed changeset so we do not remove it here.
-			// The new attach will typically cancel with a base detach,
-			// in which case the cross-field key will be removed in `composeDetachAttach`.
 			this.table.removedCrossFieldKeys.set(
 				{ ...baseAttachId, target: NodeMoveType.Attach },
 				countToProcess,
@@ -3491,8 +3489,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 
 		if (!hasBaseDetachWithNewDetachId) {
 			// The base detach may still exist in the composed changeset so we do not remove it here.
-			// The base detach will typically cancel with a new attach,
-			// in which case the cross-field key will be removed in `composeDetachAttach`.
 			this.table.removedCrossFieldKeys.set(
 				{ ...newDetachId, target: NodeMoveType.Detach },
 				countToProcess,
@@ -3565,22 +3561,6 @@ class ComposeNodeManagerI implements ComposeNodeManager {
 				addNodesToCompose(this.table, baseNodeId, newChanges);
 			}
 		}
-	}
-
-	public composeDetachAttach(
-		baseDetachId: ChangeAtomId,
-		newAttachId: ChangeAtomId,
-		count: number,
-	): void {
-		// In the case where `baseDetachId` is part of a rollback of a move in change2,
-		// change2 will also have a detach with `baseDetachId`.
-		// We make sure that `baseDetachId` is registered in this field in the composed change.
-		// In other cases, this line is unnecessary but harmless.
-		this.table.addedCrossFieldKeys.set(
-			{ target: NodeMoveType.Detach, ...baseDetachId },
-			count,
-			this.fieldId,
-		);
 	}
 
 	private invalidateBaseFields(fields: FieldId[]): void {
@@ -4626,8 +4606,7 @@ function composeCrossFieldKeyTables(
 	// If change1 contains a rollback inverse of a move from change2,
 	// may both have the same cross-field keys.
 	// The colliding keys represent moves of the same nodes.
-	// Composition typically preserves the first detach (from change1) and last attach (from change2).
-	// Note that it is also common for colliding keys to be removed in `composeDetachAttach`.
+	// Composition preserves the first detach (from change1) and last attach (from change2).
 	const mergeEntries = (key: CrossFieldKey, value1: FieldId, value2: FieldId): FieldId =>
 		key.target === NodeMoveType.Detach ? value1 : value2;
 

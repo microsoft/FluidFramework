@@ -34,5 +34,4 @@ export const failComposeManager: ComposeNodeManager = {
 	getNewChangesForBaseDetach: failingDelegate,
 	sendNewChangesToBaseSourceLocation: failingDelegate,
 	composeAttachDetach: failingDelegate,
-	composeDetachAttach: failingDelegate,
 };
