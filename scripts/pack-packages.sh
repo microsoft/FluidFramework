@@ -23,6 +23,13 @@ if [ -f ".releaseGroup" ]; then
   flub exec --no-private --concurrency=1 --releaseGroup $RELEASE_GROUP -- "mv -t $STAGING_PATH/pack/tarballs/ ./*.tgz" && \
   flub exec --no-private --releaseGroup $RELEASE_GROUP -- "[ ! -f ./*test-files.tar ] || (echo 'test files found' && mv -t $STAGING_PATH/test-files/ ./*test-files.tar)"
 
+  # Clean up generated files that are listed in a package's "files" array (e.g. oclif.manifest.json) after packing.
+  # These are produced during build and intentionally shipped in the published tarball, but should not linger in
+  # the working tree. This cleanup deliberately runs here rather than in a package "postpack" script: under
+  # pnpm >=11, `pnpm pack` re-stats every "files" entry after postpack runs and fails with ENOENT if postpack
+  # deleted one. Running it here, after all packs complete, avoids that while still cleaning the working tree.
+  flub exec --no-private --releaseGroup $RELEASE_GROUP -- "pnpm run --if-present clean:manifest"
+
 else
   if [ "$PACKAGE_MANAGER" == "pnpm" ]; then
     pnpm --if-present pack:tests
