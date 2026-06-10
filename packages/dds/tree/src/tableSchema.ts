@@ -823,33 +823,49 @@ export namespace System_TableSchema {
 					}
 
 					// Resolve any IDs to actual nodes.
-					// This validates that all of the rows exist before starting transaction.
+					// This validates that all of the columns exist before starting transaction.
 					// This improves user-facing error experience.
-					const columnsToRemove: ColumnValueType[] = [];
+					// Set insertion order is preserved on iteration, which matches the caller-supplied order
+					// expected by both the cell-deletion loop and the returned array.
+					const columnsToRemove = new Set<ColumnValueType>();
 					for (const columnOrIdToRemove of indexOrColumns) {
-						columnsToRemove.push(this.#getColumn(columnOrIdToRemove));
+						columnsToRemove.add(this.#getColumn(columnOrIdToRemove));
 					}
 
+					// Locate each column-to-remove's index in a single backward pass over the column array.
+					// Iterating in reverse means `indicesDescending` is already sorted descending,
+					// so subsequent `removeAt` calls don't shift the indices of yet-to-remove items.
+					// Avoids an O(n * m) cost of calling `indexOf` per column-to-remove.
+					const indicesDescending: number[] = [];
+					for (let i = this.table.columns.length - 1; i >= 0; i--) {
+						if (columnsToRemove.has(this.table.columns[i] as ColumnValueType)) {
+							indicesDescending.push(i);
+						}
+					}
+
+					// Note, throwing an error within a transaction will abort the entire transaction.
+					// So if we throw an error here for any column, no columns will be removed.
 					this.#applyEditsInBatch({
 						applyEdits: () => {
-							// Note, throwing an error within a transaction will abort the entire transaction.
-							// So if we throw an error here for any column, no columns will be removed.
-							for (const columnToRemove of columnsToRemove) {
-								// Remove the corresponding cell from all rows.
-								for (const row of this.table.rows) {
+							// Remove the corresponding cell from every row.
+							for (const row of this.table.rows) {
+								for (const columnToRemove of columnsToRemove) {
 									// TypeScript is unable to narrow the row type correctly here, hence the cast.
 									// See: https://github.com/microsoft/TypeScript/issues/52144
 									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
 									delete (row as RowValueInternalType).cells[columnToRemove.id];
 								}
+							}
 
-								// We have already validated that all of the columns exist above, so this is safe.
-								this.table.columns.removeAt(this.table.columns.indexOf(columnToRemove));
+							// Remove column nodes. Indices were captured descending so each removal
+							// keeps the remaining target indices valid.
+							for (const index of indicesDescending) {
+								this.table.columns.removeAt(index);
 							}
 						},
 						preconditions,
 					});
-					return columnsToRemove;
+					return [...columnsToRemove];
 				}
 			}
 
@@ -904,23 +920,35 @@ export namespace System_TableSchema {
 				// Resolve any IDs to actual nodes.
 				// This validates that all of the rows exist before starting transaction.
 				// This improves user-facing error experience.
-				const rowsToRemove: RowValueType[] = [];
+				// Set insertion order is preserved on iteration, which matches the caller-supplied order
+				// expected by the returned array.
+				const rowsToRemove = new Set<RowValueType>();
 				for (const rowToRemove of indexOrRows) {
-					rowsToRemove.push(this.#getRow(rowToRemove));
+					rowsToRemove.add(this.#getRow(rowToRemove));
 				}
+
+				// Locate each row-to-remove's index in a single backward pass over the row array.
+				// Iterating in reverse means `indicesDescending` is already sorted descending,
+				// so subsequent `removeAt` calls don't shift the indices of yet-to-remove items.
+				// Avoids an O(n * m) cost of calling `indexOf` per row-to-remove.
+				const indicesDescending: number[] = [];
+				for (let i = this.table.rows.length - 1; i >= 0; i--) {
+					if (rowsToRemove.has(this.table.rows[i] as RowValueType)) {
+						indicesDescending.push(i);
+					}
+				}
+
+				// Note, throwing an error within a transaction will abort the entire transaction.
+				// So if we throw an error here for any row, no rows will be removed.
 				this.#applyEditsInBatch({
 					applyEdits: () => {
-						// Note, throwing an error within a transaction will abort the entire transaction.
-						// So if we throw an error here for any row, no rows will be removed.
-						for (const rowToRemove of rowsToRemove) {
-							// We have already validated that all of the rows exist above, so this is safe.
-							const index = this.table.rows.indexOf(rowToRemove);
+						for (const index of indicesDescending) {
 							this.table.rows.removeAt(index);
 						}
 					},
 					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
 				});
-				return rowsToRemove;
+				return [...rowsToRemove];
 			}
 
 			public removeCell(
