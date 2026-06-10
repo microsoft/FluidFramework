@@ -8,17 +8,14 @@
 packages:
   - .
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
-onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - core-js
-  - core-js-pure
-  - keytar
-  - linkcheck-bin
-  - typesense-instantsearch-adapter
-  - unrs-resolver
+allowBuilds:
+  '@parcel/watcher': true
+  core-js: true
+  core-js-pure: true
+  keytar: true
+  linkcheck-bin: true
+  typesense-instantsearch-adapter: true
+  unrs-resolver: true
 
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
@@ -29,6 +26,88 @@ trustPolicy: no-downgrade
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
 trustPolicyExclude:
-  - 'chokidar@4.0.3'
-  - 'semver@6.3.1 || 5.7.2'
+  # chokidar@4.0.3 (published 2024-12-18, by paulmillr) — pipeline regression.
+  # Prior trusted: chokidar@4.0.1 (provenance, 2024-09-22, by paulmillr).
+  # Same publisher (sole maintainer); provenance attestation was dropped after 4.0.1.
+  # Pulled in transitively via mocha@11 (chokidar ^4.0.1).
+  # chokidar@5.0.0 has restored provenance but no upstream consumer pins ^5 yet.
+  - "chokidar@4.0.3"
+  # detect-port@1.6.1 (published 2024-05-08, by fengmk2) — pipeline regression.
+  # Prior trusted: detect-port@1.6.0 (provenance, 2024-05-08, by fengmk2).
+  - "detect-port@1.6.1"
+  # Trusted publishing not back ported to 3 branch.
+  - "langium@3.3.1"
+  # semver@5.7.2 and semver@6.3.1 — legacy maintenance lines (last published 2023-07-10
+  # and 2023-04-26 respectively, by lukekarrys).
+  # Prior trusted: semver@7.5.4 (provenance, 2023-07-07, by npm-cli-ops).
+  # Different publisher account because the 5.x and 6.x maintenance lines are
+  # hand-published by lukekarrys (a long-time npm/node-semver maintainer), while the
+  # current 7.x line publishes through the npm-cli OIDC/Actions pipeline. The 5.x/6.x
+  # lines will not be retroactively re-published with provenance. Pulled in by widely-
+  # used legacy tooling that pins ^5 / ^6.
+  - "semver@5.7.2 || 6.3.1"
+  # undici-types@6.21.0 (published 2024-11-13, by matteo.collina) — pipeline regression.
+  # Prior trusted: undici-types@6.19.2 (provenance, 2024-06-18, by matteo.collina).
+  # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
+  # repo); provenance attestation was lost on a subsequent 6.x release.
+  - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+strictPeerDependencies: true
+updateNotifier: false
+
+# Security and compatibility overrides.
+overrides:
+  # @azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser
+  # (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0
+  # is API-compatible within the ^4.3.0 range it declares.
+  '@azure/identity': ^4.13.0
+  # @types/react: pinned to v18 to prevent pnpm re-resolution from pulling in v19,
+  # which is incompatible with the React 18 docs site.
+  '@types/react': ^18.3.12
+  # diff: overridden to patched version to resolve a known ReDoS vulnerability.
+  diff@>=5 <6: ^5.2.2
+  # js-yaml: overridden to fix a known vulnerability (prototype pollution via
+  # merge keys).
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+  # jws: overridden to ^3.2.3 to resolve a known vulnerability in jws 3.2.2
+  # (transitive via jsonwebtoken). Stays within jsonwebtoken's declared ^3.2.2
+  # range.
+  jws: ^3.2.3
+  # lodash-es: overridden to ^4.18.1 to resolve a CG alert against lodash-es
+  # 4.17.21 (transitive via Docusaurus/quill).
+  lodash-es: ^4.18.1
+  # mdast-util-to-hast: overridden to ^13.2.1 to fix a known vulnerability
+  # (unsanitized class attribute injection).
+  mdast-util-to-hast: ^13.2.1
+  # node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities.
+  node-forge: ^1.4.0
+  # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
+  qs: ^6.15.0
+  # simple-git: overridden to ^3.32.3 to resolve a CG alert.
+  simple-git: ^3.32.3
+  # validator: overridden to ^13.15.0 to resolve a known vulnerability in older
+  # versions (transitive via swagger-tools).
+  validator: ^13.15.0
+  # minimatch: overridden to patched versions to resolve known security
+  # vulnerabilities across all major version ranges.
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+  # serialize-javascript: overridden to ^7.0.4 to resolve GHSA-5c6j-r48x-rmvq.
+  # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
+  serialize-javascript@>=6 <7: ^7.0.4
+  # express: overridden to ^4.22.1 to resolve a known vulnerability in express
+  # 4.21.2.
+  express@>=4 <5: ^4.22.1
+  # picomatch: overridden to patched versions to resolve a known security
+  # vulnerability.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
