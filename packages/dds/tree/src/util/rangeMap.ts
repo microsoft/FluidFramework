@@ -226,59 +226,107 @@ export class RangeMap<K, V> {
 			(key, v1, v2) => v1,
 		);
 
-		// XXX: We can't call `merged.set` since `merged` might be malformed.
-		RangeMap.forEachIntersection(a, b, (key, length, valueA, valueB) =>
-			merged.set(key, length, mergeFunc(key, valueA, valueB)),
+		// We split the overlapping tree entries into ranges which are either fully overlapping (intersections),
+		// or fully non-overlapping (residuals).
+		// We create an entry for each of these ranges.
+		// After this, the merged map should be well-formed.
+		RangeMap.forEachIntersection(
+			a,
+			b,
+			(key, length, valueA, valueB) =>
+				merged.tree.set(key, { value: mergeFunc(key, valueA, valueB), length }),
+			(key, length, value) => merged.tree.set(key, { value, length }),
 		);
 
 		return merged;
 	}
 
+	/**
+	 * Calls provided handlers on intersecting portions of `mapA` and `mapB`.
+	 * @param intersectionCallback - called once for each key which has an entry in both `mapA` and `mapB`.
+	 * @param residualCallback - called for each key which only has an entry in one of the input maps,
+	 * but which is part of a range entry that overlaps an entry in the other map.
+	 * This may also be called for entries which are not part of an overlapping range.
+	 */
 	private static forEachIntersection<K, V>(
 		mapA: RangeMap<K, V>,
 		mapB: RangeMap<K, V>,
-		callback: (key: K, length: number, valueA: V, valueB: V) => void,
+		intersectionCallback: (key: K, length: number, valueA: V, valueB: V) => void,
+		residualCallback: (key: K, length: number, value: V) => void,
 	): void {
-		let map1 = mapA;
-		let map2 = mapB;
-		const firstKeyA = map1.tree.minKey();
-		if (firstKeyA === undefined) {
-			return;
-		}
-
-		let entry1 = map1.tree.getPairOrNextLower(firstKeyA);
+		let [entry1, map1, map2] = this.getOrNextEntry(mapA, mapB, undefined);
 		while (entry1 !== undefined) {
-			const [key1, { value: value1, length: length1 }] = entry1;
-			const entry2 = map2.tree.getPairOrNextLower(key1);
+			const entry2 = map2.getOrNextEntry(entry1.start);
 			if (entry2 !== undefined) {
-				const [key2, { value: value2, length: length2 }] = entry2;
-				const offset = mapA.subtractKeys(key1, key2);
-				const intersectionLength = Math.min(length2 - offset, length1);
-				if (intersectionLength > 0) {
-					const value2Offset = mapA.offsetValue(value2, offset);
-					const [valueA, valueB] =
-						map1 === mapA ? [value1, value2Offset] : [value2Offset, value1];
+				// This is the number of keys in `entry1` that come before the first key in `entry2`.
+				const offset = Math.min(mapA.subtractKeys(entry2.start, entry1.start), entry1.length);
+				if (offset > 0) {
+					residualCallback(entry1.start, offset, entry1.value);
+				}
 
-					callback(key1, intersectionLength, valueA, valueB);
-					entry1 = map1.tree.nextHigherPair(key1);
+				const intersectionLength = Math.min(entry1.length - offset, entry2.length);
+				if (intersectionLength > 0) {
+					const value1Offset = mapA.offsetValue(entry1.value, offset);
+					const [valueA, valueB] =
+						map1 === mapA ? [value1Offset, entry2.value] : [entry2.value, value1Offset];
+
+					intersectionCallback(entry2.start, intersectionLength, valueA, valueB);
+					[entry1, map1, map2] = this.getOrNextEntry(
+						mapA,
+						mapB,
+						mapA.offsetKey(entry2.start, intersectionLength),
+					);
 					continue;
 				}
 			}
 
-			[map1, map2] = [map2, map1];
-			entry1 = map1.tree.nextHigherPair(key1);
+			residualCallback(entry1.start, entry1.length, entry1.value);
+			[entry1, map1, map2] = this.getOrNextEntry(
+				mapA,
+				mapB,
+				mapA.offsetKey(entry1.start, entry1.length),
+			);
 		}
 
 		return;
 	}
 
-	private getFirstEntry(): RangeMapEntry<K, V> | undefined {
-		const key = this.tree.minKey();
+	private static getOrNextEntry<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		key: K | undefined,
+	): [RangeMapEntry<K, V> | undefined, firstMap: RangeMap<K, V>, secondMap: RangeMap<K, V>] {
+		const entryA = mapA.getOrNextEntry(key);
+		const entryB = mapB.getOrNextEntry(key);
+		if (entryA === undefined) {
+			return [entryB, mapB, mapA];
+		} else if (entryB === undefined) {
+			return [entryA, mapA, mapB];
+		}
+
+		return mapA.le(entryA.start, entryB.start) ? [entryA, mapA, mapB] : [entryB, mapB, mapA];
+	}
+
+	/**
+	 * @returns a range entry representing the first defined key range greater than or equal to `key`.
+	 */
+	private getOrNextEntry(minKey: K | undefined): RangeMapEntry<K, V> | undefined {
+		const key = minKey ?? this.tree.minKey();
 		if (key === undefined) {
 			return undefined;
 		}
-		const entry = this.tree.get(key) ?? fail("Expected value for min key");
-		return { start: key, value: entry.value, length: entry.length };
+
+		const result = this.getFirst(key, Infinity);
+		if (result.value !== undefined) {
+			return { start: key, value: result.value, length: result.length };
+		}
+
+		const entry = this.tree.nextHigherPair(key);
+		if (entry === undefined) {
+			return undefined;
+		}
+
+		return { start: entry[0], value: entry[1].value, length: entry[1].length };
 	}
 
 	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {
