@@ -10,7 +10,7 @@ import type {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	type ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
@@ -38,7 +38,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		namespace: string,
 		baseLogger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
-	): ITelemetryLoggerExt {
+	): TelemetryLoggerExt {
 		// Setup base logger upfront, such that host can disable it (if needed)
 		const debug = registerDebug(namespace);
 

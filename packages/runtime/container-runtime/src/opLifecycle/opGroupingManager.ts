@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -65,7 +65,7 @@ export interface EmptyGroupedBatch {
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,

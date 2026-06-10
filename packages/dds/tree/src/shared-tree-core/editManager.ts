@@ -9,7 +9,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	TelemetryEventBatcher,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
 
@@ -123,7 +123,7 @@ export class EditManager<
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
-		logger?: ITelemetryLoggerExt,
+		logger?: TelemetryLoggerExt,
 	) {
 		this.trunkBase = {
 			revision: rootRevision,

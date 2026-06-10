@@ -19,7 +19,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { runWithRetry } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	GenericError,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -29,7 +29,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	private internalStorageService: IDocumentStorageService | undefined;
 	constructor(
 		private readonly internalStorageServiceP: Promise<IDocumentStorageService>,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly maxRetries?: number,
 	) {
 		this.internalStorageServiceP

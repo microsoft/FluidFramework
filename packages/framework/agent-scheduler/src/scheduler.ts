@@ -30,7 +30,7 @@ import type {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
@@ -105,7 +105,7 @@ export class AgentScheduler
 		return this;
 	}
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	private get clientId(): string {
 		if (this.runtime.attachState === AttachState.Detached) {
