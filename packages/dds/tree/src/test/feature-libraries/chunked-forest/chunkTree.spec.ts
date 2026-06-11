@@ -1277,30 +1277,35 @@ describe("chunkTree", () => {
 		});
 
 		it("keeps chunk count at the optimal partition under repeated mid-field edits", () => {
-			// Steady-state stress: repeatedly split the field's first chunk in half, splice a
-			// fresh same-shape chunk at the seam, then coalesce. Because the coalesce now
-			// operates over the full touched range in one pass, the field stays at the
-			// optimal partition `ceil(total / cap)` after every round.
+			// Steady-state stress: each round simulates a mid-field edit by calling
+			// splitFieldAtIndex at the field's midpoint and splicing a fresh same-shape chunk
+			// at the seam, then coalescing. Because the coalesce now operates over the full
+			// touched range in one pass, the field stays at the optimal partition
+			// `ceil(total / cap)` after every round.
+			//
+			// splitFieldAtIndex routes through `chunkRange`, which calls `shapeFromSchema`.
+			// The block's `policy` returns `polymorphic`, which would send chunkRange down
+			// the BasicChunk slow path and leave coalesce with nothing to merge. Override
+			// just `shapeFromSchema` so the halves come out as UniformChunks.
 			const cap = policy.uniformChunkNodeCountDynamicTargetMax;
 			let nextValue = cap;
+			const splitCompressor = {
+				policy: { ...policy, shapeFromSchema: () => numberShape },
+				idCompressor: undefined,
+			};
 			const field: TreeChunk[] = [numbersChunk(makeArray(cap, (index) => index))];
 
 			for (let round = 0; round < 20; round++) {
-				const head = field[0];
-				assert(head instanceof UniformChunk);
-				const half = Math.floor(head.topLevelLength / 2);
-				field.splice(
-					0,
-					1,
-					numbersChunk(head.values.slice(0, half)),
-					numbersChunk([nextValue++]),
-					numbersChunk(head.values.slice(half)),
+				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
+				const insertIndex = splitFieldAtIndex(
+					field,
+					Math.floor(total / 2),
+					splitCompressor,
 				);
-				head.referenceRemoved();
+				field.splice(insertIndex, 0, numbersChunk([nextValue++]));
 				coalesceUniformChunks(field, policy);
 
-				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
-				const optimal = Math.ceil(total / cap);
+				const optimal = Math.ceil((total + 1) / cap);
 				assert.equal(
 					field.length,
 					optimal,
