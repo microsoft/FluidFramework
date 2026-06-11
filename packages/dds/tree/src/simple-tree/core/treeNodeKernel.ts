@@ -234,7 +234,7 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		assert(!this.disposed, "Cannot register events on a disposed node");
+		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
 		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
 		if (this.#eventBuffer === undefined) {
 			const eventSource = isHydrated(this.#hydrationState)
@@ -332,33 +332,52 @@ export function withBufferedTreeEvents(callback: () => void): void {
 		callback();
 	} else {
 		bufferTreeEvents = true;
+		const toFlush: KernelEventBuffer[] = [];
 		try {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
+			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
+			// calls made by listeners that fire during `buffer.flush()` below:
+			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
+			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
+			// - Clearing up front means the reentrant call starts from an empty set, so its own
+			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
+			toFlush.push(...activeBuffers);
+			activeBuffers.clear();
+		}
+
+		// Don't flush/emit events in the case of an error
+		for (const buffer of toFlush) {
+			buffer.flush();
 		}
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Set of {@link KernelEventBuffer}s that have accumulated buffered events during the current
+ * {@link withBufferedTreeEvents} window and therefore need to be flushed when it ends.
+ *
+ * @remarks
+ * The set should be empty whenever no buffering window is in progress.
  */
-const flushEventsEmitter = createEmitter<{
-	flush: () => void;
-}>();
+const activeBuffers: Set<KernelEventBuffer> = new Set();
+
+/**
+ * Test-only accessor for the current size of {@link activeBuffers}.
+ * @remarks Only exported for testing purposes. Not intended for any other use.
+ */
+export function TEST_activeBufferCount(): number {
+	return activeBuffers.size;
+}
 
 /**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
+ * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
-
-	/**
-	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
-	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -501,6 +520,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
 	): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
@@ -528,6 +548,7 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			this.#subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
@@ -565,12 +586,15 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			return;
 		}
 
-		assert(
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
-			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
+		debugAssert(
+			() =>
+				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
+				"Buffered kernel events should have been flushed before disposing.",
+		);
+		debugAssert(
+			() => !activeBuffers.has(this) || "Disposed buffer should not be in activeBuffers.",
 		);
 
-		this.#disposeOnFlushListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}

@@ -675,7 +675,11 @@ export class MultiSinkLogger extends TelemetryLogger {
 export interface IPerformanceEventMarkers {
 	start?: true;
 	end?: true;
-	cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
+	cancel?: "generic" | "error"; // tells whether to issue "generic" or "error" category cancel event
+	/**
+	 * If specified, _end events whose duration is greater than this threshold are logged as essential.
+	 */
+	endEventEssentialDurationThresholdMs?: number;
 }
 
 /**
@@ -895,7 +899,36 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error, this.logLevel);
+		this.logger.sendPerformanceEvent(event, error, this.getLogLevel(eventNameSuffix, event));
+	}
+
+	/**
+	 * Get the LogLevel for performance events.
+	 * @param eventNameSuffix - The suffix of the event name.
+	 * @param event - The telemetry performance event.
+	 * @returns The log level for the event.
+	 *
+	 */
+	private getLogLevel(
+		eventNameSuffix: string,
+		event: ITelemetryPerformanceEventExt,
+	): typeof LogLevel.verbose | typeof LogLevel.info | undefined {
+		if (eventNameSuffix === "cancel") {
+			// 	When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
+			return undefined;
+		}
+
+		if (
+			eventNameSuffix === "end" &&
+			event.duration !== undefined &&
+			this.markers.endEventEssentialDurationThresholdMs !== undefined &&
+			event.duration > this.markers.endEventEssentialDurationThresholdMs
+		) {
+			// When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
+			return undefined;
+		}
+
+		return this.logLevel;
 	}
 
 	private static readonly eventHits = new Map<string, number>();

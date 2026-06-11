@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.102.0",
+	"version": "2.110.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -181,13 +181,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:mocha:esm",
-				"build:test:jest",
-				"build:test:types"
-			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -204,6 +197,18 @@
 				"build:esnext"
 			],
 			"build:exports:node": [
+				"build:esnext"
+			],
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha:cjs": [
+				"tsc"
+			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
+			"build:test:types": [
 				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
@@ -233,18 +238,6 @@
 			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
-			"build:test:jest": [
-				"tsc"
-			],
-			"build:test:mocha:cjs": [
-				"tsc"
-			],
-			"build:test:mocha:esm": [
-				"build:esnext"
-			],
-			"build:test:types": [
-				"build:esnext"
-			],
 			"ci:build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -256,6 +249,12 @@
 			],
 			"ci:build:api-reports:node:legacy": [
 				"build:exports:node"
+			],
+			"test:mocha:cjs": [
+				"build:test:mocha:cjs"
+			],
+			"test:mocha:esm": [
+				"build:test:mocha:esm"
 			]
 		}
 	},

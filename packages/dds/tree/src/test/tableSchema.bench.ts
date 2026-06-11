@@ -102,10 +102,8 @@ function runBenchmarks(options: BenchmarkConfig): void {
  * Note: These benchmarks are designed to closely match the SharedMatrix benchmarks in the `matrix` package.
  * If you modify or add tests here, consider updating the corresponding SharedMatrix benchmarks as well
  * to ensure consistency and comparability between the two implementations.
- *
- * TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
  */
-describe.skip("TableSchema Benchmarks", () => {
+describe("TableSchema Benchmarks", () => {
 	configureBenchmarkHooks();
 
 	// The value to be set in the cells of the tree.

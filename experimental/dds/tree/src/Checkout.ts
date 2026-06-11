@@ -6,7 +6,7 @@
 import { IDisposable, IErrorEvent, ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	EventEmitterWithErrorHandling,
 	createChildLogger,
 } from '@fluidframework/telemetry-utils/internal';
@@ -121,7 +121,7 @@ export abstract class Checkout extends EventEmitterWithErrorHandling<ICheckoutEv
 	 */
 	private currentEdit?: GenericTransaction;
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	public disposed: boolean = false;
 

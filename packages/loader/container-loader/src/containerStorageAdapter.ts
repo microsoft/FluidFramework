@@ -24,7 +24,7 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
@@ -107,7 +107,7 @@ export class ContainerStorageAdapter
 	 */
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
@@ -276,7 +276,7 @@ export class ContainerStorageAdapter
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
 		private readonly detachedStorage: MemoryDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {}
 
 	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {

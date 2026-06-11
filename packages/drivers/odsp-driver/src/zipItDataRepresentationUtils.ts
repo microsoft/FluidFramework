@@ -12,7 +12,7 @@ import { Uint8ArrayToArrayBuffer, Uint8ArrayToString } from "@fluid-internal/cli
 import { assert } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { ReadBuffer } from "./ReadBufferUtils.js";
 import { measure } from "./odspUtils.js";
@@ -408,7 +408,7 @@ export class NodeCore {
 	 */
 	protected load(
 		buffer: ReadBuffer,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): {
 		durationStructure: number;
 		durationStrings: number;
@@ -428,7 +428,7 @@ export class NodeCore {
 	 */
 	protected loadStructure(
 		buffer: ReadBuffer,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): IStringElementInternal[] {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
@@ -532,7 +532,7 @@ export class NodeCore {
 	private loadStrings(
 		buffer: ReadBuffer,
 		stringsToResolve: IStringElementInternal[],
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): void {
 		/**
 		 * Process all the strings at once!
@@ -584,7 +584,7 @@ export class NodeCore {
 export class TreeBuilder extends NodeCore {
 	static load(
 		buffer: ReadBuffer,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): {
 		builder: TreeBuilder;
 		telemetryProps: {
