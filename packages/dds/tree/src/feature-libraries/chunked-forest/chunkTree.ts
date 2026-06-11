@@ -708,9 +708,15 @@ export function coalesceUniformChunks(
  * the merged chunk on success, or `undefined` when the pair is not mergeable.
  *
  * @remarks
- * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, the chunks
- * carry different non-undefined {@link UniformChunk.idCompressor}s, or the combined `topLevelLength`
- * would exceed {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, or the
+ * combined `topLevelLength` would exceed
+ * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ *
+ * Asserts that the two inputs do not carry different non-undefined
+ * {@link UniformChunk.idCompressor}s: that case would silently produce a merged chunk whose
+ * compressed-id values decompress to incorrect strings under the surviving compressor. All
+ * chunks in a single {@link ChunkedForest} share that forest's idCompressor, so the assertion
+ * documents the invariant rather than guarding a path callers should take.
  *
  * @remarks
  * Ref-count contract: on success the caller transfers one ref each on `left` and `right` to this
@@ -738,18 +744,17 @@ export function tryCoalesceUniformChunks(
 	if (!leftTreeShape.equals(rightTreeShape)) {
 		return undefined;
 	}
-	// Refuse to merge chunks whose values were compressed under different idCompressors;
-	// the merged chunk can carry only one, so the other's compressed-id values would
-	// decompress to incorrect values when read.
+	// Documents the invariant that all chunks in a single ChunkedForest share its idCompressor.
+	// If this assertion ever fires it means a caller mixed chunks from different forests; merging
+	// them would silently decompress one side's compressed-id values to the wrong strings.
 	const leftCompressor = left.idCompressor;
 	const rightCompressor = right.idCompressor;
-	if (
-		leftCompressor !== undefined &&
-		rightCompressor !== undefined &&
-		leftCompressor !== rightCompressor
-	) {
-		return undefined;
-	}
+	assert(
+		leftCompressor === undefined ||
+			rightCompressor === undefined ||
+			leftCompressor === rightCompressor,
+		"tryCoalesceUniformChunks: left and right carry different idCompressors",
+	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
 	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
 		return undefined;

@@ -1091,7 +1091,11 @@ describe("chunkTree", () => {
 				assert.equal(tryCoalesceUniformChunks(left, right, policy), undefined);
 			});
 
-			it("returns undefined when the two sides carry different idCompressors", () => {
+			it("asserts when the two sides carry different idCompressors", () => {
+				// Documents the single-forest invariant: every chunk in a ChunkedForest shares
+				// the forest's idCompressor, so this case should never arise via legitimate
+				// callers. Silently merging would decompress one side's compressed-id values
+				// under the wrong compressor.
 				const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
 				const otherCompressor = createIdCompressor();
 				const left = new UniformChunk(
@@ -1104,7 +1108,7 @@ describe("chunkTree", () => {
 					[otherCompressor.generateCompressedId()],
 					otherCompressor,
 				);
-				assert.equal(tryCoalesceUniformChunks(left, right, policy), undefined);
+				assert.throws(() => tryCoalesceUniformChunks(left, right, policy));
 			});
 
 			it("uses TreeShape.equals when shape identity differs", () => {
