@@ -14,7 +14,6 @@ import {
 	type RevisionReplacer,
 	type RevisionTag,
 	areEqualChangeAtomIdOpts,
-	areEqualChangeAtomIds,
 	forbiddenFieldKindIdentifier,
 	makeChangeAtomId,
 } from "../../core/index.js";

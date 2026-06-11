@@ -25,7 +25,6 @@ export const failRebaseManager: RebaseNodeManager = {
 	addDetach: failingDelegate,
 	removeDetach: failingDelegate,
 	doesBaseAttachNodes: failingDelegate,
-	doesNewAttachNodes: failingDelegate,
 	getBaseRename: failingDelegate,
 	getNewRenameForBaseRename: failingDelegate,
 };

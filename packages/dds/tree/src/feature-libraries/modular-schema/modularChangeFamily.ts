@@ -3290,17 +3290,6 @@ class RebaseNodeManagerI implements RebaseNodeManager {
 		return { value: attachEntry.value !== undefined, length: attachEntry.length };
 	}
 
-	public doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
-		const attachEntry = getAttachFieldForDetach(
-			this.table.newChange.crossFieldKeys,
-			this.table.newChange.rootNodes,
-			detachId,
-			count,
-		);
-
-		return { value: attachEntry.value !== undefined, length: attachEntry.length };
-	}
-
 	public getBaseRename(
 		id: ChangeAtomId,
 		count: number,
@@ -4891,16 +4880,6 @@ export function getFirstAttachField(
 	count: number,
 ): RangeQueryResult<FieldId | undefined> {
 	return table.getFirst({ target: NodeMoveType.Attach, ...id }, count);
-}
-
-function getAttachFieldForDetach(
-	table: CrossFieldKeyTable,
-	roots: RootNodeTable,
-	detachId: ChangeAtomId,
-	count: number,
-): RangeQueryResult<FieldId | undefined> {
-	const renameEntry = firstAttachIdFromDetachId(roots, detachId, count);
-	return getFirstAttachField(table, renameEntry.value, renameEntry.length);
 }
 
 export function addNodeRename(

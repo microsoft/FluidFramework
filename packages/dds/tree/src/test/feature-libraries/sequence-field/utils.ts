@@ -873,10 +873,6 @@ function newRebaseManager(): TestRebaseManager {
 			throw new Error("Function not implemented.");
 		},
 
-		doesNewAttachNodes(detachId: ChangeAtomId, count: number): RangeQueryResult<boolean> {
-			throw new Error("Function not implemented.");
-		},
-
 		getBaseRename(
 			id: ChangeAtomId,
 			count: number,
