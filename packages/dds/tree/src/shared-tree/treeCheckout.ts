@@ -90,7 +90,6 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
-	type TreeChangeEvents,
 	type VerboseTree,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -822,6 +821,13 @@ export class TreeCheckout implements ITreeCheckout {
 		try {
 			emit();
 		} finally {
+			// TODO: any event that throws potentially leaves the code which triggered that event,
+			// and thus this checkout (and likely more) in a broken state.
+			// Unlocking this editLock prevents future use of this broken state from giving a confusing error in this case,
+			// however, a better approach would probably be to put something (this checkout and/or the editLock)
+			// into a broken state (using a properly scoped `Breakable`),
+			// likely by moving emitChangedLocked into EditLock, and having EditLock get a Breakable,
+			// and having the new emitChangedLocked use `Breakable.use`.
 			this.editLock.unlock();
 		}
 	}
@@ -1706,13 +1712,7 @@ class EditLock {
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
 		if (this.locked) {
-			// These type assertions ensure that the event name strings used here match the actual event names
-			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
-			const treeChanged: keyof TreeChangeEvents = "treeChanged";
-			const changed: keyof CheckoutEvents = "changed";
-			throw new UsageError(
-				`${action} is forbidden during a ${nodeChanged}, ${treeChanged}, or ${changed} event`,
-			);
+			throw new UsageError(`${action} is forbidden during a change event callback`);
 		}
 	}
 

@@ -1342,13 +1342,16 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 
 		it("direct (non-transaction) edit from a changed listener throws", () => {
-			// Engaging `editLock` around `changed` emissions means the lock check on the editor
-			// proxy also fires for direct edits — not just transactions. Without this, a consumer
-			// could bypass the transaction-time check by writing tree state directly inside a
-			// `changed` listener, with the same corruption potential.
+			// Holding the edit lock across the `changed` emission means a direct field
+			// assignment made from within a `changed` listener throws, just like the edits
+			// already rejected from the other change-event callbacks.
+			// This exercises the internal `changed` event directly; see the `treeChanged`
+			// case below for the equivalent guarantee through the public API surface.
 			const view = getTestObjectView();
 
 			view.checkout.events.on("changed", (meta) => {
+				// Only re-enter for this test's own local edit; ignore any other emission
+				// (e.g. remote changes or reverts) so the scenario under test is unambiguous.
 				if (meta.isLocal && meta.kind === CommitKind.Default) {
 					view.root.content = view.root.content + 1;
 				}
@@ -1356,9 +1359,22 @@ describe("SchematizingSimpleTreeView", () => {
 
 			assert.throws(
 				() => (view.root.content = 1),
-				validateUsageError(
-					/Editing the tree is forbidden during a nodeChanged, treeChanged, or changed event/,
-				),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
+			);
+		});
+
+		it("direct edit from a treeChanged listener throws (public API)", () => {
+			// Same guarantee as above, but reached through the public `Tree.on(..., "treeChanged")`
+			// API rather than the internal checkout `changed` event.
+			const view = getTestObjectView();
+
+			Tree.on(view.root, "treeChanged", () => {
+				view.root.content = view.root.content + 1;
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
 			);
 		});
 

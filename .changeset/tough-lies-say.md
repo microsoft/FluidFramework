@@ -3,19 +3,18 @@
 "fluid-framework": minor
 "__section": tree
 ---
-The edit lock now also covers the `changed` event
+Editing a SharedTree during its change-event callbacks now consistently throws
 
-The existing edit-time lock that forbids tree mutations from inside a `nodeChanged` or `treeChanged` event listener now also covers the `changed` event.
-Direct edits, branch operations, reverts, etc. attempted from inside a `changed` listener now throw the same canonical `UsageError` they already throw from the other change-event listeners.
+Editing a `SharedTree` from inside one of its change-event callbacks has always been forbidden, but one path was not being caught: edits (along with branch operations, reverts, transactions, etc.) made while the tree was emitting its post-change notification ran to completion instead of throwing.
 
-Previously the lock did not extend to `changed` emissions, so edits made from a `changed` listener ran to completion: they applied to the tree, their commits fired further `changed` events, and the listener could re-enter for those commits.
-This pattern could produce infinite edit loops, redundant work across clients, incorrect attribution, broken undo/redo grouping, and pollution of the outer commit's label data.
+Such edits would apply to the tree, trigger further change notifications, and could re-enter the same listener for the resulting commits.
+This can produce infinite edit loops, redundant work across clients, incorrect attribution, broken undo/redo grouping, and pollution of the outer commit's label data.
 
-The error message now names all three events:
+This release closes that gap: editing the tree during a change-event callback now throws the same canonical `UsageError` as the other change-event callbacks:
 
 ```
-Editing the tree is forbidden during a nodeChanged, treeChanged, or changed event
+Editing the tree is forbidden during a change event callback
 ```
 
-Applications should not make edits in response to edits.
-If a derived edit is genuinely needed, drive it from a user action or apply it on a `TreeBranchAlpha` and merge from there.
+More generally, edits should not be made in response to changes to the document.
+See [Editing in response to change events](https://fluidframework.com/docs/data-structures/tree/events#editing-in-response-to-change-events) for why, and for the recommended alternatives.
