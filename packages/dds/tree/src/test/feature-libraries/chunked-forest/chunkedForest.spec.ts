@@ -275,9 +275,8 @@ describe("ChunkedForest", () => {
 
 		/**
 		 * Manually seeds the root field with the requested sequence of single-shape UniformChunks.
-		 * Sidesteps the default chunker, which would produce one UniformChunk per top-level node,
-		 * so tests can position attach/detach boundaries on existing chunk seams and exercise
-		 * coalesceAroundSplice without splitFieldAtIndex having to bisect first.
+		 * Lets tests position attach/detach boundaries on existing chunk seams and exercise
+		 * coalesceUniformChunks without splitFieldAtIndex having to bisect first.
 		 */
 		function setupForestWithChunks(chunkSizes: readonly number[]): {
 			forest: ReturnType<typeof setupForest>;
@@ -306,7 +305,7 @@ describe("ChunkedForest", () => {
 		it("coalesces same-shape neighbors left adjacent by an aligned detach", () => {
 			// Field pre-arranged as three same-shape UniformChunks of sizes 2, 1, 2 so the
 			// detach lands on existing chunk boundaries — splitFieldAtIndex is a no-op and
-			// only coalesceAroundSplice is exercised. After removing the middle single-node
+			// only coalesceUniformChunks is exercised. After removing the middle single-node
 			// chunk, the two 2-node chunks merge into a single 4-node chunk.
 			const { forest } = setupForestWithChunks([2, 1, 2]);
 
@@ -328,7 +327,7 @@ describe("ChunkedForest", () => {
 			// walks chunks to find the target index read its `chunk` variable at the top of
 			// the loop body — before `indexOfChunk++` — so the next iteration's condition
 			// check used the prior iteration's chunk. With fields containing multiple
-			// multi-node UniformChunks (as produced by coalesceAroundSplice in steady state),
+			// multi-node UniformChunks (as produced by coalesceUniformChunks in steady state),
 			// this caused the loop to overshoot the target chunk.
 			//
 			// Setup: three same-shape UniformChunks of sizes 2, 5, 3 — 10 total nodes.

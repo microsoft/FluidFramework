@@ -428,7 +428,7 @@ export interface ChunkPolicy {
 	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
 	 * few extra intermediate chunks.
 	 *
-	 * Also caps chunks merged by {@link coalesceAroundSplice}, so dynamic chunk sizes
+	 * Also caps chunks merged by {@link coalesceUniformChunks}, so dynamic chunk sizes
 	 * settle around this target.
 	 *
 	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
@@ -642,68 +642,102 @@ export function splitFieldAtIndex(
 }
 
 /**
- * Keeps a field's chunks from accumulating same-shape fragments across repeated edits.
+ * Coalesce adjacent same-shape {@link UniformChunk}s within an optional sub-range of `chunks`
+ * into single larger {@link UniformChunk}s, capped at
+ * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} top-level nodes per chunk.
  *
  * @remarks
- * Merges adjacent {@link UniformChunk}s of matching shape along the seams a splice could have
- * created. Acts as the inverse of {@link splitFieldAtIndex}: without it, repeated mid-field
- * attach/detach against the same field would leave it permanently fragmented into ever-smaller
- * adjacent chunks. Cost is proportional to `insertedCount`.
+ * Walks the range from left to right, attempting to merge each chunk with its left neighbor via
+ * {@link tryCoalesceUniformChunks}. Performs at most one in-place `splice` on `chunks`. Non-mergeable
+ * chunks are passed through unchanged.
+ *
+ * Time: O(range_length) for the walk, plus the cost of one splice (O(chunks.length)) and the
+ * cost of the merges themselves. Per-chunk merge cost is O(rightChunk.values.length) when the
+ * surviving chunk can be mutated in place (see {@link tryCoalesceUniformChunks}), so the total
+ * work of merging a run of `k` chunks together is O(total values), not O(total values squared).
  *
  * @privateRemarks
  * Caps merged chunks at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}, matching the
  * bisect threshold used by {@link splitFieldAtIndex} so split-and-coalesce pairs don't oscillate.
  *
- * @param field - The field's chunks array, modified in place.
- * @param spliceStart - The index passed to the originating `splice` call.
- * @param insertedCount - The number of chunks the splice inserted (0 for a pure detach).
+ * @param chunks - The chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
+ * @param range - Sub-range of `chunks` (by chunk index) to consider for merging. Defaults to the
+ * whole array. `length` is clamped to the available chunks.
  */
-export function coalesceAroundSplice(
-	field: TreeChunk[],
-	spliceStart: number,
-	insertedCount: number,
+export function coalesceUniformChunks(
+	chunks: TreeChunk[],
 	policy: ChunkPolicy,
+	range?: { readonly start: number; readonly length: number },
 ): void {
-	// Seams the splice may have introduced:
-	//  - pure detach (insertedCount === 0): one seam at spliceStart - 1.
-	//  - attach of K: K + 1 seams, from spliceStart - 1 through spliceStart + K - 1.
-	// The `i < windowEnd` bound covers both.
-	let i = Math.max(0, spliceStart - 1);
-	let windowEnd = spliceStart + insertedCount;
-	while (i < field.length - 1 && i < windowEnd) {
-		if (tryMergeAt(field, i, policy)) {
-			// field[i] and field[i + 1] collapsed into one: the window shrinks by one, and the
-			// new field[i + 1] is an unseen neighbor that should be retested without advancing.
-			windowEnd--;
-		} else {
-			i++;
+	const rangeStart = range?.start ?? 0;
+	const rangeLength = range?.length ?? chunks.length - rangeStart;
+	const rangeEnd = Math.min(rangeStart + rangeLength, chunks.length);
+	if (rangeEnd - rangeStart < 2) {
+		return;
+	}
+
+	// Build the resulting chunk list for [rangeStart, rangeEnd). Passthrough chunks keep their
+	// identity; merged pairs are replaced by the chunk returned from tryCoalesceUniformChunks,
+	// which also handles ref-count bookkeeping for chunks that drop out of the array.
+	const result: TreeChunk[] = [];
+	let mutated = false;
+	for (let chunkIndex = rangeStart; chunkIndex < rangeEnd; chunkIndex++) {
+		const next = chunks[chunkIndex] ?? oob();
+		if (result.length === 0) {
+			result.push(next);
+			continue;
 		}
+		const last = result[result.length - 1] ?? oob();
+		const coalesced = tryCoalesceUniformChunks(last, next, policy);
+		if (coalesced !== undefined) {
+			result[result.length - 1] = coalesced;
+			mutated = true;
+		} else {
+			result.push(next);
+		}
+	}
+
+	if (mutated) {
+		chunks.splice(rangeStart, rangeEnd - rangeStart, ...result);
 	}
 }
 
 /**
- * Attempts to merge `field[i]` and `field[i + 1]` into a single {@link UniformChunk}. Skips if
- * either is not a {@link UniformChunk}, the shapes differ, the chunks carry different non-undefined
- * {@link UniformChunk.idCompressor}s, or the combined topLevelLength would exceed
- * {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ * Attempts to combine two adjacent {@link UniformChunk}s into a single {@link UniformChunk}. Returns
+ * the merged chunk on success, or `undefined` when the pair is not mergeable.
  *
- * @returns `true` if the merge occurred (and `field` was mutated), `false` otherwise.
+ * @remarks
+ * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, the chunks
+ * carry different non-undefined {@link UniformChunk.idCompressor}s, or the combined `topLevelLength`
+ * would exceed {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}.
+ *
+ * @remarks
+ * Ref-count contract: on success the caller transfers one ref each on `left` and `right` to this
+ * function and receives one ref on the returned chunk (which may be `left` itself when `left` was
+ * not shared). On failure (`undefined`), the caller's refs on `left` and `right` are unchanged.
+ *
+ * When `left.isShared()` returns false (refcount === 1), the merged chunk reuses `left`: its
+ * values array is extended in place and its shape is updated. This avoids allocating an O(n²)
+ * total of value bytes when merging a run of `n` small chunks together.
+ *
+ * @returns The merged chunk on success, or `undefined` when the pair is not mergeable.
  */
-function tryMergeAt(field: TreeChunk[], i: number, policy: ChunkPolicy): boolean {
-	const left = field[i];
-	const right = field[i + 1];
+export function tryCoalesceUniformChunks(
+	left: TreeChunk,
+	right: TreeChunk,
+	policy: ChunkPolicy,
+): UniformChunk | undefined {
 	if (!(left instanceof UniformChunk) || !(right instanceof UniformChunk)) {
-		return false;
+		return undefined;
 	}
-
 	const leftTreeShape = left.shape.treeShape;
 	const rightTreeShape = right.shape.treeShape;
-	// Identity is the fast path (chunkers cache shapes); equals() is the fallback.
-	if (leftTreeShape !== rightTreeShape && !leftTreeShape.equals(rightTreeShape)) {
-		return false;
+	// TODO: TreeShape.equals could short-circuit on identity for the common
+	// (same-chunker) case; until then this is a full structural check on every merge.
+	if (!leftTreeShape.equals(rightTreeShape)) {
+		return undefined;
 	}
-
 	// Refuse to merge chunks whose values were compressed under different idCompressors;
 	// the merged chunk can carry only one, so the other's compressed-id values would
 	// decompress to incorrect values when read.
@@ -714,23 +748,34 @@ function tryMergeAt(field: TreeChunk[], i: number, policy: ChunkPolicy): boolean
 		rightCompressor !== undefined &&
 		leftCompressor !== rightCompressor
 	) {
-		return false;
+		return undefined;
 	}
-
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
 	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
-		return false;
+		return undefined;
 	}
 
+	if (!left.isShared()) {
+		// In-place: grow `left` to absorb `right`. `left`'s sole array-slot ref is preserved
+		// and returned; `right`'s slot ref is released.
+		left.values.push(...right.values);
+		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
+		if (leftCompressor === undefined && rightCompressor !== undefined) {
+			left.idCompressor = rightCompressor;
+		}
+		right.referenceRemoved();
+		return left;
+	}
+
+	// Left is shared: build a fresh merged chunk and release the two inputs.
 	const merged = new UniformChunk(
 		leftTreeShape.withTopLevelLength(combinedTopLevel),
 		[...left.values, ...right.values],
 		leftCompressor ?? rightCompressor,
 	);
-	field.splice(i, 2, merged);
 	left.referenceRemoved();
 	right.referenceRemoved();
-	return true;
+	return merged;
 }
 
 /**
