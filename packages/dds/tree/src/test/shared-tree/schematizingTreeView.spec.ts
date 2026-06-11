@@ -1342,19 +1342,12 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 
 		it("direct (non-transaction) edit from a changed listener throws", () => {
-			// Holding the edit lock across the `changed` emission means a direct field
-			// assignment made from within a `changed` listener throws, just like the edits
-			// already rejected from the other change-event callbacks.
-			// This exercises the internal `changed` event directly; see the `treeChanged`
-			// case below for the equivalent guarantee through the public API surface.
+			// Exercises the internal `changed` event; the `treeChanged` case below covers the
+			// same guarantee through the public API surface.
 			const view = getTestObjectView();
 
-			view.checkout.events.on("changed", (meta) => {
-				// Only re-enter for this test's own local edit; ignore any other emission
-				// (e.g. remote changes or reverts) so the scenario under test is unambiguous.
-				if (meta.isLocal && meta.kind === CommitKind.Default) {
-					view.root.content = view.root.content + 1;
-				}
+			view.checkout.events.on("changed", () => {
+				view.root.content = view.root.content + 1;
 			});
 
 			assert.throws(
