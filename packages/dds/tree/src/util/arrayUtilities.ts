@@ -110,7 +110,7 @@ export function collectContiguousRanges<T>(
 	for (let i = 0; i < array.length; i++) {
 		if (shouldInclude(array[i] as T)) {
 			const last = ranges[ranges.length - 1];
-			if (last !== undefined && last.end === i) {
+			if (last?.end === i) {
 				last.end = i + 1;
 			} else {
 				ranges.push({ start: i, end: i + 1 });
