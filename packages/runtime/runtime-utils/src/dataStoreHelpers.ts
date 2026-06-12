@@ -29,7 +29,7 @@ interface IResponseException extends Error {
 }
 
 /**
- * Internal metadata preserved on errors that roundtrip through an {@link IResponse}.
+ * Internal metadata preserved on errors that roundtrip through an {@link @fluidframework/core-interfaces#IResponse}.
  * @internal
  */
 export interface IResponseExceptionMetadata {
