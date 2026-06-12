@@ -530,7 +530,7 @@ describe("TableFactory unit tests", () => {
 				it("Insert empty columns list", () => {
 					const tree = initializeTree(Table, Table.create());
 
-					const inserted = tree.insertColumns({ index: 0, columns: [] });
+					const inserted = tree.insertColumns([], 0);
 					assert.equal(inserted.length, 0);
 
 					assertEqualTrees(tree, {
@@ -544,15 +544,15 @@ describe("TableFactory unit tests", () => {
 				it("Insert single column into empty list", () => {
 					const table = initializeTree(Table, Table.create());
 
-					const inserted = table.insertColumns({
-						index: 0,
-						columns: [
+					const inserted = table.insertColumns(
+						[
 							{
 								id: "column-0",
 								props: {},
 							},
 						],
-					});
+						0,
+					);
 					assert.equal(inserted.length, 1);
 					assertEqualTrees(inserted[0], { id: "column-0", props: {} });
 
@@ -587,9 +587,8 @@ describe("TableFactory unit tests", () => {
 						}),
 					);
 
-					const inserted = table.insertColumns({
-						index: 1,
-						columns: [
+					const inserted = table.insertColumns(
+						[
 							{
 								id: "column-c",
 								props: {},
@@ -599,7 +598,8 @@ describe("TableFactory unit tests", () => {
 								props: {},
 							},
 						],
-					});
+						1,
+					);
 					assert.equal(inserted.length, 2);
 					assertEqualTrees(inserted[0], { id: "column-c", props: {} });
 					assertEqualTrees(inserted[1], { id: "column-d", props: {} });
@@ -647,18 +647,16 @@ describe("TableFactory unit tests", () => {
 						}),
 					);
 
-					const inserted = table.insertColumns({
-						columns: [
-							{
-								id: "column-c",
-								props: {},
-							},
-							{
-								id: "column-d",
-								props: {},
-							},
-						],
-					});
+					const inserted = table.insertColumns([
+						{
+							id: "column-c",
+							props: {},
+						},
+						{
+							id: "column-d",
+							props: {},
+						},
+					]);
 					assert.equal(inserted.length, 2);
 					assertEqualTrees(inserted[0], { id: "column-c", props: {} });
 					assertEqualTrees(inserted[1], { id: "column-d", props: {} });
@@ -704,14 +702,12 @@ describe("TableFactory unit tests", () => {
 
 					assert.throws(
 						() =>
-							table.insertColumns({
-								columns: [
-									{
-										id: "column-0",
-										props: {},
-									},
-								],
-							}),
+							table.insertColumns([
+								{
+									id: "column-0",
+									props: {},
+								},
+							]),
 						validateUsageError(
 							/Attempted to insert a column with ID "column-0", but a column with that ID already exists in the table./,
 						),
@@ -723,12 +719,10 @@ describe("TableFactory unit tests", () => {
 
 					assert.throws(
 						() =>
-							table.insertColumns({
-								columns: [
-									{ id: "column-0", props: {} },
-									{ id: "column-0", props: {} },
-								],
-							}),
+							table.insertColumns([
+								{ id: "column-0", props: {} },
+								{ id: "column-0", props: {} },
+							]),
 						validateUsageError(
 							/Attempted to insert multiple columns with ID "column-0". Column IDs must be unique./,
 						),
@@ -748,10 +742,7 @@ describe("TableFactory unit tests", () => {
 					);
 
 					// index === columns.length is equivalent to appending
-					const inserted = table.insertColumns({
-						index: 2,
-						columns: [{ id: "column-c", props: {} }],
-					});
+					const inserted = table.insertColumns([{ id: "column-c", props: {} }], 2);
 					assert.equal(inserted.length, 1);
 					assertEqualTrees(inserted[0], { id: "column-c", props: {} });
 					assertEqualTrees(table, {
@@ -765,13 +756,103 @@ describe("TableFactory unit tests", () => {
 						},
 					});
 				});
+
+				describe("positional overloads", () => {
+					it("insertColumns(columns) appends to the end", () => {
+						const table = initializeTree(
+							Table,
+							Table.create({
+								columns: [{ id: "column-a", props: {} }],
+								rows: [],
+							}),
+						);
+
+						const inserted = table.insertColumns([
+							{ id: "column-b", props: {} },
+							{ id: "column-c", props: {} },
+						]);
+						assert.equal(inserted.length, 2);
+						assertEqualTrees(inserted[0], { id: "column-b", props: {} });
+						assertEqualTrees(inserted[1], { id: "column-c", props: {} });
+						assertEqualTrees(table, {
+							table: {
+								columns: [
+									{ id: "column-a", props: {} },
+									{ id: "column-b", props: {} },
+									{ id: "column-c", props: {} },
+								],
+								rows: [],
+							},
+						});
+					});
+
+					it("insertColumns(columns, index) inserts at index", () => {
+						const table = initializeTree(
+							Table,
+							Table.create({
+								columns: [
+									{ id: "column-a", props: {} },
+									{ id: "column-b", props: {} },
+								],
+								rows: [],
+							}),
+						);
+
+						const inserted = table.insertColumns([{ id: "column-c", props: {} }], 1);
+						assert.equal(inserted.length, 1);
+						assertEqualTrees(inserted[0], { id: "column-c", props: {} });
+						assertEqualTrees(table, {
+							table: {
+								columns: [
+									{ id: "column-a", props: {} },
+									{ id: "column-c", props: {} },
+									{ id: "column-b", props: {} },
+								],
+								rows: [],
+							},
+						});
+					});
+
+					it("insertColumns(columns) with empty list is a no-op", () => {
+						const table = initializeTree(Table, Table.create());
+						const inserted = table.insertColumns([]);
+						assert.equal(inserted.length, 0);
+						assertEqualTrees(table, { table: { columns: [], rows: [] } });
+					});
+
+					it("insertColumns(columns, index) throws on out-of-range index", () => {
+						const table = initializeTree(Table, Table.create());
+						assert.throws(
+							() => table.insertColumns([{ id: "column-0", props: {} }], 1),
+							validateUsageError(
+								/Index value passed to Table\.insertColumns is out of bounds/,
+							),
+						);
+					});
+
+					it("insertColumns(columns) throws on duplicate ID", () => {
+						const table = initializeTree(
+							Table,
+							Table.create({
+								columns: [{ id: "column-0", props: {} }],
+								rows: [],
+							}),
+						);
+						assert.throws(
+							() => table.insertColumns([{ id: "column-0", props: {} }]),
+							validateUsageError(
+								/Attempted to insert a column with ID "column-0", but a column with that ID already exists in the table./,
+							),
+						);
+					});
+				});
 			});
 
 			describe("insertRows", () => {
 				it("Insert empty rows list", () => {
 					const table = initializeTree(Table, Table.create());
 
-					const inserted = table.insertRows({ index: 0, rows: [] });
+					const inserted = table.insertRows([], 0);
 					assert.equal(inserted.length, 0);
 
 					assertEqualTrees(table, {
@@ -785,16 +866,16 @@ describe("TableFactory unit tests", () => {
 				it("Insert single row into empty list", () => {
 					const table = initializeTree(Table, Table.create());
 
-					const inserted = table.insertRows({
-						index: 0,
-						rows: [
+					const inserted = table.insertRows(
+						[
 							{
 								id: "row-0",
 								cells: {},
 								props: {},
 							},
 						],
-					});
+						0,
+					);
 					assert.equal(inserted.length, 1);
 					assertEqualTrees(inserted[0], { id: "row-0", cells: {}, props: {} });
 
@@ -832,9 +913,8 @@ describe("TableFactory unit tests", () => {
 						}),
 					);
 
-					const inserted = table.insertRows({
-						index: 1,
-						rows: [
+					const inserted = table.insertRows(
+						[
 							{
 								id: "row-c",
 								cells: {},
@@ -846,7 +926,8 @@ describe("TableFactory unit tests", () => {
 								props: {},
 							},
 						],
-					});
+						1,
+					);
 					assert.equal(inserted.length, 2);
 					assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
 					assertEqualTrees(inserted[1], { id: "row-d", cells: {}, props: {} });
@@ -900,20 +981,18 @@ describe("TableFactory unit tests", () => {
 						}),
 					);
 
-					const inserted = table.insertRows({
-						rows: [
-							{
-								id: "row-c",
-								cells: {},
-								props: {},
-							},
-							{
-								id: "row-d",
-								cells: {},
-								props: {},
-							},
-						],
-					});
+					const inserted = table.insertRows([
+						{
+							id: "row-c",
+							cells: {},
+							props: {},
+						},
+						{
+							id: "row-d",
+							cells: {},
+							props: {},
+						},
+					]);
 					assert.equal(inserted.length, 2);
 					assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
 					assertEqualTrees(inserted[1], { id: "row-d", cells: {}, props: {} });
@@ -963,14 +1042,12 @@ describe("TableFactory unit tests", () => {
 
 					assert.throws(
 						() =>
-							table.insertRows({
-								rows: [
-									{
-										id: "row-0",
-										cells: {},
-									},
-								],
-							}),
+							table.insertRows([
+								{
+									id: "row-0",
+									cells: {},
+								},
+							]),
 						validateUsageError(
 							/Attempted to insert a row with ID "row-0", but a row with that ID already exists in the table./,
 						),
@@ -993,16 +1070,14 @@ describe("TableFactory unit tests", () => {
 
 					assert.throws(
 						() =>
-							table.insertRows({
-								rows: [
-									{
-										id: "row-0",
-										cells: {
-											"column-1": { value: "Hello world!" },
-										},
+							table.insertRows([
+								{
+									id: "row-0",
+									cells: {
+										"column-1": { value: "Hello world!" },
 									},
-								],
-							}),
+								},
+							]),
 						validateUsageError(
 							/Attempted to insert a row containing a cell under column ID "column-1", but the table does not contain a column with that ID./,
 						),
@@ -1014,12 +1089,10 @@ describe("TableFactory unit tests", () => {
 
 					assert.throws(
 						() =>
-							table.insertRows({
-								rows: [
-									{ id: "row-0", cells: {} },
-									{ id: "row-0", cells: {} },
-								],
-							}),
+							table.insertRows([
+								{ id: "row-0", cells: {} },
+								{ id: "row-0", cells: {} },
+							]),
 						validateUsageError(
 							/Attempted to insert multiple rows with ID "row-0". Row IDs must be unique./,
 						),
@@ -1038,18 +1111,16 @@ describe("TableFactory unit tests", () => {
 						}),
 					);
 
-					const inserted = table.insertRows({
-						rows: [
-							{
-								id: "row-0",
-								cells: {
-									"column-0": { value: "Hello" },
-									"column-1": { value: "World" },
-								},
-								props: {},
+					const inserted = table.insertRows([
+						{
+							id: "row-0",
+							cells: {
+								"column-0": { value: "Hello" },
+								"column-1": { value: "World" },
 							},
-						],
-					});
+							props: {},
+						},
+					]);
 
 					assert.equal(inserted.length, 1);
 					assertEqualTrees(inserted[0], {
@@ -1077,10 +1148,7 @@ describe("TableFactory unit tests", () => {
 					);
 
 					// index === rows.length is equivalent to appending
-					const inserted = table.insertRows({
-						index: 2,
-						rows: [{ id: "row-c", cells: {}, props: {} }],
-					});
+					const inserted = table.insertRows([{ id: "row-c", cells: {}, props: {} }], 2);
 					assert.equal(inserted.length, 1);
 					assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
 					assertEqualTrees(table, {
@@ -1094,16 +1162,102 @@ describe("TableFactory unit tests", () => {
 						},
 					});
 				});
+
+				describe("positional overloads", () => {
+					it("insertRows(rows) appends to the end", () => {
+						const table = initializeTree(
+							Table,
+							Table.create({
+								columns: [],
+								rows: [{ id: "row-a", cells: {}, props: {} }],
+							}),
+						);
+
+						const inserted = table.insertRows([
+							{ id: "row-b", cells: {}, props: {} },
+							{ id: "row-c", cells: {}, props: {} },
+						]);
+						assert.equal(inserted.length, 2);
+						assertEqualTrees(inserted[0], { id: "row-b", cells: {}, props: {} });
+						assertEqualTrees(inserted[1], { id: "row-c", cells: {}, props: {} });
+						assertEqualTrees(table, {
+							table: {
+								columns: [],
+								rows: [
+									{ id: "row-a", cells: {}, props: {} },
+									{ id: "row-b", cells: {}, props: {} },
+									{ id: "row-c", cells: {}, props: {} },
+								],
+							},
+						});
+					});
+
+					it("insertRows(rows, index) inserts at index", () => {
+						const table = initializeTree(
+							Table,
+							Table.create({
+								columns: [],
+								rows: [
+									{ id: "row-a", cells: {}, props: {} },
+									{ id: "row-b", cells: {}, props: {} },
+								],
+							}),
+						);
+
+						const inserted = table.insertRows([{ id: "row-c", cells: {}, props: {} }], 1);
+						assert.equal(inserted.length, 1);
+						assertEqualTrees(inserted[0], { id: "row-c", cells: {}, props: {} });
+						assertEqualTrees(table, {
+							table: {
+								columns: [],
+								rows: [
+									{ id: "row-a", cells: {}, props: {} },
+									{ id: "row-c", cells: {}, props: {} },
+									{ id: "row-b", cells: {}, props: {} },
+								],
+							},
+						});
+					});
+
+					it("insertRows(rows) with empty list is a no-op", () => {
+						const table = initializeTree(Table, Table.create());
+						const inserted = table.insertRows([]);
+						assert.equal(inserted.length, 0);
+						assertEqualTrees(table, { table: { columns: [], rows: [] } });
+					});
+
+					it("insertRows(rows, index) throws on out-of-range index", () => {
+						const table = initializeTree(Table, Table.create());
+						assert.throws(
+							() => table.insertRows([{ id: "row-0", cells: {}, props: {} }], 1),
+							validateUsageError(/Index value passed to Table\.insertRows is out of bounds/),
+						);
+					});
+
+					it("insertRows(rows) throws when a row references an unknown column", () => {
+						const table = initializeTree(Table, Table.create());
+						assert.throws(
+							() =>
+								table.insertRows([
+									{
+										id: "row-0",
+										cells: { "column-missing": { value: "x" } },
+										props: {},
+									},
+								]),
+							validateUsageError(
+								/Attempted to insert a row containing a cell under column ID "column-missing"/,
+							),
+						);
+					});
+				});
 			});
 
 			describe("setCell", () => {
 				it("Set cell using string ID key", () => {
 					const table = create2x2Table();
 
-					table.setCell({
-						key: { row: "row-0", column: "column-0" },
-						cell: { value: "Hello world!" },
-					});
+					table.setCell("row-0", "column-0", { value: "Hello world!" });
 
 					assertEqualTrees(table, {
 						table: {
@@ -1127,7 +1281,7 @@ describe("TableFactory unit tests", () => {
 					const table = create2x2Table();
 
 					// row: 1 → "row-1", column: 1 → "column-1"
-					table.setCell({ key: { row: 1, column: 1 }, cell: { value: "Hello world!" } });
+					table.setCell(1, 1, { value: "Hello world!" });
 
 					assert.equal(
 						table.getCell({ row: "row-1", column: "column-1" })?.value,
@@ -1140,7 +1294,7 @@ describe("TableFactory unit tests", () => {
 					const column = table.getColumn("column-1") ?? fail("Column not found");
 					const row = table.getRow("row-1") ?? fail("Row not found");
 
-					table.setCell({ key: { row, column }, cell: { value: "Hello world!" } });
+					table.setCell(row, column, { value: "Hello world!" });
 
 					assert.equal(
 						table.getCell({ row: "row-1", column: "column-1" })?.value,
@@ -1152,10 +1306,10 @@ describe("TableFactory unit tests", () => {
 					const table = create2x2Table();
 					const cellKey = { row: "row-0", column: "column-0" };
 
-					table.setCell({ key: cellKey, cell: { value: "initial" } });
+					table.setCell(cellKey.row, cellKey.column, { value: "initial" });
 					assert.equal(table.getCell(cellKey)?.value, "initial");
 
-					table.setCell({ key: cellKey, cell: { value: "updated" } });
+					table.setCell(cellKey.row, cellKey.column, { value: "updated" });
 					assert.equal(table.getCell(cellKey)?.value, "updated");
 				});
 
@@ -1164,60 +1318,39 @@ describe("TableFactory unit tests", () => {
 
 					// Invalid row (by string ID)
 					assert.throws(
-						() =>
-							table.setCell({
-								key: { row: "row-99", column: "column-0" },
-								cell: { value: "x" },
-							}),
+						() => table.setCell("row-99", "column-0", { value: "x" }),
 						validateUsageError(/No row with ID "row-99" exists in the table./),
 					);
 
 					// Invalid column (by string ID)
 					assert.throws(
-						() =>
-							table.setCell({
-								key: { row: "row-0", column: "column-99" },
-								cell: { value: "x" },
-							}),
+						() => table.setCell("row-0", "column-99", { value: "x" }),
 						validateUsageError(/No column with ID "column-99" exists in the table./),
 					);
 
 					// Invalid row (by index)
 					assert.throws(
-						() =>
-							table.setCell({
-								key: { row: 99, column: "column-0" },
-								cell: { value: "x" },
-							}),
+						() => table.setCell(99, "column-0", { value: "x" }),
 						validateUsageError(/No row exists at index 99./),
 					);
 
 					// Invalid column (by index)
 					assert.throws(
-						() =>
-							table.setCell({
-								key: { row: "row-0", column: 99 },
-								cell: { value: "x" },
-							}),
+						() => table.setCell("row-0", 99, { value: "x" }),
 						validateUsageError(/No column exists at index 99./),
 					);
 
 					// Negative row index
 					assert.throws(
-						() =>
-							table.setCell({
-								key: { row: -1, column: "column-0" },
-								cell: { value: "x" },
-							}),
+						() => table.setCell(-1, "column-0", { value: "x" }),
 						validateUsageError(/No row exists at index -1./),
 					);
 
 					// Invalid column (node not in table)
 					assert.throws(
 						() =>
-							table.setCell({
-								key: { row: "row-0", column: new Column({ id: "column-99", props: {} }) },
-								cell: { value: "x" },
+							table.setCell("row-0", new Column({ id: "column-99", props: {} }), {
+								value: "x",
 							}),
 						validateUsageError(
 							/The specified column node with ID "column-99" does not exist in the table./,
@@ -1227,17 +1360,94 @@ describe("TableFactory unit tests", () => {
 					// Invalid row (node not in table)
 					assert.throws(
 						() =>
-							table.setCell({
-								key: {
-									row: new Row({ id: "row-99", cells: {}, props: {} }),
-									column: "column-0",
-								},
-								cell: { value: "x" },
+							table.setCell(new Row({ id: "row-99", cells: {}, props: {} }), "column-0", {
+								value: "x",
 							}),
 						validateUsageError(
 							/The specified row node with ID "row-99" does not exist in the table./,
 						),
 					);
+				});
+
+				describe("positional overloads", () => {
+					it("setCell(row, column, cell) using string IDs", () => {
+						const table = create2x2Table();
+
+						table.setCell("row-0", "column-0", { value: "Hello world!" });
+
+						assertEqualTrees(table, {
+							table: {
+								columns: [
+									{ id: "column-0", props: {} },
+									{ id: "column-1", props: {} },
+								],
+								rows: [
+									{
+										id: "row-0",
+										cells: { "column-0": { value: "Hello world!" } },
+										props: {},
+									},
+									{ id: "row-1", cells: {}, props: {} },
+								],
+							},
+						});
+					});
+
+					it("setCell(row, column, cell) using indices", () => {
+						const table = create2x2Table();
+
+						table.setCell(1, 1, { value: "Hello world!" });
+
+						assert.equal(
+							table.getCell({ row: "row-1", column: "column-1" })?.value,
+							"Hello world!",
+						);
+					});
+
+					it("setCell(row, column, cell) using nodes", () => {
+						const table = create2x2Table();
+						const column = table.getColumn("column-1") ?? fail("Column not found");
+						const row = table.getRow("row-1") ?? fail("Row not found");
+
+						table.setCell(row, column, { value: "Hello world!" });
+
+						assert.equal(
+							table.getCell({ row: "row-1", column: "column-1" })?.value,
+							"Hello world!",
+						);
+					});
+
+					it("setCell(row, column, cell) overwrites existing cell", () => {
+						const table = create2x2Table();
+
+						table.setCell("row-0", "column-0", { value: "initial" });
+						assert.equal(
+							table.getCell({ row: "row-0", column: "column-0" })?.value,
+							"initial",
+						);
+
+						table.setCell("row-0", "column-0", { value: "updated" });
+						assert.equal(
+							table.getCell({ row: "row-0", column: "column-0" })?.value,
+							"updated",
+						);
+					});
+
+					it("setCell(row, column, cell) errors on invalid row", () => {
+						const table = create2x2Table();
+						assert.throws(
+							() => table.setCell("row-99", "column-0", { value: "x" }),
+							validateUsageError(/No row with ID "row-99" exists in the table./),
+						);
+					});
+
+					it("setCell(row, column, cell) errors on invalid column", () => {
+						const table = create2x2Table();
+						assert.throws(
+							() => table.setCell("row-0", "column-99", { value: "x" }),
+							validateUsageError(/No column with ID "column-99" exists in the table./),
+						);
+					});
 				});
 			});
 
@@ -1954,7 +2164,7 @@ describe("TableFactory unit tests", () => {
 				it("Remove cell using string ID key", () => {
 					const table = create2x2Table();
 					const cellKey = { row: "row-0", column: "column-0" };
-					table.setCell({ key: cellKey, cell: { value: "Hello world!" } });
+					table.setCell(cellKey.row, cellKey.column, { value: "Hello world!" });
 
 					const removedCell = table.removeCell(cellKey);
 
@@ -1977,12 +2187,9 @@ describe("TableFactory unit tests", () => {
 				it("Remove cell using index key", () => {
 					const table = create2x2Table();
 					// row: 1 → "row-1", column: 1 → "column-1"
-					table.setCell({
-						key: { row: "row-1", column: "column-1" },
-						cell: { value: "Hello world!" },
-					});
+					table.setCell("row-1", "column-1", { value: "Hello world!" });
 
-					const removedCell = table.removeCell({ row: 1, column: 1 });
+					const removedCell = table.removeCell(1, 1);
 
 					assert(removedCell !== undefined);
 					assertEqualTrees(removedCell, { value: "Hello world!" });
@@ -1993,12 +2200,9 @@ describe("TableFactory unit tests", () => {
 					const table = create2x2Table();
 					const column = table.getColumn("column-1") ?? fail("Column not found");
 					const row = table.getRow("row-1") ?? fail("Row not found");
-					table.setCell({
-						key: { row: "row-1", column: "column-1" },
-						cell: { value: "Hello world!" },
-					});
+					table.setCell("row-1", "column-1", { value: "Hello world!" });
 
-					const removedCell = table.removeCell({ row, column });
+					const removedCell = table.removeCell(row, column);
 
 					assert(removedCell !== undefined);
 					assertEqualTrees(removedCell, { value: "Hello world!" });
@@ -2008,7 +2212,7 @@ describe("TableFactory unit tests", () => {
 				it("Remove cell with no existing data returns undefined", () => {
 					const table = create2x2Table();
 
-					const removedCell = table.removeCell({ row: "row-0", column: "column-0" });
+					const removedCell = table.removeCell("row-0", "column-0");
 
 					assert.equal(removedCell, undefined);
 					assertEqualTrees(table, {
@@ -2030,35 +2234,31 @@ describe("TableFactory unit tests", () => {
 
 					// Invalid row (by string ID)
 					assert.throws(
-						() => table.removeCell({ row: "row-99", column: "column-0" }),
+						() => table.removeCell("row-99", "column-0"),
 						validateUsageError(/No row with ID "row-99" exists in the table./),
 					);
 
 					// Invalid column (by string ID)
 					assert.throws(
-						() => table.removeCell({ row: "row-0", column: "column-99" }),
+						() => table.removeCell("row-0", "column-99"),
 						validateUsageError(/No column with ID "column-99" exists in the table./),
 					);
 
 					// Invalid row (by index)
 					assert.throws(
-						() => table.removeCell({ row: 99, column: "column-0" }),
+						() => table.removeCell(99, "column-0"),
 						validateUsageError(/No row exists at index 99./),
 					);
 
 					// Invalid column (by index)
 					assert.throws(
-						() => table.removeCell({ row: "row-0", column: 99 }),
+						() => table.removeCell("row-0", 99),
 						validateUsageError(/No column exists at index 99./),
 					);
 
 					// Invalid column (node not in table)
 					assert.throws(
-						() =>
-							table.removeCell({
-								row: "row-0",
-								column: new Column({ id: "column-99", props: {} }),
-							}),
+						() => table.removeCell("row-0", new Column({ id: "column-99", props: {} })),
 						validateUsageError(
 							/The specified column node with ID "column-99" does not exist in the table./,
 						),
@@ -2067,14 +2267,70 @@ describe("TableFactory unit tests", () => {
 					// Invalid row (node not in table)
 					assert.throws(
 						() =>
-							table.removeCell({
-								row: new Row({ id: "row-99", cells: {}, props: {} }),
-								column: "column-0",
-							}),
+							table.removeCell(new Row({ id: "row-99", cells: {}, props: {} }), "column-0"),
 						validateUsageError(
 							/The specified row node with ID "row-99" does not exist in the table./,
 						),
 					);
+				});
+
+				describe("positional overloads", () => {
+					it("removeCell(row, column) using string IDs", () => {
+						const table = create2x2Table();
+						table.setCell("row-0", "column-0", { value: "Hello world!" });
+
+						const removedCell = table.removeCell("row-0", "column-0");
+
+						assert(removedCell !== undefined);
+						assertEqualTrees(removedCell, { value: "Hello world!" });
+						assert.equal(table.getCell({ row: "row-0", column: "column-0" }), undefined);
+					});
+
+					it("removeCell(row, column) using indices", () => {
+						const table = create2x2Table();
+						table.setCell("row-1", "column-1", { value: "Hello world!" });
+
+						const removedCell = table.removeCell(1, 1);
+
+						assert(removedCell !== undefined);
+						assertEqualTrees(removedCell, { value: "Hello world!" });
+						assert.equal(table.getCell({ row: "row-1", column: "column-1" }), undefined);
+					});
+
+					it("removeCell(row, column) using nodes", () => {
+						const table = create2x2Table();
+						const column = table.getColumn("column-1") ?? fail("Column not found");
+						const row = table.getRow("row-1") ?? fail("Row not found");
+						table.setCell("row-1", "column-1", { value: "Hello world!" });
+
+						const removedCell = table.removeCell(row, column);
+
+						assert(removedCell !== undefined);
+						assertEqualTrees(removedCell, { value: "Hello world!" });
+						assert.equal(table.getCell({ row: "row-1", column: "column-1" }), undefined);
+					});
+
+					it("removeCell(row, column) returns undefined when cell is unset", () => {
+						const table = create2x2Table();
+						const removedCell = table.removeCell("row-0", "column-0");
+						assert.equal(removedCell, undefined);
+					});
+
+					it("removeCell(row, column) errors on invalid row", () => {
+						const table = create2x2Table();
+						assert.throws(
+							() => table.removeCell("row-99", "column-0"),
+							validateUsageError(/No row with ID "row-99" exists in the table./),
+						);
+					});
+
+					it("removeCell(row, column) errors on invalid column", () => {
+						const table = create2x2Table();
+						assert.throws(
+							() => table.removeCell("row-0", "column-99"),
+							validateUsageError(/No column with ID "column-99" exists in the table./),
+						);
+					});
 				});
 			});
 
@@ -2186,29 +2442,19 @@ describe("TableFactory unit tests", () => {
 					});
 
 					// Add a row
-					table.insertRows({
-						rows: [new Row({ id: "row-0", cells: {}, props: {} })],
-					});
+					table.insertRows([new Row({ id: "row-0", cells: {}, props: {} })]);
 					assert.equal(eventCount, 1);
 
 					// Add a column
-					table.insertColumns({
-						columns: [
-							{ id: "column-0", props: {} },
-							{ id: "column-1", props: {} },
-							{ id: "column-2", props: {} },
-						],
-					});
+					table.insertColumns([
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
+						{ id: "column-2", props: {} },
+					]);
 					assert.equal(eventCount, 2);
 
 					// Set a cell
-					table.setCell({
-						key: {
-							row: "row-0",
-							column: "column-0",
-						},
-						cell: { value: "Hello world!" },
-					});
+					table.setCell("row-0", "column-0", { value: "Hello world!" });
 					assert.equal(eventCount, 3);
 
 					// Update cell value
@@ -2241,12 +2487,10 @@ describe("TableFactory unit tests", () => {
 					});
 
 					// Add columns
-					table.insertColumns({
-						columns: [
-							{ id: "column-0", props: {} },
-							{ id: "column-1", props: {} },
-						],
-					});
+					table.insertColumns([
+						{ id: "column-0", props: {} },
+						{ id: "column-1", props: {} },
+					]);
 					assert.equal(eventCount, 1);
 
 					// Update column props
@@ -2254,7 +2498,7 @@ describe("TableFactory unit tests", () => {
 					assert.equal(eventCount, 1); // Event should not have fired for column node changes
 
 					// Insert a row
-					table.insertRows({ rows: [{ id: "row-0", cells: {}, props: {} }] });
+					table.insertRows([{ id: "row-0", cells: {}, props: {} }]);
 					assert.equal(eventCount, 1); // Event should not have fired for row insertion
 
 					// Re-order columns
@@ -2279,12 +2523,10 @@ describe("TableFactory unit tests", () => {
 					});
 
 					// Add rows
-					table.insertRows({
-						rows: [
-							{ id: "row-0", cells: {}, props: {} },
-							{ id: "row-1", cells: {}, props: {} },
-						],
-					});
+					table.insertRows([
+						{ id: "row-0", cells: {}, props: {} },
+						{ id: "row-1", cells: {}, props: {} },
+					]);
 					assert.equal(eventCount, 1);
 
 					// Update row props — should NOT fire
@@ -2292,14 +2534,11 @@ describe("TableFactory unit tests", () => {
 					assert.equal(eventCount, 1);
 
 					// Insert a column — should NOT fire
-					table.insertColumns({ columns: [{ id: "column-0", props: {} }] });
+					table.insertColumns([{ id: "column-0", props: {} }]);
 					assert.equal(eventCount, 1);
 
 					// Set a cell — should NOT fire
-					table.setCell({
-						key: { row: "row-0", column: "column-0" },
-						cell: { value: "x" },
-					});
+					table.setCell("row-0", "column-0", { value: "x" });
 					assert.equal(eventCount, 1);
 
 					// Re-order rows
@@ -2321,21 +2560,15 @@ describe("TableFactory unit tests", () => {
 					});
 
 					// Set a cell in row-0 — should fire
-					table.setCell({
-						key: { row: "row-0", column: "column-0" },
-						cell: { value: "Hello" },
-					});
+					table.setCell("row-0", "column-0", { value: "Hello" });
 					assert.equal(eventCount, 1);
 
 					// Remove the cell from row-0 — should fire
-					table.removeCell({ row: "row-0", column: "column-0" });
+					table.removeCell("row-0", "column-0");
 					assert.equal(eventCount, 2);
 
 					// Mutate a cell in a different row — should NOT fire for row-0
-					table.setCell({
-						key: { row: "row-1", column: "column-0" },
-						cell: { value: "World" },
-					});
+					table.setCell("row-1", "column-0", { value: "World" });
 					assert.equal(eventCount, 2);
 				});
 			});
@@ -2514,10 +2747,7 @@ describe("TableFactory unit tests", () => {
 					// Prime any internal lookup state with an existing-ID query.
 					assert(table.getColumn("column-0") !== undefined);
 
-					table.insertColumns({
-						index: table.columns.length,
-						columns: [{ id: "column-2", props: {} }],
-					});
+					table.insertColumns([{ id: "column-2", props: {} }], table.columns.length);
 
 					const inserted = table.getColumn("column-2");
 					assert(inserted !== undefined);
@@ -2565,10 +2795,7 @@ describe("TableFactory unit tests", () => {
 
 					assert(table.getRow("row-0") !== undefined);
 
-					table.insertRows({
-						index: table.rows.length,
-						rows: [{ id: "row-2", cells: {}, props: {} }],
-					});
+					table.insertRows([{ id: "row-2", cells: {}, props: {} }], table.rows.length);
 
 					const inserted = table.getRow("row-2");
 					assert(inserted !== undefined);
@@ -2616,20 +2843,11 @@ describe("TableFactory unit tests", () => {
 					// If a stale lookup leaked, setCell would target the removed node
 					// instead of the new one.
 					table.removeRows(["row-0"]);
-					table.insertRows({
-						index: 0,
-						rows: [{ id: "row-0", cells: {}, props: {} }],
-					});
+					table.insertRows([{ id: "row-0", cells: {}, props: {} }], 0);
 					table.removeColumns(["column-0"]);
-					table.insertColumns({
-						index: 0,
-						columns: [{ id: "column-0", props: {} }],
-					});
+					table.insertColumns([{ id: "column-0", props: {} }], 0);
 
-					table.setCell({
-						key: { row: "row-0", column: "column-0" },
-						cell: { value: "0-0" },
-					});
+					table.setCell("row-0", "column-0", { value: "0-0" });
 
 					const cell = table.getCell({ row: "row-0", column: "column-0" });
 					assert(cell !== undefined);
@@ -2898,7 +3116,7 @@ describe("TableFactory unit tests", () => {
 			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 
-			view.root.insertColumns({ columns: [{ id: "column-0", props: {} }] });
+			view.root.insertColumns([{ id: "column-0", props: {} }]);
 			assert.equal(view.root.columns.length, 1);
 
 			// Undo
@@ -2917,7 +3135,7 @@ describe("TableFactory unit tests", () => {
 			const { view, undoStack, redoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 
-			view.root.insertRows({ rows: [{ id: "row-0", cells: {} }] });
+			view.root.insertRows([{ id: "row-0", cells: {} }]);
 			assert.equal(view.root.rows.length, 1);
 
 			// Undo
@@ -2941,10 +3159,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: { value: "Hello" },
-			});
+			view.root.setCell("row-0", "column-0", { value: "Hello" });
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			popAndRevert(undoStack);
@@ -2967,10 +3182,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: { value: "updated" },
-			});
+			view.root.setCell("row-0", "column-0", { value: "updated" });
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "updated");
 
 			popAndRevert(undoStack);
@@ -2993,7 +3205,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.removeCell({ row: "row-0", column: "column-0" });
+			view.root.removeCell("row-0", "column-0");
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" }), undefined);
 
 			popAndRevert(undoStack);
@@ -3063,9 +3275,9 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.insertRows({
-				rows: [new Row({ id: "row-0", cells: { "column-0": { value: "Hello" } } })],
-			});
+			view.root.insertRows([
+				new Row({ id: "row-0", cells: { "column-0": { value: "Hello" } } }),
+			]);
 			assert.equal(view.root.rows.length, 1);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
@@ -3084,17 +3296,11 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
-			});
+			view.root.insertColumns([{ id: "column-0", props: {} }]);
 
-			view.root.insertColumns({
-				columns: [{ id: "column-1", props: {} }],
-			});
+			view.root.insertColumns([{ id: "column-1", props: {} }]);
 
-			view.root.insertColumns({
-				columns: [{ id: "column-2", props: {} }],
-			});
+			view.root.insertColumns([{ id: "column-2", props: {} }]);
 
 			// No changes happened concurrently, so we should be able to revert all of these changes.
 			assert.equal(view.root.columns.length, 3);
@@ -3112,8 +3318,8 @@ describe("TableFactory unit tests", () => {
 			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 
-			view.root.insertRows({ rows: [{ id: "row-0", cells: {} }] });
-			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
+			view.root.insertRows([{ id: "row-0", cells: {} }]);
+			view.root.insertRows([{ id: "row-1", cells: {} }]);
 			assert.equal(view.root.rows.length, 2);
 
 			popAndRevert(undoStack);
@@ -3190,7 +3396,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.insertColumns({ columns: [{ id: "column-b", props: {} }] });
+			view.root.insertColumns([{ id: "column-b", props: {} }]);
 			assert.equal(view.root.columns.length, 2);
 
 			view.root.removeColumns(["column-a"]);
@@ -3218,7 +3424,7 @@ describe("TableFactory unit tests", () => {
 				}),
 			);
 
-			view.root.insertRows({ rows: [{ id: "row-b", cells: {} }] });
+			view.root.insertRows([{ id: "row-b", cells: {} }]);
 			assert.equal(view.root.rows.length, 2);
 
 			view.root.removeRows(["row-a"]);
@@ -3299,7 +3505,7 @@ describe("TableFactory unit tests", () => {
 
 			// Insert an unrelated row after the column removal.
 			// This creates a subsequent commit that will force the removeColumns undo to rebase.
-			view.root.insertRows({ rows: [{ id: "row-1", cells: {} }] });
+			view.root.insertRows([{ id: "row-1", cells: {} }]);
 
 			popAndRevert(undoStack); // undo insertRows
 			assert.equal(view.root.rows.length, 1, "row-1 should have been removed");
@@ -3336,10 +3542,7 @@ describe("TableFactory unit tests", () => {
 			assert.equal(view.root.columns.length, 1);
 
 			// Set a cell in the unrelated column to create the subsequent commit.
-			view.root.setCell({
-				key: { row: "row-0", column: "column-1" },
-				cell: { value: "World" },
-			});
+			view.root.setCell("row-0", "column-1", { value: "World" });
 
 			popAndRevert(undoStack); // undo setCell
 			assert.equal(
@@ -3377,9 +3580,7 @@ describe("TableFactory unit tests", () => {
 
 			// Concurrently add a row with a cell under the column being removed.
 			// Without the constraint, this would create an orphaned cell (a cell under a non-existent column).
-			view2.root.insertRows({
-				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
-			});
+			view2.root.insertRows([{ id: "row-0", cells: { "column-0": { value: "Hello" } } }]);
 			provider.synchronizeMessages();
 			assert.equal(table.rows.length, 1);
 			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
@@ -3395,18 +3596,14 @@ describe("TableFactory unit tests", () => {
 			const { view, undoStack, unsubscribe } = makeUndoRedoView();
 			view.initialize(Table.create({ columns: [], rows: [] }));
 			// Insert a column - this adds a revert constraint to detect row additions before undo
-			view.root.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
-			});
+			view.root.insertColumns([{ id: "column-0", props: {} }]);
 			const revertible = undoStack.pop();
 			assert(revertible !== undefined, "Missing revertible");
 			assert.equal(view.root.columns.length, 1);
 
 			// Add a row with a cell in the new column.
 			// Without the constraint, undoing the column insertion would orphan this cell.
-			view.root.insertRows({
-				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
-			});
+			view.root.insertRows([{ id: "row-0", cells: { "column-0": { value: "Hello" } } }]);
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			revertible.revert();
@@ -3434,9 +3631,7 @@ describe("TableFactory unit tests", () => {
 			const branchTable = fork.root;
 
 			// Insert a row with a cell on the branch - this adds a constraint on the column
-			branchTable.insertRows({
-				rows: [{ id: "row-0", cells: { "column-0": { value: "Hello" } } }],
-			});
+			branchTable.insertRows([{ id: "row-0", cells: { "column-0": { value: "Hello" } } }]);
 			assert.equal(branchTable.rows.length, 1);
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
@@ -3495,10 +3690,7 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Set a cell on the branch - this adds a constraint on the column
-			branchTable.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: new Cell({ value: "test" }),
-			});
+			branchTable.setCell("row-0", "column-0", new Cell({ value: "test" }));
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" })?.value, "test");
 
 			// Concurrently remove the column. Without the constraint, the cell would be orphaned.
@@ -3527,7 +3719,7 @@ describe("TableFactory unit tests", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
 			// Remove a cell on the branch - this adds a revert constraint on the column
-			branchTable.removeCell({ row: "row-0", column: "column-0" });
+			branchTable.removeCell("row-0", "column-0");
 			assert.equal(branchTable.getCell({ row: "row-0", column: "column-0" }), undefined);
 			popAndRevert(undoStack);
 
@@ -3560,19 +3752,14 @@ describe("TableFactory unit tests", () => {
 			);
 
 			// Insert a column - this adds a revert constraint to detect cell insertions/replacements before undo
-			view.root.insertColumns({
-				columns: [{ id: "column-0", props: {} }],
-			});
+			view.root.insertColumns([{ id: "column-0", props: {} }]);
 			const revertible = undoStack.pop();
 			assert(revertible !== undefined, "Missing revertible");
 			assert.equal(view.root.columns.length, 1);
 
 			// Set a cell in the new column
 			// Without the constraint, undoing the column insertion would orphan this cell
-			view.root.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: new Cell({ value: "Hello" }),
-			});
+			view.root.setCell("row-0", "column-0", new Cell({ value: "Hello" }));
 			assert.equal(view.root.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
 			revertible.revert();
@@ -3599,10 +3786,7 @@ describe("TableFactory unit tests", () => {
 
 			// Concurrently insert a cell in the column being removed via setCell.
 			// Without the constraint, this is the cell that would be orphaned by the column removal.
-			view2.root.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: new Cell({ value: "Hello" }),
-			});
+			view2.root.setCell("row-0", "column-0", new Cell({ value: "Hello" }));
 			provider.synchronizeMessages();
 			assert.equal(table.getCell({ row: "row-0", column: "column-0" })?.value, "Hello");
 
@@ -3623,10 +3807,7 @@ describe("TableFactory unit tests", () => {
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 
 			// Replace a cell on the branch - this adds a revert constraint on the column
-			branchTable.setCell({
-				key: { row: "row-0", column: "column-0" },
-				cell: new Cell({ value: "updated" }),
-			});
+			branchTable.setCell("row-0", "column-0", new Cell({ value: "updated" }));
 			assert.equal(
 				branchTable.getCell({ row: "row-0", column: "column-0" })?.value,
 				"updated",
@@ -3698,7 +3879,7 @@ describe("TableFactory unit tests", () => {
 			const branchTable = fork.root;
 
 			// Insert a row with NO cells on the branch — no column constraint should be added
-			branchTable.insertRows({ rows: [{ id: "row-0", cells: {} }] });
+			branchTable.insertRows([{ id: "row-0", cells: {} }]);
 			assert.equal(branchTable.rows.length, 1);
 
 			// Concurrently remove the column on the main view
@@ -3730,12 +3911,10 @@ describe("TableFactory unit tests", () => {
 			assert.equal(branchTable.columns.length, 0);
 
 			// Main view concurrently inserts multiple rows each with a cell in the removed column
-			view.root.insertRows({
-				rows: [
-					new Row({ id: "row-0", cells: { "column-0": { value: "A" } } }),
-					new Row({ id: "row-1", cells: { "column-0": { value: "B" } } }),
-				],
-			});
+			view.root.insertRows([
+				new Row({ id: "row-0", cells: { "column-0": { value: "A" } } }),
+				new Row({ id: "row-1", cells: { "column-0": { value: "B" } } }),
+			]);
 			assert.equal(view.root.rows.length, 2);
 
 			// The column removal is dropped because it would orphan cells in both newly added rows
