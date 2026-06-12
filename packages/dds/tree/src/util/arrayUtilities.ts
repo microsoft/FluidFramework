@@ -91,7 +91,9 @@ export function validateIndexRange(
  * A half-open `[start, end)` range of array indices.
  */
 export interface IndexRange {
+	/** Start index, inclusive. */
 	readonly start: number;
+	/** End index, exclusive. */
 	readonly end: number;
 }
 
