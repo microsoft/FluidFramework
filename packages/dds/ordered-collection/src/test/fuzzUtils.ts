@@ -180,7 +180,7 @@ function assertEqualConsensusOrderedCollections(
  * Base fuzz model for ConsensusOrderedCollection
  */
 export const baseConsensusOrderedCollectionModel: DDSFuzzModel<
-	ConsensusQueueFactory<unknown>,
+	ConsensusQueueFactory<string>,
 	ConsensusOrderedCollectionOperation,
 	FuzzTestState
 > = {

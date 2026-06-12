@@ -76,10 +76,8 @@ export class ConsensusQueueFactory<T>
  * {@inheritDoc ConsensusQueueClass}
  * @legacy @beta
  */
-export const ConsensusQueue = createSharedObjectKind<IConsensusOrderedCollection>(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO: #22835 Use unknown instead of any (breaking change)
-	ConsensusQueueFactory<any>,
-);
+export const ConsensusQueue =
+	createSharedObjectKind<IConsensusOrderedCollection>(ConsensusQueueFactory);
 
 // For #22835, consider exposing a helper to produce type specific ConsensusQueue.
 // One problem, with doing so is that nothing inside ConsensusQueue validates the shape of T.

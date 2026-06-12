@@ -110,11 +110,11 @@ describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: unknown[],
 		output: unknown[],
-		creator: () => IConsensusOrderedCollection &
+		creator: () => IConsensusOrderedCollection<unknown> &
 			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>,
 		processMessages: () => void,
 	): void {
-		let testCollection: IConsensusOrderedCollection &
+		let testCollection: IConsensusOrderedCollection<unknown> &
 			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>;
 
 		async function removeItem(): Promise<unknown> {
@@ -132,7 +132,7 @@ describe("ConsensusOrderedCollection", () => {
 			return resP;
 		}
 
-		async function addItem(item): Promise<void> {
+		async function addItem(item: unknown): Promise<void> {
 			const waitP = testCollection.add(item);
 			processMessages();
 			return waitP;
