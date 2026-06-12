@@ -3,13 +3,19 @@
 
 # include-install-build-tools
 #
-# This template can be included in pipelines to install the Fluid build-tools locally so flub can be used in the
+# This template can be included in pipelines to install the Fluid build-tools globally so flub can be used in the
 # pipeline.
+# Note that the preferred pattern for using the build tools is to dev a dev dependency on them, and just use that version.
+# Using this template is discouraged as it is introducing another dependency mechanism into the pipeline,
+# Can cause complications with the global pnpm installs overriding each other, and in slower than simply using a pre-build dev dependency.
+# Additionally, using this template requires triggering the pipeline for any changes to build tools or we risk breaking the pipeline.
 
 parameters:
 - name: buildDirectory
   type: string
 
+# The version of the build tools to install, or "repo" to install the one from the repository.
+# If "repo" is selected, this includes a global install of what ever version of pnpm build-tools uses.
 - name: buildToolsVersionToInstall
   type: string
   default: repo
