@@ -22,7 +22,7 @@ import type {
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // This is referenced by doc comments.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { Unhydrated } from "../core/index.js";
+import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -415,7 +415,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
 	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
-	upgradeSchema(): void;
+	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
 
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
@@ -425,7 +425,10 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
 	 */
-	initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
+	initialize(
+		content: InsertableTreeFieldFromImplicitField<TSchema>,
+		upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	): void;
 
 	/**
 	 * Events for the tree.
@@ -450,7 +453,10 @@ export interface TreeViewAlpha<
 
 	set root(newRoot: InsertableField<TSchema>);
 
-	initialize(content: InsertableField<TSchema>): void;
+	initialize(
+		content: InsertableField<TSchema>,
+		upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	): void;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 

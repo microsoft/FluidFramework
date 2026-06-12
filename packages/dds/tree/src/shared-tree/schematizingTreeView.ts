@@ -39,6 +39,7 @@ import {
 	type InsertableField,
 	type ReadableField,
 	type ReadSchema,
+	type SchemaUpgrade,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
 	type VoidTransactionCallbackStatus,
@@ -179,7 +180,10 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
-	public initialize(content: InsertableField<TRootSchema>): void {
+	public initialize(
+		content: InsertableField<TRootSchema>,
+		upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
@@ -188,7 +192,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema, upgrades);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -243,11 +247,14 @@ export class SchematizingSimpleTreeView<
 		});
 	}
 
-	public upgradeSchema(): void {
+	public upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void {
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
-		if (compatibility.isEquivalent) {
+		if (
+			compatibility.isEquivalent &&
+			(upgrades === undefined || Object.keys(upgrades).length === 0)
+		) {
 			// No-op
 			return;
 		}
@@ -258,7 +265,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root, upgrades);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 

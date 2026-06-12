@@ -97,20 +97,39 @@ export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenera
 	includeStagedOptional: () => true,
 };
 
+function storedSchemaGenerationOptionsForUpgrades(
+	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+): StoredFromViewSchemaGenerationOptions {
+	const enabledUpgrades = upgrades === undefined ? [] : Object.values(upgrades);
+	if (enabledUpgrades.length === 0) {
+		return restrictiveStoredSchemaGenerationOptions;
+	}
+
+	const enabledUpgradeSet = new Set(enabledUpgrades);
+	return {
+		includeStaged: (upgrade) => enabledUpgradeSet.has(upgrade),
+		includeStagedOptional: (upgrade) => enabledUpgradeSet.has(upgrade),
+	};
+}
+
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
- *
- * TODO: once upgrades are more flexible, this should take in more options, including the old schema and specific upgrades to enable.
  */
-export function toUpgradeSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+export function toUpgradeSchema(
+	root: ImplicitFieldSchema,
+	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+): TreeStoredSchema {
+	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
 }
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
  */
-export function toInitialSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+export function toInitialSchema(
+	root: ImplicitFieldSchema,
+	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+): TreeStoredSchema {
+	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
 }
 
 /**
