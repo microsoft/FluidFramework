@@ -691,17 +691,15 @@ export namespace System_TableSchema {
 
 				// #endregion
 
-				// Relevant invariant: each cell corresponds to an existing row and column
+				// Relevant invariant: each cell corresponds to an existing row and column.
 				// Prevents cell leaks from concurrently removed columns.
 				// Example scenario: Client A removes a column while concurrently Client B adds a row with cells for those columns (including the one A removed).
 				// If client B is sequenced after A, then B's row could have cells that do not correspond to existing columns.
-				// This constraint ensures all columns that existed when creating the row still exist when the row insertion is applied.
+				// We only need to constrain columns that the new rows actually reference — a removed column with no
+				// corresponding cell in the inserted rows cannot orphan anything from this insertion.
 				// TODO: Replace with "no detach" constraint on the column array when available.
-				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
-					(column) => ({
-						type: "nodeInDocument",
-						node: column as ColumnValueType,
-					}),
+				const columnConstraints = this.#buildColumnInDocumentConstraintsForRows(
+					rows as RowValueType[],
 				);
 
 				this.#applyEditsInBatch({
@@ -716,7 +714,7 @@ export namespace System_TableSchema {
 							this.table.rows.insertAt(index, TreeArrayNode.spread(rows) as any);
 						}
 					},
-					preconditions: columnConstraints.length > 0 ? columnConstraints : undefined,
+					preconditions: columnConstraints,
 				});
 
 				// Inserting the input nodes into the tree hydrates them, making them usable as nodes.
@@ -873,19 +871,6 @@ export namespace System_TableSchema {
 				indexOrRows: number | undefined | readonly string[] | readonly RowValueType[],
 				count?: number | undefined,
 			): RowValueType[] {
-				// Relevant invariant: each cell corresponds to an existing row and column
-				// Adding a constraint on columns here to prevent cells being orphaned.  The relevant scenario is:
-				// Client A removes rows
-				// Client B (either concurrently or not, so long as B's edit is sequenced after A's edit) removes a column,
-				// Client A reverts the removal of the rows
-				// TODO: Replace with "no detach on revert" constraint on the column array when available.
-				const columnConstraints: TransactionConstraintAlpha[] = this.table.columns.map(
-					(column) => ({
-						type: "nodeInDocument",
-						node: column as ColumnValueType,
-					}),
-				);
-
 				if (typeof indexOrRows === "number" || indexOrRows === undefined) {
 					let removedRows: RowValueType[] | undefined;
 					const startIndex = indexOrRows ?? 0;
@@ -897,6 +882,13 @@ export namespace System_TableSchema {
 					}
 
 					validateIndexRange(startIndex, endIndex, this.table.rows, "Table.removeRows");
+
+					// Compute revert constraints from the rows being removed.
+					const rowsBeingRemoved = this.table.rows.slice(
+						startIndex,
+						endIndex,
+					) as readonly RowValueType[];
+
 					this.#applyEditsInBatch({
 						applyEdits: () => {
 							removedRows = removeRangeFromArray(
@@ -906,8 +898,13 @@ export namespace System_TableSchema {
 								"Table.removeRows",
 							);
 						},
+						// Relevant invariant: each cell corresponds to an existing row and column.
+						// On revert, the removed rows come back with their original cells, so we need
+						// each column referenced by those cells to still exist. Columns the removed rows
+						// don't reference cannot be orphaned by the revert and need not be constrained.
+						// TODO: Replace with "no detach on revert" constraint on the column array when available.
 						preconditionsOnRevert:
-							columnConstraints.length > 0 ? columnConstraints : undefined,
+							this.#buildColumnInDocumentConstraintsForRows(rowsBeingRemoved),
 					});
 					return removedRows ?? fail(0xccd /* Transaction did not complete */);
 				}
@@ -944,7 +941,12 @@ export namespace System_TableSchema {
 							this.table.rows.removeRange(start, end);
 						}
 					},
-					preconditionsOnRevert: columnConstraints.length > 0 ? columnConstraints : undefined,
+					// Relevant invariant: each cell corresponds to an existing row and column.
+					// On revert, the removed rows come back with their original cells, so we need
+					// each column referenced by those cells to still exist. Columns the removed rows
+					// don't reference cannot be orphaned by the revert and need not be constrained.
+					// TODO: Replace with "no detach on revert" constraint on the column array when available.
+					preconditionsOnRevert: this.#buildColumnInDocumentConstraintsForRows(rowsToRemove),
 				});
 				return [...rowsToRemove];
 			}
@@ -1070,6 +1072,56 @@ export namespace System_TableSchema {
 						);
 					}
 				});
+			}
+
+			/**
+			 * Builds an array of `nodeInDocument` constraints over each column referenced by a cell
+			 * in any of `rows`.
+			 *
+			 * @remarks
+			 * The orphan-cell invariant only cares about columns that have cells in the affected rows;
+			 * columns absent from those rows' cells cannot be orphaned by this operation, so they need
+			 * not be constrained. This keeps the constraint set proportional to the cells touched
+			 * rather than the total column count, which matters for sparse tables.
+			 *
+			 * Returns `undefined` when:
+			 * - The table is unhydrated (no transaction will run), or
+			 * - None of `rows` reference any cells.
+			 *
+			 * In those cases there is nothing to constrain, and returning `undefined` avoids
+			 * allocating an array that would only be discarded.
+			 */
+			#buildColumnInDocumentConstraintsForRows(
+				rows: Iterable<RowValueType>,
+			): TransactionConstraintAlpha[] | undefined {
+				if (!TreeAlpha.context(this).isBranch()) {
+					return undefined;
+				}
+
+				const referencedColumnIds = new Set<string>();
+				for (const row of rows) {
+					// `cells` is intentionally hidden on the public row type, so cast to read it.
+					const cells = (row as RowValueInternalType).cells;
+					if (cells === undefined) {
+						continue;
+					}
+					for (const id of Object.keys(cells)) {
+						referencedColumnIds.add(id);
+					}
+				}
+
+				if (referencedColumnIds.size === 0) {
+					return undefined;
+				}
+
+				const columnCache = this.#getColumnCache();
+				const constraints: TransactionConstraintAlpha[] = [];
+				for (const id of referencedColumnIds) {
+					const column =
+						columnCache.get(id) ?? fail(`Column with ID ${id} not found in cache`);
+					constraints.push({ type: "nodeInDocument", node: column });
+				}
+				return constraints.length > 0 ? constraints : undefined;
 			}
 
 			/**
