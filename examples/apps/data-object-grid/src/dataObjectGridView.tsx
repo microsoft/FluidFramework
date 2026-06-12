@@ -102,7 +102,8 @@ const DataObjectGridView: FC<IDataObjectGridViewProps> = (
 
 	// Render nothing if there are no items
 	if (model.getItems().length === 0) {
-		return <></>;
+		// eslint-disable-next-line unicorn/no-null -- React renders nothing for a null return
+		return null;
 	}
 
 	const onGridChangeEvent = (

@@ -1168,6 +1168,7 @@ function runTest<TOperation extends BaseOperation>(
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
+	// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data (only option)
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`workload: ${model.workloadName} seed: ${seed}`, async function () {
 		const inCi = process.env.TF_BUILD !== undefined;
@@ -1303,6 +1304,7 @@ export function createLocalServerStressSuite<TOperation extends BaseOperation>(
 		}
 
 		if (replay !== undefined) {
+			// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data (replay option)
 			describe.only(`replay from file`, () => {
 				const replaySeeds = typeof replay === "number" ? [replay] : replay;
 				for (const seed of replaySeeds) {
