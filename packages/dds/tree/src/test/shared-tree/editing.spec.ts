@@ -3211,6 +3211,34 @@ describe("Editing", () => {
 
 				stack.unsubscribe();
 			});
+
+			it("inverse node existence constraint on moved node not violated by unrelated change", () => {
+				const tree = makeTreeFromJsonSequence(["A", "B"]);
+				const branch = tree.fork();
+				const stack = createTestUndoRedoStacks(tree.events);
+
+				// Make transaction that does the following:
+				// 1. Moves "A" after "B".
+				// 2. Adds inverse constraint on existence of node "A".
+				branch.transaction.start();
+				branch.editor.move(rootField, 0, 1, rootField, 2);
+				branch.editor.addNodeExistsConstraintOnRevert(rootNode2);
+				branch.transaction.commit();
+				expectJsonTree(branch, ["B", "A"]);
+
+				insert(tree, 2, "C");
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				tree.merge(branch);
+				expectJsonTree(tree, ["B", "A", "C"]);
+				const moveRevertible = stack.undoStack[1] ?? assert.fail("Missing undo");
+
+				// The inverse constraint should not be violated.
+				moveRevertible.revert();
+				expectJsonTree(tree, ["A", "B", "C"]);
+
+				stack.unsubscribe();
+			});
 		});
 
 		it("Rebase over conflicted change", () => {
