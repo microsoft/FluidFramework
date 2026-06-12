@@ -281,7 +281,7 @@ extends:
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
-                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "True" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
@@ -299,7 +299,7 @@ extends:
                 fi
               fi
 
-              if [[ "${{ parameters.skipPackageInstall }}" == "true" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+              if [[ "${{ parameters.skipPackageInstall }}" == "True" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
                 echo "##vso[task.logissue type=error]skipPackageInstall: true is incompatible with setVersion: true (version-setting requires dependencies to be installed)."
                 exit -1;
               fi
