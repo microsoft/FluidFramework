@@ -51,7 +51,9 @@ linkWorkspacePackages: true
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
 minimumReleaseAge: 1440
-minimumReleaseAgeExclude: [ '@fluidframework/eslint-config-fluid@13.0.0' ] # Temporary exceptions go here as needed.
+minimumReleaseAgeExclude: [
+  # Temporary exceptions go here as needed.
+]
 
 overrides:
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
