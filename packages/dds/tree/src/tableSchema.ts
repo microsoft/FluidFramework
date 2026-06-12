@@ -1117,8 +1117,7 @@ export namespace System_TableSchema {
 				const columnCache = this.#getColumnCache();
 				const constraints: TransactionConstraintAlpha[] = [];
 				for (const id of referencedColumnIds) {
-					const column =
-						columnCache.get(id) ?? fail(`Column with ID ${id} not found in cache`);
+					const column = columnCache.get(id) ?? fail("Column ID not found in cache");
 					constraints.push({ type: "nodeInDocument", node: column });
 				}
 				return constraints.length > 0 ? constraints : undefined;
