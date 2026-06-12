@@ -52,6 +52,10 @@ parameters:
   type: boolean
   default: false
 
+- name: isBundleSizeArtifactsPipeline
+  type: boolean
+  default: false
+
 - name: taskPack
   type: boolean
   default: true
@@ -336,14 +340,17 @@ extends:
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
 
-              - template: /tools/pipelines/templates/include-set-package-version.yml@self
-                parameters:
-                  buildDirectory: '${{ parameters.buildDirectory }}'
-                  buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
-                  buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
-                  tagName: '${{ parameters.tagName }}'
-                  interdependencyRange: '${{ parameters.interdependencyRange }}'
-                  packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+              # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
+              # so we skip version setting for it.
+              - ${{ if eq(parameters.isBundleSizeArtifactsPipeline, false) }}:
+                  - template: /tools/pipelines/templates/include-set-package-version.yml@self
+                    parameters:
+                      buildDirectory: '${{ parameters.buildDirectory }}'
+                      buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
+                      buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                      tagName: '${{ parameters.tagName }}'
+                      interdependencyRange: '${{ parameters.interdependencyRange }}'
+                      packageTypesOverride: '${{ parameters.packageTypesOverride }}'
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self
