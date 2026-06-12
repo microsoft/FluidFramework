@@ -403,6 +403,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -424,6 +425,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
+	 * @param upgrades - Staged schema upgrades to enable while generating the initial stored schema.
 	 */
 	initialize(
 		content: InsertableTreeFieldFromImplicitField<TSchema>,

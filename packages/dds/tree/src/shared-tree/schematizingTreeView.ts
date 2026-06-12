@@ -23,6 +23,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
 	type FlexTreeRequiredField,
+	allowsRepoSuperset,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -251,21 +252,26 @@ export class SchematizingSimpleTreeView<
 		this.ensureUndisposed();
 
 		const compatibility = this.compatibility;
-		if (
-			compatibility.isEquivalent &&
-			(upgrades === undefined || Object.keys(upgrades).length === 0)
-		) {
+		const hasUpgrades = upgrades !== undefined && Object.keys(upgrades).length > 0;
+		if (compatibility.isEquivalent && !hasUpgrades) {
 			// No-op
 			return;
 		}
 
-		if (!compatibility.canUpgrade) {
+		// `compatibility` is computed for the default no-upgrades schema target.
+		// Explicit upgrades can produce a different target, so validate that schema directly.
+		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root, upgrades);
+		const storedSchema = this.checkout.storedSchema.clone();
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
-				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
+				"Existing stored schema cannot be upgraded to the requested schema.",
 			);
 		}
+		if (hasUpgrades && allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
+			// No-op
+			return;
+		}
 
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root, upgrades);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
