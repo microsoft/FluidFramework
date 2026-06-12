@@ -959,11 +959,11 @@ export enum TreeStatus {
 export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends IDisposable {
     readonly compatibility: SchemaCompatibilityStatus;
     readonly events: Listenable<TreeViewEvents>;
-    initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
+    initialize(content: InsertableTreeFieldFromImplicitField<TSchema>, upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
     get root(): TreeFieldFromImplicitField<TSchema>;
     set root(newRoot: InsertableTreeFieldFromImplicitField<TSchema>);
     readonly schema: TSchema;
-    upgradeSchema(): void;
+    upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
 }
 
 // @public @sealed

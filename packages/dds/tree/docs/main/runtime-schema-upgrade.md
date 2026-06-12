@@ -9,8 +9,10 @@ A staged schema upgrade is a schema upgrade that is declared in view schema but 
 The application controls this with an optional `upgrades` parameter whose type is an application-owned property bag mapping string names to `SchemaUpgrade` values:
 
 ```typescript
-export type SchemaUpgrades = Readonly<Record<string, SchemaUpgrade>>;
+upgrades?: Readonly<Record<string, SchemaUpgrade>>;
 ```
+
+The implementation currently uses this inline type shape on the public APIs rather than exporting a dedicated `SchemaUpgrades` alias.
 
 The property names are chosen by the application, for example `enableFooUpgrade`.
 The runtime uses the `SchemaUpgrade` values to decide which staged schema upgrades should be included in the stored schema.
@@ -117,15 +119,26 @@ Today `toUpgradeSchema()` and `toInitialSchema()` hardcode restrictive options t
 
 This feature threads caller-controlled upgrade selection into those conversions:
 
-1. Reuse the existing `SchemaUpgrades` type to represent the readonly property bag from application-owned string names to `SchemaUpgrade` values.
+1. Use the inline `Readonly<Record<string, SchemaUpgrade>>` shape to represent the readonly property bag from application-owned string names to `SchemaUpgrade` values.
+	A dedicated exported alias can be added later if the API surface needs one, but the current implementation does not introduce one.
 1. Update `toUpgradeSchema(root, upgrades?)` and `toInitialSchema(root, upgrades?)` to accept the optional bag.
-1. Convert the bag's values into an immutable set of enabled `SchemaUpgrade` values before constructing generation options.
+1. Snapshot the bag's values into a local set of enabled `SchemaUpgrade` values before constructing generation options.
 1. Generate stored schema with options that include a staged schema member only when its `SchemaUpgrade` value is present in that set.
 1. Thread `upgrades` from `TreeView.upgradeSchema(upgrades?)` into `toUpgradeSchema`.
 1. Thread `upgrades` from `TreeView.initialize(content, upgrades?)` into `toInitialSchema` and use that same generated schema for initial content preparation and validation.
 
 The public `upgrades` bag should be treated as readonly input.
 The runtime should snapshot the values during the call so later application mutation of the original object cannot change generation behavior or interact poorly with schema-conversion caching.
+
+### Runtime Upgrade Validation
+
+`TreeView.compatibility` is computed against the default schema target, which omits staged schema upgrades.
+Because explicit `upgrades` can produce a different target schema, `upgradeSchema(upgrades)` must not rely only on `compatibility.canUpgrade` or `compatibility.isEquivalent` when an upgrades bag is supplied.
+Instead, it generates the requested target stored schema with `toUpgradeSchema(root, upgrades)` and validates that target directly against the current stored schema.
+
+If the requested target is not a valid repo superset of the current stored schema, `upgradeSchema(upgrades)` throws a `UsageError`.
+If upgrades were supplied but the current stored schema is already a superset of the requested target, the call is a no-op.
+This preserves idempotent behavior for documents that already contain the staged schema upgrade, including documents opened later by clients whose local rollout flag is off.
 
 ## Stored Schema Effects
 
@@ -142,7 +155,10 @@ The mechanism should preserve the current restrictive default:
 
 ## Testing Strategy
 
-Tests should cover both API entry points and the rollback-oriented production behavior.
+Tests should cover both API entry points, the staged schema member kinds that are currently supported, and the rollback-oriented production behavior.
+
+Generic runtime API tests should cover shared behavior such as `initialize(content, upgrades)` accepting enabled staged content and rejecting the same content when `upgrades` is omitted.
+More specialized staged schema tests should exercise `upgradeSchema(upgrades)` for each staged schema feature, such as staged allowed types and staged optional fields.
 
 For `upgradeSchema`:
 
@@ -162,6 +178,9 @@ For feature-flag rollback behavior:
 
 -   Verify documents created or upgraded while the flag is enabled retain the upgraded stored schema.
 -   Verify documents created after the flag is disabled omit the upgraded schema when callers omit the corresponding `upgrades` entry.
+
+Schema compatibility helper tests should remain schema-only.
+They can validate compatibility across staged rollout states by comparing stored schema snapshots, but they should not be used as substitutes for runtime tests that sequence schema edits through `initialize` or `upgradeSchema`.
 
 ## Compatibility Notes
 
