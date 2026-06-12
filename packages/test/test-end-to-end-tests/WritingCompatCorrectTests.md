@@ -1,5 +1,27 @@
 # Writing Compat-Correct Tests
 
+## Table of Contents
+
+-   [Introduction](#introduction)
+-   [Why this matters](#why-this-matters)
+-   [Using `apis`](#using-apis)
+    -   [❌ Static import — DON'T](#-static-import--dont)
+    -   [✅ Through `apis` — DO](#-through-apis--do)
+    -   [DDS factories in a registry](#dds-factories-in-a-registry)
+    -   [Extending a DataObject](#extending-a-dataobject)
+    -   [Building a container runtime factory](#building-a-container-runtime-factory)
+    -   [Creating a Loader](#creating-a-loader)
+    -   [SharedTree schema and tree utilities](#sharedtree-schema-and-tree-utilities)
+    -   [Creating and loading containers](#creating-and-loading-containers)
+    -   [Two `Loader` instances](#two-loader-instances)
+    -   [Handling recently-added APIs](#handling-recently-added-apis)
+    -   [Type-only references](#type-only-references)
+-   [The lint rule](#the-lint-rule)
+    -   [Overriding the lint rule](#overriding-the-lint-rule)
+-   [Quick checklist](#quick-checklist)
+
+## Introduction
+
 This document explains how to write Fluid Framework end-to-end tests that correctly exercise compatibility across versions. Tests that bypass these patterns may silently pass under the current version and break when run against older or cross-client compat configurations.
 
 If you arrived here from an ESLint `@typescript-eslint/no-restricted-imports` error — typically of the form
@@ -215,7 +237,7 @@ describeCompat("Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) =
 });
 ```
 
-## Handling recently-added APIs
+### Handling recently-added APIs
 
 Some `apis.dds.*` entries (for example, `SharedArray`, `SharedSignal`, and `SharedTree`) — and the matching `apis.dataRuntime.packages.*` packages — may be undefined when running against older compat versions whose Data Runtime didn't expose them.
 
@@ -272,7 +294,7 @@ This package's [`eslint.config.mts`](./eslint.config.mts) enforces the patterns 
 - `src/test/benchmark/**` — benchmarks measure the current version's performance.
 - `src/test/migration-shim/**` — these tests intentionally target the current new `SharedTree` (the migration destination).
 
-## Overriding the lint rule
+### Overriding the lint rule
 
 The lint rule allows targeted overrides via `eslint-disable` with a comment explaining intent. The convention is one-line `eslint-disable-next-line` immediately above the import, prefaced by a short reason. Cases where this is appropriate:
 
