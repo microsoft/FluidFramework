@@ -940,7 +940,7 @@ export namespace System_TableSchema {
 						// Ranges are iterated in reverse so each `removeRange` call doesn't shift
 						// the indices of yet-to-remove ranges at lower positions.
 						for (let r = ranges.length - 1; r >= 0; r--) {
-							const { start, end } = ranges[r] as { start: number; end: number };
+							const { start, end } = ranges[r] ?? oob();
 							this.table.rows.removeRange(start, end);
 						}
 					},
