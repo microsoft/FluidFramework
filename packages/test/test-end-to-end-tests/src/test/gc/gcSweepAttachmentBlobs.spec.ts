@@ -24,11 +24,7 @@ import type { ISummarizeEventProps } from "@fluidframework/container-runtime-def
 import { delay } from "@fluidframework/core-utils/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import {
-	responseExceptionMetadataSym,
-	type IErrorWithResponseExceptionMetadata,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	ITestContainerConfig,
 	ITestObjectProvider,
@@ -1355,8 +1351,8 @@ describeCompat("GC attachment blob sweep tests", "NoCompat", (getTestObjectProvi
 					);
 					await assert.rejects(
 						async () => handle.get(),
-						(error: Error & Partial<IErrorWithResponseExceptionMetadata>) => {
-							const correctErrorType = error[responseExceptionMetadataSym]?.code === 404;
+						(error: any) => {
+							const correctErrorType = error.code === 404;
 							const correctErrorMessage = error.message as string;
 							return correctErrorType && correctErrorMessage.startsWith("Blob was deleted:");
 						},

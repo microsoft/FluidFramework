@@ -35,11 +35,7 @@ import { IErrorBase } from "@fluidframework/core-interfaces";
 import { FluidErrorTypes } from "@fluidframework/core-interfaces/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { channelsTreeName, gcTreeKey } from "@fluidframework/runtime-definitions/internal";
-import {
-	responseExceptionMetadataSym,
-	type IErrorWithResponseExceptionMetadata,
-	toFluidHandleInternal,
-} from "@fluidframework/runtime-utils/internal";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import {
 	MockLogger,
 	tagCodeArtifacts,
@@ -974,16 +970,14 @@ describeCompat("GC data store sweep tests", "NoCompat", function (getTestObjectP
 					);
 					await assert.rejects(
 						async () => handle.get(),
-						(error: Error & Partial<IErrorWithResponseExceptionMetadata>) => {
-							const responseExceptionMetadata = error[responseExceptionMetadataSym];
-							const correctErrorType = responseExceptionMetadata?.code === 404;
+						(error: any) => {
+							// (see non-exported error interface IResponseException)
+							const correctErrorType = error.code === 404;
 							const correctErrorMessage = (error.message as string).startsWith(
 								"DataStore was deleted:",
 							);
 							const correctHeaders =
-								responseExceptionMetadata?.underlyingResponseHeaders?.[
-									DeletedResponseHeaderKey
-								] === true;
+								error.underlyingResponseHeaders[DeletedResponseHeaderKey] === true;
 							return correctErrorType && correctErrorMessage && correctHeaders;
 						},
 						`Should not be able to get deleted data store`,
