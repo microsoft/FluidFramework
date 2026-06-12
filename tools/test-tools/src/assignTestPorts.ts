@@ -27,19 +27,6 @@ export function getPackageInfo(): PackageInfo[] {
 			encoding: "utf8",
 			// shell:true is required for Windows without a resolved path to pnpm.
 			shell: true,
-			env: {
-				...process.env,
-				// Listing local workspace packages must not require the network. Two pnpm behaviors
-				// otherwise make a blocking request to the registry (GET registry.npmjs.org/pnpm) that,
-				// under network-isolated CI, fails the command and leaves stdout empty:
-				//  - manage-package-manager-versions: a globally-installed pnpm tries to download the
-				//    version pinned in package.json's "packageManager" field when it differs from the
-				//    running version (e.g. global pnpm 11 vs a package pinned to pnpm 10).
-				//  - update-notifier: the periodic "a newer pnpm is available" check.
-				// Disable both so the listing runs entirely offline regardless of the ambient pnpm.
-				npm_config_manage_package_manager_versions: "false",
-				npm_config_update_notifier: "false",
-			},
 		});
 
 		// spawnSync reports a failure to even launch the process (e.g. pnpm not on PATH) via `error`.
