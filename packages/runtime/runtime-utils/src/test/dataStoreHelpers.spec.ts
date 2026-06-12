@@ -5,6 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IResponse } from "@fluidframework/core-interfaces";
+import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	createResponseError,
 	exceptionToResponse,
@@ -14,6 +17,12 @@ import {
 class TestError extends Error {
 	public readonly sentinel = "test";
 }
+
+type ResponseExceptionLike = Error & {
+	code?: number;
+	errorFromRequestFluidObject?: true;
+	underlyingResponseHeaders?: Record<string, unknown>;
+};
 
 describe("createResponseError", () => {
 	it("Strip URL query param ", () => {
@@ -48,5 +57,34 @@ describe("createResponseError", () => {
 
 		assert.strict.equal(exception, originalError);
 		assert.strict.equal(exception.sentinel, "test");
+	});
+
+	// IMPORTANT: Although IResponseException isn't exported from the module,
+	// there are known external consumers of these props, and so this test stands to ensure
+	// we don't accidentally break the implicit contract, while we work on a more explicit one.
+	it("preserves underlyingResponseHeaders on a preserved LoggingError", () => {
+		const originalError = DataProcessingError.create(
+			"hello",
+			"codepath",
+		) as ResponseExceptionLike;
+		const headers = { tombstone: true };
+		const response: IResponse & { originalError: unknown } = {
+			mimeType: "text/plain",
+			status: 404,
+			value: "hello",
+			headers,
+			originalError,
+		};
+
+		const exception = responseToException(response, { url: "/foo" }) as ResponseExceptionLike;
+
+		assert.strict.equal(exception, originalError);
+		assert.strict.equal(exception.code, 404);
+		assert.strict.equal(exception.errorFromRequestFluidObject, true);
+		assert.strict.equal(exception.underlyingResponseHeaders, headers);
+
+		const response2 = exceptionToResponse(exception);
+		assert.strict.equal(response2.status, 404);
+		assert.strict.equal(response2.headers, headers);
 	});
 });
