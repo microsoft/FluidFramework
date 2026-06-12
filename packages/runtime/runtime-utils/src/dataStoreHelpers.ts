@@ -15,16 +15,49 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	generateErrorWithStack,
+	LoggingError,
 	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
+//* CPLT add doc comment
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
 	message: string;
 	code: number;
 	stack?: string;
 	underlyingResponseHeaders?: Record<string, unknown>;
+}
+
+//* CPLT add doc comment
+interface IResponseWithOriginalError extends IResponse {
+	originalError?: unknown;
+}
+
+//* CPLT add doc comment
+function mergeResponseExceptionMetadata<T extends Error>(
+	error: T,
+	response: IResponse,
+): T & IResponseException {
+	const mergedError = error as T & Partial<IResponseException>;
+	Object.defineProperties(mergedError, {
+		errorFromRequestFluidObject: {
+			value: true,
+			writable: true,
+			configurable: true,
+		},
+		code: {
+			value: response.status,
+			writable: true,
+			configurable: true,
+		},
+		underlyingResponseHeaders: {
+			value: response.headers,
+			writable: true,
+			configurable: true,
+		},
+	} satisfies Partial<Record<keyof IResponseException, unknown>>);
+	return mergedError as T & IResponseException;
 }
 
 /**
@@ -68,10 +101,11 @@ export function exceptionToResponse(error: unknown): IResponse {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
+		originalError: LoggingError.typeCheck(error) ? error : undefined,
 		get stack() {
 			return errWithStack.stack;
 		},
-	};
+	} satisfies IResponseWithOriginalError as IResponse;
 }
 
 /**
@@ -82,21 +116,23 @@ export function exceptionToResponse(error: unknown): IResponse {
  * @internal
  */
 export function responseToException(response: IResponse, request: IRequest): Error {
+	const originalError = (response as IResponseWithOriginalError).originalError;
+	if (LoggingError.typeCheck(originalError)) {
+		return mergeResponseExceptionMetadata(originalError, response);
+	}
+
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
 	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = "stack" in response ? response : generateErrorWithStack();
-	const responseErr: Error & IResponseException = {
-		errorFromRequestFluidObject: true,
-		message,
-		name: "Error",
-		code: response.status,
-		get stack() {
+	const responseErr = mergeResponseExceptionMetadata(new Error(message), response);
+	Object.defineProperty(responseErr, "stack", {
+		get() {
 			return errWithStack.stack;
 		},
-		underlyingResponseHeaders: response.headers,
-	};
+		configurable: true,
+	});
 
 	return responseErr;
 }

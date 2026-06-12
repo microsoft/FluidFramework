@@ -11,6 +11,10 @@ import {
 	responseToException,
 } from "../dataStoreHelpers.js";
 
+class TestError extends Error {
+	public readonly sentinel = "test";
+}
+
 describe("createResponseError", () => {
 	it("Strip URL query param ", () => {
 		const response = createResponseError(400, "SomeValue", { url: "http://foo.com?a=b" });
@@ -34,5 +38,15 @@ describe("createResponseError", () => {
 		assert.strict.equal(response2.status, 401, "status code3");
 		assert.strict.equal(response2.value, value, "value3");
 		assert.strict.equal(response.stack, stack, "stack3");
+	});
+
+	it("preserves the original Error object when available on the response", () => {
+		const originalError = new TestError("hello");
+		const response = exceptionToResponse(originalError);
+
+		const exception = responseToException(response, { url: "/foo" });
+
+		assert.strict.equal(exception, originalError);
+		assert.strict.equal(exception.sentinel, "test");
 	});
 });
