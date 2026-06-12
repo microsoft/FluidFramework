@@ -794,13 +794,15 @@ export namespace System_TableSchema {
 								endIndex,
 							) as ColumnValueType[];
 
-							// First, remove all cells that correspond to each column from each row:
-							for (const column of columnsToRemove) {
-								for (const row of this.table.rows) {
-									// TypeScript is unable to narrow the row type correctly here, hence the cast.
-									// See: https://github.com/microsoft/TypeScript/issues/52144
+							// First, remove all cells that correspond to each column from each row.
+							// Rows are the outer loop so each row's `cells` record is touched contiguously,
+							// and the per-column `id` values are read once up front instead of per (column, row) pair.
+							const idsToDelete = columnsToRemove.map((column) => column.id);
+							for (const row of this.table.rows) {
+								const cells = (row as RowValueInternalType).cells;
+								for (const id of idsToDelete) {
 									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
-									delete (row as RowValueInternalType).cells[column.id];
+									delete cells[id];
 								}
 							}
 
@@ -843,12 +845,14 @@ export namespace System_TableSchema {
 					this.#applyEditsInBatch({
 						applyEdits: () => {
 							// Remove the corresponding cell from every row.
+							// The per-column `id` values are hoisted out of the row loop so each row's `cells`
+							// record is indexed by a plain string rather than re-reading a tree-node property.
+							const idsToDelete = Array.from(columnsToRemove, (column) => column.id);
 							for (const row of this.table.rows) {
-								for (const columnToRemove of columnsToRemove) {
-									// TypeScript is unable to narrow the row type correctly here, hence the cast.
-									// See: https://github.com/microsoft/TypeScript/issues/52144
+								const cells = (row as RowValueInternalType).cells;
+								for (const id of idsToDelete) {
 									// eslint-disable-next-line @typescript-eslint/no-dynamic-delete -- This is currently how Record node entries are deleted.
-									delete (row as RowValueInternalType).cells[columnToRemove.id];
+									delete cells[id];
 								}
 							}
 
@@ -1328,10 +1332,9 @@ export namespace System_TableSchema {
 
 					// Note: we intentionally hide `cells` on `IRow` to avoid leaking the internal data representation as much as possible, so we have to cast here.
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-					if ((newRow as any).cells !== undefined) {
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
-						const keys: string[] = Object.keys((newRow as any).cells);
-						for (const key of keys) {
+					const cells = (newRow as any).cells;
+					if (cells !== undefined) {
+						for (const key of Object.keys(cells)) {
 							if (!columnIds.has(key)) {
 								throw new UsageError(
 									`Attempted to insert a row containing a cell under column ID "${key}", but the table does not contain a column with that ID.`,
