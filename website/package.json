@@ -1,12 +1,12 @@
 {
-	"name": "fluid-framework-docs-site",
+	"name": "fluid-framework-website",
 	"version": "0.0.0",
 	"private": true,
 	"homepage": "https://fluidframework.com",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/microsoft/FluidFramework.git",
-		"directory": "docs"
+		"directory": "website"
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
