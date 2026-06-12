@@ -50,14 +50,14 @@ export async function getTestTenantCheckoutClient(): Promise<TestTenantCheckoutC
 	const packageImportLocation = process.env.token__package__import__location;
 	if (packageImportLocation === undefined) {
 		throw new Error(
-			'The FIC credential flow relies on a test tenant checkout client, but no client was found. Ensure that the environment variable "token__package__import__location" is set to the location of a package that exports a compatible client.',
+			"The FIC credential flow relies on a test tenant checkout client, but no client was found. Populate this environment variable by running the @ff-internal/tenant-setup script.",
 		);
 	}
 
 	const pkg = (await import(packageImportLocation)) as TestTenantCheckoutClient;
 	if (typeof pkg.fetchFicTokens !== "function") {
 		throw new TypeError(
-			`Expected package at '${packageImportLocation}' to export fetchFicTokens.`,
+			`Expected package at '${packageImportLocation}' to export fetchFicTokens. Run the @ff-internal/tenant-setup script to populate this environment variable.`,
 		);
 	}
 	// eslint-disable-next-line require-atomic-updates
@@ -79,7 +79,9 @@ export function getOdspCredentials(
 ): LoginCredentials[] {
 	const ficAccounts = process.env.login__odsp__fic__test__users;
 	if (ficAccounts === undefined) {
-		throw new Error("login__odsp__fic__test__users is not defined.");
+		throw new Error(
+			"login__odsp__fic__test__users is not defined. Run the @ff-internal/tenant-setup script to populate this environment variable.",
+		);
 	}
 	const { usernames } = JSON.parse(ficAccounts) as {
 		usernames: string[];
@@ -87,7 +89,7 @@ export function getOdspCredentials(
 
 	if (usernames.length === 0) {
 		throw new Error(
-			"login__odsp__fic__test__users was defined but does not have any valid usernames.",
+			"login__odsp__fic__test__users was defined but does not have any valid usernames. Run the @ff-internal/tenant-setup script to populate this environment variable.",
 		);
 	}
 	return usernames.map((username) => getFicLoginCredentials(username, odspEndpointName));
@@ -108,12 +110,14 @@ const getFicLoginCredentials = (
 			// This error indicates a mismatch between the dynamically imported token fetcher package and this code.
 			// Double-check that the package specified in 'token__package__import__location' is up to date and its entrypoint
 			// matches the typing of `fetchFicTokens` as defined in `TestTenantCheckoutClient`.
-			throw new TypeError("Expected fetchFicTokens to return an array of tokens.");
+			throw new TypeError(
+				"Expected fetchFicTokens to return an array of tokens. Run the @ff-internal/tenant-setup script to populate this environment variable.",
+			);
 		}
 		const token = tokens.find((a) => a.UserPrincipalName === username);
 		if (!token) {
 			throw new Error(
-				`Unable to fetch token for user '${username}' and scope '${scopeEndpoint}'`,
+				`Unable to fetch token for user '${username}' and scope '${scopeEndpoint}'. Run the @ff-internal/tenant-setup script with the correct endpoint for the desired environment.`,
 			);
 		}
 		return token.Token;
