@@ -1809,6 +1809,63 @@ describe("TableFactory unit tests", () => {
 						},
 					});
 				});
+
+				it("Deduplicates repeated columns specified by node", () => {
+					const column0 = new Column({ id: "column-0", props: {} });
+					const column1 = new Column({ id: "column-1", props: {} });
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [column0, column1],
+							rows: [
+								new Row({
+									id: "row-0",
+									cells: { "column-0": { value: "Hello" } },
+									props: {},
+								}),
+							],
+						}),
+					);
+
+					const removed = table.removeColumns([column0, column0]);
+					assert.equal(removed.length, 1);
+					assertEqualTrees(removed[0], { id: "column-0", props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [{ id: "column-1", props: {} }],
+							rows: [{ id: "row-0", cells: {}, props: {} }],
+						},
+					});
+				});
+
+				it("Deduplicates repeated columns specified by ID", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [
+								new Column({ id: "column-0", props: {} }),
+								new Column({ id: "column-1", props: {} }),
+							],
+							rows: [
+								new Row({
+									id: "row-0",
+									cells: { "column-0": { value: "Hello" } },
+									props: {},
+								}),
+							],
+						}),
+					);
+
+					const removed = table.removeColumns(["column-0", "column-0"]);
+					assert.equal(removed.length, 1);
+					assertEqualTrees(removed[0], { id: "column-0", props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [{ id: "column-1", props: {} }],
+							rows: [{ id: "row-0", cells: {}, props: {} }],
+						},
+					});
+				});
 			});
 
 			describe("removeRows", () => {
@@ -2155,6 +2212,51 @@ describe("TableFactory unit tests", () => {
 						table: {
 							columns: [{ id: "column-0", props: {} }],
 							rows: [{ id: "row-2", cells: {}, props: {} }],
+						},
+					});
+				});
+
+				it("Deduplicates repeated rows specified by node", () => {
+					const row0 = new Row({ id: "row-0", cells: {}, props: {} });
+					const row1 = new Row({ id: "row-1", cells: {}, props: {} });
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [row0, row1],
+						}),
+					);
+
+					const removed = table.removeRows([row0, row0]);
+					assert.equal(removed.length, 1);
+					assertEqualTrees(removed[0], { id: "row-0", cells: {}, props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [{ id: "row-1", cells: {}, props: {} }],
+						},
+					});
+				});
+
+				it("Deduplicates repeated rows specified by ID", () => {
+					const table = initializeTree(
+						Table,
+						Table.create({
+							columns: [],
+							rows: [
+								new Row({ id: "row-0", cells: {}, props: {} }),
+								new Row({ id: "row-1", cells: {}, props: {} }),
+							],
+						}),
+					);
+
+					const removed = table.removeRows(["row-0", "row-0"]);
+					assert.equal(removed.length, 1);
+					assertEqualTrees(removed[0], { id: "row-0", cells: {}, props: {} });
+					assertEqualTrees(table, {
+						table: {
+							columns: [],
+							rows: [{ id: "row-1", cells: {}, props: {} }],
 						},
 					});
 				});
