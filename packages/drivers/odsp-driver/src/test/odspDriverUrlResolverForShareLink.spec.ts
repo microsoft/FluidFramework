@@ -117,7 +117,21 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 		it(`resolve - Should resolve odsp driver url correctly, hasVersion: ${urlWithNav.hasVersion}, hasContext: ${urlWithNav.hasContext}`, async () => {
 			const runTest = async (resolver: OdspDriverUrlResolverForShareLink): Promise<void> => {
 				const resolvedUrl1 = await resolver.resolve({ url: urlWithNav.url });
-				const url: string = createOdspUrl({ ...resolvedUrl1, dataStorePath });
+				const url: string = createOdspUrl({
+					siteUrl: resolvedUrl1.siteUrl,
+					driveId: resolvedUrl1.driveId,
+					itemId: resolvedUrl1.itemId,
+					dataStorePath,
+					...(resolvedUrl1.fileVersion === undefined
+						? {}
+						: { fileVersion: resolvedUrl1.fileVersion }),
+					...(resolvedUrl1.context === undefined
+						? {}
+						: { context: resolvedUrl1.context }),
+					...(resolvedUrl1.appName === undefined
+						? {}
+						: { appName: resolvedUrl1.appName }),
+				});
 				const resolvedUrl2 = await resolver.resolve({ url });
 				assert.strictEqual(resolvedUrl2.driveId, driveId, "Drive id should be equal");
 				assert.strictEqual(resolvedUrl2.siteUrl, siteUrl, "SiteUrl should be equal");

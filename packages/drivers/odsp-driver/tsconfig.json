@@ -5,6 +5,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// As of 2026-06-16, there are 50 errors enableing exactOptionalPropertyTypes.
 		"exactOptionalPropertyTypes": false,
 		// TODO: AB#34163 Enable noUncheckedIndexedAccess for packages/drivers/odsp-driver
 		"noUncheckedIndexedAccess": false,
