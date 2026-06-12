@@ -175,26 +175,15 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
 }
 
 /**
- * Returns the URL of the outer repo's `origin` remote, used as the source
- * for cloning the inner repo.
- */
-async function getOuterOriginUrl(outerRepoRoot: string): Promise<string> {
-	const { value } = await simpleGit(outerRepoRoot).getConfig("remote.origin.url");
-	if (value === null || value.length === 0) {
-		throw new Error(`Could not read remote.origin.url from ${outerRepoRoot}.`);
-	}
-	return value;
-}
-
-/**
  * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot`
  * and is checked out at the requested revision.
  *
- * On first call, performs a shallow clone of the outer repo's `origin` remote
- * (`--depth=1 --no-tags --no-checkout`). On every call (including the first),
- * the requested revision is fetched shallowly (`fetch --depth=1 origin <rev>`)
- * and checked out detached. This keeps the inner repo's `.git` directory small
- * even after many revisions have been visited.
+ * On first call, clones the inner repo directly from the outer enlistment on
+ * disk (`--no-tags --no-checkout`). Because the source is a local repository,
+ * no remote or network access is involved and every commit already present in
+ * the outer repo (including merge-base SHAs that aren't branch tips) is
+ * available without a separate fetch. On every call the requested revision is
+ * checked out detached.
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
@@ -204,38 +193,24 @@ async function ensureInnerRepoAtRevision(
 	innerRepoRoot: string,
 ): Promise<void> {
 	if (!existsSync(resolve(innerRepoRoot, ".git"))) {
-		const originUrl = await getOuterOriginUrl(outerRepoRoot);
 		mkdirSync(dirname(innerRepoRoot), { recursive: true });
-		console.log(`\nShallow-cloning inner repo from ${originUrl} into ${innerRepoRoot}...`);
-		// Clone shallow with no checkout: we'll fetch and check out the exact
-		// revision the caller requested below. --filter=blob:none isn't needed
-		// on top of --depth=1.
-		await simpleGit(dirname(innerRepoRoot)).clone(originUrl, innerRepoRoot, [
-			"--depth=1",
+		console.log(`\nCloning inner repo from ${outerRepoRoot} into ${innerRepoRoot}...`);
+		// Clone from the outer enlistment on disk: this avoids any remote/network
+		// access and gives the inner repo every object the outer repo already has,
+		// so the requested revision can be checked out below without a fetch.
+		// --no-checkout because we check out the exact revision explicitly below.
+		await simpleGit(dirname(innerRepoRoot)).clone(outerRepoRoot, innerRepoRoot, [
 			"--no-tags",
 			"--no-checkout",
 		]);
 	}
 
 	const innerGit = simpleGit(innerRepoRoot);
-	console.log(`\nFetching revision "${revision}" (shallow) into inner repo...`);
-	// Fetch only the requested commit at depth 1. By naming the SHA directly
-	// we skip fetching any branch tips first, which is what keeps the inner
-	// repo's `.git` small. This relies on the server allowing fetch-by-SHA:
-	// `uploadpack.allowReachableSHA1InWant` lets clients ask for any commit
-	// reachable from an advertised ref (not just the ref tips themselves).
-	// GitHub enables this on every repo; without it, we'd have to fetch a
-	// branch and walk history to the SHA, defeating --depth=1 for any
-	// non-tip commit (which is the common case here, since the merge-base
-	// usually isn't `main` HEAD).
-	await innerGit.fetch(["--depth=1", "origin", revision]);
-
 	console.log(`Checking out revision "${revision}" in inner repo...`);
 	// Use detached HEAD checkout so we don't have to manage local branch state.
-	// FETCH_HEAD is set by the fetch above and is guaranteed to point at the
-	// requested commit, even when `revision` is a SHA the local clone hasn't
-	// otherwise heard of.
-	await innerGit.raw(["checkout", "--detach", "FETCH_HEAD"]);
+	// The revision is resolved against the objects copied from the outer repo
+	// during the clone above.
+	await innerGit.raw(["checkout", "--detach", revision]);
 }
 
 /**
@@ -243,8 +218,9 @@ async function ensureInnerRepoAtRevision(
  * separate inner enlistment checked out to a specific revision (revision mode).
  *
  * In revision mode, the inner repo (at {@link CollectBundleOptions.baseRepoDir}, defaulting to
- * `<analysisDir>/base-repo`) is cloned from the outer repo's `origin` remote on first use and
- * reused thereafter. The outer repo's working tree, branch, and stash are never modified.
+ * `<analysisDir>/base-repo`) is cloned from the outer enlistment on disk on first use and
+ * reused thereafter. No remote or network access is involved. The outer repo's working tree,
+ * branch, and stash are never modified.
  */
 export async function collectBundle(options: CollectBundleOptions): Promise<void> {
 	const { mode, revision, forceCleanBuild, packageDir, analysisDir } = options;

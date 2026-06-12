@@ -58,10 +58,12 @@ Reach for the lower-level commands when the orchestrator's flow doesn't fit:
   the measurement is reproducible. The outer repo's git state (working tree,
   branch, revision) is never modified.
 - **revision** — builds the bundle from a _separate_ inner clone of the repo
-  checked out at a specific commit. The inner clone is created on first use as a
-  shallow clone of your `origin` remote and the requested commit is fetched
-  shallowly, keeping it small. The outer repo's working tree, branch, and stash
-  are never touched.
+  checked out at a specific commit. The inner clone is created on first use by
+  cloning directly from the outer enlistment on disk — no remote or network
+  access is involved, and every object the outer repo already has (including
+  merge-base commits that aren't branch tips) is available without a fetch. The
+  requested commit must therefore already exist locally in the outer repo. The
+  outer repo's working tree, branch, and stash are never touched.
 
 Each build runs webpack, which emits `bundleAnalyzerJson/analyzer.json`
 (webpack-bundle-analyzer's JSON report). That single file carries per-asset
