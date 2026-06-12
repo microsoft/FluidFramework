@@ -15,7 +15,10 @@ parameters:
   type: string
 
 # The version of the build tools to install, or "repo" to install the one from the repository.
-# If "repo" is selected, this includes a global install of what ever version of pnpm build-tools uses.
+# If "repo" is selected, this includes a global install of what ever version of pnpm build-tools uses
+# overwriting the already installed version.
+# If anything except "repo" is selected, this results in a lock-less install, which could pull in untested
+# and un-audited versions of the many dependencies of build-tools.
 - name: buildToolsVersionToInstall
   type: string
   default: repo
