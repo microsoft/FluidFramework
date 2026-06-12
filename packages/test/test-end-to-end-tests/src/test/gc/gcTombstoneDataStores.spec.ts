@@ -34,7 +34,11 @@ import {
 	IFluidDataStoreChannel,
 	IGarbageCollectionDetailsBase,
 } from "@fluidframework/runtime-definitions/internal";
-import { responseToException } from "@fluidframework/runtime-utils/internal";
+import {
+	responseExceptionMetadataSym,
+	responseToException,
+	type IErrorWithResponseExceptionMetadata,
+} from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer, parseHandles } from "@fluidframework/shared-object-base/internal";
 import { MockLogger, TelemetryDataTag } from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
@@ -53,10 +57,7 @@ import {
 	manufactureHandle,
 } from "./gcTestSummaryUtils.js";
 
-type ExpectedTombstoneError = Error & {
-	code: number;
-	underlyingResponseHeaders?: { [TombstoneResponseHeaderKey]: boolean };
-};
+type ExpectedTombstoneError = Error & IErrorWithResponseExceptionMetadata;
 
 /**
  * These tests validate that TombstoneReady data stores are correctly marked as tombstones. Tombstones should be added
@@ -648,7 +649,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					tombstoneError = error;
 				}
 				assert.equal(
-					tombstoneError?.code,
+					tombstoneError?.[responseExceptionMetadataSym].code,
 					404,
 					"Tombstone error from handle.get should have 404 status code",
 				);
@@ -658,7 +659,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"Incorrect message for Tombstone error from handle.get",
 				);
 				assert.equal(
-					tombstoneError?.underlyingResponseHeaders?.[TombstoneResponseHeaderKey],
+					tombstoneError?.[responseExceptionMetadataSym].underlyingResponseHeaders?.[
+						TombstoneResponseHeaderKey
+					],
 					true,
 					"Tombstone error from handle.get should include the tombstone flag",
 				);
@@ -1104,7 +1107,7 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					tombstoneError = error;
 				}
 				assert.equal(
-					tombstoneError?.code,
+					tombstoneError?.[responseExceptionMetadataSym].code,
 					404,
 					"Tombstone error from handle.get should have 404 status code (1A)",
 				);
@@ -1114,7 +1117,9 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 					"Incorrect message for Tombstone error from handle.get (1A)",
 				);
 				assert.equal(
-					tombstoneError?.underlyingResponseHeaders?.[TombstoneResponseHeaderKey],
+					tombstoneError?.[responseExceptionMetadataSym].underlyingResponseHeaders?.[
+						TombstoneResponseHeaderKey
+					],
 					true,
 					"Tombstone error from handle.get should include the tombstone flag (1A)",
 				);
@@ -1629,8 +1634,8 @@ describeCompat("GC data store tombstone tests", "NoCompat", (getTestObjectProvid
 				const containerRuntime2 = entryPoint2._context.containerRuntime as ContainerRuntime;
 				await assert.rejects(
 					async () => resolveHandleHelper(containerRuntime2, unreferencedId),
-					(error: any) => {
-						const correctErrorType = error.code === 404;
+					(error: Error & Partial<IErrorWithResponseExceptionMetadata>) => {
+						const correctErrorType = error[responseExceptionMetadataSym]?.code === 404;
 						const correctErrorMessage =
 							error.message === `DataStore was tombstoned: ${unreferencedId}`;
 						return correctErrorType && correctErrorMessage;

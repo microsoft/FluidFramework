@@ -24,6 +24,10 @@ import type {
 import { Deferred, delay } from "@fluidframework/core-utils/internal";
 import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type { ISharedDirectory } from "@fluidframework/map/internal";
+import {
+	responseExceptionMetadataSym,
+	type IErrorWithResponseExceptionMetadata,
+} from "@fluidframework/runtime-utils/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestObjectProvider,
@@ -571,10 +575,10 @@ describeCompat(
 				overrideResult(runtime2.storage, runtime2.storage.getSnapshot, olderSnapshot);
 				await assert.rejects(
 					dataObjectA2Handle.get(),
-					(error: Error & any) => {
+					(error: Error & Partial<IErrorWithResponseExceptionMetadata>) => {
+						const responseExceptionMetadata = error[responseExceptionMetadataSym];
 						const correctError: boolean =
-							error.errorFromRequestFluidObject === true &&
-							error.code === 500 &&
+							responseExceptionMetadata?.code === 500 &&
 							error.message !== undefined &&
 							error.message.includes("Downloaded snapshot older than snapshot we loaded from");
 

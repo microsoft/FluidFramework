@@ -14,7 +14,10 @@ import {
 	responseExceptionMetadataSym,
 	responseToException,
 } from "../dataStoreHelpers.js";
-import type { IErrorWithResponseExceptionMetadata } from "../dataStoreHelpers.js";
+import type {
+	IErrorWithResponseExceptionMetadata,
+	IResponseExceptionMetadata,
+} from "../dataStoreHelpers.js";
 
 class TestError extends Error {
 	public readonly sentinel = "test";
@@ -25,6 +28,10 @@ type ResponseExceptionLike = Error & {
 	errorFromRequestFluidObject?: true;
 	underlyingResponseHeaders?: Record<string, unknown>;
 };
+
+const getResponseExceptionMetadata = (
+	error: Error & IErrorWithResponseExceptionMetadata,
+): IResponseExceptionMetadata => error[responseExceptionMetadataSym];
 
 describe("createResponseError", () => {
 	it("Strip URL query param ", () => {
@@ -96,11 +103,14 @@ describe("createResponseError", () => {
 		const exception = responseToException(response, { url: "/foo" }) as ResponseExceptionLike &
 			IErrorWithResponseExceptionMetadata;
 
-		assert.deepStrictEqual(exception[responseExceptionMetadataSym], {
+		assert.deepStrictEqual(getResponseExceptionMetadata(exception), {
 			code: 404,
 			underlyingResponseHeaders: headers,
 		});
-		assert.strict.equal(exception.code, 404);
-		assert.strict.equal(exception.underlyingResponseHeaders, headers);
+		assert.strict.equal(getResponseExceptionMetadata(exception).code, 404);
+		assert.strict.equal(
+			getResponseExceptionMetadata(exception).underlyingResponseHeaders,
+			headers,
+		);
 	});
 });

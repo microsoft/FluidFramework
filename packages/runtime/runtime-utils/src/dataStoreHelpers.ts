@@ -20,14 +20,6 @@ import {
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-interface IResponseException extends Error {
-	errorFromRequestFluidObject: true;
-	message: string;
-	code: number;
-	stack?: string;
-	underlyingResponseHeaders?: Record<string, unknown>;
-}
-
 /**
  * Internal metadata preserved on errors that roundtrip through an {@link IResponse}.
  * @internal
@@ -55,19 +47,22 @@ export type IErrorWithResponseExceptionMetadata = Error & {
 	[responseExceptionMetadataSym]: IResponseExceptionMetadata;
 };
 
+type ResponseExceptionCompatibilityPropertyName =
+	| "errorFromRequestFluidObject"
+	| "code"
+	| "underlyingResponseHeaders";
+
 function mergeResponseExceptionMetadata<T extends Error>(
 	error: T,
 	response: IResponse,
-): T & IResponseException {
+): T & IErrorWithResponseExceptionMetadata {
 	const responseExceptionMetadata: IResponseExceptionMetadata = {
 		code: response.status,
 		underlyingResponseHeaders: response.headers,
 	};
 
 	// This type accounts for the properties defined below
-	const mergedErrorWithMetadata = error as T &
-		IErrorWithResponseExceptionMetadata &
-		IResponseException;
+	const mergedErrorWithMetadata = error as T & IErrorWithResponseExceptionMetadata;
 
 	// Attach the metadata to the error object itself
 	Object.defineProperty(mergedErrorWithMetadata, responseExceptionMetadataSym, {
@@ -95,22 +90,19 @@ function mergeResponseExceptionMetadata<T extends Error>(
 			},
 			configurable: true,
 		},
-	} satisfies Partial<Record<keyof IResponseException, unknown>>);
+	} satisfies Partial<Record<ResponseExceptionCompatibilityPropertyName, unknown>>);
 
 	return mergedErrorWithMetadata;
 }
 
 /**
- * Type guard for determining if an error is an {@link IResponseException}.
+ * Type guard for determining if an error carries response exception metadata.
  * @internal
  */
-function isResponseException(err: unknown): err is IResponseException {
-	return (
-		err !== null &&
-		typeof err === "object" &&
-		"errorFromRequestFluidObject" in err &&
-		(err as { errorFromRequestFluidObject: unknown }).errorFromRequestFluidObject === true
-	);
+function hasResponseExceptionMetadata(
+	err: unknown,
+): err is IErrorWithResponseExceptionMetadata {
+	return err !== null && typeof err === "object" && responseExceptionMetadataSym in err;
 }
 
 /**
@@ -119,15 +111,16 @@ function isResponseException(err: unknown): err is IResponseException {
  */
 export function exceptionToResponse(error: unknown): IResponse {
 	const status = 500;
-	if (isResponseException(error)) {
+	if (hasResponseExceptionMetadata(error)) {
+		const responseExceptionMetadata = error[responseExceptionMetadataSym];
 		return {
 			mimeType: "text/plain",
-			status: error.code,
+			status: responseExceptionMetadata.code,
 			value: error.message,
 			get stack() {
 				return error.stack;
 			},
-			headers: error.underlyingResponseHeaders,
+			headers: responseExceptionMetadata.underlyingResponseHeaders,
 		};
 	}
 
