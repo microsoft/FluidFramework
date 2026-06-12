@@ -22,7 +22,7 @@ import type {
  * providing each session with the ability to map these UUIDs to `numbers`.
  *
  * A session is a unique identifier that denotes a single compressor. New IDs are created through a single compressor API
- * which should then sent in ranges to the server for total ordering (and are subsequently relayed to other clients). When a new ID is
+ * which should then be sent in ranges to the server for total ordering (and are subsequently relayed to other clients). When a new ID is
  * created it is said to be created by the compressor's "local" session.
  *
  * For each stable ID created, two numeric IDs are provided by the compressor:
@@ -130,8 +130,8 @@ export interface IIdCompressorCore {
 	 * - They invoke this API starting from the same finalized creation ranges
 	 * - This API is invoked with the same ghost session id
 	 * - `ghostSessionCallback` deterministically mints the same number of ids on each client within the ghost session
-	 * Failure to meet these requirement will result in divergence across clients and eventual consistency errors.
-	 * While the ghost sesion callback is running, IdCompressor does not support serialization.
+	 * Failure to meet these requirements will result in divergence across clients and eventual consistency errors.
+	 * While the ghost session callback is running, IdCompressor does not support serialization.
 	 * @remarks This API is primarily intended for data migration scenarios which are able to deterministically transform
 	 * data in some format into data in a new format.
 	 * The first requirement (that all clients must invoke the API with the same finalized creation ranges) is guaranteed
@@ -224,7 +224,7 @@ export interface IIdCompressor {
 	/**
 	 * Generates a new ID that is guaranteed to be unique across all sessions known to this compressor without the need for any
 	 * normalization. The returned ID is not guaranteed to be a compressed ID (small number); it may be a stable ID (UUID string).
-	 * In Fluid, the likelihood of generating the bulkier stable ID is dictated by network conditions and is highly probably in
+	 * In Fluid, the likelihood of generating the bulkier stable ID is dictated by network conditions and is highly probable in
 	 * scenarios such as offline. This is still useful for use cases where simplicity is more important than performance and
 	 * this approach will often be superior to generating a UUID.
 	 * If small numbers are a requirement, `generateCompressedId` and normalization should be used instead.
@@ -235,8 +235,8 @@ export interface IIdCompressor {
 
 	/**
 	 * Normalizes a session space ID into op space.
-	 * The returned ID is in op space and can be safely serialized. However, it should be normalized back to session space before use.
-	 * See `IIdCompressor` for more details.
+	 * The returned ID is in op space and can be safely serialized.
+	 * However, it should be {@link IIdCompressor.normalizeToSessionSpace|normalized back to session space} before use.
 	 * @param id - The local ID to normalize.
 	 * @returns The ID in op space.
 	 */
@@ -245,10 +245,22 @@ export interface IIdCompressor {
 	/**
 	 * Normalizes an ID into session space.
 	 * @param id - The ID to normalize.
-	 * @param originSessionId - The session from which `id` originated. This should be the ID of the client that normalized `id` to op space.
-	 * This means that it may not be the client that created `id` in the first place, but rather the client that serialized it.
+	 * @param originSessionId - The {@link IIdCompressor.localSessionId} of the compressor which {@link IIdCompressor.normalizeToOpSpace|encoded} `id`.
+	 * This might not be the client that created `id` in the first place, but rather the client that serialized it.
 	 * This is an important distinction in the case of a reference, where a client might refer to an ID created by another client.
 	 * @returns The session-space ID in the local session corresponding to `id`.
+	 * @remarks
+	 * For this to be valid, `originSessionId` must be the {@link IIdCompressor.localSessionId} of the compressor that normalized `id` to op space.
+	 * Additionally, this compressor must know about the relevant {@link IdCreationRange} from the encoding `IIdCompressor`.
+	 * This can be accomplished using creating the compressor using {@link (deserializeIdCompressor:1)},
+	 * or relying on something (like the Fluid runtime) to synchronize the range information using internal mechanisms.
+	 *
+	 * The {@link IIdCompressor} provided by the Fluid Framework runtime will automatically track {@link IdCreationRange| Id Creation Ranges} (via its own ops) from other clients in the container.
+	 * It is up to the user of the {@link IIdCompressor} to ensure the relevant session information is available,
+	 * either by depending on the originating client's session ID for ops, or by explicitly storing it alongside the data containing the {@link OpSpaceCompressedId}.
+	 *
+	 * Note that attachment summaries, while they are ops, are also interpreted as summaries without the context of their originating session,
+	 * so they should explicitly include session IDs if required to decode them just like regular summaries and exported data.
 	 */
 	normalizeToSessionSpace(
 		id: OpSpaceCompressedId,

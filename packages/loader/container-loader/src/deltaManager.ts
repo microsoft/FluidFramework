@@ -36,7 +36,7 @@ import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-util
 import {
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	UsageError,
@@ -133,7 +133,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
  */
 function logIfFalse(
 	condition: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	event: string | ITelemetryGenericEventExt,
 ): condition is true {
 	if (condition) {
@@ -420,7 +420,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
