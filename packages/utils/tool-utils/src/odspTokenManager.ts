@@ -96,25 +96,21 @@ export class OdspTokenManager {
 	}
 
 	public async getOdspTokens(
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting odsp tokens");
-		return this.getTokens(false, server, clientConfig, credentials, forceRefresh, forceReauth);
+		return this.getTokens(false, credentials, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting push tokens");
-		return this.getTokens(true, server, clientConfig, credentials, forceRefresh, forceReauth);
+		return this.getTokens(true, credentials, forceRefresh, forceReauth);
 	}
 
 	private async getTokenFromCache(
@@ -146,8 +142,6 @@ export class OdspTokenManager {
 
 	private async getTokens(
 		isPush: boolean,
-		_server: string,
-		_clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,

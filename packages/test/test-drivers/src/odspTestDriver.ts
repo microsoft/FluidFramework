@@ -332,13 +332,7 @@ export class OdspTestDriver implements ITestDriver {
 		config: TokenConfig,
 		tokenManager: OdspTokenManager,
 	): Promise<string> {
-		const host = new URL(options.siteUrl).host;
-		const tokens = await tokenManager.getOdspTokens(
-			host,
-			config,
-			config.credentials,
-			options.refresh,
-		);
+		const tokens = await tokenManager.getOdspTokens(config.credentials, options.refresh);
 		return tokens.accessToken;
 	}
 
@@ -424,10 +418,7 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	private async getPushToken(options: OdspResourceTokenFetchOptions): Promise<string> {
-		const host = new URL(options.siteUrl).host;
 		const tokens = await this.tokenManager.getPushTokens(
-			host,
-			this.config,
 			this.config.credentials,
 			options.refresh,
 		);
