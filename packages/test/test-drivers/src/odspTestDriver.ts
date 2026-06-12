@@ -31,7 +31,7 @@ import { compare } from "semver";
 
 import { OdspDriverApi, OdspDriverApiType } from "./odspDriverApi.js";
 
-const ficLoginCredentials = (
+const getFicLoginCredentials = (
 	username: string,
 	odspEndpointName: OdspEndpoint,
 ): LoginCredentials => {
@@ -134,7 +134,7 @@ export function assertOdspEndpoint(
 	if (endpoint === undefined || endpoint === "odsp" || endpoint === "odsp-df") {
 		return;
 	}
-	throw new TypeError("Not a odsp endpoint");
+	throw new TypeError("Not an odsp endpoint");
 }
 
 /**
@@ -162,7 +162,7 @@ export function getOdspCredentials(
 			"login__odsp__fic__test__users was defined but does not have any valid usernames.",
 		);
 	}
-	return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
+	return usernames.map((username) => getFicLoginCredentials(username, odspEndpointName));
 }
 
 // Default token manager — shared across all OdspTestDriver instances that don't supply their own.

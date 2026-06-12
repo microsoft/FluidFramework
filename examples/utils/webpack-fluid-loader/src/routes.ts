@@ -12,7 +12,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import {
 	LoginCredentials,
 	OdspTokenManager,
-	getMicrosoftConfiguration,
 	odspTokensCache,
 } from "@fluidframework/tool-utils/internal";
 import Axios from "axios";
@@ -154,7 +153,6 @@ const makeAfterMiddlewares = (
 	if (options.mode === "spo-df" || options.mode === "spo") {
 		const { credentials, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
-		const clientConfig = getMicrosoftConfiguration();
 
 		readyP = async (req: express.Request, res: express.Response) => {
 			if (req.baseUrl === "/favicon.ico") {
@@ -164,15 +162,11 @@ const makeAfterMiddlewares = (
 
 			const [odspTokens, pushTokens] = await Promise.all([
 				tokenManager.getOdspTokens(
-					server,
-					clientConfig,
 					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
 				),
 				tokenManager.getPushTokens(
-					server,
-					clientConfig,
 					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
@@ -220,10 +214,8 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig } = getTestTenantCredentials(options.mode);
 				const tokens = await tokenManager.getOdspTokens(
-					server,
-					getMicrosoftConfiguration(),
 					tokenConfig,
 					undefined /* forceRefresh */,
 					true /* forceReauth */,
@@ -242,11 +234,9 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig } = getTestTenantCredentials(options.mode);
 				options.pushAccessToken = (
 					await tokenManager.getPushTokens(
-						server,
-						getMicrosoftConfiguration(),
 						tokenConfig,
 						undefined /* forceRefresh */,
 						true /* forceReauth */,

@@ -90,10 +90,10 @@ export function getOdspCredentials(
 			"login__odsp__fic__test__users was defined but does not have any valid usernames.",
 		);
 	}
-	return usernames.map((username) => ficLoginCredentials(username, odspEndpointName));
+	return usernames.map((username) => getFicLoginCredentials(username, odspEndpointName));
 }
 
-const ficLoginCredentials = (
+const getFicLoginCredentials = (
 	username: string,
 	odspEndpointName: OdspEndpoint,
 ): LoginCredentials => {
