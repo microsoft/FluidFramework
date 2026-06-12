@@ -11,8 +11,10 @@ import { DataProcessingError } from "@fluidframework/telemetry-utils/internal";
 import {
 	createResponseError,
 	exceptionToResponse,
+	responseExceptionMetadataSym,
 	responseToException,
 } from "../dataStoreHelpers.js";
+import type { IErrorWithResponseExceptionMetadata } from "../dataStoreHelpers.js";
 
 class TestError extends Error {
 	public readonly sentinel = "test";
@@ -86,5 +88,19 @@ describe("createResponseError", () => {
 		const response2 = exceptionToResponse(exception);
 		assert.strict.equal(response2.status, 404);
 		assert.strict.equal(response2.headers, headers);
+	});
+
+	it("stores response exception metadata in the symbol-indexed bag", () => {
+		const headers = { tombstone: true };
+		const response = createResponseError(404, "not found", { url: "/foo" }, headers);
+		const exception = responseToException(response, { url: "/foo" }) as ResponseExceptionLike &
+			IErrorWithResponseExceptionMetadata;
+
+		assert.deepStrictEqual(exception[responseExceptionMetadataSym], {
+			code: 404,
+			underlyingResponseHeaders: headers,
+		});
+		assert.strict.equal(exception.code, 404);
+		assert.strict.equal(exception.underlyingResponseHeaders, headers);
 	});
 });

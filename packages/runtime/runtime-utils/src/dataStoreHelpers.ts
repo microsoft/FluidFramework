@@ -20,7 +20,6 @@ import {
 	type ITelemetryPropertiesExt,
 } from "@fluidframework/telemetry-utils/internal";
 
-//* CPLT add doc comment
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
 	message: string;
@@ -29,35 +28,76 @@ interface IResponseException extends Error {
 	underlyingResponseHeaders?: Record<string, unknown>;
 }
 
-//* CPLT add doc comment
+/**
+ * Internal metadata preserved on errors that roundtrip through an {@link IResponse}.
+ * @internal
+ */
+export interface IResponseExceptionMetadata {
+	code: number;
+	underlyingResponseHeaders?: Record<string, unknown>;
+}
+
 interface IResponseWithOriginalError extends IResponse {
 	originalError?: unknown;
 }
 
-//* CPLT add doc comment
+/**
+ * Symbol used to store internal response exception metadata on an Error object.
+ * @internal
+ */
+export const responseExceptionMetadataSym = Symbol("responseExceptionMetadata");
+
+/**
+ * Error shape carrying internal response exception metadata via a symbol-indexed property.
+ * @internal
+ */
+export type IErrorWithResponseExceptionMetadata = Error & {
+	[responseExceptionMetadataSym]: IResponseExceptionMetadata;
+};
+
 function mergeResponseExceptionMetadata<T extends Error>(
 	error: T,
 	response: IResponse,
 ): T & IResponseException {
-	const mergedError = error as T & Partial<IResponseException>;
-	Object.defineProperties(mergedError, {
+	const responseExceptionMetadata: IResponseExceptionMetadata = {
+		code: response.status,
+		underlyingResponseHeaders: response.headers,
+	};
+
+	// This type accounts for the properties defined below
+	const mergedErrorWithMetadata = error as T &
+		IErrorWithResponseExceptionMetadata &
+		IResponseException;
+
+	// Attach the metadata to the error object itself
+	Object.defineProperty(mergedErrorWithMetadata, responseExceptionMetadataSym, {
+		value: responseExceptionMetadata,
+		writable: true,
+		configurable: true,
+	});
+	// Add getters for the IResponseException properties that pull from the metadata, for back-compat
+	Object.defineProperties(mergedErrorWithMetadata, {
 		errorFromRequestFluidObject: {
-			value: true,
-			writable: true,
+			get() {
+				return true;
+			},
 			configurable: true,
 		},
 		code: {
-			value: response.status,
-			writable: true,
+			get() {
+				return mergedErrorWithMetadata[responseExceptionMetadataSym].code;
+			},
 			configurable: true,
 		},
 		underlyingResponseHeaders: {
-			value: response.headers,
-			writable: true,
+			get() {
+				return mergedErrorWithMetadata[responseExceptionMetadataSym].underlyingResponseHeaders;
+			},
 			configurable: true,
 		},
 	} satisfies Partial<Record<keyof IResponseException, unknown>>);
-	return mergedError as T & IResponseException;
+
+	return mergedErrorWithMetadata;
 }
 
 /**
