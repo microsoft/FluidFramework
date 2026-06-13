@@ -51,6 +51,7 @@ declare type current_as_old_for_Interface_ContainerDevtoolsProps = requireAssign
  * typeValidation.broken:
  * "Interface_DevtoolsProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_DevtoolsProps = requireAssignableTo<TypeOnly<current.DevtoolsProps>, TypeOnly<old.DevtoolsProps>>
 
 /*
@@ -69,6 +70,7 @@ declare type current_as_old_for_Interface_IDevtools = requireAssignableTo<TypeOn
  * typeValidation.broken:
  * "Interface_IDevtoolsLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDevtoolsLogger = requireAssignableTo<TypeOnly<current.IDevtoolsLogger>, TypeOnly<old.IDevtoolsLogger>>
 
 /*

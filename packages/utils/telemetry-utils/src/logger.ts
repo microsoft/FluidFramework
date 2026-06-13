@@ -430,7 +430,7 @@ function toEitherTelemetryLoggerExt(
  * exactly an {@link ITelemetryLoggerExt}.
  */
 export function createChildLogger(props?: {
-	logger?: ITelemetryBaseLogger;
+	logger?: ITelemetryBaseLogger | undefined;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): TelemetryLoggerExt & ITelemetryLoggerExt {
@@ -453,8 +453,8 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static create(
-		baseLogger?: ITelemetryBaseLogger,
-		namespace?: string,
+		baseLogger: ITelemetryBaseLogger | undefined,
+		namespace: string | undefined,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
@@ -846,7 +846,7 @@ export class PerformanceEvent {
 		this.performanceEndMark();
 
 		// To prevent the event from being reported again later
-		this.event = undefined;
+		delete this.event;
 	}
 
 	public end(props?: ITelemetryPropertiesExt): void {
@@ -854,7 +854,7 @@ export class PerformanceEvent {
 		this.performanceEndMark();
 
 		// To prevent the event from being reported again later
-		this.event = undefined;
+		delete this.event;
 	}
 
 	private performanceEndMark(): void {
@@ -862,7 +862,7 @@ export class PerformanceEvent {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
 			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
-			this.startMark = undefined;
+			delete this.startMark;
 		}
 	}
 
@@ -872,7 +872,7 @@ export class PerformanceEvent {
 		}
 
 		// To prevent the event from being reported again later
-		this.event = undefined;
+		delete this.event;
 	}
 
 	/**
