@@ -23,9 +23,8 @@ This can include non-deprecated versions of externally accessible APIs and/or AP
 ## ITelemetryLoggerExt external deprecation
 
 Internally `TelemetryLoggerExt` maybe used to access internal, extended logger. Externally `ITelemetryLoggerExt` is passed around.
-Until a breaking change can be made these two types are structurally equivalent and must remain so.
-The one difference is that `ITelemetryLoggerExt` has `@deprecated` methods to discourage use.
-Once breaking change can be made, `ITelemetryLoggerExt` will become a branded type without any viable methods and thus neither external nor internal code may act upon it.
+Temporarily, `ITelemetryLoggerExt` imported from `@fluidframework/telemetry-utils/internal` is a type alias to `TelemetryLoggerExt` to reduce internal churn.
+All such imports should be replaced with direct `TelemetryLoggerExt` use.
 Internally, `extractTelemetryLoggerExt` can be used to get `TelemetryLoggerExt` from `ITelemetryLoggerExt`.
 These transitions are already put in place and should be preserved.
 Similarly, `toITelemetryLoggerExt` can be used to go the other direction.
