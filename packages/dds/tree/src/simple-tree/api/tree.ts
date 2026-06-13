@@ -403,7 +403,6 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
-	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -416,7 +415,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * As persisted metadata becomes more supported, how it interacts with isEquivalent and upgradeSchema should be clarified:
 	 * for now the docs are being left somewhat vague to allow flexibility in this area.
 	 */
-	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+	upgradeSchema(): void;
 
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
@@ -425,12 +424,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
-	 * @param upgrades - Staged schema upgrades to enable while generating the initial stored schema.
 	 */
-	initialize(
-		content: InsertableTreeFieldFromImplicitField<TSchema>,
-		upgrades?: Readonly<Record<string, SchemaUpgrade>>,
-	): void;
+	initialize(content: InsertableTreeFieldFromImplicitField<TSchema>): void;
 
 	/**
 	 * Events for the tree.
@@ -455,6 +450,29 @@ export interface TreeViewAlpha<
 
 	set root(newRoot: InsertableField<TSchema>);
 
+	/**
+	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
+	 * this can be used to modify the stored schema to make it match the view schema.
+	 * @remarks
+	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
+	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 *
+	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
+	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 *
+	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
+	 */
+	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+
+	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 * @param upgrades - Staged schema upgrades to enable while generating the initial stored schema.
+	 */
 	initialize(
 		content: InsertableField<TSchema>,
 		upgrades?: Readonly<Record<string, SchemaUpgrade>>,

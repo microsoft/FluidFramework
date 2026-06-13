@@ -9,7 +9,7 @@ Enable staged schema upgrades at runtime
 SharedTree now supports enabling selected staged schema upgrades when initializing a document or upgrading its stored schema.
 This lets applications deploy code that understands a schema change before enabling that change in documents, making it easier to separate code rollout from feature rollout.
 
-Pass an application-owned `upgrades` property bag to `TreeView.initialize` or `TreeView.upgradeSchema` to include the corresponding staged schema upgrades in the generated stored schema.
+Pass an application-owned `upgrades` property bag to the alpha `TreeViewAlpha.initialize` or `TreeViewAlpha.upgradeSchema` APIs to include the corresponding staged schema upgrades in the generated stored schema.
 The property names are chosen by the application, which makes them convenient to wire to feature flags or other rollout controls.
 
 The same API also makes staged schema upgrades easier to test before production rollout.
@@ -20,7 +20,7 @@ This gives applications a direct way to exercise future document shapes without 
 const enableFooUpgrade = featureFlags.enableFooUpgrade;
 const upgrades = enableFooUpgrade ? { enableFooUpgrade: fooSchemaUpgrade } : undefined;
 
-const view = tree.viewWith(new TreeViewConfiguration({ schema: AppSchema }));
+const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: AppSchema })));
 
 if (view.compatibility.canInitialize) {
 	view.initialize(initialContent, upgrades);
@@ -37,7 +37,7 @@ For example, if `fooSchemaUpgrade` enables a staged type, callers can opt docume
 ```typescript
 const upgrades = enableFooUpgrade ? { enableFooUpgrade: fooSchemaUpgrade } : undefined;
 
-view.upgradeSchema(upgrades);
+asAlpha(view).upgradeSchema(upgrades);
 
 // Once the schema op is sequenced, this document's stored schema includes the
 // staged upgrade and clients with compatible code can use the upgraded shape.

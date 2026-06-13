@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
+import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
@@ -120,7 +121,7 @@ describe("staged allowed type upgrade", () => {
 			viewB1.root = "test";
 		});
 
-		const viewB2 = treeB2.viewWith(configB);
+		const viewB2 = asAlpha(treeB2.viewWith(configB));
 		viewB2.upgradeSchema({ enableFooUpgrade: stringUpgrade });
 		viewB2.root = "test";
 		synchronizeTrees();
@@ -163,7 +164,7 @@ describe("staged allowed type upgrade", () => {
 		// B cannot write strings to the root.
 		assert.throws(() => (viewB1.root = "test"));
 
-		const viewB2 = treeB2.viewWith(configB);
+		const viewB2 = asAlpha(treeB2.viewWith(configB));
 		viewB2.upgradeSchema({ enableFooUpgrade: stringUpgrade });
 		// Use the newly enabled schema.
 		viewB2.root = "test";
@@ -185,7 +186,7 @@ describe("staged allowed type upgrade", () => {
 		viewA.initialize(5);
 		provider.synchronizeMessages();
 
-		const viewB = treeB.viewWith(new TreeViewConfiguration({ schema: schemaB }));
+		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
 		viewB.upgradeSchema({ enableFooUpgrade: stringUpgrade });
 		viewB.root = "test";
 		provider.synchronizeMessages();
@@ -368,7 +369,7 @@ describe("staged optional upgrade", () => {
 			viewB1.root = undefined;
 		});
 
-		const viewB2 = treeB2.viewWith(configB);
+		const viewB2 = asAlpha(treeB2.viewWith(configB));
 		viewB2.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
 		viewB2.root = undefined;
 		synchronizeTrees();
@@ -389,7 +390,7 @@ describe("staged optional upgrade", () => {
 		viewA.initialize(5);
 		provider.synchronizeMessages();
 
-		const viewB = treeB.viewWith(new TreeViewConfiguration({ schema: schemaB }));
+		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
 		viewB.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
 		viewB.root = undefined;
 		provider.synchronizeMessages();

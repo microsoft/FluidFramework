@@ -6,13 +6,13 @@
 
 Runtime schema upgrades let an application opt specific staged schema upgrades into the stored schema at document initialization or schema upgrade time.
 A staged schema upgrade is a schema upgrade that is declared in view schema but omitted from stored schema unless the application explicitly enables it.
-The application controls this with an optional `upgrades` parameter whose type is an application-owned property bag mapping string names to `SchemaUpgrade` values:
+The application controls this with an optional alpha API `upgrades` parameter whose type is an application-owned property bag mapping string names to `SchemaUpgrade` values:
 
 ```typescript
 upgrades?: Readonly<Record<string, SchemaUpgrade>>;
 ```
 
-The implementation currently uses this inline type shape on the public APIs rather than exporting a dedicated `SchemaUpgrades` alias.
+The implementation currently exposes this inline type shape on `TreeViewAlpha` rather than exporting a dedicated `SchemaUpgrades` alias.
 
 The property names are chosen by the application, for example `enableFooUpgrade`.
 The runtime uses the `SchemaUpgrade` values to decide which staged schema upgrades should be included in the stored schema.
@@ -65,11 +65,13 @@ Documents created after the rollback do not include that upgrade unless the flag
 
 ## API Shape
 
-Both schema-writing entry points accept an optional `upgrades` parameter:
+The alpha versions of both schema-writing entry points accept an optional `upgrades` parameter:
 
 ```typescript
-view.initialize(content, upgrades);
-view.upgradeSchema(upgrades);
+const alphaView = asAlpha(view);
+
+alphaView.initialize(content, upgrades);
+alphaView.upgradeSchema(upgrades);
 ```
 
 where `upgrades` is a property bag of application-owned names to `SchemaUpgrade` values:
@@ -79,13 +81,13 @@ const upgrades = ecsFlags.enableFooUpgrade
 	? { enableFooUpgrade: fooSchemaUpgrade }
 	: undefined;
 
-view.upgradeSchema(upgrades);
+asAlpha(view).upgradeSchema(upgrades);
 ```
 
 or, for initialization:
 
 ```typescript
-view.initialize(initialContent, {
+asAlpha(view).initialize(initialContent, {
 	enableFooUpgrade: fooSchemaUpgrade,
 });
 ```
@@ -99,7 +101,7 @@ No staged schema members are included by default.
 
 ## Initialization Versus Upgrade
 
-`upgradeSchema` and `initialize` both accept `upgrades`, but they exercise different paths.
+`TreeViewAlpha.upgradeSchema` and `TreeViewAlpha.initialize` both accept `upgrades`, but they exercise different paths.
 
 `upgradeSchema(upgrades)` adds selected staged schema members to an existing document's stored schema.
 This is the production path for enabling a staged schema upgrade after code saturation.
@@ -124,8 +126,8 @@ This feature threads caller-controlled upgrade selection into those conversions:
 1. Update `toUpgradeSchema(root, upgrades?)` and `toInitialSchema(root, upgrades?)` to accept the optional bag.
 1. Snapshot the bag's values into a local set of enabled `SchemaUpgrade` values before constructing generation options.
 1. Generate stored schema with options that include a staged schema member only when its `SchemaUpgrade` value is present in that set.
-1. Thread `upgrades` from `TreeView.upgradeSchema(upgrades?)` into `toUpgradeSchema`.
-1. Thread `upgrades` from `TreeView.initialize(content, upgrades?)` into `toInitialSchema` and use that same generated schema for initial content preparation and validation.
+1. Thread `upgrades` from `TreeViewAlpha.upgradeSchema(upgrades?)` into `toUpgradeSchema`.
+1. Thread `upgrades` from `TreeViewAlpha.initialize(content, upgrades?)` into `toInitialSchema` and use that same generated schema for initial content preparation and validation.
 
 The public `upgrades` bag should be treated as readonly input.
 The runtime should snapshot the values during the call so later application mutation of the original object cannot change generation behavior or interact poorly with schema-conversion caching.
@@ -157,8 +159,8 @@ The mechanism should preserve the current restrictive default:
 
 Tests should cover both API entry points, the staged schema member kinds that are currently supported, and the rollback-oriented production behavior.
 
-Generic runtime API tests should cover shared behavior such as `initialize(content, upgrades)` accepting enabled staged content and rejecting the same content when `upgrades` is omitted.
-More specialized staged schema tests should exercise `upgradeSchema(upgrades)` for each staged schema feature, such as staged allowed types and staged optional fields.
+Generic runtime API tests should cover shared behavior such as `TreeViewAlpha.initialize(content, upgrades)` accepting enabled staged content and rejecting the same content when `upgrades` is omitted.
+More specialized staged schema tests should exercise `TreeViewAlpha.upgradeSchema(upgrades)` for each staged schema feature, such as staged allowed types and staged optional fields.
 
 For `upgradeSchema`:
 
