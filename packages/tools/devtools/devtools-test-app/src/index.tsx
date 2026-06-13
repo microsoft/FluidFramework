@@ -30,7 +30,7 @@ devtoolsRoot.render(<DevtoolsView />);
  * @remarks
  * `<App />` is intentionally not wrapped in `<StrictMode>`. `App` initializes a singleton Devtools
  * instance via `initializeDevtools` and disposes it in an effect cleanup. Under StrictMode, React
- * intentionally double-invokes effects on mount (setup -> cleanup -> setup), which disposes that
+ * intentionally double-invokes effects on mount (setup, cleanup, setup), which disposes that
  * singleton and leaves subsequent renders pointing at a disposed instance ("The devtools instance
  * has been disposed"). The app is not resilient to that remount cycle, so StrictMode is omitted here.
  */

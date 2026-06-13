@@ -102,7 +102,6 @@ const DataObjectGridView: FC<IDataObjectGridViewProps> = (
 
 	// Render nothing if there are no items
 	if (model.getItems().length === 0) {
-		// eslint-disable-next-line unicorn/no-null -- Prefer returning null for components rendering no content
 		return null;
 	}
 
@@ -155,7 +154,6 @@ const DataObjectGridView: FC<IDataObjectGridViewProps> = (
 			cols={36}
 			rowHeight={50}
 			width={1800}
-			// eslint-disable-next-line unicorn/no-null -- null is required for the GridLayout
 			compactType={null}
 			isDroppable={editable}
 			isDraggable={editable}
