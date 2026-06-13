@@ -13,6 +13,8 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/unbound-method": "off",
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/no-nested-ternary": "off",
+			// In React components it is convention to use null to represent the absence of render output.
+			"unicorn/no-null": "off",
 			"unicorn/no-useless-undefined": "off",
 			"no-restricted-imports": ["error", "@fluentui/react"],
 			"import-x/no-unassigned-import": [
