@@ -24,13 +24,16 @@ on:
   check_run:
     types: [created, completed]
 
-# Use concurrency to ensure the completed event wins over the created event for a given SHA — so the
-# results sticky is never clobbered by a still-running "pending" handler. Cross-SHA staleness on the PR
-# path (push A then B, then A's build completes anyway) is handled in identify-from-pr-build: it searches
-# for an open PR whose current head SHA matches the just-completed build, so an event for a stale SHA
-# finds no PR and can't write anything.
+# Use concurrency to ensure the completed event wins over the created event for a given (SHA, check
+# name) — so the results sticky is never clobbered by a still-running "pending" handler. The check name
+# is part of the group key because each ADO sub-check fires its own check_run event on the same SHA
+# (e.g. `Build - client packages (🔒 SDLSources ...)`, `Build - client packages (Build Stage Build)`)
+# and we don't want those to cancel an in-flight acknowledge-build / identify-* run that's processing a
+# matching event. Cross-SHA staleness on the PR path (push A then B, then A's build completes anyway)
+# is handled in identify-from-pr-build: it searches for an open PR whose current head SHA matches the
+# just-completed build, so an event for a stale SHA finds no PR and can't write anything.
 concurrency:
-  group: pr-bundle-size-${{ github.event.check_run.head_sha }}
+  group: pr-bundle-size-${{ github.event.check_run.head_sha }}-${{ github.event.check_run.name }}
   cancel-in-progress: true
 
 permissions:
