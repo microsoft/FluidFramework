@@ -200,9 +200,8 @@ A new checkpoint should be designated no less than 6 months after the previous o
 **To designate a new checkpoint:**
 
 1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from the `futureCheckpoints` array in the same file.
-2. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to refresh the per-version compat workspaces and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
-3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
-4. Include a changeset noting the new boundary so it appears in the release notes.
+2. Run `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions` (from any directory in the client workspace) to refresh the per-version compat workspaces, update the installed versions used by e2e tests, and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
+3. Include a changeset noting the new boundary so it appears in the release notes.
 
 ## Tightening Runtime Enforcement
 

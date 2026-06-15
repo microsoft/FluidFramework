@@ -9,7 +9,7 @@
  * Designated checkpoints drive the runtime test matrix. Future / TBD checkpoints are
  * listed below for documentation purposes only. Both sets populate the table in
  * `CompatibilityCheckpoints.md` at the repo root; run
- * `pnpm --filter @fluid-private/test-version-utils run update-compat-versions`
+ * `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions`
  * after any change to regenerate that table (and the compat workspaces).
  *
  * For more information, see CrossClientCompatibility.md, CrossClientCompatibilityDevGuide.md,
@@ -248,7 +248,7 @@ const tableEndMarker = "<!-- GENERATED-TABLE-END -->";
 
 const doNotEditNotice = [
 	"<!-- NOTE: This table is automatically generated. Do not update it directly. -->",
-	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm --filter @fluid-private/test-version-utils run update-compat-versions\` -->`,
+	`<!-- To modify this table, edit \`${designatedSourceRelativePath}\` then run \`pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions\` -->`,
 ].join("\n");
 
 /**
