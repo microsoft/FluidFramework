@@ -9,15 +9,11 @@ import type {
 	IChannelServices,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import type { SharedObjectCore } from "@fluidframework/shared-object-base/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import type {
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-} from "./interfaces.js";
+import type { IConsensusOrderedCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -52,19 +48,14 @@ export class ConsensusQueueFactory<T>
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<
-		IConsensusOrderedCollection<T> & SharedObjectCore<IConsensusOrderedCollectionEvents<T>>
-	> {
+	): Promise<IConsensusOrderedCollection<T>> {
 		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass<T>(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
-	public create(
-		document: IFluidDataStoreRuntime,
-		id: string,
-	): IConsensusOrderedCollection<T> & SharedObjectCore<IConsensusOrderedCollectionEvents<T>> {
+	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection<T> {
 		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusQueueClass<T>(id, document, this.attributes);
 		collection.initializeLocal();

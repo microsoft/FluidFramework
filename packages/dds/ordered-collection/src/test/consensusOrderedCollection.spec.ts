@@ -6,9 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { type IGCTestProvider, runGCTests } from "@fluid-private/test-dds-utils";
+import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/legacy";
 import type { IChannelServices } from "@fluidframework/datastore-definitions/legacy";
-import type { SharedObjectCore } from "@fluidframework/shared-object-base/legacy";
+import { compareFluidHandles } from "@fluidframework/runtime-utils";
+import { toFluidHandleInternal } from "@fluidframework/runtime-utils/legacy";
 import {
 	MockContainerRuntimeFactory,
 	MockContainerRuntimeFactoryForReconnection,
@@ -17,10 +19,7 @@ import {
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/legacy";
 
-import type {
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionEvents,
-} from "@fluidframework/ordered-collection/legacy";
+import type { IConsensusOrderedCollection } from "@fluidframework/ordered-collection/legacy";
 import { ConsensusResult } from "@fluidframework/ordered-collection/legacy";
 
 import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
@@ -43,8 +42,7 @@ class TestConsensusQueue extends ConsensusQueueClass<unknown> {
 function createConnectedCollection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): IConsensusOrderedCollection<unknown> &
-	SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>> {
+): IConsensusOrderedCollection<unknown> {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -58,10 +56,7 @@ function createConnectedCollection(
 	return testCollection;
 }
 
-function createLocalCollection(
-	id: string,
-): IConsensusOrderedCollection<unknown> &
-	SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>> {
+function createLocalCollection(id: string): IConsensusOrderedCollection<unknown> {
 	const factory = new ConsensusQueueFactory();
 	return factory.create(new MockFluidDataStoreRuntime(), id);
 }
@@ -110,12 +105,10 @@ describe("ConsensusOrderedCollection", () => {
 	function generate(
 		input: unknown[],
 		output: unknown[],
-		creator: () => IConsensusOrderedCollection<unknown> &
-			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>,
+		creator: () => IConsensusOrderedCollection<unknown>,
 		processMessages: () => void,
 	): void {
-		let testCollection: IConsensusOrderedCollection<unknown> &
-			SharedObjectCore<IConsensusOrderedCollectionEvents<unknown>>;
+		let testCollection: IConsensusOrderedCollection<unknown>;
 
 		async function removeItem(): Promise<unknown> {
 			const resP = acquireAndComplete(testCollection);
@@ -162,9 +155,9 @@ describe("ConsensusOrderedCollection", () => {
 
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
 
-				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
+				assert(compareFluidHandles(acquiredValue, handle));
 				const dataStore = (await handle.get()) as ConsensusQueueClass<unknown>;
-				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
+				assert(compareFluidHandles(dataStore.handle, testCollection.handle));
 
 				assert.strictEqual(await removeItem(), undefined);
 			});
@@ -583,7 +576,7 @@ describe("ConsensusOrderedCollection", () => {
 
 	describe("Garbage Collection", () => {
 		class GCOrderedCollectionProvider implements IGCTestProvider {
-			private _expectedRoutes: string[] = [];
+			private expectedRouteHandles: IFluidHandle[] = [];
 			private subCollectionCount = 0;
 			private readonly collection: IConsensusOrderedCollection;
 			private readonly containerRuntimeFactory: MockContainerRuntimeFactory;
@@ -614,7 +607,9 @@ describe("ConsensusOrderedCollection", () => {
 			}
 
 			public get expectedOutboundRoutes(): string[] {
-				return this._expectedRoutes;
+				return this.expectedRouteHandles.map(
+					(routeHandle) => toFluidHandleInternal(routeHandle).absolutePath,
+				);
 			}
 
 			public async addOutboundRoutes(): Promise<void> {
@@ -622,15 +617,15 @@ describe("ConsensusOrderedCollection", () => {
 					`subCollection-${++this.subCollectionCount}`,
 				);
 				await this.addItem(subCollection.handle);
-				this._expectedRoutes.push(subCollection.handle.absolutePath);
+				this.expectedRouteHandles.push(subCollection.handle);
 			}
 
 			public async deleteOutboundRoutes(): Promise<void> {
 				const deletedHandle = (await this.removeItem()) as IFluidHandleInternal;
 				assert(deletedHandle !== undefined, "Route must be added before deleting");
 				// Remove deleted handle's route from expected routes.
-				this._expectedRoutes = this._expectedRoutes.filter(
-					(route) => route !== deletedHandle.absolutePath,
+				this.expectedRouteHandles = this.expectedRouteHandles.filter(
+					(route) => !compareFluidHandles(route, deletedHandle),
 				);
 			}
 
@@ -648,10 +643,7 @@ describe("ConsensusOrderedCollection", () => {
 					},
 				};
 				await this.addItem(containingObject);
-				this._expectedRoutes.push(
-					subCollection1.handle.absolutePath,
-					subCollection2.handle.absolutePath,
-				);
+				this.expectedRouteHandles.push(subCollection1.handle, subCollection2.handle);
 			}
 		}
 
