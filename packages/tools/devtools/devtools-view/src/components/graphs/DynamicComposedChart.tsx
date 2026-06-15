@@ -27,11 +27,15 @@ import {
 
 import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
 
-interface GraphColorPalette {
-	axisTick: string;
-	cartesianGrid: string;
-	toolTipBackround: string;
-	graphColors: string[];
+/**
+ * The subset of the props Recharts injects into a custom axis tick renderer that we consume.
+ */
+interface AxisTickProps {
+	x?: number;
+	y?: number;
+	payload?: {
+		value: string | number;
+	};
 }
 
 /**
@@ -132,7 +136,15 @@ export interface DynamicComposedChartProps {
  * High contrast colors sourced from Fluent Ui React color palette
  * https://react.fluentui.dev/?path=/docs/theme-colors--page
  */
-const createGraphColorPalette = (themeMode: ThemeOption, theme: Theme): GraphColorPalette => {
+const createGraphColorPalette = (
+	themeMode: ThemeOption,
+	theme: Theme,
+): {
+	axisTick: string;
+	cartesianGrid: string;
+	toolTipBackround: string;
+	graphColors: string[];
+} => {
 	switch (themeMode) {
 		case ThemeOption.Light:
 		case ThemeOption.Dark:
@@ -164,72 +176,6 @@ const createGraphColorPalette = (themeMode: ThemeOption, theme: Theme): GraphCol
 		}
 	}
 };
-
-/**
- * Renders a custom view for the X Axis displayed on the Rechart chart
- * @remarks Recharts doesn't have a type for the arguments passed to this function
- */
-interface CustomizedXAxisTickProps {
-	graphColorPalette: GraphColorPalette;
-	x?: number;
-	y?: number;
-	payload?: {
-		value: string;
-	};
-}
-
-function CustomizedXAxisTick({
-	graphColorPalette,
-	x,
-	y,
-	payload,
-}: CustomizedXAxisTickProps): ReactElement {
-	return (
-		<g transform={`translate(${x},${y})`}>
-			<text
-				x={0}
-				y={0}
-				dy={16}
-				textAnchor="end"
-				fill={graphColorPalette.axisTick}
-				transform="rotate(-20)"
-				fontSize={14}
-			>
-				{payload?.value}
-			</text>
-		</g>
-	);
-}
-
-/**
- * Renders a custom view for the Y Axis displayed on the Rechart chart
- * @remarks Recharts doesn't have a type for the arguments passed to this function
- */
-interface CustomizedYAxisTickProps {
-	graphColorPalette: GraphColorPalette;
-	yAxisUnitDisplayName?: string;
-	x?: number;
-	y?: number;
-	payload?: {
-		value: string | number;
-	};
-}
-
-function CustomizedYAxisTick({
-	graphColorPalette,
-	yAxisUnitDisplayName,
-	x,
-	y,
-	payload,
-}: CustomizedYAxisTickProps): ReactElement {
-	return (
-		<g>
-			<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
-				{`${payload?.value ?? ""}${yAxisUnitDisplayName ?? ""}`}
-			</text>
-		</g>
-	);
-}
 
 /**
  * This component is a wrapper over Recharts ComposedChart component that provides
@@ -296,6 +242,44 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 					);
 				})}
 			</div>
+		);
+	};
+
+	/**
+	 * Renders a custom view for the X Axis displayed on the Rechart chart
+	 * @remarks Recharts doesn't have a type for the arguments passed to this function
+	 */
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedXAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
+		return (
+			<g transform={`translate(${x},${y})`}>
+				<text
+					x={0}
+					y={0}
+					dy={16}
+					textAnchor="end"
+					fill={graphColorPalette.axisTick}
+					transform="rotate(-20)"
+					fontSize={14}
+				>
+					{payload?.value}
+				</text>
+			</g>
+		);
+	};
+
+	/**
+	 * Renders a custom view for the Y Axis displayed on the Rechart chart
+	 * @remarks Recharts doesn't have a type for the arguments passed to this function
+	 */
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedYAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
+		return (
+			<g>
+				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
+					{`${payload?.value ?? ""}${props.yAxisUnitDisplayName ?? ""}`}
+				</text>
+			</g>
 		);
 	};
 
@@ -435,20 +419,10 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis
-					dataKey={"x"}
-					tick={<CustomizedXAxisTick graphColorPalette={graphColorPalette} />}
-				>
+				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
 					<Label value="Timestamp" offset={12} position="bottom" />
 				</XAxis>
-				<YAxis
-					tick={
-						<CustomizedYAxisTick
-							graphColorPalette={graphColorPalette}
-							yAxisUnitDisplayName={props.yAxisUnitDisplayName}
-						/>
-					}
-				/>
+				<YAxis tick={<CustomizedYAxisTick />} />
 				<Tooltip
 					contentStyle={{
 						fontSize: "14px",
