@@ -2477,6 +2477,7 @@ export class ContainerRuntime
 			return;
 		}
 		this._disposed = true;
+		console.log("ContainerRuntime.dispose() called — bundle-size workflow canary");
 
 		// The ContainerRuntimeDisposed event is redundant with the loader's ContainerDispose event
 		// (see #27126) and can be removed once the change for ContainerDispose has saturated in telemetry.
