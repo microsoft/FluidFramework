@@ -303,6 +303,7 @@ declare type current_as_old_for_TypeAlias_AzureConnectionConfigType = requireAss
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<old.CompatibilityMode>, TypeOnly<current.CompatibilityMode>>
 
 /*
@@ -312,6 +313,7 @@ declare type old_as_current_for_TypeAlias_CompatibilityMode = requireAssignableT
  * typeValidation.broken:
  * "TypeAlias_CompatibilityMode": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_CompatibilityMode = requireAssignableTo<TypeOnly<current.CompatibilityMode>, TypeOnly<old.CompatibilityMode>>
 
 /*

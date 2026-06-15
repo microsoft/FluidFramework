@@ -4,8 +4,6 @@
 
 ```ts
 
-export { CompatibilityMode }
-
 // @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
 
@@ -16,17 +14,7 @@ export class TinyliciousClient {
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
-    // @deprecated
-    createContainer<TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: TinyliciousContainerServices;
-    }>;
     getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
-        container: IFluidContainer<TContainerSchema>;
-        services: TinyliciousContainerServices;
-    }>;
-    // @deprecated
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: TinyliciousContainerServices;
     }>;
