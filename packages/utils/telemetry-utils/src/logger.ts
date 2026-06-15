@@ -807,7 +807,7 @@ export class PerformanceEvent {
 
 	private event: ITelemetryGenericEventExt | undefined;
 	private readonly startTime = performanceNow();
-	private startMark?: string;
+	private startMark: string | undefined;
 
 	private constructor(
 		private readonly logger: TelemetryLoggerExt,
@@ -862,7 +862,7 @@ export class PerformanceEvent {
 			const endMark = `${this.event.eventName}-end`;
 			window.performance.mark(endMark);
 			window.performance.measure(`${this.event.eventName}`, this.startMark, endMark);
-			delete this.startMark;
+			this.startMark = undefined;
 		}
 	}
 
