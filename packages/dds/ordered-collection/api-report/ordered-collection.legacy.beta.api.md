@@ -40,12 +40,7 @@ export class ConsensusOrderedCollection<T = any> extends SharedObject<IConsensus
 export const ConsensusQueue: ISharedObjectKind<IConsensusOrderedCollection<any>> & SharedObjectKind<IConsensusOrderedCollection<any>>;
 
 // @beta @deprecated @legacy
-export type ConsensusQueue<T = any> = ConsensusQueueClass<T>;
-
-// @beta @deprecated @legacy
-export class ConsensusQueueClass<T = any> extends ConsensusOrderedCollection<T> {
-    constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
-}
+export type ConsensusQueue<T = any> = IConsensusOrderedCollection<T>;
 
 // @beta @legacy (undocumented)
 export enum ConsensusResult {

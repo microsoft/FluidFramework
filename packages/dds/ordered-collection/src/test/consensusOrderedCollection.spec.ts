@@ -17,10 +17,7 @@ import {
 } from "@fluidframework/test-runtime-utils/internal";
 
 import { ConsensusOrderedCollection } from "../consensusOrderedCollection.js";
-import {
-	ConsensusQueueFactory,
-	type ConsensusQueue,
-} from "../consensusOrderedCollectionFactory.js";
+import { ConsensusQueueFactory } from "../consensusOrderedCollectionFactory.js";
 import { ConsensusQueueClass } from "../consensusQueue.js";
 import { ConsensusResult, type IConsensusOrderedCollection } from "../interfaces.js";
 import {
@@ -41,7 +38,7 @@ class TestConsensusQueue extends ConsensusQueueClass {
 function createConnectedCollection(
 	id: string,
 	runtimeFactory: MockContainerRuntimeFactory,
-): ConsensusQueue {
+): ConsensusQueueClass {
 	const dataStoreRuntime = new MockFluidDataStoreRuntime();
 	runtimeFactory.createContainerRuntime(dataStoreRuntime);
 	const services: IChannelServices = {
@@ -52,12 +49,12 @@ function createConnectedCollection(
 	const factory = new ConsensusQueueFactory();
 	const testCollection = factory.create(dataStoreRuntime, id);
 	testCollection.connect(services);
-	return testCollection as ConsensusQueue;
+	return testCollection as ConsensusQueueClass;
 }
 
-function createLocalCollection(id: string): ConsensusQueue {
+function createLocalCollection(id: string): ConsensusQueueClass {
 	const factory = new ConsensusQueueFactory();
-	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusQueue;
+	return factory.create(new MockFluidDataStoreRuntime(), id) as ConsensusQueueClass;
 }
 
 function createCollectionForReconnection(
@@ -155,7 +152,7 @@ describe("ConsensusOrderedCollection", () => {
 				const acquiredValue = (await removeItem()) as IFluidHandleInternal;
 
 				assert.strictEqual(acquiredValue.absolutePath, handle.absolutePath);
-				const dataStore = (await handle.get()) as ConsensusQueue;
+				const dataStore = (await handle.get()) as ConsensusQueueClass;
 				assert.strictEqual(dataStore.handle.absolutePath, testCollection.handle.absolutePath);
 
 				assert.strictEqual(await removeItem(), undefined);
