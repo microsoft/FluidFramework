@@ -51,7 +51,7 @@ USAGE
 
 FLAGS
   --base=<value>  (required) Base commit SHA — the merge-base on the target branch. The baseline of the comparison.
-  --head=<value>  (required) Head commit SHA — the PR's tip. The compare side of the comparison.
+  --head=<value>  (required) Head commit SHA — the PR's latest commit. The compare side of the comparison.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
