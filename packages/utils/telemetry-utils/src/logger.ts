@@ -805,7 +805,7 @@ export class PerformanceEvent {
 		return performanceNow() - this.startTime;
 	}
 
-	private event?: ITelemetryGenericEventExt;
+	private event: ITelemetryGenericEventExt | undefined;
 	private readonly startTime = performanceNow();
 	private startMark?: string;
 
@@ -846,7 +846,7 @@ export class PerformanceEvent {
 		this.performanceEndMark();
 
 		// To prevent the event from being reported again later
-		delete this.event;
+		this.event = undefined;
 	}
 
 	public end(props?: ITelemetryPropertiesExt): void {
@@ -854,7 +854,7 @@ export class PerformanceEvent {
 		this.performanceEndMark();
 
 		// To prevent the event from being reported again later
-		delete this.event;
+		this.event = undefined;
 	}
 
 	private performanceEndMark(): void {
@@ -872,7 +872,7 @@ export class PerformanceEvent {
 		}
 
 		// To prevent the event from being reported again later
-		delete this.event;
+		this.event = undefined;
 	}
 
 	/**
