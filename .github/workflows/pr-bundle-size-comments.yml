@@ -188,6 +188,7 @@ jobs:
             );
             const pr = search.nodes[0];
             if (!pr) {
+              core.info(`Affected PRs (0): no open PR matches head SHA ${sha}`);
               core.setOutput("prs", "[]");
               return;
             }
@@ -207,17 +208,19 @@ jobs:
               throw err;
             }
             if (!mb) {
-              core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to compare.`);
+              core.info(`Affected PRs (0): PR #${pr.number} has no shared history with ${pr.baseRefName}`);
               core.setOutput("prs", "[]");
               return;
             }
 
-            core.setOutput("prs", JSON.stringify([{
+            const affected = [{
               number: pr.number,
               head: pr.headRefOid,
               baseRef: pr.baseRefName,
               mergeBase: mb,
-            }]));
+            }];
+            core.info(`Affected PRs (1): #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName} mergeBase=${mb}`);
+            core.setOutput("prs", JSON.stringify(affected));
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
   # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
@@ -268,6 +271,14 @@ jobs:
                   baseRef: pr.base.ref,
                   mergeBase: mb,
                 });
+              }
+            }
+            if (affected.length === 0) {
+              core.info("Affected PRs (0): none");
+            } else {
+              core.info(`Affected PRs (${affected.length}):`);
+              for (const a of affected) {
+                core.info(`  - #${a.number} head=${a.head} base=${a.baseRef} mergeBase=${a.mergeBase}`);
               }
             }
             core.setOutput("prs", JSON.stringify(affected));
