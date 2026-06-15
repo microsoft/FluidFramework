@@ -3,30 +3,26 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-nodejs-modules
-import process from "node:process";
-
 import type { Middleware, Request, Response } from "webpack-dev-server";
 
-import { getOdspCredentials } from "./tenantUtils.js";
+import { getOdspCredentials, resolveOdspEnvironment } from "./tenantUtils.js";
 
 /**
  * Construct the set of middleware required to support the odsp example driver.
  *
  * @remarks
  * Relies on environment variables containing the test tenant and user information, which will be
- * automatically configured by running tenant-setup.
+ * automatically configured by running tenant-setup. All environment access and validation happens
+ * here at the entry point so that misconfiguration fails fast (before any token is requested) and
+ * resolved, strongly-typed values are passed through the rest of the flow.
  *
  * process.env.login__odsp__fic__test__users - JSON array of users/credentials with deducible tenants
+ * process.env.token__package__import__location - import location of the test tenant checkout client
  */
 export const createOdspMiddlewares = (): Middleware[] => {
-	if (process.env.login__odsp__fic__test__users === undefined) {
-		throw new Error(
-			"process.env.login__odsp__fic__test__users is missing. Make sure you ran tenant-setup and restarted your terminal.",
-		);
-	}
+	const { usernames, packageImportLocation } = resolveOdspEnvironment();
 
-	const credentials = getOdspCredentials("odsp", 0);
+	const credentials = getOdspCredentials("odsp", usernames, packageImportLocation);
 	const firstCredential = credentials[0];
 	if (firstCredential === undefined) {
 		throw new Error("No credentials found from getOdspCredentials.");
