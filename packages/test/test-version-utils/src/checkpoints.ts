@@ -27,7 +27,7 @@ import * as semver from "semver";
  */
 export interface Checkpoint {
 	/**
-	 * Identifier for the checkpoint (i.e."CC-3").
+	 * Identifier for the checkpoint (i.e."CC#3").
 	 */
 	readonly name: string;
 	/**
@@ -48,7 +48,7 @@ export interface Checkpoint {
 	readonly startDate: string;
 	/**
 	 * Extra semver ranges for versions that generic semver ranges do not
-	 * capture (i.e. the `2.0.0-internal.x.y.z` releases for CC-1).
+	 * capture (i.e. the `2.0.0-internal.x.y.z` releases for CC#1).
 	 */
 	readonly additionalRanges?: readonly string[];
 }
@@ -78,26 +78,26 @@ interface DocumentedCheckpoint extends Checkpoint {
  */
 export const checkpoints: readonly Checkpoint[] = [
 	{
-		name: "CC-1",
+		name: "CC#1",
 		index: 1,
 		lowerBoundVersion: "1.4.0",
 		startDate: "2024-04-09",
 		additionalRanges: ["2.0.0-internal*", "2.0.0-rc*"],
 	},
 	{
-		name: "CC-2",
+		name: "CC#2",
 		index: 2,
 		lowerBoundVersion: "2.0.0",
 		startDate: "2024-06-26",
 	},
 	{
-		name: "CC-3",
+		name: "CC#3",
 		index: 3,
 		lowerBoundVersion: "2.40.0",
 		startDate: "2025-05-12",
 	},
 	{
-		name: "CC-4",
+		name: "CC#4",
 		index: 4,
 		lowerBoundVersion: "2.80.0",
 		startDate: "2026-01-06",
@@ -113,21 +113,21 @@ export const checkpoints: readonly Checkpoint[] = [
  */
 const futureCheckpoints: readonly DocumentedCheckpoint[] = [
 	{
-		name: "CC-5",
+		name: "CC#5",
 		index: 5,
 		lowerBoundVersion: "3.0.0",
 		startDate: "2026-07-06",
 		status: "tbd",
 	},
 	{
-		name: "CC-6",
+		name: "CC#6",
 		index: 6,
 		lowerBoundVersion: "4.0.0",
 		startDate: "2027-01-06",
 		status: "tbd",
 	},
 	{
-		name: "CC-7",
+		name: "CC#7",
 		index: 7,
 		lowerBoundVersion: "5.0.0",
 		startDate: "2027-07-06",
@@ -173,7 +173,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 		}
 		// A prerelease whose `major.minor.patch` equals a checkpoint's
 		// `lowerBoundVersion` belongs to that checkpoint — `2.100.0-rc.0` is the
-		// release-candidate of CC-4, not the tail end of CC-3, even though
+		// release-candidate of CC#4, not the tail end of CC#3, even though
 		// `semver.gte("2.100.0-rc.0", "2.100.0")` is `false`.
 		if (parsed !== null && parsed.prerelease.length > 0) {
 			const lowerBound = semver.parse(c.lowerBoundVersion);
@@ -194,7 +194,7 @@ export function getCurrentCheckpoint(version: string): Checkpoint {
 /**
  * Returns the prior in-window checkpoints relative to `current` from newest
  * to oldest. May return fewer than `fullCompatibilityWindowSize` entries when `current`
- * is near the start of the checkpoint list (e.g., `current === CC-1` returns
+ * is near the start of the checkpoint list (e.g., `current === CC#1` returns
  * `[]`).
  *
  * @internal
@@ -255,7 +255,7 @@ const doNotEditNotice = [
  * Explicit upper bounds for designated checkpoints whose range does not end at
  * the next checkpoint's `lowerBoundVersion`.
  */
-const designatedClosingVersions: Readonly<Record<string, string>> = { "CC-4": "2.101.0" };
+const designatedClosingVersions: Readonly<Record<string, string>> = { "CC#4": "2.101.0" };
 
 const documentedCheckpoints: readonly DocumentedCheckpoint[] = [
 	...checkpoints.map(
