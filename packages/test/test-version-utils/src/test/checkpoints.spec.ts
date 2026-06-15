@@ -25,7 +25,7 @@ describe("checkpoints", () => {
 		it("has unique, contiguous 1-based indexes with matching names", () => {
 			checkpoints.forEach((c, i) => {
 				assert.strictEqual(c.index, i + 1, `${c.name} index`);
-				assert.strictEqual(c.name, `CC-${c.index}`, `${c.name} name`);
+				assert.strictEqual(c.name, `CC#${c.index}`, `${c.name} name`);
 			});
 		});
 
