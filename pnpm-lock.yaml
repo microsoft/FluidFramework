@@ -11622,9 +11622,6 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
-      '@fluidframework/fluid-static':
-        specifier: workspace:~
-        version: link:../fluid-static
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
