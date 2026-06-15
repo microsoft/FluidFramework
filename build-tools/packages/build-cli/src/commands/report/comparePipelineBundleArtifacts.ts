@@ -41,7 +41,8 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 			required: true,
 		}),
 		head: Flags.string({
-			description: "Head commit SHA — the PR's latest commit. The compare side of the comparison.",
+			description:
+				"Head commit SHA — the PR's latest commit. The compare side of the comparison.",
 			required: true,
 		}),
 		...BaseCommand.flags,
