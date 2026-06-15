@@ -11,7 +11,7 @@ import { getRetryDelaySecondsFromError } from "@fluidframework/driver-utils/inte
 import { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import {
 	isFluidError,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
@@ -57,7 +57,7 @@ export class SummaryGenerator extends TypedEventEmitter<ISummarizerEvents> {
 			options: IRefreshSummaryAckOptions,
 		) => Promise<void>,
 		private readonly summaryWatcher: Pick<IClientSummaryWatcher, "watchSummary">,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		super();
 		this.summarizeTimer = new Timer(maxSummarizeTimeoutTime, () =>

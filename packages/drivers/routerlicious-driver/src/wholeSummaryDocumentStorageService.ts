@@ -20,7 +20,7 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import type {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	MonitoringContext,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -57,7 +57,7 @@ export class WholeSummaryDocumentStorageService implements IDocumentStorageServi
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLoggerExt,
+		protected readonly logger: TelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		private readonly driverPolicies?: IRouterliciousDriverPolicies,
 		private readonly blobCache: ICache<ArrayBufferLike> = new InMemoryCache(),

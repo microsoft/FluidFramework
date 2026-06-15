@@ -1,5 +1,17 @@
 # @fluid-private/test-end-to-end-tests
 
+## Table of Contents
+
+-   [Introduction](#introduction)
+-   [How-to](#how-to)
+    -   [Writing Compat-Correct Tests](#writing-compat-correct-tests)
+    -   [Writing Tests That Take Summaries](#writing-tests-that-take-summaries)
+-   [Debugging](#debugging)
+-   ["Real Service" Tests](#real-service-tests)
+    -   [Endpoint names](#endpoint-names)
+
+## Introduction
+
 This package hosts end-to-end tests for the Fluid Framework.
 The tests are end-to-end in the sense that they construct, load, and orchestrate collaborative scenarios involving containers
 in much the same way a real application using Fluid would.
@@ -24,96 +36,22 @@ The tests in this package are typically built upon:
 
 Check out the test-utils [README](../test-utils/README.md) that outlines how to write a test.
 
-Whenever possible, try to avoid importing Fluid APIs statically, since that won't fully leverage `test-version-utils`:
-the containers the test constructs will only reference code in the current version of Fluid.
-Instead, use the `apis` argument passed to `describeCompat`'s test creation function.
-This argument provides Fluid public APIs which internally reference the package version being tested under the current compatibility configuration.
-The APIs are organized roughly by layer, i.e. `apis.dds` exports the various DDS types,
-`apis.containerRuntime` exports concepts for building a container runtime (including bits of `@fluidframework/aqueduct`), etc.
+### Writing Compat-Correct Tests
 
-Less common APIs can be found on `apis.<layer-name>.packages.<package-name>` (package names are unscoped and camelCased).
-Keep in mind that if these APIs change over time, tests depending on them will either need to have a reduced compat matrix or include back-compat logic.
-See "Change contents of dds, then rehydrate and then check summary" for an example of such a test.
+Fluid values used by an e2e test (DDS factories, `DataObject`, `Loader`, `ContainerRuntime`, etc.) must come from the `apis` argument passed to the `describeCompat` callback — **not** from a static `import` of the corresponding package. Static value imports always resolve to the current version's code, which silently defeats the compat matrix: the test runs against every compat configuration but in fact only exercises the current version.
 
-### ❌ Incorrect
+If a test imports one of the restricted symbols statically, ESLint's `@typescript-eslint/no-restricted-imports` rule will fail the build with a message like
+_"`SharedMap` import from `@fluidframework/map/internal` is restricted from being used by a pattern. Rather than import this Fluid package directly, use the 'apis' argument of describeCompat."_
 
-```typescript
-import { SharedString, createOverlappingIntervalsIndex } from "@fluidframework/sequence";
+**For the patterns — using `apis`, the create vs. load API split (`apis.dds` / `apis.ddsForLoading` etc.) and the legitimate exceptions where `eslint-disable` is appropriate — see [WritingCompatCorrectTests.md](./WritingCompatCorrectTests.md).**
 
-const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
-const testContainerConfig: ITestContainerConfig = {
-	fluidDataObjectType: DataObjectFactoryType.Test,
-	registry,
-};
+For a worked example of an entire test file written this way, see [`sharedStringEndToEndTests.spec.ts`](src/test/sharedStringEndToEndTests.spec.ts). That same [directory](src/test) contains more complex examples too.
 
-describeCompat("SharedString", "FullCompat", (getTestObjectProvider) => {
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
+### Writing Tests That Take Summaries
 
-	it("supports collaborative text with intervals", async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
-		const overlapping = createOverlappingIntervalsIndex(sharedString1);
-	});
-});
-```
+Many e2e tests need to drive **summaries** on demand — configuring interactive containers so they don't summarize on their own, spinning up a dedicated summarizer, taking summaries at controlled points, and loading new containers or summarizers from a specific summary. Doing this incorrectly is a common source of flaky tests.
 
-#### ✅ Correct
-
-```typescript
-describeCompat("SharedString", "FullCompat", (getTestObjectProvider, api) => {
-	const { SharedString } = api.dds;
-	const { createOverlappingIntervalsIndex } = api.dataRuntime.packages.sequence;
-
-	// Note that `SharedString` below is equivalent to `api.dds.SharedString`.
-	// It can be used as if you had imported it from @fluidframework/sequence at runtime.
-	const registry: ChannelFactoryRegistry = [["sharedString", SharedString.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
-		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
-	};
-
-	let provider: ITestObjectProvider;
-	beforeEach(() => {
-		provider = getTestObjectProvider();
-	});
-
-	it("supports collaborative text", async () => {
-		const container1 = await provider.makeTestContainer(testContainerConfig);
-		const dataObject1 = (await container1.getEntryPoint()) as ITestFluidObject;
-		const sharedString1 = await dataObject1.getSharedObject<SharedString>(stringId);
-		const overlapping = createOverlappingIntervalsIndex(sharedString1);
-	});
-});
-```
-
-If your code needs to refer to a DDS's type (e.g. to explicitly annotate the type of a variable), you can
-use `import type` expressions freely:
-
-```typescript
-import type { SharedString } from "@fluidframework/sequence";
-
-function insert(str: SharedString): void {
-	str.insertText(0, "hello");
-}
-```
-
-#### Exceptions
-
-Enforcement of this rule is a work in progress.
-
--   Some test-version-utils APIs such as `describeInstallVersions` don't make static import convenient.
--   Not all imports are yet enforced.
-
-### Example
-
-Take a look at the [SharedStringEndToEndTest](src/test/sharedStringEndToEndTests.spec.ts) for a basic example
-of how to write an end-to-end test.
-
-That same [directory](src/test) contains more complex examples too.
+**For the full pattern — the two container configurations, how to take and inspect a summary, how to load from a specific summary, and the rules that keep these tests deterministic — see [WritingTestsThatTakeSummaries.md](./WritingTestsThatTakeSummaries.md).**
 
 ## Debugging
 
@@ -133,7 +71,7 @@ The tests under the `real-service-tests` dir target a live production service li
 These are run via `npm run test:realsvc:mocha`, and are included in the CI such that a test failure doesn't
 fail the pipeline - since a service outage or network hiccup could cause a failure when no code defect is present.
 
-### Enpdoint names
+### Endpoint names
 
 When running tests against ODSP or R11s, be mindful of a second parameter/flag usually referred to as the "endpoint name".
 This should match the target environment you want to run against or the test driver might configure things in a way

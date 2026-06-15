@@ -19,7 +19,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import type { InstrumentedStorageTokenFetcher } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
@@ -205,7 +205,7 @@ function convertSummaryToSnapshotTreeForCreateNew(summary: ISummaryTree): IOdspS
 export async function createNewFluidContainerCore<T>(args: {
 	containerSnapshot: IOdspSummaryPayload;
 	getAuthHeader: InstrumentedStorageTokenFetcher;
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 	initialUrl: string;
 	forceAccessTokenViaAuthorizationHeader: boolean;
 	epochTracker: EpochTracker;

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree-agent",
-	"version": "2.103.0",
+	"version": "2.110.0",
 	"description": "Experimental package to simplify integrating AI into Fluid-based applications",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -144,7 +144,6 @@
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
-		"prettier": "~3.6.2",
 		"rimraf": "^6.1.3",
 		"ses": "^1.14.0",
 		"typescript": "~5.4.5"
