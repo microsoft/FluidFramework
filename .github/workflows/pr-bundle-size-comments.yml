@@ -292,6 +292,7 @@ jobs:
         (needs.identify-from-pr-build.result == 'success' && needs.identify-from-pr-build.outputs.prs != '[]') ||
         (needs.identify-from-baseline-build.result == 'success' && needs.identify-from-baseline-build.outputs.prs != '[]')
       )
+    name: compare (PR #${{ matrix.pr.number }})
     strategy:
       matrix:
         pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
