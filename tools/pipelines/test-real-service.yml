@@ -34,9 +34,6 @@ resources:
     - repository: ff_pipeline_host
       type: git
       name: ff_pipeline_host
-      # Note: this is a test branch that is only used for staging purposes. Once the ff_pipeline_host main branch has the most recent
-      # package version, this change will be reverted.
-      ref: refs/heads/jzaffiro/updateTripsPkgVersion
 
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
