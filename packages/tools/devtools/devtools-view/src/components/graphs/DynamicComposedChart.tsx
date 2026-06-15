@@ -31,9 +31,9 @@ import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
  * The subset of the props Recharts injects into a custom axis tick renderer that we consume.
  */
 interface AxisTickProps {
-	x?: number;
-	y?: number;
-	payload?: {
+	x: number;
+	y: number;
+	payload: {
 		value: string | number;
 	};
 }
@@ -262,7 +262,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 					transform="rotate(-20)"
 					fontSize={14}
 				>
-					{payload?.value}
+					{payload.value}
 				</text>
 			</g>
 		);
@@ -277,7 +277,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
-					{`${payload?.value ?? ""}${props.yAxisUnitDisplayName ?? ""}`}
+					{`${payload.value}${props.yAxisUnitDisplayName ?? ""}`}
 				</text>
 			</g>
 		);
@@ -419,10 +419,10 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): ReactEle
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+				<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
 					<Label value="Timestamp" offset={12} position="bottom" />
 				</XAxis>
-				<YAxis tick={<CustomizedYAxisTick />} />
+				<YAxis tick={CustomizedYAxisTick} />
 				<Tooltip
 					contentStyle={{
 						fontSize: "14px",
