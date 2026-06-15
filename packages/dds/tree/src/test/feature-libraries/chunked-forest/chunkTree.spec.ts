@@ -1127,12 +1127,7 @@ describe("chunkTree", () => {
 
 			it("preserves an idCompressor present on either side of the merge", () => {
 				// Strings with mayContainCompressedIds carry the idCompressor on the chunk.
-				const stringShape = new TreeShape(
-					brand(stringSchema.identifier),
-					true,
-					[],
-					true,
-				);
+				const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
 				const compressedId = testIdCompressor.generateCompressedId();
 				const left = new UniformChunk(
 					stringShape.withTopLevelLength(1),
@@ -1297,11 +1292,7 @@ describe("chunkTree", () => {
 
 			for (let round = 0; round < 20; round++) {
 				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
-				const insertIndex = splitFieldAtIndex(
-					field,
-					Math.floor(total / 2),
-					splitCompressor,
-				);
+				const insertIndex = splitFieldAtIndex(field, Math.floor(total / 2), splitCompressor);
 				field.splice(insertIndex, 0, numbersChunk([nextValue++]));
 				coalesceUniformChunks(field, policy);
 
