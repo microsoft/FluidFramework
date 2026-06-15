@@ -343,7 +343,9 @@ jobs:
             --head ${{ matrix.pr.head }} \
             --json > bundle-comparison.json
           EC=$?
+          echo "::group::bundle-comparison.json"
           cat bundle-comparison.json
+          echo "::endgroup::"
           if [ "$EC" -ne 0 ]; then
             echo
             echo "flub --json exited $EC; re-running without --json so the error message is visible:"
@@ -408,10 +410,9 @@ jobs:
             const body = lines.join("\n") + "\n";
             fs.writeFileSync("bundle-comparison.md", body);
             core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
-            core.info("");
-            core.info("--- bundle-comparison.md ---");
+            core.startGroup("bundle-comparison.md");
             core.info(body);
-            core.info("--- end ---");
+            core.endGroup();
 
       # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
