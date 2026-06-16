@@ -31,7 +31,7 @@ This document explains:
 | Term | Definition |
 | --- | --- |
 | **Compatibility Checkpoint Release** | The first Fluid release in a checkpoint range (e.g., `2.80.0` for `CC#4`). |
-| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.80.0 <2.101.0` for `CC#4`). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
+| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.80.0 <3.0.0` for `CC#4`). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
 | **Checkpoint N** | `CC#N`; any individual compatibility checkpoint range. `Checkpoint N-1` `CC#(N-1)`, the compatibility checkpoint range before `N`, and so on for `N-2`, `N-3`, etc. |
 | **Saturation** | When an adequate percentage of an application's clients are running a certain version. The specific percentage is defined by the application's requirements (not by Fluid Framework). |
 

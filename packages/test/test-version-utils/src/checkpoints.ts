@@ -253,9 +253,11 @@ const doNotEditNotice = [
 
 /**
  * Explicit upper bounds for designated checkpoints whose range does not end at
- * the next checkpoint's `lowerBoundVersion`.
+ * the next checkpoint's `lowerBoundVersion`. Normally empty: a designated
+ * checkpoint's range runs up to the next checkpoint's lower bound (the next
+ * entry in {@link futureCheckpoints} when it is the latest designated one).
  */
-const designatedClosingVersions: Readonly<Record<string, string>> = { "CC#4": "2.101.0" };
+const designatedClosingVersions: Readonly<Record<string, string>> = {};
 
 const documentedCheckpoints: readonly DocumentedCheckpoint[] = [
 	...checkpoints.map(
@@ -274,15 +276,23 @@ function escapeCell(value: string): string {
 	return value.replace(/\|/g, "\\|");
 }
 
-function closingVersionOf(checkpoint: DocumentedCheckpoint, index: number): string {
-	if (checkpoint.closingVersion !== undefined) return checkpoint.closingVersion;
+function closingVersionOf(
+	checkpoint: DocumentedCheckpoint,
+	index: number,
+): { version: string; estimated: boolean } {
+	if (checkpoint.closingVersion !== undefined) {
+		return { version: checkpoint.closingVersion, estimated: checkpoint.status === "tbd" };
+	}
 	const next = documentedCheckpoints[index + 1];
 	if (next === undefined) {
 		throw new Error(
 			`Checkpoint "${checkpoint.name}" has no following checkpoint and no closingVersion.`,
 		);
 	}
-	return next.lowerBoundVersion;
+	// The upper bound is the next checkpoint's lower bound; it is an estimate when
+	// that next checkpoint is not yet designated (e.g. the latest designated
+	// checkpoint closes at the first forecasted future checkpoint).
+	return { version: next.lowerBoundVersion, estimated: next.status === "tbd" };
 }
 
 function renderName(c: DocumentedCheckpoint): string {
@@ -296,8 +306,8 @@ function renderDate(c: DocumentedCheckpoint): string {
 function renderVersionRange(c: DocumentedCheckpoint, i: number): string {
 	const closing = closingVersionOf(c, i);
 	const additional = (c.additionalRanges ?? []).map((r) => ` | ${r}`).join("");
-	const range = `\`>=${c.lowerBoundVersion} <${closing}${additional}\``;
-	return c.status === "tbd" ? `${range}(estimated)` : range;
+	const range = `\`>=${c.lowerBoundVersion} <${closing.version}${additional}\``;
+	return closing.estimated ? `${range}(estimated)` : range;
 }
 
 function compatibleCheckpointsOf(c: DocumentedCheckpoint): DocumentedCheckpoint[] {
@@ -316,14 +326,14 @@ function renderCompatibleSemanticVersions(c: DocumentedCheckpoint): string {
 	const window = compatibleCheckpointsOf(c);
 	const lowest = window[0];
 	const highest = window[window.length - 1];
-	const upper = closingVersionOf(highest, documentedCheckpoints.indexOf(highest));
-	const estimated = highest.status === "tbd" ? "(estimated)" : "";
+	const closing = closingVersionOf(highest, documentedCheckpoints.indexOf(highest));
+	const estimated = closing.estimated ? "(estimated)" : "";
 	const additionalRanges = window.flatMap((x) => x.additionalRanges ?? []);
 	// Wrap additional ranges in their own code span (e.g. `| 2.0.0-internal* | 2.0.0-rc*`),
 	// adjacent to the version range span. The `|` chars are escaped by escapeCell later.
 	const additionalPart =
 		additionalRanges.length > 0 ? `\` | ${additionalRanges.join(" | ")}\`` : "";
-	return `\`>=${lowest.lowerBoundVersion} <${upper}\`${estimated}${additionalPart}`;
+	return `\`>=${lowest.lowerBoundVersion} <${closing.version}\`${estimated}${additionalPart}`;
 }
 
 function renderRow(c: DocumentedCheckpoint, i: number): string {
