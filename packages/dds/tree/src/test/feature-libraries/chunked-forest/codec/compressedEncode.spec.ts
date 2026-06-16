@@ -106,33 +106,50 @@ function makeFieldBatchCodec(
 	JsonCompatibleReadOnly,
 	FieldBatchEncodingContext
 > {
+	const isExperimental = typeof version === "string";
+	const codec = {
+		encode: (
+			data: FieldBatch,
+			context: FieldBatchEncodingContext,
+		): EncodedFieldBatchV1OrV2 => {
+			return compressedEncode(data, encoderContext);
+		},
+		decode: (
+			data: EncodedFieldBatchV1OrV2,
+			fieldBatchContext: FieldBatchEncodingContext,
+		): FieldBatch => {
+			// TODO: consider checking data is in schema.
+			return decode(data, {
+				idCompressor: fieldBatchContext.idCompressor,
+				originatorId: fieldBatchContext.originatorId,
+				isSummary: false,
+			}).map((chunk) => chunk.cursor());
+		},
+		schema: format,
+	};
 	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
 		{
+			// VersionDispatchingCodecBuilder requires an entry for lowestMinVersionForCollab.
+			// For experimental (string) versions, provide a stable floor entry to satisfy this
+			// while the experimental entry itself uses minVersionForCollab: undefined.
 			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: version,
-			codec: {
-				encode: (
-					data: FieldBatch,
-					context: FieldBatchEncodingContext,
-				): EncodedFieldBatchV1OrV2 => {
-					return compressedEncode(data, encoderContext);
-				},
-				decode: (
-					data: EncodedFieldBatchV1OrV2,
-					fieldBatchContext: FieldBatchEncodingContext,
-				): FieldBatch => {
-					// TODO: consider checking data is in schema.
-					return decode(data, {
-						idCompressor: fieldBatchContext.idCompressor,
-						originatorId: fieldBatchContext.originatorId,
-						isSummary: false,
-					}).map((chunk) => chunk.cursor());
-				},
-				schema: format,
-			},
+			formatVersion: isExperimental ? FieldBatchFormatVersion.v1 : version,
+			codec,
 		},
+		...(isExperimental
+			? [{ minVersionForCollab: undefined, formatVersion: version, codec }]
+			: []),
 	]);
-	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });
+	return builder.build({
+		...options,
+		minVersionForCollab: lowestMinVersionForCollab,
+		...(isExperimental
+			? {
+					writeVersionOverrides: new Map([["TestCompressedFieldBatch", version]]),
+					allowPossiblyIncompatibleWriteVersionOverrides: true,
+				}
+			: {}),
+	});
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);

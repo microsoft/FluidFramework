@@ -289,7 +289,7 @@
     }
   },
   {
-    "version": 3,
+    "version": "text",
     "schema": {
       "additionalProperties": false,
       "type": "object",
@@ -308,8 +308,8 @@
           }
         },
         "version": {
-          "const": 3,
-          "type": "number"
+          "const": "text",
+          "type": "string"
         },
         "shapes": {
           "type": "array",

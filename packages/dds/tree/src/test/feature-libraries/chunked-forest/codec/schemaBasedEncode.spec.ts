@@ -801,7 +801,7 @@ describe("schemaBasedEncoding", () => {
 			// Inner's (flag:true) tuple crosses threshold.
 			// Outer's (child:Inner-specialized) tuple also crosses threshold.
 			// The second specialization requires iteration 2+ of the counting loop,
-			// because Outer's cohort key changes once Inner's shape is resolved as specialized.
+			// because Outer's specialization key changes once Inner's shape is resolved as specialized.
 			assert.equal(
 				countSpecializedShapes(encoded),
 				2,

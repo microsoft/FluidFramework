@@ -1,0 +1,33 @@
+{
+  "version": "text",
+  "identifiers": [],
+  "shapes": [
+    {
+      "d": 0
+    },
+    {
+      "c": {
+        "type": "test.hasDescriptions",
+        "value": false,
+        "fields": [
+          [
+            "stored-name",
+            2
+          ]
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": "test.minimal",
+        "value": false
+      }
+    }
+  ],
+  "data": [
+    [
+      0,
+      1
+    ]
+  ]
+}

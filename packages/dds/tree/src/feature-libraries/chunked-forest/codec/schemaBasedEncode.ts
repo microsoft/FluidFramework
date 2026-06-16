@@ -196,8 +196,8 @@ function countVTextSpecializationCandidates(
  * Recursively counts the current node and its descendants for VText specialization.
  *
  * @remarks
- * Walks in post-order: children are counted before their parent so that child cohort
- * decisions are populated before the parent's cohort key is built. This is required
+ * Walks in post-order: children are counted before their parent so that child specialization
+ * decisions are populated before the parent's specialization key is built. This is required
  * because {@link VTextObjectNodeEncoder.countNode} calls `resolveShape` on child
  * encoders, which depends on the child's counts being finalized.
  *
@@ -352,8 +352,8 @@ function getNodeEncoderVText(
 			}
 			const type = oneFromIterable(field.types);
 			if (type === undefined) {
-				// Polymorphic field: cohort key uses the resolved sub-shape per instance.
-				// Cohorts only fire when all instances pick the same sub-shape (which implies
+				// Polymorphic field: specialization key uses the resolved sub-shape per instance.
+				// Specializations only fire when all instances pick the same sub-shape (which implies
 				// the same cursor.type), so the override pinning that shape is sound.
 				specializableFields.push({ kind: "subShape", key });
 				continue;
@@ -430,15 +430,15 @@ type SpecializableField =
  * calls), so two batches never share it.
  *
  * State is partitioned per encoder instance: each {@link VTextObjectNodeEncoder}
- * reads and writes its own {@link CohortState} via {@link forEncoder}.
+ * reads and writes its own {@link SpecializationState} via {@link forEncoder}.
  */
 class VTextBatchState {
-	private readonly perEncoder: Map<object, CohortState> = new Map();
+	private readonly perEncoder: Map<object, SpecializationState> = new Map();
 
 	/**
-	 * The {@link CohortState} for `encoder`, created empty on first access.
+	 * The {@link SpecializationState} for `encoder`, created empty on first access.
 	 */
-	public forEncoder(encoder: object): CohortState {
+	public forEncoder(encoder: object): SpecializationState {
 		let state = this.perEncoder.get(encoder);
 		if (state === undefined) {
 			state = { counts: new Map(), resolveCounts: new Map(), specializedEncoders: new Map() };
@@ -448,13 +448,13 @@ class VTextBatchState {
 	}
 
 	/**
-	 * Merge the current iteration's counts into {@link CohortState.resolveCounts} monotonically
-	 * (counts only increase), then reset {@link CohortState.counts} for the next iteration.
+	 * Merge the current iteration's counts into {@link SpecializationState.resolveCounts} monotonically
+	 * (counts only increase), then reset {@link SpecializationState.counts} for the next iteration.
 	 * Returns whether any count increased — the loop stops when this returns `false`.
 	 *
 	 * @remarks
 	 * Monotonic merging guarantees convergence: since counts can only go up and there are a
-	 * finite number of cohort keys with a finite max count, the system must reach a fixed point.
+	 * finite number of specialization keys with a finite max count, the system must reach a fixed point.
 	 */
 	public commitIteration(): boolean {
 		let changed = false;
@@ -476,12 +476,12 @@ class VTextBatchState {
 /**
  * The per-encoder slice of {@link VTextBatchState}.
  */
-interface CohortState {
-	/** Cohort key occurrence counts for the current count-pass iteration. */
+interface SpecializationState {
+	/** Specialization key occurrence counts for the current count-pass iteration. */
 	counts: Map<string, number>;
 	/** Finalized counts from previous iterations, used for threshold decisions. */
 	resolveCounts: Map<string, number>;
-	/** Cached specialized shapes, keyed by cohort key. */
+	/** Cached specialized shapes, keyed by specialization key. */
 	specializedEncoders: Map<string, SpecializedNodeShapeEncoder>;
 }
 
@@ -499,7 +499,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	private readonly constantNodeEncoders: Map<string, NodeShapeBasedEncoder> = new Map();
 	/**
 	 * Stable per-encoder identifiers for {@link Shape} instances appearing as a `subShape`
-	 * field's resolved shape. Used only to build a string cohort key.
+	 * field's resolved shape. Used only to build a string specialization key.
 	 */
 	private readonly shapeIds: Map<Shape, number> = new Map();
 	private nextShapeId = 0;
@@ -519,7 +519,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	/** Counting-pass entry point. Records this node's tuple key without producing output. */
 	public countNode(cursor: ITreeCursorSynchronous, batch: VTextBatchState): void {
 		const state = batch.forEncoder(this);
-		const key = this.cohortKey(cursor, batch);
+		const key = this.specializationKey(cursor, batch);
 		state.counts.set(key, (state.counts.get(key) ?? 0) + 1);
 	}
 
@@ -538,16 +538,16 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	 * otherwise the base encoder.
 	 *
 	 * @remarks
-	 * Results are cached per cohort key so the same shape instance is returned across
+	 * Results are cached per specialization key so the same shape instance is returned across
 	 * calls. This is required for stable shape identity. Parent encoders use it to
-	 * build their own cohort keys via {@link idForShape}.
+	 * build their own specialization keys via {@link idForShape}.
 	 */
 	public resolveShape(
 		cursor: ITreeCursorSynchronous,
 		batch: VTextBatchState,
 	): NodeShapeBasedEncoder | SpecializedNodeShapeEncoder {
 		const state = batch.forEncoder(this);
-		const key = this.cohortKey(cursor, batch);
+		const key = this.specializationKey(cursor, batch);
 		if ((state.resolveCounts.get(key) ?? 0) >= this.minOccurrencesForSpecialization) {
 			let specialized = state.specializedEncoders.get(key);
 			if (specialized === undefined) {
@@ -560,10 +560,10 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	}
 
 	/**
-	 * Build the cohort key for the node at the cursor's current position.
+	 * Build the specialization key for the node at the cursor's current position.
 	 * Each {@link SpecializableField} contributes one segment to the key.
 	 */
-	private cohortKey(cursor: ITreeCursorSynchronous, batch: VTextBatchState): string {
+	private specializationKey(cursor: ITreeCursorSynchronous, batch: VTextBatchState): string {
 		const parts: string[] = [];
 		for (const field of this.specializableFields) {
 			cursor.enterField(brand(field.key));
