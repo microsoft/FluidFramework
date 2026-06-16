@@ -2229,7 +2229,7 @@ importers:
         version: link:../../../packages/service-clients/tinylicious-client
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
-        version: 2.8.18(tslib@2.8.1)
+        version: 2.8.18(tslib@1.14.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -2322,8 +2322,8 @@ importers:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
       tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
+        specifier: ^1.10.0
+        version: 1.14.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -10993,7 +10993,7 @@ importers:
         version: link:../../../common/core-interfaces
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
-        version: 2.8.18(tslib@2.8.1)
+        version: 2.8.18(tslib@1.14.1)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -11009,7 +11009,7 @@ importers:
         version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
       '@fluidframework/app-insights-logger-previous':
         specifier: npm:@fluidframework/app-insights-logger@2.103.0
-        version: '@fluidframework/app-insights-logger@2.103.0(tslib@2.8.1)'
+        version: '@fluidframework/app-insights-logger@2.103.0(tslib@1.14.1)'
       '@fluidframework/build-common':
         specifier: ^2.0.3
         version: 2.0.3
@@ -11065,8 +11065,8 @@ importers:
         specifier: ^18.0.1
         version: 18.0.1
       tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
+        specifier: ^1.10.0
+        version: 1.14.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -11084,7 +11084,7 @@ importers:
         version: link:../../fluid-static
       '@microsoft/applicationinsights-web':
         specifier: ^2.8.11
-        version: 2.8.18(tslib@2.8.1)
+        version: 2.8.18(tslib@1.14.1)
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -11159,8 +11159,8 @@ importers:
         specifier: ^7.0.1
         version: 7.0.1
       tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
+        specifier: ^1.10.0
+        version: 1.14.1
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -16009,10 +16009,10 @@ importers:
         version: link:../devtools-core
       '@microsoft/1ds-core-js':
         specifier: ^3.2.13
-        version: 3.2.18(tslib@2.8.1)
+        version: 3.2.18(tslib@1.14.1)
       '@microsoft/1ds-post-js':
         specifier: ^3.2.13
-        version: 3.2.18(tslib@2.8.1)
+        version: 3.2.18(tslib@1.14.1)
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -16020,8 +16020,8 @@ importers:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
       tslib:
-        specifier: ^2.8.1
-        version: 2.8.1
+        specifier: ^1.10.0
+        version: 1.14.1
       uuid:
         specifier: ^11.1.0
         version: 11.1.0
@@ -30005,10 +30005,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@fluidframework/app-insights-logger@2.103.0(tslib@2.8.1)':
+  '@fluidframework/app-insights-logger@2.103.0(tslib@1.14.1)':
     dependencies:
       '@fluidframework/core-interfaces': 2.103.0
-      '@microsoft/applicationinsights-web': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-web': 2.8.18(tslib@1.14.1)
     transitivePeerDependencies:
       - tslib
 
@@ -32107,17 +32107,17 @@ snapshots:
       jju: 1.4.0
       js-yaml: 4.1.1
 
-  '@microsoft/1ds-core-js@3.2.18(tslib@2.8.1)':
+  '@microsoft/1ds-core-js@3.2.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
     transitivePeerDependencies:
       - tslib
 
-  '@microsoft/1ds-post-js@3.2.18(tslib@2.8.1)':
+  '@microsoft/1ds-post-js@3.2.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/1ds-core-js': 3.2.18(tslib@2.8.1)
+      '@microsoft/1ds-core-js': 3.2.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
     transitivePeerDependencies:
@@ -32150,64 +32150,64 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@microsoft/applicationinsights-analytics-js@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-analytics-js@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-common': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-common': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
-  '@microsoft/applicationinsights-channel-js@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-channel-js@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-common': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-common': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
-  '@microsoft/applicationinsights-common@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-common@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
-  '@microsoft/applicationinsights-core-js@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-core-js@2.8.18(tslib@1.14.1)':
     dependencies:
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
-  '@microsoft/applicationinsights-dependencies-js@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-dependencies-js@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-common': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-common': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
-  '@microsoft/applicationinsights-properties-js@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-properties-js@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-common': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-common': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
   '@microsoft/applicationinsights-shims@2.0.2': {}
 
-  '@microsoft/applicationinsights-web@2.8.18(tslib@2.8.1)':
+  '@microsoft/applicationinsights-web@2.8.18(tslib@1.14.1)':
     dependencies:
-      '@microsoft/applicationinsights-analytics-js': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-channel-js': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-common': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-dependencies-js': 2.8.18(tslib@2.8.1)
-      '@microsoft/applicationinsights-properties-js': 2.8.18(tslib@2.8.1)
+      '@microsoft/applicationinsights-analytics-js': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-channel-js': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-common': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-core-js': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-dependencies-js': 2.8.18(tslib@1.14.1)
+      '@microsoft/applicationinsights-properties-js': 2.8.18(tslib@1.14.1)
       '@microsoft/applicationinsights-shims': 2.0.2
       '@microsoft/dynamicproto-js': 1.1.11
-      tslib: 2.8.1
+      tslib: 1.14.1
 
   '@microsoft/dynamicproto-js@1.1.11': {}
 

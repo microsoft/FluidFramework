@@ -126,7 +126,7 @@
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
 		"tinylicious": "^7.0.1",
-		"tslib": "^2.8.1",
+		"tslib": "^1.10.0",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
