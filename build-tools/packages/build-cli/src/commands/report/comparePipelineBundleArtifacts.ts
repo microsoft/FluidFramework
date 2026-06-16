@@ -7,11 +7,14 @@ import { Flags } from "@oclif/core";
 
 import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
 import {
+	type ArtifactLookupFailure,
+	type BuildMatch,
 	describeArtifactFailure,
 	getArtifactForCommit,
 } from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
+	type AnalyzerJsonByPackage,
 	bundleSizeArtifactsBaselinePipeline,
 	bundleSizeArtifactsPrPipeline,
 	compareJsonReportsByPackage,
@@ -21,13 +24,33 @@ import {
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
- * Result serialized to stdout by `--json`.
+ * Which side of a comparison we're operating on.
  */
-interface ComparePipelineBundleArtifactsResult {
-	baseCommit: string;
-	headCommit: string;
-	comparison: PackageComparison;
-}
+type ComparisonSide = "base" | "head";
+
+/**
+ * Failure variants a {@link ComparePipelineBundleArtifactsResult} can surface.
+ * Reuses the library's {@link ArtifactLookupFailure} kinds and adds a
+ * command-level case for artifacts that downloaded but contain no
+ * `analyzer.json` files.
+ */
+type ComparePipelineSideFailure = ArtifactLookupFailure | { kind: "no-analyzer-jsons" };
+
+/**
+ * Result serialized to stdout by `--json`. Discriminated by `kind`:
+ *
+ * - `completed`: happy path with the structured per-package comparison.
+ * - any other kind: failure, scoped to one `side` of the comparison so the
+ *   consuming workflow can render an actionable sticky comment.
+ */
+type ComparePipelineBundleArtifactsResult =
+	| {
+			kind: "completed";
+			baseCommit: string;
+			headCommit: string;
+			comparison: PackageComparison;
+	  }
+	| (ComparePipelineSideFailure & { side: ComparisonSide });
 
 export default class ComparePipelineBundleArtifacts extends BaseCommand<
 	typeof ComparePipelineBundleArtifacts
@@ -57,40 +80,71 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 		// Public ADO project — anonymous reads are fine at this command's scale.
 		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
 
-		const baseMatch = { kind: "commit", sha: base } as const;
-		const baseArtifact = await getArtifactForCommit({
-			adoApi,
-			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
-			match: baseMatch,
-			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
-			project: bundleSizeArtifactsBaselinePipeline.project,
-		});
-		if (baseArtifact.kind !== "completed") {
-			this.error(describeArtifactFailure(baseMatch, baseArtifact));
-		}
-		const baseJsons = extractAnalyzerJsonsFromArtifact(baseArtifact.contents);
-		if (baseJsons.size === 0) {
-			this.error(`Base artifact contains no analyzer.json files for commit ${base}.`);
+		// Fetch and validate one side. Returns the parsed analyzer.json map on
+		// success, or a structured failure kind. The caller decides whether to
+		// emit a printed error and exit non-zero.
+		const fetchSide = async (
+			match: BuildMatch,
+			pipeline: {
+				project: string;
+				definitionId: number;
+				bundleAnalyzerJsonArtifactName: string;
+			},
+		): Promise<
+			{ kind: "completed"; jsons: AnalyzerJsonByPackage } | ComparePipelineSideFailure
+		> => {
+			const artifact = await getArtifactForCommit({
+				adoApi,
+				artifactName: pipeline.bundleAnalyzerJsonArtifactName,
+				match,
+				definitionId: pipeline.definitionId,
+				project: pipeline.project,
+			});
+			if (artifact.kind !== "completed") {
+				return { kind: artifact.kind };
+			}
+			const jsons = extractAnalyzerJsonsFromArtifact(artifact.contents);
+			if (jsons.size === 0) {
+				return { kind: "no-analyzer-jsons" };
+			}
+			return { kind: "completed", jsons };
+		};
+
+		// Emit a per-side failure: outside `--json` mode print + non-zero exit
+		// via `this.error()`; inside `--json` return the structured kind so
+		// oclif emits it as the result payload (instead of going through the
+		// oclif/core#1608 error path).
+		const handleFailure = (
+			match: BuildMatch,
+			side: ComparisonSide,
+			failure: ComparePipelineSideFailure,
+		): ComparePipelineBundleArtifactsResult => {
+			if (!this.jsonEnabled()) {
+				const subject =
+					match.kind === "commit" ? `commit ${match.sha}` : `PR HEAD ${match.sha}`;
+				const message =
+					failure.kind === "no-analyzer-jsons"
+						? `${side === "base" ? "Base" : "Head"} artifact contains no analyzer.json files for ${subject}.`
+						: describeArtifactFailure(match, failure);
+				this.error(message);
+			}
+			return { ...failure, side };
+		};
+
+		const baseMatch: BuildMatch = { kind: "commit", sha: base };
+		const baseResult = await fetchSide(baseMatch, bundleSizeArtifactsBaselinePipeline);
+		if (baseResult.kind !== "completed") {
+			return handleFailure(baseMatch, "base", baseResult);
 		}
 
-		const headMatch = { kind: "prHead", sha: head } as const;
-		const headArtifact = await getArtifactForCommit({
-			adoApi,
-			artifactName: bundleSizeArtifactsPrPipeline.bundleAnalyzerJsonArtifactName,
-			match: headMatch,
-			definitionId: bundleSizeArtifactsPrPipeline.definitionId,
-			project: bundleSizeArtifactsPrPipeline.project,
-		});
-		if (headArtifact.kind !== "completed") {
-			this.error(describeArtifactFailure(headMatch, headArtifact));
-		}
-		const headJsons = extractAnalyzerJsonsFromArtifact(headArtifact.contents);
-		if (headJsons.size === 0) {
-			this.error(`Head artifact contains no analyzer.json files for commit ${head}.`);
+		const headMatch: BuildMatch = { kind: "prHead", sha: head };
+		const headResult = await fetchSide(headMatch, bundleSizeArtifactsPrPipeline);
+		if (headResult.kind !== "completed") {
+			return handleFailure(headMatch, "head", headResult);
 		}
 
-		const comparison = compareJsonReportsByPackage(baseJsons, headJsons);
+		const comparison = compareJsonReportsByPackage(baseResult.jsons, headResult.jsons);
 
-		return { baseCommit: base, headCommit: head, comparison };
+		return { kind: "completed", baseCommit: base, headCommit: head, comparison };
 	}
 }
