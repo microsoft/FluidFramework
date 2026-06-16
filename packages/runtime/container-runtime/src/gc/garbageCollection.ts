@@ -19,13 +19,13 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type TelemetryLoggerExt,
+	createChildLogger,
+	createChildMonitoringContext,
 	DataProcessingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	createChildLogger,
-	createChildMonitoringContext,
 	tagCodeArtifacts,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { blobManagerBasePath } from "../blobManager/index.js";

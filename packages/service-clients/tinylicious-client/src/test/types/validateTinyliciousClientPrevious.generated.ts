@@ -42,6 +42,7 @@ declare type current_as_old_for_ClassStatics_TinyliciousClient = requireAssignab
  * typeValidation.broken:
  * "Interface_TinyliciousClientProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_TinyliciousClientProps = requireAssignableTo<TypeOnly<current.TinyliciousClientProps>, TypeOnly<old.TinyliciousClientProps>>
 
 /*
