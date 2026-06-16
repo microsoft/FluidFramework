@@ -1080,9 +1080,9 @@ export namespace System_TableSchema {
 			 *
 			 * @remarks
 			 * The orphan-cell invariant only cares about columns that have cells in the affected rows;
-			 * columns absent from those rows' cells cannot be orphaned by this operation, so they need
-			 * not be constrained. This keeps the constraint set proportional to the cells touched
-			 * rather than the total column count, which matters for sparse tables.
+			 * columns absent from those rows' cells have no cell to orphan, so they need not be
+			 * constrained. This keeps the constraint set proportional to the cells touched rather than
+			 * the total column count, which matters for sparse tables.
 			 *
 			 * Returns `undefined` when:
 			 * - The table is unhydrated (no transaction will run), or
