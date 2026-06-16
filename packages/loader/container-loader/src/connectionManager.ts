@@ -46,13 +46,13 @@ import {
 	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type TelemetryLoggerExt,
-	GenericError,
-	UsageError,
 	formatTick,
 	generateStack,
+	GenericError,
 	isFluidError,
 	normalizeError,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {

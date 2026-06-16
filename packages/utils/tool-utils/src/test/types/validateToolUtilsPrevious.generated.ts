@@ -159,6 +159,7 @@ declare type current_as_old_for_Interface_ISnapshotNormalizerConfig = requireAss
  * typeValidation.broken:
  * "TypeAlias_LoginCredentials": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_LoginCredentials = requireAssignableTo<TypeOnly<old.LoginCredentials>, TypeOnly<current.LoginCredentials>>
 
 /*

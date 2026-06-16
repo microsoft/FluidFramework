@@ -157,6 +157,9 @@
 		"broken": {
 			"Interface_DataObjectFactoryProps": {
 				"backCompat": false
+			},
+			"Interface_IDataObjectProps": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"

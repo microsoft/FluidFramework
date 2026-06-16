@@ -8,8 +8,8 @@ import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
 import {
 	type IFluidErrorBase,
-	type TelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 

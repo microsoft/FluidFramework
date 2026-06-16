@@ -34,17 +34,17 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
-	type TelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
-	UsageError,
+	EventEmitterWithErrorHandling,
 	extractSafePropertiesFromMessage,
 	isFluidError,
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
 	normalizeError,
 	safeRaiseEvent,
-	EventEmitterWithErrorHandling,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

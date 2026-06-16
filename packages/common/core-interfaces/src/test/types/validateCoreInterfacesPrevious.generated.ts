@@ -501,6 +501,7 @@ declare type old_as_current_for_Interface_ITelemetryBaseLogger = requireAssignab
  * typeValidation.broken:
  * "Interface_ITelemetryBaseLogger": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ITelemetryBaseLogger = requireAssignableTo<TypeOnly<current.ITelemetryBaseLogger>, TypeOnly<old.ITelemetryBaseLogger>>
 
 /*
