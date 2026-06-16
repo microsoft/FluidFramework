@@ -59,9 +59,8 @@ jobs:
       github.event.check_run.name == 'Build - client packages' &&
       contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-    # permissions:
-    #   pull-requests: write
+    permissions:
+      pull-requests: write
     steps:
       - name: Resolve PR for check SHA
         id: find_pr
@@ -143,19 +142,18 @@ jobs:
               "",
             ].join("\n");
             fs.writeFileSync("acknowledge.md", body);
-            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
+            core.info(`PR #${process.env.PR_NUM}: rendered the following body for the sticky comment.`);
             core.startGroup("acknowledge.md");
             core.info(body);
             core.endGroup();
 
-      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-      # - if: steps.render.outcome == 'success'
-      #   # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
-      #   with:
-      #     header: bundle-size-report
-      #     number: ${{ steps.find_pr.outputs.pr_num }}
-      #     path: ${{ github.workspace }}/acknowledge.md
+      - if: steps.render.outcome == 'success'
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size-report
+          number: ${{ steps.find_pr.outputs.pr_num }}
+          path: ${{ github.workspace }}/acknowledge.md
 
   # Reacts to a PR's own `Build - client packages` build completing. The check SHA is a PR head SHA, so we
   # produce at most one matrix entry — the PR whose head matches. Fires on *any* completion (not just
@@ -317,9 +315,8 @@ jobs:
         pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
       fail-fast: false
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-    # permissions:
-    #   pull-requests: write
+    permissions:
+      pull-requests: write
     steps:
       # Check out the PR's base branch (never PR HEAD — PR-authored code isn't trusted) just to get build-tools
       # source so we can build flub. The comparison itself reads only ADO artifacts identified by SHA — no local
@@ -378,11 +375,11 @@ jobs:
             exit "$EC"
           fi
 
-      # Format the JSON into the markdown body the sticky comment would post. Done here (not in flub) so
+      # Format the JSON into the markdown body the sticky comment posts. Done here (not in flub) so
       # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
-      # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
-      # would contain without actually posting it. Dispatches on `data.kind` — happy path renders the
-      # comparison; failure kinds render a friendly per-(kind, side) message.
+      # bundle-comparison.md and also echoed to the action log so we can see what got posted.
+      # Dispatches on `data.kind` — happy path renders the comparison; failure kinds render a
+      # friendly per-(kind, side) message.
       - name: Render bundle-size comment body
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
@@ -511,15 +508,14 @@ jobs:
             ].join("\n") + "\n";
 
             fs.writeFileSync("bundle-comparison.md", body);
-            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
+            core.info(`PR #${process.env.PR_NUM}: rendered the following body for the sticky comment.`);
             core.startGroup("bundle-comparison.md");
             core.info(body);
             core.endGroup();
 
-      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
-      #   with:
-      #     header: bundle-size-report
-      #     number: ${{ matrix.pr.number }}
-      #     path: ${{ github.workspace }}/bundle-comparison.md
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size-report
+          number: ${{ matrix.pr.number }}
+          path: ${{ github.workspace }}/bundle-comparison.md
