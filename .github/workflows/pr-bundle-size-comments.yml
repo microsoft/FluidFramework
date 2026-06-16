@@ -423,7 +423,19 @@ jobs:
                   sections.push(`### \`${pkg}\`\n\n${bundleLines.join("\n")}`);
                 }
               }
-              return sections.length > 0 ? sections.join("\n\n") : "No bundles found in comparison.";
+              if (sections.length === 0) {
+                return "No bundles found in comparison.";
+              }
+              // Per-bundle deltas can be long; wrap them in a collapsed
+              // `<details>` so the top of the comment stays compact.
+              return [
+                "<details>",
+                "<summary>Per-bundle deltas</summary>",
+                "",
+                sections.join("\n\n"),
+                "",
+                "</details>",
+              ].join("\n");
             }
 
             // Render a failure body for an expected (side, kind) failure.
