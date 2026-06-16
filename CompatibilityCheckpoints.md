@@ -33,9 +33,9 @@ checkpoints are designated.
 | CC#2 | `>=2.0.0 <2.40.0` | 2024-06-26 | CC#1, CC#2, CC#3, CC#4, CC#5 | `>=1.4.0 <4.0.0`(estimated)` \| 2.0.0-internal* \| 2.0.0-rc*` |
 | CC#3 | `>=2.40.0 <2.80.0` | 2025-05-12 | CC#1, CC#2, CC#3, CC#4, CC#5, CC#6 | `>=1.4.0 <5.0.0`(estimated)` \| 2.0.0-internal* \| 2.0.0-rc*` |
 | CC#4 | `>=2.80.0 <2.101.0` | 2026-01-06 | CC#1, CC#2, CC#3, CC#4, CC#5, CC#6, CC#7 | `>=1.4.0 <6.0.0`(estimated)` \| 2.0.0-internal* \| 2.0.0-rc*` |
-| CC#5 (TBD) | `>=3.0.0 <4.0.0`(estimated) | ~2026-07-06 | CC#2, CC#3, CC#4, CC#5, CC#6, CC#7 | `>=2.0.0 <6.0.0`(estimated) |
-| CC#6 (TBD) | `>=4.0.0 <5.0.0`(estimated) | ~2027-01-06 | CC#3, CC#4, CC#5, CC#6, CC#7 | `>=2.40.0 <6.0.0`(estimated) |
-| CC#7 (TBD) | `>=5.0.0 <6.0.0`(estimated) | ~2027-07-06 | CC#4, CC#5, CC#6, CC#7 | `>=2.80.0 <6.0.0`(estimated) |
+| CC#5 (TBD) | `>=3.0.0 <4.0.0`(estimated) | ~2026-08-24 | CC#2, CC#3, CC#4, CC#5, CC#6, CC#7 | `>=2.0.0 <6.0.0`(estimated) |
+| CC#6 (TBD) | `>=4.0.0 <5.0.0`(estimated) | ~2027-04-19 | CC#3, CC#4, CC#5, CC#6, CC#7 | `>=2.40.0 <6.0.0`(estimated) |
+| CC#7 (TBD) | `>=5.0.0 <6.0.0`(estimated) | ~2027-12-06 | CC#4, CC#5, CC#6, CC#7 | `>=2.80.0 <6.0.0`(estimated) |
 
 <!-- GENERATED-TABLE-END -->
 

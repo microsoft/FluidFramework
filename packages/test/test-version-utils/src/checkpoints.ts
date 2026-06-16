@@ -116,21 +116,21 @@ const futureCheckpoints: readonly DocumentedCheckpoint[] = [
 		name: "CC#5",
 		index: 5,
 		lowerBoundVersion: "3.0.0",
-		startDate: "2026-07-06",
+		startDate: "2026-08-24",
 		status: "tbd",
 	},
 	{
 		name: "CC#6",
 		index: 6,
 		lowerBoundVersion: "4.0.0",
-		startDate: "2027-01-06",
+		startDate: "2027-04-19",
 		status: "tbd",
 	},
 	{
 		name: "CC#7",
 		index: 7,
 		lowerBoundVersion: "5.0.0",
-		startDate: "2027-07-06",
+		startDate: "2027-12-06",
 		status: "tbd",
 		closingVersion: "6.0.0",
 	},
@@ -262,7 +262,9 @@ const documentedCheckpoints: readonly DocumentedCheckpoint[] = [
 		(c): DocumentedCheckpoint => ({
 			...c,
 			status: "designated",
-			closingVersion: designatedClosingVersions[c.name],
+			...(designatedClosingVersions[c.name] === undefined
+				? {}
+				: { closingVersion: designatedClosingVersions[c.name] }),
 		}),
 	),
 	...futureCheckpoints,
