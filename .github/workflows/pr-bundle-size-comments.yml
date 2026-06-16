@@ -41,13 +41,23 @@ permissions:
   pull-requests: read
 
 jobs:
+  # NOTE on the `contains(... '10f9b53e-c7fd-4538-9fff-13cd088a436c')` check that appears in each of the
+  # triggering jobs below: that GUID is the `public` ADO project under `dev.azure.com/fluidframework`. The
+  # pipelines whose check_runs we react to all live there. We need the scope because both the `public` and
+  # `internal` projects publish check_runs with the same name (e.g. `Build - client packages`); without it
+  # the workflow also fires on `internal`'s check_runs, which we can't process (no anonymous read access)
+  # and don't produce the artifacts we consume. The GUID appears in `check_run.details_url`; there's no
+  # structured `project` field in the event payload, so `contains(details_url, '<guid>')` is the only
+  # stable distinguisher. The project lives at https://dev.azure.com/fluidframework/public.
+
   # Posts the initial "build pending" sticky comment when ADO queues the `Build - client packages` check
   # for a PR commit. We only measure bundle size on client packages today, so PRs that don't trigger that
   # check (server-only, docs-only) receive no sticky.
   acknowledge-build:
     if: >-
       github.event.action == 'created' &&
-      github.event.check_run.name == 'Build - client packages'
+      github.event.check_run.name == 'Build - client packages' &&
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
     # permissions:
@@ -155,7 +165,8 @@ jobs:
   identify-from-pr-build:
     if: >-
       github.event.action == 'completed' &&
-      github.event.check_run.name == 'Build - client packages'
+      github.event.check_run.name == 'Build - client packages' &&
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
@@ -236,7 +247,8 @@ jobs:
   identify-from-baseline-build:
     if: >-
       github.event.action == 'completed' &&
-      github.event.check_run.name == 'Build - Client bundle size artifacts'
+      github.event.check_run.name == 'Build - Client bundle size artifacts' &&
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
