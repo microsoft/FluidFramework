@@ -3,7 +3,6 @@
 "fluid-framework": minor
 "__section": tree
 ---
-
 Enable staged schema upgrades at runtime
 
 SharedTree now supports enabling selected staged schema upgrades when initializing a document or upgrading its stored schema.
