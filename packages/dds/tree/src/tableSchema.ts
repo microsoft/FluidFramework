@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { fail, oob } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey } from "./core/index.js";
@@ -1120,7 +1120,8 @@ export namespace System_TableSchema {
 					const column = columnCache.get(id) ?? fail("Column ID not found in cache");
 					constraints.push({ type: "nodeInDocument", node: column });
 				}
-				return constraints.length > 0 ? constraints : undefined;
+				assert(constraints.length > 0, "No constraints generated for column references.");
+				return constraints;
 			}
 
 			/**
