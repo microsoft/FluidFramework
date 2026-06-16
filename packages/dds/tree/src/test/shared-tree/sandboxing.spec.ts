@@ -130,6 +130,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 		if (this.inFlight > 0) {
 			return;
 		}
+		this.view.applyChange(update, false);
 		this.sendAckOfInboundUpdate();
 	}
 
@@ -217,8 +218,11 @@ describe("Host and Sandbox Demo", () => {
 	it("one outbound edit", async () => {
 		const { peer, host, sandbox, provider } = setup();
 
-		// The sandbox starts with the same content as the host
+		// The sandbox starts with the same content as the host and the peer
 		assert.deepEqual([...sandbox.view.root], ["A"]);
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...host.main.root], ["A"]);
+		assert.deepEqual([...peer.root], ["A"]);
 
 		// Edit in the sandbox
 		sandbox.view.root.push("B(s)");
@@ -229,7 +233,7 @@ describe("Host and Sandbox Demo", () => {
 		assert.deepEqual([...host.main.root], ["A"]);
 
 		// Wait for the edit to be pushed to the host
-		const _ = (await sandbox.pushPromise) ?? assert.fail("Expected push to be in progress");
+		const _ = await (sandbox.pushPromise ?? assert.fail("Expected push to be in progress"));
 
 		// The edit is now reflected in the host
 		assert.deepEqual([...host.local.root], ["A", "B(s)"]);
@@ -241,5 +245,38 @@ describe("Host and Sandbox Demo", () => {
 
 		// The edit is now reflected in the peer
 		assert.deepEqual([...peer.root], ["A", "B(s)"]);
+	});
+
+	it("one inbound edit", async () => {
+		const { peer, host, sandbox, provider } = setup();
+
+		// The sandbox starts with the same content as the host and the peer
+		assert.deepEqual([...sandbox.view.root], ["A"]);
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...host.main.root], ["A"]);
+		assert.deepEqual([...peer.root], ["A"]);
+
+		// Edit on the peer
+		peer.root.push("B(p)");
+		// The edit is synchronously reflected in the peer
+		assert.deepEqual([...peer.root], ["A", "B(p)"]);
+		// The edit is not reflected in the host or the sandbox yet
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...host.main.root], ["A"]);
+		assert.deepEqual([...sandbox.view.root], ["A"]);
+
+		provider.synchronizeMessages();
+
+		// The edit is now reflected in the host but not the local or sandbox yet
+		assert.deepEqual([...host.main.root], ["A", "B(p)"]);
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...sandbox.view.root], ["A"]);
+
+		// Wait for the edit to be pushed to the host
+		const _ = await (host.updatePromise ?? assert.fail("Expected update to be in progress"));
+
+		// The edit is now reflected in the local and sandbox
+		assert.deepEqual([...host.local.root], ["A", "B(p)"]);
+		assert.deepEqual([...sandbox.view.root], ["A", "B(p)"]);
 	});
 });

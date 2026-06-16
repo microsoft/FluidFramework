@@ -1269,17 +1269,16 @@ export class TreeCheckout implements ITreeCheckout {
 		);
 
 		// TODO: this is a dummy revision. We shouldn't need one.
-		const revision = this.mintRevisionTag();
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
-			revision,
+			revision: undefined,
 			isSummary: false,
 		};
 		const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
 		return {
 			version: 1,
-			revision,
+			revision: undefined,
 			originatorId: this.idCompressor.localSessionId,
 			change: encodedChange,
 		} satisfies SerializedChange;
@@ -1782,7 +1781,7 @@ function verboseFromCursor(
 
 interface SerializedChange {
 	version: 1;
-	revision: RevisionTag;
+	revision: RevisionTag | undefined;
 	change: JsonCompatibleReadOnly;
 	originatorId: SessionId;
 }
@@ -1794,7 +1793,9 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	const change = value as Partial<SerializedChange>;
 	return (
 		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
+		(change.revision === undefined ||
+			change.revision === "root" ||
+			typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
 		change.change !== undefined
