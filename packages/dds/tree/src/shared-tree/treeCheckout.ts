@@ -1173,6 +1173,10 @@ export class TreeCheckout implements ITreeCheckout {
 			breaker?: Breakable,
 			disposeForksAfterTransaction?: boolean,
 		) => T,
+		options?: {
+			// The branch to use for the forked checkout. If not provided, the branch used by the current checkout will be forked.
+			branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
+		},
 	): T {
 		this.checkNotDisposed(
 			"The parent branch has already been disposed and can no longer create new branches.",
@@ -1183,7 +1187,7 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		this.editLock.checkUnlocked("Branching");
-		const branch = this.#transaction.activeBranch.fork();
+		const branch = options?.branch ?? this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
 		const forest = this.forest.clone(storedSchema, forkBreaker);
