@@ -690,11 +690,11 @@ export function coalesceUniformChunks(
 		}
 		const last = result[result.length - 1] ?? oob();
 		const coalesced = tryCoalesceUniformChunks(last, next, policy);
-		if (coalesced !== undefined) {
+		if (coalesced === undefined) {
+			result.push(next);
+		} else {
 			result[result.length - 1] = coalesced;
 			mutated = true;
-		} else {
-			result.push(next);
 		}
 	}
 
