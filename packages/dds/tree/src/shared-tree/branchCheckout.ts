@@ -213,13 +213,21 @@ export class BranchCheckout extends TreeCheckout {
 			breaker,
 			disposeForksAfterTransaction,
 		);
-		// A BranchCheckout is local-only (asserted above) and its lifetime is bounded by the
-		// holder, not by the SharedTree. Detach from the long-lived branchTrimmer so the branch
-		// (and transitively this checkout) is not strongly retained by the EditManager's event
-		// emitter — without this, garbage collection of an unreachable BranchCheckout is impossible
-		// while the SharedTree lives. The trade-off is that this branch no longer receives
-		// `ancestryTrimmed` events to incrementally release repair data; that data is released when
-		// the BranchCheckout is disposed or garbage-collected.
+		// A BranchCheckout is local-only (asserted above) and its lifetime is bounded by the holder,
+		// not by the SharedTree. Detach from the long-lived branchTrimmer: the trimmer's
+		// `ancestryTrimmed` listener closure would otherwise strongly retain this branch (and
+		// transitively this checkout) for the SharedTree's lifetime. The trade-off is that this branch
+		// no longer receives `ancestryTrimmed` events to incrementally release repair data; that data is
+		// released when the BranchCheckout is disposed.
+		//
+		// NOTE: detaching the trimmer removes only *one* of the edges that retain a BranchCheckout. An
+		// undisposed BranchCheckout obtained from a real SharedTree is still retained by the EditManager
+		// (via `trunkBranches` and the `onForkTransitive` registration), so it is not collectable until
+		// it is disposed. Callers are expected to dispose a BranchCheckout when done; GC is not a
+		// substitute for disposal. See AB#75745 to make undisposed BranchCheckouts collectable.
+		//
+		// The detachTrimmer behavior relied on here is verified by "detaches the branch from its
+		// trimmer" in branch.spec.ts.
 		branch.detachTrimmer();
 		branchCheckoutMap.set(branch, new WeakRef(this));
 

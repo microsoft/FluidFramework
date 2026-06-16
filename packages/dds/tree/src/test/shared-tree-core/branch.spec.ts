@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { createEmitter } from "@fluid-internal/client-utils";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -20,6 +21,8 @@ import {
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { BranchTrimmingEvents } from "../../shared-tree-core/branch.js";
 import {
 	SharedTreeBranch,
 	type SharedTreeBranchChange,
@@ -364,6 +367,56 @@ describe("Branches", () => {
 			});
 			branch.fork();
 			assert.equal(forkCount, 2);
+		});
+	});
+
+	describe("trimmer detachment", () => {
+		/** Creates a root branch wired to a caller-controlled trimmer, so trims can be simulated directly. */
+		function createWithTrimmer(): {
+			branch: DefaultBranch;
+			trimmer: ReturnType<typeof createEmitter<BranchTrimmingEvents>>;
+			/** Revisions delivered to the branch's own `ancestryTrimmed` event. */
+			received: RevisionTag[][];
+		} {
+			const trimmer = createEmitter<BranchTrimmingEvents>();
+			const initCommit: GraphCommit<DefaultChangeset> = {
+				change: defaultChangeFamily.rebaser.compose([]),
+				revision: nullRevisionTag,
+			};
+			const branch = new SharedTreeBranch(
+				initCommit,
+				defaultChangeFamily,
+				mintRevisionTag,
+				trimmer,
+			);
+			const received: RevisionTag[][] = [];
+			branch.events.on("ancestryTrimmed", (revs) => received.push(revs));
+			return { branch, trimmer, received };
+		}
+
+		it("forwards trimmer events before detaching", () => {
+			const { trimmer, received } = createWithTrimmer();
+			const revision = mintRevisionTag();
+			trimmer.emit("ancestryTrimmed", [revision]);
+			assert.deepEqual(received, [[revision]]);
+		});
+
+		// This is the property the BranchCheckout constructor relies on: after detaching, the trimmer's
+		// listener closure no longer references the branch, so it cannot retain the branch (or its
+		// checkout) for the SharedTree's lifetime. Verifiable without a real SharedTree or GC.
+		it("detaches the branch from its trimmer", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			branch.detachTrimmer();
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.equal(received.length, 0);
+		});
+
+		it("detachTrimmer is idempotent", () => {
+			const { branch, trimmer, received } = createWithTrimmer();
+			branch.detachTrimmer();
+			branch.detachTrimmer();
+			trimmer.emit("ancestryTrimmed", [mintRevisionTag()]);
+			assert.equal(received.length, 0);
 		});
 	});
 

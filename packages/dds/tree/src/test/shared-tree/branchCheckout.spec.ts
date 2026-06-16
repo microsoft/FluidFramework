@@ -360,6 +360,12 @@ describe("BranchCheckout", () => {
 	// keyed by `SharedTreeBranch`) do not pin disposed branches in memory.
 	// Uses the two-async-major-GC pattern from packages/framework/react/src/test/useObservation.spec.tsx.
 	describe("WeakMap GC", () => {
+		// All tests in this block use `makeView()`, i.e. the `independentView` path, which builds a
+		// `TreeCheckout` directly via `createTreeCheckout` with NO `EditManager` (and therefore no
+		// `branchTrimmer`). On this path the only structures that could retain a BranchCheckout are the
+		// `WeakRef`-valued `branchCheckoutMap`/lazy-`getBranch` cache and the `FinalizationRegistry`, so
+		// these tests verify exactly that machinery — none of the EditManager retention edges exist here.
+		// (For why GC eligibility differs on a real SharedTree, see the NOTE above the getBranch test below.)
 		/**
 		 * Runs up to two major async GCs, breaking early once `predicate` returns true.
 		 *
@@ -459,12 +465,12 @@ describe("BranchCheckout", () => {
 			);
 		});
 
-		it("undisposed BranchCheckout is eligible for GC once caller drops it (auto-dispose path)", async () => {
-			// The whole point of detaching the branchTrimmer in the BranchCheckout constructor and
-			// using WeakRef-valued maps: when the caller drops their reference WITHOUT calling
-			// dispose, the BranchCheckout must still become unreachable. Before these changes the
-			// EditManager's branchTrimmer pinned the branch (and transitively the checkout) for the
-			// SharedTree's lifetime, so this would have hung indefinitely.
+		it("undisposed BranchCheckout is eligible for GC once caller drops it (independent-view path)", async () => {
+			// On the independent-view path there is no EditManager and no branchTrimmer, so the only
+			// thing that could keep a dropped-but-undisposed BranchCheckout alive is one of the
+			// WeakRef-valued maps. This asserts those maps don't pin: when the caller drops their
+			// reference WITHOUT calling dispose, the BranchCheckout still becomes unreachable.
+			// (On a real SharedTree this does NOT hold — see the note below and AB#75745.)
 			const view = makeView();
 			const { branchRef, checkoutRef } = ((): {
 				branchRef: WeakRef<object>;
@@ -493,7 +499,14 @@ describe("BranchCheckout", () => {
 			);
 		});
 
-		it("undisposed BranchCheckout from getBranch is eligible for GC, and a fresh getBranch returns a new instance", async () => {
+		// NOTE: there is intentionally no test asserting that an undisposed BranchCheckout obtained
+		// from a *real* SharedTree becomes GC-eligible while the tree lives. It is not: detaching the
+		// trimmer (see the BranchCheckout constructor) removes only one retention edge; the EditManager
+		// still retains the forked branch via `trunkBranches` and the `onForkTransitive` registration.
+		// Callers must dispose a BranchCheckout; GC is not a substitute. Making undisposed
+		// BranchCheckouts collectable is tracked by AB#75745. The detachTrimmer behavior the constructor
+		// relies on is verified directly in branch.spec.ts ("detaches the branch from its trimmer").
+		it("undisposed BranchCheckout from getBranch is eligible for GC, and a fresh getBranch returns a new instance (independent-view path)", async () => {
 			const view = makeView();
 			const { checkoutRef } = ((): { checkoutRef: WeakRef<BranchCheckout> } => {
 				const lazy = getBranch(view);
