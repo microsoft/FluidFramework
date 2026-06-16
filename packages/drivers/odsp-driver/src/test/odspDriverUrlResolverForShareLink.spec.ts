@@ -125,12 +125,8 @@ describe("Tests for OdspDriverUrlResolverForShareLink resolver", () => {
 					...(resolvedUrl1.fileVersion === undefined
 						? {}
 						: { fileVersion: resolvedUrl1.fileVersion }),
-					...(resolvedUrl1.context === undefined
-						? {}
-						: { context: resolvedUrl1.context }),
-					...(resolvedUrl1.appName === undefined
-						? {}
-						: { appName: resolvedUrl1.appName }),
+					...(resolvedUrl1.context === undefined ? {} : { context: resolvedUrl1.context }),
+					...(resolvedUrl1.appName === undefined ? {} : { appName: resolvedUrl1.appName }),
 				});
 				const resolvedUrl2 = await resolver.resolve({ url });
 				assert.strictEqual(resolvedUrl2.driveId, driveId, "Drive id should be equal");
