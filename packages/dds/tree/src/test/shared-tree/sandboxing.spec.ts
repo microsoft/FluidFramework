@@ -27,14 +27,75 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { TestTreeProviderLite, StringArray } from "../utils.js";
 
-const enableSchemaValidation = true;
+function makePromiseWithResolver<T>(): [Promise<T>, (value: T) => void] {
+	let resolver: (value: T) => void;
+	const promise = new Promise<T>((resolve) => {
+		resolver = resolve;
+	});
+	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+	assert(resolver! !== undefined, "Resolver should have been assigned");
+	return [promise, resolver];
+}
 
-interface HostState {
+class Host<const TSchema extends ImplicitFieldSchema> {
 	/** The main branch on the host. Is automatically updated when peer changes are received. */
-	readonly main: TreeViewAlpha<typeof StringArray>;
+	public readonly main: TreeViewAlpha<TSchema>;
 	/** The local branch on the host. Always reflects the state of the sandbox (though lags behind it due to async) */
-	readonly local: TreeViewAlpha<typeof StringArray>;
-	readonly processOutboundChange: (change: JsonCompatibleReadOnly) => void;
+	public readonly local: TreeViewAlpha<TSchema>;
+	private readonly sendUpdate: (change: JsonCompatibleReadOnly) => void;
+
+	private updateInProgress?: [Promise<void>, resolver: () => void];
+
+	public constructor(
+		main: TreeViewAlpha<TSchema>,
+		sendUpdate: (change: JsonCompatibleReadOnly) => void,
+	) {
+		this.sendUpdate = sendUpdate;
+		this.main = main;
+		this.local = main.fork();
+
+		this.main.events.on("changed", (metadata: ChangeMetadata) => {
+			if (!metadata.isLocal) {
+				this.startInboundUpdate();
+			}
+		});
+	}
+
+	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
+		this.local.applyChange(change);
+		this.main.merge(this.local);
+
+		if (this.updateInProgress !== undefined) {
+			this.scheduleInboundPush();
+		}
+	}
+
+	private startInboundUpdate(): void {
+		if (this.updateInProgress !== undefined) {
+			return;
+		}
+
+		this.updateInProgress = makePromiseWithResolver();
+		this.scheduleInboundPush();
+	}
+
+	private scheduleInboundPush(): void {
+		setTimeout(() => {
+			const mainAtTheStartOfThePush = this.main.fork();
+			const update = this.local.getRebaseChanges(mainAtTheStartOfThePush);
+			this.sendUpdate(update);
+		});
+	}
+
+	public receiveAckOfUpdate(): void {
+		assert.notEqual(this.updateInProgress, undefined);
+		this.updateInProgress?.[1]();
+		this.updateInProgress = undefined;
+	}
+
+	public get updatePromise(): Promise<void> | undefined {
+		return this.updateInProgress?.[0];
+	}
 }
 
 class Sandbox<const TSchema extends ImplicitFieldSchema> {
@@ -42,77 +103,143 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** The number of local changes that have been made in the sandbox but not yet reflected on the host. */
 	private inFlight: number = 0;
+	private pushInProgress?: [Promise<void>, resolver: () => void];
+
+	private readonly sendAckOfInboundUpdate: () => void;
 
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent,
-		sendOutboundChange: (change: JsonCompatibleReadOnly) => Promise<void>,
+		sendOutboundChange: (change: JsonCompatibleReadOnly) => void,
+		sendAckOfInboundUpdate: () => void,
 	) {
 		this.view = independentInitializedView(config, options, content);
+		this.sendAckOfInboundUpdate = sendAckOfInboundUpdate;
 		this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			if (metadata.isLocal) {
+				this.pushInProgress ??= makePromiseWithResolver();
 				this.inFlight += 1;
 				const newChange = metadata.getChange();
-				sendOutboundChange(newChange).then(
-					() => (this.inFlight -= 1),
-					() => {
-						assert.fail("Unexpected failure");
-					},
-				);
+				sendOutboundChange(newChange);
 			}
 		});
 	}
-}
 
-it("Host and Sandbox Demo", () => {
-	const provider = new TestTreeProviderLite(
-		2,
-		configuredSharedTree({
-			jsonValidator: FormatValidatorBasic,
-			minVersionForCollab: FluidClientVersion.v2_80,
-		}).getFactory(),
-	);
-	const config = new TreeViewConfiguration({
-		schema: StringArray,
-		enableSchemaValidation,
-	});
-
-	const peer = asAlpha(provider.trees[0].viewWith(config));
-	peer.initialize(["A"]);
-	provider.synchronizeMessages();
-
-	const main = asAlpha(provider.trees[1].viewWith(config));
-	const host: HostState = { main, local: main.fork(), processOutboundChange: (change) => {} };
-
-	// TODO: this is a legacy API: we need a stable alternative.
-	const idCompressor = createIdCompressor();
-	const startingState = TreeAlpha.exportCompressed(host.local.root, {
-		idCompressor,
-		minVersionForCollab: FluidClientVersion.v2_80,
-	});
-
-	async function sendOutboundChangeFromSandboxToHostLocalBranch(
-		change: JsonCompatibleReadOnly,
-	): Promise<void> {
-		await Promise.resolve(); // Simulates async boundary
-		host.processOutboundChange(change);
+	public receiveInboundUpdate(update: JsonCompatibleReadOnly): void {
+		if (this.inFlight > 0) {
+			return;
+		}
+		this.sendAckOfInboundUpdate();
 	}
 
-	const sandbox = new Sandbox(
-		config,
-		{ jsonValidator: FormatValidatorBasic },
-		{
-			tree: startingState,
-			schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
-			// TODO: how is the sandbox supposed to get the same compressor state as the host?
+	public receiveAckOfOutboundChange(): void {
+		assert(this.inFlight > 0);
+		this.inFlight -= 1;
+
+		if (this.inFlight === 0) {
+			this.pushInProgress?.[1]();
+			this.pushInProgress = undefined;
+		}
+	}
+
+	public get pushPromise(): Promise<void> | undefined {
+		return this.pushInProgress?.[0];
+	}
+}
+
+describe("Host and Sandbox Demo", () => {
+	function setup() {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				minVersionForCollab: FluidClientVersion.v2_80,
+			}).getFactory(),
+		);
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation: true,
+		});
+
+		const peer = asAlpha(provider.trees[0].viewWith(config));
+		peer.initialize(["A"]);
+		provider.synchronizeMessages();
+
+		const main = asAlpha(provider.trees[1].viewWith(config));
+		// eslint-disable-next-line prefer-const
+		let sandbox: Sandbox<typeof StringArray>;
+
+		function sendInboundUpdateFromHostToSandbox(update: JsonCompatibleReadOnly): void {
+			setTimeout(() => {
+				sandbox.receiveInboundUpdate(update);
+			});
+		}
+
+		const host = new Host(main, sendInboundUpdateFromHostToSandbox);
+
+		// TODO: this is a legacy API: we need a stable alternative.
+		const idCompressor = createIdCompressor();
+		const startingState = TreeAlpha.exportCompressed(host.local.root, {
 			idCompressor,
-		},
-		sendOutboundChangeFromSandboxToHostLocalBranch,
-	);
+			minVersionForCollab: FluidClientVersion.v2_80,
+		});
 
-	assert.deepEqual([...sandbox.view.root], ["A"]);
+		function sendOutboundChangeFromSandboxToHostLocalBranch(
+			change: JsonCompatibleReadOnly,
+		): void {
+			setTimeout(() => {
+				host.receiveOutboundChange(change);
+				setTimeout(() => sandbox.receiveAckOfOutboundChange());
+			});
+		}
 
-	// Edit in the sandbox
-	sandbox.view.root.push("B(s)");
+		function sendAckOfInboundUpdateFromSandboxToHost(): void {
+			setTimeout(() => host.receiveAckOfUpdate());
+		}
+
+		sandbox = new Sandbox(
+			config,
+			{ jsonValidator: FormatValidatorBasic },
+			{
+				tree: startingState,
+				schema: extractPersistedSchema(config.schema, FluidClientVersion.v2_80, () => false),
+				// TODO: how is the sandbox supposed to get the same compressor state as the host?
+				idCompressor,
+			},
+			sendOutboundChangeFromSandboxToHostLocalBranch,
+			sendAckOfInboundUpdateFromSandboxToHost,
+		);
+
+		return { peer, host, sandbox, provider };
+	}
+
+	it("one outbound edit", async () => {
+		const { peer, host, sandbox, provider } = setup();
+
+		// The sandbox starts with the same content as the host
+		assert.deepEqual([...sandbox.view.root], ["A"]);
+
+		// Edit in the sandbox
+		sandbox.view.root.push("B(s)");
+		// The edit is synchronously reflected in the sandbox
+		assert.deepEqual([...sandbox.view.root], ["A", "B(s)"]);
+		// The edit is not reflected in the host yet
+		assert.deepEqual([...host.local.root], ["A"]);
+		assert.deepEqual([...host.main.root], ["A"]);
+
+		// Wait for the edit to be pushed to the host
+		const _ = (await sandbox.pushPromise) ?? assert.fail("Expected push to be in progress");
+
+		// The edit is now reflected in the host
+		assert.deepEqual([...host.local.root], ["A", "B(s)"]);
+		assert.deepEqual([...host.main.root], ["A", "B(s)"]);
+		// The edit is not reflected in the peer yet
+		assert.deepEqual([...peer.root], ["A"]);
+
+		provider.synchronizeMessages();
+
+		// The edit is now reflected in the peer
+		assert.deepEqual([...peer.root], ["A", "B(s)"]);
+	});
 });

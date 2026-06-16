@@ -165,8 +165,8 @@ export class SchematizingSimpleTreeView<
 		return true;
 	}
 
-	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.checkout.applySerializedChange(change);
+	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
+		this.checkout.applySerializedChange(change, generateCommit);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
@@ -527,6 +527,10 @@ export class SchematizingSimpleTreeView<
 
 	public rebaseOnto(context: TreeBranchAlpha): void {
 		this.checkout.rebaseOnto(context);
+	}
+
+	public getRebaseChanges(context: TreeBranchAlpha): JsonCompatibleReadOnly {
+		return this.checkout.getRebaseChanges(context);
 	}
 
 	// #endregion Branching

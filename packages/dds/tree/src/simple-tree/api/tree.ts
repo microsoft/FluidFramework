@@ -341,7 +341,9 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * TODO: This method will support applying changes from different IdCompressor instances as long as they have the same local session ID.
 	 * Update the tests and docs to match when that is done.
 	 */
-	applyChange(change: JsonCompatibleReadOnly): void;
+	applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void;
+
+	getRebaseChanges(branch: TreeBranch): JsonCompatibleReadOnly;
 }
 
 /**

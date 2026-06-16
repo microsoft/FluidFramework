@@ -1490,6 +1490,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public rebaseOnto(branch: unknown): void {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
 	}
+	public getRebaseChanges(branch: unknown): never {
+		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
+	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
 	}

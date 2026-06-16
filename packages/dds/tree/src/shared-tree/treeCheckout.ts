@@ -825,16 +825,20 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		generateCommit: boolean = true,
+	): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
-		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
+		const { revision, change } = serializedChange;
+		// TODO: make this OK
+		// if (originatorId !== this.idCompressor.localSessionId) {
+		// 	throw new UsageError(
+		// 		`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
+		// 	);
+		// }
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
@@ -842,15 +846,20 @@ export class TreeCheckout implements ITreeCheckout {
 			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		if (generateCommit) {
+			// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+			this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		} else {
+			this.applyInternalChange(decodedChange);
+		}
 	}
 
 	// #region TreeBranchAlpha
 
 	@throwIfBroken
-	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
+		this.applySerializedChange(change, generateCommit);
 	}
 
 	public isBranch(): this is TreeBranchAlpha {
@@ -1248,6 +1257,32 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public getRebaseChanges(branch: TreeBranch): JsonCompatibleReadOnly {
+		const branchCheckout = getCheckout(branch);
+		const change = diffHistories(
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+			this.mintRevisionTag,
+		);
+
+		// TODO: this is a dummy revision. We shouldn't need one.
+		const revision = this.mintRevisionTag();
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision,
+			isSummary: false,
+		};
+		const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
+		return {
+			version: 1,
+			revision,
+			originatorId: this.idCompressor.localSessionId,
+			change: encodedChange,
+		} satisfies SerializedChange;
 	}
 
 	public merge(branch: TreeBranch): void;
