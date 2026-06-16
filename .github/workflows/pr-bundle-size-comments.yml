@@ -395,30 +395,53 @@ jobs:
             const fs = require("fs");
             const data = JSON.parse(fs.readFileSync("bundle-comparison.json", "utf8"));
 
-            // Render the happy-path comparison body — per-package sections, or
-            // "No bundle-size changes." if everything is unchanged.
+            // Render the happy-path body: a "Notable changes" summary (added,
+            // removed, or changed-with-parsed-delta ≥ NOTABLE_THRESHOLD) above
+            // the collapsed full per-bundle inventory.
             function renderComparison(comparison) {
+              const NOTABLE_THRESHOLD = 500;
+
               const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
 
-              // Render one bundle's diff line — always emitted, even for
-              // unchanged bundles, so the body is a complete inventory.
-              function renderBundleLine(bundle, cmp) {
+              // Indicator emoji and notability for one bundle. ➕/➖ for added/removed,
+              // 🔴/🟢 for changes ≥ NOTABLE_THRESHOLD; smaller/unchanged → none.
+              function getRenderProps(cmp) {
+                if (cmp.base === undefined) return { indicator: "➕", isNotable: true };
+                if (cmp.compare === undefined) return { indicator: "➖", isNotable: true };
+                const delta = cmp.compare.parsedSize - cmp.base.parsedSize;
+                if (Math.abs(delta) >= NOTABLE_THRESHOLD) {
+                  return { indicator: delta > 0 ? "🔴" : "🟢", isNotable: true };
+                }
+                return { indicator: undefined, isNotable: false };
+              }
+
+              // Render one bundle's diff line. Always emitted, including unchanged.
+              // `indicator` (➕/➖/🔴/🟢) is prepended when present.
+              function renderBundleLine(bundle, cmp, indicator) {
+                const prefix = indicator ? `${indicator} ` : "";
                 if (cmp.base === undefined && cmp.compare !== undefined) {
-                  return `- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`;
+                  return `- ${prefix}\`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`;
                 }
                 if (cmp.compare === undefined && cmp.base !== undefined) {
-                  return `- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`;
+                  return `- ${prefix}\`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`;
                 }
                 const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
                 const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
-                return `- \`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`;
+                return `- ${prefix}\`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`;
               }
 
+              const notableLines = [];
               const sections = [];
               for (const [pkg, bundles] of Object.entries(comparison)) {
-                const bundleLines = Object.entries(bundles).map(
-                  ([bundle, cmp]) => renderBundleLine(bundle, cmp),
-                );
+                const bundleLines = [];
+                for (const [bundle, cmp] of Object.entries(bundles)) {
+                  const { indicator, isNotable } = getRenderProps(cmp);
+                  const line = renderBundleLine(bundle, cmp, indicator);
+                  bundleLines.push(line);
+                  if (isNotable) {
+                    notableLines.push(line);
+                  }
+                }
                 if (bundleLines.length > 0) {
                   sections.push(`### \`${pkg}\`\n\n${bundleLines.join("\n")}`);
                 }
@@ -426,9 +449,19 @@ jobs:
               if (sections.length === 0) {
                 return "No bundles found in comparison.";
               }
-              // Per-bundle deltas can be long; wrap them in a collapsed
-              // `<details>` so the top of the comment stays compact.
+
+              const notableSection = [
+                `### Notable changes`,
+                "",
+                notableLines.length > 0
+                  ? notableLines.join("\n")
+                  : `No bundles changed by ≥ ${NOTABLE_THRESHOLD} bytes parsed.`,
+              ].join("\n");
+
+              // Wrap the full inventory in <details> so the top of the comment stays compact.
               return [
+                notableSection,
+                "",
                 "<details>",
                 "<summary>Per-bundle deltas</summary>",
                 "",
