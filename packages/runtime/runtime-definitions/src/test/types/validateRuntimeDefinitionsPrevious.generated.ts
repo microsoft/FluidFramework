@@ -114,6 +114,7 @@ declare type current_as_old_for_Interface_IAttachMessage = requireAssignableTo<T
  * typeValidation.broken:
  * "Interface_IContainerRuntimeBase": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerRuntimeBase = requireAssignableTo<TypeOnly<current.IContainerRuntimeBase>, TypeOnly<old.IContainerRuntimeBase>>
 
 /*
@@ -204,6 +205,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreChannel = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreContext = requireAssignableTo<TypeOnly<current.IFluidDataStoreContext>, TypeOnly<old.IFluidDataStoreContext>>
 
 /*
@@ -213,6 +215,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreContext = requireAssign
  * typeValidation.broken:
  * "Interface_IFluidDataStoreContextDetached": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidDataStoreContextDetached = requireAssignableTo<TypeOnly<current.IFluidDataStoreContextDetached>, TypeOnly<old.IFluidDataStoreContextDetached>>
 
 /*
@@ -276,6 +279,7 @@ declare type current_as_old_for_Interface_IFluidDataStoreRegistry = requireAssig
  * typeValidation.broken:
  * "Interface_IFluidParentContext": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IFluidParentContext = requireAssignableTo<TypeOnly<current.IFluidParentContext>, TypeOnly<old.IFluidParentContext>>
 
 /*

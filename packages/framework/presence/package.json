@@ -102,7 +102,6 @@
 		"@fluid-internal/presence-definitions": "workspace:~",
 		"@fluid-internal/presence-runtime": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
