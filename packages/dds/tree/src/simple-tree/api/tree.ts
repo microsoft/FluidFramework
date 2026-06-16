@@ -460,6 +460,41 @@ export interface TreeViewAlpha<
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 *
+	 * @example Enabling a staged allowed type for documents selected by a feature flag:
+	 * ```typescript
+	 * const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
+	 * const checklistItemSchemaUpgrade = stagedChecklistItem.metadata.stagedSchemaUpgrade;
+	 * assert(checklistItemSchemaUpgrade !== undefined);
+	 *
+	 * const view = asAlpha(
+	 * 	tree.viewWith(new TreeViewConfiguration({ schema: AppSchemaWithStagedChecklist })),
+	 * );
+	 *
+	 * if (featureFlags.enableChecklistItems && view.compatibility.canUpgrade) {
+	 * 	view.upgradeSchema({ enableChecklistItems: checklistItemSchemaUpgrade });
+	 * 	addChecklistItem(view.root, { text: "Review rollout" });
+	 * }
+	 * ```
+	 *
+	 * @example Enabling a staged optional field after clients that understand it have been deployed:
+	 * ```typescript
+	 * const stagedDueDate = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.string);
+	 * const dueDateSchemaUpgrade = stagedDueDate.isStagedOptional;
+	 * assert(dueDateSchemaUpgrade !== false);
+	 *
+	 * const view = asAlpha(
+	 * 	tree.viewWith(new TreeViewConfiguration({ schema: AppSchemaWithStagedDueDate })),
+	 * );
+	 *
+	 * if (featureFlags.enableOptionalDueDate && view.compatibility.canUpgrade) {
+	 * 	view.upgradeSchema({ enableOptionalDueDate: dueDateSchemaUpgrade });
+	 * 	view.root.dueDate = undefined;
+	 * }
+	 * ```
+	 *
+	 * Full end-to-end staged schema upgrade examples can be found in the
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
+	 *
 	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
 	 */
 	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;

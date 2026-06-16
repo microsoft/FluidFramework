@@ -97,6 +97,17 @@ export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenera
 	includeStagedOptional: () => true,
 };
 
+/**
+ * Creates options for {@link toStoredSchema} that include only the staged schema upgrades
+ * listed in the application-provided property bag.
+ *
+ * @remarks
+ * The property names in `upgrades` are application-defined labels. Only the `SchemaUpgrade`
+ * values are used to decide which staged allowed types or staged optional fields are included
+ * in generated stored schema.
+ *
+ * If `upgrades` is omitted or empty, no staged schema upgrades are enabled.
+ */
 function storedSchemaGenerationOptionsForUpgrades(
 	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
 ): StoredFromViewSchemaGenerationOptions {
