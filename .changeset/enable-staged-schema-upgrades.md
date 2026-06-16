@@ -8,7 +8,7 @@ Enable staged schema upgrades at runtime
 SharedTree now supports enabling selected staged schema upgrades when initializing a document or upgrading its stored schema.
 This lets applications deploy code that understands a schema change before enabling that change in documents, making it easier to separate code rollout from feature rollout.
 
-Pass an application-owned `upgrades` property bag to the alpha `TreeViewAlpha.initialize` or `TreeViewAlpha.upgradeSchema` APIs to include the corresponding staged schema upgrades in the generated stored schema.
+Pass an application-owned `upgrades` property bag to the alpha [`TreeViewAlpha.initialize`](https://fluidframework.com/docs/api/tree/treeviewalpha-interface#initialize-methodsignature) or [`TreeViewAlpha.upgradeSchema`](https://fluidframework.com/docs/api/tree/treeviewalpha-interface#upgradeschema-methodsignature) APIs to include the corresponding staged schema upgrades in the generated stored schema.
 The property names are chosen by the application, which makes them convenient to wire to feature flags or other rollout controls.
 
 The same API also makes staged schema upgrades easier to test before production rollout.
