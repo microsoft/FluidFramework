@@ -335,9 +335,13 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
-        # Upstream oclif bug (oclif/core#1608): in `--json` mode, thrown errors render as `{"error":{}}` to
-        # stdout and nothing to stderr — the message is lost. On non-zero exit we re-run without `--json` so
-        # the failure reason is visible in the action log.
+        # Expected failure modes (missing/in-progress/failed baseline, no
+        # analyzer.json) come back as a structured `{ kind, side }` payload
+        # under `--json` and a zero exit — the render step dispatches on
+        # `kind` to produce a friendly sticky body. Non-zero exit is reserved
+        # for *unexpected* errors (network, malformed zip, …); upstream oclif
+        # bug oclif/core#1608 swallows their message in `--json` mode, so we
+        # re-run without `--json` to surface it in the action log.
         run: |
           set -uo pipefail
           set +e
@@ -361,56 +365,90 @@ jobs:
       # Format the JSON into the markdown body the sticky comment would post. Done here (not in flub) so
       # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
       # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
-      # would contain without actually posting it.
+      # would contain without actually posting it. Dispatches on `data.kind` — happy path renders the
+      # comparison; failure kinds render a friendly per-(kind, side) message.
       - name: Render bundle-size comment body
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         env:
           PR_NUM: ${{ matrix.pr.number }}
+          BASE_SHA: ${{ matrix.pr.mergeBase }}
+          HEAD_SHA: ${{ matrix.pr.head }}
         with:
           script: |
             const fs = require("fs");
             const data = JSON.parse(fs.readFileSync("bundle-comparison.json", "utf8"));
 
-            const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
+            // Render the happy-path comparison body — per-package sections, or
+            // "No bundle-size changes." if everything is unchanged.
+            function renderComparison(comparison) {
+              const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
 
-            const lines = [
-              "## Bundle size comparison",
-              "",
-              `Base commit: \`${data.baseCommit}\``,
-              `Head commit: \`${data.headCommit}\``,
-              "",
-            ];
-
-            const packageSections = [];
-            for (const [pkg, bundles] of Object.entries(data.comparison)) {
-              const bundleLines = [];
-              for (const [bundle, cmp] of Object.entries(bundles)) {
+              // Render one bundle's diff line — always emitted, even for
+              // unchanged bundles, so the body is a complete inventory.
+              function renderBundleLine(bundle, cmp) {
                 if (cmp.base === undefined && cmp.compare !== undefined) {
-                  bundleLines.push(`- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`);
-                } else if (cmp.compare === undefined && cmp.base !== undefined) {
-                  bundleLines.push(`- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`);
-                } else if (
-                  cmp.base.parsedSize !== cmp.compare.parsedSize ||
-                  cmp.base.gzipSize !== cmp.compare.gzipSize
-                ) {
-                  const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
-                  const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
-                  bundleLines.push(`- \`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`);
+                  return `- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`;
+                }
+                if (cmp.compare === undefined && cmp.base !== undefined) {
+                  return `- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`;
+                }
+                const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
+                const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
+                return `- \`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`;
+              }
+
+              const sections = [];
+              for (const [pkg, bundles] of Object.entries(comparison)) {
+                const bundleLines = Object.entries(bundles).map(
+                  ([bundle, cmp]) => renderBundleLine(bundle, cmp),
+                );
+                if (bundleLines.length > 0) {
+                  sections.push(`### \`${pkg}\`\n\n${bundleLines.join("\n")}`);
                 }
               }
-              if (bundleLines.length > 0) {
-                packageSections.push(`### \`${pkg}\``, "", ...bundleLines, "");
-              }
+              return sections.length > 0 ? sections.join("\n\n") : "No bundles found in comparison.";
             }
 
-            if (packageSections.length > 0) {
-              lines.push(...packageSections);
-            } else {
-              lines.push("No bundle-size changes.");
+            // Render a failure body for an expected (side, kind) failure.
+            // `in-progress` is the normal "wait for the build" path and reads
+            // like acknowledge-build's pending sticky — no warning framing.
+            // Everything else is an actual error and gets the "Comparison
+            // unavailable" header.
+            function renderFailure(side, kind) {
+              // Friendly per-(side, kind) sticky body for expected failure modes.
+              const failureMessages = {
+                base: {
+                  "no-build": "No baseline CI build was found for the merge-base commit. It may be older than the workflow's search horizon, or the baseline pipeline may not have run on it. Try merging a recent main commit into this PR.",
+                  "in-progress": "Pending — the baseline CI build for the merge-base commit hasn't completed yet. Results will appear here when the build finishes.",
+                  "all-failed": "The baseline CI build for the merge-base commit failed — likely a flaky producer build. Try merging a recent main commit into this PR, or re-queue the baseline pipeline manually.",
+                  "no-id": "An ADO state anomaly prevented looking up the baseline build (no usable build id). This shouldn't happen in practice — please report.",
+                  "no-analyzer-jsons": "The baseline build completed but didn't publish a bundle-size artifact for the merge-base commit. Try merging a recent main commit into this PR.",
+                },
+                head: {
+                  "no-build": "No CI build was found for the PR HEAD commit. This shouldn't happen — the workflow only runs after the PR's `Build - client packages` check completes. Please report.",
+                  "in-progress": "Pending — the PR's CI build hasn't completed yet. Results will appear here when the build finishes.",
+                  "all-failed": "The PR's CI build failed — fix the build and the comment will update once the next run succeeds.",
+                  "no-id": "An ADO state anomaly prevented looking up the PR's build (no usable build id). This shouldn't happen in practice — please report.",
+                  "no-analyzer-jsons": "The PR's CI build completed but didn't publish a bundle-size artifact. Check whether your changes affect the bundle-publishing client packages.",
+                },
+              };
+              const message = failureMessages[side]?.[kind]
+                ?? `Comparison failed with kind \`${kind}\` on the \`${side}\` side. Please report.`;
+              return kind === "in-progress" ? message : `⚠️ Comparison unavailable.\n\n${message}`;
             }
 
-            const body = lines.join("\n") + "\n";
+            const body = [
+              "## Bundle size comparison",
+              "",
+              `Base commit: \`${process.env.BASE_SHA}\``,
+              `Head commit: \`${process.env.HEAD_SHA}\``,
+              "",
+              data.kind === "completed"
+                ? renderComparison(data.comparison)
+                : renderFailure(data.side, data.kind),
+            ].join("\n") + "\n";
+
             fs.writeFileSync("bundle-comparison.md", body);
             core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
             core.startGroup("bundle-comparison.md");
