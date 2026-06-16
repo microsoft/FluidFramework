@@ -14,8 +14,10 @@ import { type ArtifactContents, downloadArtifact } from "./downloadArtifact.js";
 import { getBuilds } from "./utils.js";
 
 // Search window — ADO has no query-by-SHA API, so we fetch this many recent
-// builds and filter client-side. Caps how stale a target SHA can be.
-const recentBuildsToFetch = 100;
+// builds and filter client-side. Caps how stale a target SHA can be. At the
+// observed CI rate in this repo (~5 main-branch builds/day per pipeline),
+// 500 builds covers roughly the last 3 months.
+const recentBuildsToFetch = 500;
 
 /**
  * How to identify the ADO build for a SHA.
