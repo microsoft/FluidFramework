@@ -152,8 +152,8 @@ import type {
 	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataCorruptionError,

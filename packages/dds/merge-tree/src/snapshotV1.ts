@@ -14,8 +14,8 @@ import type {
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type TelemetryLoggerExt,
 	createChildLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IAttributionCollection } from "./attributionCollection.js";

@@ -21,8 +21,8 @@ import { createGenericNetworkError } from "@fluidframework/driver-utils/internal
 import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
-	type TelemetryLoggerExt,
 	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
