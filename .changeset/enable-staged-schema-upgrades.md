@@ -12,7 +12,7 @@ Pass an application-owned `upgrades` property bag to the alpha `TreeViewAlpha.in
 The property names are chosen by the application, which makes them convenient to wire to feature flags or other rollout controls.
 
 The same API also makes staged schema upgrades easier to test before production rollout.
-Tests and validation tools can create or upgrade documents with a specific set of staged upgrades enabled, then verify that older and newer application versions behave correctly against the resulting stored schema.
+Tests and validation tools can create or upgrade documents with a specific set of staged upgrades enabled, then verify that older and newer application versions behave correctly with the resulting stored schema.
 This gives applications a direct way to exercise future document shapes without permanently enabling those upgrades for all new documents.
 
 ```typescript
