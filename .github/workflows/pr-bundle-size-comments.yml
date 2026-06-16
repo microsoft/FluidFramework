@@ -148,12 +148,14 @@ jobs:
       #     path: ${{ github.workspace }}/acknowledge.md
 
   # Reacts to a PR's own `Build - client packages` build completing. The check SHA is a PR head SHA, so we
-  # produce at most one matrix entry — the PR whose head matches.
+  # produce at most one matrix entry — the PR whose head matches. Fires on *any* completion (not just
+  # success) so a failed PR build also updates the sticky: the compare job's flub call returns the
+  # appropriate failure kind (`all-failed`, etc.) and the sticky moves off the acknowledge-build "Pending
+  # — …" placeholder instead of staying stale.
   identify-from-pr-build:
     if: >-
       github.event.action == 'completed' &&
-      github.event.check_run.name == 'Build - client packages' &&
-      github.event.check_run.conclusion == 'success'
+      github.event.check_run.name == 'Build - client packages'
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
@@ -227,12 +229,14 @@ jobs:
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
   # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
-  # equals this SHA — typically 0–few PRs.
+  # equals this SHA — typically 0–few PRs. Fires on *any* completion (not just success) so a baseline
+  # failure also re-triggers affected PRs: the compare job's flub call returns the appropriate failure
+  # kind (`all-failed`, etc.) and the sticky updates from "Pending — …" to a per-kind body instead of
+  # staying stale forever.
   identify-from-baseline-build:
     if: >-
       github.event.action == 'completed' &&
-      github.event.check_run.name == 'Build - Client bundle size artifacts' &&
-      github.event.check_run.conclusion == 'success'
+      github.event.check_run.name == 'Build - Client bundle size artifacts'
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
