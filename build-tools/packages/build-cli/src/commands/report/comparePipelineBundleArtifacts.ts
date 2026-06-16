@@ -40,8 +40,7 @@ type ComparePipelineSideFailure = ArtifactLookupFailure | { kind: "no-analyzer-j
  * Result serialized to stdout by `--json`. Discriminated by `kind`:
  *
  * - `completed`: happy path with the structured per-package comparison.
- * - any other kind: failure, scoped to one `side` of the comparison so the
- *   consuming workflow can render an actionable sticky comment.
+ * - any other kind: failure, scoped to one `side` of the comparison so the consuming workflow can render an actionable sticky comment.
  */
 type ComparePipelineBundleArtifactsResult =
 	| {

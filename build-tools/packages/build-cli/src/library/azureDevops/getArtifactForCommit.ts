@@ -46,15 +46,12 @@ function buildMatches(b: Build, match: BuildMatch): boolean {
 }
 
 /**
- * Failure variants shared by {@link FindBuildIdResult} and
- * {@link GetArtifactForCommitResult}.
+ * Failure variants shared by {@link FindBuildIdResult} and {@link GetArtifactForCommitResult}.
  *
  * - `no-build`: no candidate builds matched the SHA — too stale, or never queued.
- * - `in-progress`: at least one candidate is actively running (NotStarted /
- *   InProgress / Postponed) and none have succeeded yet. Retrying later may help.
+ * - `in-progress`: at least one candidate is actively running (NotStarted / InProgress / Postponed) and none have succeeded yet. Retrying later may help.
  * - `all-failed`: every candidate completed but none succeeded.
- * - `no-id`: at least one candidate Succeeded but is missing an `id` — an ADO
- *   state anomaly that shouldn't happen in practice.
+ * - `no-id`: at least one candidate Succeeded but is missing an `id` — an ADO state anomaly that shouldn't happen in practice.
  */
 export type ArtifactLookupFailure =
 	| { kind: "no-build" }
@@ -177,5 +174,9 @@ export function describeArtifactFailure(
 			return `All builds for ${subject} have completed but none succeeded.`;
 		case "no-id":
 			return `No build for ${subject} has a usable build id.`;
+		default:
+			throw new Error(
+				`Unhandled ArtifactLookupFailure kind: ${(failure as { kind: string }).kind}`,
+			);
 	}
 }
