@@ -43,7 +43,7 @@ bundleAnalyzerJson
 # Misc pipeline artifacts
 artifacts
 
-docs/resources/_gen/
+website/resources/_gen/
 
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
