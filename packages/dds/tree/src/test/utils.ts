@@ -18,7 +18,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { emulateProductionBuild, fail } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -446,6 +446,7 @@ export class TestTreeProviderLite {
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
+	private readonly compressorMap: Map<string, IIdCompressor> = new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -494,6 +495,10 @@ export class TestTreeProviderLite {
 			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
+	}
+
+	public getCompressor(tree: ISharedTree): IIdCompressor {
+		return this.compressorMap.get(tree.id) ?? fail("Tree not found");
 	}
 
 	/**
@@ -1490,8 +1495,11 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public rebaseOnto(branch: unknown): void {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
 	}
-	public getRebaseChanges(branch: unknown): never {
+	public computeNetChangeIfRebasedOnto(branch: unknown): never {
 		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
+	}
+	public hasNewEdits(branch: unknown): never {
+		throw new Error("Method 'hasNewEdits' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

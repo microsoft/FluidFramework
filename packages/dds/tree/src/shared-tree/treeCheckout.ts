@@ -57,6 +57,7 @@ import {
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -832,13 +833,12 @@ export class TreeCheckout implements ITreeCheckout {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
-		const { revision, change } = serializedChange;
-		// TODO: make this OK
-		// if (originatorId !== this.idCompressor.localSessionId) {
-		// 	throw new UsageError(
-		// 		`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-		// 	);
-		// }
+		const { revision, originatorId, change } = serializedChange;
+		if (originatorId !== this.idCompressor.localSessionId) {
+			throw new UsageError(
+				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
+			);
+		}
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,
@@ -1259,7 +1259,20 @@ export class TreeCheckout implements ITreeCheckout {
 		getCheckout(branch).rebase(this);
 	}
 
-	public getRebaseChanges(branch: TreeBranch): JsonCompatibleReadOnly {
+	public hasNewEdits(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly {
 		const branchCheckout = getCheckout(branch);
 		const change = diffHistories(
 			this.changeFamily.rebaser,
@@ -1268,7 +1281,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this.mintRevisionTag,
 		);
 
-		// TODO: this is a dummy revision. We shouldn't need one.
 		const context: ChangeEncodingContext = {
 			idCompressor: this.idCompressor,
 			originatorId: this.idCompressor.localSessionId,

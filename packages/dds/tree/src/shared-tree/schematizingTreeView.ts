@@ -529,8 +529,12 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rebaseOnto(context);
 	}
 
-	public getRebaseChanges(context: TreeBranchAlpha): JsonCompatibleReadOnly {
-		return this.checkout.getRebaseChanges(context);
+	public hasNewEdits(context: TreeBranchAlpha): boolean {
+		return this.checkout.hasNewEdits(context);
+	}
+
+	public computeNetChangeIfRebasedOnto(context: TreeBranchAlpha): JsonCompatibleReadOnly {
+		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
 
 	// #endregion Branching
