@@ -6,7 +6,10 @@
 import { Flags } from "@oclif/core";
 
 import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
-import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
+import {
+	describeArtifactFailure,
+	getArtifactForCommit,
+} from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
 	bundleSizeArtifactsBaselinePipeline,
@@ -54,26 +57,34 @@ export default class ComparePipelineBundleArtifacts extends BaseCommand<
 		// Public ADO project — anonymous reads are fine at this command's scale.
 		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
 
+		const baseMatch = { kind: "commit", sha: base } as const;
 		const baseArtifact = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
-			match: { kind: "commit", sha: base },
+			match: baseMatch,
 			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
 			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
-		const baseJsons = extractAnalyzerJsonsFromArtifact(baseArtifact);
+		if (baseArtifact.kind !== "completed") {
+			this.error(describeArtifactFailure(baseMatch, baseArtifact));
+		}
+		const baseJsons = extractAnalyzerJsonsFromArtifact(baseArtifact.contents);
 		if (baseJsons.size === 0) {
 			this.error(`Base artifact contains no analyzer.json files for commit ${base}.`);
 		}
 
+		const headMatch = { kind: "prHead", sha: head } as const;
 		const headArtifact = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsPrPipeline.bundleAnalyzerJsonArtifactName,
-			match: { kind: "prHead", sha: head },
+			match: headMatch,
 			definitionId: bundleSizeArtifactsPrPipeline.definitionId,
 			project: bundleSizeArtifactsPrPipeline.project,
 		});
-		const headJsons = extractAnalyzerJsonsFromArtifact(headArtifact);
+		if (headArtifact.kind !== "completed") {
+			this.error(describeArtifactFailure(headMatch, headArtifact));
+		}
+		const headJsons = extractAnalyzerJsonsFromArtifact(headArtifact.contents);
 		if (headJsons.size === 0) {
 			this.error(`Head artifact contains no analyzer.json files for commit ${head}.`);
 		}

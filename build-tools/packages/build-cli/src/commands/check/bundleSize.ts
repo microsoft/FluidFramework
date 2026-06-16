@@ -7,7 +7,10 @@ import { execFileSync } from "node:child_process";
 import { Flags } from "@oclif/core";
 
 import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
-import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
+import {
+	describeArtifactFailure,
+	getArtifactForCommit,
+} from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
 	bundleSizeArtifactsBaselinePipeline,
@@ -132,15 +135,19 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 
 		// Public ADO project — anonymous reads are fine at this command's scale.
 		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
-		const artifactContents = await getArtifactForCommit({
+		const baselineMatch = { kind: "commit", sha: baselineCommit } as const;
+		const baselineArtifact = await getArtifactForCommit({
 			adoApi,
 			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
-			match: { kind: "commit", sha: baselineCommit },
+			match: baselineMatch,
 			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
 			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
+		if (baselineArtifact.kind !== "completed") {
+			this.error(describeArtifactFailure(baselineMatch, baselineArtifact));
+		}
 
-		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
+		const baselineJsons = extractAnalyzerJsonsFromArtifact(baselineArtifact.contents);
 		if (baselineJsons.size === 0) {
 			this.error(
 				`Baseline artifact contains no analyzer.json files for commit ${baselineCommit}.`,

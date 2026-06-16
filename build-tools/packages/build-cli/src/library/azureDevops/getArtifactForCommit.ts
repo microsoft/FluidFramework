@@ -46,19 +46,39 @@ function buildMatches(b: Build, match: BuildMatch): boolean {
 }
 
 /**
+ * Failure variants shared by {@link FindBuildIdResult} and
+ * {@link GetArtifactForCommitResult}.
+ *
+ * - `no-build`: no candidate builds matched the SHA — too stale, or never queued.
+ * - `in-progress`: at least one candidate is actively running (NotStarted /
+ *   InProgress / Postponed) and none have succeeded yet. Retrying later may help.
+ * - `all-failed`: every candidate completed but none succeeded.
+ * - `no-id`: at least one candidate Succeeded but is missing an `id` — an ADO
+ *   state anomaly that shouldn't happen in practice.
+ */
+export type ArtifactLookupFailure =
+	| { kind: "no-build" }
+	| { kind: "in-progress" }
+	| { kind: "all-failed" }
+	| { kind: "no-id" };
+
+/**
+ * Outcome of looking up a build for a {@link BuildMatch}. `completed` carries
+ * the usable build's id; the failure variants are {@link ArtifactLookupFailure}.
+ */
+export type FindBuildIdResult = { kind: "completed"; buildId: number } | ArtifactLookupFailure;
+
+/**
  * Find a usable build matching `match` — one with an id, status Completed,
  * and result Succeeded. Scans all matches (a SHA can map to multiple builds
- * via re-runs/retries), not just the first.
- *
- * @returns The build id. Throws with a human-readable message when no usable
- * build is found, prioritizing "still running" over "all failed".
+ * via re-runs/retries), not just the first. Prioritizes "still running" over
+ * "all failed" in the failure cases since retrying later may help.
  */
-function findBuildId(builds: Build[], match: BuildMatch): number {
+function findBuildId(builds: Build[], match: BuildMatch): FindBuildIdResult {
 	const candidates = builds.filter((b) => buildMatches(b, match));
-	const subject = describeMatch(match);
 
 	if (candidates.length === 0) {
-		throw new Error(`No build found for ${subject}`);
+		return { kind: "no-build" };
 	}
 
 	const usable = candidates.find(
@@ -68,7 +88,7 @@ function findBuildId(builds: Build[], match: BuildMatch): number {
 			b.result === BuildResult.Succeeded,
 	);
 	if (usable !== undefined) {
-		return usable.id;
+		return { kind: "completed", buildId: usable.id };
 	}
 
 	// Report the most actionable failure state. Actively-running gets priority
@@ -79,14 +99,14 @@ function findBuildId(builds: Build[], match: BuildMatch): number {
 		b.status === BuildStatus.InProgress ||
 		b.status === BuildStatus.Postponed;
 	if (candidates.some(isActivelyRunning)) {
-		throw new Error(`Found an in-progress build for ${subject}; none have succeeded yet.`);
+		return { kind: "in-progress" };
 	}
 	if (candidates.every((b) => b.result !== BuildResult.Succeeded)) {
-		throw new Error(`All builds for ${subject} have completed but none succeeded.`);
+		return { kind: "all-failed" };
 	}
 	// At least one candidate Succeeded but is missing an `id` — an ADO state
 	// anomaly that shouldn't happen, but `id` is typed `number | undefined`.
-	throw new Error(`No build for ${subject} has a usable build id.`);
+	return { kind: "no-id" };
 }
 
 export interface GetArtifactForCommitArgs {
@@ -103,15 +123,26 @@ export interface GetArtifactForCommitArgs {
 }
 
 /**
+ * Outcome of fetching an artifact for a {@link BuildMatch}. `completed` carries
+ * the downloaded artifact contents; the failure variants are
+ * {@link ArtifactLookupFailure}. Download failures (network, malformed zip,
+ * etc.) still propagate as thrown exceptions.
+ */
+export type GetArtifactForCommitResult =
+	| { kind: "completed"; contents: ArtifactContents }
+	| ArtifactLookupFailure;
+
+/**
  * Fetch one artifact from the ADO build that `match` identifies.
  *
- * @returns The artifact's {@link ArtifactContents}. Throws when no usable
- * build is found (see {@link BuildMatch}); download failures propagate from
- * `downloadArtifact`.
+ * @returns A {@link GetArtifactForCommitResult}: `completed` with the
+ * artifact contents on the happy path, or one of the failure kinds when no
+ * usable build is found. Download failures still throw (unexpected and
+ * propagate from `downloadArtifact`).
  */
 export async function getArtifactForCommit(
 	args: GetArtifactForCommitArgs,
-): Promise<ArtifactContents> {
+): Promise<GetArtifactForCommitResult> {
 	const { adoApi, artifactName, match, definitionId, project } = args;
 
 	const builds = await getBuilds(adoApi, {
@@ -119,7 +150,32 @@ export async function getArtifactForCommit(
 		definitions: [definitionId],
 		maxBuildsPerDefinition: recentBuildsToFetch,
 	});
-	const buildId = findBuildId(builds, match);
+	const lookup = findBuildId(builds, match);
+	if (lookup.kind !== "completed") {
+		return lookup;
+	}
 
-	return downloadArtifact(adoApi, project, buildId, artifactName);
+	const contents = await downloadArtifact(adoApi, project, lookup.buildId, artifactName);
+	return { kind: "completed", contents };
+}
+
+/**
+ * Human-readable message for an {@link ArtifactLookupFailure}, given the
+ * originating {@link BuildMatch} that produced it.
+ */
+export function describeArtifactFailure(
+	match: BuildMatch,
+	failure: ArtifactLookupFailure,
+): string {
+	const subject = describeMatch(match);
+	switch (failure.kind) {
+		case "no-build":
+			return `No build found for ${subject}.`;
+		case "in-progress":
+			return `Found an in-progress build for ${subject}; none have succeeded yet.`;
+		case "all-failed":
+			return `All builds for ${subject} have completed but none succeeded.`;
+		case "no-id":
+			return `No build for ${subject} has a usable build id.`;
+	}
 }
