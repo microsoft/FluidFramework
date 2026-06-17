@@ -87,6 +87,8 @@ overrides:
   node-forge: ^1.4.0
   # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
   qs: ^6.15.0
+  # shell-quote: overridden to ^1.8.4 to resolve CVE-2026-9277.
+  shell-quote: ^1.8.4
   # simple-git: overridden to ^3.32.3 to resolve a CG alert.
   simple-git: ^3.32.3
   # validator: overridden to ^13.15.0 to resolve a known vulnerability in older

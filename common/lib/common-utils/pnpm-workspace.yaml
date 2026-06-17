@@ -40,3 +40,8 @@ trustPolicyExclude:
   # used legacy tooling that pins ^5 / ^6.
   - "semver@5.7.2 || 6.3.1"
 strictDepBuilds: true
+
+# Security overrides.
+overrides:
+  # Resolve CVE-2026-9277.
+  shell-quote: ^1.8.4

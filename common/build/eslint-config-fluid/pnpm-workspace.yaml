@@ -18,3 +18,8 @@ trustPolicy: no-downgrade
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
 trustPolicyExclude: []
 strictDepBuilds: true
+
+# Security overrides.
+overrides:
+  # Resolve CVE-2026-9277.
+  shell-quote: ^1.8.4

@@ -119,6 +119,9 @@ overrides:
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
 
+  # Resolve CVE-2026-9277.
+  shell-quote: ^1.8.4
+
   # Resolve a CG alert.
   simple-git: ^3.32.3
 

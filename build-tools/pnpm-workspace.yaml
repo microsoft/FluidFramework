@@ -47,3 +47,8 @@ trustPolicyExclude:
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
 strictDepBuilds: true
+
+# Security overrides.
+overrides:
+  # Resolve CVE-2026-9277.
+  shell-quote: ^1.8.4

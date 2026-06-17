@@ -41,3 +41,8 @@ trustPolicyExclude:
   # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
   - "semver@5.7.2"
 strictDepBuilds: true
+
+# Security overrides.
+overrides:
+  # Resolve CVE-2026-9277.
+  shell-quote: ^1.8.4
