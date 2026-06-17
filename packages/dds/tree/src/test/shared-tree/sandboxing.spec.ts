@@ -37,11 +37,10 @@ import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { TestTreeProviderLite, StringArray } from "../utils.js";
 
-interface PromiseWithResolver {
-	readonly promise: Promise<void>;
-	readonly resolver: () => void;
-}
-
+/**
+ * Gets the head commit of a view.
+ * Used for debugging and logging purposes only.
+ */
 function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<TSchema>,
 ): GraphCommit<unknown> {
@@ -50,6 +49,11 @@ function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>
 	).checkout.mainBranch.getHead();
 }
 
+/**
+ * Gets the revisions of the commits that are in the `ahead` view but not in the `behind` view.
+ * Note that the returned list includes commits that are in both views but have a different base.
+ * Used for debugging and logging purposes only.
+ */
 function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	behind: TreeViewAlpha<TSchema>,
 	ahead: TreeViewAlpha<TSchema>,
@@ -62,10 +66,22 @@ function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSc
 	return `[${targetPath.map((commit) => commit.revision).join(", ")}]`;
 }
 
+/**
+ * Gets the revision of a change.
+ * Used for debugging and logging purposes only.
+ */
 function getRevision(newChange: JsonCompatibleReadOnly) {
 	return (newChange as unknown as { revision: RevisionTag }).revision;
 }
 
+interface PromiseWithResolver {
+	readonly promise: Promise<void>;
+	readonly resolver: () => void;
+}
+
+/**
+ * Creates a promise and a resolver for the promise.
+ */
 function makePromiseWithResolver(): PromiseWithResolver {
 	let resolver: undefined | (() => void);
 	const promise = new Promise<void>((resolve) => {
@@ -109,6 +125,10 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		});
 	}
 
+	/**
+	 * Must be called when the sandbox sends an outbound change to the host.
+	 * The change is guaranteed to be applied to the host's main branch.
+	 */
 	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
 		this.logger(`Host: received outbound change [${getRevision(change)}] from sandbox`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
