@@ -16,8 +16,8 @@ import {
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { ISummarizer } from "@fluidframework/container-runtime/internal";
 import {
-	TelemetryLoggerExt,
 	createChildLogger,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 

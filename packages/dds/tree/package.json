@@ -176,6 +176,7 @@
 		"@sinclair/typebox": "^0.34.13",
 		"@tylerbu/sorted-btree-es6": "^2.1.1",
 		"semver-ts": "^1.0.3",
+		"tslib": "^2.8.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
