@@ -3,7 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict } from "node:assert";
+
+import { assert } from "@fluidframework/core-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
@@ -35,7 +37,7 @@ function makePromiseWithResolver(): PromiseWithResolver {
 	const promise = new Promise<void>((resolve) => {
 		resolver = resolve;
 	});
-	assert(resolver !== undefined, "Resolver should have been assigned");
+	strict(resolver !== undefined, "Resolver should have been assigned");
 	return { promise, resolver };
 }
 
@@ -50,6 +52,10 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * When undefined, no update is in progress and the sandbox is up-to-date with the host's main branch.
 	 */
 	private updateInProgress?: PromiseWithResolver;
+	/**
+	 * Clone of main branch from when the last update to the sandbox was initiated.
+	 */
+	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
 
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
@@ -68,7 +74,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 
 	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
 		this.local.applyChange(change);
-		this.main.merge(this.local);
+		this.main.merge(this.local, false);
 
 		if (this.updateInProgress !== undefined) {
 			this.syncSandboxToInboundChanges();
@@ -82,7 +88,8 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				return;
 			}
 			this.updateInProgress = makePromiseWithResolver();
-			const update = this.local.computeNetChangeIfRebasedOnto(this.main);
+			this.mainHeadFromLastUpdate = this.main.fork();
+			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
 			this.sendUpdate(update);
 		} else {
 			// The sandbox is now caught up with the host's main branch
@@ -98,7 +105,15 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * Must be called when the sandbox acknowledges an update that the host has sent.
 	 */
 	public receiveAckOfUpdate(): void {
-		assert.notEqual(this.updateInProgress, undefined);
+		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
+		assert(
+			this.mainHeadFromLastUpdate !== undefined,
+			"Expected main head from last update to be defined",
+		);
+		// Reflect the acknowledged update on the local branch
+		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
+		this.mainHeadFromLastUpdate.dispose();
+		this.mainHeadFromLastUpdate = undefined;
 		// New changes could have come in since the update was sent,
 		// so we try to sync again to ensure the sandbox is fully up-to-date.
 		this.syncSandboxToInboundChanges();
@@ -165,12 +180,12 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	 * Must be called when the host acknowledges a new local change.
 	 */
 	public receiveAckOfOutboundChange(): void {
-		assert(this.inFlight > 0);
+		strict(this.inFlight > 0);
 		this.inFlight -= 1;
 
 		if (this.inFlight === 0) {
 			// The host has now caught up with all local changes
-			assert(this.pushInProgress !== undefined);
+			strict(this.pushInProgress !== undefined);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
 			// Resolve the push promise
@@ -191,7 +206,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 }
 
 describe("Host and Sandbox Demo", () => {
-	function setup() {
+	function setup(initialState: string[]) {
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({
@@ -205,7 +220,7 @@ describe("Host and Sandbox Demo", () => {
 		});
 
 		const peer = asAlpha(provider.trees[0].viewWith(config));
-		peer.initialize(["A"]);
+		peer.initialize(initialState);
 		provider.synchronizeMessages();
 
 		const main = asAlpha(provider.trees[1].viewWith(config));
@@ -256,119 +271,187 @@ describe("Host and Sandbox Demo", () => {
 		return { peer, host, sandbox, provider };
 	}
 
-	it("one outbound edit", async () => {
-		const { peer, host, sandbox, provider } = setup();
+	it("the initial state is consistent across the host and sandbox", async () => {
+		const { host, sandbox } = setup(["A"]);
+		strict.deepEqual([...sandbox.view.root], ["A"]);
+		strict.deepEqual([...host.local.root], ["A"]);
+		strict.deepEqual([...host.main.root], ["A"]);
+	});
 
-		// The sandbox starts with the same content as the host and the peer
-		assert.deepEqual([...sandbox.view.root], ["A"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
-		assert.deepEqual([...peer.root], ["A"]);
+	it("one outbound edit", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit in the sandbox
 		sandbox.view.root.push("B(s)");
 		// The edit is synchronously reflected in the sandbox
-		assert.deepEqual([...sandbox.view.root], ["A", "B(s)"]);
+		strict.deepEqual([...sandbox.view.root], ["B(s)"]);
 		// The edit is not reflected in the host yet
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...host.main.root], []);
 
+		// The sandbox should have started the process of pushing the edit to the host
+		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
 		// Wait for the edit to be pushed to the host
-		const _ = await (sandbox.pushPromise ?? assert.fail("Expected push to be in progress"));
+		await pushPromise;
 
 		// The edit is now reflected in the host
-		assert.deepEqual([...host.local.root], ["A", "B(s)"]);
-		assert.deepEqual([...host.main.root], ["A", "B(s)"]);
+		strict.deepEqual([...host.local.root], ["B(s)"]);
+		strict.deepEqual([...host.main.root], ["B(s)"]);
 		// The edit is not reflected in the peer yet
-		assert.deepEqual([...peer.root], ["A"]);
+		strict.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 
 		// The edit is now reflected in the peer
-		assert.deepEqual([...peer.root], ["A", "B(s)"]);
+		strict.deepEqual([...peer.root], ["B(s)"]);
+	});
+
+	it("new outbound edits during outbound edit push", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
+
+		// Edit in the sandbox
+		sandbox.view.root.push("B(s)");
+		// The edit is synchronously reflected in the sandbox
+		strict.deepEqual([...sandbox.view.root], ["B(s)"]);
+		// The edit is not reflected in the host yet
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...host.main.root], []);
+
+		// The sandbox should have started the process of pushing the edit to the host
+		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+
+		// Before the push completes, other edits are made in the sandbox
+		sandbox.view.root.push("C(s)");
+		sandbox.view.root.push("D(s)");
+
+		// The new edits are synchronously reflected in the sandbox
+		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)", "D(s)"]);
+		// The new edits are not reflected in the host yet
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...host.main.root], []);
+
+		await pushPromise;
+
+		// The edits are now reflected in the host
+		strict.deepEqual([...host.local.root], ["B(s)", "C(s)", "D(s)"]);
+		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "D(s)"]);
+		// The edits are not reflected in the peer yet
+		strict.deepEqual([...peer.root], []);
+
+		provider.synchronizeMessages();
+
+		// The edits are now reflected in the peer
+		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "D(s)"]);
 	});
 
 	it("one inbound edit", async () => {
-		const { peer, host, sandbox, provider } = setup();
-
-		// The sandbox starts with the same content as the host and the peer
-		assert.deepEqual([...sandbox.view.root], ["A"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
-		assert.deepEqual([...peer.root], ["A"]);
+		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit on the peer
 		peer.root.push("B(p)");
 		// The edit is synchronously reflected in the peer
-		assert.deepEqual([...peer.root], ["A", "B(p)"]);
+		strict.deepEqual([...peer.root], ["B(p)"]);
 		// The edit is not reflected in the host or the sandbox yet
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
-		assert.deepEqual([...sandbox.view.root], ["A"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...host.main.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
 
 		provider.synchronizeMessages();
 
 		// The edit is now reflected in the host but not the local or sandbox yet
-		assert.deepEqual([...host.main.root], ["A", "B(p)"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...sandbox.view.root], ["A"]);
+		strict.deepEqual([...host.main.root], ["B(p)"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
 
+		// The host should have started the process of updating the sandbox with the inbound change
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
 		// Wait for the update to be applied to the sandbox
-		const _ = await (host.updatePromise ?? assert.fail("Expected update to be in progress"));
+		await updatePromise;
 
 		// The peer edit is now reflected in the local and sandbox
-		assert.deepEqual([...host.local.root], ["A", "B(p)"]);
-		assert.deepEqual([...sandbox.view.root], ["A", "B(p)"]);
+		strict.deepEqual([...host.local.root], ["B(p)"]);
+		strict.deepEqual([...sandbox.view.root], ["B(p)"]);
 	});
 
-	it("outbound edit wins races", async () => {
-		const { peer, host, sandbox, provider } = setup();
+	it("new inbound edits during inbound edit update", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
 
-		// The sandbox starts with the same content as the host and the peer
-		assert.deepEqual([...sandbox.view.root], ["A"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
-		assert.deepEqual([...peer.root], ["A"]);
+		// Edit on the peer
+		peer.root.push("B(p)");
+		provider.synchronizeMessages();
+		// The new peer edit is reflected in the host but not the local or sandbox yet.
+		strict.deepEqual([...host.main.root], ["B(p)"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
+
+		// The host should have started the process of updating the sandbox with the inbound change
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
+
+		// Before the update is applied to the sandbox, other edits come in from the peer
+		peer.root.push("C(p)");
+		peer.root.push("D(p)");
+		provider.synchronizeMessages();
+		// The new peer edits are reflected in the host but not the local or sandbox yet.
+		strict.deepEqual([...host.main.root], ["B(p)", "C(p)", "D(p)"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
+
+		await updatePromise;
+
+		// Once the promise resolves, all the peer edits should be reflected in the local and sandbox
+		strict.deepEqual([...host.local.root], ["B(p)", "C(p)", "D(p)"]);
+		strict.deepEqual([...sandbox.view.root], ["B(p)", "C(p)", "D(p)"]);
+	});
+
+	it("outbound edits win races", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
 
 		// Make edits in the sandbox
 		sandbox.view.root.push("B(s)");
 		sandbox.view.root.push("C(s)");
 		// The outbound edits are synchronously reflected in the sandbox
-		assert.deepEqual([...sandbox.view.root], ["A", "B(s)", "C(s)"]);
+		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
 		// The outbound edits are not reflected in the host yet
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...host.main.root], ["A"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...host.main.root], []);
+
+		// The sandbox should have started the process of pushing the edit to the host
+		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
 
 		// Before the host has a chance to process the edits from the sandbox, the peer makes an edit
 		peer.root.push("B(p)");
-		assert.deepEqual([...peer.root], ["A", "B(p)"]);
+		strict.deepEqual([...peer.root], ["B(p)"]);
 		provider.synchronizeMessages();
 		// The peer edit is now reflected in the host but not the local or sandbox yet
-		assert.deepEqual([...host.main.root], ["A", "B(p)"]);
-		assert.deepEqual([...host.local.root], ["A"]);
-		assert.deepEqual([...sandbox.view.root], ["A", "B(s)", "C(s)"]);
+		strict.deepEqual([...host.main.root], ["B(p)"]);
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
+
+		// The host should have started the process of updating the sandbox with the inbound change
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
 
 		// Wait for the outbound edits to be pushed to the host
-		const _push = await (sandbox.pushPromise ??
-			assert.fail("Expected push to be in progress"));
+		await pushPromise;
 
 		// The outbound edits are now reflected in the host
-		assert.deepEqual([...host.local.root], ["A", "B(s)", "C(s)"]);
-		assert.deepEqual([...host.main.root], ["A", "B(s)", "C(s)", "B(p)"]);
+		strict.deepEqual([...host.local.root], ["B(s)", "C(s)"]);
+		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "B(p)"]);
 		// The outbound edits are not reflected in the peer yet
-		assert.deepEqual([...peer.root], ["A"]);
+		strict.deepEqual([...peer.root], []);
 
 		provider.synchronizeMessages();
 
 		// The outbound edits are now reflected in the peer
-		assert.deepEqual([...peer.root], ["A", "B(s)", "C(s)", "B(p)"]);
+		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "B(p)"]);
 
 		// Wait for the update to be applied to the sandbox
-		const _update = await (host.updatePromise ??
-			assert.fail("Expected update to be in progress"));
+		await updatePromise;
 
 		// The peer edit is now reflected in the local and sandbox
-		assert.deepEqual([...host.local.root], ["A", "B(s)", "C(s)", "B(p)"]);
-		assert.deepEqual([...sandbox.view.root], ["A", "B(s)", "C(s)", "B(p)"]);
+		strict.deepEqual([...host.local.root], ["B(s)", "C(s)", "B(p)"]);
+		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)", "B(p)"]);
 	});
 });

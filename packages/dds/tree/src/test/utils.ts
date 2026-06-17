@@ -478,10 +478,13 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
+			const idCompressor = createIdCompressor(sessionId);
+			this.compressorMap.set(`tree-${i}`, idCompressor);
+			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
-				clientId: `test-client-${i}`,
+				clientId,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor,
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
