@@ -94,10 +94,10 @@ export async function exportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					await createContainerAndExecute(
+					await createFluidRunnerContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidFileConverter,
-						logger,
+						baseLogger,
 						options,
 						timeout,
 						disableNetworkFetch,

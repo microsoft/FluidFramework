@@ -14,10 +14,7 @@ import {
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import {
 	type IExportFileResponse,
-	// createContainerAndExecute is used instead of createFluidRunnerContainerAndExecute to avoid an
-	// extra createChildLogger wrapping, since we already have a TelemetryLoggerExt at this call site.
-	// eslint-disable-next-line import-x/no-deprecated
-	createContainerAndExecute,
+	createFluidRunnerContainerAndExecute,
 } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
@@ -92,11 +89,10 @@ export async function parseBundleAndExportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					// eslint-disable-next-line import-x/no-deprecated -- see import comment above
-					await createContainerAndExecute(
+					await createFluidRunnerContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
-						logger,
+						baseLogger,
 						options,
 						timeout,
 						disableNetworkFetch,
