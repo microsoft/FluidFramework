@@ -351,7 +351,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
 	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
 	 */
-	hasNewEdits(branch: TreeBranch): boolean;
+	isMissingEditsFrom(branch: TreeBranch): boolean;
 
 	/**
 	 * Computes the net change that would result if this branch were {@link TreeBranch.rebaseOnto | rebased onto} the given branch.

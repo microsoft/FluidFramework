@@ -1501,7 +1501,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public computeNetChangeIfRebasedOnto(branch: unknown): never {
 		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
 	}
-	public hasNewEdits(branch: unknown): never {
+	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'hasNewEdits' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {

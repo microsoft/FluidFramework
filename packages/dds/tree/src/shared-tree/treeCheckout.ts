@@ -1259,7 +1259,7 @@ export class TreeCheckout implements ITreeCheckout {
 		getCheckout(branch).rebase(this);
 	}
 
-	public hasNewEdits(branch: TreeBranch): boolean {
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
 		const branchCheckout = getCheckout(branch);
 		const targetPath: GraphCommit<unknown>[] = [];
 		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [

@@ -148,7 +148,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	private syncSandboxToInboundChanges(): void {
-		if (this.local.hasNewEdits(this.main)) {
+		if (this.local.isMissingEditsFrom(this.main)) {
 			this.logger(
 				`Host: detected new inbound changes that need to be reflected in sandbox ${getMissingCommits(this.local, this.main)}`,
 			);

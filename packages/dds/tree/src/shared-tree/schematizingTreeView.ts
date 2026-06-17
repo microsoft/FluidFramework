@@ -529,8 +529,8 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rebaseOnto(context);
 	}
 
-	public hasNewEdits(context: TreeBranchAlpha): boolean {
-		return this.checkout.hasNewEdits(context);
+	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	public computeNetChangeIfRebasedOnto(context: TreeBranchAlpha): JsonCompatibleReadOnly {
