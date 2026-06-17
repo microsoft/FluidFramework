@@ -99,8 +99,7 @@ export async function collectAndCompareBundles(
 		console.log("=".repeat(80));
 		await collectBundle({
 			mode: "revision",
-			revision: baseRevision,
-			resolution: exactBase ? "exact" : "merge-base",
+			...(exactBase ? { revision: baseRevision } : { mergeBaseOf: baseRevision }),
 			label: baseLabel,
 			forceCleanBuild,
 			packageDir,

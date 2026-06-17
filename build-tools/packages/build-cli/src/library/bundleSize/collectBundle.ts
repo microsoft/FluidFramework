@@ -23,7 +23,8 @@ import { simpleGit } from "simple-git";
 export interface CollectBundleOptions {
 	/**
 	 * `local`: collect from the outer enlistment that contains {@link CollectBundleOptions.packageDir}.
-	 * `revision`: collect from a separate inner enlistment checked out at {@link CollectBundleOptions.revision}.
+	 * `revision`: collect from a separate inner enlistment checked out at the commit resolved from
+	 * {@link CollectBundleOptions.revision} or {@link CollectBundleOptions.mergeBaseOf}.
 	 *
 	 * In `local` mode the outer enlistment is built exactly as it sits on disk: its git state
 	 * (working tree, branch, and revision) is never modified. All checkout/fetch happens only in
@@ -31,17 +32,18 @@ export interface CollectBundleOptions {
 	 */
 	readonly mode: "local" | "revision";
 	/**
-	 * (revision mode only) Committish to build in the inner repo (branch, tag, commit SHA, or any
-	 * committish like `HEAD~2`). Combined with {@link CollectBundleOptions.resolution} to pick the
-	 * commit that is built. Resolved against the outer repo. Also used as the default label.
+	 * (revision mode only) Committish (branch, tag, commit SHA, or any committish like `HEAD~2`)
+	 * to build as-is, resolved via `git rev-parse`. Mutually exclusive with
+	 * {@link CollectBundleOptions.mergeBaseOf}. Resolved against the outer repo. Also used as the
+	 * default label.
 	 */
 	readonly revision?: string;
 	/**
-	 * (revision mode only) How {@link CollectBundleOptions.revision} is resolved to the commit that
-	 * is built: `exact` uses the committish as-is (via `git rev-parse`); `merge-base` uses its
-	 * merge-base with HEAD (the fork point). Defaults to `merge-base`. Ignored in local mode.
+	 * (revision mode only) Committish whose merge-base with HEAD (the fork point) is built instead
+	 * of the committish itself. Mutually exclusive with {@link CollectBundleOptions.revision}.
+	 * Resolved against the outer repo. Also used as the default label.
 	 */
-	readonly resolution?: "exact" | "merge-base";
+	readonly mergeBaseOf?: string;
 	/**
 	 * Directory name (under {@link CollectBundleOptions.analysisDir}) to save the collected bundle
 	 * stats into. Sanitized for filesystem use before being applied. Defaults to the sanitized
@@ -75,20 +77,9 @@ function sanitizeForFileName(value: string): string {
 }
 
 /**
- * Resolves the merge-base (best common ancestor) of two committishes (branch,
- * tag, or SHA). Returns the full SHA, or undefined if either rev cannot be
- * resolved (e.g. unknown branch, detached state with no shared history).
- *
- * `otherRev` defaults to `HEAD`. The two-commit form of `git merge-base` is
- * symmetric — per the git documentation, `git merge-base a b` outputs a commit
- * reachable from both `a` and `b`, so argument order does not affect the result
- * (order only matters for the 3+ commit and `--fork-point` forms, which we do
- * not use here).
- *
- * Using merge-base instead of a raw branch tip means the comparison is taken
- * against the actual fork point, which is what users typically want — and it
- * works for worktree-based setups where `main` may not exist as a local branch
- * at the location they expect.
+ * Returns the merge-base of `rev` and `otherRev` (default `HEAD`) via
+ * `git merge-base`, or undefined if it cannot be resolved. See
+ * {@link https://git-scm.com/docs/git-merge-base}.
  */
 async function resolveMergeBase(
 	repoRoot: string,
@@ -105,13 +96,9 @@ async function resolveMergeBase(
 }
 
 /**
- * Resolves a committish (branch, tag, or SHA) to its full commit SHA via
- * `git rev-parse <rev>^{commit}`. Unlike {@link resolveMergeBase}, the revision
- * is used exactly as given (no fork-point computation). Throws if the revision
- * cannot be resolved locally, with guidance to fetch it first.
- *
- * The `^{commit}` peel ensures annotated tags resolve to the underlying commit
- * rather than the tag object.
+ * Resolves `rev` to its full commit SHA via `git rev-parse <rev>^{commit}`, or
+ * throws if it cannot be resolved locally. See
+ * {@link https://git-scm.com/docs/git-rev-parse}.
  */
 async function resolveSha(repoRoot: string, rev: string): Promise<string> {
 	try {
@@ -176,11 +163,9 @@ function buildBundles(packageRoot: string): void {
 }
 
 /**
- * Saves webpack-bundle-analyzer's JSON report into the per-label directory under
- * the persistent analysis root. This `analyzer.json` carries per-asset
- * parsed/gzip sizes and entrypoint membership, which is everything
- * compareBundles.ts needs — so the (large) webpack stats and `build/` outputs
- * do not need to be retained.
+ * Saves webpack-bundle-analyzer's `analyzer.json` report into the per-label directory under
+ * the persistent analysis root. This report is sufficient for the comparison, so the (large)
+ * webpack stats and `build/` outputs do not need to be retained.
  *
  * @remarks
  * Uses copy + unlink instead of `renameSync` because the source and destination
@@ -215,17 +200,9 @@ function saveStats(label: string, sourcePackageRoot: string, analysisDir: string
 }
 
 /**
- * Captures the outer repo's currently-staged diff to a sibling file next to
- * the bundle stats, so the analysis is reproducible even with uncommitted
- * changes. Only staged changes are recorded; unstaged changes are intentionally
- * excluded (they're often noisy / random) but a warning is printed if any are
- * detected so the user can `git add` the relevant pieces and re-run.
- *
- * This is purely a record: the patch is never applied, and the outer repo's
- * working tree and revision are left untouched. Local mode builds the enlistment
- * exactly as it sits on disk.
- *
- * The patch is written as `staged-changes.patch` inside the per-label directory.
+ * Records the outer repo's staged diff as `staged-changes.patch` in the per-label
+ * directory so the analysis is reproducible. The patch is never applied; unstaged
+ * changes are excluded, with a warning if any are present.
  */
 async function captureLocalPatch(repoRoot: string, labelDirectory: string): Promise<void> {
 	const git = simpleGit(repoRoot);
@@ -246,23 +223,14 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
 }
 
 /**
- * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot` and
- * is checked out at the given commit SHA.
+ * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot` and is
+ * checked out (detached) at `sha`.
  *
  * @remarks
- * On first call, clones the inner repo directly from the outer enlistment on
- * disk (`--no-tags --no-checkout`). Because the source is a local repository, no
- * remote or network access is involved and every commit already present in the
- * outer repo (including merge-base SHAs that aren't branch tips) is available
- * without a separate fetch. `--no-checkout` is used because the SHA is checked
- * out explicitly afterwards.
- *
- * The SHA is checked out with a detached HEAD, so there is no local branch state
- * to manage. Callers resolve the user's revision to a SHA in the outer repo
- * before calling, so any committish — branch, tag, or relative ref such as
- * `HEAD^4` — is handled uniformly here.
- *
- * Never modifies the outer repo's working tree, branch, or stash.
+ * On first call, clones from the outer enlistment on disk (`--no-tags --no-checkout`),
+ * so no network is involved and every commit in the outer repo — including merge-base
+ * SHAs that aren't branch tips — is already available. Callers pass an already-resolved
+ * SHA, so any committish is handled uniformly. Never touches the outer repo's git state.
  */
 async function ensureInnerRepoAtRevision(
 	sha: string,
@@ -293,122 +261,137 @@ function logCollectionComplete(mode: string, label: string, labelDirectory: stri
 }
 
 /**
+ * Resolves the revision-mode committish to a concrete SHA in `outerRepoRoot`: `revision` as-is,
+ * or the merge-base of HEAD and `mergeBaseOf`. Exactly one of the two is expected to be set.
+ */
+async function resolveBuildRevision(
+	outerRepoRoot: string,
+	revision: string | undefined,
+	mergeBaseOf: string | undefined,
+): Promise<string> {
+	const committish = (revision ?? mergeBaseOf) as string;
+	let resolved: string;
+	if (revision !== undefined) {
+		resolved = await resolveSha(outerRepoRoot, committish);
+	} else {
+		const mergeBase = await resolveMergeBase(outerRepoRoot, committish);
+		if (mergeBase === undefined) {
+			throw new Error(
+				`Could not find merge-base of HEAD and "${committish}". ` +
+					`Ensure the revision exists locally (e.g. "git fetch origin ${committish}").`,
+			);
+		}
+		resolved = mergeBase;
+	}
+	if (resolved !== committish) {
+		console.log(
+			`Resolved revision "${committish}" to ` +
+				`${revision !== undefined ? "" : "merge-base "}${resolved}.`,
+		);
+	}
+	return resolved;
+}
+
+/**
+ * Prepares a revision-mode build: checks out the inner repo at `sha`, installs deps, and returns
+ * the inner repo + package roots. Throws if the package doesn't exist at that revision.
+ */
+async function prepareRevisionBuild(
+	sha: string,
+	outerRepoRoot: string,
+	packageDir: string,
+	innerRepoRoot: string,
+): Promise<{ repoRoot: string; packageRoot: string }> {
+	await ensureInnerRepoAtRevision(sha, outerRepoRoot, innerRepoRoot);
+	// Same package inside the inner repo, via its path relative to the repo root.
+	const packageRoot = resolve(innerRepoRoot, relative(outerRepoRoot, packageDir));
+	if (!existsSync(packageRoot)) {
+		throw new Error(
+			`Expected package not found in inner repo at ${packageRoot}. ` +
+				`The revision "${sha}" may predate this package.`,
+		);
+	}
+	installDependencies(innerRepoRoot);
+	return { repoRoot: innerRepoRoot, packageRoot };
+}
+
+/**
  * Collects a single bundle from either the outer enlistment (local mode) or a
  * separate inner enlistment checked out to a specific revision (revision mode),
  * and returns the (sanitized) label its stats were saved under.
  *
  * @remarks
- * In revision mode, the user's {@link CollectBundleOptions.revision} is resolved to a concrete
- * commit SHA in the outer repo — its merge-base with HEAD (the fork point) or the committish
- * as-is, per {@link CollectBundleOptions.resolution}. The inner repo (at
- * {@link CollectBundleOptions.baseRepoDir}, defaulting to `<analysisDir>/base-repo`) is cloned from
- * the outer enlistment on disk on first use and reused thereafter. No remote or network access is
- * involved.
+ * In revision mode, {@link CollectBundleOptions.revision} is built as-is and
+ * {@link CollectBundleOptions.mergeBaseOf} at its merge-base with HEAD (the fork point); the
+ * resolved SHA is recorded in a sidecar `revision.txt`, letting a later run with the same SHA
+ * reuse the cached report (unless {@link CollectBundleOptions.forceCleanBuild} is set). Builds
+ * happen in the inner repo (see {@link ensureInnerRepoAtRevision}).
  *
- * Because a clean revision builds deterministically, the resolved SHA is recorded in a sidecar
- * `revision.txt` next to the stats; a later run that resolves to the same SHA reuses the cached
- * report and skips the rebuild (unless {@link CollectBundleOptions.forceCleanBuild} is set).
- *
- * In local mode the outer enlistment is built exactly as it sits on disk: its working tree and
- * revision are never checked out, stashed, or otherwise mutated. The captured patch is therefore
- * only a reproducibility record of what was staged at collection time — it is never applied. It is
- * captured up front, before any build steps, so it is preserved even if the build subsequently
- * fails.
- *
- * The outer repo's working tree, branch, and stash are never modified.
+ * In local mode the working tree is built exactly as it sits on disk; the only side effect is the
+ * up-front staged-patch record (see {@link captureLocalPatch}). The outer repo's git state is
+ * never modified.
  */
 export async function collectBundle(options: CollectBundleOptions): Promise<string> {
-	const {
-		mode,
-		revision,
-		resolution = "merge-base",
-		forceCleanBuild,
-		packageDir,
-		analysisDir,
-	} = options;
+	const { mode, revision, mergeBaseOf, forceCleanBuild, packageDir, analysisDir } = options;
 
-	if (mode === "revision" && (revision === undefined || revision.length === 0)) {
-		throw new Error("revision mode requires a revision.");
+	// Validate.
+	if (mode === "revision" && revision === undefined && mergeBaseOf === undefined) {
+		throw new Error("revision mode requires either revision or mergeBaseOf.");
 	}
 
+	// Resolve names and paths.
+	const outerRepoRoot = findGitRootSync(packageDir);
+	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
 	const label = sanitizeForFileName(
 		options.label ??
 			(mode === "revision"
-				? (revision as string)
+				? ((revision ?? mergeBaseOf) as string)
 				: `current_${Math.floor(Date.now() / 1000)}`),
 	);
-
-	const outerRepoRoot = findGitRootSync(packageDir);
-	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
 	const labelDirectory = resolve(analysisDir, label);
 
-	let activeRepoRoot: string;
-	let activePackageRoot: string;
-	// Set in revision mode to the resolved SHA, recorded alongside the stats so a
-	// later run against the same revision can reuse the report. Undefined in local mode.
-	let resolvedRevision: string | undefined;
-
-	if (mode === "local") {
-		activeRepoRoot = outerRepoRoot;
-		activePackageRoot = packageDir;
-		await captureLocalPatch(outerRepoRoot, labelDirectory);
-	} else {
-		// Resolve the user's revision to a concrete SHA in the outer repo: the
-		// merge-base with HEAD (the fork point), or the committish as-is for "exact".
-		if (resolution === "exact") {
-			resolvedRevision = await resolveSha(outerRepoRoot, revision as string);
-		} else {
-			const mergeBase = await resolveMergeBase(outerRepoRoot, revision as string);
-			if (mergeBase === undefined) {
-				throw new Error(
-					`Could not find merge-base of HEAD and "${revision as string}". ` +
-						`Ensure the revision exists locally (e.g. "git fetch origin ${revision as string}").`,
-				);
-			}
-			resolvedRevision = mergeBase;
-		}
-		if (resolvedRevision !== revision) {
-			console.log(
-				`Resolved revision "${revision as string}" to ` +
-					`${resolution === "exact" ? "" : "merge-base "}${resolvedRevision}.`,
-			);
-		}
-
-		// Reuse a previously-collected report when the recorded SHA matches.
-		const analyzerPath = resolve(labelDirectory, "analyzer.json");
-		const revisionMarkerPath = resolve(labelDirectory, "revision.txt");
-		const cachedRevision = existsSync(revisionMarkerPath)
-			? readFileSync(revisionMarkerPath, "utf8").trim()
+	// In revision mode, resolve the committish to a SHA and reuse the cached report if it matches.
+	const resolvedRevision =
+		mode === "revision"
+			? await resolveBuildRevision(outerRepoRoot, revision, mergeBaseOf)
 			: undefined;
-		if (!forceCleanBuild && existsSync(analyzerPath) && cachedRevision === resolvedRevision) {
+	if (resolvedRevision !== undefined && !forceCleanBuild) {
+		const analyzerPath = resolve(labelDirectory, "analyzer.json");
+		const markerPath = resolve(labelDirectory, "revision.txt");
+		const cachedRevision = existsSync(markerPath)
+			? readFileSync(markerPath, "utf8").trim()
+			: undefined;
+		if (existsSync(analyzerPath) && cachedRevision === resolvedRevision) {
 			console.log(`Reusing cached bundle (revision: ${resolvedRevision}, label: ${label}).`);
 			console.log(`  Report: ${analyzerPath}`);
 			logCollectionComplete(mode, label, labelDirectory);
 			return label;
 		}
-
-		// Locate the same package inside the inner repo via its path relative to
-		// the repo root (e.g. `examples/utils/bundle-size-tests`).
-		const packageWorkspacePath = relative(outerRepoRoot, packageDir);
-		await ensureInnerRepoAtRevision(resolvedRevision, outerRepoRoot, innerRepoRoot);
-		activeRepoRoot = innerRepoRoot;
-		activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
-		if (!existsSync(activePackageRoot)) {
-			throw new Error(
-				`Expected package not found in inner repo at ${activePackageRoot}. ` +
-					`The revision "${revision as string}" may predate this package.`,
-			);
-		}
-		installDependencies(activeRepoRoot);
 	}
 
+	// Prepare the build environment: the local working tree, or the inner repo at the revision.
+	let repoRoot = outerRepoRoot;
+	let packageRoot = packageDir;
+	if (mode === "local") {
+		await captureLocalPatch(outerRepoRoot, labelDirectory);
+	} else {
+		({ repoRoot, packageRoot } = await prepareRevisionBuild(
+			resolvedRevision as string,
+			outerRepoRoot,
+			packageDir,
+			innerRepoRoot,
+		));
+	}
+
+	// Build.
 	if (forceCleanBuild) {
-		cleanWorkspace(activeRepoRoot);
+		cleanWorkspace(repoRoot);
 	}
-	buildWorkspace(activePackageRoot);
-	buildBundles(activePackageRoot);
-	saveStats(label, activePackageRoot, analysisDir);
-	// Record the SHA so a later run against the same revision can skip the rebuild.
+	buildWorkspace(packageRoot);
+	buildBundles(packageRoot);
+
+	// Save stats, recording the SHA so a later run against the same revision can skip the rebuild.
+	saveStats(label, packageRoot, analysisDir);
 	if (resolvedRevision !== undefined) {
 		writeFileSync(resolve(labelDirectory, "revision.txt"), `${resolvedRevision}\n`);
 	}

@@ -91,19 +91,9 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 		const exactRevision = flags.revision;
 		const mergeBaseRevision = flags["merge-base"];
 		if (exactRevision !== undefined) {
-			await collectBundle({
-				...common,
-				mode: "revision",
-				revision: exactRevision,
-				resolution: "exact",
-			});
+			await collectBundle({ ...common, mode: "revision", revision: exactRevision });
 		} else if (mergeBaseRevision !== undefined) {
-			await collectBundle({
-				...common,
-				mode: "revision",
-				revision: mergeBaseRevision,
-				resolution: "merge-base",
-			});
+			await collectBundle({ ...common, mode: "revision", mergeBaseOf: mergeBaseRevision });
 		} else {
 			await collectBundle({ ...common, mode: "local" });
 		}
