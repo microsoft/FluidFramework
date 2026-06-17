@@ -30,10 +30,10 @@ import {
 	type IRuntimeMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type TelemetryLoggerExt,
+	createChildMonitoringContext,
 	type MonitoringContext,
 	raiseConnectedEvent,
-	createChildMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { RuntimeAttributor } from "./runtimeAttributor.js";

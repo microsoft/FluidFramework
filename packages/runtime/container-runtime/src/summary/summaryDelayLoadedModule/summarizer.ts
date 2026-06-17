@@ -11,11 +11,11 @@ import type {
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	type IFluidErrorBase,
-	type TelemetryLoggerExt,
-	LoggingError,
-	UsageError,
 	createChildLogger,
+	type IFluidErrorBase,
+	LoggingError,
+	type TelemetryLoggerExt,
+	UsageError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 

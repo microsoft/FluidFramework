@@ -90,7 +90,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.101.0",
+		"@fluidframework/container-runtime-definitions-previous": "npm:@fluidframework/container-runtime-definitions@2.103.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^9.2.1",
@@ -101,7 +101,17 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IContainerRuntime": {
+				"backCompat": false
+			},
+			"Interface_IContainerRuntimeWithResolveHandle_Deprecated": {
+				"backCompat": false
+			},
+			"TypeAlias_IContainerRuntimeBaseWithCombinedEvents": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
