@@ -6,10 +6,7 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import {
-	PerformanceEvent,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import {
