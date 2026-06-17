@@ -130,7 +130,7 @@ export interface ITelemetryBaseLogger {
 	 * Minimum log level to be logged.
 	 * @defaultValue {@link LogLevelConst.info | LogLevel.info}.
 	 */
-	minLogLevel?: LogLevel;
+	minLogLevel?: LogLevel | undefined;
 }
 
 /**

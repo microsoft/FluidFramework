@@ -6,11 +6,11 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type TelemetryLoggerExt,
-	DataProcessingError,
-	LoggingError,
-	extractSafePropertiesFromMessage,
 	createChildLogger,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	LoggingError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";

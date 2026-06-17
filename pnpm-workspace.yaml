@@ -35,7 +35,7 @@ catalogs:
     "@fluidframework/build-tools": ^0.65.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^9.0.0"
+    "@fluidframework/eslint-config-fluid": "^13.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -126,6 +126,9 @@ overrides:
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
+
+  # Resolve command injection vulnerabilities.
+  shell-quote: ^1.8.4
 
   # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
