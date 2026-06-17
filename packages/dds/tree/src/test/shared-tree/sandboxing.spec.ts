@@ -9,12 +9,18 @@ import { assert } from "@fluidframework/core-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
-import type { ChangeMetadata } from "../../core/index.js";
+import {
+	findCommonAncestor,
+	type ChangeMetadata,
+	type GraphCommit,
+	type RevisionTag,
+} from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	independentInitializedView,
 	TreeAlpha,
 	type ForestOptions,
+	type TreeCheckout,
 	type ViewContent,
 } from "../../shared-tree/index.js";
 import {
@@ -22,7 +28,11 @@ import {
 	type TreeViewAlpha,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/api/index.js";
-import { TreeViewConfiguration, type ImplicitFieldSchema } from "../../simple-tree/index.js";
+import {
+	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type UnsafeUnknownSchema,
+} from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { TestTreeProviderLite, StringArray } from "../utils.js";
@@ -32,12 +42,36 @@ interface PromiseWithResolver {
 	readonly resolver: () => void;
 }
 
+function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	view: TreeViewAlpha<TSchema>,
+): GraphCommit<unknown> {
+	return (
+		view as unknown as { readonly checkout: TreeCheckout }
+	).checkout.mainBranch.getHead();
+}
+
+function getMissingCommits<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
+	behind: TreeViewAlpha<TSchema>,
+	ahead: TreeViewAlpha<TSchema>,
+): string {
+	const behindHead = headFromView(behind);
+	const aheadHead = headFromView(ahead);
+	const targetPath: GraphCommit<unknown>[] = [];
+	const ancestor = findCommonAncestor(behindHead, [aheadHead, targetPath]);
+	assert(ancestor !== undefined, "Branches do not share a common ancestor.");
+	return `[${targetPath.map((commit) => commit.revision).join(", ")}]`;
+}
+
+function getRevision(newChange: JsonCompatibleReadOnly) {
+	return (newChange as unknown as { revision: RevisionTag }).revision;
+}
+
 function makePromiseWithResolver(): PromiseWithResolver {
 	let resolver: undefined | (() => void);
 	const promise = new Promise<void>((resolve) => {
 		resolver = resolve;
 	});
-	strict(resolver !== undefined, "Resolver should have been assigned");
+	assert(resolver !== undefined, "Resolver should have been assigned");
 	return { promise, resolver };
 }
 
@@ -60,7 +94,9 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
 		/** The callback to send updates from the host to the sandbox so that it learns about inbound changes. */
-		private readonly sendUpdate: (change: JsonCompatibleReadOnly) => void,
+		private readonly sendUpdateToSandbox: (change: JsonCompatibleReadOnly) => void,
+		/** The callback to acknowledge outbound changes from the sandbox. */
+		private readonly ackOutboundChangeFromSandbox: () => void,
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.main = main;
@@ -74,28 +110,42 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
-		this.logger("Host: received outbound change from sandbox");
-		this.local.applyChange(change);
-		this.main.merge(this.local, false);
-
-		if (this.updateInProgress !== undefined) {
-			this.syncSandboxToInboundChanges();
+		this.logger(`Host: received outbound change [${getRevision(change)}] from sandbox`);
+		if (this.mainHeadFromLastUpdate !== undefined) {
+			this.logger(
+				`Host: abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+			);
+			this.mainHeadFromLastUpdate.dispose();
+			this.mainHeadFromLastUpdate = undefined;
 		}
+		this.local.applyChange(change);
+		this.logger(
+			`Host: merging outbound changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
+		);
+		this.main.merge(this.local, false);
+		this.ackOutboundChangeFromSandbox();
+		this.syncSandboxToInboundChanges();
 	}
 
 	private syncSandboxToInboundChanges(): void {
 		if (this.local.hasNewEdits(this.main)) {
-			this.logger("Host: detected new inbound changes that need to be reflected in sandbox");
-			if (this.updateInProgress !== undefined) {
-				// We're already in the process of updating the sandbox.
-				this.logger("Host: update already in progress");
+			this.logger(
+				`Host: detected new inbound changes that need to be reflected in sandbox ${getMissingCommits(this.local, this.main)}`,
+			);
+			if (this.mainHeadFromLastUpdate !== undefined) {
+				this.logger("Host: update already in progress. Will wait for it to complete or fail.");
 				return;
 			}
-			this.updateInProgress = makePromiseWithResolver();
+			if (this.updateInProgress === undefined) {
+				this.logger("Host: no pre-existing update in progress. Creating new update promise.");
+				this.updateInProgress = makePromiseWithResolver();
+			} else {
+				this.logger("Host: Reusing existing update promise.");
+			}
 			this.mainHeadFromLastUpdate = this.main.fork();
 			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
 			this.logger("Host: sending update to sandbox");
-			this.sendUpdate(update);
+			this.sendUpdateToSandbox(update);
 		} else {
 			this.logger("Host: no new inbound changes that need to be reflected in sandbox");
 			// The sandbox is now caught up with the host's main branch
@@ -112,12 +162,13 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * Must be called when the sandbox acknowledges an update that the host has sent.
 	 */
 	public receiveAckOfUpdate(): void {
-		this.logger("Host: received ack of update from sandbox");
-
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		assert(
 			this.mainHeadFromLastUpdate !== undefined,
 			"Expected main head from last update to be defined",
+		);
+		this.logger(
+			`Host: received ack of update from sandbox for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 		);
 		// Reflect the acknowledged update on the local branch
 		this.local.rebaseOnto(this.mainHeadFromLastUpdate);
@@ -161,10 +212,17 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 		this.view = independentInitializedView(config, options, content);
 		this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			if (metadata.isLocal) {
-				this.pushInProgress ??= makePromiseWithResolver();
-				this.inFlight += 1;
-				this.logger(`Sandbox: local change made (inFlight=${this.inFlight})`);
 				const newChange = metadata.getChange();
+				this.logger(
+					`Sand: new outbound change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
+				);
+				if (this.pushInProgress === undefined) {
+					this.logger("Sand: no pre-existing push in progress. Creating new push promise.");
+					this.pushInProgress = makePromiseWithResolver();
+				} else {
+					this.logger("Sand: Reusing existing push promise.");
+				}
+				this.inFlight += 1;
 				sendOutboundChange(newChange);
 			}
 		});
@@ -181,11 +239,11 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			// There are local changes that have not yet been reflected on the host,
 			// so this inbound update is not applicable to the current state of the sandbox.
 			// We ignore the update (another will come once the host has caught up to the sandbox).
-			this.logger(`Sandbox: ignoring update (inFlight=${this.inFlight})`);
+			this.logger(`Sand: ignoring update from host (inFlight=${this.inFlight})`);
 			return;
 		}
 		this.view.applyChange(update, false);
-		this.logger("Sandbox: applied update");
+		this.logger("Sand: applied update from host");
 		this.sendAckOfInboundUpdate();
 	}
 
@@ -193,16 +251,19 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	 * Must be called when the host acknowledges a new local change.
 	 */
 	public receiveAckOfOutboundChange(): void {
-		strict(this.inFlight > 0);
+		assert(this.inFlight > 0, "Unexpectedly received ack of outbound change");
+		this.logger(`Sand: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
-		this.logger(`Sandbox: local change acked (inFlight=${this.inFlight})`);
 
 		if (this.inFlight === 0) {
 			// The host has now caught up with all local changes
-			strict(this.pushInProgress !== undefined);
+			assert(
+				this.pushInProgress !== undefined,
+				"Missing push promise despite in-flight changes",
+			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			// Resolve the push promise
+			this.logger(`Sand: all outbound changes acked. Resolving push promise.`);
 			resolver();
 		}
 	}
@@ -245,12 +306,15 @@ describe("Host and Sandbox Demo", () => {
 		let sandbox: Sandbox<typeof StringArray>;
 
 		function sendInboundUpdateFromHostToSandbox(update: JsonCompatibleReadOnly): void {
-			setTimeout(() => {
-				sandbox.receiveInboundUpdate(update);
-			});
+			setTimeout(() => sandbox.receiveInboundUpdate(update));
 		}
 
-		const host = new Host(main, sendInboundUpdateFromHostToSandbox, logger);
+		const host = new Host(
+			main,
+			sendInboundUpdateFromHostToSandbox,
+			sendAckOfOutboundChangeFromHostToSandbox,
+			logger,
+		);
 
 		const hostCompressor = provider.getCompressor(provider.trees[1]);
 		const startingState = TreeAlpha.exportCompressed(host.local.root, {
@@ -262,10 +326,11 @@ describe("Host and Sandbox Demo", () => {
 		function sendOutboundChangeFromSandboxToHostLocalBranch(
 			change: JsonCompatibleReadOnly,
 		): void {
-			setTimeout(() => {
-				host.receiveOutboundChange(change);
-				setTimeout(() => sandbox.receiveAckOfOutboundChange());
-			});
+			setTimeout(() => host.receiveOutboundChange(change));
+		}
+
+		function sendAckOfOutboundChangeFromHostToSandbox(): void {
+			setTimeout(() => sandbox.receiveAckOfOutboundChange());
 		}
 
 		function sendAckOfInboundUpdateFromSandboxToHost(): void {
@@ -458,7 +523,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.local.root], ["B(s)", "C(s)"]);
 		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "B(p)"]);
 		// The outbound edits are not reflected in the peer yet
-		strict.deepEqual([...peer.root], []);
+		strict.deepEqual([...peer.root], ["B(p)"]);
 
 		provider.synchronizeMessages();
 
