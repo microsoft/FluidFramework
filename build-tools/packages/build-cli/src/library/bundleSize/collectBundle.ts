@@ -113,6 +113,11 @@ function buildBundles(packageRoot: string): void {
  * compareBundles.ts needs — so the (large) webpack stats and `build/` outputs
  * do not need to be retained.
  *
+ * @remarks
+ * Uses copy + unlink instead of `renameSync` because the source and destination
+ * may live on different drives (e.g. `D:` -> `C:\Users\<user>\AppData\Local\Temp`),
+ * which causes `renameSync` to fail with `EXDEV` on Windows.
+ *
  * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
  * @param sourcePackageRoot - Package root that produced the webpack output.
  * @param analysisDir - Directory under which per-label stats are saved.
@@ -135,9 +140,6 @@ function saveStats(label: string, sourcePackageRoot: string, analysisDir: string
 	}
 
 	mkdirSync(labelDirectory, { recursive: true });
-	// Use copy + unlink instead of renameSync because the source and destination
-	// may live on different drives (e.g. D: -> C:\Users\<user>\AppData\Local\Temp),
-	// which causes renameSync to fail with EXDEV on Windows.
 	copyFileSync(analyzerJsonOutputPath, destAnalyzerPath);
 	unlinkSync(analyzerJsonOutputPath);
 	console.log(`Saved analyzer report to: ${destAnalyzerPath}`);
@@ -178,12 +180,17 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
  * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot`
  * and is checked out at the requested revision.
  *
+ * @remarks
  * On first call, clones the inner repo directly from the outer enlistment on
  * disk (`--no-tags --no-checkout`). Because the source is a local repository,
  * no remote or network access is involved and every commit already present in
  * the outer repo (including merge-base SHAs that aren't branch tips) is
- * available without a separate fetch. On every call the requested revision is
- * checked out detached.
+ * available without a separate fetch. `--no-checkout` is used because the exact
+ * revision is checked out explicitly afterwards.
+ *
+ * On every call the requested revision is checked out with a detached HEAD, so
+ * there is no local branch state to manage; it is resolved against the objects
+ * copied from the outer repo during the clone.
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
@@ -195,10 +202,6 @@ async function ensureInnerRepoAtRevision(
 	if (!existsSync(resolve(innerRepoRoot, ".git"))) {
 		mkdirSync(dirname(innerRepoRoot), { recursive: true });
 		console.log(`\nCloning inner repo from ${outerRepoRoot} into ${innerRepoRoot}...`);
-		// Clone from the outer enlistment on disk: this avoids any remote/network
-		// access and gives the inner repo every object the outer repo already has,
-		// so the requested revision can be checked out below without a fetch.
-		// --no-checkout because we check out the exact revision explicitly below.
 		await simpleGit(dirname(innerRepoRoot)).clone(outerRepoRoot, innerRepoRoot, [
 			"--no-tags",
 			"--no-checkout",
@@ -207,9 +210,6 @@ async function ensureInnerRepoAtRevision(
 
 	const innerGit = simpleGit(innerRepoRoot);
 	console.log(`Checking out revision "${revision}" in inner repo...`);
-	// Use detached HEAD checkout so we don't have to manage local branch state.
-	// The revision is resolved against the objects copied from the outer repo
-	// during the clone above.
 	await innerGit.raw(["checkout", "--detach", revision]);
 }
 
@@ -217,10 +217,18 @@ async function ensureInnerRepoAtRevision(
  * Collects a single bundle from either the outer enlistment (local mode) or a
  * separate inner enlistment checked out to a specific revision (revision mode).
  *
+ * @remarks
  * In revision mode, the inner repo (at {@link CollectBundleOptions.baseRepoDir}, defaulting to
  * `<analysisDir>/base-repo`) is cloned from the outer enlistment on disk on first use and
- * reused thereafter. No remote or network access is involved. The outer repo's working tree,
- * branch, and stash are never modified.
+ * reused thereafter. No remote or network access is involved.
+ *
+ * In local mode the outer enlistment is built exactly as it sits on disk: its working tree and
+ * revision are never checked out, stashed, or otherwise mutated. The captured patch is therefore
+ * only a reproducibility record of what was staged at collection time — it is never applied. It is
+ * captured up front, before any build steps, so it is preserved even if the build subsequently
+ * fails.
+ *
+ * The outer repo's working tree, branch, and stash are never modified.
  */
 export async function collectBundle(options: CollectBundleOptions): Promise<void> {
 	const { mode, revision, forceCleanBuild, packageDir, analysisDir } = options;
@@ -240,17 +248,10 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 	if (mode === "local") {
 		activeRepoRoot = outerRepoRoot;
 		activePackageRoot = packageDir;
-		// Local mode builds the outer enlistment exactly as it sits on disk: we
-		// never check out, stash, or otherwise mutate its working tree or revision.
-		// The captured patch is therefore only a reproducibility record of what was
-		// staged at collection time — it is never applied. Capture it up front,
-		// before any build steps, so the patch is preserved even if the build
-		// subsequently fails.
 		await captureLocalPatch(outerRepoRoot, resolve(analysisDir, label));
 	} else {
-		// Path of the package relative to the repo root, e.g.
-		// `examples/utils/bundle-size-tests`. Used to locate the same package
-		// inside the freshly-cloned inner repo.
+		// Locate the same package inside the freshly-cloned inner repo via its
+		// path relative to the repo root (e.g. `examples/utils/bundle-size-tests`).
 		const packageWorkspacePath = relative(outerRepoRoot, packageDir);
 		await ensureInnerRepoAtRevision(revision as string, outerRepoRoot, innerRepoRoot);
 		activeRepoRoot = innerRepoRoot;

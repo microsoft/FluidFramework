@@ -226,16 +226,19 @@ function canonicalModuleKey(modulePath: string): string {
  * owning package. Modules are deduplicated by {@link canonicalModuleKey} using
  * a single shared `seen` set, so a module reached more than once within this
  * asset set is counted exactly once.
+ *
+ * @remarks
+ * A node with children is an aggregate (asset, directory, or concatenated
+ * wrapper) whose `parsedSize` is just the sum of its descendants. The walk
+ * recurses into the children and skips the parent so those bytes are not
+ * double-counted; only childless leaf modules carry a real path and standalone
+ * size.
  */
 function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 	const perPackage = new Map<string, number>();
 	const seen = new Set<string>();
 
 	const visit = (node: AnalyzerNode): void => {
-		// A node with children is an aggregate (asset, directory, or concatenated
-		// wrapper) whose parsedSize is just the sum of its descendants. Recurse into
-		// the children and skip the parent so those bytes are not double-counted;
-		// only childless leaf modules carry a real path and standalone size.
 		if (node.groups !== undefined && node.groups.length > 0) {
 			for (const child of node.groups) visit(child);
 			return;
@@ -365,10 +368,6 @@ function comparePackages(
 	baseNodes: AnalyzerNode[],
 	currentNodes: AnalyzerNode[],
 ): { packageBuckets: ComparisonRow[]; packages: ComparisonRow[] } {
-	// Per-package rows are each scoped to a single real entrypoint (not a sum
-	// over entrypoints), deduping modules within that asset before diffing.
-	// Memoized because each entrypoint feeds more than one headline bucket as
-	// well as the full per-package breakdown.
 	const rowsByAsset = new Map<string, ComparisonRow[]>();
 	const rowsForAsset = (asset: string): ComparisonRow[] => {
 		let rows = rowsByAsset.get(asset);
@@ -542,6 +541,14 @@ function renderTable(emit: (line?: string) => void, spec: TableSpec): void {
 /**
  * Renders a {@link ComparisonReport} as a human-readable text report.
  * Also echoes each line to the console.
+ *
+ * @remarks
+ * Sections are emitted in order: asset-level (per-emitted-file sizes, independent
+ * of entrypoints), entrypoint-level, then package-level (composition buckets
+ * followed by the full breakdown). Entrypoint rows overlap and must not be
+ * summed; the `fluidFrameworkAll` aggregate entrypoint gives the single
+ * deduplicated bundle-wide total. The package-level sections are scoped to real
+ * entrypoints (see {@link bucketDefinitions} / {@link ComparisonReport}).
  */
 function renderAsText(report: ComparisonReport): string {
 	const lines: string[] = [];
@@ -569,17 +576,14 @@ function renderAsText(report: ComparisonReport): string {
 		});
 	}
 
-	// Entrypoint-level section: each row is a real shipped bundle. Rows overlap
-	// and must not be summed; the `fluidFrameworkAll` aggregate entrypoint gives
-	// the single deduplicated bundle-wide total.
+	// Entrypoint-level section: each row is a real shipped bundle.
 	renderTable(emit, {
 		heading: "Named entrypoint total asset sizes (each row is a real entrypoint)",
 		nameHeader: "Entrypoint",
 		rows: report.entrypoints,
 	});
 
-	// Package-level sections: composition buckets, then the full breakdown. Both
-	// are scoped to real entrypoints (see bucketDefinitions / ComparisonReport).
+	// Package-level sections: composition buckets, then the full breakdown.
 	renderTable(emit, {
 		heading: "Bundle composition by category (parsed size in bytes)",
 		nameHeader: "Package",

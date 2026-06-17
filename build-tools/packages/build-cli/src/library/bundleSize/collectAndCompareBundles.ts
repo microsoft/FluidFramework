@@ -108,6 +108,24 @@ async function resolveSha(packageDir: string, rev: string): Promise<string> {
  * {@link compareBundles} can find both directories.
  *
  * The outer repo's working tree, branch, and stash are never modified.
+ *
+ * @remarks
+ * The base label is pinned to "main" because {@link compareBundles} reads from a
+ * fixed base label. The current side is timestamped (unix epoch seconds) so
+ * successive runs, which may carry different uncommitted changes, don't clobber
+ * each other; the same label is passed to {@link collectBundle} and
+ * {@link compareBundles} so they agree on the directory.
+ *
+ * The inner enlistment used to build the base bundle is a scratch clone, not
+ * report data, so it lives under the output directory rather than alongside the
+ * per-label analyzer reports in `analysisDir`. Because the inner repo is only
+ * ever checked out at a clean revision, its build output for a given SHA is
+ * deterministic: the SHA that produced the base report is recorded in a sidecar
+ * `revision.txt`, so a subsequent run against the same merge-base can reuse the
+ * cached report and skip the rebuild. Once the report is saved the inner repo is
+ * deleted by default (it re-creates cheaply via shallow clone, and keeping it
+ * consumes hundreds of MB once dependencies are installed); pass
+ * {@link CollectAndCompareBundlesOptions.keepBaseRepo} to retain it.
  */
 export async function collectAndCompareBundles(
 	options: CollectAndCompareBundlesOptions,
@@ -123,10 +141,7 @@ export async function collectAndCompareBundles(
 		outputDir,
 	} = options;
 
-	// Resolve the base revision. By default we take the merge-base of HEAD and
-	// the requested revision (the fork point); with --exact-base we use the
-	// revision exactly as given (e.g. to compare against a specific parent
-	// commit rather than the fork point).
+	// Resolve the base revision (merge-base of HEAD by default; exact with --exact-base).
 	let baseRevision: string;
 	if (exactBase) {
 		baseRevision = await resolveSha(packageDir, baseRevisionInput);
@@ -148,23 +163,10 @@ export async function collectAndCompareBundles(
 		}
 		baseRevision = resolvedBaseRevision;
 	}
-	// The inner enlistment used to build the base bundle is a scratch clone, not
-	// report data, so it lives under the output directory rather than alongside
-	// the per-label analyzer reports in analysisDir.
 	const innerRepoRoot = resolve(outputDir, "base-repo");
-	// compareBundles reads from a fixed base label ("main"); pin the base
-	// bundle's directory name to that regardless of which revision we resolved.
 	const baseLabel = "main";
-	// The current side is timestamped (unix epoch seconds) so successive runs,
-	// which may carry different uncommitted changes, don't clobber each other.
-	// We pass the same label to collectBundle and compareBundles so they agree
-	// on the directory.
 	const currentLabel = `current_${Math.floor(Date.now() / 1000)}`;
 
-	// The inner repo is only ever checked out at a clean revision; its build
-	// output for a given SHA is deterministic, so a cached base report from a
-	// prior run for the same SHA can be reused. We track the SHA used to produce
-	// the base report in a sidecar revision.txt file.
 	const baseLabelDirectory = resolve(analysisDir, baseLabel);
 	const baseAnalyzerPath = resolve(baseLabelDirectory, "analyzer.json");
 	const baseRevisionMarkerPath = resolve(baseLabelDirectory, "revision.txt");
@@ -207,15 +209,11 @@ export async function collectAndCompareBundles(
 				analysisDir,
 				baseRepoDir: innerRepoRoot,
 			});
-			// Record the SHA that produced this report so a subsequent run
-			// against the same merge-base can skip the rebuild.
+			// Record the SHA so a later run against the same merge-base can skip the rebuild.
 			mkdirSync(baseLabelDirectory, { recursive: true });
 			writeFileSync(baseRevisionMarkerPath, `${baseRevision}\n`);
 
-			// Delete the inner repo now that the report is saved. It's a
-			// shallow clone of the outer repo's `origin`, so re-creating it
-			// on the next run is cheap; keeping it around just consumes disk
-			// (hundreds of MB once dependencies are installed).
+			// Delete the inner repo now that the report is saved (re-created cheaply next run).
 			if (!keepBaseRepo) {
 				if (existsSync(innerRepoRoot)) {
 					console.log(`Deleting inner base-repo at ${innerRepoRoot}...`);
