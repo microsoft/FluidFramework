@@ -61,6 +61,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		main: TreeViewAlpha<TSchema>,
 		/** The callback to send updates from the host to the sandbox so that it learns about inbound changes. */
 		private readonly sendUpdate: (change: JsonCompatibleReadOnly) => void,
+		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.main = main;
 		this.local = main.fork();
@@ -73,6 +74,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
+		this.logger("Host: received outbound change from sandbox");
 		this.local.applyChange(change);
 		this.main.merge(this.local, false);
 
@@ -83,17 +85,22 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 
 	private syncSandboxToInboundChanges(): void {
 		if (this.local.hasNewEdits(this.main)) {
+			this.logger("Host: detected new inbound changes that need to be reflected in sandbox");
 			if (this.updateInProgress !== undefined) {
 				// We're already in the process of updating the sandbox.
+				this.logger("Host: update already in progress");
 				return;
 			}
 			this.updateInProgress = makePromiseWithResolver();
 			this.mainHeadFromLastUpdate = this.main.fork();
 			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
+			this.logger("Host: sending update to sandbox");
 			this.sendUpdate(update);
 		} else {
+			this.logger("Host: no new inbound changes that need to be reflected in sandbox");
 			// The sandbox is now caught up with the host's main branch
 			if (this.updateInProgress !== undefined) {
+				this.logger("Host: resolving update promise");
 				const resolver = this.updateInProgress.resolver;
 				this.updateInProgress = undefined;
 				resolver();
@@ -105,6 +112,8 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * Must be called when the sandbox acknowledges an update that the host has sent.
 	 */
 	public receiveAckOfUpdate(): void {
+		this.logger("Host: received ack of update from sandbox");
+
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		assert(
 			this.mainHeadFromLastUpdate !== undefined,
@@ -147,12 +156,14 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 		sendOutboundChange: (change: JsonCompatibleReadOnly) => void,
 		/** The callback to send acknowledgements of inbound updates from the sandbox to the host. */
 		private readonly sendAckOfInboundUpdate: () => void,
+		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.view = independentInitializedView(config, options, content);
 		this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			if (metadata.isLocal) {
 				this.pushInProgress ??= makePromiseWithResolver();
 				this.inFlight += 1;
+				this.logger(`Sandbox: local change made (inFlight=${this.inFlight})`);
 				const newChange = metadata.getChange();
 				sendOutboundChange(newChange);
 			}
@@ -170,9 +181,11 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			// There are local changes that have not yet been reflected on the host,
 			// so this inbound update is not applicable to the current state of the sandbox.
 			// We ignore the update (another will come once the host has caught up to the sandbox).
+			this.logger(`Sandbox: ignoring update (inFlight=${this.inFlight})`);
 			return;
 		}
 		this.view.applyChange(update, false);
+		this.logger("Sandbox: applied update");
 		this.sendAckOfInboundUpdate();
 	}
 
@@ -182,6 +195,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	public receiveAckOfOutboundChange(): void {
 		strict(this.inFlight > 0);
 		this.inFlight -= 1;
+		this.logger(`Sandbox: local change acked (inFlight=${this.inFlight})`);
 
 		if (this.inFlight === 0) {
 			// The host has now caught up with all local changes
@@ -207,6 +221,9 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 
 describe("Host and Sandbox Demo", () => {
 	function setup(initialState: string[]) {
+		const logger = (message: string) => {
+			console.log(message);
+		};
 		const provider = new TestTreeProviderLite(
 			2,
 			configuredSharedTree({
@@ -233,7 +250,7 @@ describe("Host and Sandbox Demo", () => {
 			});
 		}
 
-		const host = new Host(main, sendInboundUpdateFromHostToSandbox);
+		const host = new Host(main, sendInboundUpdateFromHostToSandbox, logger);
 
 		const hostCompressor = provider.getCompressor(provider.trees[1]);
 		const startingState = TreeAlpha.exportCompressed(host.local.root, {
@@ -266,6 +283,7 @@ describe("Host and Sandbox Demo", () => {
 			},
 			sendOutboundChangeFromSandboxToHostLocalBranch,
 			sendAckOfInboundUpdateFromSandboxToHost,
+			logger,
 		);
 
 		return { peer, host, sandbox, provider };
