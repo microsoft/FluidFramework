@@ -26,7 +26,7 @@ export default class BundleCollectAndCompare extends BaseCommand<
 		"<%= config.bin %> <%= command.id %> --base-revision main",
 		"<%= config.bin %> <%= command.id %> --base-revision client_v2.100.0",
 		"<%= config.bin %> <%= command.id %> --base-revision 18062854f25 --exact-base",
-		"<%= config.bin %> <%= command.id %> --force-clean-build --skip-compare",
+		"<%= config.bin %> <%= command.id %> --force-clean-build --keep-base-repo",
 	];
 
 	public static readonly flags = {
@@ -59,10 +59,6 @@ export default class BundleCollectAndCompare extends BaseCommand<
 			description:
 				"Directory where the comparison reports are written. Defaults to " +
 				"<package-dir>/compareBundlesOutput.",
-		}),
-		"skip-compare": Flags.boolean({
-			description: "Collect both bundles, but skip the comparison step.",
-			default: false,
 		}),
 		"force-clean-build": Flags.boolean({
 			description:
@@ -98,7 +94,6 @@ export default class BundleCollectAndCompare extends BaseCommand<
 		await collectAndCompareBundles({
 			baseRevision: flags["base-revision"],
 			exactBase: flags["exact-base"],
-			skipCompare: flags["skip-compare"],
 			forceCleanBuild: flags["force-clean-build"],
 			keepBaseRepo: flags["keep-base-repo"],
 			packageDir,

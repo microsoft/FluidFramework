@@ -3,10 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { resolve } from "node:path";
-
-import { simpleGit } from "simple-git";
 
 import { collectBundle } from "./collectBundle.js";
 import { compareBundles } from "./compareBundles.js";
@@ -28,8 +26,6 @@ export interface CollectAndCompareBundlesOptions {
 	 * exact commit (e.g. "current vs. its parent") rather than the fork point.
 	 */
 	readonly exactBase?: boolean;
-	/** Collect both bundles, but skip the comparison step. */
-	readonly skipCompare: boolean;
 	/** Run the full workspace clean before each build. */
 	readonly forceCleanBuild: boolean;
 	/** For debugging only: keep the inner base-repo clone after collecting the base bundle. */
@@ -43,97 +39,40 @@ export interface CollectAndCompareBundlesOptions {
 }
 
 /**
- * Resolves the merge-base (best common ancestor) of two committishes (branch,
- * tag, or SHA). Returns the full SHA, or undefined if either rev cannot be
- * resolved (e.g. unknown branch, detached state with no shared history).
- *
- * `otherRev` defaults to `HEAD`. The two-commit form of `git merge-base` is
- * symmetric — per the git documentation, `git merge-base a b` outputs a commit
- * reachable from both `a` and `b`, so argument order does not affect the result
- * (order only matters for the 3+ commit and `--fork-point` forms, which we do
- * not use here).
- *
- * Using merge-base instead of a raw branch tip means the comparison is taken
- * against the actual fork point, which is what users typically want — and it
- * works for worktree-based setups where `main` may not exist as a local branch
- * at the location they expect.
- */
-async function resolveMergeBase(
-	packageDir: string,
-	rev: string,
-	otherRev = "HEAD",
-): Promise<string | undefined> {
-	try {
-		const output = await simpleGit(packageDir).raw(["merge-base", rev, otherRev]);
-		const sha = output.trim();
-		return sha.length > 0 ? sha : undefined;
-	} catch {
-		return undefined;
-	}
-}
-
-/**
- * Resolves a committish (branch, tag, or SHA) to its full commit SHA via
- * `git rev-parse <rev>^{commit}`. Unlike {@link resolveMergeBase}, the revision
- * is used exactly as given (no fork-point computation). Throws if the revision
- * cannot be resolved locally, with guidance to fetch it first.
- *
- * The `^{commit}` peel ensures annotated tags resolve to the underlying commit
- * rather than the tag object.
- */
-async function resolveSha(packageDir: string, rev: string): Promise<string> {
-	try {
-		const output = await simpleGit(packageDir).raw(["rev-parse", `${rev}^{commit}`]);
-		const sha = output.trim();
-		if (sha.length > 0) return sha;
-	} catch {
-		// Fall through to the shared error below.
-	}
-	throw new Error(
-		`Could not resolve revision "${rev}" to a commit. ` +
-			`Ensure it exists locally (e.g. "git fetch origin ${rev}").`,
-	);
-}
-
-/**
  * Orchestrates: {@link collectBundle} (local working tree), then
  * {@link collectBundle} (base revision), then {@link compareBundles}.
  *
  * The base revision is taken as the merge-base of HEAD and `baseRevision` by
- * default, or used as-is when `exactBase` is set.
+ * default, or used as-is when `exactBase` is set; that resolution, and caching
+ * of the base report, are handled inside {@link collectBundle}.
  *
- * Labels (used as analysis subdirectory names) are determined automatically:
- * the local bundle is saved under a timestamped "current_<epoch>" label and the
- * base bundle under "main", regardless of which revision we resolved, so that
- * {@link compareBundles} can find both directories.
+ * Labels (used as analysis subdirectory names) are determined automatically: the
+ * local bundle is saved under a timestamped "current_<epoch>" label (generated
+ * by {@link collectBundle} and returned for the comparison) and the base bundle
+ * under "main", so that {@link compareBundles} can find both directories.
  *
  * The outer repo's working tree, branch, and stash are never modified.
  *
  * @remarks
  * The base label is pinned to "main" because {@link compareBundles} reads from a
- * fixed base label. The current side is timestamped (unix epoch seconds) so
- * successive runs, which may carry different uncommitted changes, don't clobber
- * each other; the same label is passed to {@link collectBundle} and
- * {@link compareBundles} so they agree on the directory.
+ * fixed base label. The current label is timestamped by {@link collectBundle}
+ * (so successive runs carrying different uncommitted changes don't clobber each
+ * other) and the returned value is passed straight to {@link compareBundles} so
+ * they agree on the directory.
  *
  * The inner enlistment used to build the base bundle is a scratch clone, not
  * report data, so it lives under the output directory rather than alongside the
- * per-label analyzer reports in `analysisDir`. Because the inner repo is only
- * ever checked out at a clean revision, its build output for a given SHA is
- * deterministic: the SHA that produced the base report is recorded in a sidecar
- * `revision.txt`, so a subsequent run against the same merge-base can reuse the
- * cached report and skip the rebuild. Once the report is saved the inner repo is
- * deleted by default (it re-creates cheaply via shallow clone, and keeping it
- * consumes hundreds of MB once dependencies are installed); pass
+ * per-label analyzer reports in `analysisDir`. Once the comparison is complete
+ * the inner repo is deleted by default (it re-creates cheaply via clone, and
+ * keeping it consumes hundreds of MB once dependencies are installed); pass
  * {@link CollectAndCompareBundlesOptions.keepBaseRepo} to retain it.
  */
 export async function collectAndCompareBundles(
 	options: CollectAndCompareBundlesOptions,
 ): Promise<void> {
 	const {
-		baseRevision: baseRevisionInput,
+		baseRevision,
 		exactBase = false,
-		skipCompare,
 		forceCleanBuild,
 		keepBaseRepo,
 		packageDir,
@@ -141,97 +80,49 @@ export async function collectAndCompareBundles(
 		outputDir,
 	} = options;
 
-	// Resolve the base revision (merge-base of HEAD by default; exact with --exact-base).
-	let baseRevision: string;
-	if (exactBase) {
-		baseRevision = await resolveSha(packageDir, baseRevisionInput);
-		if (baseRevision !== baseRevisionInput) {
-			console.log(`Resolved base revision "${baseRevisionInput}" to ${baseRevision}.`);
-		}
-	} else {
-		const resolvedBaseRevision = await resolveMergeBase(packageDir, baseRevisionInput);
-		if (resolvedBaseRevision === undefined) {
-			throw new Error(
-				`Could not find merge-base of HEAD and "${baseRevisionInput}". ` +
-					`Ensure the revision exists locally (e.g. "git fetch origin ${baseRevisionInput}").`,
-			);
-		}
-		if (resolvedBaseRevision !== baseRevisionInput) {
-			console.log(
-				`Resolved base revision "${baseRevisionInput}" to merge-base ${resolvedBaseRevision}.`,
-			);
-		}
-		baseRevision = resolvedBaseRevision;
-	}
 	const innerRepoRoot = resolve(outputDir, "base-repo");
 	const baseLabel = "main";
-	const currentLabel = `current_${Math.floor(Date.now() / 1000)}`;
-
-	const baseLabelDirectory = resolve(analysisDir, baseLabel);
-	const baseAnalyzerPath = resolve(baseLabelDirectory, "analyzer.json");
-	const baseRevisionMarkerPath = resolve(baseLabelDirectory, "revision.txt");
-	const cachedBaseRevision = existsSync(baseRevisionMarkerPath)
-		? readFileSync(baseRevisionMarkerPath, "utf8").trim()
-		: undefined;
-	const baseStatsAreCached =
-		!forceCleanBuild && existsSync(baseAnalyzerPath) && cachedBaseRevision === baseRevision;
 
 	try {
 		console.log(`\n${"=".repeat(80)}`);
-		console.log(`Collecting local bundle (label: ${currentLabel})...`);
+		console.log("Collecting local bundle...");
 		console.log("=".repeat(80));
-		await collectBundle({
+		const currentLabel = await collectBundle({
 			mode: "local",
-			label: currentLabel,
 			forceCleanBuild,
 			packageDir,
 			analysisDir,
 		});
 
 		console.log(`\n${"=".repeat(80)}`);
-		if (baseStatsAreCached) {
-			console.log(
-				`Reusing cached base bundle (revision: ${baseRevision}, label: ${baseLabel}).`,
-			);
-			console.log(`  Report: ${baseAnalyzerPath}`);
-			console.log("=".repeat(80));
-		} else {
-			console.log(
-				`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`,
-			);
-			console.log("=".repeat(80));
-			await collectBundle({
-				mode: "revision",
-				revision: baseRevision,
-				label: baseLabel,
-				forceCleanBuild,
-				packageDir,
-				analysisDir,
-				baseRepoDir: innerRepoRoot,
-			});
-			// Record the SHA so a later run against the same merge-base can skip the rebuild.
-			mkdirSync(baseLabelDirectory, { recursive: true });
-			writeFileSync(baseRevisionMarkerPath, `${baseRevision}\n`);
+		console.log(`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`);
+		console.log("=".repeat(80));
+		await collectBundle({
+			mode: "revision",
+			revision: baseRevision,
+			resolution: exactBase ? "exact" : "merge-base",
+			label: baseLabel,
+			forceCleanBuild,
+			packageDir,
+			analysisDir,
+			baseRepoDir: innerRepoRoot,
+		});
 
-			// Delete the inner repo now that the report is saved (re-created cheaply next run).
-			if (!keepBaseRepo) {
-				if (existsSync(innerRepoRoot)) {
-					console.log(`Deleting inner base-repo at ${innerRepoRoot}...`);
-					rmSync(innerRepoRoot, { recursive: true, force: true });
-				}
-			}
-		}
+		console.log(`\n${"=".repeat(80)}`);
+		console.log("Running bundle comparison...");
+		console.log("=".repeat(80));
+		compareBundles({
+			analysisDirectory: analysisDir,
+			outputDirectory: outputDir,
+			baseLabel,
+			currentLabel,
+		});
 
-		if (!skipCompare) {
-			console.log(`\n${"=".repeat(80)}`);
-			console.log("Running bundle comparison...");
-			console.log("=".repeat(80));
-			compareBundles({
-				analysisDirectory: analysisDir,
-				outputDirectory: outputDir,
-				baseLabel,
-				currentLabel,
-			});
+		// Delete the inner repo now that the comparison is complete (re-created
+		// cheaply on the next run). Pass keepBaseRepo to retain it for debugging.
+		if (!keepBaseRepo && existsSync(innerRepoRoot)) {
+			console.log(`\nDeleting inner base-repo at ${innerRepoRoot}...`);
+			rmSync(innerRepoRoot, { recursive: true, force: true });
 		}
 
 		console.log(`\n${"=".repeat(80)}`);

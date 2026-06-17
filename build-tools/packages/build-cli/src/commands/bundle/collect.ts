@@ -24,28 +24,31 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
-		"<%= config.bin %> <%= command.id %> --mode revision --revision main",
-		"<%= config.bin %> <%= command.id %> --mode revision --revision client_v2.100.0",
+		"<%= config.bin %> <%= command.id %> --revision main",
+		"<%= config.bin %> <%= command.id %> --merge-base main",
+		"<%= config.bin %> <%= command.id %> --revision client_v2.100.0",
 	];
 
 	public static readonly flags = {
-		mode: Flags.string({
-			description:
-				"local: collect from the outer enlistment (its git state is never modified). " +
-				"revision: collect from a separate inner enlistment checked out at --revision.",
-			options: ["local", "revision"] as const,
-			default: "local",
-		}),
 		revision: Flags.string({
 			description:
-				"(revision mode only, required) Branch, tag, commit SHA, or any committish (e.g. " +
-				"HEAD~2) to check out in the inner repo before building. Non-branch revisions are " +
-				"resolved against the outer repo. Also used as the default label.",
+				"Collect a bundle for this committish (branch, tag, commit SHA, or any committish " +
+				"like HEAD~2), resolved as-is via 'git rev-parse'. Selects revision mode and is " +
+				"mutually exclusive with --merge-base; omit both to collect the local working tree. " +
+				"Also used as the default label.",
+			exclusive: ["merge-base"],
+		}),
+		"merge-base": Flags.string({
+			description:
+				"Collect a bundle for the merge-base of HEAD and this committish (the fork point). " +
+				"Selects revision mode and is mutually exclusive with --revision. Also used as the " +
+				"default label.",
+			exclusive: ["revision"],
 		}),
 		label: Flags.string({
 			description:
 				"Override the directory name under which bundle stats are saved. Defaults to the " +
-				'sanitized revision in revision mode, or "current" in local mode.',
+				'sanitized revision in revision mode, or a timestamped "current_<epoch>" in local mode.',
 		}),
 		"package-dir": Flags.string({
 			description:
@@ -70,26 +73,39 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 	public async run(): Promise<void> {
 		const { flags } = this;
 
-		const mode = flags.mode as "local" | "revision";
-		const { revision } = flags;
-		if (mode === "revision" && (revision === undefined || revision.length === 0)) {
-			this.error("--mode revision requires --revision <rev>.", { exit: 1 });
-		}
-
 		const packageDir = resolve(flags["package-dir"]);
 		const analysisDir =
 			flags["analysis-dir"] === undefined
 				? resolve(packageDir, "compareBundlesOutput", "analysis")
 				: resolve(flags["analysis-dir"]);
-		const label = flags.label ?? (mode === "revision" ? (revision as string) : "current");
 
-		await collectBundle({
-			mode,
-			revision,
-			label,
+		const common = {
+			label: flags.label,
 			forceCleanBuild: flags["force-clean-build"],
 			packageDir,
 			analysisDir,
-		});
+		};
+
+		// The presence of --revision/--merge-base (mutually exclusive) selects revision
+		// mode and how the committish is resolved; with neither, collect the local working tree.
+		const exactRevision = flags.revision;
+		const mergeBaseRevision = flags["merge-base"];
+		if (exactRevision !== undefined) {
+			await collectBundle({
+				...common,
+				mode: "revision",
+				revision: exactRevision,
+				resolution: "exact",
+			});
+		} else if (mergeBaseRevision !== undefined) {
+			await collectBundle({
+				...common,
+				mode: "revision",
+				revision: mergeBaseRevision,
+				resolution: "merge-base",
+			});
+		} else {
+			await collectBundle({ ...common, mode: "local" });
+		}
 	}
 }

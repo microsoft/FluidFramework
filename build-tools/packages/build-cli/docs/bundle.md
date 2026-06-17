@@ -13,7 +13,7 @@ Build and collect a bundle, either from the outer enlistment (local mode) or fro
 
 ```
 USAGE
-  $ flub bundle collect [-v | --quiet] [--mode local|revision] [--revision <value>] [--label <value>] [--package-dir
+  $ flub bundle collect [-v | --quiet] [--revision <value> | --merge-base <value>] [--label <value>] [--package-dir
     <value>] [--analysis-dir <value>] [--force-clean-build]
 
 FLAGS
@@ -23,14 +23,14 @@ FLAGS
                           default; opt in when stale incremental build state from a previous revision may interfere with
                           the current one.
   --label=<value>         Override the directory name under which bundle stats are saved. Defaults to the sanitized
-                          revision in revision mode, or "current" in local mode.
-  --mode=<option>         [default: local] local: collect from the outer enlistment (its git state is never modified).
-                          revision: collect from a separate inner enlistment checked out at --revision.
-                          <options: local|revision>
+                          revision in revision mode, or a timestamped "current_<epoch>" in local mode.
+  --merge-base=<value>    Collect a bundle for the merge-base of HEAD and this committish (the fork point). Selects
+                          revision mode and is mutually exclusive with --revision. Also used as the default label.
   --package-dir=<value>   [default: .] Package root whose webpack bundles are built and whose analyzer.json is
                           collected.
-  --revision=<value>      (revision mode only, required) Branch, tag, or commit SHA to check out in the inner repo
-                          before building. Also used as the default label.
+  --revision=<value>      Collect a bundle for this committish (branch, tag, commit SHA, or any committish like HEAD~2),
+                          resolved as-is via 'git rev-parse'. Selects revision mode and is mutually exclusive with
+                          --merge-base; omit both to collect the local working tree. Also used as the default label.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -46,9 +46,11 @@ DESCRIPTION
 EXAMPLES
   $ flub bundle collect
 
-  $ flub bundle collect --mode revision --revision main
+  $ flub bundle collect --revision main
 
-  $ flub bundle collect --mode revision --revision client_v2.100.0
+  $ flub bundle collect --merge-base main
+
+  $ flub bundle collect --revision client_v2.100.0
 ```
 
 _See code: [src/commands/bundle/collect.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bundle/collect.ts)_
@@ -60,7 +62,7 @@ Collect the local bundle and the base-revision (merge-base) bundle, then compare
 ```
 USAGE
   $ flub bundle collect-and-compare [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
-    [--analysis-dir <value>] [--output-dir <value>] [--skip-compare] [--force-clean-build] [--keep-base-repo]
+    [--analysis-dir <value>] [--output-dir <value>] [--force-clean-build] [--keep-base-repo]
 
 FLAGS
   --analysis-dir=<value>   Directory under which per-label analyzer stats are saved. Defaults to an 'analysis'
@@ -81,7 +83,6 @@ FLAGS
   --output-dir=<value>     Directory where the comparison reports are written. Defaults to
                            <package-dir>/compareBundlesOutput.
   --package-dir=<value>    [default: .] Package root whose webpack bundles are built and compared.
-  --skip-compare           Collect both bundles, but skip the comparison step.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -103,7 +104,7 @@ EXAMPLES
 
   $ flub bundle collect-and-compare --base-revision 18062854f25 --exact-base
 
-  $ flub bundle collect-and-compare --force-clean-build --skip-compare
+  $ flub bundle collect-and-compare --force-clean-build --keep-base-repo
 ```
 
 _See code: [src/commands/bundle/collect-and-compare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bundle/collect-and-compare.ts)_

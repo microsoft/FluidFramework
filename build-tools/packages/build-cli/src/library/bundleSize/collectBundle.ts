@@ -4,7 +4,14 @@
  */
 
 import { execSync } from "node:child_process";
-import { copyFileSync, existsSync, mkdirSync, unlinkSync, writeFileSync } from "node:fs";
+import {
+	copyFileSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
@@ -24,16 +31,23 @@ export interface CollectBundleOptions {
 	 */
 	readonly mode: "local" | "revision";
 	/**
-	 * (revision mode only) Revision to check out in the inner repo before building. May be a
-	 * branch, tag, commit SHA, or any committish (e.g. `HEAD~2`); non-branch revisions are
-	 * resolved against the outer repo.
+	 * (revision mode only) Committish to build in the inner repo (branch, tag, commit SHA, or any
+	 * committish like `HEAD~2`). Combined with {@link CollectBundleOptions.resolution} to pick the
+	 * commit that is built. Resolved against the outer repo. Also used as the default label.
 	 */
 	readonly revision?: string;
 	/**
-	 * Directory name (under {@link CollectBundleOptions.analysisDir}) to save the collected bundle
-	 * stats into. Sanitized for filesystem use before being applied.
+	 * (revision mode only) How {@link CollectBundleOptions.revision} is resolved to the commit that
+	 * is built: `exact` uses the committish as-is (via `git rev-parse`); `merge-base` uses its
+	 * merge-base with HEAD (the fork point). Defaults to `merge-base`. Ignored in local mode.
 	 */
-	readonly label: string;
+	readonly resolution?: "exact" | "merge-base";
+	/**
+	 * Directory name (under {@link CollectBundleOptions.analysisDir}) to save the collected bundle
+	 * stats into. Sanitized for filesystem use before being applied. Defaults to the sanitized
+	 * revision in revision mode, or a timestamped `current_<epoch>` in local mode.
+	 */
+	readonly label?: string;
 	/**
 	 * Run the full workspace clean (`npm run clean` at the repo root) before building.
 	 */
@@ -58,6 +72,59 @@ export interface CollectBundleOptions {
  */
 function sanitizeForFileName(value: string): string {
 	return value.replaceAll(/[^\w.-]/g, "_");
+}
+
+/**
+ * Resolves the merge-base (best common ancestor) of two committishes (branch,
+ * tag, or SHA). Returns the full SHA, or undefined if either rev cannot be
+ * resolved (e.g. unknown branch, detached state with no shared history).
+ *
+ * `otherRev` defaults to `HEAD`. The two-commit form of `git merge-base` is
+ * symmetric — per the git documentation, `git merge-base a b` outputs a commit
+ * reachable from both `a` and `b`, so argument order does not affect the result
+ * (order only matters for the 3+ commit and `--fork-point` forms, which we do
+ * not use here).
+ *
+ * Using merge-base instead of a raw branch tip means the comparison is taken
+ * against the actual fork point, which is what users typically want — and it
+ * works for worktree-based setups where `main` may not exist as a local branch
+ * at the location they expect.
+ */
+async function resolveMergeBase(
+	repoRoot: string,
+	rev: string,
+	otherRev = "HEAD",
+): Promise<string | undefined> {
+	try {
+		const output = await simpleGit(repoRoot).raw(["merge-base", rev, otherRev]);
+		const sha = output.trim();
+		return sha.length > 0 ? sha : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
+/**
+ * Resolves a committish (branch, tag, or SHA) to its full commit SHA via
+ * `git rev-parse <rev>^{commit}`. Unlike {@link resolveMergeBase}, the revision
+ * is used exactly as given (no fork-point computation). Throws if the revision
+ * cannot be resolved locally, with guidance to fetch it first.
+ *
+ * The `^{commit}` peel ensures annotated tags resolve to the underlying commit
+ * rather than the tag object.
+ */
+async function resolveSha(repoRoot: string, rev: string): Promise<string> {
+	try {
+		const output = await simpleGit(repoRoot).raw(["rev-parse", `${rev}^{commit}`]);
+		const sha = output.trim();
+		if (sha.length > 0) return sha;
+	} catch {
+		// Fall through to the shared error below.
+	}
+	throw new Error(
+		`Could not resolve revision "${rev}" to a commit. ` +
+			`Ensure it exists locally (e.g. "git fetch origin ${rev}").`,
+	);
 }
 
 /**
@@ -179,40 +246,26 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
 }
 
 /**
- * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot`
- * and is checked out at the requested revision.
+ * Ensures the inner FluidFramework enlistment exists under `innerRepoRoot` and
+ * is checked out at the given commit SHA.
  *
  * @remarks
  * On first call, clones the inner repo directly from the outer enlistment on
- * disk (`--no-tags --no-checkout`). Because the source is a local repository,
- * no remote or network access is involved and every commit already present in
- * the outer repo (including merge-base SHAs that aren't branch tips) is
- * available without a separate fetch. `--no-checkout` is used because the exact
- * revision is checked out explicitly afterwards.
+ * disk (`--no-tags --no-checkout`). Because the source is a local repository, no
+ * remote or network access is involved and every commit already present in the
+ * outer repo (including merge-base SHAs that aren't branch tips) is available
+ * without a separate fetch. `--no-checkout` is used because the SHA is checked
+ * out explicitly afterwards.
  *
- * On every call the requested revision is checked out with a detached HEAD, so
- * there is no local branch state to manage. The checkout target is chosen as
- * follows:
- *
- * - A branch from the outer repo is mirrored in the clone as a remote-tracking
- *   ref, so it is checked out by its qualified name `origin/<branch>` (a bare
- *   branch name would not resolve here — git would look for a remote literally
- *   named `<branch>`). Branch names are never turned into a SHA, so the checkout
- *   stays readable.
- * - Anything else — a commit SHA, a tag, or a relative committish such as
- *   `HEAD^4` — is meaningful only in the outer repo (a relative ref evaluated in
- *   the clone would resolve against the clone's HEAD, i.e. the wrong commit), so
- *   it is resolved to a commit SHA in the outer repo and that SHA, which the full
- *   clone already contains, is checked out.
- *
- * Branch detection uses `for-each-ref`, which echoes the ref when the revision
- * names a branch and otherwise prints nothing while exiting 0, so the non-branch
- * case is a normal empty result rather than a thrown error.
+ * The SHA is checked out with a detached HEAD, so there is no local branch state
+ * to manage. Callers resolve the user's revision to a SHA in the outer repo
+ * before calling, so any committish — branch, tag, or relative ref such as
+ * `HEAD^4` — is handled uniformly here.
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
 async function ensureInnerRepoAtRevision(
-	revision: string,
+	sha: string,
 	outerRepoRoot: string,
 	innerRepoRoot: string,
 ): Promise<void> {
@@ -225,36 +278,36 @@ async function ensureInnerRepoAtRevision(
 		]);
 	}
 
-	const innerGit = simpleGit(innerRepoRoot);
+	console.log(`Checking out ${sha} in inner repo...`);
+	await simpleGit(innerRepoRoot).raw(["checkout", "--detach", sha]);
+}
 
-	// Pick the checkout target (see @remarks): a branch is checked out by its
-	// origin/<branch> name; everything else is resolved to a SHA in the outer repo.
-	const remoteBranchRef = `refs/remotes/origin/${revision}`;
-	const matchedRef = (
-		await innerGit.raw(["for-each-ref", "--format=%(refname)", remoteBranchRef])
-	).trim();
-
-	let checkoutTarget: string;
-	if (matchedRef === remoteBranchRef) {
-		checkoutTarget = `origin/${revision}`;
-	} else {
-		checkoutTarget = (
-			await simpleGit(outerRepoRoot).raw(["rev-parse", `${revision}^{commit}`])
-		).trim();
-	}
-
-	console.log(`Checking out revision "${revision}" in inner repo...`);
-	await innerGit.raw(["checkout", "--detach", checkoutTarget]);
+/**
+ * Logs the standard "collection complete" banner.
+ */
+function logCollectionComplete(mode: string, label: string, labelDirectory: string): void {
+	console.log(`\n${"=".repeat(80)}`);
+	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
+	console.log(`  Stats directory: ${labelDirectory}`);
+	console.log("=".repeat(80));
 }
 
 /**
  * Collects a single bundle from either the outer enlistment (local mode) or a
- * separate inner enlistment checked out to a specific revision (revision mode).
+ * separate inner enlistment checked out to a specific revision (revision mode),
+ * and returns the (sanitized) label its stats were saved under.
  *
  * @remarks
- * In revision mode, the inner repo (at {@link CollectBundleOptions.baseRepoDir}, defaulting to
- * `<analysisDir>/base-repo`) is cloned from the outer enlistment on disk on first use and
- * reused thereafter. No remote or network access is involved.
+ * In revision mode, the user's {@link CollectBundleOptions.revision} is resolved to a concrete
+ * commit SHA in the outer repo — its merge-base with HEAD (the fork point) or the committish
+ * as-is, per {@link CollectBundleOptions.resolution}. The inner repo (at
+ * {@link CollectBundleOptions.baseRepoDir}, defaulting to `<analysisDir>/base-repo`) is cloned from
+ * the outer enlistment on disk on first use and reused thereafter. No remote or network access is
+ * involved.
+ *
+ * Because a clean revision builds deterministically, the resolved SHA is recorded in a sidecar
+ * `revision.txt` next to the stats; a later run that resolves to the same SHA reuses the cached
+ * report and skips the rebuild (unless {@link CollectBundleOptions.forceCleanBuild} is set).
  *
  * In local mode the outer enlistment is built exactly as it sits on disk: its working tree and
  * revision are never checked out, stashed, or otherwise mutated. The captured patch is therefore
@@ -264,30 +317,80 @@ async function ensureInnerRepoAtRevision(
  *
  * The outer repo's working tree, branch, and stash are never modified.
  */
-export async function collectBundle(options: CollectBundleOptions): Promise<void> {
-	const { mode, revision, forceCleanBuild, packageDir, analysisDir } = options;
+export async function collectBundle(options: CollectBundleOptions): Promise<string> {
+	const {
+		mode,
+		revision,
+		resolution = "merge-base",
+		forceCleanBuild,
+		packageDir,
+		analysisDir,
+	} = options;
 
 	if (mode === "revision" && (revision === undefined || revision.length === 0)) {
 		throw new Error("revision mode requires a revision.");
 	}
 
-	const label = sanitizeForFileName(options.label);
+	const label = sanitizeForFileName(
+		options.label ??
+			(mode === "revision"
+				? (revision as string)
+				: `current_${Math.floor(Date.now() / 1000)}`),
+	);
 
 	const outerRepoRoot = findGitRootSync(packageDir);
 	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
+	const labelDirectory = resolve(analysisDir, label);
 
 	let activeRepoRoot: string;
 	let activePackageRoot: string;
+	// Set in revision mode to the resolved SHA, recorded alongside the stats so a
+	// later run against the same revision can reuse the report. Undefined in local mode.
+	let resolvedRevision: string | undefined;
 
 	if (mode === "local") {
 		activeRepoRoot = outerRepoRoot;
 		activePackageRoot = packageDir;
-		await captureLocalPatch(outerRepoRoot, resolve(analysisDir, label));
+		await captureLocalPatch(outerRepoRoot, labelDirectory);
 	} else {
-		// Locate the same package inside the freshly-cloned inner repo via its
-		// path relative to the repo root (e.g. `examples/utils/bundle-size-tests`).
+		// Resolve the user's revision to a concrete SHA in the outer repo: the
+		// merge-base with HEAD (the fork point), or the committish as-is for "exact".
+		if (resolution === "exact") {
+			resolvedRevision = await resolveSha(outerRepoRoot, revision as string);
+		} else {
+			const mergeBase = await resolveMergeBase(outerRepoRoot, revision as string);
+			if (mergeBase === undefined) {
+				throw new Error(
+					`Could not find merge-base of HEAD and "${revision as string}". ` +
+						`Ensure the revision exists locally (e.g. "git fetch origin ${revision as string}").`,
+				);
+			}
+			resolvedRevision = mergeBase;
+		}
+		if (resolvedRevision !== revision) {
+			console.log(
+				`Resolved revision "${revision as string}" to ` +
+					`${resolution === "exact" ? "" : "merge-base "}${resolvedRevision}.`,
+			);
+		}
+
+		// Reuse a previously-collected report when the recorded SHA matches.
+		const analyzerPath = resolve(labelDirectory, "analyzer.json");
+		const revisionMarkerPath = resolve(labelDirectory, "revision.txt");
+		const cachedRevision = existsSync(revisionMarkerPath)
+			? readFileSync(revisionMarkerPath, "utf8").trim()
+			: undefined;
+		if (!forceCleanBuild && existsSync(analyzerPath) && cachedRevision === resolvedRevision) {
+			console.log(`Reusing cached bundle (revision: ${resolvedRevision}, label: ${label}).`);
+			console.log(`  Report: ${analyzerPath}`);
+			logCollectionComplete(mode, label, labelDirectory);
+			return label;
+		}
+
+		// Locate the same package inside the inner repo via its path relative to
+		// the repo root (e.g. `examples/utils/bundle-size-tests`).
 		const packageWorkspacePath = relative(outerRepoRoot, packageDir);
-		await ensureInnerRepoAtRevision(revision as string, outerRepoRoot, innerRepoRoot);
+		await ensureInnerRepoAtRevision(resolvedRevision, outerRepoRoot, innerRepoRoot);
 		activeRepoRoot = innerRepoRoot;
 		activePackageRoot = resolve(innerRepoRoot, packageWorkspacePath);
 		if (!existsSync(activePackageRoot)) {
@@ -305,9 +408,11 @@ export async function collectBundle(options: CollectBundleOptions): Promise<void
 	buildWorkspace(activePackageRoot);
 	buildBundles(activePackageRoot);
 	saveStats(label, activePackageRoot, analysisDir);
+	// Record the SHA so a later run against the same revision can skip the rebuild.
+	if (resolvedRevision !== undefined) {
+		writeFileSync(resolve(labelDirectory, "revision.txt"), `${resolvedRevision}\n`);
+	}
 
-	console.log(`\n${"=".repeat(80)}`);
-	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
-	console.log(`  Stats directory: ${resolve(analysisDir, label)}`);
-	console.log("=".repeat(80));
+	logCollectionComplete(mode, label, labelDirectory);
+	return label;
 }
