@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/core-interfaces";
+import type {
+	ErasedType,
+	ITelemetryBaseLogger,
+	LogLevel,
+	Tagged,
+} from "@fluidframework/core-interfaces";
 
 /**
  * The categories FF uses when instrumenting the code.
@@ -13,7 +18,8 @@ import type { ITelemetryBaseLogger, LogLevel, Tagged } from "@fluidframework/cor
  * error - Error log event, ideally 0 of these are logged during a session
  *
  * performance - Includes duration, and often has _start, _end, or _cancel suffixes for activity tracking
- * @legacy @beta
+ *
+ * @internal
  */
 export type TelemetryEventCategory = "generic" | "error" | "performance";
 
@@ -65,7 +71,7 @@ export interface ITelemetryEventExt extends ITelemetryPropertiesExt {
 /**
  * Informational (non-error) telemetry event
  * @remarks Maps to category = "generic"
- * @legacy @beta
+ * @internal
  */
 export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 	/**
@@ -83,7 +89,7 @@ export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
 /**
  * Error telemetry event.
  * @remarks Maps to category = "error"
- * @legacy @beta
+ * @internal
  */
 export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 	/**
@@ -95,7 +101,7 @@ export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
 /**
  * Performance telemetry event.
  * @remarks Maps to category = "performance"
- * @legacy @beta
+ * @internal
  */
 export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
 	/**
@@ -105,24 +111,42 @@ export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt
 }
 
 /**
+ * Handle for an extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} used internally within the Fluid Framework.
+ *
+ * @see {@link https://github.com/microsoft/FluidFramework/issues/26910 | Issue #26910} for past method deprecation and breaking change details.
+ *
+ * @privateRemarks
+ * External APIs taking in an `ITelemetryLoggerExt` ideally should be updated to
+ * accept `ITelemetryBaseLogger` instead.
+ *
+ * @sealed
+ * @legacy
+ * @beta
+ */
+export interface ITelemetryLoggerExt
+	extends ErasedType<"TelemetryLoggerExt">,
+		ITelemetryBaseLogger {}
+
+/**
  * An extended {@link @fluidframework/core-interfaces#ITelemetryBaseLogger} which allows for more lenient event types.
  *
  * @remarks
  * This interface is meant to be used internally within the Fluid Framework,
  * and `ITelemetryBaseLogger` should be used when loggers are passed between layers.
- * @legacy @beta
+ * @internal
  */
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
+export interface TelemetryLoggerExt extends ITelemetryBaseLogger {
 	/**
 	 * Send an information telemetry event.
 	 * @param event - Event to send.
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.default}.
+	 * @param logLevel - Optional level of the log. If undefined, the logLevel will be treated as {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
+	 * If the event's category is `error`, the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	sendTelemetryEvent(
 		event: ITelemetryGenericEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void;
 
 	/**
@@ -136,11 +160,12 @@ export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
 	 * Send a performance telemetry event.
 	 * @param event - Event to send
 	 * @param error - Optional error object to log.
-	 * @param logLevel - Optional level of the log. Default: {@link @fluidframework/core-interfaces#LogLevel.default}.
+	 * @param logLevel - Optional level of the log. If undefined, the logLevel will be treated as {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
+	 * If the event's category is `error`, the logLevel will be upgraded to {@link @fluidframework/core-interfaces#LogLevelConst.essential | LogLevel.essential}.
 	 */
 	sendPerformanceEvent(
 		event: ITelemetryPerformanceEventExt,
 		error?: unknown,
-		logLevel?: typeof LogLevel.verbose | typeof LogLevel.default,
+		logLevel?: typeof LogLevel.verbose | typeof LogLevel.info,
 	): void;
 }

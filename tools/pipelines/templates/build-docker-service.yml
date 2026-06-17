@@ -22,6 +22,11 @@ parameters:
     type: string
     default:
 
+  # Indicates if tests should be run with code coverage analysis.
+  - name: testCoverage
+    type: boolean
+    default: false
+
   - name: docs
     type: boolean
     default: false
@@ -60,13 +65,17 @@ parameters:
     type: string
     default: repo
 
+  # The package manager (if any) used by this pipeline.
   - name: packageManager
     type: string
-    default: npm
+    default: pnpm
+    values:
+      - pnpm
+      - none
 
   - name: packageManagerInstallCommand
     type: string
-    default: 'npm ci --unsafe-perm'
+    default: 'pnpm i --frozen-lockfile'
 
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
@@ -84,6 +93,13 @@ parameters:
   - name: additionalBuildArguments
     type: string
     default: ""
+
+  # Registry (and namespace prefix) for the base image referenced by ${BASE_IMAGE_REGISTRY} in each
+  # server-* Dockerfile. The default points at our public-accessible mirror ACR, reachable from both
+  # internal and public 1ES build pools (egress to docker.io is blocked by network isolation policies).
+  - name: baseImageRegistry
+    type: string
+    default: 'fluidmirror-a5dqhgefbwhmbtag.azurecr.io/mirror/docker'
 
   # If the build is running for a test branch
   - name: testBuild
@@ -191,6 +207,7 @@ extends:
         steps:
         # Setup
         - checkout: self
+          path: $(FluidFrameworkDirectory)
           clean: true
           lfs: false
           submodules: false
@@ -199,7 +216,7 @@ extends:
           displayName: Parameters
           inputs:
             targetType: 'inline'
-            workingDirectory: ${{ parameters.buildDirectory }}
+            workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             script: |
               # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
               # even in an error case
@@ -216,6 +233,7 @@ extends:
 
               Other parameters:
                 additionalBuildArguments=${{ parameters.additionalBuildArguments }}
+                baseImageRegistry=${{ parameters.baseImageRegistry }}
                 buildNumberInPatch=${{ parameters.buildNumberInPatch }}
                 buildToolsVersionToInstall=${{ parameters.buildToolsVersionToInstall }}
                 containerBaseDir=${{ parameters.containerBaseDir }}
@@ -241,6 +259,9 @@ extends:
                 containerTagSuffix=$(containerTagSuffix)
                 release=$(release)
                 shouldPublish=$(shouldPublish)
+                consistentSourcesDirectory=$(consistentSourcesDirectory)
+                FluidFrameworkDirectory=$(FluidFrameworkDirectory)
+                FFPipelineHostDirectory=$(FFPipelineHostDirectory)
               "
 
               if [[ "$(release)" == "release" ]]; then
@@ -280,6 +301,11 @@ extends:
                 fi
               fi
 
+              if [[ "${{ parameters.packageManager }}" == "none" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]packageManager: 'none' is incompatible with setVersion: true (version-setting transitively requires a package manager)."
+                exit -1;
+              fi
+
         # for npm ci in component detection and set version
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -302,7 +328,7 @@ extends:
             retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 ${{ parameters.packageManagerInstallCommand }}
@@ -335,16 +361,18 @@ extends:
               script: |
                 set -eu -o pipefail
                 echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
+                echo "BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
                 echo "SETVERSION_VERSION=$(SetVersion.version)"
                 echo "SETVERSION_CODEVERSION=$(SetVersion.codeversion)"
                 echo "INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }}"
                 echo "RELEASE_GROUP=${{ parameters.tagName }}"
-                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg SETVERSION_VERSION=$(SetVersion.version) --build-arg SETVERSION_CODEVERSION=$(SetVersion.codeversion) --build-arg INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }} --build-arg RELEASE_GROUP=${{ parameters.tagName }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }} --build-arg SETVERSION_VERSION=$(SetVersion.version) --build-arg SETVERSION_CODEVERSION=$(SetVersion.codeversion) --build-arg INTERDEPENDENCY_RANGE=${{ parameters.interdependencyRange }} --build-arg RELEASE_GROUP=${{ parameters.tagName }}"
             ${{ else }}:
               script: |
                 set -eu -o pipefail
                 echo "Template additionalBuildArguments: ${{ parameters.additionalBuildArguments }}"
-                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }}"
+                echo "BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
+                echo "##vso[task.setvariable variable=output;isOutput=true]${{ parameters.additionalBuildArguments }} --build-arg BASE_IMAGE_REGISTRY=${{ parameters.baseImageRegistry }}"
 
         # The 1ES.BuildContainerImage task apparently expects to see the CredScan suppressions file not in the root of
         # the repo, but in the folder used as its 'context' input. So we need to copy it there before building any images.
@@ -354,10 +382,10 @@ extends:
           displayName: Copy CredScan suppressions file for container builds
           inputs:
             targetType: 'inline'
-            workingDirectory: $(Build.SourcesDirectory)
+            workingDirectory: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
             script: |
               set -eu -o pipefail
-              cp ./CredScanSuppressions.json ${{ parameters.buildDirectory }}
+              cp ./CredScanSuppressions.json $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
 
         # The GitSSH Dockerfile does not have a 'base' target nor does it run pack/lint/test/docs tasks, so skip
         # all that for it. This feels hacky but it's a simple solution for now to the issue of trying to use variables
@@ -366,10 +394,18 @@ extends:
           # Build base image where we can run pack/lint/test/docs tasks
           - task: 1ES.BuildContainerImage@1
             inputs:
-              dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-              context: ${{ parameters.buildDirectory }}
+              dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
+              context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base $(DockerBuildArgs.output)
+              # CI's build container has no egress to registry.npmjs.org under 1ES network
+              # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
+              # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
+              # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
+              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
+              ${{ if eq(parameters.packageManager, 'pnpm') }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              ${{ else }}:
+                buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -410,7 +446,7 @@ extends:
                 STAGING_PATH: $(Build.ArtifactStagingDirectory)
               inputs:
                 targetType: 'inline'
-                workingDirectory: ${{ parameters.buildDirectory }}
+                workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
                 script: |
                   set -eu -o pipefail
                   flub list --no-private $RELEASE_GROUP --tarball --feed public --outFile $STAGING_PATH/pack/packagePublishOrder-public.txt
@@ -437,7 +473,7 @@ extends:
           - ${{ if ne(parameters.test, '') }}:
 
             # Test - With coverage
-            - ${{ if and(eq(parameters.test, 'ci:test'), ne(variables['Build.Reason'], 'PullRequest')) }}:
+            - ${{ if eq(parameters.testCoverage, true) }}:
               - task: Docker@1
                 displayName: npm run ci:test:coverage
                 inputs:
@@ -507,10 +543,15 @@ extends:
         # Build final image
         - task: 1ES.BuildContainerImage@1
           inputs:
-            dockerfile: ${{ parameters.buildDirectory }}/Dockerfile
-            context: ${{ parameters.buildDirectory }}
+            dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
+            context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: $(DockerBuildArgs.output)
+            # See the base-image build above for the rationale. Passed here too because
+            # a cache miss could re-execute the base stage layers during this build.
+            ${{ if eq(parameters.packageManager, 'pnpm') }}:
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            ${{ else }}:
+              buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
@@ -527,7 +568,7 @@ extends:
             name: ComputeFinalTagList
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 # containerTag should always be pushed
@@ -553,17 +594,16 @@ extends:
             displayName: Prune pnpm store
             inputs:
               targetType: 'inline'
-              workingDirectory: ${{ parameters.buildDirectory }}
+              workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               script: |
                 set -eu -o pipefail
                 pnpm store prune
 
         templateContext:
-          ${{ if eq(parameters.shouldPushDockerImage, true) }}:
+          # The push connection $(containerRegistryConnection) is only added when pushing in the
+          # internal project (it's empty in the public project).
+          ${{ if and(eq(parameters.shouldPushDockerImage, true), eq(variables['System.TeamProject'], 'internal')) }}:
             authenticatedContainerRegistries:
-            # $(containerRegistryConnection) comes from the container-registry-info variable group and needs to be
-            # specified as a runtime variable (variables from variable groups apparently are never available "statically"
-            # at parse/compile time, so can't be used with template-expression syntax ( '${{ }}' )).
             - serviceConnection: $(containerRegistryConnection)
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:

@@ -10,7 +10,7 @@ import { v4 as uuid } from "uuid";
 import { type IFluidErrorBase, hasErrorInstanceId, isFluidError } from "./fluidErrorBase.js";
 import { convertToBasePropertyType } from "./logger.js";
 import type {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPropertiesExt,
 	TelemetryEventPropertyTypeExt,
 } from "./telemetryTypes.js";
@@ -128,7 +128,7 @@ export function normalizeError(
 	const { message, stack } = extractLogSafeErrorProperties(error, false /* sanitizeStack */);
 	const fluidError: IFluidErrorBase = new NormalizedLoggingError({
 		message,
-		stack,
+		...(stack === undefined ? {} : { stack }),
 	});
 
 	// We need to preserve these properties which are used in a non-typesafe way throughout driver code (see #8743)
@@ -286,7 +286,7 @@ export function wrapError<T extends LoggingError>(
 export function wrapErrorAndLog<T extends LoggingError>(
 	innerError: unknown,
 	newErrorFn: (message: string) => T,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): T {
 	const newError = wrapError(innerError, newErrorFn);
 

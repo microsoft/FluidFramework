@@ -1,5 +1,64 @@
 # @fluidframework/container-runtime
 
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- GC timers are now cancelled when a container closes, not just when it is disposed ([#27130](https://github.com/microsoft/FluidFramework/pull/27130)) [86c0fffbf49](https://github.com/microsoft/FluidFramework/commit/86c0fffbf499981af297f018c7b570802ebdbeeb)
+
+  Adds an optional `close()` hook to `IRuntime` that `Container` calls on close.
+  `ContainerRuntime` implements it by cancelling all GC timers (session expiry and unreferenced-node timers)
+  without clearing tracked state.
+
+  This prevents the timers from causing memory leaks after a `Container` is closed but not disposed.
+  In Node.js environments this also prevents the timers from keeping the event loop alive until `dispose()`.
+  This can reduce the need for Mocha's --exit in tests which create containers which are closed but not disposed.
+
+  Disposing of closed containers is still recommended, but it is now less critical for avoiding timer-related hangs after close.
+  Disposal still helps clean up resources and can reduce the size of memory leaks if references to the container are leaked.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Container runtime instantiation now requires `navigator` to be defined in the runtime environment ([#27010](https://github.com/microsoft/FluidFramework/pull/27010)) [936562b87da](https://github.com/microsoft/FluidFramework/commit/936562b87da3a096315b819131e454accb27d0e8)
+
+  The internal `getDeviceSpec()` function, which is called during container runtime instantiation to report hardware telemetry, no longer guards against `navigator` being `null` or `undefined`. This means loading a container runtime requires either a browser environment or Node 22+, both of which provide a built-in `navigator` global. Environments that do not provide `navigator` (e.g., older versions of Node.js) will encounter a runtime error when instantiating the container runtime.
+
+  This requirement aligns with the recent migration of the repo to Node 22 per our standing Node upgrade policy. Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
 ## 2.82.0
 
 Dependency updates only.

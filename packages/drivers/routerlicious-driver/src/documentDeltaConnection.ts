@@ -4,24 +4,20 @@
  */
 
 import { DocumentDeltaConnection } from "@fluidframework/driver-base/internal";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IAnyDriverError,
 	IConnect,
 } from "@fluidframework/driver-definitions/internal";
 import type { DriverErrorTelemetryProps } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 
-import {
-	IR11sSocketError,
-	errorObjectFromSocketError,
-	getUrlForTelemetry,
-	socketIoPath,
-} from "./errorUtils.js";
+import type { IR11sSocketError } from "./errorUtils.js";
+import { errorObjectFromSocketError, getUrlForTelemetry, socketIoPath } from "./errorUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
-import { SocketIOClientStatic } from "./socketModule.js";
+import type { SocketIOClientStatic } from "./socketModule.js";
 
 const protocolVersions = ["^0.4.0", "^0.3.0", "^0.2.0", "^0.1.0"];
 
@@ -36,7 +32,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 		io: typeof SocketIOClientStatic,
 		client: IClient,
 		url: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		timeoutMs = 20000,
 		enableLongPollingDowngrade = true,
 	): Promise<IDocumentDeltaConnection> {
@@ -78,7 +74,7 @@ export class R11sDocumentDeltaConnection extends DocumentDeltaConnection {
 	private constructor(
 		socket: Socket,
 		documentId: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly url: string,
 		enableLongPollingDowngrades?: boolean,
 	) {

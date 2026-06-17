@@ -30,6 +30,7 @@ import {
 	type SessionSpaceCompressedId,
 	type StableId,
 	createIdCompressor,
+	toIdCompressorWithCore,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { SerializationVersion } from "../types/index.js";
@@ -1100,5 +1101,5 @@ export function createAlwaysFinalizedIdCompressor(
 	);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
-	return compressor;
+	return toIdCompressorWithCore(compressor);
 }

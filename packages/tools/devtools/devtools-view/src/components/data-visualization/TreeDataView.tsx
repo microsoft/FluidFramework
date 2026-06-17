@@ -4,7 +4,7 @@
  */
 
 import { type HasContainerKey, VisualNodeKind } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactNode } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { FluidHandleView } from "./FluidHandleView.js";
@@ -23,7 +23,7 @@ export interface TreeDataViewProps extends HasContainerKey, DataVisualizationTre
 /**
  * Displays visual summary trees for DDS_s within the container based on the current node's type.
  */
-export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
+export function TreeDataView(props: TreeDataViewProps): ReactNode {
 	const { containerKey, label, node } = props;
 
 	switch (node.nodeKind) {
@@ -77,7 +77,7 @@ export function TreeDataView(props: TreeDataViewProps): React.ReactElement {
 		}
 		default: {
 			console.log("DevTools hit unknown data. This is NOT expected.");
-			return <></>;
+			return null;
 		}
 	}
 }

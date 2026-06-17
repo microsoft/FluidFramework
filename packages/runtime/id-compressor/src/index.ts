@@ -10,8 +10,11 @@
 export {
 	createIdCompressor,
 	deserializeIdCompressor,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
 } from "./idCompressor.js";
 export { SerializationVersion } from "./types/index.js";
+export { type FinalCompressedId, isFinalId } from "./identifiers.js";
 export {
 	createSessionId,
 	assertIsStableId,

@@ -46,6 +46,7 @@ trigger:
     - scripts/*
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -54,7 +55,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 
@@ -76,11 +76,11 @@ pr:
     - scripts/*
     - tools/pipelines/build-protocol-definitions.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
 
@@ -97,9 +97,7 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: common/lib/protocol-definitions
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/lib/protocol-definitions
     tagName: protocol-definitions
     testCoverage: false
     taskTest: [] # no tests

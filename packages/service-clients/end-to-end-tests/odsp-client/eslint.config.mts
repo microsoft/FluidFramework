@@ -4,10 +4,14 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...recommended,
+	{
+		// eslint doesn't recognize renamed exports syntax (that is required for ESM config under v11 mocha)
+		ignores: ["src/test/.mocharc.js"],
+	},
 	{
 		rules: {
 			"prefer-arrow-callback": "off",

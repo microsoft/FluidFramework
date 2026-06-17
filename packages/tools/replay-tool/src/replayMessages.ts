@@ -40,7 +40,7 @@ import {
 import { convertToSummaryTreeWithStats } from "@fluidframework/runtime-utils/internal";
 import { FluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import {
@@ -184,7 +184,7 @@ class Document {
 	private documentSeqNumber = 0;
 	private from: number = -1;
 	private snapshotFileName: string = "";
-	private docLogger: ITelemetryLoggerExt;
+	private docLogger: TelemetryLoggerExt;
 	private originalSummarySeqs: number[];
 
 	public constructor(
@@ -201,7 +201,7 @@ class Document {
 		return this.from;
 	}
 
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): TelemetryLoggerExt {
 		return this.docLogger;
 	}
 
@@ -574,7 +574,6 @@ export class ReplayTool {
 			? this.mainDocument.originalSummarySequenceNumbers.filter((s) => s >= this.args.from)
 			: [];
 		let nextSnapPoint = -1;
-		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			const currentOp = this.mainDocument.currentOp;
 			if (nextSnapPoint <= currentOp) {

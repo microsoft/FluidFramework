@@ -6,7 +6,6 @@
 export {
 	type FormatVersion,
 	DependentFormatVersion,
-	type IBinaryCodec,
 	type ICodecFamily,
 	type ICodecOptions,
 	type CodecWriteOptions,
@@ -14,12 +13,10 @@ export {
 	type IDecoder,
 	type IEncoder,
 	type IJsonCodec,
-	type IMultiFormatCodec,
 	type JsonValidator,
 	makeCodecFamily,
 	type SchemaValidationFunction,
 	unitCodec,
-	withDefaultBinaryEncoding,
 	withSchemaValidation,
 	FluidClientVersion,
 	currentVersion,
@@ -31,6 +28,7 @@ export {
 	extractJsonValidator,
 	type CodecName,
 	eraseEncodedType,
+	type JsonCodecPart,
 } from "./codec.js";
 export {
 	DiscriminatedUnionDispatcher,
@@ -39,10 +37,10 @@ export {
 } from "./discriminatedUnions.js";
 export {
 	Versioned,
-	makeVersionedValidatedCodec,
-	makeVersionDispatchingCodec,
-	makeDiscontinuedCodecVersion,
-	ClientVersionDispatchingCodecBuilder,
+	makeDiscontinuedCodecAndSchema,
+	VersionDispatchingCodecBuilder,
+	type VersionDispatchingCodec,
 	type CodecVersion,
 	type CodecAndSchema,
+	versionField,
 } from "./versioned/index.js";

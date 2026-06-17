@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ITelemetryErrorEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -90,7 +90,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wipSummarizeCalled: boolean = false;
 	private wipSkipRecursion = false;
 
-	protected readonly logger: ITelemetryLoggerExt;
+	protected readonly logger: TelemetryLoggerExt;
 
 	/**
 	 * Do not call constructor directly.
@@ -104,7 +104,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * Encoded handle or path to the node
 		 */
 		private readonly _summaryHandleId: string,
-		// eslint-disable-next-line @typescript-eslint/prefer-readonly
 		private _changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created
@@ -665,7 +664,7 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param config - Configure behavior of summarizer node
  */
 export const createRootSummarizerNode = (
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

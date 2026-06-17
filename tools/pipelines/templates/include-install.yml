@@ -6,12 +6,14 @@
 parameters:
 - name: packageManager
   type: string
+  default: pnpm
 
 - name: buildDirectory
   type: string
 
 - name: packageManagerInstallCommand
   type: string
+  default: 'pnpm i --frozen-lockfile'
 
 - name: primaryRegistry
   type: string
@@ -34,7 +36,7 @@ steps:
     retryCountOnTaskFailure: 4
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
       script: |
         set -eu -o pipefail
         ${{ parameters.packageManagerInstallCommand }}

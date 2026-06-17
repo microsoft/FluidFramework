@@ -9,7 +9,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 
 import { FluidClientVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -23,15 +23,20 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
+import { snapshotCodecFormats, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { testIdCompressor } from "../../../utils.js";
 
-describe("makeFieldBatchCodec", () => {
+describe("fieldBatchCodecBuilder", () => {
 	// Use the first simple test tree from the test suite
 	const [, simpleTestData] = testTrees[0];
+	useSnapshotDirectory("codecFormats");
+	it("snapshot of supported codec formats", () => {
+		snapshotCodecFormats(fieldBatchCodecBuilder, {});
+	});
 
 	describe("version mapping", () => {
 		it("uses v1 format for FluidClientVersion.v2_0", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -40,15 +45,17 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
 			const encoded = codec.encode([input], context);
+			assert(encoded !== null && typeof encoded === "object" && "version" in encoded);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v1);
 		});
 
 		it("uses v2 format for FluidClientVersion.v2_74", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -57,19 +64,21 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
 			const encoded = codec.encode([input], context);
+			assert(encoded !== null && typeof encoded === "object" && "version" in encoded);
 			assert.equal(encoded.version, FieldBatchFormatVersion.v2);
 		});
 
 		it("can decode both formats when encoding either", () => {
-			const codec1 = makeFieldBatchCodec({
+			const codec1 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
-			const codec2 = makeFieldBatchCodec({
+			const codec2 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -77,6 +86,7 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -92,7 +102,7 @@ describe("makeFieldBatchCodec", () => {
 
 	describe("TreeCompressionStrategy.CompressedIncremental", () => {
 		it("succeeds for minVersionForCollab FluidClientVersion.v2_74", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -101,6 +111,7 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -108,7 +119,7 @@ describe("makeFieldBatchCodec", () => {
 		});
 
 		it("fails for unsupported minVersionForCollab", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -117,6 +128,7 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -129,7 +141,7 @@ describe("makeFieldBatchCodec", () => {
 
 	describe("round-trip encoding", () => {
 		it("v1 codec encodes and decodes correctly", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_0,
 			});
@@ -138,6 +150,7 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -148,7 +161,7 @@ describe("makeFieldBatchCodec", () => {
 		});
 
 		it("v2 codec encodes and decodes correctly", () => {
-			const codec = makeFieldBatchCodec({
+			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
@@ -157,6 +170,7 @@ describe("makeFieldBatchCodec", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 

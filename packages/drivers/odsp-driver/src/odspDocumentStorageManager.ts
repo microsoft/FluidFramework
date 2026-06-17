@@ -29,13 +29,13 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	generateStack,
+	type IConfigProvider,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	type IConfigProvider,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -107,7 +107,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -639,6 +639,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				tokenFetchOptions,
 				loadingGroupId,
 				options,
+				this.logger,
 				this.snapshotFormatFetchType,
 				controller,
 				this.epochTracker,

@@ -3,13 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	getPresence,
-	type AttendeeId,
-	type AttendeeStatus,
-} from "@fluidframework/presence/beta";
+import type { AttendeeId, AttendeeStatus } from "@fluidframework/presence";
 import { TinyliciousClient } from "@fluidframework/tinylicious-client";
 import type { ContainerSchema, IFluidContainer } from "fluid-framework";
+import { getPresence } from "fluid-framework";
 
 import { FocusTracker } from "./FocusTracker.js";
 import { MouseTracker } from "./MouseTracker.js";
@@ -47,7 +44,7 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container } = await client.createContainer(containerSchema, "2"));
+		({ container } = await client.createContainer(containerSchema, "2.0.0"));
 
 		// If the app is in a `createNew` state, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.
@@ -59,7 +56,7 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container } = await client.getContainer(id, containerSchema, "2"));
+		({ container } = await client.getContainer(id, containerSchema, "2.0.0"));
 	}
 
 	const presence = getPresence(container);

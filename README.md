@@ -107,7 +107,7 @@ pnpm install
 npm run build
 ```
 
-You can use the experimental worker mode to get faster build time as well: `npm run build:fast`
+You can use the worker mode to get faster build time as well: `npm run build:fast`
 
 See also: [Contributing](#Contributing)
 
@@ -175,12 +175,19 @@ This section contains common workflows and patterns to increase inner dev loop e
 
 ### Build
 
--   `pnpm install` from the root of the repository to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
--   `pnpm run build:fast` from the root of the repository to perform an incremental build that matches the CI build process. Incremental builds tend to leave extra files laying around, so running a clean is sometimes needed to cleanup ghost tests
--   `pnpm run build:fast -- <path>` to build only a specific part of the repository.
--   `pnpm run build` within a package directory to build that package.
--   `pnpm run build:compile` for cross-package compilation.
--   `pnpm run format` to format the code.
+From the root of the repository:
+
+-   `pnpm install` to install dependencies. This is necessary for new clones or after pulling changes from the main branch.
+-   `pnpm build:fast` to perform an incremental build that matches the CI build process. Incremental builds tend to leave extra files laying around, so running a clean is sometimes needed to cleanup ghost tests.
+-   `pnpm build:compile:esm:packages` to perform an incremental build for production ESM code only. This a fast (minimal) build that can be used to check broad-reaching changes without noise from tests that might need adjusted.
+-   `pnpm build:compile:esm` to perform an incremental build for ESM production code and tests.
+-   `pnpm [build:fast|build:compile:esm*] <path|name-regex>...` to build only a specific part of the repository.
+
+From root or within a package:
+
+-   `pnpm build` to build that package.
+-   `pnpm build:compile` for cross-package compilation.
+-   `pnpm format` to format the code.
 
 -   `fluid-build --vscode` to output error message to work with default problem matcher in vscode. If `fluid-build` is not installed, please install it with `npm i -g @fluidframework/build-tools`.
 
@@ -215,8 +222,11 @@ which could have other implications for your system, so proceed with caution.
 
 ## Testing
 
-You can run all of our tests from the root of the repo, or you can run a scoped set of tests by running the `test`
-command from the package you're interested in.
+You can run:
+
+1. all of our tests from the root of the repo using `pnpm test`
+2. a scoped set of tests by running the `pnpm test` command from the package you're interested in
+3. incrementally build and test using `pnpm build-and-test <optional name-regex>` (see specific [package.json](./package.json) scripts). Note that test output will only be shown if there is a test error.
 
 Note: Some of the tests depend on test collateral that lives in a submodule here:
 <https://github.com/microsoft/FluidFrameworkTestData>. You may choose to fetch that collateral into your local

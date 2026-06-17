@@ -32,4 +32,4 @@ DESCRIPTION
   List all flub commands.
 ```
 
-_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/v4.1.38/src/commands/commands.ts)_
+_See code: [@oclif/plugin-commands](https://github.com/oclif/plugin-commands/blob/4.1.45/src/commands/commands.ts)_

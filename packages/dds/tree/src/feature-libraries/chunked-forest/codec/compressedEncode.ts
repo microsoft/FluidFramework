@@ -26,17 +26,21 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
+	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
-	type EncodedFieldBatch,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
+	type FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
+	supportsIncrementalEncoding,
+} from "./format/index.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
@@ -48,7 +52,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -172,7 +176,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		const encodedAnyShape: EncodedAnyShape = 0;
 		return { d: encodedAnyShape };
 	}
@@ -328,7 +332,7 @@ export class InlineArrayEncoder
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		return {
 			b: {
 				length: this.length,
@@ -422,11 +426,11 @@ export class NestedArrayEncoder implements FieldEncoder {
 /**
  * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
-export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV2 {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
 		};
@@ -459,7 +463,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
 		assert(
-			context.version >= FieldBatchFormatVersion.v2,
+			supportsIncrementalEncoding(context.version),
 			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 		);
 
@@ -532,6 +536,10 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
+		/**
+		 * See {@link FieldBatchEncodingContext.isSummary}.
+		 */
+		public readonly isSummary: boolean,
 	) {}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {

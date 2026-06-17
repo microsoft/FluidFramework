@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
@@ -32,6 +32,7 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedString } = apis.dds;
+		const { Loader } = apis.loader;
 
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
@@ -87,7 +88,7 @@ describeCompat(
 				logger: provider.logger,
 				configProvider: {
 					getRawConfig: (name) =>
-						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+						name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 				},
 			});
 			return testLoader;

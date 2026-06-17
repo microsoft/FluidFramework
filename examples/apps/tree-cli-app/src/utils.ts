@@ -16,7 +16,10 @@ import {
 	type SerializedIdCompressorWithOngoingSession,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/id-compressor/internal";
-import { SerializationVersion } from "@fluidframework/id-compressor/legacy";
+import {
+	SerializationVersion,
+	serializeIdCompressor,
+} from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {
@@ -26,15 +29,18 @@ import {
 	FormatValidatorBasic,
 	type ForestOptions,
 	type ICodecOptions,
-	type JsonCompatible,
 	type VerboseTree,
 	type ViewContent,
-	type ConciseTree,
 	TreeAlpha,
-	KeyEncodingOptions,
 } from "@fluidframework/tree/alpha";
-import { TreeBeta } from "@fluidframework/tree/beta";
-import { type Static, Type } from "@sinclair/typebox";
+import {
+	TreeBeta,
+	KeyEncodingOptions,
+	type ConciseTree,
+	type JsonCompatible,
+} from "@fluidframework/tree/beta";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
@@ -174,7 +180,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 				}),
 
 				schema: extractPersistedSchema(config.schema, compatVersion, () => true),
-				idCompressor: idCompressor.serialize(true),
+				idCompressor: serializeIdCompressor(idCompressor, true),
 			};
 			return file as JsonCompatible;
 		}

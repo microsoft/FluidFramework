@@ -675,7 +675,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start(false);
+			tree.transaction.start();
 			assert.equal(enricher.enrichmentLog.length, 0);
 			changeTree(tree.kernel);
 			assert.equal(enricher.enrichmentLog.length, 0);
@@ -705,7 +705,7 @@ describe("SharedTreeCore", () => {
 				deltaConnection: dataStoreRuntime1.createDeltaConnection(),
 				objectStorage: new MockStorage(),
 			});
-			tree.transaction.start(false);
+			tree.transaction.start();
 			changeTree(tree.kernel);
 			tree.transaction.abort();
 			assert.equal(enricher.enrichmentLog.length, 0);

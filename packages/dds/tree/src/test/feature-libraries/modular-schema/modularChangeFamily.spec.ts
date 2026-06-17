@@ -44,7 +44,7 @@ import {
 	type TreeChunk,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type NodeId,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
@@ -120,7 +120,6 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-return -- replacer type inference issue
 		change === undefined ? undefined : replacer.getUpdatedAtomId(change),
 };
 
@@ -196,7 +195,7 @@ const codec = makeModularChangeCodecFamily(
 		[...fieldKindConfigurations.keys()].map((version) => [version, fieldKindConfiguration]),
 	),
 	testRevisionTagCodec,
-	makeFieldBatchCodec(codecOptions),
+	fieldBatchCodecBuilder.build(codecOptions),
 	codecOptions,
 );
 const family = new ModularChangeFamily(fieldKinds, codec, codecOptions);
@@ -1420,6 +1419,7 @@ describe("ModularChangeFamily", () => {
 		const sessionId = "session1" as SessionId;
 		const context: ChangeEncodingContext = {
 			originatorId: sessionId,
+			isSummary: false,
 			revision: tag1,
 			idCompressor: testIdCompressor,
 		};

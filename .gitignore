@@ -31,19 +31,25 @@ legacy.d.ts
 # Temporary api-extractor build artifacts
 **/_api-extractor-temp/**
 
+# api-extractor metadata artifact
+# This should not be generically ignored nor checked in. If found, examine settings
+# to see if file is meant to be generated in that location.
+# tsdoc-metadata.json
+
 # Bundle analysis artifacts
 bundleAnalysis
+bundleAnalyzerJson
 
 # Misc pipeline artifacts
 artifacts
 
-docs/resources/_gen/
-
-# documentation tool artifact
-tsdoc-metadata.json
+website/resources/_gen/
 
 # PNPM store (when mounting host file system in docker container)
 .pnpm-store/
+
+# Scratch dir created by `flub check trustPolicy`.
+**/.trust-audit-temp/
 
 # TODO: This can be removed once the `flub add changeset` command no longer creates the UPCOMING file.
 UPCOMING.md
@@ -54,4 +60,18 @@ UPCOMING.md
 build_output_archive
 
 # Claude Code
-.claude/
+# Local settings contain author-specific information and should not be shared.
+**/.claude/**/*.local.*
+CLAUDE.local.md
+# Session-specific task tracking
+**/.claude/todos/
+# Git worktrees created by Claude Code
+**/.claude/worktrees/
+
+# Output from benchmarks
+**/benchmark*Output.json
+
+# npm configuration: Currently only used by CI to redirect to an alternative registry.
+# Once all workspaces are updated to pnpm ll and thus have moved the pnpm config out of these files,
+# this can be made global (remove the leading slash)
+/.npmrc

@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
@@ -18,13 +19,13 @@ import {
 	responseToException,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
+	createChildLogger,
+	createChildMonitoringContext,
 	DataProcessingError,
 	type MonitoringContext,
 	PerformanceEvent,
-	createChildLogger,
-	createChildMonitoringContext,
 	tagCodeArtifacts,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { blobManagerBasePath } from "../blobManager/index.js";
@@ -100,6 +101,10 @@ export class GarbageCollector implements IGarbageCollector {
 
 	private readonly configs: IGarbageCollectorConfigs;
 
+	public get serializedConfigs(): string {
+		return JSON.stringify(this.configs);
+	}
+
 	public get shouldRunGC(): boolean {
 		return this.configs.gcAllowed;
 	}
@@ -137,6 +142,10 @@ export class GarbageCollector implements IGarbageCollector {
 	private completedRuns = 0;
 
 	private readonly runtime: IGarbageCollectionRuntime;
+	/**
+	 * Called when the runtime should close because of an error.
+	 */
+	private readonly closeFn: (error: ICriticalContainerError) => void;
 	private readonly isSummarizerClient: boolean;
 
 	private readonly summaryStateTracker: GCSummaryStateTracker;
@@ -164,6 +173,7 @@ export class GarbageCollector implements IGarbageCollector {
 
 	protected constructor(createParams: IGarbageCollectorCreateParams) {
 		this.runtime = createParams.runtime;
+		this.closeFn = createParams.closeFn;
 		this.isSummarizerClient = createParams.isSummarizerClient;
 		this.getNodePackagePath = createParams.getNodePackagePath;
 		this.getLastSummaryTimestampMs = createParams.getLastSummaryTimestampMs;
@@ -198,14 +208,10 @@ export class GarbageCollector implements IGarbageCollector {
 			}
 			timeoutMs = overrideSessionExpiryTimeoutMs ?? timeoutMs;
 			if (timeoutMs <= 0) {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			}
 			this.sessionExpiryTimer = new Timer(timeoutMs, () => {
-				this.runtime.closeFn(
-					new ClientSessionExpiredError(`Client session expired.`, timeoutMs),
-				);
+				this.closeFn(new ClientSessionExpiredError(`Client session expired.`, timeoutMs));
 			});
 			this.sessionExpiryTimer.start();
 			this.sessionExpiryTimerStarted = Date.now();
@@ -333,15 +339,6 @@ export class GarbageCollector implements IGarbageCollector {
 			const usedRoutes = runGarbageCollection(gcNodes, ["/"]).referencedNodeIds;
 
 			return { gcData: { gcNodes }, usedRoutes };
-		});
-
-		// Log all the GC options and the state determined by the garbage collector.
-		// This is useful even for interactive clients since they track unreferenced nodes and log errors.
-		this.mc.logger.sendTelemetryEvent({
-			eventName: "GarbageCollectorLoaded",
-			gcConfigs: JSON.stringify(this.configs),
-			gcOptions: JSON.stringify(createParams.gcOptions),
-			...createParams.createContainerMetadata,
 		});
 	}
 
@@ -501,7 +498,7 @@ export class GarbageCollector implements IGarbageCollector {
 			/**
 			 * Logger to use for logging GC events
 			 */
-			logger?: ITelemetryLoggerExt;
+			logger?: TelemetryLoggerExt;
 			/**
 			 * True to run GC sweep phase after the mark phase
 			 */
@@ -608,7 +605,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private async runGC(
 		fullGC: boolean,
 		currentReferenceTimestampMs: number,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): Promise<IGCStats> {
 		// 1. Generate / analyze the runtime's reference graph.
 		// Get the reference graph (gcData) and run GC algorithm to get referenced / unreferenced nodes.
@@ -799,7 +796,7 @@ export class GarbageCollector implements IGarbageCollector {
 	private findAllNodesReferencedBetweenGCs(
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData | undefined,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): string[] | undefined {
 		// If we haven't run GC before there is nothing to do.
 		// No previousGCData, means nothing is unreferenced, and there are no reference state trackers to clear
@@ -843,14 +840,21 @@ export class GarbageCollector implements IGarbageCollector {
 		const gcDataSuperSet = concatGarbageCollectionData(previousGCData, currentGCData);
 		const newOutboundRoutesSinceLastRun: string[] = [];
 		for (const [sourceNodeId, outboundRoutes] of this.newReferencesSinceLastRun) {
-			if (gcDataSuperSet.gcNodes[sourceNodeId] === undefined) {
+			const target: string[] | undefined = gcDataSuperSet.gcNodes[sourceNodeId];
+			if (target === undefined) {
 				gcDataSuperSet.gcNodes[sourceNodeId] = outboundRoutes;
 			} else {
-				// TODO: Fix this violation and remove the disable
-				// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
-				gcDataSuperSet.gcNodes[sourceNodeId].push(...outboundRoutes);
+				// Avoid `push(...outboundRoutes)`: spreading a large array into a variadic call
+				// can exceed the engine's argument-count limit and throw RangeError.
+				for (const route of outboundRoutes) {
+					target.push(route);
+				}
 			}
-			newOutboundRoutesSinceLastRun.push(...outboundRoutes);
+			// Avoid `push(...outboundRoutes)`: spreading a large array into a variadic call
+			// can exceed the engine's argument-count limit and throw RangeError.
+			for (const route of outboundRoutes) {
+				newOutboundRoutesSinceLastRun.push(route);
+			}
 		}
 
 		/**

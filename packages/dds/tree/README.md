@@ -53,12 +53,10 @@ API documentation for **@fluidframework/tree** is available at <https://fluidfra
 
 ## Status
 
-Notable consideration that early adopters should be wary of:
+Notable considerations that users should be aware of:
 
--   The persisted format is stable such that documents created with released versions 2.0.0 or greater of this package are fully supported long term.
--   In versions prior to 2.1.0, SharedTree had unbounded memory growth:
-    -   Removed content was retained in memory and persisted in the document at rest ([fix](https://github.com/microsoft/FluidFramework/pull/21372)). This was fixed in version 2.1.0.
--   All range changes are atomized.
+-   The persisted format is stable: documents created with released versions 2.0.0 or greater of this package are fully supported long term.
+-   All range changes are currently atomized.
     This means that, when inserting/removing/moving multiple contiguous nodes the edit is split up into separate single node edits.
     This can impact the merge behavior of these edits, as well as the performance of large array edits.
 -   Some documentation (such as this readme and [the roadmap](docs/roadmap.md)) are out of date.
@@ -164,6 +162,42 @@ Insertable content can still be used in other places, like when nested in other 
 // The empty node can be implicitly constructed from `{}` here, since this context allows insertable content, not just nodes.
 const node = new Test({ data: {} });
 ```
+
+See the documentation for [TreeNode](https://fluidframework.com/docs/api/fluid-framework/treenode-class#treenode-remarks) for some notes about explicit vs implicit node construction.
+
+### Why is the only type TypeScript will let me provide as content for my field `undefined`?
+
+An optional field allows `undefined` or whatever types the [`AllowedTypes`](https://fluidframework.com/docs/api/fluid-framework/allowedtypes-typealias) for the field permit.
+If the allowed types are getting reduced to `never` only `undefined` will remain.
+See below for why this might happen.
+
+### Why is my insertable content getting typed as `never`?
+
+This is a common problem when working with [Input](https://fluidframework.com/docs/api/fluid-framework/input-typealias) types due to the contravariance (see the linked documentation for details).
+
+This is most commonly a symptom of the schema having insufficiently specific types for the schema.
+This most commonly happens when declaring a constant for part of a schema which is then used later when building the full schema.
+For example it fails if you do:
+
+```typescript
+const itemTypes = [ItemA, ItemB]; // BAD: use `as const` to fix.
+class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
+const holder = new Holder({ item: new ItemA({ a: 42 }) }); // Type 'ItemA' is not assignable to type 'never'.ts(2322)
+```
+
+This can be fixed by capturing a more specific type for the schema:
+
+```typescript
+const itemTypes = [ItemA, ItemB] as const; // Fixed
+class Holder extends schemaFactory.object("Holder", { item: itemTypes }) {}
+const holder = new Holder({ item: new ItemA({ a: 42 }) });
+```
+
+### How do I effectively use SharedTree when using TypeScript's `isolatedDeclarations`?
+
+SharedTree schema heavily use expression types and class expressions as base classes, both of which `isolatedDeclarations` disallows.
+
+See [isolated-declarations.md](docs/user-facing/isolated-declarations.md) for an explanation of the problem and recommended approaches for using SharedTree schema in a project that requires `isolatedDeclarations`.
 
 ## Architecture
 
@@ -474,7 +508,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

@@ -18,4 +18,30 @@ minimumReleaseAge: 1440
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+# List of packages known to be safe but for whatever reason were published at a date after another version of the same
+# package (including later major versions) which had better provenance information.
+# ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
+trustPolicyExclude:
+  # chokidar@4.0.3 (published 2024-12-18, by paulmillr) — pipeline regression.
+  # Prior trusted: chokidar@4.0.1 (provenance, 2024-09-22, by paulmillr).
+  # Same publisher (sole maintainer); provenance attestation was dropped after 4.0.1.
+  # Pulled in transitively via mocha@11 (chokidar ^4.0.1) and sass@1 (chokidar ^4.0.0).
+  # chokidar@5.0.0 has restored provenance but no upstream consumer pins ^5 yet.
+  - "chokidar@4.0.3"
+  # semver@5.7.2 (published 2023-07-10, by lukekarrys) — legacy maintenance line.
+  # Prior trusted: semver@7.5.4 (provenance, 2023-07-07, by npm-cli-ops).
+  # Different publisher account because the 5.x and 6.x maintenance lines are
+  # hand-published by lukekarrys (a long-time npm/node-semver maintainer), while the
+  # current 7.x line publishes through the npm-cli OIDC/Actions pipeline. The 5.x/6.x
+  # lines will not be retroactively re-published with provenance. Pulled in by widely-
+  # used legacy tooling that pins ^5 / ^6.
+  # Note: multiple versions of the same package must be combined with "||" — pnpm's
+  # trust-policy evaluator returns on the first name match and does not aggregate
+  # subsequent entries for the same package.
+  - "semver@5.7.2||6.3.1"
+  # undici-types@6.21.0 (published 2024-11-13, by matteo.collina) — pipeline regression.
+  # Prior trusted: undici-types@6.19.2 (provenance, 2024-06-18, by matteo.collina).
+  # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
+  # repo); provenance attestation was lost on a subsequent 6.x release.
+  - "undici-types@6.21.0"
 strictDepBuilds: true

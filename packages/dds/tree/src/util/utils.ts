@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Type, type TUnsafe } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { TUnsafe } from "@sinclair/typebox";
 
 /**
  * Subset of Map interface.
@@ -43,8 +44,6 @@ export type Populated<T> = {
 export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
-
-export { default as clone } from "@ungap/structured-clone";
 
 /**
  * Checks whether or not the given object is a `readonly` array.

@@ -30,6 +30,12 @@ export const SerializationVersion: {
 // @beta @legacy
 export type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
 
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: true): SerializedIdCompressorWithOngoingSession;
+
+// @beta @legacy
+export function serializeIdCompressor(compressor: IIdCompressor, withSession: false): SerializedIdCompressorWithNoSession;
+
 // @public
 export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";

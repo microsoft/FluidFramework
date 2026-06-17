@@ -8,7 +8,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -16,6 +16,13 @@ import type {
 	OutboundBatch,
 	OutboundSingletonBatch,
 } from "./definitions.js";
+
+/**
+ * The number of ops in a batch above which the batch is considered "large"
+ * for telemetry purposes. Used by both {@link OpGroupingManager} (GroupLargeBatch event)
+ * and as the default staging-mode auto-flush threshold.
+ */
+export const largeBatchThreshold = 1000;
 
 /**
  * Grouping makes assumptions about the shape of message contents. This interface codifies those assumptions, but does not validate them.
@@ -58,7 +65,7 @@ export interface EmptyGroupedBatch {
 
 export class OpGroupingManager {
 	static readonly groupedBatchOp = "groupedBatch";
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		private readonly config: OpGroupingManagerConfig,
@@ -93,7 +100,7 @@ export class OpGroupingManager {
 		const serializedOp = JSON.stringify(emptyGroupedBatch);
 
 		const placeholderMessage: LocalEmptyBatchPlaceholder = {
-			metadata: { batchId: resubmittingBatchId },
+			metadata: { batchId: resubmittingBatchId, groupedOpCount: 0 },
 			localOpMetadata: { emptyBatch: true },
 			referenceSequenceNumber,
 			runtimeOp: emptyGroupedBatch,
@@ -123,7 +130,10 @@ export class OpGroupingManager {
 			return batch as OutboundSingletonBatch;
 		}
 
-		if (batch.messages.length >= 1000) {
+		// Use > (not >=) so that batches flushed exactly at the staging-mode
+		// auto-flush threshold (which defaults to largeBatchThreshold) don't
+		// trigger this event. Only genuinely oversized batches are logged.
+		if (batch.messages.length > largeBatchThreshold) {
 			this.logger.sendTelemetryEvent({
 				eventName: "GroupLargeBatch",
 				length: batch.messages.length,
@@ -159,7 +169,7 @@ export class OpGroupingManager {
 			...batch,
 			messages: [
 				{
-					metadata: { batchId: groupedBatchId },
+					metadata: { batchId: groupedBatchId, groupedOpCount: batch.messages.length },
 					referenceSequenceNumber: batch.messages[0].referenceSequenceNumber,
 					contents: serializedContent,
 				},

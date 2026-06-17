@@ -11,29 +11,22 @@ import {
 	SerializationVersion,
 } from "@fluidframework/id-compressor/internal";
 
-import {
-	FluidClientVersion,
-	type CodecWriteOptions,
-	type ICodecOptions,
-} from "../codec/index.js";
+import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
 	createNodeIdentifierManager,
-	makeFieldBatchCodec,
-	makeSchemaCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
 	defaultSchemaPolicy,
 	TreeCompressionStrategy,
 	defaultIncrementalEncodingPolicy,
+	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
 import { combineChunks } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -239,21 +232,17 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 	});
 
 	if (options?.content !== undefined) {
-		// Any version can be passed down to `makeSchemaCodec` and `makeFieldBatchCodec` here.
-		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
-		const writeOptions: CodecWriteOptions = {
-			...options,
-			minVersionForCollab: FluidClientVersion.v2_0,
-		};
-		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
-		const fieldBatchCodec = makeFieldBatchCodec(writeOptions);
-		const newSchema = schemaCodec.decode(options.content.schema as Format);
+		const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
+		const newSchema = schemaCodec.decode(options.content.schema);
 
 		const context: FieldBatchEncodingContext = {
 			encodeType: TreeCompressionStrategy.Compressed,
 			idCompressor,
 			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
 			schema: { schema: newSchema, policy: defaultSchemaPolicy },
+			// Not a summary blob — this is a synthetic decode of inline content.
+			isSummary: false,
 		};
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,

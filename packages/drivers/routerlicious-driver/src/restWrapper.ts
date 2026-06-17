@@ -4,25 +4,18 @@
  */
 
 import { performanceNow } from "@fluid-internal/client-utils";
-import { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import {
-	GenericNetworkError,
-	NonRetryableError,
-	RateLimiter,
-} from "@fluidframework/driver-utils/internal";
+import type { RateLimiter } from "@fluidframework/driver-utils/internal";
+import { GenericNetworkError, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
 	CorrelationIdHeaderName,
 	DriverVersionHeaderName,
 	RestLessClient,
 	getAuthorizationTokenFromCredentials,
 } from "@fluidframework/server-services-client";
-import {
-	ITelemetryLoggerExt,
-	PerformanceEvent,
-	numberFromString,
-} from "@fluidframework/telemetry-utils/internal";
-import fetch from "cross-fetch";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, numberFromString } from "@fluidframework/telemetry-utils/internal";
 import safeStringify from "json-stringify-safe";
 
 import {
@@ -34,15 +27,15 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 import { addOrUpdateQueryParams, type QueryStringType } from "./queryStringUtils.js";
 import type { RequestConfig, RawRequestHeaders } from "./request.cjs";
 import { RestWrapper } from "./restWrapperBase.js";
-import { ITokenProvider, ITokenResponse } from "./tokens.js";
+import type { ITokenProvider, ITokenResponse } from "./tokens.js";
 
 type AuthorizationHeaderGetter = (token: ITokenResponse) => string;
 export type TokenFetcher = (refresh?: boolean) => Promise<ITokenResponse>;
 
 const buildRequestUrl = (requestConfig: RequestConfig): string =>
-	requestConfig.baseURL !== undefined
-		? `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`
-		: (requestConfig.url ?? "");
+	requestConfig.baseURL === undefined
+		? (requestConfig.url ?? "")
+		: `${requestConfig.baseURL ?? ""}${requestConfig.url ?? ""}`;
 
 const buildRequestInitConfig = (requestConfig: RequestConfig): RequestInit => {
 	const requestInit: RequestInit = {
@@ -103,12 +96,12 @@ export function getPropsToLogFromResponse(headers: {
 	const additionalProps: ITelemetryBaseProperties = {
 		contentsize: numberFromString(headers.get("content-length")),
 	};
-	headersToLog.forEach((header) => {
+	for (const header of headersToLog) {
 		const headerValue = headers.get(header.headerName);
 		if (headerValue !== undefined && headerValue !== null) {
 			additionalProps[header.logName] = headerValue;
 		}
-	});
+	}
 
 	return additionalProps;
 }
@@ -125,13 +118,12 @@ class RouterliciousRestWrapper extends RestWrapper {
 	private readonly retryCounter = new Map<string, number>();
 
 	constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
 		private readonly fetchRefreshedToken: TokenFetcher,
 		private readonly getAuthorizationHeader: AuthorizationHeaderGetter,
 		private readonly useRestLess: boolean,
 		baseurl?: string,
-		// eslint-disable-next-line @typescript-eslint/prefer-readonly -- false positive, modified in getToken()
 		private tokenP?: Promise<ITokenResponse>,
 		defaultQueryString: QueryStringType = {},
 	) {
@@ -277,11 +269,11 @@ class RouterliciousRestWrapper extends RestWrapper {
 		}
 
 		const responseSummary =
-			responseBody !== undefined
-				? typeof responseBody === "string"
+			responseBody === undefined
+				? response.statusText
+				: typeof responseBody === "string"
 					? responseBody
-					: safeStringify(responseBody)
-				: response.statusText;
+					: safeStringify(responseBody);
 		throwR11sNetworkError(
 			`R11s fetch error: ${responseSummary}`,
 			response.status,
@@ -326,7 +318,7 @@ class RouterliciousRestWrapper extends RestWrapper {
 
 export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -350,7 +342,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 	public static load(
 		tenantId: string,
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -385,7 +377,7 @@ export class RouterliciousStorageRestWrapper extends RouterliciousRestWrapper {
 
 export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 	private constructor(
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		fetchToken: TokenFetcher,
 		getAuthorizationHeader: AuthorizationHeaderGetter,
@@ -408,7 +400,7 @@ export class RouterliciousOrdererRestWrapper extends RouterliciousRestWrapper {
 
 	public static load(
 		tokenFetcher: TokenFetcher,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		rateLimiter: RateLimiter,
 		useRestLess: boolean,
 		baseurl?: string,
@@ -438,7 +430,7 @@ export function toInstrumentedR11sOrdererTokenFetcher(
 	tenantId: string,
 	documentId: string | undefined,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchOrdererToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(
@@ -465,7 +457,7 @@ export function toInstrumentedR11sStorageTokenFetcher(
 	tenantId: string,
 	documentId: string,
 	tokenProvider: ITokenProvider,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): TokenFetcher {
 	const fetchStorageToken = async (refreshToken?: boolean): Promise<ITokenResponse> => {
 		return PerformanceEvent.timedExecAsync(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React, { type FC, useEffect, useState } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import type { IBlobCollection, IBlobRecord } from "./container/index.js";
 
@@ -116,6 +116,6 @@ export const DebugView: FC<IDebugViewProps> = ({ attach }) => {
 			</div>
 		);
 	} else {
-		return <></>;
+		return null;
 	}
 };

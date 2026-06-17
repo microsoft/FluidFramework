@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import type { JsonCompatibleReadOnlyObject } from "../../util/index.js";
@@ -73,7 +74,7 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 
 		// Data in common for all TreeNode schemas:
 		/**
-		 * Leaf node union member.
+		 * Persisted subset of metadata for this node schema.
 		 */
 		metadata: PersistedMetadataFormat,
 	},

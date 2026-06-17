@@ -13,8 +13,6 @@ import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import type { TreeValue } from "../../core/index.js";
-// This import is required for intellisense in @link doc comments on mouseover in VSCode.
-// eslint-disable-next-line unused-imports/no-unused-imports, @typescript-eslint/no-unused-vars
 import type { FlexTreeHydratedContextMinimal } from "../../feature-libraries/index.js";
 import {
 	type JsonCompatibleReadOnlyObject,
@@ -229,12 +227,13 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  * @remarks
  * For details related to inputting data constrained by schema (including via assignment), and how non-exact schema types are handled in general refer to {@link Input}.
  * For information about recursive schema support, see methods postfixed with "recursive" and {@link ValidateRecursiveSchema}.
- * To apply schema defined with this factory to a tree, see {@link ViewableTree.viewWith} and {@link TreeViewConfiguration}.
+ * To apply schema defined with this factory to a tree, see {@link TreeViewConfiguration} and {@link ViewableTree.viewWith}.
+ * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution | documentation on schema evolution} for how to handle changes to schema over time.
  *
  * All schema produced by this factory get a {@link TreeNodeSchemaCore.identifier|unique identifier} by combining the {@link SchemaFactory.scope} with the schema's `Name`.
  * The `Name` part may be explicitly provided as a parameter, or inferred as a structural combination of the provided types.
  * The APIs which use this second approach, structural naming, also deduplicate all equivalent calls.
- * Therefor two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
+ * Therefore two calls to `array(allowedTypes)` with the same allowedTypes will return the same {@link TreeNodeSchema} instance.
  * On the other hand, two calls to `array(name, allowedTypes)` will always return different {@link TreeNodeSchema} instances
  * and it is an error to use both in the same tree (since their identifiers are not unique).
  *
@@ -265,7 +264,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 1. Declaration: `class X extends schemaFactory.object("x", {}) {}`
  *
- * 2. Allows adding "local" (non-persisted) members: Yes. Members (including methods) can be added to the class.
+ * 2. Allows adding "local" (non-persisted) members: additional members (including methods) can be added to the class.
  *
  * 3. Prototype: The user-defined class.
  *
@@ -285,7 +284,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  *
  * 1. Declaration: `const X = schemaFactory.object("x", {}); type X = NodeFromSchema<typeof X>;`
  *
- * 2. Allows adding "local" (non-persisted) members: No. Attempting to set non-field members will result in an error.
+ * 2. Does not allow adding "local" (non-persisted) members: attempting to set non-field members will result in an error.
  *
  * 3. Prototype: `Object.prototype`, `Map.prototype`, or `Array.prototype` depending on node kind.
  *
@@ -324,7 +323,7 @@ export const SchemaFactory_base = classWithStatics(schemaStaticsPublic);
  * Note: the comparison between the customizable and POJO modes is not done in a table because TSDoc does not currently have support for embedded markdown.
  *
  * @see {@link SchemaFactoryAlpha}
- *
+ * @see {@link SchemaFactoryBeta}
  * @sealed @public
  */
 export class SchemaFactory<
@@ -405,7 +404,14 @@ export class SchemaFactory<
 	> {
 		return objectSchema(scoped(this, name), fields, true, {
 			...defaultSchemaFactoryObjectOptions,
-		});
+		}) as TreeNodeSchemaClass<
+			ScopedSchemaName<TScope, Name>,
+			NodeKind.Object,
+			TreeObjectNode<T, ScopedSchemaName<TScope, Name>>,
+			object & InsertableObjectFromSchemaRecord<T>,
+			true,
+			T
+		>;
 	}
 
 	/**

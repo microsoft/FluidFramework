@@ -5,8 +5,10 @@
 
 import { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt, createChildLogger } from '@fluidframework/telemetry-utils/internal';
+import { createChildLogger, TelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
+// eslint-disable-next-line import-x/no-internal-modules
+import { diffAgainst } from '@tylerbu/sorted-btree-es6/extended/diffAgainst';
 
 import {
 	Mutable,
@@ -383,7 +385,7 @@ export class IdCompressor {
 		compareFiniteNumbers
 	);
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	/**
 	 * @param localSessionId - the `IdCompressor`'s current local session ID.
@@ -1416,7 +1418,8 @@ export class IdCompressor {
 			return true;
 		};
 
-		const diff = this.clustersAndOverridesInversion.diffAgainst(
+		const diff = diffAgainst(
+			this.clustersAndOverridesInversion,
 			other.clustersAndOverridesInversion,
 			missingInOne,
 			missingInOne,

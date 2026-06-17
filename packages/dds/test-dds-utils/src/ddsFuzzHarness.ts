@@ -46,7 +46,7 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 import {
 	isISharedObjectHandle,
 	type IFluidSerializer,
@@ -545,9 +545,7 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
 	 */
-	idCompressorFactory?: (
-		summary?: FuzzSerializedIdCompressor,
-	) => IIdCompressor & IIdCompressorCore;
+	idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor;
 
 	/**
 	 * This preserves the old seed behavior where the whole fuzz tests gets a single seed.
@@ -1089,7 +1087,6 @@ export function setupClientContext(
 	random.handle = () => new DDSFuzzHandle(random.pick(handles), client.dataStoreRuntime);
 	return () => {
 		state.client = oldClient;
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		state.random.handle = oldHandle;
 	};
 }
@@ -1491,9 +1488,7 @@ function finalizeAllocatedIds(client: {
 }): void {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	if (compressor !== undefined) {
-		// Safe cast: In test scenarios, idCompressor is always created with createIdCompressor which returns
-		// the full IIdCompressor & IIdCompressorCore type, so we know it has the internal methods.
-		const compressorCore = compressor as IIdCompressor & IIdCompressorCore;
+		const compressorCore = toIdCompressorWithCore(compressor);
 		const range = compressorCore.takeNextCreationRange();
 		if (range.ids !== undefined) {
 			compressorCore.finalizeCreationRange(range);

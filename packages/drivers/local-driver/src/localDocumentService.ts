@@ -4,9 +4,9 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { IClient } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { IClient } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -15,8 +15,8 @@ import {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import { GitManager } from "@fluidframework/server-services-client";
 import { TestHistorian } from "@fluidframework/server-test-utils";
 

@@ -49,10 +49,10 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
-	IIdCompressorCore,
-	IdCreationRange,
 	SerializationVersion,
 	createIdCompressor,
+	toIdCompressorWithCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -66,6 +66,7 @@ import {
 	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -258,8 +259,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		// Cast to access internal API
-		(this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore).finalizeCreationRange(
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(
 			range as IdCreationRange,
 		);
 	}
@@ -458,10 +458,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		// Cast to access internal API
-		const idRange = (
-			this.dataStoreRuntime.idCompressor as unknown as IIdCompressorCore
-		)?.takeNextCreationRange();
+		const idRange =
+			this.dataStoreRuntime.idCompressor === undefined
+				? undefined
+				: toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -880,6 +880,8 @@ export class MockFluidDataStoreRuntime
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
 		minVersionForCollab?: MinimumVersionForCollab;
+		inStagingMode?: boolean;
+		isDirty?: boolean;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -903,7 +905,9 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab;
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.inStagingMode = overrides?.inStagingMode ?? false;
+		this.isDirty = overrides?.isDirty ?? false;
 	}
 
 	private readonly: boolean = false;
@@ -914,7 +918,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -929,6 +933,8 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	public readonly inStagingMode: boolean;
+	public readonly isDirty: boolean;
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
@@ -987,7 +993,13 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+
 		this._disposed = true;
+		this.emit("dispose");
+		this.removeAllListeners();
 	}
 
 	public async getChannel(id: string): Promise<IChannel> {

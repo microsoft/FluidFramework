@@ -28,10 +28,9 @@ import type {
 } from "@fluidframework/core-interfaces/internal";
 import type { SessionSpaceCompressedId } from "@fluidframework/id-compressor/internal";
 import { SharedMap } from "@fluidframework/map/internal";
-import {
-	asLegacyAlpha,
-	type IContainerRuntimeBase,
-	type StageControlsInternal,
+import type {
+	IContainerRuntimeBase,
+	StageControlsInternal,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	encodeHandleForSerialization,
@@ -46,7 +45,7 @@ import type { SharedObject } from "@fluidframework/shared-object-base/internal";
 import { LoggingError, wrapError } from "@fluidframework/telemetry-utils/internal";
 import sinon from "sinon";
 
-import { createLoader } from "../utils.js";
+import { createLoader } from "./utils.js";
 
 /**
  * A DataObject implementation that is used to test Staging Mode.
@@ -59,7 +58,7 @@ class DataObjectWithStagingMode extends DataObject {
 			? -1
 			: DataObjectWithStagingMode.instanceCount++;
 
-	private readonly containerRuntimeExp = asLegacyAlpha(this.context.containerRuntime);
+	private readonly containerRuntimeExp = this.context.containerRuntime;
 	get DataObjectWithStagingMode(): this {
 		return this;
 	}

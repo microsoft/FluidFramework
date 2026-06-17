@@ -5,10 +5,10 @@
 
 import { strict as assert, fail } from "node:assert";
 
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import { DiscriminatedUnionDispatcher, unionOptions } from "../../../../codec/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
 import type { ChunkedCursor } from "../../../../core/index.js";
 import {
 	type ChunkDecoder,
@@ -26,7 +26,7 @@ import {
 import {
 	EncodedFieldBatchGeneric,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../../../feature-libraries/chunked-forest/codec/formatGeneric.js";
+} from "../../../../feature-libraries/chunked-forest/codec/format/formatGeneric.js";
 import {
 	FieldBatchFormatVersion,
 	type TreeChunk,
@@ -122,6 +122,7 @@ const rootDecoder: ChunkDecoder = {
 const idDecodingContext = {
 	idCompressor: testIdCompressor,
 	originatorId: testIdCompressor.localSessionId,
+	isSummary: false,
 };
 
 describe("chunkDecodingGeneric", () => {

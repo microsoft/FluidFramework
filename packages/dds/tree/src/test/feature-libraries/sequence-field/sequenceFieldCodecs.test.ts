@@ -33,6 +33,7 @@ const tag1 = mintRevisionTag();
 const tag2 = mintRevisionTag();
 const baseContext = {
 	originatorId: "session1" as SessionId,
+	isSummary: false,
 	revision: tag1,
 	idCompressor: testIdCompressor,
 };
@@ -85,13 +86,9 @@ export function testCodecs(): void {
 				it(`version ${version}`, () => {
 					const codec = sequenceFieldCodec.resolve(version);
 					const jsonCodec =
-						codec.json.encodedSchema === undefined
-							? codec.json
-							: withSchemaValidation(
-									codec.json.encodedSchema,
-									codec.json,
-									FormatValidatorBasic,
-								);
+						codec.encodedSchema === undefined
+							? codec
+							: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 					const actual = jsonCodec.decode(changeset, context);
 					assertChangesetsEqual(actual, expected);
 				});

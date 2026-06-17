@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -114,7 +114,7 @@ export async function exportFile(
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch: boolean = false,

@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { currentVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
@@ -28,9 +28,10 @@ describe("uncompressedEncode", () => {
 				const context = {
 					encodeType: TreeCompressionStrategy.Uncompressed,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 					idCompressor: testIdCompressor,
 				};
-				const codec = makeFieldBatchCodec({
+				const codec = fieldBatchCodecBuilder.build({
 					jsonValidator: ajvValidator,
 					minVersionForCollab: currentVersion,
 				});
