@@ -57,6 +57,7 @@ import {
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -825,7 +826,10 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		generateCommit: boolean = true,
+	): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
@@ -842,15 +846,20 @@ export class TreeCheckout implements ITreeCheckout {
 			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		if (generateCommit) {
+			// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+			this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		} else {
+			this.applyInternalChange(decodedChange);
+		}
 	}
 
 	// #region TreeBranchAlpha
 
 	@throwIfBroken
-	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
+		this.applySerializedChange(change, generateCommit);
 	}
 
 	public isBranch(): this is TreeBranchAlpha {
@@ -1248,6 +1257,43 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly {
+		const branchCheckout = getCheckout(branch);
+		const change = diffHistories(
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+			this.mintRevisionTag,
+		);
+
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision: undefined,
+			isSummary: false,
+		};
+		const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
+		return {
+			version: 1,
+			revision: undefined,
+			originatorId: this.idCompressor.localSessionId,
+			change: encodedChange,
+		} satisfies SerializedChange;
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1747,7 +1793,7 @@ function verboseFromCursor(
 
 interface SerializedChange {
 	version: 1;
-	revision: RevisionTag;
+	revision: RevisionTag | undefined;
 	change: JsonCompatibleReadOnly;
 	originatorId: SessionId;
 }
@@ -1759,7 +1805,9 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	const change = value as Partial<SerializedChange>;
 	return (
 		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
+		(change.revision === undefined ||
+			change.revision === "root" ||
+			typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
 		change.change !== undefined

@@ -18,7 +18,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { emulateProductionBuild, fail } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -446,6 +446,7 @@ export class TestTreeProviderLite {
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
+	private readonly compressorMap: Map<string, IIdCompressor> = new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -477,10 +478,13 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
+			const idCompressor = createIdCompressor(sessionId);
+			this.compressorMap.set(`tree-${i}`, idCompressor);
+			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
-				clientId: `test-client-${i}`,
+				clientId,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor,
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
@@ -494,6 +498,10 @@ export class TestTreeProviderLite {
 			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
+	}
+
+	public getCompressor(tree: ISharedTree): IIdCompressor {
+		return this.compressorMap.get(tree.id) ?? fail("Tree not found");
 	}
 
 	/**
@@ -1489,6 +1497,12 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public rebaseOnto(branch: unknown): void {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
+	}
+	public computeNetChangeIfRebasedOnto(branch: unknown): never {
+		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
+	}
+	public isMissingEditsFrom(branch: unknown): never {
+		throw new Error("Method 'hasNewEdits' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
