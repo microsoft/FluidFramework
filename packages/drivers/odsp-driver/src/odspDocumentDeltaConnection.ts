@@ -22,8 +22,8 @@ import { createGenericNetworkError } from "@fluidframework/driver-utils/internal
 import type { OdspError } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -68,7 +68,7 @@ class SocketReference extends TypedEventEmitter<ISocketEvents> {
 	// Map of all existing socket io sockets. [url, tenantId, documentId] -> socket
 	private static readonly socketIoSockets: Map<string, SocketReference> = new Map();
 
-	public static find(key: string, logger: ITelemetryLoggerExt): SocketReference | undefined {
+	public static find(key: string, logger: TelemetryLoggerExt): SocketReference | undefined {
 		const socketReference = SocketReference.socketIoSockets.get(key);
 
 		// Verify the socket is healthy before reusing it
@@ -255,7 +255,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		token: string | null,
 		client: IClient,
 		url: string,
-		telemetryLogger: ITelemetryLoggerExt,
+		telemetryLogger: TelemetryLoggerExt,
 		timeoutMs: number,
 		epochTracker: EpochTracker,
 		socketReferenceKeyPrefix: string | undefined,
@@ -390,7 +390,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		enableMultiplexing: boolean,
 		tenantId: string,
 		documentId: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): SocketReference {
 		// eslint-disable-next-line unicorn/no-array-method-this-argument
 		const existingSocketReference = SocketReference.find(key, logger);
@@ -422,7 +422,7 @@ export class OdspDocumentDeltaConnection extends DocumentDeltaConnection {
 		socket: Socket,
 		documentId: string,
 		socketReference: SocketReference,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly enableMultiplexing?: boolean,
 		connectionId?: string,
 	) {

@@ -1592,6 +1592,7 @@ export class Container
 		version: string | undefined;
 		dmLastProcessedSeqNumber: number;
 		dmLastKnownSeqNumber: number;
+		numUnsummarizedOps: number;
 	}> {
 		const timings: Record<string, number> = { phase1: performanceNow() };
 		this.service = await this.createDocumentService(resolvedUrl, { mode: "load" });
@@ -1765,6 +1766,12 @@ export class Container
 			version: version?.id,
 			dmLastProcessedSeqNumber: this._deltaManager.lastSequenceNumber,
 			dmLastKnownSeqNumber: this._deltaManager.lastKnownSeqNumber,
+			// Ops known since the last summary (including queued/unprocessed). The loaded snapshot's
+			// sequence number corresponds to the last summary's reference sequence number under normal
+			// "latest" load paths (the runtime asserts this match unless pendingLocalState is used or
+			// sequence number verification is bypassed), so this approximates numUnsummarizedOps at
+			// the loader level without requiring access to runtime summary metadata.
+			numUnsummarizedOps: this._deltaManager.lastKnownSeqNumber - attributes.sequenceNumber,
 		};
 	}
 

@@ -46,12 +46,12 @@ import {
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildLogger,
 	type IConfigProvider,
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
-	createChildLogger,
+	type TelemetryLoggerExt,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -348,7 +348,7 @@ export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOd
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
-export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLoggerExt =>
+export const createOdspLogger = (logger?: ITelemetryBaseLogger): TelemetryLoggerExt =>
 	createChildLogger({
 		logger,
 		namespace: "OdspDriver",
@@ -364,7 +364,7 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLogge
  * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
  */
 export function toInstrumentedOdspStorageTokenFetcher(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 ): InstrumentedStorageTokenFetcher {
@@ -386,7 +386,7 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
  */
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,

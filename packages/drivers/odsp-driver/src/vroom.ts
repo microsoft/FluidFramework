@@ -11,8 +11,8 @@ import type {
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -49,7 +49,7 @@ export const fetchJoinSession = mockify(
 		urlParts: IOdspUrlParts,
 		path: string,
 		method: "GET" | "POST",
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
 		epochTracker: EpochTracker,
 		requestSocketToken: boolean,

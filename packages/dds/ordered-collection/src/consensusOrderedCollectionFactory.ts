@@ -5,17 +5,15 @@
 
 import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
+	IChannelFactory,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 // eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusQueueClass } from "./consensusQueue.js";
-import type {
-	IConsensusOrderedCollection,
-	IConsensusOrderedCollectionFactory,
-} from "./interfaces.js";
+import type { IConsensusOrderedCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -23,7 +21,9 @@ import { pkgVersion } from "./packageVersion.js";
  *
  * @internal
  */
-export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory {
+export class ConsensusQueueFactory<T>
+	implements IChannelFactory<IConsensusOrderedCollection<T>>
+{
 	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
 	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
 	// public static Type = "consensus-queue";
@@ -43,24 +43,21 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
 		return ConsensusQueueFactory.Attributes;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/datastore-definitions#IChannelFactory.load}
-	 */
 	public async load(
 		runtime: IFluidDataStoreRuntime,
 		id: string,
 		services: IChannelServices,
 		attributes: IChannelAttributes,
-	): Promise<IConsensusOrderedCollection> {
+	): Promise<IConsensusOrderedCollection<T>> {
 		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
-		const collection = new ConsensusQueueClass(id, runtime, attributes);
+		const collection = new ConsensusQueueClass<T>(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
-	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection {
+	public create(document: IFluidDataStoreRuntime, id: string): IConsensusOrderedCollection<T> {
 		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
-		const collection = new ConsensusQueueClass(id, document, this.attributes);
+		const collection = new ConsensusQueueClass<T>(id, document, this.attributes);
 		collection.initializeLocal();
 		return collection;
 	}
@@ -70,7 +67,21 @@ export class ConsensusQueueFactory implements IConsensusOrderedCollectionFactory
  * {@inheritDoc ConsensusQueueClass}
  * @legacy @beta
  */
-export const ConsensusQueue = createSharedObjectKind(ConsensusQueueFactory);
+export const ConsensusQueue =
+	createSharedObjectKind<IConsensusOrderedCollection>(ConsensusQueueFactory);
+
+// For #22835, consider exposing a helper to produce type specific ConsensusQueue.
+// One problem, with doing so is that nothing inside ConsensusQueue validates the shape of T.
+// A DDS load might find content that is not the same, expected type.
+// But that is not any worse than the `any` that exists currently.
+// /**
+//  * Factory for shared object kind for queue-shaped ordered collections of specific type.
+//  * @legacy @beta
+//  */
+// export function TypedConsensusQueue<T>(): ISharedObjectKind<IConsensusOrderedCollection<T>> &
+// 	SharedObjectKind<IConsensusOrderedCollection<T>> {
+// 	return ConsensusQueue;
+// }
 
 /**
  * {@inheritDoc ConsensusQueueClass}
