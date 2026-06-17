@@ -30,24 +30,17 @@ catalogs:
       version: 10.1.8
 
 overrides:
+  '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
   '@types/node': ~22.19.17
+  axios@<0.30.0: ^0.30.0
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
   diff@>=8 <9: ^8.0.3
+  express@>=4 <5: ^4.22.1
   fast-xml-parser: ^4.5.4
-  node-forge: ^1.4.0
   good-fences>nodegit: npm:empty-npm-package@1.0.0
-  qs: ^6.15.0
-  simple-git: ^3.32.3
-  systeminformation: ^5.31.0
-  simplemde>codemirror: ^5.65.11
-  simplemde>marked: ^4.3.0
-  '@fluentui/react-positioning>@floating-ui/dom': ~1.5.4
-  oclif>@aws-sdk/client-cloudfront: '-'
-  oclif>@aws-sdk/client-s3: '-'
-  axios@<0.30.0: ^0.30.0
-  tar: ^7.5.11
+  langsmith: ^0.5.15
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
   minimatch@>=6 <7: ^6.2.3
@@ -55,11 +48,19 @@ overrides:
   minimatch@>=8 <9: ^8.0.7
   minimatch@>=9 <10: ^9.0.9
   minimatch@>=10 <11: ^10.2.4
-  serialize-javascript@>=6 <7: ^7.0.4
-  express@>=4 <5: ^4.22.1
+  node-forge: ^1.4.0
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
   picomatch@>=2 <3: ^2.3.2
   picomatch@>=4 <5: ^4.0.4
-  langsmith: ^0.5.15
+  qs: ^6.15.0
+  serialize-javascript@>=6 <7: ^7.0.4
+  simple-git: ^3.32.3
+  simplemde>codemirror: ^5.65.11
+  simplemde>marked: ^4.3.0
+  shell-quote: ^1.8.4
+  systeminformation: ^5.31.0
+  tar: ^7.5.11
 
 pnpmfileChecksum: sha256-UgK94jvekjDphs6M2itZJZ9CcCzYY0xcxZhNXJw7D28=
 
@@ -26370,8 +26371,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  shell-quote@1.8.3:
-    resolution: {integrity: sha512-ObmnIF4hXNg1BqhnHmgbDETF8dLPCggZWBjkQfhZpbszZnYur5DUljTcCHii5LC3J5E0yeO/1LIMyH+UvHQgyw==}
+  shell-quote@1.8.4:
+    resolution: {integrity: sha512-VsC6n6vz1ihYYyZZwX7YZSF5l5x36ca17OC+a69h94YqB7X6XLwf+5MOgynYir2SLFUbl8gIYvBo8K8RoNQ6bQ==}
     engines: {node: '>= 0.4'}
 
   shimmer@1.2.1:
@@ -34753,7 +34754,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       rxjs: 7.8.2
-      shell-quote: 1.8.3
+      shell-quote: 1.8.4
       supports-color: 8.1.1
       tree-kill: 1.2.2
       yargs: 17.7.2
@@ -37847,7 +37848,7 @@ snapshots:
   launch-editor@2.9.1:
     dependencies:
       picocolors: 1.1.1
-      shell-quote: 1.8.3
+      shell-quote: 1.8.4
 
   lazy-ass@1.6.0: {}
 
@@ -38927,7 +38928,7 @@ snapshots:
       minimatch: 3.1.5
       pidtree: 0.3.1
       read-pkg: 3.0.0
-      shell-quote: 1.8.3
+      shell-quote: 1.8.4
       string.prototype.padend: 3.1.6
 
   npm-run-path@4.0.1:
@@ -40491,7 +40492,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  shell-quote@1.8.3: {}
+  shell-quote@1.8.4: {}
 
   shimmer@1.2.1: {}
 
