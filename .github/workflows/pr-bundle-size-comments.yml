@@ -24,13 +24,16 @@ on:
   check_run:
     types: [created, completed]
 
-# Use concurrency to ensure the completed event wins over the created event for a given SHA — so the
-# results sticky is never clobbered by a still-running "pending" handler. Cross-SHA staleness on the PR
-# path (push A then B, then A's build completes anyway) is handled in identify-from-pr-build: it searches
-# for an open PR whose current head SHA matches the just-completed build, so an event for a stale SHA
-# finds no PR and can't write anything.
+# Use concurrency to ensure the completed event wins over the created event for a given (SHA, check
+# name) — so the results sticky is never clobbered by a still-running "pending" handler. The check name
+# is part of the group key because each ADO sub-check fires its own check_run event on the same SHA
+# (e.g. `Build - client packages (🔒 SDLSources ...)`, `Build - client packages (Build Stage Build)`)
+# and we don't want those to cancel an in-flight acknowledge-build / identify-* run that's processing a
+# matching event. Cross-SHA staleness on the PR path (push A then B, then A's build completes anyway)
+# is handled in identify-from-pr-build: it searches for an open PR whose current head SHA matches the
+# just-completed build, so an event for a stale SHA finds no PR and can't write anything.
 concurrency:
-  group: pr-bundle-size-${{ github.event.check_run.head_sha }}
+  group: pr-bundle-size-${{ github.event.check_run.head_sha }}-${{ github.event.check_run.name }}
   cancel-in-progress: true
 
 permissions:
@@ -38,17 +41,26 @@ permissions:
   pull-requests: read
 
 jobs:
+  # NOTE on the `contains(... '10f9b53e-c7fd-4538-9fff-13cd088a436c')` check that appears in each of the
+  # triggering jobs below: that GUID is the `public` ADO project under `dev.azure.com/fluidframework`. The
+  # pipelines whose check_runs we react to all live there. We need the scope because both the `public` and
+  # `internal` projects publish check_runs with the same name (e.g. `Build - client packages`); without it
+  # the workflow also fires on `internal`'s check_runs, which we can't process (no anonymous read access)
+  # and don't produce the artifacts we consume. The GUID appears in `check_run.details_url`; there's no
+  # structured `project` field in the event payload, so `contains(details_url, '<guid>')` is the only
+  # stable distinguisher. The project lives at https://dev.azure.com/fluidframework/public.
+
   # Posts the initial "build pending" sticky comment when ADO queues the `Build - client packages` check
   # for a PR commit. We only measure bundle size on client packages today, so PRs that don't trigger that
   # check (server-only, docs-only) receive no sticky.
   acknowledge-build:
     if: >-
       github.event.action == 'created' &&
-      github.event.check_run.name == 'Build - client packages'
+      github.event.check_run.name == 'Build - client packages' &&
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-    # permissions:
-    #   pull-requests: write
+    permissions:
+      pull-requests: write
     steps:
       - name: Resolve PR for check SHA
         id: find_pr
@@ -103,6 +115,7 @@ jobs:
               return;
             }
 
+            core.info(`Matched PR #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName} mergeBase=${mb}`);
             core.setOutput("pr_num", pr.number);
             core.setOutput("head_sha", pr.headRefOid);
             core.setOutput("merge_base", mb);
@@ -129,28 +142,29 @@ jobs:
               "",
             ].join("\n");
             fs.writeFileSync("acknowledge.md", body);
-            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
-            core.info("");
-            core.info("--- acknowledge.md ---");
+            core.info(`PR #${process.env.PR_NUM}: rendered the following body for the sticky comment.`);
+            core.startGroup("acknowledge.md");
             core.info(body);
-            core.info("--- end ---");
+            core.endGroup();
 
-      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-      # - if: steps.render.outcome == 'success'
-      #   # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      #   uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
-      #   with:
-      #     header: bundle-size-report
-      #     number: ${{ steps.find_pr.outputs.pr_num }}
-      #     path: ${{ github.workspace }}/acknowledge.md
+      - if: steps.render.outcome == 'success'
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size-report
+          number: ${{ steps.find_pr.outputs.pr_num }}
+          path: ${{ github.workspace }}/acknowledge.md
 
   # Reacts to a PR's own `Build - client packages` build completing. The check SHA is a PR head SHA, so we
-  # produce at most one matrix entry — the PR whose head matches.
+  # produce at most one matrix entry — the PR whose head matches. Fires on *any* completion (not just
+  # success) so a failed PR build also updates the sticky: the compare job's flub call returns the
+  # appropriate failure kind (`all-failed`, etc.) and the sticky moves off the acknowledge-build "Pending
+  # — …" placeholder instead of staying stale.
   identify-from-pr-build:
     if: >-
       github.event.action == 'completed' &&
       github.event.check_run.name == 'Build - client packages' &&
-      github.event.check_run.conclusion == 'success'
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
@@ -188,6 +202,7 @@ jobs:
             );
             const pr = search.nodes[0];
             if (!pr) {
+              core.info(`Affected PRs (0): no open PR matches head SHA ${sha}`);
               core.setOutput("prs", "[]");
               return;
             }
@@ -207,26 +222,31 @@ jobs:
               throw err;
             }
             if (!mb) {
-              core.info(`PR #${pr.number} has no shared history with ${pr.baseRefName}; nothing to compare.`);
+              core.info(`Affected PRs (0): PR #${pr.number} has no shared history with ${pr.baseRefName}`);
               core.setOutput("prs", "[]");
               return;
             }
 
-            core.setOutput("prs", JSON.stringify([{
+            const affected = [{
               number: pr.number,
               head: pr.headRefOid,
               baseRef: pr.baseRefName,
               mergeBase: mb,
-            }]));
+            }];
+            core.info(`Affected PRs (1): #${pr.number} head=${pr.headRefOid} base=${pr.baseRefName} mergeBase=${mb}`);
+            core.setOutput("prs", JSON.stringify(affected));
 
   # Reacts to the baseline pipeline (`Build - Client bundle size artifacts`) completing on a main/release
   # commit. The check SHA is on the base branch, so we produce a matrix entry per open PR whose merge-base
-  # equals this SHA — typically 0–few PRs.
+  # equals this SHA — typically 0–few PRs. Fires on *any* completion (not just success) so a baseline
+  # failure also re-triggers affected PRs: the compare job's flub call returns the appropriate failure
+  # kind (`all-failed`, etc.) and the sticky updates from "Pending — …" to a per-kind body instead of
+  # staying stale forever.
   identify-from-baseline-build:
     if: >-
       github.event.action == 'completed' &&
       github.event.check_run.name == 'Build - Client bundle size artifacts' &&
-      github.event.check_run.conclusion == 'success'
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c')
     runs-on: ubuntu-latest
     outputs:
       prs: ${{ steps.collect.outputs.prs }}
@@ -270,6 +290,14 @@ jobs:
                 });
               }
             }
+            if (affected.length === 0) {
+              core.info("Affected PRs (0): none");
+            } else {
+              core.info(`Affected PRs (${affected.length}):`);
+              for (const a of affected) {
+                core.info(`  - #${a.number} head=${a.head} base=${a.baseRef} mergeBase=${a.mergeBase}`);
+              }
+            }
             core.setOutput("prs", JSON.stringify(affected));
 
   compare:
@@ -281,14 +309,14 @@ jobs:
         (needs.identify-from-pr-build.result == 'success' && needs.identify-from-pr-build.outputs.prs != '[]') ||
         (needs.identify-from-baseline-build.result == 'success' && needs.identify-from-baseline-build.outputs.prs != '[]')
       )
+    name: "${{ matrix.pr.number && format('compare (PR #{0})', matrix.pr.number) || 'compare' }}"
     strategy:
       matrix:
         pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
       fail-fast: false
     runs-on: ubuntu-latest
-    # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
-    # permissions:
-    #   pull-requests: write
+    permissions:
+      pull-requests: write
     steps:
       # Check out the PR's base branch (never PR HEAD — PR-authored code isn't trusted) just to get build-tools
       # source so we can build flub. The comparison itself reads only ADO artifacts identified by SHA — no local
@@ -320,9 +348,13 @@ jobs:
           npm link
 
       - name: Compare bundle sizes
-        # Upstream oclif bug (oclif/core#1608): in `--json` mode, thrown errors render as `{"error":{}}` to
-        # stdout and nothing to stderr — the message is lost. On non-zero exit we re-run without `--json` so
-        # the failure reason is visible in the action log.
+        # Expected failure modes (missing/in-progress/failed baseline, no
+        # analyzer.json) come back as a structured `{ kind, side }` payload
+        # under `--json` and a zero exit — the render step dispatches on
+        # `kind` to produce a friendly sticky body. Non-zero exit is reserved
+        # for *unexpected* errors (network, malformed zip, …); upstream oclif
+        # bug oclif/core#1608 swallows their message in `--json` mode, so we
+        # re-run without `--json` to surface it in the action log.
         run: |
           set -uo pipefail
           set +e
@@ -331,7 +363,9 @@ jobs:
             --head ${{ matrix.pr.head }} \
             --json > bundle-comparison.json
           EC=$?
+          echo "::group::bundle-comparison.json"
           cat bundle-comparison.json
+          echo "::endgroup::"
           if [ "$EC" -ne 0 ]; then
             echo
             echo "flub --json exited $EC; re-running without --json so the error message is visible:"
@@ -341,70 +375,147 @@ jobs:
             exit "$EC"
           fi
 
-      # Format the JSON into the markdown body the sticky comment would post. Done here (not in flub) so
+      # Format the JSON into the markdown body the sticky comment posts. Done here (not in flub) so
       # the formatting is easy to iterate on without rebuilding build-tools. The body is written to
-      # bundle-comparison.md and also echoed to the action log so we can see what the eventual sticky
-      # would contain without actually posting it.
+      # bundle-comparison.md and also echoed to the action log so we can see what got posted.
+      # Dispatches on `data.kind` — happy path renders the comparison; failure kinds render a
+      # friendly per-(kind, side) message.
       - name: Render bundle-size comment body
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
         env:
           PR_NUM: ${{ matrix.pr.number }}
+          BASE_SHA: ${{ matrix.pr.mergeBase }}
+          HEAD_SHA: ${{ matrix.pr.head }}
         with:
           script: |
             const fs = require("fs");
             const data = JSON.parse(fs.readFileSync("bundle-comparison.json", "utf8"));
 
-            const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
+            // Render the happy-path body: a "Notable changes" summary (added,
+            // removed, or changed-with-parsed-delta ≥ NOTABLE_THRESHOLD) above
+            // the collapsed full per-bundle inventory.
+            function renderComparison(comparison) {
+              const NOTABLE_THRESHOLD = 500;
 
-            const lines = [
-              "## Bundle size comparison",
-              "",
-              `Base commit: \`${data.baseCommit}\``,
-              `Head commit: \`${data.headCommit}\``,
-              "",
-            ];
+              const fmtDelta = d => (d > 0 ? `+${d}` : `${d}`);
 
-            const packageSections = [];
-            for (const [pkg, bundles] of Object.entries(data.comparison)) {
-              const bundleLines = [];
-              for (const [bundle, cmp] of Object.entries(bundles)) {
+              // Indicator emoji and notability for one bundle. ➕/➖ for added/removed,
+              // 🔴/🟢 for changes ≥ NOTABLE_THRESHOLD; smaller/unchanged → none.
+              function getRenderProps(cmp) {
+                if (cmp.base === undefined) return { indicator: "➕", isNotable: true };
+                if (cmp.compare === undefined) return { indicator: "➖", isNotable: true };
+                const delta = cmp.compare.parsedSize - cmp.base.parsedSize;
+                if (Math.abs(delta) >= NOTABLE_THRESHOLD) {
+                  return { indicator: delta > 0 ? "🔴" : "🟢", isNotable: true };
+                }
+                return { indicator: undefined, isNotable: false };
+              }
+
+              // Render one bundle's diff line. Always emitted, including unchanged.
+              // `indicator` (➕/➖/🔴/🟢) is prepended when present.
+              function renderBundleLine(bundle, cmp, indicator) {
+                const prefix = indicator ? `${indicator} ` : "";
                 if (cmp.base === undefined && cmp.compare !== undefined) {
-                  bundleLines.push(`- \`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`);
-                } else if (cmp.compare === undefined && cmp.base !== undefined) {
-                  bundleLines.push(`- \`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`);
-                } else if (
-                  cmp.base.parsedSize !== cmp.compare.parsedSize ||
-                  cmp.base.gzipSize !== cmp.compare.gzipSize
-                ) {
-                  const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
-                  const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
-                  bundleLines.push(`- \`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`);
+                  return `- ${prefix}\`${bundle}\`: **added** (parsed ${cmp.compare.parsedSize}, gzip ${cmp.compare.gzipSize})`;
+                }
+                if (cmp.compare === undefined && cmp.base !== undefined) {
+                  return `- ${prefix}\`${bundle}\`: **removed** (was parsed ${cmp.base.parsedSize}, gzip ${cmp.base.gzipSize})`;
+                }
+                const dp = cmp.compare.parsedSize - cmp.base.parsedSize;
+                const dg = cmp.compare.gzipSize - cmp.base.gzipSize;
+                return `- ${prefix}\`${bundle}\`: parsed ${cmp.base.parsedSize} → ${cmp.compare.parsedSize} (${fmtDelta(dp)}), gzip ${cmp.base.gzipSize} → ${cmp.compare.gzipSize} (${fmtDelta(dg)})`;
+              }
+
+              const notableLines = [];
+              const sections = [];
+              for (const [pkg, bundles] of Object.entries(comparison)) {
+                const bundleLines = [];
+                for (const [bundle, cmp] of Object.entries(bundles)) {
+                  const { indicator, isNotable } = getRenderProps(cmp);
+                  const line = renderBundleLine(bundle, cmp, indicator);
+                  bundleLines.push(line);
+                  if (isNotable) {
+                    notableLines.push(line);
+                  }
+                }
+                if (bundleLines.length > 0) {
+                  sections.push(`### \`${pkg}\`\n\n${bundleLines.join("\n")}`);
                 }
               }
-              if (bundleLines.length > 0) {
-                packageSections.push(`### \`${pkg}\``, "", ...bundleLines, "");
+              if (sections.length === 0) {
+                return "No bundles found in comparison.";
               }
+
+              const notableSection = [
+                `### Notable changes`,
+                "",
+                notableLines.length > 0
+                  ? notableLines.join("\n")
+                  : `No bundles changed by ≥ ${NOTABLE_THRESHOLD} bytes parsed.`,
+              ].join("\n");
+
+              // Wrap the full inventory in <details> so the top of the comment stays compact.
+              return [
+                notableSection,
+                "",
+                "<details>",
+                "<summary>Per-bundle deltas</summary>",
+                "",
+                sections.join("\n\n"),
+                "",
+                "</details>",
+              ].join("\n");
             }
 
-            if (packageSections.length > 0) {
-              lines.push(...packageSections);
-            } else {
-              lines.push("No bundle-size changes.");
+            // Render a failure body for an expected (side, kind) failure.
+            // `in-progress` is the normal "wait for the build" path and reads
+            // like acknowledge-build's pending sticky — no warning framing.
+            // Everything else is an actual error and gets the "Comparison
+            // unavailable" header.
+            function renderFailure(side, kind) {
+              // Friendly per-(side, kind) sticky body for expected failure modes.
+              const failureMessages = {
+                base: {
+                  "no-build": "No baseline CI build was found for the merge-base commit. It may be older than the workflow's search horizon, or the baseline pipeline may not have run on it. Try merging a recent main commit into this PR.",
+                  "in-progress": "Pending — the baseline CI build for the merge-base commit hasn't completed yet. Results will appear here when the build finishes.",
+                  "all-failed": "The baseline CI build for the merge-base commit failed — likely a flaky producer build. Try merging a recent main commit into this PR, or re-queue the baseline pipeline manually.",
+                  "no-id": "An ADO state anomaly prevented looking up the baseline build (no usable build id). This shouldn't happen in practice — please report.",
+                  "no-analyzer-jsons": "The baseline build completed but didn't publish a bundle-size artifact for the merge-base commit. Try merging a recent main commit into this PR.",
+                },
+                head: {
+                  "no-build": "No CI build was found for the PR HEAD commit. This shouldn't happen — the workflow only runs after the PR's `Build - client packages` check completes. Please report.",
+                  "in-progress": "Pending — the PR's CI build hasn't completed yet. Results will appear here when the build finishes.",
+                  "all-failed": "The PR's CI build failed — fix the build and the comment will update once the next run succeeds.",
+                  "no-id": "An ADO state anomaly prevented looking up the PR's build (no usable build id). This shouldn't happen in practice — please report.",
+                  "no-analyzer-jsons": "The PR's CI build completed but didn't publish a bundle-size artifact. Check whether your changes affect the bundle-publishing client packages.",
+                },
+              };
+              const message = failureMessages[side]?.[kind]
+                ?? `Comparison failed with kind \`${kind}\` on the \`${side}\` side. Please report.`;
+              return kind === "in-progress" ? message : `⚠️ Comparison unavailable.\n\n${message}`;
             }
 
-            const body = lines.join("\n") + "\n";
+            const body = [
+              "## Bundle size comparison",
+              "",
+              `Base commit: \`${process.env.BASE_SHA}\``,
+              `Head commit: \`${process.env.HEAD_SHA}\``,
+              "",
+              data.kind === "completed"
+                ? renderComparison(data.comparison)
+                : renderFailure(data.side, data.kind),
+            ].join("\n") + "\n";
+
             fs.writeFileSync("bundle-comparison.md", body);
-            core.info(`PR #${process.env.PR_NUM}: would post the following body as a sticky comment.`);
-            core.info("");
-            core.info("--- bundle-comparison.md ---");
+            core.info(`PR #${process.env.PR_NUM}: rendered the following body for the sticky comment.`);
+            core.startGroup("bundle-comparison.md");
             core.info(body);
-            core.info("--- end ---");
+            core.endGroup();
 
-      # Uncomment to enable comment posting after bake-in (tracked: AB#75349).
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      # - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
-      #   with:
-      #     header: bundle-size-report
-      #     number: ${{ matrix.pr.number }}
-      #     path: ${{ github.workspace }}/bundle-comparison.md
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size-report
+          number: ${{ matrix.pr.number }}
+          path: ${{ github.workspace }}/bundle-comparison.md
