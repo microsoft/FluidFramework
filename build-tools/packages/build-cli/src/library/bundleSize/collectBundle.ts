@@ -17,6 +17,12 @@ import { dirname, relative, resolve } from "node:path";
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
+/** Filename of the per-label analyzer report. */
+const ANALYZER_FILE = "analyzer.json";
+
+/** Filename of the sidecar recording the SHA a revision-mode report was built from. */
+const REVISION_MARKER_FILE = "revision.txt";
+
 /**
  * Options for {@link collectBundle}.
  */
@@ -69,6 +75,8 @@ export interface CollectBundleOptions {
 	readonly baseRepoDir?: string;
 }
 
+// --- Utilities ---
+
 /**
  * Sanitizes a string for use as a filename.
  */
@@ -77,23 +85,13 @@ function sanitizeForFileName(value: string): string {
 }
 
 /**
- * Returns the merge-base of `rev` and `otherRev` (default `HEAD`) via
- * `git merge-base`, or undefined if it cannot be resolved. See
- * {@link https://git-scm.com/docs/git-merge-base}.
+ * Runs a command inheriting stdio, throwing on failure.
  */
-async function resolveMergeBase(
-	repoRoot: string,
-	rev: string,
-	otherRev = "HEAD",
-): Promise<string | undefined> {
-	try {
-		const output = await simpleGit(repoRoot).raw(["merge-base", rev, otherRev]);
-		const sha = output.trim();
-		return sha.length > 0 ? sha : undefined;
-	} catch {
-		return undefined;
-	}
+function run(command: string, cwd: string): void {
+	execSync(command, { cwd, stdio: "inherit" });
 }
+
+// --- Git revision resolution ---
 
 /**
  * Resolves `rev` to its full commit SHA via `git rev-parse <rev>^{commit}`, or
@@ -115,11 +113,49 @@ async function resolveSha(repoRoot: string, rev: string): Promise<string> {
 }
 
 /**
- * Runs a command inheriting stdio, throwing on failure.
+ * Resolves the merge-base of `rev` and `otherRev` (default `HEAD`) to a commit SHA via
+ * `git merge-base`, or throws if none can be found locally. See
+ * {@link https://git-scm.com/docs/git-merge-base}.
  */
-function run(command: string, cwd: string): void {
-	execSync(command, { cwd, stdio: "inherit" });
+async function resolveMergeBase(
+	repoRoot: string,
+	rev: string,
+	otherRev = "HEAD",
+): Promise<string> {
+	try {
+		const output = await simpleGit(repoRoot).raw(["merge-base", rev, otherRev]);
+		const sha = output.trim();
+		if (sha.length > 0) return sha;
+	} catch {
+		// Fall through to the shared error below.
+	}
+	throw new Error(
+		`Could not find merge-base of "${rev}" and "${otherRev}". ` +
+			`Ensure the revision exists locally (e.g. "git fetch origin ${rev}").`,
+	);
 }
+
+/**
+ * Resolves a committish to a concrete SHA in `outerRepoRoot` — the committish as-is, or (when
+ * `useMergeBase`) its merge-base with HEAD (the fork point).
+ */
+async function resolveBuildRevision(
+	outerRepoRoot: string,
+	committish: string,
+	useMergeBase: boolean,
+): Promise<string> {
+	const resolved = useMergeBase
+		? await resolveMergeBase(outerRepoRoot, committish)
+		: await resolveSha(outerRepoRoot, committish);
+	if (resolved !== committish) {
+		console.log(
+			`Resolved revision "${committish}" to ${useMergeBase ? "merge-base " : ""}${resolved}.`,
+		);
+	}
+	return resolved;
+}
+
+// --- Build steps ---
 
 /**
  * Enables corepack and installs dependencies in the given repo.
@@ -144,60 +180,18 @@ function cleanWorkspace(repoRoot: string): void {
 }
 
 /**
- * Compiles this package and its transitive dependencies so webpack has the
- * `lib/` outputs it needs. Uses `build:compile` to avoid the lint / docs / api-report
- * tasks pulled in by the full `build` target, which are unnecessary for bundle
- * collection and prone to unrelated failures across revisions.
+ * Compiles this package and its dependencies, then builds its webpack bundles. Uses
+ * `build:compile` (not the full `build`) to skip the lint / docs / api-report tasks, which are
+ * unnecessary here and prone to unrelated failures across revisions.
  */
-function buildWorkspace(packageRoot: string): void {
+function buildPackage(packageRoot: string): void {
 	console.log(`\nCompiling bundle-size-tests and its dependencies in ${packageRoot}...`);
 	run("npm run build:compile", packageRoot);
-}
-
-/**
- * Builds bundles using webpack inside the given package root.
- */
-function buildBundles(packageRoot: string): void {
 	console.log(`\nBuilding bundles with webpack in ${packageRoot}...`);
 	run("npm run webpack", packageRoot);
 }
 
-/**
- * Saves webpack-bundle-analyzer's `analyzer.json` report into the per-label directory under
- * the persistent analysis root. This report is sufficient for the comparison, so the (large)
- * webpack stats and `build/` outputs do not need to be retained.
- *
- * @remarks
- * Uses copy + unlink instead of `renameSync` because the source and destination
- * may live on different drives (e.g. `D:` -> `C:\Users\<user>\AppData\Local\Temp`),
- * which causes `renameSync` to fail with `EXDEV` on Windows.
- *
- * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
- * @param sourcePackageRoot - Package root that produced the webpack output.
- * @param analysisDir - Directory under which per-label stats are saved.
- */
-function saveStats(label: string, sourcePackageRoot: string, analysisDir: string): void {
-	const analyzerJsonOutputPath = resolve(
-		sourcePackageRoot,
-		"bundleAnalyzerJson",
-		"analyzer.json",
-	);
-
-	const labelDirectory = resolve(analysisDir, label);
-	const destAnalyzerPath = resolve(labelDirectory, "analyzer.json");
-
-	if (!existsSync(analyzerJsonOutputPath)) {
-		throw new Error(
-			`Analyzer report not found at ${analyzerJsonOutputPath}. ` +
-				`Check that webpack ran successfully.`,
-		);
-	}
-
-	mkdirSync(labelDirectory, { recursive: true });
-	copyFileSync(analyzerJsonOutputPath, destAnalyzerPath);
-	unlinkSync(analyzerJsonOutputPath);
-	console.log(`Saved analyzer report to: ${destAnalyzerPath}`);
-}
+// --- Environment prep ---
 
 /**
  * Records the outer repo's staged diff as `staged-changes.patch` in the per-label
@@ -251,48 +245,6 @@ async function ensureInnerRepoAtRevision(
 }
 
 /**
- * Logs the standard "collection complete" banner.
- */
-function logCollectionComplete(mode: string, label: string, labelDirectory: string): void {
-	console.log(`\n${"=".repeat(80)}`);
-	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
-	console.log(`  Stats directory: ${labelDirectory}`);
-	console.log("=".repeat(80));
-}
-
-/**
- * Resolves the revision-mode committish to a concrete SHA in `outerRepoRoot`: `revision` as-is,
- * or the merge-base of HEAD and `mergeBaseOf`. Exactly one of the two is expected to be set.
- */
-async function resolveBuildRevision(
-	outerRepoRoot: string,
-	revision: string | undefined,
-	mergeBaseOf: string | undefined,
-): Promise<string> {
-	const committish = (revision ?? mergeBaseOf) as string;
-	let resolved: string;
-	if (revision !== undefined) {
-		resolved = await resolveSha(outerRepoRoot, committish);
-	} else {
-		const mergeBase = await resolveMergeBase(outerRepoRoot, committish);
-		if (mergeBase === undefined) {
-			throw new Error(
-				`Could not find merge-base of HEAD and "${committish}". ` +
-					`Ensure the revision exists locally (e.g. "git fetch origin ${committish}").`,
-			);
-		}
-		resolved = mergeBase;
-	}
-	if (resolved !== committish) {
-		console.log(
-			`Resolved revision "${committish}" to ` +
-				`${revision !== undefined ? "" : "merge-base "}${resolved}.`,
-		);
-	}
-	return resolved;
-}
-
-/**
  * Prepares a revision-mode build: checks out the inner repo at `sha`, installs deps, and returns
  * the inner repo + package roots. Throws if the package doesn't exist at that revision.
  */
@@ -315,6 +267,57 @@ async function prepareRevisionBuild(
 	return { repoRoot: innerRepoRoot, packageRoot };
 }
 
+// --- Output ---
+
+/**
+ * Saves webpack-bundle-analyzer's `analyzer.json` report into the per-label directory under
+ * the persistent analysis root. This report is sufficient for the comparison, so the (large)
+ * webpack stats and `build/` outputs do not need to be retained.
+ *
+ * @remarks
+ * Uses copy + unlink instead of `renameSync` because the source and destination
+ * may live on different drives (e.g. `D:` -> `C:\Users\<user>\AppData\Local\Temp`),
+ * which causes `renameSync` to fail with `EXDEV` on Windows.
+ *
+ * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
+ * @param sourcePackageRoot - Package root that produced the webpack output.
+ * @param analysisDir - Directory under which per-label stats are saved.
+ */
+function saveStats(label: string, sourcePackageRoot: string, analysisDir: string): void {
+	const analyzerJsonOutputPath = resolve(
+		sourcePackageRoot,
+		"bundleAnalyzerJson",
+		ANALYZER_FILE,
+	);
+
+	const labelDirectory = resolve(analysisDir, label);
+	const destAnalyzerPath = resolve(labelDirectory, ANALYZER_FILE);
+
+	if (!existsSync(analyzerJsonOutputPath)) {
+		throw new Error(
+			`Analyzer report not found at ${analyzerJsonOutputPath}. ` +
+				`Check that webpack ran successfully.`,
+		);
+	}
+
+	mkdirSync(labelDirectory, { recursive: true });
+	copyFileSync(analyzerJsonOutputPath, destAnalyzerPath);
+	unlinkSync(analyzerJsonOutputPath);
+	console.log(`Saved analyzer report to: ${destAnalyzerPath}`);
+}
+
+/**
+ * Logs the standard "collection complete" banner.
+ */
+function logCollectionComplete(mode: string, label: string, labelDirectory: string): void {
+	console.log(`\n${"=".repeat(80)}`);
+	console.log(`✓ Bundle collection complete (mode: ${mode}, label: ${label}).`);
+	console.log(`  Stats directory: ${labelDirectory}`);
+	console.log("=".repeat(80));
+}
+
+// --- Orchestrator ---
+
 /**
  * Collects a single bundle from either the outer enlistment (local mode) or a
  * separate inner enlistment checked out to a specific revision (revision mode),
@@ -334,30 +337,30 @@ async function prepareRevisionBuild(
 export async function collectBundle(options: CollectBundleOptions): Promise<string> {
 	const { mode, revision, mergeBaseOf, forceCleanBuild, packageDir, analysisDir } = options;
 
-	// Validate.
-	if (mode === "revision" && revision === undefined && mergeBaseOf === undefined) {
-		throw new Error("revision mode requires either revision or mergeBaseOf.");
-	}
-
-	// Resolve names and paths.
+	// Resolve names and paths. In revision mode, the committish selects what to build.
+	const committish = mode === "revision" ? (revision ?? mergeBaseOf) : undefined;
 	const outerRepoRoot = findGitRootSync(packageDir);
 	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
 	const label = sanitizeForFileName(
-		options.label ??
-			(mode === "revision"
-				? ((revision ?? mergeBaseOf) as string)
-				: `current_${Math.floor(Date.now() / 1000)}`),
+		options.label ?? committish ?? `current_${Math.floor(Date.now() / 1000)}`,
 	);
 	const labelDirectory = resolve(analysisDir, label);
 
 	// In revision mode, resolve the committish to a SHA and reuse the cached report if it matches.
-	const resolvedRevision =
-		mode === "revision"
-			? await resolveBuildRevision(outerRepoRoot, revision, mergeBaseOf)
-			: undefined;
+	let resolvedRevision: string | undefined;
+	if (mode === "revision") {
+		if (committish === undefined) {
+			throw new Error("revision mode requires either revision or mergeBaseOf.");
+		}
+		resolvedRevision = await resolveBuildRevision(
+			outerRepoRoot,
+			committish,
+			revision === undefined,
+		);
+	}
 	if (resolvedRevision !== undefined && !forceCleanBuild) {
-		const analyzerPath = resolve(labelDirectory, "analyzer.json");
-		const markerPath = resolve(labelDirectory, "revision.txt");
+		const analyzerPath = resolve(labelDirectory, ANALYZER_FILE);
+		const markerPath = resolve(labelDirectory, REVISION_MARKER_FILE);
 		const cachedRevision = existsSync(markerPath)
 			? readFileSync(markerPath, "utf8").trim()
 			: undefined;
@@ -383,17 +386,16 @@ export async function collectBundle(options: CollectBundleOptions): Promise<stri
 		));
 	}
 
-	// Build.
+	// Clean (if needed) and build the bundles.
 	if (forceCleanBuild) {
 		cleanWorkspace(repoRoot);
 	}
-	buildWorkspace(packageRoot);
-	buildBundles(packageRoot);
+	buildPackage(packageRoot);
 
 	// Save stats, recording the SHA so a later run against the same revision can skip the rebuild.
 	saveStats(label, packageRoot, analysisDir);
 	if (resolvedRevision !== undefined) {
-		writeFileSync(resolve(labelDirectory, "revision.txt"), `${resolvedRevision}\n`);
+		writeFileSync(resolve(labelDirectory, REVISION_MARKER_FILE), `${resolvedRevision}\n`);
 	}
 
 	logCollectionComplete(mode, label, labelDirectory);
