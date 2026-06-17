@@ -146,7 +146,7 @@ packages:
   - "!**/bundleAnalysis/**"
 
   # exclude the inner FluidFramework enlistment used by examples/utils/bundle-size-tests for
-  # cross-revision bundle comparison (see `flub bundle collect-and-compare`, which clones the
+  # cross-revision bundle comparison (see `flub bundle collectAndCompare`, which clones the
   # inner repo into <outputDir>/base-repo).
   - "!**/compareBundlesOutput/**"
 

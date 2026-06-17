@@ -14,14 +14,14 @@ explains how the commands fit together and how to read the comparison report.
 | --------------------------------- | --------------------------------------------------------------- |
 | `flub bundle collect`             | Build one bundle and save its stats under a label.              |
 | `flub bundle compare`             | Diff two already-collected bundles and write the report.        |
-| `flub bundle collect-and-compare` | Orchestrate both collect steps plus the compare step end-to-end. |
+| `flub bundle collectAndCompare`   | Orchestrate both collect steps plus the compare step end-to-end. |
 
 Each command self-describes its flags via `--help`:
 
 ```sh
 flub bundle collect --help
 flub bundle compare --help
-flub bundle collect-and-compare --help
+flub bundle collectAndCompare --help
 ```
 
 ## Typical workflow
@@ -29,7 +29,7 @@ flub bundle collect-and-compare --help
 In almost every case you just want the one-shot orchestrator:
 
 ```sh
-flub bundle collect-and-compare
+flub bundle collectAndCompare
 ```
 
 This compares your working tree against the merge-base of `HEAD` and `main` —

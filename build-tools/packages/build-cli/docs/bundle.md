@@ -4,7 +4,7 @@
 Bundle commands collect and compare webpack bundle sizes across revisions.
 
 * [`flub bundle collect`](#flub-bundle-collect)
-* [`flub bundle collect-and-compare`](#flub-bundle-collect-and-compare)
+* [`flub bundle collectAndCompare`](#flub-bundle-collectandcompare)
 * [`flub bundle compare`](#flub-bundle-compare)
 
 ## `flub bundle collect`
@@ -55,13 +55,13 @@ EXAMPLES
 
 _See code: [src/commands/bundle/collect.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bundle/collect.ts)_
 
-## `flub bundle collect-and-compare`
+## `flub bundle collectAndCompare`
 
 Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree, branch, and stash are never modified.
 
 ```
 USAGE
-  $ flub bundle collect-and-compare [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
+  $ flub bundle collectAndCompare [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
     [--analysis-dir <value>] [--output-dir <value>] [--force-clean-build] [--keep-base-repo]
 
 FLAGS
@@ -96,18 +96,18 @@ DESCRIPTION
   https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md
 
 EXAMPLES
-  $ flub bundle collect-and-compare
+  $ flub bundle collectAndCompare
 
-  $ flub bundle collect-and-compare --base-revision main
+  $ flub bundle collectAndCompare --base-revision main
 
-  $ flub bundle collect-and-compare --base-revision client_v2.100.0
+  $ flub bundle collectAndCompare --base-revision client_v2.100.0
 
-  $ flub bundle collect-and-compare --base-revision 18062854f25 --exact-base
+  $ flub bundle collectAndCompare --base-revision 18062854f25 --exact-base
 
-  $ flub bundle collect-and-compare --force-clean-build --keep-base-repo
+  $ flub bundle collectAndCompare --force-clean-build --keep-base-repo
 ```
 
-_See code: [src/commands/bundle/collect-and-compare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bundle/collect-and-compare.ts)_
+_See code: [src/commands/bundle/collectAndCompare.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/bundle/collectAndCompare.ts)_
 
 ## `flub bundle compare`
 
