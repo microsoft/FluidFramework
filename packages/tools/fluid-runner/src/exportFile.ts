@@ -24,8 +24,7 @@ import { FakeUrlResolver } from "./fakeUrlResolver.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
-	createLogger,
+	createFluidRunnerLogger,
 	getTelemetryFileValidationError,
 } from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
@@ -75,8 +74,11 @@ export async function exportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	// eslint-disable-next-line import-x/no-deprecated
-	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const { fileLogger, logger: baseLogger } = createFluidRunnerLogger(
+		telemetryFile,
+		telemetryOptions,
+	);
+	const logger = createChildLogger({ logger: baseLogger });
 
 	try {
 		return await PerformanceEvent.timedExecAsync(

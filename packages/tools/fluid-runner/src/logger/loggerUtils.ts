@@ -15,8 +15,6 @@ import { CSVFileLogger } from "./csvFileLogger.js";
 import {
 	type IFileLogger,
 	type IFileLoggerTelemetryOptions,
-	// eslint-disable-next-line import-x/no-deprecated
-	type ITelemetryOptions,
 	OutputFormat,
 } from "./fileLogger.js";
 import { JSONFileLogger } from "./jsonFileLogger.js";
@@ -66,8 +64,7 @@ export function createFluidRunnerLogger(
  */
 export function createLogger(
 	filePath: string,
-	// eslint-disable-next-line import-x/no-deprecated
-	options?: ITelemetryOptions,
+	options?: IFileLoggerTelemetryOptions,
 ): { logger: TelemetryLoggerExt; fileLogger: IFileLogger } {
 	const fileLogger =
 		options?.outputFormat === OutputFormat.CSV

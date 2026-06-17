@@ -6,19 +6,23 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-import { PerformanceEvent } from "@fluidframework/telemetry-utils/internal";
+import {
+	PerformanceEvent,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 
 import { isCodeLoaderBundle, isFluidFileConverter } from "./codeLoaderBundle.js";
 import {
 	type IExportFileResponse,
+	// createContainerAndExecute is used instead of createFluidRunnerContainerAndExecute to avoid an
+	// extra createChildLogger wrapping, since we already have a TelemetryLoggerExt at this call site.
 	// eslint-disable-next-line import-x/no-deprecated
 	createContainerAndExecute,
 } from "./exportFile.js";
 /* eslint-disable import-x/no-internal-modules */
 import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
 import {
-	// eslint-disable-next-line import-x/no-deprecated
-	createLogger,
+	createFluidRunnerLogger,
 	getTelemetryFileValidationError,
 } from "./logger/loggerUtils.js";
 /* eslint-enable import-x/no-internal-modules */
@@ -46,8 +50,11 @@ export async function parseBundleAndExportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	// eslint-disable-next-line import-x/no-deprecated
-	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const { fileLogger, logger: baseLogger } = createFluidRunnerLogger(
+		telemetryFile,
+		telemetryOptions,
+	);
+	const logger = createChildLogger({ logger: baseLogger });
 
 	try {
 		return await PerformanceEvent.timedExecAsync(
@@ -85,7 +92,7 @@ export async function parseBundleAndExportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					// eslint-disable-next-line import-x/no-deprecated
+					// eslint-disable-next-line import-x/no-deprecated -- see import comment above
 					await createContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
