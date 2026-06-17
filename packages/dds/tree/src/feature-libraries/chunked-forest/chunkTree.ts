@@ -651,19 +651,15 @@ export function splitFieldAtIndex(
  * {@link tryCoalesceUniformChunks}. Performs at most one in-place `splice` on `chunks`. Non-mergeable
  * chunks are passed through unchanged.
  *
- * Time: O(range_length) for the walk, plus the cost of one splice (O(chunks.length)) and the
- * cost of the merges themselves. Per-chunk merge cost is O(rightChunk.values.length) when the
- * surviving chunk can be mutated in place (see {@link tryCoalesceUniformChunks}), so the total
- * work of merging a run of `k` chunks together is O(total values), not O(total values squared).
- *
- * @privateRemarks
- * Caps merged chunks at {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}, matching the
- * bisect threshold used by {@link splitFieldAtIndex} so split-and-coalesce pairs don't oscillate.
+ * The per-chunk cap ({@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax}) intentionally
+ * matches the threshold {@link splitFieldAtIndex} uses when bisecting a chunk: if coalescing
+ * produced chunks larger than that threshold, a subsequent split would immediately re-divide
+ * them, so matching the two keeps repeated split/coalesce cycles from oscillating.
  *
  * @param chunks - The chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
  * @param range - Sub-range of `chunks` (by chunk index) to consider for merging. Defaults to the
- * whole array. `length` is clamped to the available chunks.
+ * whole array. `start + length` must not exceed `chunks.length`.
  */
 export function coalesceUniformChunks(
 	chunks: TreeChunk[],
@@ -672,26 +668,30 @@ export function coalesceUniformChunks(
 ): void {
 	const rangeStart = range?.start ?? 0;
 	const rangeLength = range?.length ?? chunks.length - rangeStart;
-	const rangeEnd = Math.min(rangeStart + rangeLength, chunks.length);
+	const rangeEnd = rangeStart + rangeLength;
+	debugAssert(
+		() =>
+			rangeEnd <= chunks.length || "coalesceUniformChunks: range end exceeds chunks length",
+	);
 	if (rangeEnd - rangeStart < 2) {
 		return;
 	}
 
 	// Build the resulting chunk list for [rangeStart, rangeEnd). Passthrough chunks keep their
-	// identity; merged pairs are replaced by the chunk returned from tryCoalesceUniformChunks,
+	// identity; merged pairs are replaced by the chunk returned from `tryCoalesceUniformChunks`,
 	// which also handles ref-count bookkeeping for chunks that drop out of the array.
 	const result: TreeChunk[] = [];
 	let mutated = false;
 	for (let chunkIndex = rangeStart; chunkIndex < rangeEnd; chunkIndex++) {
-		const next = chunks[chunkIndex] ?? oob();
+		const current = chunks[chunkIndex] ?? oob();
 		if (result.length === 0) {
-			result.push(next);
+			result.push(current);
 			continue;
 		}
-		const last = result[result.length - 1] ?? oob();
-		const coalesced = tryCoalesceUniformChunks(last, next, policy);
+		const previous = result[result.length - 1] ?? oob();
+		const coalesced = tryCoalesceUniformChunks(previous, current, policy);
 		if (coalesced === undefined) {
-			result.push(next);
+			result.push(current);
 		} else {
 			result[result.length - 1] = coalesced;
 			mutated = true;
@@ -704,8 +704,7 @@ export function coalesceUniformChunks(
 }
 
 /**
- * Attempts to combine two adjacent {@link UniformChunk}s into a single {@link UniformChunk}. Returns
- * the merged chunk on success, or `undefined` when the pair is not mergeable.
+ * Attempts to combine two adjacent {@link UniformChunk}s into a single {@link UniformChunk}.
  *
  * @remarks
  * Skips if either input is not a {@link UniformChunk}, the {@link TreeShape}s differ, or the
@@ -714,11 +713,8 @@ export function coalesceUniformChunks(
  *
  * Asserts that the two inputs do not carry different non-undefined
  * {@link UniformChunk.idCompressor}s: that case would silently produce a merged chunk whose
- * compressed-id values decompress to incorrect strings under the surviving compressor. All
- * chunks in a single {@link ChunkedForest} share that forest's idCompressor, so the assertion
- * documents the invariant rather than guarding a path callers should take.
+ * compressed-id values decompress to incorrect strings under the surviving compressor.
  *
- * @remarks
  * Ref-count contract: on success the caller transfers one ref each on `left` and `right` to this
  * function and receives one ref on the returned chunk (which may be `left` itself when `left` was
  * not shared). On failure (`undefined`), the caller's refs on `left` and `right` are unchanged.
