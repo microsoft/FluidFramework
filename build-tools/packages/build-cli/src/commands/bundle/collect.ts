@@ -38,8 +38,9 @@ export default class BundleCollect extends BaseCommand<typeof BundleCollect> {
 		}),
 		revision: Flags.string({
 			description:
-				"(revision mode only, required) Branch, tag, or commit SHA to check out in the " +
-				"inner repo before building. Also used as the default label.",
+				"(revision mode only, required) Branch, tag, commit SHA, or any committish (e.g. " +
+				"HEAD~2) to check out in the inner repo before building. Non-branch revisions are " +
+				"resolved against the outer repo. Also used as the default label.",
 		}),
 		label: Flags.string({
 			description:

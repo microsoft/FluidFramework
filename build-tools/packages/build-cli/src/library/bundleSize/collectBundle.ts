@@ -24,7 +24,9 @@ export interface CollectBundleOptions {
 	 */
 	readonly mode: "local" | "revision";
 	/**
-	 * (revision mode only) Branch, tag, or commit SHA to check out in the inner repo before building.
+	 * (revision mode only) Revision to check out in the inner repo before building. May be a
+	 * branch, tag, commit SHA, or any committish (e.g. `HEAD~2`); non-branch revisions are
+	 * resolved against the outer repo.
 	 */
 	readonly revision?: string;
 	/**
@@ -189,8 +191,23 @@ async function captureLocalPatch(repoRoot: string, labelDirectory: string): Prom
  * revision is checked out explicitly afterwards.
  *
  * On every call the requested revision is checked out with a detached HEAD, so
- * there is no local branch state to manage; it is resolved against the objects
- * copied from the outer repo during the clone.
+ * there is no local branch state to manage. The checkout target is chosen as
+ * follows:
+ *
+ * - A branch from the outer repo is mirrored in the clone as a remote-tracking
+ *   ref, so it is checked out by its qualified name `origin/<branch>` (a bare
+ *   branch name would not resolve here — git would look for a remote literally
+ *   named `<branch>`). Branch names are never turned into a SHA, so the checkout
+ *   stays readable.
+ * - Anything else — a commit SHA, a tag, or a relative committish such as
+ *   `HEAD^4` — is meaningful only in the outer repo (a relative ref evaluated in
+ *   the clone would resolve against the clone's HEAD, i.e. the wrong commit), so
+ *   it is resolved to a commit SHA in the outer repo and that SHA, which the full
+ *   clone already contains, is checked out.
+ *
+ * Branch detection uses `for-each-ref`, which echoes the ref when the revision
+ * names a branch and otherwise prints nothing while exiting 0, so the non-branch
+ * case is a normal empty result rather than a thrown error.
  *
  * Never modifies the outer repo's working tree, branch, or stash.
  */
@@ -209,8 +226,25 @@ async function ensureInnerRepoAtRevision(
 	}
 
 	const innerGit = simpleGit(innerRepoRoot);
+
+	// Pick the checkout target (see @remarks): a branch is checked out by its
+	// origin/<branch> name; everything else is resolved to a SHA in the outer repo.
+	const remoteBranchRef = `refs/remotes/origin/${revision}`;
+	const matchedRef = (
+		await innerGit.raw(["for-each-ref", "--format=%(refname)", remoteBranchRef])
+	).trim();
+
+	let checkoutTarget: string;
+	if (matchedRef === remoteBranchRef) {
+		checkoutTarget = `origin/${revision}`;
+	} else {
+		checkoutTarget = (
+			await simpleGit(outerRepoRoot).raw(["rev-parse", `${revision}^{commit}`])
+		).trim();
+	}
+
 	console.log(`Checking out revision "${revision}" in inner repo...`);
-	await innerGit.raw(["checkout", "--detach", revision]);
+	await innerGit.raw(["checkout", "--detach", checkoutTarget]);
 }
 
 /**
