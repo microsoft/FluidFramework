@@ -21,15 +21,6 @@ export type OpSpaceCompressedId = number & {
     readonly OpNormalized: "9209432d-a959-4df7-b2ad-767ead4dbcae";
 };
 
-// @beta @legacy
-export const SerializationVersion: {
-    readonly V2: 2;
-    readonly V3: 3;
-};
-
-// @beta @legacy
-export type SerializationVersion = (typeof SerializationVersion)[keyof typeof SerializationVersion];
-
 // @public
 export type SessionId = StableId & {
     readonly SessionId: "4498f850-e14e-4be9-8db0-89ec00997e58";

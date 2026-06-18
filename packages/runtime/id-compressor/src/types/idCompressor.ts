@@ -17,8 +17,7 @@ import type {
 
 /**
  * Serialization format versions for IdCompressor.
- * @legacy
- * @beta
+ * @internal
  */
 export const SerializationVersion = {
 	/**
@@ -33,8 +32,7 @@ export const SerializationVersion = {
 
 /**
  * Type representing valid serialization version values.
- * @legacy
- * @beta
+ * @internal
  */
 export type SerializationVersion =
 	(typeof SerializationVersion)[keyof typeof SerializationVersion];

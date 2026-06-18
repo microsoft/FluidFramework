@@ -14,10 +14,10 @@ import {
 	createIdCompressor,
 	deserializeIdCompressor,
 	serializeIdCompressor,
+	SerializationVersion,
 	type SerializedIdCompressorWithOngoingSession,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/id-compressor/internal";
-import { SerializationVersion } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {
