@@ -3220,9 +3220,7 @@ describe("treeNodeApi", () => {
 
 					assert.throws(
 						() => (view.root.value = 1),
-						validateUsageError(
-							"Editing the tree is forbidden during a change event callback",
-						),
+						validateUsageError("Editing the tree is forbidden during a change event callback"),
 					);
 				});
 			}
