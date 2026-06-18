@@ -16,6 +16,7 @@
 		"outDir": "invalid use tsconfig.esm.json or tsconfig.cjs.json to build",
 		"types": ["node", "mocha", "chai", "sinon"],
 		// must be disabled per "strict": false.
+		// The tests have only one violation at the time of setting this explicitly, but implementation has plenty of errors.
 		"exactOptionalPropertyTypes": false,
 	},
 	// Default reference for IntelliSense

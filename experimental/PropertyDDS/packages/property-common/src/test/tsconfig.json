@@ -13,6 +13,7 @@
 		"noImplicitAny": true,
 		"noUnusedLocals": true,
 		"noImplicitOverride": true,
+		// property-common src/error_objects/operationError.ts does not support exactOptionalPropertyTypes
 		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
