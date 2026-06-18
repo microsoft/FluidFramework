@@ -1,5 +1,10 @@
 name: "PR Bundle Size Comments"
 
+# Per-run title shown in the Actions list — the static workflow name on its own makes the list
+# unscannable when many runs fire on the same workflow. Including the trigger event subtype and
+# check name lets us tell at a glance which kind of event each run handled.
+run-name: "${{ github.workflow }} | ${{ github.event.check_run.name }} | ${{ github.event.action }} | ${{ github.sha }}"
+
 # This workflow runs the bundle-size comparison for a PR and posts the result back to the PR via a sticky comment.
 #
 # Triggers are all `check_run`. We use the lifecycle of ADO's own published checks to decide what to do:
@@ -139,6 +144,10 @@ jobs:
               `Head commit: \`${process.env.HEAD_SHA}\``,
               "",
               "Pending — `Build - client packages` is running. Results will appear here when the build completes.",
+              "",
+              // Hidden footer — invisible in the rendered comment but visible when viewing source. Lets
+              // us trace a sticky back to the run that last wrote it.
+              "<!-- pr-bundle-size-comments: run_id=${{ github.run_id }} attempt=${{ github.run_attempt }} -->",
               "",
             ].join("\n");
             fs.writeFileSync("acknowledge.md", body);
@@ -309,7 +318,8 @@ jobs:
         (needs.identify-from-pr-build.result == 'success' && needs.identify-from-pr-build.outputs.prs != '[]') ||
         (needs.identify-from-baseline-build.result == 'success' && needs.identify-from-baseline-build.outputs.prs != '[]')
       )
-    name: "${{ matrix.pr.number && format('compare (PR #{0})', matrix.pr.number) || 'compare' }}"
+    # Skipped runs always show the raw expression text — no fallback helps. Keep it simple.
+    name: "compare (PR #${{ matrix.pr.number }})"
     strategy:
       matrix:
         pr: ${{ fromJSON(needs.identify-from-pr-build.outputs.prs || needs.identify-from-baseline-build.outputs.prs || '[]') }}
@@ -505,6 +515,10 @@ jobs:
               data.kind === "completed"
                 ? renderComparison(data.comparison)
                 : renderFailure(data.side, data.kind),
+              "",
+              // Hidden footer — invisible in the rendered comment but visible when viewing source. Lets
+              // us trace a sticky back to the run that last wrote it.
+              "<!-- pr-bundle-size-comments: run_id=${{ github.run_id }} attempt=${{ github.run_attempt }} -->",
             ].join("\n") + "\n";
 
             fs.writeFileSync("bundle-comparison.md", body);
