@@ -31,7 +31,8 @@ import { JSONFileLogger } from "./jsonFileLogger.js";
  * to write CSV instead. See {@link IFileLoggerTelemetryOptions} for supported options including default
  * properties applied to every event and flush batching.
  *
- * @param filePath - Path to the file telemetry will be written to. Must not already exist.
+ * @param filePath - Path to the file telemetry will be written to. If the file already exists its
+ * contents will be overwritten or corrupted — callers should verify the path is unused before calling.
  * @param options - Optional telemetry configuration. See {@link IFileLoggerTelemetryOptions}.
  * @returns The wrapped telemetry logger to send events through, and the underlying `IFileLogger`
  * which must be closed when telemetry collection is finished.

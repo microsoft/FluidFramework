@@ -2,15 +2,26 @@
 "@fluidframework/fluid-runner": minor
 "__section": other
 ---
-Expose `createFluidRunnerContainerAndExecute` and `createFluidRunnerLogger` as `@legacy @beta`
+New public APIs for loading containers from ODSP snapshots and collecting telemetry
 
-The lower-level helpers `createFluidRunnerContainerAndExecute` and `createFluidRunnerLogger` from `@fluidframework/fluid-runner` are now part of the legacy/beta public API surface. Use `createFluidRunnerContainerAndExecute` to load a container from an ODSP snapshot and run caller-provided code against it. Use `createFluidRunnerLogger` to obtain a file-backed telemetry logger that can be passed to `createFluidRunnerContainerAndExecute`.
+Two new functions and their supporting types are now available in `@fluidframework/fluid-runner`:
 
-The `IFileLogger` and `IFileLoggerTelemetryOptions` types — already exported from the package — have likewise been promoted from `@internal` to `@legacy @beta` so they can be referenced by consumers of these APIs. The signatures of `createFluidRunnerLogger` and `createFluidRunnerContainerAndExecute` use the public `ITelemetryBaseLogger` type from `@fluidframework/core-interfaces`.
+**`createFluidRunnerLogger(filePath, options?)`** — Creates a file-backed telemetry logger that writes events to disk in JSON (default) or CSV format. Returns a `logger` (an `ITelemetryBaseLogger` to send events through) and a `fileLogger` (an `IFileLogger` whose `close()` method must be called when done to flush buffered events).
 
-For back-compatibility, the previous `@internal` names are retained as `@deprecated` aliases:
+**`createFluidRunnerContainerAndExecute(snapshot, converter, logger, ...)`** — Loads a Fluid container from an ODSP snapshot (JSON string or binary `Uint8Array`), waits for it to catch up, then runs caller-provided code via an `IFluidFileConverter`. The container is automatically disposed after execution. Supports an optional timeout and the ability to disable network fetch to ensure fully offline operation.
 
-- `createContainerAndExecute` → use `createFluidRunnerContainerAndExecute`
-- `createLogger` → use `createFluidRunnerLogger`
-- `ITelemetryOptions` → use `IFileLoggerTelemetryOptions`
+**Typical usage:**
+
+```ts
+const { logger, fileLogger } = createFluidRunnerLogger("./telemetry.json");
+const result = await createFluidRunnerContainerAndExecute(
+  snapshotContent, myConverter, logger, options, timeout,
+);
+await fileLogger.close();
+```
+
+**Supporting types:**
+
+- `IFileLogger` — A telemetry logger that writes to a file and exposes a `close()` method to flush buffered events.
+- `IFileLoggerTelemetryOptions` — Configuration for the logger: output format (`JSON` or `CSV`), default properties added to every event, and flush batch size.
 
