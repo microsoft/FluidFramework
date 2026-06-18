@@ -36,6 +36,11 @@ interface ShardingFuzzTestState extends BaseFuzzTestState {
 	leafCompressors: Set<IdCompressor>;
 	/** Map from compressor to all local IDs it has generated */
 	compressorGeneratedIds: Map<IdCompressor, SessionSpaceCompressedId[]>;
+	/**
+	 * Map from compressor to the set of local IDs it has been synchronized with (and so must be able
+	 * to decompress) but did not itself generate. Populated by synchronize operations.
+	 */
+	synchronizedIds: Map<IdCompressor, Set<SessionSpaceCompressedId>>;
 	/** Global set of all generated local IDs for collision detection */
 	globalLocalIds: Set<SessionSpaceCompressedId>;
 	/** Global set of all decompressed stable IDs for collision detection */
@@ -60,6 +65,14 @@ interface UnshardOperation {
 }
 
 /**
+ * Operation to synchronize a child shard's progress into its parent without disposing the child.
+ */
+interface SynchronizeOperation {
+	type: "synchronize";
+	child: IdCompressor;
+}
+
+/**
  * Operation to generate a new compressed ID.
  */
 interface GenerateIdOperation {
@@ -77,6 +90,7 @@ interface ValidateShardingOperation {
 type ShardingOperation =
 	| ShardOperation
 	| UnshardOperation
+	| SynchronizeOperation
 	| GenerateIdOperation
 	| ValidateShardingOperation;
 
@@ -118,6 +132,26 @@ function unshardGenerator(state: ShardingFuzzTestState): UnshardOperation {
 }
 
 /**
+ * Generates a synchronize operation targeting a random non-root active compressor.
+ * The selected compressor's parent will be synchronized with it.
+ * If there are no non-root compressors, returns a no-op targeting the root (filtered out in the handler).
+ */
+function synchronizeGenerator(state: ShardingFuzzTestState): SynchronizeOperation {
+	const children = [...state.activeCompressors].filter((c) => c !== state.rootCompressor);
+	if (children.length === 0) {
+		// No-op: target root which will be filtered out in the handler.
+		return {
+			type: "synchronize",
+			child: state.rootCompressor,
+		};
+	}
+	return {
+		type: "synchronize",
+		child: state.random.pick(children),
+	};
+}
+
+/**
  * Generates an operation to generate a new ID from a random compressor.
  */
 function generateIdGenerator(state: ShardingFuzzTestState): GenerateIdOperation {
@@ -143,6 +177,8 @@ interface ShardingOpGeneratorConfig {
 	shardWeight?: number;
 	/** Weight for unshard operations (default: 3) */
 	unshardWeight?: number;
+	/** Weight for synchronize operations (default: 5) */
+	synchronizeWeight?: number;
 	/** Weight for ID generation operations (default: 20) */
 	generateIdWeight?: number;
 	/** How often to inject validation operations (default: every 100 ops) */
@@ -158,6 +194,7 @@ function makeShardingOpGenerator(
 	const {
 		shardWeight = 3,
 		unshardWeight = 3,
+		synchronizeWeight = 5,
 		generateIdWeight = 20,
 		validateInterval = 100,
 	} = config;
@@ -166,6 +203,7 @@ function makeShardingOpGenerator(
 		createWeightedGenerator<ShardingOperation, ShardingFuzzTestState>([
 			[shardGenerator, shardWeight],
 			[unshardGenerator, unshardWeight],
+			[synchronizeGenerator, synchronizeWeight],
 			[generateIdGenerator, generateIdWeight],
 		]),
 		take(1, repeat<ShardingOperation, ShardingFuzzTestState>(validateGenerator())),
@@ -179,7 +217,17 @@ function makeShardingOpGenerator(
 function handleShard(state: ShardingFuzzTestState, op: ShardOperation): ShardingFuzzTestState {
 	const { compressor, numShards } = op;
 
-	const serializedShards = compressor.shard(numShards);
+	let serializedShards: ReturnType<IdCompressor["shard"]>;
+	try {
+		serializedShards = compressor.shard(numShards);
+	} catch (error) {
+		// Sharding multiplies the stride; once it would exceed the supported maximum, shard() throws
+		// before mutating any state. This is expected for sufficiently deep trees, so treat it as a no-op.
+		if (error instanceof Error && error.message === "Sharding limit reached.") {
+			return state;
+		}
+		throw error;
+	}
 
 	for (const serialized of serializedShards) {
 		const shard = IdCompressor.deserialize({
@@ -201,6 +249,7 @@ function handleShard(state: ShardingFuzzTestState, op: ShardOperation): Sharding
 		state.activeCompressors.add(shard);
 		state.leafCompressors.add(shard);
 		state.compressorGeneratedIds.set(shard, []);
+		state.synchronizedIds.set(shard, new Set());
 	}
 
 	// Parent is no longer a leaf after sharding
@@ -247,11 +296,68 @@ function handleUnshard(
 		}
 	}
 
+	// The disposed leaf's IDs become the parent's responsibility to decompress.
+	const parentSynced = state.synchronizedIds.get(parent) ?? new Set();
+	for (const id of state.compressorGeneratedIds.get(leaf) ?? []) {
+		parentSynced.add(id);
+	}
+	for (const id of state.synchronizedIds.get(leaf) ?? []) {
+		parentSynced.add(id);
+	}
+	state.synchronizedIds.set(parent, parentSynced);
+
 	state.parentMap.delete(leaf);
 	state.childrenMap.delete(leaf);
 	state.activeCompressors.delete(leaf);
 	state.leafCompressors.delete(leaf);
 	state.compressorGeneratedIds.delete(leaf);
+	state.synchronizedIds.delete(leaf);
+
+	return state;
+}
+
+/**
+ * Handles a synchronize operation by synchronizing a child's parent with the child's current progress,
+ * without disposing the child. After this, the parent must be able to decompress every ID the child has
+ * generated (and every ID the child had itself been synchronized with) up to this point.
+ * No-op if the target is the root or is otherwise no longer eligible.
+ */
+function handleSynchronize(
+	state: ShardingFuzzTestState,
+	op: SynchronizeOperation,
+): ShardingFuzzTestState {
+	const { child } = op;
+
+	if (child === state.rootCompressor || !state.activeCompressors.has(child)) {
+		return state;
+	}
+
+	const parent = state.parentMap.get(child);
+	if (parent === undefined || !state.activeCompressors.has(parent)) {
+		return state;
+	}
+
+	const token = child.getShardSyncToken();
+	if (token === undefined) {
+		return state;
+	}
+
+	parent.synchronizeWithShard(token);
+
+	// Record everything the parent must now be able to decompress: the child's own generated IDs plus
+	// whatever the child had previously been synchronized with (this models upward propagation, since
+	// the child's gen count was advanced past those IDs when it synchronized with its own children).
+	let parentSynced = state.synchronizedIds.get(parent);
+	if (parentSynced === undefined) {
+		parentSynced = new Set();
+		state.synchronizedIds.set(parent, parentSynced);
+	}
+	for (const id of state.compressorGeneratedIds.get(child) ?? []) {
+		parentSynced.add(id);
+	}
+	for (const id of state.synchronizedIds.get(child) ?? []) {
+		parentSynced.add(id);
+	}
 
 	return state;
 }
@@ -329,6 +435,28 @@ function handleValidate(state: ShardingFuzzTestState): ShardingFuzzTestState {
 		}
 	}
 
+	// Every compressor must be able to decompress all IDs it has been synchronized with.
+	for (const compressor of state.activeCompressors) {
+		const syncedIds = state.synchronizedIds.get(compressor);
+		if (syncedIds === undefined) {
+			continue;
+		}
+		for (const localId of syncedIds) {
+			try {
+				const stableId = compressor.decompress(localId);
+				if (!state.globalStableIds.has(stableId)) {
+					throw new Error(
+						`Validation failed: Compressor decompressed synchronized ID ${localId} to unknown stable ID ${stableId}`,
+					);
+				}
+			} catch (error) {
+				throw new Error(
+					`Validation failed: Compressor could not decompress synchronized ID ${localId}: ${error}`,
+				);
+			}
+		}
+	}
+
 	return state;
 }
 
@@ -353,6 +481,7 @@ function performShardingFuzzActions(
 		activeCompressors: new Set([rootCompressor]),
 		leafCompressors: new Set([rootCompressor]),
 		compressorGeneratedIds: new Map([[rootCompressor, []]]),
+		synchronizedIds: new Map([[rootCompressor, new Set()]]),
 		globalLocalIds: new Set(),
 		globalStableIds: new Set(),
 	};
@@ -360,6 +489,7 @@ function performShardingFuzzActions(
 	const handlers = {
 		shard: handleShard,
 		unshard: handleUnshard,
+		synchronize: handleSynchronize,
 		generateId: handleGenerateId,
 		validateSharding: handleValidate,
 	};
@@ -411,5 +541,23 @@ describe("IdCompressor Sharding Fuzz Tests", () => {
 			}),
 		);
 		performShardingFuzzActions(generator, root, 456);
+	});
+
+	it("synchronization-heavy fuzz test - long-lived deep shards synchronized upward", () => {
+		const sessionId = createSessionId();
+		const root = new IdCompressor(sessionId, undefined, SerializationVersion.V3);
+		// High shard and low unshard weights keep trees deep and shards long-lived, while the high
+		// synchronize weight drives many repeated, multi-ancestor synchronization steps.
+		const generator = take(
+			3000,
+			makeShardingOpGenerator({
+				shardWeight: 5,
+				unshardWeight: 1,
+				synchronizeWeight: 15,
+				generateIdWeight: 20,
+				validateInterval: 100,
+			}),
+		);
+		performShardingFuzzActions(generator, root, 789);
 	});
 });

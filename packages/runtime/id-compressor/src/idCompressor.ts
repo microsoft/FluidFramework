@@ -42,6 +42,7 @@ import {
 	lastFinalizedLocal,
 } from "./sessions.js";
 import type {
+	ShardToken,
 	ShardDisposalToken,
 	IIdCompressor,
 	IIdCompressorCore,
@@ -53,6 +54,7 @@ import type {
 	SessionId,
 	SessionSpaceCompressedId,
 	StableId,
+	ShardSynchronizationToken,
 } from "./types/index.js";
 import { SerializationVersion } from "./types/index.js";
 import {
@@ -349,37 +351,48 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		return shards;
 	}
-
 	/**
-	 * {@inheritdoc IIdCompressorCore.unshard}
+	 * {@inheritdoc IIdCompressorCore.synchronizeWithShard}
 	 */
-	public unshard(disposalToken: ShardDisposalToken): void {
+	public synchronizeWithShard(syncToken: ShardSynchronizationToken): void {
+		this.synchronizeChild(false, syncToken);
+	}
+
+	private synchronizeChild(childDisposed: boolean, syncToken: ShardToken): boolean {
 		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
 				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
 			);
 		}
 		if (this.shardingState === undefined) {
-			throw new Error("Must be in sharding mode to unshard");
+			throw new Error("Must be in sharding mode.");
 		}
 
-		const childShardId = disposalToken.shardId;
+		const childShardId = syncToken.shardId;
 		const { activeChildIds, originalStride } = this.shardingState;
 
 		// Verify this child belongs to us
-		if (!activeChildIds.delete(childShardId)) {
+		if (!activeChildIds.has(childShardId)) {
 			throw new Error(
-				`Cannot unshard child with ID ${childShardId}: not in active children set`,
+				`Cannot synchronize with child with ID ${childShardId}: not in active children set`,
 			);
 		}
 
-		const childGenCount = disposalToken.localGenCount;
+		// Only disposal removes the child from the active set. A plain synchronization leaves the
+		// child active so it can continue generating IDs and be synchronized with again later.
+		if (childDisposed) {
+			activeChildIds.delete(childShardId);
+		}
+
 		const isLeaf = activeChildIds.size === 0;
-		if (isLeaf) {
+		if (isLeaf && childDisposed) {
 			this.shardingState.currentStride = originalStride;
 		}
 
+		// Read currentStride after the possible stride reset above, so that a leaf-making disposal
+		// realigns the parent on its original (reclaimed) stride rather than the wider sharded stride.
 		const { currentStride } = this.shardingState;
+		const childGenCount = syncToken.localGenCount;
 
 		// Realign parent to next position in its sequence if child is ahead
 		if (childGenCount > this.localGenCount) {
@@ -391,9 +404,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			this.localGenCount += count;
 		}
 
+		return isLeaf;
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.unshard}
+	 */
+	public unshard(disposalToken: ShardDisposalToken): void {
+		const isNowLeaf = this.synchronizeChild(true, disposalToken);
+		assert(this.shardingState !== undefined, "Must be sharded");
+
 		// Otherwise, we're a shard that's now a leaf again, keep sharding state
 		// If originalStride === 1, we're the root with no children, so exit sharding mode
-		if (isLeaf && this.shardingState.originalStride === 1) {
+		if (isNowLeaf && this.shardingState.originalStride === 1) {
 			this.shardingState = undefined;
 		}
 	}
@@ -410,21 +433,34 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 
-		// Root cannot be disposed (shardId is undefined for root)
-		if (this.shardingState.shardId === undefined) {
-			throw new Error("Cannot dispose root compressor - only shards can be disposed");
-		}
-
-		const disposalToken: ShardDisposalToken = {
-			localGenCount: this.localGenCount,
-			shardId: this.shardingState.shardId,
-		};
+		const token = this.getShardSyncToken() as unknown as ShardDisposalToken;
 
 		// Make this compressor unusable by replacing all methods with throwing stubs
 		// This is a one-time mutation that avoids runtime checks in every method
 		makeCompressorUnusable(this);
 
-		return disposalToken;
+		return token;
+	}
+
+	/**
+	 * {@inheritdoc IIdCompressorCore.getShardSyncToken}
+	 */
+	public getShardSyncToken(): ShardSynchronizationToken | undefined {
+		if (this.shardingState === undefined) {
+			return undefined;
+		}
+
+		// Root cannot be disposed (shardId is undefined for root)
+		if (this.shardingState.shardId === undefined) {
+			throw new Error("Cannot get a token for a root compressor - only shards can be disposed");
+		}
+
+		const token: ShardToken = {
+			localGenCount: this.localGenCount,
+			shardId: this.shardingState.shardId,
+		};
+
+		return token as unknown as ShardSynchronizationToken;
 	}
 
 	private generateNextLocalId(): LocalCompressedId {

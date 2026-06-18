@@ -7,7 +7,10 @@ import { strict as assert, fail } from "node:assert";
 
 import { createIdCompressor, IdCompressor } from "../idCompressor.js";
 import { isFinalId } from "../identifiers.js";
-import type { SessionSpaceCompressedId } from "../index.js";
+import type {
+	SerializedIdCompressorWithOngoingSession,
+	SessionSpaceCompressedId,
+} from "../index.js";
 import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
@@ -977,6 +980,148 @@ describe("IdCompressor Sharding", () => {
 				isLocalId(nextId),
 				"Should still generate local IDs after finalization during sharding",
 			);
+		});
+	});
+
+	describe("Shard Synchronization", () => {
+		const deserialize = (serialized: SerializedIdCompressorWithOngoingSession): IdCompressor =>
+			IdCompressor.deserialize({
+				serialized,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+
+		it("getShardSyncToken returns undefined when not sharded", () => {
+			const compressor = new IdCompressor(
+				createSessionId(),
+				undefined,
+				SerializationVersion.V3,
+			);
+			assert.equal(compressor.getShardSyncToken(), undefined);
+		});
+
+		it("getShardSyncToken throws on the root of a shard tree", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			root.shard(1);
+			// The root has sharding state but no shardId, so it cannot produce a token.
+			assert.throws(() => root.getShardSyncToken());
+		});
+
+		it("getShardSyncToken does not dispose the shard", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = root.shard(1);
+			const child = deserialize(childSer);
+
+			const token = child.getShardSyncToken();
+			assert(token !== undefined);
+			// The child remains fully usable after producing a token.
+			assert.equal(child.generateCompressedId(), -3);
+		});
+
+		it("getShardSyncToken works on a non-leaf intermediate shard", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = root.shard(1);
+			const child = deserialize(childSer);
+			// The child now has an active grandchild, making it a non-leaf shard.
+			child.shard(1);
+
+			// Unlike disposeShard(), a sync token can be produced while children are active.
+			// This is what allows an intermediate shard to propagate progress upward.
+			assert(child.getShardSyncToken() !== undefined);
+		});
+
+		it("parent can decompress a child's post-shard IDs after synchronizing", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = root.shard(1); // stride 2; child base genCount 1
+			const child = deserialize(childSer);
+
+			const childId = child.generateCompressedId();
+			assert.equal(childId, -3);
+
+			// Before synchronizing, the parent does not recognize the child's new ID.
+			assert.throws(() => root.decompress(childId));
+
+			root.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+
+			// After synchronizing, the parent decompresses it to the same stable ID
+			// (all shards in a tree share one session).
+			assert.equal(root.decompress(childId), child.decompress(childId));
+		});
+
+		it("supports repeated synchronization with a long-lived child", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = root.shard(1); // stride 2; child base genCount 1
+			const child = deserialize(childSer);
+
+			// The root never generates its own IDs, so its decompression coverage only grows
+			// via synchronization. Each round the child generates two new IDs.
+			const rounds = [
+				[-3, -5],
+				[-7, -9],
+				[-11, -13],
+			] as [first: SessionSpaceCompressedId, second: SessionSpaceCompressedId][];
+
+			for (const [first, second] of rounds) {
+				assert.equal(child.generateCompressedId(), first);
+				assert.equal(child.generateCompressedId(), second);
+
+				// The parent cannot see the child's newest IDs until it (re)synchronizes.
+				assert.throws(() => root.decompress(first));
+
+				// The second and later calls would throw "not in active children set" if a plain
+				// synchronization removed the child from the parent's active set.
+				root.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+
+				assert.equal(root.decompress(first), child.decompress(first));
+				assert.equal(root.decompress(second), child.decompress(second));
+			}
+
+			// The child is still active after all those syncs and can now be disposed and unsharded.
+			const token = child.disposeShard() ?? fail();
+			root.unshard(token);
+		});
+
+		it("propagates synchronization upward through multiple ancestors", () => {
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = root.shard(1); // root stride 2; child base genCount 1
+			const child = deserialize(childSer);
+			const [grandchildSer] = child.shard(1); // child stride 4; grandchild base genCount 3
+			const grandchild = deserialize(grandchildSer);
+
+			const gcId1 = grandchild.generateCompressedId();
+			const gcId2 = grandchild.generateCompressedId();
+			assert.equal(gcId1, -7);
+			assert.equal(gcId2, -11);
+
+			// Synchronize grandchild -> child.
+			assert.throws(() => child.decompress(gcId1));
+			child.synchronizeWithShard(grandchild.getShardSyncToken() ?? fail());
+			assert.equal(child.decompress(gcId1), grandchild.decompress(gcId1));
+			assert.equal(child.decompress(gcId2), grandchild.decompress(gcId2));
+
+			// Synchronize child -> root. The child is a non-leaf here (grandchild still active).
+			assert.throws(() => root.decompress(gcId1));
+			root.synchronizeWithShard(child.getShardSyncToken() ?? fail());
+
+			// The grandchild's IDs are now visible all the way up at the root.
+			assert.equal(root.decompress(gcId1), grandchild.decompress(gcId1));
+			assert.equal(root.decompress(gcId2), grandchild.decompress(gcId2));
+		});
+
+		it("accepts a ShardDisposalToken for synchronization", () => {
+			// A ShardDisposalToken is a more specific ShardSynchronizationToken, so it is a valid
+			// argument to synchronizeWithShard at both compile time and runtime.
+			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [child1Ser, child2Ser] = root.shard(2);
+			const child1 = deserialize(child1Ser);
+			deserialize(child2Ser); // keep the root a non-leaf so it stays in sharding mode
+
+			const child1Id = child1.generateCompressedId();
+			const expectedStable = child1.decompress(child1Id); // capture before disposal bricks child1
+			const disposalToken = child1.disposeShard() ?? fail();
+
+			// The disposal token flows into synchronizeWithShard (not just unshard).
+			root.synchronizeWithShard(disposalToken);
+			assert.equal(root.decompress(child1Id), expectedStable);
 		});
 	});
 });

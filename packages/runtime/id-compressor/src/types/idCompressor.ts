@@ -177,23 +177,46 @@ export interface IIdCompressorCore {
 	shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
 
 	/**
-	 * Deregisters the specific shard, allowing `this` to reclaim and use its subset of the ID space.
-	 * Once called, it is no longer safe to use the sharded compressor that the token came from.
-	 * @param disposalToken - The token for the shard, obtained by calling `disposeShard`.
+	 * Synchronizes `this` compressor with a child shard. Synchronization will occur for the state of the child at the time `syncToken`
+	 * was generated, meaning that `this` compressor can use/ingest IDs generated up to that point. Attempts to use IDs from a child shard
+	 * without first synchronizing will result in an exception.
+	 * @param syncToken - The token for the shard, obtained by calling {@link IIdCompressorCore.getShardSyncToken}.
+	 * A {@link ShardDisposalToken} (returned by {@link IIdCompressorCore.disposeShard}) is also accepted, since
+	 * it is a more specific {@link ShardSynchronizationToken}.
 	 */
-	unshard(disposalToken: ShardDisposalToken): void;
+	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
+
+	/**
+	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
+	 * that can be used when calling {@link IIdCompressorCore.synchronizeWithShard}. This does NOT dispose the shard.
+	 *
+	 * @returns The sync token if this compressor is part of a sharded group, otherwise undefined.
+	 * The returned token is serializable and can be passed across marshaling boundaries. This token can be used to synchronize a
+	 * parent with this compressor by calling {@link IIdCompressorCore.synchronizeWithShard}.
+	 * Unlike {@link IIdCompressorCore.disposeShard}, this is non-destructive and may be called on a shard that still has active
+	 * child shards, which allows an intermediate shard to propagate its progress upward to its own parent.
+	 * @throws If this compressor is the root of the shard tree (only non-root shards can produce a token).
+	 */
+	getShardSyncToken(): ShardSynchronizationToken | undefined;
 
 	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise disposes this shard and returns
-	 * the shard ID for this compressor. If this compressor was part of a shard group, the compressor will no longer be usable.
+	 * the disposal token for this compressor. If this compressor was part of a shard group, the compressor will no longer be usable.
 	 *
-	 * @returns The shard ID if this compressor is part of a sharded group, otherwise undefined.
+	 * @returns The disposal token if this compressor is part of a sharded group, otherwise undefined.
 	 * The returned ID is serializable and can be passed across marshaling boundaries. This ID can be used to unshard the compressor
 	 * by calling {@link IIdCompressorCore.unshard}.
 	 * @throws If this shard has active child shards.
 	 * This means that a shard tree must be disposed/unsharded from the leaves upwards.
 	 */
 	disposeShard(): ShardDisposalToken | undefined;
+
+	/**
+	 * Deregisters the specific shard, allowing `this` to reclaim and use its subset of the ID space.
+	 * Once called, it is no longer safe to use the sharded compressor that the token came from.
+	 * @param disposalToken - The token for the shard, obtained by calling `disposeShard`.
+	 */
+	unshard(disposalToken: ShardDisposalToken): void;
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
@@ -209,11 +232,13 @@ export interface IIdCompressorCore {
 }
 
 /**
- * A token returned by {@link IIdCompressorCore.disposeShard} that identifies a disposed ID compressor shard.
- * This is used to track which shard generated which IDs and to manage unsharding.
+ * The state shared by all shard tokens: enough information to identify a shard and its progress
+ * through its stride pattern. This is used to track which shard generated which IDs and to manage
+ * unsharding. Branded variants ({@link ShardDisposalToken}, {@link ShardSynchronizationToken})
+ * distinguish the operation a given token is intended for.
  * @internal
  */
-export interface ShardDisposalToken {
+export interface ShardToken {
 	/**
 	 * The number of positions filled in this shard's stride pattern.
 	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
@@ -227,6 +252,23 @@ export interface ShardDisposalToken {
 	 */
 	shardId: SessionId;
 }
+
+/**
+ * A {@link ShardToken} that identifies a shard for synchronization.
+ * @internal
+ */
+export type ShardSynchronizationToken = ShardToken & {
+	readonly ShardSynchronizationToken: "c79724e1-9103-4415-95b5-bebb932be404";
+};
+
+/**
+ * A {@link ShardToken} returned by {@link IIdCompressorCore.disposeShard} that identifies a disposed
+ * ID compressor shard, used to reclaim its ID space via {@link IIdCompressorCore.unshard}.
+ * @internal
+ */
+export type ShardDisposalToken = ShardSynchronizationToken & {
+	readonly ShardDisposalToken: "ddfd5125-bf52-428c-84da-ce7af57d70cb";
+};
 
 /**
  * A distributed UUID generator and compressor.

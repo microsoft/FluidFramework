@@ -32,5 +32,7 @@ export type {
 	SessionId,
 	StableId,
 	IdCreationRange,
+	ShardToken,
 	ShardDisposalToken,
+	ShardSynchronizationToken,
 } from "./types/index.js";
