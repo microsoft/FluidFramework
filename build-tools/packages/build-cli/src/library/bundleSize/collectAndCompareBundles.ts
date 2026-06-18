@@ -17,9 +17,10 @@ export interface CollectAndCompareBundlesOptions {
 	 * Revision to use as the comparison baseline (branch, tag, or commit SHA). By default the
 	 * actual base used is the merge-base of HEAD and this revision (the fork point). When
 	 * {@link CollectAndCompareBundlesOptions.exactBase} is set, this revision is used as-is
-	 * (no merge-base).
+	 * (no merge-base). When omitted, {@link collectBundle} auto-detects the freshest "main" of a
+	 * remote pointing at microsoft/FluidFramework and uses its merge-base with HEAD.
 	 */
-	readonly baseRevision: string;
+	readonly baseRevision?: string;
 	/**
 	 * Use {@link CollectAndCompareBundlesOptions.baseRevision} as-is (resolved via `rev-parse`)
 	 * instead of taking the merge-base with HEAD. Useful for comparing the working tree against an
@@ -41,10 +42,11 @@ export interface CollectAndCompareBundlesOptions {
 /**
  * Orchestrates {@link collectBundle} (local working tree) and {@link collectBundle} (base
  * revision), then {@link compareBundles}. The base is the merge-base of HEAD and `baseRevision`,
- * or the revision as-is when `exactBase` is set. Labels are automatic: the local bundle under a
- * timestamped `current_<epoch>` label and the base under `main`. The scratch inner repo used to
- * build the base is deleted afterward unless {@link CollectAndCompareBundlesOptions.keepBaseRepo}
- * is set; the outer repo is never modified.
+ * or the revision as-is when `exactBase` is set; when `baseRevision` is omitted, the base defaults
+ * to the freshest canonical "main" at its merge-base with HEAD. Labels are automatic: the local
+ * bundle under a timestamped `current_<epoch>` label and the base under `main`. The scratch inner
+ * repo used to build the base is deleted afterward unless
+ * {@link CollectAndCompareBundlesOptions.keepBaseRepo} is set; the outer repo is never modified.
  */
 export async function collectAndCompareBundles(
 	options: CollectAndCompareBundlesOptions,
@@ -74,7 +76,9 @@ export async function collectAndCompareBundles(
 		});
 
 		console.log(`\n${"=".repeat(80)}`);
-		console.log(`Collecting base bundle (revision: ${baseRevision}, label: ${baseLabel})...`);
+		console.log(
+			`Collecting base bundle (revision: ${baseRevision ?? "auto-detect freshest main"}, label: ${baseLabel})...`,
+		);
 		console.log("=".repeat(80));
 		await collectBundle({
 			mode: "revision",

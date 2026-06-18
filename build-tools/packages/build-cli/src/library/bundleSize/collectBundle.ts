@@ -17,6 +17,8 @@ import { dirname, relative, resolve } from "node:path";
 import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
+import { pickFreshestRemote } from "../git/pickFreshestRemote.js";
+
 /** Filename of the per-label analyzer report. */
 const analyzerFileName = "analyzer.json";
 
@@ -48,6 +50,10 @@ export interface CollectBundleOptions {
 	 * (revision mode only) Committish whose merge-base with HEAD (the fork point) is built instead
 	 * of the committish itself. Mutually exclusive with {@link CollectBundleOptions.revision}.
 	 * Resolved against the outer repo. Also used as the default label.
+	 *
+	 * When neither this nor {@link CollectBundleOptions.revision} is set in revision mode, the base
+	 * defaults to the freshest canonical "main" (see {@link resolveDefaultBaseCommittish}) at its
+	 * merge-base with HEAD.
 	 */
 	readonly mergeBaseOf?: string;
 	/**
@@ -153,6 +159,30 @@ async function resolveBuildRevision(
 		);
 	}
 	return resolved;
+}
+
+/** Matches a remote URL that points at the canonical microsoft/FluidFramework repo. */
+const canonicalFluidRemoteUrl = /(^|[/:])microsoft\/fluidframework(\.git)?$/i;
+
+/**
+ * Resolves the default base committish used when revision mode is requested without an explicit
+ * `revision`/`mergeBaseOf`: the `main` branch of the freshest remote pointing at
+ * microsoft/FluidFramework (preferred over the local `main`, which may be stale or absent in
+ * worktree setups). Falls back to the local `main` with a warning when no such remote is
+ * configured or fetched.
+ */
+function resolveDefaultBaseCommittish(): string {
+	const remote = pickFreshestRemote("main", (url) => canonicalFluidRemoteUrl.test(url));
+	if (remote === undefined) {
+		console.warn(
+			'Could not auto-detect a remote pointing at microsoft/FluidFramework; using local "main" ' +
+				"as the base, which may be stale.",
+		);
+		return "main";
+	}
+	const ref = `${remote}/main`;
+	console.log(`Auto-detected base revision "${ref}" (freshest "main").`);
+	return ref;
 }
 
 // --- Build steps ---
@@ -325,10 +355,12 @@ function logCollectionComplete(mode: string, label: string, labelDirectory: stri
  *
  * @remarks
  * In revision mode, {@link CollectBundleOptions.revision} is built as-is and
- * {@link CollectBundleOptions.mergeBaseOf} at its merge-base with HEAD (the fork point); the
- * resolved SHA is recorded in a sidecar `revision.txt`, letting a later run with the same SHA
- * reuse the cached report (unless {@link CollectBundleOptions.forceCleanBuild} is set). Builds
- * happen in the inner repo (see {@link ensureInnerRepoAtRevision}).
+ * {@link CollectBundleOptions.mergeBaseOf} at its merge-base with HEAD (the fork point); when
+ * neither is given, the base defaults to the freshest canonical "main" at its merge-base with
+ * HEAD (see {@link resolveDefaultBaseCommittish}). The resolved SHA is recorded in a sidecar
+ * `revision.txt`, letting a later run with the same SHA reuse the cached report (unless
+ * {@link CollectBundleOptions.forceCleanBuild} is set). Builds happen in the inner repo (see
+ * {@link ensureInnerRepoAtRevision}).
  *
  * In local mode the working tree is built exactly as it sits on disk; the only side effect is the
  * up-front staged-patch record (see {@link captureLocalPatch}). The outer repo's git state is
@@ -337,27 +369,39 @@ function logCollectionComplete(mode: string, label: string, labelDirectory: stri
 export async function collectBundle(options: CollectBundleOptions): Promise<string> {
 	const { mode, revision, mergeBaseOf, forceCleanBuild, packageDir, analysisDir } = options;
 
-	// Resolve names and paths. In revision mode, the committish selects what to build.
-	const committish = mode === "revision" ? (revision ?? mergeBaseOf) : undefined;
 	const outerRepoRoot = findGitRootSync(packageDir);
 	const innerRepoRoot = options.baseRepoDir ?? resolve(analysisDir, "base-repo");
+
+	// In revision mode, decide what to build, how to resolve it, and resolve it to a SHA:
+	//   - revision    → build that committish as-is (rev-parse).
+	//   - mergeBaseOf → build its merge-base with HEAD (the fork point).
+	//   - neither     → default to the freshest canonical "main" at its merge-base with HEAD. This
+	//     is the orchestrator's pass-through of an omitted base: the local "main" may be stale, so
+	//     "<remote>/main" is auto-detected, and an unspecified base means "where this branch forked
+	//     from upstream main".
+	let committish: string | undefined;
+	let resolvedRevision: string | undefined;
+	if (mode === "revision") {
+		let useMergeBase: boolean;
+		if (revision !== undefined) {
+			committish = revision;
+			useMergeBase = false;
+		} else if (mergeBaseOf !== undefined) {
+			committish = mergeBaseOf;
+			useMergeBase = true;
+		} else {
+			committish = resolveDefaultBaseCommittish();
+			useMergeBase = true;
+		}
+		resolvedRevision = await resolveBuildRevision(outerRepoRoot, committish, useMergeBase);
+	}
+
 	const label = sanitizeForFileName(
 		options.label ?? committish ?? `current_${Math.floor(Date.now() / 1000)}`,
 	);
 	const labelDirectory = resolve(analysisDir, label);
 
-	// In revision mode, resolve the committish to a SHA and reuse the cached report if it matches.
-	let resolvedRevision: string | undefined;
-	if (mode === "revision") {
-		if (committish === undefined) {
-			throw new Error("revision mode requires either revision or mergeBaseOf.");
-		}
-		resolvedRevision = await resolveBuildRevision(
-			outerRepoRoot,
-			committish,
-			revision === undefined,
-		);
-	}
+	// Reuse the cached report when the resolved SHA matches a previous revision-mode run.
 	if (resolvedRevision !== undefined && !forceCleanBuild) {
 		const analyzerPath = resolve(labelDirectory, analyzerFileName);
 		const markerPath = resolve(labelDirectory, revisionMarkerFileName);

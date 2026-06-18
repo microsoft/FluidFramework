@@ -65,24 +65,35 @@ USAGE
     [--analysis-dir <value>] [--output-dir <value>] [--force-clean-build] [--keep-base-repo]
 
 FLAGS
-  --analysis-dir=<value>   Directory under which per-label analyzer stats are saved. Defaults to an 'analysis'
-                           subdirectory of the output directory (e.g. <package-dir>/compareBundlesOutput/analysis).
-  --base-revision=<value>  [default: main] Revision to use as the comparison baseline (branch, tag, or commit SHA). The
-                           actual base used is the merge-base of HEAD and this revision (the fork point), so
-                           worktree-based setups where 'main' is in an unusual location still produce the expected
-                           comparison. Pass --exact-base to use the revision as-is instead.
-  --exact-base             Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking the
-                           merge-base with HEAD. Useful for comparing the working tree against a specific commit, e.g.
-                           the current commit's parent.
-  --force-clean-build      Run the full workspace clean before each build. Off by default; opt in when stale incremental
-                           build state may interfere with the current revision.
-  --keep-base-repo         For debugging only: keep the inner base-repo clone after collecting the base bundle. By
-                           default the inner repo is deleted once stats are saved, since it can be re-created cheaply
-                           via shallow clone on the next run. Pass this flag to inspect the inner repo's working tree or
-                           build output (e.g. when a build is failing inside the inner repo).
-  --output-dir=<value>     Directory where the comparison reports are written. Defaults to
-                           <package-dir>/compareBundlesOutput.
-  --package-dir=<value>    [default: .] Package root whose webpack bundles are built and compared.
+  --analysis-dir=<value>
+      Directory under which per-label analyzer stats are saved. Defaults to an 'analysis' subdirectory of the output
+      directory (e.g. <package-dir>/compareBundlesOutput/analysis).
+
+  --base-revision=<value>
+      Revision to use as the comparison baseline (branch, tag, or commit SHA). The actual base used is the merge-base of
+      HEAD and this revision (the fork point), so worktree-based setups where 'main' is in an unusual location still
+      produce the expected comparison. When omitted, the baseline is auto-detected as the freshest 'main' of a remote
+      pointing at microsoft/FluidFramework — the local 'main' is not used, since it may be stale. An explicit value
+      (including 'main') is always honored as given. Pass --exact-base to use the revision as-is instead.
+
+  --exact-base
+      Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking the merge-base with HEAD.
+      Useful for comparing the working tree against a specific commit, e.g. the current commit's parent.
+
+  --force-clean-build
+      Run the full workspace clean before each build. Off by default; opt in when stale incremental build state may
+      interfere with the current revision.
+
+  --keep-base-repo
+      For debugging only: keep the inner base-repo clone after collecting the base bundle. By default the inner repo is
+      deleted once stats are saved, since it can be re-created cheaply via shallow clone on the next run. Pass this flag
+      to inspect the inner repo's working tree or build output (e.g. when a build is failing inside the inner repo).
+
+  --output-dir=<value>
+      Directory where the comparison reports are written. Defaults to <package-dir>/compareBundlesOutput.
+
+  --package-dir=<value>
+      [default: .] Package root whose webpack bundles are built and compared.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

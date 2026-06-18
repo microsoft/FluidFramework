@@ -35,8 +35,11 @@ export default class BundleCollectAndCompare extends BaseCommand<
 				"Revision to use as the comparison baseline (branch, tag, or commit SHA). The " +
 				"actual base used is the merge-base of HEAD and this revision (the fork point), so " +
 				"worktree-based setups where 'main' is in an unusual location still produce the " +
-				"expected comparison. Pass --exact-base to use the revision as-is instead.",
-			default: "main",
+				"expected comparison. When omitted, the baseline is auto-detected as the freshest " +
+				"'main' of a remote pointing at microsoft/FluidFramework — the local 'main' is not " +
+				"used, since it may be stale. An explicit value (including 'main') is always honored " +
+				"as given. Pass --exact-base to use the revision as-is instead.",
+			// No default: an omitted base-revision triggers freshest-remote 'main' auto-detection.
 		}),
 		"exact-base": Flags.boolean({
 			description:
