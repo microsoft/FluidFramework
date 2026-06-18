@@ -1342,26 +1342,11 @@ describe("SchematizingSimpleTreeView", () => {
 		});
 
 		it("direct (non-transaction) edit from a changed listener throws", () => {
-			// Exercises the internal `changed` event; the `treeChanged` case below covers the
-			// same guarantee through the public API surface.
+			// Exercises the internal `changed` event. The equivalent guarantee through the public
+			// `nodeChanged`/`treeChanged` API is covered in the treeNodeApi tests.
 			const view = getTestObjectView();
 
 			view.checkout.events.on("changed", () => {
-				view.root.content = view.root.content + 1;
-			});
-
-			assert.throws(
-				() => (view.root.content = 1),
-				validateUsageError("Editing the tree is forbidden during a change event callback"),
-			);
-		});
-
-		it("direct edit from a treeChanged listener throws (public API)", () => {
-			// Same guarantee as above, but reached through the public `Tree.on(..., "treeChanged")`
-			// API rather than the internal checkout `changed` event.
-			const view = getTestObjectView();
-
-			Tree.on(view.root, "treeChanged", () => {
 				view.root.content = view.root.content + 1;
 			});
 

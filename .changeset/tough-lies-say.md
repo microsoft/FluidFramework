@@ -12,9 +12,7 @@ This can produce infinite edit loops, redundant work across clients, incorrect a
 
 This release closes that gap: editing the tree during a change-event callback now throws the same canonical `UsageError` as the other change-event callbacks:
 
-```
-Editing the tree is forbidden during a change event callback
-```
+> Editing the tree is forbidden during a change event callback
 
 More generally, edits should not be made in response to changes to the document.
 See [Editing in response to change events](https://fluidframework.com/docs/data-structures/tree/events#editing-in-response-to-change-events) for why, and for the recommended alternatives.
