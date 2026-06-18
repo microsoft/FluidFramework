@@ -347,7 +347,7 @@ module.exports = {
 			"tools/markdown-magic/test/package.json",
 
 			// Not a real package
-			"docs/api/",
+			"website/api/",
 
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
@@ -390,7 +390,7 @@ module.exports = {
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.
-				"docs/static/dompurify/purify.min.js",
+				"website/static/dompurify/purify.min.js",
 
 				// printed ESLint configs do not need headers
 				".*/.eslint-print-configs/.*",
@@ -428,9 +428,9 @@ module.exports = {
 				"^packages/.+/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
-				"docs/static/trusted-types-policy.js",
-				"docs/static/dompurify/purify.min.js",
-				"docs/static/js/add-code-copy-button.js",
+				"website/static/trusted-types-policy.js",
+				"website/static/dompurify/purify.min.js",
+				"website/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
@@ -504,7 +504,7 @@ module.exports = {
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 				// Docs directory breaks cleaning down into multiple scripts.
-				"docs/package.json",
+				"website/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",
