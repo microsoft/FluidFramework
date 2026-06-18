@@ -163,6 +163,8 @@ jobs:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
           path: ${{ github.workspace }}/acknowledge.md
+          # Keep the sticky at the bottom of the timeline on each update.
+          recreate: true
 
   # Reacts when ADO reports a PR's `Build - client packages` as `neutral` — typically because the
   # pipeline's path filter skipped the build (no bundle-relevant changes). If a prior commit on this PR
@@ -585,3 +587,5 @@ jobs:
           header: bundle-size-report
           number: ${{ matrix.pr.number }}
           path: ${{ github.workspace }}/bundle-comparison.md
+          # Keep the sticky at the bottom of the timeline on each update.
+          recreate: true
