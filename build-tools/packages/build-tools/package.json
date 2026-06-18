@@ -65,6 +65,7 @@
 		"type-fest": "^2.19.0",
 		"typescript-5.4": "npm:typescript@~5.4.5",
 		"typescript-5.9": "npm:typescript@~5.9.3",
+		"typescript-6.0": "npm:typescript@~6.0.3",
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
