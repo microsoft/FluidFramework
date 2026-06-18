@@ -115,7 +115,9 @@ export function schemaCompressedEncodeV2(
  * Encode data from `fieldBatch` in into an `EncodedChunk` using {@link FieldBatchFormatVersion.vTextExperimental}.
  * @remarks
  * Enables the specialized node shape ('f') optimization. See {@link SpecializedNodeShapeEncoder}.
- * Uses the default specialization threshold {@link defaultMinOccurrencesForSpecialization}.
+ *
+ * `minOccurrencesForSpecialization` defaults to {@link defaultMinOccurrencesForSpecialization}; tests
+ * override it to exercise the specialization heuristic on small inputs.
  */
 export function schemaCompressedEncodeVTextExperimental(
 	schema: StoredSchemaCollection,
@@ -124,33 +126,7 @@ export function schemaCompressedEncodeVTextExperimental(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
-): EncodedFieldBatchVTextExperimental {
-	return schemaCompressedEncodeVTextExperimentalForTests(
-		schema,
-		policy,
-		fieldBatch,
-		idCompressor,
-		incrementalEncoder,
-		isSummary,
-		defaultMinOccurrencesForSpecialization,
-	);
-}
-
-/**
- * Test-only variant of {@link schemaCompressedEncodeVTextExperimental} that accepts a custom
- * `minOccurrencesForSpecialization` threshold.
- * @remarks
- * Lets small test inputs exercise the specialization heuristic. Production callers must use
- * {@link schemaCompressedEncodeVTextExperimental}.
- */
-export function schemaCompressedEncodeVTextExperimentalForTests(
-	schema: StoredSchemaCollection,
-	policy: SchemaPolicy,
-	fieldBatch: FieldBatch,
-	idCompressor: IIdCompressor,
-	incrementalEncoder: IncrementalEncoder | undefined,
-	isSummary: boolean,
-	minOccurrencesForSpecialization: number,
+	minOccurrencesForSpecialization: number = defaultMinOccurrencesForSpecialization,
 ): EncodedFieldBatchVTextExperimental {
 	const context = buildContextVText(
 		schema,
@@ -161,13 +137,7 @@ export function schemaCompressedEncodeVTextExperimentalForTests(
 		isSummary,
 		minOccurrencesForSpecialization,
 	);
-	// `compressedEncode`'s return type is too narrow to express the vTextExperimental version
-	// TODO: widen the versions of EncodedFieldBatchV1/V2 to include vText after it gets stable
-	// this will allow us to remove the use of unkown as a cast here.
-	return compressedEncode(
-		fieldBatch,
-		context,
-	) as unknown as EncodedFieldBatchVTextExperimental;
+	return compressedEncode(fieldBatch, context);
 }
 
 /**

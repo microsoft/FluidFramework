@@ -58,7 +58,7 @@ import {
 	buildContext,
 	getFieldEncoder,
 	getNodeEncoder,
-	schemaCompressedEncodeVTextExperimentalForTests,
+	schemaCompressedEncodeVTextExperimental,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/schemaBasedEncode.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -544,7 +544,7 @@ describe("schemaBasedEncoding", () => {
 			const belowThreshold = [makeFormat(false, true)];
 			const tree = [...aboveThreshold, ...belowThreshold];
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[cursorForJsonableTreeField(tree)],
@@ -594,7 +594,7 @@ describe("schemaBasedEncoding", () => {
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc),
 			);
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
@@ -671,7 +671,7 @@ describe("schemaBasedEncoding", () => {
 				(encodedSubBatch) => subEncodings.push(encodedSubBatch),
 			);
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
@@ -727,7 +727,7 @@ describe("schemaBasedEncoding", () => {
 					assert.fail("no incremental encoding expected for this schema"),
 			};
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
@@ -803,7 +803,7 @@ describe("schemaBasedEncoding", () => {
 				...Array.from({ length: 2 }, () => makeFormat(false, true)),
 			];
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[cursorForJsonableTreeField(tree)],
@@ -855,7 +855,7 @@ describe("schemaBasedEncoding", () => {
 				},
 			}));
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[cursorForJsonableTreeField(tree)],
@@ -917,7 +917,7 @@ describe("schemaBasedEncoding", () => {
 				chunkEncoderCalls += 1;
 			});
 
-			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
 				defaultSchemaPolicy,
 				[cursorForJsonableTreeField(tree)],
