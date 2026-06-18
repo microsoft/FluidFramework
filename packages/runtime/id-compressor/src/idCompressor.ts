@@ -452,7 +452,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 
 		// Root cannot be disposed (shardId is undefined for root)
 		if (this.shardingState.shardId === undefined) {
-			throw new Error("Cannot get a token for a root compressor - only shards can be disposed");
+			throw new Error(
+				"Cannot get a token for a root compressor - only shards can be disposed",
+			);
 		}
 
 		const token: ShardToken = {
