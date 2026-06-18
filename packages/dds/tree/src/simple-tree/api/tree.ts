@@ -460,7 +460,7 @@ export interface TreeViewAlpha<
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
 	 *
-	 * @example Enabling a staged allowed type for documents selected by a feature flag:
+	 * @example Enabling a staged allowed type for documents, selected by a feature flag:
 	 * ```typescript
 	 * const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
 	 * const checklistItemSchemaUpgrade = stagedChecklistItem.metadata.stagedSchemaUpgrade;
