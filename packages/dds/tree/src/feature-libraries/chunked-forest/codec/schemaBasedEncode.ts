@@ -25,7 +25,7 @@ import {
 	forEachField,
 	forEachNode,
 } from "../../../core/index.js";
-import { brand, getLast, oneFromIterable } from "../../../util/index.js";
+import { type Brand, brand, getLast, oneFromIterable } from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
 import {
@@ -402,7 +402,7 @@ function getNodeEncoderVText(
 const defaultMinOccurrencesForSpecialization = 8;
 
 /**
- * A required single-valued boolean, string, or number leaf field of an ObjectNode whose value
+ * A single-valued boolean, string, or number leaf field of an ObjectNode whose value
  * can be constant-folded into a {@link SpecializedNodeShapeEncoder}.
  */
 interface SpecializableField {
@@ -411,20 +411,43 @@ interface SpecializableField {
 }
 
 /**
+ * Encodes a leaf value to a string suitable for use as a Map key. Strings, numbers, and
+ * booleans are unambiguous when prefixed with their type tag.
+ */
+function valueKey(value: Value): string {
+	const valueType = typeof value;
+	assert(
+		valueType === "string" || valueType === "number" || valueType === "boolean",
+		"valueKey only supports primitive leaf values",
+	);
+	return `${valueType}:${value as string | number | boolean}`;
+}
+
+/**
+ * Identifies a "cohort": the set of nodes that share identical {@link SpecializableField} leaf
+ * values and so can encode through one {@link SpecializedNodeShapeEncoder}.
+ *
+ * @remarks
+ * Built by {@link VTextObjectNodeEncoder.specializationKey} as the concatenation of one
+ * length-prefixed {@link valueKey} segment per specializable field.
+ */
+type SpecializationKey = Brand<string, "tree.SpecializationKey">;
+
+/**
  * Per-encoder bookkeeping for one batch, keyed by specialization key (a "cohort" of node instances
  * that share identical specializable-field values).
  *
  * @remarks
- * A cohort's members share one specialization key, so they can all encode through a single
+ * A cohort's members share one {@link SpecializationKey}, so they can all encode through a single
  * {@link SpecializedNodeShapeEncoder} that constant-folds the shared field values into the shape
  * table. Tracks how often each cohort occurs (filled by the count pass, read by the encode pass)
  * and the specialized shape cached for cohorts that have crossed the specialization threshold.
  */
 interface CohortState {
-	/** How many times each specialization key (cohort) occurs in the batch. */
-	counts: Map<string, number>;
+	/** How many times each cohort occurs in the batch. */
+	readonly counts: Map<SpecializationKey, number>;
 	/** The specialized shape cached for each cohort that has crossed the threshold. */
-	specializedEncoders: Map<string, SpecializedNodeShapeEncoder>;
+	readonly specializedEncoders: Map<SpecializationKey, SpecializedNodeShapeEncoder>;
 	/**
 	 * Memoized declared shape for the batch; `undefined` until first computed.
 	 *
@@ -525,7 +548,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 			AnyShape.encodeNode(cursor, context, outputBuffer, this.resolveShape(cursor, batch));
 		} else {
 			// Every instance resolves to `declared`, which the parent declares directly (see
-			// {@link VTextObjectNodeEncoder.shape}); emit only the node's data, with no per-instance
+			// VTextObjectNodeEncoder.shape); emit only the node's data, with no per-instance
 			// shape token — and without recomputing this node's specialization key.
 			declared.encodeNode(cursor, context, outputBuffer);
 		}
@@ -557,7 +580,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	 * created during the count pass (see {@link countNode}), so it is always present here.
 	 */
 	private computeDeclaredShape(state: CohortState): DeclaredShape {
-		let firedKey: string | undefined;
+		let firedKey: SpecializationKey | undefined;
 		let firedCount = 0;
 		let hasUnfired = false;
 		for (const [key, count] of state.counts) {
@@ -601,16 +624,14 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	}
 
 	/**
-	 * Build the specialization key for the node at the cursor's current position: the tuple of
-	 * its {@link SpecializableField} leaf values.
+	 * Build the {@link SpecializationKey} for the node at the cursor's current position from its
+	 * {@link SpecializableField} leaf values. See {@link SpecializationKey} for the key syntax.
 	 *
 	 * @remarks
-	 * Each field contributes a length-prefixed `{@link valueKey}` segment (`<len>:<typedValue>`).
-	 * Length-prefixing makes the concatenation injective without escaping or a `JSON.stringify`
-	 * per node — which matters because this runs once per node in the count pass (and again per
-	 * node in the encode pass for polymorphic cohorts).
+	 * Runs once per node in the count pass (and again per node in the encode pass for polymorphic
+	 * cohorts), so the key is built by concatenation rather than a `JSON.stringify` per node.
 	 */
-	private specializationKey(cursor: ITreeCursorSynchronous): string {
+	private specializationKey(cursor: ITreeCursorSynchronous): SpecializationKey {
 		let key = "";
 		for (const field of this.specializableFields) {
 			cursor.enterField(brand(field.key));
@@ -621,7 +642,7 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 			cursor.exitNode();
 			cursor.exitField();
 		}
-		return key;
+		return brand(key);
 	}
 
 	/**
@@ -648,19 +669,6 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 		}
 		return new SpecializedNodeShapeEncoder(this.base, overrides);
 	}
-}
-
-/**
- * Encodes a leaf value to a string suitable for use as a Map key. Strings, numbers, and
- * booleans are unambiguous when prefixed with their type tag.
- */
-function valueKey(value: Value): string {
-	const valueType = typeof value;
-	assert(
-		valueType === "string" || valueType === "number" || valueType === "boolean",
-		"valueKey only supports primitive leaf values",
-	);
-	return `${valueType}:${value as string | number | boolean}`;
 }
 
 /**
