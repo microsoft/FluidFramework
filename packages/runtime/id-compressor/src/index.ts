@@ -32,5 +32,5 @@ export type {
 	SessionId,
 	StableId,
 	IdCreationRange,
-	CompressorShardId,
+	ShardDisposalToken,
 } from "./types/index.js";

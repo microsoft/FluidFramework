@@ -42,7 +42,7 @@ import {
 	lastFinalizedLocal,
 } from "./sessions.js";
 import type {
-	CompressorShardId,
+	ShardDisposalToken,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
@@ -353,7 +353,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * {@inheritdoc IIdCompressorCore.unshard}
 	 */
-	public unshard(shardId: CompressorShardId): void {
+	public unshard(disposalToken: ShardDisposalToken): void {
 		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
 				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
@@ -363,7 +363,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new Error("Must be in sharding mode to unshard");
 		}
 
-		const childShardId = shardId.shardId;
+		const childShardId = disposalToken.shardId;
 		const { activeChildIds, originalStride } = this.shardingState;
 
 		// Verify this child belongs to us
@@ -373,7 +373,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			);
 		}
 
-		const childGenCount = shardId.localGenCount;
+		const childGenCount = disposalToken.localGenCount;
 		const isLeaf = activeChildIds.size === 0;
 		if (isLeaf) {
 			this.shardingState.currentStride = originalStride;
@@ -401,7 +401,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	/**
 	 * {@inheritdoc IIdCompressorCore.dispose}
 	 */
-	public disposeShard(): CompressorShardId | undefined {
+	public disposeShard(): ShardDisposalToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
 		} else {
@@ -415,8 +415,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			throw new Error("Cannot dispose root compressor - only shards can be disposed");
 		}
 
-		const shardId: CompressorShardId = {
-			sessionId: this.localSessionId,
+		const disposalToken: ShardDisposalToken = {
 			localGenCount: this.localGenCount,
 			shardId: this.shardingState.shardId,
 		};
@@ -425,7 +424,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		// This is a one-time mutation that avoids runtime checks in every method
 		makeCompressorUnusable(this);
 
-		return shardId;
+		return disposalToken;
 	}
 
 	private generateNextLocalId(): LocalCompressedId {

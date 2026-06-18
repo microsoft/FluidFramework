@@ -178,10 +178,10 @@ export interface IIdCompressorCore {
 
 	/**
 	 * Deregisters the specific shard, allowing `this` to reclaim and use its subset of the ID space.
-	 * Once called, it is no longer safe to use the sharded compressor that the ID came from.
-	 * @param shardId - The ID for the shard, obtained by calling `shardId`.
+	 * Once called, it is no longer safe to use the sharded compressor that the token came from.
+	 * @param disposalToken - The token for the shard, obtained by calling `disposeShard`.
 	 */
-	unshard(shardId: CompressorShardId): void;
+	unshard(disposalToken: ShardDisposalToken): void;
 
 	/**
 	 * Returns undefined if this compressor is not part of a shard group, and otherwise disposes this shard and returns
@@ -193,7 +193,7 @@ export interface IIdCompressorCore {
 	 * @throws If this shard has active child shards.
 	 * This means that a shard tree must be disposed/unsharded from the leaves upwards.
 	 */
-	disposeShard(): CompressorShardId | undefined;
+	disposeShard(): ShardDisposalToken | undefined;
 
 	/**
 	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
@@ -209,16 +209,11 @@ export interface IIdCompressorCore {
 }
 
 /**
- * An ID that uniquely identifies an ID compressor shard.
+ * A token returned by {@link IIdCompressorCore.disposeShard} that identifies a disposed ID compressor shard.
  * This is used to track which shard generated which IDs and to manage unsharding.
  * @internal
  */
-export interface CompressorShardId {
-	/**
-	 * The session ID of the shard. All shards from the same parent share the same session ID.
-	 */
-	sessionId: SessionId;
-
+export interface ShardDisposalToken {
 	/**
 	 * The number of positions filled in this shard's stride pattern.
 	 * This tracks progress through the stride cycle, not the count of IDs actually generated.

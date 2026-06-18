@@ -229,12 +229,12 @@ function handleUnshard(
 		return state;
 	}
 
-	const shardId = leaf.disposeShard();
-	if (shardId === undefined) {
+	const disposalToken = leaf.disposeShard();
+	if (disposalToken === undefined) {
 		return state;
 	}
 
-	parent.unshard(shardId);
+	parent.unshard(disposalToken);
 
 	// Update tree structure
 	const siblings = state.childrenMap.get(parent);
