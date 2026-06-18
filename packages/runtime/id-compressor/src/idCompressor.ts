@@ -1162,7 +1162,7 @@ function makeCompressorUnusable(compressor: IdCompressor): void {
  * @param compressor - The compressor to serialize.
  * @param withSession - If true, the serialized state will include local session
  * state (for stashing). If false, only finalized state is included (for summaries).
- * @legacy @beta
+ * @internal
  */
 export function serializeIdCompressor(
 	compressor: IIdCompressor,
@@ -1173,7 +1173,7 @@ export function serializeIdCompressor(
  * @param compressor - The compressor to serialize.
  * @param withSession - If true, the serialized state will include local session
  * state (for stashing). If false, only finalized state is included (for summaries).
- * @legacy @beta
+ * @internal
  */
 export function serializeIdCompressor(
 	compressor: IIdCompressor,

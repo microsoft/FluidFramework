@@ -13,13 +13,11 @@ import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	serializeIdCompressor,
 	type SerializedIdCompressorWithOngoingSession,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/id-compressor/internal";
-import {
-	SerializationVersion,
-	serializeIdCompressor,
-} from "@fluidframework/id-compressor/legacy";
+import { SerializationVersion } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
 import {

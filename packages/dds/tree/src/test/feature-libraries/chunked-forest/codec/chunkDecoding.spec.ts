@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { compareArrays } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
-import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	createSessionId,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import type { TreeNodeSchemaIdentifier, TreeValue } from "../../../../core/index.js";
@@ -179,7 +183,10 @@ describe("chunkDecoding", () => {
 					originatorId: SessionId;
 				} {
 					const foreignSession = createSessionId();
-					const foreignCompressor = createIdCompressor(foreignSession);
+					const foreignCompressor = createIdCompressor(
+						foreignSession,
+						SerializationVersion.V3,
+					);
 					const sessionSpaceId = foreignCompressor.generateCompressedId();
 					const opSpaceId = foreignCompressor.normalizeToOpSpace(sessionSpaceId);
 					return { opSpaceId, originatorId: foreignSession };
@@ -253,7 +260,10 @@ describe("chunkDecoding", () => {
 
 				it("produces different UUIDs for different op-space ids", () => {
 					const foreignSession = createSessionId();
-					const foreignCompressor = createIdCompressor(foreignSession);
+					const foreignCompressor = createIdCompressor(
+						foreignSession,
+						SerializationVersion.V3,
+					);
 					const opSpaceA = foreignCompressor.normalizeToOpSpace(
 						foreignCompressor.generateCompressedId(),
 					);
