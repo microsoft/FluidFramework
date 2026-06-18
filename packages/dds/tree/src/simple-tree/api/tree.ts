@@ -502,6 +502,7 @@ export interface TreeViewAlpha<
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
 	 *
+	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
