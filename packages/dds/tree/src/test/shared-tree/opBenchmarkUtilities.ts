@@ -8,10 +8,6 @@ import { strict as assert, fail } from "node:assert";
 import { ValueType, type CollectedData } from "@fluid-tools/benchmark";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	createIdCompressor,
-	SerializationVersion,
-} from "@fluidframework/id-compressor/internal";
-import {
 	MockContainerRuntimeFactory,
 	MockFluidDataStoreRuntime,
 	MockStorage,
@@ -26,9 +22,7 @@ import { DefaultTestSharedTreeKind } from "../utils.js";
  */
 export function createConnectedTree(): ITreePrivate {
 	const containerRuntimeFactory = new MockContainerRuntimeFactory();
-	const dataStoreRuntime = new MockFluidDataStoreRuntime({
-		idCompressor: createIdCompressor(SerializationVersion.V3),
-	});
+	const dataStoreRuntime = new MockFluidDataStoreRuntime({});
 	containerRuntimeFactory.createContainerRuntime(dataStoreRuntime);
 	const tree = DefaultTestSharedTreeKind.getFactory().create(dataStoreRuntime, "tree");
 	tree.connect({
