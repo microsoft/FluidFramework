@@ -165,12 +165,10 @@ export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements N
 /**
  * Encodes a node with the {@link EncodedSpecializedNodeShape} (`f`) shape.
  *
- * Wraps a base {@link NodeShapeBasedEncoder} and overlays a set of field overrides.
- *
  * @remarks
- * These overrides contain the differences from the base shape. These overrides can either be differences in shapes or values
- * from the base shape. Emits a compact wire format instead of repeating the full node shape.
- *
+ * Wraps a base {@link NodeShapeBasedEncoder} and overlays a set of field overrides — the
+ * differences from the base shape, in either shapes or values. Emits a compact wire format
+ * instead of repeating the full node shape.
  */
 export class SpecializedNodeShapeEncoder
 	extends Shape<EncodedChunkShape>

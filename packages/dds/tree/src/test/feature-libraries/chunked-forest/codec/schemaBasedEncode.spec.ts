@@ -564,6 +564,69 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(resultTree, tree);
 		});
 
+		it("does not force AnyShape indirection when every instance resolves to one shape", () => {
+			// When all members of a nested array resolve to a single shape (one cohort, above
+			// threshold), the array's element shape should reference that concrete shape directly
+			// rather than AnyShape (`d`), which would otherwise prepend a shape-index token to
+			// every element's data. See PR #27515 review on schemaBasedEncode.ts:516.
+			const sf = new SchemaFactoryAlpha("test");
+			class CharacterFormat extends sf.object("CharacterFormat", {
+				bold: sf.boolean,
+				italic: sf.boolean,
+			}) {}
+			class CharacterArray extends sf.array("CharacterArray", CharacterFormat) {}
+			class Doc extends sf.object("Doc", {
+				chars: CharacterArray,
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+
+			const minOccurrencesForSpecialization = 2;
+			// Three identical formats → one cohort above threshold → all three resolve to the
+			// same specialized shape, so the array is monomorphic.
+			const chars = Array.from(
+				{ length: 3 },
+				() => new CharacterFormat({ bold: false, italic: false }),
+			);
+			const doc = new Doc({ chars: new CharacterArray(chars) });
+
+			const expected = jsonableTreeFromFieldCursor(
+				fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc),
+			);
+
+			const encoded = schemaCompressedEncodeVTextExperimentalForTests(
+				storedSchema,
+				defaultSchemaPolicy,
+				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
+				testIdCompressor,
+				undefined,
+				false,
+				minOccurrencesForSpecialization,
+			);
+
+			// One specialized shape: the single folded cohort.
+			assert.equal(countSpecializedShapes(encoded), 1);
+
+			// The nested array (`a`) for the `chars` field must point its element shape at the
+			// specialized (`f`) / concrete (`c`) shape, not at AnyShape (`d`).
+			const nestedArrayShapes = encoded.shapes.filter(
+				(shape): shape is { a: number } => "a" in shape,
+			);
+			assert.equal(nestedArrayShapes.length, 1, "expected exactly one nested array shape");
+			const innerIndex = nestedArrayShapes[0].a;
+			const innerShape = encoded.shapes[innerIndex] ?? assert.fail("missing inner shape");
+			assert.ok(
+				!("d" in innerShape),
+				`nested array element shape must not be AnyShape; got ${JSON.stringify(innerShape)}`,
+			);
+
+			// Round-trip preserves the tree.
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, expected);
+		});
+
 		it("incremental: outer count skips incremental fields, sub-chunks make their own decisions", () => {
 			// Schema:
 			//   CharacterFormat — VText specialization candidate (two required boolean leaves).
@@ -757,7 +820,11 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(jsonableTreeFromFieldCursor(firstChunk.cursor()), tree);
 		});
 
-		it("nested subShape specialization exercises multi-iteration counting", () => {
+		it("folds leaf fields but not sub-object fields", () => {
+			// Inner has a boolean leaf, so its (flag:true) cohort folds into a specialized shape.
+			// Outer's only field is a sub-object (Inner), which is not a constant-foldable leaf,
+			// so Outer is not specialized. Nested ("subShape") specialization was removed: it
+			// measured net-negative on the corpus and required a multi-pass counting loop.
 			const sf = new SchemaFactoryAlpha("test");
 			class Inner extends sf.object("Inner", {
 				flag: sf.boolean,
@@ -798,14 +865,11 @@ describe("schemaBasedEncoding", () => {
 				minOccurrencesForSpecialization,
 			);
 
-			// Inner's (flag:true) tuple crosses threshold.
-			// Outer's (child:Inner-specialized) tuple also crosses threshold.
-			// The second specialization requires iteration 2+ of the counting loop,
-			// because Outer's specialization key changes once Inner's shape is resolved as specialized.
+			// Only Inner (the leaf-bearing node) specializes; Outer (sub-object field) does not.
 			assert.equal(
 				countSpecializedShapes(encoded),
-				2,
-				"both Inner and Outer should produce specialized shapes",
+				1,
+				"only Inner's leaf field should fold; Outer's sub-object field should not",
 			);
 
 			const decoded = decodeRoundTrip(encoded);

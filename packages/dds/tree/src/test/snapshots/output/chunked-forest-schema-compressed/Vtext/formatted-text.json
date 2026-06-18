@@ -2,38 +2,31 @@
   "version": "text",
   "identifiers": [
     "",
-    "format",
+    "com.fluidframework.leaf.string",
     "bold",
     "italic",
     "underline",
     "size",
     "font",
-    "com.fluidframework.leaf.string",
     "com.fluidframework.leaf.number",
     "com.fluidframework.leaf.boolean"
   ],
   "shapes": [
     {
-      "f": {
-        "base": 6,
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringTextAtom",
+        "value": false,
         "fields": [
           [
             0,
-            7
-          ],
-          [
-            1,
-            8
+            3
           ]
         ]
       }
     },
     {
-      "d": 0
-    },
-    {
       "c": {
-        "type": 9,
+        "type": 8,
         "value": [
           false
         ]
@@ -41,13 +34,13 @@
     },
     {
       "c": {
-        "type": 9,
+        "type": 8,
         "value": true
       }
     },
     {
       "c": {
-        "type": 7,
+        "type": 1,
         "value": true
       }
     },
@@ -58,10 +51,25 @@
         "fields": [
           [
             0,
-            13
+            5
           ]
         ]
       }
+    },
+    {
+      "c": {
+        "type": "com.fluidframework.text.formatted.StringArray",
+        "value": false,
+        "fields": [
+          [
+            0,
+            6
+          ]
+        ]
+      }
+    },
+    {
+      "a": 7
     },
     {
       "c": {
@@ -70,50 +78,41 @@
         "fields": [
           [
             0,
-            1
+            8
           ],
           [
-            1,
-            1
+            "format",
+            9
           ]
         ]
       }
     },
     {
-      "c": {
-        "type": "com.fluidframework.text.formatted.StringTextAtom",
-        "value": false,
-        "fields": [
-          [
-            0,
-            4
-          ]
-        ]
-      }
+      "d": 0
     },
     {
       "f": {
-        "base": 9,
+        "base": 10,
         "fields": [
           [
             2,
-            2
+            1
           ],
           [
             3,
-            2
+            1
           ],
           [
             4,
-            2
+            1
           ],
           [
             5,
-            10
+            11
           ],
           [
             6,
-            11
+            12
           ]
         ]
       }
@@ -125,32 +124,24 @@
         "fields": [
           [
             2,
-            3
+            2
           ],
           [
             3,
-            3
+            2
           ],
           [
             4,
-            3
+            2
           ],
           [
             5,
-            12
+            13
           ],
           [
             6,
-            4
+            3
           ]
-        ]
-      }
-    },
-    {
-      "c": {
-        "type": 8,
-        "value": [
-          12
         ]
       }
     },
@@ -158,36 +149,28 @@
       "c": {
         "type": 7,
         "value": [
+          12
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 1,
+        "value": [
           "Arial"
         ]
       }
     },
     {
       "c": {
-        "type": 8,
+        "type": 7,
         "value": true
       }
-    },
-    {
-      "c": {
-        "type": "com.fluidframework.text.formatted.StringArray",
-        "value": false,
-        "fields": [
-          [
-            0,
-            14
-          ]
-        ]
-      }
-    },
-    {
-      "a": 1
     }
   ],
   "data": [
     [
-      1,
-      5,
+      4,
       [
         0,
         "H",

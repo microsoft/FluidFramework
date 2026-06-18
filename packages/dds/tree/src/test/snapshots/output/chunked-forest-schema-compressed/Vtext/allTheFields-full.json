@@ -12,9 +12,6 @@
       }
     },
     {
-      "d": 0
-    },
-    {
       "c": {
         "type": "test.allTheFields",
         "value": false,
@@ -38,7 +35,6 @@
   "data": [
     [
       2,
-      3,
       [
         5
       ],

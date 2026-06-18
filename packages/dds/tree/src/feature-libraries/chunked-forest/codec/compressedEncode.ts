@@ -146,7 +146,11 @@ export function asFieldEncoder(encoder: NodeEncoder): FieldEncoder {
 		): void {
 			forEachNode(cursor, () => encoder.encodeNode(cursor, context, outputBuffer));
 		},
-		shape: encoder.shape,
+		// Read lazily: some node encoders (e.g. the VText cohort encoder) only know their
+		// shape once per-batch state has been resolved, after this wrapper is constructed.
+		get shape(): Shape {
+			return encoder.shape;
+		},
 	};
 }
 
@@ -394,10 +398,21 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class NestedArrayEncoder implements FieldEncoder {
-	public constructor(
-		public readonly innerEncoder: NodeEncoder,
-		public readonly shape: NestedArrayShape = new NestedArrayShape(innerEncoder.shape),
-	) {}
+	private cachedShape: NestedArrayShape | undefined;
+
+	public constructor(public readonly innerEncoder: NodeEncoder) {}
+
+	public get shape(): NestedArrayShape {
+		// The inner encoder's shape can vary across batches (the VText cohort encoder resolves to
+		// a concrete shape when monomorphic, otherwise AnyShape), so rebuild when it changes.
+		// Within a batch it is stable, so the same instance is reused and the shape table still
+		// deduplicates by identity.
+		const inner = this.innerEncoder.shape;
+		if (this.cachedShape?.innerShape !== inner) {
+			this.cachedShape = new NestedArrayShape(inner);
+		}
+		return this.cachedShape;
+	}
 
 	public encodeField(
 		cursor: ITreeCursorSynchronous,
@@ -543,40 +558,28 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 * See {@link FieldBatchEncodingContext.isSummary}.
 		 */
 		public readonly isSummary: boolean,
-		/**
-		 * Optional hook invoked by {@link beginBatch} at the start of every {@link compressedEncode}
-		 * call (including the recursive sub-chunk calls made by {@link incrementalFieldEncoder}).
-		 * Lets an encoder policy set up state scoped to a single batch. The VText encoder
-		 * pushes a fresh per-batch specialization state and runs its counting pass. Paired with
-		 * {@link onEndBatch}.
-		 * @remarks
-		 * The per-batch state is owned and typed by the policy, not by this generic context;
-		 * keeping it off the encoder instances is what lets recursive sub-chunk encodes get their
-		 * own state with no snapshot/restore.
-		 */
-		private readonly onBeginBatch:
-			| ((fieldBatch: FieldBatch, context: EncoderContext) => void)
-			| undefined = undefined,
-		/**
-		 * Optional hook invoked by {@link endBatch} when a {@link compressedEncode} call completes,
-		 * to tear down the per-batch state set up by {@link onBeginBatch}.
-		 */
-		private readonly onEndBatch: (() => void) | undefined = undefined,
 	) {}
 
 	/**
-	 * Invoke the {@link onBeginBatch} hook (if any) at the start of a {@link compressedEncode}
-	 * call. No-op for encoders with no per-batch state (e.g. V1/V2).
+	 * Invoked at the start of every {@link compressedEncode} call, including the recursive sub-chunk
+	 * calls made by {@link incrementalFieldEncoder}, to let an encoder set up state scoped to a
+	 * single batch.
+	 * @remarks
+	 * The base implementation has no per-batch state and does nothing (e.g. V1/V2). Subclasses that
+	 * carry per-batch state override this. Firing per {@link compressedEncode} entry, rather than
+	 * once per top-level encode, is what lets recursive sub-chunk encodes get their own state with
+	 * no snapshot/restore.
 	 */
-	public beginBatch(fieldBatch: FieldBatch): void {
-		this.onBeginBatch?.(fieldBatch, this);
+	public beginBatch(_fieldBatch: FieldBatch): void {
+		// No per-batch state in the base encoder.
 	}
 
 	/**
-	 * Invoke the {@link onEndBatch} hook (if any) when a {@link compressedEncode} call completes.
+	 * Invoked when a {@link compressedEncode} call completes, to tear down per-batch state. The
+	 * teardown counterpart to {@link beginBatch}.
 	 */
 	public endBatch(): void {
-		this.onEndBatch?.();
+		// No per-batch state in the base encoder.
 	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
