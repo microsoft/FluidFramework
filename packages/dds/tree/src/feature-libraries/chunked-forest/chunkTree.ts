@@ -752,6 +752,9 @@ export function tryCoalesceUniformChunks(
 		"tryCoalesceUniformChunks: left and right carry different idCompressors",
 	);
 	const combinedTopLevel = left.topLevelLength + right.topLevelLength;
+	// Don't merge if the result would exceed the per-chunk node cap: this keeps chunks from
+	// growing unbounded and matches the threshold {@link splitFieldAtIndex} bisects at, so a
+	// merged chunk won't just be re-split on the next edit.
 	if (combinedTopLevel > policy.uniformChunkNodeCountDynamicTargetMax) {
 		return undefined;
 	}
@@ -761,9 +764,7 @@ export function tryCoalesceUniformChunks(
 		// and returned; `right`'s slot ref is released.
 		left.values.push(...right.values);
 		left.shape = leftTreeShape.withTopLevelLength(combinedTopLevel);
-		if (leftCompressor === undefined && rightCompressor !== undefined) {
-			left.idCompressor = rightCompressor;
-		}
+		left.idCompressor ??= rightCompressor;
 		right.referenceRemoved();
 		return left;
 	}

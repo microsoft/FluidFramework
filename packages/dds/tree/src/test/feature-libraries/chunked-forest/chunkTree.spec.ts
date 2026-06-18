@@ -1154,8 +1154,11 @@ describe("chunkTree", () => {
 
 				assert.equal(result, left, "result should be the same object as left");
 				assertNumbersChunk(left, [1, 2, 3, 4]);
-				// right's only ref was released; refcount is now 0.
-				assert.equal(right.isShared(), false);
+				// `left` is handed back holding its single ref: refcount 1.
+				assert.equal(left.isShared(), false);
+				assert.equal(left.isUnreferenced(), false);
+				// `right`'s only ref was released by the merge: refcount 0.
+				assert.equal(right.isUnreferenced(), true);
 			});
 
 			it("creates a new chunk and releases both inputs when `left.isShared()` is true", () => {
@@ -1169,10 +1172,14 @@ describe("chunkTree", () => {
 				assert(result !== undefined);
 				assert(result !== left, "result should be a fresh chunk, not left");
 				assertNumbersChunk(result, [1, 2, 3, 4]);
-				// left's slot-ref was released (only the extra ref remains).
+				// The fresh chunk holds the single ref handed back to the caller: refcount 1.
+				assert.equal(result.isShared(), false);
+				assert.equal(result.isUnreferenced(), false);
+				// `left`'s slot-ref was released, leaving only the extra ref added above: refcount 1.
 				assert.equal(left.isShared(), false);
-				assert.equal(right.isShared(), false);
-				left.referenceRemoved();
+				assert.equal(left.isUnreferenced(), false);
+				// `right`'s only ref was released by the merge: refcount 0.
+				assert.equal(right.isUnreferenced(), true);
 			});
 		});
 

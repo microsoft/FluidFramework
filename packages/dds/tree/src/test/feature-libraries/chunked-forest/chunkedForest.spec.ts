@@ -274,13 +274,15 @@ describe("ChunkedForest", () => {
 		});
 
 		/**
-		 * Manually seeds the root field with the requested sequence of single-shape UniformChunks.
+		 * Seeds the forest's root field with a sequence of single-shape UniformChunks of the given sizes.
+		 *
+		 * @remarks
 		 * Lets tests position attach/detach boundaries on existing chunk seams and exercise
-		 * coalesceUniformChunks without splitFieldAtIndex having to bisect first.
+		 * `coalesceUniformChunks` without `splitFieldAtIndex` having to bisect first.
 		 */
-		function setupForestWithChunks(chunkSizes: readonly number[]): {
-			forest: ReturnType<typeof setupForest>;
-		} {
+		function setupForestWithChunks(
+			chunkSizes: readonly number[],
+		): ReturnType<typeof setupForest> {
 			const forestSchema = new TreeStoredSchemaRepository(
 				toInitialSchema(SchemaFactory.number),
 			);
@@ -299,7 +301,7 @@ describe("ChunkedForest", () => {
 					),
 			);
 			forest.roots.fields.set(rootFieldKey, chunks);
-			return { forest };
+			return forest;
 		}
 
 		it("coalesces same-shape neighbors left adjacent by an aligned detach", () => {
@@ -307,7 +309,7 @@ describe("ChunkedForest", () => {
 			// detach lands on existing chunk boundaries — splitFieldAtIndex is a no-op and
 			// only coalesceUniformChunks is exercised. After removing the middle single-node
 			// chunk, the two 2-node chunks merge into a single 4-node chunk.
-			const { forest } = setupForestWithChunks([2, 1, 2]);
+			const forest = setupForestWithChunks([2, 1, 2]);
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
@@ -335,7 +337,7 @@ describe("ChunkedForest", () => {
 			// land in that chunk). Pre-fix, the loop steps past the 5-node chunk and lands on
 			// the 3-node chunk with indexWithinChunk = -1, throwing "Array index is out of
 			// bounds" when dereferencing newChunks[-1].
-			const { forest } = setupForestWithChunks([2, 5, 3]);
+			const forest = setupForestWithChunks([2, 5, 3]);
 
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
@@ -361,7 +363,7 @@ describe("ChunkedForest", () => {
 			// on the existing seam — splitFieldAtIndex is a no-op. After inserting a
 			// single-node UniformChunk with value 99 at index 2, coalesce merges both seams
 			// into a single 5-node UniformChunk.
-			const { forest } = setupForestWithChunks([2, 2]);
+			const forest = setupForestWithChunks([2, 2]);
 			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
 			forest.roots.fields.set(detachedKey, [source]);
 
