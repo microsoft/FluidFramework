@@ -35,8 +35,8 @@ export interface CompareBundlesOptions {
 }
 
 /**
- * One comparison row: a named measurement — an asset, entrypoint, owning
- * package, or synthetic composition bucket — sized on both the base and current
+ * One comparison row: a named measurement — an asset, owning package, or
+ * synthetic composition bucket — sized on both the base and current
  * side, with `diff = current - base`. Every output set in the report is a list
  * of these, so they share one factory ({@link makeRow}) and one renderer
  * ({@link renderTable}). The unit of `base`/`current` depends on which list the
@@ -68,13 +68,6 @@ interface ComparisonReport {
 	assets: ComparisonRow[];
 	/** Gzip-size rows, limited to assets whose gzip size changed. */
 	gzipChangedAssets: ComparisonRow[];
-	/**
-	 * Per-entrypoint total parsed-size rows. Each row is a real shipped bundle;
-	 * see {@link compareEntrypointTotals}. Rows overlap and must not be summed —
-	 * the aggregate `fluidFrameworkAll` entrypoint is the single deduplicated
-	 * bundle-wide total.
-	 */
-	entrypoints: ComparisonRow[];
 	/**
 	 * Headline composition buckets, each pinned to a real entrypoint (never
 	 * summed across entrypoints); see {@link bucketDefinitions}.
@@ -109,28 +102,6 @@ function loadAnalyzer(analysisDirectory: string, label: string): AnalyzerNode[] 
 /** Whether an asset name is an emitted `.js` asset (excluding source maps). */
 function isJsAssetName(name: string): boolean {
 	return name.endsWith(".js") && !name.endsWith(".map");
-}
-
-/** Whether an analyzer node is an emitted `.js` asset (excluding source maps). */
-function isJsAsset(node: AnalyzerNode): boolean {
-	return isJsAssetName(node.label);
-}
-
-/**
- * Sums each entrypoint's initial-chunk parsed sizes. analyzer.json tags every
- * asset with the entrypoints it is an initial chunk of via isInitialByEntrypoint.
- */
-function entrypointSizes(nodes: AnalyzerNode[]): Record<string, number> {
-	const totals: Record<string, number> = {};
-	for (const node of nodes.filter(isJsAsset)) {
-		for (const [entrypointName, isInitial] of Object.entries(
-			node.isInitialByEntrypoint ?? {},
-		)) {
-			if (isInitial !== true) continue;
-			totals[entrypointName] = (totals[entrypointName] ?? 0) + (node.parsedSize ?? 0);
-		}
-	}
-	return totals;
 }
 
 // --- Module -> owning-package attribution ---
@@ -422,24 +393,6 @@ function compareAssetField(
 }
 
 /**
- * Per-entrypoint total parsed-size rows, sorted by name. Reads the raw nodes
- * directly because the per-entrypoint totals come from `isInitialByEntrypoint`,
- * which the comparison's per-asset `BundleData` does not carry. Webpack's
- * numeric-id split chunks are filtered out so only named entrypoints remain.
- */
-function compareEntrypointTotals(
-	baseNodes: AnalyzerNode[],
-	currentNodes: AnalyzerNode[],
-): ComparisonRow[] {
-	const baseEntrypoints = entrypointSizes(baseNodes);
-	const currentEntrypoints = entrypointSizes(currentNodes);
-	return [...new Set([...Object.keys(baseEntrypoints), ...Object.keys(currentEntrypoints)])]
-		.filter((name) => !/^\d/.test(name))
-		.sort()
-		.map((name) => makeRow(name, baseEntrypoints[name] ?? 0, currentEntrypoints[name] ?? 0));
-}
-
-/**
  * Computes a structured comparison between the base and current bundles.
  * Pure data: reads each side's `analyzer.json` (webpack-bundle-analyzer's JSON
  * report) and does no other I/O. Parsed and gzip sizes come straight from that
@@ -447,7 +400,6 @@ function compareEntrypointTotals(
  * output set is produced by its own focused helper:
  *
  * - {@link compareAssetField} — per-asset (parsed and gzip).
- * - {@link compareEntrypointTotals} — per real entrypoint.
  * - {@link comparePackages} — the headline buckets and full per-package
  * breakdown, sharing one memoized per-asset row computation.
  */
@@ -476,7 +428,6 @@ function computeBundleComparison(options: CompareBundlesOptions): ComparisonRepo
 		analysisDirectory,
 		assets,
 		gzipChangedAssets,
-		entrypoints: compareEntrypointTotals(baseNodes, currentNodes),
 		packageBuckets,
 		packages,
 	};
@@ -499,7 +450,7 @@ const percentColumnWidth = 10;
 interface TableSpec {
 	/** Banner text (rendered inside `=== ... ===`). */
 	heading: string;
-	/** Header for the name column (e.g. "Asset", "Entrypoint", "Package"). */
+	/** Header for the name column (e.g. "Asset" or "Package"). */
 	nameHeader: string;
 	/** Rows to render. */
 	rows: ComparisonRow[];
@@ -543,12 +494,10 @@ function renderTable(emit: (line?: string) => void, spec: TableSpec): void {
  * Also echoes each line to the console.
  *
  * @remarks
- * Sections are emitted in order: asset-level (per-emitted-file sizes, independent
- * of entrypoints), entrypoint-level, then package-level (composition buckets
- * followed by the full breakdown). Entrypoint rows overlap and must not be
- * summed; the `fluidFrameworkAll` aggregate entrypoint gives the single
- * deduplicated bundle-wide total. The package-level sections are scoped to real
- * entrypoints (see {@link bucketDefinitions} / {@link ComparisonReport}).
+ * Sections are emitted in order: asset-level (per-emitted-file sizes) then
+ * package-level (composition buckets followed by the full breakdown). The
+ * package-level sections are each scoped to a single real entrypoint asset
+ * (see {@link bucketDefinitions} / {@link ComparisonReport}).
  */
 function renderAsText(report: ComparisonReport): string {
 	const lines: string[] = [];
@@ -575,13 +524,6 @@ function renderAsText(report: ComparisonReport): string {
 			rows: report.gzipChangedAssets,
 		});
 	}
-
-	// Entrypoint-level section: each row is a real shipped bundle.
-	renderTable(emit, {
-		heading: "Named entrypoint total asset sizes (each row is a real entrypoint)",
-		nameHeader: "Entrypoint",
-		rows: report.entrypoints,
-	});
 
 	// Package-level sections: composition buckets, then the full breakdown.
 	renderTable(emit, {

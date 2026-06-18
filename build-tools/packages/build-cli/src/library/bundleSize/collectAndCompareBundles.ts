@@ -39,33 +39,12 @@ export interface CollectAndCompareBundlesOptions {
 }
 
 /**
- * Orchestrates: {@link collectBundle} (local working tree), then
- * {@link collectBundle} (base revision), then {@link compareBundles}.
- *
- * The base revision is taken as the merge-base of HEAD and `baseRevision` by
- * default, or used as-is when `exactBase` is set; that resolution, and caching
- * of the base report, are handled inside {@link collectBundle}.
- *
- * Labels (used as analysis subdirectory names) are determined automatically: the
- * local bundle is saved under a timestamped "current_<epoch>" label (generated
- * by {@link collectBundle} and returned for the comparison) and the base bundle
- * under "main", so that {@link compareBundles} can find both directories.
- *
- * The outer repo's working tree, branch, and stash are never modified.
- *
- * @remarks
- * The base label is pinned to "main" because {@link compareBundles} reads from a
- * fixed base label. The current label is timestamped by {@link collectBundle}
- * (so successive runs carrying different uncommitted changes don't clobber each
- * other) and the returned value is passed straight to {@link compareBundles} so
- * they agree on the directory.
- *
- * The inner enlistment used to build the base bundle is a scratch clone, not
- * report data, so it lives under the output directory rather than alongside the
- * per-label analyzer reports in `analysisDir`. Once the comparison is complete
- * the inner repo is deleted by default (it re-creates cheaply via clone, and
- * keeping it consumes hundreds of MB once dependencies are installed); pass
- * {@link CollectAndCompareBundlesOptions.keepBaseRepo} to retain it.
+ * Orchestrates {@link collectBundle} (local working tree) and {@link collectBundle} (base
+ * revision), then {@link compareBundles}. The base is the merge-base of HEAD and `baseRevision`,
+ * or the revision as-is when `exactBase` is set. Labels are automatic: the local bundle under a
+ * timestamped `current_<epoch>` label and the base under `main`. The scratch inner repo used to
+ * build the base is deleted afterward unless {@link CollectAndCompareBundlesOptions.keepBaseRepo}
+ * is set; the outer repo is never modified.
  */
 export async function collectAndCompareBundles(
 	options: CollectAndCompareBundlesOptions,
@@ -117,16 +96,17 @@ export async function collectAndCompareBundles(
 			currentLabel,
 		});
 
-		// Delete the inner repo now that the comparison is complete (re-created
-		// cheaply on the next run). Pass keepBaseRepo to retain it for debugging.
+		console.log(`\n${"=".repeat(80)}`);
+		console.log("✓ Bundle collection and comparison complete!");
+		console.log("=".repeat(80));
+
+		// Delete the inner repo last, after the report is written and the completion banner is
+		// shown, so the user has the results before this slow cleanup runs. (Re-created cheaply on
+		// the next run; pass keepBaseRepo to retain it for debugging.)
 		if (!keepBaseRepo && existsSync(innerRepoRoot)) {
 			console.log(`\nDeleting inner base-repo at ${innerRepoRoot}...`);
 			rmSync(innerRepoRoot, { recursive: true, force: true });
 		}
-
-		console.log(`\n${"=".repeat(80)}`);
-		console.log("✓ Bundle collection and comparison complete!");
-		console.log("=".repeat(80));
 	} catch (error) {
 		console.error("\n✖ Error:", error instanceof Error ? error.message : String(error));
 		throw error;

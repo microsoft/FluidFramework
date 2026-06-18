@@ -2,7 +2,7 @@
 
 The `flub bundle` commands measure how a change affects a package's webpack
 bundle by building the bundle on two different revisions and diffing the
-per-asset and per-entrypoint sizes, so regressions (or wins) are easy to spot
+per-asset and per-package sizes, so regressions (or wins) are easy to spot
 before pushing.
 
 See [bundle.md](./bundle.md) for the generated command reference. This document
@@ -67,7 +67,7 @@ Reach for the lower-level commands when the orchestrator's flow doesn't fit:
 
 Each build runs webpack, which emits `bundleAnalyzerJson/analyzer.json`
 (webpack-bundle-analyzer's JSON report). That single file carries per-asset
-parsed/gzip sizes and entrypoint membership — everything the comparison needs —
+parsed/gzip sizes and per-module breakdowns — everything the comparison needs —
 so it is the only artifact saved per label; the larger webpack stats and `build/`
 outputs are not retained.
 
@@ -98,14 +98,13 @@ decompression is done):
   compression. This is the default unit for every table except the gzip one.
 - **Gzip size** — the gzipped bytes, i.e. what actually goes over the wire.
 
-The report measures the bundle at four different _granularities_, each answering a
+The report measures the bundle at three different _granularities_, each answering a
 different question:
 
 | Table                                        | Granularity | Unit   | What it answers                                                       |
 | -------------------------------------------- | ----------- | ------ | -------------------------------------------------------------------- |
 | All assets                                   | Asset       | Parsed | How did each emitted `.js` file change?                              |
 | Gzip sizes for changed assets                | Asset       | Gzip   | For the assets whose gzip size moved, what is the over-the-wire delta?|
-| Named entrypoint total asset sizes           | Entrypoint  | Parsed | How big is each shipped entrypoint bundle in total?                  |
 | Bundle composition by category               | Package set | Parsed | How is a bundle split between Fluid Framework and third-party code?  |
 | Per-package parsed-size comparison           | Package     | Parsed | Which individual package contributed each chunk of bytes?           |
 
@@ -121,15 +120,6 @@ the assets whose **gzip** size actually changed, so it stays short and signal-on
 Note its filter is on the gzip delta itself — an asset can move in parsed size but
 not gzip (compression absorbs the change), or vice versa, so this table is not
 simply the changed rows of the parsed table re-expressed in gzip bytes.
-
-### Entrypoint table
-
-An **entrypoint** is a bundle a consumer actually loads. Its total is the sum of
-the parsed sizes of the assets that are initial chunks of that entrypoint (per
-analyzer.json's `isInitialByEntrypoint`). These rows **overlap and must not be
-summed**: many entrypoints share the same underlying packages, so adding them
-double-counts shared code. The `fluidFrameworkAll` entrypoint is the single
-deduplicated whole-framework total.
 
 ### Package-level tables
 

@@ -18,10 +18,10 @@ import { findGitRootSync } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
 /** Filename of the per-label analyzer report. */
-const ANALYZER_FILE = "analyzer.json";
+const analyzerFileName = "analyzer.json";
 
 /** Filename of the sidecar recording the SHA a revision-mode report was built from. */
-const REVISION_MARKER_FILE = "revision.txt";
+const revisionMarkerFileName = "revision.txt";
 
 /**
  * Options for {@link collectBundle}.
@@ -276,7 +276,7 @@ async function prepareRevisionBuild(
  *
  * @remarks
  * Uses copy + unlink instead of `renameSync` because the source and destination
- * may live on different drives (e.g. `D:` -> `C:\Users\<user>\AppData\Local\Temp`),
+ * may live on different drives (e.g. `D:` to `C:\Users\<user>\AppData\Local\Temp`),
  * which causes `renameSync` to fail with `EXDEV` on Windows.
  *
  * @param label - Sanitized label for this build (e.g., "main", "client_v2.100.0").
@@ -287,11 +287,11 @@ function saveStats(label: string, sourcePackageRoot: string, analysisDir: string
 	const analyzerJsonOutputPath = resolve(
 		sourcePackageRoot,
 		"bundleAnalyzerJson",
-		ANALYZER_FILE,
+		analyzerFileName,
 	);
 
 	const labelDirectory = resolve(analysisDir, label);
-	const destAnalyzerPath = resolve(labelDirectory, ANALYZER_FILE);
+	const destAnalyzerPath = resolve(labelDirectory, analyzerFileName);
 
 	if (!existsSync(analyzerJsonOutputPath)) {
 		throw new Error(
@@ -359,8 +359,8 @@ export async function collectBundle(options: CollectBundleOptions): Promise<stri
 		);
 	}
 	if (resolvedRevision !== undefined && !forceCleanBuild) {
-		const analyzerPath = resolve(labelDirectory, ANALYZER_FILE);
-		const markerPath = resolve(labelDirectory, REVISION_MARKER_FILE);
+		const analyzerPath = resolve(labelDirectory, analyzerFileName);
+		const markerPath = resolve(labelDirectory, revisionMarkerFileName);
 		const cachedRevision = existsSync(markerPath)
 			? readFileSync(markerPath, "utf8").trim()
 			: undefined;
@@ -395,7 +395,7 @@ export async function collectBundle(options: CollectBundleOptions): Promise<stri
 	// Save stats, recording the SHA so a later run against the same revision can skip the rebuild.
 	saveStats(label, packageRoot, analysisDir);
 	if (resolvedRevision !== undefined) {
-		writeFileSync(resolve(labelDirectory, REVISION_MARKER_FILE), `${resolvedRevision}\n`);
+		writeFileSync(resolve(labelDirectory, revisionMarkerFileName), `${resolvedRevision}\n`);
 	}
 
 	logCollectionComplete(mode, label, labelDirectory);
