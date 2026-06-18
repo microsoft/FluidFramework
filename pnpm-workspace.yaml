@@ -10,22 +10,43 @@
 # 3. Most of these setting are important from a supply chain security perspective.
 #    Edit with care, and see /DEV.md and https://pnpm.io/settings for more information.
 
+allowBuilds:
+  '@azure/msal-node-extensions': true
+  '@azure/msal-node-runtime': true
+  '@biomejs/biome': true
+  '@parcel/watcher': true
+  '@vvago/vale': true
+  classic-level: true
+  core-js: true
+  esbuild: true
+  keytar: true
+  msgpackr-extract: true
+  puppeteer: true
+  unrs-resolver: true
+
 blockExoticSubdeps: true
 
 catalogs:
   # Build-tools packages
   buildTools:
     "@fluid-tools/build-cli": ^0.65.0
+    "@fluid-tools/build-infrastructure": ^0.65.0
     "@fluid-tools/version-tools": ^0.65.0
     "@fluidframework/build-tools": ^0.65.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^9.0.0"
+    "@fluidframework/eslint-config-fluid": "^13.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
   types:
     "@types/node": "~22.19.17"
+
+engineStrict: true
+
+frozenLockfile: true
+
+linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
@@ -107,6 +128,9 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
+  shell-quote: ^1.8.4
+
+  # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
@@ -128,9 +152,37 @@ packages:
   # exclude sub-workspaces for compat tests — these are managed separately with their own lockfiles
   - "!**/compat-workspaces/**"
 
+patchedDependencies:
+  '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+
+peerDependencyRules:
+  # The react-split-pane package used by devtools-view has a peer dependency on React 16, but it doesn't
+  # seem to be maintained and it works fine with React 18. TODO: AB#18876
+  allowedVersions:
+    react: 18.3.1
+    react-dom: 18.3.1
+  ignoreMissing:
+    # @types/node is ignored because it is usually not needed by packages, and if it is, then the
+    # package will hit a compilation failure.
+    - '@types/node'
+    # Peer dependencies on fluid-framework are never fulfilled since that's an in-repo dependency;
+    # we expect a customer using some packages to install it as a dependency.
+    - fluid-framework
+    # markdown-magic is provided by another dependency so is ignored here.
+    - markdown-magic
+    # oclif includes some AWS-related features, but we don't use them, so we ignore @aws-sdk peer
+    # dependencies.
+    - '@aws-sdk/*'
+
+# Hoist these dependencies to the root workspace
+publicHoistPattern:
+  - '@arethetypeswrong/cli'
+
 resolutionMode: highest
 
 strictDepBuilds: true
+
+strictPeerDependencies: true
 
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
@@ -178,3 +230,14 @@ trustPolicyExclude:
   # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
+
+# Disable pnpm update notifications since we use corepack to install package managers
+updateNotifier: false
+
+# pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every `pnpm run <script>`.
+# That breaks CI flows that modifies versions via `flub bump` then runs script like `pnpm run format`.
+# We may want to enable this in the future, but doing so requires changes to the pipelines, so we restore the pnpm 10 defaults for now.
+verifyDepsBeforeRun: false
+
+# Use the number of cores on the machine by default.
+workspaceConcurrency: 0

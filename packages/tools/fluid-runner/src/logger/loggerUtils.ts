@@ -6,7 +6,7 @@
 import * as fs from "fs";
 
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -15,7 +15,7 @@ import { type IFileLogger, type ITelemetryOptions, OutputFormat } from "./fileLo
 import { JSONFileLogger } from "./jsonFileLogger.js";
 
 /**
- * Create an {@link @fluidframework/telemetry-utils#ITelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
+ * Create an {@link @fluidframework/telemetry-utils#TelemetryLoggerExt} wrapped around provided {@link IFileLogger}.
  *
  * @remarks
  *
@@ -25,13 +25,13 @@ import { JSONFileLogger } from "./jsonFileLogger.js";
  *
  * Note: if an output format is not supplied, default is JSON.
  *
- * @returns Both the `IFileLogger` implementation and `ITelemetryLoggerExt` wrapper to be called.
+ * @returns Both the `IFileLogger` implementation and `TelemetryLoggerExt` wrapper to be called.
  * @internal
  */
 export function createLogger(
 	filePath: string,
 	options?: ITelemetryOptions,
-): { logger: ITelemetryLoggerExt; fileLogger: IFileLogger } {
+): { logger: TelemetryLoggerExt; fileLogger: IFileLogger } {
 	const fileLogger =
 		options?.outputFormat === OutputFormat.CSV
 			? new CSVFileLogger(filePath, options?.eventsPerFlush, options?.defaultProps)

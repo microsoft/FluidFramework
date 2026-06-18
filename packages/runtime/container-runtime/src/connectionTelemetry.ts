@@ -16,12 +16,12 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type IEventSampler,
-	type ITelemetryLoggerExt,
-	type ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -105,7 +105,7 @@ class OpPerfTelemetry {
 	 */
 	private processedOpSizeForTelemetry = 0;
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	private static readonly OP_LATENCY_SAMPLE_RATE = 500;
 	private readonly opLatencyLogger: ISampledTelemetryLogger;
@@ -151,7 +151,7 @@ class OpPerfTelemetry {
 		/**
 		 * Telemetry logger to write events to.
 		 */
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "OpPerf" });
 

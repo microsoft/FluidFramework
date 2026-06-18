@@ -33,7 +33,7 @@ import {
 } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
 import { SharedString } from "@fluidframework/sequence/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	createSummarizerFromFactory,
 	summarizeNow,
@@ -114,7 +114,7 @@ export class DocumentMultipleDds implements IDocumentLoaderAndSummarizer {
 		return this._mainContainer;
 	}
 
-	public get logger(): ITelemetryLoggerExt | undefined {
+	public get logger(): TelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 
