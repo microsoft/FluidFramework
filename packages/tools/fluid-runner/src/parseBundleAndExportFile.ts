@@ -89,7 +89,7 @@ export async function parseBundleAndExportFile(
 					await createFluidRunnerContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidExport,
-						baseLogger,
+						baseLogger, // Pass baseLogger with ITelemetryBaseLogger type
 						options,
 						timeout,
 						disableNetworkFetch,
