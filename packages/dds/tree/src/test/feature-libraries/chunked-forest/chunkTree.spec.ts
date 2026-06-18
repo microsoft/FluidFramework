@@ -1254,10 +1254,10 @@ describe("chunkTree", () => {
 			coalesceUniformChunks(singleField, policy);
 			assertChunksUnchanged(singleField, singleSnapshot);
 
-			// Explicit length-0 range on a multi-chunk field.
+			// Explicit empty range on a multi-chunk field.
 			const field: TreeChunk[] = [numbersChunk([1, 2]), numbersChunk([3, 4])];
 			const snapshot = [...field];
-			coalesceUniformChunks(field, policy, { start: 0, length: 0 });
+			coalesceUniformChunks(field, policy, { start: 0, end: 0 });
 			assertChunksUnchanged(field, snapshot);
 		});
 
@@ -1270,7 +1270,7 @@ describe("chunkTree", () => {
 				numbersChunk([4]),
 			];
 
-			coalesceUniformChunks(field, policy, { start: 0, length: 2 });
+			coalesceUniformChunks(field, policy, { start: 0, end: 2 });
 
 			assert.equal(field.length, 3);
 			assertNumbersChunk(field[0], [1, 2]);

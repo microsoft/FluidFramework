@@ -195,7 +195,7 @@ export class ChunkedForest implements IEditableForest {
 				);
 				coalesceUniformChunks(destinationField, this.forest.chunker, {
 					start: coalesceStart,
-					length: coalesceEnd - coalesceStart,
+					end: coalesceEnd,
 				});
 			},
 			/**
@@ -234,7 +234,7 @@ export class ChunkedForest implements IEditableForest {
 				const coalesceEnd = Math.min(sourceField.length, startChunkIndex + 1);
 				coalesceUniformChunks(sourceField, this.forest.chunker, {
 					start: coalesceStart,
-					length: coalesceEnd - coalesceStart,
+					end: coalesceEnd,
 				});
 
 				if (destination === undefined) {

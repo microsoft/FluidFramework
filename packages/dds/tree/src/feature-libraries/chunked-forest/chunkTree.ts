@@ -25,7 +25,11 @@ import {
 	type SchemaAndPolicy,
 	type SchemaPolicy,
 } from "../../core/index.js";
-import { assertNonNegativeSafeInteger, getOrCreate } from "../../util/index.js";
+import {
+	assertNonNegativeSafeInteger,
+	getOrCreate,
+	type IndexRange,
+} from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
@@ -658,20 +662,20 @@ export function splitFieldAtIndex(
  *
  * @param chunks - The chunks array, modified in place.
  * @param policy - The {@link ChunkPolicy} supplying the per-chunk cap.
- * @param range - Sub-range of `chunks` (by chunk index) to consider for merging. Defaults to the
- * whole array. `start + length` must not exceed `chunks.length`.
+ * @param range - Half-open `[start, end)` sub-range of `chunks` (by chunk index) to consider for
+ * merging. Defaults to the whole array. `end` must not exceed `chunks.length`.
  */
 export function coalesceUniformChunks(
 	chunks: TreeChunk[],
 	policy: ChunkPolicy,
-	range?: { readonly start: number; readonly length: number },
+	range?: IndexRange,
 ): void {
 	const rangeStart = range?.start ?? 0;
-	const rangeLength = range?.length ?? chunks.length - rangeStart;
-	const rangeEnd = rangeStart + rangeLength;
+	const rangeEnd = range?.end ?? chunks.length;
 	debugAssert(
 		() =>
-			rangeEnd <= chunks.length || "coalesceUniformChunks: range end exceeds chunks length",
+			(rangeStart <= rangeEnd && rangeEnd <= chunks.length) ||
+			"coalesceUniformChunks: invalid range",
 	);
 	if (rangeEnd - rangeStart < 2) {
 		return;
