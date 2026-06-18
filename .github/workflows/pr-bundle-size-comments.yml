@@ -164,6 +164,55 @@ jobs:
           number: ${{ steps.find_pr.outputs.pr_num }}
           path: ${{ github.workspace }}/acknowledge.md
 
+  # Reacts when ADO reports a PR's `Build - client packages` as `neutral` — typically because the
+  # pipeline's path filter skipped the build (no bundle-relevant changes). If a prior commit on this PR
+  # produced a real sticky, those numbers are now stale; delete the sticky so the PR doesn't carry
+  # outdated info. `marocchino/sticky-pull-request-comment` with `delete: true` is a no-op when no
+  # sticky exists, so PRs that never had one stay clean.
+  delete-sticky-on-neutral:
+    if: >-
+      github.event.action == 'completed' &&
+      github.event.check_run.name == 'Build - client packages' &&
+      contains(github.event.check_run.details_url, '10f9b53e-c7fd-4538-9fff-13cd088a436c') &&
+      github.event.check_run.conclusion == 'neutral'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Resolve PR for check SHA
+        id: find_pr
+        # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const sha = context.payload.check_run.head_sha;
+            const { search } = await github.graphql(
+              `query($q: String!) {
+                 search(query: $q, type: ISSUE, first: 1) {
+                   nodes {
+                     ... on PullRequest { number }
+                   }
+                 }
+               }`,
+              { q: `type:pr is:open repo:${owner}/${repo} head-sha:${sha}` },
+            );
+            const pr = search.nodes[0];
+            if (!pr) {
+              core.info(`No matching open PR for SHA ${sha}; nothing to delete.`);
+              return;
+            }
+            core.info(`Matched PR #${pr.number} — will delete the bundle-size sticky if present.`);
+            core.setOutput("pr_num", pr.number);
+
+      - if: steps.find_pr.outputs.pr_num != ''
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        with:
+          header: bundle-size-report
+          number: ${{ steps.find_pr.outputs.pr_num }}
+          delete: true
+
   # Reacts to a PR's own `Build - client packages` build completing. The check SHA is a PR head SHA, so we
   # produce at most one matrix entry — the PR whose head matches. Fires on `success` or `failure` so a
   # failed PR build also updates the sticky (the compare job's flub call returns the appropriate failure
