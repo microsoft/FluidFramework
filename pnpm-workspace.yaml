@@ -74,6 +74,9 @@ overrides:
   # Caret dependencies aren't enough on a pre-1.0 package.
   axios@<0.30.0: ^0.30.0
 
+  # Force vulnerable axios ^1.15.0 requests to the patched 1.15.1.
+  axios@^1.15.0: 1.15.1
+
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
   diff@>=3 <4: ^4.0.4

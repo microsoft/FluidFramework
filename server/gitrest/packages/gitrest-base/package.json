@@ -62,7 +62,7 @@
 		"@fluidframework/server-services-utils": "8.0.0-396786",
 		"@fluidframework/server-test-utils": "8.0.0-396786",
 		"async-mutex": "^0.3.2",
-		"axios": "^1.15.0",
+		"axios": "^1.15.1",
 		"body-parser": "^1.20.3",
 		"compression": "^1.7.3",
 		"cors": "^2.8.5",
