@@ -13,13 +13,13 @@ import { BaseCommand } from "../../library/commands/base.js";
  * Orchestrates a local bundle collection, a base-revision (merge-base) bundle collection, and a
  * comparison between them. The outer repo's working tree, branch, and stash are never modified.
  */
-export default class BundleCollectAndCompare extends BaseCommand<
-	typeof BundleCollectAndCompare
+export default class GenerateBundleAnalysisReposWithComparison extends BaseCommand<
+	typeof GenerateBundleAnalysisReposWithComparison
 > {
 	public static readonly description =
 		"Collect the local bundle and the base-revision (merge-base) bundle, then compare them. " +
 		"The outer repo's working tree, branch, and stash are never modified.\n\n" +
-		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md";
+		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md";
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",

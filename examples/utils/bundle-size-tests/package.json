@@ -21,7 +21,7 @@
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob build dist lib bundleAnalysis bundleAnalyzerJson compareBundlesOutput \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"compare:bundles": "flub bundle collectAndCompare",
+		"compare:bundles": "flub generate bundleAnalysisReposWithComparison",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",

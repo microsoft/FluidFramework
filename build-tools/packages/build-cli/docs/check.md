@@ -4,6 +4,7 @@
 Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check bundleAnalysisReposComparison`](#flub-check-bundleanalysisreposcomparison)
 * [`flub check bundleSize`](#flub-check-bundlesize)
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
@@ -66,6 +67,47 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check bundleAnalysisReposComparison`
+
+Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current = --current-label).
+
+```
+USAGE
+  $ flub check bundleAnalysisReposComparison [-v | --quiet] [--analysis-dir <value>] [--output-dir <value>] [--base-label <value>]
+    [--current-label <value>]
+
+FLAGS
+  --analysis-dir=<value>   [default: ./compareBundlesOutput/analysis] Parent directory containing analyzer.json files at
+                           {label}/analyzer.json.
+  --base-label=<value>     [default: main] Label subdirectory under --analysis-dir holding the base-side bundle stats.
+                           Must match the --label passed to 'flub generate bundleAnalysisRepo' in revision mode.
+  --current-label=<value>  [default: current] Label subdirectory under --analysis-dir holding the current-side bundle
+                           stats. Must match the --label passed to 'flub generate bundleAnalysisRepo' in local mode (the
+                           orchestrator passes a timestamped label like 'current_<epoch>').
+  --output-dir=<value>     [default: ./compareBundlesOutput] Directory where the .txt and .json comparison reports are
+                           written.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current =
+  --current-label).
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub check bundleAnalysisReposComparison
+
+  $ flub check bundleAnalysisReposComparison --base-label some-revision
+
+  $ flub check bundleAnalysisReposComparison --analysis-dir /some/other/path
+```
+
+_See code: [src/commands/check/bundleAnalysisReposComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleAnalysisReposComparison.ts)_
 
 ## `flub check bundleSize`
 

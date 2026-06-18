@@ -8,10 +8,12 @@ This package can measure how a change affects its webpack bundle by building the
 bundle on two different revisions and diffing the per-asset and per-entrypoint
 sizes, so regressions (or wins) are easy to spot before pushing.
 
-The workflow is implemented as the `flub bundle` command topic in
+The workflow is implemented as the bundle-analysis commands (`flub generate
+bundleAnalysisRepo`, `flub check bundleAnalysisReposComparison`, and the
+`flub generate bundleAnalysisReposWithComparison` orchestrator) in
 [`@fluid-tools/build-cli`](../../../build-tools/packages/build-cli); this package
 just invokes it with the appropriate context. See
-[bundleDetails.md](../../../build-tools/packages/build-cli/docs/bundleDetails.md)
+[bundleAnalysisRepoDetails.md](../../../build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md)
 for how the commands fit together and how to read the comparison report.
 
 ### Running

@@ -10,15 +10,17 @@ import { compareBundles } from "../../library/bundleSize/index.js";
 import { BaseCommand } from "../../library/commands/base.js";
 
 /**
- * Compares the two bundles previously collected by `flub bundle collect`
+ * Compares the two bundles previously collected by `flub generate bundleAnalysisRepo`
  * (base = --base-label, current = --current-label) and writes human-readable `.txt` and
  * structured `.json` comparison reports.
  */
-export default class BundleCompare extends BaseCommand<typeof BundleCompare> {
+export default class CheckBundleAnalysisReposComparison extends BaseCommand<
+	typeof CheckBundleAnalysisReposComparison
+> {
 	public static readonly description =
-		"Compare the two bundles previously collected by 'flub bundle collect' " +
+		"Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' " +
 		"(base = --base-label, current = --current-label).\n\n" +
-		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleDetails.md";
+		"To learn more see the detailed documentation at https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md";
 
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
@@ -38,13 +40,13 @@ export default class BundleCompare extends BaseCommand<typeof BundleCompare> {
 		"base-label": Flags.string({
 			description:
 				"Label subdirectory under --analysis-dir holding the base-side bundle stats. " +
-				"Must match the --label passed to 'flub bundle collect' in revision mode.",
+				"Must match the --label passed to 'flub generate bundleAnalysisRepo' in revision mode.",
 			default: "main",
 		}),
 		"current-label": Flags.string({
 			description:
 				"Label subdirectory under --analysis-dir holding the current-side bundle stats. " +
-				"Must match the --label passed to 'flub bundle collect' in local mode (the " +
+				"Must match the --label passed to 'flub generate bundleAnalysisRepo' in local mode (the " +
 				"orchestrator passes a timestamped label like 'current_<epoch>').",
 			default: "current",
 		}),

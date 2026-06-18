@@ -5,6 +5,8 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleAnalysisRepo`](#flub-generate-bundleanalysisrepo)
+* [`flub generate bundleAnalysisReposWithComparison`](#flub-generate-bundleanalysisreposwithcomparison)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
@@ -117,6 +119,119 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
+
+## `flub generate bundleAnalysisRepo`
+
+Build and collect a bundle, either from the outer enlistment (local mode) or from a separate inner enlistment checked out to a specific revision (revision mode). The outer repo's working tree, branch, and stash are never modified.
+
+```
+USAGE
+  $ flub generate bundleAnalysisRepo [-v | --quiet] [--revision <value> | --merge-base <value>] [--label <value>] [--package-dir
+    <value>] [--analysis-dir <value>] [--force-clean-build]
+
+FLAGS
+  --analysis-dir=<value>  Directory under which per-label analyzer stats are saved. Defaults to
+                          <package-dir>/compareBundlesOutput/analysis.
+  --force-clean-build     Run the full workspace clean ('npm run clean' at the repo root) before building. Off by
+                          default; opt in when stale incremental build state from a previous revision may interfere with
+                          the current one.
+  --label=<value>         Override the directory name under which bundle stats are saved. Defaults to the sanitized
+                          revision in revision mode, or a timestamped "current_<epoch>" in local mode.
+  --merge-base=<value>    Collect a bundle for the merge-base of HEAD and this committish (the fork point). Selects
+                          revision mode and is mutually exclusive with --revision. Also used as the default label.
+  --package-dir=<value>   [default: .] Package root whose webpack bundles are built and whose analyzer.json is
+                          collected.
+  --revision=<value>      Collect a bundle for this committish (branch, tag, commit SHA, or any committish like HEAD~2),
+                          resolved as-is via 'git rev-parse'. Selects revision mode and is mutually exclusive with
+                          --merge-base; omit both to collect the local working tree. Also used as the default label.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Build and collect a bundle, either from the outer enlistment (local mode) or from a separate inner enlistment checked
+  out to a specific revision (revision mode). The outer repo's working tree, branch, and stash are never modified.
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub generate bundleAnalysisRepo
+
+  $ flub generate bundleAnalysisRepo --revision main
+
+  $ flub generate bundleAnalysisRepo --merge-base main
+
+  $ flub generate bundleAnalysisRepo --revision client_v2.100.0
+```
+
+_See code: [src/commands/generate/bundleAnalysisRepo.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleAnalysisRepo.ts)_
+
+## `flub generate bundleAnalysisReposWithComparison`
+
+Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree, branch, and stash are never modified.
+
+```
+USAGE
+  $ flub generate bundleAnalysisReposWithComparison [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
+    [--analysis-dir <value>] [--output-dir <value>] [--force-clean-build] [--keep-base-repo]
+
+FLAGS
+  --analysis-dir=<value>
+      Directory under which per-label analyzer stats are saved. Defaults to an 'analysis' subdirectory of the output
+      directory (e.g. <package-dir>/compareBundlesOutput/analysis).
+
+  --base-revision=<value>
+      Revision to use as the comparison baseline (branch, tag, or commit SHA). The actual base used is the merge-base of
+      HEAD and this revision (the fork point), so worktree-based setups where 'main' is in an unusual location still
+      produce the expected comparison. When omitted, the baseline is auto-detected as the freshest 'main' of a remote
+      pointing at microsoft/FluidFramework — the local 'main' is not used, since it may be stale. An explicit value
+      (including 'main') is always honored as given. Pass --exact-base to use the revision as-is instead.
+
+  --exact-base
+      Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking the merge-base with HEAD.
+      Useful for comparing the working tree against a specific commit, e.g. the current commit's parent.
+
+  --force-clean-build
+      Run the full workspace clean before each build. Off by default; opt in when stale incremental build state may
+      interfere with the current revision.
+
+  --keep-base-repo
+      For debugging only: keep the inner base-repo clone after collecting the base bundle. By default the inner repo is
+      deleted once stats are saved, since it can be re-created cheaply via shallow clone on the next run. Pass this flag
+      to inspect the inner repo's working tree or build output (e.g. when a build is failing inside the inner repo).
+
+  --output-dir=<value>
+      Directory where the comparison reports are written. Defaults to <package-dir>/compareBundlesOutput.
+
+  --package-dir=<value>
+      [default: .] Package root whose webpack bundles are built and compared.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree,
+  branch, and stash are never modified.
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub generate bundleAnalysisReposWithComparison
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision main
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision client_v2.100.0
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision 18062854f25 --exact-base
+
+  $ flub generate bundleAnalysisReposWithComparison --force-clean-build --keep-base-repo
+```
+
+_See code: [src/commands/generate/bundleAnalysisReposWithComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleAnalysisReposWithComparison.ts)_
 
 ## `flub generate bundleStats`
 
