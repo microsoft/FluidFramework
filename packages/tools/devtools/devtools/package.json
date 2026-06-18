@@ -129,7 +129,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.101.0",
+		"@fluidframework/devtools-previous": "npm:@fluidframework/devtools@2.103.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
@@ -146,7 +146,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_DevtoolsProps": {
+				"backCompat": false
+			},
+			"Interface_IDevtoolsLogger": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "alpha"
 	}
 }
