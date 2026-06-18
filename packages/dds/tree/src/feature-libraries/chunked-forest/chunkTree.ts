@@ -739,7 +739,7 @@ export function tryCoalesceUniformChunks(
 	}
 	const leftTreeShape = left.shape.treeShape;
 	const rightTreeShape = right.shape.treeShape;
-	// TODO: TreeShape.equals could short-circuit on identity for the common
+	// TODO: AB#75982 TreeShape.equals could short-circuit on identity for the common
 	// (same-chunker) case; until then this is a full structural check on every merge.
 	if (!leftTreeShape.equals(rightTreeShape)) {
 		return undefined;
