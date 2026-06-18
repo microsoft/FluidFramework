@@ -186,15 +186,15 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 // @beta @legacy (undocumented)
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
-    appName?: string;
+    appName?: string | undefined;
     // (undocumented)
-    containerPackageName?: string;
+    containerPackageName?: string | undefined;
     // (undocumented)
-    context?: string;
+    context?: string | undefined;
     // (undocumented)
     dataStorePath: string;
     // (undocumented)
-    fileVersion?: string;
+    fileVersion?: string | undefined;
 }
 
 // @beta @deprecated @legacy
