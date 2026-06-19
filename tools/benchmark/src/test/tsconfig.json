@@ -4,6 +4,7 @@
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["mocha", "node"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
