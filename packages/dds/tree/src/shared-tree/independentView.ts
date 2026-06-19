@@ -9,7 +9,10 @@ import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
-import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	extractTelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
@@ -138,7 +141,8 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions & { readonly logger?: ITelemetryBaseLogger | undefined },
+	options: ForestOptions &
+		ICodecOptions & { readonly logger?: ITelemetryBaseLogger | undefined },
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -220,7 +224,9 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	const logger = createChildLogger({ logger: options?.logger, namespace: "independentView" });
+	const logger = extractTelemetryLoggerExt(
+		createChildLogger({ logger: options?.logger, namespace: "independentView" }),
+	);
 	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
 		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
