@@ -7,9 +7,10 @@ import * as fs from "fs";
 import * as path from "path";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 import { sha256 } from "./hash.js";
 
-type tsTypes = typeof ts54Types | typeof ts59Types;
+type tsTypes = typeof ts54Types | typeof ts59Types | typeof ts60Types;
 
 /**
  * Matches fluid-tsc command start.
@@ -101,7 +102,10 @@ function filterIncrementalOptions(options: any): Record<string, unknown> {
 }
 
 function convertOptionPaths<
-	TCompilerOptions extends ts54Types.CompilerOptions | ts59Types.CompilerOptions,
+	TCompilerOptions extends
+		| ts54Types.CompilerOptions
+		| ts59Types.CompilerOptions
+		| ts60Types.CompilerOptions,
 >(
 	options: TCompilerOptions,
 	base: string,
