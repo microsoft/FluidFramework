@@ -39,6 +39,22 @@ With this API, applications can keep the staged schema in code and use the `upgr
 For example, an application that is adding checklist items to a task document can deploy clients that understand the new checklist schema first, then enable the stored-schema upgrade only for documents where the feature flag is enabled:
 
 ```typescript
+const sf = new SchemaFactoryBeta("example-app");
+
+class ChecklistItem extends sf.object("ChecklistItem", {
+	text: sf.string,
+}) {}
+
+const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
+const checklistItemSchemaUpgrade = stagedChecklistItem.metadata.stagedSchemaUpgrade;
+assert(checklistItemSchemaUpgrade !== undefined);
+
+class AppSchema extends sf.object("AppSchema", {
+	// `taskItem` is an existing property that already allowed plain text.
+	// The staged type is added to this same property and enabled at rollout time.
+	taskItem: sf.optional([sf.string, stagedChecklistItem]),
+}) {}
+
 const enableChecklistItems = featureFlags.enableChecklistItems;
 
 const upgrades = enableChecklistItems

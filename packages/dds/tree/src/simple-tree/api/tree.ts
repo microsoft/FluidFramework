@@ -472,6 +472,7 @@ export interface TreeViewAlpha<
 	 *
 	 * if (featureFlags.enableChecklistItems && view.compatibility.canUpgrade) {
 	 * 	view.upgradeSchema({ enableChecklistItems: checklistItemSchemaUpgrade });
+	 * 	// This write demonstrates using the newly enabled staged type after the schema upgrade.
 	 * 	addChecklistItem(view.root, { text: "Review rollout" });
 	 * }
 	 * ```
@@ -488,6 +489,7 @@ export interface TreeViewAlpha<
 	 *
 	 * if (featureFlags.enableOptionalDueDate && view.compatibility.canUpgrade) {
 	 * 	view.upgradeSchema({ enableOptionalDueDate: dueDateSchemaUpgrade });
+	 * 	// Clear a value that was previously required: this is only valid after enabling the staged optional upgrade.
 	 * 	view.root.dueDate = undefined;
 	 * }
 	 * ```
