@@ -85,12 +85,6 @@
 				"...",
 				"webpack"
 			],
-			"compile": {
-				"dependsOn": [
-					"..."
-				],
-				"script": false
-			},
 			"webpack": [
 				"^build:esnext"
 			],

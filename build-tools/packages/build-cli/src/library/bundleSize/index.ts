@@ -9,7 +9,7 @@ export {
 } from "./collectAndCompareBundles.js";
 export { type CollectBundleOptions, collectBundle } from "./collectBundle.js";
 export { type CompareBundlesOptions, compareBundles } from "./compareBundles.js";
-export { compareJsonReports, compareJsonReportsByPackage } from "./compareJsonReports.js";
+export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
 	type ReadAnalyzerJsonsResult,

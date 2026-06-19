@@ -9,15 +9,6 @@ import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 const config: Linter.Config[] = [
 	...recommended,
 	{
-		files: ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
-		languageOptions: {
-			parserOptions: {
-				projectService: false,
-				project: ["./tsconfig.json", "./src/test/tsconfig.json"],
-			},
-		},
-	},
-	{
 		rules: {
 			"@typescript-eslint/consistent-type-imports": "off",
 			"@typescript-eslint/no-explicit-any": "off",

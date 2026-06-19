@@ -36,13 +36,16 @@ changes, not unrelated commits that have since landed on `main`.
 
 ### Outputs
 
-- Each label's `analyzer.json` is saved under `bundleAnalysis/<label>/`
-  (gitignored). This is also where the cached base report and the inner repo
-  clone live.
-- Comparison reports (`.txt` and `.json`) are written to `compareBundlesOutput/`
-  (gitignored).
+Everything is written under `compareBundlesOutput/` (gitignored):
 
-Both directories are removed by `npm run clean`.
+- Each label's `analyzer.json` is saved under `compareBundlesOutput/analysis/<label>/`.
+- Comparison reports (`.txt` and `.json`) are written to the root of
+  `compareBundlesOutput/`.
+- The base revision is built in a scratch clone under
+  `compareBundlesOutput/base-repo/`, which is deleted automatically unless
+  `--keep-base-repo` is passed.
+
+The whole `compareBundlesOutput/` directory is removed by `npm run clean`.
 
 <!-- AUTO-GENERATED-CONTENT:START (README_FOOTER) -->
 
