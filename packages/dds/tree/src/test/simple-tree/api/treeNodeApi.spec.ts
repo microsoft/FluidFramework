@@ -3199,6 +3199,32 @@ describe("treeNodeApi", () => {
 
 			assert.deepEqual(eventLog, [new Set(["prop1"])]);
 		});
+
+		describe("editing the tree from within a change event listener throws", () => {
+			// Each node-level change event holds the edit lock while it fires, so attempting to
+			// edit the tree from within the listener throws a UsageError. Covered for `nodeChanged`
+			// and `treeChanged` separately in case their implementations ever diverge.
+			const sf = new SchemaFactory("on-edit-throws");
+			class TestObject extends sf.object("TestObject", {
+				value: sf.number,
+			}) {}
+
+			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
+				it(`editing from a '${eventName}' listener throws`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+					view.initialize({ value: 0 });
+
+					Tree.on(view.root, eventName, () => {
+						view.root.value = 2;
+					});
+
+					assert.throws(
+						() => (view.root.value = 1),
+						validateUsageError("Editing the tree is forbidden during a change event callback"),
+					);
+				});
+			}
+		});
 	});
 
 	describe("tree.clone", () => {

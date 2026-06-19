@@ -87,7 +87,6 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
-	type TreeChangeEvents,
 	type VerboseTree,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -788,18 +787,47 @@ export class TreeCheckout implements ITreeCheckout {
 					labels: buildLabelsSet(this.labelTreeNode),
 				};
 
-				this.#events.emit("changed", metadata, getRevertible);
+				this.emitChangedLocked(() => {
+					this.#events.emit("changed", metadata, getRevertible);
+				});
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", {
-				isLocal: false,
-				kind: CommitKind.Default,
-				labels: new Set<unknown>(),
+			this.emitChangedLocked(() => {
+				this.#events.emit("changed", {
+					isLocal: false,
+					kind: CommitKind.Default,
+					labels: new Set<unknown>(),
+				});
 			});
 		}
 	};
+
+	/**
+	 * Hold the `editLock` for the duration of `emit`, so that re-entrant edits, transactions,
+	 * branch operations, etc. attempted from inside a `changed` listener throw the canonical
+	 * "forbidden during a change event" {@link UsageError} via {@link EditLock.checkUnlocked}.
+	 *
+	 * @remarks
+	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
+	 * The `try`/`finally` ensures the lock is released even if a listener throws.
+	 */
+	private emitChangedLocked(emit: () => void): void {
+		this.editLock.lock();
+		try {
+			emit();
+		} finally {
+			// TODO: any event that throws potentially leaves the code which triggered that event,
+			// and thus this checkout (and likely more) in a broken state.
+			// Unlocking this editLock prevents future use of this broken state from giving a confusing error in this case,
+			// however, a better approach would probably be to put something (this checkout and/or the editLock)
+			// into a broken state (using a properly scoped `Breakable`),
+			// likely by moving emitChangedLocked into EditLock, and having EditLock get a Breakable,
+			// and having the new emitChangedLocked use `Breakable.use`.
+			this.editLock.unlock();
+		}
+	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
 		this.editLock.lock();
@@ -1681,12 +1709,7 @@ class EditLock {
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
 		if (this.locked) {
-			// These type assertions ensure that the event name strings used here match the actual event names
-			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
-			const treeChanged: keyof TreeChangeEvents = "treeChanged";
-			throw new UsageError(
-				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
-			);
+			throw new UsageError(`${action} is forbidden during a change event callback`);
 		}
 	}
 
