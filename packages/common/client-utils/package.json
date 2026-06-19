@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.102.0",
+	"version": "2.110.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -143,7 +143,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.92.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.103.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
@@ -181,13 +181,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:mocha:esm",
-				"build:test:jest",
-				"build:test:types"
-			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -204,6 +197,18 @@
 				"build:esnext"
 			],
 			"build:exports:node": [
+				"build:esnext"
+			],
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha:cjs": [
+				"tsc"
+			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
+			"build:test:types": [
 				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
@@ -233,18 +238,6 @@
 			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
-			"build:test:jest": [
-				"tsc"
-			],
-			"build:test:mocha:cjs": [
-				"tsc"
-			],
-			"build:test:mocha:esm": [
-				"build:esnext"
-			],
-			"build:test:types": [
-				"build:esnext"
-			],
 			"ci:build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -256,13 +249,19 @@
 			],
 			"ci:build:api-reports:node:legacy": [
 				"build:exports:node"
+			],
+			"test:mocha:cjs": [
+				"build:test:mocha:cjs"
+			],
+			"test:mocha:esm": [
+				"build:test:mocha:esm"
 			]
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 6,
-		"releaseDate": "2026-04-13",
-		"releasePkgVersion": "2.93.0"
+		"generation": 7,
+		"releaseDate": "2026-05-27",
+		"releasePkgVersion": "2.102.0"
 	},
 	"typeValidation": {
 		"broken": {},

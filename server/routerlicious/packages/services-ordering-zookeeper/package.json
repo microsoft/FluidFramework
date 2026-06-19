@@ -31,9 +31,9 @@
 		"zookeeper": "^7.2.0"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "^0.65.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "^0.65.0",
 		"@fluidframework/eslint-config-fluid": "^9.0.0",
 		"@fluidframework/server-services-ordering-zookeeper-previous": "npm:@fluidframework/server-services-ordering-zookeeper@7.0.0",
 		"@fluidframework/server-test-utils": "workspace:~",

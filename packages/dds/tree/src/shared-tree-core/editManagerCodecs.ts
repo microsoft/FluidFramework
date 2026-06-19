@@ -8,7 +8,7 @@ import type { MinimumVersionForCollab } from "@fluidframework/runtime-definition
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	ClientVersionDispatchingCodecBuilder,
+	VersionDispatchingCodecBuilder,
 	type CodecTree,
 	type CodecVersion,
 	type DependentFormatVersion,
@@ -64,11 +64,9 @@ interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
 }
 
 /**
- * Creates a {@link ClientVersionDispatchingCodecBuilder} encoding for {@link SummaryData}.
+ * Creates a {@link VersionDispatchingCodecBuilder} encoding for {@link SummaryData}.
  */
-export function makeEditManagerCodecBuilder<
-	TChangeset,
->(): ClientVersionDispatchingCodecBuilder<
+export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCodecBuilder<
 	EditManagerCodecOptions<TChangeset>,
 	SummaryData<TChangeset>,
 	EditManagerEncodingContext,
@@ -137,7 +135,7 @@ export function makeEditManagerCodecBuilder<
 		},
 	];
 
-	return ClientVersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
+	return VersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
 }
 
 /**

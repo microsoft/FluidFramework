@@ -9,7 +9,7 @@ import type {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
 
 import {
 	type Brand,

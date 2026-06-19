@@ -1597,6 +1597,125 @@ describe("Runtime", () => {
 				);
 			});
 		});
+
+		describe("Submit during stashed-op apply", () => {
+			let containerRuntime: ContainerRuntime;
+			let mockLogger: MockLogger;
+			let containerErrors: ICriticalContainerError[];
+
+			async function createRuntime(settings: Record<string, ConfigTypes> = {}): Promise<void> {
+				mockLogger = new MockLogger();
+				containerErrors = [];
+				const context = {
+					...getMockContext({ logger: mockLogger, settings }),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				const { runtime } = await ContainerRuntime.loadRuntime2({
+					context: context as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					requestHandler: undefined,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+				containerRuntime = runtime;
+			}
+
+			function setApplyingStashedOps(isApplying: boolean): void {
+				const psm = (
+					containerRuntime as unknown as { pendingStateManager: PendingStateManager }
+				).pendingStateManager;
+				Object.defineProperty(psm, "isApplyingStashedOps", {
+					configurable: true,
+					get: () => isApplying,
+				});
+			}
+
+			function submitBlobAttach(): void {
+				// Mirrors `sendBlobAttachMessage` in ContainerRuntime; submit() is private.
+				(
+					containerRuntime as unknown as {
+						submit: (
+							message: { type: ContainerMessageType; contents: unknown },
+							localOpMetadata: unknown,
+							metadata: { localId: string; blobId: string },
+						) => void;
+					}
+				).submit({ type: ContainerMessageType.BlobAttach, contents: undefined }, undefined, {
+					localId: "local-1",
+					blobId: "blob-1",
+				});
+			}
+
+			it("logs but does not throw by default on submit during apply", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					0,
+					"closeFn should not have been invoked when throw is not enabled",
+				);
+			});
+
+			it("does not throw when the apply window is closed", async () => {
+				await createRuntime();
+				setApplyingStashedOps(false);
+				assert.doesNotThrow(() =>
+					submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+				);
+			});
+
+			it("does not throw for BlobAttach during apply (allowlisted)", async () => {
+				await createRuntime();
+				setApplyingStashedOps(true);
+				assert.doesNotThrow(() => submitBlobAttach());
+			});
+
+			it("on-switch throws, logs, and closes the container on submit during apply", async () => {
+				await createRuntime({
+					"Fluid.ContainerRuntime.EnableSubmitDuringStashedApplyThrow": true,
+				});
+				setApplyingStashedOps(true);
+				assert.throws(
+					() => submitDataStoreOp(containerRuntime, "1", testDataStoreMessage),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message === "Local op submitted during stashed-op apply window",
+				);
+				mockLogger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:SubmitDuringStashedOpApply",
+						category: "error",
+						messageType: ContainerMessageType.FluidDataStoreOp,
+					},
+				]);
+				assert.strictEqual(
+					containerErrors.length,
+					1,
+					"closeFn should have been invoked exactly once",
+				);
+				assert.strictEqual(
+					containerErrors[0].errorType,
+					ContainerErrorTypes.usageError,
+					"closeFn should have received the UsageError",
+				);
+			});
+		});
+
 		describe("Supports mixin classes", () => {
 			it("new loadRuntime2 method works", async () => {
 				const makeMixin = <T>(
@@ -2367,8 +2486,10 @@ describe("Runtime", () => {
 				},
 			]) {
 				it(`DuplicateBatchDetector reflects batch-id tracking enablement (${variant.name})`, async () => {
+					const logger = new MockLogger();
 					const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 						context: getMockContext({
+							logger,
 							settings: variant.settings,
 						}) as IContainerContext,
 						registry: new FluidDataStoreRegistry([]),
@@ -2389,27 +2510,33 @@ describe("Runtime", () => {
 						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 						false,
 					);
-					// Process a duplicate batch "batchId1" with different seqNum 234
-					const assertThrowsOnlyIfExpected = variant.expectDetection
-						? assert.throws
-						: assert.doesNotThrow;
-					const errorPredicate = (e: Error) =>
-						e.message === "Duplicate batch - The same batch was sequenced twice";
-					assertThrowsOnlyIfExpected(
-						() => {
-							containerRuntime.process(
-								{
-									sequenceNumber: 234,
-									type: MessageType.Operation,
-									contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-									metadata: { batchId: "batchId1" },
-								} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-								false,
-							);
-						},
-						errorPredicate,
-						"Expected duplicate batch detection to match enablement",
+					// Duplicate-batch handling is currently log-only (the DataCorruptionError throw is
+					// suppressed while a live service bug can produce duplicates). So processing the
+					// duplicate should never throw; we instead verify the DuplicateBatch telemetry
+					// event is emitted iff detection is enabled for this variant.
+					assert.doesNotThrow(() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
 					);
+					const duplicateEvent = { eventName: "ContainerRuntime:DuplicateBatch" };
+					if (variant.expectDetection) {
+						logger.assertMatchAny(
+							[duplicateEvent],
+							"Expected DuplicateBatch telemetry when tracking is enabled",
+						);
+					} else {
+						logger.assertMatchNone(
+							[duplicateEvent],
+							"DuplicateBatch telemetry should not fire when tracking is disabled",
+						);
+					}
 				});
 			}
 
@@ -2539,6 +2666,33 @@ describe("Runtime", () => {
 				assert.strictEqual(containerErrors.length, 1);
 			});
 
+			it("Offline Load opt-in errors when batchId tracking is disabled via kill-switch", async () => {
+				const containerErrors: ICriticalContainerError[] = [];
+				const context = {
+					...getMockContext({
+						settings: {
+							"Fluid.Container.enableOfflineFull": true,
+							"Fluid.ContainerRuntime.DisableBatchIdTracking": true,
+						},
+					}),
+					closeFn: (error?: ICriticalContainerError): void => {
+						if (error !== undefined) {
+							containerErrors.push(error);
+						}
+					},
+				};
+				await assert.rejects(
+					ContainerRuntime.loadRuntime2({
+						context: context as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						provideEntryPoint: mockProvideEntryPoint,
+					}),
+					(error: Error) => error instanceof UsageError,
+				);
+				assert.strictEqual(containerErrors.length, 1);
+			});
+
 			it("Can roundtrip DuplicateBatchDetector state through summary/snapshot", async () => {
 				// Duplicate Batch Detection is on by default in TurnBased mode.
 				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
@@ -2572,8 +2726,10 @@ describe("Runtime", () => {
 					// Hardcode readblob fn to return the blob contents put in the summary
 					readBlob: async (_id) => stringToBuffer(blob.content as string, "utf8"),
 				};
+				const logger = new MockLogger();
 				const { runtime: containerRuntime2 } = await ContainerRuntime.loadRuntime2({
 					context: getMockContext({
+						logger,
 						baseSnapshot: {
 							trees: {},
 							blobs: { [recentBatchInfoBlobName]: "nonempty_id_ignored_by_mockStorage" },
@@ -2588,20 +2744,22 @@ describe("Runtime", () => {
 					provideEntryPoint: mockProvideEntryPoint,
 				});
 
-				// Process an op with a duplicate batchId to what was loaded with
-				assert.throws(
-					() => {
-						containerRuntime2.process(
-							{
-								sequenceNumber: 234,
-								type: MessageType.Operation,
-								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-								metadata: { batchId: "batchId1" },
-							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-							false,
-						);
-					},
-					(e: Error) => e.message === "Duplicate batch - The same batch was sequenced twice",
+				// Process an op with a duplicate batchId to what was loaded with.
+				// Detection is currently log-only (the DataCorruptionError throw is suppressed),
+				// so verify via telemetry rather than an exception.
+				assert.doesNotThrow(() =>
+					containerRuntime2.process(
+						{
+							sequenceNumber: 234,
+							type: MessageType.Operation,
+							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							metadata: { batchId: "batchId1" },
+						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+						false,
+					),
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected duplicate batch detected after loading with recentBatchInfo",
 				);
 			});
