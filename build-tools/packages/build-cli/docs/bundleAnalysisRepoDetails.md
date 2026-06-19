@@ -17,6 +17,13 @@ to read the comparison report.
 | `flub check bundleAnalysisReposComparison`        | Diff two already-collected bundles and write the report.         |
 | `flub generate bundleAnalysisReposWithComparison` | Orchestrate both collect steps plus the compare step end-to-end. |
 
+Each collected bundle is identified by a **label** — the name of the subdirectory
+under `compareBundlesOutput/analysis/` where that bundle's `analyzer.json` is written.
+`flub generate bundleAnalysisRepo` assigns the label automatically: the sanitized
+revision it built in revision mode, or a timestamped `current_<epoch>` for the
+local working tree. `flub check bundleAnalysisReposComparison` then selects which
+two saved bundles to diff by their labels (`--base-label` and `--current-label`).
+
 Each command self-describes its flags via `--help`:
 
 ```sh
@@ -79,9 +86,9 @@ rebuild.
 
 ## Outputs
 
-- Each label's `analyzer.json` is saved under `<analysis-dir>/<label>/`. This is
+- Each label's `analyzer.json` is saved under `compareBundlesOutput/analysis/<label>/`. This is
   also where the cached base report and the inner repo clone live.
-- Comparison reports (`.txt` and `.json`) are written to the output directory.
+- Comparison reports (`.txt` and `.json`) are written to `compareBundlesOutput/`.
 
 ## Understanding the report
 

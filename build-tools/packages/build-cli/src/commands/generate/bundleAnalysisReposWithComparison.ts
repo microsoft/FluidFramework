@@ -26,7 +26,7 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 		"<%= config.bin %> <%= command.id %> --base-revision main",
 		"<%= config.bin %> <%= command.id %> --base-revision client_v2.100.0",
 		"<%= config.bin %> <%= command.id %> --base-revision 18062854f25 --exact-base",
-		"<%= config.bin %> <%= command.id %> --force-clean-build --keep-base-repo",
+		"<%= config.bin %> <%= command.id %> --keep-base-repo",
 	];
 
 	public static readonly flags = {
@@ -52,23 +52,6 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 			description: "Package root whose webpack bundles are built and compared.",
 			default: ".",
 		}),
-		"analysis-dir": Flags.string({
-			description:
-				"Directory under which per-label analyzer stats are saved. Defaults to an " +
-				"'analysis' subdirectory of the output directory (e.g. " +
-				"<package-dir>/compareBundlesOutput/analysis).",
-		}),
-		"output-dir": Flags.string({
-			description:
-				"Directory where the comparison reports are written. Defaults to " +
-				"<package-dir>/compareBundlesOutput.",
-		}),
-		"force-clean-build": Flags.boolean({
-			description:
-				"Run the full workspace clean before each build. Off by default; opt in when stale " +
-				"incremental build state may interfere with the current revision.",
-			default: false,
-		}),
 		"keep-base-repo": Flags.boolean({
 			description:
 				"For debugging only: keep the inner base-repo clone after collecting the base " +
@@ -85,19 +68,13 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 		const { flags } = this;
 
 		const packageDir = resolve(flags["package-dir"]);
-		const outputDir =
-			flags["output-dir"] === undefined
-				? resolve(packageDir, "compareBundlesOutput")
-				: resolve(flags["output-dir"]);
-		const analysisDir =
-			flags["analysis-dir"] === undefined
-				? resolve(outputDir, "analysis")
-				: resolve(flags["analysis-dir"]);
+		const outputDir = resolve(packageDir, "compareBundlesOutput");
+		const analysisDir = resolve(outputDir, "analysis");
 
 		await collectAndCompareBundles({
 			baseRevision: flags["base-revision"],
 			exactBase: flags["exact-base"],
-			forceCleanBuild: flags["force-clean-build"],
+			forceCleanBuild: false,
 			keepBaseRepo: flags["keep-base-repo"],
 			packageDir,
 			analysisDir,

@@ -25,29 +25,20 @@ export default class CheckBundleAnalysisReposComparison extends BaseCommand<
 	public static readonly examples = [
 		"<%= config.bin %> <%= command.id %>",
 		"<%= config.bin %> <%= command.id %> --base-label some-revision",
-		"<%= config.bin %> <%= command.id %> --analysis-dir /some/other/path",
 	];
 
 	public static readonly flags = {
-		"analysis-dir": Flags.string({
-			description: "Parent directory containing analyzer.json files at {label}/analyzer.json.",
-			default: "./compareBundlesOutput/analysis",
-		}),
-		"output-dir": Flags.string({
-			description: "Directory where the .txt and .json comparison reports are written.",
-			default: "./compareBundlesOutput",
-		}),
 		"base-label": Flags.string({
 			description:
-				"Label subdirectory under --analysis-dir holding the base-side bundle stats. " +
-				"Must match the --label passed to 'flub generate bundleAnalysisRepo' in revision mode.",
+				"Label subdirectory under compareBundlesOutput/analysis holding the base-side bundle stats. " +
+				"Matches the label 'flub generate bundleAnalysisRepo' saves in revision mode (the sanitized revision).",
 			default: "main",
 		}),
 		"current-label": Flags.string({
 			description:
-				"Label subdirectory under --analysis-dir holding the current-side bundle stats. " +
-				"Must match the --label passed to 'flub generate bundleAnalysisRepo' in local mode (the " +
-				"orchestrator passes a timestamped label like 'current_<epoch>').",
+				"Label subdirectory under compareBundlesOutput/analysis holding the current-side bundle stats. " +
+				"Matches the label 'flub generate bundleAnalysisRepo' saves in local mode (a timestamped " +
+				"'current_<epoch>').",
 			default: "current",
 		}),
 		...BaseCommand.flags,
@@ -55,9 +46,10 @@ export default class CheckBundleAnalysisReposComparison extends BaseCommand<
 
 	public async run(): Promise<void> {
 		const { flags } = this;
+		const outputDir = resolve("compareBundlesOutput");
 		compareBundles({
-			analysisDirectory: resolve(flags["analysis-dir"]),
-			outputDirectory: resolve(flags["output-dir"]),
+			analysisDirectory: resolve(outputDir, "analysis"),
+			outputDirectory: outputDir,
 			baseLabel: flags["base-label"],
 			currentLabel: flags["current-label"],
 		});

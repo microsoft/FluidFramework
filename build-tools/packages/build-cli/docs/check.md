@@ -74,19 +74,15 @@ Compare the two bundles previously collected by 'flub generate bundleAnalysisRep
 
 ```
 USAGE
-  $ flub check bundleAnalysisReposComparison [-v | --quiet] [--analysis-dir <value>] [--output-dir <value>] [--base-label <value>]
-    [--current-label <value>]
+  $ flub check bundleAnalysisReposComparison [-v | --quiet] [--base-label <value>] [--current-label <value>]
 
 FLAGS
-  --analysis-dir=<value>   [default: ./compareBundlesOutput/analysis] Parent directory containing analyzer.json files at
-                           {label}/analyzer.json.
-  --base-label=<value>     [default: main] Label subdirectory under --analysis-dir holding the base-side bundle stats.
-                           Must match the --label passed to 'flub generate bundleAnalysisRepo' in revision mode.
-  --current-label=<value>  [default: current] Label subdirectory under --analysis-dir holding the current-side bundle
-                           stats. Must match the --label passed to 'flub generate bundleAnalysisRepo' in local mode (the
-                           orchestrator passes a timestamped label like 'current_<epoch>').
-  --output-dir=<value>     [default: ./compareBundlesOutput] Directory where the .txt and .json comparison reports are
-                           written.
+  --base-label=<value>     [default: main] Label subdirectory under compareBundlesOutput/analysis holding the base-side
+                           bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in revision mode
+                           (the sanitized revision).
+  --current-label=<value>  [default: current] Label subdirectory under compareBundlesOutput/analysis holding the
+                           current-side bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in
+                           local mode (a timestamped 'current_<epoch>').
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -103,8 +99,6 @@ EXAMPLES
   $ flub check bundleAnalysisReposComparison
 
   $ flub check bundleAnalysisReposComparison --base-label some-revision
-
-  $ flub check bundleAnalysisReposComparison --analysis-dir /some/other/path
 ```
 
 _See code: [src/commands/check/bundleAnalysisReposComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleAnalysisReposComparison.ts)_
