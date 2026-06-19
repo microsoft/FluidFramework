@@ -34,6 +34,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.inexactOptionalPropertyTypes.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc _api-extractor-temp",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --quiet --format stylish src",
@@ -92,6 +93,13 @@
 		"ts-node": "^10.9.2",
 		"typedoc": "^0.28.14",
 		"typedoc-plugin-markdown": "^4.9.0"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:inexactOptionalPropertyTypes": [
+				"^tsc"
+			]
+		}
 	},
 	"oclif": {
 		"bin": "buildProject",
