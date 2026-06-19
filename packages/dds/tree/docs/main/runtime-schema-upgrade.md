@@ -51,6 +51,9 @@ The general production rollout process is:
 1. New documents initialized while the control is enabled include the same staged schema upgrades from the start.
 1. If an issue is found, disable the feature-rollout control.
 	Callers stop including the relevant entries in `upgrades`, so documents that have not yet been upgraded and newly initialized documents do not include those staged schema members.
+	Note: this selective rollback plan is currently difficult in practice.
+	If a document has already enabled a staged upgrade, later calling `upgradeSchema` without that token throws a `UsageError` because the request would narrow stored schema.
+	In most deployments it is hard to target only documents that have not already been upgraded, so this step is not generally feasible as written.
 
 Documents upgraded before the rollback continue to support the upgraded schema because their stored schema has already changed.
 Documents created after the rollback do not include that upgrade unless the flag is enabled again.

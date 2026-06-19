@@ -497,6 +497,12 @@ export interface TreeViewAlpha<
 	 * Full end-to-end staged schema upgrade examples can be found in the
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
 	 *
+	 * @remarks
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, omitting that upgrade token from a subsequent
+	 * `upgradeSchema` call will cause the call to throw a `UsageError`.
+	 * The stored schema already contains the upgraded members and the requested target would narrow it, which is not a valid upgrade.
+	 * To avoid this error, always re-supply previously enabled upgrade tokens when calling `upgradeSchema` again on the same document.
+	 *
 	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
 	 */
 	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;

@@ -75,6 +75,15 @@ if (view.compatibility.canInitialize) {
 }
 ```
 
+Once a staged schema upgrade has been enabled in a document's stored schema, that change is permanent for that document.
+If `upgradeSchema` is later called on the same view without re-supplying a previously enabled upgrade token, the call throws a `UsageError`.
+The stored schema already contains the upgraded members and the new target would narrow it, which is not permitted.
+
+In practice this means that when a staged schema upgrade is enabled via a feature flag, any subsequent `upgradeSchema` call must also include that token for as long as any document may have already been upgraded.
+Once all documents have been upgraded, the staged schema wrapper can be removed entirely, at which point the token is no longer needed.
+
+This also means partial rollback is currently difficult in practice: callers usually cannot target only documents that have not already been upgraded, so disabling the flag after some upgrades have happened can still lead to `UsageError` if `upgradeSchema` is called without the previously enabled token.
+
 ### Testing
 
 The same API also makes staged schema upgrades easier to test before production rollout.
