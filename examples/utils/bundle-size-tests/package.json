@@ -64,6 +64,7 @@
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",
 		"puppeteer": "^23.6.0",
 		"rimraf": "^6.1.3",

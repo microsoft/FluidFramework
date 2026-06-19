@@ -4865,6 +4865,9 @@ importers:
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
+      jiti:
+        specifier: ^2.6.1
+        version: 2.6.1
       mocha:
         specifier: ^11.7.5
         version: 11.7.5

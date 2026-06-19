@@ -140,18 +140,18 @@ This attribution is deliberately careful:
 
 Because shared modules can't be split across entrypoints without double-counting,
 each package-level measurement is **pinned to a single real entrypoint** rather
-than summed across the whole report. SharedTree is measured from its own
-`sharedTree` bundle; the framework-wide numbers are measured from the
-`fluidFrameworkAll` aggregate bundle.
+than summed across the whole report. Every package-level table is measured from
+SharedTree's own `sharedTree` bundle.
 
 The _Bundle composition by category_ table rolls those per-package sizes up into
-headline buckets. For each pinned entrypoint it reports the bundle's total Fluid
-Framework bytes, and a companion `+ 3rd-party deps` row that also folds in every
-third-party package in that same bundle. (Third-party bytes can't be split
-between the Fluid libraries that pull them in, because the flat per-package data
-carries no dependency graph; synthetic entrypoint code is always excluded.)
+headline buckets. For the pinned `sharedTree` entrypoint it reports the bundle's
+total Fluid Framework bytes, and a companion `+ 3rd-party deps` row that also
+folds in every third-party package in that same bundle. (Third-party bytes can't
+be split between the Fluid libraries that pull them in, because the flat
+per-package data carries no dependency graph; synthetic entrypoint code is always
+excluded.)
 
 The _Per-package parsed-size comparison_ table is the full breakdown for the
-`fluidFrameworkAll` aggregate bundle: one row per owning package, sorted by
-current size descending, so the biggest contributors — and the biggest movers —
-are easy to find.
+`sharedTree` bundle: one row per owning package, sorted by current size
+descending, so the biggest contributors — and the biggest movers — are easy to
+find.

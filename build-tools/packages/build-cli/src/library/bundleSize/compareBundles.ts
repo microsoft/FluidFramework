@@ -74,9 +74,8 @@ interface ComparisonReport {
 	 */
 	packageBuckets: ComparisonRow[];
 	/**
-	 * Full per-package breakdown (one row per owning package, sorted by current
-	 * size descending), scoped to the `fluidFrameworkAll` aggregate entrypoint and
-	 * deduplicated by module.
+	 * Full per-package breakdown. Format: one row per owning package, sorted by current
+	 * size descending.
 	 */
 	packages: ComparisonRow[];
 }
@@ -233,8 +232,6 @@ function accumulatePackageSizes(assets: AnalyzerNode[]): Map<string, number> {
 
 /** Named entrypoint assets the buckets and per-package breakdown are measured from. */
 const entrypointAssets = {
-	/** Entrypoint asset for the full deduplicated Fluid Framework footprint (`bundle-size-tests/src/fluidFrameworkAll.ts`). */
-	fluidFrameworkAll: "fluidFrameworkAll.js",
 	/** Entrypoint asset for SharedTree's own bundle (`bundle-size-tests/src/sharedTree.ts`). */
 	sharedTree: "sharedTree.js",
 } as const;
@@ -273,7 +270,7 @@ function isFluidPackage(name: string): boolean {
 	return name.startsWith("@fluidframework/") || name.startsWith("@fluid-");
 }
 
-/** Whether a package's bytes are third-party (not a Fluid library, not synthetic entrypoint code). */
+/** Whether a package's bytes are third-party (not a Fluid library, and not the entry file's own `(app/entry)` code). */
 function isThirdPartyPackage(name: string): boolean {
 	return !isFluidPackage(name) && name !== "(app/entry)";
 }
@@ -294,14 +291,17 @@ interface BucketDefinition {
 
 /**
  * Headline buckets, each pinned to a real entrypoint — never summed across
- * entrypoints, which would double-count shared modules. SharedTree is measured
- * from its own `sharedTree` bundle; Fluid Framework from the `fluidFrameworkAll`
- * aggregate bundle. Each bucket counts every Fluid Framework package in its
- * bundle (the entrypoint's full Fluid footprint, not just one package); a
- * `+ 3rd-party deps` row also folds in every third-party package in that same
- * bundle. Third-party bytes can't be split between libraries (the flat
- * per-package data has no dependency graph). Synthetic entrypoint code is always
- * excluded (see {@link isThirdPartyPackage}).
+ * entrypoints, which would double-count shared modules. Each bucket sums every
+ * Fluid Framework package in its bundle (the entrypoint's full Fluid footprint,
+ * not just one package); the companion `+ 3rd-party deps` bucket additionally
+ * folds in every third-party package in that same bundle.
+ *
+ * @remarks
+ * Third-party bytes can't be split between the libraries that pull them in as the flat
+ * per-package data has no dependency graph. The entry file's own code — the small
+ * `bundle-size-tests` module that imports the package being measured, reported
+ * as `(app/entry)` — is never counted, since it isn't shipped library code (see
+ * {@link isThirdPartyPackage}).
  */
 const bucketDefinitions: readonly BucketDefinition[] = [
 	{
@@ -314,22 +314,12 @@ const bucketDefinitions: readonly BucketDefinition[] = [
 		asset: entrypointAssets.sharedTree,
 		withThirdParty: false,
 	},
-	{
-		label: "Fluid Framework + 3rd-party deps",
-		asset: entrypointAssets.fluidFrameworkAll,
-		withThirdParty: true,
-	},
-	{
-		label: "Fluid Framework",
-		asset: entrypointAssets.fluidFrameworkAll,
-		withThirdParty: false,
-	},
 ];
 
 /**
  * Computes the per-package outputs from the raw nodes: the headline composition
  * buckets ({@link bucketDefinitions}) and the full per-package breakdown for the
- * `fluidFrameworkAll` aggregate entrypoint. Both derive from the same
+ * `sharedTree` entrypoint. Both derive from the same
  * entrypoint-scoped, diffed per-package rows, so each asset's rows are computed
  * once (memoized) and reused across every bucket that references it and the full
  * breakdown. Each bucket sums its bundle's Fluid packages (plus third-party deps
@@ -366,7 +356,7 @@ function comparePackages(
 
 	return {
 		packageBuckets,
-		packages: rowsForAsset(entrypointAssets.fluidFrameworkAll),
+		packages: rowsForAsset(entrypointAssets.sharedTree),
 	};
 }
 

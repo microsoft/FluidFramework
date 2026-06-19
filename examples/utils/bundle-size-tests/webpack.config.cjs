@@ -74,7 +74,6 @@ module.exports = {
 		directory: "./src/sharedDirectory",
 		experimentalSharedTree: "./src/experimentalSharedTree",
 		fluidFramework: "./src/fluidFramework",
-		fluidFrameworkAll: "./src/fluidFrameworkAll",
 		loader: "./src/loader",
 		map: "./src/sharedMap",
 		matrix: "./src/sharedMatrix",
@@ -91,13 +90,6 @@ module.exports = {
 	},
 	resolve: {
 		extensions: [".tsx", ".ts", ".js"],
-		// This package is an ESM package ("type": "module") compiled with node16 module
-		// resolution, so its relative imports carry explicit `.js` extensions (e.g.
-		// fluidFrameworkAll.ts importing "./sharedTree.js"). Map those back to the `.ts`
-		// sources so webpack's resolver can find them.
-		extensionAlias: {
-			".js": [".ts", ".js"],
-		},
 		// Block the Node-core `assert` polyfill from being bundled. It's very large in browser
 		// builds; consumers should use the assert API in @fluidframework/core-utils instead.
 		fallback: {
