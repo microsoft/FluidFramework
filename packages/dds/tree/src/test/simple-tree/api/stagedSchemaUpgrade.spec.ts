@@ -401,6 +401,21 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewC.root, undefined);
 	});
 
+	// TODO: make this a no op
+	it("throws if a staged optional upgrade is enabled and then omitted on a later upgrade call", () => {
+		const provider = new TestTreeProviderLite(2);
+		const [treeA, treeB] = provider.trees;
+
+		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: schemaA }));
+		viewA.initialize(5);
+		provider.synchronizeMessages();
+
+		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
+		viewB.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
+
+		assert.throws(() => viewB.upgradeSchema(), /cannot be upgraded to the requested schema/);
+	});
+
 	it("checks compatibility through staged optional rollout", () => {
 		// SchemaCompatibilityTester only checks compatibility against a supplied stored schema.
 		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
