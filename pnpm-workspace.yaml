@@ -154,6 +154,15 @@ packages:
   - "packages/**"
   - "tools/markdown-magic"
 
+  # exclude bundle-analysis output directories, which can contain package.json files from
+  # webpack bundle stats (e.g. examples/utils/bundle-size-tests).
+  - "!**/bundleAnalysis/**"
+
+  # exclude the inner FluidFramework enlistment used by examples/utils/bundle-size-tests for
+  # cross-revision bundle comparison (see `flub generate bundleAnalysisReposWithComparison`, which clones
+  # the inner repo into <outputDir>/base-repo).
+  - "!**/compareBundlesOutput/**"
+
   # exclude any package.json files that are inside src or output directories
   - "!**/dist/**"
   - "!**/lib/**"
