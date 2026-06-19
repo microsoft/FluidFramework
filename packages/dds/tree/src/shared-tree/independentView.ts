@@ -3,12 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
+import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
@@ -64,14 +65,29 @@ export interface IndependentViewOptions extends ForestOptions, Partial<CodecWrit
 	 * If not provided, a new one will be created.
 	 */
 	idCompressor?: IIdCompressor | undefined;
+
+	/**
+	 * Optional logger for telemetry.
+	 * @remarks
+	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
+	 * If not provided, telemetry events are dropped.
+	 */
+	logger?: ITelemetryBaseLogger | undefined;
 }
 
 /**
  * {@link createIndependentTreeAlpha} options.
  * @alpha
  */
-export type CreateIndependentTreeAlphaOptions = ForestOptions &
-	(
+export type CreateIndependentTreeAlphaOptions = ForestOptions & {
+	/**
+	 * Optional logger for telemetry.
+	 * @remarks
+	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
+	 * If not provided, telemetry events are dropped.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+} & (
 		| (IndependentViewOptions & {
 				/**
 				 * Optional content for initializing the tree.
@@ -122,7 +138,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
+	options: ForestOptions & ICodecOptions & { readonly logger?: ITelemetryBaseLogger | undefined },
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -204,7 +220,8 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	const breaker = new Breakable("independentView");
+	const logger = createChildLogger({ logger: options?.logger, namespace: "independentView" });
+	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
 		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
@@ -225,6 +242,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		forest,
 		schema: schemaRepository,
 		breaker,
+		logger,
 		codecOptions: options,
 	});
 
