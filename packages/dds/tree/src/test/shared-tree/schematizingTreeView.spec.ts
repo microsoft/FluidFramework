@@ -1341,6 +1341,21 @@ describe("SchematizingSimpleTreeView", () => {
 			assert.equal(receivedLabels.tree.sublabels[1]?.sublabels.length, 0);
 		});
 
+		it("direct (non-transaction) edit from a changed listener throws", () => {
+			// Exercises the internal `changed` event. The equivalent guarantee through the public
+			// `nodeChanged`/`treeChanged` API is covered in the treeNodeApi tests.
+			const view = getTestObjectView();
+
+			view.checkout.events.on("changed", () => {
+				view.root.content = view.root.content + 1;
+			});
+
+			assert.throws(
+				() => (view.root.content = 1),
+				validateUsageError("Editing the tree is forbidden during a change event callback"),
+			);
+		});
+
 		it("creates a single-node LabelTree for a non-nested labeled transaction", () => {
 			const view = getTestObjectView();
 
