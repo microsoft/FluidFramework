@@ -49,9 +49,6 @@ export interface BroadcastControlSettings {
 // @public
 export type ClientConnectionId = string;
 
-// @beta @deprecated
-export const getPresence: (fluidContainer: IFluidContainer) => Presence;
-
 // @alpha @legacy
 export function getPresenceFromDataStoreContext(context: IFluidDataStoreContext): Presence;
 

@@ -1,0 +1,6 @@
+# Compiled TypeScript and CSS
+dist
+lib
+
+# specialized Node10 support
+!internal.d.ts

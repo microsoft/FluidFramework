@@ -12,6 +12,10 @@ export { type CompareBundlesOptions, compareBundles } from "./compareBundles.js"
 export { compareJsonReportsByPackage } from "./compareJsonReports.js";
 export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
+	bundleSizeArtifactsBaselinePipeline,
+	bundleSizeArtifactsPrPipeline,
+} from "./pipelineConstants.js";
+export {
 	type ReadAnalyzerJsonsResult,
 	readAnalyzerJsonsFromFileSystem,
 } from "./readAnalyzerJsonsFromFileSystem.js";

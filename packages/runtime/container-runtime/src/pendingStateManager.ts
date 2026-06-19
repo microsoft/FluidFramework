@@ -6,11 +6,11 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type TelemetryLoggerExt,
-	DataProcessingError,
-	LoggingError,
-	extractSafePropertiesFromMessage,
 	createChildLogger,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	LoggingError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
@@ -140,6 +140,25 @@ export interface IRuntimeStateHandler {
 	): void;
 	isActiveConnection: () => boolean;
 	isAttached: () => boolean;
+}
+
+/**
+ * Optional hooks invoked at the close of the stashed-op apply lifecycle.
+ *
+ * `onAfterStashedOpsApplied` fires synchronously the first time
+ * `initialMessages` drains during `applyStashedOpsAt`, immediately after
+ * `isApplyingStashedOps` flips to `false`. Fires at most once per PSM
+ * lifetime. If an apply throws, control never reaches the close site and
+ * the hook is not invoked — load is fatal in that case.
+ *
+ * No corresponding open hook is exposed. The apply window is opened eagerly
+ * in the PSM constructor, but at that point `ContainerRuntime` has not yet
+ * wired up the downstream observers (`channelCollection` is undefined), so a
+ * fanout fired from the constructor would be a no-op. Consumers that care
+ * about the open transition can read `isApplyingStashedOps` directly.
+ */
+export interface PendingStateManagerHooks {
+	onAfterStashedOpsApplied?: () => void;
 }
 
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
@@ -368,14 +387,59 @@ export class PendingStateManager implements IDisposable {
 
 	private readonly logger: TelemetryLoggerExt;
 
+	/**
+	 * One-way lifecycle of the stashed-op apply window: `ended` → `applying` → `ended`.
+	 *
+	 * Default is `ended` — no stashed state means there's nothing to apply, so the window is
+	 * closed before it ever opens. `ended` → `applying` happens in the constructor when
+	 * stashed state is present (i.e. `initialMessages` is non-empty at construction). The
+	 * open is eager so the runtime is readonly from the moment any DDS could possibly
+	 * observe it. `applying` → `ended` happens the first time {@link applyStashedOpsAt}
+	 * drains `initialMessages`. After that, local edits are safe — they queue FIFO behind
+	 * any remaining `pendingMessages`, preserving server-side ordering.
+	 *
+	 * The window never reopens. After the close, subsequent `applyStashedOpsAt` calls (e.g.
+	 * from late `notifyOpReplay`s) early-return at the empty guard.
+	 *
+	 * `pendingMessages` state is intentionally NOT part of the close condition. Those
+	 * entries are drained transparently by {@link replayPendingStates} on connect via
+	 * resubmit (each pop is matched by a fresh push), so the queue size is conserved across
+	 * resubmit and DDSes can't distinguish a resubmit-ack from a normal ack. Holding the
+	 * window open through resubmit would force resubmits to run while the runtime is
+	 * readonly, which is the inverse of what we want ("never resubmit during apply stashed
+	 * ops").
+	 *
+	 * An apply error leaves the lifecycle at `applying` because the queue isn't drained.
+	 * That's fine: an error here is fatal for the load, the container is unusable, and
+	 * there's no state to restore.
+	 */
+	private _applyLifecycle: "applying" | "ended" = "ended";
+	public get isApplyingStashedOps(): boolean {
+		return this._applyLifecycle === "applying";
+	}
+
+	private readonly hooks: PendingStateManagerHooks;
+
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		stashedLocalState: IPendingLocalState | undefined,
 		logger: ITelemetryBaseLogger,
+		hooks: PendingStateManagerHooks = {},
 	) {
 		this.logger = createChildLogger({ logger });
+		this.hooks = hooks;
 		if (stashedLocalState?.pendingStates) {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
+		}
+		// Open the apply window eagerly if there is any stashed work. The
+		// runtime is readonly while `isApplyingStashedOps` is true (see
+		// `ContainerRuntime.isReadOnly`); compliant DDSes consult `readOnly`
+		// at realize time and skip submits. No fanout fires here — downstream
+		// observers (`channelCollection`) are not yet constructed at this
+		// point in the runtime constructor, and the first real readonly read
+		// happens after the constructor returns.
+		if (!this.initialMessages.isEmpty()) {
+			this._applyLifecycle = "applying";
 		}
 	}
 
@@ -451,6 +515,10 @@ export class PendingStateManager implements IDisposable {
 	 * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
 	 */
 	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
+		if (this.initialMessages.isEmpty()) {
+			return;
+		}
+
 		// apply stashed ops at sequence number
 		while (!this.initialMessages.isEmpty()) {
 			if (seqNum !== undefined) {
@@ -496,6 +564,16 @@ export class PendingStateManager implements IDisposable {
 			} catch (error) {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
+		}
+
+		// The apply window was opened eagerly in the constructor when there
+		// was any stashed work. We close it on full successful drain only.
+		// If an apply throws above, control never reaches here and the
+		// lifecycle stays at "applying" — the load is fatal so there's no
+		// recoverable state.
+		if (this._applyLifecycle === "applying" && this.initialMessages.isEmpty()) {
+			this._applyLifecycle = "ended";
+			this.hooks.onAfterStashedOpsApplied?.();
 		}
 	}
 
