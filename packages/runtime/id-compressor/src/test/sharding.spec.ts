@@ -334,7 +334,7 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(childDisposalToken.localGenCount, 5);
 
 			// Unshard
-			parent.unshard(childDisposalToken);
+			parent.synchronizeWithShard(childDisposalToken);
 
 			// Child should now be disposed and unusable
 			assert.throws(() => {
@@ -377,7 +377,7 @@ describe("IdCompressor Sharding", () => {
 			// Dispose and unshard
 			const childDisposalToken = child.disposeShard();
 			assert(childDisposalToken !== undefined);
-			parent.unshard(childDisposalToken);
+			parent.synchronizeWithShard(childDisposalToken);
 
 			// After unsharding, eager finals should resume since cluster has capacity
 			const id3 = parent.generateCompressedId();
@@ -404,7 +404,7 @@ describe("IdCompressor Sharding", () => {
 			assert(childDisposalToken !== undefined);
 
 			// Unshard child
-			parent.unshard(childDisposalToken);
+			parent.synchronizeWithShard(childDisposalToken);
 
 			// Parent should now know about both IDs
 			// This is tested implicitly by decompress working
@@ -435,7 +435,7 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(childDisposalToken.localGenCount, 1);
 
 			// Unshard empty child
-			parent.unshard(childDisposalToken);
+			parent.synchronizeWithShard(childDisposalToken);
 
 			// After realignment and exiting sharding mode
 			const nextId = parent.generateCompressedId();
@@ -476,9 +476,9 @@ describe("IdCompressor Sharding", () => {
 			assert(child3DisposalToken !== undefined);
 			assert(child1DisposalToken !== undefined);
 			assert(child2DisposalToken !== undefined);
-			parent.unshard(child3DisposalToken);
-			parent.unshard(child1DisposalToken);
-			parent.unshard(child2DisposalToken);
+			parent.synchronizeWithShard(child3DisposalToken);
+			parent.synchronizeWithShard(child1DisposalToken);
+			parent.synchronizeWithShard(child2DisposalToken);
 
 			// Should have exited sharding mode (verify by generating sequential ID)
 			// After all children unsharded, parent should generate sequentially
@@ -579,8 +579,8 @@ describe("IdCompressor Sharding", () => {
 			const gc2DisposalToken = grandchild2.disposeShard();
 			assert(gc1DisposalToken !== undefined);
 			assert(gc2DisposalToken !== undefined);
-			child1.unshard(gc1DisposalToken); // bumps child1's gen count to 4 + (9*2) = 22
-			child1.unshard(gc2DisposalToken); // moves child1 back to a leaf shard, restores original stride = 3
+			child1.synchronizeWithShard(gc1DisposalToken); // bumps child1's gen count to 4 + (9*2) = 22
+			child1.synchronizeWithShard(gc2DisposalToken); // moves child1 back to a leaf shard, restores original stride = 3
 
 			const child1Id2 = child1.generateCompressedId();
 			assert.equal(child1Id2, -25); // 22 + 3
@@ -596,8 +596,8 @@ describe("IdCompressor Sharding", () => {
 			const child2Id3 = child2.generateCompressedId();
 			assert.equal(child2Id3, -11); // This would be a collision if child1 also generated -9!
 
-			root.unshard(child1.disposeShard() ?? fail()); // bumps gen count from 3 to 27, which is first on (3, 6, 9, ... 21, 24, 27) cycle > 25
-			root.unshard(child2.disposeShard() ?? fail()); // back to unsharded mode, stride = 1
+			root.synchronizeWithShard(child1.disposeShard() ?? fail()); // bumps gen count from 3 to 27, which is first on (3, 6, 9, ... 21, 24, 27) cycle > 25
+			root.synchronizeWithShard(child2.disposeShard() ?? fail()); // back to unsharded mode, stride = 1
 
 			const rootId = root.generateCompressedId();
 			assert.equal(rootId, -28); // 27 + 1
@@ -908,7 +908,7 @@ describe("IdCompressor Sharding", () => {
 			// Dispose and unshard
 			const childDisposalToken = child.disposeShard();
 			assert(childDisposalToken !== undefined, "child.disposeShard() returned undefined");
-			parent.unshard(childDisposalToken);
+			parent.synchronizeWithShard(childDisposalToken);
 
 			// Take range after unsharding
 			const range = parent.takeNextCreationRange();
@@ -1077,7 +1077,7 @@ describe("IdCompressor Sharding", () => {
 
 			// The child is still active after all those syncs and can now be disposed and unsharded.
 			const token = child.disposeShard() ?? fail();
-			root.unshard(token);
+			root.synchronizeWithShard(token);
 		});
 
 		it("propagates synchronization upward through multiple ancestors", () => {
@@ -1107,9 +1107,9 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(root.decompress(gcId2), grandchild.decompress(gcId2));
 		});
 
-		it("accepts a ShardDisposalToken for synchronization", () => {
-			// A ShardDisposalToken is a more specific ShardSynchronizationToken, so it is a valid
-			// argument to synchronizeWithShard at both compile time and runtime.
+		it("reclaims a disposed shard's ID space when synchronizing with its disposal token", () => {
+			// disposeShard() returns a sync token whose `disposed` flag is set, so it is a valid
+			// argument to synchronizeWithShard and additionally reclaims the shard's ID space.
 			const root = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
 			const [child1Ser, child2Ser] = root.shard(2);
 			const child1 = deserialize(child1Ser);
@@ -1119,7 +1119,7 @@ describe("IdCompressor Sharding", () => {
 			const expectedStable = child1.decompress(child1Id); // capture before disposal bricks child1
 			const disposalToken = child1.disposeShard() ?? fail();
 
-			// The disposal token flows into synchronizeWithShard (not just unshard).
+			// The disposal token flows into synchronizeWithShard, which both syncs and reclaims.
 			root.synchronizeWithShard(disposalToken);
 			assert.equal(root.decompress(child1Id), expectedStable);
 		});

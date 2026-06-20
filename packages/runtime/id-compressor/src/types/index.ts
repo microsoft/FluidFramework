@@ -14,7 +14,6 @@ export type {
 	IIdCompressorCore,
 	IIdCompressor,
 	ShardToken,
-	ShardDisposalToken,
 	ShardSynchronizationToken,
 } from "./idCompressor.js";
 export {

@@ -33,6 +33,5 @@ export type {
 	StableId,
 	IdCreationRange,
 	ShardToken,
-	ShardDisposalToken,
 	ShardSynchronizationToken,
 } from "./types/index.js";

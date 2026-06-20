@@ -283,7 +283,7 @@ function handleUnshard(
 		return state;
 	}
 
-	parent.unshard(disposalToken);
+	parent.synchronizeWithShard(disposalToken);
 
 	// Update tree structure
 	const siblings = state.childrenMap.get(parent);

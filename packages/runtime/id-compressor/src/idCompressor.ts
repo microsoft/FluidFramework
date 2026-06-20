@@ -43,7 +43,6 @@ import {
 } from "./sessions.js";
 import type {
 	ShardToken,
-	ShardDisposalToken,
 	IIdCompressor,
 	IIdCompressorCore,
 	IdCreationRange,
@@ -98,7 +97,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * When defined, this compressor operates in "sharding mode" where:
 	 * - IDs are generated using stride-based allocation (no eager finals)
 	 * - The normalizer backfills all IDs in each stride cycle
-	 * - Normal operation resumes when all children are unsharded
+	 * - Normal operation resumes when all children are disposed
 	 */
 	private shardingState?:
 		| {
@@ -355,10 +354,19 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	 * {@inheritdoc IIdCompressorCore.synchronizeWithShard}
 	 */
 	public synchronizeWithShard(syncToken: ShardSynchronizationToken): void {
-		this.synchronizeChild(false, syncToken);
+		const isNowLeaf = this.synchronizeChild(syncToken);
+		// A disposal token additionally reclaims the child's ID space. If reclaiming the last child
+		// returns this compressor to a leaf and it is the root (originalStride === 1), exit sharding mode.
+		if (syncToken.disposed) {
+			assert(this.shardingState !== undefined, "Must be sharded");
+			if (isNowLeaf && this.shardingState.originalStride === 1) {
+				this.shardingState = undefined;
+			}
+		}
 	}
 
-	private synchronizeChild(childDisposed: boolean, syncToken: ShardToken): boolean {
+	private synchronizeChild(syncToken: ShardToken): boolean {
+		const childDisposed = syncToken.disposed;
 		if (this.writeVersion < SerializationVersion.V3) {
 			throw new Error(
 				`Sharding requires document version ${SerializationVersion.V3} or higher, but this document is version ${this.writeVersion}`,
@@ -408,23 +416,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	/**
-	 * {@inheritdoc IIdCompressorCore.unshard}
-	 */
-	public unshard(disposalToken: ShardDisposalToken): void {
-		const isNowLeaf = this.synchronizeChild(true, disposalToken);
-		assert(this.shardingState !== undefined, "Must be sharded");
-
-		// Otherwise, we're a shard that's now a leaf again, keep sharding state
-		// If originalStride === 1, we're the root with no children, so exit sharding mode
-		if (isNowLeaf && this.shardingState.originalStride === 1) {
-			this.shardingState = undefined;
-		}
-	}
-
-	/**
 	 * {@inheritdoc IIdCompressorCore.dispose}
 	 */
-	public disposeShard(): ShardDisposalToken | undefined {
+	public disposeShard(): ShardSynchronizationToken | undefined {
 		if (this.shardingState === undefined) {
 			return undefined;
 		} else {
@@ -433,7 +427,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			}
 		}
 
-		const token = this.getShardSyncToken() as unknown as ShardDisposalToken;
+		// A disposal token is a sync token that additionally signals reclamation of this shard's ID space.
+		const token = this.makeShardToken(true);
 
 		// Make this compressor unusable by replacing all methods with throwing stubs
 		// This is a one-time mutation that avoids runtime checks in every method
@@ -450,7 +445,17 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 			return undefined;
 		}
 
-		// Root cannot be disposed (shardId is undefined for root)
+		return this.makeShardToken(false);
+	}
+
+	/**
+	 * Builds a token describing this shard's current progress.
+	 * @param disposed - Whether the token also signals disposal (reclamation of this shard's ID space).
+	 */
+	private makeShardToken(disposed: boolean): ShardSynchronizationToken {
+		assert(this.shardingState !== undefined, "Compressor is not sharded.");
+
+		// Root cannot produce a token (shardId is undefined for root)
 		if (this.shardingState.shardId === undefined) {
 			throw new Error(
 				"Cannot get a token for a root compressor - only shards can be disposed",
@@ -460,6 +465,7 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		const token: ShardToken = {
 			localGenCount: this.localGenCount,
 			shardId: this.shardingState.shardId,
+			disposed,
 		};
 
 		return token as unknown as ShardSynchronizationToken;
