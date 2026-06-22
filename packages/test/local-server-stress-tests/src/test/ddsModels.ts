@@ -5,6 +5,7 @@
 
 import { done, type AsyncGenerator } from "@fluid-private/stochastic-test-utils";
 import { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-utils";
+import { baseClaimsModel } from "@fluidframework/claims/internal/test";
 import { baseCounterModel } from "@fluidframework/counter/internal/test";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import { baseSharedArrayModel } from "@fluidframework/legacy-dds/internal/test";
@@ -86,4 +87,5 @@ export const ddsModelMap = generateSubModelMap(
 	baseCounterModel,
 	baseRegisterCollectionModel,
 	baseConsensusOrderedCollectionModel,
+	baseClaimsModel,
 );

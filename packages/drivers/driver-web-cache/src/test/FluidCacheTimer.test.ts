@@ -23,10 +23,11 @@ function getFluidCache(config?: {
 	partitionKey?: string | null;
 	logger?: MockLogger;
 }): FluidCache {
+	const logger = config?.logger;
 	return new FluidCache({
 		partitionKey: config?.partitionKey ?? mockPartitionKey,
 		maxCacheItemAge: config?.maxCacheItemAge ?? 3 * 24 * 60 * 60 * 1000,
-		logger: config?.logger,
+		...(logger === undefined ? {} : { logger }),
 		closeDbAfterMs: 100,
 	});
 }

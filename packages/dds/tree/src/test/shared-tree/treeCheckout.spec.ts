@@ -1286,8 +1286,12 @@ describe("sharedTreeView", () => {
 			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
 			/** The code to run during the edit that should throw an error */
 			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
-			/** The expected error message */
-			error: string;
+			/**
+			 * The expected error message.
+			 * A `string` is matched exactly; a `RegExp` matches loosely (use it only when the full
+			 * message is intentionally not being pinned).
+			 */
+			error: string | RegExp;
 		}): void {
 			let view = getView(
 				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
@@ -1300,7 +1304,7 @@ describe("sharedTreeView", () => {
 				args.duringEdit(view);
 			});
 
-			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+			assert.throws(() => (view.root.number = 0), validateUsageError(args.error));
 		}
 
 		it("edit the tree", () => {
@@ -1308,28 +1312,30 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => {
 					view.root.number = 4;
 				},
-				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
+				error: "Editing the tree is forbidden during a change event callback",
 			});
 		});
 
 		it("create a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.fork(),
-				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
+				// RegExp (loose) match: forking surfaces the guard error possibly wrapped, so the
+				// full message is not pinned here.
+				error: /Branching is forbidden during a change event callback/,
 			});
 		});
 
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.rebaseOnto(view),
-				error: "Rebasing is forbidden during a nodeChanged or treeChanged event",
+				error: "Rebasing is forbidden during a change event callback",
 			});
 		});
 
 		it("merge a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.merge(view),
-				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+				error: "Merging is forbidden during a change event callback",
 			});
 		});
 
@@ -1345,7 +1351,7 @@ describe("sharedTreeView", () => {
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
 				duringEdit: () => revertible?.revert(),
-				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
+				error: "Reverting a commit is forbidden during a change event callback",
 			});
 		});
 
@@ -1354,8 +1360,39 @@ describe("sharedTreeView", () => {
 			expectErrorDuringEdit({
 				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
 				duringEdit: (view) => view.dispose(),
-				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+				error: "Disposing a view is forbidden during a change event callback",
 			});
+		});
+
+		it("run a transaction", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.runTransaction(() => {}),
+				error: "Running a transaction is forbidden during a change event callback",
+			});
+		});
+
+		it("run an async transaction", async () => {
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+			view.initialize({ number: 3 });
+
+			// Unlike the synchronous cases above, `runTransactionAsync` surfaces the guard as a
+			// rejected promise rather than a synchronous throw, so it is captured and awaited here.
+			let asyncTransaction: Promise<unknown> | undefined;
+			Tree.on(view.root, "nodeChanged", () => {
+				asyncTransaction = view.runTransactionAsync(async () => {});
+			});
+
+			view.root.number = 0;
+
+			assert(asyncTransaction !== undefined, "Async transaction should have been attempted.");
+			await assert.rejects(
+				asyncTransaction,
+				validateUsageError(
+					"Running a transaction is forbidden during a change event callback",
+				),
+			);
 		});
 	});
 

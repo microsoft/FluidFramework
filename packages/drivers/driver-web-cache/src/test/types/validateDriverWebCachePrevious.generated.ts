@@ -69,4 +69,5 @@ declare type old_as_current_for_Interface_FluidCacheConfig = requireAssignableTo
  * typeValidation.broken:
  * "Interface_FluidCacheConfig": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_FluidCacheConfig = requireAssignableTo<TypeOnly<current.FluidCacheConfig>, TypeOnly<old.FluidCacheConfig>>

@@ -106,7 +106,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			targetRef = target;
 			this.log(`Using explicit target ref ${target}.`);
 		} else {
-			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url));
+			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url), this.logger);
 			if (remote === undefined) {
 				this.error(
 					"Could not auto-detect a canonical remote. Add a remote pointing at microsoft/FluidFramework, or pass --target <ref> to override.",

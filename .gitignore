@@ -39,6 +39,7 @@ legacy.d.ts
 # Bundle analysis artifacts
 bundleAnalysis
 bundleAnalyzerJson
+compareBundlesOutput
 
 # Misc pipeline artifacts
 artifacts
