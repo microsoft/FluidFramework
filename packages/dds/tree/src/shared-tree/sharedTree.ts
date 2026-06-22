@@ -317,7 +317,6 @@ export class SharedTreeKernel
 			chunkCompressionStrategy: options.treeEncodeType,
 			logger,
 			breaker: this.breaker,
-			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -632,9 +631,7 @@ export interface SharedTreeOptions
 
 export interface SharedTreeOptionsInternal
 	extends SharedTreeOptions,
-		Partial<SharedTreeCoreOptionsInternal> {
-	disposeForksAfterTransaction?: boolean;
-}
+		Partial<SharedTreeCoreOptionsInternal> {}
 
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -757,7 +754,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	enableSharedBranches: false,
 	healUnresolvableIdentifiersOnDecode: false,
