@@ -344,11 +344,13 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	applyChange(change: JsonCompatibleReadOnly): void;
 
 	/**
-	 * Returns true iff there are changes on the given branch that are not present on this branch.
+	 * Determines if there are changes on the given branch that are not present on this branch.
 	 * @param branch - The branch to compare to.
 	 *
 	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
 	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 *
+	 * @throws UsageError if the branches are unrelated.
 	 */
 	isMissingEditsFrom(branch: TreeBranch): boolean;
 }
