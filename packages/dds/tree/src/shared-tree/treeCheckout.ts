@@ -306,7 +306,6 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
-		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
@@ -353,7 +352,6 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		breaker,
-		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -525,7 +523,6 @@ export class TreeCheckout implements ITreeCheckout {
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -1218,7 +1215,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this._removedRoots.clone(),
 			this.logger,
 			forkBreaker,
-			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
