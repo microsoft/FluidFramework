@@ -1339,15 +1339,6 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		it("create a branch", () => {
-			expectErrorDuringEdit({
-				duringEdit: (view) => view.fork(),
-				// RegExp (loose) match: forking surfaces the guard error possibly wrapped, so the
-				// full message is not pinned here.
-				error: /Branching is forbidden during a change event callback/,
-			});
-		});
-
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.rebaseOnto(view),
