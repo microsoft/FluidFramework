@@ -36,13 +36,13 @@
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~",
-		"@fluidframework/server-local-server": "^7.0.1",
-		"@fluidframework/test-utils": "workspace:~"
+		"@fluidframework/server-local-server": "^7.0.1"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/test-utils": "workspace:~",
 		"@types/node": "catalog:types",
 		"eslint": "catalog:eslint",
 		"jiti": "^2.6.1",

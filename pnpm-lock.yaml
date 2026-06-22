@@ -423,9 +423,6 @@ importers:
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1
-      '@fluidframework/test-utils':
-        specifier: workspace:~
-        version: link:../../../packages/test/test-utils
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -436,6 +433,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/test-utils':
+        specifier: workspace:~
+        version: link:../../../packages/test/test-utils
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
@@ -4467,7 +4467,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: 1.15.1
-        version: 1.15.1(debug@4.3.7)
+        version: 1.15.1(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4618,7 +4618,7 @@ importers:
         version: 2.1.0
       axios:
         specifier: 1.15.1
-        version: 1.15.1(debug@4.3.7)
+        version: 1.15.1(debug@4.4.3)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -5430,7 +5430,7 @@ importers:
         version: link:../../../packages/utils/tool-utils
       axios:
         specifier: 1.15.1
-        version: 1.15.1(debug@4.3.7)
+        version: 1.15.1(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6790,7 +6790,7 @@ importers:
         version: link:../../../../packages/dds/shared-object-base
       axios:
         specifier: 1.15.1
-        version: 1.15.1(debug@4.3.7)
+        version: 1.15.1(debug@4.4.3)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -30472,7 +30472,7 @@ snapshots:
       '@fluidframework/routerlicious-driver': 1.4.0
       '@fluidframework/runtime-utils': 1.4.0
       '@fluidframework/server-services-client': 0.1036.5002
-      axios: 0.30.3
+      axios: 0.30.3(debug@4.4.3)
       uuid: 8.3.2
     transitivePeerDependencies:
       - bufferutil
@@ -30887,7 +30887,7 @@ snapshots:
       '@fluidframework/protocol-base': 0.1036.5002
       '@fluidframework/protocol-definitions': 0.1028.2000
       '@fluidframework/telemetry-utils': 1.4.0
-      axios: 0.30.3
+      axios: 0.30.3(debug@4.4.3)
       uuid: 8.3.2
     transitivePeerDependencies:
       - debug
@@ -31387,35 +31387,6 @@ snapshots:
       nconf: 0.12.1
       serialize-error: 8.1.0
     transitivePeerDependencies:
-      - supports-color
-
-  '@fluidframework/server-lambdas@7.0.1':
-    dependencies:
-      '@fluidframework/common-utils': 3.1.0
-      '@fluidframework/gitresources': 7.0.1
-      '@fluidframework/protocol-base': 7.0.1
-      '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas-driver': 7.0.1
-      '@fluidframework/server-services-client': 7.0.1
-      '@fluidframework/server-services-core': 7.0.1
-      '@fluidframework/server-services-telemetry': 7.0.1
-      '@types/semver': 7.7.0
-      assert: 2.1.0
-      async: 3.2.6
-      axios: 1.15.1(debug@4.3.7)
-      buffer: 6.0.3
-      double-ended-queue: 2.1.0-0
-      events: 3.3.0
-      json-stringify-safe: 5.0.1
-      lodash: 4.18.1
-      nconf: 0.12.1
-      opossum: 8.5.0
-      semver: 7.7.4
-      serialize-error: 8.1.0
-      sha.js: 2.4.12
-      uuid: 11.1.0
-    transitivePeerDependencies:
-      - debug
       - supports-color
 
   '@fluidframework/server-lambdas@7.0.1(debug@4.4.3)':
@@ -34141,7 +34112,7 @@ snapshots:
 
   '@vvago/vale@3.12.0':
     dependencies:
-      axios: 1.15.1(debug@4.3.7)
+      axios: 1.15.1(debug@4.4.3)
       rimraf: 5.0.10
       tar: 7.5.11
       unzipper: 0.10.14
@@ -34552,14 +34523,6 @@ snapshots:
       possible-typed-array-names: 1.0.0
 
   axe-core@4.10.2: {}
-
-  axios@0.30.3:
-    dependencies:
-      follow-redirects: 1.16.0(debug@4.3.7)
-      form-data: 4.0.6
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
 
   axios@0.30.3(debug@4.4.3):
     dependencies:
@@ -37315,18 +37278,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-middleware@2.0.9(@types/express@4.17.21):
-    dependencies:
-      '@types/http-proxy': 1.17.15
-      http-proxy: 1.18.1
-      is-glob: 4.0.3
-      is-plain-obj: 3.0.0
-      micromatch: 4.0.8
-    optionalDependencies:
-      '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
   http-proxy-middleware@2.0.9(@types/express@4.17.21)(debug@4.4.3):
     dependencies:
       '@types/http-proxy': 1.17.15
@@ -37336,14 +37287,6 @@ snapshots:
       micromatch: 4.0.8
     optionalDependencies:
       '@types/express': 4.17.21
-    transitivePeerDependencies:
-      - debug
-
-  http-proxy@1.18.1:
-    dependencies:
-      eventemitter3: 4.0.7
-      follow-redirects: 1.16.0(debug@4.3.7)
-      requires-port: 1.0.0
     transitivePeerDependencies:
       - debug
 
@@ -37954,7 +37897,7 @@ snapshots:
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
-      wait-on: 8.0.1(debug@4.3.7)
+      wait-on: 8.0.1
     transitivePeerDependencies:
       - debug
       - supports-color
@@ -41918,7 +41861,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      '@fluidframework/server-lambdas': 7.0.1
+      '@fluidframework/server-lambdas': 7.0.1(debug@4.4.3)
       '@fluidframework/server-local-server': 7.0.1
       '@fluidframework/server-memory-orderer': 7.0.1
       '@fluidframework/server-services-client': 7.0.1
@@ -41928,7 +41871,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1
       '@fluidframework/server-test-utils': 7.0.1
       agentkeepalive: 4.6.0
-      axios: 1.15.1(debug@4.3.7)
+      axios: 1.15.1(debug@4.4.3)
       body-parser: 1.20.3
       charwise: 3.0.1
       compression: 1.7.5
@@ -42572,6 +42515,16 @@ snapshots:
     dependencies:
       xml-name-validator: 5.0.0
 
+  wait-on@8.0.1:
+    dependencies:
+      axios: 1.15.1(debug@4.4.3)
+      joi: 17.13.3
+      lodash: 4.18.1
+      minimist: 1.2.8
+      rxjs: 7.8.2
+    transitivePeerDependencies:
+      - debug
+
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
       axios: 1.15.1(debug@4.3.7)
@@ -42757,7 +42710,7 @@ snapshots:
       express: 4.22.1
       graceful-fs: 4.2.11
       html-entities: 2.6.0
-      http-proxy-middleware: 2.0.9(@types/express@4.17.21)
+      http-proxy-middleware: 2.0.9(@types/express@4.17.21)(debug@4.4.3)
       ipaddr.js: 2.2.0
       launch-editor: 2.9.1
       open: 8.4.2
