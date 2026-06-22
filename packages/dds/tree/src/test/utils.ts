@@ -1491,7 +1491,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
 	}
 	public isMissingEditsFrom(branch: unknown): never {
-		throw new Error("Method 'hasNewEdits' not implemented in MockTreeCheckout.");
+		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
