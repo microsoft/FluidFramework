@@ -159,7 +159,6 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 	const undoRedoRef = useRef(undoRedo);
 	undoRedoRef.current = undoRedo;
 
-	// Effective label: explicit option or the text node itself as the default.
 	const effectiveLabel = editLabel ?? text;
 
 	// Computed once: an uncontrolled element only reads `defaultValue` at mount. Later content (and
@@ -181,7 +180,6 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 		}
 
 		return text.onCharactersChanged((ops) => {
-			// Ignore the echo of our own local edit.
 			if (isUpdatingRef.current) {
 				return;
 			}

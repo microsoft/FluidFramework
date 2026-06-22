@@ -86,10 +86,8 @@ describe("Plain TextArea view", () => {
 					const rendered = render(content, { reactStrictMode });
 
 					act(() => {
-						// Clear all text
 						const length = [...text.characters()].length;
 						text.removeRange(0, length);
-						// Insert new text
 						text.insertAt(0, "Replaced");
 					});
 
