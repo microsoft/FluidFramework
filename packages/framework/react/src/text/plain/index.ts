@@ -7,4 +7,10 @@ export {
 	MainView as PlainTextMainView,
 	type MainViewProps as PlainTextMainViewProps,
 } from "./plainTextView.js";
-export { syncTextToTree } from "./plainUtils.js";
+export {
+	applyTextEdit,
+	applyTextOps,
+	type ApplyTextOpsResult,
+	syncTextToTree,
+	type TextSelection,
+} from "./plainUtils.js";

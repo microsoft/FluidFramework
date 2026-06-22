@@ -3,17 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type TextAsTree,
-	TreeAlpha,
-	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
+import type { TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useEffect, useReducer, useRef } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 
-import { syncTextToTree } from "./plainUtils.js";
+import { applyTextEdit, applyTextOps, type TextSelection } from "./plainUtils.js";
 
 /**
  * Props for the MainView component.
@@ -76,70 +72,27 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 			try {
 				const textarea = textareaRef.current;
 				let newValue: string;
-				let newCursorStart: number | undefined;
-				let newCursorEnd: number | undefined;
+				let newSelection: TextSelection | undefined;
 				if (ops === undefined) {
 					// Delta unavailable — fall back to full re-read.
 					newValue = root.fullString();
 				} else {
 					// Apply ops incrementally to avoid a full O(N) re-read.
-					const selectionStart = textarea.selectionStart;
-					const selectionEnd = textarea.selectionEnd;
-
-					// readPos is a UTF-16 code-unit index into oldValue.
-					// op.count is in Unicode code points; we convert via utf16LengthForCodePoints.
-					let readPos = 0;
-					const oldValue = textarea.value;
-					newValue = "";
-					newCursorStart = selectionStart;
-					newCursorEnd = selectionEnd;
-
-					for (const op of ops) {
-						if (op.type === "retain") {
-							// Convert atom count to UTF-16 units by scanning the actual characters.
-							const utf16Count = utf16LengthForCodePoints(oldValue, readPos, op.count);
-							newValue += oldValue.slice(readPos, readPos + utf16Count);
-							readPos += utf16Count;
-						} else if (op.type === "insert") {
-							// op.text is a JS string; use its UTF-16 length for cursor adjustment.
-							if (readPos <= selectionStart) {
-								newCursorStart += op.text.length;
-							}
-							if (readPos <= selectionEnd) {
-								newCursorEnd += op.text.length;
-							}
-							newValue += op.text;
-						} else {
-							// remove
-							// Convert atom count to UTF-16 units before adjusting cursors.
-							const utf16Count = utf16LengthForCodePoints(oldValue, readPos, op.count);
-							const removeEnd = readPos + utf16Count;
-							if (removeEnd <= selectionStart) {
-								newCursorStart -= utf16Count;
-							} else if (readPos < selectionStart) {
-								newCursorStart -= selectionStart - readPos;
-							}
-							if (removeEnd <= selectionEnd) {
-								newCursorEnd -= utf16Count;
-							} else if (readPos < selectionEnd) {
-								newCursorEnd -= selectionEnd - readPos;
-							}
-							readPos += utf16Count;
-						}
-					}
-
-					// Append any tail not covered by ops (e.g. trailing retained content).
-					newValue += oldValue.slice(readPos);
+					const result = applyTextOps(
+						textarea.value,
+						{ start: textarea.selectionStart, end: textarea.selectionEnd },
+						ops,
+					);
+					newValue = result.value;
+					newSelection = result.selection;
 				}
 				textarea.value = newValue;
 				// Keep the DOM's child text node in sync with `.value` so queries like
 				// `element.textContent` (used in tests / by external observers) reflect current
 				// content rather than the initial value baked in from `defaultValue`.
 				textarea.textContent = newValue;
-				if (newCursorStart !== undefined && newCursorEnd !== undefined) {
-					const clampedStart = Math.min(newCursorStart, newValue.length);
-					const clampedEnd = Math.min(newCursorEnd, newValue.length);
-					textarea.setSelectionRange(clampedStart, clampedEnd);
+				if (newSelection !== undefined) {
+					textarea.setSelectionRange(newSelection.start, newSelection.end);
 				}
 			} finally {
 				isUpdatingRef.current = false;
@@ -158,15 +111,7 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 
 			isUpdatingRef.current = true;
 			try {
-				const newText = event.target.value;
-				const context = TreeAlpha.context(root);
-				if (context.isBranch()) {
-					context.runTransaction(() => syncTextToTree(root, newText), {
-						label: effectiveLabel,
-					});
-				} else {
-					syncTextToTree(root, newText);
-				}
+				applyTextEdit(root, event.target.value, effectiveLabel);
 			} finally {
 				isUpdatingRef.current = false;
 			}
