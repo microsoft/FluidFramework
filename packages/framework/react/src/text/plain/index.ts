@@ -14,3 +14,9 @@ export {
 	syncTextToTree,
 	type TextSelection,
 } from "./plainUtils.js";
+export {
+	usePlainTextInput,
+	type PlainTextInputBinding,
+	type PlainTextInputProps,
+	type UsePlainTextInputOptions,
+} from "./usePlainTextInput.js";
