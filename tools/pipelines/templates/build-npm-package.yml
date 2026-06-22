@@ -314,8 +314,8 @@ extends:
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
-                  packageManager: '${{ parameters.packageManager }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  installPnpm: ${{ eq(parameters.packageManager, 'pnpm') }}
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,

@@ -14,6 +14,10 @@ parameters:
   type: string
   default: repo
 
+- name: installPnpmForRepoBuildTools
+  type: boolean
+  default: true
+
 # The path to the pnpm store.
 - name: pnpmStorePath
   type: string
@@ -23,11 +27,12 @@ steps:
   # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
   # with the next group of steps.
   - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-      parameters:
-        buildDirectory: $(FluidFrameworkDirectory)/build-tools
-        pnpmStorePath: ${{ parameters.pnpmStorePath }}
-        enableCache: false
+    - ${{ if parameters.installPnpmForRepoBuildTools }}:
+      - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+        parameters:
+          buildDirectory: $(FluidFrameworkDirectory)/build-tools
+          pnpmStorePath: ${{ parameters.pnpmStorePath }}
+          enableCache: false
 
     - task: Bash@3
       name: InstallBuildTools

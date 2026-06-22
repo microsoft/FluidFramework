@@ -7,6 +7,8 @@
 
 parameters:
 # The path containing the project(s) to build.
+# A package.json is expected under this folder and will be used to determine
+# the version of pnpm to install.
 - name: buildDirectory
   type: string
 
@@ -16,6 +18,8 @@ parameters:
   default: true
 
 # The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
+# If a job uses this template multiple times with enableCache=true, then each pnpmStorePath should be
+# unique AND all use of pnpm to install should be done before another use of this template.
 - name: pnpmStorePath
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
@@ -34,13 +38,27 @@ parameters:
 # An optional extra segment appended to the pnpm store cache key (separated by |).
 # Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
 #
-# additionalCacheKey: 'foo | "bar"'
+# additionalOptionalCacheKey: 'foo | "bar"'
 #
 # will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
 # Use this parameter if the set of dependencies to be installed may be be better distinguished using files other than the root pnpm-lock.
-- name: additionalCacheKey
+# And specify quoted files paths of any files to requiredCacheKey.
+- name: additionalOptionalCacheKey
   type: string
   default: ''
+
+# An optional extra segment appended to the pnpm store cache key (separated by |) and restore key.
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# requiredCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Unquoted files are *not recommended* as requiredCacheKey as it limits restore possibilities. However the quoted file path
+# of any files specified in additionalOptionalCacheKey is recommended to avoid cross-pollination from caches of other jobs.
+# There is a "default" default value to avoid unintended restore contamination. That can be overridden by setting empty string.
+- name: requiredCacheKey
+  type: string
+  default: '"default"'
 
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
@@ -49,18 +67,21 @@ steps:
     # The timeout applies to both the pre-job restore and post-job save operations.
     # 3 minutes was insufficient for the post-job cache upload of the pnpm store, causing
     # intermittent "The task has timed out" errors that mark builds as Partially Succeeded.
+    # In 2026-06, 5 minutes has been insufficient for pre-job as the pnpm store has grown
+    # with additional past versions of FF client packages for compatibility testing. But
+    # it may also just be polluted. This will either remain at 5 or be adjusted after
+    # caches are reset.
     timeoutInMinutes: 5
     continueOnError: true
     inputs:
       # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
-      # in the cache key
-      ${{ if ne(parameters.additionalCacheKey, '') }}:
-        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalCacheKey }}'
-      ${{ else }}:
-        key: '"pnpm-store" | "$(Agent.OS)" | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml'
+      # in the cache key.
+      # The pnpm lockfile path is kept as an explicit key to avoid job cross-pollination
+      # when using multiple workspaces in a pipeline.
+      key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml"${{ if ne(parameters.requiredCacheKey, '') }} | ${{ parameters.requiredCacheKey }}${{ endif }} | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml${{ if ne(parameters.additionalOptionalCacheKey, '') }} | ${{ parameters.additionalOptionalCacheKey }}${{ endif }}'
       path: ${{ parameters.pnpmStorePath }}
       restoreKeys: |
-        "pnpm-store" | "$(Agent.OS)"
+        "pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml"${{ if ne(parameters.requiredCacheKey, '') }} | ${{ parameters.requiredCacheKey }}${{ endif }}
 
 # Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
 # that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
