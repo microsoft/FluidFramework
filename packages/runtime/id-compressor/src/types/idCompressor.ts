@@ -16,6 +16,28 @@ import type {
 } from "./persisted-types/index.js";
 
 /**
+ * Serialization format versions for IdCompressor.
+ * @internal
+ */
+export const SerializationVersion = {
+	/**
+	 * Base format without sharding support
+	 */
+	V2: 2,
+	/**
+	 * Adds optional sharding state
+	 */
+	V3: 3,
+} as const;
+
+/**
+ * Type representing valid serialization version values.
+ * @internal
+ */
+export type SerializationVersion =
+	(typeof SerializationVersion)[keyof typeof SerializationVersion];
+
+/**
  * A distributed UUID generator and compressor.
  *
  * Generates arbitrary non-colliding v4 UUIDs, called stable IDs, for multiple "sessions" (which can be distributed across the network),
@@ -143,17 +165,107 @@ export interface IIdCompressorCore {
 	beginGhostSession(ghostSessionId: SessionId, ghostSessionCallback: () => void): void;
 
 	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * Shards the ID space of this compressor such that multiple local compressors can safely share it without colliding.
+	 * This can allow multiple local instantiations of the same compressor to safely share an ID space in scenarios where
+	 * different threads do not have access to a central ID compressor.
+	 * @param newShardCount - The number of additional different shards to split this compressor into.
+	 * @returns An array of serialized compressors of size `newShardCount`.
+	 * These can be passed across a marshalling boundary and rehydrated on the other side, and will safely share the ID space of `this`.
+	 * Note that this method should only be needed when multiple JS runtimes are in play, as sharded compressors essentially
+	 * attempt to emulate a single static compressor and any code running in the same JS runtime can simply use statics.
+	 */
+	shard(newShardCount: number): SerializedIdCompressorWithOngoingSession[];
+
+	/**
+	 * Synchronizes `this` compressor with a child shard. Synchronization will occur for the state of the child at the time `syncToken`
+	 * was generated, meaning that `this` compressor can use/ingest IDs generated up to that point. Attempts to use IDs from a child shard
+	 * without first synchronizing will result in an exception.
+	 *
+	 * If `syncToken` is a disposal token (its {@link ShardToken.disposed} flag is `true`, as produced by
+	 * {@link IIdCompressorCore.disposeShard}), this additionally deregisters the child shard and reclaims its subset of the ID space
+	 * into `this`. Once a shard has been disposed it is no longer safe to use the compressor the token came from, and a shard tree must
+	 * be disposed from the leaves upwards.
+	 * @param syncToken - The token for the shard, obtained by calling {@link IIdCompressorCore.getShardSyncToken} (non-destructive
+	 * synchronization) or {@link IIdCompressorCore.disposeShard} (synchronization plus reclamation of the disposed shard's ID space).
+	 */
+	synchronizeWithShard(syncToken: ShardSynchronizationToken): void;
+
+	/**
+	 * Returns undefined if this compressor is not part of a shard group, and otherwise returns a synchronization token for this shard
+	 * that can be used when calling {@link IIdCompressorCore.synchronizeWithShard}. This does NOT dispose the shard.
+	 *
+	 * @returns The sync token if this compressor is part of a sharded group, otherwise undefined.
+	 * The returned token is serializable and can be passed across marshaling boundaries. This token can be used to synchronize a
+	 * parent with this compressor by calling {@link IIdCompressorCore.synchronizeWithShard}.
+	 * Unlike {@link IIdCompressorCore.disposeShard}, this is non-destructive and may be called on a shard that still has active
+	 * child shards, which allows an intermediate shard to propagate its progress upward to its own parent.
+	 * @throws If this compressor is the root of the shard tree (only non-root shards can produce a token).
+	 */
+	getShardSyncToken(): ShardSynchronizationToken | undefined;
+
+	/**
+	 * Returns undefined if this compressor is not part of a shard group, and otherwise disposes this shard and returns
+	 * the disposal token for this compressor. If this compressor was part of a shard group, the compressor will no longer be usable.
+	 *
+	 * @returns The disposal token if this compressor is part of a sharded group, otherwise undefined.
+	 * The returned token is serializable and can be passed across marshaling boundaries. Passing it to
+	 * {@link IIdCompressorCore.synchronizeWithShard} on the parent reclaims this shard's subset of the ID space.
+	 * @throws If this shard has active child shards.
+	 * This means that a shard tree must be disposed from the leaves upwards.
+	 */
+	disposeShard(): ShardSynchronizationToken | undefined;
+
+	/**
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
 	 * This includes finalized state as well as un-finalized state and is therefore suitable for use in offline scenarios.
 	 */
 	serialize(withSession: true): SerializedIdCompressorWithOngoingSession;
 
 	/**
-	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `IdCompressor.deserialize()`.
+	 * Returns a persistable form of the current state of this `IdCompressor` which can be rehydrated via `deserializeIdCompressor()`.
 	 * This only includes finalized state and is therefore suitable for use in summaries.
 	 */
 	serialize(withSession: false): SerializedIdCompressorWithNoSession;
 }
+
+/**
+ * The state shared by all shard tokens: enough information to identify a shard and its progress
+ * through its stride pattern. This is used to track which shard generated which IDs and to manage
+ * reclamation of a disposed shard's ID space. The {@link ShardToken.disposed} flag distinguishes a
+ * plain synchronization token from a disposal token. The branded {@link ShardSynchronizationToken}
+ * is the concrete type handed to consumers.
+ * @internal
+ */
+export interface ShardToken {
+	/**
+	 * The number of positions filled in this shard's stride pattern.
+	 * This tracks progress through the stride cycle, not the count of IDs actually generated.
+	 * For example, when a shard is created, it backfills entries for positions in its stride,
+	 * so this value may be non-zero even if the shard hasn't generated any IDs yet.
+	 */
+	localGenCount: number;
+
+	/**
+	 * Unique identifier for this shard within its parent.
+	 */
+	shardId: SessionId;
+
+	/**
+	 * Whether this token also signals disposal of the originating shard. When `true`, passing the token to
+	 * {@link IIdCompressorCore.synchronizeWithShard} reclaims the shard's ID space in addition to synchronizing.
+	 * Produced as `false` by {@link IIdCompressorCore.getShardSyncToken} and `true` by {@link IIdCompressorCore.disposeShard}.
+	 */
+	disposed: boolean;
+}
+
+/**
+ * A {@link ShardToken} that identifies a shard for synchronization (and, when {@link ShardToken.disposed} is `true`,
+ * reclamation) via {@link IIdCompressorCore.synchronizeWithShard}.
+ * @internal
+ */
+export type ShardSynchronizationToken = ShardToken & {
+	readonly ShardSynchronizationToken: "c79724e1-9103-4415-95b5-bebb932be404";
+};
 
 /**
  * A distributed UUID generator and compressor.

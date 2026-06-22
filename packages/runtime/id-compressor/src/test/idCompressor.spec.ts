@@ -24,6 +24,7 @@ import type {
 	StableId,
 	SerializedIdCompressorWithOngoingSession,
 } from "../index.js";
+import { SerializationVersion } from "../types/index.js";
 import { createSessionId } from "../utilities.js";
 
 import {
@@ -1012,7 +1013,9 @@ describe("IdCompressor", () => {
 
 		it("correctly passes logger when no session specified", () => {
 			const mockLogger = new MockLogger();
-			const compressor = toIdCompressorWithCore(createIdCompressor(mockLogger));
+			const compressor = toIdCompressorWithCore(
+				createIdCompressor(SerializationVersion.V3, mockLogger),
+			);
 			compressor.generateCompressedId();
 			compressor.finalizeCreationRange(compressor.takeNextCreationRange());
 			mockLogger.assertMatchAny([
@@ -1041,6 +1044,7 @@ describe("IdCompressor", () => {
 			const [_, serializedWithSession] = expectSerializes(compressor1);
 			const compressorResumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
+				requestedWriteVersion: SerializationVersion.V3,
 			});
 			compressorResumed.generateCompressedId();
 			const range2 = compressorResumed.takeNextCreationRange();
@@ -1067,7 +1071,7 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithNoSession;
 			assert.throws(
-				() => deserializeIdCompressor(docString1, createSessionId()),
+				() => deserializeIdCompressor(docString1, createSessionId(), SerializationVersion.V3),
 				(e: Error) => e.message === "IdCompressor version 1.0 is no longer supported.",
 			);
 		});
@@ -1080,8 +1084,93 @@ describe("IdCompressor", () => {
 				"base64",
 			) as SerializedIdCompressorWithOngoingSession;
 			assert.throws(
-				() => deserializeIdCompressor(serializedWithUnknownVersion),
+				() => deserializeIdCompressor(serializedWithUnknownVersion, SerializationVersion.V3),
 				(e: Error) => e.message === "Unknown IdCompressor serialized version.",
+			);
+		});
+
+		/**
+		 * Helper to test version negotiation during serialization/deserialization.
+		 * @param serializedVersion - The version to set in the serialized data
+		 * @param requestedWriteVersion - The version requested when deserializing
+		 * @param expectedVersion - The version expected after re-serialization
+		 * @param withSession - Whether to serialize with session state
+		 */
+		function testVersionNegotiation(
+			serializedVersion: SerializationVersion,
+			requestedWriteVersion: SerializationVersion,
+			expectedVersion: SerializationVersion,
+			withSession: boolean,
+		): void {
+			// Create and serialize a compressor
+			const compressor = CompressorFactory.createCompressor(Client.Client1);
+			compressor.generateCompressedId();
+			const serialized = withSession
+				? compressor.serialize(true)
+				: compressor.serialize(false);
+
+			// Modify the serialized data to use the specified version
+			const buffer = stringToBuffer(serialized, "base64");
+			const floatView = new Float64Array(buffer);
+			floatView[0] = serializedVersion;
+			const modifiedSerialized = bufferToString(buffer, "base64");
+
+			// Deserialize with requested version and re-serialize
+			if (withSession) {
+				const deserialized = IdCompressor.deserialize({
+					serialized: modifiedSerialized as SerializedIdCompressorWithOngoingSession,
+					requestedWriteVersion,
+				});
+				const reserialized = deserialized.serialize(true);
+				const reserializedBuffer = stringToBuffer(reserialized, "base64");
+				const reserializedFloatView = new Float64Array(reserializedBuffer);
+				assert.equal(reserializedFloatView[0], expectedVersion);
+			} else {
+				const deserialized = IdCompressor.deserialize({
+					serialized: modifiedSerialized as SerializedIdCompressorWithNoSession,
+					newSessionId: createSessionId(),
+					requestedWriteVersion,
+				});
+				const reserialized = deserialized.serialize(false);
+				const reserializedBuffer = stringToBuffer(reserialized, "base64");
+				const reserializedFloatView = new Float64Array(reserializedBuffer);
+				assert.equal(reserializedFloatView[0], expectedVersion);
+			}
+		}
+
+		it("uses requested version when higher than serialized version", () => {
+			testVersionNegotiation(
+				SerializationVersion.V2,
+				SerializationVersion.V3,
+				SerializationVersion.V3,
+				false,
+			);
+		});
+
+		it("uses serialized version when higher than requested version", () => {
+			testVersionNegotiation(
+				SerializationVersion.V3,
+				SerializationVersion.V2,
+				SerializationVersion.V3,
+				false,
+			);
+		});
+
+		it("uses matching version when requested equals serialized", () => {
+			testVersionNegotiation(
+				SerializationVersion.V3,
+				SerializationVersion.V3,
+				SerializationVersion.V3,
+				false,
+			);
+		});
+
+		it("preserves serialized version with session when requested version is lower", () => {
+			testVersionNegotiation(
+				SerializationVersion.V3,
+				SerializationVersion.V2,
+				SerializationVersion.V3,
+				true,
 			);
 		});
 	});
@@ -1097,6 +1186,7 @@ describe("IdCompressor", () => {
 			const resumed = toIdCompressorWithCore(
 				deserializeIdCompressor(
 					serializedWithSession,
+					SerializationVersion.V3,
 					createChildLogger({ logger: mockLogger }),
 				),
 			);
@@ -1118,6 +1208,7 @@ describe("IdCompressor", () => {
 				deserializeIdCompressor(
 					serializedNoSession,
 					newSessionId,
+					SerializationVersion.V3,
 					createChildLogger({ logger: mockLogger }),
 				),
 			);
@@ -1134,6 +1225,7 @@ describe("IdCompressor", () => {
 			const serializedWithSession = compressor.serialize(true);
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedWithSession,
+				requestedWriteVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
@@ -1152,6 +1244,7 @@ describe("IdCompressor", () => {
 			const resumed = IdCompressor.deserialize({
 				serialized: serializedNoSession,
 				newSessionId,
+				requestedWriteVersion: SerializationVersion.V3,
 				logger: createChildLogger({ logger: mockLogger }),
 			});
 			resumed.serialize(false);
@@ -1456,6 +1549,7 @@ describe("IdCompressor", () => {
 							IdCompressor.deserialize({
 								serialized: serializedWithoutLocalState,
 								newSessionId: sessionIds.get(Client.Client2),
+								requestedWriteVersion: SerializationVersion.V3,
 							}),
 						(e: Error) => e.message === "Cannot resume existing session.",
 					);

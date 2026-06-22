@@ -162,7 +162,40 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Function_createIdCompressor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Function_deserializeIdCompressor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Function_createSessionId": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Function_serializeIdCompressor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"Interface_IdCreationRange": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_SerializedIdCompressor": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_SerializedIdCompressorWithNoSession": {
+				"backCompat": false,
+				"forwardCompat": false
+			},
+			"TypeAlias_SerializedIdCompressorWithOngoingSession": {
+				"backCompat": false,
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
