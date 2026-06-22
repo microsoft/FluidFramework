@@ -478,6 +478,14 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 	}
 
 	public takeNextCreationRange(): IdCreationRange {
+		// Child (non-root) shards must not submit their own creation ranges. All shards in a shard tree share a
+		// single session, and only the root shard is responsible for finalizing that session's IDs with the server.
+		// A child's generated IDs are reconciled with the root via shard synchronization tokens (see
+		// synchronizeWithShard / disposeShard), not by independently sending ranges, which would overlap and
+		// conflict with the root's ranges for the shared session.
+		if (this.shardingState?.shardId !== undefined) {
+			throw new Error("Cannot take a creation range from a non-root shard.");
+		}
 		assert(
 			!this.ongoingGhostSession,
 			0x8a6 /* IdCompressor should not be operated normally when in a ghost session */,

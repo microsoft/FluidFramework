@@ -862,30 +862,45 @@ describe("IdCompressor Sharding", () => {
 			assert.equal(child1.generateCompressedId(), -10); // 7→10
 			assert.equal(child2.generateCompressedId(), -8); // 5→8
 
-			// Take ranges
+			// Only the root shard may take a creation range; child shards must not finalize the shared session.
 			const parentRange = parent.takeNextCreationRange();
-			const child1Range = child1.takeNextCreationRange();
-			const child2Range = child2.takeNextCreationRange();
+			assert.throws(
+				() => child1.takeNextCreationRange(),
+				/non-root shard/,
+				"child shard should not be able to take a creation range",
+			);
+			assert.throws(
+				() => child2.takeNextCreationRange(),
+				/non-root shard/,
+				"child shard should not be able to take a creation range",
+			);
 
 			// Verify parent range: localGenCount went from 3 to 9
 			assert(parentRange.ids !== undefined);
 			assert.equal(parentRange.ids.firstGenCount, 1);
 			assert.equal(parentRange.ids.count, 9); // Range covers genCounts 1-9
 
-			// Verify child1 range: localGenCount went from 4 to 10
-			assert(child1Range.ids !== undefined);
-			assert.equal(child1Range.ids.firstGenCount, 1);
-			assert.equal(child1Range.ids.count, 10); // Range covers genCounts 1-10
-
-			// Verify child2 range: localGenCount went from 5 to 8
-			assert(child2Range.ids !== undefined);
-			assert.equal(child2Range.ids.firstGenCount, 1);
-			assert.equal(child2Range.ids.count, 8); // Range covers genCounts 1-8
-
 			// Verify local ID ranges are correct (all IDs should be in normalizer)
 			assert(parentRange.ids.localIdRanges.length > 0);
-			assert(child1Range.ids.localIdRanges.length > 0);
-			assert(child2Range.ids.localIdRanges.length > 0);
+		});
+
+		it("throws when a child (non-root) shard takes a creation range", () => {
+			const parent = new IdCompressor(createSessionId(), undefined, SerializationVersion.V3);
+			const [childSer] = parent.shard(1);
+			const child = IdCompressor.deserialize({
+				serialized: childSer,
+				requestedWriteVersion: SerializationVersion.V3,
+			});
+
+			child.generateCompressedId();
+
+			// A child shard may not take a range - only the root finalizes the shared session's IDs.
+			assert.throws(() => child.takeNextCreationRange(), /non-root shard/);
+			// takeUnfinalizedCreationRange delegates to takeNextCreationRange, so it throws as well.
+			assert.throws(() => child.takeUnfinalizedCreationRange(), /non-root shard/);
+
+			// The root is still allowed to take ranges, even while it has active child shards.
+			assert.doesNotThrow(() => parent.takeNextCreationRange());
 		});
 
 		it("takeNextCreationRange after unsharding", () => {

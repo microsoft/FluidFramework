@@ -107,6 +107,9 @@ export interface IIdCompressorCore {
 	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
 	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
+	 * @throws if called on a child (non-root) shard. All shards in a shard tree share a single session, and only
+	 * the root shard may finalize that session's IDs with the server; a child's IDs are instead reconciled with the
+	 * root via {@link IIdCompressorCore.synchronizeWithShard} / {@link IIdCompressorCore.disposeShard}.
 	 */
 	takeNextCreationRange(): IdCreationRange;
 
