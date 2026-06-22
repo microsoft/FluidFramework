@@ -1363,6 +1363,37 @@ describe("sharedTreeView", () => {
 				error: "Disposing a view is forbidden during a change event callback",
 			});
 		});
+
+		it("run a transaction", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.runTransaction(() => {}),
+				error: "Running a transaction is forbidden during a change event callback",
+			});
+		});
+
+		it("run an async transaction", async () => {
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+			view.initialize({ number: 3 });
+
+			// Unlike the synchronous cases above, `runTransactionAsync` surfaces the guard as a
+			// rejected promise rather than a synchronous throw, so it is captured and awaited here.
+			let asyncTransaction: Promise<unknown> | undefined;
+			Tree.on(view.root, "nodeChanged", () => {
+				asyncTransaction = view.runTransactionAsync(async () => {});
+			});
+
+			view.root.number = 0;
+
+			assert(asyncTransaction !== undefined, "Async transaction should have been attempted.");
+			await assert.rejects(
+				asyncTransaction,
+				validateUsageError(
+					"Running a transaction is forbidden during a change event callback",
+				),
+			);
+		});
 	});
 
 	describe("Enrichment", () => {
