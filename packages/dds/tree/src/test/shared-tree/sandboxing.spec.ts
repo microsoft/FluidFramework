@@ -107,6 +107,8 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 */
 	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
 
+	private isApplyingSandboxChanges: boolean = false;
+
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
 		/** The callback to send updates from the host to the sandbox so that it learns about inbound changes. */
@@ -118,9 +120,12 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.main = main;
 		this.local = main.fork();
 
-		this.main.events.on("changed", (metadata: ChangeMetadata) => {
-			if (!metadata.isLocal) {
-				this.syncSandboxToInboundChanges();
+		this.main.events.on("changed", () => {
+			if (this.isApplyingSandboxChanges) {
+				// While we may need to update the sandbox after applying changes from the sandbox,
+				// we don't want to do so until we have sent an acknowledgment back to the sandbox.
+			} else {
+				this.syncSandboxToInboundChanges("after main branch changed");
 			}
 		});
 	}
@@ -133,44 +138,51 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.logger(`Host: received outbound change [${getRevision(change)}] from sandbox`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
 			this.logger(
-				`Host: abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
+				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 			);
 			this.mainHeadFromLastUpdate.dispose();
 			this.mainHeadFromLastUpdate = undefined;
 		}
 		this.local.applyChange(change);
 		this.logger(
-			`Host: merging outbound changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
+			`Host:   merging outbound changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
 		);
+		this.isApplyingSandboxChanges = true;
 		this.main.merge(this.local, false);
+		this.isApplyingSandboxChanges = false;
 		this.ackOutboundChangeFromSandbox();
-		this.syncSandboxToInboundChanges();
+		this.syncSandboxToInboundChanges("after receiving outbound change");
 	}
 
-	private syncSandboxToInboundChanges(): void {
+	private syncSandboxToInboundChanges(prompt: string): void {
+		this.logger(`Host: considering sync ${prompt}...`);
 		if (this.local.isMissingEditsFrom(this.main)) {
 			this.logger(
-				`Host: detected new inbound changes that need to be reflected in sandbox ${getMissingCommits(this.local, this.main)}`,
+				`Host:   detected changes that need to be reflected in sandbox ${getMissingCommits(this.local, this.main)}`,
 			);
 			if (this.mainHeadFromLastUpdate !== undefined) {
-				this.logger("Host: update already in progress. Will wait for it to complete or fail.");
+				this.logger(
+					"Host:   update already in progress. Will wait for it to complete or fail.",
+				);
 				return;
 			}
 			if (this.updateInProgress === undefined) {
-				this.logger("Host: no pre-existing update in progress. Creating new update promise.");
+				this.logger(
+					"Host:   no pre-existing update in progress. Creating new update promise.",
+				);
 				this.updateInProgress = makePromiseWithResolver();
 			} else {
-				this.logger("Host: Reusing existing update promise.");
+				this.logger("Host:   Reusing existing update promise.");
 			}
 			this.mainHeadFromLastUpdate = this.main.fork();
 			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
-			this.logger("Host: sending update to sandbox");
+			this.logger("Host:   sending update to sandbox");
 			this.sendUpdateToSandbox(update);
 		} else {
-			this.logger("Host: no new inbound changes that need to be reflected in sandbox");
+			this.logger("Host:   no changes that need to be reflected in sandbox");
 			// The sandbox is now caught up with the host's main branch
 			if (this.updateInProgress !== undefined) {
-				this.logger("Host: resolving update promise");
+				this.logger("Host:   resolving update promise");
 				const resolver = this.updateInProgress.resolver;
 				this.updateInProgress = undefined;
 				resolver();
@@ -196,16 +208,16 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.mainHeadFromLastUpdate = undefined;
 		// New changes could have come in since the update was sent,
 		// so we try to sync again to ensure the sandbox is fully up-to-date.
-		this.syncSandboxToInboundChanges();
+		this.syncSandboxToInboundChanges("after receiving ack of update");
 	}
 
 	/**
 	 * Returns a promise that resolves when all inbound changes have been reflected in the sandbox,
 	 * or undefined if all inbound changes have already been reflected on the sandbox.
 	 *
-	 * If new inbound changes are received while a promise is already in progress,
+	 * If new changes are received while a promise is already in progress,
 	 * the existing promise will only resolve once all inbound changes (including the new ones) have been reflected in the sandbox.
-	 * This means that there's no need to call this function again after receiving new inbound changes if the previous promise is still pending.
+	 * This means that there's no need to call this function again after receiving new changes if the previous promise is still pending.
 	 */
 	public get updatePromise(): Promise<void> | undefined {
 		return this.updateInProgress?.promise;
@@ -237,10 +249,10 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 					`Sand: new outbound change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
 				if (this.pushInProgress === undefined) {
-					this.logger("Sand: no pre-existing push in progress. Creating new push promise.");
+					this.logger("Sand:   no pre-existing push in progress. Creating new push promise.");
 					this.pushInProgress = makePromiseWithResolver();
 				} else {
-					this.logger("Sand: Reusing existing push promise.");
+					this.logger("Sand:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
 				sendOutboundChange(newChange);
@@ -283,7 +295,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			this.logger(`Sand: all outbound changes acked. Resolving push promise.`);
+			this.logger(`Sand:   all outbound changes acked. Resolving push promise.`);
 			resolver();
 		}
 	}
@@ -556,5 +568,75 @@ describe("Host and Sandbox Demo", () => {
 		// The peer edit is now reflected in the local and sandbox
 		strict.deepEqual([...host.local.root], ["B(s)", "C(s)", "B(p)"]);
 		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)", "B(p)"]);
+	});
+
+	it("host edits sequenced before peer edits", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
+
+		// Make an edit on the host
+		host.main.root.push("H");
+		strict.deepEqual([...host.main.root], ["H"]);
+
+		// The outbound edits are not reflected in the sandbox or peer yet
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
+		strict.deepEqual([...peer.root], []);
+
+		// The host should have started the process of updating the sandbox with the inbound change
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
+
+		// Before the sandbox has a chance to process the edits from the host, the peer makes an edit
+		peer.root.push("P");
+		strict.deepEqual([...peer.root], ["P"]);
+
+		provider.synchronizeMessages();
+		// The peer and host edits are sequenced
+		strict.deepEqual([...host.main.root], ["P", "H"]);
+		strict.deepEqual([...peer.root], ["P", "H"]);
+
+		// The sandbox is still in the process of updating
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
+
+		// Wait for the update to be applied to the sandbox
+		await updatePromise;
+
+		// The peer edit is now reflected in the local and sandbox
+		strict.deepEqual([...host.local.root], ["P", "H"]);
+		strict.deepEqual([...sandbox.view.root], ["P", "H"]);
+	});
+
+	it("peer edits sequenced before host edits", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
+
+		// Make an edit on the peer
+		peer.root.push("P");
+		strict.deepEqual([...peer.root], ["P"]);
+
+		// Make an edit on the host
+		host.main.root.push("H");
+		strict.deepEqual([...host.main.root], ["H"]);
+
+		// The host should have started the process of updating the sandbox with the inbound change
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
+
+		provider.synchronizeMessages();
+
+		// The peer and host edits are sequenced
+		strict.deepEqual([...host.main.root], ["H", "P"]);
+		strict.deepEqual([...peer.root], ["H", "P"]);
+
+		// The sandbox is still in the process of updating
+		strict.deepEqual([...host.local.root], []);
+		strict.deepEqual([...sandbox.view.root], []);
+
+		// Wait for the update to be applied to the sandbox
+		await updatePromise;
+
+		// The peer edit is now reflected in the local and sandbox
+		strict.deepEqual([...host.local.root], ["H", "P"]);
+		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
 	});
 });
