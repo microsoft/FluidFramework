@@ -961,11 +961,14 @@ export class Container
 			enableSummarizeProtocolTree,
 		);
 
-		const offlineLoadEnabled =
-			this.isInteractiveClient &&
-			(this.mc.config.getBoolean("Fluid.Container.enableOfflineLoad") ??
-				this.mc.config.getBoolean("Fluid.Container.enableOfflineFull") ??
-				options.enableOfflineLoad !== false);
+		const explicitOfflineFull = this.mc.config.getBoolean("Fluid.Container.enableOfflineFull");
+		// paranoic defense mechanism while enableOfflineFull still exists in config.
+		if (pendingLocalState !== undefined && explicitOfflineFull === false) {
+			throw new UsageError(
+				"Cannot load from pending local state when Fluid.Container.enableOfflineFull is explicitly disabled",
+			);
+		}
+		const offlineLoadEnabled = this.isInteractiveClient && (explicitOfflineFull ?? true);
 		this.serializedStateManager = new SerializedStateManager(
 			this.subLogger,
 			this.storageAdapter,
