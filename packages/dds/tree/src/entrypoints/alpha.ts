@@ -192,6 +192,7 @@ export {
 	ICodecOptions, 
 	ITreeAlpha, 
 	IncrementalEncodingPolicy, 
+	IndependentViewLogger, 
 	IndependentViewOptions, 
 	Insertable, 
 	InsertableContent, 

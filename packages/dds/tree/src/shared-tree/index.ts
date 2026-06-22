@@ -55,6 +55,7 @@ export {
 	independentInitializedView,
 	type ViewContent,
 	independentView,
+	type IndependentViewLogger,
 	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
