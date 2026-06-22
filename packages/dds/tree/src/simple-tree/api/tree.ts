@@ -388,7 +388,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the document's stored schema changes,
+	 * which may change this compatibility status.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
 	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
@@ -451,33 +452,19 @@ export interface TreeViewAlpha<
 	set root(newRoot: InsertableField<TSchema>);
 
 	/**
-	 * When {@link SchemaCompatibilityStatus.canUpgrade} is true,
-	 * this can be used to modify the stored schema to make it match the view schema.
+	 * Declares the staged schema upgrades this view should treat as enabled for compatibility checks and stored schema changes.
 	 * @remarks
-	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
-	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 * This persists the provided `upgrades` on the view.
 	 *
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 * After calling this:
+	 * - {@link TreeView.compatibility} is recomputed.
+	 * - {@link SchemaCompatibilityStatus.canUpgrade} reflects upgradeability to the schema target produced using these declared upgrades.
+	 * - {@link TreeViewAlpha.initialize} and {@link TreeViewAlpha.upgradeSchema} apply these declared upgrades when generating their target stored schema.
 	 *
-	 * @example Enabling a staged allowed type for documents, selected by a feature flag:
-	 * ```typescript
-	 * const stagedChecklistItem = SchemaFactoryBeta.staged(ChecklistItem);
-	 * const checklistItemSchemaUpgrade = stagedChecklistItem.metadata.stagedSchemaUpgrade;
-	 * assert(checklistItemSchemaUpgrade !== undefined);
+	 * Calling this with `undefined` or an empty bag clears previously declared upgrades and restores
+	 * default compatibility behavior.
 	 *
-	 * const view = asAlpha(
-	 * 	tree.viewWith(new TreeViewConfiguration({ schema: AppSchemaWithStagedChecklist })),
-	 * );
-	 *
-	 * if (featureFlags.enableChecklistItems && view.compatibility.canUpgrade) {
-	 * 	view.upgradeSchema({ enableChecklistItems: checklistItemSchemaUpgrade });
-	 * 	// This write demonstrates using the newly enabled staged type after the schema upgrade.
-	 * 	addChecklistItem(view.root, { text: "Review rollout" });
-	 * }
-	 * ```
-	 *
-	 * @example Enabling a staged optional field after clients that understand it have been deployed:
+	 * @example Declaring upgrades and then applying them:
 	 * ```typescript
 	 * const stagedDueDate = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.string);
 	 * const dueDateSchemaUpgrade = stagedDueDate.isStagedOptional;
@@ -487,25 +474,36 @@ export interface TreeViewAlpha<
 	 * 	tree.viewWith(new TreeViewConfiguration({ schema: AppSchemaWithStagedDueDate })),
 	 * );
 	 *
-	 * if (featureFlags.enableOptionalDueDate && view.compatibility.canUpgrade) {
-	 * 	view.upgradeSchema({ enableOptionalDueDate: dueDateSchemaUpgrade });
-	 * 	// Clear a value that was previously required: this is only valid after enabling the staged optional upgrade.
-	 * 	view.root.dueDate = undefined;
+	 * if (featureFlags.enableOptionalDueDate) {
+	 * 	view.declareUpgrades({ enableOptionalDueDate: dueDateSchemaUpgrade });
+	 * 	if (view.compatibility.canUpgrade) {
+	 * 		view.upgradeSchema();
+	 * 	}
 	 * }
 	 * ```
+	 */
+	declareEnabledUpgrades(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+
+	/**
+	 * Modifies the stored schema to match this view's schema using the currently declared staged schema upgrades.
+	 * @remarks
+	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
+	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 *
+	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
+	 * If no staged upgrades are declared via {@link TreeViewAlpha.declareEnabledUpgrades}, this behaves like the base
+	 * {@link TreeView.upgradeSchema}.
+	 *
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, clearing that upgrade from
+	 * {@link TreeViewAlpha.declareEnabledUpgrades} and then calling `upgradeSchema` will throw a `UsageError` because
+	 * the requested target would narrow the stored schema.
+	 * Keep previously enabled upgrade tokens declared for as long as any document may contain them.
 	 *
 	 * Full end-to-end staged schema upgrade examples can be found in the
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
 	 *
-	 * @remarks
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, omitting that upgrade token from a subsequent
-	 * `upgradeSchema` call will cause the call to throw a `UsageError`.
-	 * The stored schema already contains the upgraded members and the requested target would narrow it, which is not a valid upgrade.
-	 * To avoid this error, always re-supply previously enabled upgrade tokens when calling `upgradeSchema` again on the same document.
-	 *
-	 * @param upgrades - Staged schema upgrades to enable while generating the upgraded stored schema.
 	 */
-	upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+	upgradeSchema(): void;
 
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
@@ -513,14 +511,16 @@ export interface TreeViewAlpha<
 	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
+	 * Uses staged schema upgrades declared via {@link TreeViewAlpha.declareEnabledUpgrades} when generating the initial stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, clearing that upgrade from the declared set before
+	 * a subsequent `upgradeSchema` call will cause the call to throw a `UsageError`.
+	 * The stored schema already contains the upgraded members and the requested target would narrow it, which is not a valid upgrade.
+	 * To avoid this error, keep previously enabled upgrade tokens declared when calling `upgradeSchema` again on the same document.
+	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
-	 * @param upgrades - Staged schema upgrades to enable while generating the initial stored schema.
 	 */
-	initialize(
-		content: InsertableField<TSchema>,
-		upgrades?: Readonly<Record<string, SchemaUpgrade>>,
-	): void;
+	initialize(content: InsertableField<TSchema>): void;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 

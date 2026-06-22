@@ -49,7 +49,8 @@ describe("runtime schema upgrade API", () => {
 			}),
 		);
 
-		view.initialize("test", { enableFooUpgrade: stringUpgrade });
+		view.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		view.initialize("test");
 
 		assert.equal(view.root, "test");
 	});
@@ -122,7 +123,8 @@ describe("staged allowed type upgrade", () => {
 		});
 
 		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.upgradeSchema({ enableFooUpgrade: stringUpgrade });
+		viewB2.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		viewB2.upgradeSchema();
 		viewB2.root = "test";
 		synchronizeTrees();
 
@@ -165,7 +167,8 @@ describe("staged allowed type upgrade", () => {
 		assert.throws(() => (viewB1.root = "test"));
 
 		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.upgradeSchema({ enableFooUpgrade: stringUpgrade });
+		viewB2.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		viewB2.upgradeSchema();
 		// Use the newly enabled schema.
 		viewB2.root = "test";
 
@@ -187,7 +190,8 @@ describe("staged allowed type upgrade", () => {
 		provider.synchronizeMessages();
 
 		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.upgradeSchema({ enableFooUpgrade: stringUpgrade });
+		viewB.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		viewB.upgradeSchema();
 		viewB.root = "test";
 		provider.synchronizeMessages();
 
@@ -370,7 +374,8 @@ describe("staged optional upgrade", () => {
 		});
 
 		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
+		viewB2.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		viewB2.upgradeSchema();
 		viewB2.root = undefined;
 		synchronizeTrees();
 
@@ -391,7 +396,8 @@ describe("staged optional upgrade", () => {
 		provider.synchronizeMessages();
 
 		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
+		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		viewB.upgradeSchema();
 		viewB.root = undefined;
 		provider.synchronizeMessages();
 
@@ -401,8 +407,7 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewC.root, undefined);
 	});
 
-	// TODO: make this a no op
-	it("throws if a staged optional upgrade is enabled and then omitted on a later upgrade call", () => {
+	it("throws if a staged optional upgrade is enabled and then explicitly disabled on a later upgrade call", () => {
 		const provider = new TestTreeProviderLite(2);
 		const [treeA, treeB] = provider.trees;
 
@@ -411,9 +416,41 @@ describe("staged optional upgrade", () => {
 		provider.synchronizeMessages();
 
 		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.upgradeSchema({ enableFooUpgrade: optionalUpgrade });
+		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		viewB.upgradeSchema();
 
+		viewB.declareEnabledUpgrades({});
 		assert.throws(() => viewB.upgradeSchema(), /cannot be upgraded to the requested schema/);
+	});
+
+	it("declareEnabledUpgrades updates compatibility and supplies default upgrades for upgradeSchema", () => {
+		const provider = new TestTreeProviderLite(3);
+		const [treeA, treeB, treeC] = provider.trees;
+
+		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: schemaA }));
+		viewA.initialize(5);
+		provider.synchronizeMessages();
+
+		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
+		assert.equal(viewB.compatibility.canUpgrade, true);
+
+		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		assert.equal(viewB.compatibility.canUpgrade, true);
+
+		viewB.upgradeSchema();
+		viewB.root = undefined;
+		provider.synchronizeMessages();
+
+		assert.equal(viewA.compatibility.canView, false);
+		assert.equal(viewB.root, undefined);
+
+		const viewBReloaded = asAlpha(
+			treeC.viewWith(new TreeViewConfiguration({ schema: schemaB })),
+		);
+		assert.equal(viewBReloaded.compatibility.canUpgrade, false);
+		viewBReloaded.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		assert.equal(viewBReloaded.compatibility.canUpgrade, true);
+		assert.equal(viewBReloaded.compatibility.isEquivalent, true);
 	});
 
 	it("checks compatibility through staged optional rollout", () => {

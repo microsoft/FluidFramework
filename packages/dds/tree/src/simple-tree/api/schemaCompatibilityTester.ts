@@ -4,6 +4,7 @@
  */
 
 import type { TreeStoredSchema } from "../../core/index.js";
+import type { SchemaUpgrade } from "../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../feature-libraries/index.js";
 import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
@@ -22,6 +23,10 @@ export class SchemaCompatibilityTester {
 		 * Schema for the view
 		 */
 		public readonly viewSchema: TreeSchema,
+		/**
+		 * Staged schema upgrades to include when computing upgrade-target compatibility.
+		 */
+		private readonly upgrades?: Readonly<Record<string, SchemaUpgrade>>,
 	) {}
 
 	/**
@@ -51,7 +56,7 @@ export class SchemaCompatibilityTester {
 			break;
 		}
 
-		const wouldUpgradeTo = toUpgradeSchema(this.viewSchema.root);
+		const wouldUpgradeTo = toUpgradeSchema(this.viewSchema.root, this.upgrades);
 
 		const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 
