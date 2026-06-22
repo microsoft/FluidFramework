@@ -931,6 +931,15 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.checkNotDisposed();
+		// Starting a transaction is an edit, so it is forbidden from within a change-event
+		// callback (where the edit lock is held), the same as direct edits. For the async
+		// entry point this throw is captured as a rejected promise by the `async` wrapper.
+		//
+		// Note: because runTransaction/runTransactionAsync are `@breakingMethod`, this throw also
+		// puts the checkout into a broken state (unlike a direct edit, which throws recoverably).
+		// That is the same pre-existing broken-state limitation tracked by the TODO in
+		// `emitChangedLocked`, not something specific to transactions.
+		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
