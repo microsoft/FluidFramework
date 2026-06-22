@@ -660,9 +660,6 @@ export class TreeCheckout implements ITreeCheckout {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -689,7 +686,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
