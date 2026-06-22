@@ -74,7 +74,6 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
-	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
@@ -307,7 +306,6 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
-		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
@@ -354,7 +352,6 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		breaker,
-		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -526,7 +523,6 @@ export class TreeCheckout implements ITreeCheckout {
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -658,9 +654,6 @@ export class TreeCheckout implements ITreeCheckout {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -687,7 +680,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
@@ -1207,7 +1199,6 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		this.editLock.checkUnlocked("Branching");
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
@@ -1224,7 +1215,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this._removedRoots.clone(),
 			this.logger,
 			forkBreaker,
-			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1730,34 +1720,6 @@ class EditLock {
 		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
-}
-
-/**
- * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
- * The returned function may only be called once.
- *
- * @param checkout - The tree checkout for which you want to monitor forks for disposal.
- * @returns a function which can be called to dispose all of the tracked forks.
- */
-function trackForksForDisposal(checkout: TreeCheckout): () => void {
-	const forks = new Set<TreeCheckout>();
-	const onDisposeUnSubscribes: (() => void)[] = [];
-	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
-		forks.add(fork);
-		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-	});
-	let disposed = false;
-	return () => {
-		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		for (const fork of forks) {
-			fork.dispose();
-		}
-		for (const unsubscribe of onDisposeUnSubscribes) {
-			unsubscribe();
-		}
-		onForkUnSubscribe();
-		disposed = true;
-	};
 }
 
 function verboseFromCursor(
