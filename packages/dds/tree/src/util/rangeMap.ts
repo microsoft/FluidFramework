@@ -3,8 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -29,13 +31,13 @@ export class RangeMap<K, V> {
 	 * When writing to a range of keys starting with `start`, the value of the nth key is interpreted to be
 	 * `offsetValue(firstValue, n - 1)`.
 	 * The same logic should be used when interpreting the values for keys after the first in a
-	 * `RangeQueryResult` or `RangeQueryEntry`.
+	 * `RangeQueryResult` or `RangeMapEntry`.
 	 *
 	 * If `offsetValue` is left unspecified, all keys in a block will be given the same value.
 	 */
 	public constructor(
-		private readonly offsetKey: (key: K, offset: number) => K,
-		private readonly subtractKeys: (a: K, b: K) => number,
+		public readonly offsetKey: (key: K, offset: number) => K,
+		public readonly subtractKeys: (a: K, b: K) => number,
 		public readonly offsetValue: (value: V, offset: number) => V = defaultValueOffsetFn,
 	) {
 		this.tree = new BTree(undefined, subtractKeys);
@@ -44,8 +46,8 @@ export class RangeMap<K, V> {
 	/**
 	 * Retrieves all entries from the RangeMap.
 	 */
-	public entries(): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	public entries(): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		for (const [start, entry] of this.tree.entries()) {
 			entries.push({ start, length: entry.length, value: entry.value });
 		}
@@ -62,34 +64,22 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The first key in the range being queried
 	 * @param length - The length of the query range
-	 * @returns A list of entries, each describing the value for some subrange of the query.
-	 * The entries are in the same order as the keys, and there is an entry for every key with a non `undefined` value.
+	 * @returns A list of fragments, each describing the value for a subrange of the query.
+	 * The fragments are in the same order as the keys.
+	 * The key for each fragment is `start` offset by `fragment.offset`.
 	 */
-	public getAll(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const entries = this.getIntersectingEntries(start, length);
-		if (entries.length === 0) {
-			return entries;
+	public getAll(start: K, length: number): RangeQueryResultFragment<V | undefined>[] {
+		let offset = 0;
+		const results: RangeQueryResultFragment<V | undefined>[] = [];
+
+		while (offset < length) {
+			const key = this.offsetKey(start, offset);
+			const result = this.getFirst(key, length - offset);
+			results.push({ offset, value: result.value, length: result.length });
+			offset += result.length;
 		}
 
-		const firstEntry = entries[0] ?? oob();
-		const lengthBefore = this.subtractKeys(start, firstEntry.start);
-		if (lengthBefore > 0) {
-			entries[0] = {
-				start,
-				length: firstEntry.length - lengthBefore,
-				value: this.offsetValue(firstEntry.value, lengthBefore),
-			};
-		}
-
-		const lastEntry = entries[entries.length - 1] ?? oob();
-		const lastEntryKey = this.offsetKey(lastEntry.start, lastEntry.length - 1);
-		const lastQueryKey = this.offsetKey(start, length - 1);
-		const lengthAfter = this.subtractKeys(lastEntryKey, lastQueryKey);
-		if (lengthAfter > 0) {
-			entries[entries.length - 1] = { ...lastEntry, length: lastEntry.length - lengthAfter };
-		}
-
-		return entries;
+		return results;
 	}
 
 	/**
@@ -100,7 +90,7 @@ export class RangeMap<K, V> {
 	 * @returns A RangeQueryResult containing the value associated with `start`,
 	 * and the number of consecutive keys with that same value (at least 1, at most `length`).
 	 */
-	public getFirst(start: K, length: number): RangeQueryResult<K, V> {
+	public getFirst(start: K, length: number): RangeQueryResult<V | undefined> {
 		{
 			// We first check for an entry with a key less than or equal to `start`.
 			const entry = this.tree.getPairOrNextLower(start);
@@ -114,7 +104,6 @@ export class RangeMap<K, V> {
 				if (overlappingLength > 0) {
 					return {
 						value: this.offsetValue(value, lengthBeforeQuery),
-						start,
 						length: overlappingLength,
 					};
 				}
@@ -130,11 +119,11 @@ export class RangeMap<K, V> {
 
 				const lastQueryKey = this.offsetKey(start, length - 1);
 				if (this.le(entryKey, lastQueryKey)) {
-					return { value: undefined, start, length: this.subtractKeys(entryKey, start) };
+					return { value: undefined, length: this.subtractKeys(entryKey, start) };
 				}
 			}
 
-			return { value: undefined, start, length };
+			return { value: undefined, length };
 		}
 	}
 
@@ -171,18 +160,22 @@ export class RangeMap<K, V> {
 	 *
 	 * @param start - The start of the range to delete (inclusive).
 	 * @param length - The length of the range to delete.
+	 * @returns The number of keys/value pairs deleted (integer between 0 and `length`, inclusive).
 	 */
-	public delete(start: K, length: number): void {
+	public delete(start: K, length: number): number {
+		let deleteCount = 0;
 		const lastDeleteKey = this.offsetKey(start, length - 1);
 		for (const { start: key, length: entryLength, value } of this.getIntersectingEntries(
 			start,
 			length,
 		)) {
+			deleteCount += entryLength;
 			this.tree.delete(key);
 			const lengthBefore = this.subtractKeys(start, key);
 			if (lengthBefore > 0) {
 				// A portion of this entry comes before the deletion range, so we reinsert that portion.
 				this.tree.set(key, { length: lengthBefore, value });
+				deleteCount -= lengthBefore;
 			}
 
 			const lastEntryKey = this.offsetKey(key, entryLength - 1);
@@ -195,8 +188,10 @@ export class RangeMap<K, V> {
 					length: lengthAfter,
 					value: this.offsetValue(value, difference),
 				});
+				deleteCount -= lengthAfter;
 			}
 		}
+		return deleteCount;
 	}
 
 	public clone(): RangeMap<K, V> {
@@ -207,8 +202,14 @@ export class RangeMap<K, V> {
 
 	/**
 	 * Returns a new map which contains the entries from both input maps.
+	 * Whenever both maps contain entries for the same keys, the value is determined by calling `mergeFunc`.
+	 * By default, `mergeFunc` chooses the value from `b`.
 	 */
-	public static union<K, V>(a: RangeMap<K, V>, b: RangeMap<K, V>): RangeMap<K, V> {
+	public static union<K, V>(
+		a: RangeMap<K, V>,
+		b: RangeMap<K, V>,
+		mergeFunc: (key: K, valueA: V, valueB: V) => V = (_k, _a, valB) => valB,
+	): RangeMap<K, V> {
 		assert(
 			a.offsetKey === b.offsetKey &&
 				a.subtractKeys === b.subtractKeys &&
@@ -218,18 +219,118 @@ export class RangeMap<K, V> {
 
 		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
-		// TODO: Is there a good pattern that lets us make `tree` readonly?
-		merged.tree = a.tree.clone();
-		for (const [key, value] of b.tree.entries()) {
-			// TODO: Handle key collisions
-			merged.tree.set(key, value);
-		}
+		// We first union the underlying B-trees, possibly resulting in a malformed range map.
+		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
+			a.tree,
+			b.tree,
+			(key, v1, v2) => v1,
+		);
+
+		// We split the overlapping tree entries into ranges which are either fully overlapping (intersections),
+		// or fully non-overlapping (residuals).
+		// We create an entry for each of these ranges.
+		// After this, the merged map should be well-formed.
+		RangeMap.forEachIntersection(
+			a,
+			b,
+			(key, length, valueA, valueB) =>
+				merged.tree.set(key, { value: mergeFunc(key, valueA, valueB), length }),
+			(key, length, value) => merged.tree.set(key, { value, length }),
+		);
 
 		return merged;
 	}
 
-	private getIntersectingEntries(start: K, length: number): RangeQueryEntry<K, V>[] {
-		const entries: RangeQueryEntry<K, V>[] = [];
+	/**
+	 * Calls provided handlers on intersecting portions of `mapA` and `mapB`.
+	 * @param intersectionCallback - called once for each key range which has an entry in both `mapA` and `mapB`.
+	 * @param residualCallback - called for each key range which only has an entry in one of the input maps,
+	 * but which is part of a range entry that overlaps an entry in the other map.
+	 * This may also be called for entries which are not part of an overlapping range.
+	 */
+	private static forEachIntersection<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		intersectionCallback: (key: K, length: number, valueA: V, valueB: V) => void,
+		residualCallback: (key: K, length: number, value: V) => void,
+	): void {
+		let [entry1, map1, map2] = this.getOrNextEntry(mapA, mapB, undefined);
+		while (entry1 !== undefined) {
+			const entry2 = map2.getOrNextEntry(entry1.start);
+			if (entry2 !== undefined) {
+				// This is the number of keys in `entry1` that come before the first key in `entry2`.
+				const offset = Math.min(mapA.subtractKeys(entry2.start, entry1.start), entry1.length);
+				if (offset > 0) {
+					residualCallback(entry1.start, offset, entry1.value);
+				}
+
+				const intersectionLength = Math.min(entry1.length - offset, entry2.length);
+				if (intersectionLength > 0) {
+					const value1Offset = mapA.offsetValue(entry1.value, offset);
+					const [valueA, valueB] =
+						map1 === mapA ? [value1Offset, entry2.value] : [entry2.value, value1Offset];
+
+					intersectionCallback(entry2.start, intersectionLength, valueA, valueB);
+					[entry1, map1, map2] = this.getOrNextEntry(
+						mapA,
+						mapB,
+						mapA.offsetKey(entry2.start, intersectionLength),
+					);
+					continue;
+				}
+			}
+
+			residualCallback(entry1.start, entry1.length, entry1.value);
+			[entry1, map1, map2] = this.getOrNextEntry(
+				mapA,
+				mapB,
+				mapA.offsetKey(entry1.start, entry1.length),
+			);
+		}
+
+		return;
+	}
+
+	private static getOrNextEntry<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		key: K | undefined,
+	): [RangeMapEntry<K, V> | undefined, firstMap: RangeMap<K, V>, secondMap: RangeMap<K, V>] {
+		const entryA = mapA.getOrNextEntry(key);
+		const entryB = mapB.getOrNextEntry(key);
+		if (entryA === undefined) {
+			return [entryB, mapB, mapA];
+		} else if (entryB === undefined) {
+			return [entryA, mapA, mapB];
+		}
+
+		return mapA.le(entryA.start, entryB.start) ? [entryA, mapA, mapB] : [entryB, mapB, mapA];
+	}
+
+	/**
+	 * @returns a range entry representing the first defined key range greater than or equal to `key`.
+	 */
+	private getOrNextEntry(minKey: K | undefined): RangeMapEntry<K, V> | undefined {
+		const key = minKey ?? this.tree.minKey();
+		if (key === undefined) {
+			return undefined;
+		}
+
+		const result = this.getFirst(key, Infinity);
+		if (result.value !== undefined) {
+			return { start: key, value: result.value, length: result.length };
+		}
+
+		const entry = this.tree.nextHigherPair(key);
+		if (entry === undefined) {
+			return undefined;
+		}
+
+		return { start: entry[0], value: entry[1].value, length: entry[1].length };
+	}
+
+	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {
+		const entries: RangeMapEntry<K, V>[] = [];
 		const lastQueryKey = this.offsetKey(start, length - 1);
 		{
 			const entry = this.tree.getPairOrNextLower(start);
@@ -297,17 +398,11 @@ interface RangeEntry<V> {
 /**
  * Describes the result of a range query, including the value and length of the matching prefix.
  */
-export interface RangeQueryResult<K, V> {
-	/**
-	 * The key for the first element in the range.
-	 */
-	readonly start: K;
-
+export interface RangeQueryResult<V> {
 	/**
 	 * The value of the first key in the query range.
-	 * If no matching range is found, this will be undefined.
 	 */
-	readonly value: V | undefined;
+	readonly value: V;
 
 	/**
 	 * The length of the prefix of the query range which has the same value.
@@ -317,19 +412,30 @@ export interface RangeQueryResult<K, V> {
 	readonly length: number;
 }
 
-export interface RangeQueryEntry<K, V> extends RangeQueryResult<K, V> {
-	readonly value: V;
+export interface RangeQueryResultFragment<V> extends RangeQueryResult<V> {
+	/**
+	 * The offset from the query key to the key this result is associated with.
+	 * This is useful in the case where a query returns multiple `RangeQueryResults`
+	 * addressing the key range.
+	 */
+	readonly offset: number;
 }
 
-export function newIntegerRangeMap<V>(): RangeMap<number, V> {
+export interface RangeMapEntry<K, V> {
+	readonly start: K;
+	readonly value: V;
+	readonly length: number;
+}
+
+export function newIntegerRangeMap<V, K extends number = number>(): RangeMap<K, V> {
 	return new RangeMap(offsetInteger, subtractIntegers);
 }
 
-function offsetInteger(key: number, offset: number): number {
-	return key + offset;
+function offsetInteger<K extends number>(key: K, offset: number): K {
+	return (key + offset) as K;
 }
 
-function subtractIntegers(a: number, b: number): number {
+function subtractIntegers<K extends number>(a: K, b: K): number {
 	return a - b;
 }
 

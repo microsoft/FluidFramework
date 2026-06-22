@@ -105,7 +105,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		const req: () => Promise<T[]> = async () => {
 			let queryCursor = this.collection.find<T>(query).sort(sort).limit(limit);
 
-			if (skip) {
+			if (skip !== undefined) {
 				queryCursor = queryCursor.skip(skip);
 			}
 			return queryCursor.toArray();
@@ -304,7 +304,7 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 		query: any,
 		value: any,
 		options = {
-			returnOriginal: true,
+			returnDocument: "before" as const,
 			upsert: true,
 		},
 	): Promise<{ value: T; existing: boolean }> {
@@ -316,8 +316,8 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result.value
-					? { value: result.value, existing: true }
+				return result
+					? { value: result as unknown as T, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
@@ -345,8 +345,8 @@ export class MongoCollection<T extends Document> implements core.ICollection<T>,
 					options,
 				);
 
-				return result.value
-					? { value: result.value, existing: true }
+				return result
+					? { value: result as unknown as T, existing: true }
 					: { value, existing: false };
 			} catch (sdkError) {
 				const error = this.cloneError(sdkError);
@@ -629,7 +629,6 @@ const DefaultMongoDbMonitoringEvents = [
 	"connectionPoolCleared",
 ];
 const DefaultHeartbeatFrequencyMS = 30000;
-const DefaultKeepAliveInitialDelay = 60000;
 const DefaultSocketTimeoutMS = 0;
 const DefaultConnectionTimeoutMS = 120000;
 const DefaultMinHeartbeatFrequencyMS = 10000;
@@ -656,7 +655,6 @@ interface IMongoDBConfig {
 	connectionNotAvailableMode?: ConnectionNotAvailableMode;
 	dbMonitoringEventsList?: string[];
 	heartbeatFrequencyMS?: number;
-	keepAliveInitialDelay?: number;
 	socketTimeoutMS?: number;
 	connectionTimeoutMS?: number;
 	minHeartbeatFrequencyMS?: number;
@@ -682,7 +680,6 @@ export class MongoDbFactory implements core.IDbFactory {
 	private readonly retryRuleOverride: Map<string, boolean>;
 	private readonly dbMonitoringEventsList: string[];
 	private readonly heartbeatFrequencyMS: number;
-	private readonly keepAliveInitialDelay: number;
 	private readonly socketTimeoutMS: number;
 	private readonly connectionTimeoutMS: number;
 	private readonly minHeartbeatFrequencyMS: number;
@@ -706,7 +703,6 @@ export class MongoDbFactory implements core.IDbFactory {
 			connectionNotAvailableMode,
 			dbMonitoringEventsList,
 			heartbeatFrequencyMS,
-			keepAliveInitialDelay,
 			socketTimeoutMS,
 			connectionTimeoutMS,
 			minHeartbeatFrequencyMS,
@@ -731,14 +727,13 @@ export class MongoDbFactory implements core.IDbFactory {
 		this.connectionPoolMaxSize = connectionPoolMaxSize;
 		this.connectionNotAvailableMode = connectionNotAvailableMode ?? "ruleBehavior";
 		this.directConnection = directConnection ?? false;
-		this.retryEnabled = config.facadeLevelRetry || false;
-		this.telemetryEnabled = config.facadeLevelTelemetry || false;
+		this.retryEnabled = config.facadeLevelRetry ?? false;
+		this.telemetryEnabled = config.facadeLevelTelemetry ?? false;
 		this.retryRuleOverride = config.facadeLevelRetryRuleOverride
 			? new Map(Object.entries(config.facadeLevelRetryRuleOverride))
 			: new Map();
 		this.dbMonitoringEventsList = dbMonitoringEventsList ?? DefaultMongoDbMonitoringEvents;
 		this.heartbeatFrequencyMS = heartbeatFrequencyMS ?? DefaultHeartbeatFrequencyMS;
-		this.keepAliveInitialDelay = keepAliveInitialDelay ?? DefaultKeepAliveInitialDelay;
 		this.socketTimeoutMS = socketTimeoutMS ?? DefaultSocketTimeoutMS;
 		this.connectionTimeoutMS = connectionTimeoutMS ?? DefaultConnectionTimeoutMS;
 		this.minHeartbeatFrequencyMS = minHeartbeatFrequencyMS ?? DefaultMinHeartbeatFrequencyMS;
@@ -762,8 +757,6 @@ export class MongoDbFactory implements core.IDbFactory {
 		// Need to cast to any before MongoClientOptions due to missing properties in d.ts
 		const options: MongoClientOptions = {
 			directConnection: this.directConnection ?? false,
-			keepAlive: true,
-			keepAliveInitialDelay: this.keepAliveInitialDelay,
 			socketTimeoutMS: this.socketTimeoutMS,
 			connectTimeoutMS: this.connectionTimeoutMS,
 			heartbeatFrequencyMS: this.heartbeatFrequencyMS,

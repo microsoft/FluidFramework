@@ -6,33 +6,34 @@
 import { strict as assert } from "node:assert";
 
 import { isStableId } from "@fluidframework/id-compressor/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { Tree } from "../../shared-tree/index.js";
 import { rootFieldKey } from "../../core/index.js";
+import { TreeStatus } from "../../feature-libraries/index.js";
+import { Tree } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+import type {
+	ConstantFieldProvider,
+	ContextualFieldProvider,
+	FieldProvider,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../simple-tree/fieldSchema.js";
 import {
-	getOrCreateInnerNode,
+	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeBeta,
 	type FieldProps,
 	type TreeNode,
 } from "../../simple-tree/index.js";
-import type {
-	ConstantFieldProvider,
-	ContextualFieldProvider,
-	FieldProvider,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../../simple-tree/fieldSchema.js";
-import { hydrate } from "./utils.js";
-import { TreeStatus } from "../../feature-libraries/index.js";
-import { validateUsageError } from "../utils.js";
-// eslint-disable-next-line import/no-internal-modules
-import { UnhydratedFlexTreeNode } from "../../simple-tree/core/unhydratedFlexTree.js";
 import { singleJsonCursor } from "../json/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import { unhydratedFlexTreeFromCursor } from "../../simple-tree/api/create.js";
-// eslint-disable-next-line import/no-internal-modules
-import { getUnhydratedContext } from "../../simple-tree/createContext.js";
+
+import { hydrate } from "./utils.js";
 
 describe("Unhydrated nodes", () => {
 	const schemaFactory = new SchemaFactoryAlpha("undefined");
@@ -54,15 +55,15 @@ describe("Unhydrated nodes", () => {
 		const record = new TestRecord({});
 		const array = new TestArray([leaf]);
 		const object = new TestObject({ map, array, record });
-		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, true);
-		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(leaf) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(map) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(array) instanceof UnhydratedFlexTreeNode, true);
+		assert.equal(getInnerNode(object) instanceof UnhydratedFlexTreeNode, true);
 		const hydratedObject = hydrate(TestObject, object);
-		assert.equal(getOrCreateInnerNode(leaf) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(map) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(array) instanceof UnhydratedFlexTreeNode, false);
-		assert.equal(getOrCreateInnerNode(object) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(leaf) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(map) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(array) instanceof UnhydratedFlexTreeNode, false);
+		assert.equal(getInnerNode(object) instanceof UnhydratedFlexTreeNode, false);
 		assert.equal(hydratedObject, object);
 		assert.equal(hydratedObject.array, array);
 		assert.equal(hydratedObject.map, map);
@@ -536,9 +537,9 @@ describe("Unhydrated nodes", () => {
 			log.push(...changedProperties),
 		);
 		TreeBeta.on(map, "nodeChanged", ({ changedProperties }) => log.push(...changedProperties));
-		TreeBeta.on(array, "nodeChanged", ({ changedProperties }) => {
-			assert.equal(changedProperties, undefined);
-			// Arrays do not supply a changedProperties, but we still want to validate that the event is emitted.
+		TreeBeta.on(array, "nodeChanged", (data) => {
+			assert.equal("changedProperties" in data, false);
+			// Arrays do not supply changedProperties, but we still want to validate that the event is emitted.
 			log.push("<arrayChanged>");
 		});
 		TreeBeta.on(record, "nodeChanged", ({ changedProperties }) => {

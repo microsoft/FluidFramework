@@ -6,8 +6,7 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { IHostLoader } from "@fluidframework/container-definitions/internal";
-import { IContainerExperimental } from "@fluidframework/container-loader/internal";
+import { type IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import { DefaultSummaryConfiguration } from "@fluidframework/container-runtime/internal";
 import { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
@@ -21,8 +20,9 @@ import {
 	ITestContainerConfig,
 	ITestFluidObject,
 	ITestObjectProvider,
-	toIDeltaManagerFull,
 	getContainerEntryPointBackCompat,
+	getRequiredPendingLocalState,
+	toIDeltaManagerFull,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 
@@ -34,7 +34,7 @@ const assertIntervals = (
 	intervalCollection: ISequenceIntervalCollection,
 	expected: readonly { start: number; end: number }[],
 	validateOverlapping: boolean = true,
-) => {
+): void => {
 	const actual = Array.from(intervalCollection);
 	if (validateOverlapping && sharedString.getLength() > 0) {
 		const overlapping = intervalCollection.findOverlappingIntervals(
@@ -86,15 +86,10 @@ describeCompat(
 				},
 				enableRuntimeIdCompressor: "on",
 			},
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
 		};
 
 		let provider: ITestObjectProvider;
-		let container1: IContainerExperimental;
+		let container1: IContainer;
 		let sharedString1: SharedString;
 		let sharedString2: SharedString;
 		let dataObject1: ITestFluidObject;
@@ -121,8 +116,7 @@ describeCompat(
 
 			// pending ops stuff from e2e tests - make a new container, pause op processing,
 			// make a change, close the container, then resume op processing and reload container
-			const container: IContainerExperimental =
-				await provider.loadTestContainer(testContainerConfig);
+			const container: IContainer = await provider.loadTestContainer(testContainerConfig);
 			await waitForContainerConnection(container);
 			const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
 
@@ -142,7 +136,7 @@ describeCompat(
 			const collection = sharedString.getIntervalCollection(collectionId);
 			collection.change(id, { start: 3, end: 8 });
 
-			const pendingState: string | undefined = await container.getPendingLocalState?.();
+			const pendingState = await getRequiredPendingLocalState(container);
 			container.close();
 			provider.opProcessingController.resumeProcessing();
 			assert.ok(pendingState);

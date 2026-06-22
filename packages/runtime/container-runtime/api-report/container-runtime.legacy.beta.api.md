@@ -37,6 +37,7 @@ export interface ContainerRuntimeOptions {
     readonly chunkSizeInBytes: number;
     readonly compressionOptions: ICompressionRuntimeOptions;
     readonly createBlobPayloadPending: true | undefined;
+    readonly disableSchemaUpgrade: boolean;
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;
@@ -45,6 +46,7 @@ export interface ContainerRuntimeOptions {
     readonly gcOptions: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes: number;
+    readonly stagingModeAutoFlushThreshold: number;
     // (undocumented)
     readonly summaryOptions: ISummaryRuntimeOptions;
 }
@@ -271,7 +273,7 @@ export interface ISummaryCollectionOpEvents extends IEvent {
 }
 
 // @beta @legacy (undocumented)
-export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics;
+export type ISummaryConfiguration = ISummaryConfigurationDisableSummarizer | ISummaryConfigurationDisableHeuristics | ISummaryConfigurationHeuristics | ISummaryConfigurationWithSummaryOnRequest;
 
 // @beta @legacy (undocumented)
 export interface ISummaryConfigurationDisableHeuristics extends ISummaryBaseConfiguration {
@@ -297,6 +299,12 @@ export interface ISummaryConfigurationHeuristics extends ISummaryBaseConfigurati
     runtimeOpWeight: number;
     // (undocumented)
     state: "enabled";
+}
+
+// @beta @legacy
+export interface ISummaryConfigurationWithSummaryOnRequest extends ISummaryBaseConfiguration {
+    // (undocumented)
+    state: "summaryOnRequest";
 }
 
 // @beta @legacy
@@ -345,8 +353,6 @@ export interface LoadContainerRuntimeParams {
     requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
     runtimeOptions?: IContainerRuntimeOptions;
 }
-
-export { MinimumVersionForCollab }
 
 // @beta @deprecated @legacy (undocumented)
 export type OmitAttributesVersions<T> = Omit<T, "snapshotFormatVersion" | "summaryFormatVersion">;

@@ -11,19 +11,24 @@ import {
 	waitContainerToCatchUp,
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createLocalOdspDocumentServiceFactory } from "@fluidframework/odsp-driver/internal";
 import {
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 	PerformanceEvent,
+	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { FakeUrlResolver } from "./fakeUrlResolver.js";
-/* eslint-disable import/no-internal-modules */
-import type { ITelemetryOptions } from "./logger/fileLogger.js";
-import { createLogger, getTelemetryFileValidationError } from "./logger/loggerUtils.js";
+/* eslint-disable import-x/no-internal-modules */
+import type { IFileLoggerTelemetryOptions } from "./logger/fileLogger.js";
+import {
+	createFluidRunnerLogger,
+	getTelemetryFileValidationError,
+} from "./logger/loggerUtils.js";
 import { getArgsValidationError, getSnapshotFileContent, timeoutPromise } from "./utils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 /**
  * @legacy @beta
@@ -50,7 +55,8 @@ export interface IExportFileResponseFailure {
 const clientArgsValidationError = "Client_ArgsValidationError";
 
 /**
- * Execute code on Container based on ODSP snapshot and write result to file
+ * Execute code on a Fluid {@link @fluidframework/container-definitions#IContainer} loaded from an ODSP snapshot
+ * file and write the resulting string to disk.
  * @internal
  */
 export async function exportFile(
@@ -59,7 +65,7 @@ export async function exportFile(
 	outputFile: string,
 	telemetryFile: string,
 	options?: string,
-	telemetryOptions?: ITelemetryOptions,
+	telemetryOptions?: IFileLoggerTelemetryOptions,
 	timeout?: number,
 	disableNetworkFetch?: boolean,
 ): Promise<IExportFileResponse> {
@@ -68,7 +74,11 @@ export async function exportFile(
 		const eventName = clientArgsValidationError;
 		return { success: false, eventName, errorMessage: telemetryArgError };
 	}
-	const { fileLogger, logger } = createLogger(telemetryFile, telemetryOptions);
+	const { fileLogger, logger: baseLogger } = createFluidRunnerLogger(
+		telemetryFile,
+		telemetryOptions,
+	);
+	const logger = createChildLogger({ logger: baseLogger });
 
 	try {
 		return await PerformanceEvent.timedExecAsync(
@@ -84,10 +94,10 @@ export async function exportFile(
 
 				fs.writeFileSync(
 					outputFile,
-					await createContainerAndExecute(
+					await createFluidRunnerContainerAndExecute(
 						getSnapshotFileContent(inputFile),
 						fluidFileConverter,
-						logger,
+						baseLogger,
 						options,
 						timeout,
 						disableNetworkFetch,
@@ -107,19 +117,63 @@ export async function exportFile(
 }
 
 /**
+ * Create a Fluid {@link @fluidframework/container-definitions#IContainer} from an ODSP snapshot and run
+ * caller-provided code against it.
+ *
+ * @remarks
+ * The container is loaded with `opsBeforeReturn: "cached"` and {@link @fluidframework/container-loader#waitContainerToCatchUp}
+ * is invoked before {@link IFluidFileConverter.execute} runs. The container is disposed once `execute` resolves
+ * (or rejects).
+ *
+ * @param localOdspSnapshot - The ODSP snapshot to load the container from. May be either the JSON snapshot
+ * as a string or the binary snapshot as a `Uint8Array`.
+ * @param fluidFileConverter - Caller-provided code loader and execution logic. See {@link IFluidFileConverter}.
+ * @param baseLogger - Telemetry logger that will receive events emitted during load and execution. Typically
+ * obtained from {@link createFluidRunnerLogger}.
+ * @param options - Opaque, caller-defined string passed through to {@link IFluidFileConverter.execute}.
+ * @param timeout - Optional timeout in milliseconds. If the operation does not complete within this period
+ * the returned promise rejects. When omitted, no timeout is applied.
+ * @param disableNetworkFetch - When `true`, replaces `global.fetch` with an implementation that throws,
+ * ensuring the container load is fully serviced from the provided snapshot. Defaults to `false`.
+ * @returns The string result returned by {@link IFluidFileConverter.execute}.
+ *
+ * @legacy
+ * @beta
+ */
+export async function createFluidRunnerContainerAndExecute(
+	localOdspSnapshot: string | Uint8Array,
+	fluidFileConverter: IFluidFileConverter,
+	baseLogger: ITelemetryBaseLogger,
+	options?: string,
+	timeout?: number,
+	disableNetworkFetch?: boolean,
+): Promise<string> {
+	const logger = createChildLogger({ logger: baseLogger });
+	return createContainerAndExecute(
+		localOdspSnapshot,
+		fluidFileConverter,
+		logger,
+		options,
+		timeout,
+		disableNetworkFetch,
+	);
+}
+
+/**
  * Create the container based on an ODSP snapshot and execute code on it
  * @returns result of execution
+ * @deprecated Use {@link createFluidRunnerContainerAndExecute}.
  * @internal
  */
 export async function createContainerAndExecute(
 	localOdspSnapshot: string | Uint8Array,
 	fluidFileConverter: IFluidFileConverter,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	options?: string,
 	timeout?: number,
 	disableNetworkFetch: boolean = false,
 ): Promise<string> {
-	const fn = async () => {
+	const fn = async (): Promise<string> => {
 		if (disableNetworkFetch) {
 			global.fetch = async () => {
 				throw new Error("Network fetch is not allowed");

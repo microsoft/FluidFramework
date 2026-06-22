@@ -11,9 +11,8 @@ import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-sta
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import type { Revertible, TreeView, ValidateRecursiveSchema } from "@fluidframework/tree";
 import { SchemaFactory, Tree, TreeStatus, TreeViewConfiguration } from "@fluidframework/tree";
-import { allowUnused, asTreeViewAlpha } from "@fluidframework/tree/alpha";
+import { allowUnused, asAlpha } from "@fluidframework/tree/alpha";
 import { SharedTree } from "@fluidframework/tree/legacy";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -21,7 +20,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix } from "./utils.js";
+import { getTestMatrix, currentVersion } from "./utils.js";
 
 const sf = new SchemaFactory("d302b84c-75f6-4ecd-9663-524f467013e3");
 
@@ -88,20 +87,20 @@ for (const testOpts of testMatrix) {
 			let treeData: TreeView<typeof StringArray>;
 
 			if (summaryTree === undefined) {
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, currentVersion);
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				treeData.initialize(new StringArray([]));
 				containerId = await container.attach();
 				await waitForConnection(container);
 			} else {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					summaryTree,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				const { container } = await client.getContainer(containerId, schema, "2");
+				const { container } = await client.getContainer(containerId, schema, currentVersion);
 				treeData = container.initialObjects.tree1.viewWith(treeConfiguration);
 				await waitForConnection(container);
 			}
@@ -138,7 +137,7 @@ for (const testOpts of testMatrix) {
 
 			treeData.root.insertNew("test string 1");
 
-			const resources = client.getContainer(containerId, schema, "2");
+			const resources = client.getContainer(containerId, schema, currentVersion);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -173,7 +172,7 @@ for (const testOpts of testMatrix) {
 				}) {}
 
 				it("can read and edit data", async () => {
-					const { container } = await client.createContainer(schema, "2");
+					const { container } = await client.createContainer(schema, currentVersion);
 					await container.attach();
 					const view = container.initialObjects.tree1.viewWith(
 						new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
@@ -214,9 +213,9 @@ for (const testOpts of testMatrix) {
 				});
 
 				it("can handle undo/redo and transactions", async () => {
-					const { container } = await client.createContainer(schema, "2");
+					const { container } = await client.createContainer(schema, currentVersion);
 					await container.attach();
-					const view = asTreeViewAlpha(
+					const view = asAlpha(
 						container.initialObjects.tree1.viewWith(
 							new TreeViewConfiguration({ schema: User, enableSchemaValidation: true }),
 						),
@@ -263,7 +262,7 @@ for (const testOpts of testMatrix) {
 			it("can use identifiers and the static Tree APIs", async () => {
 				class Widget extends sf.object("Widget", { id: sf.identifier }) {}
 
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, currentVersion);
 				await container.attach();
 				const view = container.initialObjects.tree1.viewWith(
 					new TreeViewConfiguration({
@@ -294,12 +293,11 @@ for (const testOpts of testMatrix) {
 
 			it("can listen to events on a recursive tree", async () => {
 				class Doll extends sf.objectRecursive("Matryoshka", {
-					// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 					nested: sf.optionalRecursive([() => Doll]),
 				}) {}
 				allowUnused<ValidateRecursiveSchema<typeof Doll>>();
 
-				const { container } = await client.createContainer(schema, "2");
+				const { container } = await client.createContainer(schema, currentVersion);
 				await container.attach();
 				const view = container.initialObjects.tree1.viewWith(
 					new TreeViewConfiguration({ schema: Doll, enableSchemaValidation: true }),

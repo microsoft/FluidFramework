@@ -81,6 +81,6 @@ export class MongoErrorRetryAnalyzer {
 		error: any,
 		ruleSet: IMongoExceptionRetryRule[],
 	): IMongoExceptionRetryRule {
-		return ruleSet.find((rule) => rule.match(error)) || this.defaultRule;
+		return ruleSet.find((rule) => rule.match(error)) ?? this.defaultRule;
 	}
 }

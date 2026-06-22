@@ -59,8 +59,9 @@ const fuzzComposedVsIndividualReducer = combineReducers<Operation, BranchedTreeF
 				applyFieldEdit(tree, edit);
 				break;
 			}
-			default:
+			default: {
 				fail("Unknown tree edit type");
+			}
 		}
 		return state;
 	},

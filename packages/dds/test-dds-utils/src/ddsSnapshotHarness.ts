@@ -62,7 +62,11 @@ export function createSnapshotSuite(snapshotFolderPath: string): ISnapshotSuite 
 
 		beforeEach(function (): void {
 			currentTestName = this.currentTest?.title ?? assert.fail();
-			currentTestFile = path.join(normalizedDir, `${currentTestName}.json`);
+			// .replace removes variant prefixes like "[CJS] ".
+			currentTestFile = path.join(
+				normalizedDir,
+				`${currentTestName.replace(/^\[.*?] /g, "")}.json`,
+			);
 		});
 
 		afterEach(() => {

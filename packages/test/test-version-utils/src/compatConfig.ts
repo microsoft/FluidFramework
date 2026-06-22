@@ -13,18 +13,22 @@ import {
 	testBaseVersion,
 } from "./baseVersion.js";
 import {
+	checkpointResolutionRange,
+	getCurrentCheckpoint,
+	getInWindowPriorCheckpoints,
+} from "./checkpoints.js";
+import {
 	CompatKind,
 	compatKind,
 	compatVersions,
 	driver,
 	r11sEndpointName,
 	tenantIndex,
-	reinstall,
 	odspEndpointName,
 } from "./compatOptions.js";
 import { pkgVersion } from "./packageVersion.js";
-import { ensurePackageInstalled } from "./testApi.js";
-import { getRequestedVersion, resolveVersion } from "./versionUtils.js";
+import { ensureVersionLoaded } from "./testApi.js";
+import { getRequestedVersion, resolveRangeViaManifest } from "./versionUtils.js";
 
 /**
  * Represents a previous major release of a package based on the provided delta. For example, if the base version is 2.X and
@@ -63,18 +67,23 @@ export interface CompatConfig {
 	loadVersion?: string;
 }
 
-const defaultCompatVersions = {
+export const oldestCompatibleVersion = resolveRangeViaManifest("2.0.0-internal.5.4.2");
+
+/**
+ * The default versions to be used for generating configurations for layer compat testing.
+ */
+const defaultVersionsForLayerCompat = {
 	// N and N - 1
 	currentVersionDeltas: [0, -1],
-	// N, N-1, and N-2 for cross-client compat
-	currentCrossClientVersionDeltas: [0, -1, -2],
-	// we are currently supporting 1.3.X long-term
-	ltsVersions: [resolveVersion("^1.3", false)],
+	// This is the oldest compatible version (OCV) for Loader and Driver layers.
+	oldestCompatibleVersion: [oldestCompatibleVersion],
 };
 
 // This indicates the number of versions above 2.0.0.internal.1.y.z that we want to support for back compat.
 // Currently we only want to support 2.0.0.internal.3.y.z. and above
 const defaultNumOfDriverVersionsAboveV2Int1 = 2;
+
+const currentVersionStr = `${baseVersion} (N)`;
 
 function genConfig(compatVersion: number | string): CompatConfig[] {
 	if (compatVersion === 0) {
@@ -98,55 +107,55 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 	return [
 		{
-			name: `compat ${compatVersionStr} - old loader`,
+			name: `compat - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new loader`,
+			name: `compat - loader ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewLoader,
 			compatVersion,
 			...allOld,
 			loader: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old driver`,
+			name: `compat - driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Driver,
 			compatVersion,
 			driver: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new driver`,
+			name: `compat - driver ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDriver,
 			compatVersion,
 			...allOld,
 			driver: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old container runtime`,
+			name: `compat - container runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.ContainerRuntime,
 			compatVersion,
 			containerRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new container runtime`,
+			name: `compat - container runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewContainerRuntime,
 			compatVersion,
 			...allOld,
 			containerRuntime: undefined,
 		},
 		{
-			name: `compat ${compatVersionStr} - old data runtime`,
+			name: `compat - data store runtime ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.DataRuntime,
 			compatVersion,
 			dataRuntime: compatVersion,
 		},
 		{
-			name: `compat ${compatVersionStr} - new data runtime`,
+			name: `compat - data store runtime ${currentVersionStr}, other layers ${compatVersionStr}`,
 			kind: CompatKind.NewDataRuntime,
 			compatVersion,
 			...allOld,
@@ -155,16 +164,16 @@ function genConfig(compatVersion: number | string): CompatConfig[] {
 	];
 }
 
-const genLTSConfig = (compatVersion: number | string): CompatConfig[] => {
+const genOldestCompatibleConfig = (compatVersion: number | string): CompatConfig[] => {
 	return [
 		{
-			name: `compat LTS ${compatVersion} - old loader`,
+			name: `compat - loader ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
 		},
 		{
-			name: `compat LTS ${compatVersion} - old loader + old driver`,
+			name: `compat - loader & driver ${compatVersion} (OCV), other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -177,11 +186,11 @@ const genLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] => {
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader`,
+			name: `compat back - loader ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.Loader,
 			compatVersion,
 			loader: compatVersion,
@@ -193,10 +202,10 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	const compatVersionStr =
 		typeof compatVersion === "string"
 			? `${compatVersion} (N)`
-			: `${getRequestedVersion(baseVersion, compatVersion)} (N${compatVersion})`;
+			: `${getRequestedVersion({ baseVersion, requested: compatVersion })} (N${compatVersion})`;
 	return [
 		{
-			name: `compat back ${compatVersionStr} - older loader + older driver`,
+			name: `compat back - loader & driver ${compatVersionStr}, other layers ${currentVersionStr}`,
 			kind: CompatKind.LoaderDriver,
 			compatVersion,
 			driver: compatVersion,
@@ -205,16 +214,19 @@ const genDriverLoaderBackCompatConfig = (compatVersion: number): CompatConfig[] 
 	];
 };
 
+/**
+ * We have 8 internal and 5 RC versions.
+ */
+export const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
+
 const getNumberOfVersionsToGoBack = (numOfVersionsAboveV2Int1: number = 0): number => {
 	const semverVersion = semver.parse(codeVersion);
 	assert(semverVersion !== null, `Unexpected pkg version '${codeVersion}'`);
 
-	// We have 8 internal and 5 RC versions.
 	// We want to generate back compat configs for all of them because they are all considered major releases.
 	// RCs can be thought of as internal 9 through 13 for this purpose, so just add them.
-	const numOfInternalMajorsBeforePublic2dot0 = 8 + 5;
-	// This allows us to increase our "LTS" support for certain versions above 2.0.0.internal.1.y.z, where
-	// we don't want to go that far.
+	// This allows us to increase our oldest compatible version (OCV) support for certain versions above
+	// 2.0.0.internal.1.y.z, where we don't want to go that far.
 	return numOfInternalMajorsBeforePublic2dot0 - numOfVersionsAboveV2Int1;
 };
 
@@ -242,10 +254,18 @@ const genFullBackCompatConfig = (driverVersionsAboveV2Int1: number = 0): CompatC
 
 /**
  * Returns true if compat test version is below the one provided as minimum version.
- * It helps to filter out lower verions configs that the ones intended to be tested on a
+ * It helps to filter out lower versions configs that the ones intended to be tested on a
  * particular suite.
  */
-export function isCompatVersionBelowMinVersion(minVersion: string, config: CompatConfig) {
+export function isCompatVersionBelowMinVersion(
+	minVersion: string,
+	config: CompatConfig,
+	useOnlineRegistry: boolean = false,
+): boolean {
+	if (!semver.valid(minVersion)) {
+		throw new Error(`Invalid version: "${minVersion}"`);
+	}
+
 	let lowerVersion: string | number = config.compatVersion;
 	// For cross-client there are 2 versions being tested. Get the lower one.
 	if (config.kind === CompatKind.CrossClient) {
@@ -254,9 +274,12 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
 				? (config.loadVersion as string)
 				: config.compatVersion;
 	}
-	const compatVersion = getRequestedVersion(baseVersionForMinCompat, lowerVersion);
-	const minReqVersion = getRequestedVersion(testBaseVersion(minVersion), minVersion);
-	return semver.compare(compatVersion, minReqVersion) < 0;
+	const compatVersion = getRequestedVersion({
+		baseVersion: baseVersionForMinCompat,
+		requested: lowerVersion,
+		useOnlineRegistry,
+	});
+	return semver.compare(compatVersion, minVersion) < 0;
 }
 
 /**
@@ -264,7 +287,7 @@ export function isCompatVersionBelowMinVersion(minVersion: string, config: Compa
  * ! If a summarizer's version is too old (using dual-commit summaries), ODSP will nack the summaries with "Upgrade to a newer version of the Fluid client packages to summarize".
  */
 export function isOdspCompatCompliant(config: CompatConfig): boolean {
-	const versionIsCompliant = (version: string | number | undefined) => {
+	const versionIsCompliant = (version: string | number | undefined): boolean => {
 		// ! Looking at current telemetry, the oldest hit that doesn't use dual-commit summaries was version "2.0.0-rc.5.0.7"
 		// ! Given this, version "2.0.0" is a fine cut off since we currently only test back to N-1
 		const odspMinVersion = "2.0.0";
@@ -302,72 +325,25 @@ function genCompatConfig(versionDetails: {
 	};
 }
 /**
- * Generates the cross-client compat config permutations.
- * This will resolve to one permutation where `CompatConfig.createVersion` is set to the current version and
- * `CompatConfig.loadVersion` is set to the delta version. Then, a second permutation where `CompatConfig.createVersion`
- * is set to the delta version and `CompatConfig.loadVersion` is set to the current version.
- * The delta versions will be:
- * - N-1 and N-2, for "fast train" customers (i.e. \>=2.10.0 \<2.20.0, \>=2.20.0 \<2.30.0, etc.)
- * - N-1 and N-2, for "slow train" customers (i.e. ^1.0.0, ^2.0.0, etc.)
- * - LTS versions
- *
- * @remarks
- * Fast/slow trains refer to the different velocities that customers adopt new releases.
- * Fast train customers integrate most minor releases quickly and saturate on a roughly 2-month
- * cadence. This currently aligns with our regular schedule for .10 minor releases (i.e. 2.10.0,
- * 2.20.0, etc.). Note that this may change in the future, and we will have to adjust our strategy accordingly.
- * Slow train customers mainly integrate public major releases and may take much longer to saturate
- * on any given release. Ideally, the slow train releases would also be on a regular time-based cadence, but
- * public major releases are not currently on a fixed schedule. This may change in the future.
- * We want to be able to test cross-client compat for both types of customers, so we generate permutations for
- * N/N-1 and N/N-2 for both fast and slow trains.
+ * Generates the cross-client compat config permutations. The current version is paired
+ * against every in-window prior Compatibility Checkpoint.
+ * See `./checkpoints.ts` and `CompatibilityCheckpoints.md` for details on the policy.
  *
  * @internal
  */
 export const genCrossClientCompatConfig = (): CompatConfig[] => {
-	const currentVersion = getRequestedVersion(pkgVersion, 0, false /* adjustMajorPublic */);
+	// Current-version APIs come from the in-repo build, so we should use pkgVersion directly
+	// instead of resolving through the compat manifest/registry.
+	const currentVersion = pkgVersion;
 
 	// We build a map of all the versions we want to test the current version against.
 	// The key is the version and the value is a string describing the delta from the current version.
 	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
-	// If there is a duplicate version (i.e. the N-1 public major version is the same as the LTS version),
-	// then we will append the delta description to the existing delta description for that version.
 	const deltaVersions: Map<string, string> = new Map();
-
-	// N-1 and N-2 for "fast train" releases
-	defaultCompatVersions.currentCrossClientVersionDeltas
-		.filter((delta) => delta !== 0) // skip current build
-		.forEach((delta) => {
-			const v = getRequestedVersion(pkgVersion, delta, false /* adjustMajorPublic */);
-			if (semver.gte(v, "1.0.0")) {
-				deltaVersions.set(v, `N${delta} fast train`);
-			}
-		});
-
-	// N-1 and N-2 for "slow train" releases
-	// Note: We add these in a separate for loop to maintain the order of tests (minor, major, then LTS).
-	defaultCompatVersions.currentCrossClientVersionDeltas
-		.filter((delta) => delta !== 0) // skip current build
-		.forEach((delta) => {
-			const v = getRequestedVersion(pkgVersion, delta, true /* adjustMajorPublic */);
-			if (semver.gte(v, "1.0.0")) {
-				if (deltaVersions.has(v)) {
-					deltaVersions.set(v, `${deltaVersions.get(v)}/N${delta} slow train`);
-				} else {
-					deltaVersions.set(v, `N${delta} slow train`);
-				}
-			}
-		});
-
-	// LTS releases
-	for (const v of defaultCompatVersions.ltsVersions) {
-		if (semver.gte(v, "1.0.0")) {
-			if (deltaVersions.has(v)) {
-				deltaVersions.set(v, `${deltaVersions.get(v)}/LTS`);
-			} else {
-				deltaVersions.set(v, "LTS");
-			}
-		}
+	const current = getCurrentCheckpoint(pkgVersion);
+	for (const c of getInWindowPriorCheckpoints(current)) {
+		const v = resolveRangeViaManifest(checkpointResolutionRange(c));
+		deltaVersions.set(v, c.name);
 	}
 
 	// Build all combos of (current version, prior version) & (prior version, current version)
@@ -414,12 +390,12 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 
 	// CompatVersions is set via pipeline flags. If not set, use default scenarios.
 	if (!compatVersions || compatVersions.length === 0) {
-		// By default run currentVersionDeltas (N/N-1), LTS, and cross-client compat tests
-		defaultCompatVersions.currentVersionDeltas.forEach((value) => {
+		// By default run currentVersionDeltas (N/N-1), OCV, and cross-client compat tests
+		defaultVersionsForLayerCompat.currentVersionDeltas.forEach((value) => {
 			_configList.push(...genConfig(value));
 		});
-		defaultCompatVersions.ltsVersions.forEach((value) => {
-			_configList.push(...genLTSConfig(value));
+		defaultVersionsForLayerCompat.oldestCompatibleVersion.forEach((value) => {
+			_configList.push(...genOldestCompatibleConfig(value));
 		});
 		_configList.push(...genCrossClientCompatConfig());
 		// If fluid__test__backCompat=FULL is enabled, run full back compat tests
@@ -432,9 +408,9 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
 	} else {
 		compatVersions.forEach((value) => {
 			switch (value) {
-				case "LTS": {
-					defaultCompatVersions.ltsVersions.forEach((lts) => {
-						_configList.push(...genLTSConfig(lts));
+				case "OCV": {
+					defaultVersionsForLayerCompat.oldestCompatibleVersion.forEach((ocv) => {
+						_configList.push(...genOldestCompatibleConfig(ocv));
 					});
 					break;
 				}
@@ -506,20 +482,21 @@ export const configList = new Lazy<readonly CompatConfig[]>(() => {
  *
  * @internal
  */
-export async function mochaGlobalSetup() {
-	const versions = new Set(configList.value.map((value) => value.compatVersion));
-	if (versions.size === 0) {
+export async function mochaGlobalSetup(): Promise<void> {
+	const configs = configList.value;
+	if (configs.length === 0) {
 		return;
 	}
 
-	// Make sure we wait for all before returning, even if one of them has error.
-	const installP = Array.from(versions.values()).map(async (value) => {
+	// Load all versioned packages concurrently.
+	const versions = new Set(configs.map((value) => value.compatVersion));
+	const loadPromises = Array.from(versions.values()).map(async (value) => {
 		const version = testBaseVersion(value);
-		return ensurePackageInstalled(version, value, reinstall);
+		return ensureVersionLoaded(version, value);
 	});
 
 	let error: unknown;
-	for (const p of installP) {
+	for (const p of loadPromises) {
 		try {
 			await p;
 		} catch (e) {
@@ -527,7 +504,7 @@ export async function mochaGlobalSetup() {
 		}
 	}
 	if (error) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal -- rethrowing the originally caught value
+		// eslint-disable-next-line @typescript-eslint/only-throw-error -- rethrowing the originally caught value
 		throw error;
 	}
 }

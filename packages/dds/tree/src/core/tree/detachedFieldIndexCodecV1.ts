@@ -5,8 +5,10 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { isFinalId } from "@fluidframework/id-compressor/internal";
 
-import type { ICodecOptions, IJsonCodec } from "../../codec/index.js";
+import type { CodecAndSchema, IJsonCodec } from "../../codec/index.js";
+import { brand } from "../../util/index.js";
 import {
 	type EncodedRevisionTag,
 	type RevisionTagCodec,
@@ -14,14 +16,13 @@ import {
 	RevisionTagSchema,
 } from "../rebase/index.js";
 
-import { type FormatV1, version1 } from "./detachedFieldIndexFormatV1.js";
-import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 import { makeDetachedFieldIndexCodecFromMajorCodec } from "./detachedFieldIndexCodecCommon.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
+import type { DetachedFieldSummaryData, Major } from "./detachedFieldIndexTypes.js";
 
 class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 	public constructor(
 		private readonly revisionTagCodec: RevisionTagCodec,
-		private readonly options: ICodecOptions,
 		private readonly idCompressor: IIdCompressor,
 	) {}
 
@@ -46,7 +47,7 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 		 * The assert below will fail in such a scenario. This is addressed in the v2 codec.
 		 */
 		assert(
-			id === "root" || id >= 0,
+			id === "root" || isFinalId(id),
 			0x88f /* Expected final id on encode of detached field index revision */,
 		);
 		return id;
@@ -54,27 +55,27 @@ class MajorCodec implements IJsonCodec<Major, EncodedRevisionTag> {
 
 	public decode(major: EncodedRevisionTag): RevisionTag {
 		assert(
-			major === "root" || major >= 0,
+			major === "root" || isFinalId(major),
 			0x890 /* Expected final id on decode of detached field index revision */,
 		);
 		return this.revisionTagCodec.decode(major, {
 			originatorId: this.revisionTagCodec.localSessionId,
 			idCompressor: this.idCompressor,
 			revision: undefined,
+			// DetachedFieldIndex codecs are only used by the summarizer.
+			isSummary: true,
 		});
 	}
 }
 
 export function makeDetachedNodeToFieldCodecV1(
 	revisionTagCodec: RevisionTagCodec,
-	options: ICodecOptions,
 	idCompressor: IIdCompressor,
-): IJsonCodec<DetachedFieldSummaryData, FormatV1> {
-	const majorCodec = new MajorCodec(revisionTagCodec, options, idCompressor);
+): CodecAndSchema<DetachedFieldSummaryData> {
+	const majorCodec = new MajorCodec(revisionTagCodec, idCompressor);
 	return makeDetachedFieldIndexCodecFromMajorCodec(
-		options,
 		majorCodec,
-		version1,
+		brand(DetachedFieldIndexFormatVersion.v1),
 		RevisionTagSchema,
 	);
 }

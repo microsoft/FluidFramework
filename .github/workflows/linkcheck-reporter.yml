@@ -7,16 +7,17 @@ on:
 
 permissions:
   contents: read
-  actions: read  # for dawidd6/action-download-artifact to query and download artifacts
+  actions: read # for dawidd6/action-download-artifact to query and download artifacts
 
 jobs:
   load_report:
     permissions:
-      pull-requests: write  # for marocchino/sticky-pull-request-comment to create or update PR comment
+      pull-requests: write # for marocchino/sticky-pull-request-comment to create or update PR comment
     runs-on: ubuntu-latest
     steps:
       - name: Download results
-        uses: dawidd6/action-download-artifact@bd10f381a96414ce2b13a11bfa89902ba7cea07f # ratchet:dawidd6/action-download-artifact@v2.24.3
+        # release notes: https://github.com/dawidd6/action-download-artifact/releases/tag/v11
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # ratchet:dawidd6/action-download-artifact@v20
         with:
           workflow: website-validation.yml
           # workflow_conclusion: completed
@@ -28,8 +29,8 @@ jobs:
         run: echo "pr=$(cat pr)" >> $GITHUB_OUTPUT
         working-directory: ./results
       - name: Post report in comment
-        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v2.9.0
-        uses: marocchino/sticky-pull-request-comment@331f8f5b4215f0445d3c07b4967662a32a2d3e31 # ratchet:marocchino/sticky-pull-request-comment@v2.9.0
+        # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
         with:
           header: linkreport
           recreate: true

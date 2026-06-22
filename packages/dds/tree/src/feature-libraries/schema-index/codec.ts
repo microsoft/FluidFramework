@@ -3,19 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { fail, unreachableCase } from "@fluidframework/core-utils/internal";
+import { fail } from "@fluidframework/core-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
+import { VersionDispatchingCodecBuilder, FluidClientVersion } from "../../codec/index.js";
 import {
-	type FluidClientVersion,
-	type ICodecFamily,
-	type ICodecOptions,
-	type IJsonCodec,
-	makeCodecFamily,
-	makeVersionDispatchingCodec,
-	makeVersionedValidatedCodec,
-} from "../../codec/index.js";
-import {
-	SchemaVersion,
+	SchemaFormatVersion,
 	type TreeNodeSchemaIdentifier,
 	type TreeNodeStoredSchema,
 	type TreeStoredSchema,
@@ -24,73 +17,16 @@ import {
 	encodeFieldSchemaV2,
 	storedSchemaDecodeDispatcher,
 } from "../../core/index.js";
-import { brand, type JsonCompatible } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import { Format as FormatV1 } from "./formatV1.js";
 import { Format as FormatV2 } from "./formatV2.js";
-
-/**
- * Convert a FluidClientVersion to a SchemaVersion.
- * @param clientVersion - The FluidClientVersion to convert.
- * @returns The SchemaVersion that corresponds to the provided FluidClientVersion.
- */
-export function clientVersionToSchemaVersion(
-	clientVersion: FluidClientVersion,
-): SchemaVersion {
-	// Only one version of the schema codec is currently supported.
-	return SchemaVersion.v1;
-}
-
-/**
- * Create a schema codec.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @param writeVersion - The schema write version.
- * @returns The composed codec.
- *
- * @privateRemarks We should consider using the Shared Tree format version instead as it may be more valuable for application authors than the schema version.
- */
-export function makeSchemaCodec(
-	options: ICodecOptions,
-	writeVersion: SchemaVersion,
-): IJsonCodec<TreeStoredSchema> {
-	const family = makeSchemaCodecs(options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
-
-/**
- * Create a family of schema codecs.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The composed codec family.
- */
-export function makeSchemaCodecs(options: ICodecOptions): ICodecFamily<TreeStoredSchema> {
-	return makeCodecFamily([
-		[SchemaVersion.v1, makeSchemaCodecV1(options)],
-		[SchemaVersion.v2, makeSchemaCodecV2(options)],
-	]);
-}
-
-/**
- * Encode an in-memory TreeStoredSchema into the specified format version.
- * @param repo - The in-memory schema.
- * @param version - The schema write version.
- * @returns The encoded schema.
- */
-export function encodeRepo(repo: TreeStoredSchema, version: SchemaVersion): JsonCompatible {
-	switch (version) {
-		case SchemaVersion.v1:
-			return encodeRepoV1(repo) as JsonCompatible;
-		case SchemaVersion.v2:
-			return encodeRepoV2(repo) as JsonCompatible;
-		default:
-			unreachableCase(version);
-	}
-}
 
 function encodeRepoV1(repo: TreeStoredSchema): FormatV1 {
 	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV1());
 	const rootFieldSchema = encodeFieldSchemaV1(repo.rootFieldSchema);
 	return {
-		version: SchemaVersion.v1,
+		version: SchemaFormatVersion.v1,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -100,7 +36,7 @@ function encodeRepoV2(repo: TreeStoredSchema): FormatV2 {
 	const nodeSchema = encodeNodeSchema(repo, (schema) => schema.encodeV2());
 	const rootFieldSchema = encodeFieldSchemaV2(repo.rootFieldSchema);
 	return {
-		version: SchemaVersion.v2,
+		version: SchemaFormatVersion.v2,
 		nodes: nodeSchema,
 		root: rootFieldSchema,
 	};
@@ -116,7 +52,7 @@ function encodeNodeSchema<TFormat>(
 	repo: TreeStoredSchema,
 	encodeValue: (schema: TreeNodeStoredSchema) => TFormat,
 ): Record<string, TFormat> {
-	const nodeSchema: Record<string, TFormat> = Object.create(null);
+	const nodeSchema: Record<string, TFormat> = Object.create(null) as Record<string, TFormat>;
 	for (const name of [...repo.nodeSchema.keys()].sort()) {
 		const schema = repo.nodeSchema.get(name) ?? fail(0xb28 /* missing schema */);
 		Object.defineProperty(nodeSchema, name, {
@@ -160,24 +96,24 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
 
 /**
  * Creates a codec which performs synchronous monolithic encoding of schema content.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The codec.
  */
-function makeSchemaCodecV1(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV1> {
-	return makeVersionedValidatedCodec(options, new Set([SchemaVersion.v1]), FormatV1, {
-		encode: (data: TreeStoredSchema) => encodeRepoV1(data),
-		decode: (data: FormatV1) => decodeV1(data),
-	});
-}
-
-/**
- * Creates a codec which performs synchronous monolithic encoding of schema content.
- * @param options - Specifies common codec options, including which `validator` to use.
- * @returns The codec.
- */
-function makeSchemaCodecV2(options: ICodecOptions): IJsonCodec<TreeStoredSchema, FormatV2> {
-	return makeVersionedValidatedCodec(options, new Set([SchemaVersion.v2]), FormatV2, {
-		encode: (data: TreeStoredSchema) => encodeRepoV2(data),
-		decode: (data: FormatV2) => decodeV2(data),
-	});
-}
+export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: SchemaFormatVersion.v1,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
+			decode: (data: FormatV1) => decodeV1(data),
+			schema: FormatV1,
+		},
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_43,
+		formatVersion: SchemaFormatVersion.v2,
+		codec: {
+			encode: (data: TreeStoredSchema) => encodeRepoV2(data),
+			decode: (data: FormatV2) => decodeV2(data),
+			schema: FormatV2,
+		},
+	},
+]);

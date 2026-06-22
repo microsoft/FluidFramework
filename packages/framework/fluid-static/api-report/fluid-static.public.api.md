@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export type CompatibilityMode = "1" | "2";
 
 // @public
@@ -15,6 +15,9 @@ export interface ContainerSchema {
     readonly dynamicObjectTypes?: readonly SharedObjectKind[];
     readonly initialObjects: Record<string, SharedObjectKind>;
 }
+
+// @public
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @public
 export interface IConnection {

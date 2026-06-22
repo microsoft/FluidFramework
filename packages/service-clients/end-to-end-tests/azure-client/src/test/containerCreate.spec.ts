@@ -14,7 +14,7 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/legacy";
-// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+// eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { isTreeContainerSchema } from "@fluidframework/fluid-static/internal";
 import {
 	type ContainerSchema,
@@ -26,7 +26,6 @@ import { SharedMap as SharedMapLegacy } from "@fluidframework/map-legacy";
 import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 import { SharedTree } from "@fluidframework/tree/legacy";
-import type { AxiosResponse } from "axios";
 import type { SinonSandbox } from "sinon";
 import { createSandbox } from "sinon";
 
@@ -37,7 +36,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix, mapWait } from "./utils.js";
+import { getTestMatrix, mapWait, currentVersion } from "./utils.js";
 
 const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 	getRawConfig: (name: string): ConfigTypes => settings[name],
@@ -74,7 +73,7 @@ for (const testOpts of testMatrix) {
 			if (isEphemeral) {
 				this.skip();
 			}
-			const { container } = await client.createContainer(schema, "2");
+			const { container } = await client.createContainer(schema, currentVersion);
 			assert.strictEqual(
 				container.attachState,
 				AttachState.Detached,
@@ -96,15 +95,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.canAttachContainer,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -133,15 +132,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.cannotAttachContainerTwice,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -175,14 +174,14 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let newContainer: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.retrieveExistingAFRContainer,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container: newContainer } = await client.createContainer(schema, "2"));
+				({ container: newContainer } = await client.createContainer(schema, currentVersion));
 				containerId = await newContainer.attach();
 
 				if (newContainer.connectionState !== ConnectionState.Connected) {
@@ -193,7 +192,7 @@ for (const testOpts of testMatrix) {
 				}
 			}
 
-			const resources = client.getContainer(containerId, schema, "2");
+			const resources = client.getContainer(containerId, schema, currentVersion);
 			await assert.doesNotReject(
 				resources,
 				() => true,
@@ -211,7 +210,11 @@ for (const testOpts of testMatrix) {
 		it("cannot load improperly created container (cannot load a non-existent container)", async () => {
 			const consoleErrorFn = console.error;
 			console.error = (): void => {};
-			const containerAndServicesP = client.getContainer("containerConfig", schema, "2");
+			const containerAndServicesP = client.getContainer(
+				"containerConfig",
+				schema,
+				currentVersion,
+			);
 
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");
@@ -267,7 +270,7 @@ for (const testOpts of testMatrix) {
 			if (isEphemeral) {
 				this.skip();
 			}
-			await client.createContainer(schema, "2");
+			await client.createContainer(schema, currentVersion);
 			const event = mockLogger.events.find((e) => e.eventName.endsWith("ContainerLoadStats"));
 			assert(event !== undefined, "ContainerLoadStats event should exist");
 			const featureGates = event.featureGates as string;
@@ -311,7 +314,7 @@ for (const testOpts of testMatrix) {
 		 * Expected behavior: an error should not be thrown nor should a rejected promise
 		 * be returned.
 		 */
-		for (const compatibilityMode of ["1", "2"] as const) {
+		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			it(`Current AzureClient (mode: "${compatibilityMode}") can get container made by legacy AzureClient`, async () => {
 				const { container: containerLegacy } =
 					await clientLegacy.createContainer(schemaLegacy);
@@ -349,7 +352,7 @@ for (const testOpts of testMatrix) {
 				// Await the value being saved, especially important if we dispose the legacy container.
 				await valueSetP;
 
-				if (compatibilityMode === "2") {
+				if (compatibilityMode === "2.0.0") {
 					// We don't support interop between legacy containers and "2" mode, dispose the legacy
 					// container to avoid this case.
 					containerLegacy.dispose();
@@ -430,7 +433,7 @@ for (const testOpts of testMatrix) {
 			const { container: containerCurrent } = await clientCurrent1.createContainer(
 				schemaCurrent,
 				// Note: Only containers created in compatibility mode "1" may be loaded by legacy client.
-				"1",
+				"1.0.0",
 			);
 			const containerId = await containerCurrent.attach();
 
@@ -471,7 +474,7 @@ for (const testOpts of testMatrix) {
 		it(`Current AzureClient (mode: "2") can get container made by current AzureClient (mode: "1")`, async () => {
 			const { container: containerCurrent1 } = await clientCurrent1.createContainer(
 				schemaCurrent,
-				"1",
+				"1.0.0",
 			);
 			const containerId = await containerCurrent1.attach();
 
@@ -487,7 +490,7 @@ for (const testOpts of testMatrix) {
 
 			containerCurrent1.initialObjects.map1.set("key", "value");
 
-			const resources = clientCurrent2.getContainer(containerId, schemaCurrent, "2");
+			const resources = clientCurrent2.getContainer(containerId, schemaCurrent, "2.0.0");
 			await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
 			const { container: containerCurrent2 } = await resources;
@@ -513,7 +516,7 @@ for (const testOpts of testMatrix) {
 		it(`Current AzureClient (mode: "1") can get container made by current AzureClient (mode: "2")`, async () => {
 			const { container: containerCurrent2 } = await clientCurrent2.createContainer(
 				schemaCurrent,
-				"2",
+				"2.0.0",
 			);
 			const containerId = await containerCurrent2.attach();
 
@@ -529,7 +532,7 @@ for (const testOpts of testMatrix) {
 
 			containerCurrent2.initialObjects.map1.set("key", "value");
 
-			const resources = clientCurrent1.getContainer(containerId, schemaCurrent, "1");
+			const resources = clientCurrent1.getContainer(containerId, schemaCurrent, "1.0.0");
 			await assert.doesNotReject(resources, () => true, "container could not be loaded");
 
 			const { container: containerCurrent1 } = await resources;
@@ -550,7 +553,7 @@ for (const testOpts of testMatrix) {
 		it("op grouping disabled as expected for 1.x clients", async () => {
 			const { container: container1 } = await clientCurrent1.createContainer(
 				schemaCurrent,
-				"1",
+				"1.0.0",
 			);
 			const containerId = await container1.attach();
 
@@ -606,7 +609,7 @@ for (const testOpts of testMatrix) {
 			}
 		});
 
-		for (const compatibilityMode of ["1", "2"] as const) {
+		for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			it(`op grouping works as expected (compatibilityMode: ${compatibilityMode})`, async () => {
 				const { container: container1 } = await clientCurrent1.createContainer(
 					schemaCurrent,
@@ -661,7 +664,7 @@ for (const testOpts of testMatrix) {
 					}
 				}
 
-				if (compatibilityMode === "1") {
+				if (compatibilityMode === "1.0.0") {
 					assert.strictEqual(
 						groupedBatchCount,
 						0,
@@ -692,11 +695,14 @@ describe("Container create in tree-only mode", () => {
 			undefined,
 			undefined,
 			undefined,
-			({ schema, compatibilityMode }) => {
+			({ schema, minVersionForCollaboration }) => {
 				if (!isTreeContainerSchema(schema)) {
 					throw new UsageError(invalidSchemaErrorMessage);
 				}
-				return createTreeContainerRuntimeFactory({ schema, compatibilityMode });
+				return createTreeContainerRuntimeFactory({
+					schema,
+					minVersionForCollaboration,
+				});
 			},
 		);
 	}
@@ -707,7 +713,7 @@ describe("Container create in tree-only mode", () => {
 				tree: SharedTree,
 			},
 		};
-		const { container } = await client.createContainer(schema, "2");
+		const { container } = await client.createContainer(schema, currentVersion);
 
 		assert(SharedTree.is(container.initialObjects.tree));
 	});
@@ -722,7 +728,7 @@ describe("Container create in tree-only mode", () => {
 		};
 
 		await assert.rejects(
-			client.createContainer(schema, "2"),
+			client.createContainer(schema, currentVersion),
 			(error: unknown) => {
 				assert(error instanceof UsageError);
 				assert.strictEqual(error.message, invalidSchemaErrorMessage);

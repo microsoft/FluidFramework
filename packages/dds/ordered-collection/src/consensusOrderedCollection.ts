@@ -10,16 +10,19 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import {
 	type IFluidSerializer,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
+import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import {
@@ -100,6 +103,7 @@ const idForLocalUnattachedClient = undefined;
  *
  * Generally not used directly. A derived type will pass in a backing data type
  * IOrderedCollection that will define the deterministic add/acquire order and snapshot ability.
+ * @deprecated Use {@link IConsensusOrderedCollection} for typing and the appropriate factory to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 
@@ -254,7 +258,10 @@ export class ConsensusOrderedCollection<T = any>
 				opName: "release",
 				acquireId,
 			}).catch((error) => {
-				this.logger.sendErrorEvent({ eventName: "ConsensusQueue_release" }, error);
+				extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+					{ eventName: "ConsensusQueue_release" },
+					error,
+				);
 			});
 		}
 	}
@@ -302,13 +309,20 @@ export class ConsensusOrderedCollection<T = any>
 		}
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IConsensusOrderedCollectionOperation<T>;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IConsensusOrderedCollectionOperation<T>;
 			let value: IConsensusOrderedCollectionValue<T> | undefined;
 			switch (op.opName) {
 				case "add": {
@@ -321,7 +335,7 @@ export class ConsensusOrderedCollection<T = any>
 				}
 
 				case "acquire": {
-					value = this.acquireCore(op.acquireId, message.clientId ?? undefined);
+					value = this.acquireCore(op.acquireId, messageEnvelope.clientId ?? undefined);
 					break;
 				}
 
@@ -341,7 +355,7 @@ export class ConsensusOrderedCollection<T = any>
 			}
 			if (local) {
 				// Resolve the pending promise for this operation now that we have received an ack for it.
-				const resolve = localOpMetadata as PendingResolve<T>;
+				const resolve = messageContent.localOpMetadata as PendingResolve<T>;
 				resolve(value);
 			}
 		}
@@ -421,7 +435,26 @@ export class ConsensusOrderedCollection<T = any>
 		return serializer.parse(content);
 	}
 
-	protected applyStashedOp(): void {
-		throw new Error("not implemented");
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IConsensusOrderedCollectionOperation<T>;
+		// Submit the original op so we can match the ACK when it arrives during remote op processing.
+		// Use a no-op resolve function since we don't need to wait for the result. Note - this results in `acquire()` promises resolving to `false`.
+		const resolve: PendingResolve<T> = () => {};
+		this.submitLocalMessage(op, resolve);
+	}
+
+	/**
+	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.rollback}
+	 * @sealed
+	 */
+	protected rollback(content: unknown, localOpMetadata: unknown): void {
+		assert(
+			typeof localOpMetadata === "function",
+			0xc93 /* localOpMetadata should be a function */,
+		);
+		// A resolve function is passed as the localOpMetadata on this.submitLocalMessage().
+		// On rollback we resolve with undefined and the promises will handle it appropriately.
+		const resolve = localOpMetadata as PendingResolve<T>;
+		resolve(undefined);
 	}
 }

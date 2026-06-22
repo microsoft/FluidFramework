@@ -25,8 +25,8 @@ import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
 	LoggingError,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -74,10 +74,10 @@ import {
 	type IJSONSegment,
 	type IMergeTreeAnnotateMsg,
 	type IMergeTreeDeltaOp,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeGroupMsg,
 	type IMergeTreeInsertMsg,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	type IMergeTreeObliterateMsg,
 	type IMergeTreeOp,
 	type IMergeTreeRemoveMsg,
@@ -193,7 +193,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 */
 	constructor(
 		public readonly specToSegment: (spec: IJSONSegment) => ISegment,
-		public readonly logger: ITelemetryLoggerExt,
+		public readonly logger: TelemetryLoggerExt,
 		options?: IMergeTreeOptionsInternal & PropertySet,
 		private readonly getMinInFlightRefSeq: () => number | undefined = (): undefined =>
 			undefined,
@@ -323,9 +323,9 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	public obliterateRangeLocal(
 		start: number | InteriorSequencePlace,
 		end: number | InteriorSequencePlace,
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 	): IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg {
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		let obliterateOp: IMergeTreeObliterateMsg | IMergeTreeObliterateSidedMsg;
 		if (this._mergeTree.options?.mergeTreeEnableSidedObliterate) {
 			obliterateOp = createObliterateRangeOpSided(start, end);
@@ -672,7 +672,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 	 * @throws LoggingError if the range is invalid
 	 */
 	private getValidSidedRange(
-		// eslint-disable-next-line import/no-deprecated
+		// eslint-disable-next-line import-x/no-deprecated
 		op: IMergeTreeObliterateSidedMsg | IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): {
@@ -752,7 +752,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			| IMergeTreeAnnotateAdjustMsg
 			| IMergeTreeInsertMsg
 			| IMergeTreeRemoveMsg
-			// eslint-disable-next-line import/no-deprecated
+			// eslint-disable-next-line import-x/no-deprecated
 			| IMergeTreeObliterateMsg,
 		perspective: Perspective,
 	): IIntegerRange {
@@ -1479,6 +1479,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 
 		const collabWindow = this.getCollabWindow();
 		if (
+			// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58520 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 			this.lastNormalization === undefined ||
 			collabWindow.currentSeq !== this.lastNormalization.refSeq ||
 			collabWindow.localSeq !== this.lastNormalization.localRefSeq
@@ -1595,7 +1596,7 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		return loader.initialize(storage);
 	}
 
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	localTransaction(groupOp: IMergeTreeGroupMsg): void {
 		for (const op of groupOp.ops) {
 			const opArgs: IMergeTreeDeltaOpArgs = {

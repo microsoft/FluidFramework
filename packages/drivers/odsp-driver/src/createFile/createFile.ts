@@ -5,10 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
-	type IFileEntry,
 	type IOdspResolvedUrl,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
@@ -16,9 +15,9 @@ import {
 	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICreateFileResponse, IRenameFileResponse } from "./../contracts.js";
@@ -56,7 +55,7 @@ const isInvalidFileName = (fileName: string): boolean => {
 export async function createNewFluidFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,
@@ -205,7 +204,7 @@ function encodeFilePath(path: string | undefined): string {
 export async function createNewEmptyFluidFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<{ itemId: string; fileName: string }> {
 	const filePath = encodeFilePath(newFileInfo.filePath);
@@ -273,7 +272,7 @@ export async function renameEmptyFluidFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	odspParts: IOdspUrlParts,
 	requestedFileName: string,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	epochTracker: EpochTracker,
 ): Promise<IRenameFileResponse> {
 	const initialUrl = `${getApiRoot(new URL(odspParts.siteUrl))}/drives/${
@@ -333,7 +332,7 @@ export async function renameEmptyFluidFile(
 export async function createNewFluidFileFromSummary(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	newFileInfo: INewFileInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	createNewSummary: ISummaryTree,
 	epochTracker: EpochTracker,
 	forceAccessTokenViaAuthorizationHeader: boolean,

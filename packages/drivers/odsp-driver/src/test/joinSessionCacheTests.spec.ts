@@ -26,7 +26,7 @@ import { getJoinSessionCacheKey } from "../odspUtils.js";
 import { SocketIOClientStatic } from "../socketModule.js";
 import { fetchJoinSession } from "../vroom.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { ClientSocketMock } from "./socketTests/socketMock.js";
 
 describe("expose joinSessionInfo Tests", () => {
@@ -83,7 +83,7 @@ describe("expose joinSessionInfo Tests", () => {
 	});
 
 	it("Response present in join session cache", async () => {
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		// eslint-disable-next-line @typescript-eslint/dot-notation
 		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
 			getJoinSessionCacheKey(resolvedUrl),
 			async () => {
@@ -141,7 +141,7 @@ describe("expose joinSessionInfo Tests", () => {
 
 		// Save a mock joinSession response in nonPersistenCache to test with later.
 		const cacheKey = getJoinSessionCacheKey(odspResolvedUrl);
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		// eslint-disable-next-line @typescript-eslint/dot-notation
 		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
 			getJoinSessionCacheKey(odspResolvedUrl),
 			async () => {
@@ -167,7 +167,7 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test
-			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
 			joinSessionStub.restore();
 		}
@@ -207,7 +207,7 @@ describe("expose joinSessionInfo Tests", () => {
 
 		// Save a mock joinSession response in nonPersistenCache to test with later.
 		const cacheKey = getJoinSessionCacheKey(odspResolvedUrl);
-		// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+		// eslint-disable-next-line @typescript-eslint/dot-notation
 		odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.add(
 			cacheKey,
 			async () => {
@@ -233,7 +233,7 @@ describe("expose joinSessionInfo Tests", () => {
 			);
 		} finally {
 			// reset nonPersistenCache changes from the test
-			// eslint-disable-next-line @typescript-eslint/dot-notation, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+			// eslint-disable-next-line @typescript-eslint/dot-notation
 			odspDocumentServiceFactory["nonPersistentCache"].sessionJoinCache.remove(cacheKey);
 			joinSessionStub.restore();
 		}

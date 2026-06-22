@@ -36,15 +36,22 @@ import {
 	type DeltaDetachedNodeId,
 } from "../../core/index.js";
 import {
-	assertValidRange,
 	brand,
 	getLast,
 	getOrAddEmptyToMap,
 	hasSome,
+	type Breakable,
 } from "../../util/index.js";
 
 import { BasicChunk, BasicChunkCursor, type SiblingsOrKey } from "./basicChunk.js";
-import { type IChunker, basicChunkTree, chunkFieldSingle, chunkTree } from "./chunkTree.js";
+import {
+	type ChunkCompressor,
+	type IChunker,
+	basicChunkTree,
+	chunkField,
+	chunkTree,
+	splitFieldAtIndex,
+} from "./chunkTree.js";
 
 function makeRoot(): BasicChunk {
 	return new BasicChunk(aboveRootPlaceholder, new Map());
@@ -85,13 +92,13 @@ export class ChunkedForest implements IEditableForest {
 		return this.roots.fields.size === 0;
 	}
 
-	public clone(schema: TreeStoredSchemaSubscription, anchors: AnchorSet): ChunkedForest {
+	public clone(schema: TreeStoredSchemaSubscription, _breaker?: Breakable): ChunkedForest {
 		this.roots.referenceAdded();
-		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema), anchors);
+		return new ChunkedForest(this.roots, schema, this.chunker.clone(schema));
 	}
 
-	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk {
-		return chunkFieldSingle(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
+	public chunkField(cursor: ITreeCursorSynchronous): TreeChunk[] {
+		return chunkField(cursor, { idCompressor: this.idCompressor, policy: this.chunker });
 	}
 
 	public forgetAnchor(anchor: Anchor): void {
@@ -172,8 +179,12 @@ export class ChunkedForest implements IEditableForest {
 
 				const parent = this.getParent();
 				const destinationField = getOrAddEmptyToMap(parent.mutableChunk.fields, parent.key);
+				const destinationChunkIndex = splitFieldAtIndex(destinationField, destination, {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				});
 				// TODO: this will fail for very large moves due to argument limits.
-				destinationField.splice(destination, 0, ...sourceField);
+				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -192,21 +203,31 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
+				assert(source.start <= source.end, 0xcf8 /* detach range start must not exceed end */);
 
-				assertValidRange(source, sourceField);
-				const newField = sourceField.splice(source.start, source.end - source.start);
+				const policy: ChunkCompressor = {
+					policy: this.forest.chunker,
+					idCompressor: this.forest.idCompressor,
+				};
+				// Split start first: splitting end later only expands chunks at positions >= startChunkIndex,
+				// which leaves startChunkIndex valid. The reverse order would shift endChunkIndex when
+				// source.start and source.end land in different chunks.
+				// Performance: It's practical to have a variant of splitFieldAtIndex which can split at multiple locations in a single pass if the performance of this becomes worth optimizing.
+				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
+				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
+				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
 
-				if (destination !== undefined) {
+				if (destination === undefined) {
+					for (const child of newField) {
+						child.referenceRemoved();
+					}
+				} else {
 					assert(
 						!this.forest.roots.fields.has(destination),
 						0x7af /* Destination must be a new empty detached field */,
 					);
 					if (newField.length > 0) {
 						this.forest.roots.fields.set(destination, newField);
-					}
-				} else {
-					for (const child of newField) {
-						child.referenceRemoved();
 					}
 				}
 				// This check is performed after the transfer to ensure that the field is not removed in scenarios
@@ -224,12 +245,12 @@ export class ChunkedForest implements IEditableForest {
 				let indexOfChunk = 0;
 				let chunk = chunks[indexOfChunk] ?? oob();
 				while (indexWithinChunk >= chunk.topLevelLength) {
-					chunk = chunks[indexOfChunk] ?? oob();
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail(0xaf7 /* missing edited node */);
 					}
+					chunk = chunks[indexOfChunk] ?? oob();
 				}
 				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {
@@ -276,7 +297,9 @@ export class ChunkedForest implements IEditableForest {
 		};
 
 		const announcedVisitors: AnnouncedVisitor[] = [];
-		this.deltaVisitors.forEach((getVisitor) => announcedVisitors.push(getVisitor()));
+		for (const getVisitor of this.deltaVisitors) {
+			announcedVisitors.push(getVisitor());
+		}
 		const combinedVisitor = combineVisitors([forestVisitor, ...announcedVisitors]);
 		this.activeVisitor = combinedVisitor;
 		return combinedVisitor;

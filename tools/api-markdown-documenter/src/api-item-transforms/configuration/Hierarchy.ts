@@ -10,7 +10,7 @@ import {
 	getUnscopedPackageName,
 	type ValidApiItemKind,
 } from "../../utilities/index.js";
-import { createQualifiedDocumentNameForApiItem } from "../ApiItemTransformUtilities.js";
+import { createQualifiedDocumentNameForApiItem } from "../utilities/index.js";
 
 /**
  * Kind of documentation suite hierarchy.
@@ -154,6 +154,8 @@ const defaultFolderHierarchyOptions = {
  *
  * @public
  */
+// Keep mapped members so TSDoc remains attached to the API-item-kind property group.
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export type HierarchyConfiguration = {
 	/**
 	 * Hierarchy configuration for the API item kind.
@@ -221,6 +223,8 @@ export type HierarchyConfiguration = {
  *
  * @public
  */
+// Keep mapped members so TSDoc remains attached to the API-item-kind property group.
+// eslint-disable-next-line @typescript-eslint/consistent-indexed-object-style
 export type HierarchyOptions = {
 	/**
 	 * Hierarchy configuration for the API item kind.

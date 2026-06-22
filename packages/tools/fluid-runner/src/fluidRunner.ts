@@ -4,17 +4,19 @@
  */
 
 import yargs from "yargs";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { hideBin } from "yargs/helpers";
 
 import type { IFluidFileConverter } from "./codeLoaderBundle.js";
 import { exportFile } from "./exportFile.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { validateAndParseTelemetryOptions } from "./logger/loggerUtils.js";
 import { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
 import { validateCommandLineArgs } from "./utils.js";
 
 /**
+ * Entry point for the Fluid runner CLI tool that exports ODSP snapshots.
+ *
  * @param fluidFileConverter - needs to be provided if "codeLoaderBundle" is not and vice versa
  * @internal
  */

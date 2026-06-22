@@ -36,7 +36,7 @@ const legacyNodeId: TraitLabel = "inventory" as TraitLabel;
 
 // Basic helper functions because the legacy tree is complicated
 // The LST is very simple - it is a tree with a single node that has a quantity trait
-export function setLSTQuantity(legacyTree: LegacySharedTree, quantity: number) {
+export function setLSTQuantity(legacyTree: LegacySharedTree, quantity: number): void {
 	// Initialize the legacy tree with some data
 	const rootNode = legacyTree.currentView.getViewNode(legacyTree.currentView.root);
 	// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

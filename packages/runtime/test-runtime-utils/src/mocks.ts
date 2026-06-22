@@ -45,11 +45,13 @@ import {
 	ITreeEntry,
 	MessageType,
 	ISequencedDocumentMessage,
+	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type {
-	IIdCompressorCore,
-	IdCreationRange,
+import {
+	createIdCompressor,
+	toIdCompressorWithCore,
+	type IdCreationRange,
 } from "@fluidframework/id-compressor/internal";
 import {
 	ISummaryTreeWithStats,
@@ -60,8 +62,10 @@ import {
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	defaultMinVersionForCollab,
 	getNormalizedObjectStoragePathParts,
 	mergeStats,
 	toDeltaManagerErased,
@@ -104,16 +108,16 @@ export class MockDeltaConnection implements IDeltaConnection {
 		this.dirtyFn();
 	}
 
-	public setConnectionState(connected: boolean) {
+	public setConnectionState(connected: boolean): void {
 		this._connected = connected;
 		this.handler?.setConnectionState(connected);
 	}
 
-	public processMessages(messageCollection: IRuntimeMessageCollection) {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		this.handler?.processMessages?.(messageCollection);
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void {
 		this.handler?.reSubmit(content, localOpMetadata, squash);
 	}
 
@@ -239,6 +243,8 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	/**
+	 * Creates a {@link MockDeltaConnection} for this container runtime.
+	 *
 	 * @deprecated use the associated datastore to create the delta connection
 	 */
 	public createDeltaConnection(): MockDeltaConnection {
@@ -247,18 +253,18 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return deltaConnection;
 	}
 
-	public finalizeIdRange(range: IdCreationRange) {
+	public finalizeIdRange(range: IdCreationRange): void {
 		assert(
 			this.dataStoreRuntime.idCompressor !== undefined,
 			"Shouldn't try to finalize IdRanges without an IdCompressor",
 		);
-		this.dataStoreRuntime.idCompressor.finalizeCreationRange(range);
+		toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).finalizeCreationRange(range);
 	}
 
 	// This enables manual control over flush mode, allowing operations like rollback to be executed in a controlled environment.
 	#manualFlushCalls: number = 0;
 
-	public async runWithManualFlush(act: () => void | Promise<void>) {
+	public async runWithManualFlush(act: () => void | Promise<void>): Promise<void> {
 		this.#manualFlushCalls++;
 		try {
 			await act();
@@ -331,7 +337,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	public dirty(): void {}
-	public get isDirty() {
+	public get isDirty(): boolean {
 		return this.pendingMessages.length > 0;
 	}
 
@@ -339,7 +345,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 * If flush mode is set to FlushMode.TurnBased, it will send all messages queued since the last time
 	 * this method (or `flushSomeMessages`) was called. Otherwise, calling the method does nothing.
 	 */
-	public flush() {
+	public flush(): void {
 		this.flushSomeMessages(this.outbox.length);
 	}
 
@@ -391,7 +397,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	 *
 	 * The method requires `runtimeOptions.enableGroupedBatching` to be enabled.
 	 */
-	public rebase() {
+	public rebase(): void {
 		if (this.runtimeOptions.flushMode !== FlushMode.TurnBased) {
 			return;
 		}
@@ -424,7 +430,11 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 			if (pendingMessage.content.type === "idAllocation") {
 				this.submit(pendingMessage.content, pendingMessage.localOpMetadata);
 			} else {
-				this.dataStoreRuntime.reSubmit(pendingMessage.content, pendingMessage.localOpMetadata);
+				this.dataStoreRuntime.reSubmit(
+					pendingMessage.content,
+					pendingMessage.localOpMetadata,
+					false,
+				);
 			}
 		});
 	}
@@ -445,7 +455,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 	}
 
 	private generateIdAllocationOp(): IInternalMockRuntimeMessage | undefined {
-		const idRange = this.dataStoreRuntime.idCompressor?.takeNextCreationRange();
+		const idRange =
+			this.dataStoreRuntime.idCompressor === undefined
+				? undefined
+				: toIdCompressorWithCore(this.dataStoreRuntime.idCompressor).takeNextCreationRange();
 		if (idRange?.ids !== undefined) {
 			const allocationOp: IMockContainerRuntimeIdAllocationMessage = {
 				type: "idAllocation",
@@ -459,7 +472,10 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return undefined;
 	}
 
-	private submitInternal(message: IInternalMockRuntimeMessage, clientSequenceNumber: number) {
+	private submitInternal(
+		message: IInternalMockRuntimeMessage,
+		clientSequenceNumber: number,
+	): void {
 		// Here, we should instead push to the DeltaManager. And the DeltaManager will push things into the factory's messages
 		this.deltaManager.outbound.push([
 			{
@@ -473,7 +489,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		this.addPendingMessage(message.content, message.localOpMetadata, clientSequenceNumber);
 	}
 
-	public process(message: ISequencedDocumentMessage) {
+	public process(message: ISequencedDocumentMessage): void {
 		this.deltaManager.process(message);
 		const [local, localOpMetadata] = this.processInternal(message);
 
@@ -495,7 +511,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		content: any,
 		localOpMetadata: unknown,
 		clientSequenceNumber: number,
-	) {
+	): void {
 		const pendingMessage: IMockContainerRuntimePendingMessage = {
 			referenceSequenceNumber: this.deltaManager.lastSequenceNumber,
 			content,
@@ -519,7 +535,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
 		return [local, localOpMetadata];
 	}
 
-	public async resolveHandle(handle: IFluidHandle) {
+	public async resolveHandle(handle: IFluidHandle): Promise<IResponse> {
 		return this.dataStoreRuntime.resolveHandle({
 			url: toFluidHandleInternal(handle).absolutePath,
 		});
@@ -561,12 +577,12 @@ export class MockContainerRuntimeFactory {
 		this.runtimeOptions = makeContainerRuntimeOptions(mockContainerRuntimeOptions);
 	}
 
-	public get outstandingMessageCount() {
+	public get outstandingMessageCount(): number {
 		return this.messages.length;
 	}
 
 	/**
-	 * @returns a minimum sequence number for all connected clients.
+	 * Gets the minimum sequence number for all connected clients.
 	 */
 	public getMinSeq(): number {
 		let minimumSequenceNumber: number | undefined;
@@ -599,11 +615,11 @@ export class MockContainerRuntimeFactory {
 		return containerRuntime;
 	}
 
-	public removeContainerRuntime(containerRuntime: MockContainerRuntime) {
+	public removeContainerRuntime(containerRuntime: MockContainerRuntime): void {
 		this.runtimes.delete(containerRuntime);
 	}
 
-	public pushMessage(msg: Partial<ISequencedDocumentMessage>) {
+	public pushMessage(msg: Partial<ISequencedDocumentMessage>): void {
 		deepFreeze(msg);
 		if (
 			msg.clientId &&
@@ -616,7 +632,7 @@ export class MockContainerRuntimeFactory {
 	}
 
 	protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
-	protected getFirstMessageToProcess() {
+	protected getFirstMessageToProcess(): ISequencedDocumentMessage {
 		assert(this.messages.length > 0, "The message queue should not be empty");
 
 		// Explicitly JSON clone the value to match the behavior of going thru the wire.
@@ -638,7 +654,7 @@ export class MockContainerRuntimeFactory {
 		return message;
 	}
 
-	private processFirstMessage() {
+	private processFirstMessage(): void {
 		const message = this.getFirstMessageToProcess();
 		for (const runtime of this.runtimes) {
 			runtime.process(message);
@@ -648,7 +664,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process one of the queued messages.  Throws if no messages are queued.
 	 */
-	public processOneMessage() {
+	public processOneMessage(): void {
 		if (this.messages.length === 0) {
 			throw new Error("Tried to process a message that did not exist");
 		}
@@ -661,7 +677,7 @@ export class MockContainerRuntimeFactory {
 	 * Process a given number of queued messages.  Throws if there are fewer messages queued than requested.
 	 * @param count - the number of messages to process
 	 */
-	public processSomeMessages(count: number) {
+	public processSomeMessages(count: number): void {
 		if (count > this.messages.length) {
 			throw new Error("Tried to process more messages than exist");
 		}
@@ -676,7 +692,7 @@ export class MockContainerRuntimeFactory {
 	/**
 	 * Process all remaining messages in the queue.
 	 */
-	public processAllMessages() {
+	public processAllMessages(): void {
 		this.lastProcessedMessage = undefined;
 		while (this.messages.length > 0) {
 			this.processFirstMessage();
@@ -695,19 +711,22 @@ export class MockQuorumClients implements IQuorumClients, EventEmitter {
 		this.members = new Map((members as [string, ISequencedClient][]) ?? []);
 	}
 
-	addMember(id: string, client: Partial<ISequencedClient>) {
+	addMember(id: string, client: Partial<ISequencedClient>): void {
 		this.members.set(id, client as ISequencedClient);
 		this.eventEmitter.emit("addMember", id, client);
 	}
 
-	removeMember(id: string) {
+	removeMember(id: string): void {
 		if (this.members.delete(id)) {
 			this.eventEmitter.emit("removeMember", id);
 		}
 	}
 
 	getMembers(): Map<string, ISequencedClient> {
-		return this.members;
+		// Implementation always generates a new Map.
+		// Mock should as well in case any callers rely on being able to modify
+		// the returned Map.
+		return new Map(this.members);
 	}
 	getMember(clientId: string): ISequencedClient | undefined {
 		return this.getMembers().get(clientId);
@@ -843,6 +862,7 @@ const attachStatesToComparableNumbers = {
 /**
  * Mock implementation of IRuntime for testing that does nothing
  * @legacy @beta
+ * @sealed
  */
 export class MockFluidDataStoreRuntime
 	extends EventEmitter
@@ -853,9 +873,12 @@ export class MockFluidDataStoreRuntime
 		entryPoint?: IFluidHandle<FluidObject>;
 		id?: string;
 		logger?: ITelemetryBaseLogger;
-		idCompressor?: IIdCompressor & IIdCompressorCore;
+		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
+		minVersionForCollab?: MinimumVersionForCollab;
+		inStagingMode?: boolean;
+		isDirty?: boolean;
 	}) {
 		super();
 		this.clientId = overrides?.clientId ?? uuid();
@@ -871,18 +894,28 @@ export class MockFluidDataStoreRuntime
 			childLoggerProps.logger = logger;
 		}
 		this.logger = createChildLogger(childLoggerProps);
-		this.idCompressor = overrides?.idCompressor;
+		this.idCompressor = overrides?.idCompressor ?? createIdCompressor();
 		this._attachState = overrides?.attachState ?? AttachState.Attached;
 
 		const registry = overrides?.registry;
 		if (registry) {
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
+
+		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		this.inStagingMode = overrides?.inStagingMode ?? false;
+		this.isDirty = overrides?.isDirty ?? false;
 	}
+
 	private readonly: boolean = false;
-	public readonly isReadOnly = () => this.readonly;
+	public readonly isReadOnly = (): boolean => this.readonly;
 
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
+
+	/**
+	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;
@@ -897,6 +930,8 @@ export class MockFluidDataStoreRuntime
 		return this;
 	}
 
+	public readonly inStagingMode: boolean;
+	public readonly isDirty: boolean;
 	public readonly documentId: string = undefined as any;
 	public readonly id: string;
 	public readonly existing: boolean = undefined as any;
@@ -913,25 +948,27 @@ export class MockFluidDataStoreRuntime
 	public quorum = new MockQuorumClients();
 	private readonly audience = new MockAudience();
 	public containerRuntime?: MockContainerRuntime;
-	public idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+	public idCompressor: IIdCompressor | undefined;
 	private readonly deltaConnections: MockDeltaConnection[] = [];
 	private readonly registry?: ReadonlyMap<string, IChannelFactory>;
 
 	public createDeltaConnection(): MockDeltaConnection {
 		const deltaConnection = new MockDeltaConnection(
-			(messageContent: any, localOpMetadata: unknown) =>
+			(messageContent: any, localOpMetadata: unknown): number =>
 				this.submitMessageInternal(messageContent, localOpMetadata),
-			() => this.setChannelDirty(),
+			(): void => this.setChannelDirty(),
 		);
 		this.deltaConnections.push(deltaConnection);
 		return deltaConnection;
 	}
 
-	public get absolutePath() {
+	public get absolutePath(): string {
 		return `/${this.id}`;
 	}
 
 	/**
+	 * Whether the data store is local (not attached).
+	 *
 	 * @deprecated Use `attachState` instead
 	 *
 	 * @privateRemarks Also remove the setter when this is removed. setters don't get their own doc tags.
@@ -948,12 +985,18 @@ export class MockFluidDataStoreRuntime
 
 	private _disposed = false;
 
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
 
 	public dispose(): void {
+		if (this._disposed) {
+			return;
+		}
+
 		this._disposed = true;
+		this.emit("dispose");
+		this.removeAllListeners();
 	}
 
 	public async getChannel(id: string): Promise<IChannel> {
@@ -1014,7 +1057,7 @@ export class MockFluidDataStoreRuntime
 		return this.audience;
 	}
 
-	public save(message: string) {
+	public save(message: string): void {
 		return;
 	}
 
@@ -1027,10 +1070,6 @@ export class MockFluidDataStoreRuntime
 	}
 
 	public async getBlob(blobId: string): Promise<any> {
-		return null;
-	}
-
-	public submitMessage(type: MessageType, content: any) {
 		return null;
 	}
 
@@ -1050,11 +1089,9 @@ export class MockFluidDataStoreRuntime
 		return this.containerRuntime.dirty();
 	}
 
-	public submitSignal(type: string, content: any) {
-		return null;
-	}
+	public submitSignal: IFluidDataStoreRuntime["submitSignal"] = () => null;
 
-	public processMessages(messageCollection: IRuntimeMessageCollection) {
+	public processMessages(messageCollection: IRuntimeMessageCollection): void {
 		if (this.disposed) {
 			return;
 		}
@@ -1063,7 +1100,7 @@ export class MockFluidDataStoreRuntime
 		});
 	}
 
-	public processSignal(message: any, local: boolean) {
+	public processSignal(message: any, local: boolean): void {
 		return;
 	}
 
@@ -1071,7 +1108,7 @@ export class MockFluidDataStoreRuntime
 		return;
 	}
 
-	public setConnectionState(connected: boolean, clientId?: string) {
+	public setConnectionState(connected: boolean, clientId?: string): void {
 		if (connected && clientId !== undefined) {
 			this.clientId = clientId;
 		}
@@ -1119,7 +1156,7 @@ export class MockFluidDataStoreRuntime
 		};
 	}
 
-	public updateUsedRoutes(usedRoutes: string[]) {}
+	public updateUsedRoutes(usedRoutes: string[]): void {}
 
 	public getAttachSnapshot(): ITreeEntry[] {
 		return [];
@@ -1180,13 +1217,13 @@ export class MockFluidDataStoreRuntime
 		return null as any as IResponse;
 	}
 
-	public reSubmit(content: any, localOpMetadata: unknown, squash?: boolean) {
+	public reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void {
 		this.deltaConnections.forEach((dc) => {
 			dc.reSubmit(content, localOpMetadata, squash);
 		});
 	}
 
-	public async applyStashedOp(content: any) {
+	public async applyStashedOp(content: any): Promise<unknown> {
 		return this.deltaConnections.map((dc) => dc.applyStashedOp(content))[0];
 	}
 
@@ -1204,7 +1241,7 @@ export class MockFluidDataStoreRuntime
 export class MockEmptyDeltaConnection implements IDeltaConnection {
 	public connected = false;
 
-	public attach(handler) {}
+	public attach(handler): void {}
 
 	public submit(messageContent: any): number {
 		assert(false, "Throw submit error on mock empty delta connection");
@@ -1218,21 +1255,35 @@ export class MockEmptyDeltaConnection implements IDeltaConnection {
  * @legacy @beta
  */
 export class MockObjectStorageService implements IChannelStorageService {
-	public constructor(private readonly contents: { [key: string]: string }) {}
+	private readonly snapshotTree: ISnapshotTree;
+
+	/**
+	 * @param contents - Key value pairs that represent a snapshot.
+	 * The keys are the path to the contents of a blob in the snapshot tree. The corresponding values are its contents.
+	 *
+	 * @remarks
+	 * The snapshot contents must not change after it has been passed here as the changes will not be reflected
+	 * in the snapshot tree retrieved via `getSnapshotTree`.
+	 */
+	public constructor(private readonly contents: { [key: string]: string }) {
+		this.snapshotTree = createSnapshotTreeFromContents(contents);
+	}
 
 	public async readBlob(path: string): Promise<ArrayBufferLike> {
 		return stringToBuffer(this.contents[path], "utf8");
 	}
-
 	public async contains(path: string): Promise<boolean> {
 		return this.contents[path] !== undefined;
 	}
-
 	public async list(path: string): Promise<string[]> {
 		const pathPartsLength = getNormalizedObjectStoragePathParts(path).length;
 		return Object.keys(this.contents).filter(
 			(key) => key.startsWith(path) && key.split("/").length === pathPartsLength + 1,
 		);
+	}
+
+	public getSnapshotTree(): ISnapshotTree {
+		return this.snapshotTree;
 	}
 }
 
@@ -1241,7 +1292,7 @@ export class MockObjectStorageService implements IChannelStorageService {
  * @legacy @beta
  */
 export class MockSharedObjectServices implements IChannelServices {
-	public static createFromSummary(summaryTree: ISummaryTree) {
+	public static createFromSummary(summaryTree: ISummaryTree): MockSharedObjectServices {
 		const contents: { [key: string]: string } = {};
 		setContentsFromSummaryTree(summaryTree, "", contents);
 		return new MockSharedObjectServices(contents);
@@ -1279,4 +1330,44 @@ function setContentsFromSummaryTree(
 				assert(false, "Unexpected summary type on mock createFromSummary");
 		}
 	}
+}
+
+/**
+ * Create an ISnapshotTree from contents object (reverse of setContentsFromSummaryTree)
+ * @param contents - Object with path/value pairs
+ * @returns ISnapshotTree representing the hierarchical structure
+ */
+export function createSnapshotTreeFromContents(contents: {
+	[key: string]: string;
+}): ISnapshotTree {
+	const tree: ISnapshotTree = {
+		trees: {},
+		blobs: {},
+	};
+
+	for (const [path, content] of Object.entries(contents)) {
+		// Remove empty strings to handle leading, trailing, or consecutive slashes in the path.
+		const pathParts = path.split("/").filter((part) => part !== "");
+		let currentTree = tree;
+
+		// Navigate/create the tree structure for all but the last part
+		for (let i = 0; i < pathParts.length - 1; i++) {
+			const part = pathParts[i];
+			if (!currentTree.trees[part]) {
+				currentTree.trees[part] = {
+					trees: {},
+					blobs: {},
+				};
+			}
+			currentTree = currentTree.trees[part];
+		}
+
+		// Add the blob at the final location
+		const blobName = pathParts[pathParts.length - 1];
+		if (blobName !== undefined) {
+			currentTree.blobs[blobName] = content;
+		}
+	}
+
+	return tree;
 }

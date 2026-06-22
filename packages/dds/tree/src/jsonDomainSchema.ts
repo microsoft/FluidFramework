@@ -37,7 +37,7 @@ const sf = new SchemaFactoryAlpha("com.fluidframework.json");
  *
  * 2. The order of fields on an object is not preserved. The resulting order is arbitrary.
  *
- * JSON data can be imported from JSON into this format using `JSON.parse` then {@link (TreeAlpha:interface).importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
+ * JSON data can be imported from JSON into this format using `JSON.parse` then {@link (TreeBeta:interface).importConcise} with the {@link JsonAsTree.(Tree:variable)} schema.
  *
  * @alpha
  */
@@ -63,7 +63,7 @@ export namespace JsonAsTree {
 	 * {@link AllowedTypes} for any content allowed in the {@link JsonAsTree} domain.
 	 * @example
 	 * ```typescript
-	 * const tree = TreeAlpha.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
+	 * const tree = TreeBeta.importConcise(JsonAsTree.Union, { example: { nested: true }, value: 5 });
 	 * ```
 	 * @privateRemarks
 	 * The order here should not matter for any functionality related reasons.
@@ -95,7 +95,7 @@ export namespace JsonAsTree {
 	 * // Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
 	 * const fromArray = new JsonAsTreeObject([["a", 0]]);
 	 * // Using `importConcise` can work better for JSON data:
-	 * const imported = TreeAlpha.importConcise(JsonAsTree.Object, { a: 0 });
+	 * const imported = TreeBeta.importConcise(JsonAsTree.Object, { a: 0 });
 	 * // Node API is like a Map:
 	 * const value = imported.get("a");
 	 * ```
@@ -128,13 +128,13 @@ export namespace JsonAsTree {
 	/**
 	 * Arbitrary JSON array as a {@link TreeNode}.
 	 * @remarks
-	 * This can be imported using {@link (TreeAlpha:interface).importConcise}.
+	 * This can be imported using {@link (TreeBeta:interface).importConcise}.
 	 * @example
 	 * ```typescript
 	 * // Due to TypeScript restrictions on recursive types, the constructor can be somewhat limiting.
 	 * const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
 	 * // Using `importConcise` can work better for JSON data:
-	 * const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
+	 * const imported = TreeBeta.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 	 * // Node API is like an Array:
 	 * const inner: JsonAsTree.Tree = imported[2];
 	 * assert(Tree.is(inner, JsonAsTree.Array));

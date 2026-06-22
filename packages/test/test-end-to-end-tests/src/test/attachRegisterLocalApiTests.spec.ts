@@ -7,8 +7,11 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
-import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type {
+	IContainer,
+	IFluidCodeDetails,
+} from "@fluidframework/container-definitions/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
@@ -37,7 +40,7 @@ function onAttachChange(
 	context: IFluidDataStoreContext,
 	stateToNotify: AttachState.Attaching | AttachState.Attached,
 	callback: () => void,
-) {
+): void {
 	const oldApi = (context as any).setAttachState.bind(context);
 
 	(context as any).setAttachState = (arg) => {
@@ -54,6 +57,7 @@ describeCompat(
 	"NoCompat" /* 2.0.0-internal.8.0.0 */,
 	(getTestObjectProvider, apis) => {
 		const { SharedMap } = apis.dds;
+		const { Loader } = apis.loader;
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
 			config: {},
@@ -65,10 +69,13 @@ describeCompat(
 		let loader: Loader;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		const createTestStatementForAttachedDetached = (name: string, attached: boolean) =>
+		const createTestStatementForAttachedDetached = (name: string, attached: boolean): string =>
 			`${name} should be ${attached ? "Attached" : "Detached"}`;
 
-		async function createDetachedContainerAndGetEntryPoint() {
+		async function createDetachedContainerAndGetEntryPoint(): Promise<{
+			container: IContainer;
+			defaultDataStore: ITestFluidObject;
+		}> {
 			const container = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
 			const defaultDataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -81,7 +88,9 @@ describeCompat(
 		/**
 		 * Creates a new DataStore and returns its entry point
 		 */
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{ peerDataStore: ITestFluidObject }> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {
@@ -108,7 +117,7 @@ describeCompat(
 		}
 
 		let provider: ITestObjectProvider;
-		beforeEach("createLoader", async () => {
+		beforeEach("createLoader", async (): Promise<void> => {
 			provider = getTestObjectProvider();
 			const documentId = createDocumentId();
 			const driver = provider.driver;

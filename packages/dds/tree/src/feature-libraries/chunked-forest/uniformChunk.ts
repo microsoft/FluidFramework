@@ -5,7 +5,6 @@
 
 import { assert, compareArrays, oob, fail } from "@fluidframework/core-utils/internal";
 import type { SessionSpaceCompressedId, IIdCompressor } from "@fluidframework/id-compressor";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	CursorLocationType,
@@ -21,7 +20,7 @@ import {
 	cursorChunk,
 	dummyRoot,
 } from "../../core/index.js";
-import { ReferenceCountedBase, hasSome } from "../../util/index.js";
+import { ReferenceCountedBase, getOrCreate, hasSome } from "../../util/index.js";
 import { SynchronousCursor, prefixFieldPath, prefixPath } from "../treeCursorUtils.js";
 
 /**
@@ -54,7 +53,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 		idCompressor?: IIdCompressor,
 	) {
 		super();
-		this.idCompressor = idCompressor;
+		this.idCompressor = shape.treeShape.mayContainCompressedIds ? idCompressor : undefined;
 		assert(
 			shape.treeShape.valuesPerTopLevelNode * shape.topLevelLength === values.length,
 			0x4c3 /* invalid number of values for shape */,
@@ -66,7 +65,7 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 	}
 
 	public clone(): UniformChunk {
-		return new UniformChunk(this.shape, this.values.slice());
+		return new UniformChunk(this.shape, [...this.values]);
 	}
 
 	public cursor(): Cursor {
@@ -85,6 +84,23 @@ export class UniformChunk extends ReferenceCountedBase implements TreeChunk {
 export type FieldShape = readonly [FieldKey, TreeShape, number];
 
 /**
+ * Maximum topLevelLength value (exclusive) for which {@link TreeShape.withTopLevelLength}
+ * caches the resulting {@link ChunkShape}. Values at or above this threshold always
+ * create a new instance to prevent unbounded cache growth.
+ *
+ * @remarks
+ * This value is an estimation of the general size needed to cover current workflows,
+ * not a researched constant, and is safe to tune as workloads change.
+ *
+ * Raising this value captures more chunk sizes in the cache, at the cost of
+ * each `TreeShape` retaining up to `chunkShapeCacheLimit - 1` cached entries for the
+ * lifetime of the shape. Lowering it reduces memory held per `TreeShape` but forces
+ * small chunks, where the relative cost of rebuilding `positions` is highest, to pay
+ * the construction cost on every call.
+ */
+const chunkShapeCacheLimit = 8;
+
+/**
  * The "shape" of a tree.
  * Does not contain the actual values from  the tree, but describes everything else,
  * including where the values would be found in a flat values array.
@@ -97,33 +113,62 @@ export class TreeShape {
 	public readonly fieldsOffsetArray: readonly OffsetShape[];
 	public readonly valuesPerTopLevelNode: number;
 
-	// TODO: this is only needed at chunk roots. Optimize it base on that.
+	/**
+	 * Information about every node in this shape.
+	 * The root is first, and all indexes it uses to refer to other nodes are indexes into this array.
+	 * Beyond that the ordering is an implementation detail of this shape.
+	 * @remarks
+	 * Use of this in contexts where there might be multiple top-level nodes requires some additional care.
+	 * For example {@link Cursor} derives each node's actual position info from this shared
+	 * array plus the node's top-level index within the chunk.
+	 */
 	public readonly positions: readonly NodePositionInfo[];
 
 	/**
+	 * Whether chunks using this shape (including any descendant leaf within it) may contain values compressed by the {@link UniformChunk.idCompressor}.
 	 *
+	 * @remarks
+	 * For string leaf nodes, this can be explicitly set to `true` to indicate that the value may be a compressed id
+	 * stored as a number that needs to be decompressed back to a string.
+	 * For non-leaf nodes, this is automatically derived from whether any child shapes have it set.
+	 */
+	public readonly mayContainCompressedIds: boolean;
+
+	/**
+	 * Cache for ChunkShape instances created by {@link withTopLevelLength}.
+	 * `topLevelLength` is always a positive integer (enforced by the {@link ChunkShape} constructor),
+	 * so the cache only ever holds entries for values in `1..chunkShapeCacheLimit - 1` to prevent unbounded growth.
+	 */
+	private readonly chunkShapeCache: Map<number, ChunkShape> = new Map();
+
+	/**
 	 * @param type - {@link TreeNodeSchemaIdentifier} used to compare shapes.
 	 * @param hasValue - whether or not the TreeShape has a value.
 	 * @param fieldsArray - an array of {@link FieldShape} values, which contains a TreeShape for each FieldKey.
 	 *
-	 * @param maybeDecompressedStringAsNumber - used to check whether or not the value could have been compressed by the idCompressor.
-	 * This flag can only be set on string leaf nodes, and will throw a usage error otherwise.
-	 * If set to true, an additional check can be made (example: getting the value of {@link Cursor}) to return the original uncompressed value.
+	 * @param maybeCompressedIdLeaf - whether the value may have been compressed by the {@link UniformChunk.idCompressor}.
+	 * Can only be explicitly set to `true` on string leaf nodes; otherwise this constructor asserts.
+	 * For non-leaf nodes, {@link TreeShape.mayContainCompressedIds} is automatically derived from child shapes.
 	 */
 	public constructor(
 		public readonly type: TreeNodeSchemaIdentifier,
 		public readonly hasValue: boolean,
 		public readonly fieldsArray: readonly FieldShape[],
-		public readonly maybeDecompressedStringAsNumber: boolean = false,
+		maybeCompressedIdLeaf: boolean = false,
 	) {
-		if (
-			maybeDecompressedStringAsNumber &&
-			!(hasValue && type === "com.fluidframework.leaf.string")
-		) {
-			throw new UsageError(
-				"maybeDecompressedStringAsNumber flag can only be set to true for string leaf node.",
+		assert(
+			hasValue === false || fieldsArray.length === 0,
+			0xcef /* only non-leaf can have fields */,
+		);
+		if (maybeCompressedIdLeaf) {
+			assert(
+				hasValue && type === "com.fluidframework.leaf.string",
+				0xcf0 /* only strings can opt into maybeCompressedIdLeaf */,
 			);
 		}
+		// For non-leaf nodes, derive from whether any child shapes contain compressed ids.
+		this.mayContainCompressedIds =
+			maybeCompressedIdLeaf || fieldsArray.some(([, shape]) => shape.mayContainCompressedIds);
 		const fields: Map<FieldKey, OffsetShape> = new Map();
 		let numberOfValues = hasValue ? 1 : 0;
 		const infos: NodePositionInfo[] = [
@@ -146,7 +191,7 @@ export class TreeShape {
 	}
 
 	public equals(other: TreeShape): boolean {
-		// TODO: either dedup instances and/or store a collision resistant hash for fast compare.
+		// TODO: either dedupe instances and/or store a collision resistant hash for fast compare.
 
 		if (
 			!compareArrays(
@@ -157,10 +202,21 @@ export class TreeShape {
 		) {
 			return false;
 		}
-		return this.type === other.type && this.hasValue === other.hasValue;
+		return (
+			this.type === other.type &&
+			this.hasValue === other.hasValue &&
+			this.mayContainCompressedIds === other.mayContainCompressedIds
+		);
 	}
 
 	public withTopLevelLength(topLevelLength: number): ChunkShape {
+		if (topLevelLength < chunkShapeCacheLimit) {
+			return getOrCreate(
+				this.chunkShapeCache,
+				topLevelLength,
+				() => new ChunkShape(this, topLevelLength),
+			);
+		}
 		return new ChunkShape(this, topLevelLength);
 	}
 }
@@ -198,25 +254,19 @@ function clonePositions(
 /**
  * The shape (see `TreeShape`) of a sequence of trees, all with the same shape (like `FieldShape`, but without a field key).
  *
- * This shape is optimized (by caching derived data like the positions array),
- * so that when paired with a value array it can be efficiently traversed like a tree by an {@link ITreeCursorSynchronous}.
- * See {@link uniformChunk} for how to do this.
+ * @remarks
+ * Paired with a value array, this lets a {@link UniformChunk} be traversed like a tree by an
+ * {@link ITreeCursorSynchronous}. The {@link Cursor} derives each node's position info from the
+ * shared {@link TreeShape.positions} plus the node's top-level index.
  *
  * TODO: consider storing shape information in WASM
  */
 export class ChunkShape {
-	public readonly positions: readonly (NodePositionInfo | undefined)[];
-
 	public constructor(
 		public readonly treeShape: TreeShape,
 		public readonly topLevelLength: number,
 	) {
 		assert(topLevelLength > 0, 0x4c6 /* topLevelLength must be greater than 0 */);
-
-		// TODO: avoid duplication from inner loop
-		const positions: (NodePositionInfo | undefined)[] = [undefined];
-		clonePositions(0, [dummyRoot, treeShape, topLevelLength], 0, 0, positions);
-		this.positions = positions;
 	}
 
 	public equals(other: ChunkShape): boolean {
@@ -247,17 +297,19 @@ class OffsetShape {
 }
 
 /**
- * Information about a node at a specific position within a uniform chunk.
+ * Information about a node at a specific position within one top-level tree of a {@link TreeShape}.
  */
 class NodePositionInfo implements UpPath {
 	/**
-	 * @param parent - TODO
-	 * @param parentField - TODO
+	 * @param parent - The parent node's {@link NodePositionInfo} or `undefined` for a root.
+	 * @param parentField - The {@link FieldKey} of the field this node occupies within its parent.
 	 * @param parentIndex - indexWithinParentField
-	 * @param indexOfParentField - which field of the parent `parentIndex` is indexing into to locate this.
-	 * @param indexOfParentPosition - Index of parent NodePositionInfo in positions array. TODO: use offsets to avoid copying at top level?
+	 * @param indexOfParentField - Which field of the parent `parentIndex` is indexing into to locate this.
+	 * @param indexOfParentPosition - Index of this node's parent in {@link TreeShape.positions}
 	 * @param shape - Shape of the top level sequence this node is part of
-	 * @param valueOffset - TODO
+	 * @param topLevelLength - Number of siblings in this node's field. For a root this is unused
+	 * @param valueOffset - Offset of this node's value within one top-level tree's slice of the chunk's flat `values` array;
+	 * only valid when `shape.hasValue` (otherwise it's where the value would have gone, and should not be used to read a value).
 	 */
 	public constructor(
 		public readonly parent: NodePositionInfo | undefined, // TODO; general UpPath to allow prefixing here?
@@ -274,16 +326,28 @@ class NodePositionInfo implements UpPath {
 /**
  * The cursor implementation for `UniformChunk`.
  *
- * Works by tracking its location in the chunk's `positions` array.
+ * @remarks
+ * Tracks a flat `positionIndex` and derives each node's position info from the shape's shared
+ * {@link TreeShape.positions} plus the node's top-level index.
  */
 class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private positionIndex!: number; // When in fields mode, this points to the parent node.
-	// Undefined when in root field
+
+	/** Position info for the current node, or `undefined` when in root field. */
 	private nodePositionInfo: NodePositionInfo | undefined;
 
-	// Cached constants for faster access
+	/** Which top-level node of the chunk the current position is within. Valid when nodePositionInfo !== undefined. */
+	private topLevelIndex: number = 0;
+
+	// Cached constants for faster access.
+	/** The chunk's shape. */
 	private readonly shape: ChunkShape;
-	private readonly positions: readonly (NodePositionInfo | undefined)[];
+	/** The chunk's per-tree shape (shape of each top-level tree). */
+	private readonly treeShape: TreeShape;
+	/** Number of positions in one top-level tree (treeShape.positions.length). */
+	private readonly nodeLength: number;
+	/** Number of values per top-level node (treeShape.valuesPerTopLevelNode). */
+	private readonly stride: number;
 
 	public mode: CursorLocationType = CursorLocationType.Fields;
 
@@ -298,7 +362,9 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	public constructor(private readonly chunk: UniformChunk) {
 		super();
 		this.shape = this.chunk.shape;
-		this.positions = this.shape.positions;
+		this.treeShape = this.shape.treeShape;
+		this.nodeLength = this.treeShape.positions.length;
+		this.stride = this.treeShape.valuesPerTopLevelNode;
 		this.fieldKey = dummyRoot;
 		this.moveToPosition(0);
 	}
@@ -329,18 +395,70 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	/**
 	 * Change the current node within the chunk.
+	 *
+	 * @param positionIndex - flat position index of the newly selected node. This is NOT an index
+	 * within a field, and is not bounds checked.
+	 *
+	 * @remarks
+	 * Decomposes the index into {@link Cursor.topLevelIndex} and {@link Cursor.nodePositionInfo}.
 	 * See `nodeInfo` for getting data about the current node.
 	 *
-	 * @param positionIndex - index of the position of the newly selected node in `positions`.
-	 * This is NOT an index within a field, and is not bounds checked.
 	 */
 	private moveToPosition(positionIndex: number): void {
-		this.nodePositionInfo = this.positions[positionIndex];
 		this.positionIndex = positionIndex;
-		if (this.nodePositionInfo === undefined) {
-			assert(positionIndex === 0, 0x561 /* expected root at start */);
+		if (positionIndex === 0) {
+			this.nodePositionInfo = undefined;
 			assert(this.mode === CursorLocationType.Fields, 0x562 /* expected root to be a field */);
+			return;
 		}
+		const decoded = this.decodePosition(positionIndex);
+		this.topLevelIndex = decoded.topLevelIndex;
+		this.nodePositionInfo = decoded.info;
+	}
+
+	/**
+	 * Decode a flat `positionIndex` into its components.
+	 *
+	 * @param positionIndex - flat position index of the node to decode. Must be greater than 0;
+	 * @returns the node's index within {@link TreeShape.positions} (`withinTree`), which top-level
+	 * tree holds it (`topLevelIndex`), and the corresponding shared {@link NodePositionInfo} (`info`).
+	 */
+	private decodePosition(positionIndex: number): {
+		withinTree: number;
+		topLevelIndex: number;
+		info: NodePositionInfo;
+	} {
+		const offset = positionIndex - 1;
+		// Find the node's index within treeShape.positions, then which top-level tree holds it.
+		const withinTree = offset % this.nodeLength; // remainder
+		const topLevelIndex = (offset - withinTree) / this.nodeLength; // quotient
+		const info = this.treeShape.positions[withinTree] ?? oob();
+		return { withinTree, topLevelIndex, info };
+	}
+
+	/**
+	 * Build a standalone {@link UpPath} for the node at `positionIndex`. O(depth) allocation.
+	 *
+	 * @remarks
+	 * walks the shared per-tree {@link TreeShape.positions} and applies the top-level index
+	 * at each level. Mirrors how the `BasicChunk` cursor allocates paths.
+	 */
+	private materializePath(positionIndex: number): UpPath | undefined {
+		if (positionIndex === 0) {
+			return undefined;
+		}
+		const { withinTree, topLevelIndex, info } = this.decodePosition(positionIndex);
+		if (info.parent === undefined) {
+			// Top-level node: its parent is the (prefixed) chunk root.
+			return { parent: undefined, parentField: info.parentField, parentIndex: topLevelIndex };
+		}
+		return {
+			parent: this.materializePath(
+				positionIndex - withinTree + (info.indexOfParentPosition ?? oob()),
+			),
+			parentField: info.parentField,
+			parentIndex: info.parentIndex,
+		};
 	}
 
 	/**
@@ -457,36 +575,51 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	private enterRootNodeInner(childIndex: number): void {
 		this.mode = CursorLocationType.Nodes;
 		this.fieldKey = undefined;
-		// 1 for the "undefined" at the beginning of the positions array, then stride by top level tree shape.
-		this.moveToPosition(1 + childIndex * this.shape.treeShape.positions.length);
+		// 1 for the "undefined" root-field marker at position 0, then stride by one top-level tree (nodeLength).
+		this.moveToPosition(1 + childIndex * this.nodeLength);
 		assert(this.fieldIndex === childIndex, 0x543 /* should be at selected child */);
 	}
 
 	public getFieldPath(prefix?: PathRootPrefix): FieldUpPath {
 		return prefixFieldPath(prefix, {
 			field: this.getFieldKey(),
-			parent: this.nodePositionInfo,
+			parent: this.materializePath(this.positionIndex),
 		});
 	}
 
 	public getPath(prefix?: PathRootPrefix): UpPath | undefined {
-		return prefixPath(prefix, this.nodeInfo(CursorLocationType.Nodes));
+		this.nodeInfo(CursorLocationType.Nodes); // assert: in nodes mode at a node
+		return prefixPath(prefix, this.materializePath(this.positionIndex));
 	}
 
 	public get fieldIndex(): number {
-		return this.nodeInfo(CursorLocationType.Nodes).parentIndex;
+		const info = this.nodeInfo(CursorLocationType.Nodes);
+		return info.parent === undefined ? this.topLevelIndex : info.parentIndex;
 	}
 
 	public readonly chunkStart: number = 0;
 
+	/**
+	 * Number of nodes in `info`'s field including `info` itself.
+	 *
+	 * @remarks
+	 * For top-level nodes this is the chunk's `topLevelLength`, read from the chunk
+	 * rather than the node, so the shared per-tree {@link TreeShape.positions} stays independent of
+	 * chunk length; the root entry's own `topLevelLength` field is unused. Nested nodes use the
+	 * field length stored on the node.
+	 */
+	private siblingCount(info: NodePositionInfo): number {
+		return info.parent === undefined ? this.shape.topLevelLength : info.topLevelLength;
+	}
+
 	public get chunkLength(): number {
-		return this.nodeInfo(CursorLocationType.Nodes).topLevelLength;
+		return this.siblingCount(this.nodeInfo(CursorLocationType.Nodes));
 	}
 
 	public seekNodes(offset: number): boolean {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
-		const index = offset + info.parentIndex;
-		if (index >= 0 && index < info.topLevelLength) {
+		const index = offset + this.fieldIndex;
+		if (index >= 0 && index < this.siblingCount(info)) {
 			this.moveToPosition(this.positionIndex + offset * info.shape.positions.length);
 			return true;
 		}
@@ -498,8 +631,8 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 		// This is the same as `return this.seekNodes(1);` but slightly faster.
 
 		const info = this.nodeInfo(CursorLocationType.Nodes);
-		const index = info.parentIndex + 1;
-		if (index === info.topLevelLength) {
+		const index = this.fieldIndex + 1;
+		if (index === this.siblingCount(info)) {
 			this.exitNode();
 			return false;
 		}
@@ -509,15 +642,17 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 
 	public exitNode(): void {
 		const info = this.nodeInfo(CursorLocationType.Nodes);
-		this.indexOfField =
-			info.indexOfParentField ??
-			fail(0xb0a /* navigation up to root field not yet supported */); // TODO;
+		const withinTree = this.positionIndex - 1 - this.topLevelIndex * this.nodeLength;
+		// Top-level nodes (no parent) exit to the root field at position 0;
+		// nested nodes' parent is `indexOfParentPosition` within the same top-level instance.
+		this.indexOfField = info.indexOfParentField ?? 0;
 		this.fieldKey = info.parentField;
 		this.mode = CursorLocationType.Fields;
 		this.moveToPosition(
-			info.indexOfParentPosition ??
-				fail(0xb0b /* navigation up to root field not yet supported */),
-		); // TODO
+			info.indexOfParentPosition === undefined
+				? 0
+				: this.positionIndex - withinTree + info.indexOfParentPosition,
+		);
 	}
 
 	public firstField(): boolean {
@@ -548,16 +683,20 @@ class Cursor extends SynchronousCursor implements ChunkedCursor {
 	}
 
 	public get value(): Value {
-		const idCompressor = this.chunk.idCompressor;
 		const info = this.nodeInfo(CursorLocationType.Nodes);
-		// If the maybeDecompressedStringAsNumber flag is set to true, we check if the value is a number.
-		// This flag can only ever be set on string leaf nodes, so if the value is a number, we can assume it is a compressible, known stable id.
-		if (info.shape.hasValue && info.shape.maybeDecompressedStringAsNumber) {
-			const value = this.chunk.values[info.valueOffset];
-			if (typeof value === "number" && idCompressor !== undefined) {
+		if (info.shape.hasValue) {
+			const value = this.chunk.values[info.valueOffset + this.topLevelIndex * this.stride];
+			// If mayContainCompressedIds is set, check if the value is a number (i.e. a compressed ID that needs decompression).
+			if (info.shape.mayContainCompressedIds && typeof value === "number") {
+				const idCompressor = this.chunk.idCompressor;
+				assert(
+					idCompressor !== undefined,
+					0xcf1 /* chunk required idCompressor but did not provide it */,
+				);
 				return idCompressor.decompress(value as SessionSpaceCompressedId);
 			}
+			return value;
 		}
-		return info.shape.hasValue ? this.chunk.values[info.valueOffset] : undefined;
+		return undefined;
 	}
 }

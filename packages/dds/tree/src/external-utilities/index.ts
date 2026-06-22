@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { typeboxValidator, FormatValidatorBasic } from "./typeboxValidator.js";
+export { FormatValidatorBasic } from "./typeboxValidator.js";

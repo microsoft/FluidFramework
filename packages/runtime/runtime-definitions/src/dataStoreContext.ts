@@ -27,6 +27,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
+import type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+import type { ContainerExtensionProvider } from "./containerExtensionProvider.js";
 import type {
 	IFluidDataStoreFactory,
 	IProvideFluidDataStoreFactory,
@@ -67,22 +69,6 @@ export enum FlushMode {
 	 * batch at the end of the turn. The flush call on the runtime can be used to force send the current batch.
 	 */
 	TurnBased,
-}
-
-/**
- * @internal
- */
-export enum FlushModeExperimental {
-	/**
-	 * When in Async flush mode, the runtime will accumulate all operations across JS turns and send them as a single
-	 * batch when all micro-tasks are complete.
-	 *
-	 * This feature requires a version of the loader which supports reference sequence numbers. If an older version of
-	 * the loader is used, the runtime will fall back on FlushMode.TurnBased.
-	 *
-	 * @experimental - Not ready for use
-	 */
-	Async = 2,
 }
 
 /**
@@ -146,6 +132,17 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
 	(event: "op", listener: (op: ISequencedDocumentMessage, runtimeMessage?: boolean) => void);
 	(event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void);
 	(event: "dispose", listener: () => void);
+	/**
+	 * Fires when the container runtime enters or exits staging mode.
+	 * @param stagingModeInfo - An object describing the staging mode state.
+	 * If `inStagingMode` is true, the runtime has entered staging mode.
+	 * If false, it has exited staging mode, and `commit` indicates whether changes were committed or discarded.
+	 *
+	 * @remarks
+	 * This event is not emitted when the container is disposed while in staging mode.
+	 * If the container is disposed, staged changes are silently dropped.
+	 */
+	(event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void);
 }
 
 /**
@@ -192,6 +189,35 @@ export interface IDataStore {
 	 * with it.
 	 */
 	readonly entryPoint: IFluidHandleInternal<FluidObject>;
+}
+
+/**
+ * Controls for managing staged changes in staging mode.
+ *
+ * Provides methods to either commit or discard changes made while in staging mode.
+ *
+ * @see {@link IContainerRuntimeBase.enterStagingMode}
+ *
+ * @legacy @beta
+ * @sealed
+ */
+export interface StageControls {
+	/**
+	 * Exit staging mode and commit to any changes made while in staging mode.
+	 * This will cause them to be sent to the ordering service, and subsequent changes
+	 * made by this container will additionally flow freely to the ordering service.
+	 *
+	 * @remarks
+	 * Squash-rebase semantics during commit are not yet fully specified.
+	 */
+	readonly commitChanges: () => void;
+	/**
+	 * Exit staging mode and discard any changes made while in staging mode.
+	 *
+	 * @remarks
+	 * DDS rollback support may be incomplete — this may throw for some DDS implementations.
+	 */
+	readonly discardChanges: () => void;
 }
 
 /**
@@ -247,7 +273,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/runtime/container-runtime/README.md | README}.
 	 */
 	createDetachedDataStore(
-		pkg: Readonly<string[]>,
+		pkg: readonly string[],
 		loadingGroupId?: string,
 	): IFluidDataStoreContextDetached;
 
@@ -304,62 +330,29 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 		loadingGroupIds: string[],
 		pathParts: string[],
 	): Promise<{ snapshotTree: ISnapshotTree; sequenceNumber: number }>;
-}
 
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface CommitStagedChangesOptionsExperimental {
 	/**
-	 * If true, intermediate states created by changes made while in staging mode will be "squashed" out of the
-	 * ops which were created during staging mode.
-	 * Defaults to false.
-	 * @remarks
-	 * The squash parameter is analogous to `git squash` but differs in a notable way: ops created by a client exiting staging mode
-	 * are not necessarily coalesced into a single op or something like it.
-	 * It still does have the desirable property that "unnecessary changes" (such as inserting some content then removing it) will
-	 * be removed from the set of submitted ops, which means it helps reduce network traffic and the chance of unwanted data being
-	 * persisted--even if only temporarily--in the document.
+	 * Enter Staging Mode, such that ops submitted to the ContainerRuntime will not be sent to the ordering service.
+	 * To exit Staging Mode, call either discardChanges or commitChanges on the Stage Controls returned from this method.
 	 *
-	 * By not attempting to reduce the set of changes to a single op a la `git squash`, we can better preserve the ordering of
-	 * changes that remote clients see such that they better align with the client which submitted the changes.
+	 * @remarks
+	 * Known limitations:
+	 * - DDS rollback support may be incomplete — {@link StageControls.discardChanges} may throw for some DDS implementations.
+	 * - Squash-rebase semantics during {@link StageControls.commitChanges} are not yet fully specified.
+	 *
+	 * @returns Controls for committing or discarding staged changes.
 	 */
-	squash?: boolean;
+	enterStagingMode(): StageControls;
+
+	/**
+	 * If true, the ContainerRuntime is not submitting any new ops to the ordering service.
+	 * Ops submitted to the ContainerRuntime while in Staging Mode will be queued in the PendingStateManager,
+	 * either to be discarded or committed later (via the Stage Controls returned from enterStagingMode).
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
+	 */
+	readonly inStagingMode: boolean;
 }
 
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface StageControlsExperimental {
-	/**
-	 * Exit staging mode and commit to any changes made while in staging mode.
-	 * This will cause them to be sent to the ordering service, and subsequent changes
-	 * made by this container will additionally flow freely to the ordering service.
-	 * @param options - Options when committing changes.
-	 */
-	readonly commitChanges: (options?: Partial<CommitStagedChangesOptionsExperimental>) => void;
-	/**
-	 * Exit staging mode and discard any changes made while in staging mode.
-	 */
-	readonly discardChanges: () => void;
-}
-
-/**
- * @experimental
- * @deprecated - These APIs are unstable, and can be changed at will. They should only be used with direct agreement with the Fluid Framework.
- * @legacy @beta
- * @sealed
- */
-export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase {
-	enterStagingMode?(): StageControlsExperimental;
-	readonly inStagingMode?: boolean;
-}
 /**
  * These policies can be set by the author of the data store via its data store runtime to influence behaviors.
  *
@@ -371,11 +364,17 @@ export interface IContainerRuntimeBaseExperimental extends IContainerRuntimeBase
  */
 export interface IFluidDataStorePolicies {
 	/**
-	 * When set to true, data stores will appear to be readonly while in staging mode.
+	 * When set to true, the data store will appear readonly while in staging mode.
 	 *
 	 * @remarks
-	 * This policy is useful for data stores that do not support staging mode, such as those using consensus DDS.
-	 * It ensures that the data store appears readonly during staging mode to discourage unsupported operations.
+	 * In staging mode, operations are held locally until committed, so consensus-based operations
+	 * (e.g., `ConsensusRegisterCollection`, `ConsensusQueue`, `TaskManager`) won't resolve their promises until
+	 * staging mode exits. Set this to `true` for data stores that depend on consensus acknowledgments
+	 * to prevent modifications that would leave the data store in an unresponsive state.
+	 *
+	 * This provides a best-effort readonly appearance, but no strict enforcement.
+	 *
+	 * @see {@link IContainerRuntimeBase.enterStagingMode}
 	 */
 	readonly readonlyInStagingMode: boolean;
 }
@@ -453,7 +452,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * @param clientId - ID of the client. It's old ID when in disconnected state and
 	 * it's new client ID when we are connecting or connected.
 	 */
-	setConnectionState(connected: boolean, clientId?: string);
+	setConnectionState(connected: boolean, clientId?: string): void;
 
 	/**
 	 * Notifies this object about changes in the readonly state
@@ -479,7 +478,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 * See remarks about squashing contract on `CommitStagedChangesOptionsExperimental`.
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
-	reSubmit(type: string, content: any, localOpMetadata: unknown, squash?: boolean);
+	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;
@@ -503,6 +502,19 @@ export interface IFluidDataStoreChannel extends IDisposable {
 
 	setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
 }
+
+/**
+ * Describes a staging mode transition on the container runtime.
+ * - `{ inStagingMode: true }` — the runtime has entered staging mode.
+ *
+ * - `{ inStagingMode: false, commit: boolean }` — the runtime has exited staging mode.
+ * `commit` is `true` when staged changes were committed (not discarded), or `false` when they were discarded.
+ *
+ * @legacy @beta
+ */
+export type StagingModeChangedEvent =
+	| { readonly inStagingMode: true }
+	| { readonly inStagingMode: false; readonly commit: boolean };
 
 /**
  * @legacy @beta
@@ -535,9 +547,11 @@ export interface IPendingMessagesState {
  * Therefore the semantics of these two interfaces is not really distinct.
  *
  * @privateRemarks
- * In addition to the use for datastores via IFluidDataStoreContext, this is implemented by ContainerRuntime to provide context to the ChannelCollection.
+ * In addition to the use for datastores via IFluidDataStoreContext, this is
+ * partially implemented by ContainerRuntime to provide context to the ChannelCollection.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidParentContext
 	extends IProvideFluidHandleContext,
@@ -551,6 +565,12 @@ export interface IFluidParentContext
 	 * the context should also consider themselves readonly.
 	 */
 	readonly isReadOnly?: () => boolean;
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 */
+	readonly minVersionForCollab: MinimumVersionForCollab;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;
 	readonly baseLogger: ITelemetryBaseLogger;
@@ -680,6 +700,7 @@ export type PackagePath = readonly string[];
  * This context is provided to the implementation of {@link IFluidDataStoreChannel} which powers the datastore.
  *
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContext extends IFluidParentContext {
 	readonly id: string;
@@ -740,7 +761,22 @@ export interface IFluidDataStoreContext extends IFluidParentContext {
 }
 
 /**
+ * Internal extension to {@link IFluidDataStoreContext} for use across FluidFramework packages.
+ *
+ * @remarks
+ * Important: this interface does cross layer boundaries and must follow `@legacy`
+ * layer compatibility patterns.
+ * This is meant to be a staging ground ahead of adding properties to {@link IFluidDataStoreContext}.
+ *
+ * @internal
+ */
+export interface FluidDataStoreContextInternal
+	extends IFluidDataStoreContext,
+		ContainerExtensionProvider {}
+
+/**
  * @legacy @beta
+ * @sealed
  */
 export interface IFluidDataStoreContextDetached extends IFluidDataStoreContext {
 	/**

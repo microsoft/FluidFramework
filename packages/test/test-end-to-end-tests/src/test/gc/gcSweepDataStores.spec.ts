@@ -14,10 +14,10 @@ import {
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerMessageType,
-	ContainerRuntime,
+	type ContainerRuntime,
 	IGCRuntimeOptions,
 	IOnDemandSummarizeOptions,
-	ISummarizer,
+	type ISummarizer,
 	DeletedResponseHeaderKey,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -25,12 +25,10 @@ import {
 	defaultSessionExpiryDurationMs,
 	defaultSweepGracePeriodMs,
 	ISweepMessage,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/gc";
 import {
 	RetriableSummaryError,
 	defaultMaxAttemptsForSubmitFailures,
-	// eslint-disable-next-line import/no-internal-modules
 } from "@fluidframework/container-runtime/internal/test/summary";
 import type { ISummarizeEventProps } from "@fluidframework/container-runtime-definitions/internal";
 import { IErrorBase } from "@fluidframework/core-interfaces";

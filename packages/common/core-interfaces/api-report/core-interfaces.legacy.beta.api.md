@@ -5,7 +5,20 @@
 ```ts
 
 // @public
+export class BrandedType<out Brand> {
+    static [Symbol.hasInstance](value: never): value is never;
+    protected constructor();
+    protected readonly brand: (dummy: never) => Brand;
+}
+
+// @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
+
+// @beta @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
 
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
@@ -23,6 +36,7 @@ export const FluidErrorTypes: {
     readonly dataCorruptionError: "dataCorruptionError";
     readonly dataProcessingError: "dataProcessingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy (undocumented)
@@ -30,6 +44,29 @@ export type FluidErrorTypes = (typeof FluidErrorTypes)[keyof typeof FluidErrorTy
 
 // @public
 export const fluidHandleSymbol: unique symbol;
+
+// @beta @sealed
+export interface FluidIterable<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @beta @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    next(): {
+        value: T;
+        done?: false;
+    } | {
+        value: any;
+        done: true;
+    };
+}
+
+// @beta @sealed
+export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+    delete(key: K): void;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    set(key: K, value: V): void;
+}
 
 // @public
 export type FluidObject<T = unknown> = {
@@ -41,6 +78,19 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @beta @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
+}
 
 // @public
 export interface IConfigProviderBase {
@@ -292,6 +342,18 @@ export interface IFluidLoadable extends IProvideFluidLoadable {
 }
 
 // @beta @legacy
+export interface ILayerIncompatibilityError extends IErrorBase {
+    readonly actualDifferenceInMonths: number;
+    readonly compatibilityRequirementsInMonths: number;
+    readonly details: string;
+    readonly errorType: typeof FluidErrorTypes.layerIncompatibilityError;
+    readonly incompatibleLayer: string;
+    readonly incompatibleLayerVersion: string;
+    readonly layer: string;
+    readonly layerVersion: string;
+}
+
+// @beta @legacy
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
     readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
     readonly payloadShareError: unknown;
@@ -368,7 +430,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    minLogLevel?: LogLevel;
+    minLogLevel?: LogLevel | undefined;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 
@@ -396,14 +458,21 @@ export type Listeners<T extends object> = {
 };
 
 // @public
-export const LogLevel: {
-    readonly verbose: 10;
-    readonly default: 20;
-    readonly error: 30;
-};
+export const LogLevel: LogLevelConst;
 
 // @public
 export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    // @deprecated
+    readonly default: 20;
+    // @deprecated
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
+}
 
 // @public
 export type Off = () => void;

@@ -5,9 +5,9 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 
-import { type SequenceIntervalClass } from "../intervals/index.js";
+import type { SequenceIntervalClass } from "../intervals/index.js";
 
-import { type SequenceIntervalIndex } from "./intervalIndex.js";
+import type { SequenceIntervalIndex } from "./intervalIndex.js";
 
 export interface IIdIntervalIndex
 	extends SequenceIntervalIndex,

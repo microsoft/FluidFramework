@@ -19,7 +19,7 @@ let idleTaskScheduled = false;
  * @param task - The task to be executed
  * @param options - Optional configuration for the task execution
  */
-export function scheduleIdleTask(task: () => void) {
+export function scheduleIdleTask(task: () => void): void {
 	taskQueue.push({
 		task,
 	});
@@ -30,7 +30,7 @@ export function scheduleIdleTask(task: () => void) {
 /**
  * Ensures an idle callback has been scheduled for the remaining tasks
  */
-function ensureIdleCallback(timeout: number = 0) {
+function ensureIdleCallback(timeout: number = 0): void {
 	if (!idleTaskScheduled) {
 		// Exception added when eslint rule was added, this should be revisited when modifying this code
 		if (self.requestIdleCallback) {
@@ -60,7 +60,7 @@ function ensureIdleCallback(timeout: number = 0) {
 function runTasks(
 	filter?: (taskQueueItem: TaskQueueItem) => boolean,
 	shouldContinueRunning?: () => boolean,
-) {
+): void {
 	// The next value for the task queue
 	const newTaskQueue: TaskQueueItem[] = [];
 
@@ -85,7 +85,7 @@ function runTasks(
 function idleTaskCallback(deadline: {
 	timeRemaining: () => number;
 	readonly didTimeout: boolean;
-}) {
+}): void {
 	// Minimum time that must be available on deadline to run any more tasks
 	const minTaskTime = 10;
 	runTasks(undefined, () => deadline.timeRemaining() > minTaskTime);

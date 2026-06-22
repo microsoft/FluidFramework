@@ -13,17 +13,12 @@ import {
 	TreeStoredSchemaRepository,
 	rootFieldKey,
 } from "../../../core/index.js";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { Context } from "../../../feature-libraries/flex-tree/context.js";
 import {
 	defaultSchemaPolicy,
 	MockNodeIdentifierManager,
 } from "../../../feature-libraries/index.js";
-import {
-	MockTreeCheckout,
-	fieldCursorFromInsertable,
-	forestWithContent,
-} from "../../utils.js";
 import {
 	toInitialSchema,
 	type ImplicitFieldSchema,
@@ -31,6 +26,11 @@ import {
 	type InsertableField,
 	type UnsafeUnknownSchema,
 } from "../../../simple-tree/index.js";
+import {
+	MockTreeCheckout,
+	fieldCursorFromInsertable,
+	forestWithContent,
+} from "../../utils.js";
 
 export function getReadonlyContext(
 	forest: IEditableForest,

@@ -17,16 +17,17 @@ import {
 	type TraitLabel,
 } from "@fluid-experimental/tree";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { type IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type ConfigTypes, type IConfigProviderBase } from "@fluidframework/core-interfaces";
-import { type IChannel } from "@fluidframework/datastore-definitions/internal";
+import { type IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	toIDeltaManagerFull,
 	createSummarizerFromFactory,
+	getRequiredPendingLocalState,
 	summarizeNow,
+	toIDeltaManagerFull,
+	type ITestObjectProvider,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
 import { ITree, SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
@@ -79,7 +80,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		private channel?: IChannel;
 
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
@@ -185,12 +186,6 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	let provider: ITestObjectProvider;
 
-	const loaderProps = {
-		configProvider: configProvider({
-			"Fluid.Container.enableOfflineLoad": true,
-		}),
-	};
-
 	beforeEach("setup", async () => {
 		provider = getTestObjectProvider();
 		// Creates the document as v1 of the code with a SharedCell
@@ -276,10 +271,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim can apply stashed v1 ops to v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: IContainerExperimental = await provider.loadContainer(
-			runtimeFactory2,
-			loaderProps,
-		);
+		const container1: IContainer = await provider.loadContainer(runtimeFactory2);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -295,13 +287,14 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		const pendingState = await container1.getPendingLocalState?.();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 		const container2 = await loader.resolve({ url }, pendingState);
-		await provider.ensureSynchronized();
+		// The following line causes a timeout when the test is ran against FRS.
+		// await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const legacyTree2 = shim2.currentTree as LegacySharedTree;
@@ -311,10 +304,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim can apply stashed v2 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: IContainerExperimental = await provider.loadContainer(
-			runtimeFactory2,
-			loaderProps,
-		);
+		const container1: IContainer = await provider.loadContainer(runtimeFactory2);
 		const url = await container1.getAbsoluteUrl("");
 		assert(url !== undefined, "Container url should be defined");
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
@@ -334,13 +324,14 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node1.quantity = 3;
 		node1.quantity = 4;
 		node1.quantity = 5;
-		const pendingState = await container1.getPendingLocalState?.();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
 		const loader = provider.createLoader([[provider.defaultCodeDetails, runtimeFactory2]]);
 		const container2 = await loader.resolve({ url }, pendingState);
-		await provider.ensureSynchronized();
+		// The following line causes a timeout when the test is ran against FRS.
+		// await provider.ensureSynchronized();
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
 		const shim2 = testObj2.getTree<MigrationShim>();
 		const newTree2 = shim2.currentTree as ITree;
@@ -374,13 +365,9 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		);
 		await provider.ensureSynchronized();
 		const { summaryVersion } = await summarizeNow(summarizer);
-		const container2: IContainerExperimental = await provider.loadContainer(
-			runtimeFactory2,
-			loaderProps,
-			{
-				[LoaderHeader.version]: summaryVersion,
-			},
-		);
+		const container2: IContainer = await provider.loadContainer(runtimeFactory2, undefined, {
+			[LoaderHeader.version]: summaryVersion,
+		});
 		await waitForContainerConnection(container2);
 
 		const testObj2 = (await container2.getEntryPoint()) as TestDataObject;
@@ -397,7 +384,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		node2.quantity = 3;
 		node2.quantity = 4;
 		node2.quantity = 5;
-		const pendingState = await container2.getPendingLocalState?.();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 
@@ -414,10 +401,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("Shims drop stashed v1 ops to v2 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: IContainerExperimental = await provider.loadContainer(
-			runtimeFactory2,
-			loaderProps,
-		);
+		const container1: IContainer = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
@@ -439,7 +423,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		updateQuantity(legacyTree1, 3);
 		updateQuantity(legacyTree1, 4);
 		updateQuantity(legacyTree1, 5);
-		const pendingState = await container1.getPendingLocalState?.();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		shim2.submitMigrateOp();
@@ -483,10 +467,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("MigrationShim apply stashed v1 migrate ops in v1 state", async () => {
 		// Setup containers and get Migration Shims instead of LegacySharedTrees
-		const container1: IContainerExperimental = await provider.loadContainer(
-			runtimeFactory2,
-			loaderProps,
-		);
+		const container1: IContainer = await provider.loadContainer(runtimeFactory2);
 		const testObj1 = (await container1.getEntryPoint()) as TestDataObject;
 		const shim1 = testObj1.getTree<MigrationShim>();
 		const legacyTree1 = shim1.currentTree as LegacySharedTree;
@@ -503,7 +484,7 @@ describeCompat("Stamped v2 ops", "NoCompat", (getTestObjectProvider, apis) => {
 		await toIDeltaManagerFull(container1.deltaManager).outbound.pause();
 
 		shim1.submitMigrateOp();
-		const pendingState = await container1.getPendingLocalState?.();
+		const pendingState = await getRequiredPendingLocalState(container1);
 		container1.close();
 		assert(pendingState !== undefined, "Pending state should be defined");
 		updateQuantity(legacyTree2, 1);

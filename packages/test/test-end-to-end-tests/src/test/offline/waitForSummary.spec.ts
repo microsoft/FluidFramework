@@ -15,7 +15,6 @@ import {
 	type IContainer,
 	type IHostLoader,
 } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import type {
 	ConfigTypes,
 	IConfigProviderBase,
@@ -24,19 +23,19 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { ISharedMap } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	type ITestContainerConfig,
-	createSummarizer,
-	summarizeNow,
-	type ChannelFactoryRegistry,
-	createAndAttachContainer,
 	DataObjectFactoryType,
-	type ITestFluidObject,
-	waitForContainerConnection,
+	createAndAttachContainer,
+	createSummarizer,
+	getRequiredPendingLocalState,
+	summarizeNow,
 	timeoutAwait,
+	type ChannelFactoryRegistry,
+	type ITestContainerConfig,
+	type ITestFluidObject,
+	type ITestObjectProvider,
+	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
-import { SchemaFactory, ITree, TreeViewConfiguration } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+import type { ITree } from "@fluidframework/tree";
 
 import { loadContainerOffline, generatePendingState } from "./offlineTestsUtils.js";
 
@@ -45,7 +44,7 @@ const loadSummarizerAndSummarize = async (
 	container: IContainer,
 	testContainerConfig: ITestContainerConfig,
 	summaryVersion?: string,
-) => {
+): Promise<string> => {
 	const { summarizer, container: summarizingContainer } = await createSummarizer(
 		provider,
 		container,
@@ -68,14 +67,15 @@ describeCompat(
 	(getTestObjectProvider, apis) => {
 		const mapId = "map";
 		const treeId = "tree";
-		const { SharedMap } = apis.dds;
+		const { SharedMap, SharedTree } = apis.dds;
+		const { SchemaFactory, TreeViewConfiguration } = apis.dataRuntime.packages.tree;
 		const registry: ChannelFactoryRegistry = [
 			[mapId, SharedMap.getFactory()],
 			[treeId, SharedTree.getFactory()],
 		];
 		let provider: ITestObjectProvider;
 		let loader: IHostLoader;
-		let container: IContainerExperimental;
+		let container: IContainer;
 		let url: any;
 		let map1: MinimalMap;
 		let dataStore1: ITestFluidObject;
@@ -84,7 +84,6 @@ describeCompat(
 			registry,
 			loaderProps: {
 				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
 					"Fluid.Sequence.intervalStickinessEnabled": true,
 				}),
 			},
@@ -134,7 +133,9 @@ describeCompat(
 			return view.root.map;
 		}
 
-		async function initialize(initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>) {
+		async function initialize(
+			initializeMap: (d: ITestFluidObject) => Promise<MinimalMap>,
+		): Promise<void> {
 			provider = getTestObjectProvider({ syncSummarizer: true });
 			loader = provider.makeTestLoader(mainContainerConfig);
 			container = await createAndAttachContainer(
@@ -255,12 +256,12 @@ describeCompat(
 					[LoaderHeader.loadMode]: { deltaConnection: "none" },
 					[LoaderHeader.version]: summaryVersion,
 				};
-				const container2: IContainerExperimental = await loader.resolve({ url, headers });
+				const container2: IContainer = await loader.resolve({ url, headers });
 				const dataStore2 = (await container2.getEntryPoint()) as ITestFluidObject;
 				const map2 = await getMap(dataStore2);
 				// generate ops with RSN === summary SN
 				map2.set("2", "2");
-				const stashBlob = await container2.getPendingLocalState?.();
+				const stashBlob = await getRequiredPendingLocalState(container2);
 				container2.close();
 				assert(stashBlob);
 				const pendingState = JSON.parse(stashBlob);

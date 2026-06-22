@@ -16,7 +16,10 @@ import {
 	MessageType,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import type { IEnvelope } from "@fluidframework/runtime-definitions/internal";
+import type {
+	FluidDataStoreMessage,
+	IEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import type Deque from "double-ended-queue";
 import Sinon from "sinon";
@@ -74,6 +77,14 @@ type StubbedRuntimeStateHandler = {
 		ReturnType<IRuntimeStateHandler[K]>
 	>;
 };
+
+const testAddressedDataStoreMessage = {
+	address: "test-address",
+	contents: {
+		type: "op",
+		content: "test-content",
+	},
+} as const satisfies IEnvelope<FluidDataStoreMessage>;
 
 describe("Pending State Manager", () => {
 	const sandbox = Sinon.createSandbox();
@@ -135,7 +146,7 @@ describe("Pending State Manager", () => {
 			rollbackCalled = true;
 			rollbackContent.push(m);
 			if (rollbackShouldThrow) {
-				throw new Error();
+				throw new Error("test error");
 			}
 		};
 
@@ -144,7 +155,7 @@ describe("Pending State Manager", () => {
 			rollbackContent = [];
 			rollbackShouldThrow = false;
 
-			batchManager = new BatchManager({ canRebase: true });
+			batchManager = new BatchManager({ disableGroupedBatching: false });
 		});
 
 		it("should do nothing when rolling back empty pending stack", () => {
@@ -213,7 +224,7 @@ describe("Pending State Manager", () => {
 			pendingStateManager = new PendingStateManager(
 				{
 					applyStashedOp: () => {
-						throw new Error();
+						throw new Error("test error");
 					},
 					clientId: () => "oldClientId",
 					connected: () => true,
@@ -673,11 +684,11 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				processFullBatch(messages, 0 /* batchStartCsn */, false /* groupedBatch */);
-				let pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				let pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
-				pendingState = pendingStateManager.getLocalState(5).pendingStates;
+				pendingState = pendingStateManager.getLocalState(5).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 5);
-				pendingState = pendingStateManager.getLocalState(10).pendingStates;
+				pendingState = pendingStateManager.getLocalState(10).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 0);
 			});
 
@@ -691,7 +702,7 @@ describe("Pending State Manager", () => {
 				}));
 				submitBatch(messages);
 				assert.throws(() => pendingStateManager.getLocalState(1));
-				const pendingState = pendingStateManager.getLocalState(0).pendingStates;
+				const pendingState = pendingStateManager.getLocalState(0).pending.pendingStates;
 				assert.strictEqual(pendingState.length, 10);
 			});
 		});
@@ -804,7 +815,7 @@ describe("Pending State Manager", () => {
 			);
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			oldPsm.onFlushEmptyBatch(placeholderMessage, 0, false /* staged */);
-			const localStateWithEmptyBatch = oldPsm.getLocalState(0);
+			const localStateWithEmptyBatch = oldPsm.getLocalState(0).pending;
 
 			const applyStashedOps: string[] = [];
 			const pendingStateManager = new PendingStateManager(
@@ -822,6 +833,116 @@ describe("Pending State Manager", () => {
 			await pendingStateManager.applyStashedOpsAt();
 			assert.strictEqual(applyStashedOps.length, 0);
 			assert.strictEqual(pendingStateManager.pendingMessagesCount, 1);
+		});
+
+		describe("apply lifecycle", () => {
+			const stashedMessage = (refSeq: number, csn: number): IPendingMessage => ({
+				type: "message",
+				content: '{"type":"component"}',
+				referenceSequenceNumber: refSeq,
+				localOpMetadata: undefined,
+				opMetadata: undefined,
+				batchInfo: { clientId: "CLIENT_ID", batchStartCsn: csn, length: 1, staged: false },
+				runtimeOp: undefined,
+			});
+
+			const stateHandler = (): IRuntimeStateHandler => ({
+				applyStashedOp: async () => undefined,
+				clientId: () => "clientId",
+				connected: () => true,
+				reSubmitBatch: () => {},
+				isActiveConnection: () => false,
+				isAttached: () => true,
+			});
+
+			it("eagerly enters apply window in constructor when stashed state present", () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(afterCount, 0);
+			});
+
+			it("does not enter apply window when no stashed state", () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(stateHandler(), undefined, logger, {
+					onAfterStashedOpsApplied: () => afterCount++,
+				});
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(afterCount, 0);
+			});
+
+			it("closes apply window when initialMessages drains", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1), stashedMessage(11, 2)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				await psm.applyStashedOpsAt();
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(afterCount, 1);
+			});
+
+			it("stays in apply window across partial drains", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1), stashedMessage(11, 2)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				) as unknown as PendingStateManager_WithPrivates;
+
+				await (psm as unknown as PendingStateManager).applyStashedOpsAt(10);
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(afterCount, 0);
+				assert.strictEqual(psm.initialMessages.length, 1);
+
+				await (psm as unknown as PendingStateManager).applyStashedOpsAt(11);
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+				assert.strictEqual(afterCount, 1);
+				assert.strictEqual(psm.initialMessages.length, 0);
+			});
+
+			it("close hook fires exactly once even with repeated applyStashedOpsAt calls", async () => {
+				let afterCount = 0;
+				const psm = new PendingStateManager(
+					stateHandler(),
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				await psm.applyStashedOpsAt();
+				await psm.applyStashedOpsAt();
+				await psm.applyStashedOpsAt(100);
+				assert.strictEqual(afterCount, 1);
+				assert.strictEqual(psm.isApplyingStashedOps, false);
+			});
+
+			it("leaves lifecycle in 'applying' and does not fire close hook when the last apply throws", async () => {
+				let afterCount = 0;
+				const failingHandler: IRuntimeStateHandler = {
+					...stateHandler(),
+					applyStashedOp: async () => {
+						throw new Error("apply failed");
+					},
+				};
+				const psm = new PendingStateManager(
+					failingHandler,
+					{ pendingStates: [stashedMessage(10, 1)] },
+					logger,
+					{ onAfterStashedOpsApplied: () => afterCount++ },
+				);
+				await assert.rejects(psm.applyStashedOpsAt());
+				assert.strictEqual(psm.isApplyingStashedOps, true);
+				assert.strictEqual(afterCount, 0);
+			});
 		});
 	});
 
@@ -919,18 +1040,24 @@ describe("Pending State Manager", () => {
 
 		it("has both pending messages and initial messages", () => {
 			const pendingStateManager = createPendingStateManager(forInitialMessages);
-			// let each message be its own batch
+			// Flushing while initialMessages is non-empty is a usage error (apply
+			// window is open), so push directly into the private pendingMessages
+			// queue to set up the dual-populated state under test.
 			for (const message of forFlushedMessages) {
-				pendingStateManager.onFlushBatch(
-					[
-						{
-							runtimeOp: message.runtimeOp,
-							referenceSequenceNumber: message.referenceSequenceNumber,
-						},
-					],
-					0,
-					false /* staged */,
-				);
+				pendingStateManager.pendingMessages.push({
+					type: "message",
+					content: '{"type":"component"}',
+					referenceSequenceNumber: message.referenceSequenceNumber,
+					localOpMetadata: undefined,
+					opMetadata: undefined,
+					batchInfo: {
+						clientId: "CLIENT_ID",
+						batchStartCsn: 0,
+						length: 1,
+						staged: false,
+					},
+					runtimeOp: message.runtimeOp,
+				});
 			}
 			assert.strictEqual(
 				pendingStateManager.hasPendingMessages(),
@@ -1064,7 +1191,6 @@ describe("Pending State Manager", () => {
 	});
 
 	describe("hasPendingUserChanges", () => {
-		// eslint-disable-next-line unicorn/consistent-function-scoping
 		function createPendingStateManager(
 			pendingMessages: IPendingMessage[] = [],
 			initialMessages: IPendingMessage[] = [],
@@ -1176,7 +1302,10 @@ describe("Pending State Manager", () => {
 				stubs.reSubmitBatch.callsFake((batch, metadata) => {
 					// Here's where we implement [firstBatchSize === 0] case - Flush an empty batch on resubmit
 					if (firstBatchSize === 0 && stubs.reSubmitBatch.callCount === 1) {
-						assert(metadata.batchId, "PRECONDITION: Expected batchId for empty batch");
+						assert(
+							metadata.batchId !== undefined,
+							"PRECONDITION: Expected batchId for empty batch",
+						);
 						const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch(
 							metadata.batchId,
 							refSeqResubmit_15,
@@ -1211,7 +1340,7 @@ describe("Pending State Manager", () => {
 						{
 							runtimeOp: {
 								type: ContainerMessageType.FluidDataStoreOp,
-								contents: {} as IEnvelope,
+								contents: testAddressedDataStoreMessage,
 							},
 							referenceSequenceNumber: RefSeqInitial_10,
 							metadata: undefined, // Single message batch has no batch metadata
@@ -1228,7 +1357,7 @@ describe("Pending State Manager", () => {
 							Array.from<unknown, LocalBatchMessage>({ length: secondBatchSize }, (_, i) => ({
 								runtimeOp: {
 									type: ContainerMessageType.FluidDataStoreOp,
-									contents: {} as IEnvelope,
+									contents: testAddressedDataStoreMessage,
 								},
 								referenceSequenceNumber: RefSeqInitial_10,
 								localOpMetadata: `SECOND_BATCH_MSG${i + 1}`,
@@ -1307,7 +1436,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 13,
 						metadata: undefined,
@@ -1322,7 +1451,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 12,
 						metadata: undefined,
@@ -1381,7 +1510,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1399,7 +1528,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 15,
 						metadata: undefined,
@@ -1425,7 +1554,7 @@ describe("Pending State Manager", () => {
 					{
 						runtimeOp: {
 							type: ContainerMessageType.FluidDataStoreOp,
-							contents: {} as IEnvelope,
+							contents: testAddressedDataStoreMessage,
 						},
 						referenceSequenceNumber: 16,
 						metadata: undefined,

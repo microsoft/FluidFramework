@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-end-to-end-tests",
-	"version": "2.61.0",
+	"version": "2.110.0",
 	"description": "Azure client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,12 +15,14 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
-		"eslint": "eslint --format stylish src",
-		"eslint:fix": "eslint --format stylish src --fix --fix-type problem,suggestion,layout",
+		"eslint": "eslint --quiet --format stylish src",
+		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"format": "npm run format:biome",
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
@@ -30,10 +32,11 @@
 		"test:coverage": "c8 npm test",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:azure": "cross-env FLUID_CLIENT=azure npm run test:realsvc:azure:run -- --driver=r11s --r11sEndpointName=frs",
-		"test:realsvc:azure:run": "mocha --recursive \"lib/test/**/*.spec.*js\" --exit --timeout 20000 --config src/test/.mocharc.cjs",
+		"test:realsvc:azure:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.js",
 		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7071 test:realsvc:tinylicious:run",
 		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious:run": "npm run test:realsvc:azure:run -- --driver=t9s",
+		"test:realsvc:tinylicious:scale": "cross-env FLUID_TEST_SCALE=true npm run test:realsvc:tinylicious",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=msgs npm run test:realsvc",
 		"test:realsvc:veryverbose": "cross-env FLUID_TEST_VERBOSE=msgs+telem npm run test:realsvc"
 	},
@@ -81,43 +84,41 @@
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree": "workspace:~",
-		"axios": "^1.8.4",
-		"cross-env": "^7.0.3",
-		"mocha": "^10.8.2",
+		"cross-env": "^10.1.0",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"sinon": "^18.0.1",
 		"start-server-and-test": "^2.0.3",
-		"tinylicious": "^7.0.0",
+		"tinylicious": "^7.0.1",
 		"uuid": "^11.1.0"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "~1.9.3",
+		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.58.1",
+		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/driver-definitions": "workspace:~",
-		"@fluidframework/eslint-config-fluid": "^6.0.0",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
 		"@types/nock": "^9.3.0",
-		"@types/node": "^18.19.0",
+		"@types/node": "catalog:types",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
-		"eslint": "~8.55.0",
+		"eslint": "catalog:eslint",
+		"jiti": "^2.6.1",
 		"nock": "^13.3.3",
-		"rimraf": "^4.4.0",
+		"rimraf": "^6.1.3",
 		"typescript": "~5.4.5"
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:esm": [
 				"^api-extractor:esnext",
 				"^build:esnext",
-				"^tsc"
+				"build:genver"
 			]
 		}
 	},
 	"typeValidation": {
-		"disabled": true,
-		"broken": {},
-		"entrypoint": "internal"
+		"disabled": true
 	}
 }

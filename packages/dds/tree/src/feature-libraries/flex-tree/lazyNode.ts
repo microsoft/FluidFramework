@@ -33,6 +33,7 @@ import {
 } from "./flexTreeTypes.js";
 import { LazyEntity } from "./lazyEntity.js";
 import { makeField } from "./lazyField.js";
+import { currentObserver } from "./observer.js";
 
 /**
  * Get or create a {@link HydratedFlexTreeNode} for the given context at node indicated by the cursor.
@@ -118,18 +119,23 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	public readonly fields: Pick<Map<FieldKey, FlexTreeField>, typeof Symbol.iterator | "get"> =
 		{
 			get: (key: FieldKey): FlexTreeField | undefined => this.tryGetField(key),
-			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> =>
-				mapCursorFields(this.cursor, (cursor) => {
+			[Symbol.iterator]: (): IterableIterator<[FieldKey, FlexTreeField]> => {
+				currentObserver?.observeNodeFields(this);
+
+				return mapCursorFields(this.cursor, (cursor) => {
 					const key: FieldKey = cursor.getFieldKey();
 					const pair: [FieldKey, FlexTreeField] = [
 						key,
 						makeField(this.context, this.storedSchema.getFieldSchema(key).kind, cursor),
 					];
 					return pair;
-				}).values(),
+				}).values();
+			},
 		};
 
 	public tryGetField(fieldKey: FieldKey): FlexTreeField | undefined {
+		currentObserver?.observeNodeField(this, fieldKey);
+
 		const schema = this.storedSchema.getFieldSchema(fieldKey);
 		return inCursorField(this.cursor, fieldKey, (cursor) => {
 			if (cursor.getFieldLength() === 0) {
@@ -140,6 +146,8 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	}
 
 	public getBoxed(key: FieldKey): FlexTreeField {
+		currentObserver?.observeNodeField(this, key);
+
 		const fieldSchema = this.storedSchema.getFieldSchema(key);
 		return inCursorField(this.cursor, key, (cursor) => {
 			return makeField(this.context, fieldSchema.kind, cursor);
@@ -157,6 +165,8 @@ export class LazyTreeNode extends LazyEntity<Anchor> implements HydratedFlexTree
 	}
 
 	public get parentField(): { readonly parent: FlexTreeField; readonly index: number } {
+		currentObserver?.observeParentOf(this);
+
 		const cursor = this.cursor;
 		const index = this.anchorNode.parentIndex;
 		assert(cursor.fieldIndex === index, 0x786 /* mismatched indexes */);

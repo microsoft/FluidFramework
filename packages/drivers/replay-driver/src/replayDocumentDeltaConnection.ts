@@ -4,24 +4,25 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
+	IClientConfiguration,
+	IConnected,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
-	IDocumentService,
-	IClientConfiguration,
-	IConnected,
 	IDocumentMessage,
+	IDocumentService,
+	ISequencedDocumentMessage,
 	ISignalClient,
+	ISignalMessage,
+	ISnapshotTree,
 	ITokenClaims,
 	IVersion,
-	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";
 
@@ -54,7 +55,7 @@ export class ReplayControllerStatic extends ReplayController {
 		}
 	}
 
-	public async initStorage(documentService: IDocumentService) {
+	public async initStorage(documentService: IDocumentService): Promise<boolean> {
 		return true;
 	}
 
@@ -62,7 +63,7 @@ export class ReplayControllerStatic extends ReplayController {
 		return [];
 	}
 
-	public async getSnapshotTree(version?: IVersion) {
+	public async getSnapshotTree(version?: IVersion): Promise<ISnapshotTree | null> {
 		return version ? Promise.reject(new Error("Invalid operation")) : null;
 	}
 
@@ -74,14 +75,14 @@ export class ReplayControllerStatic extends ReplayController {
 		return 0;
 	}
 
-	public fetchTo(currentOp: number) {
+	public fetchTo(currentOp: number): number | undefined {
 		if (!(this.unitIsTime !== true && this.replayTo >= 0)) {
 			return undefined;
 		}
 		return this.replayTo;
 	}
 
-	public isDoneFetch(currentOp: number, lastTimeStamp?: number) {
+	public isDoneFetch(currentOp: number, lastTimeStamp?: number): boolean {
 		if (this.replayTo >= 0) {
 			if (this.unitIsTime === true) {
 				return (
@@ -95,13 +96,14 @@ export class ReplayControllerStatic extends ReplayController {
 		return lastTimeStamp === undefined; // No more ops
 	}
 
-	public skipToIndex(fetchedOps: ISequencedDocumentMessage[]) {
+	public skipToIndex(fetchedOps: ISequencedDocumentMessage[]): number {
 		if (this.replayFrom <= 0) {
 			return 0;
 		}
 		if (this.unitIsTime === true) {
 			for (const [i, { timestamp }] of fetchedOps.entries()) {
 				if (timestamp !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (this.firstTimeStamp === undefined) {
 						this.firstTimeStamp = timestamp;
 					}
@@ -123,7 +125,7 @@ export class ReplayControllerStatic extends ReplayController {
 		let current = this.skipToIndex(fetchedOps);
 
 		return new Promise((resolve) => {
-			const replayNextOps = () => {
+			const replayNextOps = (): void => {
 				// Emit the ops from replay to the end every "deltainterval" milliseconds
 				// to simulate the socket stream
 				const currentOp = fetchedOps[current];
@@ -171,7 +173,7 @@ export class ReplayControllerStatic extends ReplayController {
 				scheduleNext(nextInterval);
 				emitter(playbackOps);
 			};
-			const scheduleNext = (nextInterval: number) => {
+			const scheduleNext = (nextInterval: number): void => {
 				if (nextInterval >= 0 && current < fetchedOps.length) {
 					setTimeout(replayNextOps, nextInterval);
 				} else {
@@ -230,8 +232,8 @@ export class ReplayDocumentDeltaConnection
 		user: {
 			id: "",
 		},
-		iat: Math.round(new Date().getTime() / 1000),
-		exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+		iat: Math.round(Date.now() / 1000),
+		exp: Math.round(Date.now() / 1000) + 60 * 60, // 1 hour expiration
 		ver: "1.0",
 	};
 
@@ -283,13 +285,14 @@ export class ReplayDocumentDeltaConnection
 		throw new Error("ReplayDocumentDeltaConnection.submit() can't be called");
 	}
 
-	public async submitSignal(message: any) {}
+	// eslint-disable-next-line @typescript-eslint/no-misused-promises
+	public async submitSignal(message: unknown): Promise<void> {}
 
 	private _disposed = false;
-	public get disposed() {
+	public get disposed(): boolean {
 		return this._disposed;
 	}
-	public dispose() {
+	public dispose(): void {
 		this._disposed = true;
 	}
 

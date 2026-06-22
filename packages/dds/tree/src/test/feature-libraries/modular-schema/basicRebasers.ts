@@ -4,20 +4,29 @@
  */
 
 import { strict as assert } from "node:assert";
-import { type TUnsafe, Type } from "@sinclair/typebox";
 
-import { makeCodecFamily } from "../../../codec/index.js";
-import { makeDetachedNodeId, Multiplicity } from "../../../core/index.js";
+import type { TUnsafe } from "@sinclair/typebox";
+
+import { eraseEncodedType, makeCodecFamily } from "../../../codec/index.js";
+import {
+	makeDetachedNodeId,
+	Multiplicity,
+	type FieldKindIdentifier,
+} from "../../../core/index.js";
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
-	FieldKindWithEditor,
+	FlexFieldKind,
 	referenceFreeFieldChangeRebaser,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
-import type { Mutable } from "../../../util/index.js";
+import {
+	brandConst,
+	JsonCompatibleReadOnlySchema,
+	type Mutable,
+} from "../../../util/index.js";
 import { makeValueCodec } from "../../codec/index.js";
 
 /**
@@ -81,10 +90,13 @@ export type ValueChangeset = ReplaceOp<number>;
 
 export const valueHandler = {
 	rebaser: replaceRebaser(),
-	codecsFactory: () =>
-		makeCodecFamily([
-			[1, makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(Type.Any())],
-		]),
+	codecsFactory: () => {
+		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+			// As this is just a test rebaser, it is acceptable to not use a proper schema, and thus not detect invalid data here.
+			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
+		);
+		return makeCodecFamily([[1, eraseEncodedType(inner)]]);
+	},
 	editor: { buildChildChanges: () => assert.fail("Child changes not supported") },
 
 	intoDelta: (change): FieldChangeDelta => {
@@ -94,7 +106,7 @@ export const valueHandler = {
 			// These would have no real meaning to a delta consumer, but these delta are only used for testing.
 			const detach = makeDetachedNodeId(undefined, change.old);
 			const attach = makeDetachedNodeId(undefined, change.new);
-			delta.local = [{ count: 1, attach, detach }];
+			delta.local = { marks: [{ count: 1, attach, detach }] };
 		}
 		return delta;
 	},
@@ -106,10 +118,8 @@ export const valueHandler = {
 	getCrossFieldKeys: (_change) => [],
 } satisfies FieldChangeHandler<ValueChangeset>;
 
-export const valueField = new FieldKindWithEditor(
-	"Value",
+export const valueField = new FlexFieldKind(
+	brandConst("Value")<FieldKindIdentifier>(),
 	Multiplicity.Single,
-	valueHandler,
-	(a, b) => false,
-	new Set(),
+	{ changeHandler: valueHandler, allowMonotonicUpgradeFrom: new Set() },
 );

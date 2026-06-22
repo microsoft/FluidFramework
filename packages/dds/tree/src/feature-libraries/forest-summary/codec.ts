@@ -4,49 +4,84 @@
  */
 
 import { assert, oob } from "@fluidframework/core-utils/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type ICodecOptions,
-	type IJsonCodec,
-	makeVersionedValidatedCodec,
+	VersionDispatchingCodecBuilder,
+	type CodecAndSchema,
+	type CodecWriteOptions,
+	type VersionDispatchingCodec,
+	FluidClientVersion,
 } from "../../codec/index.js";
 import type { FieldKey, ITreeCursorSynchronous } from "../../core/index.js";
-import type { FieldBatchCodec, FieldBatchEncodingContext } from "../chunked-forest/index.js";
+import {
+	fieldBatchCodecBuilder,
+	type FieldBatchEncodingContext,
+} from "../chunked-forest/index.js";
 
-import { Format } from "./format.js";
+import { ForestFormatVersion, FormatCommon } from "./formatCommon.js";
 
 /**
  * Uses field cursors
  */
 export type FieldSet = ReadonlyMap<FieldKey, ITreeCursorSynchronous>;
-export type ForestCodec = IJsonCodec<FieldSet, Format, Format, FieldBatchEncodingContext>;
+export type ForestCodec = VersionDispatchingCodec<
+	FieldSet,
+	FieldBatchEncodingContext,
+	ForestFormatVersion
+>;
 
-export function makeForestSummarizerCodec(
-	options: ICodecOptions,
-	fieldBatchCodec: FieldBatchCodec,
-): ForestCodec {
-	const inner = fieldBatchCodec;
-	// TODO: AB#41865
-	// This needs to be updated to support multiple versions.
-	// The second version will be used to enable incremental summarization.
-	return makeVersionedValidatedCodec(options, new Set([1]), Format, {
-		encode: (data: FieldSet, context: FieldBatchEncodingContext): Format => {
+function makeForestSummarizerCodec(
+	options: CodecWriteOptions,
+	version: ForestFormatVersion,
+): CodecAndSchema<FieldSet, FieldBatchEncodingContext> {
+	// Performance: Since multiple places (including multiple versions of this codec) use the field batch codec,
+	// we may end up with multiple copies of it, including compiling its format validation multiple times.
+	// This is not ideal, but is not too bad as it is a small fixed number of copies and thus should not be too expensive.
+	// If this becomes problematic a cache could be added for options to codec instances somewhere.
+	const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
+	const formatSchema = FormatCommon;
+	return {
+		encode: (data: FieldSet, context: FieldBatchEncodingContext): FormatCommon => {
 			const keys: FieldKey[] = [];
 			const fields: ITreeCursorSynchronous[] = [];
 			for (const [key, value] of data) {
 				keys.push(key);
 				fields.push(value);
 			}
-			return { keys, fields: inner.encode(fields, context), version: 1 };
+			return {
+				keys,
+				fields: fieldBatchCodec.encode(fields, context),
+				version,
+			};
 		},
-		decode: (data: Format, context: FieldBatchEncodingContext): FieldSet => {
+		decode: (data: FormatCommon, context: FieldBatchEncodingContext): FieldSet => {
 			const out: Map<FieldKey, ITreeCursorSynchronous> = new Map();
-			const fields = inner.decode(data.fields, context);
+			const fields = fieldBatchCodec.decode(data.fields, context);
 			assert(data.keys.length === fields.length, 0x891 /* mismatched lengths */);
 			for (const [index, field] of fields.entries()) {
 				out.set(data.keys[index] ?? oob(), field);
 			}
 			return out;
 		},
-	});
+		schema: formatSchema,
+	};
 }
+
+/**
+ * {@link VersionDispatchingCodecBuilder} for forest summarizer codecs.
+ */
+export const forestCodecBuilder = VersionDispatchingCodecBuilder.build("Forest", [
+	{
+		minVersionForCollab: lowestMinVersionForCollab,
+		formatVersion: ForestFormatVersion.v1,
+		codec: (options: CodecWriteOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v1),
+	},
+	{
+		minVersionForCollab: FluidClientVersion.v2_74,
+		formatVersion: ForestFormatVersion.v2,
+		codec: (options: CodecWriteOptions) =>
+			makeForestSummarizerCodec(options, ForestFormatVersion.v2),
+	},
+]);

@@ -9,16 +9,20 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { anchorSlot } from "../core/index.js";
+import { anchorSlot, rootFieldKey } from "../core/index.js";
 import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	cursorForMapTreeField,
-	TreeStatus,
 	Context,
+	combineChunks,
+	type FlexTreeOptionalField,
+	type FlexTreeUnknownUnboxed,
+	FieldKinds,
+	type FlexTreeRequiredField,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -36,16 +40,12 @@ import {
 	type ReadableField,
 	type ReadSchema,
 	type UnsafeUnknownSchema,
-	type TreeBranch,
 	type TreeBranchEvents,
-	getOrCreateInnerNode,
-	getKernel,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParams,
-	type TransactionConstraint,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -56,16 +56,18 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranchAlpha,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
 	breakingClass,
 	disposeSymbol,
+	type JsonCompatibleReadOnly,
 	type WithBreakable,
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -117,6 +119,11 @@ export class SchematizingSimpleTreeView<
 	 */
 	private midUpgrade = false;
 
+	/**
+	 * Hydration work deferred until Context has been created.
+	 */
+	private pendingHydration?: () => void;
+
 	private readonly rootFieldSchema: FieldSchema;
 	public readonly breaker: Breakable;
 
@@ -154,6 +161,14 @@ export class SchematizingSimpleTreeView<
 		);
 	}
 
+	public isBranch(): this is TreeBranchAlpha {
+		return true;
+	}
+
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.checkout.applySerializedChange(change);
+	}
+
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
 		schema: TSchema,
 	): this is TreeViewAlpha<TSchema> {
@@ -174,6 +189,13 @@ export class SchematizingSimpleTreeView<
 
 		this.runSchemaEdit(() => {
 			const schema = toInitialSchema(this.config.schema);
+			// This has to be the contextless version, since when "initialize" is called (right after this),
+			// it will do a schema change which would dispose of the current context (see inside `update`).
+			// Thus using the current context (if any) would hydrate nodes then
+			// immediately dispose them instead of having them actually be useable after initialize.
+			// For this to work,
+			// the hydration must be deferred until after the content is inserted into the tree and the final schema change is done (for required roots),
+			// but before any user event could could run.
 			const mapTree = prepareForInsertionContextless(
 				content as InsertableContent | undefined,
 				this.rootFieldSchema,
@@ -183,21 +205,41 @@ export class SchematizingSimpleTreeView<
 				},
 				this,
 				schema.rootFieldSchema,
-			);
-
-			this.checkout.transaction.start();
-
-			initialize(
-				this.checkout,
-				schema,
-				initializerFromChunk(this.checkout, () => {
-					// This must be done after initial schema is set!
-					return this.checkout.forest.chunkField(
-						cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+				(batches, doHydration) => {
+					assert(
+						this.pendingHydration === undefined,
+						0xc74 /* pendingHydration already set */,
 					);
-				}),
+					this.pendingHydration = () => {
+						assert(
+							batches.length <= 1,
+							0xc75 /* initialize should at most one hydration batch */,
+						);
+						for (const batch of batches) {
+							doHydration(batch, {
+								parent: undefined,
+								parentField: rootFieldKey,
+								parentIndex: 0,
+							});
+						}
+					};
+				},
 			);
-			this.checkout.transaction.commit();
+
+			this.runTransaction(() => {
+				initialize(
+					this.checkout,
+					schema,
+					initializerFromChunk(this.checkout, () => {
+						// This must be done after initial schema is set!
+						return combineChunks(
+							this.checkout.forest.chunkField(
+								cursorForMapTreeField(mapTree === undefined ? [] : [mapTree]),
+							),
+						);
+					}),
+				);
+			});
 		});
 	}
 
@@ -229,16 +271,10 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
 		params?: RunTransactionParams,
@@ -250,40 +286,41 @@ export class SchematizingSimpleTreeView<
 			| void,
 		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		const addConstraints = (
-			constraintsOnRevert: boolean,
-			constraints: readonly TransactionConstraint[] = [],
-		): void => {
-			addConstraintsToTransaction(this.checkout, constraintsOnRevert, constraints);
-		};
+		this.ensureUndisposed();
+		return this.checkout.runTransaction(transaction, params);
+	}
 
-		this.checkout.transaction.start();
-
-		// Validate preconditions before running the transaction callback.
-		addConstraints(false /* constraintsOnRevert */, params?.preconditions);
-		const transactionCallbackStatus = transaction();
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
-
-		if (rollback === true) {
-			this.checkout.transaction.abort();
-			return value !== undefined
-				? { success: false, value: value as TFailureValue }
-				: { success: false };
+	public runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	public runTransactionAsync(
+		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		params?: RunTransactionParams,
+	): Promise<TransactionResult>;
+	public async runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<
+			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatus
+			| void
+		>,
+		params: RunTransactionParams | undefined,
+	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		this.ensureUndisposed();
+		if (this.checkout.transaction.size > 0) {
+			// breaker.break() sets brokenBy synchronously before throwing.
+			// A plain `throw` inside an async function would be captured as a rejected Promise
+			// before @breakingClass could set brokenBy. By setting it here first, the
+			// subsequent call to unmountTransaction (also @breakingClass-wrapped) will see the
+			// broken state and throw synchronously, propagating out of the outer runTransaction
+			// to its caller.
+			this.breaker.break(
+				new UsageError(
+					"An asynchronous transaction cannot be started while another transaction is already in progress.",
+				),
+			);
 		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraints(
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		this.checkout.transaction.commit();
-		return value !== undefined
-			? { success: true, value: value as TSuccessValue }
-			: { success: true };
+		return this.checkout.runTransactionAsync(transaction, params);
 	}
 
 	private ensureUndisposed(): void {
@@ -336,7 +373,7 @@ export class SchematizingSimpleTreeView<
 				new HydratedContext(
 					this.flexTreeContext,
 					HydratedContext.schemaMapFromRootSchema(
-						this.rootFieldSchema.annotatedAllowedTypesNormalized,
+						this.rootFieldSchema.allowedTypesFull.evaluate(),
 					),
 				),
 			);
@@ -350,7 +387,10 @@ export class SchematizingSimpleTreeView<
 				// TODO: provide a better event: this.view.flexTree.on(????) and/or integrate with with the normal event code paths.
 
 				// Track what the root was before to be able to detect changes.
-				let lastRoot: ReadableField<TRootSchema> = this.root;
+				// This uses the flex tree root to avoid demanding the simple-tree TreeNode when it might not be hydrated yet.
+				let lastRoot: FlexTreeUnknownUnboxed | undefined = (
+					this.flexTreeContext.root as FlexTreeOptionalField
+				).content;
 
 				this.flexTreeViewUnregisterCallbacks.add(
 					this.checkout.events.on("afterBatch", () => {
@@ -359,8 +399,8 @@ export class SchematizingSimpleTreeView<
 						// - The rootChanged event will already be raised at the end of the current upgrade
 						// - It doesn't matter that `lastRoot` isn't updated in this case, because `update` will be called again before the upgrade
 						//   completes (at which point this callback and the `lastRoot` captured here will be out of scope anyway)
-						if (!this.midUpgrade && lastRoot !== this.root) {
-							lastRoot = this.root;
+						if (!this.midUpgrade && lastRoot !== this.flexRoot.content) {
+							lastRoot = this.flexRoot.content;
 							this.events.emit("rootChanged");
 						}
 					}),
@@ -374,6 +414,10 @@ export class SchematizingSimpleTreeView<
 		);
 
 		if (!this.midUpgrade) {
+			assert(
+				this.pendingHydration === undefined,
+				0xc76 /* no nodes should be pending hydration when triggering events that could access nodes */,
+			);
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
@@ -386,6 +430,9 @@ export class SchematizingSimpleTreeView<
 		} finally {
 			this.midUpgrade = false;
 		}
+		// Ensure hydration is flushed before events run which could access nodes.
+		this.pendingHydration?.();
+		this.pendingHydration = undefined;
 		this.events.emit("schemaChanged");
 		this.events.emit("rootChanged");
 	}
@@ -401,7 +448,9 @@ export class SchematizingSimpleTreeView<
 			this.flexTreeContext[disposeSymbol]();
 			this.flexTreeContext = undefined;
 		}
-		this.flexTreeViewUnregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.flexTreeViewUnregisterCallbacks) {
+			unregister();
+		}
 		this.flexTreeViewUnregisterCallbacks.clear();
 		anchors.slots.delete(SimpleContextSlot);
 	}
@@ -416,17 +465,19 @@ export class SchematizingSimpleTreeView<
 	public dispose(): void {
 		this.disposed = true;
 		this.disposeFlexView();
-		this.unregisterCallbacks.forEach((unregister) => unregister());
+		for (const unregister of this.unregisterCallbacks) {
+			unregister();
+		}
 		this.checkout.forest.anchors.slots.delete(ViewSlot);
 		this.currentCompatibility = undefined;
 		this.onDispose?.();
-		if (this.checkout.isBranch && !this.checkout.disposed) {
-			// All (non-main) branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
+		if (!this.checkout.isSharedBranch && !this.checkout.disposed) {
+			// All non-shared branches are 1:1 with views, so if a user manually disposes a view, we should also dispose the checkout/branch.
 			this.checkout.dispose();
 		}
 	}
 
-	public get root(): ReadableField<TRootSchema> {
+	private get flexRoot(): FlexTreeOptionalField | FlexTreeRequiredField {
 		this.breaker.use();
 		if (!this.compatibility.canView) {
 			throw new UsageError(
@@ -434,7 +485,17 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 		const view = this.getFlexTreeContext();
-		return tryGetTreeNodeForField(view.root) as ReadableField<TRootSchema>;
+		assert(
+			view.root.is(FieldKinds.optional) ||
+				view.root.is(FieldKinds.required) ||
+				view.root.is(FieldKinds.identifier),
+			0xc77 /* unexpected root field kind */,
+		);
+		return view.root;
+	}
+
+	public get root(): ReadableField<TRootSchema> {
+		return tryGetTreeNodeForField(this.flexRoot) as ReadableField<TRootSchema>;
 	}
 
 	public set root(newRoot: InsertableField<TRootSchema>) {
@@ -455,68 +516,18 @@ export class SchematizingSimpleTreeView<
 
 	// #region Branching
 
-	public fork(): ReturnType<TreeBranch["fork"]> & SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.branch().viewWith(this.config);
+	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
+		SchematizingSimpleTreeView<TRootSchema> {
+		return this.checkout.fork().viewWith(this.config);
 	}
 
-	public merge(context: TreeBranch, disposeMerged = true): void {
-		this.checkout.merge(getCheckout(context), disposeMerged);
+	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
+		this.checkout.merge(context, disposeMerged);
 	}
 
-	public rebaseOnto(context: TreeBranch): void {
-		getCheckout(context).rebase(this.checkout);
+	public rebaseOnto(context: TreeBranchAlpha): void {
+		this.checkout.rebaseOnto(context);
 	}
 
 	// #endregion Branching
-}
-
-/**
- * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
- * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
- * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
- */
-export function getCheckout(context: TreeBranch): TreeCheckout {
-	if (context instanceof SchematizingSimpleTreeView) {
-		return context.checkout;
-	}
-	throw new UsageError("Unsupported context implementation");
-}
-
-/**
- * Adds constraints to a `checkout`'s pending transaction.
- *
- * @param checkout - The checkout's who's transaction will have the constraints added to it.
- * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
- * @param constraints - The constraints to add to the transaction.
- *
- * @see {@link RunTransactionParams.preconditions}.
- */
-export function addConstraintsToTransaction(
-	checkout: ITreeCheckout,
-	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraint[] = [],
-): void {
-	for (const constraint of constraints) {
-		switch (constraint.type) {
-			case "nodeInDocument": {
-				const node = getOrCreateInnerNode(constraint.node);
-				const nodeStatus = getKernel(constraint.node).getStatus();
-				if (nodeStatus !== TreeStatus.InDocument) {
-					const revertText = constraintsOnRevert ? " on revert" : "";
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
-				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
-				if (constraintsOnRevert) {
-					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
-				} else {
-					checkout.editor.addNodeExistsConstraint(node.anchorNode);
-				}
-				break;
-			}
-			default:
-				unreachableCase(constraint.type);
-		}
-	}
 }

@@ -7,6 +7,7 @@ import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
+
 import type { ICache } from "./definitions";
 
 /**

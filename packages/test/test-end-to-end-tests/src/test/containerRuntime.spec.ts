@@ -8,13 +8,14 @@ import { strict as assert } from "assert";
 import { describeCompat, ITestDataObject } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import { CompressionAlgorithms } from "@fluidframework/container-runtime/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	type ITestContainerConfig,
 	ITestObjectProvider,
 	getContainerEntryPointBackCompat,
 } from "@fluidframework/test-utils/internal";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import semverGt from "semver/functions/gt.js";
 
 import { pkgVersion } from "../packageVersion.js";
@@ -27,20 +28,20 @@ describeCompat(
 		let entry: TestDataObject;
 
 		class TestDataObject extends apis.dataRuntime.DataObject {
-			public get root() {
+			public get root(): ISharedDirectory {
 				return super.root;
 			}
 		}
 
-		function generateStringOfSize(sizeInBytes: number) {
+		function generateStringOfSize(sizeInBytes: number): string {
 			return new Array(sizeInBytes + 1).join("0");
 		}
 
-		async function loadContainer(options: ITestContainerConfig) {
+		async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 			return provider.loadTestContainer(options);
 		}
 
-		async function getEntryPoint(container: IContainer) {
+		async function getEntryPoint(container: IContainer): Promise<TestDataObject> {
 			return getContainerEntryPointBackCompat<TestDataObject>(container);
 		}
 
@@ -52,12 +53,10 @@ describeCompat(
 			explicitSchemaControl: boolean,
 			compression: boolean,
 			chunking: boolean,
-		) {
+		): Promise<void> {
 			let crash = false;
 			let crash2 = false;
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				assert(apis.containerRuntime !== undefined);
-				assert(apis.containerRuntimeForLoading !== undefined);
 				// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 				// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 				// and thus it will see either of those.
@@ -201,11 +200,11 @@ describeCompat(
 describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider, apis) => {
 	let provider: ITestObjectProvider;
 
-	async function loadContainer(options: ITestContainerConfig) {
+	async function loadContainer(options: ITestContainerConfig): Promise<IContainer> {
 		return provider.loadTestContainer(options);
 	}
 
-	async function getEntryPoint(container: IContainer) {
+	async function getEntryPoint(container: IContainer): Promise<ITestDataObject> {
 		return getContainerEntryPointBackCompat<ITestDataObject>(container);
 	}
 
@@ -221,7 +220,7 @@ describeCompat("Id Compressor Schema change", "NoCompat", (getTestObjectProvider
 		await testUpgrade(true);
 	});
 
-	async function testUpgrade(explicitSchemaControl: boolean) {
+	async function testUpgrade(explicitSchemaControl: boolean): Promise<void> {
 		const options: ITestContainerConfig = {
 			runtimeOptions: {
 				explicitSchemaControl: true,
@@ -304,11 +303,12 @@ describeCompat(
 		 * This test is to validate that we properly send a telemetry event when
 		 * we detect that a client tries to connect to a document that has a
 		 * minVersionForCollab that is greater than that clients's runtime version.
+		 *
+		 * TODO: Test will be enabled when AB#50563 is resolved.
 		 */
-		it("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
+		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
-				apis.containerRuntimeForLoading === undefined ||
 				semverGt(
 					releaseMinVersionForCollabWarningAdded,
 					apis.containerRuntimeForLoading.version,

@@ -10,7 +10,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -18,7 +17,7 @@ import {
 	getContainerIdFromPayloadResponse,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { getTestMatrix } from "./utils.js";
+import { getTestMatrix, currentVersion } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -58,15 +57,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.getVersionsOfCurrentDocument,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -120,14 +119,14 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.copyDocumentSuccessfully,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 
 				if (container.connectionState !== ConnectionState.Connected) {
@@ -144,7 +143,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[0],
-				"2",
+				currentVersion,
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -164,16 +163,16 @@ for (const testOpts of testMatrix) {
 			const testKey = "new-key";
 			const expectedValue = "expected-value";
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.copyDDSValuesWhenCopyingContainer,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 				map1 = container.initialObjects.map1 as SharedMap;
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 
 				map1 = container.initialObjects.map1 as SharedMap;
 				map1.set(testKey, expectedValue);
@@ -198,7 +197,7 @@ for (const testOpts of testMatrix) {
 				containerId,
 				schema,
 				versions[versions.length - 1],
-				"2",
+				currentVersion,
 			);
 			await assert.doesNotReject(viewContainerVersionAttempt);
 			const { container: containerView } = await viewContainerVersionAttempt;
@@ -217,7 +216,7 @@ for (const testOpts of testMatrix) {
 				{
 					id: "whatever",
 				},
-				"2",
+				currentVersion,
 			);
 			const errorFn = (error: Error): boolean => {
 				assert.notStrictEqual(error.message, undefined, "Azure Client error is undefined");

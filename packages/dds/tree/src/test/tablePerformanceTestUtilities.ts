@@ -3,8 +3,14 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+import { strict as assert } from "node:assert";
+
+import { AttachState } from "@fluidframework/container-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/legacy";
+import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
+
+import { CommitKind, type Revertible } from "../core/index.js";
+import { Tree } from "../shared-tree/index.js";
 import {
 	SchemaFactoryAlpha,
 	TreeViewConfiguration,
@@ -12,12 +18,8 @@ import {
 	type TreeView,
 } from "../simple-tree/index.js";
 import { TableSchema } from "../tableSchema.js";
+
 import { DefaultTestSharedTreeKind } from "./utils.js";
-import { AttachState } from "@fluidframework/container-definitions";
-import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
-import { CommitKind, type Revertible } from "../core/index.js";
-import { strict as assert } from "node:assert";
-import { Tree } from "../shared-tree/index.js";
 
 /**
  * Factory for creating a table tree schema.
@@ -110,34 +112,25 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 		}),
 	);
 
-	treeView.initialize(Table.empty());
+	treeView.initialize(Table.create());
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));
-	table.insertColumns({ index: 0, columns });
+	table.insertColumns(columns, 0);
 
-	const rows = Array.from(
-		{ length: tableSize },
-		() =>
-			new Row({
-				cells: {},
-			}),
-	);
-	table.insertRows({ index: 0, rows });
-
-	if (initialCellValue !== undefined) {
-		for (const row of table.rows) {
-			for (const column of table.columns) {
-				table.setCell({
-					key: {
-						column,
-						row,
-					},
-					cell: initialCellValue,
-				});
+	// Pre populate each row's cells at construction time so the entire dense table is initialized
+	// by a single `insertRows` op.
+	const columnIds = table.columns.map((column) => column.id);
+	const rows = Array.from({ length: tableSize }, () => {
+		const cells: Record<string, string> = {};
+		if (initialCellValue !== undefined) {
+			for (const columnId of columnIds) {
+				cells[columnId] = initialCellValue;
 			}
 		}
-	}
+		return new Row({ cells });
+	});
+	table.insertRows(rows, 0);
 
 	// Configure event listeners
 	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});

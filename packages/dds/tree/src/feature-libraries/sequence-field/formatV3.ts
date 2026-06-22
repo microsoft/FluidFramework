@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 
@@ -39,7 +40,7 @@ export const Changeset = <Schema extends TSchema>(tNodeChange: Schema) =>
 	Type.Array(Mark(tNodeChange));
 
 /**
- * @privateRemarks - Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
+ * @privateRemarks Many of these names are currently used in the sequence-field types. Putting them in a namespace makes codec code more readable.
  */
 export namespace Encoded {
 	export type CellCount = EncodedV2.CellCount;

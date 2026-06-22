@@ -26,10 +26,10 @@ export class Json1Factory implements IChannelFactory {
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return Json1Factory.Type;
 	}
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return Json1Factory.Attributes;
 	}
 

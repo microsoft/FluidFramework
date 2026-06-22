@@ -32,11 +32,22 @@ import {
 
 describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedMap, SharedDirectory } = apis.dds;
+	// In cross-client compat, the loading client may be a different version than the creating
+	// client. Use ddsForLoading to build the load-side registry so loadTestContainer reconstructs
+	// DDS factories from the correct version. (Outside cross-client compat it matches apis.dds.)
+	const ddsForLoading = apis.ddsForLoading;
 	const directoryId = "directoryKey";
-	const registry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
+	const createRegistry: ChannelFactoryRegistry = [[directoryId, SharedDirectory.getFactory()]];
+	const loadRegistry: ChannelFactoryRegistry = [
+		[directoryId, ddsForLoading.SharedDirectory.getFactory()],
+	];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -50,24 +61,24 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 
 	beforeEach("createContainers", async () => {
 		// Create a Container for the first client.
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const container1 = await provider.makeTestContainer(createContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedDirectory1 = await dataObject1.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const container2 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedDirectory2 = await dataObject2.getSharedObject<SharedDirectory>(directoryId);
 
 		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
+		const container3 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedDirectory3 = await dataObject3.getSharedObject<SharedDirectory>(directoryId);
 
 		await provider.ensureSynchronized();
 	});
 
-	function expectAllValues(msg, key, path, value1, value2, value3) {
+	function expectAllValues(msg, key, path, value1, value2, value3): void {
 		const user1Value = sharedDirectory1.getWorkingDirectory(path)?.get(key);
 		assert.equal(user1Value, value1, `Incorrect value for ${key} in container 1 ${msg}`);
 		const user2Value = sharedDirectory2.getWorkingDirectory(path)?.get(key);
@@ -76,15 +87,15 @@ describeCompat("SharedDirectory", "FullCompat", (getTestObjectProvider, apis) =>
 		assert.equal(user3Value, value3, `Incorrect value for ${key} in container 3 ${msg}`);
 	}
 
-	function expectAllBeforeValues(key, path, value1, value2, value3) {
+	function expectAllBeforeValues(key, path, value1, value2, value3): void {
 		expectAllValues("before process", key, path, value1, value2, value3);
 	}
 
-	function expectAllAfterValues(key, path, value) {
+	function expectAllAfterValues(key, path, value): void {
 		expectAllValues("after process", key, path, value, value, value);
 	}
 
-	function expectAllSize(size: number, path?: string) {
+	function expectAllSize(size: number, path?: string): void {
 		const dir1 = path ? sharedDirectory1.getWorkingDirectory(path) : sharedDirectory1;
 		const dir2 = path ? sharedDirectory2.getWorkingDirectory(path) : sharedDirectory2;
 		const dir3 = path ? sharedDirectory3.getWorkingDirectory(path) : sharedDirectory3;
@@ -1288,7 +1299,7 @@ describeCompat(
 			directory: ISharedDirectory,
 			subdirsInOrder: string[],
 			path?: string,
-		) {
+		): void {
 			const dir = path ? directory.getWorkingDirectory(path) : directory;
 			assert(dir);
 
@@ -1298,13 +1309,13 @@ describeCompat(
 			assert.deepEqual(subdirs, subdirsInOrder, "Incorrect order of subdirs in the container");
 		}
 
-		function expectAllSubdirsOrder(dirsInOrder: string[], path?: string) {
+		function expectAllSubdirsOrder(dirsInOrder: string[], path?: string): void {
 			expectSubdirsOrder(sharedDirectory1, dirsInOrder, path);
 			expectSubdirsOrder(sharedDirectory2, dirsInOrder, path);
 			expectSubdirsOrder(sharedDirectory3, dirsInOrder, path);
 		}
 
-		async function pauseAllContainers() {
+		async function pauseAllContainers(): Promise<void> {
 			await toIDeltaManagerFull(container1.deltaManager).inbound.pause();
 			await toIDeltaManagerFull(container2.deltaManager).inbound.pause();
 			await toIDeltaManagerFull(container3.deltaManager).inbound.pause();
@@ -1314,7 +1325,7 @@ describeCompat(
 			await toIDeltaManagerFull(container3.deltaManager).outbound.pause();
 		}
 
-		function resumeContainer(c: IContainer) {
+		function resumeContainer(c: IContainer): void {
 			toIDeltaManagerFull(c.deltaManager).inbound.resume();
 			toIDeltaManagerFull(c.deltaManager).outbound.resume();
 		}
@@ -1322,7 +1333,7 @@ describeCompat(
 		/**
 		 * Wait for the message sent by the current container to be sequenced.
 		 */
-		async function waitForContainerSave(c: IContainer) {
+		async function waitForContainerSave(c: IContainer): Promise<void> {
 			if (!c.isDirty) {
 				return;
 			}

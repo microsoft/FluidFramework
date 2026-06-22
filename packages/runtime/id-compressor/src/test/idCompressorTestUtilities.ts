@@ -30,6 +30,7 @@ import {
 	type SessionSpaceCompressedId,
 	type StableId,
 	createIdCompressor,
+	toIdCompressorWithCore,
 } from "../index.js";
 import { SessionSpaceNormalizer } from "../sessionSpaceNormalizer.js";
 import { assertIsSessionId, createSessionId, localIdFromGenCount } from "../utilities.js";
@@ -538,6 +539,7 @@ export class IdCompressorTestNetwork {
 				assert(range.sessionId === compressor.localSessionId);
 				if (range.ids !== undefined) {
 					// initialize firstGenCount if not set
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstGenCount === undefined) {
 						firstGenCount = range.ids.firstGenCount;
 					}
@@ -1066,13 +1068,16 @@ export function createAlwaysFinalizedIdCompressor(
 export function createAlwaysFinalizedIdCompressor(
 	sessionId: SessionId,
 	logger?: ITelemetryBaseLogger,
+	seed?: number,
 ): IIdCompressor & IIdCompressorCore;
 export function createAlwaysFinalizedIdCompressor(
 	sessionIdOrLogger?: SessionId | ITelemetryBaseLogger,
 	loggerOrUndefined?: ITelemetryBaseLogger,
+	seed?: number,
 ): IIdCompressor & IIdCompressorCore {
+	const random = seed === undefined ? makeRandom() : makeRandom(seed);
 	const sessionId =
-		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : createSessionId();
+		typeof sessionIdOrLogger === "string" ? sessionIdOrLogger : (random.uuid4() as SessionId);
 	const logger =
 		(loggerOrUndefined ?? typeof sessionIdOrLogger === "object")
 			? (sessionIdOrLogger as ITelemetryBaseLogger)
@@ -1080,8 +1085,8 @@ export function createAlwaysFinalizedIdCompressor(
 	// This local session is unused, but it needs to not collide with the GhostSession, so allocate a random one.
 	// This causes the compressor to serialize non-deterministically even when provided an explicit SessionId.
 	// This can be fixed in the future if needed.
-	const compressor = createIdCompressor(createSessionId(), logger);
+	const compressor = createIdCompressor(random.uuid4() as SessionId, logger);
 	// Permanently put the compressor in a ghost session
 	(compressor as IdCompressor).startGhostSession(sessionId);
-	return compressor;
+	return toIdCompressorWithCore(compressor);
 }

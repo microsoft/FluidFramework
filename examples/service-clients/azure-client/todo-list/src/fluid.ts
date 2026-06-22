@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { getTinyliciousEndpoint } from "@fluid-example/example-utils";
 import type {
 	AzureLocalConnectionConfig,
 	AzureRemoteConnectionConfig,
 } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
+// eslint-disable-next-line import-x/no-internal-modules -- #26985: `test-runtime-utils` internal used in example
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ContainerSchema,
@@ -52,7 +53,7 @@ export const connectionConfig: AzureRemoteConnectionConfig | AzureLocalConnectio
 		: {
 				type: "local",
 				tokenProvider: new InsecureTokenProvider("fooBar", user),
-				endpoint: "http://localhost:7070",
+				endpoint: getTinyliciousEndpoint(),
 			};
 
 /**

@@ -150,6 +150,15 @@ export interface ISummarizerEvents extends IEvent {
 			props: { reason: SummarizerStopReason } & ISummarizerObservabilityProps,
 		) => void,
 	);
+	(
+		event: "summarizeTimeout",
+		listener: (
+			props: {
+				timeoutCount: number;
+				currentSummarizeStep: string;
+			} & ISummarizerObservabilityProps,
+		) => void,
+	);
 }
 
 /**
@@ -200,6 +209,17 @@ export interface IContainerRuntime
  *
  * @internal
  */
-export interface IContainerRuntimeInternal
-	extends IContainerRuntime,
-		ContainerExtensionStore {}
+export interface IContainerRuntimeInternal extends IContainerRuntime, ContainerExtensionStore {
+	/**
+	 * Lookup the blob storage ID for a given local blob id.
+	 * @param localId - The local blob id. Likely coming from a handle.
+	 * @returns The storage ID if found and the blob is not pending, undefined otherwise.
+	 * @remarks
+	 * This method provides access to the BlobManager's storage ID lookup functionality.
+	 * For blobs with pending payloads (localId exists but upload hasn't finished), this is expected to return undefined.
+	 * Consumers should use the observability APIs on the handle (handle.payloadState, payloadShared event)
+	 * to understand/wait for storage ID availability.
+	 * Similarly, when the runtime is detached, this will return undefined as no blobs have been uploaded to storage.
+	 */
+	lookupTemporaryBlobStorageId(localId: string): string | undefined;
+}

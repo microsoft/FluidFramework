@@ -7,6 +7,7 @@
 
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
-const packageDir = __dirname;
-const config = getFluidTestMochaConfig(packageDir);
+const config = getFluidTestMochaConfig(__dirname);
+// This package has no tests; disable fail-zero so the empty placeholder spec doesn't fail the run.
+config["fail-zero"] = false;
 module.exports = config;

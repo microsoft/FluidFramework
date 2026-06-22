@@ -58,7 +58,7 @@ export class MockContainerRuntime extends TypedEventEmitter<IContainerRuntimeEve
     protected addPendingMessage(content: any, localOpMetadata: unknown, clientSequenceNumber: number): void;
     // (undocumented)
     clientId: string;
-    // @deprecated (undocumented)
+    // @deprecated
     createDeltaConnection(): MockDeltaConnection;
     // (undocumented)
     protected readonly dataStoreRuntime: MockFluidDataStoreRuntime;
@@ -112,7 +112,6 @@ export class MockContainerRuntimeFactory {
     createContainerRuntime(dataStoreRuntime: MockFluidDataStoreRuntime): MockContainerRuntime;
     // (undocumented)
     protected getFirstMessageToProcess(): ISequencedDocumentMessage;
-    // (undocumented)
     getMinSeq(): number;
     // (undocumented)
     protected lastProcessedMessage: ISequencedDocumentMessage | undefined;
@@ -191,7 +190,7 @@ export class MockDeltaConnection implements IDeltaConnection {
     // (undocumented)
     processMessages(messageCollection: IRuntimeMessageCollection): void;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -338,7 +337,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: IIdCompressorCore & IIdCompressor;
+    idCompressor: IIdCompressor;
     // (undocumented)
     IFluidDataStoreRegistry: IFluidDataStoreRegistry;
     // (undocumented)
@@ -349,6 +348,7 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
+    minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -368,23 +368,26 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     // (undocumented)
     storage: IRuntimeStorageService;
     // (undocumented)
-    submitMessage(type: string, content: any, localOpMetadata: unknown): void;
+    submitMessage(): void;
     // (undocumented)
-    submitSignal(type: string, content: any): void;
+    submitSignal(): void;
     // (undocumented)
     uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandleInternal<ArrayBufferLike>>;
 }
 
-// @beta @legacy
+// @beta @sealed @legacy
 export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDataStoreRuntime, IFluidDataStoreChannel, IFluidHandleContext {
     constructor(overrides?: {
         clientId?: string;
         entryPoint?: IFluidHandle<FluidObject>;
         id?: string;
         logger?: ITelemetryBaseLogger;
-        idCompressor?: IIdCompressor & IIdCompressorCore;
+        idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
+        minVersionForCollab?: MinimumVersionForCollab;
+        inStagingMode?: boolean;
+        isDirty?: boolean;
     });
     // (undocumented)
     get absolutePath(): string;
@@ -447,24 +450,30 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     readonly id: string;
     // (undocumented)
-    idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
+    idCompressor: IIdCompressor | undefined;
     // (undocumented)
     get IFluidHandleContext(): IFluidHandleContext;
     // (undocumented)
     ILayerCompatDetails?: unknown;
     // (undocumented)
+    readonly inStagingMode: boolean;
+    // (undocumented)
     get isAttached(): boolean;
+    // (undocumented)
+    readonly isDirty: boolean;
     // (undocumented)
     readonly isReadOnly: () => boolean;
     // (undocumented)
     readonly loader: ILoader;
-    // @deprecated (undocumented)
+    // @deprecated
     get local(): boolean;
     set local(local: boolean);
     // (undocumented)
     readonly logger: ITelemetryBaseLogger;
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
+    // (undocumented)
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
@@ -486,7 +495,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     resolveHandle(request: IRequest): Promise<IResponse>;
     // (undocumented)
-    reSubmit(content: any, localOpMetadata: unknown, squash?: boolean): void;
+    reSubmit(content: any, localOpMetadata: unknown, squash: boolean): void;
     // (undocumented)
     rollback?(message: any, localOpMetadata: unknown): void;
     // (undocumented)
@@ -498,9 +507,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     setConnectionState(connected: boolean, clientId?: string): void;
     // (undocumented)
-    submitMessage(type: MessageType, content: any): null;
-    // (undocumented)
-    submitSignal(type: string, content: any): null;
+    submitSignal: IFluidDataStoreRuntime["submitSignal"];
     // (undocumented)
     summarize(fullTree?: boolean, trackState?: boolean): Promise<ISummaryTreeWithStats>;
     // (undocumented)
@@ -539,6 +546,8 @@ export class MockObjectStorageService implements IChannelStorageService {
     });
     // (undocumented)
     contains(path: string): Promise<boolean>;
+    // (undocumented)
+    getSnapshotTree(): ISnapshotTree;
     // (undocumented)
     list(path: string): Promise<string[]>;
     // (undocumented)

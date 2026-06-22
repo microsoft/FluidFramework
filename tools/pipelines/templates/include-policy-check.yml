@@ -33,18 +33,20 @@ stages:
   - job:
     displayName: Run checks
     steps:
+    - checkout: self
+      path: $(FluidFrameworkDirectory)
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
     - template: /tools/pipelines/templates/include-install-pnpm.yml@self
       parameters:
-        buildDirectory: $(Build.SourcesDirectory)
+        buildDirectory: ${{ parameters.buildDirectory }}
 
     - task: Bash@3
       displayName: Install dependencies
       retryCountOnTaskFailure: 4
       inputs:
         targetType: 'inline'
-        workingDirectory: ${{ parameters.buildDirectory }}
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
         script: |
           set -eu -o pipefail
           ${{ parameters.dependencyInstallCommand }}
@@ -55,7 +57,7 @@ stages:
           displayName: npm run ${{ check }}
           inputs:
             command: 'custom'
-            workingDir: ${{ parameters.buildDirectory }}
+            workingDir: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             customCommand: 'run ${{ check }}'
           condition: succeededOrFailed()
 

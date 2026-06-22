@@ -27,6 +27,9 @@ import {
 	intoDelta,
 	jsonableTreeFromCursor,
 } from "../../../feature-libraries/index.js";
+import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
+import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { brand } from "../../../util/index.js";
 import {
 	assertDeltaEqual,
@@ -37,11 +40,13 @@ import {
 	testIdCompressor,
 	testRevisionTagCodec,
 } from "../../utils.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
-import { numberSchema, stringSchema } from "../../../simple-tree/index.js";
 import { initializeForest } from "../initializeForest.js";
 
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily);
+const codecOptions = {
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: FluidClientVersion.v2_0,
+};
+const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
 const family = defaultChangeFamily;
 
 const rootKey = rootFieldKey;
@@ -132,12 +137,17 @@ function initializeEditableForest(data?: JsonableTree): {
 		testRevisionTagCodec,
 		testIdCompressor,
 	);
-	const builder = new DefaultEditBuilder(family, mintRevisionTag, (taggedChange) => {
-		changes.push(taggedChange);
-		const delta = intoDelta(taggedChange);
-		deltas.push(delta);
-		applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
-	});
+	const builder = new DefaultEditBuilder(
+		family,
+		mintRevisionTag,
+		(taggedChange) => {
+			changes.push(taggedChange);
+			const delta = intoDelta(taggedChange);
+			deltas.push(delta);
+			applyDelta(delta, taggedChange.revision, forest, detachedFieldIndex);
+		},
+		codecOptions,
+	);
 	return {
 		forest,
 		builder,
@@ -722,6 +732,56 @@ describe("DefaultEditBuilder", () => {
 			assert.deepEqual(treeView, [expected]);
 		});
 
+		it("Can move nodes from field to a nested field under a sibling field of the same parent", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root_bar0, field: barKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
 		it("Can move nodes before an ancestor of the moved node", () => {
 			const { builder, forest } = initializeEditableForest({
 				type: brand(JsonAsTree.JsonObject.identifier),
@@ -808,6 +868,111 @@ describe("DefaultEditBuilder", () => {
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{ type: brand(numberSchema.identifier), value: 2 },
 						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from before an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				// Path to root.foo.
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				// Path to root.foo[4].foo, which is after the moved nodes in their original location.
+				{
+					parent: {
+						parent: root,
+						parentField: fooKey,
+						parentIndex: 4,
+					},
+					field: fooKey,
+				},
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from after an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+				},
+			});
+			builder.move(
+				// Path to root.foo.
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				// Path to root.foo[0].foo, which is before the moved nodes in their original location.
+				{ parent: root_foo0, field: fooKey },
+				1,
+			);
+			const treeView = toJsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
 					],
 				},
 			};

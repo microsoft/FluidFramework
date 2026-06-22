@@ -84,7 +84,7 @@ export interface ISummarizeInternalResult extends ISummarizeResult {
 }
 
 /**
- * @experimental - Can be deleted/changed at any time
+ * @experimental Can be deleted/changed at any time
  * Contains the necessary information to allow DDSes to do incremental summaries
  * @legacy @beta
  */
@@ -387,3 +387,13 @@ export const blobCountPropertyName = "BlobCount";
  * @internal
  */
 export const totalBlobSizePropertyName = "TotalBlobSize";
+
+/**
+ * @internal
+ */
+export const currentSummarizeStepPrefix = "";
+
+/**
+ * @internal
+ */
+export const currentSummarizeStepPropertyName = "CurrentSummarizeStep";

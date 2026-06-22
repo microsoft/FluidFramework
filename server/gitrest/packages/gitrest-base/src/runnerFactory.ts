@@ -57,7 +57,7 @@ export class GitrestResourcesFactory implements core.IResourcesFactory<GitrestRe
 		config: Provider,
 		customizations?: IGitrestResourcesCustomizations,
 	): Promise<GitrestResources> {
-		const port = normalizePort(process.env.PORT || "3000");
+		const port = normalizePort(process.env.PORT ?? "3000");
 
 		const fileSystemManagerFactories = this.getFileSystemManagerFactories(
 			config,

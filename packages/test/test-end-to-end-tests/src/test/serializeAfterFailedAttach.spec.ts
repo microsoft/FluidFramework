@@ -8,11 +8,14 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ISharedMap } from "@fluidframework/map/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	type IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -29,6 +32,7 @@ describeCompat(
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
 		const { SharedMap, SharedString } = apis.dds;
+		const { Loader } = apis.loader;
 
 		const codeDetails: IFluidCodeDetails = {
 			package: "detachedContainerTestPackage1",
@@ -36,7 +40,9 @@ describeCompat(
 		};
 		const sharedStringId = "ss1Key";
 		const sharedMapId = "sm1Key";
-		async function createAttachingContainerAndGetEntryPoint(provider: ITestObjectProvider) {
+		async function createAttachingContainerAndGetEntryPoint(
+			provider: ITestObjectProvider,
+		): Promise<{ container: IContainer; defaultDataStore: TestFluidObject }> {
 			const documentId = createDocumentId();
 			const request = provider.driver.createCreateNewRequest(documentId);
 			const loader = createTestLoader(
@@ -82,13 +88,18 @@ describeCompat(
 				logger: provider.logger,
 				configProvider: {
 					getRawConfig: (name) =>
-						name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+						name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 				},
 			});
 			return testLoader;
 		}
 
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{
+			peerDataStore: ITestFluidObject;
+			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
+		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore = (await dataStore.entryPoint.get()) as ITestFluidObject;
 			return {

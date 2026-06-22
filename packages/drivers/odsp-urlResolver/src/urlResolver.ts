@@ -41,7 +41,7 @@ export class OdspUrlResolver implements IUrlResolver {
 			const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
 			return odspDriverUrlResolver.resolve({
 				url: urlToBeResolved,
-				headers: request.headers,
+				...(request.headers === undefined ? {} : { headers: request.headers }),
 			});
 		}
 		return undefined;
@@ -111,9 +111,8 @@ async function initializeFluidOfficeOrOneNote(
 	urlSource: URL,
 ): Promise<IOdspUrlParts | undefined> {
 	const pathname = urlSource.pathname;
-	const siteDriveItemMatch = pathname.match(
-		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/,
-	);
+	const siteDriveItemMatch =
+		/\/(p|preview|meetingnotes|notes)\/([^/]*)\/([^/]*)\/([^/]*)/.exec(pathname);
 	if (siteDriveItemMatch === null) {
 		return undefined;
 	}

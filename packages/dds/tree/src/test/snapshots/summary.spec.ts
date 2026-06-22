@@ -3,8 +3,9 @@
  * Licensed under the MIT License.
  */
 
+import { FluidClientVersion } from "../../codec/index.js";
 import { TreeCompressionStrategy } from "../../feature-libraries/index.js";
-import { SharedTreeFormatVersion, type SharedTreeOptions } from "../../shared-tree/index.js";
+import type { SharedTreeOptions } from "../../shared-tree/index.js";
 
 import { generateTestTrees } from "./snapshotTestScenarios.js";
 import { useSnapshotDirectory } from "./snapshotTools.js";
@@ -17,17 +18,18 @@ describe("snapshot tests", () => {
 	]) {
 		// Friendly description of tree encoding type
 		const treeEncodeKey = TreeCompressionStrategy[treeEncodeType];
-		for (const formatVersionKey of Object.keys(SharedTreeFormatVersion)) {
-			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and SharedTreeFormatVersion.${formatVersionKey}`, () => {
-				useSnapshotDirectory(`summary/${treeEncodeKey}/${formatVersionKey}`);
+		for (const versionKey of Object.keys(FluidClientVersion)) {
+			describe(`Using TreeCompressionStrategy.${treeEncodeKey} and FluidClientVersion.${versionKey}`, () => {
+				useSnapshotDirectory(`summary/${treeEncodeKey}/${versionKey}`);
 				const options: SharedTreeOptions = {
 					treeEncodeType,
-					formatVersion:
-						SharedTreeFormatVersion[formatVersionKey as keyof typeof SharedTreeFormatVersion],
+					minVersionForCollab:
+						FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
 				};
 				const testTrees = generateTestTrees(options);
 
 				for (const { name: testName, runScenario, skip = false, only = false } of testTrees) {
+					// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data
 					const itFn = only ? it.only : skip ? it.skip : it;
 
 					itFn(testName, async () => {

@@ -77,7 +77,9 @@ export function getContainerAlreadyRegisteredErrorText(containerKey: ContainerKe
 
 /**
  * Properties for configuring the Devtools.
- * @alpha
+ * @beta
+ * @input
+ * @sealed
  */
 export interface FluidDevtoolsProps {
 	/**
@@ -90,14 +92,14 @@ export interface FluidDevtoolsProps {
 	 * This is provided to the Devtools instance strictly to enable communicating supported / desired functionality with
 	 * external listeners.
 	 */
-	logger?: IDevtoolsLogger;
+	readonly logger?: IDevtoolsLogger;
 
 	/**
 	 * (optional) List of Containers to initialize the devtools with.
 	 *
 	 * @remarks Additional Containers can be registered with the Devtools via {@link IFluidDevtools.registerContainerDevtools}.
 	 */
-	initialContainers?: ContainerDevtoolsProps[];
+	readonly initialContainers?: ContainerDevtoolsProps[];
 
 	// TODO: Add ability for customers to specify custom data visualizer overrides
 }
@@ -517,7 +519,7 @@ export class FluidDevtools implements IFluidDevtools {
  *
  * It is automatically disposed on webpage unload, but it can be closed earlier by calling `dispose`
  * on the returned handle.
- * @alpha
+ * @beta
  */
 export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 	return FluidDevtools.initialize(props);
@@ -525,7 +527,7 @@ export function initializeDevtools(props?: FluidDevtoolsProps): IFluidDevtools {
 
 /**
  * Gets the Devtools singleton if it has been {@link initializeDevtools | initialized}, otherwise returns `undefined`.
- * @alpha
+ * @beta
  */
 export function tryGetFluidDevtools(): IFluidDevtools | undefined {
 	return FluidDevtools.tryGet();

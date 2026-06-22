@@ -13,6 +13,7 @@ import * as util from "util";
 import type * as core from "@fluidframework/server-services-core";
 import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import { Server } from "socket.io";
 import { setupMaster, setupWorker } from "@socket.io/sticky";
 
 import * as socketIo from "./socketIoServer";
@@ -102,6 +103,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 		private readonly httpServerConfig?: IHttpServerConfig,
 		private readonly socketIoConfig?: socketIo.ISocketIoServerConfig,
 		private readonly customCreateAdapter?: socketIo.SocketIoAdapterCreator,
+		private readonly customIoSetupFunction?: (io: Server) => void,
 	) {}
 
 	public create(requestListener: RequestListener): core.IWebServer {
@@ -115,7 +117,7 @@ export class SocketIoWebServerFactory implements core.IWebServerFactory {
 			server,
 			this.socketIoAdapterConfig,
 			this.socketIoConfig,
-			undefined /* ioSetup */,
+			this.customIoSetupFunction,
 			this.customCreateAdapter,
 		);
 

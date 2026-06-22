@@ -48,7 +48,7 @@ describe("SharedArray", () => {
 		});
 
 		it("Can create a new SharedArray", () => {
-			assert.ok(sharedArray, "SharedArray should be created");
+			assert(sharedArray !== undefined, "SharedArray should be created");
 		});
 
 		it("Can insert new data and get sharedArray data", () => {

@@ -52,6 +52,7 @@ export class SchemaValidator {
 					resolve(this.inheritsFrom(child, ancestor));
 				} catch (error) {
 					console.error("Error in inheritsFrom: ", error);
+					// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 					reject(error);
 				}
 			}, 5);
@@ -116,7 +117,6 @@ export class SchemaValidator {
 		in_skipSemver?: boolean,
 		in_allowDraft?: boolean,
 	): SchemaValidationResult;
-	// eslint-disable-next-line @typescript-eslint/promise-function-async
 	validate(
 		in_schema: PropertySchema,
 		in_previousSchema?: PropertySchema,

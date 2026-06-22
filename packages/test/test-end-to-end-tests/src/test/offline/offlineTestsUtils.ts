@@ -6,17 +6,22 @@
 import { strict as assert } from "assert";
 
 import type { IContainer } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
+import type {
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentServiceFactory,
+	IDocumentStorageService,
+} from "@fluidframework/driver-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITestFluidObject,
+	getRequiredPendingLocalState,
+	toIDeltaManagerFull,
 	type ITestContainerConfig,
+	type ITestFluidObject,
 	type ITestObjectProvider,
 	waitForContainerConnection,
-	toIDeltaManagerFull,
 } from "@fluidframework/test-utils/internal";
 
 import { wrapObjectAndOverride } from "../../mocking.js";
@@ -33,9 +38,9 @@ export const generatePendingState = async (
 	testContainerConfig: ITestContainerConfig,
 	testObjectProvider: ITestObjectProvider,
 	send: false | true | "afterReconnect",
-	cb: SharedObjCallback = () => undefined,
-) => {
-	const container: IContainerExperimental =
+	cb: SharedObjCallback = (): void => undefined,
+): Promise<string> => {
+	const container: IContainer =
 		await testObjectProvider.loadTestContainer(testContainerConfig);
 	await waitForContainerConnection(container);
 	const dataStore = (await container.getEntryPoint()) as ITestFluidObject;
@@ -56,17 +61,17 @@ export const generatePendingState = async (
 
 	let pendingState: string | undefined;
 	if (send === true) {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await getRequiredPendingLocalState(container);
 		await testObjectProvider.ensureSynchronized(); // Note: This will resume processing to get synchronized
 		container.close();
 	} else if (send === "afterReconnect") {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await getRequiredPendingLocalState(container);
 		container.disconnect();
 		container.connect();
 		await testObjectProvider.ensureSynchronized(); // Note: This will have a different clientId than in pendingState
 		container.close();
 	} else {
-		pendingState = await container.getPendingLocalState?.();
+		pendingState = await getRequiredPendingLocalState(container);
 		container.close();
 	}
 
@@ -91,22 +96,24 @@ export async function loadContainerOffline(
 	testObjectProvider: ITestObjectProvider,
 	request: IRequest,
 	pendingLocalState?: string,
-): Promise<{ container: IContainerExperimental; connect: () => void }> {
+): Promise<{ container: IContainer; connect: () => void }> {
 	const p = new Deferred();
 	// This documentServiceFactory will wait for the promise p to resolve before connecting to the service
 	const documentServiceFactory = wrapObjectAndOverride<IDocumentServiceFactory>(
 		testObjectProvider.documentServiceFactory,
 		{
 			createDocumentService: {
-				connectToDeltaStream: (ds) => async (client) => {
-					await p.promise;
-					return ds.connectToDeltaStream(client);
-				},
-				connectToDeltaStorage: (ds) => async () => {
+				connectToDeltaStream:
+					(ds) =>
+					async (client): Promise<IDocumentDeltaConnection> => {
+						await p.promise;
+						return ds.connectToDeltaStream(client);
+					},
+				connectToDeltaStorage: (ds) => async (): Promise<IDocumentDeltaStorageService> => {
 					await p.promise;
 					return ds.connectToDeltaStorage();
 				},
-				connectToStorage: (ds) => async () => {
+				connectToStorage: (ds) => async (): Promise<IDocumentStorageService> => {
 					await p.promise;
 					return ds.connectToStorage();
 				},
@@ -128,5 +135,5 @@ export async function loadContainerOffline(
 		pendingLocalState ??
 			(await generatePendingState(testContainerConfig, testObjectProvider, false /* send */)),
 	);
-	return { container, connect: () => p.resolve(undefined) };
+	return { container, connect: (): void => p.resolve(undefined) };
 }

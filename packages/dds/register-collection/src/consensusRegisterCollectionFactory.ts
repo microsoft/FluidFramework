@@ -3,16 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
-	IFluidDataStoreRuntime,
-	type IChannelFactory,
+	IChannelFactory,
 	IChannelServices,
+	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
+// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class in factory
 import { ConsensusRegisterCollection as ConsensusRegisterCollectionClass } from "./consensusRegisterCollection.js";
-import { IConsensusRegisterCollection } from "./interfaces.js";
+import type { IConsensusRegisterCollection } from "./interfaces.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -22,6 +23,9 @@ import { pkgVersion } from "./packageVersion.js";
 export class ConsensusRegisterCollectionFactory
 	implements IChannelFactory<IConsensusRegisterCollection>
 {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "consensus-register-collection";
 	public static Type = "https://graph.microsoft.com/types/consensus-register-collection";
 
 	public static readonly Attributes: IChannelAttributes = {
@@ -30,11 +34,11 @@ export class ConsensusRegisterCollectionFactory
 		packageVersion: pkgVersion,
 	};
 
-	public get type() {
+	public get type(): string {
 		return ConsensusRegisterCollectionFactory.Type;
 	}
 
-	public get attributes() {
+	public get attributes(): IChannelAttributes {
 		return ConsensusRegisterCollectionFactory.Attributes;
 	}
 
@@ -47,12 +51,14 @@ export class ConsensusRegisterCollectionFactory
 		services: IChannelServices,
 		attributes: IChannelAttributes,
 	): Promise<IConsensusRegisterCollection> {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusRegisterCollectionClass(id, runtime, attributes);
 		await collection.load(services);
 		return collection;
 	}
 
 	public create(document: IFluidDataStoreRuntime, id: string): IConsensusRegisterCollection {
+		// eslint-disable-next-line import-x/no-deprecated -- Internal usage of deprecated class
 		const collection = new ConsensusRegisterCollectionClass(
 			id,
 			document,

@@ -13,6 +13,7 @@ import type {
 	IResolvedUrl,
 	ISnapshot,
 	IContainerPackageInfo,
+	ICacheEntry,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type AuthorizationError,
@@ -28,7 +29,6 @@ import {
 	throwOdspNetworkError,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import {
-	type ICacheEntry,
 	type IOdspResolvedUrl,
 	type IOdspUrlParts,
 	type ISharingLinkKind,
@@ -45,17 +45,17 @@ import {
 	snapshotWithLoadingGroupIdKey,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
+	createChildLogger,
 	type IConfigProvider,
 	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	TelemetryDataTag,
-	createChildLogger,
+	type TelemetryLoggerExt,
 	wrapError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { storeLocatorInOdspUrl } from "./odspFluidFileLink.js";
-// eslint-disable-next-line import/no-deprecated
+// eslint-disable-next-line import-x/no-deprecated
 import type { ISnapshotContents } from "./odspPublicUtils.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
@@ -347,7 +347,7 @@ export function isOdspResolvedUrl(resolvedUrl: IResolvedUrl): resolvedUrl is IOd
 	return "odspResolvedUrl" in resolvedUrl && resolvedUrl.odspResolvedUrl === true;
 }
 
-export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLoggerExt =>
+export const createOdspLogger = (logger?: ITelemetryBaseLogger): TelemetryLoggerExt =>
 	createChildLogger({
 		logger,
 		namespace: "OdspDriver",
@@ -363,7 +363,7 @@ export const createOdspLogger = (logger?: ITelemetryBaseLogger): ITelemetryLogge
  * Storage token can not be empty - if original delegate (tokenFetcher argument) returns null result, exception will be thrown
  */
 export function toInstrumentedOdspStorageTokenFetcher(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 ): InstrumentedStorageTokenFetcher {
@@ -385,7 +385,7 @@ export function toInstrumentedOdspStorageTokenFetcher(
  * @param returnPlainToken - When true, tokenResponse.token is returned. When false, tokenResponse.authorizationHeader is returned or an authorization header value is created based on tokenResponse.token
  */
 export function toInstrumentedOdspTokenFetcher(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	resolvedUrlParts: IOdspUrlParts,
 	tokenFetcher: TokenFetcher<OdspResourceTokenFetchOptions>,
 	throwOnNullToken: boolean,
@@ -467,10 +467,11 @@ export function createCacheSnapshotKey(
 ): ICacheEntry {
 	const cacheEntry: ICacheEntry = {
 		type: snapshotWithLoadingGroupId ? snapshotWithLoadingGroupIdKey : snapshotKey,
-		key: odspResolvedUrl.fileVersion ?? "",
+		key: "",
 		file: {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: odspResolvedUrl.fileVersion,
 		},
 	};
 	return cacheEntry;
@@ -531,7 +532,7 @@ export function getJoinSessionCacheKey(odspResolvedUrl: IOdspResolvedUrl): strin
  * @param obj - obj whose type needs to be identified.
  */
 export function isInstanceOfISnapshot(
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	obj: ISnapshotContents | ISnapshot | undefined,
 ): obj is ISnapshot {
 	return obj !== undefined && "snapshotFormatV" in obj && obj.snapshotFormatV === 1;

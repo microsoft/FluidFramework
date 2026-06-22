@@ -8,10 +8,10 @@ import { readFile, stat } from "node:fs/promises";
 import * as path from "node:path";
 import ignore from "ignore";
 
-import type { BuildContext } from "../../buildContext";
-import type { BuildPackage } from "../../buildGraph";
-import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils";
-import { LeafWithDoneFileTask } from "./leafTask";
+import type { BuildContext } from "../../buildContext.js";
+import type { BuildPackage } from "../../buildGraph.js";
+import { getInstalledPackageVersion, getRecursiveFiles, globFn } from "../taskUtils.js";
+import { LeafWithDoneFileTask } from "./leafTask.js";
 
 export class PrettierTask extends LeafWithDoneFileTask {
 	private parsed: boolean = false;
@@ -50,12 +50,12 @@ export class PrettierTask extends LeafWithDoneFileTask {
 		}
 		this.parsed = this.entries.length !== 0;
 	}
-	protected get configFileFullPath() {
+	protected get configFileFullPath(): string {
 		// Currently there's no package-level config file, so just use tsconfig.json
 		return this.getPackageFileFullPath(".prettierrc.json");
 	}
 
-	protected async getDoneFileContent() {
+	protected async getDoneFileContent(): Promise<string | undefined> {
 		if (!this.parsed) {
 			this.traceError(`error generating done file content, unable to understand command line`);
 			return undefined;

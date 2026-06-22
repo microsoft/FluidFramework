@@ -3,11 +3,11 @@
  * Licensed under the MIT License.
  */
 
+import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import type {
 	IRedisParameters,
 	IRedisClientConnectionManager,
 } from "@fluidframework/server-services-utils";
-import { Lumberjack } from "@fluidframework/server-services-telemetry";
 
 /**
  * Redis based cache client for caching and expiring tenants and tokens.

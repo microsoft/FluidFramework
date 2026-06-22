@@ -43,9 +43,16 @@ export interface IAudienceEvents extends IEvent {
 }
 
 // @public
-export type ICriticalContainerError = IErrorBase_2;
+export type ICriticalContainerError = IErrorBase;
 
-export { IErrorBase }
+// @public
+export interface IErrorBase extends Partial<Error> {
+    readonly errorType: string;
+    getTelemetryProperties?(): ITelemetryBaseProperties;
+    readonly message: string;
+    readonly name?: string;
+    readonly stack?: string;
+}
 
 // @public
 export interface ISelf {

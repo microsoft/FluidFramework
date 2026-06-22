@@ -12,11 +12,9 @@ import {
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	MockLogger,
-	isFluidError,
-} from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { stub } from "sinon";
 import type { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
@@ -42,7 +40,7 @@ describe("OdspDocumentDeltaConnection tests", () => {
 		user: { id: "userId" },
 	};
 	const webSocketUrl = "https://webSocketUrl";
-	let logger: ITelemetryLoggerExt;
+	let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
 	const socketReferenceKeyPrefix = "prefix";
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";

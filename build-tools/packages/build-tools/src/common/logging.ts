@@ -5,7 +5,7 @@
 
 import chalk from "picocolors";
 
-import { commonOptions } from "../fluidBuild/commonOptions";
+import { commonOptions } from "../fluidBuild/commonOptions.js";
 
 /**
  * A function that logs an Error or error message.
@@ -91,7 +91,7 @@ export const defaultLogger: Logger = {
 	verbose,
 };
 
-function logWithTime(msg: string | Error, logFunc: ErrorLoggingFunction) {
+function logWithTime(msg: string | Error, logFunc: ErrorLoggingFunction): void {
 	if (!commonOptions.logtime) {
 		logFunc(msg);
 		return;

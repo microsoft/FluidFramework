@@ -7,16 +7,17 @@ import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
-import type { IContainerExperimental } from "@fluidframework/container-loader/internal";
-import { type IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { ISharedDirectory } from "@fluidframework/map/internal";
 import {
-	type ITestObjectProvider,
-	createTestConfigProvider,
 	createSummarizerFromFactory,
+	createTestConfigProvider,
+	getRequiredPendingLocalState,
 	summarizeNow,
+	type ITestObjectProvider,
 } from "@fluidframework/test-utils/internal";
 
 import { TestPersistedCache } from "../../testPersistedCache.js";
@@ -44,7 +45,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	// A Test Data Object that exposes some basic functionality.
 	class TestDataObject extends DataObject {
-		public get _root() {
+		public get _root(): ISharedDirectory {
 			return this.root;
 		}
 
@@ -67,7 +68,6 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 	};
 	const configProvider = createTestConfigProvider();
 	configProvider.set("Fluid.Container.UseLoadingGroupIdForSnapshotFetch2", true);
-	configProvider.set("Fluid.Container.enableOfflineLoad", true);
 
 	const testDataObjectType = "TestDataObject";
 	const dataObjectFactory = new DataObjectFactory({
@@ -116,9 +116,9 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("GroupId offline regular flow", async () => {
 		// Load basic container stuff
-		const container = (await provider.createContainer(runtimeFactory, {
+		const container = await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -142,11 +142,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB._root.set("B", "B");
 
 		// Get Pending state and close
-		assert(
-			container.getPendingLocalState !== undefined,
-			"Test can't run without getPendingLocalState",
-		);
-		const pendingState = await container.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container);
 		container.close();
 
 		// Load from the pending state
@@ -217,11 +213,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		const { summaryVersion } = await summarizeNow(summarizer);
 		clearCacheIfOdsp(provider, persistedCache);
 
-		const container2 = (await provider.loadContainer(
+		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
@@ -235,8 +231,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectA2._root.set("A2", "A2");
 
 		// Get Pending state and close
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 
 		// Load from the pending state
@@ -273,9 +268,9 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 	it("GroupId offline with refresh", async () => {
 		// Load basic container stuff
-		const container = (await provider.createContainer(runtimeFactory, {
+		const container = await provider.createContainer(runtimeFactory, {
 			configProvider,
-		})) as IContainerExperimental;
+		});
 		const mainObject = (await container.getEntryPoint()) as TestDataObject;
 		const containerRuntime = mainObject.containerRuntime;
 
@@ -313,11 +308,11 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 
 		clearCacheIfOdsp(provider, persistedCache);
 
-		const container2 = (await provider.loadContainer(
+		const container2 = await provider.loadContainer(
 			runtimeFactory,
 			{ configProvider },
 			{ [LoaderHeader.version]: summaryVersion },
-		)) as IContainerExperimental;
+		);
 		await provider.ensureSynchronized();
 		const mainObject2 = (await container2.getEntryPoint()) as TestDataObject;
 		const handleA2 = mainObject2._root.get<IFluidHandle<TestDataObject>>("dataObjectA");
@@ -343,13 +338,15 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 			container2 as unknown as {
 				// See SerializedStateManager class in container-loader package
 				serializedStateManager: {
-					refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					snapshotRefresher: {
+						refreshLatestSnapshot: (supportGetSnapshotApi: boolean) => Promise<void>;
+					};
 				};
 			}
 		).serializedStateManager;
 		clearCacheIfOdsp(provider, persistedCache);
 
-		await serializedStateManager.refreshLatestSnapshot(true);
+		await serializedStateManager.snapshotRefresher.refreshLatestSnapshot(true);
 
 		// Update the latestSequenceNumber so that the reference sequence number is beyond the snapshot
 		await provider.ensureSynchronized();
@@ -358,8 +355,7 @@ describeCompat("GroupId offline", "NoCompat", (getTestObjectProvider, apis) => {
 		dataObjectB2._root.set("B2", "B2");
 
 		// Get Pending state and close
-		assert(container2.getPendingLocalState !== undefined, "Missing method!");
-		const pendingState = await container2.getPendingLocalState();
+		const pendingState = await getRequiredPendingLocalState(container2);
 		container2.close();
 
 		// Load from the pending state

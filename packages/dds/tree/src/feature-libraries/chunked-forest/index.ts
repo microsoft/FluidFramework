@@ -12,16 +12,20 @@ export {
 	type IChunker,
 	chunkFieldSingle,
 	chunkField,
+	combineChunks,
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	EncodedFieldBatch,
+	FieldBatchFormatVersion,
 	type FieldBatch,
 	type FieldBatchCodec,
-	makeFieldBatchCodec,
+	fieldBatchCodecBuilder,
 	type FieldBatchEncodingContext,
-	fluidVersionToFieldBatchCodecWriteVersion,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchV2,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

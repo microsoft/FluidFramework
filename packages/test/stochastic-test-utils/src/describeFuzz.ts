@@ -114,6 +114,8 @@ export const defaultOptions: Required<FuzzDescribeOptions> = {
 };
 
 /**
+ * Creates a fuzz test `describe` function with the provided options.
+ *
  * @internal
  */
 export function createFuzzDescribe(optionsArg?: FuzzDescribeOptions): DescribeFuzz {
@@ -161,7 +163,7 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
  * The test creation callback receives an `isStress` parameter which it should use to support
  * this functionality as it deems fit.
  *
- * @privateRemarks - Reusing `createFuzzDescribe` here means tests will also receive a testCount parameter,
+ * @privateRemarks Reusing `createFuzzDescribe` here means tests will also receive a testCount parameter,
  * but since the typing doesn't include that information it shouldn't be used.
  *
  * @internal
@@ -169,6 +171,8 @@ export const describeFuzz: DescribeFuzz = createFuzzDescribe();
 export const describeStress: DescribeStress = createFuzzDescribe();
 
 /**
+ * Generates test seeds based on the provided test count and stress mode.
+ *
  * @internal
  */
 export function generateTestSeeds(testCount: number, stressMode: StressMode): number[] {

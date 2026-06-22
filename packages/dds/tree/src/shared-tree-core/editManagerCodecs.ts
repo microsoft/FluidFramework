@@ -4,226 +4,151 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
+	VersionDispatchingCodecBuilder,
+	type CodecTree,
+	type CodecVersion,
+	type DependentFormatVersion,
+	FluidClientVersion,
 	type ICodecFamily,
 	type ICodecOptions,
 	type IJsonCodec,
-	type IMultiFormatCodec,
-	makeCodecFamily,
-	withSchemaValidation,
+	makeDiscontinuedCodecAndSchema,
 } from "../codec/index.js";
-import { makeVersionDispatchingCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import {
-	type JsonCompatibleReadOnly,
-	JsonCompatibleReadOnlySchema,
-	mapIterable,
-} from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
-import {
-	type Commit,
-	type EncodedCommit,
-	EncodedEditManager,
-	type SequencedCommit,
-} from "./editManagerFormat.js";
+import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
+import { makeSharedBranchesCodecWithVersion } from "./editManagerCodecsVSharedBranches.js";
+import { EditManagerFormatVersion } from "./editManagerFormatCommons.js";
 
+/**
+ * Context required for encoding/decoding the {@link EditManager}'s {@link SummaryData}.
+ */
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	readonly isSummary: boolean;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	readonly sharedObjectId?: string;
 }
 
-export function makeEditManagerCodec<TChangeset>(
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
+/**
+ * Codec name used to identify the {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
+ */
+export const editManagerCodecName = "EditManager";
+
+/**
+ * Options for constructing an {@link EditManager} codec, see {@link makeEditManagerCodecBuilder}.
+ */
+interface EditManagerCodecOptions<TChangeset> extends ICodecOptions {
+	/** Codecs for encoding changesets. */
+	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>;
+	/** Maps each EditManager format version to the corresponding changeset format version. */
+	dependentChangeFormatVersion: DependentFormatVersion<EditManagerFormatVersion>;
+	/** Codec for encoding revision tags within changesets. */
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
 		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-	writeVersion: number,
-): IJsonCodec<
-	SummaryData<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	EditManagerEncodingContext
-> {
-	const family = makeEditManagerCodecs(changeCodecs, revisionTagCodec, options);
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
-
-export function makeEditManagerCodecs<TChangeset>(
-	changeCodecs: ICodecFamily<TChangeset, ChangeEncodingContext>,
-	revisionTagCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-): ICodecFamily<SummaryData<TChangeset>, EditManagerEncodingContext> {
-	return makeCodecFamily([
-		[1, makeV1CodecWithVersion(changeCodecs.resolve(1), revisionTagCodec, options, 1)],
-		[2, makeV1CodecWithVersion(changeCodecs.resolve(2), revisionTagCodec, options, 2)],
-		[3, makeV1CodecWithVersion(changeCodecs.resolve(3), revisionTagCodec, options, 3)],
-		[4, makeV1CodecWithVersion(changeCodecs.resolve(4), revisionTagCodec, options, 4)],
-	]);
-}
-
-function makeV1CodecWithVersion<TChangeset>(
-	changeCodec: IMultiFormatCodec<
-		TChangeset,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		ChangeEncodingContext
-	>,
-	revisionTagCodec: IJsonCodec<
-		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
-		ChangeEncodingContext
-	>,
-	options: ICodecOptions,
-	version: EncodedEditManager<TChangeset>["version"],
-): IJsonCodec<
-	SummaryData<TChangeset>,
-	JsonCompatibleReadOnly,
-	JsonCompatibleReadOnly,
-	EditManagerEncodingContext
-> {
-	const format = EncodedEditManager(
-		changeCodec.json.encodedSchema ?? JsonCompatibleReadOnlySchema,
-	);
-
-	const encodeCommit = <T extends Commit<TChangeset>>(
-		commit: T,
-		context: ChangeEncodingContext,
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	) => ({
-		...commit,
-		revision: revisionTagCodec.encode(commit.revision, {
-			originatorId: commit.sessionId,
-			idCompressor: context.idCompressor,
-			revision: undefined,
-		}),
-		change: changeCodec.json.encode(commit.change, { ...context, revision: commit.revision }),
-	});
-
-	const decodeCommit = <T extends EncodedCommit<JsonCompatibleReadOnly>>(
-		commit: T,
-		context: ChangeEncodingContext,
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-	) => {
-		const revision = revisionTagCodec.decode(commit.revision, {
-			originatorId: commit.sessionId,
-			idCompressor: context.idCompressor,
-			revision: undefined,
-		});
-
-		return {
-			...commit,
-			revision,
-			change: changeCodec.json.decode(commit.change, { ...context, revision }),
-		};
-	};
-
-	const codec: IJsonCodec<
-		SummaryData<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EncodedEditManager<TChangeset>,
-		EditManagerEncodingContext
-	> = withSchemaValidation(
-		format,
-		{
-			encode: (data, context: EditManagerEncodingContext) => {
-				const json: EncodedEditManager<TChangeset> = {
-					trunk: data.trunk.map((commit) =>
-						encodeCommit(commit, {
-							originatorId: commit.sessionId,
-							idCompressor: context.idCompressor,
-							schema: context.schema,
-							revision: undefined,
-						}),
-					),
-					branches: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
-						sessionId,
-						{
-							base: revisionTagCodec.encode(branch.base, {
-								originatorId: sessionId,
-								idCompressor: context.idCompressor,
-								revision: undefined,
-							}),
-							commits: branch.commits.map((commit) =>
-								encodeCommit(commit, {
-									originatorId: commit.sessionId,
-									idCompressor: context.idCompressor,
-									schema: context.schema,
-									revision: undefined,
-								}),
-							),
-						},
-					]),
-					version,
-				};
-				return json;
-			},
-			decode: (
-				json: EncodedEditManager<TChangeset>,
-				context: EditManagerEncodingContext,
-			): SummaryData<TChangeset> => {
-				// TODO: sort out EncodedCommit vs Commit, and make this type check without `any`.
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
-				const trunk: readonly any[] = json.trunk;
-				return {
-					trunk: trunk.map(
-						(commit): SequencedCommit<TChangeset> =>
-							// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-							// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-							decodeCommit(commit, {
-								originatorId: commit.sessionId,
-								idCompressor: context.idCompressor,
-								revision: undefined,
-							}),
-					),
-					peerLocalBranches: new Map(
-						mapIterable(json.branches, ([sessionId, branch]) => [
-							sessionId,
-							{
-								base: revisionTagCodec.decode(branch.base, {
-									originatorId: sessionId,
-									idCompressor: context.idCompressor,
-									revision: undefined,
-								}),
-								commits: branch.commits.map((commit) =>
-									// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-									decodeCommit(commit as EncodedCommit<JsonCompatibleReadOnly>, {
-										originatorId: commit.sessionId,
-										idCompressor: context.idCompressor,
-										revision: undefined,
-									}),
-								),
-							},
-						]),
-					),
-				};
-			},
-		},
-		options.jsonValidator,
-	);
-	// TODO: makeVersionedValidatedCodec and withSchemaValidation should allow the codec to decode JsonCompatibleReadOnly, or Versioned or something like that,
-	// and not leak the internal encoded format in the API surface.
-	// Fixing that would remove the need for this cast.
-	return codec as unknown as IJsonCodec<
-		SummaryData<TChangeset>,
-		JsonCompatibleReadOnly,
-		JsonCompatibleReadOnly,
-		EditManagerEncodingContext
 	>;
+}
+
+/**
+ * Creates a {@link VersionDispatchingCodecBuilder} encoding for {@link SummaryData}.
+ */
+export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCodecBuilder<
+	EditManagerCodecOptions<TChangeset>,
+	SummaryData<TChangeset>,
+	EditManagerEncodingContext,
+	EditManagerFormatVersion,
+	typeof editManagerCodecName
+> {
+	// See EditManagerFormatVersion and its members for documentation on what changed in each version.
+	const versions: CodecVersion<
+		SummaryData<TChangeset>,
+		EditManagerEncodingContext,
+		EditManagerFormatVersion,
+		EditManagerCodecOptions<TChangeset>
+	>[] = [
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v1, "2.73.0"),
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v2, "2.73.0"),
+		{
+			minVersionForCollab: lowestMinVersionForCollab,
+			formatVersion: EditManagerFormatVersion.v3,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v3),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v3,
+				),
+		},
+		{
+			minVersionForCollab: FluidClientVersion.v2_43,
+			formatVersion: EditManagerFormatVersion.v4,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v4),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v4,
+				),
+		},
+		makeDiscontinuedCodecAndSchema(EditManagerFormatVersion.v5, "2.74.0"),
+		{
+			minVersionForCollab: FluidClientVersion.v2_80,
+			formatVersion: EditManagerFormatVersion.v6,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeV1toV4andV6CodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(EditManagerFormatVersion.v6),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.v6,
+				),
+		},
+		{
+			minVersionForCollab: undefined,
+			formatVersion: EditManagerFormatVersion.vSharedBranches,
+			codec: (options: EditManagerCodecOptions<TChangeset>) =>
+				makeSharedBranchesCodecWithVersion(
+					options.changeCodecs.resolve(
+						options.dependentChangeFormatVersion.lookup(
+							EditManagerFormatVersion.vSharedBranches,
+						),
+					),
+					options.revisionTagCodec,
+					EditManagerFormatVersion.vSharedBranches,
+				),
+		},
+	];
+
+	return VersionDispatchingCodecBuilder.build(editManagerCodecName, versions);
+}
+
+/**
+ * Returns a {@link CodecTree} for the EditManager format at the given client version,
+ * with the provided change codec tree as a child.
+ */
+export function getCodecTreeForEditManagerFormatWithChange(
+	clientVersion: MinimumVersionForCollab,
+	changeFormat: CodecTree,
+): CodecTree {
+	const builder = makeEditManagerCodecBuilder();
+	return {
+		...builder.getCodecTree(clientVersion),
+		children: [changeFormat],
+	};
 }

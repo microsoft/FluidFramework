@@ -142,7 +142,11 @@ describe("SharedMap rollback", () => {
 			undefined,
 			"Pending value for key2 should reflect the clear",
 		);
-		assert.strictEqual(valueChanges.length, 0, "Should have no value change events");
+		assert.strictEqual(
+			valueChanges.length,
+			2,
+			"Should have two value change events for deleted keys",
+		);
 		assert.strictEqual(clears, 1, "Should have one clear event");
 		containerRuntime.rollback?.();
 		assert.strictEqual(
@@ -155,18 +159,48 @@ describe("SharedMap rollback", () => {
 			"value2",
 			"Value should be restored by rollback",
 		);
-		assert.strictEqual(valueChanges.length, 2, "Should have two value change events");
-		assert.strictEqual(valueChanges[0].key, "key1", "First event should be for key1");
+		assert.strictEqual(
+			valueChanges.length,
+			4,
+			"Should have four value change events total (2 from clear + 2 from rollback)",
+		);
+		// First two events are from the clear
+		assert.strictEqual(valueChanges[0].key, "key1", "First event should be for key1 deletion");
 		assert.strictEqual(
 			valueChanges[0].previousValue,
-			undefined,
-			"First event previousValue should be pre-rollback value",
+			"value1",
+			"First event previousValue should be the value before clear",
 		);
-		assert.strictEqual(valueChanges[1].key, "key2", "Second event should be for key2");
+		assert.strictEqual(
+			valueChanges[1].key,
+			"key2",
+			"Second event should be for key2 deletion",
+		);
 		assert.strictEqual(
 			valueChanges[1].previousValue,
+			"value2",
+			"Second event previousValue should be the value before clear",
+		);
+		// Next two events are from the rollback
+		assert.strictEqual(
+			valueChanges[2].key,
+			"key1",
+			"Third event should be for key1 restoration",
+		);
+		assert.strictEqual(
+			valueChanges[2].previousValue,
 			undefined,
-			"Second event previousValue should be pre-rollback value",
+			"Third event previousValue should be pre-rollback value",
+		);
+		assert.strictEqual(
+			valueChanges[3].key,
+			"key2",
+			"Fourth event should be for key2 restoration",
+		);
+		assert.strictEqual(
+			valueChanges[3].previousValue,
+			undefined,
+			"Fourth event previousValue should be pre-rollback value",
 		);
 	});
 
@@ -205,7 +239,9 @@ describe("SharedMap rollback", () => {
 				{ key: "key1", previousValue: "value1" },
 				// Set key2 to a new value
 				{ key: "key2", previousValue: "value2" },
-				// Clear happens here, no valueChange event for clear
+				// Clear happens here - valueChanged events for deleted keys
+				{ key: "key2", previousValue: "newValue2" },
+				{ key: "key3", previousValue: "value3" },
 				// Set key4
 				{ key: "key4", previousValue: undefined },
 			],

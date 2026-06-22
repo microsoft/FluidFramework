@@ -3,10 +3,11 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 export type { ICodeLoaderBundle, IFluidFileConverter } from "./codeLoaderBundle.js";
 export {
 	createContainerAndExecute,
+	createFluidRunnerContainerAndExecute,
 	exportFile,
 	type IExportFileResponse,
 	type IExportFileResponseSuccess,
@@ -15,14 +16,16 @@ export {
 export { fluidRunner } from "./fluidRunner.js";
 export {
 	OutputFormat,
-	type ITelemetryOptions,
+	type IFileLoggerTelemetryOptions,
 	type IFileLogger,
+	type ITelemetryOptions,
 } from "./logger/fileLogger.js";
 export {
+	createFluidRunnerLogger,
 	createLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
 } from "./logger/loggerUtils.js";
 export { parseBundleAndExportFile } from "./parseBundleAndExportFile.js";
 export { getSnapshotFileContent } from "./utils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */

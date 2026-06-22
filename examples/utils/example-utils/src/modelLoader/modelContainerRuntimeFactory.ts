@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IContainer,
 	IContainerContext,
 	IRuntime,
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/legacy";
 import {
+	type IContainerRuntimeOptions,
 	loadContainerRuntime,
-	IContainerRuntimeOptions,
 } from "@fluidframework/container-runtime/legacy";
-import { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
-import { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
+import type { NamedFluidDataStoreRegistryEntries } from "@fluidframework/runtime-definitions/legacy";
 
 /**
  * @internal
@@ -29,7 +29,7 @@ export interface IModelContainerRuntimeEntryPoint<ModelType> {
  * @internal
  */
 export abstract class ModelContainerRuntimeFactory<ModelType> implements IRuntimeFactory {
-	public get IRuntimeFactory() {
+	public get IRuntimeFactory(): IRuntimeFactory {
 		return this;
 	}
 

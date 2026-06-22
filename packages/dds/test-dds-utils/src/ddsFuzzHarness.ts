@@ -46,7 +46,7 @@ import type {
 	IChannelServices,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { IIdCompressorCore } from "@fluidframework/id-compressor/internal";
+import { toIdCompressorWithCore } from "@fluidframework/id-compressor/internal";
 import {
 	isISharedObjectHandle,
 	type IFluidSerializer,
@@ -114,7 +114,7 @@ export interface ClientSpec {
 export interface ChangeConnectionState {
 	type: "changeConnectionState";
 	connected: boolean;
-	squash?: boolean;
+	squash: boolean;
 }
 
 /**
@@ -266,7 +266,7 @@ export interface DDSFuzzModel<
 	 * Equivalence validation function, which should verify that the provided channels contain the same data.
 	 * This is run at each synchronization point for all connected clients (as disconnected clients won't
 	 * necessarily have the same set of ops applied).
-	 * @throws - An informative error if the channels don't have equivalent data.
+	 * @throws An informative error if the channels don't have equivalent data.
 	 */
 	validateConsistency: (
 		channelA: Client<TChannelFactory>,
@@ -545,9 +545,7 @@ export interface DDSFuzzSuiteOptions {
 	/**
 	 * An optional IdCompressor that will be passed to the constructed MockDataStoreRuntime instance.
 	 */
-	idCompressorFactory?: (
-		summary?: FuzzSerializedIdCompressor,
-	) => IIdCompressor & IIdCompressorCore;
+	idCompressorFactory?: (summary?: FuzzSerializedIdCompressor) => IIdCompressor;
 
 	/**
 	 * This preserves the old seed behavior where the whole fuzz tests gets a single seed.
@@ -685,6 +683,7 @@ export function mixinReconnect<
 					const op: ChangeConnectionState = {
 						type: "changeConnectionState",
 						connected: !state.client.containerRuntime.connected,
+						squash: false,
 					};
 					if (options.testSquashResubmit === true && op.connected && state.random.bool(0.5)) {
 						op.squash = true;
@@ -1088,7 +1087,6 @@ export function setupClientContext(
 	random.handle = () => new DDSFuzzHandle(random.pick(handles), client.dataStoreRuntime);
 	return () => {
 		state.client = oldClient;
-		// eslint-disable-next-line unicorn/consistent-destructuring
 		state.random.handle = oldHandle;
 	};
 }
@@ -1486,13 +1484,14 @@ async function loadDetached<TChannelFactory extends IChannelFactory>(
 }
 
 function finalizeAllocatedIds(client: {
-	dataStoreRuntime: { idCompressor?: IIdCompressorCore };
+	dataStoreRuntime: { idCompressor?: IIdCompressor };
 }): void {
 	const compressor = client.dataStoreRuntime.idCompressor;
 	if (compressor !== undefined) {
-		const range = compressor.takeNextCreationRange();
+		const compressorCore = toIdCompressorWithCore(compressor);
+		const range = compressorCore.takeNextCreationRange();
 		if (range.ids !== undefined) {
-			compressor.finalizeCreationRange(range);
+			compressorCore.finalizeCreationRange(range);
 		}
 	}
 }
@@ -1791,7 +1790,32 @@ export function createSuite<
 				}
 			});
 		}
+
+		afterEach(() => {
+			disposeAllOracles();
+		});
 	});
+}
+
+const activeOracles: Set<{ dispose: () => void }> = new Set();
+
+/**
+ * Tracks oracles created during fuzz runs so they can be disposed after each test.
+ * @internal
+ */
+export function registerOracle(oracle: { dispose: () => void }): void {
+	activeOracles.add(oracle);
+}
+
+/**
+ * Dispose all oracles
+ * @internal
+ */
+function disposeAllOracles(): void {
+	for (const oracle of activeOracles) {
+		oracle.dispose();
+	}
+	activeOracles.clear();
 }
 
 const getFullModel = <

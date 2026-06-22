@@ -1,0 +1,15 @@
+{
+	"name": "catalog-test-root",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Test repo root for pnpm catalog tests",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepoCatalog"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
+}

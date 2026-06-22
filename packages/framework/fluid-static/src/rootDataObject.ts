@@ -12,7 +12,6 @@ import type { IRuntimeFactory } from "@fluidframework/container-definitions/inte
 import {
 	FluidDataStoreRegistry,
 	type IContainerRuntimeOptions,
-	type MinimumVersionForCollab,
 } from "@fluidframework/container-runtime/internal";
 import type {
 	IContainerRuntime,
@@ -26,12 +25,14 @@ import type {
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type { IDirectory } from "@fluidframework/map/internal";
-import type { IFluidDataStoreRegistry } from "@fluidframework/runtime-definitions/internal";
+import type {
+	IFluidDataStoreRegistry,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
-import { compatibilityModeRuntimeOptions } from "./compatibilityConfiguration.js";
+import { defaultRuntimeOptionsForMinVersion } from "./compatibilityConfiguration.js";
 import type {
-	CompatibilityMode,
 	ContainerSchema,
 	IRootDataObject,
 	IStaticEntryPoint,
@@ -40,7 +41,6 @@ import type {
 	LoadableObjectRecord,
 } from "./types.js";
 import {
-	compatibilityModeToMinVersionForCollab,
 	createDataObject,
 	createSharedObject,
 	isDataObjectKind,
@@ -194,9 +194,10 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	 */
 	schema: ContainerSchema;
 	/**
-	 * See {@link CompatibilityMode} and compatibilityModeRuntimeOptions for more details.
+	 * Minimum Fluid Framework version required for collaboration as a
+	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
 	 */
-	compatibilityMode: CompatibilityMode;
+	minVersionForCollaboration: MinimumVersionForCollab;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -204,34 +205,21 @@ export function createDOProviderContainerRuntimeFactory(props: {
 	rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	/**
 	 * Optional overrides for the container runtime options.
-	 * If not provided, only the default options for the given compatibilityMode will be used.
+	 * If not provided, only the default options for the given minVersionForCollaboration will be used.
 	 */
 	runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collab.
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * @remarks
-	 * This is useful when runtime options are overridden and change the minimum version for collab.
-	 */
-	minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
-	const {
-		compatibilityMode,
-		minVersionForCollabOverride,
-		rootDataStoreRegistry,
-		runtimeOptionOverrides,
-		schema,
-	} = props;
+	const { rootDataStoreRegistry, runtimeOptionOverrides, schema } = props;
+	const minVersionForCollab = props.minVersionForCollaboration;
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);
 	const registry = rootDataStoreRegistry ?? new FluidDataStoreRegistry(registryEntries);
 
 	return new DOProviderContainerRuntimeFactory(
 		schema,
-		compatibilityMode,
 		new RootDataObjectFactory(sharedObjects, registry),
 		{
 			runtimeOptions: runtimeOptionOverrides,
-			minVersionForCollab: minVersionForCollabOverride,
+			minVersionForCollab,
 		},
 	);
 }
@@ -261,31 +249,28 @@ class DOProviderContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	 * since it can take care of constructing the root data object factory based on the schema.
 	 *
 	 * @param schema - The schema for the container
-	 * @param compatibilityMode - Compatibility mode
 	 * @param rootDataObjectFactory - A factory that can construct the root data object.
+	 * @param config - Resolved minimum version for collaboration (required) and optional runtime option overrides.
 	 */
 	public constructor(
 		schema: ContainerSchema,
-		compatibilityMode: CompatibilityMode,
 		rootDataObjectFactory: DataObjectFactory<
 			RootDataObject,
 			{ InitialState: RootDataObjectProps }
 		>,
-		overrides?: Partial<{
-			runtimeOptions: Partial<IContainerRuntimeOptions>;
+		config: {
 			minVersionForCollab: MinimumVersionForCollab;
-		}>,
+			runtimeOptions?: Partial<IContainerRuntimeOptions>;
+		},
 	) {
 		super({
 			registryEntries: [rootDataObjectFactory.registryEntry],
 			runtimeOptions: {
-				...compatibilityModeRuntimeOptions[compatibilityMode],
-				...overrides?.runtimeOptions,
+				...defaultRuntimeOptionsForMinVersion(config.minVersionForCollab),
+				...config.runtimeOptions,
 			},
 			provideEntryPoint,
-			minVersionForCollab:
-				overrides?.minVersionForCollab ??
-				compatibilityModeToMinVersionForCollab[compatibilityMode],
+			minVersionForCollab: config.minVersionForCollab,
 		});
 		this.rootDataObjectFactory = rootDataObjectFactory;
 		this.initialObjects = schema.initialObjects;

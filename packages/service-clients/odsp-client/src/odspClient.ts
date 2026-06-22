@@ -20,15 +20,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
-import type {
-	ContainerAttachProps,
-	ContainerSchema,
-	IFluidContainer,
-} from "@fluidframework/fluid-static";
+import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/fluid-static";
 import {
 	createDOProviderContainerRuntimeFactory,
 	createFluidContainer,
-	createServiceAudience,
+	isInternalFluidContainer,
 } from "@fluidframework/fluid-static/internal";
 import {
 	OdspDocumentServiceFactory,
@@ -38,6 +34,7 @@ import {
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -46,9 +43,10 @@ import type {
 	OdspClientProps,
 	OdspConnectionConfig,
 	OdspContainerAttachProps,
-	OdspContainerServices,
+	OdspContainerServices as IOdspContainerServices,
+	IOdspFluidContainer,
 } from "./interfaces.js";
-import { createOdspAudienceMember } from "./odspAudience.js";
+import { OdspContainerServices } from "./odspContainerServices.js";
 import type { IOdspTokenProvider } from "./token.js";
 
 async function getStorageToken(
@@ -114,13 +112,43 @@ export class OdspClient {
 		this.configProvider = wrapConfigProvider(properties.configProvider);
 	}
 
+	/**
+	 * Creates a new detached container instance backed by ODSP.
+	 * @param containerSchema - Container schema for the new container.
+	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
+	 * version so the container opts into the latest defaults.
+	 * @returns New detached container instance along with associated services.
+	 */
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+		// OdspClient does not support 1.x clients, so we exclude it from the accepted `minVersionForCollab` values.
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	/**
+	 * Creates a new detached container instance backed by ODSP.
+	 * @param containerSchema - Container schema for the new container.
+	 * @returns New detached container instance along with associated services.
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a second argument.
+	 * The previous behavior was equivalent to passing `"2.0.0"`.
+	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	public async createContainer<T extends ContainerSchema>(
+		containerSchema: T,
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -130,21 +158,57 @@ export class OdspClient {
 			},
 		});
 
-		const fluidContainer = await this.createFluidContainer(container, this.connectionConfig);
+		const fluidContainer = await this.createFluidContainer<T>(
+			container,
+			this.connectionConfig,
+		);
 
 		const services = await this.getContainerServices(container);
 
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
+	/**
+	 * Accesses an existing container by its unique ID in ODSP.
+	 * @param id - Unique ID of the container in ODSP.
+	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * `MinimumVersionForCollab` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
+	 * version so the container opts into the latest defaults.
+	 * @returns Existing container instance along with associated services.
+	 */
+	public async getContainer<T extends ContainerSchema>(
+		id: string,
+		containerSchema: T,
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>,
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	/**
+	 * Accesses an existing container by its unique ID in ODSP.
+	 * @param id - Unique ID of the container in ODSP.
+	 * @param containerSchema - Container schema used to access data objects in the container.
+	 * @returns Existing container instance along with associated services.
+	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) as a third argument.
+	 * The previous behavior was equivalent to passing `"2.0.0"`.
+	 */
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
 	): Promise<{
-		container: IFluidContainer<T>;
-		services: OdspContainerServices;
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
+	}>;
+	public async getContainer<T extends ContainerSchema>(
+		id: string,
+		containerSchema: T,
+		minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`> = "2.0.0",
+	): Promise<{
+		container: IOdspFluidContainer<T>;
+		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema);
+		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
 		const url = createOdspUrl({
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,
@@ -153,17 +217,23 @@ export class OdspClient {
 		});
 		const container = await loadExistingContainer({ ...loaderProps, request: { url } });
 
-		const fluidContainer = await createFluidContainer({
+		const fluidContainer = await createFluidContainer<T>({
 			container,
 		});
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		const services = await this.getContainerServices(container);
-		return { container: fluidContainer as IFluidContainer<T>, services };
+		return { container: fluidContainer, services };
 	}
 
-	private getLoaderProps(schema: ContainerSchema): ILoaderProps {
+	private getLoaderProps(
+		schema: ContainerSchema,
+		minVersionForCollaboration: Exclude<MinimumVersionForCollab, `1.${string}`>,
+	): ILoaderProps {
 		const runtimeFactory = createDOProviderContainerRuntimeFactory({
 			schema,
-			compatibilityMode: "2",
+			minVersionForCollaboration,
 		});
 		const load = async (): Promise<IFluidModuleWithDetails> => {
 			return {
@@ -193,10 +263,10 @@ export class OdspClient {
 		};
 	}
 
-	private async createFluidContainer(
+	private async createFluidContainer<T extends ContainerSchema>(
 		container: IContainer,
 		connection: OdspConnectionConfig,
-	): Promise<IFluidContainer> {
+	): Promise<IOdspFluidContainer<T>> {
 		/**
 		 * See {@link FluidContainer.attach}
 		 */
@@ -227,17 +297,15 @@ export class OdspClient {
 			 */
 			return resolvedUrl.itemId;
 		};
-		const fluidContainer = await createFluidContainer({ container });
+		const fluidContainer = await createFluidContainer<T>({ container });
+		if (!isInternalFluidContainer(fluidContainer)) {
+			throw new Error("Fluid container is not internal");
+		}
 		fluidContainer.attach = attach;
 		return fluidContainer;
 	}
 
-	private async getContainerServices(container: IContainer): Promise<OdspContainerServices> {
-		return {
-			audience: createServiceAudience({
-				container,
-				createServiceMember: createOdspAudienceMember,
-			}),
-		};
+	private async getContainerServices(container: IContainer): Promise<IOdspContainerServices> {
+		return new OdspContainerServices(container);
 	}
 }

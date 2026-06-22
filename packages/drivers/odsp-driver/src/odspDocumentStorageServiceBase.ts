@@ -19,7 +19,7 @@ import {
 	type IVersion,
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { maximumCacheDurationMs } from "@fluidframework/odsp-driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import type { IConfigProvider } from "@fluidframework/telemetry-utils/internal";
 
 class BlobCache {
@@ -241,6 +241,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 
 	private async readTree(id: string, scenarioName?: string): Promise<ISnapshotTree | null> {
 		let tree = this.commitCache.get(id);
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!tree) {
 			tree = await this.fetchTreeFromSnapshot(id, scenarioName);
 		}

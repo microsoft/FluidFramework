@@ -8,15 +8,13 @@
 
 parameters:
 # Expected form:
-# name: string
-# affectedPaths: string[]
-# testFileTarName: string
-# testCommand: string
+# name: string                  (npm package name; used to derive the stage id)
+# affectedPaths: string[]       (paths under which a diff triggers the test for this package)
+# id: string                    (stable identifier used in job / output variable names)
+# testPackageDirectory: string  (path to the package, relative to the FluidFramework repo root)
+# testCommand: string           (npm script to invoke inside testPackageDirectory)
 - name: packages
   type: object
-
-- name: testWorkspace
-  type: string
 
 - name: pool
   type: object
@@ -31,6 +29,14 @@ parameters:
 # Needed to workaround a bug in the DownloadPipelineArtifact task that might cause artifacts to be downloaded from the
 # incorrect pipeline run (see https://github.com/microsoft/azure-pipelines-tasks/issues/13518).
 - name: artifactBuildId
+  type: string
+
+# A valid git ref to use for the microsoft/FluidFramework repository checkout (e.g. refs/heads/main, a commit SHA, tag, etc)
+# Pipelines that are triggered on completion of the "Build - client packages" pipeline should generally use
+# the same source commit as what was used for "Build - client packages". This is typically available via
+# `$(resources.pipeline.client.sourceCommit)` (where "client" is actually the name of the resource declared
+# in the current pipeline's root yaml file)
+- name: fluidFrameworkSourceVersion
   type: string
 
 stages:
@@ -61,7 +67,7 @@ stages:
                 echo "##vso[task.setvariable variable=AffectedFilesModified;isOutput=true]true"
               }
           displayName: 'Check if files affecting ${{ package.name }} tests were modified'
-          name: Check${{ replace(package.testFileTarName, '-', '' ) }}
+          name: Check${{ replace(package.id, '-', '' ) }}
           env:
             AFFECTED_PATHS: ${{ join(';', package.affectedPaths) }}
 
@@ -73,14 +79,12 @@ stages:
         stageDependencies:
           - CheckAffectedPaths
         pipelineIdentifierForTelemetry: 'DdsStressService'
-        condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.testFileTarName, '-', '') }}.AffectedFilesModified'],'true')
+        condition: eq(dependencies.CheckAffectedPaths.outputs['Job.Check${{ replace(package.id, '-', '') }}.AffectedFilesModified'],'true')
         poolBuild: ${{ parameters.pool }}
-        loggerPackage: ''
         artifactBuildId: ${{ parameters.artifactBuildId }}
-        testPackage: ${{ package.name }}
-        testWorkspace: ${{ parameters.testWorkspace }}
+        fluidFrameworkSourceVersion: ${{ parameters.fluidFrameworkSourceVersion }}
+        testPackageDirectory: ${{ package.testPackageDirectory }}
         timeoutInMinutes: 120
-        testFileTarName: ${{ package.testFileTarName }}
         testCommand: ${{ package.testCommand }}
         env:
           FUZZ_STRESS_RUN: ${{ parameters.stressMode }}  # The value in package.json passed via cross-env will override this one.

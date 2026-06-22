@@ -11,12 +11,10 @@ import type {
 	AliasResult,
 	IDataStore,
 	IFluidDataStoreChannel,
-	// eslint-disable-next-line import/no-deprecated
-	IContainerRuntimeBaseExperimental,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	TelemetryDataTag,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -26,6 +24,8 @@ import { ContainerMessageType } from "./messageTypes.js";
 /**
  * Interface for an op to be used for assigning an
  * alias to a datastore
+ * @internal
+ * @privateRemarks exported per ContainerRuntime export for testing purposes
  */
 export interface IDataStoreAliasMessage {
 	/**
@@ -58,7 +58,7 @@ export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
 	channelCollection: ChannelCollection,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
@@ -80,9 +80,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		// eslint-disable-next-line import/no-deprecated
-		const runtime = this.parentContext.containerRuntime as IContainerRuntimeBaseExperimental;
-		if (runtime.inStagingMode === true) {
+		if (this.parentContext.containerRuntime.inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
@@ -147,7 +145,10 @@ class DataStore implements IDataStore {
 		}
 
 		const aliased = await this.ackBasedPromise<boolean>((resolve) => {
-			this.parentContext.submitMessage(ContainerMessageType.Alias, message, resolve);
+			this.parentContext.submitMessage(
+				{ type: ContainerMessageType.Alias, contents: message },
+				resolve,
+			);
 		})
 			.catch((error) => {
 				this.logger.sendErrorEvent(
@@ -193,7 +194,7 @@ class DataStore implements IDataStore {
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
 		private readonly channelCollection: ChannelCollection,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly parentContext = channelCollection.parentContext,
 	) {
 		this.pendingAliases = channelCollection.pendingAliases;

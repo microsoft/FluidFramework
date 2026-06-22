@@ -6,11 +6,11 @@
 import type { IDisposable, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	type ITelemetryLoggerExt,
-	DataProcessingError,
-	LoggingError,
-	extractSafePropertiesFromMessage,
 	createChildLogger,
+	DataProcessingError,
+	extractSafePropertiesFromMessage,
+	LoggingError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import Deque from "double-ended-queue";
 import { v4 as uuid } from "uuid";
@@ -85,10 +85,6 @@ export interface IPendingMessage {
 		 */
 		length: number;
 		/**
-		 * If true, don't compare batchID of incoming batches to this. e.g. ID Allocation Batch IDs should be ignored
-		 */
-		ignoreBatchId?: boolean;
-		/**
 		 * If true, this batch is staged and should not actually be submitted on replayPendingStates.
 		 */
 		staged: boolean;
@@ -146,6 +142,25 @@ export interface IRuntimeStateHandler {
 	isAttached: () => boolean;
 }
 
+/**
+ * Optional hooks invoked at the close of the stashed-op apply lifecycle.
+ *
+ * `onAfterStashedOpsApplied` fires synchronously the first time
+ * `initialMessages` drains during `applyStashedOpsAt`, immediately after
+ * `isApplyingStashedOps` flips to `false`. Fires at most once per PSM
+ * lifetime. If an apply throws, control never reaches the close site and
+ * the hook is not invoked — load is fatal in that case.
+ *
+ * No corresponding open hook is exposed. The apply window is opened eagerly
+ * in the PSM constructor, but at that point `ContainerRuntime` has not yet
+ * wired up the downstream observers (`channelCollection` is undefined), so a
+ * fanout fired from the constructor would be a no-op. Consumers that care
+ * about the open transition can read `isApplyingStashedOps` directly.
+ */
+export interface PendingStateManagerHooks {
+	onAfterStashedOpsApplied?: () => void;
+}
+
 function isEmptyBatchPendingMessage(message: IPendingMessageFromStash): boolean {
 	const content = JSON.parse(message.content) as Partial<EmptyGroupedBatch>;
 	return content.type === "groupedBatch" && content.contents?.length === 0;
@@ -160,6 +175,8 @@ function buildPendingMessageContent(message: InboundSequencedContainerRuntimeMes
 }
 
 function typesOfKeys<T extends object>(obj: T): Record<keyof T, string> {
+	// TODO: Fix this violation and remove the disable
+	// eslint-disable-next-line unicorn/no-array-reduce
 	return Object.keys(obj).reduce((acc, key) => {
 		acc[key] = typeof obj[key];
 		return acc;
@@ -174,7 +191,10 @@ function scrubAndStringify(
 
 	// For these known/expected keys, we can either drill into the object (for contents)
 	// or just use the value as-is (since it's not personal info)
-	scrubbed.contents = message.contents && typesOfKeys(message.contents);
+	scrubbed.contents =
+		typeof message.contents === "object" && message.contents !== null
+			? typesOfKeys(message.contents)
+			: undefined;
 	scrubbed.type = message.type;
 
 	return JSON.stringify(scrubbed);
@@ -330,7 +350,9 @@ export class PendingStateManager implements IDisposable {
 		return this.pendingMessagesCount !== 0;
 	}
 
-	public getLocalState(snapshotSequenceNumber?: number): IPendingLocalState {
+	public getLocalState(snapshotSequenceNumber?: number): {
+		pending: IPendingLocalState;
+	} {
 		assert(
 			this.initialMessages.isEmpty(),
 			0x2e9 /* "Must call getLocalState() after applying initial states" */,
@@ -354,23 +376,70 @@ export class PendingStateManager implements IDisposable {
 			}
 		}
 		return {
-			pendingStates: [
-				...newSavedOps,
-				...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
-			],
+			pending: {
+				pendingStates: [
+					...newSavedOps,
+					...this.pendingMessages.toArray().map((message) => toSerializableForm(message)),
+				],
+			},
 		};
 	}
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
+
+	/**
+	 * One-way lifecycle of the stashed-op apply window: `ended` → `applying` → `ended`.
+	 *
+	 * Default is `ended` — no stashed state means there's nothing to apply, so the window is
+	 * closed before it ever opens. `ended` → `applying` happens in the constructor when
+	 * stashed state is present (i.e. `initialMessages` is non-empty at construction). The
+	 * open is eager so the runtime is readonly from the moment any DDS could possibly
+	 * observe it. `applying` → `ended` happens the first time {@link applyStashedOpsAt}
+	 * drains `initialMessages`. After that, local edits are safe — they queue FIFO behind
+	 * any remaining `pendingMessages`, preserving server-side ordering.
+	 *
+	 * The window never reopens. After the close, subsequent `applyStashedOpsAt` calls (e.g.
+	 * from late `notifyOpReplay`s) early-return at the empty guard.
+	 *
+	 * `pendingMessages` state is intentionally NOT part of the close condition. Those
+	 * entries are drained transparently by {@link replayPendingStates} on connect via
+	 * resubmit (each pop is matched by a fresh push), so the queue size is conserved across
+	 * resubmit and DDSes can't distinguish a resubmit-ack from a normal ack. Holding the
+	 * window open through resubmit would force resubmits to run while the runtime is
+	 * readonly, which is the inverse of what we want ("never resubmit during apply stashed
+	 * ops").
+	 *
+	 * An apply error leaves the lifecycle at `applying` because the queue isn't drained.
+	 * That's fine: an error here is fatal for the load, the container is unusable, and
+	 * there's no state to restore.
+	 */
+	private _applyLifecycle: "applying" | "ended" = "ended";
+	public get isApplyingStashedOps(): boolean {
+		return this._applyLifecycle === "applying";
+	}
+
+	private readonly hooks: PendingStateManagerHooks;
 
 	constructor(
 		private readonly stateHandler: IRuntimeStateHandler,
 		stashedLocalState: IPendingLocalState | undefined,
 		logger: ITelemetryBaseLogger,
+		hooks: PendingStateManagerHooks = {},
 	) {
 		this.logger = createChildLogger({ logger });
+		this.hooks = hooks;
 		if (stashedLocalState?.pendingStates) {
 			this.initialMessages.push(...stashedLocalState.pendingStates);
+		}
+		// Open the apply window eagerly if there is any stashed work. The
+		// runtime is readonly while `isApplyingStashedOps` is true (see
+		// `ContainerRuntime.isReadOnly`); compliant DDSes consult `readOnly`
+		// at realize time and skip submits. No fanout fires here — downstream
+		// observers (`channelCollection`) are not yet constructed at this
+		// point in the runtime constructor, and the first real readonly read
+		// happens after the constructor returns.
+		if (!this.initialMessages.isEmpty()) {
+			this._applyLifecycle = "applying";
 		}
 	}
 
@@ -398,13 +467,11 @@ export class PendingStateManager implements IDisposable {
 	 * @param clientSequenceNumber - The CSN of the first message in the batch,
 	 * or undefined if the batch was not yet sent (e.g. by the time we flushed we lost the connection)
 	 * @param staged - Indicates whether batch is staged (not to be submitted while runtime is in Staging Mode)
-	 * @param ignoreBatchId - Whether to ignore the batchId in the batchStartInfo
 	 */
 	public onFlushBatch(
 		batch: LocalBatchMessage[] | [LocalEmptyBatchPlaceholder],
 		clientSequenceNumber: number | undefined,
 		staged: boolean,
-		ignoreBatchId?: boolean,
 	): void {
 		// clientId and batchStartCsn are used for generating the batchId so we can detect container forks
 		// where this batch was submitted by two different clients rehydrating from the same local state.
@@ -422,7 +489,7 @@ export class PendingStateManager implements IDisposable {
 			clientId !== undefined,
 			0xa33 /* clientId (from stateHandler) could only be undefined if we've never connected, but we have a CSN so we know that's not the case */,
 		);
-
+		const batchInfo = { clientId, batchStartCsn, length: batch.length, staged };
 		for (const message of batch) {
 			const {
 				runtimeOp,
@@ -433,12 +500,11 @@ export class PendingStateManager implements IDisposable {
 			const pendingMessage: IPendingMessage = {
 				type: "message",
 				referenceSequenceNumber,
-				content: serializeOp(runtimeOp),
+				content: serializeOp(runtimeOp).content,
 				runtimeOp,
 				localOpMetadata,
 				opMetadata,
-				// Note: We only will read this off the first message, but put it on all for simplicity
-				batchInfo: { clientId, batchStartCsn, length: batch.length, ignoreBatchId, staged },
+				batchInfo,
 			};
 			this.pendingMessages.push(pendingMessage);
 		}
@@ -449,6 +515,10 @@ export class PendingStateManager implements IDisposable {
 	 * @param seqNum - Sequence number at which to apply ops. Will apply all ops if seqNum is undefined.
 	 */
 	public async applyStashedOpsAt(seqNum?: number): Promise<void> {
+		if (this.initialMessages.isEmpty()) {
+			return;
+		}
+
 		// apply stashed ops at sequence number
 		while (!this.initialMessages.isEmpty()) {
 			if (seqNum !== undefined) {
@@ -495,6 +565,16 @@ export class PendingStateManager implements IDisposable {
 				throw DataProcessingError.wrapIfUnrecognized(error, "applyStashedOp", nextMessage);
 			}
 		}
+
+		// The apply window was opened eagerly in the constructor when there
+		// was any stashed work. We close it on full successful drain only.
+		// If an apply throws above, control never reaches here and the
+		// lifecycle stays at "applying" — the load is fatal so there's no
+		// recoverable state.
+		if (this._applyLifecycle === "applying" && this.initialMessages.isEmpty()) {
+			this._applyLifecycle = "ended";
+			this.hooks.onAfterStashedOpsApplied?.();
+		}
 	}
 
 	/**
@@ -504,23 +584,14 @@ export class PendingStateManager implements IDisposable {
 	 * @returns whether the batch IDs match
 	 */
 	private remoteBatchMatchesPendingBatch(remoteBatchStart: BatchStartInfo): boolean {
-		// Find the first pending message that uses Batch ID, to compare to the incoming remote batch.
-		// If there is no such message, then the incoming remote batch doesn't have a match here and we can return.
-		const firstIndexUsingBatchId = Array.from({
-			length: this.pendingMessages.length,
-		}).findIndex((_, i) => this.pendingMessages.get(i)?.batchInfo.ignoreBatchId !== true);
-		const pendingMessageUsingBatchId =
-			firstIndexUsingBatchId === -1
-				? undefined
-				: this.pendingMessages.get(firstIndexUsingBatchId);
-
-		if (pendingMessageUsingBatchId === undefined) {
+		const pendingMessage = this.pendingMessages.peekFront();
+		if (pendingMessage === undefined) {
 			return false;
 		}
 
 		// We must compare the effective batch IDs, since one of these ops
 		// may have been the original, not resubmitted, so wouldn't have its batch ID stamped yet.
-		const pendingBatchId = getEffectiveBatchId(pendingMessageUsingBatchId);
+		const pendingBatchId = getEffectiveBatchId(pendingMessage);
 		const inboundBatchId = getEffectiveBatchId(remoteBatchStart);
 
 		return pendingBatchId === inboundBatchId;
@@ -603,7 +674,7 @@ export class PendingStateManager implements IDisposable {
 	 * @param sequenceNumber - The sequenceNumber from the server corresponding to the next pending message.
 	 * @param message - [optional] The entire incoming message, for comparing contents with the pending message for extra validation.
 	 * @throws DataProcessingError if the pending message content doesn't match the incoming message content.
-	 * @returns - The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
+	 * @returns The localOpMetadata of the next pending message, to be sent to whoever submitted the original message.
 	 */
 	private processNextPendingMessage(
 		sequenceNumber: number,
@@ -733,7 +804,7 @@ export class PendingStateManager implements IDisposable {
 					pendingMessageBatchMetadata: asBatchMetadata(pendingMessage.opMetadata)?.batch,
 					messageBatchMetadata: asBatchMetadata(firstMessage?.metadata)?.batch,
 				},
-				messageDetails: firstMessage && extractSafePropertiesFromMessage(firstMessage),
+				messageDetails: extractSafePropertiesFromMessage(firstMessage),
 			});
 		}
 	}
@@ -742,8 +813,12 @@ export class PendingStateManager implements IDisposable {
 	 * Called when the Container's connection state changes. If the Container gets connected, it replays all the pending
 	 * states in its queue. This includes triggering resubmission of unacked ops.
 	 * ! Note: successfully resubmitting an op that has been successfully sequenced is not possible due to checks in the ConnectionStateHandler (Loader layer)
+	 *
+	 * @returns The unique batch infos for all batches that were replayed.
 	 */
-	public replayPendingStates(options?: ReplayPendingStateOptions): void {
+	public replayPendingStates(
+		options?: ReplayPendingStateOptions,
+	): IPendingMessage["batchInfo"][] {
 		const { committingStagedBatches, squash } = {
 			...defaultReplayPendingStatesOptions,
 			...options,
@@ -770,6 +845,7 @@ export class PendingStateManager implements IDisposable {
 
 		const initialPendingMessagesCount = this.pendingMessages.length;
 		let remainingPendingMessagesCount = this.pendingMessages.length;
+		const replayedBatchSet = new Set<IPendingMessage["batchInfo"]>();
 
 		let seenStagedBatch = false;
 
@@ -797,15 +873,14 @@ export class PendingStateManager implements IDisposable {
 			assert(batchMetadataFlag !== false, 0x41b /* We cannot process batches in chunks */);
 
 			// The next message starts a batch (possibly single-message), and we'll need its batchId.
-			const batchId = pendingMessage.batchInfo.ignoreBatchId
-				? undefined
-				: getEffectiveBatchId(pendingMessage);
+			const batchId = getEffectiveBatchId(pendingMessage);
 
 			const staged = pendingMessage.batchInfo.staged;
 
 			if (asEmptyBatchLocalOpMetadata(pendingMessage.localOpMetadata)?.emptyBatch === true) {
 				// Resubmit no messages, with the batchId. Will result in another empty batch marker.
 				this.stateHandler.reSubmitBatch([], { batchId, staged, squash });
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 
@@ -832,6 +907,7 @@ export class PendingStateManager implements IDisposable {
 					],
 					{ batchId, staged, squash },
 				);
+				replayedBatchSet.add(pendingMessage.batchInfo);
 				continue;
 			}
 			// else: batchMetadataFlag === true  (It's a typical multi-message batch)
@@ -871,6 +947,7 @@ export class PendingStateManager implements IDisposable {
 			}
 
 			this.stateHandler.reSubmitBatch(batch, { batchId, staged, squash });
+			replayedBatchSet.add(pendingMessage.batchInfo);
 		}
 
 		if (!committingStagedBatches) {
@@ -888,6 +965,8 @@ export class PendingStateManager implements IDisposable {
 				clientId: this.stateHandler.clientId(),
 			});
 		}
+
+		return [...replayedBatchSet];
 	}
 
 	/**
@@ -898,11 +977,13 @@ export class PendingStateManager implements IDisposable {
 			// callback will only be given staged messages with a valid runtime op (i.e. not empty batch and not an initial message with only serialized content)
 			stagedMessage: IPendingMessage & { runtimeOp: LocalContainerRuntimeMessage },
 		) => void,
-	): void {
+	): IPendingMessage["batchInfo"][] {
+		const batchSet = new Set<IPendingMessage["batchInfo"]>();
 		while (!this.pendingMessages.isEmpty()) {
 			const stagedMessage = this.pendingMessages.peekBack();
 			if (stagedMessage?.batchInfo.staged === true) {
 				this.pendingMessages.pop();
+				batchSet.add(stagedMessage.batchInfo);
 
 				if (hasTypicalRuntimeOp(stagedMessage)) {
 					callback(stagedMessage);
@@ -915,6 +996,7 @@ export class PendingStateManager implements IDisposable {
 			this.pendingMessages.toArray().every((m) => m.batchInfo.staged !== true),
 			0xb89 /* Shouldn't be any more staged messages */,
 		);
+		return [...batchSet];
 	}
 }
 

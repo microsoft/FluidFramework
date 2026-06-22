@@ -13,7 +13,7 @@ import type { SharedCounter } from "@fluidframework/counter/internal";
 import { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitions/internal";
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/internal";
-import { SharedStringClass, type SharedString } from "@fluidframework/sequence/internal";
+import type { SharedString } from "@fluidframework/sequence/internal";
 import {
 	ITestFluidObject,
 	ITestObjectProvider,
@@ -31,6 +31,7 @@ const counterKey = "count";
 describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedCounter, SharedString } = apis.dds;
 	const { DataObject, DataObjectFactory } = apis.dataRuntime;
+	const { SharedStringClass } = apis.dataRuntime.packages.sequence;
 	const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
 
 	/**
@@ -39,7 +40,7 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 	class TestDataObject extends DataObject {
 		public static readonly type = "@fluid-example/test-dataObject";
 
-		public static getFactory() {
+		public static getFactory(): IFluidDataStoreFactory {
 			return TestDataObject.factory;
 		}
 
@@ -71,16 +72,16 @@ describeCompat("LocalLoader", "NoCompat", (getTestObjectProvider, apis) => {
 		/**
 		 * Increments the counter value by 1.
 		 */
-		public increment() {
+		public increment(): void {
 			this.counter.increment(1);
 		}
 
-		protected async initializingFirstTime() {
+		protected async initializingFirstTime(): Promise<void> {
 			const counter = SharedCounter.create(this.runtime);
 			this.root.set(counterKey, counter.handle);
 		}
 
-		protected async hasInitialized() {
+		protected async hasInitialized(): Promise<void> {
 			const counterHandle = this.root.get<IFluidHandle<SharedCounter>>(counterKey);
 			assert(counterHandle);
 			this.counter = await counterHandle.get();

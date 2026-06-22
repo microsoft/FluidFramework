@@ -4,23 +4,21 @@
  */
 
 import { strict as assert } from "node:assert";
+
+import { makeRandom } from "@fluid-private/stochastic-test-utils";
+import type { Client } from "@fluid-private/test-dds-utils";
+import { LocalServerTestDriver } from "@fluid-private/test-drivers";
+import { BenchmarkMode, currentBenchmarkMode } from "@fluid-tools/benchmark";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
+import { Loader } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
 import type {
 	HasListeners,
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import {
-	createMockLoggerExt,
-	type IMockLoggerExt,
-	UsageError,
-} from "@fluidframework/telemetry-utils/internal";
-
-import { makeRandom } from "@fluid-private/stochastic-test-utils";
-import { LocalServerTestDriver } from "@fluid-private/test-drivers";
-import type { IContainer } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
-import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -28,16 +26,32 @@ import type {
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { assertIsStableId, createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	assertIsStableId,
+	createIdCompressor,
+	type IIdCompressorCore,
+} from "@fluidframework/id-compressor/internal";
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
-import { FlushMode } from "@fluidframework/runtime-definitions/internal";
+import {
+	FlushMode,
+	MinimumVersionForCollab,
+} from "@fluidframework/runtime-definitions/internal";
+import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
+import type {
+	ISharedObjectKind,
+	SharedObjectKind,
+} from "@fluidframework/shared-object-base/internal";
+import {
+	createMockLoggerExt,
+	type IMockLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
+	validateUsageError,
 } from "@fluidframework/test-runtime-utils/internal";
 import {
 	type ChannelFactoryRegistry,
-	type ITestContainerConfig,
 	type ITestObjectProvider,
 	type SummaryInfo,
 	TestContainerRuntimeFactory,
@@ -48,7 +62,15 @@ import {
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
-import { type ICodecFamily, type IJsonCodec, withSchemaValidation } from "../codec/index.js";
+import {
+	currentVersion,
+	type CodecWriteOptions,
+	FluidClientVersion,
+	type FormatVersion,
+	type ICodecFamily,
+	type IJsonCodec,
+	withSchemaValidation,
+} from "../codec/index.js";
 import {
 	type ChangeFamily,
 	type ChangeFamilyEditor,
@@ -94,12 +116,11 @@ import {
 	type NormalizedFieldUpPath,
 	type ExclusiveMapTree,
 	type MapTree,
-	SchemaVersion,
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
 } from "../core/index.js";
-import { typeboxValidator } from "../external-utilities/index.js";
+import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
 	Context,
 	type NodeIdentifierManager,
@@ -116,13 +137,25 @@ import {
 	defaultChunkPolicy,
 	cursorForJsonableTreeField,
 	chunkFieldSingle,
-	makeSchemaCodec,
+	schemaCodecBuilder,
 	mapTreeWithField,
 	type MinimalMapTreeNodeView,
 	jsonableTreeFromCursor,
 	cursorForMapTreeNode,
 	type FullSchemaPolicy,
+	type IncrementalEncodingPolicy,
+	defaultIncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
+import {
+	allowsFieldSuperset,
+	allowsTreeSuperset,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../feature-libraries/modular-schema/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
+import { JsonAsTree } from "../jsonDomainSchema.js";
 import {
 	type CheckoutEvents,
 	type ITreePrivate,
@@ -131,21 +164,21 @@ import {
 	type TreeCheckout,
 	createTreeCheckout,
 	type ISharedTreeEditor,
-	type ITreeCheckoutFork,
 	independentView,
 	SchematizingSimpleTreeView,
 	type ForestOptions,
-	type SharedTreeOptionsInternal,
-	type SharedTreeOptions,
 	buildConfiguredForest,
 	type ForestType,
 	ForestTypeReference,
+	type SharedTreeOptionsInternal,
 } from "../shared-tree/index.js";
+import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
 	SchemaFactory,
 	type TreeView,
+	type TreeBranchAlpha,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -153,10 +186,17 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	getStoredSchema,
 	restrictiveStoredSchemaGenerationOptions,
 	toInitialSchema,
+	toStoredSchema,
+	type SnapshotFileSystem,
+	type TreeViewAlpha,
 } from "../simple-tree/index.js";
+import {
+	configuredSharedTree,
+	configuredSharedTreeInternal,
+	type ISharedTree,
+} from "../treeFactory.js";
 import {
 	Breakable,
 	type JsonCompatible,
@@ -167,34 +207,15 @@ import {
 	isReadonlyArray,
 	brand,
 } from "../util/index.js";
-import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
-import type { Client } from "@fluid-private/test-dds-utils";
-import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
-// eslint-disable-next-line import/no-internal-modules
+
+// eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "./feature-libraries/flex-tree/utils.js";
-import type { Transactor } from "../shared-tree-core/index.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
-import { configuredSharedTree, type ISharedTree } from "../treeFactory.js";
-import { JsonAsTree } from "../jsonDomainSchema.js";
+import { initializeForest } from "./feature-libraries/index.js";
+import { cursorToJsonObject, fieldJsonCursor, singleJsonCursor } from "./json/index.js";
 import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import { configureDebugAsserts } from "@fluidframework/core-utils/internal";
-import { isInPerformanceTestingMode } from "@fluid-tools/benchmark";
-import type {
-	ISharedObjectKind,
-	SharedObjectKind,
-} from "@fluidframework/shared-object-base/internal";
-// eslint-disable-next-line import/no-internal-modules
-import { ObjectForest } from "../feature-libraries/object-forest/objectForest.js";
-import {
-	allowsFieldSuperset,
-	allowsTreeSuperset,
-	// eslint-disable-next-line import/no-internal-modules
-} from "../feature-libraries/modular-schema/index.js";
-import { initializeForest } from "./feature-libraries/index.js";
 
 // Testing utilities
 
@@ -202,7 +223,9 @@ import { initializeForest } from "./feature-libraries/index.js";
  * A SharedObjectKind typed to return `ISharedTree` and configured with a `jsonValidator`.
  */
 export const DefaultTestSharedTreeKind = configuredSharedTree({
-	jsonValidator: typeboxValidator,
+	jsonValidator: FormatValidatorBasic,
+	// Default to v2_80 to support noChange constraints in table operations
+	minVersionForCollab: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -240,6 +263,8 @@ export enum SummarizeType {
 /**
  * A test helper class that manages the creation, connection and retrieval of SharedTrees. Instances of this
  * class are created via {@link TestTreeProvider.create} and satisfy the {@link ITestObjectProvider} interface.
+ * @remarks
+ * When possible, prefer {@link TestTreeProviderLite} which is simpler and has lower overhead.
  */
 export class TestTreeProvider {
 	private static readonly treeId = "TestSharedTree";
@@ -346,16 +371,9 @@ export class TestTreeProvider {
 		const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({
 			getRawConfig: (name: string): ConfigTypes => settings[name],
 		});
-		const testContainerConfig: ITestContainerConfig = {
-			loaderProps: {
-				configProvider: configProvider({
-					"Fluid.Container.enableOfflineLoad": true,
-				}),
-			},
-		};
 		const container =
 			this.trees.length === 0
-				? await this.provider.makeTestContainer(testContainerConfig)
+				? await this.provider.makeTestContainer()
 				: await this.provider.loadTestContainer();
 
 		this._containers.push(container);
@@ -498,16 +516,16 @@ export class TestTreeProviderLite {
 	public synchronizeMessages(options?: { count?: number; flush?: boolean }): void {
 		const flush = options?.flush ?? true;
 		if (flush) {
-			this.containerRuntimeMap.forEach((containerRuntime) => {
+			for (const containerRuntime of this.containerRuntimeMap.values()) {
 				containerRuntime.flush();
-			});
+			}
 		}
 
 		const count = options?.count;
-		if (count !== undefined) {
-			this.runtimeFactory.processSomeMessages(count);
-		} else {
+		if (count === undefined) {
 			this.runtimeFactory.processAllMessages();
+		} else {
+			this.runtimeFactory.processSomeMessages(count);
 		}
 	}
 
@@ -529,18 +547,21 @@ export class TestTreeProviderLite {
  * after the spy is no longer needed.
  */
 export function spyOnMethod(
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 	methodClass: Function,
 	methodName: string,
 	spy: () => void,
 ): () => void {
-	const { prototype } = methodClass;
+	const prototype = methodClass.prototype as Record<
+		string,
+		(this: unknown, ...args: unknown[]) => unknown
+	>;
 	const method = prototype[methodName];
 	assert(typeof method === "function", `Method does not exist: ${methodName}`);
 
 	const methodSpy = function (this: unknown, ...args: unknown[]): unknown {
 		spy();
-		return method.call(this, ...args);
+		return (method as (...args: unknown[]) => unknown).call(this, ...args);
 	};
 	prototype[methodName] = methodSpy;
 
@@ -553,7 +574,7 @@ export function spyOnMethod(
  * Determines whether or not the given delta has a visible impact on the document tree.
  */
 export function isDeltaVisible(fieldChanges: DeltaFieldChanges | undefined): boolean {
-	for (const mark of fieldChanges ?? []) {
+	for (const mark of fieldChanges?.marks ?? []) {
 		if (mark.attach !== undefined || mark.detach !== undefined) {
 			return true;
 		}
@@ -615,10 +636,10 @@ export class SharedTreeTestFactory implements IChannelFactory<ISharedTree> {
 	) {
 		const optionsUpdated: SharedTreeOptionsInternal = {
 			...options,
-			jsonValidator: typeboxValidator,
+			jsonValidator: FormatValidatorBasic,
 		};
-		this.inner = configuredSharedTree(
-			optionsUpdated as SharedTreeOptions,
+		this.inner = configuredSharedTreeInternal(
+			optionsUpdated,
 		).getFactory() as IChannelFactory<ISharedTree>;
 	}
 
@@ -656,7 +677,10 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // that equality of two schemas in tests is achieved by deep-comparing their persisted representations.
 // If the newer format is a superset of the previous format, it can be safely used for comparisons. This is the
 // case with schema format v2.
-const schemaCodec = makeSchemaCodec({ jsonValidator: typeboxValidator }, SchemaVersion.v2);
+const schemaCodec = schemaCodecBuilder.build({
+	jsonValidator: FormatValidatorBasic,
+	minVersionForCollab: currentVersion,
+});
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {
 	if (trees.length > 1) {
@@ -806,6 +830,8 @@ export function checkoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
 	const { checkout } = createCheckoutWithContent(content, args);
@@ -819,6 +845,8 @@ function createCheckoutWithContent(
 			IEmitter<CheckoutEvents> &
 			HasListeners<CheckoutEvents>;
 		forestType?: ForestType;
+		shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): { checkout: TreeCheckout; logger: IMockLoggerExt } {
 	const fieldCursor = normalizeNewFieldContent(content.initialTree);
@@ -829,6 +857,7 @@ function createCheckoutWithContent(
 		args?.forestType ?? ForestTypeReference,
 		schema,
 		testIdCompressor,
+		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
 	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
 
@@ -1019,11 +1048,49 @@ export interface EncodingTestData<TDecoded, TEncoded, TContext = void> {
 
 const assertDeepEqual = (a: unknown, b: unknown): void => assert.deepEqual(a, b);
 
+const testedVersionsByFamily = new WeakMap<
+	ICodecFamily<unknown, unknown>,
+	Set<FormatVersion>
+>();
+const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
 /**
- * Constructs a basic suite of round-trip tests for all versions of a codec family.
+ * Tracks tested versions and registers an after hook to validate that all supported
+ * versions in the codec family have corresponding tests.
+ */
+function registerValidationHook<TDecoded, TContext>(
+	family: ICodecFamily<TDecoded, TContext>,
+	versions: readonly FormatVersion[],
+): void {
+	let tested = testedVersionsByFamily.get(family);
+	if (tested === undefined) {
+		tested = new Set<FormatVersion>();
+		testedVersionsByFamily.set(family, tested);
+	}
+	for (const version of versions) {
+		tested.add(version);
+	}
+	if (!testedFamilies.has(family)) {
+		testedFamilies.add(family);
+		after("validate all versions tested", () => {
+			const supportedVersions = [...family.getSupportedFormats()];
+			const missingVersions = supportedVersions.filter((version) => !tested.has(version));
+			if (missingVersions.length > 0) {
+				throw new Error(`Missing codec versions in test: ${missingVersions.join(", ")}`);
+			}
+		});
+	}
+}
+
+/**
+ * Constructs a basic suite of round-trip tests for supported versions of a codec family.
  * This helper should generally be wrapped in a `describe` block.
  *
- * Encoded data for JSON codecs within `family` will be validated using `typeboxValidator`.
+ * Encoded data for JSON codecs within `family` will be validated using `FormatValidatorBasic`.
+ *
+ * @remarks
+ * This function tests actively supported codec versions. For discontinued versions,
+ * use `makeDiscontinuedEncodingTestSuite` separately. Both functions register validation
+ * hooks that ensure all supported versions from `family.getSupportedFormats()` are tested.
  *
  * @privateRemarks It is generally not valid to compare the decoded formats with assert.deepEqual,
  * but since these round trip tests start with the decoded format (not the encoded format),
@@ -1041,8 +1108,18 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 	family: ICodecFamily<TDecoded, TContext>,
 	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
+	supportedVersions?: FormatVersion[],
 ): void {
-	for (const version of family.getSupportedFormats()) {
+	// Type cast away the conditional type: if TContext is void, indexing off the end of this will get undefined which works, making this safe.
+	const successes = encodingTestData.successes as [
+		name: string,
+		data: TDecoded,
+		context: TContext,
+	][];
+	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
+	registerValidationHook(family, supportedVersionsToTest);
+
+	for (const version of supportedVersionsToTest) {
 		describe(`version ${version}`, () => {
 			const codec = family.resolve(version);
 			// A common pattern to avoid validating the same portion of encoded data multiple times
@@ -1051,41 +1128,26 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 			// This block makes sure we still validate the encoded data schema for codecs following the latter
 			// pattern.
 			const jsonCodec =
-				codec.json.encodedSchema !== undefined
-					? withSchemaValidation(codec.json.encodedSchema, codec.json, typeboxValidator)
-					: codec.json;
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
 			describe("can json roundtrip", () => {
 				for (const includeStringification of [false, true]) {
-					// biome-ignore format: https://github.com/biomejs/biome/issues/4202
 					describe(
 						includeStringification ? "with stringification" : "without stringification",
 						() => {
-							for (const [name, data, context] of encodingTestData.successes) {
+							for (const [name, data, context] of successes) {
 								it(name, () => {
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									let encoded = jsonCodec.encode(data, context!);
+									let encoded = jsonCodec.encode(data, context);
 									if (includeStringification) {
 										encoded = JSON.parse(JSON.stringify(encoded));
 									}
-									// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-									const decoded = jsonCodec.decode(encoded, context!);
+									const decoded = jsonCodec.decode(encoded, context);
 									assertEquivalent(decoded, data);
 								});
 							}
 						},
 					);
-				}
-			});
-
-			describe("can binary roundtrip", () => {
-				for (const [name, data, context] of encodingTestData.successes) {
-					it(name, () => {
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const encoded = codec.binary.encode(data, context!);
-						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-						const decoded = codec.binary.decode(encoded, context!);
-						assertEquivalent(decoded, data);
-					});
 				}
 			});
 
@@ -1095,13 +1157,50 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
 							assert.throws(() =>
-								// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-								jsonCodec.decode(encodedData as JsonCompatible, context!),
+								jsonCodec.decode(encodedData as JsonCompatible, context as TContext),
 							);
 						});
 					}
 				});
 			}
+		});
+	}
+}
+
+/**
+ * Creates test suites for discontinued codec versions that verify they properly reject encode/decode operations.
+ *
+ * @param family - The codec family containing the discontinued versions
+ * @param discontinuedVersions - Array of format versions that are no longer supported
+ *
+ * Use this alongside `makeEncodingTestSuite` for codec families that have deprecated older versions.
+ * This ensures discontinued versions are tracked in validation but don't require full round-trip tests.
+ */
+export function makeDiscontinuedEncodingTestSuite(
+	family: ICodecFamily<unknown, unknown>,
+	discontinuedVersions: FormatVersion[],
+): void {
+	registerValidationHook(family, discontinuedVersions);
+
+	for (const version of discontinuedVersions) {
+		describe(`${version} (discontinued)`, () => {
+			const codec = family.resolve(version);
+			const jsonCodec =
+				codec.encodedSchema === undefined
+					? codec
+					: withSchemaValidation(codec.encodedSchema, codec, FormatValidatorBasic);
+			it("throws when encoding", () => {
+				assert.throws(
+					() => jsonCodec.encode({}, {}),
+					validateUsageError(/Cannot encode data to format/),
+				);
+			});
+			it("throws when decoding", () => {
+				assert.throws(
+					() => jsonCodec.decode({ version }, {}),
+					validateUsageError(/Cannot decode data in format/),
+				);
+			});
 		});
 	}
 }
@@ -1223,13 +1322,13 @@ export function createTestUndoRedoStacks(
 
 	function onDispose(disposed: RevertibleAlpha): void {
 		const redoIndex = redoStack.indexOf(disposed);
-		if (redoIndex !== -1) {
-			redoStack.splice(redoIndex, 1);
-		} else {
+		if (redoIndex === -1) {
 			const undoIndex = undoStack.indexOf(disposed);
 			if (undoIndex !== -1) {
 				undoStack.splice(undoIndex, 1);
 			}
+		} else {
+			redoStack.splice(redoIndex, 1);
 		}
 	}
 
@@ -1285,11 +1384,15 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
+		minVersionForCollab?: MinimumVersionForCollab;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
+	// Default to v2_80 to support noChange constraints in table operations
+	const minVersionForCollab = options.minVersionForCollab ?? FluidClientVersion.v2_80;
 	const view = independentView(config, {
-		idCompressor: createSnapshotCompressor(),
 		...options,
+		idCompressor: options.idCompressor ?? createSnapshotCompressor(),
+		minVersionForCollab,
 	});
 	assert(view instanceof SchematizingSimpleTreeView);
 	return view;
@@ -1303,8 +1406,8 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
  */
 export const snapshotSessionId = assertIsSessionId("beefbeef-beef-4000-8000-000000000001");
 
-export function createSnapshotCompressor() {
-	return createAlwaysFinalizedIdCompressor(snapshotSessionId);
+export function createSnapshotCompressor(seed?: number): IIdCompressor & IIdCompressorCore {
+	return createAlwaysFinalizedIdCompressor(snapshotSessionId, undefined, seed);
 }
 
 /**
@@ -1362,14 +1465,33 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("'rootEvents' property not implemented in MockTreeCheckout.");
 	}
 
-	public branch(): ITreeCheckoutFork {
-		throw new Error("Method 'fork' not implemented in MockTreeCheckout.");
+	public disposed = false;
+	public fork(): ITreeCheckout {
+		throw new Error("Method 'branch' not implemented in MockTreeCheckout.");
+	}
+	public isBranch(): this is TreeBranchAlpha {
+		throw new Error("Method 'isBranch' not implemented in MockTreeCheckout.");
+	}
+	public hasRootSchema<TSchema extends ImplicitFieldSchema>(): this is TreeViewAlpha<TSchema> {
+		throw new Error("Method 'hasRootSchema' not implemented in MockTreeCheckout.");
+	}
+	public runTransaction(): never {
+		throw new Error("Method 'runTransaction' not implemented in MockTreeCheckout.");
+	}
+	public runTransactionAsync(): never {
+		throw new Error("Method 'runTransactionAsync' not implemented in MockTreeCheckout.");
+	}
+	public applyChange(): void {
+		throw new Error("Method 'applyChange' not implemented in MockTreeCheckout.");
 	}
 	public merge(view: unknown, disposeView?: unknown): void {
 		throw new Error("Method 'merge' not implemented in MockTreeCheckout.");
 	}
-	public rebase(view: ITreeCheckoutFork): void {
-		throw new Error("Method 'rebase' not implemented in MockTreeCheckout.");
+	public rebaseOnto(branch: unknown): void {
+		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
+	}
+	public dispose(): void {
+		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
 	}
 	public updateSchema(newSchema: TreeStoredSchema): void {
 		throw new Error("Method 'updateSchema' not implemented in MockTreeCheckout.");
@@ -1380,44 +1502,6 @@ export class MockTreeCheckout implements ITreeCheckout {
 	public locate(anchor: Anchor): AnchorNode | undefined {
 		throw new Error("Method 'locate' not implemented in MockTreeCheckout.");
 	}
-}
-
-/**
- * {@link validateError} for `UsageError`.
- */
-export function validateUsageError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, UsageError);
-}
-
-/**
- * {@link validateError} for `TypeError`.
- */
-export function validateTypeError(expectedErrorMsg: string | RegExp): (error: Error) => true {
-	return validateError(expectedErrorMsg, TypeError);
-}
-
-/**
- * Validates that a specific kind of error was thrown with the expected message.
- *
- * Intended for use with NodeJS's `assert.throws`.
- */
-export function validateError(
-	expectedErrorMsg: string | RegExp,
-	errorType: new (...args: any[]) => Error = Error,
-): (error: Error) => true {
-	return (error: Error) => {
-		assert(error instanceof errorType, `Expected ${errorType.name}, got ${error}`);
-		if (
-			typeof expectedErrorMsg === "string"
-				? error.message !== expectedErrorMsg
-				: !expectedErrorMsg.test(error.message)
-		) {
-			throw new Error(
-				`Unexpected ${errorType.name} thrown\nActual: ${error.message}\nExpected: ${expectedErrorMsg}`,
-			);
-		}
-		return true;
-	};
 }
 
 function normalizeNewFieldContent(
@@ -1447,22 +1531,42 @@ export function moveWithin(
 	sourceIndex: number,
 	count: number,
 	destIndex: number,
-) {
+): void {
 	editor.move(field, sourceIndex, count, field, destIndex);
 }
 
 /**
- * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance if isInPerformanceTestingMode,
+ * Invoke inside a describe block for benchmarks to add hooks that configure things for maximum performance in performance testing mode,
  * and enable debug asserts otherwise.
  */
 export function configureBenchmarkHooks(): void {
-	let debugBefore: boolean;
-	before(() => {
-		debugBefore = configureDebugAsserts(!isInPerformanceTestingMode);
-	});
-	after(() => {
-		assert.equal(configureDebugAsserts(debugBefore), !isInPerformanceTestingMode);
-	});
+	emulateProductionBuildHooks(currentBenchmarkMode === BenchmarkMode.Performance);
+}
+
+function emulateProductionBuildHooks(enable = true): void {
+	if (enable) {
+		before(() => {
+			emulateProductionBuild();
+		});
+		after(() => {
+			emulateProductionBuild(false);
+		});
+	}
+}
+
+/**
+ * Creates two describe blocks, one with production build emulation enabled and one without,
+ * and places the test suite in both contexts.
+ *
+ * Use this for testing code which has debugAsserts to confirm they don't break the desired behavior.
+ */
+export function suitesWithAndWithoutProduction(fn: (emulateProduction: boolean) => void) {
+	for (const emulateProduction of [true, false]) {
+		describe(`emulateProductionBuild: ${emulateProduction}`, () => {
+			emulateProductionBuildHooks(emulateProduction);
+			fn(emulateProduction);
+		});
+	}
 }
 
 export function chunkFromJsonTrees(field: JsonCompatible[]): TreeChunk {
@@ -1552,8 +1656,10 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	 * @returns true iff update was performed.
 	 */
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
-		const storedSchema = getStoredSchema(schema, restrictiveStoredSchemaGenerationOptions);
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
+		const storedSchema =
+			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {
 			this.nodeSchemaData.set(name, storedSchema);
@@ -1603,4 +1709,31 @@ export function treeChunkFromCursor(fieldCursor: ITreeCursorSynchronous): TreeCh
 		policy: defaultChunkPolicy,
 		idCompressor: testIdCompressor,
 	});
+}
+
+/**
+ * Create a trivial in-memory {@link SnapshotFileSystem} for testing.
+ * Ignores the directory and stores files by filename in a map.
+ * @remarks
+ * This is useful for testing how schema compatibility changes over time (using {@link testSchemaCompatibilitySnapshots} when making specific schema changes.
+ */
+export function inMemorySnapshotFileSystem(): [SnapshotFileSystem, Map<string, string>] {
+	const snapshots = new Map<string, string>();
+
+	const fileSystem: SnapshotFileSystem = {
+		writeFileSync(file: string, data: string, options: { encoding: "utf8" }): void {
+			snapshots.set(file, data);
+		},
+		readFileSync(file: string, encoding: "utf8"): string {
+			return snapshots.get(file) ?? assert.fail(`File not found: ${file}`);
+		},
+		mkdirSync(dir: string, options: { recursive: true }): void {},
+		readdirSync(dir: string): readonly string[] {
+			return [...snapshots.keys()];
+		},
+		join(parentPath: string, childPath: string): string {
+			return childPath;
+		},
+	};
+	return [fileSystem, snapshots];
 }

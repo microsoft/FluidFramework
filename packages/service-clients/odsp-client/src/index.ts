@@ -14,10 +14,13 @@
  */
 
 export type {
-	OdspConnectionConfig,
-	OdspClientProps,
-	OdspContainerServices,
 	IOdspAudience,
+	IOdspContainerServicesEvents,
+	IOdspFluidContainer,
+	OdspClientProps,
+	OdspConnectionConfig,
+	OdspContainerAttachProps,
+	OdspContainerServices,
 	OdspMember,
 	TokenResponse,
 } from "./interfaces.js";

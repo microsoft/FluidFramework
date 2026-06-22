@@ -10,7 +10,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type { Theme } from "@fluentui/react-components";
-import React from "react";
+import { type CSSProperties, type ReactElement, useState } from "react";
 import {
 	Area,
 	Bar,
@@ -26,6 +26,17 @@ import {
 } from "recharts";
 
 import { ThemeOption, useThemeContext } from "../../ThemeHelper.js";
+
+/**
+ * The subset of the props Recharts injects into a custom axis tick renderer that we consume.
+ */
+interface AxisTickProps {
+	x: number;
+	y: number;
+	payload: {
+		value: string | number;
+	};
+}
 
 /**
  * Data To be rendered with Op Latency Graph
@@ -112,7 +123,7 @@ export interface DynamicComposedChartProps {
 		left: number;
 		bottom: number;
 	};
-	legendStyle?: React.CSSProperties;
+	legendStyle?: CSSProperties;
 }
 
 /**
@@ -172,8 +183,8 @@ const createGraphColorPalette = (
  *
  * @remarks {@link ThemeContext} must be set in order to use this component.
  */
-export function DynamicComposedChart(props: DynamicComposedChartProps): React.ReactElement {
-	const [activeIndex, setActiveIndex] = React.useState<string | undefined>();
+export function DynamicComposedChart(props: DynamicComposedChartProps): ReactElement {
+	const [activeIndex, setActiveIndex] = useState<string | undefined>();
 	const { themeInfo } = useThemeContext();
 
 	const graphColorPalette = createGraphColorPalette(themeInfo.name, themeInfo.theme);
@@ -186,7 +197,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 * Renders a custom component for the graph legend
 	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	const renderLegend = (legendProps: any): React.ReactElement => {
+	const renderLegend = (legendProps: any): ReactElement => {
 		const { payload } = legendProps;
 
 		return (
@@ -238,8 +249,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 * Renders a custom view for the X Axis displayed on the Rechart chart
 	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	const CustomizedXAxisTick = (xAxisProps: any): React.ReactElement => {
-		const { x, y, payload } = xAxisProps;
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedXAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
 		return (
 			<g transform={`translate(${x},${y})`}>
 				<text
@@ -261,9 +272,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 * Renders a custom view for the Y Axis displayed on the Rechart chart
 	 * @remarks Recharts doesn't have a type for the arguments passed to this function
 	 */
-	const CustomizedYAxisTick = (yAxisProps: any): React.ReactElement => {
-		const { x, y, payload } = yAxisProps;
-
+	// eslint-disable-next-line @eslint-react/no-nested-component-definitions -- Kept as an in-scope closure so it can read graphColorPalette; Recharts injects the x/y/payload props.
+	const CustomizedYAxisTick = ({ x, y, payload }: AxisTickProps): ReactElement => {
 		return (
 			<g>
 				<text x={x} y={y} textAnchor="end" fill={graphColorPalette.axisTick} fontSize={14}>
@@ -286,7 +296,7 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 		name: string,
 		hexColor: string,
 		dataKey: string,
-	): React.ReactElement => {
+	): ReactElement => {
 		let fillOpacity = 0.45;
 		if (activeIndex === dataKey) {
 			fillOpacity = 0.85;
@@ -375,8 +385,8 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 	 */
 	const renderChartComponentsFromGraphDataSets = (
 		dataSets: GraphDataSet[],
-	): React.ReactElement[] => {
-		const graphComponents: React.ReactElement[] = [];
+	): ReactElement[] => {
+		const graphComponents: ReactElement[] = [];
 		let currColorPaletteIndex = 0;
 		for (const dataSet of dataSets) {
 			if (currColorPaletteIndex > graphColorPalette.graphColors.length - 1) {
@@ -409,10 +419,10 @@ export function DynamicComposedChart(props: DynamicComposedChartProps): React.Re
 				data-testId="test-dynamic-composed-chart"
 			>
 				<CartesianGrid strokeDasharray="2 2" stroke={graphColorPalette.cartesianGrid} />
-				<XAxis dataKey={"x"} tick={<CustomizedXAxisTick />}>
+				<XAxis dataKey={"x"} tick={CustomizedXAxisTick}>
 					<Label value="Timestamp" offset={12} position="bottom" />
 				</XAxis>
-				<YAxis tick={<CustomizedYAxisTick />} />
+				<YAxis tick={CustomizedYAxisTick} />
 				<Tooltip
 					contentStyle={{
 						fontSize: "14px",

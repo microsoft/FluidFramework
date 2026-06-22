@@ -12,10 +12,8 @@ import {
 	type ITreeCursorSynchronous,
 	LeafNodeStoredSchema,
 	ObjectNodeStoredSchema,
-	type StoredSchemaCollection,
 	type TreeFieldStoredSchema,
 	type TreeNodeSchemaIdentifier,
-	type TreeStoredSchema,
 	type TreeStoredSchemaSubscription,
 	type TreeValue,
 	type Value,
@@ -24,12 +22,14 @@ import {
 	ValueSchema,
 	type TreeChunk,
 	tryGetChunk,
+	type SchemaAndPolicy,
+	type SchemaPolicy,
 } from "../../core/index.js";
-import { getOrCreate } from "../../util/index.js";
-import type { FullSchemaPolicy } from "../modular-schema/index.js";
+import { assertNonNegativeSafeInteger, getOrCreate } from "../../util/index.js";
 import { isStableNodeIdentifier } from "../node-identifier/index.js";
 
 import { BasicChunk } from "./basicChunk.js";
+import type { IncrementalEncodingPolicy } from "./codec/index.js";
 import { SequenceChunk } from "./sequenceChunk.js";
 import { type FieldShape, TreeShape, UniformChunk } from "./uniformChunk.js";
 
@@ -39,13 +39,13 @@ export interface Disposable {
 	 */
 	dispose(): void;
 }
-
 /**
  * Creates a ChunkPolicy which responds to schema changes.
  */
 export function makeTreeChunker(
 	schema: TreeStoredSchemaSubscription,
-	policy: FullSchemaPolicy,
+	policy: SchemaPolicy,
+	shouldEncodeIncrementally: IncrementalEncodingPolicy,
 ): IChunker {
 	return new Chunker(
 		schema,
@@ -53,7 +53,17 @@ export function makeTreeChunker(
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.sequenceChunkInlineThreshold,
 		defaultChunkPolicy.uniformChunkNodeCount,
-		tryShapeFromSchema,
+		defaultChunkPolicy.uniformChunkNodeCountDynamicTargetMax,
+		(type: TreeNodeSchemaIdentifier, shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>) =>
+			tryShapeFromNodeSchema(
+				{
+					schema,
+					policy,
+					shouldEncodeIncrementally,
+					shapes,
+				},
+				type,
+			),
 	);
 }
 
@@ -73,7 +83,7 @@ export interface IChunker extends ChunkPolicy, Disposable {
  *
  * @remarks
  * For example, a schema transitively containing a sequence field, optional field, or allowing multiple child types will be Polymorphic.
- * See `tryShapeFromSchema` for how to tell if a type is Polymorphic.
+ * See `tryShapeFromNodeSchema` for how to tell if a type is Polymorphic.
  *
  * TODO: cache some of the possible shapes here.
  */
@@ -104,14 +114,13 @@ export class Chunker implements IChunker {
 
 	public constructor(
 		public readonly schema: TreeStoredSchemaSubscription,
-		public readonly policy: FullSchemaPolicy,
+		public readonly policy: SchemaPolicy,
 		public readonly sequenceChunkSplitThreshold: number,
 		public readonly sequenceChunkInlineThreshold: number,
 		public readonly uniformChunkNodeCount: number,
+		public readonly uniformChunkNodeCountDynamicTargetMax: number,
 		// eslint-disable-next-line @typescript-eslint/no-shadow
-		private readonly tryShapeFromSchema: (
-			schema: TreeStoredSchema,
-			policy: FullSchemaPolicy,
+		private readonly tryShapeFromNodeSchema: (
 			type: TreeNodeSchemaIdentifier,
 			shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
 		) => ShapeInfo,
@@ -126,7 +135,8 @@ export class Chunker implements IChunker {
 			this.sequenceChunkSplitThreshold,
 			this.sequenceChunkInlineThreshold,
 			this.uniformChunkNodeCount,
-			this.tryShapeFromSchema,
+			this.uniformChunkNodeCountDynamicTargetMax,
+			this.tryShapeFromNodeSchema,
 		);
 	}
 
@@ -138,7 +148,7 @@ export class Chunker implements IChunker {
 		this.unregisterSchemaCallback = this.schema.events.on("afterSchemaChange", () =>
 			this.schemaChanged(),
 		);
-		return this.tryShapeFromSchema(this.schema, this.policy, schema, this.typeShapes);
+		return this.tryShapeFromNodeSchema(schema, this.typeShapes);
 	}
 
 	public dispose(): void {
@@ -190,6 +200,15 @@ export function chunkFieldSingle(
 	policy: ChunkCompressor,
 ): TreeChunk {
 	const chunks = chunkField(cursor, policy);
+	return combineChunks(chunks);
+}
+
+/**
+ * Create a single TreeChunk from an array of TreeChunks.
+ * @remarks
+ * This takes ownership of the provided TreeChunk references, and returns an owned referenced.
+ */
+export function combineChunks(chunks: TreeChunk[]): TreeChunk {
 	if (chunks.length === 1) {
 		return chunks[0] ?? oob();
 	}
@@ -226,75 +245,126 @@ export function makePolicy(policy?: Partial<ChunkPolicy>): ChunkPolicy {
 	return withDefaults;
 }
 
-export function shapesFromSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-): Map<TreeNodeSchemaIdentifier, ShapeInfo> {
-	const shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo> = new Map();
-	for (const identifier of schema.nodeSchema.keys()) {
-		tryShapeFromSchema(schema, policy, identifier, shapes);
-	}
-	return shapes;
+export interface ShapeFromSchemaParameters extends SchemaAndPolicy {
+	/**
+	 * Policy function to determine if a field should be encoded incrementally.
+	 * Incrementally encoding requires the subtree to not start in the middle of a larger uniform chunk.
+	 * Thus returning true from this callback indicates that shapes should not be produced which could
+	 *contain the incremental portion as a part of a larger shape.
+	 */
+	readonly shouldEncodeIncrementally: IncrementalEncodingPolicy;
+	/**
+	 * A cache for shapes which may be read and/or updated.
+	 * As the shape is a function of the other members of `ShapeFromSchemaParameters`,
+	 * it must be replaced or cleared if any of the properties other than this cache are modified.
+	 */
+	readonly shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>;
 }
 
 /**
- * If `schema` has only one shape, return it.
- *
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * A TreeFieldStoredSchema with some additional context about where it is in the tree.
  */
-export function tryShapeFromSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	type: TreeNodeSchemaIdentifier,
-	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+export interface FieldSchemaWithContext {
+	/**
+	 * The identifier of the specific field schema to analyze for shape uniformity.
+	 */
+	readonly fieldSchema: TreeFieldStoredSchema;
+	/**
+	 * The identifier of the parent node schema containing this field.
+	 * If undefined, this is a root field.
+	 */
+	readonly parentNodeSchema?: TreeNodeSchemaIdentifier;
+	/**
+	 * The field key/name used to identify this field within the parent node.
+	 */
+	readonly key: FieldKey;
+}
+
+/**
+ * Analyzes a tree node schema to determine if it has a single, uniform shape that can be optimized for chunking.
+ * If the schema defines a tree structure with a deterministic, fixed shape (no optional fields, no sequences,
+ * single child types), returns a TreeShape that can be used for efficient uniform chunking. Otherwise,
+ * returns Polymorphic to indicate the shape varies and should use basic chunking.
+ *
+ * @param context - {@link ShapeFromSchemaParameters}.
+ * @param nodeSchema - The identifier of the specific node schema to analyze for shape uniformity.
+ * @returns TreeShape if the schema has a uniform shape, or Polymorphic if shape varies.
+ *
+ * @remarks
+ * The determination here is conservative. `shouldEncodeIncrementally` is used to split up shapes so incrementally
+ * encoded schema are not part of larger shapes. It also does not tolerate optional or sequence fields, nor does it
+ * optimize for patterns of specific values.
+ */
+export function tryShapeFromNodeSchema(
+	context: ShapeFromSchemaParameters,
+	nodeSchema: TreeNodeSchemaIdentifier,
 ): ShapeInfo {
-	return getOrCreate(shapes, type, () => {
-		const treeSchema = schema.nodeSchema.get(type) ?? fail(0xaf9 /* missing schema */);
+	const { schema, shapes } = context;
+	return getOrCreate(shapes, nodeSchema, () => {
+		const treeSchema = schema.nodeSchema.get(nodeSchema) ?? fail(0xaf9 /* missing schema */);
 		if (treeSchema instanceof LeafNodeStoredSchema) {
 			// Allow all string values (but only string values) to be compressed by the id compressor.
 			// This allows compressing all compressible identifiers without requiring additional context to know which values could be identifiers.
 			// Attempting to compress other string shouldn't have significant overhead,
 			// and if any of them do end up compressing, that's a benefit not a bug.
 			return treeSchema.leafValue === ValueSchema.String
-				? new TreeShape(type, true, [], true)
-				: new TreeShape(type, true, [], false);
+				? new TreeShape(nodeSchema, true, [], true)
+				: new TreeShape(nodeSchema, true, [], false);
 		}
 		if (treeSchema instanceof ObjectNodeStoredSchema) {
 			const fieldsArray: FieldShape[] = [];
-			for (const [key, field] of treeSchema.objectNodeFields) {
-				const fieldShape = tryShapeFromFieldSchema(schema, policy, field, key, shapes);
+			for (const [key, fieldSchema] of treeSchema.objectNodeFields) {
+				const fieldShape = tryShapeFromFieldSchema(context, {
+					fieldSchema,
+					parentNodeSchema: nodeSchema,
+					key,
+				});
 				if (fieldShape === undefined) {
 					return polymorphic;
 				}
 				fieldsArray.push(fieldShape);
 			}
-			return new TreeShape(type, false, fieldsArray);
+			return new TreeShape(nodeSchema, false, fieldsArray);
 		}
 		return polymorphic;
 	});
 }
 
 /**
- * If `schema` has only one shape, return it.
+ * Same as {@link tryShapeFromNodeSchema} but for fields with {@link FieldSchemaWithContext} instead of a nodeSchema.
  *
- * Note that this does not tolerate optional or sequence fields, nor does it optimize for patterns of specific values.
+ * @param context - {@link ShapeFromFieldSchemaParameters}.
+ * @param fieldSchemaWithContext - {@link FieldSchemaWithContext}.
+ * @returns FieldShape if the field has a uniform shape, or undefined if the field is polymorphic.
  */
 export function tryShapeFromFieldSchema(
-	schema: StoredSchemaCollection,
-	policy: FullSchemaPolicy,
-	type: TreeFieldStoredSchema,
-	key: FieldKey,
-	shapes: Map<TreeNodeSchemaIdentifier, ShapeInfo>,
+	context: ShapeFromSchemaParameters,
+	fieldSchemaWithContext: FieldSchemaWithContext,
 ): FieldShape | undefined {
-	const kind = policy.fieldKinds.get(type.kind) ?? fail(0xafa /* missing FieldKind */);
+	const { schema, policy, shouldEncodeIncrementally, shapes } = context;
+	const { fieldSchema, parentNodeSchema, key } = fieldSchemaWithContext;
+	// If this field should be encoded incrementally, use polymorphic shape so that they
+	// are chunked separately and can be re-used across encodings if they do not change.
+	if (shouldEncodeIncrementally(parentNodeSchema, key)) {
+		return undefined;
+	}
+	const kind = policy.fieldKinds.get(fieldSchema.kind) ?? fail(0xafa /* missing FieldKind */);
 	if (kind.multiplicity !== Multiplicity.Single) {
 		return undefined;
 	}
-	if (type.types?.size !== 1) {
+	if (fieldSchema.types?.size !== 1) {
 		return undefined;
 	}
-	const childType = [...type.types][0] ?? oob();
-	const childShape = tryShapeFromSchema(schema, policy, childType, shapes);
+	const childType = [...fieldSchema.types][0] ?? oob();
+	const childShape = tryShapeFromNodeSchema(
+		{
+			schema,
+			policy,
+			shouldEncodeIncrementally,
+			shapes,
+		},
+		childType,
+	);
 	if (childShape instanceof Polymorphic) {
 		return undefined;
 	}
@@ -312,6 +382,7 @@ export const defaultChunkPolicy: ChunkPolicy = {
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	// Current UniformChunk handling doesn't scale well to large chunks, so set a modest size limit:
 	uniformChunkNodeCount: 400,
+	uniformChunkNodeCountDynamicTargetMax: 25,
 	// Without knowing what the schema is, all shapes are possible.
 	// Use `makeTreeChunker` to do better.
 	shapeFromSchema: () => polymorphic,
@@ -321,6 +392,7 @@ export const basicOnlyChunkPolicy: ChunkPolicy = {
 	sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
 	sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
 	uniformChunkNodeCount: 0,
+	uniformChunkNodeCountDynamicTargetMax: 0,
 	shapeFromSchema: () => polymorphic,
 };
 
@@ -347,6 +419,24 @@ export interface ChunkPolicy {
 	readonly uniformChunkNodeCount: number;
 
 	/**
+	 * Target maximum top level length for a UniformChunk while a field is being edited.
+	 *
+	 * @remarks
+	 * When {@link splitFieldAtIndex} has to split a chunk to land an attach/detach on a chunk
+	 * boundary, chunks whose {@link TreeChunk.topLevelLength} exceeds this value are bisected
+	 * recursively until each piece is at or below it, and only the piece holding the target index
+	 * is split exactly. This bounds N splits inside an M-sized chunk at the cost of producing a
+	 * few extra intermediate chunks.
+	 *
+	 * Future merge/extend logic for adjacent small chunks could use the same value as the
+	 * upper bound it tries to stay under, so dynamic chunk sizes settle around this target.
+	 *
+	 * Independent of {@link ChunkPolicy.uniformChunkNodeCount}, which only bounds the size of
+	 * chunks produced by the initial chunking pass.
+	 */
+	readonly uniformChunkNodeCountDynamicTargetMax: number;
+
+	/**
 	 * Returns information about the shapes trees of type `schema` can take.
 	 */
 	shapeFromSchema(schema: TreeNodeSchemaIdentifier): ShapeInfo;
@@ -357,8 +447,8 @@ export interface ChunkCompressor {
 	/**
 	 * If the idCompressor is provided, {@link UniformChunk}s with identifiers will be encoded for its in-memory representation.
 	 * @remarks
-	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.maybeDecompressedStringAsNumber} is set.
-	 * If the `policy` does not use UniformChunks or does not set `maybeDecompressedStringAsNumber`, then no compression will be applied even when providing `idCompressor`.
+	 * This compression applies to {@link UniformChunk}s when {@link TreeShape.mayContainCompressedIds} is set.
+	 * If the `policy` does not use UniformChunks or does not set `mayContainCompressedIds`, then no compression will be applied even when providing `idCompressor`.
 	 */
 	readonly idCompressor: IIdCompressor | undefined;
 }
@@ -440,8 +530,9 @@ export function chunkRange(
 			const shape = chunkCompressor.policy.shapeFromSchema(type);
 			if (shape instanceof TreeShape) {
 				const nodesPerTopLevelNode = shape.positions.length;
-				const maxTopLevelLength = Math.ceil(
-					nodesPerTopLevelNode / chunkCompressor.policy.uniformChunkNodeCount,
+				const maxTopLevelLength = Math.max(
+					1,
+					Math.floor(chunkCompressor.policy.uniformChunkNodeCount / nodesPerTopLevelNode),
 				);
 				const maxLength = Math.min(maxTopLevelLength, remaining);
 				const newChunk = uniformChunkFromCursor(
@@ -489,8 +580,78 @@ export function chunkRange(
 
 	return output;
 }
+
 /**
- * @param idCompressor - compressor used to encoded string values that are compressible by the idCompressor for in-memory representation.
+ * Walks the `chunks` array of a field and splits a chunk if needed so that `nodeIndex` sits on
+ * a chunk boundary. After the call, inserting a chunk at the returned index would place its
+ * first top-level node at index `nodeIndex` when treating `chunks` as a field.
+ *
+ * @remarks
+ * When splitting chunks, large chunks are split evenly so that repeated calls to this method (or similar operations)
+ * avoid poor worst-case behavior. See {@link ChunkPolicy.uniformChunkNodeCountDynamicTargetMax} for details.
+ *
+ * @param chunks - The array of {@link TreeChunk}s for the field to split. Mutated in place.
+ * @param nodeIndex - The index to split at, measured in top-level nodes within the field.
+ * Must be in `[0, totalNodes]`, where `totalNodes` is the sum of {@link TreeChunk.topLevelLength}
+ * across all chunks.
+ * @param policy - The {@link ChunkCompressor} to use when splitting chunks and re-chunking each side
+ * of the split via {@link chunkRange}.
+ *
+ * @returns The index in `chunks` (after modifications made by this function) where if a chunk were inserted at that index its first top level node would have index `nodeIndex` when treating `chunks` as a field.
+ */
+export function splitFieldAtIndex(
+	chunks: TreeChunk[],
+	nodeIndex: number,
+	policy: ChunkCompressor,
+): number {
+	assertNonNegativeSafeInteger(nodeIndex);
+	const bisectThreshold = policy.policy.uniformChunkNodeCountDynamicTargetMax;
+	let remaining = nodeIndex;
+	let chunkIndex = 0;
+	while (chunkIndex < chunks.length) {
+		if (remaining === 0) {
+			return chunkIndex;
+		}
+		const chunk = chunks[chunkIndex] ?? oob();
+		const total = chunk.topLevelLength;
+		if (remaining >= total) {
+			// nodeIndex is not in this chunk, so move forward one chunk and continue.
+			remaining -= total;
+			chunkIndex++;
+			continue;
+		}
+
+		// nodeIndex falls within this chunk, so split the chunk.
+		// This does not move the chunkIndex forward: the next iteration might need to split again at the same index.
+		//
+		// For chunks above the bisect threshold, cut at the midpoint and let the loop descend
+		// into whichever half holds nodeIndex. The other half is left untouched.
+		const splitPoint = total > bisectThreshold ? Math.floor(total / 2) : remaining;
+		const cursor = chunk.cursor();
+		cursor.firstNode();
+		const before = chunkRange(cursor, policy, splitPoint, false);
+		const after = chunkRange(cursor, policy, total - splitPoint, true);
+		// TODO: this could fail for really long chunks being split (due to argument count limits).
+		chunks.splice(chunkIndex, 1, ...before, ...after);
+		// The spliced-out slot held a ref to the original chunk. The two new chunks come with
+		// their own refs from chunkRange, so the slot's ref to the original needs to be released.
+		chunk.referenceRemoved();
+	}
+	assert(remaining === 0, 0xcf9 /* nodeIndex exceeds total node count in field */);
+	return chunks.length;
+}
+
+/**
+ * Extracts values from the current cursor position according to the provided tree shape.
+ *
+ * Walks through the tree structure defined by the shape, extracting values from leaf nodes
+ * and recursively processing child fields. If an ID compressor is provided, compressible
+ * string values (stable node identifiers) will be recompressed for optimal storage.
+ *
+ * @param cursor - Tree cursor positioned at the node to extract values from
+ * @param shape - The tree shape defining the structure to extract
+ * @param values - Array to append the extracted values to
+ * @param idCompressor - Optional compressor used to encode string values that are compressible by the idCompressor for in-memory representation.
  * If the idCompressor is not provided, the values will be the original uncompressed values.
  */
 export function insertValues(
@@ -507,6 +668,7 @@ export function insertValues(
 	// Slow path: walk shape and cursor together, inserting values.
 	if (shape.hasValue) {
 		if (
+			shape.mayContainCompressedIds &&
 			typeof cursor.value === "string" &&
 			idCompressor !== undefined &&
 			isStableNodeIdentifier(cursor.value)

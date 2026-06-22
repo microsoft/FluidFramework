@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type {
+	FluidLayer,
 	ILayerCompatDetails,
 	ILayerCompatSupportRequirements,
 	IProvideLayerCompatDetails,
@@ -15,13 +16,15 @@ import {
 	type IContainerContext,
 	type ICriticalContainerError,
 } from "@fluidframework/container-definitions/internal";
+import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces/internal";
 import {
-	FluidErrorTypes,
-	type ITelemetryBaseProperties,
-	type Tagged,
-	type TelemetryBaseEventPropertyType,
-} from "@fluidframework/core-interfaces/internal";
-import { createChildLogger, isFluidError } from "@fluidframework/telemetry-utils/internal";
+	createChildLogger,
+	createChildMonitoringContext,
+	isLayerIncompatibilityError,
+	mixinMonitoringContext,
+	MockLogger,
+	type MonitoringContext,
+} from "@fluidframework/telemetry-utils/internal";
 import {
 	MockDeltaManager,
 	MockAudience,
@@ -32,93 +35,70 @@ import Sinon from "sinon";
 import { ContainerRuntime } from "../containerRuntime.js";
 import { pkgVersion } from "../packageVersion.js";
 import {
-	runtimeCompatDetailsForLoader,
 	loaderSupportRequirementsForRuntime,
 	validateLoaderCompatibility,
 	validateDatastoreCompatibility,
 	dataStoreSupportRequirementsForRuntime,
+	runtimeCoreCompatDetails,
+	disableStrictLoaderLayerCompatibilityCheckKey,
 } from "../runtimeLayerCompatState.js";
 
 import { createLocalDataStoreContext } from "./dataStoreCreationHelper.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createTestConfigProvider } from "./gc/gcUnitTestHelpers.js";
 
 type ILayerCompatSupportRequirementsOverride = Omit<
 	ILayerCompatSupportRequirements,
-	"requiredFeatures"
+	"requiredFeatures" | "minSupportedGeneration"
 > & {
 	requiredFeatures: string[];
+	minSupportedGeneration: number;
 };
 
 function validateFailureProperties(
 	error: Error,
 	isGenerationCompatible: boolean,
-	layerGeneration: number,
-	layerType: "Loader" | "Driver" | "DataStore",
+	incompatibleLayerGeneration: number,
+	incompatibleLayer: FluidLayer,
 	unsupportedFeatures?: string[],
 ): boolean {
-	assert(
-		isFluidError(error) && error.errorType === FluidErrorTypes.usageError,
-		"Error should be a usageError",
-	);
+	assert(isLayerIncompatibilityError(error), "Error should be a layerIncompatibilityError");
+	assert(typeof error.details === "string", "Error details should be present");
+	const detailedProperties = JSON.parse(error.details) as ITelemetryBaseProperties;
 	assert.strictEqual(
-		error.errorType,
-		FluidErrorTypes.usageError,
-		"Error type should be usageError",
-	);
-	const telemetryProps = error.getTelemetryProperties();
-	assert(typeof telemetryProps.errorDetails === "string", "Error details should be present");
-	const properties = JSON.parse(telemetryProps.errorDetails) as ITelemetryBaseProperties;
-	assert.strictEqual(
-		properties.isGenerationCompatible,
+		detailedProperties.isGenerationCompatible,
 		isGenerationCompatible,
 		"Generation compatibility not as expected",
 	);
-	assert.strictEqual(properties.runtimeVersion, pkgVersion, "Runtime version not as expected");
+
+	assert.strictEqual(error.layer, "runtime", "Layer type not as expected");
 	assert.strictEqual(
-		properties.runtimeGeneration,
-		runtimeCompatDetailsForLoader.generation,
+		error.incompatibleLayer,
+		incompatibleLayer,
+		"Incompatible layer type not as expected",
+	);
+
+	assert.strictEqual(error.layerVersion, pkgVersion, "Runtime version not as expected");
+	assert.strictEqual(
+		detailedProperties.layerGeneration,
+		runtimeCoreCompatDetails.generation,
 		"Runtime generation not as expected",
 	);
 	assert.deepStrictEqual(
-		properties.unsupportedFeatures,
+		detailedProperties.unsupportedFeatures,
 		unsupportedFeatures,
 		"Unsupported features not as expected",
 	);
 
-	let otherLayerVersion:
-		| TelemetryBaseEventPropertyType
-		| Tagged<TelemetryBaseEventPropertyType>
-		| undefined;
-	let otherLayerGeneration:
-		| TelemetryBaseEventPropertyType
-		| Tagged<TelemetryBaseEventPropertyType>
-		| undefined;
-
-	switch (layerType) {
-		case "Loader": {
-			otherLayerVersion = properties.loaderVersion;
-			otherLayerGeneration = properties.loaderGeneration;
-			break;
-		}
-		case "Driver": {
-			otherLayerVersion = properties.driverVersion;
-			otherLayerGeneration = properties.driverGeneration;
-			break;
-		}
-		case "DataStore": {
-			otherLayerVersion = properties.dataStoreVersion;
-			otherLayerGeneration = properties.dataStoreGeneration;
-			break;
-		}
-		default: {
-			assert.fail(`Unexpected layer type: ${layerType}`);
-		}
-	}
-
-	assert.strictEqual(otherLayerVersion, pkgVersion, `${layerType} version not as expected`);
 	assert.strictEqual(
-		otherLayerGeneration,
-		layerGeneration,
-		`${layerType} generation not as expected`,
+		error.incompatibleLayerVersion,
+		pkgVersion,
+		`${incompatibleLayer} version not as expected`,
+	);
+	assert.strictEqual(
+		detailedProperties.incompatibleLayerGeneration,
+		incompatibleLayerGeneration,
+		`${incompatibleLayer} generation not as expected`,
 	);
 	return true;
 }
@@ -162,8 +142,9 @@ describe("Runtime Layer compatibility", () => {
 	 * and has the correct error / properties.
 	 */
 	describe("Validation error and properties", () => {
+		const mc = createChildMonitoringContext({ logger: createChildLogger() });
 		const testCases: {
-			layerType: "Loader" | "Driver" | "DataStore";
+			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 			validateCompatibility: (
 				maybeCompatDetails: ILayerCompatDetails | undefined,
@@ -171,14 +152,16 @@ describe("Runtime Layer compatibility", () => {
 			) => void;
 		}[] = [
 			{
-				layerType: "Loader",
-				validateCompatibility: validateLoaderCompatibility,
+				layerType: "loader",
+				validateCompatibility: (maybeCompatDetails, disposeFn) =>
+					validateLoaderCompatibility(maybeCompatDetails, disposeFn, mc),
 				layerSupportRequirements:
 					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 			},
 			{
-				layerType: "DataStore",
-				validateCompatibility: validateDatastoreCompatibility,
+				layerType: "dataStore",
+				validateCompatibility: (maybeCompatDetails, disposeFn) =>
+					validateDatastoreCompatibility(maybeCompatDetails, disposeFn, mc),
 				layerSupportRequirements:
 					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 			},
@@ -308,18 +291,18 @@ describe("Runtime Layer compatibility", () => {
 	 */
 	describe("Validation during load / initialization", () => {
 		const testCases: {
-			layerType: "Loader" | "DataStore" | "Driver";
+			layerType: "loader" | "dataStore";
 			layerSupportRequirements: ILayerCompatSupportRequirementsOverride;
 			createAndLoad: (compatibilityDetails?: ILayerCompatDetails) => Promise<void>;
 		}[] = [
 			{
-				layerType: "Loader",
+				layerType: "loader",
 				layerSupportRequirements:
 					loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 				createAndLoad: createAndLoadRuntime,
 			},
 			{
-				layerType: "DataStore",
+				layerType: "dataStore",
 				layerSupportRequirements:
 					dataStoreSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride,
 				createAndLoad: createAndLoadDataStore,
@@ -370,5 +353,77 @@ describe("Runtime Layer compatibility", () => {
 				});
 			});
 		}
+	});
+
+	describe("DisableStrictLoaderLayerCompatibilityCheck config for missing loader compat details", () => {
+		let originalMinSupportedGeneration: number;
+		let mc: MonitoringContext;
+		let logger: MockLogger;
+		let configProvider: ReturnType<typeof createTestConfigProvider>;
+
+		beforeEach(() => {
+			const loaderSupportRequirements =
+				loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride;
+			// Set up incompatible configuration
+			originalMinSupportedGeneration = loaderSupportRequirements.minSupportedGeneration;
+			loaderSupportRequirements.minSupportedGeneration = 1;
+
+			configProvider = createTestConfigProvider();
+			logger = new MockLogger();
+			mc = mixinMonitoringContext(logger.toTelemetryLogger(), configProvider);
+		});
+
+		afterEach(() => {
+			// Restore original configuration
+			const loaderSupportRequirements =
+				loaderSupportRequirementsForRuntime as ILayerCompatSupportRequirementsOverride;
+			loaderSupportRequirements.minSupportedGeneration = originalMinSupportedGeneration;
+		});
+
+		it("DisableStrictLoaderLayerCompatibilityCheck = undefined (default) should fail validation", () => {
+			const disposeFn = Sinon.fake();
+			assert.throws(
+				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
+				(error: Error) => isLayerIncompatibilityError(error),
+				"Should throw LayerIncompatibilityError when loader compat details are missing and strict check is enabled",
+			);
+			assert(disposeFn.calledOnce, "Dispose should be called");
+			logger.assertMatch([
+				{
+					eventName: "LayerIncompatibilityError",
+				},
+			]);
+		});
+
+		it("DisableStrictLoaderLayerCompatibilityCheck = false should fail validation", () => {
+			configProvider.set(disableStrictLoaderLayerCompatibilityCheckKey, false);
+			const disposeFn = Sinon.fake();
+			assert.throws(
+				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
+				(error: Error) => isLayerIncompatibilityError(error),
+				"Should throw LayerIncompatibilityError when loader compat details are missing and strict check is enabled",
+			);
+			assert(disposeFn.calledOnce, "Dispose should be called");
+			logger.assertMatch([
+				{
+					eventName: "LayerIncompatibilityError",
+				},
+			]);
+		});
+
+		it("DisableStrictLoaderLayerCompatibilityCheck = true should skip validation", () => {
+			configProvider.set(disableStrictLoaderLayerCompatibilityCheckKey, true);
+			const disposeFn = Sinon.fake();
+			assert.doesNotThrow(
+				() => validateLoaderCompatibility(undefined /* maybeCompatDetails */, disposeFn, mc),
+				"Should not throw when loader compat details are missing and strict check is enabled",
+			);
+			assert(disposeFn.notCalled, "Dispose should not be called");
+			logger.assertMatch([
+				{
+					eventName: "LayerIncompatibilityDetectedButBypassed",
+				},
+			]);
+		});
 	});
 });

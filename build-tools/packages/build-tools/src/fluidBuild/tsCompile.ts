@@ -4,9 +4,20 @@
  */
 
 import path from "path";
-import type * as tsTypes from "typescript";
+import type * as ts54Types from "typescript-5.4";
+import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 import { defaultLogger } from "../common/logging.js";
+import type { UnionToIntersection } from "./tscUtils.js";
 import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
+
+type tsDiagnostic = ts54Types.Diagnostic | ts59Types.Diagnostic | ts60Types.Diagnostic;
+
+function castDiagnosticsUnionArrayToIntersection(
+	diagnostics: tsDiagnostic[],
+): UnionToIntersection<tsDiagnostic>[] {
+	return diagnostics as unknown as UnionToIntersection<tsDiagnostic>[];
+}
 
 interface TsCompileOptions {
 	/**
@@ -53,16 +64,20 @@ export function tsCompile(
 	let commandLine = tscUtils.parseCommandLine(command);
 	let configFileName: string | undefined;
 	const currentDirectorySystem = { ...ts.sys, getCurrentDirectory: () => cwd };
-	const diagnostics: tsTypes.Diagnostic[] = [];
+	const diagnostics: tsDiagnostic[] = [];
 	if (commandLine) {
 		configFileName = tscUtils.findConfigFile(cwd, commandLine);
 		if (configFileName) {
-			commandLine = ts.getParsedCommandLineOfConfigFile(configFileName, commandLine.options, {
-				...currentDirectorySystem,
-				onUnRecoverableConfigFileDiagnostic: (diagnostic: tsTypes.Diagnostic) => {
-					diagnostics.push(diagnostic);
+			commandLine = ts.getParsedCommandLineOfConfigFile(
+				configFileName,
+				tscUtils.castOptionsUnionToIntersection(commandLine.options),
+				{
+					...currentDirectorySystem,
+					onUnRecoverableConfigFileDiagnostic: (diagnostic: tsDiagnostic) => {
+						diagnostics.push(diagnostic);
+					},
 				},
-			});
+			);
 		} else {
 			throw new Error("Unknown config file in command line");
 		}
@@ -77,8 +92,10 @@ export function tsCompile(
 			? undefined
 			: (
 					host:
-						| tsTypes.CompilerHost
-						| tsTypes.WatchCompilerHostOfConfigFile<tsTypes.EmitAndSemanticDiagnosticsBuilderProgram>,
+						| ts54Types.CompilerHost
+						| ts59Types.CompilerHost
+						| ts54Types.WatchCompilerHostOfConfigFile<ts54Types.EmitAndSemanticDiagnosticsBuilderProgram>
+						| ts59Types.WatchCompilerHostOfConfigFile<ts59Types.EmitAndSemanticDiagnosticsBuilderProgram>,
 				): void => {
 					const originalReadFile = host.readFile;
 					const packageJsonPath = normalizeSlashes(path.join(cwd, "package.json"));
@@ -97,6 +114,11 @@ export function tsCompile(
 					};
 				};
 
+		// The remainder of this block mostly uses a single version of TypeScript - a base
+		// version that is meant to represent the earliest supported version. `ts` should
+		// be used directly when allowed.
+		const baseTs = tscUtils.baseTs(ts);
+
 		if (commandLine.options.watch) {
 			if (allowWatch !== "allow-watch") {
 				throw new Error(
@@ -107,31 +129,40 @@ export function tsCompile(
 				throw new Error("A config file is required when --watch option is specified.");
 			}
 
-			const host = ts.createWatchCompilerHost(
+			const host = baseTs.createWatchCompilerHost(
 				configFileName,
-				commandLine.options,
+				tscUtils.castOptionsUnionToIntersection(commandLine.options),
 				currentDirectorySystem,
-				ts.createEmitAndSemanticDiagnosticsBuilderProgram,
+				baseTs.createEmitAndSemanticDiagnosticsBuilderProgram,
 			);
 			applyPackageJsonTypeOverride?.(host);
-			ts.createWatchProgram(host);
+			baseTs.createWatchProgram(host);
 			return undefined;
 		}
 
 		const incremental = !!(commandLine.options.incremental || commandLine.options.composite);
 
+		// baseTs is used here so that host is a specific version and can be passed to .create*Program params below.
 		const host = incremental
-			? ts.createIncrementalCompilerHost(commandLine.options)
-			: ts.createCompilerHost(commandLine.options);
+			? baseTs.createIncrementalCompilerHost(
+					tscUtils.castOptionsUnionToIntersection(commandLine.options),
+				)
+			: baseTs.createCompilerHost(
+					tscUtils.castOptionsUnionToIntersection(commandLine.options),
+				);
 		applyPackageJsonTypeOverride?.(host);
 
 		const param = {
 			rootNames: commandLine.fileNames,
-			options: tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
+			options: tscUtils.castOptionsUnionToIntersection(
+				tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
+			),
 			host,
 			projectReferences: commandLine.projectReferences,
 		};
-		const program = incremental ? ts.createIncrementalProgram(param) : ts.createProgram(param);
+		const program = incremental
+			? baseTs.createIncrementalProgram(param)
+			: baseTs.createProgram(param);
 
 		diagnostics.push(...program.getConfigFileParsingDiagnostics());
 		diagnostics.push(...program.getSyntacticDiagnostics());
@@ -159,9 +190,13 @@ export function tsCompile(
 	}
 
 	if (diagnostics.length > 0) {
-		const sortedDiagnostics = ts.sortAndDeduplicateDiagnostics(diagnostics);
+		const sortedDiagnostics = tscUtils
+			.baseTs(ts)
+			.sortAndDeduplicateDiagnostics(castDiagnosticsUnionArrayToIntersection(diagnostics));
 
-		const formatDiagnosticsHost: tsTypes.FormatDiagnosticsHost = {
+		const formatDiagnosticsHost:
+			| ts54Types.FormatDiagnosticsHost
+			| ts59Types.FormatDiagnosticsHost = {
 			getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
 			getCanonicalFileName: tscUtils.getCanonicalFileName,
 			getNewLine: () => ts.sys.newLine,

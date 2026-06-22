@@ -7,6 +7,18 @@
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
+// @beta @sealed
+export interface IOdspContainerServicesEvents {
+    readOnlyStateChanged: () => void;
+    sensitivityLabelsInfoChanged: () => void;
+}
+
+// @beta
+export interface IOdspFluidContainer<TContainerSchema extends ContainerSchema = ContainerSchema> extends IFluidContainer<TContainerSchema> {
+    attach(props?: ContainerAttachProps<OdspContainerAttachProps>): Promise<string>;
+    uploadBlob(blob: ArrayBufferLike): Promise<IFluidHandle<ArrayBufferLike>>;
+}
+
 // @beta
 export interface IOdspTokenProvider {
     fetchStorageToken(siteUrl: string, refresh: boolean): Promise<TokenResponse>;
@@ -16,14 +28,22 @@ export interface IOdspTokenProvider {
 // @beta @sealed
 export class OdspClient {
     constructor(properties: OdspClientProps);
-    // (undocumented)
-    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+    createContainer<T extends ContainerSchema>(containerSchema: T, minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>): Promise<{
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
-    // (undocumented)
+    // @deprecated
+    createContainer<T extends ContainerSchema>(containerSchema: T): Promise<{
+        container: IOdspFluidContainer<T>;
+        services: OdspContainerServices;
+    }>;
+    getContainer<T extends ContainerSchema>(id: string, containerSchema: T, minVersionForCollab: Exclude<MinimumVersionForCollab, `1.${string}`>): Promise<{
+        container: IOdspFluidContainer<T>;
+        services: OdspContainerServices;
+    }>;
+    // @deprecated
     getContainer<T extends ContainerSchema>(id: string, containerSchema: T): Promise<{
-        container: IFluidContainer<T>;
+        container: IOdspFluidContainer<T>;
         services: OdspContainerServices;
     }>;
 }
@@ -43,9 +63,19 @@ export interface OdspConnectionConfig {
     tokenProvider: IOdspTokenProvider;
 }
 
-// @beta
-export interface OdspContainerServices {
+// @beta (undocumented)
+export interface OdspContainerAttachProps {
+    fileName: string | undefined;
+    filePath: string | undefined;
+}
+
+// @beta @sealed
+export interface OdspContainerServices extends IDisposable {
     audience: IOdspAudience;
+    // (undocumented)
+    events: Listenable<IOdspContainerServicesEvents>;
+    getReadOnlyState(): boolean | undefined;
+    getSensitivityLabelsInfo(): string | undefined;
 }
 
 // @beta

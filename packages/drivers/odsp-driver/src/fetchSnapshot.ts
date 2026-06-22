@@ -6,7 +6,12 @@
 import { fromUtf8ToBase64 } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import { getW3CData } from "@fluidframework/driver-base/internal";
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import {
+	DriverErrorTypes,
+	type ILocationRedirectionError,
+	type ISnapshot,
+	type ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import {
 	type DriverErrorTelemetryProps,
 	NonRetryableError,
@@ -23,8 +28,8 @@ import {
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	PerformanceEvent,
 	isFluidError,
 	wrapError,
@@ -54,6 +59,7 @@ import {
 	fetchAndParseAsJSONHelper,
 	fetchHelper,
 	getWithRetryForTokenRefresh,
+	getOdspResolvedUrl,
 	getWithRetryForTokenRefreshRepeat,
 	isSnapshotFetchForLoadingGroup,
 	measure,
@@ -88,7 +94,7 @@ export async function fetchSnapshot(
 	versionId: string,
 	fetchFullSnapshot: boolean,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (url: string) => Promise<IOdspResponse<unknown>>,
 ): Promise<ISnapshot> {
 	const path = `/trees/${versionId}`;
@@ -115,7 +121,7 @@ export async function fetchSnapshotWithRedeem(
 	storageTokenFetcher: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
 	forceAccessTokenViaAuthorizationHeader: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
@@ -153,12 +159,11 @@ export async function fetchSnapshotWithRedeem(
 				// Execute the redeem fallback
 				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
 
+				const shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo };
+				delete shareLinkInfo.sharingLinkToRedeem;
 				const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl = {
 					...odspResolvedUrl,
-					shareLinkInfo: {
-						...odspResolvedUrl.shareLinkInfo,
-						sharingLinkToRedeem: undefined,
-					},
+					shareLinkInfo,
 				};
 
 				// Log initial failure only if redeem succeeded - it points out to some bug somewhere
@@ -183,6 +188,31 @@ export async function fetchSnapshotWithRedeem(
 					putInCache,
 					loadingGroupIds,
 				);
+			} else if (
+				isLocationRedirectionError(error) &&
+				odspResolvedUrl.shareLinkInfo?.sharingLinkToRedeem !== undefined
+			) {
+				try {
+					// The redirect itself is handled earlier, but we need to redeem the sharing link
+					// now against the redirected URL rather than waiting until the error reaches the
+					// resolveWithLocationRedirectionHandling handler as it will call getAbsoluteURL
+					// and would fail due to permission issues since it will not attempt to redeem.
+					logger.sendTelemetryEvent(
+						{
+							eventName: "RedirectRedeemFallback",
+							errorType: error.errorType,
+						},
+						error,
+					);
+					const redirectedResolvedUrl: IOdspResolvedUrl = {
+						...getOdspResolvedUrl(error.redirectUrl),
+						shareLinkInfo: odspResolvedUrl.shareLinkInfo,
+					};
+					await redeemSharingLink(redirectedResolvedUrl, storageTokenFetcher, logger);
+				} catch (redeemError) {
+					logger.sendErrorEvent({ eventName: "RedirectRedeemFallbackError" }, redeemError);
+				}
+				throw error;
 			} else {
 				throw error;
 			}
@@ -208,7 +238,7 @@ export async function fetchSnapshotWithRedeem(
 async function redeemSharingLink(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Promise<void> {
 	await PerformanceEvent.timedExecAsync(
 		logger,
@@ -275,7 +305,7 @@ async function fetchLatestSnapshotCore(
 	odspResolvedUrl: IOdspResolvedUrl,
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	snapshotOptions: ISnapshotOptions | undefined,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	snapshotDownloader: (
 		finalOdspResolvedUrl: IOdspResolvedUrl,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
@@ -294,6 +324,7 @@ async function fetchLatestSnapshotCore(
 		const internalFarmType = checkForKnownServerFarmType(odspResolvedUrl.siteUrl);
 		const isRedemptionNonDurable: boolean =
 			odspResolvedUrl.shareLinkInfo?.isRedemptionNonDurable === true;
+		const fileVersion = odspResolvedUrl.fileVersion ?? undefined;
 
 		const perfEvent = {
 			eventName,
@@ -547,6 +578,7 @@ async function fetchLatestSnapshotCore(
 				useLegacyFlowWithoutGroups:
 					useLegacyFlowWithoutGroupsForSnapshotFetch(loadingGroupIds),
 				userOps: snapshot.ops?.filter((op) => isRuntimeMessage(op)).length ?? 0,
+				fileVersion,
 				// Measures time to make fetch call. Should be similar to
 				// fetchStartToResponseEndTime - receiveContentTime, i.e. it looks like it's time till first byte /
 				// end of response headers
@@ -680,15 +712,18 @@ function getTreeStatsCore(snapshotTree: ISnapshotTree, stats: ITreeStats): void 
 /**
  * This function fetches the snapshot and parse it according to what is mentioned in response headers.
  * @param odspResolvedUrl - resolved odsp url.
- * @param storageToken - token to do the auth for network request.
- * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param getAuthHeader - function to fetch the auth header for the network request.
+ * @param tokenFetchOptions - options for fetching the token.
  * @param loadingGroupIds - loadingGroupIds for which snapshot needs to be downloaded. Note:
  * 1.) If undefined, then legacy trees latest call will be used where no groupId query param would be specified.
  * 2.) If [] is passed, then snapshot with all ungrouped data will be fetched.
  * 3.) If any groupId is specified like ["g1"], then snapshot for g1 group will be fetched.
+ * @param snapshotOptions - Options used to specify how and what to fetch in the snapshot.
+ * @param logger - logger for sending telemetry events.
  * @param snapshotFormatFetchType - Snapshot format to fetch.
  * @param controller - abort controller if caller needs to abort the network call.
  * @param epochTracker - epoch tracker used to add/validate epoch in the network call.
+ * @param scenarioName - scenario name for telemetry.
  * @returns fetched snapshot.
  */
 export const downloadSnapshot = mockify(
@@ -698,6 +733,7 @@ export const downloadSnapshot = mockify(
 		tokenFetchOptions: TokenFetchOptionsEx,
 		loadingGroupIds: string[] | undefined,
 		snapshotOptions: ISnapshotOptions | undefined,
+		logger?: TelemetryLoggerExt,
 		snapshotFormatFetchType?: SnapshotFormatSupportType,
 		controller?: AbortController,
 		epochTracker?: EpochTracker,
@@ -754,6 +790,7 @@ export const downloadSnapshot = mockify(
 			"downloadSnapshot",
 		);
 		assert(authHeader !== null, 0x1e5 /* "Storage token should not be null" */);
+		logger?.sendTelemetryEvent({ eventName: "SnapshotAuthHeaderObtained" });
 		const { body, headers } = getFormBodyAndHeaders(odspResolvedUrl, authHeader, header);
 		const fetchOptions = {
 			body,
@@ -780,6 +817,7 @@ export const downloadSnapshot = mockify(
 			true,
 			scenarioName,
 		) ?? fetchHelper(url, fetchOptions));
+		logger?.sendTelemetryEvent({ eventName: "SnapshotFetchResponseReceived" });
 
 		return {
 			odspResponse,
@@ -788,6 +826,14 @@ export const downloadSnapshot = mockify(
 		};
 	},
 );
+
+function isLocationRedirectionError(error: unknown): error is ILocationRedirectionError {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		(error as Partial<IOdspError>).errorType === DriverErrorTypes.locationRedirection
+	);
+}
 
 function isRedeemSharingLinkError(
 	odspResolvedUrl: IOdspResolvedUrl,

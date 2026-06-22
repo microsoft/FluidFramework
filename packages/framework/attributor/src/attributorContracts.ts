@@ -43,7 +43,7 @@ export const attributorDataStoreAlias = "attributor-cf9b6fe4-4c50-4a5d-9045-eb73
  */
 export interface IRuntimeAttributor extends IProvideRuntimeAttributor {
 	/**
-	 * @throws - If no AttributionInfo exists for this key.
+	 * @throws If no AttributionInfo exists for this key.
 	 */
 	get(key: AttributionKey): AttributionInfo;
 

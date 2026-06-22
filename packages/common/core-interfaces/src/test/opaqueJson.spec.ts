@@ -3,13 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import {
-	assertIdenticalTypes,
-	castToOpaqueJson,
-	createInstanceOf,
-	exposeFromOpaqueJson,
-} from "./testUtils.js";
-
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type {
 	JsonDeserialized,
@@ -17,6 +10,13 @@ import type {
 	OpaqueJsonDeserialized,
 	OpaqueJsonSerializable,
 } from "@fluidframework/core-interfaces/internal/exposedUtilityTypes";
+
+import {
+	assertIdenticalTypes,
+	castToOpaqueJson,
+	createInstanceOf,
+	exposeFromOpaqueJson,
+} from "./testUtils.js";
 
 function saveJsonSerializable<const T>(value: JsonSerializable<T>): OpaqueJsonSerializable<T> {
 	return value as unknown as OpaqueJsonSerializable<T>;

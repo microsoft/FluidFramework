@@ -3,7 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import {
+	type FC,
+	type PropsWithChildren,
+	type ReactElement,
+	useEffect,
+	useState,
+} from "react";
 import RGL, { WidthProvider, type Layout } from "react-grid-layout";
 
 import type { IDataObjectGrid, IDataObjectGridItem } from "./dataObjectGrid.js";
@@ -14,7 +20,7 @@ import {
 } from "./dataObjectRegistry.js";
 import { DataObjectGridToolbar } from "./toolbar.js";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import "react-grid-layout/css/styles.css";
 import "./dataObjectGridView.css";
 
@@ -25,9 +31,7 @@ interface IEditPaneProps {
 	removeItem(): void;
 }
 
-const EditPane: React.FC<IEditPaneProps> = (
-	props: React.PropsWithChildren<IEditPaneProps>,
-) => {
+const EditPane: FC<IEditPaneProps> = (props: PropsWithChildren<IEditPaneProps>) => {
 	const { url, removeItem } = props;
 	return (
 		<div className="data-grid-edit-pane">
@@ -51,13 +55,11 @@ interface IItemViewProps {
 	removeItem(): void;
 }
 
-const ItemView: React.FC<IItemViewProps> = (
-	props: React.PropsWithChildren<IItemViewProps>,
-) => {
+const ItemView: FC<IItemViewProps> = (props: PropsWithChildren<IItemViewProps>) => {
 	const { url, getItemView, removeItem } = props;
-	const [itemView, setItemView] = React.useState<JSX.Element | undefined>(undefined);
+	const [itemView, setItemView] = useState<JSX.Element | undefined>(undefined);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		getItemView()
 			.then(setItemView)
 			.catch((error) => console.error(`Error in getting item`, error));
@@ -79,16 +81,16 @@ interface IDataObjectGridViewProps {
 	editable: boolean;
 }
 
-const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
-	props: React.PropsWithChildren<IDataObjectGridViewProps>,
+const DataObjectGridView: FC<IDataObjectGridViewProps> = (
+	props: PropsWithChildren<IDataObjectGridViewProps>,
 ) => {
 	const { getUrlForItem, model, registry, editable } = props;
 	// Again stronger typing would be good
-	const [itemList, setItemList] = React.useState<IDataObjectGridItem<ISingleHandleItem>[]>(
+	const [itemList, setItemList] = useState<IDataObjectGridItem<ISingleHandleItem>[]>(
 		model.getItems(),
 	);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		const onItemListChanged = (newList: IDataObjectGridItem<ISingleHandleItem>[]): void => {
 			setItemList(newList);
 		};
@@ -100,7 +102,7 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 
 	// Render nothing if there are no items
 	if (model.getItems().length === 0) {
-		return <></>;
+		return null;
 	}
 
 	const onGridChangeEvent = (
@@ -119,7 +121,7 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 	const itemViews: JSX.Element[] = [];
 	const layouts: Layout[] = [];
 	for (const item of itemList) {
-		const getItemView = async (): Promise<React.ReactElement> => {
+		const getItemView = async (): Promise<ReactElement> => {
 			const registryEntry = registry.get(item.type);
 
 			if (registryEntry === undefined) {
@@ -152,7 +154,6 @@ const DataObjectGridView: React.FC<IDataObjectGridViewProps> = (
 			cols={36}
 			rowHeight={50}
 			width={1800}
-			// eslint-disable-next-line unicorn/no-null -- null is required for the GridLayout
 			compactType={null}
 			isDroppable={editable}
 			isDraggable={editable}
@@ -186,11 +187,11 @@ export interface IDataObjectGridAppViewProps {
 /**
  * The main React view for the app.
  */
-export const DataObjectGridAppView: React.FC<IDataObjectGridAppViewProps> = (
+export const DataObjectGridAppView: FC<IDataObjectGridAppViewProps> = (
 	props: IDataObjectGridAppViewProps,
 ) => {
 	const { model, getDirectUrl } = props;
-	const [editable, setEditable] = React.useState<boolean>(model.getItems().length === 0);
+	const [editable, setEditable] = useState<boolean>(model.getItems().length === 0);
 	return (
 		<div className="data-grid-view">
 			<DataObjectGridToolbar

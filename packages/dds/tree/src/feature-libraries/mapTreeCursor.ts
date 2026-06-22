@@ -19,6 +19,7 @@ import {
 	rootField,
 	rootFieldKey,
 } from "../core/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 
 import {
 	type CursorAdapter,
@@ -27,7 +28,6 @@ import {
 	stackTreeFieldCursor,
 	stackTreeNodeCursor,
 } from "./treeCursorUtils.js";
-import type { requireAssignableTo } from "../util/index.js";
 
 /**
  * A generic variant of {@link MapTree} that can be used to strongly type trees implementing a MapTree-like API.

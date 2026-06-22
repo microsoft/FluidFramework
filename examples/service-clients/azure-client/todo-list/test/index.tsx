@@ -12,17 +12,16 @@ import { Loader } from "@fluidframework/container-loader/legacy";
 import {
 	createFluidContainer,
 	createTreeContainerRuntimeFactory,
-	// eslint-disable-next-line import/no-internal-modules -- #26986: `fluid-static` internal used in examples
+	// eslint-disable-next-line import-x/no-internal-modules -- #26986: `fluid-static` internal used in examples
 } from "@fluidframework/fluid-static/internal";
-// eslint-disable-next-line import/no-internal-modules -- #26987: `local-driver` internal used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26987: `local-driver` internal used in examples
 import { LocalSessionStorageDbFactory } from "@fluidframework/local-driver/internal";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,
 } from "@fluidframework/local-driver/legacy";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
-import React from "react";
-// eslint-disable-next-line import/no-internal-modules -- This is the pattern prescribed by React
+// eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
 import { createRoot } from "react-dom/client";
 
 import {
@@ -106,7 +105,7 @@ async function createContainerAndRenderInElement(
 		containerId,
 		createTreeContainerRuntimeFactory({
 			schema: todoListContainerSchema,
-			compatibilityMode: "2",
+			minVersionForCollaboration: "2.0.0",
 		}),
 		createNewFlag,
 	);

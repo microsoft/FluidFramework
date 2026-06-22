@@ -4,8 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Type } from "@sinclair/typebox";
-import structuredClone from "@ungap/structured-clone";
+import * as Type from "@sinclair/typebox";
+import type { TUnsafe } from "@sinclair/typebox";
 
 /**
  * Subset of Map interface.
@@ -44,8 +44,6 @@ export type Populated<T> = {
 export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
-
-export const clone = structuredClone;
 
 /**
  * Checks whether or not the given object is a `readonly` array.
@@ -106,6 +104,28 @@ export function iterableHasSome<T>(iterable: Iterable<T>): boolean {
 }
 
 /**
+ * Returns the value from the given iterable if it contains exactly one item, otherwise `undefined`.
+ * @remarks
+ * Note that if the iterable itself may contain `undefined` values,
+ * it is not possible to use this to distinguish between an iterable that contains exactly one `undefined` value and an iterable that contains zero or multiple values.
+ */
+export function oneFromIterable<T>(items: Iterable<T>): T | undefined {
+	const iterator = items[Symbol.iterator]();
+	const first = iterator.next();
+	if (first.done === true) {
+		// Empty iterable case.
+		return undefined;
+	}
+	const second = iterator.next();
+	if (second.done === true) {
+		// Single item iterable case.
+		return first.value;
+	}
+	// Multiple item iterable case.
+	return undefined;
+}
+
+/**
  * Returns true if and only if the given array has exactly one element.
  * @param array - The array to check.
  * @remarks
@@ -143,27 +163,28 @@ export function compareSets<T>({
 	same?: (t: T) => boolean;
 }): boolean {
 	for (const item of a.keys()) {
-		if (!b.has(item)) {
-			if (aExtra !== undefined) {
-				if (!aExtra(item)) {
-					return false;
-				}
-			} else {
+		if (b.has(item)) {
+			if (same !== undefined && !same(item)) {
 				return false;
 			}
 		} else {
-			if (same !== undefined && !same(item)) {
+			if (aExtra === undefined) {
 				return false;
+			} else {
+				if (!aExtra(item)) {
+					return false;
+				}
 			}
 		}
 	}
 	for (const item of b.keys()) {
-		if (!a.has(item)) {
-			if (bExtra !== undefined) {
-				if (!bExtra(item)) {
-					return false;
-				}
-			} else {
+		if (a.has(item)) {
+			continue;
+		}
+		if (bExtra === undefined) {
+			return false;
+		} else {
+			if (!bExtra(item)) {
 				return false;
 			}
 		}
@@ -291,7 +312,11 @@ export function count(iterable: Iterable<unknown>): number {
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatible<TExtra = never> =
 	| string
@@ -305,10 +330,15 @@ export type JsonCompatible<TExtra = never> =
 
 /**
  * Use for Json object compatible data.
+ *
  * @remarks
  * This does not robustly forbid non json comparable data via type checking,
  * but instead mostly restricts access to it.
- * @alpha
+ *
+ * @privateRemarks
+ * TODO (before promoting to public): consider moving this to a more general location - this isn't SharedTree-specific.
+ *
+ * @beta
  */
 export type JsonCompatibleObject<TExtra = never> = { [P in string]?: JsonCompatible<TExtra> };
 
@@ -345,7 +375,8 @@ export type JsonCompatibleReadOnlyObject = { readonly [P in string]?: JsonCompat
  * expressed using composition of schemas for runtime validation, even if we don't think making the types
  * generic is worth the maintenance cost.
  */
-export const JsonCompatibleReadOnlySchema = Type.Any();
+export const JsonCompatibleReadOnlySchema =
+	Type.Any() as unknown as TUnsafe<JsonCompatibleReadOnly>;
 
 /**
  * Returns if a particular json compatible value is an object.
@@ -439,8 +470,11 @@ export function transformObjectMap<
 >(
 	objectMap: Record<MapKey, MapValue>,
 	transformer: (value: MapValue, key: MapKey) => NewMapValue,
-): Record<MapKey, MapValue> {
-	const output: Record<MapKey, MapValue> = Object.create(null);
+): Record<MapKey, NewMapValue> {
+	const output: Record<MapKey, NewMapValue> = Object.create(null) as Record<
+		MapKey,
+		NewMapValue
+	>;
 	// This function must only be used with objects specifically intended to encode map like information.
 	for (const key of Object.keys(objectMap)) {
 		const element = objectMap[key as MapKey];
@@ -466,42 +500,6 @@ export function invertMap<Key, Value>(input: Map<Key, Value>): Map<Value, Key> {
 		0x88a /* all values in a map must be unique to invert it */,
 	);
 	return result;
-}
-
-/**
- * Returns the value from `set` if it contains exactly one item, otherwise `undefined`.
- */
-export function oneFromSet<T>(set: ReadonlySet<T> | undefined): T | undefined {
-	if (set === undefined) {
-		return undefined;
-	}
-	if (set.size !== 1) {
-		return undefined;
-	}
-	for (const item of set) {
-		return item;
-	}
-}
-
-/**
- * Type with a name describing what it is.
- * Typically used with values (like schema) that can be stored in a map, but in some representations have their name/key as a field.
- */
-export interface Named<TName> {
-	readonly name: TName;
-}
-
-/**
- * Order {@link Named} objects by their name.
- */
-export function compareNamed(a: Named<string>, b: Named<string>): -1 | 0 | 1 {
-	if (a.name < b.name) {
-		return -1;
-	}
-	if (a.name > b.name) {
-		return 1;
-	}
-	return 0;
 }
 
 /**
@@ -553,10 +551,57 @@ export function capitalize<S extends string>(s: S): Capitalize<S> {
 }
 
 /**
- * Compares strings lexically to form a strict partial ordering.
+ * Compares two numbers to form a strict total ordering.
+ * @remarks NaN is treated as less than all other numbers and equal to itself.
+ * Infinity is considered equal to itself.
  */
+export function compareNumbers<T extends number>(a: T, b: T): number {
+	if (Number.isNaN(a)) {
+		return Number.isNaN(b) ? 0 : -1;
+	} else if (Number.isNaN(b)) {
+		return 1;
+	} else if (a === b) {
+		return 0; // Infinity - Infinity = NaN (not 0), so use explicit comparison
+	}
+	return a - b;
+}
+
+/**
+ * Compares two numbers to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any number and equal to itself.
+ * NaN is treated as less than all other numbers (but greater than undefined) and equal to itself.
+ */
+export function comparePartialNumbers<T extends number>(
+	a: T | undefined,
+	b: T | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareNumbers(a, b);
+}
+
+/** Compares two strings lexically to form a strict total ordering. */
 export function compareStrings<T extends string>(a: T, b: T): number {
 	return a > b ? 1 : a === b ? 0 : -1;
+}
+
+/**
+ * Compares two strings lexically to form a strict total ordering while allowing for `undefined` values.
+ * @remarks `undefined` is considered less than any string and equal to itself.
+ */
+export function comparePartialStrings<T extends string>(
+	a: T | undefined,
+	b: T | undefined,
+): number {
+	if (a === undefined) {
+		return b === undefined ? 0 : -1;
+	} else if (b === undefined) {
+		return 1;
+	}
+	return compareStrings(a, b);
 }
 
 /**

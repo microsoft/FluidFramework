@@ -5,7 +5,7 @@
 
 import type { SignalListener } from "@fluid-experimental/data-objects";
 import { EventEmitter } from "@fluid-internal/client-utils";
-// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+// eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import { createDataObjectKind } from "@fluidframework/aqueduct/internal";
 import {
 	DataObject,

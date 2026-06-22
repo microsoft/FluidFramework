@@ -4,16 +4,31 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type IContainerExperimental, waitContainerToCatchUp } from "./container.js";
+export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
+export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
+	captureFullContainerState,
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
+	loadFrozenContainerFromPendingState,
+	loadSummarizerContainerAndMakeSummary,
+	type ICaptureFullContainerStateProps,
+	type IContainerDriverServices,
+	type IContainerHostProps,
+	type IContainerLoadDriverProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
+	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,
+	type ILoadFrozenContainerFromPendingStateProps,
 } from "./createAndLoadContainerUtils.js";
+export type {
+	LoadSummarizerSummaryResult,
+	OnDemandSummaryResults,
+	SummaryStage,
+} from "./summarizerResultTypes.js";
 export {
 	type ICodeDetailsLoader,
 	type IFluidModuleWithDetails,
@@ -44,3 +59,9 @@ export type {
 	QuorumClientsSnapshot,
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
+export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
+export {
+	extractBlobAttachReferences,
+	wireFormatConstants,
+	type IBlobAttachReference,
+} from "./captureReferencedContents.js";

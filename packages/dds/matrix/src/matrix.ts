@@ -26,7 +26,12 @@ import {
 	ReferenceType,
 	segmentIsRemoved,
 } from "@fluidframework/merge-tree/internal";
-import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import {
 	ObjectStoragePartition,
 	SummaryTreeBuilder,
@@ -36,7 +41,10 @@ import {
 	type ISharedObjectEvents,
 	SharedObject,
 } from "@fluidframework/shared-object-base/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	extractTelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 import type {
 	IMatrixConsumer,
 	IMatrixProducer,
@@ -965,7 +973,10 @@ export class SharedMatrix<T = any>
 							cellLastWriteTracker: SparseArray2D.load(cellLastWriteTracker),
 						};
 		} catch (error) {
-			this.logger.sendErrorEvent({ eventName: "MatrixLoadFailed" }, error);
+			extractTelemetryLoggerExt(this.logger).sendErrorEvent(
+				{ eventName: "MatrixLoadFailed" },
+				error,
+			);
 		}
 	}
 
@@ -996,11 +1007,25 @@ export class SharedMatrix<T = any>
 		);
 	}
 
-	protected processCore(
-		msg: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
 	): void {
+		// Reconstruct the ISequencedDocumentMessage which is needed by merge tree client.
+		const msg: ISequencedDocumentMessage = {
+			...messageEnvelope,
+			contents: messageContent.contents,
+			clientSequenceNumber: messageContent.clientSequenceNumber,
+		};
+		const localOpMetadata = messageContent.localOpMetadata;
 		if (local) {
 			const recordedRefSeq = this.inFlightRefSeqs.shift();
 			assert(recordedRefSeq !== undefined, 0x8ba /* No pending recorded refSeq found */);
@@ -1013,7 +1038,7 @@ export class SharedMatrix<T = any>
 			// assert(recordedRefSeq <= message.referenceSequenceNumber, "RefSeq mismatch");
 		}
 
-		const contents = msg.contents as MatrixSetOrVectorOp<T>;
+		const contents = messageContent.contents as MatrixSetOrVectorOp<T>;
 		const target = contents.target;
 
 		switch (target) {

@@ -11,7 +11,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { SharedMap } from "@fluidframework/map/legacy";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -20,7 +19,7 @@ import {
 	ScopeType,
 } from "./AzureClientFactory.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, waitForMember, getTestMatrix } from "./utils.js";
+import { configProvider, waitForMember, getTestMatrix, currentVersion } from "./utils.js";
 
 const testMatrix = getTestMatrix();
 for (const testOpts of testMatrix) {
@@ -49,15 +48,19 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.findOriginalMember,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					currentVersion,
+				));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2"));
+				({ container, services } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -94,15 +97,19 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.findPartnerMember,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					currentVersion,
+				));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2"));
+				({ container, services } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -132,7 +139,11 @@ for (const testOpts of testMatrix) {
 					"Fluid.Container.ForceWriteConnection": true,
 				}),
 			);
-			const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
+			const { services: servicesGet } = await client2.getContainer(
+				containerId,
+				schema,
+				currentVersion,
+			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 			const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
@@ -158,15 +169,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -185,7 +196,11 @@ for (const testOpts of testMatrix) {
 					"Fluid.Container.ForceWriteConnection": true,
 				}),
 			);
-			const { services: servicesGet } = await client2.getContainer(containerId, schema, "2");
+			const { services: servicesGet } = await client2.getContainer(
+				containerId,
+				schema,
+				currentVersion,
+			);
 
 			/* This is a workaround for a known bug, we should have one member (self) upon container connection */
 			const partner = await waitForMember(servicesGet.audience, "test-user-id-2");
@@ -217,15 +232,19 @@ for (const testOpts of testMatrix) {
 			let container: IFluidContainer;
 			let services: AzureContainerServices;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					currentVersion,
+				));
 			} else {
-				({ container, services } = await client.createContainer(schema, "2"));
+				({ container, services } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -255,7 +274,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer, services: partnerServices } =
-				await partnerClient.getContainer(containerId, schema, "2");
+				await partnerClient.getContainer(containerId, schema, currentVersion);
 
 			if (partnerContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(
@@ -326,15 +345,15 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			let container: IFluidContainer;
 			if (isEphemeral) {
-				const containerResponse: AxiosResponse | undefined = await createContainerFromPayload(
+				const containerResponse = await createContainerFromPayload(
 					ephemeralSummaryTrees.observeMemberLeaving,
 					"test-user-id-1",
 					"test-user-name-1",
 				);
 				containerId = getContainerIdFromPayloadResponse(containerResponse);
-				({ container } = await client.getContainer(containerId, schema, "2"));
+				({ container } = await client.getContainer(containerId, schema, currentVersion));
 			} else {
-				({ container } = await client.createContainer(schema, "2"));
+				({ container } = await client.createContainer(schema, currentVersion));
 				containerId = await container.attach();
 			}
 
@@ -353,7 +372,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer, services: partnerServices } =
-				await partnerClient.getContainer(containerId, schema, "2");
+				await partnerClient.getContainer(containerId, schema, currentVersion);
 
 			if (partnerContainer.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(
@@ -399,7 +418,7 @@ for (const testOpts of testMatrix) {
 				[ScopeType.DocRead],
 			);
 			const { container: partnerContainer2, services: partnerServices2 } =
-				await partnerClient2.getContainer(containerId, schema, "2");
+				await partnerClient2.getContainer(containerId, schema, currentVersion);
 
 			if (partnerContainer2.connectionState !== ConnectionState.Connected) {
 				await timeoutPromise(

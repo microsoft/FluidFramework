@@ -5,33 +5,48 @@
 
 import { DevtoolsPanel, WindowMessageRelay } from "@fluid-internal/devtools-view";
 import { Resizable } from "re-resizable";
-import React from "react";
-import ReactDOM from "react-dom";
+import { type ReactElement, useLayoutEffect } from "react";
+// eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 
 import { App } from "./App.js";
 
 console.log("Rendering app...");
 
-ReactDOM.render(
-	<React.StrictMode>
-		<App />
-	</React.StrictMode>,
-	document.querySelector("#content"),
-	() => {
-		console.log("App rendered!");
-	},
-);
+const contentElement = document.querySelector("#content") as HTMLElement;
+const appRoot = createRoot(contentElement);
+appRoot.render(<AppRoot />);
 
 const devtoolsElement = document.createElement("devtools");
 document.body.append(devtoolsElement);
 
-ReactDOM.render(<DevtoolsView />, devtoolsElement, () => {
-	console.log("Devtools UI rendered!");
-	// Setting "fluidStarted" is just for our test automation
-	globalThis.fluidStarted = true;
-});
+const devtoolsRoot = createRoot(devtoolsElement);
+devtoolsRoot.render(<DevtoolsView />);
 
-function DevtoolsView(): React.ReactElement {
+/**
+ * Wraps the app so the "App rendered!" log fires once the initial render has been committed to the
+ * DOM. useLayoutEffect runs synchronously after DOM mutations and before the browser paints.
+ *
+ * @remarks
+ * `<App />` is intentionally not wrapped in `<StrictMode>`. `App` initializes a singleton Devtools
+ * instance via `initializeDevtools` and disposes it in an effect cleanup. Under StrictMode, React
+ * intentionally double-invokes effects on mount (setup, cleanup, setup), which disposes that
+ * singleton and leaves subsequent renders pointing at a disposed instance ("The devtools instance
+ * has been disposed"). The app is not resilient to that remount cycle, so StrictMode is omitted here.
+ */
+function AppRoot(): ReactElement {
+	useLayoutEffect(() => {
+		console.log("App rendered!");
+	}, []);
+	return <App />;
+}
+
+function DevtoolsView(): ReactElement {
+	useLayoutEffect(() => {
+		console.log("Devtools UI rendered!");
+		// Setting "fluidStarted" is just for our test automation
+		globalThis.fluidStarted = true;
+	}, []);
 	return (
 		<Resizable
 			style={{

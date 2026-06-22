@@ -2,33 +2,105 @@
 
 This package contains a shared ESLint config used by all the packages in the Fluid Framework repo.
 
-It exports the following shared ESLint configs:
+## Requirements
+
+- **ESLint 9** (recommended), or
+- **ESLint 8.21+** with `ESLINT_USE_FLAT_CONFIG=true` environment variable
+
+This package uses ESLint's flat config format exclusively. Legacy `.eslintrc` format is not supported.
+
+## Usage
+
+Import the desired configuration and spread it into your `eslint.config.mts`:
+
+```javascript
+// eslint.config.mts
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
+
+The package root exports the standard flat and server configs. For specialized cases, explicit subpaths are also available:
+`@fluidframework/eslint-config-fluid/flat.mts` and `@fluidframework/eslint-config-fluid/server.mts`.
+
+### ESLint 8.21+ Users
+
+If you're using ESLint 8.21-8.x, you must enable flat config support via environment variable:
+
+```bash
+ESLINT_USE_FLAT_CONFIG=true eslint .
+```
+
+Or in your npm scripts:
+
+```json
+{
+	"scripts": {
+		"lint": "cross-env ESLINT_USE_FLAT_CONFIG=true eslint ."
+	}
+}
+```
+
+**Note:** ESLint 8.x flat config support was experimental. We recommend upgrading to ESLint 9 for the best experience.
+
+### Modular Structure
+
+The flat config is organized into a modular structure for maintainability:
+
+```
+eslint-config-fluid/
+├── flat.mts                    # Main entry point (~30 lines)
+├── library/
+│   ├── constants.mts           # Shared constants (ignores, file patterns, import restrictions)
+│   ├── settings.mts            # Plugin settings (import-x, jsdoc)
+│   ├── rules/
+│   │   ├── base.mts            # Base rules from eslint:recommended, typescript-eslint, etc.
+│   │   ├── recommended.mts     # Rules for recommended config (unicorn, type safety)
+│   │   └── strict.mts          # Rules for strict config (jsdoc requirements, explicit access)
+│   └── configs/
+│       ├── base.mts            # Base config builder with all plugins
+│       ├── overrides.mts       # Shared overrides (test files, React, JS files)
+│       └── factory.mts         # Config factory functions
+```
+
+This structure ensures:
+
+- No single file exceeds ~250 lines
+- Single source of truth for constants and settings
+- Each module has a single responsibility
+- Easy to understand and maintain
 
 ## Configurations
 
 ### Recommended
 
-This is the standard config for use in Fluid Framework libraries.
-It is also the default library export.
+The standard named config for use in Fluid Framework libraries.
+
+```javascript
+import { recommended } from "@fluidframework/eslint-config-fluid";
+export default [...recommended];
+```
 
 This configuration is recommended for all libraries in the repository, though use of the [strict](#strict) config is preferred whenever reasonable.
 
-Imported via `@fluidframework/eslint-config-fluid` (or `@fluidframework/eslint-config-fluid/recommended`).
-
 ### Strict
 
-The strictest config for use in Fluid Framework libraries.
-Recommended for highest code quality enforcement.
+The strictest config for use in Fluid Framework libraries. Recommended for highest code quality enforcement.
 
-In particular, use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
+```javascript
+import { strict } from "@fluidframework/eslint-config-fluid";
+export default [...strict];
+```
 
-Imported via `@fluidframework/eslint-config-fluid/strict`.
+Use of this config is encouraged for libraries with public facing APIs, and those used as external-facing examples (e.g. those mentioned on `fluidframework.com`).
 
 ### Strict-Biome
 
-A version of the "strict" config that disables rules that are supported by Biome's "recommended" lint config.
-This config is intended to be used in projects that use both eslint and Biome for linting.
-This config is considered experimental.
+A version of the "strict" config that disables rules covered by Biome's "recommended" lint config. Intended for projects using both ESLint and Biome.
+
+```javascript
+import { strictBiome } from "@fluidframework/eslint-config-fluid";
+export default [...strictBiome];
+```
 
 ## Changing the lint config
 
@@ -59,20 +131,14 @@ a diff to review as part of a PR -- just like we do with API reports for code ch
 | Script | Description |
 |--------|-------------|
 | `build` | `npm run print-config` |
-| `build:readme` | `markdown-magic --files "**/*.md"` |
-| `cleanup-printed-configs` | Clean up the printed configs. Removes the `parser` property and sorts the JSON. |
+| `build:readme:disabled` | `markdown-magic --files "**/*.md"` |
+| `clean` | `rimraf --glob dist "**/*.build.log"` |
 | `format` | `npm run prettier:fix` |
 | `prettier` | `prettier --check .` |
 | `prettier:fix` | `prettier --write .` |
-| `print-config` | Print all the eslint configs. |
-| `print-config:default` | Print the eslint config for regular TypeScript files (`eslint --config index.js --print-config src/file.ts`). |
-| `print-config:minimal` | `eslint --config ./minimal-deprecated.js --print-config ./src/file.ts > ./printed-configs/minimal.json` |
-| `print-config:react` | `eslint --config ./index.js --print-config ./src/file.tsx > ./printed-configs/react.json` |
-| `print-config:recommended` | `eslint --config ./recommended.js --print-config ./src/file.ts > ./printed-configs/recommended.json` |
-| `print-config:strict` | `eslint --config ./strict.js --print-config ./src/file.ts > ./printed-configs/strict.json` |
-| `print-config:strict-biome` | `eslint --config ./strict-biome.js --print-config ./src/file.ts > ./printed-configs/strict-biome.json` |
-| `print-config:test` | Print the eslint config for test files (`eslint --config index.js --print-config src/test/file.ts`). |
+| `print-configs` | `tsx scripts/print-configs.ts printed-configs` |
 | `test` | `echo TODO: add tests in @fluidframework/eslint-config-fluid` |
+| `test:mocha` | `mocha "src/test/**/*.test.mts"` |
 
 <!-- prettier-ignore-end -->
 

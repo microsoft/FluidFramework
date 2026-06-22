@@ -4,6 +4,8 @@
 
 A test abstract getter property.
 
+@escapedTag
+
 <h2 id="abstractpropertygetter-signature">Signature</h2>
 
 ```typescript

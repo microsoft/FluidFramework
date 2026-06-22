@@ -4,41 +4,38 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
-	type CodecWriteOptions,
+	VersionDispatchingCodecBuilder,
 	FluidClientVersion,
-	type ICodecFamily,
-	type IJsonCodec,
-	makeCodecFamily,
-	makeVersionDispatchingCodec,
+	type ICodecOptions,
 } from "../../codec/index.js";
 import type { RevisionTagCodec } from "../rebase/index.js";
 
-import { version1 } from "./detachedFieldIndexFormatV1.js";
-import { version2 } from "./detachedFieldIndexFormatV2.js";
 import { makeDetachedNodeToFieldCodecV1 } from "./detachedFieldIndexCodecV1.js";
 import { makeDetachedNodeToFieldCodecV2 } from "./detachedFieldIndexCodecV2.js";
-import type { DetachedFieldSummaryData } from "./detachedFieldIndexTypes.js";
+import { DetachedFieldIndexFormatVersion } from "./detachedFieldIndexFormatCommon.js";
 
-export function makeDetachedFieldIndexCodec(
-	revisionTagCodec: RevisionTagCodec,
-	options: CodecWriteOptions,
-	idCompressor: IIdCompressor,
-): IJsonCodec<DetachedFieldSummaryData> {
-	const family = makeDetachedFieldIndexCodecFamily(revisionTagCodec, options, idCompressor);
-	const writeVersion =
-		options.oldestCompatibleClient < FluidClientVersion.v2_52 ? version1 : version2;
-	return makeVersionDispatchingCodec(family, { ...options, writeVersion });
-}
+type BuildData = ICodecOptions & {
+	readonly revisionTagCodec: RevisionTagCodec;
+	readonly idCompressor: IIdCompressor;
+};
 
-export function makeDetachedFieldIndexCodecFamily(
-	revisionTagCodec: RevisionTagCodec,
-	options: CodecWriteOptions,
-	idCompressor: IIdCompressor,
-): ICodecFamily<DetachedFieldSummaryData> {
-	return makeCodecFamily([
-		[version1, makeDetachedNodeToFieldCodecV1(revisionTagCodec, options, idCompressor)],
-		[version2, makeDetachedNodeToFieldCodecV2(revisionTagCodec, options, idCompressor)],
-	]);
-}
+export const detachedFieldIndexCodecBuilder = VersionDispatchingCodecBuilder.build(
+	"DetachedFieldIndex",
+	[
+		{
+			minVersionForCollab: lowestMinVersionForCollab,
+			formatVersion: DetachedFieldIndexFormatVersion.v1,
+			codec: (buildData: BuildData) =>
+				makeDetachedNodeToFieldCodecV1(buildData.revisionTagCodec, buildData.idCompressor),
+		},
+		{
+			minVersionForCollab: FluidClientVersion.v2_52,
+			formatVersion: DetachedFieldIndexFormatVersion.v2,
+			codec: (buildData: BuildData) =>
+				makeDetachedNodeToFieldCodecV2(buildData.revisionTagCodec, buildData.idCompressor),
+		},
+	],
+);

@@ -7,7 +7,7 @@ import child_process from "child_process";
 
 import { ITestDriver } from "@fluid-internal/test-driver-definitions";
 import {
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	TelemetryDataTag,
 } from "@fluidframework/telemetry-utils/internal";
 import ps from "ps-node";
@@ -16,7 +16,7 @@ import type { TestUsers } from "./getTestUsers.js";
 import type { TestConfiguration } from "./testConfigFile.js";
 import { initialize } from "./utils.js";
 
-const createLoginEnv = (userName: string, password: string) =>
+const createLoginEnv = (userName: string, password: string): string =>
 	`{"${userName}": "${password}"}`;
 
 /**
@@ -34,10 +34,10 @@ export async function stressTest(
 		createTestId: boolean;
 		testUsers: TestUsers | undefined;
 		profileName: string;
-		logger: ITelemetryLoggerExt;
+		logger: TelemetryLoggerExt;
 		outputDir: string;
 	},
-) {
+): Promise<void> {
 	const {
 		testId,
 		debug,
@@ -167,10 +167,10 @@ export async function stressTest(
  */
 function setupTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	runId: number,
 	username: string | undefined,
-) {
+): void {
 	logger.send({
 		category: "metric",
 		eventName: "Runner Started",
@@ -216,10 +216,10 @@ function setupTelemetry(
 
 function setupDataTelemetry(
 	process: child_process.ChildProcess,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	runId: number,
 	username?: string,
-) {
+): void {
 	let stdOutLine = 0;
 	process.stdout?.on("data", (chunk) => {
 		const data = String(chunk);

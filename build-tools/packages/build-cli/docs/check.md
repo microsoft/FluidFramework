@@ -4,11 +4,14 @@
 Check commands are used to verify repo state, apply policy, etc.
 
 * [`flub check buildVersion`](#flub-check-buildversion)
+* [`flub check bundleAnalysisReposComparison`](#flub-check-bundleanalysisreposcomparison)
+* [`flub check bundleSize`](#flub-check-bundlesize)
 * [`flub check changeset`](#flub-check-changeset)
 * [`flub check latestVersions VERSION PACKAGE_OR_RELEASE_GROUP`](#flub-check-latestversions-version-package_or_release_group)
 * [`flub check layers`](#flub-check-layers)
 * [`flub check policy`](#flub-check-policy)
 * [`flub check prApproval`](#flub-check-prapproval)
+* [`flub check trustPolicy`](#flub-check-trustpolicy)
 
 ## `flub check buildVersion`
 
@@ -64,6 +67,73 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/buildVersion.ts)_
+
+## `flub check bundleAnalysisReposComparison`
+
+Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current = --current-label).
+
+```
+USAGE
+  $ flub check bundleAnalysisReposComparison [-v | --quiet] [--base-label <value>] [--current-label <value>]
+
+FLAGS
+  --base-label=<value>     [default: main] Label subdirectory under compareBundlesOutput/analysis holding the base-side
+                           bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in revision mode
+                           (the sanitized revision).
+  --current-label=<value>  [default: current] Label subdirectory under compareBundlesOutput/analysis holding the
+                           current-side bundle stats. Matches the label 'flub generate bundleAnalysisRepo' saves in
+                           local mode (a timestamped 'current_<epoch>').
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Compare the two bundles previously collected by 'flub generate bundleAnalysisRepo' (base = --base-label, current =
+  --current-label).
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub check bundleAnalysisReposComparison
+
+  $ flub check bundleAnalysisReposComparison --base-label some-revision
+```
+
+_See code: [src/commands/check/bundleAnalysisReposComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleAnalysisReposComparison.ts)_
+
+## `flub check bundleSize`
+
+Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a human-readable summary by default; pass --json for the structured result.
+
+```
+USAGE
+  $ flub check bundleSize [--json] [-v | --quiet] [--localReportPath <value>] [--target <value>]
+
+FLAGS
+  --localReportPath=<value>  [default: ./artifacts/bundleAnalyzerJson] Path to the locally-collected bundle reports (as
+                             produced by `flub generate bundleStats`).
+  --target=<value>           Target ref — the ref you'd be PRing against. Typically `<remote>/<branch>` (e.g.
+                             'upstream/main', 'origin/release/2.x'), but accepts any ref `git merge-base` understands.
+                             Skips auto-detection of the canonical remote. The bundles aren't compared against this ref
+                             directly — the baseline commit is `git merge-base <target> HEAD`.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Compare the locally-collected bundle reports against the CI build of the merge-base commit (between HEAD and a target
+  ref) and print the diff. By default, the target is auto-detected as `<canonical-remote>/main` where
+  `<canonical-remote>` is whichever remote points at `microsoft/FluidFramework`; pass `--target` to override. Prints a
+  human-readable summary by default; pass --json for the structured result.
+```
+
+_See code: [src/commands/check/bundleSize.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/bundleSize.ts)_
 
 ## `flub check changeset`
 
@@ -186,8 +256,8 @@ FLAGS
   --approvers=<value>...  GitHub users who should be considered approvers. If at least one of these users has approved
                           the PR, it is considered approved. Cannot be used with the --team flag. You can provide
                           multiple names as a space-delimited list, e.g. '--approvers user1 user2'
-  --ghActions             Set to true to output logs in a GitHub Actions-compatible format. This value will be set to
-                          true automatically when running in GitHub Actions.
+  --ghActions             [env: GITHUB_ACTIONS] Set to true to output logs in a GitHub Actions-compatible format. This
+                          value will be set to true automatically when running in GitHub Actions.
   --pr=<value>            (required) The PR number to check.
   --repo=<value>          (required) The name of the GitHub repository to check. This should be in the form
                           'owner/repo-name'. For example, 'microsoft/FluidFramework'
@@ -195,8 +265,8 @@ FLAGS
                           approved the PR, it is considered approved. The team must be in the same GitHub organization
                           as the repo. Only the team name should be provided - the org is inferred from the repo
                           details.
-  --token=<value>         (required) GitHub access token. This parameter should be passed using the GITHUB_TOKEN
-                          environment variable for security purposes.
+  --token=<value>         (required) [env: GITHUB_TOKEN] GitHub access token. This parameter should be passed using the
+                          GITHUB_TOKEN environment variable for security purposes.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -210,3 +280,35 @@ DESCRIPTION
 ```
 
 _See code: [src/commands/check/prApproval.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/prApproval.ts)_
+
+## `flub check trustPolicy`
+
+Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+```
+USAGE
+  $ flub check trustPolicy [--json] [-v | --quiet] [--keep] [--path <value>] [--tempDir <value>]
+
+FLAGS
+  --keep             Do not delete the scratch workspace after running.
+  --path=<value>     Path inside the workspace to audit. The most specific workspace (e.g. a release group like
+                     `server/routerlicious` rather than the repo root) containing this path is used. Defaults to the
+                     current working directory.
+  --tempDir=<value>  Scratch workspace directory (default: <workspace>/.trust-audit-temp).
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+GLOBAL FLAGS
+  --json  Format output as json.
+
+DESCRIPTION
+  Audits the repo's lockfile against pnpm's `no-downgrade` trust policy.
+
+  Materializes a scratch workspace under `.trust-audit-temp/` containing one leaf project per pinned dependency, then
+  runs `pnpm install --trust-policy no-downgrade` and iteratively excludes each violation until pnpm either succeeds or
+  stops surfacing new violations. Reports the full list of trust-downgrade violations.
+```
+
+_See code: [src/commands/check/trustPolicy.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/check/trustPolicy.ts)_

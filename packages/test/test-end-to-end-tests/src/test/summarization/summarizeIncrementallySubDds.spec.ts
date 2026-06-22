@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { describeCompat, getContainerRuntimeApi } from "@fluid-private/test-version-utils";
 import { IContainer, LoaderHeader } from "@fluidframework/container-definitions/internal";
-import { IContainerRuntimeOptions } from "@fluidframework/container-runtime/internal";
+import type {
+	IContainerRuntimeOptions,
+	ISummarizer,
+} from "@fluidframework/container-runtime/internal";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -16,15 +19,13 @@ import {
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
-import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
 	channelsTreeName,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
@@ -154,30 +155,29 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 			this.blobMap.set(blob, blobContent);
 		}
 	}
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ICreateBlobOp;
-			switch (op.type) {
-				case "blobStorage": {
-					const blob: IBlob = {
-						value: op.value,
-						seqNumber: message.sequenceNumber,
-					};
-					const blobName = `${this.blobMap.size}`;
-					this.blobMap.set(blobName, blob);
-					break;
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			if (envelope.type === MessageType.Operation) {
+				const op = messageContent.contents as ICreateBlobOp;
+				switch (op.type) {
+					case "blobStorage": {
+						const blob: IBlob = {
+							value: op.value,
+							seqNumber: envelope.sequenceNumber,
+						};
+						const blobName = `${this.blobMap.size}`;
+						this.blobMap.set(blobName, blob);
+						break;
+					}
+					default:
+						throw new Error("Unknown operation");
 				}
-				default:
-					throw new Error("Unknown operation");
 			}
 		}
 	}
 
-	public createBlobOp(content: string) {
+	public createBlobOp(content: string): void {
 		const op: ICreateBlobOp = {
 			type: "blobStorage",
 			value: content,
@@ -185,8 +185,8 @@ class TestIncrementalSummaryBlobDDS extends SharedObject {
 		this.submitLocalMessage(op);
 	}
 
-	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected onDisconnect(): void {}
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -374,31 +374,30 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		return node;
 	}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as ICreateTreeNodeOp;
-			switch (op.type) {
-				case "treeOp": {
-					const node: ITreeNode = {
-						children: [],
-						name: op.name,
-						seqNumber: message.sequenceNumber,
-					};
-					const parent = this.findNodeAndUpdateSeqNumber(
-						op.parentPath,
-						this.root,
-						message.sequenceNumber,
-					);
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			if (envelope.type === MessageType.Operation) {
+				const op = messageContent.contents as ICreateTreeNodeOp;
+				switch (op.type) {
+					case "treeOp": {
+						const node: ITreeNode = {
+							children: [],
+							name: op.name,
+							seqNumber: envelope.sequenceNumber,
+						};
+						const parent = this.findNodeAndUpdateSeqNumber(
+							op.parentPath,
+							this.root,
+							envelope.sequenceNumber,
+						);
 
-					parent.children.push(node);
-					break;
+						parent.children.push(node);
+						break;
+					}
+					default:
+						throw new Error("Unknown operation");
 				}
-				default:
-					throw new Error("Unknown operation");
 			}
 		}
 	}
@@ -423,7 +422,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	}
 
 	// searches the node tree for a given path to insure the path can be reached
-	private validatePath(path: string[], current: ITreeNode) {
+	private validatePath(path: string[], current: ITreeNode): void {
 		const name = path[0];
 		assert(name === current.name, "Path is incorrect!");
 		const newPath = path.slice(1);
@@ -448,7 +447,7 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 	 * All this does is creates a new node attached to some parent with the path starting from the root node
 	 * Note: The name of the node should be unique, it may cause issues if it is not.
 	 */
-	public createTreeOp(parentPath: string[], name: string) {
+	public createTreeOp(parentPath: string[], name: string): void {
 		this.validatePath(parentPath, this.root);
 		const op: ICreateTreeNodeOp = {
 			type: "treeOp",
@@ -458,8 +457,8 @@ class TestIncrementalSummaryTreeDDSClass extends SharedObject {
 		this.submitLocalMessage(op);
 	}
 
-	protected onDisconnect() {}
-	protected applyStashedOp(content: any): unknown {
+	protected onDisconnect(): void {}
+	protected applyStashedOp(content: unknown): void {
 		throw new Error("Method not implemented.");
 	}
 }
@@ -498,13 +497,16 @@ describeCompat(
 			return provider.createContainer(runtimeFactory);
 		};
 
-		async function loadContainer(summaryVersion: string) {
+		async function loadContainer(summaryVersion: string): Promise<IContainer> {
 			return provider.loadContainer(runtimeFactory, undefined, {
 				[LoaderHeader.version]: summaryVersion,
 			});
 		}
 
-		async function createSummarizer(container: IContainer, summaryVersion?: string) {
+		async function createSummarizer(
+			container: IContainer,
+			summaryVersion?: string,
+		): Promise<ISummarizer> {
 			const createSummarizerResult = await createSummarizerFromFactory(
 				provider,
 				container,
@@ -524,7 +526,7 @@ describeCompat(
 			ddsId: string,
 			subDDSId: string,
 			messagePrefix: string,
-		) {
+		): void {
 			// The handle id for sub-DDS should be under ".channels/<dataStoreId>/.channels/<ddsId>" as that is where
 			// the summary tree for a sub-DDS is.
 			const expectedHandleId = `/${channelsTreeName}/${dataStoreId}/${channelsTreeName}/${ddsId}/${subDDSId}`;

@@ -28,11 +28,22 @@ const cellId = "cellKey";
 
 describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedCell } = apis.dds;
+	// In cross-client compat, the loading client may be a different version than the creating
+	// client. Use ddsForLoading to build the load-side registry so loadTestContainer reconstructs
+	// DDS factories from the correct version. (Outside cross-client compat it matches apis.dds.)
+	const ddsForLoading = apis.ddsForLoading;
 
-	const registry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
-	const testContainerConfig: ITestContainerConfig = {
+	const createRegistry: ChannelFactoryRegistry = [[cellId, SharedCell.getFactory()]];
+	const loadRegistry: ChannelFactoryRegistry = [
+		[cellId, ddsForLoading.SharedCell.getFactory()],
+	];
+	const createContainerConfig: ITestContainerConfig = {
 		fluidDataObjectType: DataObjectFactoryType.Test,
-		registry,
+		registry: createRegistry,
+	};
+	const loadContainerConfig: ITestContainerConfig = {
+		fluidDataObjectType: DataObjectFactoryType.Test,
+		registry: loadRegistry,
 	};
 
 	let provider: ITestObjectProvider;
@@ -50,17 +61,17 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 
 	beforeEach("setup", async () => {
 		// Create a Container for the first client.
-		const container1 = await provider.makeTestContainer(testContainerConfig);
+		const container1 = await provider.makeTestContainer(createContainerConfig);
 		dataObject1 = await getContainerEntryPointBackCompat<ITestFluidObject>(container1);
 		sharedCell1 = await dataObject1.getSharedObject<ISharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
-		const container2 = await provider.loadTestContainer(testContainerConfig);
+		const container2 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject2 = await getContainerEntryPointBackCompat<ITestFluidObject>(container2);
 		sharedCell2 = await dataObject2.getSharedObject<ISharedCell>(cellId);
 
 		// Load the Container that was created by the first client.
-		const container3 = await provider.loadTestContainer(testContainerConfig);
+		const container3 = await provider.loadTestContainer(loadContainerConfig);
 		const dataObject3 = await getContainerEntryPointBackCompat<ITestFluidObject>(container3);
 		sharedCell3 = await dataObject3.getSharedObject<ISharedCell>(cellId);
 
@@ -70,22 +81,23 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 		await provider.ensureSynchronized();
 	});
 
-	function verifyCellValue(cell: ISharedCell, expectedValue, index: number) {
+	function verifyCellValue(cell: ISharedCell, expectedValue, index: number): void {
 		const userValue = cell.get();
 		assert.equal(
 			userValue,
 			expectedValue,
+			// eslint-disable-next-line @typescript-eslint/no-base-to-string
 			`Incorrect value ${userValue} instead of ${expectedValue} in container ${index}`,
 		);
 	}
 
-	function verifyCellValues(value1, value2, value3) {
+	function verifyCellValues(value1, value2, value3): void {
 		verifyCellValue(sharedCell1, value1, 1);
 		verifyCellValue(sharedCell2, value2, 2);
 		verifyCellValue(sharedCell3, value3, 3);
 	}
 
-	function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean) {
+	function verifyCellEmpty(value1: boolean, value2: boolean, value3: boolean): void {
 		const user1Empty = sharedCell1.empty();
 		assert.equal(
 			user1Empty,
@@ -147,6 +159,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 1: ${newValue}`,
 			);
 			user1ValueChangedCount = user1ValueChangedCount + 1;
@@ -155,6 +168,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 2: ${newValue}`,
 			);
 			user2ValueChangedCount = user2ValueChangedCount + 1;
@@ -163,6 +177,7 @@ describeCompat("SharedCell", "FullCompat", (getTestObjectProvider, apis) => {
 			assert.equal(
 				newValue,
 				newCellValue,
+				// eslint-disable-next-line @typescript-eslint/no-base-to-string
 				`Incorrect value for changed in container 3: ${newValue}`,
 			);
 			user3ValueChangedCount = user3ValueChangedCount + 1;

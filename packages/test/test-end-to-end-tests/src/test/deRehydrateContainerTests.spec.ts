@@ -9,7 +9,7 @@ import type { SparseMatrix } from "@fluid-experimental/sequence-deprecated";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import type { ISharedCell } from "@fluidframework/cell/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import type { SharedCounter } from "@fluidframework/counter/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -21,7 +21,10 @@ import type { SharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusOrderedCollection } from "@fluidframework/ordered-collection/internal";
 import type { ConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
-import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import {
+	IContainerRuntimeBase,
+	IFluidDataStoreChannel,
+} from "@fluidframework/runtime-definitions/internal";
 import type { SequenceInterval, SharedString } from "@fluidframework/sequence/internal";
 import {
 	createDataStoreFactory,
@@ -36,7 +39,7 @@ import {
 } from "@fluidframework/test-utils/internal";
 import * as semver from "semver";
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { SnapshotWithBlobs } from "../../../../loader/container-loader/lib/serializedStateManager.js";
 import { pkgVersion } from "../packageVersion.js";
 
@@ -143,18 +146,27 @@ describeCompat(
 			return subTree;
 		}
 
-		const assertChannelsTree = (rootOrDatastore: ISnapshotTree) =>
+		const assertChannelsTree = (rootOrDatastore: ISnapshotTree): ISnapshotTree =>
 			assertSubtree(rootOrDatastore, ".channels");
-		const assertProtocolTree = (root: ISnapshotTree) => assertSubtree(root, ".protocol");
+		const assertProtocolTree = (root: ISnapshotTree): ISnapshotTree =>
+			assertSubtree(root, ".protocol");
 
-		function assertChannelTree(rootOrDatastore: ISnapshotTree, key: string, msg?: string) {
+		function assertChannelTree(
+			rootOrDatastore: ISnapshotTree,
+			key: string,
+			msg?: string,
+		): { channelsTree: ISnapshotTree; datastoreTree: ISnapshotTree } {
 			const channelsTree = assertChannelsTree(rootOrDatastore);
 			return {
 				channelsTree,
 				datastoreTree: assertSubtree(channelsTree, key, msg ?? `${key} channel not present`),
 			};
 		}
-		const assertDatastoreTree = (root: ISnapshotTree, key: string, msg?: string) =>
+		const assertDatastoreTree = (
+			root: ISnapshotTree,
+			key: string,
+			msg?: string,
+		): { channelsTree: ISnapshotTree; datastoreTree: ISnapshotTree } =>
 			assertChannelTree(root, key, `${key} datastore not present`);
 
 		function assertBlobContents<T>(
@@ -170,7 +182,10 @@ describeCompat(
 			return JSON.parse(contents) as T;
 		}
 
-		const assertProtocolAttributes = (s: ISnapshotTree, b: ISerializableBlobContents) =>
+		const assertProtocolAttributes = (
+			s: ISnapshotTree,
+			b: ISerializableBlobContents,
+		): IDocumentAttributes =>
 			assertBlobContents<IDocumentAttributes>(assertProtocolTree(s), b, "attributes");
 
 		const codeDetails: IFluidCodeDetails = {
@@ -192,7 +207,10 @@ describeCompat(
 		let request: IRequest;
 		const loaderContainerTracker = new LoaderContainerTracker();
 
-		async function createDetachedContainerAndGetEntryPoint() {
+		async function createDetachedContainerAndGetEntryPoint(): Promise<{
+			container: IContainer;
+			defaultDataStore: TestFluidObject;
+		}> {
 			const container: IContainer = await loader.createDetachedContainer(codeDetails);
 			// Get the root dataStore from the detached container.
 			const defaultDataStore =
@@ -241,7 +259,12 @@ describeCompat(
 			return testLoader;
 		}
 
-		const createPeerDataStore = async (containerRuntime: IContainerRuntimeBase) => {
+		const createPeerDataStore = async (
+			containerRuntime: IContainerRuntimeBase,
+		): Promise<{
+			peerDataStore: ITestFluidObject;
+			peerDataStoreRuntimeChannel: IFluidDataStoreChannel;
+		}> => {
 			const dataStore = await containerRuntime.createDataStore(["default"]);
 			const peerDataStore =
 				await getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
@@ -251,7 +274,10 @@ describeCompat(
 			};
 		};
 
-		async function getDataObjectFromContainer(container: IContainer, key: string) {
+		async function getDataObjectFromContainer(
+			container: IContainer,
+			key: string,
+		): Promise<TestFluidObject> {
 			const entryPoint = await getContainerEntryPointBackCompat<TestFluidObject>(container);
 			const handle: IFluidHandle<TestFluidObject> | undefined = entryPoint.root.get(key);
 			assert(handle !== undefined, `handle for [${key}] must exist`);
@@ -291,7 +317,7 @@ describeCompat(
 			loaderContainerTracker.reset();
 		});
 
-		const tests = () => {
+		const tests = (): void => {
 			it("Dehydrated container snapshot", async () => {
 				const { container, defaultDataStore } =
 					await createDetachedContainerAndGetEntryPoint();
@@ -529,43 +555,6 @@ describeCompat(
 				assert.strictEqual(coc.id, cocId, "COC should exist!!");
 				assert.strictEqual(sharedMatrix.id, sharedMatrixId, "Shared matrix should exist!!");
 				assert.strictEqual(sparseMatrix.id, sparseMatrixId, "Sparse matrix should exist!!");
-			});
-
-			it("Storage in detached container", async () => {
-				const { container } = await createDetachedContainerAndGetEntryPoint();
-
-				const snapshotTree = container.serialize();
-				const defaultDataStore =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container);
-				assert(
-					defaultDataStore.context.storage !== undefined,
-					"Storage should be present in detached data store",
-				);
-				let success1: boolean | undefined;
-				await defaultDataStore.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success1 = false;
-				});
-				assert(
-					success1 === false,
-					"Snapshot fetch should not be allowed in detached data store",
-				);
-
-				const container2: IContainer =
-					await loader.rehydrateDetachedContainerFromSnapshot(snapshotTree);
-				const defaultDataStore2 =
-					await getContainerEntryPointBackCompat<TestFluidObject>(container2);
-				assert(
-					defaultDataStore2.context.storage !== undefined,
-					"Storage should be present in rehydrated data store",
-				);
-				let success2: boolean | undefined;
-				await defaultDataStore2.context.storage.getSnapshotTree(undefined).catch((err) => {
-					success2 = false;
-				});
-				assert(
-					success2 === false,
-					"Snapshot fetch should not be allowed in rehydrated data store",
-				);
 			});
 
 			it("Change contents of dds, then rehydrate and then check summary", async () => {

@@ -30,6 +30,7 @@ export const DriverErrorTypes: {
     readonly genericError: "genericError";
     readonly throttlingError: "throttlingError";
     readonly usageError: "usageError";
+    readonly layerIncompatibilityError: "layerIncompatibilityError";
 };
 
 // @beta @legacy
@@ -111,6 +112,11 @@ export interface IBranchOrigin {
     id: string;
     minimumSequenceNumber: number;
     sequenceNumber: number;
+}
+
+// @beta @legacy
+export interface ICacheEntry extends IEntry {
+    file: IFileEntry;
 }
 
 // @public
@@ -261,7 +267,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
-    policies?: IDocumentServicePolicies;
+    policies?: IDocumentServicePolicies | undefined;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
 }
@@ -319,6 +325,19 @@ export interface IDriverErrorBase {
     online?: string;
 }
 
+// @beta @legacy
+export interface IEntry {
+    key: string;
+    type: string;
+}
+
+// @beta @legacy
+export interface IFileEntry {
+    docId: string;
+    fileVersion?: string;
+    resolvedUrl: IResolvedUrl;
+}
+
 // @beta @legacy (undocumented)
 export interface IGenericNetworkError extends IDriverErrorBase {
     // (undocumented)
@@ -348,6 +367,15 @@ export interface INackContent {
     message: string;
     retryAfter?: number;
     type: NackErrorType;
+}
+
+// @beta @legacy
+export interface IPersistedCache {
+    get(entry: ICacheEntry): Promise<unknown>;
+    put(entry: ICacheEntry, value: unknown): Promise<void>;
+    removeEntries(file: IFileEntry): Promise<void>;
+    removeEntry?(entry: ICacheEntry): Promise<void>;
+    update?(entry: ICacheEntry, updater: (existing: unknown, set: (value: unknown) => void) => void): Promise<boolean>;
 }
 
 // @beta @legacy (undocumented)

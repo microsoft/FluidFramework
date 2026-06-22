@@ -5,6 +5,7 @@
 
 export {
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	arraySchema,
@@ -12,7 +13,10 @@ export {
 	isArrayNodeSchema,
 	IterableTreeArrayContent,
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type ReadonlyArrayNode,
+	type ArrayPlaceAnchor,
+	createArrayInsertionAnchor,
 } from "./array/index.js";
 
 export {
@@ -23,21 +27,23 @@ export {
 	MapNodeSchema,
 	mapSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 } from "./map/index.js";
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	isObjectNodeSchema,
 	type ObjectFromSchemaRecord,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
 	objectSchema,
 	setField,
 	type TreeObjectNode,
 	type SimpleKeyMap,
-	type UnannotateSchemaRecord,
 } from "./object/index.js";
 
 export {

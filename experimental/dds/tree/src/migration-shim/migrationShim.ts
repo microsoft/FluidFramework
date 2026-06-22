@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { type EventEmitterEventType } from '@fluid-internal/client-utils';
+import type { EventEmitterEventType } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
-import { type IEvent, type IFluidHandle, type IFluidLoadable } from '@fluidframework/core-interfaces';
+import type { IEvent, IFluidHandle, IFluidLoadable } from '@fluidframework/core-interfaces';
 import { assert } from '@fluidframework/core-utils/internal';
 import {
 	type IChannelAttributes,
@@ -17,25 +17,22 @@ import {
 import { MessageType, type ISequencedDocumentMessage } from '@fluidframework/driver-definitions/internal';
 import type { SessionId } from '@fluidframework/id-compressor';
 import type { IIdCompressorCore } from '@fluidframework/id-compressor/internal';
-import {
-	type IExperimentalIncrementalSummaryContext,
-	type IGarbageCollectionData,
-	type ISummaryTreeWithStats,
-	type ITelemetryContext,
+import type {
+	IExperimentalIncrementalSummaryContext,
+	IGarbageCollectionData,
+	ISummaryTreeWithStats,
+	ITelemetryContext,
 } from '@fluidframework/runtime-definitions/internal';
 import { DataProcessingError, EventEmitterWithErrorHandling } from '@fluidframework/telemetry-utils/internal';
-import { type ITree } from '@fluidframework/tree';
+import type { ITree } from '@fluidframework/tree';
 
-import {
-	type SharedTree as LegacySharedTree,
-	type SharedTreeFactory as LegacySharedTreeFactory,
-} from '../SharedTree.js';
+import type { SharedTree as LegacySharedTree, SharedTreeFactory as LegacySharedTreeFactory } from '../SharedTree.js';
 
 import { MigrationShimDeltaHandler } from './migrationDeltaHandler.js';
 import { type IShimChannelServices, NoDeltasChannelServices } from './shimChannelServices.js';
 import { PreMigrationDeltaConnection, StampDeltaConnection } from './shimDeltaConnection.js';
 import { ShimHandle } from './shimHandle.js';
-import { type IOpContents, type IShim } from './types.js';
+import type { IOpContents, IShim } from './types.js';
 
 /**
  * Interface for migration events to indicate the stage of the migration. There really is two stages: before, and after.
@@ -158,6 +155,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.closeWithError}
 	 */
 	private closeWithError(error: ReturnType<typeof DataProcessingError.wrapIfUnrecognized>): void {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- TODO: AB#58517 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 		if (this.closeError === undefined) {
 			this.closeError = error;
 		}
@@ -265,7 +263,7 @@ export class MigrationShim extends EventEmitterWithErrorHandling<IMigrationEvent
 	 * twice, we will be in a "v2" state even though we really are in a "v1" state. We will encounter unexpected op
 	 * dropping behavior or lack thereof and may corrupt the document.
 	 * @param services - the services to generate the shim services from
-	 * @returns - shim services
+	 * @returns shim services
 	 */
 	private generateShimServicesOnce(services: IChannelServices): IShimChannelServices {
 		assert(

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
+import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	DeltaDetachedNodeChanges,
@@ -11,14 +11,15 @@ import type {
 	DeltaDetachedNodeRename,
 	DeltaFieldChanges,
 	DeltaFieldMap,
-	EncodedRevisionTag,
 	RevisionMetadataSource,
+	RevisionReplacer,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { IdAllocator, Invariant } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
-import type { EncodedNodeChangeset } from "./modularChangeFormat.js";
+import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesIndices = [
@@ -56,10 +57,9 @@ export interface FieldChangeHandler<
 	_typeCheck?: Invariant<TChangeset>;
 	readonly rebaser: FieldChangeRebaser<TChangeset>;
 	readonly codecsFactory: (
-		revisionTagCodec: IJsonCodec<
+		revisionTagCodec: JsonCodecPart<
 			RevisionTag,
-			EncodedRevisionTag,
-			EncodedRevisionTag,
+			typeof RevisionTagSchema,
 			ChangeEncodingContext
 		>,
 	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
@@ -164,11 +164,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	prune(change: TChangeset, pruneChild: NodeChangePruner): TChangeset;
 
-	replaceRevisions(
-		change: TChangeset,
-		oldRevisions: Set<RevisionTag | undefined>,
-		newRevisions: RevisionTag | undefined,
-	): TChangeset;
+	replaceRevisions(change: TChangeset, replacer: RevisionReplacer): TChangeset;
 
 	/**
 	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.

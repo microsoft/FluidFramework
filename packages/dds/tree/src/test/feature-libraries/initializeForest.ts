@@ -16,6 +16,7 @@ import {
 	makeDetachedFieldIndex,
 	visitDelta,
 } from "../../core/index.js";
+import { combineChunks } from "../../feature-libraries/index.js";
 
 /**
  * Initializes the given forest with the given content.
@@ -35,7 +36,9 @@ export function initializeForest(
 	visitAnchors = false,
 ): void {
 	assert(forest.isEmpty, 0x747 /* forest must be empty */);
-	const delta: DeltaRoot = deltaForRootInitialization(forest.chunkField(content));
+	const delta: DeltaRoot = deltaForRootInitialization(
+		combineChunks(forest.chunkField(content)),
+	);
 	let visitor = forest.acquireVisitor();
 	if (visitAnchors) {
 		assert(forest.anchors.isEmpty(), 0x9b7 /* anchor set must be empty */);

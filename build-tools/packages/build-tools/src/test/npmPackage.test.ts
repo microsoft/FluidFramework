@@ -3,17 +3,17 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
 import * as path from "node:path";
+import { strict as assert } from "assert";
 
-import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage";
-import { testDataPath } from "./init";
+import { type PackageJson, readPackageJsonAndIndent } from "../common/npmPackage.js";
+import { testDataPath } from "./init.js";
 
 /**
  * A transformer function that does nothing.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-const testTransformer = (json: PackageJson) => {
+const testTransformer = (json: PackageJson): void => {
 	// do nothing
 	return;
 };

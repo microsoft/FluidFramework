@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// TODO: Fix prefer-nullish-coalescing and prefer-optional-chain lint violations
+/* eslint-disable @typescript-eslint/prefer-nullish-coalescing, @typescript-eslint/prefer-optional-chain */
+
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
@@ -10,28 +13,28 @@ import type {
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
-import {
-	MessageType,
-	type ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type {
 	ISummaryTreeWithStats,
 	ITelemetryContext,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
 } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
 	SharedObject,
 	ValueType,
-	bindHandles,
 	parseHandles,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	createChildMonitoringContext,
-	type ITelemetryLoggerExt,
+	extractTelemetryLoggerExt,
 	type MonitoringContext,
 	UsageError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import path from "path-browserify";
 
@@ -44,7 +47,7 @@ import type {
 	IValueChanged,
 } from "./interfaces.js";
 import type {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISerializableValue,
 	ISerializedValue,
 } from "./internalInterfaces.js";
@@ -63,17 +66,19 @@ const snapshotFileName = "header";
 interface IDirectoryMessageHandler {
 	/**
 	 * Apply the given operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The directory operation to apply
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 * @param clientSequenceNumber - The client sequence number of the message.
 	 */
 	process(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryOperation,
 		local: boolean,
 		localOpMetadata: DirectoryLocalOpMetadata | undefined,
+		clientSequenceNumber: number,
 	): void;
 
 	/**
@@ -106,7 +111,7 @@ export interface IDirectorySetOperation {
 	/**
 	 * Value to be set on the key.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	value: ISerializableValue;
 }
 
@@ -267,7 +272,7 @@ type PendingSubDirectoryEntry = PendingSubDirectoryCreate | PendingSubDirectoryD
 /**
  * Create info for the subdirectory.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -291,7 +296,7 @@ export interface ICreateInfo {
  * | JSON.stringify}, direct result from
  * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/parse | JSON.parse}.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -299,7 +304,7 @@ export interface IDirectoryDataObject {
 	/**
 	 * Key/value date set by the user.
 	 */
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	storage?: Record<string, ISerializableValue>;
 
 	/**
@@ -320,7 +325,7 @@ export interface IDirectoryDataObject {
 /**
  * {@link IDirectory} storage format.
  *
- * @deprecated - This interface will no longer be exported in the future(AB#8004).
+ * @deprecated This interface will no longer be exported in the future(AB#8004).
  *
  * @legacy @beta
  */
@@ -425,7 +430,7 @@ export class SharedDirectory
 		this.runtime,
 		this.serializer,
 		posix.sep,
-		this.logger,
+		extractTelemetryLoggerExt(this.logger),
 	);
 
 	/**
@@ -523,7 +528,7 @@ export class SharedDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	public forEach(callback: (value: any, key: string, map: Map<string, any>) => void): void {
-		// eslint-disable-next-line unicorn/no-array-for-each, unicorn/no-array-callback-reference
+		// eslint-disable-next-line unicorn/no-array-for-each
 		this.root.forEach(callback);
 	}
 
@@ -762,7 +767,7 @@ export class SharedDirectory
 							this.runtime,
 							this.serializer,
 							posix.join(currentSubDir.absolutePath, subdirName),
-							this.logger,
+							extractTelemetryLoggerExt(this.logger),
 						);
 						currentSubDir.populateSubDirectory(subdirName, newSubDir);
 					}
@@ -775,7 +780,7 @@ export class SharedDirectory
 					const parsedSerializable = parseHandles(
 						serializable,
 						this.serializer,
-						// eslint-disable-next-line import/no-deprecated
+						// eslint-disable-next-line import-x/no-deprecated
 					) as ISerializableValue;
 					migrateIfSharedSerializable(parsedSerializable, this.serializer, this.handle);
 					currentSubDir.populateStorage(key, parsedSerializable.value);
@@ -784,23 +789,33 @@ export class SharedDirectory
 		}
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-object-base#SharedObject.processCore}
-	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: DirectoryLocalOpMetadata | undefined,
 	): void {
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-		if (message.type === MessageType.Operation) {
-			const op: IDirectoryOperation = message.contents as IDirectoryOperation;
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op: IDirectoryOperation = messageContent.contents as IDirectoryOperation;
 			const handler = this.messageHandlers.get(op.type);
 			assert(
 				handler !== undefined,
 				0x00e /* "Missing message handler for message type: op may be from a newer version */,
 			);
-			handler.process(message, op, local, localOpMetadata);
+			handler.process(
+				messageEnvelope,
+				op,
+				local,
+				messageContent.localOpMetadata as DirectoryLocalOpMetadata | undefined,
+				messageContent.clientSequenceNumber,
+			);
 		}
 	}
 
@@ -838,14 +853,15 @@ export class SharedDirectory
 		// the op was originally targeting.
 		this.messageHandlers.set("clear", {
 			process: (
-				msg: ISequencedDocumentMessage,
+				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectoryClearOperation,
 				local: boolean,
 				localOpMetadata: ClearLocalOpMetadata | undefined,
+				clientSequenceNumber: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
-					subdir.processClearMessage(msg, op, local, localOpMetadata);
+					subdir.processClearMessage(msgEnvelope, op, local, localOpMetadata);
 				}
 			},
 			resubmit: (op: IDirectoryClearOperation, localOpMetadata: ClearLocalOpMetadata) => {
@@ -857,14 +873,15 @@ export class SharedDirectory
 		});
 		this.messageHandlers.set("delete", {
 			process: (
-				msg: ISequencedDocumentMessage,
+				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectoryDeleteOperation,
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
+				clientSequenceNumber: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
-					subdir.processDeleteMessage(msg, op, local, localOpMetadata);
+					subdir.processDeleteMessage(msgEnvelope, op, local, localOpMetadata);
 				}
 			},
 			resubmit: (op: IDirectoryDeleteOperation, localOpMetadata: EditLocalOpMetadata) => {
@@ -876,16 +893,17 @@ export class SharedDirectory
 		});
 		this.messageHandlers.set("set", {
 			process: (
-				msg: ISequencedDocumentMessage,
+				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectorySetOperation,
 				local: boolean,
 				localOpMetadata: EditLocalOpMetadata | undefined,
+				clientSequenceNumber: number,
 			) => {
 				const subdir = this.getSequencedWorkingDirectory(op.path) as SubDirectory | undefined;
 				if (subdir !== undefined && !subdir?.disposed) {
 					migrateIfSharedSerializable(op.value, this.serializer, this.handle);
 					const localValue: unknown = local ? undefined : op.value.value;
-					subdir.processSetMessage(msg, op, localValue, local, localOpMetadata);
+					subdir.processSetMessage(msgEnvelope, op, localValue, local, localOpMetadata);
 				}
 			},
 			resubmit: (op: IDirectorySetOperation, localOpMetadata: EditLocalOpMetadata) => {
@@ -898,16 +916,23 @@ export class SharedDirectory
 
 		this.messageHandlers.set("createSubDirectory", {
 			process: (
-				msg: ISequencedDocumentMessage,
+				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectoryCreateSubDirectoryOperation,
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
+				clientSequenceNumber: number,
 			) => {
 				const parentSubdir = this.getSequencedWorkingDirectory(op.path) as
 					| SubDirectory
 					| undefined;
 				if (parentSubdir !== undefined && !parentSubdir?.disposed) {
-					parentSubdir.processCreateSubDirectoryMessage(msg, op, local, localOpMetadata);
+					parentSubdir.processCreateSubDirectoryMessage(
+						msgEnvelope,
+						op,
+						local,
+						localOpMetadata,
+						clientSequenceNumber,
+					);
 				}
 			},
 			resubmit: (
@@ -924,7 +949,7 @@ export class SharedDirectory
 
 		this.messageHandlers.set("deleteSubDirectory", {
 			process: (
-				msg: ISequencedDocumentMessage,
+				msgEnvelope: ISequencedMessageEnvelope,
 				op: IDirectoryDeleteSubDirectoryOperation,
 				local: boolean,
 				localOpMetadata: SubDirLocalOpMetadata | undefined,
@@ -933,7 +958,12 @@ export class SharedDirectory
 					| SubDirectory
 					| undefined;
 				if (parentSubdir !== undefined && !parentSubdir?.disposed) {
-					parentSubdir.processDeleteSubDirectoryMessage(msg, op, local, localOpMetadata);
+					parentSubdir.processDeleteSubDirectoryMessage(
+						msgEnvelope,
+						op,
+						local,
+						localOpMetadata,
+					);
 				}
 			},
 			resubmit: (
@@ -1006,7 +1036,7 @@ export class SharedDirectory
 				if (!currentSubDirObject.storage) {
 					currentSubDirObject.storage = {};
 				}
-				// eslint-disable-next-line import/no-deprecated
+				// eslint-disable-next-line import-x/no-deprecated
 				const result: ISerializableValue = {
 					type: value.type,
 					value: value.value && (JSON.parse(value.value) as object),
@@ -1125,7 +1155,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		private readonly runtime: IFluidDataStoreRuntime,
 		private readonly serializer: IFluidSerializer,
 		public readonly absolutePath: string,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	) {
 		super();
 		this.mc = createChildMonitoringContext({ logger, namespace: "Directory" });
@@ -1181,14 +1211,6 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			throw new Error("Undefined and null keys are not supported");
 		}
 		const previousOptimisticLocalValue = this.getOptimisticValue(key);
-
-		const detachedBind =
-			this.mc.config.getBoolean("Fluid.Directory.AllowDetachedResolve") ?? false;
-		if (detachedBind) {
-			// Create a local value and serialize it.
-			// AB#47081: This will be removed once we can validate that it is no longer needed.
-			bindHandles(value, this.serializer, this.directory.handle);
-		}
 
 		// If we are not attached, don't submit the op.
 		if (!this.directory.isAttached()) {
@@ -1482,7 +1504,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			const successfullyRemoved = this.sequencedStorageData.delete(key);
 			// Only emit if we actually deleted something.
-			if (previousOptimisticLocalValue !== undefined && successfullyRemoved) {
+			if (
+				this.isNotDisposedAndReachable() &&
+				previousOptimisticLocalValue !== undefined &&
+				successfullyRemoved
+			) {
 				const event: IDirectoryValueChanged = {
 					key,
 					path: this.absolutePath,
@@ -1515,7 +1541,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// Only emit if we locally believe we deleted something.  Otherwise we still send the op
 		// (permitting speculative deletion even if we don't see anything locally) but don't emit
 		// a valueChanged since we in fact did not locally observe a value change.
-		if (previousOptimisticLocalValue !== undefined) {
+		if (this.isNotDisposedAndReachable() && previousOptimisticLocalValue !== undefined) {
 			const event: IDirectoryValueChanged = {
 				key,
 				path: this.absolutePath,
@@ -1540,6 +1566,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		if (!this.directory.isAttached()) {
 			this.sequencedStorageData.clear();
 			this.directory.emit("clear", true, this.directory);
+			this.directory.emit("cleared", this.absolutePath, true, this.directory);
 			return;
 		}
 
@@ -1551,6 +1578,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		this.pendingStorageData.push(pendingClear);
 
 		this.directory.emit("clear", true, this.directory);
+		this.directory.emit("cleared", this.absolutePath, true, this.directory);
 		const op: IDirectoryOperation = {
 			type: "clear",
 			path: this.absolutePath,
@@ -1827,6 +1855,29 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		return subdir;
 	};
 
+	/**
+	 * Checks if this directory should be considered visible in the optimistic view.
+	 * This requires both:
+	 * 1. The directory object must not be disposed (disposed = true means fully deleted)
+	 * 2. The directory must be reachable via getWorkingDirectory (respects pending deletes)
+	 *
+	 * There's a timing window where a directory has a pending delete but is not yet disposed:
+	 * - When deleteSubDirectory is called locally, it adds a pending delete entry and emits a
+	 * "dispose" event, but doesn't set disposed = true yet.
+	 * - The directory only gets fully disposed when the delete message is sequenced.
+	 * - During this window, !disposed is true but getWorkingDirectory returns undefined.
+	 *
+	 * This method should be used before emitting events during remote message processing to ensure
+	 * events aren't emitted for directories that are invisible in the optimistic view.
+	 *
+	 * @returns true if this directory is visible in the optimistic view, false otherwise
+	 */
+	private isNotDisposedAndReachable(): boolean {
+		return (
+			!this.disposed && this.directory.getWorkingDirectory(this.absolutePath) !== undefined
+		);
+	}
+
 	public get sequencedSubdirectories(): ReadonlyMap<string, SubDirectory> {
 		this.throwIfDisposed();
 		return this._sequencedSubdirectories;
@@ -1834,20 +1885,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * Process a clear operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
 	public processClearMessage(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryClearOperation,
 		local: boolean,
 		localOpMetadata: ClearLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(msgEnvelope, localOpMetadata?.subdir)
+		) {
 			return;
 		}
 
@@ -1873,16 +1926,24 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Only emit for remote ops, we would have already emitted for local ops. Only emit if there
 			// is no optimistically-applied local pending clear that would supersede this remote clear.
+			// Don't emit events if this directory has been disposed or no longer exists
 			if (!this.pendingStorageData.some((entry) => entry.type === "clear")) {
 				this.directory.emit("clear", local, this.directory);
+				this.directory.emit("cleared", this.absolutePath, local, this.directory);
 			}
 
 			// For pending set operations, emit valueChanged events
+			// Include 'path' so listeners can identify which subdirectory the change occurred in
 			for (const { key, previousValue } of pendingSets) {
+				// Stop emitting events if this directory has been disposed or is no longer reachable
+				if (!this.isNotDisposedAndReachable()) {
+					break;
+				}
 				this.directory.emit(
 					"valueChanged",
 					{
 						key,
+						path: this.absolutePath,
 						previousValue,
 					},
 					local,
@@ -1894,20 +1955,22 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * Process a delete operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
 	public processDeleteMessage(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryDeleteOperation,
 		local: boolean,
 		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(msgEnvelope, localOpMetadata?.subdir)
+		) {
 			return;
 		}
 		if (local) {
@@ -1928,6 +1991,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			this.sequencedStorageData.delete(op.key);
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some(
 					(entry) => entry.type === "clear" || entry.key === op.key,
 				)
@@ -1946,21 +2010,23 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * Process a set operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
 	public processSetMessage(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectorySetOperation,
 		value: unknown,
 		local: boolean,
 		localOpMetadata: EditLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.subdir)) {
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(msgEnvelope, localOpMetadata?.subdir)
+		) {
 			return;
 		}
 
@@ -1991,6 +2057,7 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
 			if (
+				this.isNotDisposedAndReachable() &&
 				!this.pendingStorageData.some((entry) => entry.type === "clear" || entry.key === key)
 			) {
 				const event: IDirectoryValueChanged = { key, path: this.absolutePath, previousValue };
@@ -2003,24 +2070,31 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 
 	/**
 	 * Process a create subdirectory operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
+	 * @param clientSequenceNumber - The client sequence number of the message.
 	 */
 	public processCreateSubDirectoryMessage(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryCreateSubDirectoryOperation,
 		local: boolean,
 		localOpMetadata: SubDirLocalOpMetadata | undefined,
+		clientSequenceNumber: number,
 	): void {
 		this.throwIfDisposed();
 
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.parentSubdir)) {
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(
+				msgEnvelope,
+				localOpMetadata?.parentSubdir,
+			)
+		) {
 			return;
 		}
-		assertNonNullClientId(msg.clientId);
+		assertNonNullClientId(msgEnvelope.clientId);
 
 		let subDir: SubDirectory | undefined;
 		if (local) {
@@ -2053,8 +2127,8 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 			if (subDir === undefined) {
 				const absolutePath = posix.join(this.absolutePath, op.subdirName);
 				subDir = new SubDirectory(
-					{ seq: msg.sequenceNumber, clientSeq: msg.clientSequenceNumber },
-					new Set([msg.clientId]),
+					{ seq: msgEnvelope.sequenceNumber, clientSeq: clientSequenceNumber },
+					new Set([msgEnvelope.clientId]),
 					this.directory,
 					this.runtime,
 					this.serializer,
@@ -2067,13 +2141,16 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				if (subDir.disposed) {
 					this.undisposeSubdirectoryTree(subDir);
 				}
-				subDir.clientIds.add(msg.clientId);
+				subDir.clientIds.add(msgEnvelope.clientId);
 			}
 			this.registerEventsOnSubDirectory(subDir, op.subdirName);
 			this._sequencedSubdirectories.set(op.subdirName, subDir);
 
 			// Suppress the event if local changes would cause the incoming change to be invisible optimistically.
-			if (!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName)) {
+			if (
+				!this.pendingSubDirectoryData.some((entry) => entry.subdirName === op.subdirName) &&
+				subDir.isNotDisposedAndReachable()
+			) {
 				this.emit("subDirectoryCreated", op.subdirName, local, this);
 			}
 		}
@@ -2082,30 +2159,35 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// then later recreated.
 		if (
 			this.seqData.seq !== -1 &&
-			this.seqData.seq <= msg.sequenceNumber &&
+			this.seqData.seq <= msgEnvelope.sequenceNumber &&
 			subDir.seqData.seq === -1
 		) {
-			subDir.seqData.seq = msg.sequenceNumber;
-			subDir.seqData.clientSeq = msg.clientSequenceNumber;
+			subDir.seqData.seq = msgEnvelope.sequenceNumber;
+			subDir.seqData.clientSeq = clientSequenceNumber;
 		}
 	}
 
 	/**
 	 * Process a delete subdirectory operation.
-	 * @param msg - The message from the server to apply.
+	 * @param msgEnvelope - The envelope of the message from the server to apply.
 	 * @param op - The op to process
 	 * @param local - Whether the message originated from the local client
 	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
 	 * For messages from a remote client, this will be undefined.
 	 */
 	public processDeleteSubDirectoryMessage(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		op: IDirectoryDeleteSubDirectoryOperation,
 		local: boolean,
 		localOpMetadata: SubDirLocalOpMetadata | undefined,
 	): void {
 		this.throwIfDisposed();
-		if (!this.isMessageForCurrentInstanceOfSubDirectory(msg, localOpMetadata?.parentSubdir)) {
+		if (
+			!this.isMessageForCurrentInstanceOfSubDirectory(
+				msgEnvelope,
+				localOpMetadata?.parentSubdir,
+			)
+		) {
 			return;
 		}
 
@@ -2449,9 +2531,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type === "createSubDirectory" && entry.subdirName === subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			if (pendingEntry === undefined) {
+				// If we can't find a pending entry then it's likely we deleted and re-created this
+				// subdirectory from a remote delete subdir op. If that's the case then there is
+				// nothing to rollback since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "createSubDirectory",
-				0xc37 /* Unexpected pending data for createSubDirectory op */,
+				pendingEntry.type === "createSubDirectory",
+				0xc71 /* Unexpected pending data for createSubDirectory op */,
 			);
 
 			// We still need to emit the disposed event for any locally created (and now
@@ -2473,9 +2561,15 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 				(entry) => entry.type === "deleteSubDirectory" && entry.subdirName === subdirName,
 			);
 			const pendingEntry = this.pendingSubDirectoryData[pendingEntryIndex];
+			if (pendingEntry === undefined) {
+				// If we can't find a pending entry then it's likely we deleted and re-created this
+				// subdirectory from a remote delete subdir op. If that's the case then there is
+				// nothing to rollback since the pending data was removed with the subdirectory deletion.
+				return;
+			}
 			assert(
-				pendingEntry !== undefined && pendingEntry.type === "deleteSubDirectory",
-				0xc38 /* Unexpected pending data for deleteSubDirectory op */,
+				pendingEntry.type === "deleteSubDirectory",
+				0xc72 /* Unexpected pending data for deleteSubDirectory op */,
 			);
 			this.pendingSubDirectoryData.splice(pendingEntryIndex, 1);
 
@@ -2505,11 +2599,11 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 	/**
 	 * This return true if the message is for the current instance of this sub directory. As the sub directory
 	 * can be deleted and created again, then this finds if the message is for current instance of directory or not.
-	 * @param msg - message for the directory
+	 * @param msgEnvelope - message envelope for the directory
 	 * @param targetSubdir - subdirectory instance we are targeting from local op metadata (if a local op)
 	 */
 	private isMessageForCurrentInstanceOfSubDirectory(
-		msg: ISequencedDocumentMessage,
+		msgEnvelope: ISequencedMessageEnvelope,
 		targetSubdir?: SubDirectory | undefined,
 	): boolean {
 		// The message must be from this instance of the directory (if a local op) AND one of the following must be true:
@@ -2518,9 +2612,9 @@ class SubDirectory extends TypedEventEmitter<IDirectoryEvents> implements IDirec
 		// 3. This directory was already live (known to other clients) and the op was created after the directory was created.
 		return (
 			(targetSubdir === undefined || targetSubdir === this) &&
-			((msg.clientId !== null && this.clientIds.has(msg.clientId)) ||
+			((msgEnvelope.clientId !== null && this.clientIds.has(msgEnvelope.clientId)) ||
 				this.clientIds.has("detached") ||
-				(this.seqData.seq !== -1 && this.seqData.seq <= msg.referenceSequenceNumber))
+				(this.seqData.seq !== -1 && this.seqData.seq <= msgEnvelope.referenceSequenceNumber))
 		);
 	}
 

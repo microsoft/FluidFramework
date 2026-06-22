@@ -215,6 +215,12 @@ export function configureWebSocketServices(
 		// Map from client Ids to supportedFeatures ()
 		const supportedFeaturesMap = new Map<string, Record<string, unknown>>();
 
+		// Map from client IDs to session operation count
+		const sessionOpCountMap = new Map<string, number>();
+
+		// Map from client IDs to session signal count
+		const sessionSignalCountMap = new Map<string, number>();
+
 		// Set of client Ids that have been disconnected from orderer.
 		const disconnectedOrdererConnections = new Set<string>();
 
@@ -232,6 +238,8 @@ export function configureWebSocketServices(
 			disconnectedOrdererConnections,
 			disconnectedClients,
 			supportedFeaturesMap,
+			sessionOpCountMap,
+			sessionSignalCountMap,
 		};
 
 		let connectDocumentComplete: boolean = false;
@@ -512,6 +520,10 @@ export function configureWebSocketServices(
 							});
 
 							if (sanitized.length > 0) {
+								// Increment session op count for this client
+								const currentOpCount = sessionOpCountMap.get(clientId) || 0;
+								sessionOpCountMap.set(clientId, currentOpCount + sanitized.length);
+
 								// Cannot await this order call without delaying other message batches in this submitOp.
 								connection
 									.order(sanitized)
@@ -557,9 +569,9 @@ export function configureWebSocketServices(
 			/**
 			 * @param contentBatches - typed as `unknown` array as it comes from wire and has not been validated.
 			 * v1 signals are expected to be an array of strings (Json.stringified `ISignalEnvelope`s from
-			 * [Container.submitSignal](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294)
+			 * {@link https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/loader/container-loader/src/container.ts#L2292-L2294|Container.submitSignal}
 			 * and sent via
-			 * [DocumentDeltaConnection.emitMessages](https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4)),
+			 * {@link https://github.com/microsoft/FluidFramework/blob/ccb26baf65be1cbe3f708ec0fe6887759c25be6d/packages/drivers/driver-base/src/documentDeltaConnection.ts#L313C1-L321C4|DocumentDeltaConnection.emitMessages}
 			 * but actual content is passed-thru and not decoded.
 			 *
 			 * v2 signals are expected to be an array of `ISentSignalMessage` objects.
@@ -607,6 +619,10 @@ export function configureWebSocketServices(
 						socket.emit("nack", "", [nackMessage]);
 						return;
 					}
+
+					// Increment session signal count for this client
+					const currentSignalCount = sessionSignalCountMap.get(clientId) || 0;
+					sessionSignalCountMap.set(clientId, currentSignalCount + messageCount);
 
 					if (supportedFeaturesMap.get(clientId)?.submit_signals_v2) {
 						for (const signal of contentBatches) {

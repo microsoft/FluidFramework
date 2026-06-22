@@ -6,16 +6,18 @@
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
-import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import {
-	type IOdspResolvedUrl,
-	type IOdspUrlParts,
-	type IPersistedCache,
-	type ISnapshotOptions,
-	type OdspResourceTokenFetchOptions,
-	type TokenFetcher,
-	getKeyForCacheEntry,
-	type InstrumentedStorageTokenFetcher,
+import type {
+	IPersistedCache,
+	IResolvedUrl,
+} from "@fluidframework/driver-definitions/internal";
+import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
+import type {
+	IOdspResolvedUrl,
+	IOdspUrlParts,
+	ISnapshotOptions,
+	OdspResourceTokenFetchOptions,
+	TokenFetcher,
+	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	PerformanceEvent,
@@ -108,6 +110,7 @@ export async function prefetchLatestSnapshot(
 			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
+			odspLogger,
 			undefined,
 			controller,
 		);
@@ -172,7 +175,7 @@ export async function prefetchLatestSnapshot(
 					}, 5000);
 				})
 				.catch((error) => {
-					// Remove it from the non persistent cache if an error occured.
+					// Remove it from the non persistent cache if an error occurred.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					snapshotContentsWithEpochP.reject(error);
 					throw error;

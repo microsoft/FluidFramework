@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules -- #26904: `sequence` internals used in examples
+// eslint-disable-next-line import-x/no-internal-modules -- #26904: `sequence` internals used in examples
 import { getTextAndMarkers, reservedTileLabelsKey } from "@fluidframework/sequence/internal";
 import {
 	Marker,
@@ -14,13 +14,13 @@ import {
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
 import CodeMirror from "codemirror";
-import React, { useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 
-/* eslint-disable import/no-unassigned-import, import/no-internal-modules */
+/* eslint-disable import-x/no-unassigned-import, import-x/no-internal-modules */
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/javascript/javascript.js";
 import "./style.css";
-/* eslint-enable import/no-unassigned-import, import/no-internal-modules */
+/* eslint-enable import-x/no-unassigned-import, import-x/no-internal-modules */
 
 import { CodeMirrorPresenceManager, PresenceManager } from "./presence.js";
 
@@ -58,6 +58,7 @@ class CodeMirrorView {
 
 	public render(elm: HTMLElement): void {
 		// Create base textarea
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this.textArea) {
 			this.textArea = document.createElement("textarea");
 		}
@@ -73,7 +74,7 @@ class CodeMirrorView {
 		}
 	}
 
-	private setupEditor() {
+	private setupEditor(): void {
 		this.codeMirror = CodeMirror.fromTextArea(
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.textArea!,
@@ -185,9 +186,11 @@ export interface ICodeMirrorReactViewProps {
 }
 
 /**
+ * React component that renders a CodeMirror editor with collaborative features.
+ *
  * @internal
  */
-export const CodeMirrorReactView: React.FC<ICodeMirrorReactViewProps> = (
+export const CodeMirrorReactView: FC<ICodeMirrorReactViewProps> = (
 	props: ICodeMirrorReactViewProps,
 ) => {
 	const { text, presenceManager } = props;

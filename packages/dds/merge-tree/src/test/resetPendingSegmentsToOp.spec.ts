@@ -123,7 +123,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 			applyOpList(client);
@@ -135,7 +135,7 @@ describe("resetPendingSegmentsToOp", () => {
 			assert(client.mergeTree.pendingSegments?.empty);
 
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 
@@ -157,7 +157,7 @@ describe("resetPendingSegmentsToOp", () => {
 
 		it("nacked insertSegment and removeRange", async () => {
 			opList.push({
-				op: client.removeRangeLocal(0, client.getLength())!,
+				op: client.removeRangeLocal(0, client.getLength()),
 				refSeq: client.getCurrentSeq(),
 			});
 			const oldops = opList;

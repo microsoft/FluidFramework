@@ -33,6 +33,7 @@ import type { INexusResourcesCustomizations } from "./customizations";
 import { OrdererManager, type IOrdererManagerOptions } from "./ordererManager";
 import { NexusRunner } from "./runner";
 import { StorageNameAllocator } from "./services";
+import { configureThrottler } from "@fluidframework/server-services";
 
 class NodeWebSocketServer implements core.IWebSocketServer {
 	private readonly webSocketServer: ws.Server;
@@ -366,31 +367,13 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 				redisParamsForThrottling,
 			);
 
-		const configureThrottler = (
-			throttleConfig: Partial<utils.IThrottleConfig>,
-		): core.IThrottler => {
-			const throttlerHelper = new services.ThrottlerHelper(
-				redisThrottleAndUsageStorageManager,
-				throttleConfig.maxPerMs,
-				throttleConfig.maxBurst,
-				throttleConfig.minCooldownIntervalInMs,
-			);
-			return new services.Throttler(
-				throttlerHelper,
-				throttleConfig.minThrottleIntervalInMs,
-				winston,
-				throttleConfig.maxInMemoryCacheSize,
-				throttleConfig.maxInMemoryCacheAgeInMs,
-				throttleConfig.enableEnhancedTelemetry,
-			);
-		};
-
 		// Socket Connection Throttler
 		const socketConnectionThrottleConfigPerTenant = utils.getThrottleConfig(
 			config.get("nexus:throttling:socketConnectionsPerTenant"),
 		);
 		const socketConnectTenantThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerTenant,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		const socketConnectionThrottleConfigPerCluster = utils.getThrottleConfig(
@@ -398,19 +381,26 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 		);
 		const socketConnectClusterThrottler = configureThrottler(
 			socketConnectionThrottleConfigPerCluster,
+			redisThrottleAndUsageStorageManager,
 		);
 
 		// Socket SubmitOp Throttler
 		const submitOpThrottleConfig = utils.getThrottleConfig(
 			config.get("nexus:throttling:submitOps"),
 		);
-		const socketSubmitOpThrottler = configureThrottler(submitOpThrottleConfig);
+		const socketSubmitOpThrottler = configureThrottler(
+			submitOpThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 
 		// Socket SubmitSignal Throttler
 		const submitSignalThrottleConfig = utils.getThrottleConfig(
 			config.get("nexus:throttling:submitSignals"),
 		);
-		const socketSubmitSignalThrottler = configureThrottler(submitSignalThrottleConfig);
+		const socketSubmitSignalThrottler = configureThrottler(
+			submitSignalThrottleConfig,
+			redisThrottleAndUsageStorageManager,
+		);
 		const documentRepository =
 			customizations?.documentRepository ??
 			new core.MongoDocumentRepository(documentsCollection);
@@ -605,6 +595,7 @@ export class NexusResourcesFactory implements core.IResourcesFactory<NexusResour
 					httpServerConfig,
 					socketIoConfig,
 					customizations?.customCreateSocketIoAdapter,
+					customizations?.customSocketIoSetupFunction,
 			  );
 
 		const startupCheck = new StartupCheck();

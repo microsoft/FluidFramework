@@ -4,7 +4,6 @@
  */
 
 // Eventually this will become a library to craft various rest ops.
-import type * as git from "@fluidframework/gitresources";
 import {
 	type IClientJoin,
 	type IDocumentMessage,
@@ -17,12 +16,6 @@ export interface IMapSetOperation {
 	op: string;
 	path: string;
 	value: string;
-}
-
-export interface IBlobData {
-	content: string;
-
-	metadata: git.ICreateBlobParams;
 }
 
 export function craftClientJoinMessage(
@@ -137,7 +130,7 @@ export function getDocumentUrlsfromNetworkInfo(
 	externalHistorianUrl: string,
 	externalDeltaStreamUrl: string,
 	enablePrivateLinkNetworkCheck: boolean = false,
-	isPrivateLink?: boolean | false,
+	isPrivateLink: boolean = false,
 	privateServiceHost?: string | undefined,
 ): {
 	documentOrdererUrl: string;

@@ -6,6 +6,7 @@ Release commands are used to manage the Fluid release process.
 * [`flub release`](#flub-release)
 * [`flub release fromTag TAG`](#flub-release-fromtag-tag)
 * [`flub release history`](#flub-release-history)
+* [`flub release prep PACKAGE_OR_RELEASE_GROUP`](#flub-release-prep-package_or_release_group)
 * [`flub release prepare PACKAGE_OR_RELEASE_GROUP`](#flub-release-prepare-package_or_release_group)
 * [`flub release report`](#flub-release-report)
 * [`flub release report-unreleased`](#flub-release-report-unreleased)
@@ -134,6 +135,39 @@ EXAMPLES
 
 _See code: [src/commands/release/history.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/history.ts)_
 
+## `flub release prep PACKAGE_OR_RELEASE_GROUP`
+
+Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+```
+USAGE
+  $ flub release prep PACKAGE_OR_RELEASE_GROUP [-v | --quiet]
+
+ARGUMENTS
+  PACKAGE_OR_RELEASE_GROUP  [default: client] The name of a package or a release group. Defaults to the client release
+                            group if not specified.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
+
+  Runs the following checks:
+
+  - Branch has no local changes
+  - The local branch is up to date with the microsoft/FluidFramework remote
+  - Dependencies are installed locally
+  - Has no pre-release Fluid dependencies
+  - No repo policy violations
+  - No untagged asserts
+  - Compatibility layer generation is up to date
+
+ALIASES
+  $ flub release prep
+```
+
 ## `flub release prepare PACKAGE_OR_RELEASE_GROUP`
 
 Runs checks on a local branch to verify it is ready to serve as the base for a release branch.
@@ -161,6 +195,7 @@ DESCRIPTION
   - Has no pre-release Fluid dependencies
   - No repo policy violations
   - No untagged asserts
+  - Compatibility layer generation is up to date
 
 ALIASES
   $ flub release prep
@@ -175,7 +210,7 @@ Generates a report of Fluid Framework releases.
 ```
 USAGE
   $ flub release report [--json] [-v | --quiet] [-i | -r | -s] [-g
-    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>]
+    client|server|azure|build-tools|gitrest|historian] [-o <value>] [--baseFileName <value>] [--useCurrentVersion]
 
 FLAGS
   -g, --releaseGroup=<option>
@@ -205,6 +240,10 @@ FLAGS
       If provided, the output files will be named using this base name followed by the report kind (caret, simple, full,
       tilde, legacy-compat) and the .json extension. For example, if baseFileName is 'foo', the output files will be named
       'foo.caret.json', 'foo.simple.json', etc.
+
+  --useCurrentVersion
+      When selecting versions in in-repo mode, use current build versions (including unreleased in-repo versions) instead
+      of falling back to the latest released version.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.
@@ -242,6 +281,10 @@ EXAMPLES
   Generate a release report for each package and release group in the repo interactively.
 
     $ flub release report -i
+
+  Generate a release report for the historian release group using the current package.json versions.
+
+    $ flub release report -g historian --useCurrentVersion
 ```
 
 _See code: [src/commands/release/report.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/release/report.ts)_
@@ -253,15 +296,17 @@ Creates a release report for an unreleased build (one that is not published to n
 ```
 USAGE
   $ flub release report-unreleased --version <value> --outDir <value> --fullReportFilePath <value> --branchName <value> [-v |
-    --quiet]
+    --quiet] [-g client|server|azure|build-tools|gitrest|historian]
 
 FLAGS
-  --branchName=<value>          (required) Branch name. For release branches, the manifest file is uplaoded by build
-                                number and not by current date.
-  --fullReportFilePath=<value>  (required) Path to a report file in the 'full' format.
-  --outDir=<value>              (required) Release report output directory
-  --version=<value>             (required) Version to generate a report for. Typically, this version is the version of a
-                                dev build.
+  -g, --releaseGroup=<option>       Filters the release report to only include packages from this release group.
+                                    <options: client|server|azure|build-tools|gitrest|historian>
+      --branchName=<value>          (required) Branch name. For release branches, the manifest file is uploaded by build
+                                    number and not by current date.
+      --fullReportFilePath=<value>  (required) Path to a report file in the 'full' format.
+      --outDir=<value>              (required) Release report output directory
+      --version=<value>             (required) Version to generate a report for. Typically, this version is the version
+                                    of a dev build.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

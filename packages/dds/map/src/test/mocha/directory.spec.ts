@@ -406,11 +406,13 @@ describe("Directory", () => {
 				directory.createSubDirectory("rock2");
 				const childSubDirectory = subDirectory.createSubDirectory("rock1Child");
 				assert.strictEqual(
-					directory.countSubDirectory?.(),
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58519 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
+					directory.countSubDirectory !== undefined && directory.countSubDirectory(),
 					2,
 					"Should have 2 sub directories",
 				);
 				assert(
+					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58519 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
 					subDirectory.countSubDirectory !== undefined &&
 						subDirectory.countSubDirectory() === 1,
 					"Should have 1 sub directory",
@@ -1802,14 +1804,17 @@ describe("Directory", () => {
 				assert(fooSubDir);
 				const fooSubDirIterator = fooSubDir.entries();
 				const fooSubDirResult1 = fooSubDirIterator.next();
+				assert(fooSubDirResult1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult1.value[1], "testValue");
-				assert.equal(fooSubDirResult1.done, false);
 				const fooSubDirResult2 = fooSubDirIterator.next();
+				assert(fooSubDirResult2.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDirResult2.value[1], "testValue2");
 				assert.equal(fooSubDirResult2.done, false);
@@ -1832,12 +1837,17 @@ describe("Directory", () => {
 				assert(fooSubDir2);
 				const fooSubDir2Iterator = fooSubDir2.entries();
 				const fooSubDir2Result1 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result1.value !== undefined, "Iterator result should have a value");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[0], "testKey");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result1.value[1], "testValue");
-				assert.equal(fooSubDir2Result1.done, false);
 				const fooSubDir2Result2 = fooSubDir2Iterator.next();
+				assert(fooSubDir2Result2.value !== undefined, "Iterator result should have a value");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[0], "testKey2");
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				assert.equal(fooSubDir2Result2.value[1], "testValue2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(fooSubDir2Result2.value[0], "testKey2");
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

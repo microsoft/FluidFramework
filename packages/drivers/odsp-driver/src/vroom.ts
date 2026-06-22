@@ -10,8 +10,8 @@ import type {
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -38,7 +38,6 @@ interface IJoinSessionBody {
  * which is used when establishing websocket connection with collab session backend service.
  * @param options - Options to fetch the token.
  * @param disableJoinSessionRefresh - Whether the caller wants to disable refreshing join session periodically.
- * @param setSensitivityLabelHeader - Whether the caller wants to set the Return-Sensitivity-Labels Prefer header in the join session request.
  * @param isRefreshingJoinSession - whether call is to refresh the session before expiry.
  * @param displayName - display name used to identify client joining a session.
  * This is optional and used only when collab session is being joined by client acting in app-only mode (i.e. without user context).
@@ -49,13 +48,12 @@ export const fetchJoinSession = mockify(
 		urlParts: IOdspUrlParts,
 		path: string,
 		method: "GET" | "POST",
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		getAuthHeader: InstrumentedStorageTokenFetcher,
 		epochTracker: EpochTracker,
 		requestSocketToken: boolean,
 		options: TokenFetchOptionsEx,
 		disableJoinSessionRefresh: boolean | undefined,
-		setSensitivityLabelHeader: boolean | undefined,
 		isRefreshingJoinSession: boolean,
 		displayName: string | undefined,
 	): Promise<ISocketStorageDiscovery> => {
@@ -93,9 +91,7 @@ export const fetchJoinSession = mockify(
 				if (!disableJoinSessionRefresh) {
 					postBody += `Prefer: FluidRemoveCheckAccess\r\n`;
 				}
-				if (setSensitivityLabelHeader) {
-					postBody += `Prefer: Return-Sensitivity-Labels\r\n`;
-				}
+				postBody += `Prefer: Return-Sensitivity-Labels\r\n`;
 				postBody += `_post: 1\r\n`;
 
 				let requestBody: IJoinSessionBody | undefined;
@@ -136,6 +132,7 @@ export const fetchJoinSession = mockify(
 					pushv2: socketUrl.includes("pushf"),
 					webSocketHostName,
 					refreshSessionDurationSeconds: response.content.refreshSessionDurationSeconds,
+					hasSensitivityLabelsInfo: response.content.sensitivityLabelsInfo !== undefined,
 				});
 
 				if (response.content.runtimeTenantId && !response.content.tenantId) {

@@ -3,9 +3,13 @@
  * Licensed under the MIT License.
  */
 
+// Too restrictive for test suite hierarchy
+/* eslint-disable max-nested-callbacks */
+
 import { expect } from "chai";
 import { describe, it } from "mocha";
 import {
+	createNode10EntrypointFileContent,
 	optionDefaults,
 	readArgValues,
 } from "../../../library/commands/generateEntrypoints.js";
@@ -25,6 +29,113 @@ describe("generateEntrypoints", () => {
 		expect(readArgValues("--outDir ./lib", optionDefaults)).to.deep.equal({
 			...optionDefaults,
 			outDir: "./lib",
+		});
+
+		// Does not support multi-args nor args that don't start
+		// with "out" (doesn't currently need to). Instead any
+		// such options passed in are preserved.
+		const argsReadFromUnsupportedCommandLine = readArgValues(
+			"--resolutionConditions first second --resolutionConditions third --mainEntrypoint xxx",
+			optionDefaults,
+		);
+		expect(argsReadFromUnsupportedCommandLine).to.deep.equal(optionDefaults);
+		expect(
+			// @ts-expect-error - mainEntrypoint is not supported by readArgValues, so not in return type (though it does exist at runtime)
+			argsReadFromUnsupportedCommandLine.mainEntrypoint,
+		).to.equal(optionDefaults.mainEntrypoint);
+	});
+
+	describe("generateNode10EntrypointFileContent", () => {
+		describe("type-only", () => {
+			it("dirPath: package root", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
+						isTypeOnly: true,
+						contentHeader: "",
+					}),
+				).to.contain('export type * from "./lib/legacy.d.ts";\n');
+			});
+
+			it("dirPath: sub directory", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "rollups",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
+						isTypeOnly: true,
+						contentHeader: "",
+					}),
+				).to.contain('export type * from "../lib/legacy.d.ts";\n');
+			});
+
+			it("sourceTypeRelPath: nested", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+						isTypeOnly: true,
+						contentHeader: "",
+					}),
+				).to.contain('export type * from "./lib/legacy/alpha.d.ts";\n');
+			});
+
+			it("sourceTypeRelPath: file with leading .", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: ".foo.d.ts",
+						isTypeOnly: true,
+						contentHeader: "",
+					}),
+				).to.contain('export type * from "./.foo.d.ts";\n');
+			});
+		});
+
+		describe("non-type-only", () => {
+			it("dirPath: package root", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
+						isTypeOnly: false,
+						contentHeader: "",
+					}),
+				).to.contain('export * from "./lib/legacy.js";\n');
+			});
+
+			it("dirPath: sub directory", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "rollups",
+						sourceTypeRelPath: "./lib/legacy.d.ts",
+						isTypeOnly: false,
+						contentHeader: "",
+					}),
+				).to.contain('export * from "../lib/legacy.js";\n');
+			});
+
+			it("sourceTypeRelPath: nested", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: "./lib/legacy/alpha.d.ts",
+						isTypeOnly: false,
+						contentHeader: "",
+					}),
+				).to.contain('export * from "./lib/legacy/alpha.js";\n');
+			});
+
+			it("sourceTypeRelPath: file with leading .", () => {
+				expect(
+					createNode10EntrypointFileContent({
+						dirPath: "",
+						sourceTypeRelPath: ".foo.d.ts",
+						isTypeOnly: false,
+						contentHeader: "",
+					}),
+				).to.contain('export * from "./.foo.js";\n');
+			});
 		});
 	});
 });

@@ -141,13 +141,13 @@ axis is typically within an order of magnitude compared to sequentially accessin
 
 Shared Matrix allows a one-way switch from LWW to FWW. This is introduced in order to handle conflict
 when multiple clients at once initialize a cell. Using FWW, will help clients to receive a `conflict` event in case
-their change was rejected. They can resolve conflict with the new information that they received in the event.
+their change was rejected. They can resolve conflicts with the new information that they received in the event.
 This event is only emitted when the SetCell Resolution Policy is First Write Win(FWW). This is emitted when two clients
 race and send changes without observing each other changes, the changes that gets sequenced last would be rejected, and
 only client whose changes were rejected would be notified via this event, with expectation that it will merge its changes
 back by accounting new information (state from winner of the race).
 
-Some cases which documents how the Set op changes are applied or rejected during LWW -> FWW switch as some clients will
+Some cases which document how the Set op changes are applied or rejected during LWW -> FWW switch as some clients will
 be in FWW mode and some will in LWW mode. When app calls `switchSetCellPolicy` the policy is changed to FWW mode
 immediately and then later communicated to other clients via next SetOp which is made on the matrix.
 
@@ -193,7 +193,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

@@ -50,12 +50,11 @@ trigger:
   branches:
     include:
     - main
-    - next
-    - lts
     - release/*
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
@@ -70,7 +69,7 @@ trigger:
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -78,12 +77,11 @@ pr:
   branches:
     include:
     - main
-    - next
-    - lts
     - release/*
   paths:
     include:
     - .prettierignore
+    - common/build/eslint-config-fluid
     - fluidBuild.config.cjs
     - server/routerlicious
     - tools/pipelines/server-routerlicious.yml
@@ -93,6 +91,7 @@ pr:
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
     exclude:
     - server/routerlicious/kubernetes/routerlicious
 
@@ -103,12 +102,9 @@ variables:
       publishOverride: ${{ parameters.publishOverride }}
       releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
       buildNumberInPatch: false
-  # Note: we tried to centralize the use of the 'container-registry-info' variable group (i.e. put it inside the shared
-  # build-docker-service.yml template) but ran into issues because if it exists in the stage-level variables of the template
-  # instead of in the root-level variables of a pipeline, then the value for the ACR service connection name (which comes
-  # from the variable group) that gets passed to a Docker@1 task seems to not be available before ADO performs checks for
-  # that task, including that the specified service connection exists and the pipeline is authorized to use it. So ADO ends
-  # uplooking for a service connection named "$(containerRegistryConnection)" instead of the actual value after replacement.
+  # Loaded at the root level rather than inside the build-docker-service.yml template's variables so
+  # that $(containerRegistryConnection) is available before ADO performs service-connection pre-checks
+  # on the Docker tasks (the value is otherwise treated as a literal connection name).
   - group: container-registry-info
 
 extends:
@@ -121,25 +117,28 @@ extends:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     interdependencyRange: ${{ parameters.interdependencyRange }}
-    buildDirectory: server/routerlicious
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/routerlicious
     containerName: fluidframework/routerlicious/server
     buildNumberInPatch: false
     dockerBuildBumpsVersion: true
-    # We need to install only the root dependencies; r11s has native deps that don't install in CI since we use Docker
-    # to do the actual build in CI. We need the root dependencies so setting package versions works.
-    packageManagerInstallCommand: 'pnpm install --workspace-root'
-    packageManager: pnpm
+    # Root-only install: r11s has native deps that don't install in CI; the real build runs in Docker.
+    # Root deps are still needed for the version-setting step.
+    packageManagerInstallCommand: 'pnpm i --frozen-lockfile --workspace-root'
     tagName: server
     isReleaseGroup: true
     pool: Large-eastus2
     pack: true
     lint: true
     test: ci:test
+    # Disabled: coverage performance regressed in Node 22, causing test timeouts
+    # that need mitigation before coverage can be reenabled.
+    # testCoverage: ${{ ne(variables['Build.Reason'], 'PullRequest') }}
     docs: true
     containerBaseDir: /usr/FluidFramework/server/routerlicious
     checks:
     - prettier
     - check:versions
     - generate:packageList
-    additionalBuildArguments: --build-context root=$(Build.SourcesDirectory)
+    # The --build-context is needed because the Dockerfile copies files from the repo root.
+    additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
     enableDockerImagePull: false

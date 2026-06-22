@@ -4,6 +4,8 @@
  */
 
 import type * as git from "@fluidframework/gitresources";
+import { ScopeType } from "@fluidframework/protocol-definitions";
+import { NetworkError } from "@fluidframework/server-services-client";
 import type {
 	IStorageNameRetriever,
 	IThrottler,
@@ -12,22 +14,16 @@ import type {
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import {
-	denyListMiddleware,
-	type IThrottleMiddlewareOptions,
-	throttle,
-} from "@fluidframework/server-services-utils";
-import {
 	containsPathTraversal,
 	validateRequestParams,
 } from "@fluidframework/server-services-shared";
-import { Router } from "express";
+import { denyListMiddleware, throttle } from "@fluidframework/server-services-utils";
+import type { Router } from "express";
 import type * as nconf from "nconf";
 import winston from "winston";
+
 import type { ICache, ITenantService, ISimplifiedCustomDataRetriever } from "../../services";
 import * as utils from "../utils";
-import { Constants } from "../../utils";
-import { NetworkError } from "@fluidframework/server-services-client";
-import { ScopeType } from "@fluidframework/protocol-definitions";
 
 export function create(
 	config: nconf.Provider,
@@ -42,17 +38,8 @@ export function create(
 	ephemeralDocumentTTLSec?: number,
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ): Router {
-	const router: Router = Router();
-
-	const maxTokenLifetimeSec = config.get("maxTokenLifetimeSec");
-
-	const tenantThrottleOptions: Partial<IThrottleMiddlewareOptions> = {
-		throttleIdPrefix: (req) => req.params.tenantId,
-		throttleIdSuffix: Constants.historianRestThrottleIdSuffix,
-	};
-	const restTenantGeneralThrottler = restTenantThrottlers.get(
-		Constants.generalRestCallThrottleIdPrefix,
-	);
+	const { router, maxTokenLifetimeSec, tenantThrottleOptions, restTenantGeneralThrottler } =
+		utils.createRouteContext(config, restTenantThrottlers);
 
 	async function getCommits(
 		tenantId: string,

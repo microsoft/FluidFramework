@@ -3,6 +3,10 @@
  * Licensed under the MIT License.
  */
 
+import {
+	createExampleDriver,
+	getSpecifiedServiceFromWebpack,
+} from "@fluid-example/example-driver";
 import type {
 	ICodeDetailsLoader,
 	IContainer,
@@ -13,14 +17,8 @@ import {
 	createDetachedContainer,
 	loadExistingContainer,
 } from "@fluidframework/container-loader/legacy";
-import { createRouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/legacy";
-import {
-	createInsecureTinyliciousTestTokenProvider,
-	createInsecureTinyliciousTestUrlResolver,
-	createTinyliciousTestCreateNewRequest,
-} from "@fluidframework/tinylicious-driver/test-utils";
 import { createElement } from "react";
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
 import {
@@ -29,9 +27,14 @@ import {
 } from "./container/index.js";
 import { BlobCollectionView, DebugView } from "./view.js";
 
-const urlResolver = createInsecureTinyliciousTestUrlResolver();
-const tokenProvider = createInsecureTinyliciousTestTokenProvider();
-const documentServiceFactory = createRouterliciousDocumentServiceFactory(tokenProvider);
+const service = getSpecifiedServiceFromWebpack();
+const {
+	urlResolver,
+	documentServiceFactory,
+	createCreateNewRequest,
+	createLoadExistingRequest,
+} = await createExampleDriver(service);
+
 const codeLoader: ICodeDetailsLoader = {
 	load: async (details: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 		return {
@@ -41,8 +44,31 @@ const codeLoader: ICodeDetailsLoader = {
 	},
 };
 
+const doAttach = async (): Promise<void> => {
+	// Some services support or require specifying the container id at attach time (local, odsp). For
+	// services that do not (t9s), the passed id will be ignored.
+	id = Date.now().toString();
+	const createNewRequest = createCreateNewRequest(id);
+	await container.attach(createNewRequest);
+	// For most services, the id on the resolvedUrl is the authoritative source for the container id
+	// (regardless of whether the id passed in createCreateNewRequest is respected or not). However,
+	// for odsp the id is a hashed combination of drive and container ID which we can't use. Instead,
+	// we retain the id we generated above.
+	if (service !== "odsp") {
+		if (container.resolvedUrl === undefined) {
+			throw new Error("Resolved Url unexpectedly missing!");
+		}
+		// eslint-disable-next-line require-atomic-updates -- No other flows may set id during the attach flow (the await above), and this would be the authoritative value for id even if they did.
+		id = container.resolvedUrl.id;
+	}
+	// Update url and tab title
+	location.hash = id;
+	document.title = id;
+};
+
 let container: IContainer;
 let attach: (() => void) | undefined;
+let id: string | undefined;
 
 if (location.hash.length === 0) {
 	container = await createDetachedContainer({
@@ -51,24 +77,15 @@ if (location.hash.length === 0) {
 		documentServiceFactory,
 		codeLoader,
 	});
+	// This function is synchronous since it is intended to be called in response to an event - we need to be
+	// locally responsible for the handling of any async errors.
 	attach = () => {
-		container
-			.attach(createTinyliciousTestCreateNewRequest())
-			.then(() => {
-				if (container.resolvedUrl === undefined) {
-					throw new Error("Resolved Url unexpectedly missing!");
-				}
-				const id = container.resolvedUrl.id;
-				// Update url and tab title
-				location.hash = id;
-				document.title = id;
-			})
-			.catch(console.error);
+		doAttach().catch(console.error);
 	};
 } else {
-	const id = location.hash.slice(1);
+	id = location.hash.slice(1);
 	container = await loadExistingContainer({
-		request: { url: id },
+		request: await createLoadExistingRequest(id),
 		urlResolver,
 		documentServiceFactory,
 		codeLoader,
@@ -81,10 +98,25 @@ if (location.hash.length === 0) {
 const blobCollection = (await container.getEntryPoint()) as IBlobCollection;
 
 // Render view
-const debugDiv = document.querySelector("#debug") as HTMLDivElement;
+const debugDiv = document.createElement("div");
+document.body.append(debugDiv);
 const debugRoot = createRoot(debugDiv);
 debugRoot.render(createElement(DebugView, { attach }));
 
-const appDiv = document.querySelector("#app") as HTMLDivElement;
+const appDiv = document.createElement("div");
+document.body.append(appDiv);
 const appRoot = createRoot(appDiv);
 appRoot.render(createElement(BlobCollectionView, { blobCollection }));
+
+// For testing purposes, we expose a way to load an additional instance of the container in the same page
+globalThis.loadAdditionalContainer = async () => {
+	if (id === undefined) {
+		throw new Error("Cannot load additional container before initial container is attached");
+	}
+	return loadExistingContainer({
+		request: await createLoadExistingRequest(id),
+		urlResolver,
+		documentServiceFactory,
+		codeLoader,
+	});
+};

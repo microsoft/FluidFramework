@@ -11,10 +11,9 @@ import type {
 	ISensitivityLabel,
 	ISocketStorageDiscovery,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	type ITelemetryLoggerExt,
-	MockLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { type SinonFakeTimers, type SinonStub, stub, useFakeTimers } from "sinon";
 import type { Socket } from "socket.io-client";
 
@@ -43,7 +42,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		user: { id: "userId" },
 	};
 
-	let logger: ITelemetryLoggerExt;
+	let logger: TelemetryLoggerExt & ITelemetryLoggerExt;
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
 	const driveId = "driveId";
 	const itemId = "itemId";
@@ -62,6 +61,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		refreshSessionDurationSeconds: 100,
 	};
 	let odspDocumentServiceFactory: OdspDocumentServiceFactory;
+	let testTimestamp: number;
 
 	// Stash the real setTimeout because sinon fake timers will hijack it.
 	const realSetTimeout = setTimeout;
@@ -81,8 +81,10 @@ describe("DeltaConnectionMetadata update tests", () => {
 	}
 
 	function addJoinSessionStub(label: ISensitivityLabel): SinonStub {
+		// Increment timestamp to ensure each call produces a "newer" timestamp
+		testTimestamp += 1000;
 		joinSessionResponse.sensitivityLabelsInfo = {
-			timestamp: new Date().toISOString(),
+			timestamp: testTimestamp,
 			labels: [label],
 		};
 		const joinSessionStub = stub(fetchJoinSession, mockify.key).callsFake(
@@ -106,6 +108,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 
 	beforeEach(async () => {
 		clock = useFakeTimers();
+		testTimestamp = 1716929781000;
 		odspDocumentServiceFactory = new OdspDocumentServiceFactory(
 			async (_options) => "token",
 			async (_options) => "token",
@@ -156,7 +159,7 @@ describe("DeltaConnectionMetadata update tests", () => {
 		let eventRaised = false;
 
 		const exampleSensitivityLabelsInfo = `{
-			"timestamp":"2025-05-28T14:56:21-07:00",
+			"timestamp":${testTimestamp},
 			"labels":[
 				{"sensitivityLabelId":"sensitivityLabelId",
 				"tenantId":"tenantId",
@@ -242,7 +245,9 @@ describe("DeltaConnectionMetadata update tests", () => {
 		eventRaised = false;
 		const label2Object = testSensitivityLabelObjectWithId("label2");
 		content = { labels: [label2Object] };
-		const signalContent1 = { labels: [label2Object], timestamp: new Date().toISOString() };
+		// Use a timestamp larger than the one from addJoinSessionStub to ensure it's "newer"
+		testTimestamp += 1000;
+		const signalContent1 = { labels: [label2Object], timestamp: testTimestamp };
 		const signalMessage1: ISignalMessage = {
 			clientId: null,
 			content: JSON.stringify({

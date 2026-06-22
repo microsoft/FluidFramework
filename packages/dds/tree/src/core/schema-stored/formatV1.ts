@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static } from "@sinclair/typebox";
 
 import { unionOptions } from "../../codec/index.js";
 import { type Brand, brandedStringType } from "../../util/index.js";
@@ -52,6 +53,7 @@ const FieldSchemaFormatBase = Type.Object({
 
 const noAdditionalProps: ObjectOptions = { additionalProperties: false };
 
+export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;
 export const FieldSchemaFormat = Type.Composite([FieldSchemaFormatBase], noAdditionalProps);
 
 /**
@@ -70,6 +72,7 @@ export enum PersistedValueSchema {
  *
  * See {@link DiscriminatedUnionDispatcher} for more information on this pattern.
  */
+export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
 export const TreeNodeSchemaDataFormat = Type.Object(
 	{
 		/**
@@ -87,7 +90,3 @@ export const TreeNodeSchemaDataFormat = Type.Object(
 	},
 	unionOptions,
 );
-
-export type TreeNodeSchemaDataFormat = Static<typeof TreeNodeSchemaDataFormat>;
-
-export type FieldSchemaFormat = Static<typeof FieldSchemaFormat>;

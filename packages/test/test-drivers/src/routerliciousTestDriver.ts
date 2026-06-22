@@ -28,16 +28,23 @@ interface IServiceEndpoint {
 	deltaStorageUrl: string;
 }
 
-const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies) => ({
+interface IConfig {
+	serviceEndpoint: IServiceEndpoint;
+	tenantId: string;
+	tenantSecret: string;
+	driverPolicies?: IRouterliciousDriverPolicies;
+}
+
+const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies): IConfig => ({
 	serviceEndpoint: {
 		deltaStreamUrl: "http://localhost:3002",
-		hostUrl: "http://localhost:3000",
+		hostUrl: "http://localhost:3003",
 		ordererUrl: "http://localhost:3003",
 		deltaStorageUrl: "http://localhost:3001",
 	},
 	tenantId: "fluid",
 	tenantSecret: "create-new-tenants-if-going-to-production",
-	driverPolicies,
+	...(driverPolicies === undefined ? {} : { driverPolicies }),
 });
 
 function getConfig(
@@ -46,9 +53,9 @@ function getConfig(
 	tenantId?: string,
 	tenantSecret?: string,
 	driverPolicies?: IRouterliciousDriverPolicies,
-) {
-	assert(tenantId, "Missing tenantId");
-	assert(tenantSecret, "Missing tenant secret");
+): IConfig {
+	assert(tenantId !== undefined, "Missing tenantId");
+	assert(tenantSecret !== undefined, "Missing tenant secret");
 	if (discoveryEndpoint !== undefined) {
 		// The hostUrl, deltaStreamUrl and deltaStorageUrl will be replaced by the URLs of the discovery result.
 		// The deltaStorageUrl is firstly set to https://dummy-historian to make the workflow successful.
@@ -61,10 +68,10 @@ function getConfig(
 			},
 			tenantId,
 			tenantSecret,
-			driverPolicies,
+			...(driverPolicies !== undefined ? { driverPolicies } : {}),
 		};
 	}
-	assert(fluidHost, "Missing Fluid host");
+	assert(fluidHost !== undefined, "Missing Fluid host");
 	return {
 		serviceEndpoint: {
 			hostUrl: fluidHost,
@@ -74,11 +81,11 @@ function getConfig(
 		},
 		tenantId,
 		tenantSecret,
-		driverPolicies,
+		...(driverPolicies !== undefined ? { driverPolicies } : {}),
 	};
 }
 
-function getLegacyConfigFromEnv() {
+function getLegacyConfigFromEnv(): IConfig {
 	const discoveryEndpoint = process.env.fluid__webpack__discoveryEndpoint;
 	const fluidHost = process.env.fluid__webpack__fluidHost;
 	const tenantSecret = process.env.fluid__webpack__tenantSecret;
@@ -86,7 +93,7 @@ function getLegacyConfigFromEnv() {
 	return getConfig(discoveryEndpoint, fluidHost, tenantId, tenantSecret);
 }
 
-function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
+function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint): IConfig {
 	const configStr = process.env[`fluid__test__driver__${r11sEndpointName}`];
 	if (r11sEndpointName === "docker") {
 		const dockerDriverPolicies =
@@ -97,7 +104,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
 		// Allow legacy setting from fluid__webpack__ for r11s for now
 		return getLegacyConfigFromEnv();
 	}
-	assert(configStr, `Missing config for ${r11sEndpointName}`);
+	assert(configStr !== undefined, `Missing config for ${r11sEndpointName}`);
 	const config = JSON.parse(configStr);
 	return getConfig(
 		config.discoveryEndpoint,
@@ -108,7 +115,7 @@ function getEndpointConfigFromEnv(r11sEndpointName: RouterliciousEndpoint) {
 	);
 }
 
-function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
+function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint): IConfig {
 	if (r11sEndpointName === undefined) {
 		const fluidHost = process.env.fluid__webpack__fluidHost;
 		if (fluidHost === undefined) {
@@ -120,6 +127,8 @@ function getConfigFromEnv(r11sEndpointName?: RouterliciousEndpoint) {
 	return getEndpointConfigFromEnv(r11sEndpointName);
 }
 /**
+ * Asserts that the endpoint is a valid Routerlicious endpoint or `undefined`.
+ *
  * @internal
  */
 export function assertRouterliciousEndpoint(
@@ -144,7 +153,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 	public static createFromEnv(
 		config?: { r11sEndpointName?: string },
 		api: RouterliciousDriverApiType = RouterliciousDriverApi,
-	) {
+	): RouterliciousTestDriver {
 		assertRouterliciousEndpoint(config?.r11sEndpointName);
 		const { serviceEndpoint, tenantId, tenantSecret, driverPolicies } = getConfigFromEnv(
 			config?.r11sEndpointName,
@@ -160,7 +169,8 @@ export class RouterliciousTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "routerlicious";
-	public get version() {
+	public readonly endpointName?: string;
+	public get version(): string {
 		return this.api.version;
 	}
 	private constructor(
@@ -169,8 +179,12 @@ export class RouterliciousTestDriver implements ITestDriver {
 		private readonly serviceEndpoints: IServiceEndpoint,
 		private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
 		private readonly driverPolicies: IRouterliciousDriverPolicies | undefined,
-		public readonly endpointName?: string,
-	) {}
+		endpointName?: string,
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+	}
 
 	async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
 		const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;

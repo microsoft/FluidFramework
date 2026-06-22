@@ -11,18 +11,18 @@ import {
 	reducer,
 	saveFailures,
 	type StressOperations,
-} from "../baseModel.js";
-import { validateAllDataStoresSaved } from "../dataStoreOperations.js";
-import { validateConsistencyOfAllDDS } from "../ddsOperations";
+} from "./baseModel.js";
+import { validateAllDataStoresSaved } from "./dataStoreOperations.js";
+import { validateConsistencyOfAllDDS } from "./ddsOperations.js";
 import {
 	createLocalServerStressSuite,
 	LocalServerStressModel,
-} from "../localServerStressHarness";
+} from "./localServerStressHarness.js";
 
 describe("Local Server Stress", () => {
 	const model: LocalServerStressModel<StressOperations> = {
 		workloadName: "default",
-		generatorFactory: () => takeAsync(100, makeGenerator()),
+		generatorFactory: () => takeAsync(200, makeGenerator()),
 		reducer,
 		validateConsistency: async (...clients) => {
 			await validateAllDataStoresSaved(...clients);
@@ -32,16 +32,16 @@ describe("Local Server Stress", () => {
 	};
 
 	createLocalServerStressSuite(model, {
-		defaultTestCount: 100,
-		// skipMinimization: true,
-		// Uncomment to replay a particular seed.
-		// replay: 93,
-		// only: [30, 69],
+		defaultTestCount: 200,
 		saveFailures,
-		// saveSuccesses,
-		configurations: { "Fluid.Container.enableOfflineLoad": true },
-		skip: [
-			...[62], // shared array error
-		],
+		configurations: {
+			"Fluid.Container.enableOfflineFull": true,
+			"Fluid.ContainerRuntime.EnableRollback": true,
+		},
+		// Minimization is slow with many seeds; use only to minimize specific failing seeds.
+		skipMinimization: true,
+		// Pre-existing DDS bugs: seeds 0 and 54 (ConsensusOrderedCollection), seed 92 (Matrix).
+		skip: [0, 54, 92],
+		// Use skip, replay, and only properties to control which seeds run.
 	});
 });

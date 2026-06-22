@@ -12,9 +12,9 @@ import {
 
 import type { Section, SectionContent } from "../../mdast/index.js";
 import { getApiItemKind, getScopedMemberNameForDiagnostics } from "../../utilities/index.js";
-import { getFilteredMembers } from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import { createMemberTables } from "../helpers/index.js";
+import { filterItems } from "../utilities/index.js";
 
 /**
  * Default documentation transform for `Enum` items.
@@ -26,7 +26,7 @@ export function transformApiEnum(
 ): Section[] {
 	const sections: Section[] = [];
 
-	const filteredChildren = getFilteredMembers(apiEnum, config);
+	const filteredChildren = filterItems(apiEnum.members, config);
 	if (filteredChildren.length > 0) {
 		// Accumulate child items
 		const flags: ApiEnumMember[] = [];
@@ -34,7 +34,7 @@ export function transformApiEnum(
 			const childKind = getApiItemKind(child);
 			switch (childKind) {
 				case ApiItemKind.EnumMember: {
-					flags.push(child as ApiEnumMember);
+					flags.push(child);
 					break;
 				}
 				default: {

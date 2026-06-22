@@ -13,6 +13,7 @@ import {
 	ITestObjectProvider,
 	createTestContainerRuntimeFactory,
 	getContainerEntryPointBackCompat,
+	type fluidEntryPoint,
 } from "@fluidframework/test-utils/internal";
 
 // By default, the container loads in read mode.  However, pick() attempts silently fail if not in write
@@ -24,15 +25,13 @@ const forceWriteMode = async (scheduler: IAgentScheduler): Promise<void> =>
 	scheduler.register(`makeWriteMode ${writeModeCount++}`);
 
 describeCompat("AgentScheduler", "FullCompat", (getTestObjectProvider, apis) => {
-	const getContainerRuntimeFactory = (forLoad: boolean) => {
-		const runtime =
-			forLoad && apis.containerRuntimeForLoading !== undefined
-				? apis.containerRuntimeForLoading.ContainerRuntime
-				: apis.containerRuntime.ContainerRuntime;
-		const agentSchedulerFactory =
-			forLoad && apis.dataRuntimeForLoading !== undefined
-				? apis.dataRuntimeForLoading?.packages.agentScheduler.AgentSchedulerFactory
-				: apis.dataRuntime.packages.agentScheduler.AgentSchedulerFactory;
+	const getContainerRuntimeFactory = (forLoad: boolean): fluidEntryPoint => {
+		const runtime = forLoad
+			? apis.containerRuntimeForLoading.ContainerRuntime
+			: apis.containerRuntime.ContainerRuntime;
+		const agentSchedulerFactory = forLoad
+			? apis.dataRuntimeForLoading.packages.agentScheduler.AgentSchedulerFactory
+			: apis.dataRuntime.packages.agentScheduler.AgentSchedulerFactory;
 
 		const TestContainerRuntimeFactory = createTestContainerRuntimeFactory(runtime);
 		return {

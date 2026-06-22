@@ -4,21 +4,25 @@
  */
 
 import { createEmitter } from "@fluid-internal/client-utils";
-import type { Listenable, Off } from "@fluidframework/core-interfaces";
-import { assert, Lazy, fail, debugAssert } from "@fluidframework/core-utils/internal";
+import type { HasListeners, Listenable, Off } from "@fluidframework/core-interfaces/internal";
+import {
+	assert,
+	fail,
+	debugAssert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
-	type AnchorSet,
+	type DeltaMark,
+	type FieldKey,
 	type TreeValue,
-	type UpPath,
 } from "../../core/index.js";
 import { getOrCreateHydratedFlexTreeNode } from "../../feature-libraries/index.js";
 import {
-	assertFlexTreeEntityNotFreed,
 	ContextSlot,
 	flexTreeSlot,
 	LazyEntity,
@@ -74,16 +78,13 @@ export function tryGetTreeNodeSchema(value: unknown): undefined | TreeNodeSchema
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} before the kernel is hydrated */
 interface UnhydratedState {
-	off: Off;
 	readonly innerNode: UnhydratedFlexTreeNode;
 }
 
 /** The {@link HydrationState} of a {@link TreeNodeKernel} after the kernel is hydrated */
 interface HydratedState {
-	/** The flex node for this kernel (lazy - undefined if it has not yet been demanded) */
-	innerNode?: FlexTreeNode;
-	/** The {@link AnchorNode} that this node is associated with. */
-	readonly anchorNode: AnchorNode;
+	/** The flex node for this kernel */
+	readonly innerNode: HydratedFlexTreeNode;
 	/** All {@link Off | event deregistration functions} that should be run when the kernel is disposed. */
 	readonly offAnchorNode: Set<Off>;
 }
@@ -93,7 +94,7 @@ type HydrationState = UnhydratedState | HydratedState;
 
 /** True if and only if the given {@link HydrationState} is post-hydration */
 function isHydrated(state: HydrationState): state is HydratedState {
-	return (state as Partial<HydratedState>).anchorNode !== undefined;
+	return state.innerNode.isHydrated();
 }
 
 /**
@@ -119,20 +120,22 @@ export class TreeNodeKernel {
 	#hydrationState: HydrationState;
 
 	/**
-	 * Events registered before hydration.
+	 * Handler for events listeners registered with the kernel.
+	 *
 	 * @remarks
-	 * Since these are usually not used, they are allocated lazily as an optimization.
-	 * The laziness also avoids extra forwarding overhead for events from this kernel's anchor node and also avoids registering for events that are unneeded.
-	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
-	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
+	 * Supports event buffering via {@link withBufferedEvents}.
+	 *
+	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
+	 * We expect the majority of nodes to never have event listeners registered, so
+	 * deferring construction avoids per-kernel allocations.
 	 */
-	readonly #unhydratedEvents = new Lazy(createEmitter<KernelEvents>);
+	#eventBuffer: KernelEventBuffer | undefined;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
 	 *
 	 * @param initialContext - context from when this node was originally created. Only used when unhydrated.
-	 * @param innerNode - When unhydrated/raw or marinated the MapTreeNode. FlexTreeNode when cooked.
+	 * @param innerNode - When unhydrated the MapTreeNode. Otherwise HydratedFlexTreeNode.
 	 * @remarks
 	 * Exactly one kernel per TreeNode should be created.
 	 */
@@ -149,38 +152,16 @@ export class TreeNodeKernel {
 
 		if (innerNode instanceof UnhydratedFlexTreeNode) {
 			// Unhydrated case
+
 			debugAssert(() => innerNode.treeNode === undefined);
 			innerNode.treeNode = node;
-			// Register for change events from the unhydrated flex node.
-			// These will be fired if the unhydrated node is edited, and will also be forwarded later to the hydrated node.
+
 			this.#hydrationState = {
 				innerNode,
-				off: innerNode.events.on("childrenChangedAfterBatch", ({ changedFields }) => {
-					this.#unhydratedEvents.value.emit("childrenChangedAfterBatch", {
-						changedFields,
-					});
-
-					let unhydratedNode: UnhydratedFlexTreeNode | undefined = innerNode;
-					while (unhydratedNode !== undefined) {
-						const treeNode = unhydratedNode.treeNode;
-						if (treeNode !== undefined) {
-							const kernel = getKernel(treeNode);
-							kernel.#unhydratedEvents.value.emit("subtreeChangedAfterBatch");
-						}
-						const parentNode: FlexTreeNode | undefined =
-							unhydratedNode.parentField.parent.parent;
-						assert(
-							parentNode === undefined || parentNode instanceof UnhydratedFlexTreeNode,
-							0xb76 /* Unhydrated node's parent should be an unhydrated node */,
-						);
-						unhydratedNode = parentNode;
-					}
-				}),
 			};
 		} else {
 			// Hydrated case
-			this.#hydrationState = this.createHydratedState(innerNode.anchorNode);
-			this.#hydrationState.innerNode = innerNode;
+			this.#hydrationState = this.createHydratedState(innerNode);
 		}
 	}
 
@@ -188,7 +169,7 @@ export class TreeNodeKernel {
 		if (isHydrated(this.#hydrationState)) {
 			// This can't be cached on this.#hydrated during hydration since initial tree is hydrated before the context is cached on the anchorSet.
 			return (
-				this.#hydrationState?.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
+				this.#hydrationState.innerNode.anchorNode.anchorSet.slots.get(SimpleContextSlot) ??
 				fail(0xb40 /* missing simple-tree context */)
 			);
 		}
@@ -197,49 +178,35 @@ export class TreeNodeKernel {
 
 	/**
 	 * Transition from {@link Unhydrated} to hydrated.
-	 * Bi-directionally associates the given hydrated TreeNode to the anchor node at the provided path.
+	 * Bi-directionally associates the given hydrated TreeNode to the HydratedFlexTreeNode.
 	 * @remarks
 	 * Happens at most once for any given node.
 	 * Cleans up mappings to {@link UnhydratedFlexTreeNode} - it is assumed that they are no longer needed once this node has an anchor node.
 	 */
-	public hydrate(anchors: AnchorSet, path: UpPath): void {
+	public hydrate(inner: HydratedFlexTreeNode): void {
 		assert(!this.disposed, 0xa2a /* cannot hydrate a disposed node */);
 		assert(!isHydrated(this.#hydrationState), 0xa2b /* hydration should only happen once */);
 
-		const anchor = anchors.track(path);
-		const anchorNode =
-			anchors.locate(anchor) ?? fail(0xb42 /* Expected anchor node to be present */);
+		this.#hydrationState = this.createHydratedState(inner);
 
-		this.#hydrationState = this.createHydratedState(anchorNode);
-		this.#hydrationState.offAnchorNode.add(() => anchors.forget(anchor));
-
-		// If needed, register forwarding emitters for events from before hydration
-		if (this.#unhydratedEvents.evaluated) {
-			const events = this.#unhydratedEvents.value;
-			for (const eventName of kernelEvents) {
-				if (events.hasListeners(eventName)) {
-					this.#hydrationState.offAnchorNode.add(
-						// Argument is forwarded between matching events, so the type should be correct.
-						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						anchorNode.events.on(eventName, (arg: any) => events.emit(eventName, arg)),
-					);
-				}
-			}
-		}
+		// Lazily migrate existing event listeners to the anchor node.
+		// If no one ever subscribed to this kernel's events, the buffer was never allocated
+		// and there is nothing to migrate.
+		this.#eventBuffer?.migrateEventSource(inner.anchorNode.events);
 	}
 
-	private createHydratedState(anchorNode: AnchorNode): HydratedState {
+	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
 		assert(
-			!anchorNode.slots.has(simpleTreeNodeSlot),
+			!innerNode.anchorNode.slots.has(simpleTreeNodeSlot),
 			0x7f5 /* Cannot associate an flex node with multiple simple-tree nodes */,
 		);
-		anchorNode.slots.set(simpleTreeNodeSlot, this.node);
+		innerNode.anchorNode.slots.set(simpleTreeNodeSlot, this.node);
 		return {
-			anchorNode,
+			innerNode,
 			offAnchorNode: new Set([
-				anchorNode.events.on("afterDestroy", () => this.dispose()),
+				innerNode.anchorNode.events.on("afterDestroy", () => this.dispose()),
 				// TODO: this should be triggered on change even for unhydrated nodes.
-				anchorNode.events.on("childrenChanging", () => {
+				innerNode.anchorNode.events.on("childrenChanging", () => {
 					this.generationNumber += 1;
 				}),
 			]),
@@ -255,7 +222,7 @@ export class TreeNodeKernel {
 		}
 
 		// TODO: Replace this check with the proper check against the cursor state when the cursor becomes part of the kernel
-		const flex = this.#hydrationState.anchorNode.slots.get(flexTreeSlot);
+		const flex = this.#hydrationState.innerNode.anchorNode.slots.get(flexTreeSlot);
 		if (flex !== undefined) {
 			assert(flex instanceof LazyEntity, 0x9b4 /* Unexpected flex node implementation */);
 			if (flex.isFreed()) {
@@ -263,14 +230,19 @@ export class TreeNodeKernel {
 			}
 		}
 
-		return treeStatusFromAnchorCache(this.#hydrationState.anchorNode);
+		return treeStatusFromAnchorCache(this.#hydrationState.innerNode.anchorNode);
 	}
 
 	public get events(): Listenable<KernelEvents> {
-		// Retrieve the correct events object based on whether this node is pre or post hydration.
-		return isHydrated(this.#hydrationState)
-			? this.#hydrationState.anchorNode.events
-			: this.#unhydratedEvents.value;
+		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
+		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
+		if (this.#eventBuffer === undefined) {
+			const eventSource = isHydrated(this.#hydrationState)
+				? this.#hydrationState.innerNode.anchorNode.events
+				: this.#hydrationState.innerNode.events;
+			this.#eventBuffer = new KernelEventBuffer(eventSource);
+		}
+		return this.#eventBuffer;
 	}
 
 	public dispose(): void {
@@ -281,6 +253,7 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
+		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -289,7 +262,9 @@ export class TreeNodeKernel {
 	}
 
 	public get anchorNode(): AnchorNode | undefined {
-		return isHydrated(this.#hydrationState) ? this.#hydrationState.anchorNode : undefined;
+		return isHydrated(this.#hydrationState)
+			? this.#hydrationState.innerNode.anchorNode
+			: undefined;
 	}
 
 	/**
@@ -298,11 +273,10 @@ export class TreeNodeKernel {
 	 * For {@link Unhydrated} nodes, this returns the MapTreeNode.
 	 *
 	 * For hydrated nodes it returns a FlexTreeNode backed by the forest.
-	 * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
 	 *
 	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
 	 */
-	public getOrCreateInnerNode(): InnerNode {
+	public getInnerNode(): InnerNode {
 		if (!isHydrated(this.#hydrationState)) {
 			debugAssert(
 				() =>
@@ -314,26 +288,6 @@ export class TreeNodeKernel {
 
 		if (this.disposed) {
 			throw new UsageError("Cannot access a deleted node.");
-		}
-
-		if (this.#hydrationState.innerNode === undefined) {
-			// Marinated case -> cooked
-			const anchorNode = this.#hydrationState.anchorNode;
-			// This TreeNode is bound to an anchor node, but it may or may not have an actual flex node yet
-			const flexNode = anchorNode.slots.get(flexTreeSlot);
-			if (flexNode !== undefined) {
-				// If the flex node already exists, use it...
-				this.#hydrationState.innerNode = flexNode;
-			} else {
-				// ...otherwise, the flex node must be created
-				const context =
-					anchorNode.anchorSet.slots.get(ContextSlot) ?? fail(0xb41 /* missing context */);
-				const cursor = context.checkout.forest.allocateCursor("getFlexNode");
-				context.checkout.forest.moveCursorToPath(anchorNode, cursor);
-				this.#hydrationState.innerNode = getOrCreateHydratedFlexTreeNode(context, cursor);
-				cursor.free();
-				assertFlexTreeEntityNotFreed(this.#hydrationState.innerNode);
-			}
 		}
 
 		return this.#hydrationState.innerNode;
@@ -350,15 +304,316 @@ export class TreeNodeKernel {
 	}
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const kernelEvents = ["childrenChangedAfterBatch", "subtreeChangedAfterBatch"] as const;
 
 type KernelEvents = Pick<AnchorEvents, (typeof kernelEvents)[number]>;
 
+// #region TreeNodeEventBuffer
+
 /**
- * For "cooked" nodes this is a HydratedFlexTreeNode thats a projection of forest content.
- * For {@link Unhydrated} nodes this is a UnhydratedFlexTreeNode.
+ * Whether or not events from {@link TreeNodeKernel} should be buffered instead of emitted immediately.
+ */
+let bufferTreeEvents: boolean = false;
+
+/**
+ * Call the provided callback with {@link TreeNode}s' events paused until after the callback's completion.
  *
- * For "marinated" nodes, some code (ex: getOrCreateInnerNode) returns the FlexTreeNode thats a projection of forest content, and some code (ex: tryGetInnerNode) returns undefined.
+ * Events that would otherwise have been emitted immediately are merged and buffered until after the
+ * provided callback has been completed.
+ *
+ * @remarks
+ * Note: this should be used with caution. User application behaviors are implicitly coupled to event timing.
+ * Disrupting this timing can lead to unexpected behavior.
+ */
+export function withBufferedTreeEvents(callback: () => void): void {
+	if (bufferTreeEvents) {
+		// Already buffering - just run the callback
+		callback();
+	} else {
+		bufferTreeEvents = true;
+		const toFlush: KernelEventBuffer[] = [];
+		try {
+			callback();
+		} finally {
+			bufferTreeEvents = false;
+			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
+			// calls made by listeners that fire during `buffer.flush()` below:
+			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
+			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
+			// - Clearing up front means the reentrant call starts from an empty set, so its own
+			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
+			toFlush.push(...activeBuffers);
+			activeBuffers.clear();
+		}
+
+		// Don't flush/emit events in the case of an error
+		for (const buffer of toFlush) {
+			buffer.flush();
+		}
+	}
+}
+
+/**
+ * Set of {@link KernelEventBuffer}s that have accumulated buffered events during the current
+ * {@link withBufferedTreeEvents} window and therefore need to be flushed when it ends.
+ *
+ * @remarks
+ * The set should be empty whenever no buffering window is in progress.
+ */
+const activeBuffers: Set<KernelEventBuffer> = new Set();
+
+/**
+ * Test-only accessor for the current size of {@link activeBuffers}.
+ * @remarks Only exported for testing purposes. Not intended for any other use.
+ */
+export function TEST_activeBufferCount(): number {
+	return activeBuffers.size;
+}
+
+/**
+ * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
+ * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
+ * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
+ */
+class KernelEventBuffer implements Listenable<KernelEvents> {
+	#disposed: boolean = false;
+
+	readonly #events = createEmitter<KernelEvents>();
+
+	#eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>;
+	readonly #disposeSourceListeners: Map<keyof KernelEvents, Off> = new Map();
+
+	/**
+	 * Buffer of fields that have changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.childrenChangedAfterBatch} event will be emitted
+	 * containing the accumulated set of changed fields.
+	 */
+	readonly #childrenChangedBuffer: Set<FieldKey> = new Set();
+
+	/**
+	 * Buffer of field marks accumulated since events were paused.
+	 * Emitted alongside the buffered changed-fields set when flushed.
+	 */
+	readonly #fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]> = new Map();
+
+	/**
+	 * Fields whose marks have been permanently invalidated within the current buffer window due to
+	 * two or more separate delta batches touching the same field.
+	 * Once a key is in this set it must never be re-added to the marks buffer, even if
+	 * a third (or later) batch arrives for that field.
+	 */
+	readonly #invalidatedFieldMarkKeys: Set<FieldKey> = new Set();
+
+	/**
+	 * Whether or not the subtree has changed since events were paused.
+	 * When events are flushed, a single {@link AnchorEvents.subTreeChanged} event will be emitted if and only
+	 * if the subtree has changed.
+	 */
+	#subTreeChangedBuffer: boolean = false;
+
+	public constructor(
+		/**
+		 * Source of the kernel events.
+		 * Subscriptions will be created on-demand when listeners are added to this.events,
+		 * and those subscriptions will be cleaned up when all corresponding listeners have been removed.
+		 */
+		eventSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+	) {
+		this.#eventSource = eventSource;
+	}
+
+	/**
+	 * Migrate this event buffer to a new event source.
+	 *
+	 * @remarks
+	 * Cleans up any existing event subscriptions from the old source.
+	 * Binds events to the new source for each event with active listeners.
+	 */
+	public migrateEventSource(
+		newSource: Listenable<KernelEvents> & HasListeners<KernelEvents>,
+	): void {
+		// Unsubscribe from the old source
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
+		this.#disposeSourceListeners.clear();
+
+		this.#eventSource = newSource;
+
+		if (this.#events.hasListeners("childrenChangedAfterBatch")) {
+			const off = this.#eventSource.on(
+				"childrenChangedAfterBatch",
+				({ changedFields, fieldMarks }) =>
+					this.#emit("childrenChangedAfterBatch", { changedFields, fieldMarks }),
+			);
+			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
+		}
+		if (this.#events.hasListeners("subtreeChangedAfterBatch")) {
+			const off = this.#eventSource.on("subtreeChangedAfterBatch", () =>
+				this.#emit("subtreeChangedAfterBatch"),
+			);
+			this.#disposeSourceListeners.set("subtreeChangedAfterBatch", off);
+		}
+	}
+
+	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
+		this.#assertNotDisposed();
+
+		// Lazily bind event listeners to the source.
+		// If we do not have any existing listeners for this event, then we need to bind to the source.
+		if (!this.#events.hasListeners(eventName)) {
+			assert(
+				!this.#disposeSourceListeners.has(eventName),
+				0xc4f /* Should not have a dispose function without listeners */,
+			);
+
+			const off: Off =
+				eventName === "childrenChangedAfterBatch"
+					? this.#eventSource.on(eventName, (args) => this.#emit(eventName, args))
+					: this.#eventSource.on(eventName, () => this.#emit(eventName));
+			this.#disposeSourceListeners.set(eventName, off);
+		}
+
+		this.#events.on(eventName, listener);
+		// Return a bound method instead of an arrow closure. A bound function captures
+		// (target, thisArg, ...boundArgs) in a fixed shape that V8 can optimize more
+		// uniformly than a closure that captures its lexical context.
+		return this.off.bind(this, eventName, listener);
+	}
+
+	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
+		this.#events.off(eventName, listener);
+
+		// If there are no remaining listeners for the event, unbind from the source
+		if (!this.#events.hasListeners(eventName)) {
+			const off = this.#disposeSourceListeners.get(eventName);
+			off?.();
+			this.#disposeSourceListeners.delete(eventName);
+		}
+	}
+
+	#emit(
+		eventName: keyof KernelEvents,
+		arg?: {
+			changedFields: ReadonlySet<FieldKey>;
+			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
+		},
+	): void {
+		this.#assertNotDisposed();
+		switch (eventName) {
+			case "childrenChangedAfterBatch": {
+				assert(arg !== undefined, 0xcea /* childrenChangedAfterBatch requires arg */);
+				return this.#handleChildrenChangedAfterBatch(arg.changedFields, arg.fieldMarks);
+			}
+			case "subtreeChangedAfterBatch": {
+				return this.#handleSubtreeChangedAfterBatch();
+			}
+			default: {
+				unreachableCase(eventName);
+			}
+		}
+	}
+
+	#handleChildrenChangedAfterBatch(
+		changedFields: ReadonlySet<FieldKey>,
+		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
+	): void {
+		if (bufferTreeEvents) {
+			activeBuffers.add(this);
+			for (const fieldKey of changedFields) {
+				this.#childrenChangedBuffer.add(fieldKey);
+			}
+			for (const [key, marks] of fieldMarks) {
+				if (this.#invalidatedFieldMarkKeys.has(key)) {
+					// Already permanently invalidated by an earlier collision; ignore this batch too.
+					// TODO: Once the eventing stack is rewritten to walk the composed delta at flush
+					// time, this collision path will be unreachable and can be removed entirely.
+					continue;
+				}
+				if (this.#fieldMarksBuffer.has(key)) {
+					// A second batch of marks arrived for the same field before the buffer was flushed.
+					// We have no delta composition logic, so permanently invalidate this field so that
+					// any further batches are also discarded rather than incorrectly surfaced.
+					this.#fieldMarksBuffer.delete(key);
+					this.#invalidatedFieldMarkKeys.add(key);
+				} else {
+					this.#fieldMarksBuffer.set(key, marks);
+				}
+			}
+		} else {
+			this.#events.emit("childrenChangedAfterBatch", { changedFields, fieldMarks });
+		}
+	}
+
+	#handleSubtreeChangedAfterBatch(): void {
+		if (bufferTreeEvents) {
+			activeBuffers.add(this);
+			this.#subTreeChangedBuffer = true;
+		} else {
+			this.#events.emit("subtreeChangedAfterBatch");
+		}
+	}
+
+	/**
+	 * Flushes any events buffered due to {@link withBufferedTreeEvents}.
+	 */
+	public flush(): void {
+		this.#assertNotDisposed();
+
+		if (this.#childrenChangedBuffer.size > 0) {
+			this.#events.emit("childrenChangedAfterBatch", {
+				changedFields: this.#childrenChangedBuffer,
+				fieldMarks: this.#fieldMarksBuffer,
+			});
+			this.#childrenChangedBuffer.clear();
+			this.#fieldMarksBuffer.clear();
+			this.#invalidatedFieldMarkKeys.clear();
+		}
+
+		if (this.#subTreeChangedBuffer) {
+			this.#events.emit("subtreeChangedAfterBatch");
+			this.#subTreeChangedBuffer = false;
+		}
+	}
+
+	#assertNotDisposed(): void {
+		assert(!this.#disposed, 0xc51 /* Event handler disposed. */);
+	}
+
+	public dispose(): void {
+		if (this.#disposed) {
+			return;
+		}
+
+		debugAssert(
+			() =>
+				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
+				"Buffered kernel events should have been flushed before disposing.",
+		);
+		debugAssert(
+			() => !activeBuffers.has(this) || "Disposed buffer should not be in activeBuffers.",
+		);
+
+		for (const off of this.#disposeSourceListeners.values()) {
+			off();
+		}
+		this.#disposeSourceListeners.clear();
+
+		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
+		this.#subTreeChangedBuffer = false;
+
+		this.#disposed = true;
+	}
+}
+
+// #endregion
+
+/**
+ * For hydrated nodes this is a HydratedFlexTreeNode thats a projection of forest content.
+ * For {@link Unhydrated} nodes this is a UnhydratedFlexTreeNode.
  */
 export type InnerNode = FlexTreeNode;
 
@@ -423,13 +678,12 @@ export function getSimpleContextFromInnerNode(innerNode: InnerNode): Context {
  * For {@link Unhydrated} nodes, this returns the MapTreeNode.
  *
  * For hydrated nodes it returns a FlexTreeNode backed by the forest.
- * Note that for "marinated" nodes, this FlexTreeNode exists and returns it: it does not return the MapTreeNode which is the current InnerNode.
  *
  * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the node has been deleted.
  */
-export function getOrCreateInnerNode(treeNode: TreeNode): InnerNode {
+export function getInnerNode(treeNode: TreeNode): InnerNode {
 	const kernel = getKernel(treeNode);
-	return kernel.getOrCreateInnerNode();
+	return kernel.getInnerNode();
 }
 
 /**

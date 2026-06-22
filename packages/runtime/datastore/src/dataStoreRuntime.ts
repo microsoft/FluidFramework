@@ -29,8 +29,6 @@ import type {
 	IFluidDataStoreRuntime,
 	IFluidDataStoreRuntimeEvents,
 	IDeltaManagerErased,
-	// eslint-disable-next-line import/no-deprecated
-	IFluidDataStoreRuntimeExperimental,
 } from "@fluidframework/datastore-definitions/internal";
 import {
 	type IClientDetails,
@@ -61,11 +59,12 @@ import {
 	type IInboundSignalMessage,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	// eslint-disable-next-line import/no-deprecated
-	type IContainerRuntimeBaseExperimental,
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
+	type MinimumVersionForCollab,
+	currentSummarizeStepPrefix,
+	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	GCDataBuilder,
@@ -79,22 +78,26 @@ import {
 	exceptionToResponse,
 	generateHandleContextPath,
 	processAttachMessageGCData,
+	dataStoreLoadTelemetryProps,
 	toFluidHandleInternal,
 	unpackChildNodesUsedRoutes,
 	toDeltaManagerErased,
 	encodeCompactIdToString,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	LoggingError,
 	type MonitoringContext,
 	UsageError,
 	createChildMonitoringContext,
+	extractTelemetryLoggerExt,
 	generateStack,
 	raiseConnectedEvent,
 	tagCodeArtifacts,
+	toITelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { type IChannelContext, summarizeChannel } from "./channelContext.js";
@@ -137,6 +140,17 @@ export enum DataStoreMessageType {
 }
 
 /**
+ * Outgoing {@link FluidDataStoreRuntime} message structures.
+ * @internal
+ *
+ * @privateRemarks
+ * The types here are required to satisfy {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} interface.
+ */
+export type LocalFluidDataStoreRuntimeMessage =
+	| { type: DataStoreMessageType.ChannelOp; content: IEnvelope }
+	| { type: DataStoreMessageType.Attach; content: IAttachMessage };
+
+/**
  * @legacy @beta
  */
 export interface ISharedObjectRegistry {
@@ -145,8 +159,80 @@ export interface ISharedObjectRegistry {
 	get(name: string): IChannelFactory | undefined;
 }
 
+/**
+ * The common URL prefix used by legacy DDS type strings.
+ * Factories originally used full URLs (e.g. `"https://graph.microsoft.com/types/map"`);
+ * new factories use only the trailing path segment (e.g. `"map"`).
+ *
+ * Support for reading both formats was added in 2.92.0.
+ * @remarks
+ * This is encoded using base64 to avoid replacement of URL-like values that we have seen some reverse proxies perform.
+ * The value at runtime is "https://graph.microsoft.com/types/".
+ */
+const legacyTypeUrlPrefix = atob("aHR0cHM6Ly9ncmFwaC5taWNyb3NvZnQuY29tL3R5cGVzLw==");
+
+/**
+ * Wraps an {@link ISharedObjectRegistry} to transparently redirect legacy URL-based DDS type
+ * strings to the factories registered under the corresponding short-name path segment.
+ *
+ * When a lookup by the full URL fails, this wrapper retries using only the portion of the URL
+ * after `"https://graph.microsoft.com/types/"`. This allows old documents whose summaries
+ * contain URL-based type strings to be loaded against a registry built with the current
+ * short-name factory types.
+ *
+ * @remarks
+ * See {@link legacyTypeUrlPrefix} for details on old vs. new formats
+ */
+export class LegacyTypeAwareRegistry implements ISharedObjectRegistry {
+	public constructor(private readonly base: ISharedObjectRegistry) {}
+
+	public get(name: string): IChannelFactory | undefined {
+		let factory = this.base.get(name);
+		if (factory !== undefined) {
+			return factory;
+		}
+
+		// eslint-disable-next-line unicorn/prefer-ternary -- This is more readable as an if statement to clearly delineate which logic can be later removed vs. which needs to stay.
+		if (name.startsWith(legacyTypeUrlPrefix)) {
+			// Back-compat: if the name is a legacy URL-based type string, retry with just the trailing path segment.
+			factory = this.base.get(name.slice(legacyTypeUrlPrefix.length));
+		} else {
+			// Temporary compat: if the name is *not* a legacy URL-based type string and we haven't found a match yet, check if we have a match with the
+			// corresponding legacy scheme. This ensures that if a client containing an older code version with the legacy attribute types loads a document
+			// written by a newer code version, they are still able to find the correct factories. This block can be removed once collaboration between clients
+			// with legacy vs. new attribute types in their code is no longer supported.
+			factory = this.base.get(`${legacyTypeUrlPrefix}${name}`);
+		}
+
+		if (factory !== undefined) {
+			return factory;
+		}
+
+		if (isURL(name) && name.includes("graph.microsoft")) {
+			// Reasonably strong signal that this the document refers to a DDS type string that is using the legacy URL format, but
+			// the base URL was likely changed by a reverse proxy or similar. Assume that its final segment is still the short (modern) name of
+			// a valid DDS type and look it up as such.
+			const finalSegment = name.split("/").slice(-1)[0];
+			if (finalSegment !== undefined) {
+				return (
+					this.base.get(finalSegment) ?? this.base.get(`${legacyTypeUrlPrefix}${finalSegment}`)
+				);
+			}
+		}
+	}
+}
+
+function isURL(str: string): boolean {
+	try {
+		new URL(str);
+		return true;
+	} catch {
+		return false;
+	}
+}
+
 const defaultPolicies: IFluidDataStorePolicies = {
-	readonlyInStagingMode: true,
+	readonlyInStagingMode: false,
 };
 
 /**
@@ -234,6 +320,11 @@ export class FluidDataStoreRuntime
 		return this;
 	}
 
+	private localOpActivity: "applyStashed" | "rollback" | undefined = undefined;
+	public get activeLocalOperationActivity(): "applyStashed" | "rollback" | undefined {
+		return this.localOpActivity;
+	}
+
 	private _disposed = false;
 	public get disposed(): boolean {
 		return this._disposed;
@@ -260,11 +351,12 @@ export class FluidDataStoreRuntime
 		ISequencedDocumentMessage,
 		IDocumentMessage
 	>;
+	private readonly sharedObjectRegistry: ISharedObjectRegistry;
 	private readonly quorum: IQuorumClients;
 	private readonly audience: IAudience;
 	private readonly mc: MonitoringContext;
 	public get logger(): ITelemetryLoggerExt {
-		return this.mc.logger;
+		return toITelemetryLoggerExt(this.mc.logger);
 	}
 
 	/**
@@ -293,6 +385,15 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 *
+	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
+	 * and we keep this property as private, but consumers may optimistically cast
+	 * to the internal interface to access this property.
+	 */
+	public readonly minVersionForCollab: MinimumVersionForCollab;
+
+	/**
 	 * Create an instance of a DataStore runtime.
 	 *
 	 * @param dataStoreContext - Context object for the runtime.
@@ -305,24 +406,36 @@ export class FluidDataStoreRuntime
 	 */
 	public constructor(
 		private readonly dataStoreContext: IFluidDataStoreContext,
-		private readonly sharedObjectRegistry: ISharedObjectRegistry,
+		sharedObjectRegistry: ISharedObjectRegistry,
 		existing: boolean,
 		provideEntryPoint: (runtime: IFluidDataStoreRuntime) => Promise<FluidObject>,
 		policies?: Partial<IFluidDataStorePolicies>,
 	) {
 		super();
+		this.sharedObjectRegistry = new LegacyTypeAwareRegistry(sharedObjectRegistry);
 
 		assert(
 			!dataStoreContext.id.includes("/"),
 			0x30e /* Id cannot contain slashes. DataStoreContext should have validated this. */,
 		);
 
-		this.policies = { ...defaultPolicies, ...policies };
+		this.mc = createChildMonitoringContext({
+			logger: dataStoreContext.baseLogger,
+			namespace: "FluidDataStoreRuntime",
+			properties: {
+				all: {
+					dataStoreVersion: pkgVersion,
+					...dataStoreLoadTelemetryProps(dataStoreContext),
+					inStagingMode: () => this.inStagingMode,
+					isDirty: () => this.isDirty,
+				},
+			},
+		});
 
 		// Validate that the Runtime is compatible with this DataStore.
 		const { ILayerCompatDetails: runtimeCompatDetails } =
 			dataStoreContext as FluidObject<ILayerCompatDetails>;
-		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this));
+		validateRuntimeCompatibility(runtimeCompatDetails, this.dispose.bind(this), this.mc);
 
 		if (contextSupportsFeature(dataStoreContext, notifiesReadOnlyState)) {
 			this._readonly = dataStoreContext.isReadOnly();
@@ -333,20 +446,14 @@ export class FluidDataStoreRuntime
 			);
 		}
 
+		this.policies = { ...defaultPolicies, ...policies };
+
 		this.submitMessagesWithoutEncodingHandles = contextSupportsFeature(
 			dataStoreContext,
 			encodeHandlesInContainerRuntime,
 		);
 		// We read this property here to avoid a compiler error (unused private member)
 		debugAssert(() => this.submitMessagesWithoutEncodingHandles !== undefined);
-
-		this.mc = createChildMonitoringContext({
-			logger: dataStoreContext.baseLogger,
-			namespace: "FluidDataStoreRuntime",
-			properties: {
-				all: { dataStoreId: uuid(), dataStoreVersion: pkgVersion },
-			},
-		});
 
 		this.id = dataStoreContext.id;
 		this.options = dataStoreContext.options;
@@ -401,7 +508,28 @@ export class FluidDataStoreRuntime
 		}
 
 		this.entryPoint = new FluidObjectHandle<FluidObject>(
-			new LazyPromise(async () => provideEntryPoint(this)),
+			new LazyPromise(async () =>
+				provideEntryPoint(this).catch((error) => {
+					let packagePath: readonly string[] = [];
+					try {
+						packagePath = this.dataStoreContext.packagePath;
+					} catch {
+						// `packagePath` may not be available during early load failures.
+					}
+					const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+						error,
+						"entryPointInitialization",
+					);
+					errorWrapped.addTelemetryProperties(
+						dataStoreLoadTelemetryProps({ id: this.dataStoreContext.id, packagePath }),
+					);
+					this.mc.logger.sendErrorEvent(
+						{ eventName: "EntryPointInitializationFailure" },
+						errorWrapped,
+					);
+					throw errorWrapped;
+				}),
+			),
 			"",
 			this.objectsRoutingContext,
 		);
@@ -437,29 +565,20 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		// Reference these properties to avoid unused private member errors.
-		// They're accessed via IFluidDataStoreRuntimeExperimental interface.
-		// eslint-disable-next-line no-void
-		void [this.inStagingMode, this.isDirty];
+		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeExperimental.inStagingMode
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.inStagingMode}
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	private get inStagingMode(): IFluidDataStoreRuntimeExperimental["inStagingMode"] {
-		return (
-			// eslint-disable-next-line import/no-deprecated
-			(this.dataStoreContext.containerRuntime as IContainerRuntimeBaseExperimental)
-				?.inStagingMode
-		);
+	public get inStagingMode(): boolean {
+		return this.dataStoreContext.containerRuntime.inStagingMode;
 	}
 
 	/**
-	 * Implementation of IFluidDataStoreRuntimeExperimental.isDirty
+	 * {@inheritDoc @fluidframework/datastore-definitions#IFluidDataStoreRuntime.isDirty}
 	 */
-	// eslint-disable-next-line import/no-deprecated
-	private get isDirty(): IFluidDataStoreRuntimeExperimental["isDirty"] {
+	public get isDirty(): boolean {
 		return this.pendingOpCount.value > 0;
 	}
 
@@ -633,7 +752,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(channel.id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 		);
@@ -651,7 +770,7 @@ export class FluidDataStoreRuntime
 			this,
 			this.dataStoreContext,
 			this.dataStoreContext.storage,
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			(content, localOpMetadata) => this.submitChannelOp(id, content, localOpMetadata),
 			(address: string) => this.setChannelDirty(address),
 			tree,
@@ -742,7 +861,7 @@ export class FluidDataStoreRuntime
 			object.setConnectionState(connected, clientId);
 		}
 
-		raiseConnectedEvent(this.logger, this, connected, clientId);
+		raiseConnectedEvent(extractTelemetryLoggerExt(this.logger), this, connected, clientId);
 	}
 
 	private _readonly: boolean;
@@ -1158,16 +1277,6 @@ export class FluidDataStoreRuntime
 		}
 	}
 
-	public submitMessage(
-		type: DataStoreMessageType,
-		// TODO: use something other than `any` here (breaking change)
-		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
-		content: any,
-		localOpMetadata: unknown,
-	): void {
-		this.submit(type, content, localOpMetadata);
-	}
-
 	/**
 	 * Submits the signal to be sent to other clients.
 	 * @param type - Type of the signal.
@@ -1227,7 +1336,7 @@ export class FluidDataStoreRuntime
 			type: channel.attributes.type,
 		};
 		this.pendingAttach.add(channel.id);
-		this.submit(DataStoreMessageType.Attach, message);
+		this.submit({ type: DataStoreMessageType.Attach, content: message });
 
 		const context = this.contexts.get(channel.id) as LocalChannelContextBase;
 		context.makeVisible();
@@ -1235,7 +1344,8 @@ export class FluidDataStoreRuntime
 
 	private submitChannelOp(address: string, contents: unknown, localOpMetadata: unknown): void {
 		const envelope: IEnvelope = { address, contents };
-		this.submit(DataStoreMessageType.ChannelOp, envelope, localOpMetadata);
+		this.verifyNotClosed();
+		this.submit({ type: DataStoreMessageType.ChannelOp, content: envelope }, localOpMetadata);
 	}
 
 	/**
@@ -1245,12 +1355,10 @@ export class FluidDataStoreRuntime
 	private readonly pendingOpCount: { value: number } = initializePendingOpCount();
 
 	private submit(
-		type: DataStoreMessageType,
-		content: unknown,
+		message: LocalFluidDataStoreRuntimeMessage,
 		localOpMetadata: unknown = undefined,
 	): void {
-		this.verifyNotClosed();
-		this.dataStoreContext.submitMessage(type, content, localOpMetadata);
+		this.dataStoreContext.submitMessage(message.type, message.content, localOpMetadata);
 		++this.pendingOpCount.value;
 	}
 
@@ -1260,6 +1368,14 @@ export class FluidDataStoreRuntime
 	 * This typically happens when we reconnect and there are unacked messages.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 *
+	 * @privateRemarks
+	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
+	 * over `string` that `IFluidDataStoreChannel` specifies. So long as local
+	 * submissions conform to this type all is well. (`unreachableCase` might be
+	 * reachable over time without better typing in this area if a mistake is made.)
+	 * See {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} comment
+	 * for opportunity to resolve this.
 	 */
 	public reSubmit(
 		type: DataStoreMessageType,
@@ -1267,7 +1383,7 @@ export class FluidDataStoreRuntime
 		// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 		content: any,
 		localOpMetadata: unknown,
-		squash?: boolean,
+		squash: boolean,
 	): void {
 		this.verifyNotClosed();
 
@@ -1287,7 +1403,8 @@ export class FluidDataStoreRuntime
 			}
 			case DataStoreMessageType.Attach: {
 				// For Attach messages, just submit them again.
-				this.submit(type, content, localOpMetadata);
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- `content` needs typed better than `any`
+				this.submit({ type, content }, localOpMetadata);
 				break;
 			}
 			default: {
@@ -1300,6 +1417,14 @@ export class FluidDataStoreRuntime
 	 * Revert a local op.
 	 * @param content - The content of the original message.
 	 * @param localOpMetadata - The local metadata associated with the original message.
+	 *
+	 * @privateRemarks
+	 * `type` parameter's type of `DataStoreMessageType` is a covariance exception
+	 * over `string` that `IFluidDataStoreChannel` specifies. So long as local
+	 * submissions conform to this type all is well. (`unreachableCase` might be
+	 * reachable over time without better typing in this area if a mistake is made.)
+	 * See {@link @fluidframework/runtime-definitions#FluidDataStoreMessage} comment
+	 * for opportunity to resolve this.
 	 */
 	public rollback?(
 		type: DataStoreMessageType,
@@ -1309,69 +1434,86 @@ export class FluidDataStoreRuntime
 		localOpMetadata: unknown,
 	): void {
 		this.verifyNotClosed();
+		assert(
+			!this.localOpActivity,
+			0xca2 /* localOpActivity must be undefined when entering rollback */,
+		);
+		this.localOpActivity = "rollback";
+		try {
+			// The op being rolled back was not/will not be submitted, so decrement the count.
+			--this.pendingOpCount.value;
 
-		// The op being rolled back was not/will not be submitted, so decrement the count.
-		--this.pendingOpCount.value;
+			switch (type) {
+				case DataStoreMessageType.ChannelOp: {
+					// For Operations, find the right channel and trigger resubmission on it.
+					const envelope = content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
 
-		switch (type) {
-			case DataStoreMessageType.ChannelOp: {
-				// For Operations, find the right channel and trigger resubmission on it.
-				const envelope = content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x2ed /* "There should be a channel context for the op" */);
-
-				channelContext.rollback(envelope.contents, localOpMetadata);
-				break;
+					channelContext.rollback(envelope.contents, localOpMetadata);
+					break;
+				}
+				default: {
+					throw new LoggingError(`Can't rollback ${type} message`);
+				}
 			}
-			default: {
-				throw new LoggingError(`Can't rollback ${type} message`);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 
 	// TODO: use something other than `any` here
 	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 	public async applyStashedOp(content: any): Promise<unknown> {
-		// The op being applied may have been submitted in a previous session, so we increment the count here.
-		// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
-		++this.pendingOpCount.value;
+		assert(
+			!this.localOpActivity,
+			0xca3 /* localOpActivity must be undefined when entering applyStashedOp */,
+		);
+		this.localOpActivity = "applyStashed";
+		try {
+			// The op being applied may have been submitted in a previous session, so we increment the count here.
+			// Either the ack will arrive and be processed, or that previous session's connection will end, at which point the op will be resubmitted.
+			++this.pendingOpCount.value;
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const type = content?.type as DataStoreMessageType;
-		switch (type) {
-			case DataStoreMessageType.Attach: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const attachMessage = content.content as IAttachMessage;
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			const type = content?.type as DataStoreMessageType;
+			switch (type) {
+				case DataStoreMessageType.Attach: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const attachMessage = content.content as IAttachMessage;
 
-				const flatBlobs = new Map<string, ArrayBufferLike>();
-				const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
+					const flatBlobs = new Map<string, ArrayBufferLike>();
+					const snapshotTree = buildSnapshotTree(attachMessage.snapshot.entries, flatBlobs);
 
-				const channelContext = this.createRehydratedLocalChannelContext(
-					attachMessage.id,
-					snapshotTree,
-					flatBlobs,
-				);
-				await channelContext.getChannel();
-				this.contexts.set(attachMessage.id, channelContext);
-				if (this.attachState === AttachState.Detached) {
-					this.localChannelContextQueue.set(attachMessage.id, channelContext);
-				} else {
-					channelContext.makeVisible();
-					this.pendingAttach.add(attachMessage.id);
+					const channelContext = this.createRehydratedLocalChannelContext(
+						attachMessage.id,
+						snapshotTree,
+						flatBlobs,
+					);
+					await channelContext.getChannel();
+					this.contexts.set(attachMessage.id, channelContext);
+					if (this.attachState === AttachState.Detached) {
+						this.localChannelContextQueue.set(attachMessage.id, channelContext);
+					} else {
+						channelContext.makeVisible();
+						this.pendingAttach.add(attachMessage.id);
+					}
+					return;
 				}
-				return;
+				case DataStoreMessageType.ChannelOp: {
+					// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+					const envelope = content.content as IEnvelope;
+					const channelContext = this.contexts.get(envelope.address);
+					assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
+					await channelContext.getChannel();
+					return channelContext.applyStashedOp(envelope.contents);
+				}
+				default: {
+					unreachableCase(type);
+				}
 			}
-			case DataStoreMessageType.ChannelOp: {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-				const envelope = content.content as IEnvelope;
-				const channelContext = this.contexts.get(envelope.address);
-				assert(!!channelContext, 0x184 /* "There should be a channel context for the op" */);
-				await channelContext.getChannel();
-				return channelContext.applyStashedOp(envelope.contents);
-			}
-			default: {
-				unreachableCase(type);
-			}
+		} finally {
+			this.localOpActivity = undefined;
 		}
 	}
 
@@ -1379,7 +1521,7 @@ export class FluidDataStoreRuntime
 	 * Indicates the given channel is dirty from Summarizer's point of view,
 	 * i.e. it has local changes that need to be included in the summary.
 	 *
-	 * @remarks - If a channel's changes are rolled back or rebased away, we won't
+	 * @remarks If a channel's changes are rolled back or rebased away, we won't
 	 * clear the dirty flag set here.
 	 */
 	private setChannelDirty(address: string): void {
@@ -1433,8 +1575,9 @@ export class FluidDataStoreRuntime
 			...tagCodeArtifacts({
 				channelType,
 				channelId,
-				fluidDataStoreId: this.id,
-				fluidDataStorePackagePath: this.dataStoreContext.packagePath.join("/"),
+				// Properties renamed in 2.103.0 (present via logger common props):
+				// fluidDataStoreId -> dataStoreId
+				// fluidDataStorePackagePath -> dataStorePackagePath
 			}),
 			stack: generateStack(30),
 		});
@@ -1521,6 +1664,7 @@ export const mixinRequestHandler = (
 export const mixinSummaryHandler = (
 	handler: (
 		runtime: FluidDataStoreRuntime,
+		setCurrentSummarizeStep: (currentStep: string) => void,
 	) => Promise<{ path: string[]; content: string } | undefined>,
 	Base: typeof FluidDataStoreRuntime = FluidDataStoreRuntime,
 ): typeof FluidDataStoreRuntime =>
@@ -1548,12 +1692,21 @@ export const mixinSummaryHandler = (
 			summary.summary.tree[firstName] = blob;
 		}
 
-		async summarize(...args: any[]): Promise<ISummaryTreeWithStats> {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-			const summary = await super.summarize(...args);
+		async summarize(
+			fullTree: boolean = false,
+			trackState: boolean = true,
+			telemetryContext?: ITelemetryContext,
+		): Promise<ISummaryTreeWithStats> {
+			const summary = await super.summarize(fullTree, trackState, telemetryContext);
 
 			try {
-				const content = await handler(this);
+				const content = await handler(this, (currentStep: string) =>
+					telemetryContext?.set(
+						currentSummarizeStepPrefix,
+						currentSummarizeStepPropertyName,
+						`mixinSummaryHandler:${currentStep}`,
+					),
+				);
 				if (content !== undefined) {
 					this.addBlob(summary, content.path, content.content);
 				}

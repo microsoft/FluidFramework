@@ -5,7 +5,7 @@
 
 import type { OdspTestDriver } from "@fluid-private/test-drivers";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IPersistedCache } from "@fluidframework/odsp-driver-definitions/internal";
+import type { IPersistedCache } from "@fluidframework/driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import {
 	getUnexpectedLogErrorException,
@@ -38,6 +38,7 @@ import {
 	getLoaderApi,
 	CompatApis,
 	getDriverApi,
+	getCompatModeFromKind,
 } from "./testApi.js";
 import { getRequestedVersion } from "./versionUtils.js";
 
@@ -197,6 +198,7 @@ function createCompatSuite(
  * Get versioned APIs for the given config.
  */
 function getVersionedApis(config: CompatConfig): CompatApis {
+	const mode = getCompatModeFromKind(config.kind);
 	// If this is cross-clients compat scenario, make sure we use the correct versions
 	if (config.kind === CompatKind.CrossClient) {
 		assert(
@@ -211,6 +213,7 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		const dataRuntime = getDataRuntimeApi(config.createVersion);
 		const dataRuntimeForLoading = getDataRuntimeApi(config.loadVersion);
 		return {
+			mode,
 			containerRuntime: getContainerRuntimeApi(config.createVersion),
 			containerRuntimeForLoading: getContainerRuntimeApi(config.loadVersion),
 			dataRuntime,
@@ -224,17 +227,44 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 		};
 	}
 
+	// Outside of cross-client compat, the same set of APIs is used for both creating and loading
+	// containers, so the "ForLoading" APIs mirror the ones above.
 	const dataRuntimeApi = getDataRuntimeApi(
-		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.dataRuntime),
+			requested: config.dataRuntime,
+		}),
+	);
+	const containerRuntimeApi = getContainerRuntimeApi(
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.containerRuntime),
+			requested: config.containerRuntime,
+		}),
+	);
+	const driverApi = getDriverApi(
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.driver),
+			requested: config.driver,
+		}),
+	);
+	const loaderApi = getLoaderApi(
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.loader),
+			requested: config.loader,
+		}),
 	);
 	return {
-		containerRuntime: getContainerRuntimeApi(
-			getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
-		),
+		mode,
+		containerRuntime: containerRuntimeApi,
+		containerRuntimeForLoading: containerRuntimeApi,
 		dataRuntime: dataRuntimeApi,
+		dataRuntimeForLoading: dataRuntimeApi,
 		dds: dataRuntimeApi.dds,
-		driver: getDriverApi(getRequestedVersion(testBaseVersion(config.driver), config.driver)),
-		loader: getLoaderApi(getRequestedVersion(testBaseVersion(config.loader), config.loader)),
+		ddsForLoading: dataRuntimeApi.dds,
+		driver: driverApi,
+		driverForLoading: driverApi,
+		loader: loaderApi,
+		loaderForLoading: loaderApi,
 	};
 }
 
@@ -294,7 +324,7 @@ function createCompatDescribe(): DescribeCompat {
 	const createCompatSuiteWithDefault = (
 		tests: (this: Mocha.Suite, provider: () => ITestObjectProvider, apis: CompatApis) => void,
 		compatVersion: CompatType,
-	) => {
+	): ((this: Mocha.Suite) => void) => {
 		switch (compatVersion) {
 			case "FullCompat":
 				return createCompatSuite(tests, undefined);

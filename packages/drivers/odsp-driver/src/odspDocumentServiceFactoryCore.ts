@@ -9,6 +9,8 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
+	IFileEntry,
+	IPersistedCache,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -17,9 +19,7 @@ import {
 } from "@fluidframework/driver-utils/internal";
 import {
 	type HostStoragePolicy,
-	type IFileEntry,
 	type IOdspUrlParts,
-	type IPersistedCache,
 	type IRelaySessionAwareDriverFactory,
 	type ISharingLinkKind,
 	type ISocketStorageDiscovery,
@@ -149,6 +149,7 @@ export class OdspDocumentServiceFactoryCore
 		const fileEntry: IFileEntry = {
 			resolvedUrl: odspResolvedUrl,
 			docId: odspResolvedUrl.hashedDocumentId,
+			fileVersion: undefined,
 		};
 		const cacheAndTracker = createOdspCacheAndTracker(
 			this.persistedCache,
@@ -287,7 +288,11 @@ export class OdspDocumentServiceFactoryCore
 			createOdspCacheAndTracker(
 				this.persistedCache,
 				this.nonPersistentCache,
-				{ resolvedUrl: odspResolvedUrl, docId: odspResolvedUrl.hashedDocumentId },
+				{
+					resolvedUrl: odspResolvedUrl,
+					docId: odspResolvedUrl.hashedDocumentId,
+					fileVersion: odspResolvedUrl.fileVersion,
+				},
 				extLogger,
 				clientIsSummarizer,
 			);

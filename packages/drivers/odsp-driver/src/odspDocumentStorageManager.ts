@@ -17,28 +17,31 @@ import {
 	type IVersion,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
-import { NonRetryableError, RateLimiter } from "@fluidframework/driver-utils/internal";
+import {
+	getKeyForCacheEntry,
+	NonRetryableError,
+	RateLimiter,
+} from "@fluidframework/driver-utils/internal";
 import {
 	type IOdspResolvedUrl,
 	type ISnapshotOptions,
 	type InstrumentedStorageTokenFetcher,
 	OdspErrorTypes,
-	getKeyForCacheEntry,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	generateStack,
+	type IConfigProvider,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	type IConfigProvider,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	HostStoragePolicyInternal,
 	IDocumentStorageGetVersionsResponse,
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	ISnapshotCachedEntry,
 	ISnapshotCachedEntry2,
 	IVersionedValueWithEpoch,
@@ -104,7 +107,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
 		private readonly getAuthHeader: InstrumentedStorageTokenFetcher,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly fetchFullSnapshot: boolean,
 		private readonly cache: IOdspCache,
 		private readonly hostPolicy: HostStoragePolicyInternal,
@@ -295,7 +298,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						)
 						.then(
 							async (
-								// eslint-disable-next-line import/no-deprecated
+								// eslint-disable-next-line import-x/no-deprecated
 								snapshotCachedEntry: ISnapshotCachedEntry | ISnapshotCachedEntry2,
 							) => {
 								if (snapshotCachedEntry !== undefined) {
@@ -636,6 +639,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				tokenFetchOptions,
 				loadingGroupId,
 				options,
+				this.logger,
 				this.snapshotFormatFetchType,
 				controller,
 				this.epochTracker,
@@ -721,6 +725,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		this.checkSnapshotUrl();
 
 		// Set the module promise right away, so as to not call it twice.
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.summaryModuleP === undefined) {
 			this.summaryModuleP = this.getDelayLoadedSummaryManager();
 		}
@@ -757,6 +762,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (!this.odspSummaryUploadManager) {
 			this.odspSummaryUploadManager = await this.summaryModuleP
 				.then(async (m) => {

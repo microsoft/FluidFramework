@@ -88,12 +88,9 @@ describe("TaskManager", () => {
 		});
 
 		it("Can create a connected TaskManager", () => {
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok(
-				(taskManager1 as TaskManagerClass).connected,
-				"TaskManager should be connected",
-			);
+			assert(taskManager1 !== undefined, "Could not create a task manager");
+			assert(taskManager1.isAttached(), "TaskManager should be attached");
+			assert((taskManager1 as TaskManagerClass).connected, "TaskManager should be connected");
 		});
 
 		describe("Volunteering for a task", () => {
@@ -646,6 +643,28 @@ describe("TaskManager", () => {
 					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
 					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
 				});
+
+				it("Can abandon and immediately attempt to reacquire a task while detached", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					assert.ok(!taskManager1.queued(taskId), "Should not be queued");
+					assert.ok(!taskManager1.assigned(taskId), "Should not be assigned");
+					const revolunteerTaskP = taskManager1.volunteerForTask(taskId);
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+					const isAssigned2 = await revolunteerTaskP;
+					assert.ok(isAssigned2, "Should resolve true");
+					assert.ok(taskManager1.queued(taskId), "Should be queued");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+				});
 			});
 
 			describe("Subscribing to a task", () => {
@@ -909,9 +928,9 @@ describe("TaskManager", () => {
 
 		it("Can create a TaskManager while disconnected", () => {
 			containerRuntime1.connected = false;
-			assert.ok(taskManager1, "Could not create a task manager");
-			assert.ok(taskManager1.isAttached(), "TaskManager should be attached");
-			assert.ok(!taskManager1.connected, "TaskManager should be disconnected");
+			assert(taskManager1 !== undefined, "Could not create a task manager");
+			assert(taskManager1.isAttached(), "TaskManager should be attached");
+			assert(!taskManager1.connected, "TaskManager should be disconnected");
 		});
 
 		describe("Behavior transitioning to disconnect", () => {
@@ -1052,6 +1071,106 @@ describe("TaskManager", () => {
 					assert.ok(
 						!taskManager1.subscribed(taskId),
 						"Task manager 1 should not be subscribed",
+					);
+				});
+
+				it("Can subscribe to a task while disconnected and pending abandon won't be applied", async () => {
+					const taskId = "taskId";
+					const volunteerTaskP = taskManager1.volunteerForTask(taskId);
+					containerRuntimeFactory.processAllMessages();
+					const isAssigned = await volunteerTaskP;
+					assert.ok(isAssigned, "Should resolve true");
+					assert.ok(taskManager1.assigned(taskId), "Should be assigned");
+
+					taskManager1.abandon(taskId);
+					// Abandon won't be processed anymore since we're now disconnected and we
+					// don't resubmit ops.
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId);
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.equal(taskManager1.assigned(taskId), true, "Should be assigned");
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be assigned all tasks",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/complete after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.complete(taskId3);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[false, true, false],
+						"Should only be assigned task 2",
+					);
+				});
+
+				it("Can abandon subscription to multiple tasks while disconnected and abandon/resubscribe after", async () => {
+					const taskId1 = "taskId1";
+					const taskId2 = "taskId2";
+					const taskId3 = "taskId3";
+					containerRuntime1.connected = false;
+
+					taskManager1.subscribeToTask(taskId1);
+					taskManager1.subscribeToTask(taskId2);
+					taskManager1.subscribeToTask(taskId3);
+
+					containerRuntime1.connected = true;
+					containerRuntimeFactory.processAllMessages();
+
+					taskManager1.abandon(taskId1);
+					taskManager1.subscribeToTask(taskId1);
+					containerRuntimeFactory.processAllMessages();
+
+					assert.deepEqual(
+						[
+							taskManager1.assigned(taskId1),
+							taskManager1.assigned(taskId2),
+							taskManager1.assigned(taskId3),
+						],
+						[true, true, true],
+						"Should be subscribed to all tasks",
 					);
 				});
 			});

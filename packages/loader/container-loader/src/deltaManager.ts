@@ -16,7 +16,8 @@ import type {
 	ITelemetryBaseEvent,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
-import type { IThrottlingWarning } from "@fluidframework/core-interfaces/internal";
+import { JsonParse } from "@fluidframework/core-interfaces/internal";
+import type { IThrottlingWarning, JsonString } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ConnectionMode } from "@fluidframework/driver-definitions";
 import {
@@ -29,20 +30,21 @@ import {
 	type ISignalMessage,
 	type IClientDetails,
 	type IClientConfiguration,
+	type ISequencedDocumentSystemMessage,
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
-	UsageError,
+	EventEmitterWithErrorHandling,
 	extractSafePropertiesFromMessage,
 	isFluidError,
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
 	normalizeError,
 	safeRaiseEvent,
-	EventEmitterWithErrorHandling,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -131,7 +133,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
  */
 function logIfFalse(
 	condition: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	event: string | ITelemetryGenericEventExt,
 ): condition is true {
 	if (condition) {
@@ -189,6 +191,12 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private lastProcessedMessage: ISequencedDocumentMessage | undefined;
 
 	/**
+	 * Map of clientId to the last observed message from that client. This is used to validate
+	 * that clientSequenceNumbers are always increasing for a given clientId.
+	 */
+	private readonly lastObservedMessageByClient = new Map<string, ISequencedDocumentMessage>();
+
+	/**
 	 * Count the number of noops sent by the client which may not be acked
 	 */
 	private noOpCount: number = 0;
@@ -210,7 +218,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 	private initSequenceNumber: number = 0;
 
 	private readonly _inbound: DeltaQueue<ISequencedDocumentMessage>;
-	private readonly _inboundSignal: DeltaQueue<ISignalMessage>;
+	private readonly _inboundSignal: DeltaQueue<
+		ISignalMessage<{ type: never; content: JsonString<unknown> }>
+	>;
 
 	private _closed = false;
 	private _disposed = false;
@@ -410,7 +420,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {
@@ -433,7 +443,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					this.close(normalizeError(error));
 				}
 			},
-			signalHandler: (signals: ISignalMessage[]) => {
+			signalHandler: (
+				signals: ISignalMessage<{ type: never; content: JsonString<unknown> }>[],
+			) => {
 				for (const signal of signals) {
 					this._inboundSignal.push(signal);
 				}
@@ -474,14 +486,16 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		});
 
 		// Inbound signal queue
-		this._inboundSignal = new DeltaQueue<ISignalMessage>((message) => {
+		this._inboundSignal = new DeltaQueue<
+			ISignalMessage<{ type: never; content: JsonString<unknown> }>
+		>((message) => {
 			if (this.handler === undefined) {
 				throw new Error("Attempted to process an inbound signal without a handler attached");
 			}
 
 			this.handler.processSignal({
 				...message,
-				content: JSON.parse(message.content as string),
+				content: JsonParse(message.content),
 			});
 		});
 
@@ -654,6 +668,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 			throw new Error("Delta manager is not attached");
 		}
 
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 		if (this.deltaStorage === undefined) {
 			this.deltaStorage = await docService.connectToDeltaStorage();
 		}
@@ -722,7 +737,6 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				fetchReason,
 			);
 
-			// eslint-disable-next-line no-constant-condition
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -857,6 +871,54 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		return `${m.clientId}-${m.type}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
 	}
 
+	/**
+	 * Validates that the clientSequenceNumber for a given clientId is always increasing.
+	 * @param message - The message to validate.
+	 */
+	private validateClientSequenceNumberConsistency(message: ISequencedDocumentMessage): void {
+		// Once client leaves, we no longer need to track its last observed message as the client won't send messages.
+		if (message.type === MessageType.ClientLeave) {
+			const systemLeaveMessage = message as ISequencedDocumentSystemMessage;
+			const clientId = JSON.parse(systemLeaveMessage.data) as string;
+			this.lastObservedMessageByClient.delete(clientId);
+		}
+
+		if (message.clientId === null) {
+			return;
+		}
+
+		const lastObservedClientMessage = this.lastObservedMessageByClient.get(message.clientId);
+		if (
+			lastObservedClientMessage !== undefined &&
+			message.clientSequenceNumber <= lastObservedClientMessage.clientSequenceNumber
+		) {
+			const messagePayloadToLog = (m: ISequencedDocumentMessage): string => {
+				return `${m.type}-${m.sequenceNumber}-${m.clientSequenceNumber}-${m.minimumSequenceNumber}-${m.referenceSequenceNumber}-${m.timestamp}`;
+			};
+			// This looks like a data corruption issue where the clientSequenceNumber for a given clientId is not
+			// increasing. The Fluid Service ensures that it only processes ops with contiguous increasing
+			// clientSequenceNumbers for a given clientId.
+			// So, if we see this error, it is likely a service issue.
+			// One example of this is if the service sequences the same op more than once. In this case, all the
+			// properties except the sequenceNumber will be the same.
+			// Note that we are not checking for gaps in clientSequenceNumber because very old clients may have gaps
+			// as per the op stream in the snapshot tests under test/snapshots/content.
+			const error = DataCorruptionError.create(
+				"Found two messages with non-increasing clientSequenceNumber for a given client. Likely to be a service issue",
+				"DeltaManager.validateClientSequenceNumberConsistency",
+				message,
+				{
+					clientId: this.connectionManager.clientId,
+					sequenceNumber: message.sequenceNumber,
+					message1: messagePayloadToLog(lastObservedClientMessage),
+					message2: messagePayloadToLog(message),
+				},
+			);
+			this.close(error);
+		}
+		this.lastObservedMessageByClient.set(message.clientId, message);
+	}
+
 	private enqueueMessages(
 		messages: ISequencedDocumentMessage[],
 		reason: string,
@@ -907,6 +969,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					duplicate++;
 				} else if (message.sequenceNumber !== prev + 1) {
 					gap++;
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (firstMissing === undefined) {
 						firstMissing = prev + 1;
 					}
@@ -995,6 +1058,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 					}
 				}
 			} else if (message.sequenceNumber === this.lastQueuedSequenceNumber + 1) {
+				this.validateClientSequenceNumberConsistency(message);
 				this.lastQueuedSequenceNumber = message.sequenceNumber;
 				this.previouslyProcessedMessage = message;
 				this._inbound.push(message);

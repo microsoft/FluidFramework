@@ -25,7 +25,11 @@ import {
 	MessageType,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
+import {
+	ISummaryTreeWithStats,
+	type IRuntimeMessageCollection,
+	type ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 import { SharedObject, IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import axios from "axios";
@@ -274,6 +278,7 @@ export class SharedPropertyTree extends SharedObject {
 		}
 
 		if (doSubmit || !isEmpty(changes)) {
+			// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 			this.applyChangeSet(changes, metadata || {});
 			this.root.cleanDirty();
 		}
@@ -359,29 +364,24 @@ export class SharedPropertyTree extends SharedObject {
 		this._root._reportDirtinessToView();
 	}
 
-	/**
-	 * Process an operation
-	 *
-	 * @param message - the message to prepare
-	 * @param local - whether the message was sent by the local client
-	 * @param localOpMetadata - For local client messages, this is the metadata that was submitted with the message.
-	 * For messages from a remote client, this will be undefined.
-	 */
-	protected processCore(
-		message: ISequencedDocumentMessage,
-		local: boolean,
-		localOpMetadata: unknown,
-	) {
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent.contents);
+		}
+	}
+
+	private processMessage(messageEnvelope: ISequencedMessageEnvelope, contents: unknown) {
 		if (
-			message.type === MessageType.Operation &&
-			message.sequenceNumber > this.skipSequenceNumber
+			messageEnvelope.type === MessageType.Operation &&
+			messageEnvelope.sequenceNumber > this.skipSequenceNumber
 		) {
 			const change: IPropertyTreeMessage = this.decodeMessage(
-				cloneDeep(message.contents as IPropertyTreeMessage),
+				cloneDeep(contents as IPropertyTreeMessage),
 			);
 			const content: IRemotePropertyTreeMessage = {
 				...change,
-				sequenceNumber: message.sequenceNumber,
+				sequenceNumber: messageEnvelope.sequenceNumber,
 			};
 			switch (content.op) {
 				case OpKind.ChangeSet:
@@ -642,6 +642,7 @@ export class SharedPropertyTree extends SharedObject {
 					throw new Error("Invalid Snapshot.");
 				}
 
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 				if (snapshotSummary.remoteHeadGuid === undefined) {
 					// The summary does not contain a remoteHeadGuid. This means the summary has
 					// been created by an old version of PropertyDDS, that did not yet have this patch.
@@ -722,12 +723,13 @@ export class SharedPropertyTree extends SharedObject {
 
 				// eslint-disable-next-line @typescript-eslint/prefer-for-of
 				for (let i = 0; i < missingDeltas.length; i++) {
-					if (missingDeltas[i].sequenceNumber < commitMetadata.sequenceNumber) {
+					const missingDelta = missingDeltas[i];
+					if (missingDelta.sequenceNumber < commitMetadata.sequenceNumber) {
 						// TODO: Don't spy on the DeltaManager's private internals.
 						// This is trying to mimic what DeltaManager does in processInboundMessage, but there's no guarantee that
 						// private implementation won't change.
 						const remoteChange: IPropertyTreeMessage = JSON.parse(
-							missingDeltas[i].contents as string,
+							missingDelta.contents as string,
 						).contents.contents.content.contents;
 						const { changeSet } = (
 							await axios.get(
@@ -746,7 +748,7 @@ export class SharedPropertyTree extends SharedObject {
 							this.addRemoteChange(remoteChange);
 						}
 					} else {
-						this.processCore(missingDeltas[i], false, {});
+						this.processMessage(missingDelta, missingDelta.contents);
 					}
 				}
 

@@ -14,18 +14,19 @@ import {
 import type { ApiDocument } from "../ApiDocument.js";
 import type { Section } from "../mdast/index.js";
 
-import {
-	doesItemRequireOwnDocument,
-	shouldItemBeIncluded,
-} from "./ApiItemTransformUtilities.js";
 import { apiItemToDocument, apiItemToSections } from "./TransformApiItem.js";
-import { checkForDuplicateDocumentPaths, createDocument } from "./Utilities.js";
 import {
 	type ApiItemTransformationConfiguration,
 	type ApiItemTransformationOptions,
 	getApiItemTransformationConfigurationWithDefaults,
 } from "./configuration/index.js";
 import { createBreadcrumbParagraph, createEntryPointList } from "./helpers/index.js";
+import {
+	checkForDuplicateDocumentPaths,
+	createDocument,
+	doesItemRequireOwnDocument,
+	shouldItemBeIncluded,
+} from "./utilities/index.js";
 
 /**
  * Renders the provided model and its contents to a series of {@link ApiDocument}s.
@@ -50,15 +51,15 @@ export function transformApiModel(options: ApiItemTransformationOptions): ApiDoc
 
 	if (packages.length === 0) {
 		logger.warning("No packages found.");
-		return [];
+		return [...documentsMap.values()];
 	}
 
 	// Filter out packages not wanted per user config
 	const filteredPackages = apiModel.packages.filter((apiPackage) => !excludeItem(apiPackage));
 
 	if (filteredPackages.length === 0) {
-		logger.warning("No packages found after filtering per `skipPackages` configuration.");
-		return [];
+		logger.warning("No packages found after filtering per `exclude` configuration.");
+		return [...documentsMap.values()];
 	}
 
 	// For each package, walk the child graph to find API items which should be rendered to their own document

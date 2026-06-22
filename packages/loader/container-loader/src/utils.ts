@@ -4,9 +4,9 @@
  */
 
 import {
-	Uint8ArrayToString,
 	bufferToString,
 	stringToBuffer,
+	Uint8ArrayToArrayBuffer,
 } from "@fluid-internal/client-utils";
 import { assert, compareArrays, unreachableCase } from "@fluidframework/core-utils/internal";
 import { type ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
@@ -34,7 +34,7 @@ import type { ISerializableBlobContents } from "./containerStorageAdapter.js";
 import type {
 	IPendingContainerState,
 	IPendingDetachedContainerState,
-	ISnapshotInfo,
+	SerializedSnapshotInfo,
 	SnapshotWithBlobs,
 } from "./serializedStateManager.js";
 
@@ -81,7 +81,18 @@ export interface IParsedUrl {
  * @legacy @beta
  */
 export function tryParseCompatibleResolvedUrl(url: string): IParsedUrl | undefined {
-	const parsed = new URL(url);
+	// `new URL(...)` throws `TypeError` for any string that isn't a well-formed
+	// absolute URL. The `try*` name in this function's identifier implies a
+	// non-throwing contract on bad input, and callers all gate on `=== undefined`
+	// to surface their own errors — letting the built-in throw escape here would
+	// bypass those caller-supplied error messages for the broadest class of bad
+	// URLs ("not absolute", "invalid characters", etc.).
+	let parsed: URL;
+	try {
+		parsed = new URL(url);
+	} catch {
+		return undefined;
+	}
 	if (typeof parsed.pathname !== "string") {
 		throw new LoggingError("Failed to parse pathname");
 	}
@@ -132,35 +143,39 @@ export function combineAppAndProtocolSummary(
  * to align detached container format with IPendingContainerState
  * @param summary - ISummaryTree
  */
-function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBlobs {
-	let blobContents: ISerializableBlobContents = {};
-	const treeNode: ISnapshotTree = {
+function convertSummaryToISnapshot(
+	summary: ISummaryTree,
+	blobContents = new Map<string, ArrayBuffer>(),
+): ISnapshot {
+	const snapshotTree: ISnapshotTree = {
 		blobs: {},
 		trees: {},
 		id: uuid(),
 		unreferenced: summary.unreferenced,
 		groupId: summary.groupId,
 	};
+
 	for (const [key, summaryObject] of Object.entries(summary.tree)) {
 		switch (summaryObject.type) {
 			case SummaryType.Tree: {
-				const innerSnapshot = convertSummaryToSnapshotAndBlobs(summaryObject);
-				treeNode.trees[key] = innerSnapshot.baseSnapshot;
-				blobContents = { ...blobContents, ...innerSnapshot.snapshotBlobs };
+				const innerSnapshot = convertSummaryToISnapshot(summaryObject, blobContents);
+				snapshotTree.trees[key] = innerSnapshot.snapshotTree;
 				break;
 			}
 			case SummaryType.Attachment: {
-				treeNode.blobs[key] = summaryObject.id;
+				snapshotTree.blobs[key] = summaryObject.id;
 				break;
 			}
 			case SummaryType.Blob: {
 				const blobId = uuid();
-				treeNode.blobs[key] = blobId;
-				const contentString: string =
+				snapshotTree.blobs[key] = blobId;
+				blobContents.set(
+					blobId,
 					summaryObject.content instanceof Uint8Array
-						? Uint8ArrayToString(summaryObject.content)
-						: summaryObject.content;
-				blobContents[blobId] = contentString;
+						? Uint8ArrayToArrayBuffer(summaryObject.content)
+						: stringToBuffer(summaryObject.content, "utf8"),
+				);
+
 				break;
 			}
 			case SummaryType.Handle: {
@@ -174,8 +189,14 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
 			}
 		}
 	}
-	const pendingSnapshot = { baseSnapshot: treeNode, snapshotBlobs: blobContents };
-	return pendingSnapshot;
+	return {
+		blobContents,
+		latestSequenceNumber: undefined,
+		ops: [],
+		sequenceNumber: 0,
+		snapshotFormatV: 1,
+		snapshotTree,
+	};
 }
 
 /**
@@ -185,7 +206,7 @@ function convertSummaryToSnapshotAndBlobs(summary: ISummaryTree): SnapshotWithBl
  * Note, this assumes the ISnapshot sequence number is defined. Otherwise an assert will be thrown
  * @param snapshot - ISnapshot
  */
-export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInfo {
+export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): SerializedSnapshotInfo {
 	assert(
 		snapshot.sequenceNumber !== undefined,
 		0x93a /* Snapshot sequence number is missing */,
@@ -209,10 +230,9 @@ export function convertSnapshotToSnapshotInfo(snapshot: ISnapshot): ISnapshotInf
  * @param snapshot - ISnapshot
  */
 export function convertSnapshotInfoToSnapshot(
-	snapshotInfo: ISnapshotInfo,
-	snapshotSequenceNumber: number,
+	snapshotInfo: SerializedSnapshotInfo,
 ): ISnapshot {
-	const blobContents = new Map<string, ArrayBufferLike>();
+	const blobContents = new Map<string, ArrayBuffer>();
 	for (const [blobId, serializedContent] of Object.entries(snapshotInfo.snapshotBlobs)) {
 		blobContents.set(blobId, stringToBuffer(serializedContent, "utf8"));
 	}
@@ -220,7 +240,7 @@ export function convertSnapshotInfoToSnapshot(
 		snapshotTree: snapshotInfo.baseSnapshot,
 		blobContents,
 		ops: [],
-		sequenceNumber: snapshotSequenceNumber,
+		sequenceNumber: snapshotInfo.snapshotSequenceNumber,
 		latestSequenceNumber: undefined,
 		snapshotFormatV: 1,
 	};
@@ -231,30 +251,30 @@ export function convertSnapshotInfoToSnapshot(
  * @param protocolSummaryTree - Protocol Summary Tree
  * @param appSummaryTree - App Summary Tree
  */
-function convertProtocolAndAppSummaryToSnapshotAndBlobs(
+function convertProtocolAndAppSummaryToISnapshot(
 	protocolSummaryTree: ISummaryTree,
 	appSummaryTree: ISummaryTree,
-): SnapshotWithBlobs {
+): ISnapshot {
 	const combinedSummary: ISummaryTree = {
 		type: SummaryType.Tree,
 		tree: { ...appSummaryTree.tree },
 	};
 
 	combinedSummary.tree[".protocol"] = protocolSummaryTree;
-	const snapshotTreeWithBlobContents = convertSummaryToSnapshotAndBlobs(combinedSummary);
+	const snapshotTreeWithBlobContents = convertSummaryToISnapshot(combinedSummary);
 	return snapshotTreeWithBlobContents;
 }
 
-export const getSnapshotTreeAndBlobsFromSerializedContainer = (
+export const getISnapshotFromSerializedContainer = (
 	detachedContainerSnapshot: ISummaryTree,
-): SnapshotWithBlobs => {
+): ISnapshot => {
 	assert(
 		isCombinedAppAndProtocolSummary(detachedContainerSnapshot),
 		0x8e6 /* Protocol and App summary trees should be present */,
 	);
 	const protocolSummaryTree = detachedContainerSnapshot.tree[".protocol"];
 	const appSummaryTree = detachedContainerSnapshot.tree[".app"];
-	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToSnapshotAndBlobs(
+	const snapshotTreeWithBlobContents = convertProtocolAndAppSummaryToISnapshot(
 		protocolSummaryTree,
 		appSummaryTree,
 	);
@@ -265,33 +285,34 @@ export function getProtocolSnapshotTree(snapshot: ISnapshotTree): ISnapshotTree 
 	return ".protocol" in snapshot.trees ? snapshot.trees[".protocol"] : snapshot;
 }
 
-export const combineSnapshotTreeAndSnapshotBlobs = (
-	baseSnapshot: ISnapshotTree,
-	snapshotBlobs: ISerializableBlobContents,
-): ISnapshotTreeWithBlobContents => {
-	const blobsContents: { [path: string]: ArrayBufferLike } = {};
+export const combineSnapshotTreeAndSnapshotBlobs = ({
+	blobContents,
+	snapshotTree,
+}: Pick<ISnapshot, "blobContents" | "snapshotTree">): ISnapshotTreeWithBlobContents => {
+	const currentTreeBlobs: { [path: string]: ArrayBufferLike } = {};
 
 	// Process blobs in the current level
-	for (const [, id] of Object.entries(baseSnapshot.blobs)) {
-		if (snapshotBlobs[id] !== undefined) {
-			blobsContents[id] = stringToBuffer(snapshotBlobs[id], "utf8");
+	for (const [, id] of Object.entries(snapshotTree.blobs)) {
+		const blob = blobContents.get(id);
+		if (blob !== undefined) {
+			currentTreeBlobs[id] = blob;
 		}
 	}
 
 	// Recursively process trees in the current level
 	const trees: { [path: string]: ISnapshotTreeWithBlobContents } = {};
-	for (const [path, tree] of Object.entries(baseSnapshot.trees)) {
-		trees[path] = combineSnapshotTreeAndSnapshotBlobs(tree, snapshotBlobs);
+	for (const [path, tree] of Object.entries(snapshotTree.trees)) {
+		trees[path] = combineSnapshotTreeAndSnapshotBlobs({ snapshotTree: tree, blobContents });
 	}
 
 	// Create a new snapshot tree with blob contents and processed trees
-	const snapshotTreeWithBlobContents: ISnapshotTreeWithBlobContents = {
-		...baseSnapshot,
-		blobsContents,
+	const snapshot: ISnapshotTreeWithBlobContents = {
+		...snapshotTree,
+		blobsContents: currentTreeBlobs,
 		trees,
 	};
 
-	return snapshotTreeWithBlobContents;
+	return snapshot;
 };
 
 export function isDeltaStreamConnectionForbiddenError(
@@ -322,6 +343,21 @@ function isPendingDetachedContainerState(
 	}
 	return true;
 }
+/**
+ * Converts an ISnapshot to a SnapshotWithBlobs, extracting and serializing its blob contents.
+ * @param snapshot - The ISnapshot to convert.
+ * @returns A SnapshotWithBlobs containing the base snapshot and serialized blob contents.
+ */
+export function convertISnapshotToSnapshotWithBlobs(snapshot: ISnapshot): SnapshotWithBlobs {
+	const snapshotBlobs: ISerializableBlobContents = {};
+	for (const [id, blob] of snapshot.blobContents.entries()) {
+		snapshotBlobs[id] = bufferToString(blob, "utf8");
+	}
+	return {
+		baseSnapshot: snapshot.snapshotTree,
+		snapshotBlobs,
+	};
+}
 
 /**
  * Parses the given string into {@link IPendingDetachedContainerState} format,
@@ -339,12 +375,10 @@ export function getDetachedContainerStateFromSerializedContainer(
 		return parsedContainerState;
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 	} else if (isCombinedAppAndProtocolSummary(parsedContainerState)) {
-		const { baseSnapshot, snapshotBlobs } =
-			getSnapshotTreeAndBlobsFromSerializedContainer(parsedContainerState);
+		const snapshot = getISnapshotFromSerializedContainer(parsedContainerState);
 		const detachedContainerState: IPendingDetachedContainerState = {
 			attached: false,
-			baseSnapshot,
-			snapshotBlobs,
+			...convertISnapshotToSnapshotWithBlobs(snapshot),
 			hasAttachmentBlobs: parsedContainerState.tree[hasBlobsSummaryTree] !== undefined,
 		};
 		return detachedContainerState;
@@ -357,6 +391,12 @@ export function getDetachedContainerStateFromSerializedContainer(
  * Blindly parses the given string into {@link IPendingContainerState} format.
  * This is the inverse of the JSON.stringify call in {@link SerializedStateManager.getPendingLocalState}
  */
+export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string,
+): IPendingContainerState;
+export function getAttachedContainerStateFromSerializedContainer(
+	serializedContainer: string | undefined,
+): IPendingContainerState | undefined;
 export function getAttachedContainerStateFromSerializedContainer(
 	serializedContainer: string | undefined,
 ): IPendingContainerState | undefined {

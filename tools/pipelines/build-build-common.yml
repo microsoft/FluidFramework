@@ -40,6 +40,7 @@ trigger:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -48,7 +49,6 @@ trigger:
     - tools/pipelines/templates/include-publish-npm-package-steps.yml
     - tools/pipelines/templates/include-git-tag-steps.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
@@ -66,11 +66,11 @@ pr:
     - common/build/build-common
     - tools/pipelines/build-build-common.yml
     - tools/pipelines/templates/build-npm-package.yml
+    - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
-    - tools/pipelines/templates/include-process-test-results.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
     - scripts/*
@@ -88,10 +88,8 @@ extends:
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
-    buildDirectory: common/build/build-common
+    buildDirectory: ${{ variables.FluidFrameworkDirectory }}/common/build/build-common
     tagName: build-common
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
     testCoverage: ${{ variables.testCoverage }}
     taskBuild: false
     taskBuildDocs: false

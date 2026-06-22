@@ -5,27 +5,29 @@
 
 import { bufferToString, createEmitter } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelStorageService,
 } from "@fluidframework/datastore-definitions/internal";
+import { MessageType } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISummaryTreeWithStats,
+	IRuntimeMessageCollection,
+	IRuntimeMessagesContent,
+	ISequencedMessageEnvelope,
+} from "@fluidframework/runtime-definitions/internal";
+import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	MessageType,
-	ISequencedDocumentMessage,
-} from "@fluidframework/driver-definitions/internal";
-import { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
-import {
-	IFluidSerializer,
 	SharedObject,
 	createSingleBlobSummary,
 } from "@fluidframework/shared-object-base/internal";
 
-import {
+import type {
 	IConsensusRegisterCollection,
 	IConsensusRegisterCollectionEvents,
-	ReadPolicy,
 } from "./interfaces.js";
+import { ReadPolicy } from "./interfaces.js";
 
 interface ILocalData<T> {
 	// Atomic version
@@ -120,6 +122,7 @@ interface IConsensusRegisterCollectionInternalEvents {
 
 /**
  * {@inheritDoc IConsensusRegisterCollection}
+ * @deprecated Use {@link IConsensusRegisterCollection} for typing and {@link ConsensusRegisterCollectionFactory} to create instances. This implementation class will be removed in a future release.
  * @legacy @beta
  */
 export class ConsensusRegisterCollection<T>
@@ -180,14 +183,14 @@ export class ConsensusRegisterCollection<T>
 		// 3. The runtime is disposed
 		// The boolean value returned by the promise is true if the attempted write was ack'd and won, false otherwise.
 		return new Promise<boolean>((resolve) => {
-			const handleAck = (ackMessageId: number, isWinner: boolean) => {
+			const handleAck = (ackMessageId: number, isWinner: boolean): void => {
 				if (ackMessageId === pendingMessageId) {
 					resolve(isWinner);
 					removeListeners();
 				}
 			};
 
-			const handleRollback = (rollbackMessageId: number) => {
+			const handleRollback = (rollbackMessageId: number): void => {
 				if (rollbackMessageId === pendingMessageId) {
 					// If we rolled back the pending message, resolve the promise with false.
 					resolve(false);
@@ -195,12 +198,12 @@ export class ConsensusRegisterCollection<T>
 				}
 			};
 
-			const handleDisposed = () => {
+			const handleDisposed = (): void => {
 				resolve(false);
 				removeListeners();
 			};
 
-			const removeListeners = () => {
+			const removeListeners = (): void => {
 				this.internalEvents.off("pendingMessageAck", handleAck);
 				this.internalEvents.off("pendingMessageRollback", handleRollback);
 				this.runtime.off("dispose", handleDisposed);
@@ -245,9 +248,9 @@ export class ConsensusRegisterCollection<T>
 
 	protected summarizeCore(serializer: IFluidSerializer): ISummaryTreeWithStats {
 		const dataObj: { [key: string]: ILocalData<T> } = {};
-		this.data.forEach((v, k) => {
+		for (const [k, v] of this.data.entries()) {
 			dataObj[k] = v;
-		});
+		}
 
 		return createSingleBlobSummary(snapshotFileName, this.stringify(dataObj, serializer));
 	}
@@ -270,27 +273,35 @@ export class ConsensusRegisterCollection<T>
 		}
 	}
 
-	protected onDisconnect() {}
+	protected onDisconnect(): void {}
 
-	protected processCore(
-		message: ISequencedDocumentMessage,
+	protected override processMessagesCore(messagesCollection: IRuntimeMessageCollection): void {
+		const { envelope, local, messagesContent } = messagesCollection;
+		for (const messageContent of messagesContent) {
+			this.processMessage(envelope, messageContent, local);
+		}
+	}
+
+	private processMessage(
+		messageEnvelope: ISequencedMessageEnvelope,
+		messageContent: IRuntimeMessagesContent,
 		local: boolean,
-		localOpMetadata: unknown,
-	) {
-		if (message.type === MessageType.Operation) {
-			const op = message.contents as IIncomingRegisterOperation<T>;
+	): void {
+		if (messageEnvelope.type === MessageType.Operation) {
+			const op = messageContent.contents as IIncomingRegisterOperation<T>;
 			switch (op.type) {
 				case "write": {
 					// backward compatibility: File at rest written with runtime <= 0.13 do not have refSeq
 					// when the refSeq property didn't exist
+					// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- using ??= could change behavior if value is falsy
 					if (op.refSeq === undefined) {
-						op.refSeq = message.referenceSequenceNumber;
+						op.refSeq = messageEnvelope.referenceSequenceNumber;
 					}
 					// Message can be delivered with delay - e.g. resubmitted on reconnect.
 					// Use the refSeq from when the op was created, not when it was transmitted
 					const refSeqWhenCreated = op.refSeq;
 					assert(
-						refSeqWhenCreated <= message.referenceSequenceNumber,
+						refSeqWhenCreated <= messageEnvelope.referenceSequenceNumber,
 						0x06e /* "Message's reference sequence number < op's reference sequence number!" */,
 					);
 
@@ -301,21 +312,26 @@ export class ConsensusRegisterCollection<T>
 						op.key,
 						value,
 						refSeqWhenCreated,
-						message.sequenceNumber,
+						messageEnvelope.sequenceNumber,
 						local,
 					);
 					if (local) {
 						// Resolve the pending promise for this operation now that we have received an ack for it.
 						assert(
-							typeof localOpMetadata === "number",
+							typeof messageContent.localOpMetadata === "number",
 							0xc0e /* Expect localOpMetadata to be a number */,
 						);
-						this.internalEvents.emit("pendingMessageAck", localOpMetadata, isWinner);
+						this.internalEvents.emit(
+							"pendingMessageAck",
+							messageContent.localOpMetadata,
+							isWinner,
+						);
 					}
 					break;
 				}
-				default:
+				default: {
 					unreachableCase(op.type);
+				}
 			}
 		}
 	}
@@ -415,7 +431,12 @@ export class ConsensusRegisterCollection<T>
 		this.internalEvents.emit("pendingMessageRollback", localOpMetadata);
 	}
 
-	protected applyStashedOp(): void {
-		// empty implementation
+	protected applyStashedOp(content: unknown): void {
+		const op = content as IIncomingRegisterOperation<T>;
+		assert(op.type === "write", 0xccc /* Only write ops should be stashed */);
+		// Submit the original op (preserving its refSeq) so we can match the ACK
+		// when it arrives during remote op processing.
+		const pendingMessageId = this.nextPendingMessageId++;
+		this.submitLocalMessage(op, pendingMessageId);
 	}
 }

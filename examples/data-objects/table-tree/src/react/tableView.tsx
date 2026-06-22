@@ -5,16 +5,16 @@
 
 import { Table, TableBody, Button } from "@fluentui/react-components";
 import { Add24Regular } from "@fluentui/react-icons";
-import React, { useState, type DragEvent } from "react";
+import { useTree } from "@fluidframework/react/alpha";
+import { type DragEvent, type FC, useState } from "react";
 
 import type { TableDataObject } from "../dataObject.js";
-import { type Column, Row } from "../schema.js";
+import { Row } from "../schema.js";
 
 import { TableHeaderView } from "./tableHeaderView.js";
 import { TableRowView } from "./tableRowView.js";
-import { useTree } from "./utilities.js";
 
-// eslint-disable-next-line import/no-unassigned-import
+// eslint-disable-next-line import-x/no-unassigned-import
 import "./tableView.css";
 
 /**
@@ -35,39 +35,15 @@ import "./tableView.css";
  * - Column properties such as `label` and `hint` (e.g., `"checkbox"`, `"text"`, `"date"`) from the columns
  * are used to determine how each cell is rendered.
  */
-export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
+export const TableView: FC<{ tableModel: TableDataObject }> = ({ tableModel }) => {
 	const [draggedRowIndex, setDraggedRowIndex] = useState<number | undefined>(undefined);
 	const [draggedColumnIndex, setDraggedColumnIndex] = useState<number | undefined>(undefined);
 
 	const table = tableModel.treeView.root;
-
 	useTree(table);
 
-	const columns = [...table.columns];
-	const rows = [...table.rows];
-
 	const handleAppendNewRow = (): void => {
-		table.insertRows({
-			rows: [new Row({ cells: {} })],
-		});
-	};
-
-	const handleRemoveRow = (index: number): void => {
-		if (index >= 0 && index < rows.length) {
-			table.removeRows(index, 1);
-		}
-	};
-
-	const handleAppendNewColumn = (newColumn: Column): void => {
-		table.insertColumns({
-			columns: [newColumn],
-		});
-	};
-
-	const handleRemoveColumn = (index: number): void => {
-		if (index >= 0 && index < columns.length) {
-			table.removeColumns(index, 1);
-		}
+		table.insertRows([new Row({ cells: {} })]);
 	};
 
 	const handleRowDragStart = (index: number): void => {
@@ -108,24 +84,20 @@ export const TableView: React.FC<{ tableModel: TableDataObject }> = ({ tableMode
 			<div className="table-scroll">
 				<Table aria-label="Fluid-based dynamic table" className="custom-table">
 					<TableHeaderView
-						columns={columns}
+						table={table}
 						onColumnDragStart={handleColumnDragStart}
 						onColumnDragOver={handleColumnDragOver}
 						onColumnDrop={handleColumnDrop}
-						onRemoveColumn={handleRemoveColumn}
-						handleAppendColumn={handleAppendNewColumn}
 					/>
 					<TableBody>
-						{rows.map((row, index) => (
+						{table.rows.map((row, index) => (
 							<TableRowView
 								key={row.id}
-								row={row}
-								columns={columns}
-								index={index}
+								table={table}
+								rowIndex={index}
 								onRowDragStart={handleRowDragStart}
 								onRowDragOver={handleRowDragOver}
 								onRowDrop={handleRowDrop}
-								onRemoveRow={handleRemoveRow}
 							/>
 						))}
 					</TableBody>

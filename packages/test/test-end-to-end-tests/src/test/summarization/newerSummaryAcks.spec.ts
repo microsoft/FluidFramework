@@ -12,7 +12,7 @@ import type {
 	Summarizer,
 	SummaryCollection,
 } from "@fluidframework/container-runtime/internal";
-import { type IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
+import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	MessageType,
 	type ISequencedDocumentMessage,

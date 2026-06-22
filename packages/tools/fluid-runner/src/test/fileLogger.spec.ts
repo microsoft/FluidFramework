@@ -7,11 +7,11 @@ import { strict as assert } from "assert";
 import * as fs from "fs";
 import path from "path";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { CSVFileLogger } from "../logger/csvFileLogger.js";
 import type { IFileLogger } from "../logger/fileLogger.js";
 import { JSONFileLogger } from "../logger/jsonFileLogger.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 import { _dirname } from "./dirname.cjs";
 
@@ -21,7 +21,7 @@ describe("fileLogger", () => {
 	const telemetryFile = path.join(outputFolder, "telemetryFile.txt");
 	const expectedOutputFolder = path.join(folderRoot, "telemetryExpectedOutputs");
 
-	function verifyOutput(expectedOutputFilePath: string) {
+	function verifyOutput(expectedOutputFilePath: string): void {
 		const actualOutput = `${fs
 			.readFileSync(telemetryFile, { encoding: "utf-8" })
 			.replace(/\r\n/g, "\n")}\n`;
@@ -33,7 +33,7 @@ describe("fileLogger", () => {
 		);
 	}
 
-	function sendTelemetry(logger: IFileLogger) {
+	function sendTelemetry(logger: IFileLogger): void {
 		logger.send({ eventName: "event1", category: "category1", prop1: "value1" });
 		logger.send({ eventName: "event2", category: "category1", prop2: "value2" });
 		logger.send({ eventName: "event3", category: "category2", prop1: "value3" });

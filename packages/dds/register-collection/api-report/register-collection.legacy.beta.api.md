@@ -10,18 +10,18 @@ export const ConsensusRegisterCollection: ISharedObjectKind<IConsensusRegisterCo
 // @beta @legacy
 export type ConsensusRegisterCollection<T> = IConsensusRegisterCollection<T>;
 
-// @beta @legacy
+// @beta @deprecated @legacy
 export class ConsensusRegisterCollectionClass<T> extends SharedObject<IConsensusRegisterCollectionEvents> implements IConsensusRegisterCollection<T> {
     constructor(id: string, runtime: IFluidDataStoreRuntime, attributes: IChannelAttributes);
     // (undocumented)
-    protected applyStashedOp(): void;
+    protected applyStashedOp(content: unknown): void;
     // (undocumented)
     keys(): string[];
     protected loadCore(storage: IChannelStorageService): Promise<void>;
     // (undocumented)
     protected onDisconnect(): void;
     // (undocumented)
-    protected processCore(message: ISequencedDocumentMessage, local: boolean, localOpMetadata: unknown): void;
+    protected processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
     read(key: string, readPolicy?: ReadPolicy): T | undefined;
     // (undocumented)
     readVersions(key: string): T[] | undefined;

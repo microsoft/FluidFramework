@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "root": {
+    "kind": 1,
+    "simpleAllowedTypes": {
+      "test.record": {
+        "isStaged": false
+      }
+    }
+  },
+  "definitions": {
+    "com.fluidframework.leaf.string": {
+      "leaf": {
+        "kind": 3,
+        "leafKind": 1
+      }
+    },
+    "test.record": {
+      "record": {
+        "kind": 4,
+        "simpleAllowedTypes": {
+          "com.fluidframework.leaf.string": {
+            "isStaged": false
+          }
+        }
+      }
+    }
+  }
+}

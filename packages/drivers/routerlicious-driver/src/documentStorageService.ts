@@ -3,24 +3,24 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	LoaderCachingPolicy,
 	ISnapshotTree,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
+import { LoaderCachingPolicy } from "@fluidframework/driver-definitions/internal";
 import {
 	DocumentStorageServiceProxy,
 	PrefetchDocumentStorageService,
 } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { ICache } from "./cache.js";
-import { INormalizedWholeSnapshot } from "./contracts.js";
-import { ISnapshotTreeVersion } from "./definitions.js";
-import { GitManager } from "./gitManager.js";
-import { IRouterliciousDriverPolicies } from "./policies.js";
+import type { ICache } from "./cache.js";
+import type { INormalizedWholeSnapshot } from "./contracts.js";
+import type { ISnapshotTreeVersion } from "./definitions.js";
+import type { GitManager } from "./gitManager.js";
+import type { IRouterliciousDriverPolicies } from "./policies.js";
 import { ShreddedSummaryDocumentStorageService } from "./shreddedSummaryDocumentStorageService.js";
 import { WholeSummaryDocumentStorageService } from "./wholeSummaryDocumentStorageService.js";
 
@@ -34,7 +34,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	private static loadInternalDocumentStorageService(
 		id: string,
 		manager: GitManager,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,
@@ -78,7 +78,7 @@ export class DocumentStorageService extends DocumentStorageServiceProxy {
 	constructor(
 		public readonly id: string,
 		public manager: GitManager,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

@@ -15,7 +15,7 @@ import {
  * @param diceRoller - The Data Object to be rendered
  * @param div - The div to render into
  */
-export function renderSampler(diceRoller: IDiceRoller, div: HTMLDivElement) {
+export function renderSampler(diceRoller: IDiceRoller, div: HTMLDivElement): void {
 	const jsDiv = document.createElement("div");
 	const reactDiv = document.createElement("div");
 	const vueDiv = document.createElement("div");

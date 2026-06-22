@@ -41,6 +41,11 @@ const testConfigs = generatePairwiseOptions({
 
 describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	// In cross-client compat, the validation loader (which loads the previously-created container)
+	// may be a different version than the init loader (which created the container). Use
+	// ddsForLoading so the validation loader reconstructs SharedString factories from the load-side
+	// version. (Outside cross-client compat it matches apis.dds.)
+	const SharedStringForLoading = apis.ddsForLoading.SharedString;
 	before(function () {
 		const provider = getTestObjectProvider();
 		switch (provider.driver.type) {
@@ -59,19 +64,24 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 			const provider = getTestObjectProvider();
 			let containerUrl: IResolvedUrl | undefined;
 			const sharedStringFactory = SharedString.getFactory();
-			const channelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+			const sharedStringFactoryForLoading = SharedStringForLoading.getFactory();
+			const createChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
 				[sharedStringFactory.type, sharedStringFactory],
 			];
-			const containerConfig = { registry: channelFactoryRegistry };
+			const loadChannelFactoryRegistry: [string | undefined, IChannelFactory][] = [
+				[sharedStringFactoryForLoading.type, sharedStringFactoryForLoading],
+			];
+			const createContainerConfig = { registry: createChannelFactoryRegistry };
+			const loadContainerConfig = { registry: loadChannelFactoryRegistry };
 
 			// act code block
 			{
-				const initLoader = provider.makeTestLoader(containerConfig);
+				const initLoader = provider.makeTestLoader(createContainerConfig);
 
 				const initContainer = await initLoader.createDetachedContainer(
 					provider.defaultCodeDetails,
 				);
-				const attachContainer = async () => {
+				const attachContainer = async (): Promise<void> => {
 					const attachP = initContainer.attach(
 						provider.driver.createCreateNewRequest(provider.documentId),
 					);
@@ -89,7 +99,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 				const ds = await initDataObject.context.containerRuntime.createDataStore("default");
 				const newDataObj = await getDataStoreEntryPointBackCompat<ITestFluidObject>(ds);
-				const attachDatastore = async () => {
+				const attachDatastore = async (): Promise<void> => {
 					initDataObject.root.set("ds", newDataObj.handle);
 					while (
 						testConfig.datastoreSaveAfterAttach &&
@@ -111,7 +121,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 				}
 
 				const newString = SharedString.create(newDataObj.runtime);
-				const attachDds = async () => {
+				const attachDds = async (): Promise<void> => {
 					newDataObj.root.set(ddsKey, newString.handle);
 					while (
 						testConfig.ddsSaveAfterAttach &&
@@ -169,7 +179,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 
 			// validation code block
 			{
-				const validationLoader = provider.makeTestLoader(containerConfig);
+				const validationLoader = provider.makeTestLoader(loadContainerConfig);
 				const validationContainer = await validationLoader.resolve({
 					url: await provider.driver.createContainerUrl(provider.documentId, containerUrl),
 				});
@@ -197,7 +207,7 @@ describeCompat("Validate Attach lifecycle", "FullCompat", (getTestObjectProvider
 	}
 });
 
-function convertSharedPointToPos(i: number) {
+function convertSharedPointToPos(i: number): number {
 	return i - sharedPoints[0];
 }
 
@@ -208,7 +218,7 @@ async function waitChar(sharedString: SharedString, pos: number): Promise<string
 			if (text.length > pos) {
 				resolve(text[pos]);
 			} else {
-				const waitFunc = (event: SequenceDeltaEvent) => {
+				const waitFunc = (event: SequenceDeltaEvent): void => {
 					const range = event.ranges.find((value) => value.position === pos);
 					if (range) {
 						sharedString.off("sequenceDelta", waitFunc);
@@ -229,7 +239,7 @@ async function waitKey<T>(map: ISharedMap, key: string): Promise<T> {
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 				resolve(map.get<T>(key)!);
 			} else {
-				const waitFunc = (changed: IValueChanged) => {
+				const waitFunc = (changed: IValueChanged): void => {
 					if (changed.key === key) {
 						map.off("valueChanged", waitFunc);
 						// eslint-disable-next-line @typescript-eslint/no-non-null-assertion

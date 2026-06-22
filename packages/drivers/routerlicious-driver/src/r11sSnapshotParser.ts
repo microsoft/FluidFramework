@@ -4,9 +4,9 @@
  */
 
 import { stringToBuffer } from "@fluid-internal/client-utils";
-import { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 
-import {
+import type {
 	INormalizedWholeSnapshot,
 	IWholeFlatSnapshot,
 	IWholeFlatSnapshotTree,
@@ -43,8 +43,8 @@ function buildHierarchy(
 			const newTree: ISnapshotTree = {
 				blobs: {},
 				trees: {},
-				unreferenced: entry.unreferenced,
-				groupId: entry.groupId,
+				...(entry.unreferenced === undefined ? {} : { unreferenced: entry.unreferenced }),
+				...(entry.groupId === undefined ? {} : { groupId: entry.groupId }),
 			};
 			node.trees[decodeURIComponent(entryPathBase)] = newTree;
 			lookup[entryPath] = newTree;
@@ -71,9 +71,9 @@ export function convertWholeFlatSnapshotToSnapshotTreeAndBlobs(
 ): INormalizedWholeSnapshot {
 	const blobs = new Map<string, ArrayBuffer>();
 	if (flatSnapshot.blobs) {
-		flatSnapshot.blobs.forEach((blob) => {
+		for (const blob of flatSnapshot.blobs) {
 			blobs.set(blob.id, stringToBuffer(blob.content, blob.encoding ?? "utf-8"));
-		});
+		}
 	}
 	const flatSnapshotTree = flatSnapshot.trees?.[0];
 	const sequenceNumber = flatSnapshotTree?.sequenceNumber;

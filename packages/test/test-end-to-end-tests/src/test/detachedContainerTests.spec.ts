@@ -15,7 +15,7 @@ import {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { ConnectionState } from "@fluidframework/container-loader";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import { ContainerMessageType } from "@fluidframework/container-runtime/internal";
 import { FluidObject, IFluidHandle, IRequest } from "@fluidframework/core-interfaces";
 import { Deferred } from "@fluidframework/core-utils/internal";
@@ -61,7 +61,10 @@ const sharedCellId = "scell1Key";
 const sharedMatrixId = "smatrix1Key";
 const sparseMatrixId = "sparsematrixKey";
 
-const createFluidObject = async (dataStoreContext: IFluidDataStoreContext, type: string) => {
+const createFluidObject = async (
+	dataStoreContext: IFluidDataStoreContext,
+	type: string,
+): Promise<ITestFluidObject> => {
 	const dataStore = await dataStoreContext.containerRuntime.createDataStore(type);
 	return getDataStoreEntryPointBackCompat<ITestFluidObject>(dataStore);
 };
@@ -866,6 +869,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 		ConsensusQueue,
 		SparseMatrix,
 	} = apis.dds;
+	const { Loader } = apis.loader;
 
 	const registry: ChannelFactoryRegistry = [
 		[sharedStringId, SharedString.getFactory()],
@@ -953,7 +957,7 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 				{
 					configProvider: {
 						getRawConfig: (name) =>
-							name === "Fluid.Container.RetryOnAttachFailure" ? true : undefined,
+							name === "Fluid.Container.DisableCloseOnAttachFailure" ? true : undefined,
 					},
 				},
 			);
@@ -1063,7 +1067,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);
@@ -1114,7 +1120,9 @@ describeCompat("Detached Container", "NoCompat", (getTestObjectProvider, apis) =
 			try {
 				await container.attach(request);
 				assert.fail("expected attach to fail!");
-			} catch (e) {}
+			} catch (e) {
+				// Ignore the error
+			}
 			assert.strictEqual(container.closed, true, "Container should be closed");
 		},
 	);

@@ -10,8 +10,10 @@ export const enum FluidCacheGenericEvent {
 
 export const enum FluidCacheErrorEvent {
 	"FluidCacheDeleteOldEntriesError" = "FluidCacheDeleteOldEntriesError",
+	"FluidCacheDeleteSingleEntryError" = "FluidCacheDeleteSingleEntryError",
 	"FluidCacheGetError" = "FluidCacheGetError",
 	"FluidCachePutError" = "FluidCachePutError",
+	"FluidCacheUpdateCallbackError" = "FluidCacheUpdateCallbackError",
 	"FluidCacheUpdateUsageError" = "FluidCacheUpdateUsageError",
 	"FluidCacheDeleteOldDbError" = "FluidCacheDeleteOldDbError",
 }

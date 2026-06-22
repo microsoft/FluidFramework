@@ -11,3 +11,9 @@ UUIDs
 enum
 Enum
 openable
+Datastore
+DDSes
+accessor
+accessors
+Zod
+unhydrated

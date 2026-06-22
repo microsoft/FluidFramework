@@ -8,6 +8,10 @@ import type { ConfigTypes, IConfigProviderBase } from "@fluidframework/core-inte
 import type { IMember } from "@fluidframework/fluid-static";
 import type { ISharedMap, IValueChanged } from "@fluidframework/map/legacy";
 
+// `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
+// `minVersionForCollab` in tests so they exercise the latest defaults rather than a hardcoded version.
+export { pkgVersion as currentVersion } from "../packageVersion.js";
+
 export const waitForMember = async (
 	audience: IAzureAudience,
 	id: string,
@@ -59,7 +63,7 @@ export const configProvider = (
  * Currently, there is only a test-set for Durable containers and one for Ephemeral containers.
  * The Ephemeral container tests will not run for local tests.
  *
- * @returns - The test matrix
+ * @returns The test matrix
  */
 export function getTestMatrix(): { variant: string; options: { isEphemeral: boolean } }[] {
 	const testMatrix = [

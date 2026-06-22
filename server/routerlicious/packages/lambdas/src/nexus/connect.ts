@@ -27,6 +27,7 @@ import {
 	type ICollaborationSessionClient,
 	clusterDrainingRetryTimeInMs,
 	type IDenyList,
+	StageTrace,
 } from "@fluidframework/server-services-core";
 import {
 	CommonProperties,
@@ -47,7 +48,7 @@ import type {
 } from "./interfaces";
 import { ProtocolVersions, checkProtocolVersion } from "./protocol";
 import { checkThrottleAndUsage, getSocketConnectThrottleId } from "./throttleAndUsage";
-import { StageTrace, sampleMessages } from "./trace";
+import { sampleMessages } from "./trace";
 import {
 	getMessageMetadata,
 	handleServerErrorAndConvertToNetworkError,
@@ -269,16 +270,16 @@ async function connectOrderer(
 	};
 }
 
-function trackSocket(
+async function trackSocket(
 	socket: IWebSocket,
 	tenantId: string,
 	documentId: string,
 	claims: ITokenClaims,
 	{ socketTracker }: INexusLambdaDependencies,
-): void {
+): Promise<void> {
 	// Track socket and tokens for this connection
 	if (socketTracker && claims.jti) {
-		socketTracker.addSocketForToken(
+		return socketTracker.addSocketForToken(
 			createCompositeTokenId(tenantId, documentId, claims.jti),
 			socket,
 		);
@@ -323,7 +324,7 @@ function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDep
 		logger,
 	);
 	if (throttleErrorPerCluster) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal
+		// eslint-disable-next-line @typescript-eslint/only-throw-error
 		throw throttleErrorPerCluster;
 	}
 	const throttleErrorPerTenant = checkThrottleAndUsage(
@@ -333,7 +334,7 @@ function checkThrottle(tenantId: string, { throttlers, logger }: INexusLambdaDep
 		logger,
 	);
 	if (throttleErrorPerTenant) {
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal
+		// eslint-disable-next-line @typescript-eslint/only-throw-error
 		throw throttleErrorPerTenant;
 	}
 }
@@ -711,7 +712,7 @@ export async function connectDocument(
 		(connectedMessage as any).timestamp = connectedTimestamp;
 		connectionTrace.stampStage(ConnectDocumentStage.MessageClientConnected);
 
-		trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
+		await trackSocket(socket, tenantId, documentId, claims, lambdaDependencies);
 		connectionTrace.stampStage(ConnectDocumentStage.SocketTrackerAppended);
 
 		trackCollaborationSession(

@@ -12,7 +12,7 @@ import { constants } from "@fluid-experimental/property-common";
 
 const { PROPERTY_PATH_DELIMITER, MSG } = constants;
 
-export type PathTree = Map<String, PathTree>;
+export type PathTree = Map<string, PathTree>;
 
 /**
  * Helper functions for string processing

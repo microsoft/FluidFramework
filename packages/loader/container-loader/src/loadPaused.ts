@@ -104,6 +104,7 @@ export async function loadContainerPaused(
 
 	const promise = new Promise<void>((resolve, reject) => {
 		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
+		// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 		onClose = (error?: IErrorBase): void => reject(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).

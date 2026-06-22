@@ -12,7 +12,7 @@ import {
 } from "@fluidframework/container-loader/internal";
 import type { FluidObject, IFluidHandle } from "@fluidframework/core-interfaces";
 import { LocalResolver } from "@fluidframework/local-driver/internal";
-import { type IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
+import type { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
 	LoaderContainerTracker,
@@ -21,7 +21,7 @@ import {
 	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils";
+import { createLoader } from "./utils.js";
 
 /**
  * Creates a non-root data object and validates that it is not visible from the root of the container.

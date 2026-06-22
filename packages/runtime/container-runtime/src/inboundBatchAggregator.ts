@@ -9,10 +9,10 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
 	extractSafePropertiesFromMessage,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IBatchMetadata } from "./metadata.js";
@@ -38,7 +38,7 @@ export class InboundBatchAggregator {
 	constructor(
 		private readonly deltaManager: IDeltaManagerFull,
 		private readonly getClientId: () => string | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {
 		// Listen for updates and peek at the inbound
 		this.deltaManager.inbound.on("push", this.trackPending);
@@ -190,7 +190,7 @@ export class InboundBatchAggregator {
 		//    - here, when queue was empty and start of batch showed up (batchMetadata === true below).
 		// 2. resumed when batch end comes in (batchMetadata === false below)
 
-		if (batchMetadata) {
+		if (batchMetadata === true) {
 			assert(
 				this.currentBatchClientId === undefined,
 				0x29e /* "there can't be active batch" */,

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 
 import { strict as assert, fail } from "node:assert";
 
@@ -19,12 +19,12 @@ import {
 import type { Context } from "../../../feature-libraries/flex-tree/context.js";
 import { LazyTreeNode } from "../../../feature-libraries/flex-tree/lazyNode.js";
 import type { FlexTreeField, FlexTreeNode } from "../../../feature-libraries/index.js";
-
-import { readonlyTreeWithContent } from "./utils.js";
+import { JsonAsTree } from "../../../jsonDomainSchema.js";
 import { SchemaFactory } from "../../../simple-tree/index.js";
 import { stringSchema } from "../../../simple-tree/leafNodeSchema.js";
 import { brand } from "../../../util/index.js";
-import { JsonAsTree } from "../../../jsonDomainSchema.js";
+
+import { readonlyTreeWithContent } from "./utils.js";
 
 /**
  * Test {@link LazyTreeNode} implementation.

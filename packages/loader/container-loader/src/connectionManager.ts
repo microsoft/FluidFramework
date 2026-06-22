@@ -3,17 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type {
 	IDeltaQueue,
 	ReadOnlyInfo,
 } from "@fluidframework/container-definitions/internal";
-import {
-	type IDisposable,
-	type ITelemetryBaseProperties,
-	LogLevel,
-} from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseProperties, LogLevel } from "@fluidframework/core-interfaces";
+import type { JsonString } from "@fluidframework/core-interfaces/internal";
+import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ConnectionMode,
@@ -22,7 +20,6 @@ import type {
 } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaConnection,
-	type IDocumentDeltaConnectionEvents,
 	type IDocumentService,
 	DriverErrorTypes,
 	type IAnyDriverError,
@@ -32,7 +29,6 @@ import {
 	type INackContent,
 	type ISequencedDocumentSystemMessage,
 	type ISignalClient,
-	type ITokenClaims,
 	MessageType,
 	ScopeType,
 	type ISequencedDocumentMessage,
@@ -50,13 +46,13 @@ import {
 	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
-	GenericError,
-	UsageError,
 	formatTick,
 	generateStack,
+	GenericError,
 	isFluidError,
 	normalizeError,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -67,6 +63,11 @@ import {
 	ReconnectMode,
 } from "./contracts.js";
 import { DeltaQueue } from "./deltaQueue.js";
+import {
+	FrozenDeltaStream,
+	isFrozenDeltaStreamConnection,
+	isWritableFrozenDeltaStreamConnection,
+} from "./frozenServices.js";
 import { SignalType } from "./protocol.js";
 import { isDeltaStreamConnectionForbiddenError } from "./utils.js";
 
@@ -88,85 +89,6 @@ function getNackReconnectInfo(
 		{ canRetry, retryAfterMs },
 		{ statusCode: nackContent.code, driverVersion: undefined },
 	);
-}
-
-/**
- * Implementation of IDocumentDeltaConnection that does not support submitting
- * or receiving ops. Used in storage-only mode.
- */
-const clientNoDeltaStream: IClient = {
-	mode: "read",
-	details: { capabilities: { interactive: true } },
-	permission: [],
-	user: { id: "storage-only client" }, // we need some "fake" ID here.
-	scopes: [],
-};
-const clientIdNoDeltaStream: string = "storage-only client";
-
-class NoDeltaStream
-	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
-	implements IDocumentDeltaConnection, IDisposable
-{
-	clientId = clientIdNoDeltaStream;
-	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-	claims = {
-		scopes: [ScopeType.DocRead],
-	} as ITokenClaims;
-	mode: ConnectionMode = "read";
-	existing: boolean = true;
-	maxMessageSize: number = 0;
-	version: string = "";
-	initialMessages: ISequencedDocumentMessage[] = [];
-	initialSignals: ISignalMessage[] = [];
-	initialClients: ISignalClient[] = [
-		{ client: clientNoDeltaStream, clientId: clientIdNoDeltaStream },
-	];
-	serviceConfiguration: IClientConfiguration = {
-		maxMessageSize: 0,
-		blockSize: 0,
-	};
-	checkpointSequenceNumber?: number | undefined = undefined;
-	/**
-	 * Connection which is not connected to socket.
-	 * @param storageOnlyReason - Reason on why the connection to delta stream is not allowed.
-	 * @param readonlyConnectionReason - reason/error if any which lead to using NoDeltaStream.
-	 */
-	constructor(
-		public readonly storageOnlyReason?: string,
-		public readonly readonlyConnectionReason?: IConnectionStateChangeReason,
-	) {
-		super();
-	}
-	submit(messages: IDocumentMessage[]): void {
-		this.emit(
-			"nack",
-			this.clientId,
-			messages.map((operation) => {
-				return {
-					operation,
-					content: { message: "Cannot submit with storage-only connection", code: 403 },
-				};
-			}),
-		);
-	}
-	submitSignal(message: unknown): void {
-		this.emit("nack", this.clientId, {
-			operation: message,
-			content: { message: "Cannot submit signal with storage-only connection", code: 403 },
-		});
-	}
-
-	private _disposed = false;
-	public get disposed(): boolean {
-		return this._disposed;
-	}
-	public dispose(): void {
-		this._disposed = true;
-	}
-}
-
-function isNoDeltaStreamConnection(connection: unknown): connection is NoDeltaStream {
-	return connection instanceof NoDeltaStream;
 }
 
 const waitForOnline = async (): Promise<void> => {
@@ -195,6 +117,19 @@ interface IPendingConnection {
 	 * Desired ConnectionMode of this in-progress connection attempt.
 	 */
 	connectionMode: ConnectionMode;
+}
+
+function assertExpectedSignals(
+	signals: ISignalMessage[],
+): asserts signals is ISignalMessage<{ type: never; content: JsonString<unknown> }>[] {
+	for (const signal of signals) {
+		if ("type" in signal) {
+			throw new Error("Unexpected type in ISignalMessage");
+		}
+		if (typeof signal.content !== "string") {
+			throw new TypeError("Non-string content in ISignalMessage");
+		}
+	}
 }
 
 /**
@@ -254,12 +189,6 @@ export class ConnectionManager implements IConnectionManager {
 	private lastSubmittedClientId: string | undefined;
 
 	private connectFirstConnection = true;
-
-	/**
-	 * Tracks the initial connection start time for the entire lifetime of the class.
-	 * This is used only for retryConnectionTimeoutMs checks and is never reset.
-	 */
-	private initialConnectionStartTime: number | undefined;
 
 	private _connectionVerboseProps: Record<string, string | number> = {};
 
@@ -377,7 +306,7 @@ export class ConnectionManager implements IConnectionManager {
 	public get readOnlyInfo(): ReadOnlyInfo {
 		let storageOnly: boolean = false;
 		let storageOnlyReason: string | undefined;
-		if (isNoDeltaStreamConnection(this.connection)) {
+		if (isFrozenDeltaStreamConnection(this.connection)) {
 			storageOnly = true;
 			storageOnlyReason = this.connection.storageOnlyReason;
 		}
@@ -417,9 +346,9 @@ export class ConnectionManager implements IConnectionManager {
 		public readonly containerDirty: () => boolean,
 		private readonly client: IClient,
 		reconnectAllowed: boolean,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
-		private readonly retryConnectionTimeoutMs?: number,
+		private maxInitialConnectionAttempts?: number,
 	) {
 		this.clientDetails = this.client.details;
 		this.defaultReconnectionMode = this.client.mode;
@@ -586,11 +515,9 @@ export class ConnectionManager implements IConnectionManager {
 
 		this.props.establishConnectionHandler(reason);
 
-		let connection: IDocumentDeltaConnection | undefined;
-
 		if (docService.policies?.storageOnly === true) {
-			connection = new NoDeltaStream();
-			this.setupNewSuccessfulConnection(connection, "read", reason);
+			const frozenDeltaStreamConnection = new FrozenDeltaStream();
+			this.setupNewSuccessfulConnection(frozenDeltaStreamConnection, "read", reason);
 			assert(this.pendingConnection === undefined, 0x2b3 /* "logic error" */);
 			return;
 		}
@@ -598,11 +525,6 @@ export class ConnectionManager implements IConnectionManager {
 		let delayMs = InitialReconnectDelayInMs;
 		let connectRepeatCount = 0;
 		const connectStartTime = performanceNow();
-
-		// Set the initial connection start time only once for the entire lifetime of the class
-		if (this.initialConnectionStartTime === undefined) {
-			this.initialConnectionStartTime = connectStartTime;
-		}
 
 		let lastError: unknown;
 
@@ -616,6 +538,7 @@ export class ConnectionManager implements IConnectionManager {
 		};
 
 		// This loop will keep trying to connect until successful, with a delay between each iteration.
+		let connection: IDocumentDeltaConnection | undefined;
 		while (connection === undefined) {
 			if (this._disposed) {
 				throw new Error("Attempting to connect a closed DeltaManager");
@@ -646,6 +569,7 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectionReceived",
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 						connected: connection !== undefined && connection.disposed === false,
 					},
 					undefined,
@@ -655,15 +579,16 @@ export class ConnectionManager implements IConnectionManager {
 				this.logger.sendTelemetryEvent(
 					{
 						eventName: "ConnectToDeltaStreamException",
+						// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- using ?. could change behavior
 						connected: connection !== undefined && connection.disposed === false,
 					},
 					undefined,
 					LogLevel.verbose,
 				);
 				if (isDeltaStreamConnectionForbiddenError(origError)) {
-					connection = new NoDeltaStream(origError.storageOnlyReason, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						storageOnlyReason: origError.storageOnlyReason,
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
@@ -671,11 +596,10 @@ export class ConnectionManager implements IConnectionManager {
 					isFluidError(origError) &&
 					origError.errorType === DriverErrorTypes.outOfStorageError
 				) {
-					// If we get out of storage error from calling joinsession, then use the NoDeltaStream object so
+					// If we get out of storage error from calling joinsession, then use the FrozenDeltaStream object so
 					// that user can at least load the container.
-					connection = new NoDeltaStream(undefined, {
-						text: origError.message,
-						error: origError,
+					connection = new FrozenDeltaStream({
+						readonlyConnectionReason: { text: origError.message, error: origError },
 					});
 					requestedMode = "read";
 					break;
@@ -702,6 +626,17 @@ export class ConnectionManager implements IConnectionManager {
 
 				lastError = origError;
 
+				// When maxInitialConnectionAttempts is set, do not retry beyond the allowed attempts.
+				// The consumer will own the retry policy.
+				if (
+					this.maxInitialConnectionAttempts !== undefined &&
+					connectRepeatCount >= this.maxInitialConnectionAttempts
+				) {
+					const error = normalizeError(origError, { props: fatalConnectErrorProp });
+					this.props.closeHandler(error);
+					throw error;
+				}
+
 				// We will not perform retries if the container disconnected and the ReconnectMode is set to Disabled or Never
 				// so break out of the re-connecting while-loop after first attempt
 				if (this.reconnectMode !== ReconnectMode.Enabled) {
@@ -722,31 +657,6 @@ export class ConnectionManager implements IConnectionManager {
 				// Raise event in case the delay was there from the error.
 				if (retryDelayFromError !== undefined) {
 					this.props.reconnectionDelayHandler(delayMs, origError);
-				}
-
-				// Check if the calculated delay would exceed the remaining timeout with a conservative buffer
-				if (this.retryConnectionTimeoutMs !== undefined) {
-					const elapsedTime = performanceNow() - this.initialConnectionStartTime;
-					const remainingTime = this.retryConnectionTimeoutMs - elapsedTime;
-					const connectionAttemptDuration = performanceNow() - connectStartTime;
-
-					// Use a 75% buffer to be conservative about timeout usage
-					const timeoutBufferThreshold = remainingTime * 0.75;
-					// Estimate the next attempt time as the delay plus the time it took to connect
-					const estimatedNextAttemptTime = delayMs + connectionAttemptDuration;
-
-					if (estimatedNextAttemptTime >= timeoutBufferThreshold) {
-						this.logger.sendTelemetryEvent({
-							eventName: "RetryDelayExceedsConnectionTimeout",
-							attempts: connectRepeatCount,
-							duration: formatTick(elapsedTime),
-							calculatedDelayMs: delayMs,
-							remainingTimeMs: remainingTime,
-							timeoutMs: this.retryConnectionTimeoutMs,
-						});
-						// Throw the error immediately since the estimated time for delay + next connection attempt would exceed our conservative timeout buffer
-						throw normalizeError(origError, { props: fatalConnectErrorProp });
-					}
 				}
 
 				await new Promise<void>((resolve) => {
@@ -792,6 +702,11 @@ export class ConnectionManager implements IConnectionManager {
 			});
 			return;
 		}
+
+		// Clear the max connection attempts limit now that a connection has been established.
+		// The limit is only intended to scope initial connection retries;
+		// once connected, normal reconnect behavior should apply.
+		this.maxInitialConnectionAttempts = undefined;
 
 		this.setupNewSuccessfulConnection(connection, requestedMode, reason);
 	}
@@ -931,7 +846,9 @@ export class ConnectionManager implements IConnectionManager {
 		this.set_readonlyPermissions(
 			readonlyPermission,
 			oldReadonlyValue,
-			isNoDeltaStreamConnection(connection) ? connection.readonlyConnectionReason : undefined,
+			isFrozenDeltaStreamConnection(connection)
+				? connection.readonlyConnectionReason
+				: undefined,
 		);
 
 		if (this._disposed) {
@@ -1003,29 +920,29 @@ export class ConnectionManager implements IConnectionManager {
 		// Synthesize clear & join signals out of initialClients state.
 		// This allows us to have single way to process signals, and makes it simpler to initialize
 		// protocol in Container.
-		const clearSignal: ISignalMessage = {
+		const clearSignal = {
 			// API uses null
 			// eslint-disable-next-line unicorn/no-null
 			clientId: null, // system message
-			content: JSON.stringify({
+			content: JsonStringify({
 				type: SignalType.Clear,
 			}),
 		};
 
 		// list of signals to process due to this new connection
-		let signalsToProcess: ISignalMessage[] = [clearSignal];
+		let signalsToProcess: ISignalMessage<{ type: never; content: JsonString<unknown> }>[] = [
+			clearSignal,
+		];
 
-		const clientJoinSignals: ISignalMessage[] = (connection.initialClients ?? []).map(
-			(priorClient) => ({
-				// API uses null
-				// eslint-disable-next-line unicorn/no-null
-				clientId: null, // system signal
-				content: JSON.stringify({
-					type: SignalType.ClientJoin,
-					content: priorClient, // ISignalClient
-				}),
+		const clientJoinSignals = (connection.initialClients ?? []).map((priorClient) => ({
+			// API uses null
+			// eslint-disable-next-line unicorn/no-null
+			clientId: null, // system signal
+			content: JsonStringify({
+				type: SignalType.ClientJoin,
+				content: priorClient, // ISignalClient
 			}),
-		);
+		}));
 		if (clientJoinSignals.length > 0) {
 			signalsToProcess = [...signalsToProcess, ...clientJoinSignals];
 		}
@@ -1035,6 +952,7 @@ export class ConnectionManager implements IConnectionManager {
 		// for "self" and connection.initialClients does not contain "self", so we have to process them after
 		// "clear" signal above.
 		if (connection.initialSignals !== undefined && connection.initialSignals.length > 0) {
+			assertExpectedSignals(connection.initialSignals);
 			signalsToProcess = [...signalsToProcess, ...connection.initialSignals];
 		}
 
@@ -1174,6 +1092,25 @@ export class ConnectionManager implements IConnectionManager {
 
 	public sendMessages(messages: IDocumentMessage[]): void {
 		assert(this.connected, 0x2b4 /* "not connected on sending ops!" */);
+		// WritableFrozenDeltaStream short-circuit: writable-frozen containers
+		// (`loadFrozenContainerFromPendingState({ readOnly: false })`) attach a
+		// WritableFrozenDeltaStream as the live connection. Its `mode` is "read" (advertising
+		// "write" would imply quorum membership we cannot honor), so a runtime submit
+		// would otherwise fall into the read-mode reconnect branch below. That branch
+		// schedules `reconnect("write")`, which under `ReconnectMode.Never`
+		// (`allowReconnect: false`) calls `closeHandler` and closes the container — the
+		// opposite of what writable-frozen wants. Drop the messages here: the runtime's
+		// outbox keeps them in `pendingStateManager` so `getPendingLocalState()` can
+		// capture them, which is the entire point of the writable-frozen flow.
+		//
+		// Match only the writable variant (a sibling class, not a subclass) so the read-only
+		// `FrozenDeltaStream` retains its `submit` 403-nack tripwire — a stray submit on a
+		// storage-only frozen connection signals an upstream invariant break and should
+		// remain observable. The read-only variant shouldn't reach here in normal flow anyway
+		// (its `storageOnly` policy keeps the runtime from submitting).
+		if (isWritableFrozenDeltaStreamConnection(this.connection)) {
+			return;
+		}
 		// If connection is "read" or implicit "read" (got leave op for "write" connection),
 		// then op can't make it through - we will get a nack if op is sent.
 		// We can short-circuit this process.
@@ -1261,6 +1198,7 @@ export class ConnectionManager implements IConnectionManager {
 
 	private readonly signalHandler = (signalsArg: ISignalMessage | ISignalMessage[]): void => {
 		const signals = Array.isArray(signalsArg) ? signalsArg : [signalsArg];
+		assertExpectedSignals(signals);
 		this.props.signalHandler(signals);
 	};
 

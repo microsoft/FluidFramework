@@ -5,16 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
+import { FluidClientVersion } from "../../../codec/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	comparePersistedSchema,
 	extractPersistedSchema,
-	// eslint-disable-next-line import/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/storedSchema.js";
-import { testDocuments } from "../../testTrees.js";
-import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
-import { typeboxValidator } from "../../../external-utilities/index.js";
-import { FluidClientVersion } from "../../../codec/index.js";
 import { TreeViewConfigurationAlpha, type SchemaUpgrade } from "../../../simple-tree/index.js";
+import { takeJsonSnapshot, useSnapshotDirectory } from "../../snapshots/index.js";
+import { testDocuments } from "../../testTrees.js";
 
 describe("simple-tree storedSchema", () => {
 	describe("test-schema", () => {
@@ -60,7 +60,7 @@ describe("simple-tree storedSchema", () => {
 					);
 
 					const status = comparePersistedSchema(persistedA, test.schema, {
-						jsonValidator: typeboxValidator,
+						jsonValidator: FormatValidatorBasic,
 					});
 					assert.deepEqual(status, {
 						isEquivalent: true,

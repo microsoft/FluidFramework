@@ -84,7 +84,6 @@ describe("Garbage Collection Stats", () => {
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
-			closeFn,
 		};
 
 		let metadata = createParams.metadata;
@@ -103,6 +102,7 @@ describe("Garbage Collection Stats", () => {
 		return GarbageCollector.create({
 			...createParams,
 			runtime: gcRuntime,
+			closeFn,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
 			baseLogger: createChildLogger({ logger: mc.logger }),
@@ -278,6 +278,8 @@ describe("Garbage Collection Stats", () => {
 			);
 
 			// Add 2 new nodes and make one of them unreferenced.
+			// TODO: Fix this violation and remove the disable
+			// eslint-disable-next-line @fluid-internal/fluid/no-unchecked-record-access
 			defaultGCData.gcNodes["/"].push(nodes[4]);
 			defaultGCData.gcNodes[nodes[4]] = [];
 			defaultGCData.gcNodes[nodes[5]] = [];

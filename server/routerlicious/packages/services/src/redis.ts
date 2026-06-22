@@ -21,11 +21,11 @@ export class RedisCache implements ICache {
 		private readonly redisClientConnectionManager: IRedisClientConnectionManager,
 		parameters?: IRedisParameters,
 	) {
-		if (parameters?.expireAfterSeconds) {
+		if (parameters?.expireAfterSeconds !== undefined) {
 			this.expireAfterSeconds = parameters.expireAfterSeconds;
 		}
 
-		if (parameters?.prefix) {
+		if (parameters?.prefix !== undefined) {
 			this.prefix = parameters.prefix;
 		}
 

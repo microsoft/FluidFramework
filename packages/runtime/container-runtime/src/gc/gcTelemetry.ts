@@ -6,11 +6,11 @@
 import type { Tagged } from "@fluidframework/core-interfaces";
 import type { IGarbageCollectionData } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	type MonitoringContext,
 	generateStack,
-	tagCodeArtifacts,
 	type ITelemetryPropertiesExt,
+	type MonitoringContext,
+	tagCodeArtifacts,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { RuntimeHeaderData } from "../containerRuntime.js";
@@ -210,10 +210,9 @@ export class GCTelemetryTracker {
 					return this.configs.tombstoneTimeoutMs;
 				}
 				case UnreferencedState.SweepReady: {
-					return (
-						this.configs.tombstoneTimeoutMs &&
-						this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs
-					);
+					return this.configs.tombstoneTimeoutMs === undefined
+						? undefined
+						: this.configs.tombstoneTimeoutMs + this.configs.sweepGracePeriodMs;
 				}
 				default: {
 					return undefined;
@@ -327,7 +326,7 @@ export class GCTelemetryTracker {
 		if (
 			usageType === "Loaded" &&
 			this.configs.throwOnTombstoneLoad &&
-			!headers?.allowTombstone
+			headers?.allowTombstone !== true
 		) {
 			this.mc.logger.sendErrorEvent(event);
 		} else {
@@ -351,7 +350,7 @@ export class GCTelemetryTracker {
 		currentGCData: IGarbageCollectionData,
 		previousGCData: IGarbageCollectionData,
 		explicitReferences: Map<string, string[]>,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): void {
 		for (const [nodeId, currentOutboundRoutes] of Object.entries(currentGCData.gcNodes)) {
 			const previousRoutes = previousGCData.gcNodes[nodeId] ?? [];
@@ -396,7 +395,7 @@ export class GCTelemetryTracker {
 	 * Log events that are pending in pendingEventsQueue. This is called after GC runs in the summarizer client
 	 * so that the state of an unreferenced node is updated.
 	 */
-	public async logPendingEvents(logger: ITelemetryLoggerExt): Promise<void> {
+	public async logPendingEvents(logger: TelemetryLoggerExt): Promise<void> {
 		// Events sent come only from the summarizer client. In between summaries, events are pushed to a queue and at
 		// summary time they are then logged.
 		// Events generated:

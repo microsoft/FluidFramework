@@ -9,7 +9,11 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 
 import { MockHandle } from "../mockHandle.js";
-import { MockContainerRuntimeFactory, MockFluidDataStoreRuntime } from "../mocks.js";
+import {
+	createSnapshotTreeFromContents,
+	MockContainerRuntimeFactory,
+	MockFluidDataStoreRuntime,
+} from "../mocks.js";
 
 describe("MockContainerRuntime", () => {
 	it("inherits its id from the datastore when set", () => {
@@ -67,5 +71,148 @@ describe("MockContainerRuntime", () => {
 
 	it("MockHandle is handle", () => {
 		assert(isFluidHandle(new MockHandle(5)));
+	});
+});
+
+describe("createSnapshotTreeFromContents", () => {
+	it("creates empty snapshot tree from empty contents", () => {
+		const contents = {};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {},
+			blobs: {},
+		});
+	});
+
+	it("creates snapshot tree with single blob at root", () => {
+		const contents = {
+			"blob1": "content1",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {},
+			blobs: {
+				"blob1": "content1",
+			},
+		});
+	});
+
+	it("creates snapshot tree with multiple blobs at root", () => {
+		const contents = {
+			"blob1": "content1",
+			"blob2": "content2",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {},
+			blobs: {
+				"blob1": "content1",
+				"blob2": "content2",
+			},
+		});
+	});
+
+	it("creates snapshot tree with single level directory", () => {
+		const contents = {
+			"dir1/blob": "content1",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {
+				dir1: {
+					trees: {},
+					blobs: {
+						"blob": "content1",
+					},
+				},
+			},
+			blobs: {},
+		});
+	});
+
+	it("creates snapshot tree with nested directories", () => {
+		const contents = {
+			"dir1/subdir/blob": "content1",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {
+				dir1: {
+					trees: {
+						subdir: {
+							trees: {},
+							blobs: {
+								"blob": "content1",
+							},
+						},
+					},
+					blobs: {},
+				},
+			},
+			blobs: {},
+		});
+	});
+
+	it("creates snapshot tree with mixed structure", () => {
+		const contents = {
+			"root": "root content",
+			"dir1/blob1": "content1",
+			"dir1/blob2": "content2",
+			"dir1/subdir/blob": "nested content",
+			"dir2/blob": "other content",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {
+				dir1: {
+					trees: {
+						subdir: {
+							trees: {},
+							blobs: {
+								"blob": "nested content",
+							},
+						},
+					},
+					blobs: {
+						"blob1": "content1",
+						"blob2": "content2",
+					},
+				},
+				dir2: {
+					trees: {},
+					blobs: {
+						"blob": "other content",
+					},
+				},
+			},
+			blobs: {
+				"root": "root content",
+			},
+		});
+	});
+
+	it("handles paths with trailing slashes gracefully", () => {
+		const contents = {
+			"dir1/blob": "content1",
+		};
+		const snapshotTree = createSnapshotTreeFromContents(contents);
+
+		assert.deepStrictEqual(snapshotTree, {
+			trees: {
+				dir1: {
+					trees: {},
+					blobs: {
+						"blob": "content1",
+					},
+				},
+			},
+			blobs: {},
+		});
 	});
 });

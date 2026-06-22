@@ -15,13 +15,9 @@ import {
 	Loader,
 	waitContainerToCatchUp as waitContainerToCatchUp_original,
 } from "@fluidframework/container-loader/internal";
-import {
-	type IContainerRuntimeOptionsInternal,
-	type MinimumVersionForCollab,
-} from "@fluidframework/container-runtime/internal";
+import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
 import {
 	IRequestHeader,
-	ITelemetryBaseEvent,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 	TelemetryBaseEventPropertyType,
@@ -33,8 +29,8 @@ import {
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
 import { isOdspResolvedUrl } from "@fluidframework/odsp-driver/internal";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryGenericEventExt,
 	createChildLogger,
 	createMultiSinkLogger,
 	type ITelemetryLoggerPropertyBags,
@@ -43,10 +39,14 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
+import type { IEventAndErrorTrackingLogger } from "./eventAndErrorLogger.js";
+import {
+	EventAndErrorTrackingLogger,
+	getUnexpectedLogErrorException,
+} from "./eventAndErrorLogger.js";
 import { LoaderContainerTracker } from "./loaderContainerTracker.js";
 import { LocalCodeLoader, fluidEntryPoint } from "./localCodeLoader.js";
 import { createAndAttachContainer } from "./localLoader.js";
-import { isNonEmptyArray } from "./nonEmptyArrayType.js";
 import { ChannelFactoryRegistry } from "./testFluidObject.js";
 
 const defaultCodeDetails: IFluidCodeDetails = {
@@ -269,13 +269,15 @@ export interface ITestContainerConfig {
 	loaderProps?: Partial<ILoaderProps>;
 
 	/**
-	 * The minVersionForCollab passed to the ContainerRuntime when instantiating it.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams} for more details on this property.
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab | undefined;
 }
 
 /**
+ * Generates a new unique document ID.
+ *
  * @internal
  */
 export const createDocumentId = (): string => uuid();
@@ -326,108 +328,6 @@ function getDocumentIdStrategy(type?: TestDriverTypes): IDocumentIdStrategy {
 					documentId = createDocumentId();
 				},
 			};
-	}
-}
-
-/** @internal */
-export interface IEventAndErrorTrackingLogger {
-	registerExpectedEvent: (...orderedExpectedEvents: ITelemetryGenericEventExt[]) => void;
-	reportAndClearTrackedEvents: () => {
-		expectedNotFound: { index: number; event: ITelemetryGenericEventExt }[];
-		unexpectedErrors: ITelemetryBaseEvent[];
-	};
-}
-
-/**
- * This class tracks events. It allows specifying expected events, which will be looked for in order.
- * It also tracks all unexpected errors.
- * At any point you call reportAndClearTrackedEvents which will provide all unexpected errors, and
- * any expected events that have not occurred.
- * @internal
- */
-export class EventAndErrorTrackingLogger
-	implements ITelemetryBaseLogger, IEventAndErrorTrackingLogger
-{
-	/**
-	 * Even if these error events are logged, tests should still be allowed to pass
-	 * Additionally, if downgrade is true, then log as generic (e.g. to avoid polluting the e2e test logs)
-	 */
-	private readonly allowedErrors: { eventName: string; downgrade?: true }[] = [
-		// This log was removed in current version as unnecessary, but it's still present in previous versions
-		{
-			eventName: "fluid:telemetry:Container:NoRealStorageInDetachedContainer",
-			downgrade: true,
-		},
-		// This log's category changes depending on the op latency. test results shouldn't be affected but if we see lots we'd like an alert from the logs.
-		{ eventName: "fluid:telemetry:OpRoundtripTime" },
-	];
-
-	constructor(private readonly baseLogger?: ITelemetryBaseLogger) {}
-
-	private readonly expectedEvents: { index: number; event: ITelemetryGenericEventExt }[] = [];
-	private readonly unexpectedErrors: ITelemetryBaseEvent[] = [];
-
-	public registerExpectedEvent(...orderedExpectedEvents: ITelemetryGenericEventExt[]) {
-		if (this.expectedEvents.length !== 0) {
-			// we don't have to error here. just no reason not to. given the events must be
-			// ordered it could be tricky to figure out problems around multiple registrations.
-			throw new Error(
-				"Expected events already registered.\n" +
-					"Call reportAndClearTrackedEvents to clear them before registering more",
-			);
-		}
-		this.expectedEvents.push(
-			...orderedExpectedEvents.map((event, index) => ({ index, event })),
-		);
-	}
-
-	send(event: ITelemetryBaseEvent): void {
-		if (isNonEmptyArray(this.expectedEvents)) {
-			const ee = this.expectedEvents[0].event;
-			if (ee.eventName === event.eventName) {
-				let matches = true;
-				for (const key of Object.keys(ee)) {
-					if (ee[key] !== event[key]) {
-						matches = false;
-						break;
-					}
-				}
-				if (matches) {
-					// we found an expected event
-					// so remove it from the list of expected events
-					// and if it is an error, change it to generic
-					// this helps keep our telemetry clear of
-					// expected errors.
-					this.expectedEvents.shift();
-					if (event.category === "error") {
-						event.category = "generic";
-					}
-				}
-			}
-		}
-		if (event.category === "error") {
-			// Check to see if this error is allowed and if its category should be downgraded
-			const allowedError = this.allowedErrors.find(
-				({ eventName }) => eventName === event.eventName,
-			);
-
-			if (allowedError === undefined) {
-				this.unexpectedErrors.push(event);
-			} else if (allowedError.downgrade) {
-				event.category = "generic";
-			}
-		}
-
-		this.baseLogger?.send(event);
-	}
-
-	public reportAndClearTrackedEvents() {
-		const expectedNotFound = this.expectedEvents.splice(0, this.expectedEvents.length);
-		const unexpectedErrors = this.unexpectedErrors.splice(0, this.unexpectedErrors.length);
-		return {
-			expectedNotFound,
-			unexpectedErrors,
-		};
 	}
 }
 
@@ -492,7 +392,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._logger;
 	}
 
-	public get tracker() {
+	public get tracker(): EventAndErrorTrackingLogger {
 		void this.logger;
 		assert(this._tracker !== undefined, "should be initialized");
 		return this._tracker;
@@ -501,7 +401,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
-	public get documentServiceFactory() {
+	public get documentServiceFactory(): IDocumentServiceFactory {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
 			this._documentServiceFactory = this.driver.createDocumentServiceFactory();
 		}
@@ -511,7 +412,8 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
-	public get urlResolver() {
+	public get urlResolver(): IUrlResolver {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
 			this._urlResolver = this.driver.createUrlResolver();
 		}
@@ -521,14 +423,14 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.documentId}
 	 */
-	public get documentId() {
+	public get documentId(): string {
 		return this._documentIdStrategy.get();
 	}
 
 	/**
 	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
 	 */
-	public get defaultCodeDetails() {
+	public get defaultCodeDetails(): IFluidCodeDetails {
 		return defaultCodeDetails;
 	}
 
@@ -545,7 +447,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public createLoader(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Loader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
@@ -568,7 +470,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	public async createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Promise<IContainer> {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -634,7 +536,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		loader: ILoader,
 		headers?: IRequestHeader,
 		pendingLocalState?: string,
-	) {
+	): Promise<IContainer> {
 		return loader.resolve(
 			{
 				url: await this.driver.createContainerUrl(this.documentId),
@@ -647,7 +549,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
 	 */
-	public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
@@ -697,7 +599,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.reset}
 	 */
-	public reset() {
+	public reset(): void {
 		this._loaderContainerTracker.reset();
 		this._documentServiceFactory = undefined;
 		this._urlResolver = undefined;
@@ -718,7 +620,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
-	private async waitContainerToCatchUp(container: IContainer) {
+	private async waitContainerToCatchUp(container: IContainer): Promise<boolean> {
 		// The original waitContainerToCatchUp() from container loader uses either Container.resume()
 		// or Container.connect() as part of its implementation. However, resume() was deprecated
 		// and eventually replaced with connect(). To avoid issues during LTS compatibility testing
@@ -733,7 +635,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
 	 */
-	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
 		this.logger.send({
 			category: "generic",
@@ -745,7 +647,7 @@ export class TestObjectProvider implements ITestObjectProvider {
 	/**
 	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
 	 */
-	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false): void {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
@@ -797,7 +699,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.logger}
 	 */
-	public get logger() {
+	public get logger(): ITelemetryBaseLogger {
 		if (this._logger === undefined) {
 			this._tracker = new EventAndErrorTrackingLogger(getTestLogger?.());
 			this._logger = createChildLogger({
@@ -808,7 +710,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this._logger;
 	}
 
-	public get tracker() {
+	public get tracker(): EventAndErrorTrackingLogger {
 		void this.logger;
 		assert(this._tracker !== undefined, "should be initialized");
 		return this._tracker;
@@ -817,7 +719,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.documentServiceFactory}
 	 */
-	public get documentServiceFactory() {
+	public get documentServiceFactory(): IDocumentServiceFactory {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._documentServiceFactory) {
 			this._documentServiceFactory = this.driverForCreating.createDocumentServiceFactory();
 		}
@@ -827,7 +730,8 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.urlResolver}
 	 */
-	public get urlResolver() {
+	public get urlResolver(): IUrlResolver {
+		// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 		if (!this._urlResolver) {
 			this._urlResolver = this.driverForCreating.createUrlResolver();
 		}
@@ -837,14 +741,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.documentId}
 	 */
-	public get documentId() {
+	public get documentId(): string {
 		return this._documentIdStrategy.get();
 	}
 
 	/**
 	 * {@inheritDoc ITestObjectProvider.defaultCodeDetails}
 	 */
-	public get defaultCodeDetails() {
+	public get defaultCodeDetails(): IFluidCodeDetails {
 		return defaultCodeDetails;
 	}
 
@@ -876,7 +780,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private createLoaderForCreating(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Loader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
@@ -897,7 +801,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	private createLoaderForLoading(
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Loader {
 		const logger = createMultiSinkLogger({
 			loggers: [this.logger, loaderProps?.logger],
 		});
@@ -922,7 +826,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		packageEntries: Iterable<[IFluidCodeDetails, fluidEntryPoint]>,
 		loaderProps?: Partial<ILoaderProps>,
 		forceUseCreateVersion = false,
-	) {
+	): Loader {
 		const useCreateVersion = forceUseCreateVersion === true || this.useCreateApi;
 		if (this.useCreateApi) {
 			// After we create the first loader, we can set this.useCreateApi to false.
@@ -940,7 +844,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	public async createContainer(
 		entryPoint: fluidEntryPoint,
 		loaderProps?: Partial<ILoaderProps>,
-	) {
+	): Promise<IContainer> {
 		if (this._documentCreated) {
 			throw new Error(
 				"Only one container/document can be created. To load the container/document use loadContainer",
@@ -1008,7 +912,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		headers?: IRequestHeader,
 		driver?: ITestDriver,
 		pendingLocalState?: string,
-	) {
+	): Promise<IContainer> {
 		return loader.resolve(
 			{
 				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1022,7 +926,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.makeTestLoader}
 	 */
-	public makeTestLoader(testContainerConfig?: ITestContainerConfig) {
+	public makeTestLoader(testContainerConfig?: ITestContainerConfig): Loader {
 		return this.createLoader(
 			[[defaultCodeDetails, this.createFluidEntryPoint(testContainerConfig)]],
 			testContainerConfig?.loaderProps,
@@ -1082,7 +986,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.reset}
 	 */
-	public reset() {
+	public reset(): void {
 		this.useCreateApi = true;
 		this._loaderContainerTracker.reset();
 		this._logger = undefined;
@@ -1104,7 +1008,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 		return this._loaderContainerTracker.ensureSynchronized(...containers);
 	}
 
-	private async waitContainerToCatchUp(container: IContainer) {
+	private async waitContainerToCatchUp(container: IContainer): Promise<boolean> {
 		// The original waitContainerToCatchUp() from container loader uses either Container.resume()
 		// or Container.connect() as part of its implementation. However, resume() was deprecated
 		// and eventually replaced with connect(). To avoid issues during LTS compatibility testing
@@ -1119,7 +1023,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.updateDocumentId}
 	 */
-	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined) {
+	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
 		this.logger.send({
 			category: "generic",
@@ -1131,7 +1035,7 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	/**
 	 * {@inheritDoc ITestObjectProvider.resetLoaderContainerTracker}
 	 */
-	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false) {
+	public resetLoaderContainerTracker(syncSummarizerClients: boolean = false): void {
 		this._loaderContainerTracker.reset();
 		this._loaderContainerTracker = new LoaderContainerTracker(syncSummarizerClients);
 	}
@@ -1163,49 +1067,4 @@ function getUrlTelemetryProps(
 	}
 
 	return tagData(TelemetryDataTag.UserData, props);
-}
-
-/** Summarize the event with just the primary properties, for succinct output in case of test failure */
-const primaryEventProps = ({
-	category,
-	eventName,
-	error,
-	errorType,
-}: ITelemetryBaseEvent) => ({
-	category,
-	eventName,
-	error,
-	errorType,
-	["..."]: "*** Additional properties not shown, see full log for details ***",
-});
-
-/**
- * @internal
- */
-export function getUnexpectedLogErrorException(
-	logger: IEventAndErrorTrackingLogger | undefined,
-	prefix?: string,
-) {
-	if (logger === undefined) {
-		return;
-	}
-	const results = logger.reportAndClearTrackedEvents();
-	if (results.unexpectedErrors.length > 0) {
-		return new Error(
-			`${prefix ?? ""}Unexpected Errors in Logs:\n${JSON.stringify(
-				results.unexpectedErrors.map(primaryEventProps),
-				undefined,
-				2,
-			)}`,
-		);
-	}
-	if (results.expectedNotFound.length > 0) {
-		return new Error(
-			`${prefix ?? ""}Expected Events not found:\n${JSON.stringify(
-				results.expectedNotFound,
-				undefined,
-				2,
-			)}`,
-		);
-	}
 }

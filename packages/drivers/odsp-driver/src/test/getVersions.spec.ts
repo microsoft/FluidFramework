@@ -6,12 +6,9 @@
 import { strict as assert } from "node:assert";
 
 import { delay } from "@fluidframework/core-utils/internal";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
-import {
-	type ICacheEntry,
-	type IOdspResolvedUrl,
-	maximumCacheDurationMs,
-} from "@fluidframework/odsp-driver-definitions/internal";
+import type { ICacheEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
+import type { IOdspResolvedUrl } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -125,7 +122,7 @@ describe("Tests for snapshot fetch", () => {
 	describe("Tests for caching of different file versions", () => {
 		beforeEach(async () => {
 			localCache = createUtLocalCache();
-			const resolvedUrlWithFileVersion: IOdspResolvedUrl = {
+			const resolvedUrlWithFileVersion = {
 				siteUrl,
 				driveId,
 				itemId,
@@ -144,13 +141,14 @@ describe("Tests for snapshot fetch", () => {
 				fileName: "",
 				summarizer: false,
 				id: "id",
-			};
+			} as const satisfies IOdspResolvedUrl;
 
 			epochTracker = new EpochTracker(
 				localCache,
 				{
 					docId: hashedDocumentId,
 					resolvedUrl,
+					fileVersion: resolvedUrlWithFileVersion.fileVersion,
 				},
 				createChildLogger(),
 			);

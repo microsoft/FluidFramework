@@ -1,6 +1,6 @@
 [Packages](docs/) > [test-suite-a](docs/test-suite-a)
 
-Test package
+Test package Contains a suite of test cases for validation API documentation generation.
 
 <h1 id="test-suite-a-remarks">Remarks</h1>
 
@@ -35,8 +35,9 @@ const foo = bar;
 | Interface | Description |
 | - | - |
 | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) | An empty interface |
-| [TestInterface](docs/test-suite-a#testinterface-interface) | Test interface |
+| [TestInterface](docs/test-suite-a#testinterface-interface) | <p>Test \[interface\]\(https://www.typescriptlang.org/docs/handbook/interfaces.html\).</p><p>Cheers\!</p> |
 | [TestInterfaceExtendingOtherInterfaces](docs/test-suite-a#testinterfaceextendingotherinterfaces-interface) | Test interface that extends other interfaces |
+| [TestInterfaceWithCallSignature](docs/test-suite-a#testinterfacewithcallsignature-interface) | An interface with a complex call signature. |
 | [TestInterfaceWithIndexSignature](docs/test-suite-a#testinterfacewithindexsignature-interface) | An interface with an index signature. |
 | [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface) | Test interface with generic type parameter |
 
@@ -57,13 +58,20 @@ const foo = bar;
 
 | TypeAlias | Description |
 | - | - |
+| [IntersectionType](docs/test-suite-a#intersectiontype-typealias) | An intersection type combining [TypeWithProperties](docs/test-suite-a#typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a#typewithconstructsignature-typealias). |
 | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | Test Mapped Type, using [TestEnum](docs/test-suite-a#testenum-enum) |
 | [TypeAlias](docs/test-suite-a#typealias-typealias) | Test Type-Alias |
+| [TypeWithConstructSignature](docs/test-suite-a#typewithconstructsignature-typealias) | A test type with a construct signature. |
+| [TypeWithProperties](docs/test-suite-a#typewithproperties-typealias) | A test type with properties. |
+| [UnionType](docs/test-suite-a#uniontype-typealias) | A union type combining [TypeWithProperties](docs/test-suite-a#typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a#typewithconstructsignature-typealias). |
 
 # Functions
 
 | Function | Alerts | Return Type | Description |
 | - | - | - | - |
+| [functionWithOverloads(value)](docs/test-suite-a#functionwithoverloads-function) | | string | Takes a number and returns a string. |
+| [functionWithOverloads(value)](docs/test-suite-a#functionwithoverloads_1-function) | | boolean | Takes a string and returns a boolean. |
+| [functionWithOverloads(value)](docs/test-suite-a#functionwithoverloads_2-function) | | number | Takes a boolean and returns a number. |
 | [testFunctionReturningInlineType()](docs/test-suite-a#testfunctionreturninginlinetype-function) | | {     foo: number;     bar: [TestEnum](docs/test-suite-a#testenum-enum); } | Test function that returns an inline type |
 | [testFunctionReturningIntersectionType()](docs/test-suite-a#testfunctionreturningintersectiontype-function) | `Deprecated` | [TestEmptyInterface](docs/test-suite-a#testemptyinterface-interface) & [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)\<number> | Test function that returns an inline type |
 | [testFunctionReturningUnionType()](docs/test-suite-a#testfunctionreturninguniontype-function) | | string \| [TestInterface](docs/test-suite-a#testinterface-interface) | Test function that returns an inline type |
@@ -77,11 +85,11 @@ const foo = bar;
 
 # Namespaces
 
-| Namespace | Alerts | Description |
-| - | - | - |
-| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | A namespace tagged as `@beta`. |
-| [TestModule](docs/test-suite-a#testmodule-namespace) | | |
-| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | Test Namespace |
+| Namespace | Alerts | Modifiers | Description |
+| - | - | - | - |
+| [TestBetaNamespace](docs/test-suite-a#testbetanamespace-namespace) | `Beta` | `sealed` | A namespace tagged as `@beta`. |
+| [TestModule](docs/test-suite-a#testmodule-namespace) | | | |
+| [TestNamespace](docs/test-suite-a#testnamespace-namespace) | | | Test Namespace |
 
 # Interface Details
 
@@ -97,7 +105,9 @@ export interface TestEmptyInterface
 
 <h2 id="testinterface-interface">TestInterface</h2>
 
-Test interface
+Test \[interface]\(https\://www\.typescriptlang.org/docs/handbook/interfaces.html).
+
+Cheers!
 
 <h3 id="testinterface-signature">Signature</h3>
 
@@ -139,10 +149,10 @@ Here are some remarks about the interface
 
 ### Call Signatures
 
-| CallSignature | Description |
-| - | - |
-| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | Test interface event call signature |
-| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | Another example call signature |
+| Call Signature | Return Type | Description |
+| - | - | - |
+| [(event: 'testCallSignature', listener: (input: unknown) => void): any](docs/test-suite-a#testinterface-_call_-callsignature) | any | Test interface event call signature |
+| [(event: 'anotherTestCallSignature', listener: (input: number) => string): number](docs/test-suite-a#testinterface-_call__1-callsignature) | number | Another example call signature |
 
 ### Constructor Details
 
@@ -356,6 +366,40 @@ A number
 - [TestInterfaceWithTypeParameter](docs/test-suite-a#testinterfacewithtypeparameter-interface)
 - [TestMappedType](docs/test-suite-a#testmappedtype-typealias)
 
+<h2 id="testinterfacewithcallsignature-interface">TestInterfaceWithCallSignature</h2>
+
+An interface with a complex call signature.
+
+<h3 id="testinterfacewithcallsignature-signature">Signature</h3>
+
+```typescript
+export interface TestInterfaceWithCallSignature
+```
+
+### Call Signatures
+
+| Call Signature | Return Type | Description |
+| - | - | - |
+| [\<T extends string>(foo: T): number & T](docs/test-suite-a#testinterfacewithcallsignature-_call_-callsignature) | number & T | Test call signature. |
+
+### Call Signature Details
+
+<h4 id="testinterfacewithcallsignature-_call_-callsignature">&#x3C;T extends string>(foo: T): number &#x26; T</h4>
+
+Test call signature.
+
+<h5 id="_call_-signature">Signature</h5>
+
+```typescript
+<T extends string>(foo: T): number & T;
+```
+
+###### Type Parameters
+
+| Parameter | Constraint | Description |
+| - | - | - |
+| T | string | A type parameter |
+
 <h2 id="testinterfacewithindexsignature-interface">TestInterfaceWithIndexSignature</h2>
 
 An interface with an index signature.
@@ -368,7 +412,7 @@ export interface TestInterfaceWithIndexSignature
 
 ### Index Signatures
 
-| IndexSignature | Description |
+| Index Signature | Description |
 | - | - |
 | [\[foo: number\]: { bar: string; }](docs/test-suite-a#testinterfacewithindexsignature-_indexer_-indexsignature) | Test index signature. |
 
@@ -607,7 +651,7 @@ Here are some remarks about the class
 
 | Property | Modifiers | Type | Description |
 | - | - | - | - |
-| [abstractPropertyGetter](docs/test-suite-a#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | A test abstract getter property. |
+| [abstractPropertyGetter](docs/test-suite-a#testclass-abstractpropertygetter-property) | `readonly` | [TestMappedType](docs/test-suite-a#testmappedtype-typealias) | <p>A test abstract getter property.</p><p>@escapedTag</p> |
 | [testClassGetterProperty](docs/test-suite-a#testclass-testclassgetterproperty-property) | `virtual` | number | Test class property with both a getter and a setter. |
 | [testClassProperty](docs/test-suite-a#testclass-testclassproperty-property) | `readonly` | TTypeParameterB | Test class property |
 
@@ -667,6 +711,8 @@ Here are some remarks about the property
 <h4 id="testclass-abstractpropertygetter-property">abstractPropertyGetter</h4>
 
 A test abstract getter property.
+
+@escapedTag
 
 <h5 id="abstractpropertygetter-signature">Signature</h5>
 
@@ -893,6 +939,16 @@ Here are some remarks about the enum value
 
 # Type Details
 
+<h2 id="intersectiontype-typealias">IntersectionType</h2>
+
+An intersection type combining [TypeWithProperties](docs/test-suite-a#typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a#typewithconstructsignature-typealias).
+
+<h3 id="intersectiontype-signature">Signature</h3>
+
+```typescript
+export type IntersectionType = TypeWithProperties & TypeWithConstructSignature;
+```
+
 <h2 id="testmappedtype-typealias">TestMappedType</h2>
 
 Test Mapped Type, using [TestEnum](docs/test-suite-a#testenum-enum)
@@ -923,7 +979,109 @@ export type TypeAlias = string;
 
 Here are some remarks about the type alias
 
+<h2 id="typewithconstructsignature-typealias">TypeWithConstructSignature</h2>
+
+A test type with a construct signature.
+
+<h3 id="typewithconstructsignature-signature">Signature</h3>
+
+```typescript
+export type TypeWithConstructSignature = {
+    new (input: string): TypeWithConstructSignature;
+};
+```
+
+<h2 id="typewithproperties-typealias">TypeWithProperties</h2>
+
+A test type with properties.
+
+<h3 id="typewithproperties-signature">Signature</h3>
+
+```typescript
+export type TypeWithProperties = {
+    foo: string;
+    readonly bar: number;
+    readonly baz?: boolean;
+};
+```
+
+<h2 id="uniontype-typealias">UnionType</h2>
+
+A union type combining [TypeWithProperties](docs/test-suite-a#typewithproperties-typealias) and [TypeWithConstructSignature](docs/test-suite-a#typewithconstructsignature-typealias).
+
+<h3 id="uniontype-signature">Signature</h3>
+
+```typescript
+export type UnionType = TypeWithProperties | TypeWithConstructSignature;
+```
+
 # Function Details
+
+<h2 id="functionwithoverloads-function">functionWithOverloads</h2>
+
+Takes a number and returns a string.
+
+<h3 id="functionwithoverloads-signature">Signature</h3>
+
+```typescript
+export declare function functionWithOverloads(value: number): string;
+```
+
+<h3 id="functionwithoverloads-parameters">Parameters</h3>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | number | A number. |
+
+<h3 id="functionwithoverloads-returns">Returns</h3>
+
+A string.
+
+**Return type**: string
+
+<h2 id="functionwithoverloads_1-function">functionWithOverloads</h2>
+
+Takes a string and returns a boolean.
+
+<h3 id="functionwithoverloads_1-signature">Signature</h3>
+
+```typescript
+export declare function functionWithOverloads(value: string): boolean;
+```
+
+<h3 id="functionwithoverloads_1-parameters">Parameters</h3>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | string | A string. |
+
+<h3 id="functionwithoverloads_1-returns">Returns</h3>
+
+A boolean.
+
+**Return type**: boolean
+
+<h2 id="functionwithoverloads_2-function">functionWithOverloads</h2>
+
+Takes a boolean and returns a number.
+
+<h3 id="functionwithoverloads_2-signature">Signature</h3>
+
+```typescript
+export declare function functionWithOverloads(value: boolean): number;
+```
+
+<h3 id="functionwithoverloads_2-parameters">Parameters</h3>
+
+| Parameter | Type | Description |
+| - | - | - |
+| value | boolean | A boolean. |
+
+<h3 id="functionwithoverloads_2-returns">Returns</h3>
+
+A number.
+
+**Return type**: number
 
 <h2 id="testfunctionreturninginlinetype-function">testFunctionReturningInlineType</h2>
 
@@ -950,7 +1108,7 @@ Test function that returns an inline type
 
 **WARNING: This API is deprecated and will be removed in a future release.**
 
-This is a test deprecation notice. Here is a [link](docs/test-suite-a#testfunctionreturninguniontype-function) to something else!
+This is a test deprecation notice. Here is a [link](docs/test-suite-a#testfunctionreturninguniontype-function) to something else! And here is a malformed link to nothing: _{@link }_.
 
 <h3 id="testfunctionreturningintersectiontype-signature">Signature</h3>
 
@@ -1023,6 +1181,7 @@ A namespace tagged as `@beta`.
 <h3 id="testbetanamespace-signature">Signature</h3>
 
 ```typescript
+/** @sealed */
 export declare namespace TestBetaNamespace
 ```
 

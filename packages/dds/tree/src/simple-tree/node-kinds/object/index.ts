@@ -5,8 +5,9 @@
 
 export {
 	type FieldHasDefault,
-	type InsertableObjectFromAnnotatedSchemaRecord,
+	type FieldHasDefaultAlpha,
 	type InsertableObjectFromSchemaRecord,
+	type InsertableObjectFromSchemaRecordAlpha,
 	type ObjectFromSchemaRecord,
 	objectSchema,
 	setField,
@@ -16,6 +17,6 @@ export {
 export {
 	isObjectNodeSchema,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type ObjectNodeSchemaPrivate,
-	type UnannotateSchemaRecord,
 } from "./objectNodeTypes.js";

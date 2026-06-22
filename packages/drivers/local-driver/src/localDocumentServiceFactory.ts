@@ -3,9 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentService,
 	IDocumentServiceFactory,
 	IDocumentServicePolicies,
@@ -13,10 +13,10 @@ import {
 	NackErrorType,
 } from "@fluidframework/driver-definitions/internal";
 import { DefaultTokenProvider } from "@fluidframework/routerlicious-driver/internal";
-import { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
+import type { ILocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 
 import { createDocument } from "./localCreateDocument.js";
-import { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
+import type { LocalDocumentDeltaConnection } from "./localDocumentDeltaConnection.js";
 import { createLocalDocumentService } from "./localDocumentService.js";
 import { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 
@@ -106,7 +106,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param clientId - The ID of the client to be disconnected.
 	 * @param disconnectReason - The reason of the disconnection.
 	 */
-	public disconnectClient(clientId: string, disconnectReason: string) {
+	public disconnectClient(clientId: string, disconnectReason: string): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);
@@ -121,7 +121,12 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
 	 * @param type - Type of the Nack.
 	 * @param message - A message about the nack for debugging/logging/telemetry purposes.
 	 */
-	public nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any) {
+	public nackClient(
+		clientId: string,
+		code?: number,
+		type?: NackErrorType,
+		message?: any,
+	): void {
 		const documentDeltaConnection = this.documentDeltaConnectionsMap.get(clientId);
 		if (documentDeltaConnection === undefined) {
 			throw new Error(`No client with the id: ${clientId}`);

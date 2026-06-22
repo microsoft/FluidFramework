@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
 
 interface ITestMetadata {
 	/** Tells whether testSummaries functionality is true. If so, the testSummaries ReplayArg is true. */
@@ -40,7 +40,7 @@ export function getMetadata(folder: string): ITestMetadata {
 /**
  * Writes the metadata file in the given test folder.
  */
-export function writeMetadataFile(folder: string) {
+export function writeMetadataFile(folder: string): void {
 	const metadataFile = getFullMetadataFileName(folder);
 	fs.writeFileSync(metadataFile, JSON.stringify(currentMetadata), {
 		encoding: "utf-8",

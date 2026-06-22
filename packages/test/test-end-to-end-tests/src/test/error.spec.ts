@@ -6,8 +6,11 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import {
+	ContainerErrorTypes,
+	IContainer,
+} from "@fluidframework/container-definitions/internal";
+import type { ILoaderProps } from "@fluidframework/container-loader/internal";
 import {
 	IDocumentServiceFactory,
 	IResolvedUrl,
@@ -25,7 +28,8 @@ import { v4 as uuid } from "uuid";
 import { wrapObjectAndOverride } from "../mocking.js";
 
 // REVIEW: enable compat testing?
-describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Errors Types", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	let provider: ITestObjectProvider;
 	let fileName: string;
 	let containerUrl: IResolvedUrl;
@@ -55,7 +59,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		loaderContainerTracker.reset();
 	});
 
-	async function loadContainer(props?: Partial<ILoaderProps>) {
+	async function loadContainer(props?: Partial<ILoaderProps>): Promise<IContainer> {
 		const loader = new Loader({
 			...props,
 			logger: provider.logger,
@@ -144,7 +148,7 @@ describeCompat("Errors Types", "NoCompat", (getTestObjectProvider) => {
 		);
 	});
 
-	function assertCustomPropertySupport(err: any) {
+	function assertCustomPropertySupport(err: any): void {
 		err.asdf = "asdf";
 		assert(isILoggingError(err), "Error should support getTelemetryProperties()");
 		assert.equal(err.getTelemetryProperties().asdf, "asdf", "Error should have property asdf");

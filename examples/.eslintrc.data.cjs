@@ -8,8 +8,8 @@
 
 const importInternalModulesAllowed = [
 	// Allow import of Fluid Framework external API exports.
-	"@fluidframework/*/{beta,alpha,legacy}",
-	"fluid-framework/{beta,alpha,legacy}",
+	"@fluidframework/*/{beta,alpha,legacy,legacy/alpha}",
+	"fluid-framework/{beta,alpha,legacy,legacy/alpha}",
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",
@@ -40,9 +40,9 @@ const lintConfig = {
 	rules: {
 		/**
 		 * Allow Fluid Framework examples to import from unstable and legacy APIs.
-		 * https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-internal-modules.md
+		 * https://github.com/import-js/eslint-plugin-import-x/blob/main/docs/rules/no-internal-modules.md
 		 */
-		"import/no-internal-modules": [
+		"import-x/no-internal-modules": [
 			"error",
 			{
 				allow: importInternalModulesAllowed,
@@ -53,7 +53,7 @@ const lintConfig = {
 		{
 			files: ["*.spec.ts", "src/test/**", "tests/**"],
 			rules: {
-				"import/no-internal-modules": [
+				"import-x/no-internal-modules": [
 					"error",
 					{
 						allow: importInternalModulesAllowedForTest,

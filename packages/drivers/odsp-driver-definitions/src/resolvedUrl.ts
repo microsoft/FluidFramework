@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 
 /**
  * @legacy
@@ -126,7 +126,7 @@ export interface IOdspResolvedUrl extends IResolvedUrl, IOdspUrlParts {
 	};
 
 	// Tokens are not obtained by the ODSP driver using the resolve flow, the app must provide them.
-	// eslint-disable-next-line @typescript-eslint/ban-types
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	tokens: {};
 
 	fileName: string;

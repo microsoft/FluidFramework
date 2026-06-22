@@ -4,7 +4,8 @@
  */
 
 import {
-	IFluidMountableViewEntryPoint,
+	type IFluidMountableView,
+	type IFluidMountableViewEntryPoint,
 	MountableView,
 	getDataStoreEntryPoint,
 } from "@fluid-example/example-utils";
@@ -14,7 +15,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/legacy";
-import React from "react";
+import { createElement } from "react";
 
 import { SmdeDataObject, SmdeFactory } from "./smde.js";
 import { SmdeReactView } from "./smdeView.js";
@@ -50,11 +51,10 @@ class SmdeContainerFactory extends RuntimeFactoryHelper {
 					defaultComponentId,
 				);
 
-				const view = React.createElement(SmdeReactView, {
+				const view = createElement(SmdeReactView, {
 					smdeDataObject,
-				}) as any;
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
-				let getMountableDefaultView = async () => view;
+				}) as unknown as IFluidMountableView;
+				let getMountableDefaultView = async (): Promise<IFluidMountableView> => view;
 				if (MountableView.canMount(view)) {
 					getMountableDefaultView = async () => new MountableView(view);
 				}

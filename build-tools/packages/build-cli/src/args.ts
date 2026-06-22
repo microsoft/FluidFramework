@@ -7,8 +7,8 @@ import type { MonoRepo, Package } from "@fluidframework/build-tools";
 import { Args } from "@oclif/core";
 import { PackageName } from "@rushstack/node-core-library";
 import * as semver from "semver";
-// eslint-disable-next-line import/no-deprecated
-import { type Context, isMonoRepoKind } from "./library/index.js";
+// eslint-disable-next-line import-x/no-deprecated
+import { type Context, isMonoRepoKind } from "./library/context.js";
 
 /**
  * Creates a CLI argument for package or release group names. It's a factory function so that commands can override the
@@ -28,7 +28,7 @@ export const findPackageOrReleaseGroup = (
 	name: string,
 	context: Context,
 ): Package | MonoRepo | undefined => {
-	// eslint-disable-next-line import/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated
 	if (isMonoRepoKind(name)) {
 		return context.repo.releaseGroups.get(name);
 	}
@@ -48,7 +48,7 @@ export const semverArg = Args.custom<semver.SemVer, { loose?: boolean }>({
 	description:
 		"A semantic versioning (semver) version string. Values are verified to be valid semvers during argument parsing.",
 	parse: async (input, _, opts) => {
-		const parsed = semver.parse(input, opts.loose);
+		const parsed = semver.parse(input, opts.loose ?? false);
 		if (parsed === null) {
 			throw new Error(`Invalid semver: ${input}`);
 		}

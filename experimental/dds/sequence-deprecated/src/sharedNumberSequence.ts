@@ -44,7 +44,7 @@ export class SharedNumberSequenceClass extends SharedSequence<number> {
 	 * @deprecated SharedNumberSequence is not recommended for use and will be removed in an upcoming release.
 	 * For more info, please see {@link https://github.com/microsoft/FluidFramework/issues/8526 | Github issue 8526}.
 	 */
-	public getRange(start: number, end?: number) {
+	public getRange(start: number, end?: number): number[] {
 		return this.getItems(start, end);
 	}
 }

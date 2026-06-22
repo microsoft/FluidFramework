@@ -5,13 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
-import type { IDocumentStorageServicePolicies } from "@fluidframework/driver-definitions/internal";
+import type {
+	ICacheEntry,
+	IDocumentStorageServicePolicies,
+	IEntry,
+} from "@fluidframework/driver-definitions/internal";
+import { maximumCacheDurationMs } from "@fluidframework/driver-utils/internal";
 import {
-	type ICacheEntry,
-	type IEntry,
 	type IOdspResolvedUrl,
 	OdspErrorTypes,
-	maximumCacheDurationMs,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
 	type IFluidErrorBase,
@@ -368,9 +370,21 @@ describe("Tests for Epoch Tracker", () => {
 		);
 	});
 
-	it("Check for resolved url on LocationRedirection error", async () => {
-		let success: boolean = true;
+	it("LocationRedirection error should have correct resolved url and clear cache", async () => {
+		const cacheEntry: IEntry = {
+			key: "key1",
+			type: "snapshot",
+		};
+		epochTracker.setEpoch("epoch1", true, "test");
+		await epochTracker.put(cacheEntry, { val: "val1" });
+
+		assert(
+			(await epochTracker.get(cacheEntry)) !== undefined,
+			"Entry should exist in cache before redirect",
+		);
+
 		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+		let success: boolean = true;
 		try {
 			await mockFetchSingle(
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
@@ -399,5 +413,9 @@ describe("Tests for Epoch Tracker", () => {
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
+		assert(
+			(await epochTracker.get(cacheEntry)) === undefined,
+			"Cache entry should be cleared after site/geo move redirect",
+		);
 	});
 });

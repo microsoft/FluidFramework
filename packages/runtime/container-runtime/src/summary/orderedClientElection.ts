@@ -19,15 +19,15 @@ import type {
 	ISequencedClient,
 } from "@fluidframework/driver-definitions";
 import {
-	type ITelemetryLoggerExt,
-	UsageError,
 	createChildLogger,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { summarizerClientType } from "./summarizerTypes.js";
 
 // helper types for recursive readonly.
-// eslint-disable-next-line @typescript-eslint/ban-types
+// eslint-disable-next-line @typescript-eslint/no-unsafe-function-type
 export type ImmutablePrimitives = undefined | null | boolean | string | number | Function;
 export type Immutable<T> = T extends ImmutablePrimitives
 	? T
@@ -135,7 +135,7 @@ export class OrderedClientCollection
 	 * Pointer to end of linked list, for optimized client adds.
 	 */
 	private _youngestClient: LinkNode = this.rootNode;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	public get count(): number {
 		return this.clientMap.size;
@@ -413,7 +413,7 @@ export class OrderedClientElection
 	}
 
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly orderedClientCollection: IOrderedClientCollection,
 		/**
 		 * Serialized state from summary or current sequence number at time of load if new.
@@ -515,7 +515,7 @@ export class OrderedClientElection
 				"InteractiveClientElected",
 				client,
 				sequenceNumber,
-				true /* forceSend */,
+				false /* forceSend */,
 				reason,
 			);
 			// Changing the elected parent as well.
@@ -544,7 +544,7 @@ export class OrderedClientElection
 				"ParentElected",
 				client,
 				sequenceNumber,
-				true /* forceSend */,
+				false /* forceSend */,
 				reason,
 			);
 			this._electedParent = client;

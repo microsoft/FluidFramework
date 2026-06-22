@@ -7,10 +7,6 @@ import { type ApiItem, ReleaseTag } from "@microsoft/api-extractor-model";
 
 import type { Section } from "../../mdast/index.js";
 import { getEffectiveReleaseLevel } from "../../utilities/index.js";
-import {
-	doesItemRequireOwnDocument,
-	getHeadingForApiItem,
-} from "../ApiItemTransformUtilities.js";
 import type { ApiItemTransformationConfiguration } from "../configuration/index.js";
 import {
 	alphaWarningSpan,
@@ -23,6 +19,7 @@ import {
 	createSummarySection,
 	createThrowsSection,
 } from "../helpers/index.js";
+import { doesItemRequireOwnDocument, getHeadingForApiItem } from "../utilities/index.js";
 
 /**
  * Default {@link ApiItemTransformationConfiguration.defaultSectionLayout} implementation.

@@ -517,18 +517,27 @@ describe("Map", () => {
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 2);
+					// After remote clear: emit clear + valueChanged delete events for removed keys
+					assert.equal(valuesChanged.length, 3, "2 initial sets + 1 delete for map2key");
 					assert.equal(valuesChanged[0].key, "map1Key");
 					assert.equal(valuesChanged[0].previousValue, undefined);
 					assert.equal(valuesChanged[1].key, "map2key");
 					assert.equal(valuesChanged[1].previousValue, undefined);
+					assert.equal(valuesChanged[2].key, "map2key", "Delete event for map2key");
+					assert.equal(
+						valuesChanged[2].previousValue,
+						"value2",
+						"Previous value before clear",
+					);
 					assert.equal(clearCount, 1);
 					assert.equal(map1.size, 1);
 					assert.equal(map1.get("map1Key"), "value1");
 
 					containerRuntimeFactory.processSomeMessages(2);
 
-					assert.equal(valuesChanged.length, 2);
+					assert.equal(valuesChanged.length, 4, "One more delete for map1Key");
+					assert.equal(valuesChanged[3].key, "map1Key");
+					assert.equal(valuesChanged[3].previousValue, "value1");
 					assert.equal(clearCount, 2);
 					assert.equal(map1.size, 0);
 				});

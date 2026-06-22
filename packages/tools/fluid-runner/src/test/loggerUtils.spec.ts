@@ -6,14 +6,14 @@
 import { strict as assert } from "assert";
 import path from "path";
 
-/* eslint-disable import/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules */
 import { OutputFormat } from "../logger/fileLogger.js";
 import {
-	createLogger,
+	createFluidRunnerLogger,
 	getTelemetryFileValidationError,
 	validateAndParseTelemetryOptions,
 } from "../logger/loggerUtils.js";
-/* eslint-enable import/no-internal-modules */
+/* eslint-enable import-x/no-internal-modules */
 
 import { _dirname } from "./dirname.cjs";
 
@@ -173,10 +173,10 @@ describe("logger utils", () => {
 		});
 	});
 
-	describe("createLogger", () => {
+	describe("createFluidRunnerLogger", () => {
 		[-1, 0, 1, 25].forEach((eventsPerFlush) => {
 			it(`sets eventsPerFlush [${eventsPerFlush}] properly`, () => {
-				const { fileLogger } = createLogger("fake/path", {
+				const { fileLogger } = createFluidRunnerLogger("fake/path", {
 					outputFormat: OutputFormat.CSV,
 					eventsPerFlush,
 				});

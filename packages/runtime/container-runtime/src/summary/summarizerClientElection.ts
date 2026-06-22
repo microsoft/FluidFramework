@@ -7,7 +7,7 @@ import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEvent, IEventProvider } from "@fluidframework/core-interfaces";
 import type { IClientDetails } from "@fluidframework/driver-definitions";
 import { MessageType } from "@fluidframework/driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type {
 	IOrderedClientElection,
@@ -58,7 +58,7 @@ export class SummarizerClientElection
 	}
 
 	constructor(
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly summaryCollection: IEventProvider<ISummaryCollectionOpEvents>,
 		public readonly clientElection: IOrderedClientElection,
 		private readonly maxOpsSinceLastSummary: number,
@@ -91,6 +91,7 @@ export class SummarizerClientElection
 						lastSummaryAckSeqForClient: this.lastSummaryAckSeqForClient,
 						electionSequenceNumber,
 						nextElectedClientId: this.clientElection.peekNextElectedClient()?.clientId,
+						opsWithoutSummary,
 					});
 					this.lastReportedSeq = sequenceNumber;
 				}

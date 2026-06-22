@@ -15,6 +15,7 @@ import type {
 } from "@fluidframework/server-services-core";
 import type { SocketIoAdapterCreator } from "@fluidframework/server-services-shared";
 import type { IRedisClientConnectionManager } from "@fluidframework/server-services-utils";
+import type { Server } from "socket.io";
 
 /**
  * @internal
@@ -36,4 +37,5 @@ export interface INexusResourcesCustomizations {
 	redisClientConnectionManagerForInvalidTokenCache?: IRedisClientConnectionManager;
 	customCreateSocketIoAdapter?: SocketIoAdapterCreator;
 	readinessCheck?: IReadinessCheck;
+	customSocketIoSetupFunction?: (io: Server) => void;
 }

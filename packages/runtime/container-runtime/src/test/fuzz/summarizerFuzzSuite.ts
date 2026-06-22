@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable import/no-nodejs-modules */
+/* eslint-disable import-x/no-nodejs-modules */
 
 import { strict as assert } from "node:assert";
 import { mkdirSync, readFileSync } from "node:fs";
@@ -171,6 +171,7 @@ export function createSummarizerFuzzSuite(
 
 		if (options.replay !== undefined) {
 			const seed = options.replay;
+			// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data (replay option)
 			describe.only(`replay from file`, () => {
 				const saveInfo = getSaveInfo(model, options, seed);
 				assert(
@@ -247,9 +248,10 @@ function runTest(
 	seed: number,
 	saveInfo: SaveInfo | undefined,
 ): void {
+	// eslint-disable-next-line no-only-tests/no-only-tests -- controlled by test data (only option)
 	const itFn = options.only.has(seed) ? it.only : options.skip.has(seed) ? it.skip : it;
 	itFn(`seed ${seed}`, async () => {
-		const inCi = !!process.env.TF_BUILD;
+		const inCi = process.env.TF_BUILD !== undefined;
 		await runTestForSeed(model, options, seed, inCi ? undefined : saveInfo);
 	});
 }

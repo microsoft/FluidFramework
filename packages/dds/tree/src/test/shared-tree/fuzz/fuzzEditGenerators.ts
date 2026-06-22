@@ -15,7 +15,9 @@ import {
 	done,
 } from "@fluid-private/stochastic-test-utils";
 import type { Client, DDSFuzzTestState, DDSRandom } from "@fluid-private/test-dds-utils";
+import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
+import { asAlpha } from "../../../api.js";
 import type {
 	TreeStoredSchemaRepository,
 	FieldKey,
@@ -25,6 +27,16 @@ import type {
 } from "../../../core/index.js";
 import { type DownPath, toDownPath } from "../../../feature-libraries/index.js";
 import { Tree, type ITreePrivate } from "../../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
+import { getInnerNode } from "../../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	TreeViewConfiguration,
+	type TreeNode,
+	type TreeNodeSchema,
+} from "../../../simple-tree/index.js";
+import type { ISharedTree } from "../../../treeFactory.js";
 import { getOrCreate, makeArray } from "../../../util/index.js";
 
 import {
@@ -56,22 +68,11 @@ import {
 	type NodeRange,
 	type ForkMergeOperation,
 } from "./operationTypes.js";
-// eslint-disable-next-line import/no-internal-modules
-import type { SchematizingSimpleTreeView } from "../../../shared-tree/schematizingTreeView.js";
-import { asTreeViewAlpha, getOrCreateInnerNode } from "../../../simple-tree/index.js";
-import {
-	SchemaFactory,
-	TreeViewConfiguration,
-	type TreeNode,
-	type TreeNodeSchema,
-} from "../../../simple-tree/index.js";
-import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
-import type { ISharedTree } from "../../../treeFactory.js";
 
 export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
-	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
@@ -85,7 +86,7 @@ export type FuzzView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 export type FuzzTransactionView = SchematizingSimpleTreeView<typeof fuzzFieldSchema> & {
 	/**
 	 * This client's current stored schema, which dictates allowable edits that the client may perform.
-	 * @remarks - The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
+	 * @remarks The type of this field isn't totally correct, since the supported schema for fuzz nodes changes
 	 * at runtime to support different primitives (this allows fuzz testing of schema changes).
 	 * However, fuzz schemas always have the same field names, so schema-dependent
 	 * APIs such as the tree reading API will work correctly anyway.
@@ -148,7 +149,7 @@ export function viewFromState(
 				schema: treeSchema,
 			});
 
-			const treeView = asTreeViewAlpha(tree.viewWith(config));
+			const treeView = asAlpha(tree.viewWith(config));
 			treeView.events.on("schemaChanged", () => {
 				if (!treeView.compatibility.canView) {
 					treeView.dispose();
@@ -198,12 +199,9 @@ export function simpleSchemaFromStoredSchema(
 	]);
 	const fuzzNodeSchemas: TreeNodeSchema[] = [];
 	for (const nodeSchema of nodeSchemas) {
-		class GUIDNodeSchema extends schemaFactory.object(
-			nodeSchema.substring("treeFuzz.".length),
-			{
-				value: schemaFactory.number,
-			},
-		) {}
+		class GUIDNodeSchema extends schemaFactory.object(nodeSchema.slice("treeFuzz.".length), {
+			value: schemaFactory.number,
+		}) {}
 		fuzzNodeSchemas.push(GUIDNodeSchema);
 	}
 	return createTreeViewSchema(fuzzNodeSchemas);
@@ -245,7 +243,7 @@ export interface FieldSelectionWeights {
 	/**
 	 * Whether the selected field is acceptable for use.
 	 *
-	 * @remarks - This can be helpful for restricting tests to only use certain types of fields
+	 * @remarks This can be helpful for restricting tests to only use certain types of fields
 	 */
 	filter?: FieldFilter;
 }
@@ -304,7 +302,7 @@ export interface EditGeneratorOptions {
 	maxRemoveCount: number;
 }
 
-export function getAllowableNodeTypes(state: FuzzTestState) {
+export function getAllowableNodeTypes(state: FuzzTestState): string[] {
 	const fuzzView = viewFromState(state, state.client);
 	const nodeSchema = fuzzView.currentSchema;
 	const nodeTypes = [];
@@ -329,24 +327,27 @@ export const makeTreeEditGenerator = (
 		const nodeTypeToGenerate = state.random.pick(allowableNodeTypes);
 
 		switch (nodeTypeToGenerate) {
-			case "com.fluidframework.leaf.string":
+			case "com.fluidframework.leaf.string": {
 				return {
 					type: GeneratedFuzzValueType.String,
 					value: state.random
 						.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER)
 						.toString(),
 				};
-			case "com.fluidframework.leaf.number":
+			}
+			case "com.fluidframework.leaf.number": {
 				return {
 					type: GeneratedFuzzValueType.Number,
 					value: state.random.integer(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
 				};
-			case "com.fluidframework.leaf.handle":
+			}
+			case "com.fluidframework.leaf.handle": {
 				return {
 					type: GeneratedFuzzValueType.Handle,
 					value: state.random.handle(),
 				};
-			case "treeFuzz.node":
+			}
+			case "treeFuzz.node": {
 				return {
 					type: GeneratedFuzzValueType.NodeObject,
 					value: {
@@ -357,9 +358,11 @@ export const makeTreeEditGenerator = (
 						arrayChildren: [],
 					},
 				};
-			default:
+			}
+			default: {
 				// This would be the for the case when the node type was one of our custom node with GUID as the identifier
 				return { type: GeneratedFuzzValueType.GUIDNode, value: { guid: nodeTypeToGenerate } };
+			}
 		}
 	};
 
@@ -471,22 +474,25 @@ export const makeTreeEditGenerator = (
 					(edit) => ({ type: "sequence", edit }),
 				);
 			}
-			case "optional":
+			case "optional": {
 				return {
 					type: "optional",
 					edit: assertNotDone(
 						optionalFieldEditGenerator(state as FuzzTestStateForFieldEdit<OptionalFuzzField>),
 					),
 				};
-			case "required":
+			}
+			case "required": {
 				return {
 					type: "required",
 					edit: assertNotDone(
 						requiredFieldEditGenerator(state as FuzzTestStateForFieldEdit<RequiredFuzzField>),
 					),
 				};
-			default:
+			}
+			default: {
 				assert.fail("Unknown field type");
+			}
 		}
 	}
 
@@ -570,7 +576,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "commit",
 			},
 			opWeights.commit,
-			(state) => viewFromState(state).checkout.transaction.isInProgress(),
+			(state) => viewFromState(state).checkout.transaction.size > 0,
 		],
 		[
 			{
@@ -578,7 +584,7 @@ export const makeTransactionEditGenerator = (
 				boundary: "abort",
 			},
 			opWeights.abort,
-			(state) => viewFromState(state).checkout.transaction.isInProgress(),
+			(state) => viewFromState(state).checkout.transaction.size > 0,
 		],
 	]);
 };
@@ -608,6 +614,8 @@ export const makeBranchEditGenerator = (
 				};
 			},
 			opWeights.fork,
+			// Can only fork if there is no open transaction
+			(state) => state.transactionViews?.get(state.client.channel) === undefined,
 		],
 		[
 			(state): ForkMergeOperation => {
@@ -637,6 +645,8 @@ export const makeBranchEditGenerator = (
 			},
 			opWeights.merge,
 			(state) =>
+				// Can only merge if there is no open transaction
+				state.transactionViews?.get(state.client.channel) === undefined &&
 				state.forkedViews?.get(state.client.channel) !== undefined &&
 				state.forkedViews.get(state.client.channel)?.length !== 0,
 		],
@@ -740,15 +750,21 @@ export function makeOpGenerator(
 					(): Synchronize => ({
 						type: "synchronizeTrees",
 					}),
-					weights.synchronizeTrees,
+					synchronizeTrees,
 				],
-				[() => schemaEditGenerator, weights.schema],
+				[() => schemaEditGenerator, schema],
 				[
 					() => makeConstraintEditGenerator(weights),
 					constraintWeight,
-					(state: FuzzTestState) => viewFromState(state).checkout.transaction.isInProgress(),
+					(state: FuzzTestState) => viewFromState(state).checkout.transaction.size > 0,
 				],
-				[() => makeBranchEditGenerator(weights), weights.fork + weights.merge],
+				[
+					() => makeBranchEditGenerator(weights),
+					fork + merge,
+					// Can only fork/merge if there is no open transaction
+					(state: FuzzTestState) =>
+						state.transactionViews?.get(state.client.channel) === undefined,
+				],
 			] as const
 		)
 			.filter(([, weight]) => weight > 0)
@@ -776,7 +792,7 @@ export interface FieldPathWithCount {
 }
 
 function upPathFromNode(node: TreeNode): UpPath {
-	const flexNode = getOrCreateInnerNode(node);
+	const flexNode = getInnerNode(node);
 	assert(flexNode.isHydrated());
 	const anchorNode = flexNode.anchorNode;
 	return anchorNode;
@@ -917,8 +933,9 @@ function trySelectTreeField(
 
 				break;
 			}
-			default:
+			default: {
 				assert.fail(`Invalid option: ${option}`);
+			}
 		}
 	}
 

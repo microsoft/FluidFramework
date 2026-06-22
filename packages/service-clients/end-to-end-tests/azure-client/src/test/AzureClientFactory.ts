@@ -9,7 +9,7 @@ import {
 	type AzureRemoteConnectionConfig,
 	type ITelemetryBaseLogger,
 } from "@fluidframework/azure-client";
-// eslint-disable-next-line import/no-internal-modules -- TODO consider a test exposure to avoid /internal
+// eslint-disable-next-line import-x/no-internal-modules -- TODO consider a test exposure to avoid /internal
 import type { AzureClientPropsInternal } from "@fluidframework/azure-client/internal";
 import {
 	AzureClient as AzureClientLegacy,
@@ -20,15 +20,25 @@ import {
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type { CompatibilityMode, ContainerSchema } from "@fluidframework/fluid-static";
+import type { ContainerSchema } from "@fluidframework/fluid-static";
+import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import {
 	type MockLogger,
 	createChildLogger,
 	createMultiSinkLogger,
 } from "@fluidframework/telemetry-utils/internal";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { default as Axios, type AxiosResponse, type AxiosRequestConfig } from "axios";
 import { v4 as uuid } from "uuid";
+
+/**
+ * Response type for container creation requests.
+ * - Azure Fluid Relay (AFR) returns `{ id: string }` object
+ * - Local Tinylicious returns the container ID as a plain string
+ */
+interface FetchResponse {
+	status: number;
+	data: { id?: string } | string;
+}
 
 import { createAzureTokenProvider } from "./AzureTokenFactory.js";
 
@@ -47,10 +57,10 @@ export function createAzureClient(
 	scopes?: ScopeType[],
 	createContainerRuntimeFactory?: ({
 		schema,
-		compatibilityMode,
+		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		compatibilityMode: CompatibilityMode;
+		minVersionForCollaboration: MinimumVersionForCollab;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);
@@ -88,7 +98,7 @@ export function createAzureClient(
 			}
 		: {
 				tokenProvider: new InsecureTokenProvider("fooBar", user, scopes),
-				endpoint: "http://localhost:7071",
+				endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 				type: "local",
 			};
 	const getLogger = (): ITelemetryBaseLogger | undefined => {
@@ -155,7 +165,7 @@ export function createAzureClientLegacy(
 				}
 			: {
 					tokenProvider: new InsecureTokenProvider("fooBar", user),
-					endpoint: "http://localhost:7071",
+					endpoint: "http://localhost:7071", // Port for local Azure Fluid Relay (AFR) service
 					type: "local",
 				};
 	const getLogger = (): ITelemetryBaseLoggerLegacy | undefined => {
@@ -187,13 +197,13 @@ export function createAzureClientLegacy(
  * currently these are mainly fetched from ephemeralSummaryTrees.ts
  * @param userID - ID for the user creating the container
  * @param userName - Name for the user creating the container
- * @returns - An AxiosResponse containing the container ID(response.data.id)
+ * @returns A FetchResponse containing the container ID(response.data.id)
  */
 export async function createContainerFromPayload(
 	requestPayload: object,
 	userID?: string,
 	userName?: string,
-): Promise<AxiosResponse> {
+): Promise<FetchResponse> {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
 	const tenantId = useAzure
 		? (process.env.azure__fluid__relay__service__tenantId as string)
@@ -204,7 +214,7 @@ export async function createContainerFromPayload(
 	};
 	const endPoint = useAzure
 		? (process.env.azure__fluid__relay__service__endpoint as string)
-		: "http://localhost:7071";
+		: "http://localhost:7071"; // Port for local Azure Fluid Relay (AFR) service
 	if (useAzure && endPoint === undefined) {
 		throw new Error("Azure Fluid Relay service endpoint is missing");
 	}
@@ -219,48 +229,57 @@ export async function createContainerFromPayload(
 		"Content-Type": "application/json",
 	};
 
-	const url = `/documents/${tenantId}`;
-
-	const options: AxiosRequestConfig = {
-		baseURL: endPoint,
-		data: requestPayload,
-		headers,
-		maxBodyLength: 1048576000,
-		maxContentLength: 1048576000,
-		method: "POST",
-		url,
-	};
+	const url = `${endPoint}/documents/${tenantId}`;
 
 	try {
-		const response: AxiosResponse = await Axios(options);
+		const response = await fetch(url, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(requestPayload),
+		});
 
-		if (response.status === 201) {
-			console.log("Container created successfully");
-		} else {
+		// Fetch doesn't auto-throw on non-2xx responses like axios did, so check explicitly
+		if (!response.ok) {
 			throw new Error(`Error creating container. Status code: ${response.status}`);
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		if (response?.data === undefined || (useAzure && response?.data?.id === undefined)) {
+		if (response.status === 201) {
+			console.log("Container created successfully");
+		}
+
+		const data: { id?: string } | string = (await response.json()) as { id?: string } | string;
+
+		if (
+			data === undefined ||
+			(useAzure && typeof data === "object" && data.id === undefined)
+		) {
 			throw new Error(`ID of the created container is undefined`);
 		}
 
-		return response;
+		return { status: response.status, data };
 	} catch (error) {
 		throw new Error(`An error occurred: ${error}`);
 	}
 }
 
 /**
- * This function takes an AxiosResponse returned by the createContainerFromPayload and returns the containerId.
+ * This function takes a FetchResponse returned by the createContainerFromPayload and returns the containerId.
  * A separate function is used for this, since the data path to the containerID is not always the same.
  * (Tinylicious has the ID stored at a different path than other services)
  *
  * @param response - A container creation response returned by createContainerFromPayload
- * @returns - The ID of the container that was created by createContainerFromPayload
+ * @returns The ID of the container that was created by createContainerFromPayload
  */
-export function getContainerIdFromPayloadResponse(response: AxiosResponse): string {
+export function getContainerIdFromPayloadResponse(response: FetchResponse): string {
 	const useAzure = process.env.FLUID_CLIENT === "azure";
-	// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-	return (useAzure ? response.data.id : response.data) as string;
+	if (useAzure) {
+		if (typeof response.data === "object" && response.data.id !== undefined) {
+			return response.data.id;
+		}
+		throw new Error("Invalid response format for Azure");
+	}
+	if (typeof response.data === "string") {
+		return response.data;
+	}
+	throw new Error("Invalid response format for local");
 }

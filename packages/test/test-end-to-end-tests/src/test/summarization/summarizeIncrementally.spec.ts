@@ -11,7 +11,7 @@ import {
 	describeCompat,
 } from "@fluid-private/test-version-utils";
 import { IContainer } from "@fluidframework/container-definitions/internal";
-import { ISummarizer } from "@fluidframework/container-runtime/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import {
 	IContainerRuntimeBase,
@@ -35,7 +35,7 @@ function validateDataStoreStateInSummary(
 	summaryTree: ISummaryTree,
 	dataStoreId: string,
 	expectHandle: boolean,
-) {
+): void {
 	const channelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
 	const dataStoreSummaryObject = channelsTree[dataStoreId];
 
@@ -73,7 +73,7 @@ function validateDDSStateInSummary(
 	dataStoreId: string,
 	ddsId: string,
 	expectHandle: boolean,
-) {
+): void {
 	const dataStoreChannelsTree = (summaryTree.tree[channelsTreeName] as ISummaryTree).tree;
 	const dataStoreSummaryTree = dataStoreChannelsTree[dataStoreId];
 	assert.strictEqual(

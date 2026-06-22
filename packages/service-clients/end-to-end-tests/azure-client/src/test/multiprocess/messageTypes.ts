@@ -3,14 +3,22 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules
 import type { JsonSerializable } from "@fluidframework/core-interfaces/internal";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
-import type { AttendeeId } from "@fluidframework/presence/beta";
+import type { AttendeeId } from "@fluidframework/presence";
 
 export interface UserIdAndName {
 	id: string;
 	name: string;
+}
+
+export interface EventEntry {
+	timestamp: number;
+	agentId: string;
+	eventCategory: string;
+	eventName: string;
+	details?: string;
 }
 
 /**
@@ -18,6 +26,7 @@ export interface UserIdAndName {
  */
 export type MessageToChild =
 	| ConnectCommand
+	| DebugReportCommand
 	| DisconnectSelfCommand
 	| RegisterWorkspaceCommand
 	| GetLatestValueCommand
@@ -48,6 +57,25 @@ export interface ConnectCommand {
 	 * If not provided, a new Fluid container will be created.
 	 */
 	containerId?: string;
+	connectTimeoutMs: number;
+}
+
+/**
+ * Instructs a child process to report debug information.
+ *
+ * @privateRemarks
+ * This can be expanded over time to include more options.
+ */
+interface DebugReportCommand {
+	command: "debugReport";
+	/**
+	 * Send event log entries.
+	 */
+	sendEventLog?: true;
+	/**
+	 * Send basic attendee statistics (like count of connected).
+	 */
+	reportAttendees?: true;
 }
 
 /**
@@ -127,6 +155,7 @@ export type MessageFromChild =
 	| AttendeeConnectedEvent
 	| AttendeeDisconnectedEvent
 	| ConnectedEvent
+	| DebugReportCompleteEvent
 	| DisconnectedSelfEvent
 	| ErrorEvent
 	| LatestMapValueGetResponseEvent
@@ -165,6 +194,14 @@ interface ConnectedEvent {
 	event: "connected";
 	containerId: string;
 	attendeeId: AttendeeId;
+}
+
+/**
+ * Sent from the child processes to the orchestrator in response to a {@link DebugReportCommand}.
+ */
+interface DebugReportCompleteEvent {
+	event: "debugReportComplete";
+	log?: EventEntry[];
 }
 
 /**

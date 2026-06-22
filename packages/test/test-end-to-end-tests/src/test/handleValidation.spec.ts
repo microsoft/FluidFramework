@@ -7,7 +7,8 @@ import { strict as assert } from "assert";
 
 import { generatePairwiseOptions } from "@fluid-private/test-pairwise-generator";
 import { describeCompat } from "@fluid-private/test-version-utils";
-import { ISharedCell } from "@fluidframework/cell/internal";
+import type { ISharedCell } from "@fluidframework/cell/internal";
+import type { IContainer, IHostLoader } from "@fluidframework/container-definitions/internal";
 import {
 	IFluidHandle,
 	IFluidLoadable,
@@ -18,13 +19,10 @@ import type {
 	IChannel,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import { ISharedMap, type ISharedDirectory } from "@fluidframework/map/internal";
-import { SharedMatrixFactory, type ISharedMatrix } from "@fluidframework/matrix/internal";
+import type { ISharedMap, ISharedDirectory } from "@fluidframework/map/internal";
+import type { ISharedMatrix } from "@fluidframework/matrix/internal";
 import type { ConsensusQueue } from "@fluidframework/ordered-collection/internal";
-import {
-	ConsensusRegisterCollectionFactory,
-	type IConsensusRegisterCollection,
-} from "@fluidframework/register-collection/internal";
+import type { IConsensusRegisterCollection } from "@fluidframework/register-collection/internal";
 import { IDataStore } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
@@ -41,13 +39,18 @@ import {
 	type ITestObjectProvider,
 	timeoutAwait,
 } from "@fluidframework/test-utils/internal";
+// SchemaFactory and TreeViewConfiguration are used at file scope below to define the test schema
+// `class Bar` and the corresponding TreeView config. Moving them inside the describeCompat callback
+// would require non-trivial restructuring; tests in this file run NoCompat so the current versions
+// are equivalent to apis.dataRuntime.packages.tree.* anyway.
+/* eslint-disable @typescript-eslint/no-restricted-imports */
 import {
 	ITree,
 	SchemaFactory,
 	TreeViewConfiguration,
 	type TreeView,
 } from "@fluidframework/tree";
-import { SharedTree } from "@fluidframework/tree/internal";
+/* eslint-enable @typescript-eslint/no-restricted-imports */
 
 const mapId = "map";
 const stringId = "sharedString";
@@ -65,7 +68,7 @@ const builder = new SchemaFactory("test");
 class Bar extends builder.object("bar", {
 	h: builder.optional(builder.handle),
 }) {}
-function treeSetup(dds: ITree) {
+function treeSetup(dds: ITree): TreeView<typeof Bar> {
 	const config = new TreeViewConfiguration({ schema: Bar });
 
 	const view = dds.viewWith(config);
@@ -179,6 +182,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		SharedMatrix,
 		ConsensusRegisterCollection,
 		ConsensusQueue,
+		SharedTree,
 	} = apis.dds;
 
 	let provider: ITestObjectProvider;
@@ -297,7 +301,6 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 						string.annotateRange(0, 1, { B: handle });
 					},
 					async readHandle(): Promise<unknown> {
-						// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 						return string.getPropertiesAtPosition(0)?.B;
 					},
 					handle: string.handle,
@@ -306,7 +309,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 		{
 			id: matrixId,
-			type: SharedMatrixFactory.Type,
+			type: SharedMatrix.getFactory().type,
 			createDDS(runtime) {
 				const matrix = runtime.createChannel(undefined, SharedMatrix.getFactory().type);
 				return this.downCast(matrix);
@@ -351,7 +354,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 		{
 			id: registerId,
-			type: ConsensusRegisterCollectionFactory.Type,
+			type: ConsensusRegisterCollection.getFactory().type,
 			createDDS(runtime) {
 				const register = runtime.createChannel(
 					undefined,
@@ -403,6 +406,7 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 											reject(new Error("No values found in consensus queue."));
 										}
 									})
+									// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 									.catch((error) => reject(error));
 							}),
 							{ errorMsg: "Timeout waiting for acquiring value from consensus queue." },
@@ -434,7 +438,11 @@ describeCompat("handle validation", "NoCompat", (getTestObjectProvider, apis) =>
 		},
 	};
 
-	async function setup() {
+	async function setup(): Promise<{
+		loader: IHostLoader;
+		provider: ITestObjectProvider;
+		container1: IContainer;
+	}> {
 		const loader = provider.makeTestLoader(testContainerConfig);
 		const container1 = await createAndAttachContainer(
 			provider.defaultCodeDetails,

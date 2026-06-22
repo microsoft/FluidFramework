@@ -10,7 +10,6 @@ import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
-import type { AxiosResponse } from "axios";
 
 import {
 	createAzureClient,
@@ -20,7 +19,7 @@ import {
 } from "./AzureClientFactory.js";
 import { SignalerTestDataObject } from "./TestDataObject.js";
 import * as ephemeralSummaryTrees from "./ephemeralSummaryTrees.js";
-import { configProvider, getTestMatrix } from "./utils.js";
+import { configProvider, getTestMatrix, currentVersion } from "./utils.js";
 
 interface UserIdAndName {
 	readonly id: string;
@@ -103,21 +102,28 @@ for (const testOpts of testMatrix) {
 			let containerId: string;
 			if (id === undefined) {
 				if (isEphemeral) {
-					const containerResponse: AxiosResponse | undefined =
-						await createContainerFromPayload(
-							ephemeralSummaryTrees.sendAndRecieveSignals,
-							"test-user-id-1",
-							"test-user-name-1",
-						);
+					const containerResponse = await createContainerFromPayload(
+						ephemeralSummaryTrees.sendAndRecieveSignals,
+						"test-user-id-1",
+						"test-user-name-1",
+					);
 					containerId = getContainerIdFromPayloadResponse(containerResponse);
-					({ container, services } = await client.getContainer(containerId, schema, "2"));
+					({ container, services } = await client.getContainer(
+						containerId,
+						schema,
+						currentVersion,
+					));
 				} else {
-					({ container, services } = await client.createContainer(schema, "2"));
+					({ container, services } = await client.createContainer(schema, currentVersion));
 					containerId = await container.attach();
 				}
 			} else {
 				containerId = id;
-				({ container, services } = await client.getContainer(containerId, schema, "2"));
+				({ container, services } = await client.getContainer(
+					containerId,
+					schema,
+					currentVersion,
+				));
 			}
 
 			if (container.connectionState !== ConnectionState.Connected) {
@@ -149,7 +155,7 @@ for (const testOpts of testMatrix) {
 		 * Scenario: Client sends a signal and connected clients receive it.
 		 *
 		 * Expected behavior: While 2 clients are connected to a container,
-		 * a signal sent by 1 client should be recieved by both clients.
+		 * a signal sent by 1 client should be received by both clients.
 		 */
 		it("can send and receive signals", async () => {
 			const { signaler, containerId } = await getOrCreateSignalerContainer(undefined, user1);
@@ -191,7 +197,7 @@ for (const testOpts of testMatrix) {
 		 * Scenario: Read and Write clients send signals and connected clients receive them.
 		 *
 		 * Expected behavior: While 2 clients are connected (1 writer, 2 readers) to a container,
-		 * a signal sent by any 1 client should be recieved by all 3 clients, regardless of read/write permissions.
+		 * a signal sent by any 1 client should be received by all 3 clients, regardless of read/write permissions.
 		 */
 		it("can send and receive read-only client signals", async function () {
 			const { signaler: writeSignaler, containerId } = await getOrCreateSignalerContainer(

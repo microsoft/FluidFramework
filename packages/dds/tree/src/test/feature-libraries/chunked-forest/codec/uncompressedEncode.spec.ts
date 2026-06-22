@@ -5,9 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
+import { currentVersion } from "../../../../codec/index.js";
 import {
-	makeFieldBatchCodec,
-	// eslint-disable-next-line import/no-internal-modules
+	fieldBatchCodecBuilder,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/codecs.js";
 import {
 	TreeCompressionStrategy,
@@ -27,9 +28,13 @@ describe("uncompressedEncode", () => {
 				const context = {
 					encodeType: TreeCompressionStrategy.Uncompressed,
 					originatorId: testIdCompressor.localSessionId,
+					isSummary: false,
 					idCompressor: testIdCompressor,
 				};
-				const codec = makeFieldBatchCodec({ jsonValidator: ajvValidator }, 1);
+				const codec = fieldBatchCodecBuilder.build({
+					jsonValidator: ajvValidator,
+					minVersionForCollab: currentVersion,
+				});
 				const result = codec.encode([input], context);
 				const decoded = codec.decode(result, context);
 				const decodedJson = decoded.map(jsonableTreeFromFieldCursor);

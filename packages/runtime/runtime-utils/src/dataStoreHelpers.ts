@@ -5,7 +5,19 @@
 
 import type { IRequest, IResponse } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { generateErrorWithStack } from "@fluidframework/telemetry-utils/internal";
+import type {
+	IFluidDataStoreRuntime,
+	IFluidDataStoreRuntimeAlpha,
+} from "@fluidframework/datastore-definitions/internal";
+import type {
+	ContainerRuntimeBaseAlpha,
+	IContainerRuntimeBase,
+} from "@fluidframework/runtime-definitions/internal";
+import {
+	generateErrorWithStack,
+	tagCodeArtifacts,
+	type ITelemetryPropertiesExt,
+} from "@fluidframework/telemetry-utils/internal";
 
 interface IResponseException extends Error {
 	errorFromRequestFluidObject: true;
@@ -46,20 +58,18 @@ export function exceptionToResponse(error: unknown): IResponse {
 		};
 	}
 
-	// Capture error objects, not stack itself, as stack retrieval is very expensive operation
-	const errWithStack = generateErrorWithStack();
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	const errWithStack =
+		typeof error === "object" && error !== null && "stack" in error
+			? (error as { stack: string })
+			: generateErrorWithStack();
 
 	return {
 		mimeType: "text/plain",
 		status,
 		value: `${error}`,
 		get stack() {
-			// Use type assertion after checking if error is an object with stack
-			return (
-				(typeof error === "object" && error !== null && "stack" in error
-					? (error.stack as string | undefined)
-					: undefined) ?? errWithStack.stack
-			);
+			return errWithStack.stack;
 		},
 	};
 }
@@ -75,14 +85,15 @@ export function responseToException(response: IResponse, request: IRequest): Err
 	// As of 2025-08-20 the code seems to assume `response.value` is always a string.
 	// This type assertion just encodes that assumption as we move to stricter linting rules, but it might need to be revisited.
 	const message = response.value as string;
-	const errWithStack = generateErrorWithStack();
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
+	const errWithStack = "stack" in response ? response : generateErrorWithStack();
 	const responseErr: Error & IResponseException = {
 		errorFromRequestFluidObject: true,
 		message,
 		name: "Error",
 		code: response.status,
 		get stack() {
-			return response.stack ?? errWithStack.stack;
+			return errWithStack.stack;
 		},
 		underlyingResponseHeaders: response.headers,
 	};
@@ -119,7 +130,7 @@ export function createResponseError(
 	// Omit query string which could contain personal data unfit for logging
 	const urlNoQuery = request.url?.split("?")[0];
 
-	// Capture error objects, not stack itself, as stack retrieval is very expensive operation, so we delay it
+	// Both error generation, and accessing the stack value are expensive operations, so we only create an error if necessary, and then defer accessing the stack value until it is needed.
 	const errWithStack = generateErrorWithStack();
 
 	return {
@@ -131,4 +142,42 @@ export function createResponseError(
 		},
 		headers,
 	};
+}
+
+/**
+ * Returns the canonical set of code-artifact-tagged telemetry properties identifying a data store.
+ * Use this anywhere a data store identity needs to appear in telemetry, so all such logs use
+ * consistent property names.
+ * @internal
+ */
+export function dataStoreLoadTelemetryProps(props: {
+	id: string;
+	packagePath: readonly string[];
+}): ITelemetryPropertiesExt {
+	const { id, packagePath } = props;
+	const dataStorePackagePath = packagePath.length > 0 ? packagePath.join("/") : undefined;
+	return tagCodeArtifacts({
+		dataStorePackagePath, // aka fullPackageName, before 2.103.0
+		dataStoreId: id, // aka fluidDataStoreId, before 2.103.0
+	});
+}
+
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(runtime: IContainerRuntimeBase): ContainerRuntimeBaseAlpha;
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(runtime: IFluidDataStoreRuntime): IFluidDataStoreRuntimeAlpha;
+/**
+ * Converts types to their alpha counterparts to expose alpha functionality.
+ * @legacy @alpha
+ */
+export function asLegacyAlpha(
+	runtime: IFluidDataStoreRuntime | IContainerRuntimeBase,
+): unknown {
+	return runtime;
 }

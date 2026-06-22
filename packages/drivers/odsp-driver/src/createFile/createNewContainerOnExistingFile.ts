@@ -4,16 +4,15 @@
  */
 
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
-import type { ISnapshot } from "@fluidframework/driver-definitions/internal";
+import type { IFileEntry, ISnapshot } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import type {
-	IFileEntry,
 	IOdspResolvedUrl,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { IWriteSummaryResponse } from "./../contracts.js";
@@ -47,7 +46,7 @@ import {
 export async function createNewContainerOnExistingFile(
 	getAuthHeader: InstrumentedStorageTokenFetcher,
 	fileInfo: IExistingFileInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	createNewSummary: ISummaryTree | undefined,
 	epochTracker: EpochTracker,
 	fileEntry: IFileEntry,

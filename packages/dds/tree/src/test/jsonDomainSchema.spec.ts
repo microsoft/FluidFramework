@@ -4,24 +4,28 @@
  */
 
 import { strict as assert } from "node:assert";
-import { Tree, TreeAlpha } from "../shared-tree/index.js";
+
 import { JsonAsTree } from "../jsonDomainSchema.js";
+import { Tree } from "../shared-tree/index.js";
+import { TreeBeta, TreeViewConfiguration } from "../simple-tree/index.js";
 import type { areSafelyAssignable, requireTrue } from "../util/index.js";
+
+import { testSchemaCompatibilitySnapshots } from "./snapshots/index.js";
 
 describe("JsonDomainSchema", () => {
 	it("examples", () => {
-		const tree1 = TreeAlpha.importConcise(JsonAsTree.Tree, {
+		const tree1 = TreeBeta.importConcise(JsonAsTree.Tree, {
 			example: { nested: true },
 			value: 5,
 		});
 
-		const tree3 = TreeAlpha.importConcise(JsonAsTree.Array, [1, "x", { a: 0 }]);
+		const tree3 = TreeBeta.importConcise(JsonAsTree.Array, [1, "x", { a: 0 }]);
 
 		{
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
 			const fromRecord = new JsonAsTree.JsonObject({ a: 0 });
 			// Using `importConcise` can work better for JSON data:
-			const imported = TreeAlpha.importConcise(JsonAsTree.JsonObject, { a: 0 });
+			const imported = TreeBeta.importConcise(JsonAsTree.JsonObject, { a: 0 });
 			const value = imported.a;
 			assert.equal(value, 0);
 		}
@@ -30,7 +34,7 @@ describe("JsonDomainSchema", () => {
 			// Due to TypeScript restrictions on recursive types, the constructor and be somewhat limiting.
 			const usingConstructor = new JsonAsTree.Array(["a", 0, new JsonAsTree.Array([1])]);
 			// Using `importConcise` can work better for JSON data:
-			const imported = TreeAlpha.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
+			const imported = TreeBeta.importConcise(JsonAsTree.Array, ["a", 0, [1]]);
 			assert(Tree.is(imported, JsonAsTree.Array));
 			// Node API is like an Array:
 			const inner: JsonAsTree.Tree = imported[2];
@@ -63,5 +67,10 @@ describe("JsonDomainSchema", () => {
 		// Due to the nature of this issue possibly being impacted by details of the .d.ts generation,
 		// there is also some testing in examples/utils/import-testing/src/test/importer.spec.ts
 		// which ensures it works from outside the package with both CJS and ESM.
+	});
+
+	it("compatibility", () => {
+		const currentViewSchema = new TreeViewConfiguration({ schema: JsonAsTree.Tree });
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.80.0", "json");
 	});
 });

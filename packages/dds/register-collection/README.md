@@ -42,9 +42,9 @@ API documentation for **@fluidframework/register-collection** is available at <h
 
 ### Detecting concurrency in Fluid
 
-In distributed systems literaure, detecting concurrency requires some form of logical/phsical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.
+In distributed systems literature, detecting concurrency requires some form of logical/physical clock. A popular technique used in replicated databases such as dynamodb is called version vectors where each key stores a collection of `[time, value]` tuples. `time` is essentially a reference clock used to decide concurrency amongst updates. Each update to a key includes the `time`, essentially to indicate how `caught up` the replica was during that update.
 
-In Fluid, each operation contains a referenceSequenceNumber (`refSeq`), which essenially refers to how caught up the client was (in terms of sequence number) during that update. We can use this property to implement a similar concurreny model. Mathematically, if an update has a `refSeq N`, it can overwrite/discard any other prior values with `sequenceNumber (seq) <= N`. It is safe to do so because the client must have seen all those updates before posting it's own update. Hence this update is not concurrent with those overwritten updates. However, the update is still concurrent with any other update with `seq > N`. Therefore those versions are still kept.
+In Fluid, each operation contains a referenceSequenceNumber (`refSeq`), which essentially refers to how caught up the client was (in terms of sequence number) during that update. We can use this property to implement a similar concurrency model. Mathematically, if an update has a `refSeq N`, it can overwrite/discard any other prior values with `sequenceNumber (seq) <= N`. It is safe to do so because the client must have seen all those updates before posting its own update. Hence this update is not concurrent with those overwritten updates. However, the update is still concurrent with any other update with `seq > N`. Therefore those versions are still kept.
 
 ### Conflict resolution policies
 
@@ -73,7 +73,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

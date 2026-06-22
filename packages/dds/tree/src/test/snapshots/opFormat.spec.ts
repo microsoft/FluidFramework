@@ -4,6 +4,7 @@
  */
 
 import { AttachState } from "@fluidframework/container-definitions";
+import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import {
@@ -12,12 +13,13 @@ import {
 	MockFluidDataStoreRuntime,
 	MockStorage,
 } from "@fluidframework/test-runtime-utils/internal";
-import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
+
+import { FluidClientVersion } from "../../codec/index.js";
 import { SchemaFactory, TreeViewConfiguration, type ITree } from "../../simple-tree/index.js";
-import { SharedTreeFormatVersion } from "../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import type { IChannel } from "@fluidframework/datastore-definitions/internal";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
+
+import { takeJsonSnapshot, useSnapshotDirectory } from "./snapshotTools.js";
 
 /**
  * This suite provides some e2e snapshot coverage for how SharedTree ops look.
@@ -43,13 +45,13 @@ describe("SharedTree op format snapshots", () => {
 	let containerRuntime: MockContainerRuntime;
 	let tree: ITree & IChannel;
 
-	for (const versionKey of Object.keys(SharedTreeFormatVersion)) {
-		describe(`using SharedTreeFormatVersion.${versionKey}`, () => {
+	for (const versionKey of Object.keys(FluidClientVersion)) {
+		describe(`using FluidClientVersion.${versionKey}`, () => {
 			useSnapshotDirectory(`op-format/${versionKey}`);
 			beforeEach(() => {
 				const factory = configuredSharedTree({
-					formatVersion:
-						SharedTreeFormatVersion[versionKey as keyof typeof SharedTreeFormatVersion],
+					minVersionForCollab:
+						FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
 				}).getFactory();
 				const containerRuntimeFactory = new MockContainerRuntimeFactory();
 				const sessionId = "00000000-0000-4000-b000-000000000000" as SessionId;

@@ -68,7 +68,7 @@ steps:
     PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
     script: |
       set -eu -o pipefail
       # expect release group root package.json be in the current working directory
@@ -91,7 +91,7 @@ steps:
     continueOnError: false
     inputs:
       targetType: 'inline'
-      workingDirectory: ${{ parameters.buildDirectory }}
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
         # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
@@ -106,8 +106,8 @@ steps:
       INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
     inputs:
       targetType: 'filePath'
-      workingDirectory: ${{ parameters.buildDirectory }}
-      filePath: $(Build.SourcesDirectory)/scripts/update-package-version.sh
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/update-package-version.sh
 
 # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
 # help find and prevent bugs in the version bumping tools.
@@ -115,7 +115,7 @@ steps:
   displayName: Check for caret dependencies on internal versions
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
     script: |
       # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
       # even in an error case
@@ -131,7 +131,7 @@ steps:
   displayName: Check for caret dependencies on dev versions
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
     script: |
       # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
       # even in an error case

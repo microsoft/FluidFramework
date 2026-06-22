@@ -8,11 +8,9 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { FieldKey } from "../../core/index.js";
 import { FieldKinds } from "../../feature-libraries/index.js";
 import { brand } from "../../util/index.js";
-
 import {
 	createField,
 	type UnhydratedFlexTreeField,
-	unannotateImplicitAllowedTypes,
 	normalizeAllowedTypes,
 	type FlexContent,
 } from "../core/index.js";
@@ -21,6 +19,7 @@ import {
 	unhydratedFlexTreeFromInsertableNode,
 	type InsertableContent,
 } from "../unhydratedFlexTreeFromInsertable.js";
+
 import type { MapNodeSchema } from "./map/index.js";
 import type { RecordNodeSchema } from "./record/index.js";
 
@@ -35,7 +34,7 @@ export function recordLikeDataToFlexContent(
 	fieldsIterator: Iterable<readonly [string, InsertableContent]>,
 	schema: MapNodeSchema | RecordNodeSchema,
 ): FlexContent {
-	const allowedChildTypes = normalizeAllowedTypes(unannotateImplicitAllowedTypes(schema.info));
+	const allowedChildTypes = normalizeAllowedTypes(schema.info);
 	const context = getUnhydratedContext(schema).flexContext;
 
 	const transformedFields = new Map<FieldKey, UnhydratedFlexTreeField>();
@@ -45,7 +44,10 @@ export function recordLikeDataToFlexContent(
 
 		// Omit undefined values - an entry with an undefined value is equivalent to one that has been removed or omitted
 		if (value !== undefined) {
-			const child = unhydratedFlexTreeFromInsertableNode(value, allowedChildTypes);
+			const child = unhydratedFlexTreeFromInsertableNode(
+				value,
+				allowedChildTypes.evaluateSet(),
+			);
 			const field = createField(context, FieldKinds.optional.identifier, brand(key), [child]);
 			transformedFields.set(brand(key), field);
 		}

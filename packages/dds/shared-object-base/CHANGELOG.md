@@ -1,5 +1,115 @@
 # @fluidframework/shared-object-base
 
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- minVersionForCollab is now non-optional ([#25331](https://github.com/microsoft/FluidFramework/pull/25331)) [9a0d0272df](https://github.com/microsoft/FluidFramework/commit/9a0d0272df6ae1a521cff00292dd159ea3b5e270)
+
+  This change is a follow-up for [pull request 25130](https://github.com/microsoft/FluidFramework/pull/25130)
+  which was released as part of [2.61.0](https://github.com/microsoft/FluidFramework/releases/tag/client_v2.61.0).
+
+  The `minVersionForCollab` property has been made non-optional in the following `@beta` `@legacy` interfaces in the Runtime layer:
+  - `IFluidParentContext.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+  - `IFluidDataStoreContext.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+  - `IFluidDataStoreContextDetached.minVersionForCollab` in `@fluidframework/runtime-definitions`.
+
+  Consumers of Fluid aren't expected to implement these interfaces directly, so no impact is expected.
+
+  Additionally the following properties now always return a value, rather than possibly returning `undefined`:
+  - `FluidDataStoreRuntime.minVersionForCollab` in `@fluidframework/datastore`.
+    Note that API Extractor shows this as a breaking change since FluidDataStoreRuntime is beta + legacy and non-sealed.
+    However, FluidDataStoreRuntime is not intended to be extended directly outside of a known legacy use-case.
+  - `IDataObjectProps.context.minVersionForCollab` in `@fluidframework/aqueduct`.
+  - `ITestFluidObject.context.minVersionForCollab` in `@fluidframework/test-utils`
+  - `IProvideTestFluidObject.ITestFluidObject.context.minVersionForCollab` in `@fluidframework/test-utils`
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
+## 2.83.0
+
+Dependency updates only.
+
+## 2.82.0
+
+Dependency updates only.
+
+## 2.81.0
+
+Dependency updates only.
+
+## 2.80.0
+
+Dependency updates only.
+
+## 2.74.0
+
+Dependency updates only.
+
+## 2.73.0
+
+Dependency updates only.
+
+## 2.72.0
+
+Dependency updates only.
+
+## 2.71.0
+
+Dependency updates only.
+
+## 2.70.0
+
+### Minor Changes
+
+- Deprecated property processCore has been removed from SharedObject ([#25749](https://github.com/microsoft/FluidFramework/pull/25749)) [a33a2e370f](https://github.com/microsoft/FluidFramework/commit/a33a2e370fbb95b565f39c2a14abc7716bc01980)
+
+  The deprecated property `processCore` has been removed from `SharedObject`.
+
+  Please see [this github issue](https://github.com/microsoft/FluidFramework/issues/25176) for more details.
+
+## 2.63.0
+
+Dependency updates only.
+
+## 2.62.0
+
+Dependency updates only.
+
+## 2.61.0
+
+Dependency updates only.
+
 ## 2.60.0
 
 Dependency updates only.
@@ -128,7 +238,6 @@ Dependency updates only.
   to validate that the returned object actually matches the expected type.
 
   The list of affected APIs is as follows:
-
   - `IFluidSerializer.encode(...)` now takes `value: unknown` instead of `value: any` and returns `unknown` instead of `any`.
   - `IFluidSerializer.decode(...)` now takes `input: unknown` instead of `input: any` and returns `unknown` instead of `any`.
   - `IFluidSerializer.stringify(...)` now takes `value: unknown` instead of `value: any`.
@@ -143,7 +252,6 @@ Dependency updates only.
   - `parseHandles(...)` now returns `unknown` instead of `any`.
 
   Additionally, the following APIs were never designed to return a value and have thus been updated to return `void` instead of `any`:
-
   - `SharedObjectCore.processCore(...)`.
   - `SharedObjectCore.onDisconnect(...)`
 
@@ -219,7 +327,6 @@ Dependency updates only.
 
   Access to these now less public types should not be required for users of the `@public` "declarative API" exposed in the `fluid-framework` package, but can still be accessed for those who need them under the `/legacy` import paths.
   The full list of such types is:
-
   - `SharedTree` as exported from `@fluidframwork/tree`: It is still exported as `@public` from `fluid-framework` as `SharedObjectKind`.
   - `ISharedObjectKind`: See new `SharedObjectKind` type for use in `@public` APIs.
     `ISharedObject`
@@ -237,7 +344,6 @@ Dependency updates only.
   - `IProvideFluidHandleContext`
 
   Removed APIs:
-
   - `DataObjectClass`: Usages replaced with `SharedObjectKind`.
   - `LoadableObjectClass`: Replaced with `SharedObjectKind`.
   - `LoadableObjectClassRecord`: Replaced with `Record<string, SharedObjectKind>`.
@@ -250,7 +356,6 @@ Dependency updates only.
 - fluid-framework: Remove several types from `@public` scope ([#21142](https://github.com/microsoft/FluidFramework/pull/21142)) [983e9f09f7](https://github.com/microsoft/FluidFramework/commit/983e9f09f7b10fef9ffa1e9af86166f0ccda7e14)
 
   The following types have been moved from `@public` to `@alpha`:
-
   - `IFluidSerializer`
   - `ISharedObjectEvents`
   - `IChannelServices`
@@ -284,7 +389,6 @@ Dependency updates only.
   TypeScript types and implementation code.
 
   This means that using Fluid Framework packages require the following TypeScript settings in tsconfig.json:
-
   - `"moduleResolution": "Node16"` with `"module": "Node16"`
   - `"moduleResolution": "Bundler"` with `"module": "ESNext"`
 
@@ -321,7 +425,6 @@ Dependency updates only.
 - Updated server dependencies ([#19122](https://github.com/microsoft/FluidFramework/issues/19122)) [25366b4229](https://github.com/microsoft/FluidFramework/commits/25366b422918cb43685c5f328b50450749592902)
 
   The following Fluid server dependencies have been updated to the latest version, 3.0.0. [See the full changelog.](https://github.com/microsoft/FluidFramework/releases/tag/server_v3.0.0)
-
   - @fluidframework/gitresources
   - @fluidframework/server-kafka-orderer
   - @fluidframework/server-lambdas
@@ -379,7 +482,6 @@ Dependency updates only.
 - Dependencies on @fluidframework/protocol-definitions package updated to 3.0.0 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   This included the following changes from the protocol-definitions release:
-
   - Updating signal interfaces for some planned improvements. The intention is split the interface between signals
     submitted by clients to the server and the resulting signals sent from the server to clients.
     - A new optional type member is available on the ISignalMessage interface and a new ISentSignalMessage interface has
@@ -390,7 +492,6 @@ Dependency updates only.
 - Server upgrade: dependencies on Fluid server packages updated to 2.0.1 [871b3493dd](https://github.com/microsoft/FluidFramework/commits/871b3493dd0d7ea3a89be64998ceb6cb9021a04e)
 
   Dependencies on the following Fluid server package have been updated to version 2.0.1:
-
   - @fluidframework/gitresources: 2.0.1
   - @fluidframework/server-kafka-orderer: 2.0.1
   - @fluidframework/server-lambdas: 2.0.1
@@ -436,7 +537,6 @@ Dependency updates only.
 
   The **@fluidframework/common-definitions** package is being deprecated, so the following interfaces and types are now
   imported from the **@fluidframework/core-interfaces** package:
-
   - interface IDisposable
   - interface IErrorEvent
   - interface IErrorEvent
