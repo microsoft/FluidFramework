@@ -6,8 +6,8 @@
 import type { SummaryObject } from "@fluidframework/driver-definitions";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
-	TelemetryLoggerExt,
 	TelemetryDataTag,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 export interface IRefreshSummaryResult {

@@ -64,6 +64,7 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/claims": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -121,7 +122,8 @@
 				"@fluidframework/legacy-dds#build:test:esm",
 				"@fluidframework/ordered-collection#build:test:esm",
 				"@fluidframework/counter#build:test:esm",
-				"@fluidframework/register-collection#build:test:esm"
+				"@fluidframework/register-collection#build:test:esm",
+				"@fluidframework/claims#build:test:esm"
 			]
 		}
 	},
