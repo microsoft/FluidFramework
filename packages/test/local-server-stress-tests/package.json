@@ -57,6 +57,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-internal/claims": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -64,7 +65,6 @@
 		"@fluidframework/aqueduct": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/claims": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/container-runtime": "workspace:~",
@@ -123,7 +123,7 @@
 				"@fluidframework/ordered-collection#build:test:esm",
 				"@fluidframework/counter#build:test:esm",
 				"@fluidframework/register-collection#build:test:esm",
-				"@fluidframework/claims#build:test:esm"
+				"@fluid-internal/claims#build:test:esm"
 			]
 		}
 	},
