@@ -40,7 +40,7 @@ steps:
         primaryRegistry: ${{ parameters.primaryRegistry }}
         userNpmrcPath: ${{ parameters.userNpmrcPath }}
         ${{ if ne(parameters.additionalLockFilePaths, '') }}:
-          additionalOptionalCacheKey: '${{ parameters.additionalLockFilePaths }}'
+          additionalOptionalCacheKey: '$(Pipeline.Workspace)/${{ replace(parameters.additionalLockFilePaths, '' | '', '' | $(Pipeline.Workspace)/'') }}'
           requiredCacheKey: '"${{ replace(parameters.additionalLockFilePaths, '' | '', ''" | "'') }}"'
 
   - task: Bash@3

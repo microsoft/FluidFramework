@@ -154,7 +154,7 @@ stages:
             # cache key ensures a cache miss whenever the set of compat packages changes.
             # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
             # internal tooling dependencies change.
-            additionalLockFilePaths: '$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
+            additionalLockFilePaths: '$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(FFPipelineHostDirectory)/pnpm-lock.yaml'
 
         # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
         - template: /tools/pipelines/templates/include-install.yml@self
