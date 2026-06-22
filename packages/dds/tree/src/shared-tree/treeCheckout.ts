@@ -57,6 +57,7 @@ import {
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -74,7 +75,6 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
-	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
@@ -658,9 +658,6 @@ export class TreeCheckout implements ITreeCheckout {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -687,7 +684,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
@@ -853,7 +849,10 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		generateCommit: boolean = true,
+	): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
@@ -870,15 +869,20 @@ export class TreeCheckout implements ITreeCheckout {
 			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		if (generateCommit) {
+			// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+			this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		} else {
+			this.applyInternalChange(decodedChange);
+		}
 	}
 
 	// #region TreeBranchAlpha
 
 	@throwIfBroken
-	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
+		this.applySerializedChange(change, generateCommit);
 	}
 
 	public isBranch(): this is TreeBranchAlpha {
@@ -1285,6 +1289,43 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly {
+		const branchCheckout = getCheckout(branch);
+		const change = diffHistories(
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+			this.mintRevisionTag,
+		);
+
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision: undefined,
+			isSummary: false,
+		};
+		const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
+		return {
+			version: 1,
+			revision: undefined,
+			originatorId: this.idCompressor.localSessionId,
+			change: encodedChange,
+		} satisfies SerializedChange;
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1732,34 +1773,6 @@ class EditLock {
 	}
 }
 
-/**
- * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
- * The returned function may only be called once.
- *
- * @param checkout - The tree checkout for which you want to monitor forks for disposal.
- * @returns a function which can be called to dispose all of the tracked forks.
- */
-function trackForksForDisposal(checkout: TreeCheckout): () => void {
-	const forks = new Set<TreeCheckout>();
-	const onDisposeUnSubscribes: (() => void)[] = [];
-	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
-		forks.add(fork);
-		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-	});
-	let disposed = false;
-	return () => {
-		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		for (const fork of forks) {
-			fork.dispose();
-		}
-		for (const unsubscribe of onDisposeUnSubscribes) {
-			unsubscribe();
-		}
-		onForkUnSubscribe();
-		disposed = true;
-	};
-}
-
 function verboseFromCursor(
 	reader: ITreeCursor,
 	schema: ReadonlyMap<TreeNodeSchemaIdentifier, TreeNodeStoredSchema>,
@@ -1779,7 +1792,7 @@ function verboseFromCursor(
 
 interface SerializedChange {
 	version: 1;
-	revision: RevisionTag;
+	revision: RevisionTag | undefined;
 	change: JsonCompatibleReadOnly;
 	originatorId: SessionId;
 }
@@ -1791,7 +1804,9 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	const change = value as Partial<SerializedChange>;
 	return (
 		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
+		(change.revision === undefined ||
+			change.revision === "root" ||
+			typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
 		change.change !== undefined
