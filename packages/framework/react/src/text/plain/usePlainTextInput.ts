@@ -154,6 +154,10 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 	const isUpdatingRef = useRef<boolean>(false);
 	// Re-render trigger used only to refresh undo/redo button state (when `undoRedo` is provided).
 	const [, forceUpdate] = useReducer((x: number) => x + 1, 0);
+	// Latest `undoRedo`, readable from event callbacks without making the subscription effect
+	// re-run (and re-seed the element) whenever `undoRedo` changes identity.
+	const undoRedoRef = useRef(undoRedo);
+	undoRedoRef.current = undoRedo;
 
 	// Effective label: explicit option or the text node itself as the default.
 	const effectiveLabel = editLabel ?? text;
@@ -169,7 +173,8 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 			return;
 		}
 
-		// Reflect the (possibly new) node's content into the uncontrolled element.
+		// Reflect the (possibly new) node's content into the uncontrolled element. On a node swap
+		// the element briefly shows the previous node's value until this runs (one frame).
 		const seedElement = elementRef.current;
 		if (seedElement !== undefined) {
 			seedElement.value = text.fullString();
@@ -209,11 +214,11 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 				element.setSelectionRange(newSelection.start, newSelection.end);
 			}
 			// Refresh undo/redo button state — only re-renders when an undo/redo manager is in use.
-			if (undoRedo) {
+			if (undoRedoRef.current !== undefined) {
 				forceUpdate();
 			}
 		});
-	}, [text, undoRedo]);
+	}, [text]);
 
 	// Element → tree: write the user's edit back into the tree (guarded against the resulting echo).
 	const onChange = useCallback<ChangeEventHandler<TextInputElement>>(
@@ -226,6 +231,11 @@ export function usePlainTextInput(options: UsePlainTextInputOptions): PlainTextI
 				applyEdit(text, event.target.value, effectiveLabel);
 			} finally {
 				isUpdatingRef.current = false;
+			}
+			// Refresh undo/redo button state: this edit's own echo is skipped by the guard in the
+			// subscription, so a local edit's refresh has to happen here.
+			if (undoRedoRef.current !== undefined) {
+				forceUpdate();
 			}
 		},
 		[text, applyEdit, effectiveLabel],

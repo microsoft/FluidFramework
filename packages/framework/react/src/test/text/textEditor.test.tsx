@@ -164,6 +164,44 @@ describe("Plain TextArea view", () => {
 			// The local edit reaches the tree (and its own echo is ignored, not re-applied).
 			assert.equal(text.fullString(), "Hello World");
 		});
+
+		const noopUndoRedo: UndoRedo = {
+			undo: () => {},
+			redo: () => {},
+			canUndo: () => false,
+			canRedo: () => false,
+			dispose: () => {},
+		};
+
+		it("re-renders on a local edit when undoRedo is set, so button state refreshes", () => {
+			const text = TextAsTree.Tree.fromString("Hello");
+			let renders = 0;
+			const { result } = renderHook(() => {
+				renders++;
+				return usePlainTextInput({ text, undoRedo: noopUndoRedo });
+			});
+
+			const before = renders;
+			act(() => result.current.inputProps.onChange(changeEvent("Hello!")));
+
+			assert.equal(text.fullString(), "Hello!");
+			assert.ok(renders > before, "a local edit must re-render so undo/redo buttons refresh");
+		});
+
+		it("does not re-render on a local edit when undoRedo is omitted", () => {
+			const text = TextAsTree.Tree.fromString("Hello");
+			let renders = 0;
+			const { result } = renderHook(() => {
+				renders++;
+				return usePlainTextInput({ text });
+			});
+
+			const before = renders;
+			act(() => result.current.inputProps.onChange(changeEvent("Hello!")));
+
+			assert.equal(text.fullString(), "Hello!");
+			assert.equal(renders, before, "without undoRedo a local edit must not re-render");
+		});
 	});
 
 	describe("toolbar", () => {

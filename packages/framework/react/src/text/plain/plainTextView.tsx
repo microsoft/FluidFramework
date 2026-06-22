@@ -51,9 +51,8 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
  * remote changes to the textarea without a full re-read of the text.
  */
 const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
-	// All input ↔ tree binding (subscription, re-entrancy guard, caret, change handler) lives in
-	// the hook. Passing `undoRedo` lets the hook re-render this component on each tree change so the
-	// undo/redo button disabled state stays current (it is otherwise re-render-free).
+	// All input ↔ tree binding lives in the hook; `undoRedo` is forwarded so it keeps the toolbar's
+	// enabled state in sync.
 	const { inputProps, focus } = usePlainTextInput({ text: root, editLabel, undoRedo });
 
 	// Effective label: explicit prop or the root node itself as the default (for the undo/redo buttons).
