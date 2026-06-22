@@ -5,4 +5,3 @@
 @fluid-private/stochastic-test-utils
 @fluid-private/test-loader-utils
 @fluid-private/test-dds-utils
-@fluid-internal/claims
