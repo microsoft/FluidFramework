@@ -630,6 +630,52 @@ extends:
                       sbomEnabled: false
                       publishLocation: pipeline
 
+      - ${{ if and(eq(parameters.tagName, 'build-tools'), ne(parameters.taskPack, false)) }}:
+        - stage: validate_build_tools_publish_install
+          displayName: Validate build-tools publish install
+          dependsOn: build
+          condition: succeeded()
+          variables:
+            - group: ado-feeds
+          jobs:
+            - job: validate_install
+              displayName: Validate frozen install from pack artifact
+              pool: ${{ parameters.poolBuild }}
+              steps:
+                - template: /tools/pipelines/templates/include-use-node-version.yml@self
+
+                - download: current
+                  artifact: pack
+                  path: $(Pipeline.Workspace)/buildTools-zip
+
+                - task: Bash@3
+                  displayName: Verify build-tools install lockfile
+                  inputs:
+                    targetType: inline
+                    workingDirectory: $(Pipeline.Workspace)/buildTools-zip/tarballs
+                    script: |
+                      set -eu -o pipefail
+                      test -f package.json
+                      test -f pnpm-lock.yaml
+                      ls ./*.tgz > /dev/null
+                      echo "Using build-tools install package.json:"
+                      cat package.json
+
+                - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+                  parameters:
+                    buildDirectory: buildTools-zip/tarballs
+                    enableCache: false
+
+                - task: Bash@3
+                  displayName: Install build tools from generated lockfile
+                  inputs:
+                    targetType: inline
+                    workingDirectory: $(Pipeline.Workspace)/buildTools-zip/tarballs
+                    script: |
+                      set -eu -o pipefail
+                      pnpm install --frozen-lockfile
+                      ./node_modules/.bin/flub --version
+
       # Publish stage
       - ${{ if eq(parameters.publish, true) }}:
         - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
