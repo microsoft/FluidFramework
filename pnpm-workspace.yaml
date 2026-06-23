@@ -138,9 +138,6 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
-  shell-quote: ^1.8.4
-
-  # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
