@@ -72,7 +72,6 @@ fluid-framework
 @fluidframework/legacy-dds
 @fluid-experimental/ink
 @fluidframework/counter
-@fluidframework/claims
 @fluidframework/cell
 @fluidframework/driver-definitions
 @fluidframework/core-utils

@@ -14520,6 +14520,9 @@ importers:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
+      '@fluid-internal/claims':
+        specifier: workspace:~
+        version: link:../../dds/claims
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
@@ -14541,9 +14544,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)
-      '@fluidframework/claims':
-        specifier: workspace:~
-        version: link:../../dds/claims
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions
