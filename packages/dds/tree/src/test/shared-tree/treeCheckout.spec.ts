@@ -1264,6 +1264,37 @@ describe("sharedTreeView", () => {
 			stacks.unsubscribe();
 		});
 
+		it("are disposed upon rollback of the commit they would revert", () => {
+			// Setup
+			const sf = new SchemaFactory("Enrichment Schema");
+			class Node extends sf.object("Node", { id: sf.string }) {}
+			const NodeArray = sf.array(Node);
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const init = view.checkout.mainBranch.getHead();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.root.insertAtEnd({ id: "A" });
+			view.root[0].id = "B";
+			assert.equal(undoStack.length, 2);
+			const [undoB, undoC] = undoStack;
+
+			// Act
+			view.checkout.mainBranch.removeAfter(init);
+
+			// Consistency check
+			assert.equal(view.root.length, 0);
+
+			// Verify
+			assert.equal(undoB.status, RevertibleStatus.Disposed);
+			assert.equal(undoC.status, RevertibleStatus.Disposed);
+
+			// Cleanup
+			unsubscribe();
+		});
+
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
@@ -1898,27 +1929,6 @@ describe("sharedTreeView", () => {
 			assert.equal(view.root, 5);
 			fork1.dispose();
 		});
-	});
-
-	it("Rolled back commits cannot be reverted", () => {
-		const sf = new SchemaFactory("Enrichment Schema");
-		class Node extends sf.object("Node", { id: sf.string }) {}
-		const NodeArray = sf.array(Node);
-		const provider = new TestTreeProviderLite(1);
-		const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
-		const view = provider.trees[0].kernel.viewWith(config);
-		view.initialize([]);
-		const init = view.checkout.mainBranch.getHead();
-
-		const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
-		view.root.insertAtEnd({ id: "A" });
-		view.root[0].id = "B";
-		assert.equal(undoStack.length, 2);
-
-		view.checkout.mainBranch.removeAfter(init);
-		assert.equal(view.root.length, 0);
-		assert.equal(undoStack.length, 0);
-		unsubscribe();
 	});
 });
 
