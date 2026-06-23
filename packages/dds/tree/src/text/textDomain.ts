@@ -266,6 +266,16 @@ export function processCharactersChangedDelta(
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
+ * @remarks
+ * The character content of a {@link TextAsTree.(Tree:type)} is opted in to incremental summarization:
+ * its schema carries the {@link incrementalSummaryHint} metadata.
+ * When incremental summarization is enabled on the tree, character content which does not change between
+ * summaries is not re-encoded or re-uploaded to the service; instead the unchanged chunks are referenced by handle.
+ * For large texts which are edited in only a few places at a time, this can substantially reduce summary upload size
+ * and the CPU cost of producing each summary.
+ *
+ * See the {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/INCREMENTAL_SUMMARY.md}
+ * for the full set of required options (including `minVersionForCollab`) and a complete setup example.
  * @privateRemarks
  * Currently this API only supports a really minimal feature set, and has no support for more advanced features like:
  * - Alternative character boundaries (e.g. grapheme clusters, paragraphs, tokens, etc.).
