@@ -36,9 +36,6 @@ describe("app", () => {
 					user1: createFormattedTreeView("Text A"),
 					user2: createFormattedTreeView("Text B"),
 					containerId: "test",
-					// No containers to register in this render-only test; the Devtools toggle just
-					// initializes/disposes an empty Devtools instance.
-					devtoolsProps: {},
 				}}
 			/>
 		);

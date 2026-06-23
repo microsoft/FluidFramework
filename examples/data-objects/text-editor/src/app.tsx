@@ -107,7 +107,7 @@ interface DualUserViews {
 	 * Properties for (re)initializing Devtools. Held so the UI can toggle Devtools on and off at runtime
 	 * (see {@link DevtoolsToggle}).
 	 */
-	devtoolsProps: DevtoolsProps;
+	devtoolsProps?: DevtoolsProps;
 }
 
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
@@ -430,13 +430,16 @@ const UserPanel: FC<{
  * Button that enables/disables Fluid Devtools at runtime.
  */
 const DevtoolsToggle: FC<{
-	devtoolsProps: DevtoolsProps;
+	devtoolsProps: DevtoolsProps | undefined;
 }> = ({ devtoolsProps }) => {
 	// Devtools defaults to off
 	const [enabled, setEnabled] = useState(false);
 
 	// Handles initialization and cleanup of devtools instance
 	useEffect(() => {
+		if (devtoolsProps === undefined) {
+			return;
+		}
 		if (enabled) {
 			const instance = initializeDevtools(devtoolsProps);
 			return () => {
@@ -454,7 +457,7 @@ const DevtoolsToggle: FC<{
 			onClick={() => setEnabled((value) => !value)}
 			title={
 				enabled
-					? "Disable Fluid Devtools (recommended before capturing a performance trace)"
+					? "Disable Fluid Devtools (recommended before capturing a performance trace. Devtools visualizes every node on every edit)"
 					: "Enable Fluid Devtools"
 			}
 			style={{
