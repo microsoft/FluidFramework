@@ -4898,6 +4898,9 @@ importers:
       '@cerner/duplicate-package-checker-webpack-plugin':
         specifier: ~2.3.0
         version: 2.3.0(webpack@5.103.0)
+      '@fluid-tools/build-cli':
+        specifier: catalog:buildTools
+        version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
       '@fluid-tools/version-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)
@@ -14576,6 +14579,9 @@ importers:
       '@fluid-experimental/tree':
         specifier: workspace:~
         version: link:../../../experimental/dds/tree
+      '@fluid-internal/claims':
+        specifier: workspace:~
+        version: link:../../dds/claims
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
@@ -14597,9 +14603,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)
-      '@fluidframework/claims':
-        specifier: workspace:~
-        version: link:../../dds/claims
       '@fluidframework/container-definitions':
         specifier: workspace:~
         version: link:../../common/container-definitions

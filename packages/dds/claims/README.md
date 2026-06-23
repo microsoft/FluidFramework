@@ -1,4 +1,4 @@
-# @fluidframework/claims
+# @fluid-internal/claims
 
 A distributed data structure (DDS) for first-writer-wins claim management with optional compare-and-swap (CAS) support.
 
