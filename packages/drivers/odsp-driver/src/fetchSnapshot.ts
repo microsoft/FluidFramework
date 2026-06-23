@@ -159,12 +159,11 @@ export async function fetchSnapshotWithRedeem(
 				// Execute the redeem fallback
 				await redeemSharingLink(odspResolvedUrl, storageTokenFetcher, logger);
 
+				const shareLinkInfo = { ...odspResolvedUrl.shareLinkInfo };
+				delete shareLinkInfo.sharingLinkToRedeem;
 				const odspResolvedUrlWithoutShareLink: IOdspResolvedUrl = {
 					...odspResolvedUrl,
-					shareLinkInfo: {
-						...odspResolvedUrl.shareLinkInfo,
-						sharingLinkToRedeem: undefined,
-					},
+					shareLinkInfo,
 				};
 
 				// Log initial failure only if redeem succeeded - it points out to some bug somewhere

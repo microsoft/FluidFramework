@@ -341,6 +341,9 @@ export class OdspTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "odsp";
+	public readonly endpointName?: string;
+	public readonly tenantName?: string;
+	public readonly userIndex?: number;
 	public get version(): string {
 		return this.api.version;
 	}
@@ -349,11 +352,21 @@ export class OdspTestDriver implements ITestDriver {
 	private constructor(
 		private readonly config: Readonly<IOdspTestDriverConfig>,
 		private readonly api = OdspDriverApi,
-		public readonly tenantName?: string,
-		public readonly userIndex?: number,
-		public readonly endpointName?: string,
+		tenantName?: string,
+		userIndex?: number,
+		endpointName?: string,
 		private readonly tokenManager: OdspTokenManager = defaultTokenManager,
-	) {}
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+		if (tenantName !== undefined) {
+			this.tenantName = tenantName;
+		}
+		if (userIndex !== undefined) {
+			this.userIndex = userIndex;
+		}
+	}
 
 	/**
 	 * Returns the url to container which can be used to load the container through loader.
@@ -400,7 +413,7 @@ export class OdspTestDriver implements ITestDriver {
 			this.config.options,
 		);
 		// Automatically reset the cache after creating the factory
-		this.cache = undefined;
+		delete this.cache;
 		return documentServiceFactory;
 	}
 
