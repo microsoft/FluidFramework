@@ -220,7 +220,7 @@ async function initFluid(): Promise<DualUserViews> {
 	console.log(`User 2 connected to document: ${containerId}`);
 
 	//* Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
-	// by the React layer 
+	// by the React layer.
 	const devtoolsProps: DevtoolsProps = {
 		logger: devtoolsLogger,
 		initialContainers: [
