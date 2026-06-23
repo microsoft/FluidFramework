@@ -37,8 +37,8 @@ import {
 	loadExistingContainer,
 } from "@fluidframework/container-loader/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import { ClaimsKind } from "@fluidframework/claims/internal";
-import type { IClaims } from "@fluidframework/claims/internal";
+import { ClaimsKind } from "@fluid-internal/claims";
+import type { IClaims } from "@fluid-internal/claims";
 import {
 	LocalDocumentServiceFactory,
 	LocalResolver,

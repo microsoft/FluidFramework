@@ -28,8 +28,8 @@
 		"start": "node ./lib/index.js"
 	},
 	"dependencies": {
+		"@fluid-internal/claims": "workspace:~",
 		"@fluidframework/aqueduct": "workspace:~",
-		"@fluidframework/claims": "workspace:~",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
