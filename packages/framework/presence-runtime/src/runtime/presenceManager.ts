@@ -25,8 +25,8 @@ import type { IEmitter, Listenable } from "@fluidframework/core-interfaces/inter
 import { assert } from "@fluidframework/core-utils/internal";
 import { createSessionId } from "@fluidframework/id-compressor/internal";
 import type {
-	TelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { createChildMonitoringContext } from "@fluidframework/telemetry-utils/internal";
 

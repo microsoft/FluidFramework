@@ -33,6 +33,7 @@ declare type old_as_current_for_Class_Loader = requireAssignableTo<TypeOnly<old.
  * typeValidation.broken:
  * "Class_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<current.Loader>, TypeOnly<old.Loader>>
 
 /*
@@ -42,6 +43,7 @@ declare type current_as_old_for_Class_Loader = requireAssignableTo<TypeOnly<curr
  * typeValidation.broken:
  * "ClassStatics_Loader": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_ClassStatics_Loader = requireAssignableTo<TypeOnly<typeof current.Loader>, TypeOnly<typeof old.Loader>>
 
 /*
@@ -186,6 +188,7 @@ declare type old_as_current_for_Interface_IContainerHostProps = requireAssignabl
  * typeValidation.broken:
  * "Interface_IContainerHostProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IContainerHostProps = requireAssignableTo<TypeOnly<current.IContainerHostProps>, TypeOnly<old.IContainerHostProps>>
 
 /*
@@ -222,6 +225,7 @@ declare type old_as_current_for_Interface_ICreateAndLoadContainerProps = require
  * typeValidation.broken:
  * "Interface_ICreateAndLoadContainerProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ICreateAndLoadContainerProps = requireAssignableTo<TypeOnly<current.ICreateAndLoadContainerProps>, TypeOnly<old.ICreateAndLoadContainerProps>>
 
 /*
@@ -240,6 +244,7 @@ declare type old_as_current_for_Interface_ICreateDetachedContainerProps = requir
  * typeValidation.broken:
  * "Interface_ICreateDetachedContainerProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ICreateDetachedContainerProps = requireAssignableTo<TypeOnly<current.ICreateDetachedContainerProps>, TypeOnly<old.ICreateDetachedContainerProps>>
 
 /*
@@ -276,6 +281,7 @@ declare type old_as_current_for_Interface_ILoaderProps = requireAssignableTo<Typ
  * typeValidation.broken:
  * "Interface_ILoaderProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILoaderProps = requireAssignableTo<TypeOnly<current.ILoaderProps>, TypeOnly<old.ILoaderProps>>
 
 /*
@@ -294,6 +300,7 @@ declare type old_as_current_for_Interface_ILoaderServices = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_ILoaderServices": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILoaderServices = requireAssignableTo<TypeOnly<current.ILoaderServices>, TypeOnly<old.ILoaderServices>>
 
 /*
@@ -312,6 +319,7 @@ declare type old_as_current_for_Interface_ILoadExistingContainerProps = requireA
  * typeValidation.broken:
  * "Interface_ILoadExistingContainerProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_ILoadExistingContainerProps = requireAssignableTo<TypeOnly<current.ILoadExistingContainerProps>, TypeOnly<old.ILoadExistingContainerProps>>
 
 /*
@@ -384,6 +392,7 @@ declare type old_as_current_for_Interface_IRehydrateDetachedContainerProps = req
  * typeValidation.broken:
  * "Interface_IRehydrateDetachedContainerProps": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IRehydrateDetachedContainerProps = requireAssignableTo<TypeOnly<current.IRehydrateDetachedContainerProps>, TypeOnly<old.IRehydrateDetachedContainerProps>>
 
 /*
