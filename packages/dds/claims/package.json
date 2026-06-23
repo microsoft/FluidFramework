@@ -1,6 +1,7 @@
 {
-	"name": "@fluidframework/claims",
+	"name": "@fluid-internal/claims",
 	"version": "2.110.0",
+	"private": true,
 	"description": "Distributed data structure for first-writer-wins claim management",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -14,16 +15,6 @@
 	"type": "module",
 	"exports": {
 		".": {
-			"import": {
-				"types": "./lib/index.d.ts",
-				"default": "./lib/index.js"
-			},
-			"require": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.js"
-			}
-		},
-		"./internal": {
 			"import": {
 				"types": "./lib/index.d.ts",
 				"default": "./lib/index.js"
