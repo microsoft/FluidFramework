@@ -5,7 +5,7 @@
 
 import { strict } from "node:assert";
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import { asAlpha } from "../../api.js";
 import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
@@ -313,7 +313,46 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 }
 
 describe("Host and Sandbox Demo", () => {
-	function setup(initialState: string[]) {
+	interface InteropFunctions {
+		readonly sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly) => void;
+		readonly sendOutboundChangeFromSandboxToHostLocalBranch: (
+			change: JsonCompatibleReadOnly,
+		) => void;
+		readonly sendAckOfOutboundChangeFromHostToSandbox: () => void;
+		readonly sendAckOfInboundUpdateFromSandboxToHost: () => void;
+	}
+
+	type InteropFunctionsBuilder = (
+		getHost: () => Host<typeof StringArray>,
+		getSandbox: () => Sandbox<typeof StringArray>,
+	) => InteropFunctions;
+
+	function buildTimeoutInteropFunctions(
+		getHost: () => Host<typeof StringArray>,
+		getSandbox: () => Sandbox<typeof StringArray>,
+	): InteropFunctions {
+		return {
+			sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
+				setTimeout(() => getSandbox().receiveInboundUpdate(update));
+			},
+			sendOutboundChangeFromSandboxToHostLocalBranch: (
+				change: JsonCompatibleReadOnly,
+			): void => {
+				setTimeout(() => getHost().receiveOutboundChange(change));
+			},
+			sendAckOfOutboundChangeFromHostToSandbox: (): void => {
+				setTimeout(() => getSandbox().receiveAckOfOutboundChange());
+			},
+			sendAckOfInboundUpdateFromSandboxToHost: (): void => {
+				setTimeout(() => getHost().receiveAckOfUpdate());
+			},
+		};
+	}
+
+	function setup(
+		initialState: string[],
+		interopFunctionsBuilder: InteropFunctionsBuilder = buildTimeoutInteropFunctions,
+	) {
 		const logger = (message: string) => {
 			console.log(message);
 		};
@@ -336,15 +375,18 @@ describe("Host and Sandbox Demo", () => {
 		const main = asAlpha(provider.trees[1].viewWith(config));
 		// eslint-disable-next-line prefer-const -- it is assigned below
 		let sandbox: Sandbox<typeof StringArray>;
+		// eslint-disable-next-line prefer-const -- it is assigned below
+		let host: Host<typeof StringArray>;
 
-		function sendInboundUpdateFromHostToSandbox(update: JsonCompatibleReadOnly): void {
-			setTimeout(() => sandbox.receiveInboundUpdate(update));
-		}
+		const interopFunctions = interopFunctionsBuilder(
+			() => host ?? fail("Interop function called before host was initialized"),
+			() => sandbox ?? fail("Interop function called before sandbox was initialized"),
+		);
 
-		const host = new Host(
+		host = new Host(
 			main,
-			sendInboundUpdateFromHostToSandbox,
-			sendAckOfOutboundChangeFromHostToSandbox,
+			interopFunctions.sendInboundUpdateFromHostToSandbox,
+			interopFunctions.sendAckOfOutboundChangeFromHostToSandbox,
 			logger,
 		);
 
@@ -355,20 +397,6 @@ describe("Host and Sandbox Demo", () => {
 			minVersionForCollab: FluidClientVersion.v2_80,
 		});
 
-		function sendOutboundChangeFromSandboxToHostLocalBranch(
-			change: JsonCompatibleReadOnly,
-		): void {
-			setTimeout(() => host.receiveOutboundChange(change));
-		}
-
-		function sendAckOfOutboundChangeFromHostToSandbox(): void {
-			setTimeout(() => sandbox.receiveAckOfOutboundChange());
-		}
-
-		function sendAckOfInboundUpdateFromSandboxToHost(): void {
-			setTimeout(() => host.receiveAckOfUpdate());
-		}
-
 		sandbox = new Sandbox(
 			config,
 			{ jsonValidator: FormatValidatorBasic },
@@ -378,8 +406,8 @@ describe("Host and Sandbox Demo", () => {
 				// TODO: shard the compressor here?
 				idCompressor: hostCompressor,
 			},
-			sendOutboundChangeFromSandboxToHostLocalBranch,
-			sendAckOfInboundUpdateFromSandboxToHost,
+			interopFunctions.sendOutboundChangeFromSandboxToHostLocalBranch,
+			interopFunctions.sendAckOfInboundUpdateFromSandboxToHost,
 			logger,
 		);
 
@@ -638,5 +666,147 @@ describe("Host and Sandbox Demo", () => {
 		// The peer edit is now reflected in the local and sandbox
 		strict.deepEqual([...host.local.root], ["H", "P"]);
 		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
+	});
+
+	const NUM_STEPS = 3;
+	describe(`All scenarios with ${NUM_STEPS} steps`, () => {
+		interface QueueInteropFunctions extends InteropFunctions {
+			readonly inboundQueue: JsonCompatibleReadOnly[];
+			readonly outboundQueue: JsonCompatibleReadOnly[];
+			inboundAckQueue: number;
+			outboundAckQueue: number;
+
+			shiftInboundQueue(): void;
+			shiftInboundAckQueue(): void;
+			shiftOutboundQueue(): void;
+			shiftOutboundAckQueue(): void;
+		}
+		function buildQueueInteropFunctions(
+			getHost: () => Host<typeof StringArray>,
+			getSandbox: () => Sandbox<typeof StringArray>,
+		): QueueInteropFunctions {
+			const out: QueueInteropFunctions = {
+				inboundQueue: [],
+				outboundQueue: [],
+				inboundAckQueue: 0,
+				outboundAckQueue: 0,
+				sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
+					out.inboundQueue.push(update);
+				},
+				shiftInboundQueue: (): void => {
+					const update = out.inboundQueue.shift() ?? fail("No inbound updates in queue");
+					getSandbox().receiveInboundUpdate(update);
+				},
+				sendAckOfInboundUpdateFromSandboxToHost: (): void => {
+					out.inboundAckQueue++;
+				},
+				shiftInboundAckQueue: (): void => {
+					assert(out.inboundAckQueue > 0, "No inbound acks in queue");
+					out.inboundAckQueue--;
+					getHost().receiveAckOfUpdate();
+				},
+				sendOutboundChangeFromSandboxToHostLocalBranch: (
+					change: JsonCompatibleReadOnly,
+				): void => {
+					out.outboundQueue.push(change);
+				},
+				shiftOutboundQueue: (): void => {
+					const change = out.outboundQueue.shift() ?? fail("No outbound changes in queue");
+					getHost().receiveOutboundChange(change);
+				},
+				sendAckOfOutboundChangeFromHostToSandbox: (): void => {
+					out.outboundAckQueue++;
+				},
+				shiftOutboundAckQueue: (): void => {
+					assert(out.outboundAckQueue > 0, "No outbound acks in queue");
+					out.outboundAckQueue--;
+					getSandbox().receiveAckOfOutboundChange();
+				},
+			};
+			return out;
+		}
+
+		enum ScenarioStep {
+			HostEdit = "H",
+			PeerEdit = "P",
+			SandboxEdit = "S",
+			Message = "M",
+			H2S = "H2S",
+			S2H = "S2H",
+		}
+
+		function* buildScenario(
+			scenario: ScenarioStep[],
+			hostToSandQueue: ("New" | "Ack")[] = [],
+			sandToHostQueue: ("New" | "Ack")[] = [],
+			messageQueue: ("New" | "Ack")[] = [],
+		): Generator<readonly ScenarioStep[]> {
+			if (scenario.length >= NUM_STEPS) {
+				yield scenario;
+			} else {
+				scenario.push(ScenarioStep.SandboxEdit);
+				yield* buildScenario(
+					scenario,
+					hostToSandQueue,
+					[...sandToHostQueue, "New"],
+					messageQueue,
+				);
+				scenario.pop();
+
+				scenario.push(ScenarioStep.HostEdit);
+				yield* buildScenario(scenario, [...hostToSandQueue, "New"], sandToHostQueue, [
+					...messageQueue,
+					"Ack",
+				]);
+				scenario.pop();
+
+				scenario.push(ScenarioStep.PeerEdit);
+				yield* buildScenario(scenario, hostToSandQueue, sandToHostQueue, [
+					...messageQueue,
+					"New",
+				]);
+				scenario.pop();
+
+				if (hostToSandQueue.length > 0) {
+					const inbound = hostToSandQueue[0];
+					scenario.push(ScenarioStep.H2S);
+					yield* buildScenario(
+						scenario,
+						hostToSandQueue.slice(1),
+						inbound === "New" ? [...sandToHostQueue, "Ack"] : sandToHostQueue,
+						messageQueue,
+					);
+					scenario.pop();
+				}
+
+				if (sandToHostQueue.length > 0) {
+					const outbound = sandToHostQueue[0];
+					scenario.push(ScenarioStep.S2H);
+					yield* buildScenario(
+						scenario,
+						outbound === "New" ? [...hostToSandQueue, "Ack"] : hostToSandQueue,
+						sandToHostQueue.slice(1),
+						[...messageQueue, "Ack"],
+					);
+					scenario.pop();
+				}
+
+				if (messageQueue.length > 0) {
+					const message = messageQueue[0];
+					scenario.push(ScenarioStep.Message);
+					yield* buildScenario(
+						scenario,
+						message === "New" ? [...hostToSandQueue, "New"] : hostToSandQueue,
+						sandToHostQueue,
+						messageQueue.slice(1),
+					);
+					scenario.pop();
+				}
+			}
+		}
+		for (const scenario of buildScenario([])) {
+			it(`${scenario.join(" ")}`, () => {});
+			// runUnitTestScenario(undefined, scenario);
+		}
 	});
 });
