@@ -18,6 +18,7 @@ import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
+	incrementalSummaryHint,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -180,7 +181,13 @@ export function charactersFromString(value: string): Iterable<string> {
 	return value;
 }
 
-class StringArray extends sf.array("StringArray", SchemaFactory.string) {
+class StringArray extends sf.arrayAlpha(
+	"StringArray",
+	// Opt the character content into incremental summary optimization.
+	sf.types([SchemaFactory.string], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
+) {
 	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
 		const cursor = getInnerNode(this).borrowCursor();
 		cursor.enterField(EmptyKey);

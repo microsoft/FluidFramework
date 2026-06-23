@@ -30,7 +30,11 @@ import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	asAlpha,
 	configuredSharedTreeAlpha,
+	FluidClientVersion,
 	ForestTypeOptimized,
+	incrementalEncodingPolicyForAllowedTypes,
+	TreeCompressionStrategy,
+	TreeViewConfigurationAlpha,
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -62,17 +66,6 @@ function getTinyliciousEndpoint(): string {
 	return `http://localhost:${tinyliciousPort}`;
 }
 
-/**
- * SharedTree configured to use the optimized "chunked" forest.
- */
-const SharedTree = configuredSharedTreeAlpha({ forest: ForestTypeOptimized });
-
-const containerSchema = {
-	initialObjects: {
-		tree: SharedTree,
-	},
-};
-
 const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
 export class TextEditorRoot extends sf.object("TextEditorRoot", {
@@ -81,6 +74,26 @@ export class TextEditorRoot extends sf.object("TextEditorRoot", {
 }) {}
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
+
+/**
+ * SharedTree configured to use the optimized "chunked" forest along
+ * with incremental summarization. This applys to both plain and formatted text
+ * if they have incrementalSummaryHint on any of their fields.
+ */
+const SharedTree = configuredSharedTreeAlpha({
+	forest: ForestTypeOptimized,
+	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
+		new TreeViewConfigurationAlpha({ schema: TextEditorRoot }),
+	),
+	minVersionForCollab: FluidClientVersion.v2_74,
+});
+
+const containerSchema = {
+	initialObjects: {
+		tree: SharedTree,
+	},
+};
 
 function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 	return {
