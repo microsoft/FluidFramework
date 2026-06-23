@@ -644,9 +644,12 @@ extends:
               steps:
                 - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-                - download: current
-                  artifact: pack
-                  path: $(Pipeline.Workspace)/buildTools-zip
+                - task: DownloadPipelineArtifact@2
+                  displayName: Download pack artifact
+                  inputs:
+                    buildType: current
+                    artifactName: pack
+                    targetPath: $(Pipeline.Workspace)/buildTools-zip
 
                 - task: Bash@3
                   displayName: Verify build-tools install lockfile
