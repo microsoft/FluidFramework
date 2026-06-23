@@ -10,11 +10,11 @@ import type {
 } from "@fluidframework/core-interfaces";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import {
-	DataProcessingError,
-	UsageError,
 	createChildLogger,
+	DataProcessingError,
 	type IFluidErrorBase,
 	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICompressionRuntimeOptions } from "../compressionDefinitions.js";

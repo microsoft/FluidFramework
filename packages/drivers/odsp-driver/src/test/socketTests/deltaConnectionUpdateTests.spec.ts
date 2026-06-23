@@ -133,7 +133,6 @@ describe("DeltaConnectionMetadata update tests", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			logger,
 		);

@@ -170,7 +170,6 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 		super(onCreate, onLoad, {
 			...options,
 			jsonValidator: FormatValidatorBasic,
-			disposeForksAfterTransaction: false,
 		});
 	}
 }

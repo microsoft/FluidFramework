@@ -35,7 +35,7 @@ catalogs:
     "@fluidframework/build-tools": ^0.65.0
   # eslint and related packages
   eslint:
-    "@fluidframework/eslint-config-fluid": "^9.0.0"
+    "@fluidframework/eslint-config-fluid": "^13.0.0"
     "eslint": "~9.39.1"
     "eslint-config-prettier": "~10.1.8"
   # Type definitions
@@ -60,12 +60,22 @@ overrides:
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
 
+  # Uncomment all or some below and run `pnpm install --no-frozen-lockfile` to apply
+  # these overrides to use locally built build-tools packages.
+  # "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
+  # "@fluid-tools/build-infrastructure": "link:./build-tools/packages/build-infrastructure"
+  # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
+  # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
+
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
   # axios pre-1.0 needs an override to stay current on a version with no reported CVEs.
   # Caret dependencies aren't enough on a pre-1.0 package.
   axios@<0.30.0: ^0.30.0
+
+  # Force vulnerable axios ^1.15.0 requests to the patched 1.15.1.
+  axios@^1.15.0: 1.15.1
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
@@ -128,6 +138,9 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
+  shell-quote: ^1.8.4
+
+  # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
@@ -140,6 +153,15 @@ packages:
   - "experimental/**"
   - "packages/**"
   - "tools/markdown-magic"
+
+  # exclude bundle-analysis output directories, which can contain package.json files from
+  # webpack bundle stats (e.g. examples/utils/bundle-size-tests).
+  - "!**/bundleAnalysis/**"
+
+  # exclude the inner FluidFramework enlistment used by examples/utils/bundle-size-tests for
+  # cross-revision bundle comparison (see `flub generate bundleAnalysisReposWithComparison`, which clones
+  # the inner repo into <outputDir>/base-repo).
+  - "!**/compareBundlesOutput/**"
 
   # exclude any package.json files that are inside src or output directories
   - "!**/dist/**"

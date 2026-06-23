@@ -103,7 +103,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.101.0",
+		"@fluidframework/driver-web-cache-previous": "npm:@fluidframework/driver-web-cache@2.103.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
@@ -122,8 +122,8 @@
 	},
 	"typeValidation": {
 		"broken": {
-			"Class_FluidCache": {
-				"forwardCompat": false
+			"Interface_FluidCacheConfig": {
+				"backCompat": false
 			}
 		},
 		"entrypoint": "legacy"
