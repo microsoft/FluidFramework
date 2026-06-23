@@ -4,12 +4,13 @@
  */
 
 import type { TextAsTree } from "@fluidframework/tree/internal";
-import type { FC } from "react";
+import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 
-import { usePlainTextInput } from "./usePlainTextInput.js";
+import { applyTextEdit } from "./plainUtils.js";
+import { useTreeSynchronizedString } from "./useTreeSynchronizedString.js";
 
 /**
  * Props for the MainView component.
@@ -46,23 +47,46 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
  * Uses TextAsTree for collaborative plain text storage.
  *
  * @remarks
- * Subscribes to incremental character-level deltas from the tree via
- * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged} to apply
- * remote changes to the textarea without a full re-read of the text.
+ * A controlled textarea driven by {@link useTreeSynchronizedString} (tree → string); local edits
+ * are written back to the tree via {@link applyTextEdit} (string → tree). Doubles as a reference
+ * for binding a text input to a {@link @fluidframework/tree#TextAsTree.Tree}.
  */
 const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
-	// All input ↔ tree binding lives in the hook; `undoRedo` is forwarded so it keeps the toolbar's
-	// enabled state in sync.
-	const { inputProps, focus } = usePlainTextInput({ text: root, editLabel, undoRedo });
-
-	// Effective label: explicit prop or the root node itself as the default (for the undo/redo buttons).
 	const effectiveLabel = editLabel ?? root;
+	const textareaRef = useRef<HTMLTextAreaElement>(null);
+	// Distinguishes the local user's own edit (browser keeps the caret) from a remote one.
+	const isLocalEditRef = useRef<boolean>(false);
+
+	// Tree → string (one-way). The component supplies the other direction below.
+	const { text, selection } = useTreeSynchronizedString(root);
+
+	// A controlled value resets the caret on every change. For the user's own edit the browser
+	// already placed the caret correctly, so only restore the tracked selection for remote edits.
+	useLayoutEffect(() => {
+		if (isLocalEditRef.current) {
+			isLocalEditRef.current = false;
+			return;
+		}
+		const textarea = textareaRef.current;
+		if (textarea !== null && selection !== undefined) {
+			textarea.setSelectionRange(selection.start, selection.end);
+		}
+	}, [text, selection]);
+
+	// String → tree: write the user's edit back into the tree.
+	const onChange = useCallback(
+		(event: ChangeEvent<HTMLTextAreaElement>) => {
+			isLocalEditRef.current = true;
+			applyTextEdit(root, event.target.value, effectiveLabel);
+		},
+		[root, effectiveLabel],
+	);
 
 	return (
 		<div
 			className="text-editor-container"
 			style={{ height: "100%", display: "flex", flexDirection: "column" }}
-			onClick={focus}
+			onClick={() => textareaRef.current?.focus()}
 		>
 			<style>{`
 				.pt-toolbar {
@@ -110,7 +134,9 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 				</div>
 			)}
 			<textarea
-				{...inputProps}
+				ref={textareaRef}
+				value={text}
+				onChange={onChange}
 				placeholder="Start typing..."
 				style={{
 					flex: 1,

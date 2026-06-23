@@ -8,12 +8,11 @@ import { strict as assert } from "node:assert";
 import { TextAsTree } from "@fluidframework/tree/internal";
 import { act, render, renderHook } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import type { ChangeEvent } from "react";
 
 import { toPropTreeNode } from "../../propNode.js";
 import { PlainTextMainView } from "../../text/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- the hook is not re-exported from text/index; import it directly for testing.
-import { usePlainTextInput } from "../../text/plain/usePlainTextInput.js";
+import { useTreeSynchronizedString } from "../../text/plain/useTreeSynchronizedString.js";
 import type { UndoRedo } from "../../undoRedo.js";
 
 /** Read the current value of the editor's `<textarea>`. */
@@ -63,7 +62,7 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					// Mutate the tree by inserting text; the hook applies the delta to the textarea.
+					// Mutate the tree; the controlled textarea updates from the hook's synced text.
 					act(() => text.insertAt(5, " World"));
 
 					assert.equal(getTextareaValue(rendered.container), "Hello World");
@@ -143,62 +142,37 @@ describe("Plain TextArea view", () => {
 		}
 	});
 
-	// These drive the hook's handlers directly via renderHook. Simulating `onChange` through the
-	// DOM (fireEvent) does not trigger React's value-tracker in this jsdom/mocha harness, so the
-	// input → tree direction is exercised at the hook boundary.
-	describe("usePlainTextInput (input → tree)", () => {
-		// Minimal synthetic change event carrying only the field the handler reads.
-		function changeEvent(value: string): ChangeEvent<HTMLTextAreaElement> {
-			const event: unknown = { target: { value } };
-			return event as ChangeEvent<HTMLTextAreaElement>;
-		}
-
-		it("writes local edits back into the tree", () => {
+	// The hook is a one-way tree → string sync; exercise it directly via renderHook.
+	describe("useTreeSynchronizedString", () => {
+		it("returns the tree's current text", () => {
 			const text = TextAsTree.Tree.fromString("Hello");
-			const { result } = renderHook(() => usePlainTextInput({ text }));
+			const { result } = renderHook(() => useTreeSynchronizedString(text));
 
-			act(() => result.current.inputProps.onChange(changeEvent("Hello World")));
-
-			// The local edit reaches the tree (and its own echo is ignored, not re-applied).
-			assert.equal(text.fullString(), "Hello World");
+			assert.equal(result.current.text, "Hello");
 		});
 
-		const noopUndoRedo: UndoRedo = {
-			undo: () => {},
-			redo: () => {},
-			canUndo: () => false,
-			canRedo: () => false,
-			dispose: () => {},
-		};
-
-		it("re-renders on a local edit when undoRedo is set, so button state refreshes", () => {
+		it("syncs character changes into the returned text", () => {
 			const text = TextAsTree.Tree.fromString("Hello");
-			let renders = 0;
-			const { result } = renderHook(() => {
-				renders++;
-				return usePlainTextInput({ text, undoRedo: noopUndoRedo });
-			});
+			const { result } = renderHook(() => useTreeSynchronizedString(text));
 
-			const before = renders;
-			act(() => result.current.inputProps.onChange(changeEvent("Hello!")));
+			act(() => text.insertAt(5, " World"));
+			assert.equal(result.current.text, "Hello World");
 
-			assert.equal(text.fullString(), "Hello!");
-			assert.ok(renders > before, "a local edit must re-render so undo/redo buttons refresh");
+			act(() => text.removeRange(0, 6));
+			assert.equal(result.current.text, "World");
 		});
 
-		it("does not re-render on a local edit when undoRedo is omitted", () => {
+		it("adjusts the tracked selection across edits", () => {
 			const text = TextAsTree.Tree.fromString("Hello");
-			let renders = 0;
-			const { result } = renderHook(() => {
-				renders++;
-				return usePlainTextInput({ text });
-			});
+			// Caret after "Hello".
+			const { result } = renderHook(() =>
+				useTreeSynchronizedString(text, { start: 5, end: 5 }),
+			);
 
-			const before = renders;
-			act(() => result.current.inputProps.onChange(changeEvent("Hello!")));
-
-			assert.equal(text.fullString(), "Hello!");
-			assert.equal(renders, before, "without undoRedo a local edit must not re-render");
+			// Inserting before the caret shifts it right by the inserted length.
+			act(() => text.insertAt(0, "Oh "));
+			assert.equal(result.current.text, "Oh Hello");
+			assert.deepEqual(result.current.selection, { start: 8, end: 8 });
 		});
 	});
 
