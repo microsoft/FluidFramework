@@ -8,7 +8,7 @@ import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/i
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
-import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	FluidClientVersion,
@@ -57,6 +57,7 @@ import {
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -74,7 +75,6 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
-	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
@@ -87,7 +87,6 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
-	type TreeChangeEvents,
 	type VerboseTree,
 	type VoidTransactionCallbackStatus,
 	type TransactionCallbackStatus,
@@ -308,7 +307,6 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
-		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
@@ -355,7 +353,6 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		breaker,
-		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -527,7 +524,6 @@ export class TreeCheckout implements ITreeCheckout {
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -659,9 +655,6 @@ export class TreeCheckout implements ITreeCheckout {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -688,7 +681,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
@@ -788,18 +780,47 @@ export class TreeCheckout implements ITreeCheckout {
 					labels: buildLabelsSet(this.labelTreeNode),
 				};
 
-				this.#events.emit("changed", metadata, getRevertible);
+				this.emitChangedLocked(() => {
+					this.#events.emit("changed", metadata, getRevertible);
+				});
 				withinEventContext = false;
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
-			this.#events.emit("changed", {
-				isLocal: false,
-				kind: CommitKind.Default,
-				labels: new Set<unknown>(),
+			this.emitChangedLocked(() => {
+				this.#events.emit("changed", {
+					isLocal: false,
+					kind: CommitKind.Default,
+					labels: new Set<unknown>(),
+				});
 			});
 		}
 	};
+
+	/**
+	 * Hold the `editLock` for the duration of `emit`, so that re-entrant edits, transactions,
+	 * branch operations, etc. attempted from inside a `changed` listener throw the canonical
+	 * "forbidden during a change event" {@link UsageError} via {@link EditLock.checkUnlocked}.
+	 *
+	 * @remarks
+	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
+	 * The `try`/`finally` ensures the lock is released even if a listener throws.
+	 */
+	private emitChangedLocked(emit: () => void): void {
+		this.editLock.lock();
+		try {
+			emit();
+		} finally {
+			// TODO: any event that throws potentially leaves the code which triggered that event,
+			// and thus this checkout (and likely more) in a broken state.
+			// Unlocking this editLock prevents future use of this broken state from giving a confusing error in this case,
+			// however, a better approach would probably be to put something (this checkout and/or the editLock)
+			// into a broken state (using a properly scoped `Breakable`),
+			// likely by moving emitChangedLocked into EditLock, and having EditLock get a Breakable,
+			// and having the new emitChangedLocked use `Breakable.use`.
+			this.editLock.unlock();
+		}
+	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
 		this.editLock.lock();
@@ -908,6 +929,15 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.checkNotDisposed();
+		// Starting a transaction is an edit, so it is forbidden from within a change-event
+		// callback (where the edit lock is held), the same as direct edits. For the async
+		// entry point this throw is captured as a rejected promise by the `async` wrapper.
+		//
+		// Note: because runTransaction/runTransactionAsync are `@breakingMethod`, this throw also
+		// puts the checkout into a broken state (unlike a direct edit, which throws recoverably).
+		// That is the same pre-existing broken-state limitation tracked by the TODO in
+		// `emitChangedLocked`, not something specific to transactions.
+		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -1170,7 +1200,6 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		this.editLock.checkUnlocked("Branching");
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
@@ -1187,7 +1216,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this._removedRoots.clone(),
 			this.logger,
 			forkBreaker,
-			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1248,6 +1276,19 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1681,12 +1722,7 @@ class EditLock {
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
 		if (this.locked) {
-			// These type assertions ensure that the event name strings used here match the actual event names
-			const nodeChanged: keyof TreeChangeEvents = "nodeChanged";
-			const treeChanged: keyof TreeChangeEvents = "treeChanged";
-			throw new UsageError(
-				`${action} is forbidden during a ${nodeChanged} or ${treeChanged} event`,
-			);
+			throw new UsageError(`${action} is forbidden during a change event callback`);
 		}
 	}
 
@@ -1698,34 +1734,6 @@ class EditLock {
 		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
-}
-
-/**
- * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
- * The returned function may only be called once.
- *
- * @param checkout - The tree checkout for which you want to monitor forks for disposal.
- * @returns a function which can be called to dispose all of the tracked forks.
- */
-function trackForksForDisposal(checkout: TreeCheckout): () => void {
-	const forks = new Set<TreeCheckout>();
-	const onDisposeUnSubscribes: (() => void)[] = [];
-	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
-		forks.add(fork);
-		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-	});
-	let disposed = false;
-	return () => {
-		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		for (const fork of forks) {
-			fork.dispose();
-		}
-		for (const unsubscribe of onDisposeUnSubscribes) {
-			unsubscribe();
-		}
-		onForkUnSubscribe();
-		disposed = true;
-	};
 }
 
 function verboseFromCursor(

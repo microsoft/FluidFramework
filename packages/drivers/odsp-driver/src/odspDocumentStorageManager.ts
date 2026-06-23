@@ -29,13 +29,13 @@ import {
 	OdspErrorTypes,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
-	PerformanceEvent,
 	generateStack,
+	type IConfigProvider,
 	loggerToMonitoringContext,
 	normalizeError,
 	overwriteStack,
-	type IConfigProvider,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {

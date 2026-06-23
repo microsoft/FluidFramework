@@ -10,18 +10,25 @@ import path from "node:path";
 import isEqual from "lodash.isequal";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 
 import { getTscUtils, type TscUtil } from "../../tscUtils.js";
 import { getInstalledPackageVersion } from "../taskUtils.js";
 import { LeafTask, LeafWithDoneFileTask } from "./leafTask.js";
 
-type tsTypes = typeof ts54Types | typeof ts59Types;
-type tsParsedCommandLine = ts54Types.ParsedCommandLine | ts59Types.ParsedCommandLine;
+type tsTypes = typeof ts54Types | typeof ts59Types | typeof ts60Types;
+type tsParsedCommandLine =
+	| ts54Types.ParsedCommandLine
+	| ts59Types.ParsedCommandLine
+	| ts60Types.ParsedCommandLine;
 
 interface ITsBuildInfo {
 	program: {
 		fileNames: string[];
-		fileInfos: (string | { version: string; affectsGlobalScope: true })[];
+		fileInfos: (
+			| string
+			| { version: string; affectsGlobalScope?: true; impliedFormat?: number }
+		)[];
 		affectedFilesPendingEmit?: any[];
 		emitDiagnosticsPerFile?: any[];
 		semanticDiagnosticsPerFile?: any[];
@@ -29,6 +36,36 @@ interface ITsBuildInfo {
 		options: any;
 	};
 	version: string;
+}
+
+/**
+ * Normalizes a raw tsbuildinfo JSON object into the canonical {@link ITsBuildInfo} shape.
+ *
+ * TypeScript 5.x stores build info under a `program` wrapper, while TypeScript 6+
+ * places the same keys at the top level. This function detects which format is present
+ * and returns a unified structure, or `undefined` if the input is not recognizable.
+ */
+export function normalizeTsBuildInfo(raw: any): ITsBuildInfo | undefined {
+	// TS5 format: { program: { fileNames, fileInfos, options, ... }, version }
+	if (raw.program?.fileNames && raw.program?.fileInfos && raw.program?.options) {
+		return raw as ITsBuildInfo;
+	}
+	// TS6 format: { fileNames, fileInfos, options, ..., version }
+	if (raw.fileNames && raw.fileInfos && raw.options) {
+		return {
+			program: {
+				fileNames: raw.fileNames,
+				fileInfos: raw.fileInfos,
+				options: raw.options,
+				affectedFilesPendingEmit: raw.affectedFilesPendingEmit,
+				emitDiagnosticsPerFile: raw.emitDiagnosticsPerFile,
+				semanticDiagnosticsPerFile: raw.semanticDiagnosticsPerFile,
+				changeFileSet: raw.changeFileSet,
+			},
+			version: raw.version,
+		};
+	}
+	return undefined;
 }
 
 export class TscTask extends LeafTask {
@@ -435,14 +472,10 @@ export class TscTask extends LeafTask {
 			const tsBuildInfoFileFullPath = this.tsBuildInfoFileFullPath;
 			if (tsBuildInfoFileFullPath && existsSync(tsBuildInfoFileFullPath)) {
 				try {
-					const tsBuildInfo = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
-					if (
-						tsBuildInfo.program &&
-						tsBuildInfo.program.fileNames &&
-						tsBuildInfo.program.fileInfos &&
-						tsBuildInfo.program.options
-					) {
-						this._tsBuildInfo = tsBuildInfo;
+					const raw = JSON.parse(await readFile(tsBuildInfoFileFullPath, "utf8"));
+					const normalized = normalizeTsBuildInfo(raw);
+					if (normalized) {
+						this._tsBuildInfo = normalized;
 					} else {
 						this.traceError(`Invalid format ${tsBuildInfoFileFullPath}`);
 					}

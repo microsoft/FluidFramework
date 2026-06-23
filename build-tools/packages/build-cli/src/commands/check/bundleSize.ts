@@ -6,9 +6,14 @@
 import { execFileSync } from "node:child_process";
 import { Flags } from "@oclif/core";
 
-import { getArtifactForCommit } from "../../library/azureDevops/getArtifactForCommit.js";
+import { fluidframeworkAdoOrgUrl } from "../../library/azureDevops/constants.js";
+import {
+	describeArtifactFailure,
+	getArtifactForCommit,
+} from "../../library/azureDevops/getArtifactForCommit.js";
 import { getAzureDevopsApi } from "../../library/azureDevops/getAzureDevopsApi.js";
 import {
+	bundleSizeArtifactsBaselinePipeline,
 	compareJsonReportsByPackage,
 	extractAnalyzerJsonsFromArtifact,
 	type PackageComparison,
@@ -40,7 +45,7 @@ function formatComparison(comparison: PackageComparison): string[] {
 	const fmt = (before: number, after: number): string => {
 		const delta = after - before;
 		const sign = delta > 0 ? "+" : "";
-		return `${before} -> ${after} (${sign}${delta})`;
+		return `${before} → ${after} (${sign}${delta})`;
 	};
 
 	const lines: string[] = [];
@@ -101,7 +106,7 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 			targetRef = target;
 			this.log(`Using explicit target ref ${target}.`);
 		} else {
-			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url));
+			const remote = pickFreshestRemote(branch, (url) => canonicalUrl.test(url), this.logger);
 			if (remote === undefined) {
 				this.error(
 					"Could not auto-detect a canonical remote. Add a remote pointing at microsoft/FluidFramework, or pass --target <ref> to override.",
@@ -129,19 +134,20 @@ export default class CheckBundleSize extends BaseCommand<typeof CheckBundleSize>
 		this.log(`Baseline commit: ${baselineCommit}`);
 
 		// Public ADO project — anonymous reads are fine at this command's scale.
-		const adoApi = getAzureDevopsApi(undefined, "https://dev.azure.com/fluidframework");
-		const artifactContents = await getArtifactForCommit({
+		const adoApi = getAzureDevopsApi(undefined, fluidframeworkAdoOrgUrl);
+		const baselineMatch = { kind: "commit", sha: baselineCommit } as const;
+		const baselineArtifact = await getArtifactForCommit({
 			adoApi,
-			// Published by the `Build - Client bundle size artifacts` pipeline.
-			artifactName: "bundleAnalyzerJson",
-			commit: baselineCommit,
-			// `Build - Client bundle size artifacts` in the `public` project.
-			// Source-of-truth: tools/pipelines/build-bundle-size-artifacts.yml.
-			definitionId: 48,
-			project: "public",
+			artifactName: bundleSizeArtifactsBaselinePipeline.bundleAnalyzerJsonArtifactName,
+			match: baselineMatch,
+			definitionId: bundleSizeArtifactsBaselinePipeline.definitionId,
+			project: bundleSizeArtifactsBaselinePipeline.project,
 		});
+		if (baselineArtifact.kind !== "completed") {
+			this.error(describeArtifactFailure(baselineMatch, baselineArtifact));
+		}
 
-		const baselineJsons = extractAnalyzerJsonsFromArtifact(artifactContents);
+		const baselineJsons = extractAnalyzerJsonsFromArtifact(baselineArtifact.contents);
 		if (baselineJsons.size === 0) {
 			this.error(
 				`Baseline artifact contains no analyzer.json files for commit ${baselineCommit}.`,

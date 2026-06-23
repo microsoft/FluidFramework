@@ -160,7 +160,12 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"NOTE": "When these are reset, also remove ./types/validateCoreInterfacesPrevious.generated.ts from src/test/tsconfig.no-exactOptionalPropertyTypes.json exclusion list",
+			"Interface_ITelemetryBaseLogger": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }
