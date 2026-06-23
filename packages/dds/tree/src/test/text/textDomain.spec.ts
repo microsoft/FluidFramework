@@ -8,7 +8,10 @@ import { strict as assert } from "node:assert";
 import { TreeAlpha } from "../../shared-tree/index.js";
 import {
 	allowUnused,
+	incrementalEncodingPolicyForAllowedTypes,
+	isArrayNodeSchema,
 	TreeViewConfiguration,
+	TreeViewConfigurationAlpha,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
 // Allow importing file being tested
@@ -39,6 +42,17 @@ describe("textDomain", () => {
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
+	});
+
+	it("opts the character content into incremental summarization", () => {
+		// Checks that the plain-text character array opts into incremental summarization via incrementalSummaryHint.
+		const config = new TreeViewConfigurationAlpha({ schema: TextAsTree.Tree });
+		const shouldEncodeIncrementally = incrementalEncodingPolicyForAllowedTypes(config);
+		const arrayNodes = [...config.definitions].filter(([, schema]) =>
+			isArrayNodeSchema(schema),
+		);
+		assert(arrayNodes.length > 0);
+		assert(arrayNodes.every(([identifier]) => shouldEncodeIncrementally(identifier, "")));
 	});
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
