@@ -91,17 +91,15 @@ export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMain
 FormattedMainView.displayName = "FormattedMainView";
 
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
-function createLineAtom(
-	lineTag: FormattedTextAsTree.LineTag,
-	indent: number = 0,
-): FormattedTextAsTree.StringAtom {
-	return new FormattedTextAsTree.StringAtom({
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: add type for this.
+function createLineAtom(lineTag: FormattedTextAsTree.LineTag, indent: number = 0) {
+	return {
 		content: new FormattedTextAsTree.StringLineAtom({
 			tag: lineTag,
 			indent,
 		}),
 		format: new FormattedTextAsTree.CharacterFormat(quillAttributesToFormat()),
-	});
+	};
 }
 
 /**

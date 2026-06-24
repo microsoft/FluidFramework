@@ -3,7 +3,7 @@
 	"root": {
 		"kind": 1,
 		"simpleAllowedTypes": {
-			"com.fluidframework.text.formatted.Text": {
+			"com.fluidframework.text.formatted<default>.Text": {
 				"isStaged": false
 			}
 		}
@@ -230,7 +230,7 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.StringAtom": {
+		"com.fluidframework.text.formatted<default>.StringAtom": {
 			"object": {
 				"kind": 2,
 				"fields": {
@@ -259,24 +259,24 @@
 				"allowUnknownOptionalFields": false
 			}
 		},
-		"com.fluidframework.text.formatted.StringArray": {
+		"com.fluidframework.text.formatted<default>.StringArray": {
 			"array": {
 				"kind": 1,
 				"simpleAllowedTypes": {
-					"com.fluidframework.text.formatted.StringAtom": {
+					"com.fluidframework.text.formatted<default>.StringAtom": {
 						"isStaged": false
 					}
 				}
 			}
 		},
-		"com.fluidframework.text.formatted.Text": {
+		"com.fluidframework.text.formatted<default>.Text": {
 			"object": {
 				"kind": 2,
 				"fields": {
 					"content": {
 						"kind": 1,
 						"simpleAllowedTypes": {
-							"com.fluidframework.text.formatted.StringArray": {
+							"com.fluidframework.text.formatted<default>.StringArray": {
 								"isStaged": false
 							}
 						},
