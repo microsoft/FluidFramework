@@ -5,9 +5,9 @@
 ---
 TreeView transaction APIs have been promoted to beta
 
-The `TreeViewBeta` interface exposes `runTransaction` and `runTransactionAsync` methods.
+The [TreeViewBeta](https://fluidframework.com/docs/api/fluid-framework/treeviewbeta-interface) interface exposes `runTransaction` and `runTransactionAsync` methods.
 
-An `asBeta` helper is also provided for down-casting a `TreeView` to a `TreeViewBeta`, mirroring the existing `asAlpha` helper.
+The [asBeta](https://fluidframework.com/docs/api/fluid-framework/#asbeta-function) helper function can be used to down-cast a `TreeView` to a `TreeViewBeta`.
 
 ```typescript
 import { asBeta } from "fluid-framework/beta";
