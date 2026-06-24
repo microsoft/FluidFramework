@@ -24,6 +24,7 @@ if (result.success === false) {
 **Type Name Changes**
 
 With the introduction of new beta types, existing alpha types have been replaced with new alpha and beta variants.
+
 | Old | New Alpha | New Beta |
 | --- | --- | --- |
 | `RunTransactionParams` | `RunTransactionParamsAlpha` | `RunTransactionParamsBeta` |
