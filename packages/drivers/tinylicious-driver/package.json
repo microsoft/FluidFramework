@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-driver",
-	"version": "2.110.0",
+	"version": "2.111.0",
 	"description": "Driver for tinylicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -103,7 +103,7 @@
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

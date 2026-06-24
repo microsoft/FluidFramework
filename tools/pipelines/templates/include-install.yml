@@ -7,6 +7,14 @@ parameters:
 - name: buildDirectory
   type: string
 
+- name: installDependenciesDescription
+  type: string
+  default: Install dependencies
+
+- name: installPnpm
+  type: boolean
+  default: true
+
 - name: primaryRegistry
   type: string
   default: $(ado-feeds-primary-registry)
@@ -15,15 +23,24 @@ parameters:
   type: string
   default: $(Agent.TempDirectory)/.npmrc
 
+# string with ` | ` separated list of lockfiles (note that the spacing is meaningful)
+- name: additionalLockFilePaths
+  type: string
+  default: ''
+
 steps:
-  - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-    parameters:
-      buildDirectory: ${{ parameters.buildDirectory }}
-      primaryRegistry: ${{ parameters.primaryRegistry }}
-      userNpmrcPath: ${{ parameters.userNpmrcPath }}
+  - ${{ if parameters.installPnpm }}:
+    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+      parameters:
+        buildDirectory: ${{ parameters.buildDirectory }}
+        primaryRegistry: ${{ parameters.primaryRegistry }}
+        userNpmrcPath: ${{ parameters.userNpmrcPath }}
+        ${{ if ne(parameters.additionalLockFilePaths, '') }}:
+          additionalOptionalCacheKey: '$(Pipeline.Workspace)/${{ replace(parameters.additionalLockFilePaths, '' | '', '' | $(Pipeline.Workspace)/'') }}'
+          requiredCacheKey: '"${{ replace(parameters.additionalLockFilePaths, '' | '', ''" | "'') }}"'
 
   - task: Bash@3
-    displayName: Install dependencies
+    displayName: ${{ parameters.installDependenciesDescription }}
     retryCountOnTaskFailure: 4
     inputs:
       targetType: 'inline'

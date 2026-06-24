@@ -339,6 +339,14 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+                  # whenever legacy package versions are added or removed. Including it in the pnpm store
+                  # cache key ensures a cache miss whenever the set of compat packages changes.
+                  ${{ if and(eq(parameters.isBundleSizeArtifactsPipeline, false), eq(parameters.buildToolsVersionToInstall, 'repo')) }}:
+                    # Currently repo build-tools also installs sharing the store - ideally that is removed by #73628 and the `| ...` can be removed.
+                    additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | ${{ parameters.buildDirectory }}/build-tools/pnpm-lock.yaml'
+                  ${{ else }}:
+                    additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,
               # so we skip version setting for it.
@@ -348,6 +356,11 @@ extends:
                       buildDirectory: '${{ parameters.buildDirectory }}'
                       buildNumberInPatch: ${{ parameters.buildNumberInPatch }}
                       buildToolsVersionToInstall: '${{ parameters.buildToolsVersionToInstall }}'
+                      # Note that skipping pnpm install means client pnpm version must suffice for build-tools.
+                      # Ideally, #73628 removes include-install-build-tools template use in include-set-package-version
+                      # making it a non-issue. For now, second pnpm install is skipped to preserve the client version
+                      # for all remaining steps.
+                      installPnpmForRepoBuildTools: false
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
@@ -605,12 +618,22 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+                  # whenever legacy package versions are added or removed. Including it in the pnpm store
+                  # cache key ensures a cache miss whenever the set of compat packages changes.
+                  # Currently repo build-tools also installs sharing the store - ideally that is removed by #73628 and the `| ...` can be removed.
+                  additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | ${{ parameters.buildDirectory }}/build-tools/pnpm-lock.yaml'
 
               # We need it in order to run flub where the code coverage comparison logic calls for it
               - template: /tools/pipelines/templates/include-install-build-tools.yml@self
                 parameters:
                   buildDirectory: ${{ parameters.buildDirectory }}
                   buildToolsVersionToInstall: repo
+                  # Note that skipping pnpm install means client pnpm version must suffice for build-tools.
+                  # Ideally, #73628 removes this whole template use making it a non-issue. For now, second
+                  # pnpm install is skipped to preserve the client version for any remaining steps.
+                  installPnpmForRepoBuildTools: false
+                  # This shares the store with the client installs (above).
                   pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
 
               - task: DownloadPipelineArtifact@2
@@ -767,6 +790,10 @@ extends:
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:
                     buildDirectory: '${{ parameters.buildDirectory }}'
+                    # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+                    # whenever legacy package versions are added or removed. Including it in the pnpm store
+                    # cache key ensures a cache miss whenever the set of compat packages changes.
+                    additionalLockFilePaths: '${{ parameters.buildDirectory }}/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml'
 
                 - task: DownloadPipelineArtifact@2
                   inputs:

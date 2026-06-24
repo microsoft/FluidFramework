@@ -1191,10 +1191,13 @@ export namespace System_TableSchema {
 				const columnCache = this.#getColumnCache();
 				const constraints: TransactionConstraintAlpha[] = [];
 				for (const id of referencedColumnIds) {
-					const column = columnCache.get(id) ?? fail("Column ID not found in cache");
+					const column = columnCache.get(id) ?? fail(0xd05 /* Column ID not found in cache */);
 					constraints.push({ type: "nodeInDocument", node: column });
 				}
-				assert(constraints.length > 0, "No constraints generated for column references.");
+				assert(
+					constraints.length > 0,
+					0xd06 /* No constraints generated for column references. */,
+				);
 				return constraints;
 			}
 
