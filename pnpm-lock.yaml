@@ -59,7 +59,6 @@ overrides:
   simple-git: ^3.32.3
   simplemde>codemirror: ^5.65.11
   simplemde>marked: ^4.3.0
-  shell-quote: ^1.8.4
   systeminformation: ^5.31.0
   tar: ^7.5.11
 
@@ -115,8 +114,8 @@ importers:
         specifier: ^0.3.0
         version: 0.3.0(@changesets/cli@2.29.8(@types/node@22.19.17))
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -225,8 +224,8 @@ importers:
         specifier: ^10.5.12
         version: 10.5.15
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -3608,8 +3607,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -5181,8 +5180,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -5275,8 +5274,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -6989,8 +6988,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7083,8 +7082,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7174,8 +7173,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7319,8 +7318,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7407,8 +7406,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7477,8 +7476,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7574,8 +7573,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7665,8 +7664,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7719,8 +7718,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7791,8 +7790,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7855,8 +7854,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -7943,8 +7942,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8040,8 +8039,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8140,8 +8139,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8231,8 +8230,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8340,8 +8339,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8458,8 +8457,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8588,8 +8587,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8706,8 +8705,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8815,8 +8814,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -8909,8 +8908,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9009,8 +9008,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9133,8 +9132,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9254,8 +9253,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9351,8 +9350,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9460,8 +9459,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9563,8 +9562,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9717,8 +9716,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9802,8 +9801,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9878,8 +9877,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -9966,8 +9965,8 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10045,8 +10044,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10151,8 +10150,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10257,8 +10256,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10318,8 +10317,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10394,8 +10393,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10473,8 +10472,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10567,8 +10566,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10655,8 +10654,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10740,8 +10739,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10831,8 +10830,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -10937,8 +10936,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11052,8 +11051,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11122,8 +11121,8 @@ importers:
         specifier: ^17.0.3
         version: 17.0.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11225,8 +11224,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11322,8 +11321,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11398,8 +11397,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11489,8 +11488,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11613,8 +11612,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11686,8 +11685,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11747,8 +11746,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11802,8 +11801,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11899,8 +11898,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -11999,8 +11998,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12120,8 +12119,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12214,8 +12213,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12296,8 +12295,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12402,8 +12401,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12502,8 +12501,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12578,8 +12577,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12648,8 +12647,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12739,8 +12738,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12857,8 +12856,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -12954,8 +12953,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13021,8 +13020,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13151,8 +13150,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13224,8 +13223,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13327,8 +13326,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13400,8 +13399,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13482,8 +13481,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13555,8 +13554,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13649,8 +13648,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13770,8 +13769,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -13870,8 +13869,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -14236,8 +14235,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -14345,8 +14344,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -14833,8 +14832,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15024,8 +15023,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15085,8 +15084,8 @@ importers:
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15188,8 +15187,8 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15463,8 +15462,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15732,8 +15731,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15907,8 +15906,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15992,8 +15991,8 @@ importers:
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
@@ -16053,8 +16052,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -16201,8 +16200,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copy-webpack-plugin:
         specifier: ^12.0.2
         version: 12.0.2(webpack@5.103.0)
@@ -16391,8 +16390,8 @@ importers:
         specifier: ^4.5.0
         version: 4.5.0
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -16557,8 +16556,8 @@ importers:
         specifier: ^5.14.5
         version: 5.14.9
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -16744,8 +16743,8 @@ importers:
         specifier: ^4.1.2
         version: 4.1.2
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -16962,8 +16961,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -17177,8 +17176,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -17268,8 +17267,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -17365,8 +17364,8 @@ importers:
         specifier: ^10.1.3
         version: 10.1.3
       concurrently:
-        specifier: ^9.2.1
-        version: 9.2.1
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -21814,9 +21813,9 @@ packages:
     resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
     engines: {'0': node >= 0.8}
 
-  concurrently@9.2.1:
-    resolution: {integrity: sha512-fsfrO0MxV64Znoy8/l1vVIjjHa29SZyyqPgQBwhiDcaW8wJc2W3XWVOGx4M3oJBnv/zdUZIIp1gDeS98GzP8Ng==}
-    engines: {node: '>=18'}
+  concurrently@10.0.3:
+    resolution: {integrity: sha512-hc3LH4UaKWd/bbyDK/IGVa4RB6PtQ3CUYwtrkzqHn+wIG3Hr5fhpRlk0L/gCa8ZE1L/Ufj50Zho69cI5w8SQBA==}
+    engines: {node: '>=22'}
     hasBin: true
 
   config-chain@1.1.13:
@@ -26993,6 +26992,10 @@ packages:
     resolution: {integrity: sha512-WZWbwceHUo2P36RoEIdXvmqfs47idNNZjCuJOqDz6rvtkk8ym56aU5oglORCpPeXGxT7l9rkJ41+O1lffQXYSA==}
     engines: {node: '>=6.0.0'}
     deprecated: Please upgrade to supertest v7.1.3+, see release notes at https://github.com/forwardemail/supertest/releases/tag/v7.1.3 - maintenance is supported by Forward Email @ https://forwardemail.net
+
+  supports-color@10.2.2:
+    resolution: {integrity: sha512-SS+jx45GF1QjgEXQx4NJZV9ImqmO2NPz5FNsIHrsDjh2YsHnawpan7SNQ1o8NuhrbHZy9AZhIoCUiCeaW/C80g==}
+    engines: {node: '>=18'}
 
   supports-color@5.5.0:
     resolution: {integrity: sha512-QjVjwdXIt408MIiAqCX4oUKsgU2EqAGzs2Ppkm4aQYbjm+ZEWEcW4SfFNTr4uMNZma0ey4f5lgLrkB0aX0QMow==}
@@ -35146,14 +35149,14 @@ snapshots:
       readable-stream: 2.3.8
       typedarray: 0.0.6
 
-  concurrently@9.2.1:
+  concurrently@10.0.3:
     dependencies:
-      chalk: 4.1.2
+      chalk: 5.6.2
       rxjs: 7.8.2
       shell-quote: 1.8.4
-      supports-color: 8.1.1
+      supports-color: 10.2.2
       tree-kill: 1.2.2
-      yargs: 17.7.2
+      yargs: 18.0.0
 
   config-chain@1.1.13:
     dependencies:
@@ -41548,6 +41551,8 @@ snapshots:
       superagent: 3.8.3
     transitivePeerDependencies:
       - supports-color
+
+  supports-color@10.2.2: {}
 
   supports-color@5.5.0:
     dependencies:
