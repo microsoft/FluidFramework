@@ -789,16 +789,15 @@ describe("Host and Sandbox Demo", () => {
 			// });
 		}
 
+		type Ack = "Ack";
+		const Ack: Ack = "Ack";
+		type Message = JsonCompatibleReadOnly | Ack;
 		interface QueueInteropFunctions extends InteropFunctions {
-			readonly inboundQueue: JsonCompatibleReadOnly[];
-			readonly outboundQueue: JsonCompatibleReadOnly[];
-			inboundAckQueue: number;
-			outboundAckQueue: number;
+			readonly host2View: Message[];
+			readonly view2Host: Message[];
 
-			shiftInboundQueue(): void;
-			shiftInboundAckQueue(): void;
-			shiftOutboundQueue(): void;
-			shiftOutboundAckQueue(): void;
+			dispatchToView(): void;
+			dispatchToHost(): void;
 		}
 
 		function buildQueueInterop(
@@ -806,41 +805,37 @@ describe("Host and Sandbox Demo", () => {
 			getSandbox: () => Sandbox<typeof StringArray>,
 		): QueueInteropFunctions {
 			const out: QueueInteropFunctions = {
-				inboundQueue: [],
-				outboundQueue: [],
-				inboundAckQueue: 0,
-				outboundAckQueue: 0,
+				host2View: [],
+				view2Host: [],
 				sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
-					out.inboundQueue.push(update);
+					out.host2View.push(update);
 				},
-				shiftInboundQueue: (): void => {
-					const update = out.inboundQueue.shift() ?? fail("No inbound updates in queue");
-					getSandbox().receiveInboundUpdate(update);
+				dispatchToView: (): void => {
+					const message = out.host2View.shift() ?? fail("No inbound updates in queue");
+					if (message === Ack) {
+						getSandbox().receiveAckOfOutboundChange();
+					} else {
+						getSandbox().receiveInboundUpdate(message);
+					}
 				},
 				sendAckOfInboundUpdateFromSandboxToHost: (): void => {
-					out.inboundAckQueue++;
-				},
-				shiftInboundAckQueue: (): void => {
-					assert(out.inboundAckQueue > 0, "No inbound acks in queue");
-					out.inboundAckQueue--;
-					getHost().receiveAckOfUpdate();
+					out.view2Host.push(Ack);
 				},
 				sendOutboundChangeFromSandboxToHostLocalBranch: (
 					change: JsonCompatibleReadOnly,
 				): void => {
-					out.outboundQueue.push(change);
+					out.view2Host.push(change);
 				},
-				shiftOutboundQueue: (): void => {
-					const change = out.outboundQueue.shift() ?? fail("No outbound changes in queue");
-					getHost().receiveOutboundChange(change);
+				dispatchToHost: (): void => {
+					const message = out.view2Host.shift() ?? fail("No outbound changes in queue");
+					if (message === Ack) {
+						getHost().receiveAckOfUpdate();
+					} else {
+						getHost().receiveOutboundChange(message);
+					}
 				},
 				sendAckOfOutboundChangeFromHostToSandbox: (): void => {
-					out.outboundAckQueue++;
-				},
-				shiftOutboundAckQueue: (): void => {
-					assert(out.outboundAckQueue > 0, "No outbound acks in queue");
-					out.outboundAckQueue--;
-					getSandbox().receiveAckOfOutboundChange();
+					out.host2View.push(Ack);
 				},
 			};
 			return out;
@@ -869,19 +864,19 @@ describe("Host and Sandbox Demo", () => {
 						break;
 					}
 					case Step.Host2ViewEdit: {
-						interop.shiftInboundQueue();
+						interop.dispatchToView();
 						break;
 					}
 					case Step.Host2ViewAck: {
-						interop.shiftOutboundAckQueue();
+						interop.dispatchToView();
 						break;
 					}
 					case Step.View2HostEdit: {
-						interop.shiftOutboundQueue();
+						interop.dispatchToHost();
 						break;
 					}
 					case Step.View2HostAck: {
-						interop.shiftInboundAckQueue();
+						interop.dispatchToHost();
 						break;
 					}
 					case Step.SequenceEdit: {
@@ -896,11 +891,7 @@ describe("Host and Sandbox Demo", () => {
 						fail(`Unexpected step: ${step}`);
 					}
 				}
-				if (
-					interop.inboundQueue.length === 0 &&
-					interop.outboundQueue.length === 0 &&
-					interop.inboundAckQueue === 0
-				) {
+				if (interop.host2View.length === 0 && interop.view2Host.length === 0) {
 					strict.deepEqual([...host.main.root], [...sandbox.view.root]);
 					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
