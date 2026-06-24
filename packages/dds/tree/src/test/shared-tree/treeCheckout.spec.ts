@@ -1279,7 +1279,7 @@ describe("sharedTreeView", () => {
 			view.root.insertAtEnd({ id: "A" });
 			view.root[0].id = "B";
 			assert.equal(undoStack.length, 2);
-			const [undoB, undoC] = undoStack;
+			const [undo1, undo2] = undoStack;
 
 			// Act
 			view.checkout.mainBranch.removeAfter(init);
@@ -1288,8 +1288,8 @@ describe("sharedTreeView", () => {
 			assert.equal(view.root.length, 0);
 
 			// Verify
-			assert.equal(undoB.status, RevertibleStatus.Disposed);
-			assert.equal(undoC.status, RevertibleStatus.Disposed);
+			assert.equal(undo1.status, RevertibleStatus.Disposed);
+			assert.equal(undo2.status, RevertibleStatus.Disposed);
 
 			// Cleanup
 			unsubscribe();
