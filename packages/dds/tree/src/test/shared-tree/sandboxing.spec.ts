@@ -34,7 +34,7 @@ import {
 	type UnsafeUnknownSchema,
 } from "../../simple-tree/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import { hasSome, type JsonCompatibleReadOnly } from "../../util/index.js";
 import { TestTreeProviderLite, StringArray } from "../utils.js";
 
 /**
@@ -693,102 +693,6 @@ describe("Host and Sandbox Demo", () => {
 			View2HostAck = "V2Ha",
 		}
 
-		type MessageQueue = ("Edit" | "Ack")[];
-
-		function* buildScenario(
-			scenario: Step[],
-			hostToSandQueue: MessageQueue = [],
-			sandToHostQueue: MessageQueue = [],
-			sequencingQueue: MessageQueue = [],
-		): Generator<readonly Step[]> {
-			if (scenario.length >= NUM_STEPS) {
-				yield scenario;
-			} else {
-				const lastStep = scenario.at(-1);
-				const beforeLastStep = scenario.at(-2);
-				if (beforeLastStep !== Step.ViewEdit || lastStep !== Step.ViewEdit) {
-					scenario.push(Step.ViewEdit);
-					yield* buildScenario(
-						scenario,
-						hostToSandQueue,
-						[...sandToHostQueue, "Edit"],
-						sequencingQueue,
-					);
-					scenario.pop();
-				}
-
-				if (beforeLastStep !== Step.HostEdit || lastStep !== Step.HostEdit) {
-					scenario.push(Step.HostEdit);
-					yield* buildScenario(
-						scenario,
-						// If the host has already sent an update to the sandbox, it will await a response before sending another update
-						hostToSandQueue.includes("Edit") || sandToHostQueue.length > 0
-							? hostToSandQueue
-							: [...hostToSandQueue, "Edit"],
-						sandToHostQueue,
-						[...sequencingQueue, "Ack"],
-					);
-					scenario.pop();
-				}
-
-				if (beforeLastStep !== Step.PeerEdit || lastStep !== Step.PeerEdit) {
-					scenario.push(Step.PeerEdit);
-					yield* buildScenario(scenario, hostToSandQueue, sandToHostQueue, [
-						...sequencingQueue,
-						"Edit",
-					]);
-					scenario.pop();
-				}
-
-				if (hostToSandQueue.length > 0) {
-					const isEdit = hostToSandQueue[0] === "Edit";
-					scenario.push(isEdit ? Step.Host2ViewEdit : Step.Host2ViewAck);
-					yield* buildScenario(
-						scenario,
-						hostToSandQueue.slice(1),
-						// The sandbox will not Ack an inbound edit if it has local edits that have not yet been reflected on the host
-						isEdit && !sandToHostQueue.includes("Edit") && !hostToSandQueue.includes("Ack")
-							? [...sandToHostQueue, "Ack"]
-							: sandToHostQueue,
-						sequencingQueue,
-					);
-					scenario.pop();
-				}
-
-				if (sandToHostQueue.length > 0) {
-					const isEdit = sandToHostQueue[0] === "Edit";
-					scenario.push(isEdit ? Step.View2HostEdit : Step.View2HostAck);
-					yield* buildScenario(
-						scenario,
-						isEdit ? [...hostToSandQueue, "Ack"] : hostToSandQueue,
-						sandToHostQueue.slice(1),
-						[...sequencingQueue, "Ack"],
-					);
-					scenario.pop();
-				}
-
-				if (sequencingQueue.length > 0) {
-					const isEdit = sequencingQueue[0] === "Edit";
-					scenario.push(isEdit ? Step.SequenceEdit : Step.SequenceAck);
-					yield* buildScenario(
-						scenario,
-						isEdit ? [...hostToSandQueue, "Edit"] : hostToSandQueue,
-						sandToHostQueue,
-						sequencingQueue.slice(1),
-					);
-					scenario.pop();
-				}
-			}
-		}
-
-		for (const scenario of buildScenario([])) {
-			console.log(`${scenario.join(" ")}`);
-			runScenario(scenario);
-			// it(`${scenario.join(" ")}`, () => {
-			// 	runScenario(scenario);
-			// });
-		}
-
 		type Ack = "Ack";
 		const Ack: Ack = "Ack";
 		type Message = JsonCompatibleReadOnly | Ack;
@@ -841,54 +745,20 @@ describe("Host and Sandbox Demo", () => {
 			return out;
 		}
 
-		function runScenario(scenario: readonly Step[]): void {
+		type Edit = "Edit";
+		const Edit: Edit = "Edit";
+		const todo: Step[][] = [[]];
+		while (hasSome(todo)) {
 			const { peer, host, sandbox, provider, interop } = setupCustom([], buildQueueInterop);
-			let viewEditCounter = 0;
-			let hostEditCounter = 0;
-			let peerEditCounter = 0;
-			for (const step of scenario) {
-				switch (step) {
-					case Step.ViewEdit: {
-						viewEditCounter += 1;
-						sandbox.view.root.push(`V${viewEditCounter}`);
-						break;
-					}
-					case Step.HostEdit: {
-						hostEditCounter += 1;
-						host.main.root.push(`H${hostEditCounter}`);
-						break;
-					}
-					case Step.PeerEdit: {
-						peerEditCounter += 1;
-						peer.root.push(`P${peerEditCounter}`);
-						break;
-					}
-					case Step.Host2ViewEdit: {
-						interop.dispatchToView();
-						break;
-					}
-					case Step.Host2ViewAck: {
-						interop.dispatchToView();
-						break;
-					}
-					case Step.View2HostEdit: {
-						interop.dispatchToHost();
-						break;
-					}
-					case Step.View2HostAck: {
-						interop.dispatchToHost();
-						break;
-					}
-					case Step.SequenceEdit: {
-						provider.synchronizeMessages({ count: 2 });
-						break;
-					}
-					case Step.SequenceAck: {
-						provider.synchronizeMessages({ count: 2 });
-						break;
-					}
-					default: {
-						fail(`Unexpected step: ${step}`);
+			const serviceQueue: (Edit | Ack)[] = [];
+			const redo = todo.pop() ?? fail("Expected a todo item");
+			const steps: Step[] = [];
+			while (steps.length < NUM_STEPS) {
+				if (steps.length < redo.length) {
+					steps.push(redo[steps.length]);
+				} else {
+					if (serviceQueue.length > 0) {
+						steps.push(serviceQueue.pop() === Edit ? Step.SequenceEdit : Step.SequenceAck);
 					}
 				}
 				if (interop.host2View.length === 0 && interop.view2Host.length === 0) {
