@@ -22,3 +22,9 @@ if (maybeSessionId === undefined) {
 	// use maybeSessionId
 }
 ```
+
+`IIdCompressor` is now marked `@sealed`.
+Fluid already assumed any `IIdCompressor` was its own implementation and casted them internally.
+Any custom implementations will no longer build due to the above change,
+but would not have worked at runtime anyway.
+The updated tagging now correctly documents this requirement.
