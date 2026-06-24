@@ -21,6 +21,7 @@ if (typeof window !== "undefined" && window.location.hostname !== "localhost") {
 		appInsights = new ApplicationInsights({
 			config: {
 				connectionString: `InstrumentationKey=${instrumentationKey}`,
+				disableCookieUsage: true,
 				enableAutoRouteTracking: true,
 				enableDebug: true,
 				extensions: [reactPlugin],
