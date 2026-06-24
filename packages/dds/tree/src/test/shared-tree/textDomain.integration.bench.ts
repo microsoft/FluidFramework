@@ -555,9 +555,8 @@ describe("TextDomain benchmarks", () => {
 		// TODO: formatted text benchmarks.
 	});
 
-	// Testing Suite that focuses on whole-document performance/memory measurements for text at varying doc sizes. All test are done on a
+	// Testing Suite that focuses on whole-document performance/memory measurements for text at varying doc sizes.
 	describe("TextDomain whole-document benchmarks", () => {
-
 		/* Upper bound on each duration benchmark's wall-clock so the full sweep stays tractable. */
 		const maxBenchmarkDurationSeconds = 5;
 
