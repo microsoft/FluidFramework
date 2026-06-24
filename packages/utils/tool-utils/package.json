@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tool-utils",
-	"version": "2.110.0",
+	"version": "2.111.0",
 	"description": "Common utilities for Fluid tools",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -112,14 +112,14 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.101.0",
+		"@fluidframework/tool-utils-previous": "npm:@fluidframework/tool-utils@2.103.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/debug": "^4.1.5",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"@types/proper-lockfile": "^4.1.4",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
@@ -130,7 +130,11 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"TypeAlias_LoginCredentials": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "internal"
 	}
 }

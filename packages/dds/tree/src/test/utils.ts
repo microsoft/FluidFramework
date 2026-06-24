@@ -120,6 +120,7 @@ import {
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
 	type SchemaAndPolicy,
+	RevertibleStatus,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -1353,10 +1354,14 @@ export function createTestUndoRedoStacks(
 	const unsubscribe = (): void => {
 		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 		for (const revertible of redoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1546,6 +1551,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public rebaseOnto(branch: unknown): void {
 		throw new Error("Method 'rebaseOnto' not implemented in MockTreeCheckout.");
+	}
+	public isMissingEditsFrom(branch: unknown): never {
+		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");
