@@ -2360,8 +2360,15 @@ export class ContainerRuntime
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
+			// Import the delay-loaded module directly rather than through the `./summary/index.js` barrel. That barrel is
+			// also statically imported above for the summarization dependencies every client loads (SummaryManager,
+			// SummaryCollection, SummarizerClientElection, etc.), so dynamically importing it here would not produce a
+			// separate chunk: the summarizer code would already be in the initial chunk via the static import and the
+			// delay-load would have no effect. Targeting summaryDelayLoadedModule/index.js directly keeps it out of the
+			// statically-reachable graph so a bundler can split it into its own lazily-loaded chunk.
 			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+				// eslint-disable-next-line import-x/no-internal-modules -- Needed to import the delay-loaded module directly.
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/summaryDelayLoadedModule/index.js"
 			);
 			this._summarizer = new module.Summarizer(
 				this /* ISummarizerRuntime */,
