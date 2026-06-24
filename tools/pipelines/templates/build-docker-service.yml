@@ -65,10 +65,10 @@ parameters:
     type: string
     default: repo
 
-  # If true, skip package-manager setup/install entirely (used by packages without package.json, e.g. gitssh).
-  - name: skipPackageInstall
+  # If true, perform package-manager setup/install (set false for packages without package.json, e.g. gitssh).
+  - name: installPackages
     type: boolean
-    default: false
+    default: true
 
   # If true, install only root dependencies for version-setting scenarios in packages with native deps.
   - name: installWorkspaceRootOnly
@@ -237,7 +237,7 @@ extends:
                 containerBaseDir=${{ parameters.containerBaseDir }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
-                skipPackageInstall=${{ parameters.skipPackageInstall }}
+                installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
@@ -299,8 +299,8 @@ extends:
                 fi
               fi
 
-              if [[ "${{ parameters.skipPackageInstall }}" == "True" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
-                echo "##vso[task.logissue type=error]skipPackageInstall: true is incompatible with setVersion: true (version-setting requires dependencies to be installed)."
+              if [[ "${{ parameters.installPackages }}" != "True" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]installPackages: false is incompatible with setVersion: true (version-setting requires dependencies to be installed)."
                 exit -1;
               fi
 
@@ -314,13 +314,13 @@ extends:
               buildDirectory: ${{ parameters.buildDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
-        - ${{ if not(parameters.skipPackageInstall) }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
 
         # Set version
-        - ${{ if and(eq(parameters.setVersion, true), not(parameters.skipPackageInstall)) }}:
+        - ${{ if and(eq(parameters.setVersion, true), eq(parameters.installPackages, true)) }}:
           - task: Bash@3
             displayName: Install dependencies
             retryCountOnTaskFailure: 4
@@ -405,7 +405,7 @@ extends:
               # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
               # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
               # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
-              ${{ if not(parameters.skipPackageInstall) }}:
+              ${{ if eq(parameters.installPackages, true) }}:
                 buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
               ${{ else }}:
                 buildArguments: --target base $(DockerBuildArgs.output)
@@ -551,7 +551,7 @@ extends:
             image: $(containerTag)
             # See the base-image build above for the rationale. Passed here too because
             # a cache miss could re-execute the base stage layers during this build.
-            ${{ if not(parameters.skipPackageInstall) }}:
+            ${{ if eq(parameters.installPackages, true) }}:
               buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
             ${{ else }}:
               buildArguments: $(DockerBuildArgs.output)
@@ -591,7 +591,7 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
-        - ${{ if not(parameters.skipPackageInstall) }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
             displayName: Prune pnpm store

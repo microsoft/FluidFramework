@@ -83,7 +83,7 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
-    # No package.json; skip package-manager setup.
-    skipPackageInstall: true
+    # No package.json; disable package-manager setup.
+    installPackages: false
     enableDockerImagePull: false
     tagName: gitssh
