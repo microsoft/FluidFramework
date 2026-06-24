@@ -109,6 +109,8 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 
 	private isApplyingSandboxChanges: boolean = false;
 
+	private readonly offMainChanged: () => void;
+
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
 		/** The callback to send updates from the host to the sandbox so that it learns about inbound changes. */
@@ -120,7 +122,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.main = main;
 		this.local = main.fork();
 
-		this.main.events.on("changed", () => {
+		this.offMainChanged = this.main.events.on("changed", () => {
 			if (this.isApplyingSandboxChanges) {
 				// While we may need to update the sandbox after applying changes from the sandbox,
 				// we don't want to do so until we have sent an acknowledgment back to the sandbox.
@@ -128,6 +130,12 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				this.syncSandboxToInboundChanges("after main branch changed");
 			}
 		});
+	}
+
+	public dispose(): void {
+		this.offMainChanged();
+		this.local.dispose();
+		this.main.dispose();
 	}
 
 	/**
@@ -230,6 +238,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	/** The number of local changes that have been made in the sandbox but not yet reflected on the host. */
 	private inFlight: number = 0;
 	private pushInProgress?: PromiseWithResolver;
+	private readonly offViewChanged: () => void;
 
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
@@ -242,7 +251,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.view = independentInitializedView(config, options, content);
-		this.view.events.on("changed", (metadata: ChangeMetadata) => {
+		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
 			if (metadata.isLocal) {
 				const newChange = metadata.getChange();
 				this.logger(
@@ -258,6 +267,11 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 				sendOutboundChange(newChange);
 			}
 		});
+	}
+
+	public dispose(): void {
+		this.offViewChanged();
+		this.view.dispose();
 	}
 
 	/**
@@ -350,22 +364,18 @@ describe("Host and Sandbox Demo", () => {
 	}
 
 	function setup(initialState: string[]) {
-		return setupImpl(initialState, buildTimeoutInterop);
+		return setupCustom(initialState, buildTimeoutInterop);
 	}
 
 	function setupCustom<T extends InteropFunctions>(
 		initialState: string[],
 		interopBuilder: InteropFunctionsBuilder<T>,
-	) {
-		return setupImpl(initialState, interopBuilder);
-	}
-
-	function setupImpl<T extends InteropFunctions>(
-		initialState: string[],
-		interopBuilder: InteropFunctionsBuilder<T>,
+		logging: boolean = false,
 	) {
 		const logger = (message: string) => {
-			console.log(message);
+			if (logging) {
+				console.log(message);
+			}
 		};
 		const provider = new TestTreeProviderLite(
 			2,
@@ -422,7 +432,12 @@ describe("Host and Sandbox Demo", () => {
 			logger,
 		);
 
-		return { peer, host, sandbox, provider, interop };
+		const teardown = () => {
+			sandbox.dispose();
+			host.dispose();
+		};
+
+		return { teardown, peer, host, sandbox, provider, interop, logger };
 	}
 
 	it("the initial state is consistent across the host and sandbox", async () => {
@@ -679,8 +694,9 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
 	});
 
-	const NUM_STEPS = 5;
-	it(`All scenarios with ${NUM_STEPS} steps`, () => {
+	const NUM_STEPS = 6;
+	it(`All scenarios with ${NUM_STEPS} steps`, function () {
+		this.timeout(60_000 * 10);
 		enum Step {
 			HostEdit = "He",
 			ViewEdit = "Ve",
@@ -747,27 +763,121 @@ describe("Host and Sandbox Demo", () => {
 
 		type Edit = "Edit";
 		const Edit: Edit = "Edit";
-		const todo: Step[][] = [[]];
-		while (hasSome(todo)) {
-			const { peer, host, sandbox, provider, interop } = setupCustom([], buildQueueInterop);
-			const serviceQueue: (Edit | Ack)[] = [];
-			const redo = todo.pop() ?? fail("Expected a todo item");
-			const steps: Step[] = [];
-			while (steps.length < NUM_STEPS) {
-				if (steps.length < redo.length) {
-					steps.push(redo[steps.length]);
-				} else {
-					if (serviceQueue.length > 0) {
-						steps.push(serviceQueue.pop() === Edit ? Step.SequenceEdit : Step.SequenceAck);
+		let scenario = 0;
+		const potential: Step[][] = [[Step.ViewEdit, Step.HostEdit, Step.PeerEdit]];
+		// const potential: Step[][] = [
+		// 	[Step.ViewEdit],
+		// 	[Step.ViewEdit],
+		// 	[Step.View2HostEdit],
+		// 	[Step.SequenceAck],
+		// 	[Step.View2HostEdit],
+		// 	[Step.SequenceAck],
+		// ];
+		while (hasSome(potential)) {
+			scenario += 1;
+			const { teardown, peer, host, sandbox, provider, interop, logger } = setupCustom(
+				[],
+				buildQueueInterop,
+				false,
+			);
+			let peerEditCounter = 0;
+			let hostEditCounter = 0;
+			let viewEditCounter = 0;
+			const serviceQueue: (Step.SequenceEdit | Step.SequenceAck)[] = [];
+			const offPeerChange = peer.events.on("changed", ({ isLocal }) => {
+				if (isLocal) {
+					serviceQueue.push(Step.SequenceEdit);
+				}
+			});
+			const offHostChange = host.main.events.on("changed", ({ isLocal }) => {
+				if (isLocal) {
+					serviceQueue.push(Step.SequenceAck);
+				}
+			});
+			const actual: Step[] = [];
+			while (actual.length < NUM_STEPS) {
+				if (actual.length === potential.length) {
+					const potentialNext: Step[] = [Step.ViewEdit, Step.HostEdit, Step.PeerEdit];
+					if (hasSome(serviceQueue)) {
+						potentialNext.push(serviceQueue[0]);
+					}
+					if (hasSome(interop.host2View)) {
+						potentialNext.push(
+							interop.host2View[0] === Ack ? Step.Host2ViewAck : Step.Host2ViewEdit,
+						);
+					}
+					if (hasSome(interop.view2Host)) {
+						potentialNext.push(
+							interop.view2Host[0] === Ack ? Step.View2HostAck : Step.View2HostEdit,
+						);
+					}
+					potential.push(potentialNext);
+				}
+				const step: Step = potential[actual.length][0] ?? fail("No next step available");
+				logger(`--> [${actual.join(", ")}] + ${step}`);
+				switch (step) {
+					case Step.ViewEdit: {
+						viewEditCounter += 1;
+						sandbox.view.root.push(`V${viewEditCounter}`);
+						break;
+					}
+					case Step.HostEdit: {
+						hostEditCounter += 1;
+						host.main.root.push(`H${hostEditCounter}`);
+						break;
+					}
+					case Step.PeerEdit: {
+						peerEditCounter += 1;
+						peer.root.push(`P${peerEditCounter}`);
+						break;
+					}
+					case Step.SequenceEdit:
+					case Step.SequenceAck: {
+						const expected = serviceQueue.shift();
+						strict.equal(expected, step);
+						let nextMessage = provider.peekNextMessage();
+						while (
+							nextMessage?.type === "op" &&
+							(nextMessage.contents as { type?: string }).type === "idAllocation"
+						) {
+							provider.synchronizeMessages({ count: 1 });
+							nextMessage = provider.peekNextMessage();
+						}
+						provider.synchronizeMessages({ count: 1 });
+						break;
+					}
+					case Step.Host2ViewEdit:
+					case Step.Host2ViewAck: {
+						interop.dispatchToView();
+						break;
+					}
+					case Step.View2HostEdit:
+					case Step.View2HostAck: {
+						interop.dispatchToHost();
+						break;
+					}
+					default: {
+						throw new Error(`Unexpected step: ${step}`);
 					}
 				}
+				actual.push(step);
 				if (interop.host2View.length === 0 && interop.view2Host.length === 0) {
 					strict.deepEqual([...host.main.root], [...sandbox.view.root]);
 					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
+
+				if (actual.length === NUM_STEPS) {
+					potential.push([]);
+					do {
+						potential.pop();
+						potential.at(-1)?.shift();
+					} while (potential.at(-1)?.length === 0);
+				}
 			}
-			provider.synchronizeMessages();
-			strict.deepEqual([...host.main.root], [...peer.root]);
+			offPeerChange();
+			offHostChange();
+			teardown();
 		}
+		console.log(`${scenario} scenarios tested`);
 	});
 });

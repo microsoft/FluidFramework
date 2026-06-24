@@ -216,6 +216,7 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 // Testing utilities
 
@@ -535,6 +536,10 @@ export class TestTreeProviderLite {
 		} else {
 			this.runtimeFactory.processSomeMessages(count);
 		}
+	}
+
+	public peekNextMessage(): ISequencedDocumentMessage | undefined {
+		return this.runtimeFactory.peekNextMessage();
 	}
 
 	public get minimumSequenceNumber(): number {
