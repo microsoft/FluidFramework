@@ -24,6 +24,7 @@ declare type MakeUnusedImportErrorsGoAway<T> = TypeOnly<T> | MinimalType<T> | Fu
  * typeValidation.broken:
  * "Function_createIdCompressor": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_createIdCompressor = requireAssignableTo<TypeOnly<typeof current.createIdCompressor>, TypeOnly<typeof old.createIdCompressor>>
 
 /*
@@ -33,6 +34,7 @@ declare type current_as_old_for_Function_createIdCompressor = requireAssignableT
  * typeValidation.broken:
  * "Function_createSessionId": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_createSessionId = requireAssignableTo<TypeOnly<typeof current.createSessionId>, TypeOnly<typeof old.createSessionId>>
 
 /*
@@ -42,6 +44,7 @@ declare type current_as_old_for_Function_createSessionId = requireAssignableTo<T
  * typeValidation.broken:
  * "Function_deserializeIdCompressor": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_deserializeIdCompressor = requireAssignableTo<TypeOnly<typeof current.deserializeIdCompressor>, TypeOnly<typeof old.deserializeIdCompressor>>
 
 /*
@@ -51,6 +54,7 @@ declare type current_as_old_for_Function_deserializeIdCompressor = requireAssign
  * typeValidation.broken:
  * "Function_serializeIdCompressor": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Function_serializeIdCompressor = requireAssignableTo<TypeOnly<typeof current.serializeIdCompressor>, TypeOnly<typeof old.serializeIdCompressor>>
 
 /*
@@ -60,6 +64,7 @@ declare type current_as_old_for_Function_serializeIdCompressor = requireAssignab
  * typeValidation.broken:
  * "Interface_IdCreationRange": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_IdCreationRange = requireAssignableTo<TypeOnly<old.IdCreationRange>, TypeOnly<current.IdCreationRange>>
 
 /*
@@ -69,6 +74,7 @@ declare type old_as_current_for_Interface_IdCreationRange = requireAssignableTo<
  * typeValidation.broken:
  * "Interface_IdCreationRange": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IdCreationRange = requireAssignableTo<TypeOnly<current.IdCreationRange>, TypeOnly<old.IdCreationRange>>
 
 /*
@@ -114,6 +120,7 @@ declare type current_as_old_for_TypeAlias_OpSpaceCompressedId = requireAssignabl
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressor": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SerializedIdCompressor = requireAssignableTo<TypeOnly<old.SerializedIdCompressor>, TypeOnly<current.SerializedIdCompressor>>
 
 /*
@@ -123,6 +130,7 @@ declare type old_as_current_for_TypeAlias_SerializedIdCompressor = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressor": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SerializedIdCompressor = requireAssignableTo<TypeOnly<current.SerializedIdCompressor>, TypeOnly<old.SerializedIdCompressor>>
 
 /*
@@ -132,6 +140,7 @@ declare type current_as_old_for_TypeAlias_SerializedIdCompressor = requireAssign
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressorWithNoSession": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithNoSession = requireAssignableTo<TypeOnly<old.SerializedIdCompressorWithNoSession>, TypeOnly<current.SerializedIdCompressorWithNoSession>>
 
 /*
@@ -141,6 +150,7 @@ declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithNoSession = 
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressorWithNoSession": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SerializedIdCompressorWithNoSession = requireAssignableTo<TypeOnly<current.SerializedIdCompressorWithNoSession>, TypeOnly<old.SerializedIdCompressorWithNoSession>>
 
 /*
@@ -150,6 +160,7 @@ declare type current_as_old_for_TypeAlias_SerializedIdCompressorWithNoSession = 
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressorWithOngoingSession": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithOngoingSession = requireAssignableTo<TypeOnly<old.SerializedIdCompressorWithOngoingSession>, TypeOnly<current.SerializedIdCompressorWithOngoingSession>>
 
 /*
@@ -159,6 +170,7 @@ declare type old_as_current_for_TypeAlias_SerializedIdCompressorWithOngoingSessi
  * typeValidation.broken:
  * "TypeAlias_SerializedIdCompressorWithOngoingSession": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_TypeAlias_SerializedIdCompressorWithOngoingSession = requireAssignableTo<TypeOnly<current.SerializedIdCompressorWithOngoingSession>, TypeOnly<old.SerializedIdCompressorWithOngoingSession>>
 
 /*

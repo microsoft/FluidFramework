@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import {
 	createIdCompressor,
 	createSessionId,
+	SerializationVersion,
 	toIdCompressorWithCore,
 } from "@fluidframework/id-compressor/internal";
 
@@ -193,7 +194,7 @@ describe("nodeShape", () => {
 			}
 
 			it("emits the negative op-space id for a non-finalized id when isSummary=false", () => {
-				const idCompressor = createIdCompressor(createSessionId());
+				const idCompressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const sessionSpaceId = idCompressor.generateCompressedId();
 				const stableUuid = idCompressor.decompress(sessionSpaceId);
 				assert(
@@ -216,7 +217,7 @@ describe("nodeShape", () => {
 			// guarantee the correct originator ID is part of the summary. This test enforces the former behavior;
 			// if the latter is implemented it would be reasonable to rework it.
 			it("emits the stable UUID for a non-finalized id when isSummary=true", () => {
-				const idCompressor = createIdCompressor(createSessionId());
+				const idCompressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const sessionSpaceId = idCompressor.generateCompressedId();
 				const stableUuid = idCompressor.decompress(sessionSpaceId);
 				assert(
@@ -232,7 +233,7 @@ describe("nodeShape", () => {
 			});
 
 			it("still emits the op-space integer for a finalized id when isSummary=true", () => {
-				const idCompressor = createIdCompressor(createSessionId());
+				const idCompressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const sessionSpaceId = idCompressor.generateCompressedId();
 				const stableUuid = idCompressor.decompress(sessionSpaceId);
 				// Round-trip the creation range so the id has a cluster allocated.
@@ -255,7 +256,7 @@ describe("nodeShape", () => {
 				// A stable UUID minted in a different id-compressor — `idCompressor`
 				// cannot recompress it, so the encoder falls through to the
 				// pass-through path that emits the original string.
-				const otherCompressor = createIdCompressor(createSessionId());
+				const otherCompressor = createIdCompressor(createSessionId(), SerializationVersion.V3);
 				const unknownUuid = otherCompressor.decompress(otherCompressor.generateCompressedId());
 				for (const isSummary of [false, true]) {
 					const buffer = checkNodeEncode(

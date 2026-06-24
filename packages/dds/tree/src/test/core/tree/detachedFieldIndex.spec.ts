@@ -7,7 +7,10 @@ import { strict as assert } from "node:assert";
 import path from "node:path";
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import {
+	createIdCompressor,
+	SerializationVersion,
+} from "@fluidframework/id-compressor/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
 import {
@@ -49,6 +52,7 @@ const finalizedTag = testIdCompressor.normalizeToOpSpace(mintedTag);
 
 const unfinalizedIdCompressor = createIdCompressor(
 	assertIsSessionId("00000000-0000-4000-b000-000000000000"),
+	SerializationVersion.V3,
 );
 
 const malformedData: readonly [string, JsonCompatibleReadOnly][] = [
