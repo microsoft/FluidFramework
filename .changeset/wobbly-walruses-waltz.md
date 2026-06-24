@@ -5,7 +5,7 @@
 ---
 TreeView transaction APIs have been promoted to beta
 
-The new `TreeViewBeta` interface exposes `runTransaction` and `runTransactionAsync` methods.
+The `TreeViewBeta` interface exposes `runTransaction` and `runTransactionAsync` methods.
 
 An `asBeta` helper is also provided for down-casting a `TreeView` to a `TreeViewBeta`, mirroring the existing `asAlpha` helper.
 
