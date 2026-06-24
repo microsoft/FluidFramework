@@ -6,9 +6,13 @@
 
 Runtime schema upgrades let an application opt specific staged schema upgrades into stored schema when initializing a document or upgrading its stored schema.
 A staged schema upgrade is a schema upgrade that is declared in view schema but omitted from stored schema unless the application explicitly enables it.
-The application does this by calling `TreeViewAlpha.declareEnabledUpgrades(upgrades)` before `initialize` or `upgradeSchema`, where `upgrades` is an application-owned property bag mapping string names to `SchemaUpgrade` values.
+The application does this by calling `TreeViewAlpha.declareEnabledUpgrades(upgrades)` before `initialize` or `upgradeSchema`.
+The `upgrades` input can be either:
 
-The property names are chosen by the application, for example `enableFooUpgrade`.
+- an application-owned property bag mapping string names to `SchemaUpgrade` values, or
+- a `StoredFromViewSchemaGenerationOptions` object.
+
+For property bags, property names are chosen by the application, for example `enableFooUpgrade`.
 The runtime uses the `SchemaUpgrade` values to decide which staged schema upgrades should be included in the stored schema.
 The property names are for call-site clarity and feature-flag integration; they are not part of the stored schema and should not affect compatibility.
 
@@ -60,7 +64,9 @@ Documents created after the rollback do not include that upgrade unless the flag
 -   Allow callers to enable selected staged schema upgrades during `upgradeSchema`.
 -   Make enabling an upgrade granular: only staged schema members associated with the supplied `SchemaUpgrade` values are included in the generated stored schema.
 -   Support both production feature-flag rollouts and tests that simulate documents created or upgraded by a future application version.
--   Keep the default behavior unchanged when `declareEnabledUpgrades` is omitted or empty.
+-   Keep the default behavior unchanged when `declareEnabledUpgrades` is omitted, `undefined`, or empty.
+-   Support an easy integration-test mode that enables all staged upgrades.
+-   Support composition/wrapping of generation options.
 
 ## API Shape
 
@@ -74,7 +80,7 @@ alphaView.initialize(content);
 alphaView.upgradeSchema();
 ```
 
-where `upgrades` is a property bag of application-owned names to `SchemaUpgrade` values:
+`upgrades` can be a property bag of application-owned names to `SchemaUpgrade` values:
 
 ```typescript
 const upgrades = featureFlags.enableFooUpgrade
@@ -84,12 +90,37 @@ const upgrades = featureFlags.enableFooUpgrade
 asAlpha(view).declareEnabledUpgrades(upgrades);
 ```
 
+or a full `StoredFromViewSchemaGenerationOptions` object:
+
+```typescript
+asAlpha(view).declareEnabledUpgrades(permissiveStoredSchemaGenerationOptions);
+```
+
 The name `enableFooUpgrade` is not interpreted by SharedTree.
 It gives the application a readable, flag-friendly place to name why the `SchemaUpgrade` is being supplied.
 SharedTree treats the provided values as a set of enabled staged schema upgrades.
 
 When `upgrades` is omitted, `undefined`, or empty, `initialize` and `upgradeSchema` continue to generate the restrictive stored schema they generate today.
 No staged schema members are included by default.
+
+### Accepting `StoredFromViewSchemaGenerationOptions`
+
+`declareEnabledUpgrades` accepts a full `StoredFromViewSchemaGenerationOptions`, not only an upgrades bag.
+This keeps the API unified while still allowing callers to declare policy directly for staged-type and staged-optional inclusion when they need to.
+
+Benefits:
+
+- Keeps schema-generation policy as a first-class API concept.
+- Supports layered configuration (base policy + local override) without changing schema-writing entry points.
+- Preserves a single source of truth by feeding one resolved options object into compatibility checks and schema generation.
+- Enables integration tests to force broad enablement quickly (for example with `permissiveStoredSchemaGenerationOptions`).
+
+Future consideration:
+
+- It may be useful for the view to expose a current/default policy object (either `StoredFromViewSchemaGenerationOptions` or similar) in the future, but that would still be part of the same unified API shape.
+- That could let callers test whether a specific upgrade is already included.
+- That could clarify that the exposed policy is the default used when no custom options are declared.
+- Callers could build wrapper policies from that baseline instead of reconstructing it.
 
 ## Why DeclareEnabledUpgrades?
 
@@ -112,8 +143,17 @@ The insertion/validation path for initialization must use the same generated sch
 
 ## Implementation Notes
 
-Stored schema generation remains based on `toUpgradeSchema(root, upgrades?)` and `toInitialSchema(root, upgrades?)`.
-The view is responsible for selecting `upgrades` by storing the declared bag and threading it to these helpers.
+Stored schema generation remains based on `toUpgradeSchema(root, upgradesOrOptions?)` and `toInitialSchema(root, upgradesOrOptions?)`.
+Both helpers now accept either an upgrades bag or `StoredFromViewSchemaGenerationOptions`.
+
+`storedSchemaGenerationOptionsForUpgrades(upgrades)` converts property bags into options.
+`restrictiveStoredSchemaGenerationOptions` and `permissiveStoredSchemaGenerationOptions` provide built-in defaults for "none" and "all" staged-upgrade inclusion.
+
+The view stores the currently declared options and threads them consistently through:
+
+- compatibility computation,
+- `initialize`, and
+- `upgradeSchema`.
 
 Behavioral requirements:
 
@@ -128,6 +168,12 @@ Tests should cover both API entry points, the staged schema member kinds that ar
 
 Generic runtime API tests should cover shared behavior such as `TreeViewAlpha.declareEnabledUpgrades(upgrades)` + `TreeViewAlpha.initialize(content)` accepting enabled staged content and rejecting the same content when no upgrades are declared.
 More specialized staged schema tests should exercise `TreeViewAlpha.declareEnabledUpgrades(upgrades)` + `TreeViewAlpha.upgradeSchema()` for each staged schema feature, such as staged allowed types and staged optional fields.
+
+Integration tests should also cover option-based flows:
+
+-   `declareEnabledUpgrades(permissiveStoredSchemaGenerationOptions)` enables all staged upgrades.
+-   App-defined composed options can be re-declared as needed.
+-   Declared options are used consistently by compatibility checks and schema-writing APIs.
 
 For `upgradeSchema`:
 
