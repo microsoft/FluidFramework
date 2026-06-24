@@ -284,7 +284,7 @@ describe("logLevel forwarding", () => {
 	} {
 		const recorded: { event: ITelemetryBaseEvent; logLevel: LogLevel | undefined }[] = [];
 		const sink: ITelemetryBaseLogger = {
-			send: (event, logLevel): void => {
+			send: (event: ITelemetryBaseEvent, logLevel?: LogLevel): void => {
 				recorded.push({ event, logLevel });
 			},
 			minLogLevel,

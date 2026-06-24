@@ -177,7 +177,7 @@ export function checkoutTests(
 			const events: ITelemetryBaseEvent[] = [];
 			const { checkout } = await setUpTestTreeCheckout({
 				logger: {
-					send: (event) => event.eventName.includes('Checkout') && events.push(event),
+					send: (event: ITelemetryBaseEvent) => event.eventName.includes('Checkout') && events.push(event),
 				},
 			});
 			checkout.openEdit();

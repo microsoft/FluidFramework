@@ -120,9 +120,21 @@ export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
  */
 export interface ITelemetryBaseLogger {
 	/**
-	 * Log a telemetry event, if it meets the appropriate log-level threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
+	 * Log a telemetry event.
+	 * @param event - The event to log.
+	 * @param logLevel - The log level of the event.
+	 *
+	 * @remarks Implementations may filter events at their discretion including if `logLevel` meets threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
+	 */
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void;
+	/**
+	 * Log a telemetry event.
 	 * @param event - The event to log.
 	 * @param logLevel - The log level of the event. If undefined, the logLevel should be treated as {@link LogLevelConst.essential | LogLevel.essential}.
+	 *
+	 * @remarks Implementations may filter events at their discretion including if `logLevel` meets threshold (see {@link ITelemetryBaseLogger.minLogLevel}).
+	 *
+	 * @deprecated Instead call with a defined {@link (LogLevel:type)}. `logLevel` optionality will be removed in v3.0. See {@link https://github.com/microsoft/FluidFramework/issues/27595|issue #27595}.
 	 */
 	send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 

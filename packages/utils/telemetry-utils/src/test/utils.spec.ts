@@ -343,7 +343,7 @@ describe("Sampling", () => {
 		} {
 			const captures: { method: string; logLevel: LogLevel | undefined }[] = [];
 			const logger: TelemetryLoggerExt = {
-				send: (_event, logLevel): void => {
+				send: (_event, logLevel?: LogLevel): void => {
 					captures.push({ method: "send", logLevel });
 				},
 				sendTelemetryEvent: (_event, _error, logLevel): void => {

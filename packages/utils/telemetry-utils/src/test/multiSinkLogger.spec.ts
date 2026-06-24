@@ -25,7 +25,7 @@ function createRecordingSink(minLogLevel: LogLevel = LogLevel.verbose): {
 } {
 	const recorded: RecordedEntry[] = [];
 	const sink: ITelemetryBaseLogger = {
-		send: (event, logLevel): void => {
+		send: (event: ITelemetryBaseEvent, logLevel?: LogLevel): void => {
 			recorded.push({ event, logLevel });
 		},
 		minLogLevel,
