@@ -322,12 +322,12 @@ describe("Host and Sandbox Demo", () => {
 		readonly sendAckOfInboundUpdateFromSandboxToHost: () => void;
 	}
 
-	type InteropFunctionsBuilder = (
+	type InteropFunctionsBuilder<T extends InteropFunctions> = (
 		getHost: () => Host<typeof StringArray>,
 		getSandbox: () => Sandbox<typeof StringArray>,
-	) => InteropFunctions;
+	) => T;
 
-	function buildTimeoutInteropFunctions(
+	function buildTimeoutInterop(
 		getHost: () => Host<typeof StringArray>,
 		getSandbox: () => Sandbox<typeof StringArray>,
 	): InteropFunctions {
@@ -349,9 +349,20 @@ describe("Host and Sandbox Demo", () => {
 		};
 	}
 
-	function setup(
+	function setup(initialState: string[]) {
+		return setupImpl(initialState, buildTimeoutInterop);
+	}
+
+	function setupCustom<T extends InteropFunctions>(
 		initialState: string[],
-		interopFunctionsBuilder: InteropFunctionsBuilder = buildTimeoutInteropFunctions,
+		interopBuilder: InteropFunctionsBuilder<T>,
+	) {
+		return setupImpl(initialState, interopBuilder);
+	}
+
+	function setupImpl<T extends InteropFunctions>(
+		initialState: string[],
+		interopBuilder: InteropFunctionsBuilder<T>,
 	) {
 		const logger = (message: string) => {
 			console.log(message);
@@ -378,15 +389,15 @@ describe("Host and Sandbox Demo", () => {
 		// eslint-disable-next-line prefer-const -- it is assigned below
 		let host: Host<typeof StringArray>;
 
-		const interopFunctions = interopFunctionsBuilder(
+		const interop = interopBuilder(
 			() => host ?? fail("Interop function called before host was initialized"),
 			() => sandbox ?? fail("Interop function called before sandbox was initialized"),
 		);
 
 		host = new Host(
 			main,
-			interopFunctions.sendInboundUpdateFromHostToSandbox,
-			interopFunctions.sendAckOfOutboundChangeFromHostToSandbox,
+			interop.sendInboundUpdateFromHostToSandbox,
+			interop.sendAckOfOutboundChangeFromHostToSandbox,
 			logger,
 		);
 
@@ -406,12 +417,12 @@ describe("Host and Sandbox Demo", () => {
 				// TODO: shard the compressor here?
 				idCompressor: hostCompressor,
 			},
-			interopFunctions.sendOutboundChangeFromSandboxToHostLocalBranch,
-			interopFunctions.sendAckOfInboundUpdateFromSandboxToHost,
+			interop.sendOutboundChangeFromSandboxToHostLocalBranch,
+			interop.sendAckOfInboundUpdateFromSandboxToHost,
 			logger,
 		);
 
-		return { peer, host, sandbox, provider };
+		return { peer, host, sandbox, provider, interop };
 	}
 
 	it("the initial state is consistent across the host and sandbox", async () => {
@@ -668,8 +679,116 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
 	});
 
-	const NUM_STEPS = 3;
-	describe(`All scenarios with ${NUM_STEPS} steps`, () => {
+	const NUM_STEPS = 5;
+	it(`All scenarios with ${NUM_STEPS} steps`, () => {
+		enum Step {
+			HostEdit = "He",
+			ViewEdit = "Ve",
+			PeerEdit = "Pe",
+			SequenceEdit = "Se",
+			SequenceAck = "Sa",
+			Host2ViewEdit = "H2Ve",
+			Host2ViewAck = "H2Va",
+			View2HostEdit = "V2He",
+			View2HostAck = "V2Ha",
+		}
+
+		type MessageQueue = ("Edit" | "Ack")[];
+
+		function* buildScenario(
+			scenario: Step[],
+			hostToSandQueue: MessageQueue = [],
+			sandToHostQueue: MessageQueue = [],
+			sequencingQueue: MessageQueue = [],
+		): Generator<readonly Step[]> {
+			if (scenario.length >= NUM_STEPS) {
+				yield scenario;
+			} else {
+				const lastStep = scenario.at(-1);
+				const beforeLastStep = scenario.at(-2);
+				if (beforeLastStep !== Step.ViewEdit || lastStep !== Step.ViewEdit) {
+					scenario.push(Step.ViewEdit);
+					yield* buildScenario(
+						scenario,
+						hostToSandQueue,
+						[...sandToHostQueue, "Edit"],
+						sequencingQueue,
+					);
+					scenario.pop();
+				}
+
+				if (beforeLastStep !== Step.HostEdit || lastStep !== Step.HostEdit) {
+					scenario.push(Step.HostEdit);
+					yield* buildScenario(
+						scenario,
+						// If the host has already sent an update to the sandbox, it will await a response before sending another update
+						hostToSandQueue.includes("Edit") || sandToHostQueue.length > 0
+							? hostToSandQueue
+							: [...hostToSandQueue, "Edit"],
+						sandToHostQueue,
+						[...sequencingQueue, "Ack"],
+					);
+					scenario.pop();
+				}
+
+				if (beforeLastStep !== Step.PeerEdit || lastStep !== Step.PeerEdit) {
+					scenario.push(Step.PeerEdit);
+					yield* buildScenario(scenario, hostToSandQueue, sandToHostQueue, [
+						...sequencingQueue,
+						"Edit",
+					]);
+					scenario.pop();
+				}
+
+				if (hostToSandQueue.length > 0) {
+					const isEdit = hostToSandQueue[0] === "Edit";
+					scenario.push(isEdit ? Step.Host2ViewEdit : Step.Host2ViewAck);
+					yield* buildScenario(
+						scenario,
+						hostToSandQueue.slice(1),
+						// The sandbox will not Ack an inbound edit if it has local edits that have not yet been reflected on the host
+						isEdit && !sandToHostQueue.includes("Edit") && !hostToSandQueue.includes("Ack")
+							? [...sandToHostQueue, "Ack"]
+							: sandToHostQueue,
+						sequencingQueue,
+					);
+					scenario.pop();
+				}
+
+				if (sandToHostQueue.length > 0) {
+					const isEdit = sandToHostQueue[0] === "Edit";
+					scenario.push(isEdit ? Step.View2HostEdit : Step.View2HostAck);
+					yield* buildScenario(
+						scenario,
+						isEdit ? [...hostToSandQueue, "Ack"] : hostToSandQueue,
+						sandToHostQueue.slice(1),
+						[...sequencingQueue, "Ack"],
+					);
+					scenario.pop();
+				}
+
+				if (sequencingQueue.length > 0) {
+					const isEdit = sequencingQueue[0] === "Edit";
+					scenario.push(isEdit ? Step.SequenceEdit : Step.SequenceAck);
+					yield* buildScenario(
+						scenario,
+						isEdit ? [...hostToSandQueue, "Edit"] : hostToSandQueue,
+						sandToHostQueue,
+						sequencingQueue.slice(1),
+					);
+					scenario.pop();
+				}
+			}
+		}
+
+		for (const scenario of buildScenario([])) {
+			console.log(`${scenario.join(" ")}`);
+			runScenario(scenario);
+			// it(`${scenario.join(" ")}`, () => {
+			// 	runScenario(scenario);
+			// });
+		}
+
 		interface QueueInteropFunctions extends InteropFunctions {
 			readonly inboundQueue: JsonCompatibleReadOnly[];
 			readonly outboundQueue: JsonCompatibleReadOnly[];
@@ -681,7 +800,8 @@ describe("Host and Sandbox Demo", () => {
 			shiftOutboundQueue(): void;
 			shiftOutboundAckQueue(): void;
 		}
-		function buildQueueInteropFunctions(
+
+		function buildQueueInterop(
 			getHost: () => Host<typeof StringArray>,
 			getSandbox: () => Sandbox<typeof StringArray>,
 		): QueueInteropFunctions {
@@ -726,87 +846,67 @@ describe("Host and Sandbox Demo", () => {
 			return out;
 		}
 
-		enum ScenarioStep {
-			HostEdit = "H",
-			PeerEdit = "P",
-			SandboxEdit = "S",
-			Message = "M",
-			H2S = "H2S",
-			S2H = "S2H",
-		}
-
-		function* buildScenario(
-			scenario: ScenarioStep[],
-			hostToSandQueue: ("New" | "Ack")[] = [],
-			sandToHostQueue: ("New" | "Ack")[] = [],
-			messageQueue: ("New" | "Ack")[] = [],
-		): Generator<readonly ScenarioStep[]> {
-			if (scenario.length >= NUM_STEPS) {
-				yield scenario;
-			} else {
-				scenario.push(ScenarioStep.SandboxEdit);
-				yield* buildScenario(
-					scenario,
-					hostToSandQueue,
-					[...sandToHostQueue, "New"],
-					messageQueue,
-				);
-				scenario.pop();
-
-				scenario.push(ScenarioStep.HostEdit);
-				yield* buildScenario(scenario, [...hostToSandQueue, "New"], sandToHostQueue, [
-					...messageQueue,
-					"Ack",
-				]);
-				scenario.pop();
-
-				scenario.push(ScenarioStep.PeerEdit);
-				yield* buildScenario(scenario, hostToSandQueue, sandToHostQueue, [
-					...messageQueue,
-					"New",
-				]);
-				scenario.pop();
-
-				if (hostToSandQueue.length > 0) {
-					const inbound = hostToSandQueue[0];
-					scenario.push(ScenarioStep.H2S);
-					yield* buildScenario(
-						scenario,
-						hostToSandQueue.slice(1),
-						inbound === "New" ? [...sandToHostQueue, "Ack"] : sandToHostQueue,
-						messageQueue,
-					);
-					scenario.pop();
+		function runScenario(scenario: readonly Step[]): void {
+			const { peer, host, sandbox, provider, interop } = setupCustom([], buildQueueInterop);
+			let viewEditCounter = 0;
+			let hostEditCounter = 0;
+			let peerEditCounter = 0;
+			for (const step of scenario) {
+				switch (step) {
+					case Step.ViewEdit: {
+						viewEditCounter += 1;
+						sandbox.view.root.push(`V${viewEditCounter}`);
+						break;
+					}
+					case Step.HostEdit: {
+						hostEditCounter += 1;
+						host.main.root.push(`H${hostEditCounter}`);
+						break;
+					}
+					case Step.PeerEdit: {
+						peerEditCounter += 1;
+						peer.root.push(`P${peerEditCounter}`);
+						break;
+					}
+					case Step.Host2ViewEdit: {
+						interop.shiftInboundQueue();
+						break;
+					}
+					case Step.Host2ViewAck: {
+						interop.shiftOutboundAckQueue();
+						break;
+					}
+					case Step.View2HostEdit: {
+						interop.shiftOutboundQueue();
+						break;
+					}
+					case Step.View2HostAck: {
+						interop.shiftInboundAckQueue();
+						break;
+					}
+					case Step.SequenceEdit: {
+						provider.synchronizeMessages({ count: 2 });
+						break;
+					}
+					case Step.SequenceAck: {
+						provider.synchronizeMessages({ count: 2 });
+						break;
+					}
+					default: {
+						fail(`Unexpected step: ${step}`);
+					}
 				}
-
-				if (sandToHostQueue.length > 0) {
-					const outbound = sandToHostQueue[0];
-					scenario.push(ScenarioStep.S2H);
-					yield* buildScenario(
-						scenario,
-						outbound === "New" ? [...hostToSandQueue, "Ack"] : hostToSandQueue,
-						sandToHostQueue.slice(1),
-						[...messageQueue, "Ack"],
-					);
-					scenario.pop();
-				}
-
-				if (messageQueue.length > 0) {
-					const message = messageQueue[0];
-					scenario.push(ScenarioStep.Message);
-					yield* buildScenario(
-						scenario,
-						message === "New" ? [...hostToSandQueue, "New"] : hostToSandQueue,
-						sandToHostQueue,
-						messageQueue.slice(1),
-					);
-					scenario.pop();
+				if (
+					interop.inboundQueue.length === 0 &&
+					interop.outboundQueue.length === 0 &&
+					interop.inboundAckQueue === 0
+				) {
+					strict.deepEqual([...host.main.root], [...sandbox.view.root]);
+					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
 			}
-		}
-		for (const scenario of buildScenario([])) {
-			it(`${scenario.join(" ")}`, () => {});
-			// runUnitTestScenario(undefined, scenario);
+			provider.synchronizeMessages();
+			strict.deepEqual([...host.main.root], [...peer.root]);
 		}
 	});
 });
