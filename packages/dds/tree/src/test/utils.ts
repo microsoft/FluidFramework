@@ -119,6 +119,7 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
+	RevertibleStatus,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -1347,10 +1348,14 @@ export function createTestUndoRedoStacks(
 	const unsubscribe = (): void => {
 		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 		for (const revertible of redoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };

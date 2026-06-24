@@ -23,8 +23,8 @@ for full terminology definitions. Key terms used in this guide:
 <!-- prettier-ignore -->
 | Term | Definition |
 | --- | --- |
-| **Compatibility Checkpoint Release** | The first Fluid release in a checkpoint range (e.g., `2.100.0` for CC-4). |
-| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.100.0 <2.130.0` for CC-4). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
+| **Compatibility Checkpoint Release** | The first Fluid release in a checkpoint range (e.g., `2.100.0` for CC#4). |
+| **Compatibility Checkpoint Range** | The semver range of Fluid releases that are part of a checkpoint (e.g., `>=2.100.0 <2.130.0` for CC#4). All releases in the range share the same cross-client compatibility guarantees as the first release of the range. |
 | **Compatibility Window** | The set of checkpoints guaranteed to be cross-client compatible (currently ~18 months in each direction, spanning Checkpoint N-3 through Checkpoint N+3). |
 
 ## Identifying Cross-Client Compatibility Breaking Changes
@@ -168,14 +168,14 @@ A feature gate can be removed when **all** of the following are true:
    been approved for cleanup.
 
 **Example:** Suppose `enableFoo` was introduced in version `2.95.0` and there are checkpoints
-CC-4 (`"2.100.0"`), CC-5 (`"2.130.0"`), CC-6 (`"2.160.0"`), CC-7 (`"2.190.0"`), and CC-8 (`"2.220.0"`).
+CC#4 (`"2.100.0"`), CC#5 (`"2.130.0"`), CC#6 (`"2.160.0"`), CC#7 (`"2.190.0"`), and CC#8 (`"2.220.0"`).
 
-- **At CC-6** the compat window is CC-3 through CC-6, so CC-3 clients are still
-  supported and the gate must remain. Some CC-3 clients (e.g., `2.90.0`) cannot understand the data format with `enableFoo` enabled, so the feature must remain gated.
-- **At CC-7** the window shifts to CC-4 through CC-7. The oldest supported
+- **At CC#6** the compat window is CC#3 through CC#6, so CC#3 clients are still
+  supported and the gate must remain. Some CC#3 clients (e.g., `2.90.0`) cannot understand the data format with `enableFoo` enabled, so the feature must remain gated.
+- **At CC#7** the window shifts to CC#4 through CC#7. The oldest supported
   version (`2.100.0`) is above the `2.95.0` threshold, so every client in the
   window understands the feature. The gate can be removed once
-  `lowestMinVersionForCollab` is `>= 2.95.0`. This becomes possible at the CC-7 designation.
+  `lowestMinVersionForCollab` is `>= 2.95.0`. This becomes possible at the CC#7 designation.
 
 ### How to remove a feature gate
 
@@ -200,9 +200,8 @@ A new checkpoint should be designated no less than 6 months after the previous o
 **To designate a new checkpoint:**
 
 1. Add the new checkpoint to `checkpoints` in [`packages/test/test-version-utils/src/checkpoints.ts`](./packages/test/test-version-utils/src/checkpoints.ts), and remove the corresponding future (TBD) estimate from the `futureCheckpoints` array in the same file.
-2. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to refresh the per-version compat workspaces and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
-3. From `packages/test/test-version-utils`, run `pnpm run update-compat-versions` to update the installed versions used by e2e tests.
-4. Include a changeset noting the new boundary so it appears in the release notes.
+2. Run `pnpm -r --filter @fluid-private/test-version-utils run update-compat-versions` (from any directory in the client workspace) to refresh the per-version compat workspaces, update the installed versions used by e2e tests, and regenerate the table in [`CompatibilityCheckpoints.md`](./CompatibilityCheckpoints.md). Do **not** edit that table by hand.
+3. Include a changeset noting the new boundary so it appears in the release notes.
 
 ## Tightening Runtime Enforcement
 
@@ -233,21 +232,21 @@ cross-client compatibility scenarios by using one version of the Fluid runtime f
 creating containers and a different version for loading containers.
 
 **Example:** With current build `2.101.0` (N) and in-window prior Compatibility
-Checkpoints `2.40.0` (CC-3), `2.0.9` (CC-2), and `1.4.0` (CC-1), a SharedCell
+Checkpoints `2.40.0` (CC#3), `2.0.9` (CC#2), and `1.4.0` (CC#1), a SharedCell
 test generates these cross-client variations:
 
 ```
-compat cross-client - create with 2.101.0 (N) + load with 2.40.0 (CC-3)
+compat cross-client - create with 2.101.0 (N) + load with 2.40.0 (CC#3)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC-2)
+compat cross-client - create with 2.101.0 (N) + load with 2.0.9 (CC#2)
   ✔ Example test
-compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC-1)
+compat cross-client - create with 2.101.0 (N) + load with 1.4.0 (CC#1)
   ✔ Example test
-compat cross-client - create with 2.40.0 (CC-3) + load with 2.101.0 (N)
+compat cross-client - create with 2.40.0 (CC#3) + load with 2.101.0 (N)
   ✔ Example test
-compat cross-client - create with 2.0.9 (CC-2) + load with 2.101.0 (N)
+compat cross-client - create with 2.0.9 (CC#2) + load with 2.101.0 (N)
   ✔ Example test
-compat cross-client - create with 1.4.0 (CC-1) + load with 2.101.0 (N)
+compat cross-client - create with 1.4.0 (CC#1) + load with 2.101.0 (N)
   ✔ Example test
 ```
 
