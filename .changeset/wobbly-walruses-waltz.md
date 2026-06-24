@@ -21,6 +21,10 @@ if (result.success === false) {
 }
 ```
 
+> [!IMPORTANT]
+> Transaction constraints are not yet available as a part of the beta transaction APIs.
+> These capabilities can still be accessed via the updated alpha APIs.
+
 **Type Name Changes**
 
 With the introduction of new beta types, existing alpha types have been replaced with new alpha and beta variants.
