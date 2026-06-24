@@ -92,7 +92,7 @@ import {
 	type TransactionCallbackStatus,
 	type TransactionResult,
 	type TransactionResultExt,
-	type RunTransactionParams,
+	type RunTransactionParamsAlpha,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -390,7 +390,7 @@ function getCheckout(context: TreeBranch): TreeCheckout {
  * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
  * @param constraints - The constraints to add to the transaction.
  *
- * @see {@link RunTransactionParams.preconditions}.
+ * @see {@link RunTransactionParamsAlpha.preconditions}.
  */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
@@ -886,11 +886,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
@@ -898,7 +898,7 @@ export class TreeCheckout implements ITreeCheckout {
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
@@ -907,11 +907,11 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
@@ -920,14 +920,17 @@ export class TreeCheckout implements ITreeCheckout {
 			| VoidTransactionCallbackStatus
 			| void
 		>,
-		params: RunTransactionParams | undefined,
+		params: RunTransactionParamsAlpha | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
-	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+	private mountTransaction(
+		params: RunTransactionParamsAlpha | undefined,
+		isAsync: boolean,
+	): void {
 		this.checkNotDisposed();
 		// Starting a transaction is an edit, so it is forbidden from within a change-event
 		// callback (where the edit lock is held), the same as direct edits. For the async
@@ -954,7 +957,7 @@ export class TreeCheckout implements ITreeCheckout {
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params: RunTransactionParams | undefined,
+		params: RunTransactionParamsAlpha | undefined,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.checkNotDisposed();
 		const rollback = transactionCallbackStatus?.rollback;

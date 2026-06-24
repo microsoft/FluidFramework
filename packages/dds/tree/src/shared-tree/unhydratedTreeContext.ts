@@ -8,7 +8,7 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	TreeContextAlpha,
 	TreeBranchAlpha,
-	RunTransactionParams,
+	RunTransactionParamsAlpha,
 	TransactionResult,
 	TransactionResultExt,
 	WithValue,
@@ -30,12 +30,12 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	public runTransaction<TValue>(
 		t: () => WithValue<TValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TValue, TValue>;
-	public runTransaction(t: () => void, _params?: RunTransactionParams): TransactionResult;
+	public runTransaction(t: () => void, _params?: RunTransactionParamsAlpha): TransactionResult;
 	public runTransaction(
 		t: () => WithValue<unknown> | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<unknown, unknown> | TransactionResult {
 		for (const constraint of params?.preconditions ?? []) {
 			assertValidConstraint(constraint, false);
@@ -50,15 +50,15 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	public runTransactionAsync<TValue>(
 		t: () => Promise<WithValue<TValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TValue, TValue>>;
 	public runTransactionAsync(
 		t: () => Promise<void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 	public async runTransactionAsync(
 		t: () => Promise<WithValue<unknown> | void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
 		if (this.transactionCount > 0) {
 			throw new UsageError(

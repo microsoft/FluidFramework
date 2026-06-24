@@ -45,7 +45,7 @@ import {
 	type TransactionCallbackStatus,
 	type TransactionResult,
 	type TransactionResultExt,
-	type RunTransactionParams,
+	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -273,18 +273,18 @@ export class SchematizingSimpleTreeView<
 
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
 			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
 			| VoidTransactionCallbackStatus
 			| void,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);
@@ -292,11 +292,11 @@ export class SchematizingSimpleTreeView<
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
+		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
@@ -304,7 +304,7 @@ export class SchematizingSimpleTreeView<
 			| VoidTransactionCallbackStatus
 			| void
 		>,
-		params: RunTransactionParams | undefined,
+		params: RunTransactionParamsAlpha | undefined,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
