@@ -21,5 +21,11 @@ if (result.success === false) {
 }
 ```
 
-Additionally, the alpha `RunTransactionParams` interface has been renamed to `RunTransactionParamsAlpha`.
-Consumers using this type should update their imports accordingly.
+**Type Name Changes**
+
+With the introduction of new beta types, existing alpha types have been replaced with new alpha and beta variants.
+| Old | New Alpha | New Beta |
+| --- | --- | --- |
+| `RunTransactionParams` | `RunTransactionParamsAlpha` | `RunTransactionParamsBeta` |
+| `TransactionCallbackStatus` | `TransactionCallbackStatusAlpha` | `TransactionCallbackStatusBeta` |
+| `VoidTransactionCallbackStatus` | `VoidTransactionCallbackStatusAlpha` | `VoidTransactionCallbackStatusBeta` |
