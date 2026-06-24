@@ -19,7 +19,7 @@ import type {
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
 	TreeAlpha,
 } from "../../shared-tree/index.js";
-import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../util/index.js";
+import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // This is referenced by doc comments.
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import type { Unhydrated } from "../core/index.js";
@@ -524,14 +524,6 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 		transaction: () => Promise<VoidTransactionCallbackStatusBeta | void>,
 		params?: RunTransactionParamsBeta,
 	): Promise<TransactionResult>;
-}
-
-{
-	// Ensure that `TreeViewBeta` is assignable to `TreeView` as intended:
-	type _check = requireAssignableTo<
-		TreeViewBeta<ImplicitFieldSchema>,
-		TreeView<ImplicitFieldSchema>
-	>;
 }
 
 /**

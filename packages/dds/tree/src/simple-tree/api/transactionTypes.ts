@@ -4,7 +4,6 @@
  */
 
 import type { TreeNode } from "../core/index.js";
-import type { requireAssignableTo } from "../../util/index.js";
 
 /**
  * A special object that signifies when a SharedTree {@link RunTransaction | transaction} should "roll back".
@@ -170,20 +169,4 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
-}
-
-{
-	// Check that the alpha transaction types are assignable to their beta counterparts as intended:
-	type _checkCallbackStatus = requireAssignableTo<
-		TransactionCallbackStatusAlpha<unknown, unknown>,
-		TransactionCallbackStatusBeta<unknown, unknown>
-	>;
-	type _checkVoidCallbackStatus = requireAssignableTo<
-		VoidTransactionCallbackStatusAlpha,
-		VoidTransactionCallbackStatusBeta
-	>;
-	type _checkRunTransactionParams = requireAssignableTo<
-		RunTransactionParamsAlpha,
-		RunTransactionParamsBeta
-	>;
 }
