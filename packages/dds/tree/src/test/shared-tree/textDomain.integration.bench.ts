@@ -5,23 +5,52 @@
 
 import { strict as assert } from "node:assert";
 
+import { IsoBuffer } from "@fluid-internal/client-utils";
 import {
 	BenchmarkType,
+	benchmarkDuration,
+	benchmarkDurationBatchless,
 	benchmarkIt,
+	benchmarkMemoryUse,
 	isInPerformanceTestingMode,
+	memoryUseOfValue,
 	ValueType,
 	type CollectedData,
 } from "@fluid-tools/benchmark";
+import type { IChannelServices } from "@fluidframework/datastore-definitions/internal";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { convertSummaryTreeToITree } from "@fluidframework/runtime-utils/internal";
+import {
+	MockContainerRuntimeFactory,
+	MockDeltaConnection,
+	MockFluidDataStoreRuntime,
+	MockStorage,
+} from "@fluidframework/test-runtime-utils/internal";
 
-import { Tree, TreeAlpha, createIndependentTreeAlpha } from "../../shared-tree/index.js";
+import type { IForestSubscription } from "../../core/index.js";
+import {
+	ForestTypeOptimized,
+	Tree,
+	TreeAlpha,
+	createIndependentTreeAlpha,
+	type ITreePrivate,
+} from "../../shared-tree/index.js";
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
+	type ImplicitFieldSchema,
+	type InsertableTreeFieldFromImplicitField,
+	type TreeNode,
+	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { TextAsTree } from "../../text/index.js";
+import { FormattedTextAsTree, TextAsTree } from "../../text/index.js";
+import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { iterationSettings } from "../memory/utils.js";
 import { configureBenchmarkHooks } from "../utils.js";
 
 import {
@@ -524,5 +553,405 @@ describe("TextDomain benchmarks", () => {
 		});
 
 		// TODO: formatted text benchmarks.
+	});
+
+	// Testing Suite that focuses on whole-document performance/memory measurements for text at varying doc sizes. All test are done on a
+	describe("TextDomain whole-document benchmarks", () => {
+
+		/* Upper bound on each duration benchmark's wall-clock so the full sweep stays tractable. */
+		const maxBenchmarkDurationSeconds = 5;
+
+		/* Document sizes (in characters) swept by the whole-document benchmarks. */
+		const documentSizeConfigurations = [
+			{ size: 10, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
+			{ size: 100, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
+			{ size: 1000, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: true },
+			{ size: 10000, benchmarkType: BenchmarkType.Measurement, runInCorrectnessMode: false },
+		] as const;
+		const filteredDocumentSizeConfigurations = documentSizeConfigurations.filter(
+			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
+		);
+
+		// --- Document construction helpers --------------------------------------------------------
+
+		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const formattedTextViewConfiguration = new TreeViewConfiguration({
+			schema: FormattedTextAsTree.Tree,
+		});
+
+		/**
+		 * The subset of the text-node API the whole-document benchmarks use. Both {@link TextAsTree.Tree}
+		 * and {@link FormattedTextAsTree.Tree} share these, so the read/edit helpers below work
+		 * against either domain (and against an unhydrated node).
+		 */
+		type TextRoot = TreeNode & {
+			insertAt(index: number, additionalCharacters: string): void;
+			removeRange(start: number | undefined, end: number | undefined): void;
+			characterCount(): number;
+			fullString(): string;
+		};
+
+		/**
+		 * Reaches the forest backing a view. The view is a `SchematizingSimpleTreeView` whose `checkout`
+		 * exposes the `IForestSubscription`. This is an internal coupling, but it lets the forest-footprint
+		 * benchmark return the forest alone (dropping the view and checkout) so only forest storage is
+		 * measured.
+		 */
+		function forestOf(view: object): IForestSubscription {
+			return (view as { readonly checkout: { readonly forest: IForestSubscription } }).checkout
+				.forest;
+		}
+
+		/* Builds an independent text document of `content` on the optimized chunked forest, returning the
+		 * view (which retains the checkout and forest). Its schema is erased to the common handle type so the
+		 * two domains can share a single `buildDocument` signature. */
+		function buildTextView<TSchema extends ImplicitFieldSchema>(
+			viewConfiguration: TreeViewConfiguration<TSchema>,
+			content: InsertableTreeFieldFromImplicitField<TSchema>,
+		): TreeView<ImplicitFieldSchema> {
+			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+				viewConfiguration,
+			);
+			view.initialize(content);
+			return view as unknown as TreeView<ImplicitFieldSchema>;
+		}
+
+		/* The view's root node, typed as the shared {@link TextRoot} editing surface used by both domains. */
+		function rootOf(view: TreeView<ImplicitFieldSchema>): TextRoot {
+			return view.root as unknown as TextRoot;
+		}
+
+		/* The SharedTree factory the summary-size and load benchmarks build on. */
+		const wholeDocumentTreeFactory = configuredSharedTree({
+			forest: ForestTypeOptimized,
+		}).getFactory();
+
+		/* Builds an attached text document of `content` and returns its attach summary together with the
+		 * `idCompressor` that produced it.
+		 */
+		function textAttachSummary<TSchema extends ImplicitFieldSchema>(
+			viewConfiguration: TreeViewConfiguration<TSchema>,
+			content: InsertableTreeFieldFromImplicitField<TSchema>,
+		): {
+			readonly summary: ISummaryTree;
+			readonly idCompressor: ReturnType<typeof createIdCompressor>;
+		} {
+			const idCompressor = createIdCompressor();
+			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
+			const containerRuntimeFactory = new MockContainerRuntimeFactory();
+			containerRuntimeFactory.createContainerRuntime(runtime);
+			const tree = wholeDocumentTreeFactory.create(runtime, "tree");
+			tree.connect({
+				deltaConnection: runtime.createDeltaConnection(),
+				objectStorage: new MockStorage(),
+			});
+			const view = (tree as unknown as ITreePrivate).kernel.viewWith(viewConfiguration);
+			// `viewWith` here returns the alpha view, whose `initialize` is typed over `ReadSchema<TSchema>`;
+			// that equals `TSchema` for these (non-recursive) text schemas, but the compiler can't prove it
+			// for the open generic, so cast. Every concrete call site passes correctly-typed content.
+			view.initialize(content as never);
+			// Sequence the initialization op so the content is part of the attach summary (and the
+			// compressor's creation range is finalized).
+			containerRuntimeFactory.processAllMessages();
+			return { summary: tree.getAttachSummary(true).summary, idCompressor };
+		}
+
+		/**
+		 * A text domain to benchmark: a name plus factories that build a `size` character document in each
+		 * of the forms the whole-document benchmarks need.
+		 */
+		interface TextDomain {
+			readonly name: string;
+			/** Builds a hydrated document of `size` characters */
+			buildDocument(size: number): TreeView<ImplicitFieldSchema>;
+			/** Builds the forest of a `size` character document in isolation (no retained view). */
+			buildForest(size: number): IForestSubscription;
+			/** Builds an unhydrated root node of `size` characters (not inserted into any tree). */
+			makeUnhydratedRoot(size: number): TextRoot;
+			/**
+			 * Attach summary of a `size` character document, plus the `idCompressor` that produced it (the load
+			 * benchmark must load with that same compressor — see {@link textAttachSummary}).
+			 */
+			attachSummary(size: number): {
+				readonly summary: ISummaryTree;
+				readonly idCompressor: ReturnType<typeof createIdCompressor>;
+			};
+		}
+
+		const textDomains: readonly TextDomain[] = [
+			{
+				name: "plain",
+				buildDocument: (size) =>
+					buildTextView(
+						plainTextViewConfiguration,
+						TextAsTree.Tree.fromString(makeTestString(size)),
+					),
+				buildForest: (size) =>
+					forestOf(
+						buildTextView(
+							plainTextViewConfiguration,
+							TextAsTree.Tree.fromString(makeTestString(size)),
+						),
+					),
+				makeUnhydratedRoot: (size) =>
+					TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+				attachSummary: (size) =>
+					textAttachSummary(
+						plainTextViewConfiguration,
+						TextAsTree.Tree.fromString(makeTestString(size)),
+					),
+			},
+			{
+				name: "formatted",
+				buildDocument: (size) =>
+					buildTextView(
+						formattedTextViewConfiguration,
+						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+					),
+				buildForest: (size) =>
+					forestOf(
+						buildTextView(
+							formattedTextViewConfiguration,
+							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+						),
+					),
+				makeUnhydratedRoot: (size) =>
+					FormattedTextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+				attachSummary: (size) =>
+					textAttachSummary(
+						formattedTextViewConfiguration,
+						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+					),
+			},
+		];
+
+		/**
+		 * Types `count` single characters at the middle of the document. One `insertAt` per character,
+		 * recomputing the middle each time — mirroring sustained typing.
+		 * @returns The index at which the last character was inserted, so the caller can remove exactly that
+		 * character to restore the document length (independent of whether `count` is even or odd).
+		 */
+		function typeMiddle(root: TextRoot, count: number): number {
+			let lastIndex = -1;
+			for (let i = 0; i < count; i++) {
+				const middle = Math.floor(root.characterCount() / 2);
+				root.insertAt(middle, i % 2 === 0 ? "a" : "b");
+				lastIndex = middle;
+			}
+			return lastIndex;
+		}
+
+		// The serialized attach-summary byte size of a document
+		describe("Summary size", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `summary size of ${size}-character document`,
+							run: async () => {
+								const { summary } = domain.attachSummary(size);
+								const summarySize = IsoBuffer.from(JSON.stringify(summary)).byteLength;
+								return [
+									{
+										name: "summarySize",
+										value: summarySize,
+										units: "bytes",
+										type: ValueType.SmallerIsBetter,
+										significance: "Primary",
+									},
+								] satisfies CollectedData;
+							},
+						});
+					}
+				});
+			}
+		});
+
+		// The heap retained by a fresh, history-free document of N characters. `memoryUseOfValue` measures
+		// the memory uniquely retained by the returned view, which transitively holds the checkout, forest,
+		// and simple-tree nodes.
+		describe("Memory use of fresh document", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `memory of ${size}-character document`,
+							...benchmarkMemoryUse({
+								...memoryUseOfValue(() => domain.buildDocument(size)),
+								...iterationSettings,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		// A forest only memory footprint. Comparing to the results of the full memory footprint from the test
+		// above will show how much of the memory footprint is just the forest
+		describe("Forest footprint", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `forest footprint of ${size}-character document`,
+							...benchmarkMemoryUse({
+								...memoryUseOfValue(() => domain.buildForest(size)),
+								...iterationSettings,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		// Time to read the whole document's content via `fullString`. Each call re-walks the forest cursor over
+		// the whole document. The document is built once and read repeatedly, so this measures that repeated
+		// read in isolation, excluding the build cost.
+		describe("End-to-end read (fullString)", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `fullString of ${size}-character document`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									const root = rootOf(domain.buildDocument(size));
+									let running: boolean;
+									do {
+										running = state.time(() => {
+											root.fullString();
+										});
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		// Time per keystroke when typing into the middle of a document of N characters. The document is built
+		// once; each timed sample types one character and an untimed remove restores the document to `size`,
+		// and the document is rebuilt every `size` edits to flush the removed-roots repair the removes
+		// accumulate.
+		describe("End-to-end edit (typing)", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `type 1 character into ${size}-character document`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									let root = rootOf(domain.buildDocument(size));
+									let editsSinceBuild = 0;
+									let running: boolean;
+									do {
+										let typedIndex = -1;
+										running = state.time(() => {
+											typedIndex = typeMiddle(root, 1);
+										});
+										// Untimed restore: remove the just-typed character to hold the document at `size`.
+										root.removeRange(typedIndex, typedIndex + 1);
+										if (++editsSinceBuild >= size) {
+											// Rebuild to flush the removed roots the restores accumulate.
+											root = rootOf(domain.buildDocument(size));
+											editsSinceBuild = 0;
+										}
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		// Time to construct the tree a view renders over and read its content, in the two backing states a
+		// react view can encounter: an unhydrated node versus a hydrated document.
+		describe("View hydration", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `unhydrated ${size}-character tree`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									let running: boolean;
+									do {
+										running = state.time(() => {
+											const root = domain.makeUnhydratedRoot(size);
+											root.fullString();
+										});
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds,
+							}),
+						});
+
+						benchmarkIt({
+							type: benchmarkType,
+							title: `hydrated ${size}-character tree`,
+							...benchmarkDurationBatchless({
+								benchmarkFn: (state) => {
+									let running: boolean;
+									do {
+										running = state.time(() => {
+											rootOf(domain.buildDocument(size)).fullString();
+										});
+									} while (running);
+								},
+								maxBenchmarkDurationSeconds,
+							}),
+						});
+					}
+				});
+			}
+		});
+
+		describe("Load time from summary", () => {
+			for (const domain of textDomains) {
+				describe(domain.name, () => {
+					for (const { size, benchmarkType } of filteredDocumentSizeConfigurations) {
+						benchmarkIt({
+							type: benchmarkType,
+							title: `load ${size}-character document from summary`,
+							...benchmarkDuration({
+								benchmarkFnCustom: async (state) => {
+									const { summary, idCompressor } = domain.attachSummary(size);
+									const summaryTree = convertSummaryTreeToITree(summary);
+									await state.timeAllBatchesAsync(async () => {
+										const services: IChannelServices = {
+											deltaConnection: new MockDeltaConnection(
+												() => 0,
+												() => {},
+											),
+											objectStorage: new MockStorage(summaryTree),
+										};
+										// Load with the same compressor that produced the summary.
+										const datastoreRuntime = new MockFluidDataStoreRuntime({
+											idCompressor,
+										});
+										await wholeDocumentTreeFactory.load(
+											datastoreRuntime,
+											"test",
+											services,
+											wholeDocumentTreeFactory.attributes,
+										);
+									});
+								},
+							}),
+						});
+					}
+				});
+			}
+		});
 	});
 });
