@@ -907,6 +907,11 @@ export interface RunTransaction {
     readonly rollback: typeof rollback;
 }
 
+// @beta @input
+export interface RunTransactionParamsBeta {
+    readonly label?: unknown;
+}
+
 // @public @sealed
 export interface SchemaCompatibilityStatus {
     readonly canInitialize: boolean;
@@ -1301,8 +1306,31 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
+// @beta
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
+    rollback?: false;
+}) | (WithValue<TFailureValue> & {
+    rollback: true;
+});
+
 // @public
 export type TransactionConstraint = NodeInDocumentConstraint;
+
+// @beta
+export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
+
+// @beta
+export type TransactionResultExt<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
+
+// @beta
+export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
+    success: false;
+}
+
+// @beta
+export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
+    success: true;
+}
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
@@ -1503,6 +1531,10 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>, params?: RunTransactionParamsBeta): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatusBeta | void, params?: RunTransactionParamsBeta): TransactionResult;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsBeta): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusBeta | void>, params?: RunTransactionParamsBeta): Promise<TransactionResult>;
 }
 
 // @public @sealed
@@ -1580,11 +1612,19 @@ export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
+// @beta
+export type VoidTransactionCallbackStatusBeta = Omit<TransactionCallbackStatusBeta<unknown, unknown>, "value">;
+
 // @public @sealed
 export interface WithType<out TName extends string = string, out TKind extends NodeKind = NodeKind, out TInfo = unknown> {
     // @deprecated
     get [typeNameSymbol](): TName;
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
+}
+
+// @beta
+export interface WithValue<TValue> {
+    value: TValue;
 }
 
 ```
