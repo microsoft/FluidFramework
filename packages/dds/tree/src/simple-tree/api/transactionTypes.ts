@@ -72,10 +72,19 @@ export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	  });
 
 /**
+ * The result of a {@link TreeViewBeta.(runTransaction:2) | transaction} that doesn't return a value.
+ * @beta
+ */
+export type VoidTransactionCallbackStatusBeta = Omit<
+	TransactionCallbackStatusBeta<unknown, unknown>,
+	"value"
+>;
+
+/**
  * {@link TransactionCallbackStatusBeta} extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
  * @alpha
  */
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> =
+export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
 	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
 		/**
 		 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
@@ -88,20 +97,11 @@ export type TransactionCallbackStatus<TSuccessValue, TFailureValue> =
 	};
 
 /**
- * The result of a {@link TreeViewBeta.(runTransaction:2) | transaction} that doesn't return a value.
- * @beta
- */
-export type VoidTransactionCallbackStatusBeta = Omit<
-	TransactionCallbackStatusBeta<unknown, unknown>,
-	"value"
->;
-
-/**
  * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
  * @alpha
  */
-export type VoidTransactionCallbackStatus = Omit<
-	TransactionCallbackStatus<unknown, unknown>,
+export type VoidTransactionCallbackStatusAlpha = Omit<
+	TransactionCallbackStatusAlpha<unknown, unknown>,
 	"value"
 >;
 

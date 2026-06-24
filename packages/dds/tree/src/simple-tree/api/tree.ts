@@ -38,11 +38,11 @@ import type { TreeViewConfiguration } from "./configuration.js";
 import type {
 	RunTransactionParamsAlpha,
 	RunTransactionParamsBeta,
-	TransactionCallbackStatus,
+	TransactionCallbackStatusAlpha,
 	TransactionCallbackStatusBeta,
 	TransactionResult,
 	TransactionResultExt,
-	VoidTransactionCallbackStatus,
+	VoidTransactionCallbackStatusAlpha,
 	VoidTransactionCallbackStatusBeta,
 	WithValue,
 } from "./transactionTypes.js";
@@ -301,12 +301,12 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
-	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatus | value or rollback signal}.
+	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
 	 * @remarks
 	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 
@@ -314,7 +314,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
 	 */
 	runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResult;
 
@@ -324,7 +324,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 
 	runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 
@@ -332,7 +332,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 */
 	runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 

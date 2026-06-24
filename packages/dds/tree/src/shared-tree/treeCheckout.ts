@@ -88,8 +88,8 @@ import {
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type VerboseTree,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParamsAlpha,
@@ -885,18 +885,18 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
@@ -906,18 +906,18 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
 		params: RunTransactionParamsAlpha | undefined,
@@ -954,15 +954,15 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private unmountTransaction<TSuccessValue, TFailureValue>(
 		transactionCallbackStatus:
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
 		params: RunTransactionParamsAlpha | undefined,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
 		this.checkNotDisposed();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			transactionCallbackStatus as TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
 		)?.value;
 
 		if (rollback === true) {

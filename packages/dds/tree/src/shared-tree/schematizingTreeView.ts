@@ -41,8 +41,8 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
 	type TransactionResult,
 	type TransactionResultExt,
 	type RunTransactionParamsAlpha,
@@ -272,17 +272,17 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
@@ -291,17 +291,17 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
 		params: RunTransactionParamsAlpha | undefined,
