@@ -2966,6 +2966,7 @@ describe("ModularChangeFamily integration", () => {
 						newId: moveInId,
 						count: 1,
 						detachLocation: fieldAId,
+						firstIntermediateRename: moveOutId,
 					},
 				],
 				revisions,
@@ -2996,7 +2997,6 @@ describe("ModularChangeFamily integration", () => {
 			]),
 		);
 
-		// XXX: Update to include intermediate rename.
 		const removeId: ChangeAtomId = { revision: tag1, localId: brand(2) };
 		const reviveMoveAndRemove = Change.build(
 			{
@@ -3008,6 +3008,7 @@ describe("ModularChangeFamily integration", () => {
 						newId: removeId,
 						count: 1,
 						detachLocation: fieldAId,
+						firstIntermediateRename: moveOutId,
 					},
 				],
 				detachedMoves: [{ detachId: removeId, count: 1, newLocation: fieldAId }],
@@ -3057,7 +3058,15 @@ describe("ModularChangeFamily integration", () => {
 		const moveDetached = Change.build(
 			{
 				family,
-				renames: [{ oldId, newId: removeId, count: 1, detachLocation: fieldAId }],
+				renames: [
+					{
+						oldId,
+						newId: removeId,
+						count: 1,
+						detachLocation: fieldAId,
+						firstIntermediateRename: moveOutId,
+					},
+				],
 				detachedMoves: [{ detachId: removeId, count: 1, newLocation: fieldBId }],
 				revisions,
 				maxId: 3,

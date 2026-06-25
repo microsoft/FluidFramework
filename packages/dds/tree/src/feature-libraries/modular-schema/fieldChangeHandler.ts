@@ -315,6 +315,7 @@ export interface FieldChangeEncodingContext {
 		oldId: ChangeAtomId,
 		newId: ChangeAtomId,
 		count: number,
+		firstIntermediateRename: ChangeAtomId | undefined,
 		doesChangeDetachRoots: boolean,
 	): void;
 

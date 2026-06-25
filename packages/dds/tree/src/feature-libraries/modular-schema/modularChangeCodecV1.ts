@@ -16,6 +16,7 @@ import {
 	type SchemaValidationFunction,
 } from "../../codec/index.js";
 import {
+	areEqualChangeAtomIds,
 	newChangeAtomIdTransform,
 	offsetChangeAtomId,
 	type ChangeAtomId,
@@ -293,7 +294,13 @@ function decodeFieldChangesFromJson(
 				decodedRootTable.detachLocations.set(detachId, 1, fieldId);
 			},
 
-			decodeRootRename: (oldId, newId, count, doesChangeDetachRoot): void => {
+			decodeRootRename: (
+				oldId,
+				newId,
+				count,
+				firstIntermediateRename,
+				doesChangeDetachRoot,
+			): void => {
 				addNodeRename(
 					decodedRootTable,
 					oldId,
@@ -301,6 +308,13 @@ function decodeFieldChangesFromJson(
 					count,
 					doesChangeDetachRoot ? undefined : fieldId,
 				);
+
+				if (
+					firstIntermediateRename !== undefined &&
+					!areEqualChangeAtomIds(firstIntermediateRename, newId)
+				) {
+					decodedRootTable.firstIntermediateRenames.set(oldId, count, firstIntermediateRename);
+				}
 			},
 
 			decodeMoveAndDetach: (detachId, count): void => {

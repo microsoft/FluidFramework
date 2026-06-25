@@ -43,6 +43,7 @@ export const EncodedModularChangesetV3 = Type.Composite(
 			{
 				rootNodes: EncodedRootNodes,
 				nodeRenames: EncodedRenames,
+				intermediateRenames: EncodedRenames,
 			},
 			noAdditionalProps,
 		),

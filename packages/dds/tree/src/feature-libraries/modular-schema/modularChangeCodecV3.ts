@@ -302,6 +302,7 @@ export function makeModularChangeCodecV3(
 	function decodeRootTable(
 		encodedRoots: EncodedRootNodes | undefined,
 		encodedRenames: EncodedRenames | undefined,
+		encodedIntermediateRenames: EncodedRenames | undefined,
 		context: ChangeEncodingContext,
 		decodeNode: NodeDecoder,
 	): RootNodeTable {
@@ -325,6 +326,16 @@ export function makeModularChangeCodecV3(
 					changeAtomIdCodec.decode(newId, context),
 					count,
 					undefined,
+				);
+			}
+		}
+
+		if (encodedIntermediateRenames !== undefined) {
+			for (const { oldId, newId, count } of encodedIntermediateRenames) {
+				roots.firstIntermediateRenames.set(
+					changeAtomIdCodec.decode(oldId, context),
+					count,
+					changeAtomIdCodec.decode(newId, context),
 				);
 			}
 		}
@@ -354,6 +365,10 @@ export function makeModularChangeCodecV3(
 				changes: encodeFieldChangesForJson(change.fieldChanges, undefined, contextFactory),
 				rootNodes: encodeRootNodesForJson(change.rootNodes.nodeChanges, context, encodeNode),
 				nodeRenames: encodeRenamesForJson(change.rootNodes.oldToNewId, context),
+				intermediateRenames: encodeRenamesForJson(
+					change.rootNodes.firstIntermediateRenames,
+					context,
+				),
 				builds: encodeDetachedNodes(
 					change.builds,
 					context,
@@ -425,6 +440,7 @@ export function makeModularChangeCodecV3(
 				rootNodes: decodeRootTable(
 					encodedChange.rootNodes,
 					encodedChange.nodeRenames,
+					encodedChange.intermediateRenames,
 					context,
 					decodeNode,
 				),

@@ -162,7 +162,7 @@ export function makeOptionalFieldCodec(
 					if (register === "self") {
 						decoded.nodeDetach = replace.src;
 					} else {
-						context.decodeRootRename(register, replace.src, 1, false);
+						context.decodeRootRename(register, replace.src, 1, undefined, false);
 					}
 				}
 				decoded.valueReplace = replace;
@@ -186,6 +186,7 @@ export function makeOptionalFieldCodec(
 					changeAtomIdCodec.decode(encodedOldId, context.baseContext),
 					changeAtomIdCodec.decode(encodedNewId, context.baseContext),
 					1,
+					undefined,
 					false,
 				);
 			}

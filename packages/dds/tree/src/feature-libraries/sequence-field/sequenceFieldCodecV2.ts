@@ -228,7 +228,7 @@ function makeMarkEffectDecoder(
 
 			const attachId = getAttachedRootId(mark);
 			if (cellId !== undefined && !areEqualChangeAtomIds(cellId, attachId)) {
-				context.decodeRootRename(cellId, attachId, count, false);
+				context.decodeRootRename(cellId, attachId, count, undefined, false);
 			}
 
 			return mark;
@@ -306,17 +306,21 @@ function makeMarkEffectDecoder(
 				"Attach and detach should always contains a remove",
 			);
 
-			const detachId: ChangeAtomId =
+			const firstDetachId: ChangeAtomId = {
+				revision: decodeRevision(encoded.detach.remove.revision, context.baseContext),
+				localId: encoded.detach.remove.id,
+			};
+
+			const idOverride: ChangeAtomId | undefined =
 				encoded.detach.remove.idOverride === undefined
-					? {
-							revision: decodeRevision(encoded.detach.remove.revision, context.baseContext),
-							localId: encoded.detach.remove.id,
-						}
+					? undefined
 					: changeAtomIdCodec.decode(encoded.detach.remove.idOverride, context.baseContext);
+
+			const detachId = idOverride ?? firstDetachId;
 
 			assert(cellId !== undefined, "Attach and detach should target an empty cell");
 			if (encoded.attach.moveIn === undefined) {
-				context.decodeRootRename(cellId, detachId, count, false);
+				context.decodeRootRename(cellId, detachId, count, firstDetachId, false);
 			} else {
 				context.decodeMoveAndDetach(detachId, count);
 			}
@@ -342,13 +346,13 @@ function decodeDetach(
 ): Detach | Rename {
 	const detachId: ChangeAtomId = { revision, localId };
 	if (cellId !== undefined) {
-		context.decodeRootRename(cellId, endpoint ?? detachId, count, false);
+		context.decodeRootRename(cellId, endpoint ?? detachId, count, detachId, false);
 		return {
 			type: "Rename",
 			idOverride: cellRename ?? detachId,
 		};
 	} else if (endpoint !== undefined) {
-		context.decodeRootRename(detachId, endpoint, count, true);
+		context.decodeRootRename(detachId, endpoint, count, undefined, true);
 	}
 
 	const mark: Mutable<Detach> = {
