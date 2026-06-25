@@ -837,6 +837,29 @@ describe("sharedTreeView", () => {
 
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
+
+		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			const forks: (typeof view)[] = [];
+			view.events.on("changed", () => {
+				forks.push(view.fork());
+			});
+
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
+			});
+
+			assert.equal(forks.length, 1);
+
+			assert.deepEqual(forks[0].disposed, false);
+			assert.deepEqual(forks[0].root, ["A"]);
+
+			assert.deepEqual(view.root, ["A"]);
+		});
 	});
 
 	describe("disposal", () => {
@@ -1309,13 +1332,6 @@ describe("sharedTreeView", () => {
 					view.root.number = 4;
 				},
 				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
-			});
-		});
-
-		it("create a branch", () => {
-			expectErrorDuringEdit({
-				duringEdit: (view) => view.fork(),
-				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
 			});
 		});
 
