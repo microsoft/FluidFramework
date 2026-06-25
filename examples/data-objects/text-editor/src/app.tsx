@@ -4,7 +4,11 @@
  */
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import {
+	createDevtoolsLogger,
+	initializeDevtools,
+	type DevtoolsProps,
+} from "@fluidframework/devtools/beta";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -185,6 +189,7 @@ async function connectUser(
 async function initFluid(): Promise<{
 	containerId: string;
 	devtoolsLogger: DevtoolsLogger;
+	devtoolsProps: DevtoolsProps;
 	initialUsers: UserView[];
 }> {
 	console.log(`Connecting to Tinylicious at: ${getTinyliciousEndpoint()}`);
@@ -223,15 +228,17 @@ async function initFluid(): Promise<{
 		initialUsers.push(await connectUser(id, containerId, devtoolsLogger));
 	}
 
-	initializeDevtools({
+	// Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
+	// by the React layer (see {@link DevtoolsToggle}).
+	const devtoolsProps: DevtoolsProps = {
 		logger: devtoolsLogger,
 		initialContainers: initialUsers.map((user) => ({
 			container: user.container,
 			containerKey: `User ${user.id} Container`,
 		})),
-	});
+	};
 
-	return { containerId, devtoolsLogger, initialUsers };
+	return { containerId, devtoolsLogger, devtoolsProps, initialUsers };
 }
 
 const viewLabels = {
@@ -437,11 +444,62 @@ const UserPanel: FC<{
 	);
 };
 
+/**
+ * Button that enables/disables Fluid Devtools at runtime.
+ */
+const DevtoolsToggle: FC<{
+	devtoolsProps: DevtoolsProps | undefined;
+}> = ({ devtoolsProps }) => {
+	// Devtools defaults to off
+	const [enabled, setEnabled] = useState(false);
+
+	// Handles initialization and cleanup of devtools instance
+	useEffect(() => {
+		if (devtoolsProps === undefined) {
+			return;
+		}
+		if (enabled) {
+			const instance = initializeDevtools(devtoolsProps);
+			return () => {
+				if (!instance.disposed) {
+					instance.dispose();
+				}
+			};
+		}
+		return undefined;
+	}, [enabled, devtoolsProps]);
+
+	return (
+		<button
+			type="button"
+			onClick={() => setEnabled((value) => !value)}
+			title={
+				enabled
+					? "Disable Fluid Devtools (recommended before capturing a performance trace.)"
+					: "Enable Fluid Devtools (Devtools visualizes every node on every edit)"
+			}
+			style={{
+				padding: "6px 12px",
+				borderRadius: "4px",
+				border: "1px solid #ccc",
+				background: enabled ? "#e6f4ea" : "#f5f5f5",
+				color: "#333",
+				fontSize: "13px",
+				fontWeight: 600,
+				cursor: "pointer",
+			}}
+		>
+			{`Devtools: ${enabled ? "On" : "Off"}`}
+		</button>
+	);
+};
+
 export const App: FC<{
 	containerId: string;
 	devtoolsLogger: DevtoolsLogger;
+	devtoolsProps: DevtoolsProps;
 	initialUsers: UserView[];
-}> = ({ containerId, devtoolsLogger, initialUsers }) => {
+}> = ({ containerId, devtoolsLogger, devtoolsProps, initialUsers }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
 	// ID is never reused.
 	const nextId = useRef(initialUserCount + 1);
@@ -471,10 +529,18 @@ export const App: FC<{
 				flexDirection: "column",
 			}}
 		>
-			<div style={{ marginBottom: "12px" }}>
+			<div
+				style={{
+					marginBottom: "12px",
+					display: "flex",
+					gap: "12px",
+					alignItems: "center",
+				}}
+			>
 				<button type="button" onClick={addUser}>
 					+ Add user
 				</button>
+				<DevtoolsToggle devtoolsProps={devtoolsProps} />
 			</div>
 			<div
 				style={{
@@ -506,12 +572,13 @@ async function start(): Promise<void> {
 	if (!rootElement) return;
 
 	try {
-		const { containerId, devtoolsLogger, initialUsers } = await initFluid();
+		const { containerId, devtoolsLogger, devtoolsProps, initialUsers } = await initFluid();
 		const root = createRoot(rootElement);
 		root.render(
 			<App
 				containerId={containerId}
 				devtoolsLogger={devtoolsLogger}
+				devtoolsProps={devtoolsProps}
 				initialUsers={initialUsers}
 			/>,
 		);
