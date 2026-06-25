@@ -557,10 +557,10 @@ describe("TextDomain benchmarks", () => {
 
 	// Testing Suite that focuses on whole-document performance/memory measurements for text at varying doc sizes.
 	describe("TextDomain whole-document benchmarks", () => {
-		/* Upper bound on each duration benchmark's wall-clock so the full sweep stays tractable. */
+		/** Upper bound on each duration benchmark's wall-clock so the full sweep stays tractable. */
 		const maxBenchmarkDurationSeconds = 5;
 
-		/* Document sizes (in characters) swept by the whole-document benchmarks. */
+		/** Document sizes (in characters) swept by the whole-document benchmarks. */
 		const documentSizeConfigurations = [
 			{ size: 10, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
 			{ size: 100, benchmarkType: BenchmarkType.Perspective, runInCorrectnessMode: true },
@@ -571,7 +571,7 @@ describe("TextDomain benchmarks", () => {
 			(configuration) => isInPerformanceTestingMode || configuration.runInCorrectnessMode,
 		);
 
-		// --- Document construction helpers --------------------------------------------------------
+		// #region Document construction helpers
 
 		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 		const formattedTextViewConfiguration = new TreeViewConfiguration({
@@ -591,44 +591,56 @@ describe("TextDomain benchmarks", () => {
 		};
 
 		/**
+		 * A retained text-document view. Formatted and plain have different node schemas, so the view's
+		 * schema parameter is erased to the common handle here; what they share and all the benchmarks use
+		 * is a {@link TextRoot} at the root. Narrowing `root` to `TextRoot` lets the benchmarks read/edit the
+		 * document without a per-access cast.
+		 */
+		type TextDocumentView = TreeView<ImplicitFieldSchema> & { readonly root: TextRoot };
+
+		/**
 		 * Reaches the forest backing a view. The view is a `SchematizingSimpleTreeView` whose `checkout`
 		 * exposes the `IForestSubscription`. This is an internal coupling, but it lets the forest-footprint
 		 * benchmark return the forest alone (dropping the view and checkout) so only forest storage is
 		 * measured.
 		 */
-		function forestOf(view: object): IForestSubscription {
+		function getForestOf(view: object): IForestSubscription {
 			return (view as { readonly checkout: { readonly forest: IForestSubscription } }).checkout
 				.forest;
 		}
 
-		/* Builds an independent text document of `content` on the optimized chunked forest, returning the
-		 * view (which retains the checkout and forest). Its schema is erased to the common handle type so the
-		 * two domains can share a single `buildDocument` signature. */
+		/**
+		 * Builds an independent text document of `content` on the optimized chunked forest, returning the
+		 * view (which retains the checkout and forest). Its schema is erased to {@link TextDocumentView} — the
+		 * common handle whose root is a {@link TextRoot} — so the two domains share one `buildDocument`
+		 * signature. The single unsafe cast in this whole flow lives here, at the construction boundary.
+		 */
 		function buildTextView<TSchema extends ImplicitFieldSchema>(
 			viewConfiguration: TreeViewConfiguration<TSchema>,
 			content: InsertableTreeFieldFromImplicitField<TSchema>,
-		): TreeView<ImplicitFieldSchema> {
+		): TextDocumentView {
 			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
 				viewConfiguration,
 			);
 			view.initialize(content);
-			return view as unknown as TreeView<ImplicitFieldSchema>;
+			return view as unknown as TextDocumentView;
 		}
 
-		/* The view's root node, typed as the shared {@link TextRoot} editing surface used by both domains. */
-		function rootOf(view: TreeView<ImplicitFieldSchema>): TextRoot {
-			return view.root as unknown as TextRoot;
+		/** The view's root node, typed as the shared {@link TextRoot} editing surface used by both domains. */
+		function getRootOf(view: TextDocumentView): TextRoot {
+			return view.root;
 		}
 
-		/* The SharedTree factory the summary-size and load benchmarks build on. */
+		/** The SharedTree factory the summary-size and load benchmarks build on. */
 		const wholeDocumentTreeFactory = configuredSharedTree({
 			forest: ForestTypeOptimized,
 		}).getFactory();
 
-		/* Builds an attached text document of `content` and returns its attach summary together with the
+		/**
+		 * Builds an attached text document of `content` and returns its attach summary together with the
 		 * `idCompressor` that produced it.
 		 */
-		function textAttachSummary<TSchema extends ImplicitFieldSchema>(
+		function getTextAttachSummary<TSchema extends ImplicitFieldSchema>(
 			viewConfiguration: TreeViewConfiguration<TSchema>,
 			content: InsertableTreeFieldFromImplicitField<TSchema>,
 		): {
@@ -661,15 +673,15 @@ describe("TextDomain benchmarks", () => {
 		 */
 		interface TextDomain {
 			readonly name: string;
-			/** Builds a hydrated document of `size` characters */
-			buildDocument(size: number): TreeView<ImplicitFieldSchema>;
+			/** Builds a hydrated document of `size` characters, whose root is a {@link TextRoot}. */
+			buildDocument(size: number): TextDocumentView;
 			/** Builds the forest of a `size` character document in isolation (no retained view). */
 			buildForest(size: number): IForestSubscription;
 			/** Builds an unhydrated root node of `size` characters (not inserted into any tree). */
 			makeUnhydratedRoot(size: number): TextRoot;
 			/**
 			 * Attach summary of a `size` character document, plus the `idCompressor` that produced it (the load
-			 * benchmark must load with that same compressor — see {@link textAttachSummary}).
+			 * benchmark must load with that same compressor — see {@link getTextAttachSummary}).
 			 */
 			attachSummary(size: number): {
 				readonly summary: ISummaryTree;
@@ -686,7 +698,7 @@ describe("TextDomain benchmarks", () => {
 						TextAsTree.Tree.fromString(makeTestString(size)),
 					),
 				buildForest: (size) =>
-					forestOf(
+					getForestOf(
 						buildTextView(
 							plainTextViewConfiguration,
 							TextAsTree.Tree.fromString(makeTestString(size)),
@@ -695,7 +707,7 @@ describe("TextDomain benchmarks", () => {
 				makeUnhydratedRoot: (size) =>
 					TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 				attachSummary: (size) =>
-					textAttachSummary(
+					getTextAttachSummary(
 						plainTextViewConfiguration,
 						TextAsTree.Tree.fromString(makeTestString(size)),
 					),
@@ -708,7 +720,7 @@ describe("TextDomain benchmarks", () => {
 						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
 					),
 				buildForest: (size) =>
-					forestOf(
+					getForestOf(
 						buildTextView(
 							formattedTextViewConfiguration,
 							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
@@ -717,7 +729,7 @@ describe("TextDomain benchmarks", () => {
 				makeUnhydratedRoot: (size) =>
 					FormattedTextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 				attachSummary: (size) =>
-					textAttachSummary(
+					getTextAttachSummary(
 						formattedTextViewConfiguration,
 						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
 					),
@@ -739,6 +751,8 @@ describe("TextDomain benchmarks", () => {
 			}
 			return lastIndex;
 		}
+
+		// #endregion
 
 		// The serialized attach-summary byte size of a document
 		describe("Summary size", () => {
@@ -818,7 +832,7 @@ describe("TextDomain benchmarks", () => {
 							title: `fullString of ${size}-character document`,
 							...benchmarkDurationBatchless({
 								benchmarkFn: (state) => {
-									const root = rootOf(domain.buildDocument(size));
+									const root = getRootOf(domain.buildDocument(size));
 									let running: boolean;
 									do {
 										running = state.time(() => {
@@ -847,7 +861,7 @@ describe("TextDomain benchmarks", () => {
 							title: `type 1 character into ${size}-character document`,
 							...benchmarkDurationBatchless({
 								benchmarkFn: (state) => {
-									let root = rootOf(domain.buildDocument(size));
+									let root = getRootOf(domain.buildDocument(size));
 									let editsSinceBuild = 0;
 									let running: boolean;
 									do {
@@ -859,7 +873,7 @@ describe("TextDomain benchmarks", () => {
 										root.removeRange(typedIndex, typedIndex + 1);
 										if (++editsSinceBuild >= size) {
 											// Rebuild to flush the removed roots the restores accumulate.
-											root = rootOf(domain.buildDocument(size));
+											root = getRootOf(domain.buildDocument(size));
 											editsSinceBuild = 0;
 										}
 									} while (running);
@@ -903,7 +917,7 @@ describe("TextDomain benchmarks", () => {
 									let running: boolean;
 									do {
 										running = state.time(() => {
-											rootOf(domain.buildDocument(size)).fullString();
+											getRootOf(domain.buildDocument(size)).fullString();
 										});
 									} while (running);
 								},
