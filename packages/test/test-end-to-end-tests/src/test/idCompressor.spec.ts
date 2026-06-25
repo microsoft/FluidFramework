@@ -18,7 +18,7 @@ import {
 	IContainer,
 	type IFluidCodeDetails,
 } from "@fluidframework/container-definitions/internal";
-import { Loader } from "@fluidframework/container-loader/internal";
+import type { Loader } from "@fluidframework/container-loader/internal";
 import {
 	IContainerRuntimeOptions,
 	IdCompressorMode,
@@ -33,7 +33,7 @@ import {
 	SessionSpaceCompressedId,
 	StableId,
 } from "@fluidframework/id-compressor";
-import { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedDirectory, ISharedMap } from "@fluidframework/map/internal";
 import type {
 	IFluidDataStoreContext,
 	IRuntimeMessageCollection,

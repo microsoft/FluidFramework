@@ -46,13 +46,13 @@ import {
 	type ThrottlingError,
 } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryLoggerExt,
-	GenericError,
-	UsageError,
 	formatTick,
 	generateStack,
+	GenericError,
 	isFluidError,
 	normalizeError,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -346,7 +346,7 @@ export class ConnectionManager implements IConnectionManager {
 		public readonly containerDirty: () => boolean,
 		private readonly client: IClient,
 		reconnectAllowed: boolean,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly props: IConnectionManagerFactoryArgs,
 		private maxInitialConnectionAttempts?: number,
 	) {

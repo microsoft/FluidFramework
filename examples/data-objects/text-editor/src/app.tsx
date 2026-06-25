@@ -27,10 +27,14 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import { asAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
+import {
+	asAlpha,
+	configuredSharedTreeAlpha,
+	ForestTypeOptimized,
+	type TreeViewAlpha,
+} from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
-import { SharedTree } from "@fluidframework/tree/legacy";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -57,6 +61,11 @@ function getTinyliciousEndpoint(): string {
 
 	return `http://localhost:${tinyliciousPort}`;
 }
+
+/**
+ * SharedTree configured to use the optimized "chunked" forest.
+ */
+const SharedTree = configuredSharedTreeAlpha({ forest: ForestTypeOptimized });
 
 const containerSchema = {
 	initialObjects: {
@@ -97,7 +106,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	containerId: string;
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
-	const { container } = await client.createContainer(containerSchema, "2");
+	const { container } = await client.createContainer(containerSchema, "2.0.0");
 
 	const treeView = asAlpha<typeof TextEditorRoot>(
 		container.initialObjects.tree.viewWith(treeConfig),
@@ -127,7 +136,7 @@ async function loadExistingContainer(
 	container: IFluidContainer<typeof containerSchema>;
 	treeView: TreeViewAlpha<typeof TextEditorRoot>;
 }> {
-	const { container } = await client.getContainer(containerId, containerSchema, "2");
+	const { container } = await client.getContainer(containerId, containerSchema, "2.0.0");
 	const treeView = asAlpha(container.initialObjects.tree.viewWith(treeConfig));
 	return {
 		container,

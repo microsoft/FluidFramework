@@ -10,7 +10,7 @@ import { ITestDataObject, describeCompat } from "@fluid-private/test-version-uti
 import { benchmarkIt, benchmarkMemoryUse, memoryUseOfValue } from "@fluid-tools/benchmark";
 import { IContainer } from "@fluidframework/container-definitions/internal";
 import {
-	ContainerRuntime,
+	type ContainerRuntime,
 	DefaultSummaryConfiguration,
 } from "@fluidframework/container-runtime/internal";
 import { ISummaryBlob, SummaryType } from "@fluidframework/driver-definitions";

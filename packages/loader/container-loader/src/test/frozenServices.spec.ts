@@ -10,6 +10,7 @@ import type {
 	IDocumentMessage,
 	IDocumentService,
 	IDocumentServiceFactory,
+	IDocumentStorageService,
 	INack,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
@@ -267,6 +268,76 @@ describe("FrozenDocumentService disposal", () => {
 			innerDisposeError,
 			sentinelError,
 			"Expected FrozenDocumentService.dispose to forward the error to the wrapped inner service",
+		);
+	});
+});
+
+describe("FrozenDocumentStorageService readBlob (no inner factory)", () => {
+	// Offline frozen loads pass `undefined` for the inner factory. The
+	// previous handler threw a raw `Error("Operations are not supported…")`,
+	// which bypassed the package's UsageError contract and did not name the
+	// missing precondition (pending state produced by
+	// `captureFullContainerState`, which inlines attachment blobs). Verify
+	// both: the error type so callers can detect misuse uniformly, and the
+	// message so the diagnostic points at the right API.
+	it("rejects readBlob with a UsageError that names captureFullContainerState", async () => {
+		const factory = new FrozenDocumentServiceFactory(true);
+		const service = await factory.createDocumentService(fakeUrl);
+		const storage = await service.connectToStorage();
+
+		await assert.rejects(storage.readBlob("non-existent-id"), (error: Error) => {
+			assert.strictEqual(
+				error.constructor.name,
+				"UsageError",
+				"Expected a UsageError, not a generic Error — frozen storage misuse must surface uniformly",
+			);
+			assert.match(
+				error.message,
+				/captureFullContainerState/,
+				"Expected the error message to name the missing precondition (captureFullContainerState inlines attachment blobs)",
+			);
+			return true;
+		});
+	});
+
+	it("readBlob delegates to the inner storage when one is provided", async () => {
+		// Inverse of the offline assertion: with an inner factory the
+		// wrapped storage's readBlob must serve, not throw — that's the
+		// normal online frozen-load path.
+		const innerBytes = new Uint8Array([42]).buffer;
+		const innerStorage = {
+			readBlob: async () => innerBytes,
+		} as unknown as IDocumentStorageService;
+		const innerService = {
+			resolvedUrl: fakeUrl,
+			policies: {},
+			connectToStorage: async () => innerStorage,
+			connectToDeltaStorage: async () => {
+				throw new Error("not used in this test");
+			},
+			connectToDeltaStream: async () => {
+				throw new Error("not used in this test");
+			},
+			dispose: () => {},
+			on: () => innerService,
+			off: () => innerService,
+			once: () => innerService,
+		} as unknown as IDocumentService;
+		const innerFactory: IDocumentServiceFactory = {
+			createDocumentService: async () => innerService,
+			createContainer: async () => {
+				throw new Error("not used in this test");
+			},
+		};
+		const factory = new FrozenDocumentServiceFactory(true, innerFactory);
+		const service = await factory.createDocumentService(fakeUrl);
+		const storage = await service.connectToStorage();
+
+		const result = await storage.readBlob("any-id");
+		assert.strictEqual(
+			result,
+			innerBytes,
+			"Expected readBlob to delegate byte-identically to the inner storage",
 		);
 	});
 });

@@ -7,7 +7,7 @@ import type { IContainerContext } from "@fluidframework/container-definitions/in
 import { readAndParse } from "@fluidframework/driver-utils/internal";
 import type { ISummaryTreeWithStats } from "@fluidframework/runtime-definitions/internal";
 import { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * Information from a snapshot needed to load BlobManager
@@ -58,7 +58,7 @@ const loadV1 = async (
 
 export const toRedirectTable = (
 	blobManagerLoadInfo: IBlobManagerLoadInfo,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Map<string, string> => {
 	const count = blobManagerLoadInfo.ids?.length ?? 0;
 	const redirectTableLength = blobManagerLoadInfo.redirectTable?.length ?? 0;

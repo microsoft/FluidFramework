@@ -3,19 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import { getExecutableFromCommand } from "../../common/utils";
-import type { BuildContext } from "../buildContext";
-import type { BuildPackage } from "../buildGraph";
-import type { TaskFileDependencies } from "../fluidTaskDefinitions";
-import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands";
-import { GroupTask } from "./groupTask";
-import { ApiExtractorTask } from "./leaf/apiExtractorTask";
-import { BiomeTask } from "./leaf/biomeTasks";
-import { DeclarativeLeafTask } from "./leaf/declarativeTask";
-import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks";
+import { getExecutableFromCommand } from "../../common/utils.js";
+import type { BuildContext } from "../buildContext.js";
+import type { BuildPackage } from "../buildGraph.js";
+import type { TaskFileDependencies } from "../fluidTaskDefinitions.js";
+import { isConcurrentlyCommand, parseConcurrentlyCommand } from "../parseCommands.js";
+import { GroupTask } from "./groupTask.js";
+import { ApiExtractorTask } from "./leaf/apiExtractorTask.js";
+import { BiomeTask } from "./leaf/biomeTasks.js";
+import { DeclarativeLeafTask } from "./leaf/declarativeTask.js";
+import { FlubCheckLayerTask, FlubCheckPolicyTask, FlubListTask } from "./leaf/flubTasks.js";
 import { GenerateEntrypointsTask } from "./leaf/generateEntrypointsTask.js";
-import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask";
-import { EsLintTask } from "./leaf/lintTasks";
+import { type LeafTask, UnknownLeafTask } from "./leaf/leafTask.js";
+import { EsLintTask } from "./leaf/lintTasks.js";
 import {
 	CopyfilesTask,
 	DepCruiseTask,
@@ -24,13 +24,13 @@ import {
 	GoodFence,
 	LesscTask,
 	TypeValidationTask,
-} from "./leaf/miscTasks";
-import { PrettierTask } from "./leaf/prettierTask";
-import { Ts2EsmTask } from "./leaf/ts2EsmTask";
-import { TscTask } from "./leaf/tscTask";
-import { WebpackTask } from "./leaf/webpackTask";
-import type { Task } from "./task";
-import type { TaskHandler } from "./taskHandlers";
+} from "./leaf/miscTasks.js";
+import { PrettierTask } from "./leaf/prettierTask.js";
+import { Ts2EsmTask } from "./leaf/ts2EsmTask.js";
+import { TscTask } from "./leaf/tscTask.js";
+import { WebpackTask } from "./leaf/webpackTask.js";
+import type { Task } from "./task.js";
+import type { TaskHandler } from "./taskHandlers.js";
 
 // Map of executable name to LeafTasks
 const executableToLeafTask: {

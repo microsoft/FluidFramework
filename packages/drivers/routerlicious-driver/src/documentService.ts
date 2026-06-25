@@ -21,7 +21,7 @@ import {
 	RateLimiter,
 	canRetryOnError,
 } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { PerformanceEvent, wrapError } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICache } from "./cache.js";
@@ -69,7 +69,7 @@ export class DocumentService
 		private deltaStorageUrl: string,
 		private deltaStreamUrl: string,
 		private storageUrl: string,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		protected tokenProvider: ITokenProvider,
 		protected tenantId: string,
 		protected documentId: string,

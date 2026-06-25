@@ -1,5 +1,22 @@
 # @fluid-experimental/presence
 
+## 2.110.0
+
+### Minor Changes
+
+- getPresence export removed ([#27536](https://github.com/microsoft/FluidFramework/pull/27536)) [a3c731f4a6c](https://github.com/microsoft/FluidFramework/commit/a3c731f4a6ccae3056f6dce1c535487f13de69ff)
+
+  Import from `fluid-framework` instead.
+  See [#26397](https://github.com/microsoft/FluidFramework/issues/26397).
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
 ## 2.101.0
 
 Dependency updates only.

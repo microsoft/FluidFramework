@@ -18,7 +18,13 @@ import {
 	type Value,
 	forEachNode,
 } from "../../../core/index.js";
-import { getOrCreate } from "../../../util/index.js";
+import {
+	EncodedIdType,
+	encodePossiblyCompressedId,
+	getOrCreate,
+	type EncodedId,
+	type IdEncodingContext,
+} from "../../../util/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
@@ -32,7 +38,7 @@ import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
 	type EncodedChunkShapeV1,
-	type EncodedChunkShapeV1OrV2,
+	type EncodedChunkShape,
 	type EncodedChunkShapeV2,
 	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
@@ -64,8 +70,8 @@ export function compressedEncode(
 	return updateShapesAndIdentifiersEncoding(context.version, batchBuffer);
 }
 
-export type BufferFormat = BufferFormatGeneric<EncodedChunkShapeV1OrV2>;
-export type Shape = ShapeGeneric<EncodedChunkShapeV1OrV2>;
+export type BufferFormat = BufferFormatGeneric<EncodedChunkShape>;
+export type Shape = ShapeGeneric<EncodedChunkShape>;
 
 /**
  * Like {@link FieldEncoder}, except data will be prefixed with the key.
@@ -167,7 +173,7 @@ export function asNodesEncoder(encoder: NodeEncoder): NodesEncoder {
 /**
  * Encodes a chunk with {@link EncodedAnyShape} by prefixing the data with its shape.
  */
-export class AnyShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
+export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	private constructor() {
 		super();
 	}
@@ -272,7 +278,7 @@ export const anyFieldEncoder: FieldEncoder = {
  * which is an easy way to keep all the related code together without extra objects.
  */
 export class InlineArrayEncoder
-	extends ShapeGeneric<EncodedChunkShapeV1OrV2>
+	extends ShapeGeneric<EncodedChunkShape>
 	implements NodesEncoder, FieldEncoder
 {
 	public static readonly empty: InlineArrayEncoder = new InlineArrayEncoder(0, {
@@ -356,7 +362,7 @@ export class InlineArrayEncoder
 /**
  * Encodes the shape for a nested array as {@link EncodedNestedArrayShape} shape.
  */
-export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
+export class NestedArrayShape extends ShapeGeneric<EncodedChunkShape> {
 	/**
 	 * @param innerShape - The shape of each item in this nested array.
 	 */
@@ -367,7 +373,7 @@ export class NestedArrayShape extends ShapeGeneric<EncodedChunkShapeV1OrV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShapeV1OrV2 {
+	): EncodedChunkShape {
 		const shape: EncodedNestedArrayShape =
 			shapes.valueToIndex.get(this.innerShape) ??
 			fail(0xb4f /* index for shape not found in table */);
@@ -520,7 +526,9 @@ export function encodeValue(
  * - Singletons defined in a static scope.
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
  */
-export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
+export class EncoderContext
+	implements NodeEncodeBuilder, FieldEncodeBuilder, IdEncodingContext
+{
 	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
 		new Map();
 	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
@@ -528,7 +536,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
-		public readonly idCompressor: IIdCompressor,
+		private readonly idCompressor: IIdCompressor,
 		/**
 		 * To be used to encode incremental chunks, if any.
 		 * @remarks
@@ -540,7 +548,27 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 * See {@link FieldBatchEncodingContext.isSummary}.
 		 */
 		public readonly isSummary: boolean,
-	) {}
+	) {
+		// Currently we never include originator-dependent identifiers in summaries
+		// (there was a bug which violated this for attach-summaries: it has been fixed, see `IdentifierHealingConfig`).
+		// If that ever changes (to allow better compressed attach summaries), we need to take special care with incremental summaries.
+		// This assert guards against data corruption leaking in via missing session information in incremental summaries,
+		// protecting from bugs of potential future optimizations to attach summaries applied to non-attach summaries.
+		// Incremental summaries should have no need for originator-dependent identifiers,
+		// as they can't be attach summaries which are the only ones which should ever have non-final ids.
+		assert(
+			isSummary || incrementalEncoder === undefined,
+			"incrementalEncoder cannot be used when encoding originator-dependent identifiers",
+		);
+	}
+
+	public encodePossiblyCompressedId(id: string): string | EncodedId<EncodedIdType> {
+		return encodePossiblyCompressedId(
+			id,
+			this.idCompressor,
+			this.isSummary ? EncodedIdType.Originatorless : EncodedIdType.OriginatorDependent,
+		);
+	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>

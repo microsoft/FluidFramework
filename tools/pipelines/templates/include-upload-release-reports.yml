@@ -12,8 +12,12 @@ steps:
     SourceFolder: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/upload_release_reports
     TargetFolder: $(Build.ArtifactStagingDirectory)/release_reports
 
+# During the storage migration we dual-write the release reports to the legacy account
+# (fluid-docs / STORAGE_ACCOUNT, served by the current AFD origin) and the new Torus account
+# (fluid-docs-torus / STORAGE_ACCOUNT_NEW). Once the AFD origin is repointed and verified, the
+# legacy task can be removed. Only the second task cleans up the working folders.
 - task: AzureCLI@2
-  displayName: Upload release reports
+  displayName: Upload release reports (legacy)
   continueOnError: true
   inputs:
     azureSubscription: 'fluid-docs'
@@ -42,7 +46,47 @@ steps:
         # perf losses while remaining simple.
         az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
       done
-      # Delete generate_release_reports and upload_release_reports folder
+
+- task: AzureCLI@2
+  displayName: Upload release reports (Torus)
+  continueOnError: true
+  inputs:
+    azureSubscription: 'fluid-docs-torus'
+    scriptType: bash
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    scriptLocation: inlineScript
+    inlineScript: |
+      blobPrefix=""
+      if [[ '${{ parameters.buildDirectory }}' == */server/* ]]; then
+        if [ "$(release)" == "release" ]; then
+          blobPrefix="server/release"
+        else
+          blobPrefix="server/prerelease"
+        fi
+      fi
+      for file in upload_release_reports/*; do
+        fileName="$(basename "$file")"
+        if [ -n "$blobPrefix" ]; then
+          blobName="$blobPrefix/$fileName"
+        else
+          blobName="$fileName"
+        fi
+        # Use 5 minute TTL for manifest files. This could be lengthened significantly
+        # for manifest files for a particular build (immutable) or for those for a particular
+        # release (updates with our release cycle), but using a shorter TTL for all risks only small
+        # perf losses while remaining simple.
+        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT_NEW) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
+      done
+
+# Clean up the working folders unconditionally so a failed/dual upload task can't leave stale
+# directories behind for the next run on a self-hosted agent.
+- task: Bash@3
+  displayName: Clean up release report working folders
+  condition: always()
+  inputs:
+    targetType: inline
+    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+    script: |
       rm -rf generate_release_reports upload_release_reports
 
 - task: 1ES.PublishPipelineArtifact@1

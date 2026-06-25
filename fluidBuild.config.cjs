@@ -64,6 +64,17 @@ module.exports = {
 			dependsOn: ["commonjs", "build:esnext", "api", "build:test", "build:copy"],
 			script: false,
 		},
+		"compile:esm": {
+			dependsOn: ["compile:esm:packages", "build:test:esm"],
+			script: false,
+		},
+		"compile:esm:packages": {
+			// Note that "api-extractor:esnext" is included as "compile" intends
+			// to build complete packages and "api-extractor:esnext" currently
+			// generates package entrypoint files.
+			dependsOn: ["build:esnext", "api-extractor:esnext", "build:copy"],
+			script: false,
+		},
 		"commonjs": {
 			dependsOn: ["tsc", "build:test"],
 			script: false,
@@ -87,13 +98,27 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": tscDependsOn,
 		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
-		"build:esnext": [...tscDependsOn, "^build:esnext"],
+		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
 		// Generic build:test script should be replaced by :esm or :cjs specific versions.
 		// "tsc" would be nice to eliminate from here, but plenty of packages still focus
 		// on CommonJS.
 		"build:test": ["typetests:gen", "tsc", "api-extractor:commonjs", "api-extractor:esnext"],
-		"build:test:cjs": ["typetests:gen", "tsc", "api-extractor:commonjs"],
-		"build:test:esm": ["typetests:gen", "build:esnext", "api-extractor:esnext"],
+		"build:test:cjs": [
+			"typetests:gen",
+			"tsc",
+			"api-extractor:commonjs",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^tsc",
+			"^api-extractor:commonjs",
+		],
+		"build:test:esm": [
+			"typetests:gen",
+			"build:esnext",
+			"api-extractor:esnext",
+			// depend on ancestor packages in case current package doesn't have production build (e.g. test-only packages)
+			"^build:esnext",
+			"^api-extractor:esnext",
+		],
 		"api": {
 			dependsOn: [
 				"api-extractor:commonjs",
@@ -159,8 +184,8 @@ module.exports = {
 		"format:prettier": [],
 		"prettier": [],
 		"prettier:fix": [],
-		"webpack": ["^tsc", "^build:esnext"],
-		"webpack:profile": ["^tsc", "^build:esnext"],
+		"webpack": ["^api-extractor:esnext", "^build:esnext"],
+		"webpack:profile": ["^api-extractor:esnext", "^build:esnext"],
 		"clean": {
 			before: ["*"],
 		},
@@ -322,7 +347,7 @@ module.exports = {
 			"tools/markdown-magic/test/package.json",
 
 			// Not a real package
-			"docs/api/",
+			"website/api/",
 
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
@@ -365,7 +390,7 @@ module.exports = {
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.
-				"docs/static/dompurify/purify.min.js",
+				"website/static/dompurify/purify.min.js",
 
 				// printed ESLint configs do not need headers
 				".*/.eslint-print-configs/.*",
@@ -398,10 +423,14 @@ module.exports = {
 				"common/lib/common-utils/jest-puppeteer.config.js",
 				"common/lib/common-utils/jest.config.js",
 
+				// Mocha configs are okay to match package.json (help migrate to simple ESM all the time)
+				// (Just under client packages for now)
+				"^packages/.+/.mocharc.js$",
+
 				// Avoids MIME-type issues in the browser.
-				"docs/static/trusted-types-policy.js",
-				"docs/static/dompurify/purify.min.js",
-				"docs/static/js/add-code-copy-button.js",
+				"website/static/trusted-types-policy.js",
+				"website/static/dompurify/purify.min.js",
+				"website/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
@@ -475,7 +504,7 @@ module.exports = {
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 				// Docs directory breaks cleaning down into multiple scripts.
-				"docs/package.json",
+				"website/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",

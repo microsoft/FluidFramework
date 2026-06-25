@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/core-interfaces",
-	"version": "2.102.0",
+	"version": "2.111.0",
 	"description": "Fluid object interfaces",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -136,13 +136,13 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.92.0",
+		"@fluidframework/core-interfaces-previous": "npm:@fluidframework/core-interfaces@2.103.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
@@ -160,7 +160,12 @@
 		}
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"NOTE": "When these are reset, also remove ./types/validateCoreInterfacesPrevious.generated.ts from src/test/tsconfig.no-exactOptionalPropertyTypes.json exclusion list",
+			"Interface_ITelemetryBaseLogger": {
+				"backCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

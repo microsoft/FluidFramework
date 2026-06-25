@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-experimental/odsp-end-to-end-tests",
-	"version": "2.102.0",
+	"version": "2.111.0",
 	"description": "Odsp client end to end tests",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -15,7 +15,9 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build:compile": "fluid-build . --task compile",
-		"build:test": "tsc --project ./src/test/tsconfig.json",
+		"build:genver": "gen-version",
+		"build:test": "npm run build:test:esm",
+		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
@@ -28,7 +30,7 @@
 		"test": "npm run test:realsvc:odsp",
 		"test:coverage": "c8 npm test",
 		"test:realsvc:odsp": "npm run test:realsvc:odsp:run -- --driver=odsp --odspEndpointName=odsp",
-		"test:realsvc:odsp:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.cjs",
+		"test:realsvc:odsp:run": "mocha --exit --timeout 20000 --config src/test/.mocharc.js",
 		"test:realsvc:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run test:realsvc:odsp"
 	},
 	"c8": {
@@ -92,10 +94,10 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:test": [
+			"build:test:esm": [
 				"^api-extractor:esnext",
 				"^build:esnext",
-				"^tsc"
+				"build:genver"
 			]
 		}
 	},
