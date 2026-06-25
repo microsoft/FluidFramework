@@ -219,7 +219,7 @@ async function initFluid(): Promise<DualUserViews> {
 
 	console.log(`User 2 connected to document: ${containerId}`);
 
-	//* Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
+	// Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
 	// by the React layer.
 	const devtoolsProps: DevtoolsProps = {
 		logger: devtoolsLogger,
@@ -457,8 +457,8 @@ const DevtoolsToggle: FC<{
 			onClick={() => setEnabled((value) => !value)}
 			title={
 				enabled
-					? "Disable Fluid Devtools (recommended before capturing a performance trace. Devtools visualizes every node on every edit)"
-					: "Enable Fluid Devtools"
+					? "Disable Fluid Devtools (recommended before capturing a performance trace.)"
+					: "Enable Fluid Devtools (Devtools visualizes every node on every edit)"
 			}
 			style={{
 				padding: "6px 12px",
