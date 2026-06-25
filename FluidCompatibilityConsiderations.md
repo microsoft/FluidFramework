@@ -5,7 +5,7 @@
 Fluid Framework is a distributed system where multiple clients collaborate on shared documents in real-time. To understand why we need different types of compatibility, we must first recognize three fundamental aspects of the Fluid software:
 
 1. **Build Time**: What happens during development and build of projects using Fluid. Includes compatibility of package dependencies and TypeScript types.
-2. **In Memory**: What happens at runtime in memory. Includes compatibility of runtime behaviors and data structures.
+2. **Run Time**: What happens at runtime in memory. Includes compatibility of runtime behaviors and in memory data structures.
 3. **Serialized Data**: Ops and Summaries (or snapshots). Includes anything which leaves the memory of the specific JavaScript context which created it.
 
 Combined with Fluid's distributed architecture, these aspects create four distinct dimensions of compatibility that must be carefully managed:
@@ -15,12 +15,12 @@ flowchart TD
     BuildTime[Build Time] --APIs--> TypeScript
         TypeScript --TypeCheck--> PackageCompat[Package Compatibility]
 
-    InMemory[In Memory] --External APIs/Behaviors--> CustomerUse[Use by customer]
+    RunTime[Run Time] --External APIs/Behaviors--> CustomerUse[Use by customer]
         CustomerUse --Run Application--> PackageCompat
-    InMemory --Internal APIs/Behaviors--> LayeredArch[Layered architecture]
+    RunTime --Internal APIs/Behaviors--> LayeredArch[Layered architecture]
         LayeredArch --Interactions between layers--> LayerCompat[Layer compatibility]
 
-    SerializedData[Serialized Data] --Ops--> MultiClient[Multi-client collaboration]
+    SerializedData[Serialized Data] --Ops/Snapshots--> MultiClient[Multi-client collaboration]
         MultiClient --Collaboration via ops--> CrossClientCompat[Cross-client compatibility]
     SerializedData --Ops/Snapshots--> Persistence[Persistence]
         Persistence --Read saved files--> DataAtRestCompat[Data-at-rest compatibility]
@@ -30,8 +30,8 @@ flowchart TD
 
 - **Package compatibility** arises because applications depend on Fluid packages using version ranges which guarantee compatibility according to our [API support levels](./docs/docs/build/releases-and-apitags.mdx#api-support-levels) for both Type compatibility and runtime behavior.
 - **Layer compatibility** arises because Fluid's modular design consists of four distinct layers (Driver, Loader, Runtime, and Datastore), each of which can be versioned independently. These layers must interoperate at runtime even when they're at different versions. They interact by calling APIs (mostly internal) on other layers and the signatures and behavior of these APIs must be compatible.
-- **Data-at-rest compatibility** arises because documents (stored as summaries/snapshots) may be dormant for extended periods and then reopened by clients running newer versions of Fluid.
 - **Cross-client compatibility** arises because multiple clients collaborating on the same document in real-time by exchanging ops may be running different versions of Fluid during rolling upgrades or version transitions.
+- **Data-at-rest compatibility** arises because documents (stored as summaries/snapshots, which can include training ops) may be opened by any currently in use version (older or newer than the one which saved it), or any potential future version, which could much newer than the version which saved it.
 
 This document defines and explains each compatibility type in detail, describing what it means, why it matters, and the scenarios it enables. Understanding these distinctions helps both Fluid Framework maintainers and application developers reason about version compatibility and upgrade strategies.
 
