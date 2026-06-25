@@ -272,7 +272,8 @@ export function processCharactersChangedDelta(
  * When incremental summarization is enabled on the tree, character content which does not change between
  * summaries is not re-encoded or re-uploaded to the service; instead the unchanged chunks are referenced by handle.
  * For large texts which are edited in only a few places at a time, this can substantially reduce summary upload size
- * and the CPU cost of producing each summary.
+ * and the CPU cost of producing each summary. Because the schema already opts its content in, enabling the optimization only
+ * requires configuring with {@link configuredSharedTreeAlpha}
  *
  * See the {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/INCREMENTAL_SUMMARY.md}
  * for the full set of required options (including `minVersionForCollab`) and a complete setup example.

@@ -24,13 +24,17 @@ import {
 const config = new TreeViewConfigurationAlpha({ schema: TextAsTree.Tree });
 
 const SharedTreeWithIncrementalSummaries = configuredSharedTreeAlpha({
+	// Required: incremental summarization only works with the optimized (chunked) forest.
 	forest: ForestTypeOptimized,
+	// Required: selects the incremental capable compression strategy.
 	treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
+	// Required: opts the schema's `incrementalSummaryHint` marked fields into incremental encoding.
 	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(config),
+	// Required: must be `FluidClientVersion.v2_74` or higher (the version that introduced support for this feature).
 	minVersionForCollab: FluidClientVersion.v2_74,
 });
 
-const sharedTree = haredTreeWithIncrementalSummaries.create(runtime, "tree");
+const sharedTree = SharedTreeWithIncrementalSummaries.create(runtime, "tree");
 ```
 
 See the [Incremental Summary documentation](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/INCREMENTAL_SUMMARY.md) for the full set of required options and details.
