@@ -407,4 +407,48 @@ describe("simple-tree tree", () => {
 			assert.equal(viewA.root, 5);
 		});
 	});
+
+	describe("isMissingEditsFrom", () => {
+		it("returns false when the branches are equivalent", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			assert.equal(viewA.isMissingEditsFrom(viewB), false);
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns false when only 'this' branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns true when only the other branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+		});
+
+		it("returns true when both branches are diverged", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewA.root = 4;
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+			assert.equal(viewB.isMissingEditsFrom(viewA), true);
+		});
+	});
 });

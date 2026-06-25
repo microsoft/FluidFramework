@@ -138,9 +138,6 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
-  shell-quote: ^1.8.4
-
-  # Resolve command injection vulnerabilities.
   systeminformation: ^5.31.0
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
@@ -153,6 +150,15 @@ packages:
   - "experimental/**"
   - "packages/**"
   - "tools/markdown-magic"
+
+  # exclude bundle-analysis output directories, which can contain package.json files from
+  # webpack bundle stats (e.g. examples/utils/bundle-size-tests).
+  - "!**/bundleAnalysis/**"
+
+  # exclude the inner FluidFramework enlistment used by examples/utils/bundle-size-tests for
+  # cross-revision bundle comparison (see `flub generate bundleAnalysisReposWithComparison`, which clones
+  # the inner repo into <outputDir>/base-repo).
+  - "!**/compareBundlesOutput/**"
 
   # exclude any package.json files that are inside src or output directories
   - "!**/dist/**"
