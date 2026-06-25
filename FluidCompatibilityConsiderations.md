@@ -44,7 +44,7 @@ See [API support levels](./docs/docs/build/releases-and-apitags.mdx#api-support-
 
 ### Motivation
 
-This allows users of our packages to use [dependency ranges](https://github.com/npm/node-semver) like "^2.100.0" providing predictable upgrade path to newer Fluid versions, ensuring bug fixes are easy to integrate, and it's clear when breaking changes need to be checked for.
+This allows users of our packages to use [dependency ranges](https://github.com/npm/node-semver) like "^2.100.0" providing predictable upgrade path to newer Fluid versions, ensuring bug fixes are easy to integrate, and it's clear when to check for breaking changes.
 
 ## Layer compatibility
 
