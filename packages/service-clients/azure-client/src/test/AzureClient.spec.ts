@@ -76,7 +76,7 @@ const connectionModeOf = (container: IFluidContainer): ConnectionMode => {
 	return getContainerConnectionMode(container.container);
 };
 
-for (const compatibilityMode of ["1", "2"] as const) {
+for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 	describe(`AzureClient (compatibilityMode: ${compatibilityMode})`, function () {
 		const connectTimeoutMs = 1000;
 		let client: AzureClient;
@@ -363,7 +363,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 
 			it("preserves 'SharedTree' type", async function () {
 				// SharedTree is not supported in compatibilityMode "1", because it requires idCompressor to be enabled.
-				if (compatibilityMode === "1") {
+				if (compatibilityMode === "1.0.0") {
 					this.skip();
 				}
 				const { container } = await client.createContainer(
@@ -438,7 +438,7 @@ for (const compatibilityMode of ["1", "2"] as const) {
 				} as const satisfies ContainerRuntimeOptionsInternal;
 
 				const expectedRuntimeOptions =
-					compatibilityMode === "1" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
+					compatibilityMode === "1.0.0" ? expectedRuntimeOptions1 : expectedRuntimeOptions2;
 				assert(isInternalFluidContainer(container_defaultConfig));
 				const actualRuntimeOptions = getRuntimeOptions(
 					getContainerRuntime(container_defaultConfig.container),

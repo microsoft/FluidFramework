@@ -203,7 +203,7 @@ export class ChunkedForest implements IEditableForest {
 				this.forest.#events.emit("beforeChange");
 				const parent = this.getParent();
 				const sourceField = parent.mutableChunk.fields.get(parent.key) ?? [];
-				assert(source.start <= source.end, "detach range start must not exceed end");
+				assert(source.start <= source.end, 0xcf8 /* detach range start must not exceed end */);
 
 				const policy: ChunkCompressor = {
 					policy: this.forest.chunker,
@@ -245,12 +245,12 @@ export class ChunkedForest implements IEditableForest {
 				let indexOfChunk = 0;
 				let chunk = chunks[indexOfChunk] ?? oob();
 				while (indexWithinChunk >= chunk.topLevelLength) {
-					chunk = chunks[indexOfChunk] ?? oob();
 					indexWithinChunk -= chunk.topLevelLength;
 					indexOfChunk++;
 					if (indexOfChunk === chunks.length) {
 						fail(0xaf7 /* missing edited node */);
 					}
+					chunk = chunks[indexOfChunk] ?? oob();
 				}
 				let found = chunks[indexOfChunk] ?? oob();
 				if (!(found instanceof BasicChunk)) {

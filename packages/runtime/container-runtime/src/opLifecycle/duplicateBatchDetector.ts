@@ -66,6 +66,16 @@ export class DuplicateBatchDetector {
 	private readonly batchesBySeqNum = new Map<number, RecordedBatch>();
 
 	/**
+	 * Number of inbound batches processed since the last summary. Reset by getRecentBatchInfoForSummary.
+	 */
+	private processedBatchCount = 0;
+
+	/**
+	 * Largest tracked-batch count observed since the last summary. Reset by getRecentBatchInfoForSummary.
+	 */
+	private peakTrackedBatchCount = 0;
+
+	/**
 	 * Initialize from snapshot data if provided - otherwise initialize empty
 	 */
 	constructor(batchIdsFromSnapshot: [number, string][] | undefined) {
@@ -76,6 +86,7 @@ export class DuplicateBatchDetector {
 				this.batchesBySeqNum.set(seqNum, { batchId, info: undefined });
 				this.seqNumByBatchId.set(batchId, seqNum);
 			}
+			this.peakTrackedBatchCount = this.batchesBySeqNum.size;
 		}
 	}
 
@@ -94,6 +105,7 @@ export class DuplicateBatchDetector {
 		  }
 		| { duplicate: false } {
 		const { sequenceNumber, minimumSequenceNumber } = batchStart.keyMessage;
+		this.processedBatchCount++;
 
 		// Glance at this batch's MSN. Any batchIds we're tracking with a lower sequence number are now safe to forget.
 		// Why? Because any other client holding the same batch locally would have seen the earlier batch and closed before submitting its duplicate.
@@ -136,6 +148,9 @@ export class DuplicateBatchDetector {
 		};
 		this.batchesBySeqNum.set(sequenceNumber, { batchId, info });
 		this.seqNumByBatchId.set(batchId, sequenceNumber);
+		if (this.batchesBySeqNum.size > this.peakTrackedBatchCount) {
+			this.peakTrackedBatchCount = this.batchesBySeqNum.size;
+		}
 
 		return { duplicate: false };
 	}
@@ -164,15 +179,21 @@ export class DuplicateBatchDetector {
 	public getRecentBatchInfoForSummary(
 		telemetryContext?: ITelemetryContext,
 	): [number, string][] | undefined {
+		if (telemetryContext !== undefined) {
+			const prefix = "fluid_DuplicateBatchDetector_";
+			telemetryContext.set(prefix, "recentBatchCount", this.batchesBySeqNum.size);
+			telemetryContext.set(prefix, "peakRecentBatchCount", this.peakTrackedBatchCount);
+			telemetryContext.set(prefix, "processedBatchCount", this.processedBatchCount);
+		}
+
+		// Reset per-window perf counters so each summary covers only the activity since the
+		// previous one. Peak resets to the current size (the floor for the next window).
+		this.processedBatchCount = 0;
+		this.peakTrackedBatchCount = this.batchesBySeqNum.size;
+
 		if (this.batchesBySeqNum.size === 0) {
 			return undefined;
 		}
-
-		telemetryContext?.set(
-			"fluid_DuplicateBatchDetector_",
-			"recentBatchCount",
-			this.batchesBySeqNum.size,
-		);
 
 		return [...this.batchesBySeqNum.entries()].map(([seqNum, recorded]) => [
 			seqNum,

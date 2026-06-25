@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/bundle-size-tests",
-	"version": "2.102.0",
+	"version": "2.111.0",
 	"private": true,
 	"description": "A package for understanding the bundle size of Fluid Framework",
 	"homepage": "https://fluidframework.com",
@@ -20,7 +20,8 @@
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
-		"clean": "rimraf --glob build dist lib bundleAnalysis bundleAnalyzerJson \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"clean": "rimraf --glob build dist lib bundleAnalysis bundleAnalyzerJson compareBundlesOutput \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
+		"compare:bundles": "flub generate bundleAnalysisReposWithComparison",
 		"eslint": "eslint --quiet --format stylish src",
 		"eslint:fix": "eslint --quiet --format stylish src --fix --fix-type problem,suggestion,layout",
 		"explore:tree": "fluid-build . --task webpack && source-map-explorer ./build/sharedTree.js --html bundleAnalysis/reportTree.html",
@@ -54,6 +55,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@cerner/duplicate-package-checker-webpack-plugin": "~2.3.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluid-tools/version-tools": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",

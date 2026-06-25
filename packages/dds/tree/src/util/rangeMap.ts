@@ -5,6 +5,8 @@
 
 import { assert } from "@fluidframework/core-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
+// eslint-disable-next-line import-x/no-internal-modules
+import { union } from "@tylerbu/sorted-btree-es6/extended/union";
 
 /**
  * RangeMap represents a mapping from keys of type K to values of type V or undefined.
@@ -222,19 +224,116 @@ export class RangeMap<K, V> {
 			0xaae /* Maps should have the same behavior */,
 		);
 
-		const merged = a.clone();
-		for (const entryB of b.entries()) {
-			for (const entryA of a.getAll(entryB.start, entryB.length)) {
-				const key = b.offsetKey(entryB.start, entryA.offset);
-				const valueB = b.offsetValue(entryB.value, entryA.offset);
-				const mergedValue =
-					entryA.value === undefined ? valueB : mergeFunc(key, entryA.value, valueB);
+		const merged = new RangeMap<K, V>(a.offsetKey, a.subtractKeys, a.offsetValue);
 
-				merged.set(key, entryA.length, mergedValue);
-			}
-		}
+		// We first union the underlying B-trees, possibly resulting in a malformed range map.
+		merged.tree = union<BTree<K, RangeEntry<V>>, K, RangeEntry<V>>(
+			a.tree,
+			b.tree,
+			(key, v1, v2) => v1,
+		);
+
+		// We split the overlapping tree entries into ranges which are either fully overlapping (intersections),
+		// or fully non-overlapping (residuals).
+		// We create an entry for each of these ranges.
+		// After this, the merged map should be well-formed.
+		RangeMap.forEachIntersection(
+			a,
+			b,
+			(key, length, valueA, valueB) =>
+				merged.tree.set(key, { value: mergeFunc(key, valueA, valueB), length }),
+			(key, length, value) => merged.tree.set(key, { value, length }),
+		);
 
 		return merged;
+	}
+
+	/**
+	 * Calls provided handlers on intersecting portions of `mapA` and `mapB`.
+	 * @param intersectionCallback - called once for each key range which has an entry in both `mapA` and `mapB`.
+	 * @param residualCallback - called for each key range which only has an entry in one of the input maps,
+	 * but which is part of a range entry that overlaps an entry in the other map.
+	 * This may also be called for entries which are not part of an overlapping range.
+	 */
+	private static forEachIntersection<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		intersectionCallback: (key: K, length: number, valueA: V, valueB: V) => void,
+		residualCallback: (key: K, length: number, value: V) => void,
+	): void {
+		let [entry1, map1, map2] = this.getOrNextEntry(mapA, mapB, undefined);
+		while (entry1 !== undefined) {
+			const entry2 = map2.getOrNextEntry(entry1.start);
+			if (entry2 !== undefined) {
+				// This is the number of keys in `entry1` that come before the first key in `entry2`.
+				const offset = Math.min(mapA.subtractKeys(entry2.start, entry1.start), entry1.length);
+				if (offset > 0) {
+					residualCallback(entry1.start, offset, entry1.value);
+				}
+
+				const intersectionLength = Math.min(entry1.length - offset, entry2.length);
+				if (intersectionLength > 0) {
+					const value1Offset = mapA.offsetValue(entry1.value, offset);
+					const [valueA, valueB] =
+						map1 === mapA ? [value1Offset, entry2.value] : [entry2.value, value1Offset];
+
+					intersectionCallback(entry2.start, intersectionLength, valueA, valueB);
+					[entry1, map1, map2] = this.getOrNextEntry(
+						mapA,
+						mapB,
+						mapA.offsetKey(entry2.start, intersectionLength),
+					);
+					continue;
+				}
+			}
+
+			residualCallback(entry1.start, entry1.length, entry1.value);
+			[entry1, map1, map2] = this.getOrNextEntry(
+				mapA,
+				mapB,
+				mapA.offsetKey(entry1.start, entry1.length),
+			);
+		}
+
+		return;
+	}
+
+	private static getOrNextEntry<K, V>(
+		mapA: RangeMap<K, V>,
+		mapB: RangeMap<K, V>,
+		key: K | undefined,
+	): [RangeMapEntry<K, V> | undefined, firstMap: RangeMap<K, V>, secondMap: RangeMap<K, V>] {
+		const entryA = mapA.getOrNextEntry(key);
+		const entryB = mapB.getOrNextEntry(key);
+		if (entryA === undefined) {
+			return [entryB, mapB, mapA];
+		} else if (entryB === undefined) {
+			return [entryA, mapA, mapB];
+		}
+
+		return mapA.le(entryA.start, entryB.start) ? [entryA, mapA, mapB] : [entryB, mapB, mapA];
+	}
+
+	/**
+	 * @returns a range entry representing the first defined key range greater than or equal to `key`.
+	 */
+	private getOrNextEntry(minKey: K | undefined): RangeMapEntry<K, V> | undefined {
+		const key = minKey ?? this.tree.minKey();
+		if (key === undefined) {
+			return undefined;
+		}
+
+		const result = this.getFirst(key, Infinity);
+		if (result.value !== undefined) {
+			return { start: key, value: result.value, length: result.length };
+		}
+
+		const entry = this.tree.nextHigherPair(key);
+		if (entry === undefined) {
+			return undefined;
+		}
+
+		return { start: entry[0], value: entry[1].value, length: entry[1].length };
 	}
 
 	private getIntersectingEntries(start: K, length: number): RangeMapEntry<K, V>[] {

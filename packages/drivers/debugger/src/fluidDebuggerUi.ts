@@ -292,7 +292,7 @@ export class DebuggerUI {
 				: `Playing from ${version.id}, seq# ${seqNumber}`;
 
 		this.wasVersionSelected = true;
-		this.selector = undefined;
+		delete this.selector;
 
 		const doc = this.debuggerWindow.document;
 		doc.open();

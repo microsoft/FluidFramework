@@ -75,7 +75,7 @@ parameters:
 
 - name: packageManager
   type: string
-  default: npm
+  default: pnpm
 
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
@@ -85,7 +85,7 @@ parameters:
 
 - name: packageManagerInstallCommand
   type: string
-  default: 'npm ci --unsafe-perm'
+  default: 'pnpm i --frozen-lockfile'
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -314,8 +314,8 @@ extends:
 
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
-                  packageManager: '${{ parameters.packageManager }}'
                   buildDirectory: '${{ parameters.buildDirectory }}'
+                  installPnpm: ${{ eq(parameters.packageManager, 'pnpm') }}
                   packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
 
               # The bundle-size-artifacts pipeline runs a client build but doesn't publish packages,

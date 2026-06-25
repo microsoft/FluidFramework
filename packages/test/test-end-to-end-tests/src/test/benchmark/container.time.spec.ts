@@ -8,7 +8,7 @@ import { strict as assert } from "assert";
 import { describeCompat } from "@fluid-private/test-version-utils";
 import { benchmarkDuration, benchmarkIt } from "@fluid-tools/benchmark";
 import { IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
+import type { ILoaderProps, Loader } from "@fluidframework/container-loader/internal";
 import { IRequest } from "@fluidframework/core-interfaces";
 import {
 	ITestObjectProvider,
@@ -20,7 +20,8 @@ import { v4 as uuid } from "uuid";
 
 const codeDetails: IFluidCodeDetails = { package: "test" };
 
-describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvider) => {
+describeCompat("Container - runtime benchmarks", "NoCompat", (getTestObjectProvider, apis) => {
+	const { Loader } = apis.loader;
 	const loaderContainerTracker = new LoaderContainerTracker();
 
 	function createLoader(provider: ITestObjectProvider, props?: Partial<ILoaderProps>): Loader {

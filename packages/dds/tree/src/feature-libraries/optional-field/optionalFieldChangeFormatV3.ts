@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
 
 import { EncodedChangeAtomId } from "../../core/index.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: Type.ObjectOptions = { additionalProperties: false };
 
 // Type is intentionally derived.
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Schema) =>
+export const EncodedOptionalChangeset = <Schema extends Type.TSchema>(tNodeChange: Schema) =>
 	Type.Object(
 		{
 			/**
@@ -32,7 +32,7 @@ export const EncodedOptionalChangeset = <Schema extends TSchema>(tNodeChange: Sc
 		noAdditionalProps,
 	);
 
-export type EncodedOptionalChangeset<Schema extends TSchema> = Static<
+export type EncodedOptionalChangeset<Schema extends Type.TSchema> = Type.Static<
 	ReturnType<typeof EncodedOptionalChangeset<Schema>>
 >;
 
@@ -55,4 +55,4 @@ const EncodedReplace = Type.Object(
 	},
 	noAdditionalProps,
 );
-export type EncodedReplace = Static<typeof EncodedReplace>;
+export type EncodedReplace = Type.Static<typeof EncodedReplace>;

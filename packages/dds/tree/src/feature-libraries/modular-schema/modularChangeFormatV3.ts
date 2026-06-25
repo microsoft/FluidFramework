@@ -3,14 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { type ObjectOptions, type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
 
 import { EncodedChangeAtomId } from "../../core/index.js";
 
 import { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 
-const noAdditionalProps: ObjectOptions = { additionalProperties: false };
+const noAdditionalProps: Type.ObjectOptions = { additionalProperties: false };
 
 const EncodedRenames = Type.Optional(
 	Type.Array(
@@ -23,7 +23,7 @@ const EncodedRenames = Type.Optional(
 	),
 );
 
-export type EncodedRenames = Static<typeof EncodedRenames>;
+export type EncodedRenames = Type.Static<typeof EncodedRenames>;
 
 const EncodedRootNodes = Type.Optional(
 	Type.Array(
@@ -34,7 +34,7 @@ const EncodedRootNodes = Type.Optional(
 	),
 );
 
-export type EncodedRootNodes = Static<typeof EncodedRootNodes>;
+export type EncodedRootNodes = Type.Static<typeof EncodedRootNodes>;
 
 export const EncodedModularChangesetV3 = Type.Composite(
 	[
@@ -50,4 +50,4 @@ export const EncodedModularChangesetV3 = Type.Composite(
 	noAdditionalProps,
 );
 
-export type EncodedModularChangesetV3 = Static<typeof EncodedModularChangesetV3>;
+export type EncodedModularChangesetV3 = Type.Static<typeof EncodedModularChangesetV3>;

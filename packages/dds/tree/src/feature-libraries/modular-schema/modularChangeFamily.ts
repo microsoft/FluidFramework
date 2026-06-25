@@ -869,8 +869,15 @@ export class ModularChangeFamily
 		}
 
 		const crossFieldKeys = this.makeCrossFieldKeyTable(invertedFields, invertedNodes);
-
 		this.processInvertRenames(crossFieldTable);
+
+		const constraintState = newConstraintState(0);
+		this.updateConstraintsOnInvert(
+			invertedFields,
+			constraintState,
+			invertedNodes,
+			crossFieldTable.invertedRoots,
+		);
 
 		return makeModularChangeset({
 			rebaseVersion: change.change.rebaseVersion,
@@ -882,8 +889,7 @@ export class ModularChangeFamily
 			crossFieldKeys,
 			maxId: genId.getMaxId(),
 			revisions: revInfos,
-			constraintViolationCount: change.change.constraintViolationCountOnRevert,
-			constraintViolationCountOnRevert: change.change.constraintViolationCount,
+			constraintViolationCount: constraintState.violationCount,
 			noChangeConstraint,
 			noChangeConstraintOnRevert,
 			destroys,
@@ -981,6 +987,29 @@ export class ModularChangeFamily
 		}
 	}
 
+	private updateConstraintsOnInvert(
+		invertedFields: FieldChangeMap,
+		constraintState: ConstraintState,
+		invertedNodes: ChangeAtomIdBTree<NodeChangeset>,
+		invertedRoots: RootNodeTable,
+	): void {
+		this.updateConstraintsForFields(
+			invertedFields,
+			NodeAttachState.Attached,
+			constraintState,
+			invertedNodes,
+		);
+
+		for (const nodeId of invertedRoots.nodeChanges.values()) {
+			this.updateConstraintsForNode(
+				nodeId,
+				NodeAttachState.Detached,
+				invertedNodes,
+				constraintState,
+			);
+		}
+	}
+
 	public rebase(
 		taggedChange: TaggedChange<ModularChangeset>,
 		potentiallyConflictedOver: TaggedChange<ModularChangeset>,
@@ -1069,9 +1098,6 @@ export class ModularChangeFamily
 		fixupRebasedDetachLocations(crossFieldTable);
 
 		const constraintState = newConstraintState(change.constraintViolationCount ?? 0);
-		const revertConstraintState = newConstraintState(
-			change.constraintViolationCountOnRevert ?? 0,
-		);
 
 		let noChangeConstraint = change.noChangeConstraint;
 		if (
@@ -1083,13 +1109,7 @@ export class ModularChangeFamily
 			constraintState.violationCount += 1;
 		}
 
-		this.updateConstraints(
-			rebasedFields,
-			rebasedNodes,
-			rebasedRootNodes,
-			constraintState,
-			revertConstraintState,
-		);
+		this.updateConstraints(rebasedFields, rebasedNodes, rebasedRootNodes, constraintState);
 
 		removeUnnecessaryDetachLocations(rebasedRootNodes, rebaseVersion);
 
@@ -1134,7 +1154,6 @@ export class ModularChangeFamily
 			maxId: idState.maxId,
 			revisions: change.revisions,
 			constraintViolationCount: constraintState.violationCount,
-			constraintViolationCountOnRevert: revertConstraintState.violationCount,
 			noChangeConstraint,
 			noChangeConstraintOnRevert: change.noChangeConstraintOnRevert,
 			builds: change.builds,
@@ -1652,29 +1671,20 @@ export class ModularChangeFamily
 		rebasedNodes: ChangeAtomIdBTree<NodeChangeset>,
 		rebasedRoots: RootNodeTable,
 		constraintState: ConstraintState,
-		revertConstraintState: ConstraintState,
 	): void {
 		this.updateConstraintsForFields(
 			rebasedFields,
 			NodeAttachState.Attached,
-			NodeAttachState.Attached,
 			constraintState,
-			revertConstraintState,
 			rebasedNodes,
 		);
 
 		for (const [_detachId, nodeId] of rebasedRoots.nodeChanges.entries()) {
-			// XXX: This is incorrect if the rebased changeset attaches the node.
-			// Efficiently computing whether the changeset attaches the node would require maintaining a mapping from node ID to attach ID.
-			// Alternatively, we could only set the input attach/detach state here, and set the output detach state by viewing fields?
-			const detachedInOutput = true;
 			this.updateConstraintsForNode(
 				nodeId,
 				NodeAttachState.Detached,
-				detachedInOutput ? NodeAttachState.Detached : NodeAttachState.Attached,
 				rebasedNodes,
 				constraintState,
-				revertConstraintState,
 			);
 		}
 	}
@@ -1682,30 +1692,19 @@ export class ModularChangeFamily
 	private updateConstraintsForFields(
 		fields: FieldChangeMap,
 		parentInputAttachState: NodeAttachState,
-		parentOutputAttachState: NodeAttachState,
 		constraintState: ConstraintState,
-		revertConstraintState: ConstraintState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 	): void {
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
-			for (const [nodeId] of handler.getNestedChanges(field.change)) {
-				// XXX: This is incorrect if the rebased changeset detaches this node.
-				// Efficiently computing whether the changeset detaches the node would require maintaining a mapping from node ID to detach ID.
-				const isOutputDetached = false;
-				const outputAttachState =
-					parentOutputAttachState === NodeAttachState.Detached || isOutputDetached
+			for (const [nodeId, inputIndex] of handler.getNestedChanges(field.change)) {
+				const isInputDetached = inputIndex === undefined;
+				const inputAttachState =
+					parentInputAttachState === NodeAttachState.Detached || isInputDetached
 						? NodeAttachState.Detached
 						: NodeAttachState.Attached;
 
-				this.updateConstraintsForNode(
-					nodeId,
-					parentInputAttachState,
-					outputAttachState,
-					nodes,
-					constraintState,
-					revertConstraintState,
-				);
+				this.updateConstraintsForNode(nodeId, inputAttachState, nodes, constraintState);
 			}
 		}
 	}
@@ -1713,10 +1712,8 @@ export class ModularChangeFamily
 	private updateConstraintsForNode(
 		nodeId: NodeId,
 		inputAttachState: NodeAttachState,
-		outputAttachState: NodeAttachState,
 		nodes: ChangeAtomIdBTree<NodeChangeset>,
 		constraintState: ConstraintState,
-		revertConstraintState: ConstraintState,
 	): void {
 		const node = getFromChangeAtomIdMap(nodes, nodeId) ?? fail(0xb24 /* Unknown node ID */);
 
@@ -1733,24 +1730,12 @@ export class ModularChangeFamily
 				constraintState.violationCount += isNowViolated ? 1 : -1;
 			}
 		}
-		if (node.nodeExistsConstraintOnRevert !== undefined) {
-			const isNowViolated = outputAttachState === NodeAttachState.Detached;
-			if (node.nodeExistsConstraintOnRevert.violated !== isNowViolated) {
-				updatedNode.nodeExistsConstraintOnRevert = {
-					...node.nodeExistsConstraintOnRevert,
-					violated: isNowViolated,
-				};
-				revertConstraintState.violationCount += isNowViolated ? 1 : -1;
-			}
-		}
 
 		if (node.fieldChanges !== undefined) {
 			this.updateConstraintsForFields(
 				node.fieldChanges,
 				inputAttachState,
-				outputAttachState,
 				constraintState,
-				revertConstraintState,
 				nodes,
 			);
 		}
@@ -2437,7 +2422,6 @@ export function updateRefreshers(
 		maxId,
 		revisions,
 		constraintViolationCount,
-		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 		rootNodes,
@@ -2454,7 +2438,6 @@ export function updateRefreshers(
 		maxId: maxId as number,
 		revisions,
 		constraintViolationCount,
-		constraintViolationCountOnRevert,
 		builds,
 		destroys,
 		refreshers,
@@ -3575,7 +3558,6 @@ function makeModularChangeset(props?: {
 	maxId: number;
 	revisions?: readonly RevisionInfo[];
 	constraintViolationCount?: number;
-	constraintViolationCountOnRevert?: number;
 	noChangeConstraint?: NoChangeConstraint;
 	noChangeConstraintOnRevert?: NoChangeConstraint;
 	builds?: ChangeAtomIdBTree<TreeChunk>;
@@ -3601,12 +3583,6 @@ function makeModularChangeset(props?: {
 	}
 	if (p.constraintViolationCount !== undefined && p.constraintViolationCount > 0) {
 		changeset.constraintViolationCount = p.constraintViolationCount;
-	}
-	if (
-		p.constraintViolationCountOnRevert !== undefined &&
-		p.constraintViolationCountOnRevert > 0
-	) {
-		changeset.constraintViolationCountOnRevert = p.constraintViolationCountOnRevert;
 	}
 	if (p.noChangeConstraint !== undefined) {
 		changeset.noChangeConstraint = p.noChangeConstraint;

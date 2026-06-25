@@ -386,10 +386,7 @@ export function isModularEmpty(change: ModularChangeset): boolean {
 	if (change.destroys !== undefined && change.destroys.length > 0) {
 		return false;
 	}
-	if (
-		change.constraintViolationCount !== undefined ||
-		change.constraintViolationCountOnRevert !== undefined
-	) {
+	if (change.constraintViolationCount !== undefined) {
 		return false;
 	}
 	if (change.crossFieldKeys.entries().length > 0) {

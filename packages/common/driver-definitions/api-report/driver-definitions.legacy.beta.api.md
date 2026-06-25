@@ -267,7 +267,7 @@ export interface IDocumentService extends IEventProvider<IDocumentServiceEvents>
     connectToDeltaStream(client: IClient): Promise<IDocumentDeltaConnection>;
     connectToStorage(): Promise<IDocumentStorageService>;
     dispose(error?: any): void;
-    policies?: IDocumentServicePolicies;
+    policies?: IDocumentServicePolicies | undefined;
     // (undocumented)
     resolvedUrl: IResolvedUrl;
 }
@@ -375,6 +375,7 @@ export interface IPersistedCache {
     put(entry: ICacheEntry, value: unknown): Promise<void>;
     removeEntries(file: IFileEntry): Promise<void>;
     removeEntry?(entry: ICacheEntry): Promise<void>;
+    update?(entry: ICacheEntry, updater: (existing: unknown, set: (value: unknown) => void) => void): Promise<boolean>;
 }
 
 // @beta @legacy (undocumented)

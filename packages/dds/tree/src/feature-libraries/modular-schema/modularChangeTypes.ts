@@ -71,11 +71,6 @@ export interface ModularChangeset extends Readonly<HasFieldChanges> {
 	readonly noChangeConstraint?: NoChangeConstraint;
 	/** Constraint that the document must be in the same state before the revert of this change is applied as it was after this change was applied */
 	readonly noChangeConstraintOnRevert?: NoChangeConstraint;
-	/**
-	 * The number of constraint violations that apply to the revert of the changeset. If this count is greater than 0, it will
-	 * prevent the changeset from being reverted or undone.
-	 */
-	readonly constraintViolationCountOnRevert?: number;
 	readonly builds?: ChangeAtomIdBTree<TreeChunk>;
 	readonly destroys?: ChangeAtomIdBTree<number>;
 	readonly refreshers?: ChangeAtomIdBTree<TreeChunk>;

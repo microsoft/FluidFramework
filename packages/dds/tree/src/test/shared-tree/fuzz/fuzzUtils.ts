@@ -177,7 +177,6 @@ export class SharedTreeFuzzTestFactory extends SharedTreeTestFactory {
 		return SharedTreeTestFactory.build(onCreate, onLoad, {
 			...options,
 			jsonValidator: FormatValidatorBasic,
-			disposeForksAfterTransaction: false,
 		});
 	}
 }

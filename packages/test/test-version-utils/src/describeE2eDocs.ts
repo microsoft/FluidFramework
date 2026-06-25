@@ -366,25 +366,44 @@ function createE2EDocCompatSuite(
 				describe(name, function () {
 					let provider: TestObjectProvider;
 					let resetAfterEach: boolean;
+					// These docs tests are not cross-client compat, so the same set of APIs is used for
+					// both creating and loading containers; the "ForLoading" APIs mirror the ones above.
 					const dataRuntimeApi = getDataRuntimeApi(
-						getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
+						getRequestedVersion({
+							baseVersion: testBaseVersion(config.dataRuntime),
+							requested: config.dataRuntime,
+						}),
+					);
+					const containerRuntimeApi = getContainerRuntimeApi(
+						getRequestedVersion({
+							baseVersion: testBaseVersion(config.containerRuntime),
+							requested: config.containerRuntime,
+						}),
+					);
+					const driverApi = getDriverApi(
+						getRequestedVersion({
+							baseVersion: testBaseVersion(config.driver),
+							requested: config.driver,
+						}),
+					);
+					const loaderApi = getLoaderApi(
+						getRequestedVersion({
+							baseVersion: testBaseVersion(config.loader),
+							requested: config.loader,
+						}),
 					);
 					const apis: CompatApis = {
 						mode: getCompatModeFromKind(config.kind),
-						containerRuntime: getContainerRuntimeApi(
-							getRequestedVersion(
-								testBaseVersion(config.containerRuntime),
-								config.containerRuntime,
-							),
-						),
+						containerRuntime: containerRuntimeApi,
+						containerRuntimeForLoading: containerRuntimeApi,
 						dataRuntime: dataRuntimeApi,
+						dataRuntimeForLoading: dataRuntimeApi,
 						dds: dataRuntimeApi.dds,
-						driver: getDriverApi(
-							getRequestedVersion(testBaseVersion(config.driver), config.driver),
-						),
-						loader: getLoaderApi(
-							getRequestedVersion(testBaseVersion(config.loader), config.loader),
-						),
+						ddsForLoading: dataRuntimeApi.dds,
+						driver: driverApi,
+						driverForLoading: driverApi,
+						loader: loaderApi,
+						loaderForLoading: loaderApi,
 					};
 
 					before("Create TestObjectProvider", async function () {

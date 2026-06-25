@@ -13,10 +13,7 @@ import type {
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type CodecTree,
@@ -201,7 +198,7 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -320,7 +317,6 @@ export class SharedTreeKernel
 			chunkCompressionStrategy: options.treeEncodeType,
 			logger,
 			breaker: this.breaker,
-			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -643,9 +639,7 @@ export interface SharedTreeOptions
 
 export interface SharedTreeOptionsInternal
 	extends SharedTreeOptions,
-		Partial<SharedTreeCoreOptionsInternal> {
-	disposeForksAfterTransaction?: boolean;
-}
+		Partial<SharedTreeCoreOptionsInternal> {}
 
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -768,7 +762,6 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
 	enableSharedBranches: false,
 	healUnresolvableIdentifiersOnDecode: false,

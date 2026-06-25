@@ -4,6 +4,8 @@
  */
 
 export {
+	collectContiguousRanges,
+	type IndexRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,

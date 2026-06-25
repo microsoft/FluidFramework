@@ -37,7 +37,6 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
 	RunTransactionParams,
-	RunTransactionSyncParams,
 	TransactionCallbackStatus,
 	TransactionResult,
 	TransactionResultExt,
@@ -194,7 +193,7 @@ export interface TreeContextAlpha {
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
 	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
-	 * @param params - Optional {@link RunTransactionSyncParams | parameters} for the transaction.
+	 * @param params - Optional {@link RunTransactionParams | parameters} for the transaction.
 	 * @returns A {@link TransactionResultExt | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
@@ -216,14 +215,11 @@ export interface TreeContextAlpha {
 	 */
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TValue, TValue>;
 
 	/** An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value. */
-	runTransaction(
-		transaction: () => void,
-		params?: RunTransactionSyncParams,
-	): TransactionResult;
+	runTransaction(transaction: () => void, params?: RunTransactionParams): TransactionResult;
 
 	/**
 	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
@@ -305,7 +301,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResultExt<TSuccessValue, TFailureValue>;
 
 	/**
@@ -313,7 +309,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 */
 	runTransaction(
 		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionSyncParams,
+		params?: RunTransactionParams,
 	): TransactionResult;
 
 	/**
@@ -346,6 +342,17 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * Update the tests and docs to match when that is done.
 	 */
 	applyChange(change: JsonCompatibleReadOnly): void;
+
+	/**
+	 * Determines if there are changes on the given branch that are not present on this branch.
+	 * @param branch - The branch to compare to.
+	 *
+	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
+	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 *
+	 * @throws UsageError if the branches are unrelated.
+	 */
+	isMissingEditsFrom(branch: TreeBranch): boolean;
 }
 
 /**

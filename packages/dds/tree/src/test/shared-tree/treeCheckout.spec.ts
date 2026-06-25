@@ -838,247 +838,27 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
-		describe("deferEvents", () => {
-			itView("buffers nodeChanged events until the transaction commits", ({ view }) => {
-				const log: string[] = [];
-				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
 
-				view.runTransaction(
-					() => {
-						view.root.insertAtEnd("A");
-						assert.deepEqual(log, [], "nodeChanged should not fire during the transaction");
-						view.root.insertAtEnd("B");
-						assert.deepEqual(log, [], "nodeChanged should not fire during the transaction");
-					},
-					{ deferEvents: true },
-				);
-
-				assert.deepEqual(log, ["nodeChanged"], "nodeChanged should fire once after commit");
+			const forks: (typeof view)[] = [];
+			view.events.on("changed", () => {
+				forks.push(view.fork());
 			});
 
-			itView(
-				"coalesces multiple nodeChanged events into one when deferEvents is true",
-				({ view }) => {
-					let nodeChangedCount = 0;
-					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
-
-					// Without buffering, two inserts → two nodeChanged events.
-					// With buffering, they coalesce into one.
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("A");
-							view.root.insertAtEnd("B");
-						},
-						{ deferEvents: true },
-					);
-
-					assert.equal(nodeChangedCount, 1);
-				},
-			);
-
-			itView(
-				"unbuffered rollback fires two nodeChanged events (edit then revert)",
-				({ view }) => {
-					// Baseline: without `deferEvents`, the insert and the abort each fire their
-					// own `nodeChanged` event — two events for a net-zero change.
-					const log: string[] = [];
-					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
-
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("A");
-							return { rollback: true };
-						},
-						{ deferEvents: false },
-					);
-
-					assert.deepEqual(view.root, []);
-					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
-				},
-			);
-
-			itView("emits no nodeChanged events for a rolled-back transaction", ({ view }) => {
-				// Without buffering, a rolled-back transaction emits TWO events: one when the edit
-				// is applied and a second when the abort reverses it. With deferEvents both are
-				// captured by the buffer; because the tree ends in its starting state the
-				// runTransaction wrapper discards the buffer entirely instead of flushing it.
-				const log: string[] = [];
-				Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
-
-				view.runTransaction(
-					() => {
-						view.root.insertAtEnd("A");
-						return { rollback: true };
-					},
-					{ deferEvents: true },
-				);
-
-				assert.deepEqual(view.root, []);
-				assert.deepEqual(log, []);
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
 			});
 
-			itView(
-				"fires nodeChanged normally (unbuffered) when deferEvents is false",
-				({ view }) => {
-					const log: string[] = [];
-					Tree.on(view.root, "nodeChanged", () => log.push("nodeChanged"));
+			assert.equal(forks.length, 1);
 
-					view.runTransaction(() => {
-						view.root.insertAtEnd("A");
-						view.root.insertAtEnd("B");
-					});
+			assert.deepEqual(forks[0].disposed, false);
+			assert.deepEqual(forks[0].root, ["A"]);
 
-					assert.deepEqual(log, ["nodeChanged", "nodeChanged"]);
-				},
-			);
-
-			itView(
-				"nested transactions: outer deferEvents coalesces events from inner transaction",
-				({ view }) => {
-					let nodeChangedCount = 0;
-					Tree.on(view.root, "nodeChanged", () => nodeChangedCount++);
-
-					view.runTransaction(
-						() => {
-							view.runTransaction(() => {
-								view.root.insertAtEnd("A");
-								view.root.insertAtEnd("B");
-							});
-							view.root.insertAtEnd("C");
-						},
-						{ deferEvents: true },
-					);
-
-					assert.equal(nodeChangedCount, 1);
-					assert.deepEqual(view.root, ["A", "B", "C"]);
-				},
-			);
-
-			// treeChanged tests — mirrors the nodeChanged tests above but for the subtree event.
-
-			itView("buffers treeChanged events until the transaction commits", ({ view }) => {
-				const log: string[] = [];
-				Tree.on(view.root, "treeChanged", () => log.push("treeChanged"));
-
-				view.runTransaction(
-					() => {
-						view.root.insertAtEnd("A");
-						assert.deepEqual(log, [], "treeChanged should not fire during the transaction");
-						view.root.insertAtEnd("B");
-						assert.deepEqual(log, [], "treeChanged should not fire during the transaction");
-					},
-					{ deferEvents: true },
-				);
-
-				assert.deepEqual(log, ["treeChanged"], "treeChanged should fire once after commit");
-			});
-
-			itView(
-				"coalesces multiple treeChanged events into one when deferEvents is true",
-				({ view }) => {
-					let treeChangedCount = 0;
-					Tree.on(view.root, "treeChanged", () => treeChangedCount++);
-
-					view.runTransaction(
-						() => {
-							view.root.insertAtEnd("A");
-							view.root.insertAtEnd("B");
-						},
-						{ deferEvents: true },
-					);
-
-					assert.equal(treeChangedCount, 1);
-				},
-			);
-
-			itView("emits no treeChanged events for a rolled-back transaction", ({ view }) => {
-				const log: string[] = [];
-				Tree.on(view.root, "treeChanged", () => log.push("treeChanged"));
-
-				view.runTransaction(
-					() => {
-						view.root.insertAtEnd("A");
-						return { rollback: true };
-					},
-					{ deferEvents: true },
-				);
-
-				assert.deepEqual(view.root, []);
-				assert.deepEqual(log, []);
-			});
-
-			// Nested-schema tests — verify treeChanged behavior that diverges from nodeChanged.
-			// For an object with a child array, modifying the child array fires:
-			//   - nodeChanged on the child array (direct change)
-			//   - treeChanged on the parent object (subtree change)
-			// but does NOT fire nodeChanged on the parent object (the "items" field was not reassigned).
-
-			const sfBE = new SchemaFactory("deferEvents treeChanged tests");
-			const BEItemsArray = sfBE.array("Items", sfBE.string);
-			const BERoot = sfBE.object("Root", { items: BEItemsArray });
-
-			itView(
-				"treeChanged on an ancestor node is buffered when a descendant changes",
-				({ view }) => {
-					const log: string[] = [];
-					const root = view.root;
-					// nodeChanged on the root object does NOT fire here because the "items" field
-					// is not reassigned; only the array's contents change.
-					Tree.on(root, "nodeChanged", () => log.push("nodeChanged"));
-					Tree.on(root, "treeChanged", () => log.push("treeChanged"));
-					Tree.on(root.items, "nodeChanged", () => log.push("items.nodeChanged"));
-
-					view.runTransaction(
-						() => {
-							root.items.insertAtEnd("A");
-							root.items.insertAtEnd("B");
-							assert.deepEqual(log, [], "no events should fire during the transaction");
-						},
-						{ deferEvents: true },
-					);
-
-					assert.deepEqual([...root.items], ["A", "B"]);
-					// items.nodeChanged fires once (two inserts coalesced).
-					// treeChanged fires once on root (subtree changed).
-					// nodeChanged does NOT fire on root (the "items" field was not reassigned).
-					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
-				},
-				{
-					initialContent: {
-						schema: BERoot,
-						initialTree: { items: [] },
-					},
-				},
-			);
-
-			itView(
-				"nodeChanged and treeChanged are both deferred to the same flush point",
-				({ view }) => {
-					const log: string[] = [];
-					const root = view.root;
-					Tree.on(root, "treeChanged", () => log.push("treeChanged"));
-					Tree.on(root.items, "nodeChanged", () => log.push("items.nodeChanged"));
-
-					view.runTransaction(
-						() => {
-							root.items.insertAtEnd("A");
-							assert.deepEqual(log, [], "no events should fire during the transaction");
-							root.items.insertAtEnd("B");
-							assert.deepEqual(log, [], "no events should fire during the transaction");
-						},
-						{ deferEvents: true },
-					);
-
-					// Both events fire (each exactly once) after the transaction, not during it.
-					assert.deepEqual(log, ["treeChanged", "items.nodeChanged"]);
-				},
-				{
-					initialContent: {
-						schema: BERoot,
-						initialTree: { items: [] },
-					},
-				},
-			);
+			assert.deepEqual(view.root, ["A"]);
 		});
 	});
 
@@ -1484,6 +1264,37 @@ describe("sharedTreeView", () => {
 			stacks.unsubscribe();
 		});
 
+		it("are disposed upon rollback of the commit they would revert", () => {
+			// Setup
+			const sf = new SchemaFactory("Enrichment Schema");
+			class Node extends sf.object("Node", { id: sf.string }) {}
+			const NodeArray = sf.array(Node);
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const init = view.checkout.mainBranch.getHead();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.root.insertAtEnd({ id: "A" });
+			view.root[0].id = "B";
+			assert.equal(undoStack.length, 2);
+			const [undo1, undo2] = undoStack;
+
+			// Act
+			view.checkout.mainBranch.removeAfter(init);
+
+			// Consistency check
+			assert.equal(view.root.length, 0);
+
+			// Verify
+			assert.equal(undo1.status, RevertibleStatus.Disposed);
+			assert.equal(undo2.status, RevertibleStatus.Disposed);
+
+			// Cleanup
+			unsubscribe();
+		});
+
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
@@ -1529,8 +1340,12 @@ describe("sharedTreeView", () => {
 			) => void | SchematizingSimpleTreeView<typeof NumberNode>;
 			/** The code to run during the edit that should throw an error */
 			duringEdit: (view: SchematizingSimpleTreeView<typeof NumberNode>) => void;
-			/** The expected error message */
-			error: string;
+			/**
+			 * The expected error message.
+			 * A `string` is matched exactly; a `RegExp` matches loosely (use it only when the full
+			 * message is intentionally not being pinned).
+			 */
+			error: string | RegExp;
 		}): void {
 			let view = getView(
 				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
@@ -1543,7 +1358,7 @@ describe("sharedTreeView", () => {
 				args.duringEdit(view);
 			});
 
-			assert.throws(() => (view.root.number = 0), new RegExp(args.error));
+			assert.throws(() => (view.root.number = 0), validateUsageError(args.error));
 		}
 
 		it("edit the tree", () => {
@@ -1551,28 +1366,21 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => {
 					view.root.number = 4;
 				},
-				error: "Editing the tree is forbidden during a nodeChanged or treeChanged event",
-			});
-		});
-
-		it("create a branch", () => {
-			expectErrorDuringEdit({
-				duringEdit: (view) => view.fork(),
-				error: ".*Branching is forbidden during a nodeChanged or treeChanged event.*",
+				error: "Editing the tree is forbidden during a change event callback",
 			});
 		});
 
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.rebaseOnto(view),
-				error: "Rebasing is forbidden during a nodeChanged or treeChanged event",
+				error: "Rebasing is forbidden during a change event callback",
 			});
 		});
 
 		it("merge a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.merge(view),
-				error: "Merging is forbidden during a nodeChanged or treeChanged event",
+				error: "Merging is forbidden during a change event callback",
 			});
 		});
 
@@ -1588,7 +1396,7 @@ describe("sharedTreeView", () => {
 					assert(revertible !== undefined, "Expected revertible to be created.");
 				},
 				duringEdit: () => revertible?.revert(),
-				error: "Reverting a commit is forbidden during a nodeChanged or treeChanged event",
+				error: "Reverting a commit is forbidden during a change event callback",
 			});
 		});
 
@@ -1597,8 +1405,39 @@ describe("sharedTreeView", () => {
 			expectErrorDuringEdit({
 				setup: (view) => (branch = view.fork()), // Create a fork of the view because the main view can't be disposed
 				duringEdit: (view) => view.dispose(),
-				error: "Disposing a view is forbidden during a nodeChanged or treeChanged event",
+				error: "Disposing a view is forbidden during a change event callback",
 			});
+		});
+
+		it("run a transaction", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.runTransaction(() => {}),
+				error: "Running a transaction is forbidden during a change event callback",
+			});
+		});
+
+		it("run an async transaction", async () => {
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+			view.initialize({ number: 3 });
+
+			// Unlike the synchronous cases above, `runTransactionAsync` surfaces the guard as a
+			// rejected promise rather than a synchronous throw, so it is captured and awaited here.
+			let asyncTransaction: Promise<unknown> | undefined;
+			Tree.on(view.root, "nodeChanged", () => {
+				asyncTransaction = view.runTransactionAsync(async () => {});
+			});
+
+			view.root.number = 0;
+
+			assert(asyncTransaction !== undefined, "Async transaction should have been attempted.");
+			await assert.rejects(
+				asyncTransaction,
+				validateUsageError(
+					"Running a transaction is forbidden during a change event callback",
+				),
+			);
 		});
 	});
 
