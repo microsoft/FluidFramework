@@ -11,6 +11,7 @@
 		"moduleResolution": "Node16",
 		"rootDir": "./src",
 		"types": ["mocha"],
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["src/**/*"],
 }

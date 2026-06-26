@@ -10,6 +10,8 @@
 		"types": ["node", "mocha", "chai", "sinon"],
 		"declaration": false,
 		"declarationMap": false,
+		// The tests have only one violation at the time of setting this explicitly, but implementation has plenty of errors.
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [
