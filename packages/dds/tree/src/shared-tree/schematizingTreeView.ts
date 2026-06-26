@@ -33,7 +33,7 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
@@ -59,6 +59,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -100,8 +101,14 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private viewSchema: SchemaCompatibilityTester;
-	private declaredUpgrades?: Readonly<Record<string, SchemaUpgrade>>;
+	/**
+	 * The schema for this view, captured at construction time for compatibility checking.
+	 */
+	private readonly viewSchema: TreeSchema;
+	/**
+	 * Staged schema upgrades from the view configuration, frozen at construction time.
+	 */
+	private readonly enabledUpgrades: Readonly<Record<string, SchemaUpgrade>> | undefined;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -144,9 +151,20 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const enabledUpgrades =
+			config instanceof TreeViewConfigurationAlpha && config.enabledUpgrades !== undefined
+				? { ...config.enabledUpgrades }
+				: undefined;
+		const configAlpha = new TreeViewConfigurationAlpha({
+			schema: config.schema,
+			enableSchemaValidation: config.enableSchemaValidation,
+			preventAmbiguity: config.preventAmbiguity,
+			enabledUpgrades,
+		});
+		this.enabledUpgrades = configAlpha.enabledUpgrades;
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha, this.declaredUpgrades);
+		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -182,18 +200,6 @@ export class SchematizingSimpleTreeView<
 		return this.config.schema;
 	}
 
-	public declareEnabledUpgrades(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void {
-		this.ensureUndisposed();
-
-		this.declaredUpgrades = this.normalizeUpgrades(upgrades);
-		this.viewSchema = new SchemaCompatibilityTester(
-			this.viewSchema.viewSchema,
-			this.declaredUpgrades,
-		);
-
-		this.currentCompatibility = this.computeCompatibility();
-	}
-
 	public initialize(content: InsertableField<TRootSchema>): void {
 		this.ensureUndisposed();
 
@@ -203,7 +209,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.declaredUpgrades);
+			const schema = toInitialSchema(this.config.schema, this.enabledUpgrades);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -261,7 +267,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root, this.declaredUpgrades);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.enabledUpgrades);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -434,21 +440,15 @@ export class SchematizingSimpleTreeView<
 	}
 
 	private computeCompatibility(): SchemaCompatibilityStatus {
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.enabledUpgrades,
+		);
 		return {
 			...compatibility,
 			canInitialize: canInitialize(this.checkout),
 		};
-	}
-
-	private normalizeUpgrades(
-		upgrades: Readonly<Record<string, SchemaUpgrade>> | undefined,
-	): Readonly<Record<string, SchemaUpgrade>> | undefined {
-		if (upgrades === undefined || Object.keys(upgrades).length === 0) {
-			return undefined;
-		}
-
-		return upgrades;
 	}
 
 	private runSchemaEdit(edit: () => void): void {

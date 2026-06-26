@@ -13,6 +13,7 @@ import {
 	NodeKind,
 	type TreeNodeSchema,
 } from "../core/index.js";
+import type { SchemaUpgrade } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	isArrayNodeSchema,
@@ -156,6 +157,29 @@ export interface ITreeViewConfiguration<
 }
 
 /**
+ * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
+ * @alpha
+ */
+export interface ITreeViewConfigurationAlpha<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> extends ITreeViewConfiguration<TSchema> {
+	/**
+	 * Staged schema upgrades to enable for this view when calling `initialize` or `upgradeSchema`.
+	 * @remarks
+	 * These upgrades are fixed at view construction time and cannot be changed afterwards.
+	 *
+	 * Each property maps an application-defined label to a {@link SchemaUpgrade} value obtained
+	 * from a staged schema factory API.
+	 * Only the `SchemaUpgrade` values are used to decide which staged schema members are included
+	 * in generated stored schema; the property names are for call-site clarity and are not persisted.
+	 *
+	 * When omitted or empty, staged schema members remain disabled and `initialize`/`upgradeSchema`
+	 * generate the most restrictive stored schema compatible with the view schema.
+	 */
+	readonly enabledUpgrades?: Readonly<Record<string, SchemaUpgrade>>;
+}
+
+/**
  * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
@@ -252,11 +276,20 @@ export class TreeViewConfigurationAlpha<
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
 	>;
 
-	public constructor(props: ITreeViewConfiguration<TSchema>) {
+	/**
+	 * The staged schema upgrades declared for this view, as provided at construction time.
+	 */
+	public readonly enabledUpgrades: Readonly<Record<string, SchemaUpgrade>> | undefined;
+
+	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
+		this.enabledUpgrades =
+			props.enabledUpgrades !== undefined && Object.keys(props.enabledUpgrades).length > 0
+				? props.enabledUpgrades
+				: undefined;
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root);

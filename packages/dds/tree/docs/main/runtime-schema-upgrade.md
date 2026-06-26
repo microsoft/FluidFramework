@@ -6,17 +6,12 @@
 
 Runtime schema upgrades let an application opt specific staged schema upgrades into stored schema when initializing a document or upgrading its stored schema.
 A staged schema upgrade is a schema upgrade that is declared in view schema but omitted from stored schema unless the application explicitly enables it.
-The application does this by calling `TreeViewAlpha.declareEnabledUpgrades(upgrades)` before `initialize` or `upgradeSchema`.
-The `upgrades` input can be either:
 
-- an application-owned property bag mapping string names to `SchemaUpgrade` values, or
-- a `StoredFromViewSchemaGenerationOptions` object.
+Enabled upgrades are provided at view construction time through alpha configuration passed to `viewWith`.
+The set of enabled upgrades is fixed for that view instance and cannot be changed later through view APIs.
 
-For property bags, property names are chosen by the application, for example `enableFooUpgrade`.
-The runtime uses the `SchemaUpgrade` values to decide which staged schema upgrades should be included in the stored schema.
-The property names are for call-site clarity and feature-flag integration; they are not part of the stored schema and should not affect compatibility.
-
-Calling `declareEnabledUpgrades` before `initialize` or `upgradeSchema` lets the same declared set drive both compatibility checking and schema generation.
+This keeps the view schema and upgrade policy together in one place: the view configuration.
+Compatibility checking and schema generation both use that same construction-time upgrade set.
 
 ## Problem
 
@@ -26,7 +21,7 @@ Problem: There is currently no easy way to create a test document that simulates
 Declaring a staged schema upgrade in the view schema is not enough to change the document: `initialize` and `upgradeSchema` only make that upgrade usable when they include it in the stored schema.
 As a result, an application cannot easily test whether the current version works correctly with documents created or upgraded by a future version.
 
-Solution: tests declare selected staged schema upgrades on the view before calling `initialize` or `upgradeSchema`.
+Solution: tests construct a view with an alpha configuration that includes selected staged schema upgrades which get applied to the stored schema when calling `initialize` or `upgradeSchema`.
 This makes it possible to create documents whose stored schema matches the state a future version would produce, while still running the test against the current application code.
 
 ### Production Rollout Control
@@ -35,85 +30,79 @@ Problem: In production, developers often need to deploy code that can read and w
 Without a runtime enablement mechanism, code rollout and feature rollout are coupled: once the staged schema upgrade stops being excluded from stored schema, all relevant documents may begin accepting the upgraded shape.
 This is risky for teams that need gradual rollout, monitoring, or fast rollback but do not have sophisticated slow-rollout tooling.
 
-Solution: applications derive an upgrades bag from feature flags and declare it on the view before calling `initialize` or `upgradeSchema`.
-Code rollout can deploy support for the upgraded schema first, and feature rollout can later enable the staged schema upgrade by declaring the relevant `SchemaUpgrade` values.
-If the feature needs to be rolled back, the application stops declaring those values for documents that have not already been upgraded.
+Solution: applications derive an upgrades bag from feature flags and include it in view construction options.
+Code rollout can deploy support for the upgraded schema first, and feature rollout can later enable the staged schema upgrade by constructing views with the relevant `SchemaUpgrade` values.
+If the feature needs to be rolled back, applications stop constructing views with those values for documents that have not already been upgraded.
 
 The general production rollout process is:
 
 1. Deploy code that understands both the current schema and the upgraded schema.
-	The code calls `declareEnabledUpgrades` with an upgrades bag controlled by application configuration or a feature flag, but the flag initially leaves the bag empty.
+   Views are constructed with alpha configuration that accepts an upgrades bag, but the flag initially leaves the bag empty.
 2. Enable the feature-rollout control.
-	Clients now declare the relevant `SchemaUpgrade` values.
+   New views are constructed with the relevant `SchemaUpgrade` values enabled.
 3. Existing documents are upgraded through `upgradeSchema`.
-	A schema op is sequenced for each upgraded document.
-	Once the op is in the document, all clients observe the upgraded stored schema, including clients whose local feature flag is off.
+   A schema op is sequenced for each upgraded document.
+   Once the op is in the document, all clients observe the upgraded stored schema, including clients whose local feature flag is off.
 4. New documents initialized while the control is enabled include the same staged schema upgrades from the start.
 5. If an issue is found, disable the feature-rollout control.
-	Callers stop declaring the relevant entries for documents that have not yet been upgraded and newly initialized documents do not include those staged schema members.
-	Note: this selective rollback plan is currently difficult in practice.
-	If a document has already enabled a staged upgrade, later calling `upgradeSchema` without that token throws a `UsageError` because the request would narrow stored schema.
-	In most deployments it is hard to target only documents that have not already been upgraded, so this step is not generally feasible as written.
+   Callers stop constructing views with the relevant entries for documents that have not yet been upgraded and newly initialized documents do not include those staged schema members.
+   Note: this selective rollback plan is currently difficult in practice.
+   If a document has already enabled a staged upgrade, later calling `upgradeSchema` from a view configured without that token throws a `UsageError` because the request would narrow stored schema.
+   In most deployments it is hard to target only documents that have not already been upgraded, so this step is not generally feasible as written.
 
 Documents upgraded before the rollback continue to support the upgraded schema because their stored schema has already changed.
 Documents created after the rollback do not include that upgrade unless the flag is enabled again.
 
 ## Goals
 
--   Allow callers to enable selected staged schema upgrades during `initialize`.
--   Allow callers to enable selected staged schema upgrades during `upgradeSchema`.
--   Make enabling an upgrade granular: only staged schema members associated with the supplied `SchemaUpgrade` values are included in the generated stored schema.
--   Support both production feature-flag rollouts and tests that simulate documents created or upgraded by a future application version.
--   Keep the default behavior unchanged when `declareEnabledUpgrades` is omitted, `undefined`, or empty.
--   Support an easy integration-test mode that enables all staged upgrades.
--   Support composition/wrapping of generation options.
+- Allow callers to enable selected staged schema upgrades during `initialize`.
+- Allow callers to enable selected staged schema upgrades during `upgradeSchema`.
+- Make enabling an upgrade granular: only staged schema members associated with the supplied `SchemaUpgrade` values are included in the generated stored schema.
+- Support both production feature-flag rollouts and tests that simulate documents created or upgraded by a future application version.
+- Keep the default behavior unchanged when upgrades are omitted, `undefined`, or empty.
+- Keep view APIs immutable with respect to upgrade enablement after construction.
+- Support an easy integration-test mode that enables all staged upgrades.
+- Support composition/wrapping of generation options.
 
 ## API Shape
 
-The alpha versions of both schema-writing entry points use a declaration-first flow:
+The alpha flow sets staged-upgrade policy in view construction:
 
 ```typescript
-const alphaView = asAlpha(view);
-
-alphaView.declareEnabledUpgrades(upgrades);
-alphaView.initialize(content);
-alphaView.upgradeSchema();
-```
-
-`upgrades` can be a property bag of application-owned names to `SchemaUpgrade` values:
-
-```typescript
-const upgrades = featureFlags.enableFooUpgrade
+const enabledUpgrades = featureFlags.enableFooUpgrade
 	? { enableFooUpgrade: fooSchemaUpgrade }
 	: undefined;
 
-asAlpha(view).declareEnabledUpgrades(upgrades);
+const view = tree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		enabledUpgrades,
+	}),
+);
+
+if (view.compatibility.canInitialize) {
+	view.initialize(initialContent);
+} else if (view.compatibility.canUpgrade) {
+	view.upgradeSchema();
+}
 ```
 
-or a full `StoredFromViewSchemaGenerationOptions` object:
+Key properties of this shape:
 
-```typescript
-asAlpha(view).declareEnabledUpgrades(permissiveStoredSchemaGenerationOptions);
-```
-
-The name `enableFooUpgrade` is not interpreted by SharedTree.
-It gives the application a readable, flag-friendly place to name why the `SchemaUpgrade` is being supplied.
-SharedTree treats the provided values as a set of enabled staged schema upgrades.
-
-When `upgrades` is omitted, `undefined`, or empty, `initialize` and `upgradeSchema` continue to generate the restrictive stored schema they generate today.
-No staged schema members are included by default.
+- The upgrade set is fixed when the view is created.
+- `compatibility.canUpgrade`, `initialize`, and `upgradeSchema` all observe the same configured target.
 
 ### Accepting `StoredFromViewSchemaGenerationOptions`
 
-`declareEnabledUpgrades` accepts a full `StoredFromViewSchemaGenerationOptions`, not only an upgrades bag.
-This keeps the API unified while still allowing callers to declare policy directly for staged-type and staged-optional inclusion when they need to.
+In addition to an application-owned `Record<string, SchemaUpgrade>` bag, the construction-time configuration model can support accepting a full `StoredFromViewSchemaGenerationOptions` policy object in view configuration.
+This keeps policy selection at view construction time while allowing advanced callers to configure staged-type and staged-optional inclusion directly.
 
 Benefits:
 
-- Keeps schema-generation policy as a first-class API concept.
-- Supports layered configuration (base policy + local override) without changing schema-writing entry points.
-- Preserves a single source of truth by feeding one resolved options object into compatibility checks and schema generation.
-- Enables integration tests to force broad enablement quickly (for example with `permissiveStoredSchemaGenerationOptions`).
+- Keeps schema-generation policy explicit and colocated with view construction.
+- Supports layered policy composition (base + local override) without adding mutable view APIs.
+- Preserves single-source-of-truth behavior: compatibility checks and schema generation consume the same resolved policy.
+- Enables broad integration-test scenarios (for example, all staged upgrades enabled) with a single configuration choice.
 
 Future consideration:
 
@@ -122,78 +111,69 @@ Future consideration:
 - That could clarify that the exposed policy is the default used when no custom options are declared.
 - Callers could build wrapper policies from that baseline instead of reconstructing it.
 
-## Why DeclareEnabledUpgrades?
+## Why Construction-Time Upgrades?
 
-`declareEnabledUpgrades` keeps the staged-upgrade decision in one place instead of splitting it across two different method calls.
-That has two practical benefits:
+Construction-time configuration keeps staged-upgrade policy colocated with the view schema and avoids mutable runtime policy on the view instance.
+That has practical benefits:
 
--   Tests and production code can declare the rollout state once and then call normal `initialize` or `upgradeSchema` APIs.
--   `compatibility.canUpgrade` can be computed against the same declared target that schema-writing operations will use.
-
-It also avoids a more awkward API shape where callers would need to pass the same upgrades bag to both a declaration call and a write call, or choose between a property-level configuration and a per-call override.
+- Eliminates ordering concerns between view creation, compatibility reads, and upgrade declaration calls.
+- Prevents accidental policy drift on a long-lived view.
+- Ensures compatibility checks and schema writes always use the same immutable policy for a given view.
+- Makes testing deterministic because each view clearly represents one schema+upgrade configuration.
 
 ## Initialization Versus Upgrade
 
-`initialize(...)` and `upgradeSchema()` both use declared upgrades but affect different scenarios:
+`initialize(...)` and `upgradeSchema()` both use the configured upgrades but affect different scenarios:
 
 - `upgradeSchema()` upgrades existing document stored schema.
 - `initialize(...)` writes initial stored schema and content for new documents.
 
-The insertion/validation path for initialization must use the same generated schema target as declaration-driven schema generation.
+The insertion/validation path for initialization must use the same generated schema target as compatibility and upgrade paths.
 
 ## Implementation Notes
 
-Stored schema generation remains based on `toUpgradeSchema(root, upgradesOrOptions?)` and `toInitialSchema(root, upgradesOrOptions?)`.
-Both helpers now accept either an upgrades bag or `StoredFromViewSchemaGenerationOptions`.
+Stored schema generation remains based on `toUpgradeSchema(root, upgrades?)` and `toInitialSchema(root, upgrades?)`.
+The view is responsible for selecting `upgrades` from construction-time configuration and threading them to these helpers.
 
-`storedSchemaGenerationOptionsForUpgrades(upgrades)` converts property bags into options.
+`storedSchemaGenerationOptionsForUpgrades(upgrades)` converts property bags into generation options.
 `restrictiveStoredSchemaGenerationOptions` and `permissiveStoredSchemaGenerationOptions` provide built-in defaults for "none" and "all" staged-upgrade inclusion.
-
-The view stores the currently declared options and threads them consistently through:
-
-- compatibility computation,
-- `initialize`, and
-- `upgradeSchema`.
+If construction-time configuration accepts `StoredFromViewSchemaGenerationOptions`, those options should be used directly as the source policy for compatibility and schema generation.
 
 Behavioral requirements:
 
-- No declaration or empty declaration means restrictive default behavior.
-- Declared upgrades enable only staged members guarded by matching `SchemaUpgrade` values.
-- `upgradeSchema()` is a no-op when stored schema is already a superset of the declared target.
-- `upgradeSchema()` throws when declared target is not a valid repo superset of current stored schema.
+- No configured upgrades (or empty upgrades) means restrictive default behavior.
+- Configured upgrades enable only staged members guarded by matching `SchemaUpgrade` values.
+- `upgradeSchema()` is a no-op when stored schema is already a superset of the configured target.
+- `upgradeSchema()` throws when the configured target is not a valid repo superset of current stored schema.
 
 ## Testing Strategy
 
-Tests should cover both API entry points, the staged schema member kinds that are currently supported, and the rollback-oriented production behavior.
+Tests should cover both API entry points, the staged schema member kinds that are currently supported, and rollback-oriented production behavior.
 
-Generic runtime API tests should cover shared behavior such as `TreeViewAlpha.declareEnabledUpgrades(upgrades)` + `TreeViewAlpha.initialize(content)` accepting enabled staged content and rejecting the same content when no upgrades are declared.
-More specialized staged schema tests should exercise `TreeViewAlpha.declareEnabledUpgrades(upgrades)` + `TreeViewAlpha.upgradeSchema()` for each staged schema feature, such as staged allowed types and staged optional fields.
+Generic runtime API tests should cover shared behavior such as creating a view with configured upgrades and calling `initialize(content)` to accept enabled staged content, while rejecting that content when upgrades are not configured.
+More specialized staged schema tests should exercise configured upgrades with `upgradeSchema()` for each staged schema feature, such as staged allowed types and staged optional fields.
 
-Integration tests should also cover option-based flows:
-
--   `declareEnabledUpgrades(permissiveStoredSchemaGenerationOptions)` enables all staged upgrades.
--   App-defined composed options can be re-declared as needed.
--   Declared options are used consistently by compatibility checks and schema-writing APIs.
+When `StoredFromViewSchemaGenerationOptions` is accepted at view construction, tests should also cover policy-object configuration paths in addition to property-bag paths.
 
 For `upgradeSchema`:
 
--   Create a document with the current schema.
--   Declare a staged upgrade with `declareEnabledUpgrades({ enableFooUpgrade: fooSchemaUpgrade })`.
--   Call `upgradeSchema()`.
--   Verify the stored schema includes the staged schema members guarded by `fooSchemaUpgrade`.
--   Verify clients whose local declarations omit `fooSchemaUpgrade` can still observe and work with the upgraded document after the schema op is sequenced.
+- Create a document with the current schema.
+- Construct a view with configured upgrades.
+- Call `upgradeSchema()`.
+- Verify the stored schema includes the staged schema members guarded by the configured upgrade token.
+- Verify clients using a view configuration that omits that token observe expected compatibility/upgrade behavior.
 
 For `initialize`:
 
--   Call `declareEnabledUpgrades({ enableFooUpgrade: fooSchemaUpgrade })` and then initialize a new document with `initialize(content)`.
--   Use initial content that requires the upgraded schema.
--   Verify the content is accepted and the stored schema includes the enabled staged schema upgrade.
--   Verify not declaring upgrades rejects or excludes content that depends on that upgrade, matching existing restrictive behavior.
+- Construct a view with configured upgrades and initialize a new document with `initialize(content)`.
+- Use initial content that requires the upgraded schema.
+- Verify the content is accepted and the stored schema includes the enabled staged schema upgrade.
+- Verify constructing a view without upgrades rejects or excludes content that depends on that upgrade, matching existing restrictive behavior.
 
 For feature-flag rollback behavior:
 
--   Verify documents created or upgraded while the flag is enabled retain the upgraded stored schema.
--   Verify documents created after the flag is disabled omit the upgraded schema when callers omit the corresponding `declareEnabledUpgrades` entry.
+- Verify documents created or upgraded while the flag is enabled retain the upgraded stored schema.
+- Verify documents created after the flag is disabled omit the upgraded schema when callers construct views without the corresponding upgrade entry.
 
 Schema compatibility helper tests should remain schema-only.
 They can validate compatibility across staged rollout states by comparing stored schema snapshots, but they should not be used as substitutes for runtime tests that sequence schema edits through `initialize` or `upgradeSchema`.

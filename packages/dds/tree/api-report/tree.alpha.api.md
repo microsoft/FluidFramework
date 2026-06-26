@@ -1968,11 +1968,11 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     readonly events: Listenable_2<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
-    initialize(content: InsertableField<TSchema>, upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+    initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
     get root(): ReadableField<TSchema>;
     set root(newRoot: InsertableField<TSchema>);
-    upgradeSchema(upgrades?: Readonly<Record<string, SchemaUpgrade>>): void;
+    upgradeSchema(): void;
 }
 
 // @beta @sealed
@@ -1993,9 +1993,10 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 
 // @alpha @sealed
 export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends TreeViewConfiguration<TSchema> implements TreeSchema {
-    constructor(props: ITreeViewConfiguration<TSchema>);
+    constructor(props: ITreeViewConfigurationAlpha<TSchema>);
     // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
+    readonly enabledUpgrades: Readonly<Record<string, SchemaUpgrade>> | undefined;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
 }

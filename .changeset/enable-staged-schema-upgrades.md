@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Enable staged schema upgrades at runtime
+Enable select staged schema upgrades at runtime via view configuration
 
 SharedTree now supports enabling selected staged schema upgrades when initializing a document or upgrading its stored schema.
 This lets applications deploy code that understands a schema change before enabling that change in documents,
@@ -11,31 +11,39 @@ making it easier to separate code rollout from feature rollout.
 
 ### API
 
-Pass an application-owned `upgrades` property bag to alpha [`TreeViewAlpha.declareEnabledUpgrades`](https://fluidframework.com/docs/api/tree/treeviewalpha-interface#declareenabledupgrades-methodsignature) to include the corresponding staged schema upgrades in generated stored schema.
+Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` property bag in the config object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 The property names are chosen by the application, which makes them convenient to wire to feature flags or other rollout controls.
 
-The `upgrades` property bag is a regular object whose keys are application-defined names and whose values are `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
+The `enabledUpgrades` property bag is a regular object whose keys are application-defined names and whose values are `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
 ```typescript
 const stagedType = SchemaFactoryBeta.staged(NewNodeSchema);
 const schemaUpgrade = stagedType.metadata.stagedSchemaUpgrade;
 assert(schemaUpgrade !== undefined);
 
-const upgrades = {
+const enabledUpgrades = {
 	// This name is chosen by the application. It maps to the SchemaUpgrade
 	// obtained from the staged schema factory API above.
 	upgradeName: schemaUpgrade,
 };
+
+const alphaTree = asAlpha(tree);
+const view = alphaTree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		enabledUpgrades,
+	}),
+);
 ```
 
-When declared `upgrades` is omitted or empty, staged schema upgrades remain disabled.
+When configured `enabledUpgrades` is omitted or empty, staged schema upgrades remain disabled.
 The document's stored schema continues to allow only the schema that has already been enabled, so clients can understand the staged schema in code but cannot write data that depends on it yet.
 
 ### Production
 
 For production rollout, applications can use feature flags to control when staged schema upgrades are enabled.
 Previously, enabling the staged schema in stored schema required a code change that removed the staged schema wrapper from the schema definition.
-With this API, applications can keep the staged schema in code and use the `upgrades` property bag to decide at runtime which documents should enable it.
+With this API, applications can keep the staged schema in code and use construction-time view configuration to decide at runtime which documents should enable it.
 For example, an application that is adding checklist items to a task document can deploy clients that understand the new checklist schema first, then enable the stored-schema upgrade only for documents where the feature flag is enabled:
 
 ```typescript
@@ -57,15 +65,20 @@ class AppSchema extends sf.object("AppSchema", {
 
 const enableChecklistItems = featureFlags.enableChecklistItems;
 
-const upgrades = enableChecklistItems
+const enabledUpgrades = enableChecklistItems
 	? {
 			// The property name is application-owned, so it can match the feature flag.
 			enableChecklistItems: checklistItemSchemaUpgrade,
 		}
 	: undefined;
 
-const view = asAlpha(tree.viewWith(new TreeViewConfiguration({ schema: AppSchema })));
-view.declareEnabledUpgrades(upgrades);
+const alphaTree = asAlpha(tree);
+const view = alphaTree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		enabledUpgrades,
+	}),
+);
 
 if (view.compatibility.canInitialize) {
 	// New documents include the checklist schema only while the rollout is enabled.
@@ -78,18 +91,18 @@ if (view.compatibility.canInitialize) {
 ```
 
 Once a staged schema upgrade has been enabled in a document's stored schema, that change is permanent for that document.
-If `upgradeSchema` is later called after no longer declaring a previously enabled upgrade token from `declareEnabledUpgrades` (including when a client loads an already-upgraded document without declaring that token), the call throws a `UsageError`.
+If `upgradeSchema` is later called from a view configured without a previously enabled upgrade token (including when a client loads an already-upgraded document without configuring that token), the call throws a `UsageError`.
 The stored schema already contains the upgraded members and the new target would narrow it, which is not permitted.
 
-In practice this means that when a staged schema upgrade is enabled via a feature flag, subsequent `upgradeSchema` calls must keep that token declared for as long as any document may have already been upgraded.
+In practice this means that when a staged schema upgrade is enabled via a feature flag, subsequent `upgradeSchema` calls must use views configured with that token for as long as any document may have already been upgraded.
 Once all documents have been upgraded, the staged schema wrapper can be removed entirely, at which point the token is no longer needed.
 
-This also means partial rollback is currently difficult in practice: callers usually cannot target only documents that have not already been upgraded, so disabling the flag after some upgrades have happened can still lead to `UsageError` if `upgradeSchema` is called without the previously enabled token.
+This also means partial rollback is currently difficult in practice: callers usually cannot target only documents that have not already been upgraded, so disabling the flag after some upgrades have happened can still lead to `UsageError` if `upgradeSchema` is called from views configured without previously enabled tokens.
 
 ### Testing
 
 The same API also makes staged schema upgrades easier to test before production rollout.
-Tests and validation tools can create or upgrade documents with a specific set of staged upgrades enabled, then verify that older and newer application versions behave correctly with the resulting stored schema.
+Tests and validation tools can create or upgrade documents with a specific set of staged upgrades enabled in view construction options, then verify that older and newer application versions behave correctly with the resulting stored schema.
 This gives applications a direct way to exercise future document shapes without permanently enabling those upgrades for all new documents.
 
 For example, a compatibility test can start with an existing document, verify that the staged shape is not writable yet, then explicitly enable the staged schema upgrade and validate the upgraded document shape:
@@ -101,19 +114,19 @@ const currentView = currentAppTree.viewWith(
 currentView.initialize(existingTaskDocument);
 await ensureSynchronized();
 
-const nextView = asAlpha(
-	nextAppTree.viewWith(new TreeViewConfiguration({ schema: AppSchemaWithStagedChecklist })),
+const nextView = asAlpha(nextAppTree).viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchemaWithStagedChecklist,
+		upgrades: {
+			enableChecklistItems: checklistItemSchemaUpgrade,
+		},
+	}),
 );
 
 // The next app version can read the document, but the checklist shape is still
 // disabled in stored schema and cannot be written yet.
 assert.throws(() => addChecklistItem(nextView.root, { text: "Review rollout" }));
 
-// Tests opt in directly instead of depending on a production feature flag, then
-// verify the document behaves the same way it will after the production rollout.
-nextView.declareEnabledUpgrades({
-	enableChecklistItems: checklistItemSchemaUpgrade,
-});
 nextView.upgradeSchema();
 await ensureSynchronized();
 

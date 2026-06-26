@@ -19,8 +19,8 @@ import {
 	type ViewContent,
 } from "../../../shared-tree/index.js";
 import {
+	checkSchemaCompatibility,
 	extractPersistedSchema,
-	SchemaCompatibilityTester,
 	SchemaFactoryAlpha,
 	schemaStatics,
 	toUpgradeSchema,
@@ -46,10 +46,10 @@ describe("runtime schema upgrade API", () => {
 		const view = independentView(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
 			}),
 		);
 
-		view.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
 		view.initialize("test");
 
 		assert.equal(view.root, "test");
@@ -122,8 +122,12 @@ describe("staged allowed type upgrade", () => {
 			viewB1.root = "test";
 		});
 
-		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		const viewB2 = treeB2.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+			}),
+		);
 		viewB2.upgradeSchema();
 		viewB2.root = "test";
 		synchronizeTrees();
@@ -166,8 +170,12 @@ describe("staged allowed type upgrade", () => {
 		// B cannot write strings to the root.
 		assert.throws(() => (viewB1.root = "test"));
 
-		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		const viewB2 = treeB2.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+			}),
+		);
 		viewB2.upgradeSchema();
 		// Use the newly enabled schema.
 		viewB2.root = "test";
@@ -189,8 +197,12 @@ describe("staged allowed type upgrade", () => {
 		viewA.initialize(5);
 		provider.synchronizeMessages();
 
-		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.declareEnabledUpgrades({ enableFooUpgrade: stringUpgrade });
+		const viewB = treeB.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+			}),
+		);
 		viewB.upgradeSchema();
 		viewB.root = "test";
 		provider.synchronizeMessages();
@@ -266,7 +278,7 @@ describe("staged allowed type upgrade", () => {
 	});
 
 	it("checks compatibility through staged allowed type rollout", () => {
-		// SchemaCompatibilityTester only checks compatibility against a supplied stored schema.
+		// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
 		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
 		// schema state directly.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
@@ -274,10 +286,12 @@ describe("staged allowed type upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof schemaA | typeof schemaB | typeof schemaC,
-			expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
+			expected: ReturnType<typeof checkSchemaCompatibility>,
 		): void => {
-			const view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema }));
-			assert.deepEqual(view.checkCompatibility(stored), expected);
+			assert.deepEqual(
+				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
+				expected,
+			);
 		};
 
 		expectCompatibility(schemaA, {
@@ -373,8 +387,12 @@ describe("staged optional upgrade", () => {
 			viewB1.root = undefined;
 		});
 
-		const viewB2 = asAlpha(treeB2.viewWith(configB));
-		viewB2.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		const viewB2 = treeB2.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+			}),
+		);
 		viewB2.upgradeSchema();
 		viewB2.root = undefined;
 		synchronizeTrees();
@@ -395,8 +413,12 @@ describe("staged optional upgrade", () => {
 		viewA.initialize(5);
 		provider.synchronizeMessages();
 
-		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
+		const viewB = treeB.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+			}),
+		);
 		viewB.upgradeSchema();
 		viewB.root = undefined;
 		provider.synchronizeMessages();
@@ -407,23 +429,7 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewC.root, undefined);
 	});
 
-	it("throws if a staged optional upgrade is enabled and then explicitly disabled on a later upgrade call", () => {
-		const provider = new TestTreeProviderLite(2);
-		const [treeA, treeB] = provider.trees;
-
-		const viewA = treeA.viewWith(new TreeViewConfiguration({ schema: schemaA }));
-		viewA.initialize(5);
-		provider.synchronizeMessages();
-
-		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
-		viewB.upgradeSchema();
-
-		viewB.declareEnabledUpgrades({});
-		assert.throws(() => viewB.upgradeSchema(), /cannot be upgraded to the requested schema/);
-	});
-
-	it("declareEnabledUpgrades updates compatibility and supplies default upgrades for upgradeSchema", () => {
+	it("throws when a view without upgrades tries to upgradeSchema on a document already upgraded by another view", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeA, treeB, treeC] = provider.trees;
 
@@ -431,40 +437,40 @@ describe("staged optional upgrade", () => {
 		viewA.initialize(5);
 		provider.synchronizeMessages();
 
-		const viewB = asAlpha(treeB.viewWith(new TreeViewConfiguration({ schema: schemaB })));
-		assert.equal(viewB.compatibility.canUpgrade, true);
-
-		viewB.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
-		assert.equal(viewB.compatibility.canUpgrade, true);
-
+		// View with upgrade enabled — upgrades the document.
+		const viewB = treeB.viewWith(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+			}),
+		);
 		viewB.upgradeSchema();
-		viewB.root = undefined;
+		viewB.dispose();
 		provider.synchronizeMessages();
 
-		assert.equal(viewA.compatibility.canView, false);
-		assert.equal(viewB.root, undefined);
-
-		const viewBReloaded = asAlpha(
-			treeC.viewWith(new TreeViewConfiguration({ schema: schemaB })),
+		// A new view without the upgrade token cannot upgrade further — the stored schema already has the upgrade
+		// and the new target (without the token) would narrow it.
+		const viewBNarrow = treeC.viewWith(new TreeViewConfigurationAlpha({ schema: schemaB }));
+		assert.throws(
+			() => viewBNarrow.upgradeSchema(),
+			/cannot be upgraded to the requested schema/,
 		);
-		assert.equal(viewBReloaded.compatibility.canUpgrade, false);
-		viewBReloaded.declareEnabledUpgrades({ enableFooUpgrade: optionalUpgrade });
-		assert.equal(viewBReloaded.compatibility.canUpgrade, true);
-		assert.equal(viewBReloaded.compatibility.isEquivalent, true);
 	});
 
 	it("checks compatibility through staged optional rollout", () => {
-		// SchemaCompatibilityTester only checks compatibility against a supplied stored schema.
+		// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
 		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
 		// schema state directly.
 		const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(schemaA));
 
 		const expectCompatibility = (
 			schema: typeof schemaA | typeof schemaB | typeof schemaC,
-			expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
+			expected: ReturnType<typeof checkSchemaCompatibility>,
 		): void => {
-			const view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema }));
-			assert.deepEqual(view.checkCompatibility(stored), expected);
+			assert.deepEqual(
+				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
+				expected,
+			);
 		};
 
 		// Schema A is equivalent to the initial required-number stored schema.
