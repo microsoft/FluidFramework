@@ -11,6 +11,11 @@ export {
 	responseToException,
 	asLegacyAlpha,
 	dataStoreLoadTelemetryProps,
+	responseExceptionMetadataSym,
+} from "./dataStoreHelpers.js";
+export type {
+	IErrorWithResponseExceptionMetadata,
+	IResponseExceptionMetadata,
 } from "./dataStoreHelpers.js";
 export {
 	compareFluidHandles,
