@@ -666,6 +666,11 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
+// @alpha
+export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly enabledUpgrades?: Readonly<Record<string, SchemaUpgrade>>;
+}
+
 // @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
     readonly items: JsonFieldSchema;

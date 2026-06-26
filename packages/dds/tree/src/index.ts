@@ -97,6 +97,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,

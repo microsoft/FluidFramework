@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 
-import { asAlpha } from "../../../api.js";
 import { FluidClientVersion } from "../../../codec/index.js";
 import { storedEmptyFieldSchema } from "../../../core/index.js";
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
