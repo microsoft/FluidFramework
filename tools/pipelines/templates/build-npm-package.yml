@@ -42,6 +42,12 @@ parameters:
   type: boolean
   default: false
 
+# Set to false to skip the version-setting step entirely (flub generate buildVersion + package.json bump).
+# Useful for pipelines that use sparse checkouts and don't need a CI-stamped version (e.g. independent packages).
+- name: taskSetVersion
+  type: boolean
+  default: true
+
 - name: taskPack
   type: boolean
   default: true
@@ -53,6 +59,13 @@ parameters:
 - name: checkoutSubmodules
   type: boolean
   default: false
+
+# Newline-separated list of directories to include in a sparse checkout. When empty (the default), a full checkout is
+# performed. When set, only the listed directories (plus all root-level files, which git cone mode always includes) are
+# checked out. Use this to avoid checking out large parts of the repo that aren't needed for this pipeline.
+- name: sparseCheckoutDirectories
+  type: string
+  default: ''
 
 - name: buildNumberInPatch
   type: boolean
@@ -176,6 +189,7 @@ extends:
               checks: '${{ parameters.checks }}'
               # Install all dependencies, not just the root ones
               dependencyInstallCommand: pnpm install --frozen-lockfile
+              sparseCheckoutDirectories: '${{ parameters.sparseCheckoutDirectories }}'
 
       # Install / Build / Test Stage
       - stage: build
@@ -212,6 +226,8 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                ${{ if ne(parameters.sparseCheckoutDirectories, '') }}:
+                  sparseCheckoutDirectories: ${{ parameters.sparseCheckoutDirectories }}
 
               - task: Bash@3
                 displayName: Parameters
@@ -321,6 +337,7 @@ extends:
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
+                      taskSetVersion: ${{ parameters.taskSetVersion }}
 
               # Build and Lint
               - template: /tools/pipelines/templates/include-build-lint.yml@self

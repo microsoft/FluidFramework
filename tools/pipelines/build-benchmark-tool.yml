@@ -23,9 +23,9 @@ parameters:
     - skip
     - force
 - name: buildToolsVersionToInstall
-  displayName: Fluid build tools version (default = installs version in repo)
+  displayName: Fluid build tools version (default = installs from npm per workspace catalog)
   type: string
-  default: repo
+  default: ^0.65.0
 
 trigger:
   branches:
@@ -96,3 +96,8 @@ extends:
     taskLint: true
     taskTest:
     - test
+    taskSetVersion: false
+    sparseCheckoutDirectories: |
+      tools/benchmark
+      common/build/build-common
+      scripts

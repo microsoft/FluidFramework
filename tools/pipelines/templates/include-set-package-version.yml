@@ -49,6 +49,12 @@ parameters:
   type: boolean
   default: true
 
+# Set to false to skip version computation and package.json bumping while still installing build tools.
+# Useful for pipelines using sparse checkouts that need flub available but don't need CI-stamped versions.
+- name: taskSetVersion
+  type: boolean
+  default: true
+
 # Set version
 steps:
 
@@ -59,88 +65,89 @@ steps:
     installPnpmForRepoBuildTools: ${{ parameters.installPnpmForRepoBuildTools }}
     pnpmStorePath: ${{ parameters.pnpmStorePath }}
 
-- task: Bash@3
-  name: SetVersion
-  displayName: Set Package Version
-  env:
-    VERSION_RELEASE: $(release)
-    VERSION_BUILDNUMBER: $(Build.BuildNumber)
-    TEST_BUILD: $(testBuild)
-    VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
-    VERSION_TAGNAME: ${{ parameters.tagName }}
-    VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
-    PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
-  inputs:
-    targetType: 'inline'
-    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-    script: |
-      set -eu -o pipefail
-      # expect release group root package.json be in the current working directory
-
-      echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
-      echo TEST_BUILD=$TEST_BUILD
-      echo VERSION_RELEASE=$VERSION_RELEASE
-      echo VERSION_PATCH=$VERSION_PATCH
-      echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
-      echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
-
-      # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
-      # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
-      flub generate buildVersion
-
-# This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
-- ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+- ${{ if eq(parameters.taskSetVersion, true) }}:
   - task: Bash@3
-    displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
-    continueOnError: false
+    name: SetVersion
+    displayName: Set Package Version
+    env:
+      VERSION_RELEASE: $(release)
+      VERSION_BUILDNUMBER: $(Build.BuildNumber)
+      TEST_BUILD: $(testBuild)
+      VERSION_PATCH: ${{ parameters.buildNumberInPatch }}
+      VERSION_TAGNAME: ${{ parameters.tagName }}
+      VERSION_INCLUDE_INTERNAL_VERSIONS: ${{ parameters.includeInternalVersions }}
+      PACKAGE_TYPES_FIELD: ${{ parameters.packageTypesOverride }}
     inputs:
       targetType: 'inline'
       workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
       script: |
         set -eu -o pipefail
-        # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
-        flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
+        # expect release group root package.json be in the current working directory
 
-- ${{ if eq(parameters.performBump, true) }}:
+        echo VERSION_BUILDNUMBER=$VERSION_BUILDNUMBER
+        echo TEST_BUILD=$TEST_BUILD
+        echo VERSION_RELEASE=$VERSION_RELEASE
+        echo VERSION_PATCH=$VERSION_PATCH
+        echo VERSION_INCLUDE_INTERNAL_VERSIONS=$VERSION_INCLUDE_INTERNAL_VERSIONS
+        echo PACKAGE_TYPES_FIELD=$PACKAGE_TYPES_FIELD
+
+        # Generate the build version. Sets the environment variables version, codeVersion, and isLatest.
+        # These are referenced in following steps prefixed by this task name. E.g. SetVersion.version
+        flub generate buildVersion
+
+  # This check runs only when the value of `Change package types` is selected as `alpha` or `beta`
+  - ${{ if ne(parameters.packageTypesOverride, 'none') }}:
+    - task: Bash@3
+      displayName: Set Package Types - ${{ parameters.packageTypesOverride }}
+      continueOnError: false
+      inputs:
+        targetType: 'inline'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        script: |
+          set -eu -o pipefail
+          # At this point in the pipeline the build hasn't been done, so we skip checking if the types files and other build outputs exist.
+          flub release setPackageTypesField -g ${{ parameters.tagName }} --types ${{ parameters.packageTypesOverride }} --no-checkFileExists
+
+  - ${{ if eq(parameters.performBump, true) }}:
+    - task: Bash@3
+      displayName: Update Package Version (flub)
+      env:
+        VERSION_RELEASE: $(release)
+        RELEASE_GROUP: ${{ parameters.tagName }}
+        INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+      inputs:
+        targetType: 'filePath'
+        workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+        filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/update-package-version.sh
+
+  # This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
+  # help find and prevent bugs in the version bumping tools.
   - task: Bash@3
-    displayName: Update Package Version (flub)
-    env:
-      VERSION_RELEASE: $(release)
-      RELEASE_GROUP: ${{ parameters.tagName }}
-      INTERDEPENDENCY_RANGE: ${{ parameters.interdependencyRange }}
+    displayName: Check for caret dependencies on internal versions
     inputs:
-      targetType: 'filePath'
+      targetType: 'inline'
       workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-      filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/update-package-version.sh
+      script: |
+        # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+        # even in an error case
+        grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+        if [[ $? == 0 ]]; then
+          echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
+          exit -1;
+        fi
 
-# This task is a last-minute verification that no Fluid internal versions show up with caret dependencies. This is to
-# help find and prevent bugs in the version bumping tools.
-- task: Bash@3
-  displayName: Check for caret dependencies on internal versions
-  inputs:
-    targetType: 'inline'
-    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-    script: |
-      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
-      # even in an error case
-      grep -r -e "\^2.0.0-internal.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
-      if [[ $? == 0 ]]; then
-        echo "##vso[task.logissue type=error]Fluid internal versions shouldn't use caret dependencies"
-        exit -1;
-      fi
-
-# This task is a last-minute verification that no Fluid internal dev versions show up with caret dependencies. This is
-# to help find and prevent bugs in the version bumping tools.
-- task: Bash@3
-  displayName: Check for caret dependencies on dev versions
-  inputs:
-    targetType: 'inline'
-    workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-    script: |
-      # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
-      # even in an error case
-      grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
-      if [[ $? == 0 ]]; then
-        echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
-        exit -1;
-      fi
+  # This task is a last-minute verification that no Fluid internal dev versions show up with caret dependencies. This is
+  # to help find and prevent bugs in the version bumping tools.
+  - task: Bash@3
+    displayName: Check for caret dependencies on dev versions
+    inputs:
+      targetType: 'inline'
+      workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
+      script: |
+        # Note: deliberately not using `set -eu -o pipefail` because this script leverages the return code of grep
+        # even in an error case
+        grep -r -e "\^2.0.0-dev.\d*.\d*.\d*.\d*" `find . -type d -name node_modules -prune -o -name 'package.json' -print`
+        if [[ $? == 0 ]]; then
+          echo "##vso[task.logissue type=error]Fluid internal dev versions shouldn't use caret dependencies"
+          exit -1;
+        fi
