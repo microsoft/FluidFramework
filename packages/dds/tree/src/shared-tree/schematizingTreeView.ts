@@ -108,7 +108,7 @@ export class SchematizingSimpleTreeView<
 	/**
 	 * Staged schema upgrades from the view configuration, frozen at construction time.
 	 */
-	private readonly enabledUpgrades: Readonly<Record<string, SchemaUpgrade>> | undefined;
+	private readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -153,7 +153,7 @@ export class SchematizingSimpleTreeView<
 
 		const enabledUpgrades =
 			config instanceof TreeViewConfigurationAlpha && config.enabledUpgrades !== undefined
-				? { ...config.enabledUpgrades }
+				? [...config.enabledUpgrades]
 				: undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
 			schema: config.schema,

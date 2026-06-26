@@ -11,21 +11,16 @@ making it easier to separate code rollout from feature rollout.
 
 ### API
 
-Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` property bag in the config object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
-The property names are chosen by the application, which makes them convenient to wire to feature flags or other rollout controls.
+Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the config object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 
-The `enabledUpgrades` property bag is a regular object whose keys are application-defined names and whose values are `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
+The `enabledUpgrades` list contains `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
 ```typescript
 const stagedType = SchemaFactoryBeta.staged(NewNodeSchema);
 const schemaUpgrade = stagedType.metadata.stagedSchemaUpgrade;
 assert(schemaUpgrade !== undefined);
 
-const enabledUpgrades = {
-	// This name is chosen by the application. It maps to the SchemaUpgrade
-	// obtained from the staged schema factory API above.
-	upgradeName: schemaUpgrade,
-};
+const enabledUpgrades = [schemaUpgrade];
 
 const alphaTree = asAlpha(tree);
 const view = alphaTree.viewWith(
@@ -66,10 +61,7 @@ class AppSchema extends sf.object("AppSchema", {
 const enableChecklistItems = featureFlags.enableChecklistItems;
 
 const enabledUpgrades = enableChecklistItems
-	? {
-			// The property name is application-owned, so it can match the feature flag.
-			enableChecklistItems: checklistItemSchemaUpgrade,
-		}
+	? [checklistItemSchemaUpgrade]
 	: undefined;
 
 const alphaTree = asAlpha(tree);
@@ -117,9 +109,7 @@ await ensureSynchronized();
 const nextView = asAlpha(nextAppTree).viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchemaWithStagedChecklist,
-		upgrades: {
-			enableChecklistItems: checklistItemSchemaUpgrade,
-		},
+		enabledUpgrades: [checklistItemSchemaUpgrade],
 	}),
 );
 

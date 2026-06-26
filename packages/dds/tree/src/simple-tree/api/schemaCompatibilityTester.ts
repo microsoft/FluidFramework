@@ -28,7 +28,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
 export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
-	enabledUpgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	enabledUpgrades?: Iterable<SchemaUpgrade>,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;

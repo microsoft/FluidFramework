@@ -99,19 +99,18 @@ export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenera
 
 /**
  * Creates options for {@link toStoredSchema} that include only the staged schema upgrades
- * listed in the application-provided property bag.
+ * listed in the application-provided collection.
  *
  * @remarks
- * The property names in `upgrades` are application-defined labels. Only the `SchemaUpgrade`
- * values are used to decide which staged allowed types or staged optional fields are included
- * in generated stored schema.
+ * The `SchemaUpgrade` values are used to decide which staged allowed types or staged optional
+ * fields are included in generated stored schema.
  *
  * If `upgrades` is omitted or empty, no staged schema upgrades are enabled.
  */
 function storedSchemaGenerationOptionsForUpgrades(
-	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	upgrades?: Iterable<SchemaUpgrade>,
 ): StoredFromViewSchemaGenerationOptions {
-	const enabledUpgrades = upgrades === undefined ? [] : Object.values(upgrades);
+	const enabledUpgrades = upgrades === undefined ? [] : [...upgrades];
 	if (enabledUpgrades.length === 0) {
 		return restrictiveStoredSchemaGenerationOptions;
 	}
@@ -128,7 +127,7 @@ function storedSchemaGenerationOptionsForUpgrades(
  */
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
-	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	upgrades?: Iterable<SchemaUpgrade>,
 ): TreeStoredSchema {
 	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
 }
@@ -138,7 +137,7 @@ export function toUpgradeSchema(
  */
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
-	upgrades?: Readonly<Record<string, SchemaUpgrade>>,
+	upgrades?: Iterable<SchemaUpgrade>,
 ): TreeStoredSchema {
 	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
 }

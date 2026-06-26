@@ -668,7 +668,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
-    readonly enabledUpgrades?: Readonly<Record<string, SchemaUpgrade>>;
+    readonly enabledUpgrades?: Iterable<SchemaUpgrade>;
 }
 
 // @alpha @sealed
@@ -2001,7 +2001,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     constructor(props: ITreeViewConfigurationAlpha<TSchema>);
     // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
-    readonly enabledUpgrades: Readonly<Record<string, SchemaUpgrade>> | undefined;
+    readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
 }

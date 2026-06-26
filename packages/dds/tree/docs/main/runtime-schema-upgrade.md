@@ -70,7 +70,7 @@ The alpha flow sets staged-upgrade policy in view construction:
 
 ```typescript
 const enabledUpgrades = featureFlags.enableFooUpgrade
-	? { enableFooUpgrade: fooSchemaUpgrade }
+	? [fooSchemaUpgrade]
 	: undefined;
 
 const view = tree.viewWith(
@@ -94,7 +94,7 @@ Key properties of this shape:
 
 ### Accepting `StoredFromViewSchemaGenerationOptions`
 
-In addition to an application-owned `Record<string, SchemaUpgrade>` bag, the construction-time configuration model can support accepting a full `StoredFromViewSchemaGenerationOptions` policy object in view configuration.
+In addition to an application-owned collection of `SchemaUpgrade` values, the construction-time configuration model can support accepting a full `StoredFromViewSchemaGenerationOptions` policy object in view configuration.
 This keeps policy selection at view construction time while allowing advanced callers to configure staged-type and staged-optional inclusion directly.
 
 Benefits:
@@ -135,7 +135,7 @@ The insertion/validation path for initialization must use the same generated sch
 Stored schema generation remains based on `toUpgradeSchema(root, upgrades?)` and `toInitialSchema(root, upgrades?)`.
 The view is responsible for selecting `upgrades` from construction-time configuration and threading them to these helpers.
 
-`storedSchemaGenerationOptionsForUpgrades(upgrades)` converts property bags into generation options.
+`storedSchemaGenerationOptionsForUpgrades(upgrades)` converts configured upgrade collections into generation options.
 `restrictiveStoredSchemaGenerationOptions` and `permissiveStoredSchemaGenerationOptions` provide built-in defaults for "none" and "all" staged-upgrade inclusion.
 If construction-time configuration accepts `StoredFromViewSchemaGenerationOptions`, those options should be used directly as the source policy for compatibility and schema generation.
 

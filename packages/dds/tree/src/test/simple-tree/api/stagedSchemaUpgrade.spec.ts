@@ -45,7 +45,7 @@ describe("runtime schema upgrade API", () => {
 		const view = independentView(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+				enabledUpgrades: [stringUpgrade],
 			}),
 		);
 
@@ -124,7 +124,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+				enabledUpgrades: [stringUpgrade],
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -172,7 +172,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+				enabledUpgrades: [stringUpgrade],
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -199,7 +199,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: stringUpgrade },
+				enabledUpgrades: [stringUpgrade],
 			}),
 		);
 		viewB.upgradeSchema();
@@ -389,7 +389,7 @@ describe("staged optional upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+				enabledUpgrades: [optionalUpgrade],
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -415,7 +415,7 @@ describe("staged optional upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+				enabledUpgrades: [optionalUpgrade],
 			}),
 		);
 		viewB.upgradeSchema();
@@ -440,7 +440,7 @@ describe("staged optional upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				enabledUpgrades: { enableFooUpgrade: optionalUpgrade },
+				enabledUpgrades: [optionalUpgrade],
 			}),
 		);
 		viewB.upgradeSchema();
