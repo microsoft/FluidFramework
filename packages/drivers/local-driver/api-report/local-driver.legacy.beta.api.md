@@ -15,6 +15,7 @@ export class LocalDocumentServiceFactory implements IDocumentServiceFactory {
     createDocumentService(resolvedUrl: IResolvedUrl, logger?: ITelemetryBaseLogger, clientIsSummarizer?: boolean): Promise<IDocumentService>;
     disconnectClient(clientId: string, disconnectReason: string): void;
     readonly ILayerCompatDetails?: unknown;
+    readonly ILayerCompatSupportRequirements?: unknown;
     nackClient(clientId: string, code?: number, type?: NackErrorType, message?: any): void;
 }
 
