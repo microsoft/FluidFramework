@@ -16,7 +16,6 @@ import { currentObserver, buildNodeComparator } from "../feature-libraries/index
 import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
 import {
 	enumFromStrings,
-	eraseSchemaDetails,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
@@ -25,6 +24,7 @@ import {
 	createCustomizedFluidFrameworkScopedFactory,
 	SchemaFactoryBeta,
 	isObjectNodeSchema,
+	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
 import type {
 	TreeNodeSchema,
@@ -33,15 +33,13 @@ import type {
 	TreeFieldFromImplicitField,
 	InsertableTypedNode,
 	TreeNodeFromImplicitAllowedTypes,
-	WithType,
-	// Fix  TS4058: Return type of exported function has or is using name 'typeNameSymbol' ... but cannot be named
-	// eslint-disable-next-line import-x/no-deprecated, @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- Note on above line
-	typeNameSymbol,
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports  -- See above
-	typeSchemaSymbol,
+	InsertableTreeNodeFromImplicitAllowedTypes,
 	InsertableTreeFieldFromImplicitField,
 	NodeKind,
 	TreeNode,
+	ScopedSchemaName,
+	ErasedSchemaSubclassable,
+	ErasedNode,
 } from "../simple-tree/index.js";
 import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
@@ -50,7 +48,6 @@ import {
 	processCharactersChangedDelta,
 	type TextAsTree,
 } from "./textDomain.js";
-import type { ErasedType } from "@fluidframework/core-interfaces";
 
 /**
  * Sets up scope for formatted text schema built-in types.
@@ -65,7 +62,6 @@ function createFormattedScopedFactory<TUserScope extends string>(
 
 const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- Inferring is the most practical option here
 function createSchema<
 	const TUserScope extends string,
 	const FormatSchema extends ImplicitAllowedTypes,
@@ -77,24 +73,18 @@ function createSchema<
 	formatSchema: FormatSchema,
 	extraAtoms: ExtraAtomsSchema,
 	defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
-) {
+): FormattedTextAsTree.FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema> {
 	const atoms = [FormattedTextAsTree.StringTextAtom, ...extraAtoms] as const;
 
 	const sf = createFormattedScopedFactory(inputSchemaFactory);
 
-	// const defaultFormatNode: TreeFieldFromImplicitField<FormatSchema> =
-	// 		TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
+	type Members = FormattedTextAsTree.FormattedTextMembers<FormatSchema, ExtraAtomsSchema>;
+
 	class TextNode
 		extends sf.object("Text", {
 			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 		})
-		implements
-			FormattedTextAsTree.Members<
-				TreeFieldFromImplicitField<FormatSchema>,
-				Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
-				TreeNodeFromImplicitAllowedTypes<typeof StringAtom>,
-				InsertableTypedNode<typeof StringAtom>
-			>
+		implements Members
 	{
 		public defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
 			TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
@@ -445,17 +435,30 @@ function createSchema<
 
 	/**
 	 * A unit of the text, with formatting.
-	 * @internal
 	 */
-	class StringAtom extends createFormattedScopedFactory(inputSchemaFactory).object(
-		"StringAtom",
-		{
+	class StringAtom
+		extends sf.object("StringAtom", {
 			content: SchemaFactory.required(atoms, { key: EmptyKey }),
-			format: formatSchema,
-		},
-	) {}
+			format: SchemaFactory.required(formatSchema),
+		})
+		implements
+			FormattedTextAsTree.FormattedAtom<
+				TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+				TreeNodeFromImplicitAllowedTypes<typeof atoms>
+			> {}
 
-	return { StringAtom, TextNode, StringArray, atoms };
+	/**
+	 * Schema for a text node.
+	 * @remarks
+	 * See {@link FormattedTextAsTree.Members} for the API.
+	 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
+	 */
+	const Tree = eraseSchemaDetailsSubclassable<Members, FormattedTextAsTree.Statics<Tree>>()(
+		TextNode,
+	);
+	type Tree = ErasedNode<Members, FormattedTextAsTree.FormattedTextSchemaName<TUserScope>>;
+
+	return Tree;
 }
 
 const defaultFormat = {
@@ -483,9 +486,8 @@ export namespace FormattedTextAsTree {
 	 * @sealed
 	 * @internal
 	 */
-	export interface FormattedAtom<TFormat, TText, TTextSchema>
-		extends ErasedType<["FormattedAtom", TFormat, TText, TTextSchema]> {
-		content: TText;
+	export interface FormattedAtom<TFormat = CharacterFormat, TText = StringAtomContent> {
+		readonly content: TText;
 		format: TFormat;
 	}
 
@@ -587,36 +589,16 @@ export namespace FormattedTextAsTree {
 	 */
 	export type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
 
-	const schema = createSchema(
-		new SchemaFactoryBeta("default"),
-		CharacterFormat,
-		[StringLineAtom],
-		defaultFormat,
-	);
-
-	/**
-	 * A unit of the text, with formatting.
-	 * @internal
-	 */
-	// export const StringAtom = schema.StringAtom;
-	// export type StringAtom = TreeNodeFromImplicitAllowedTypes<typeof StringAtom>;
-
-	export type StringAtom = FormattedAtom<
-		CharacterFormat,
-		StringAtomContent,
-		TreeNode & WithType<"com.fluidframework.text.formatted<default>.Text">
-	>;
-
 	/**
 	 * Statics for text nodes.
 	 * @internal
 	 */
-	export interface Statics {
+	export interface Statics<TTree = Tree> {
 		/**
-		 * Construct a {@link FormattedTextAsTree.(Tree:type)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
+		 * Construct a {@link FormattedTextAsTree.(Tree:class)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
 		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
-		fromString(value: string): Tree;
+		fromString(value: string): TTree;
 	}
 
 	/**
@@ -633,16 +615,16 @@ export namespace FormattedTextAsTree {
 	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
-	 * @see {@link FormattedTextAsTree.(Tree:type)} for schema.
+	 * @see {@link FormattedTextAsTree.(Tree:class)} for schema.
 	 * @internal
 	 */
 	export interface Members<
 		TFormatTree = TreeFieldFromImplicitField<typeof CharacterFormat>,
 		TPartialFormat = Partial<TreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>>,
-		TFormattedAtom = StringAtom,
+		TFormattedAtom = FormattedAtom,
 		TFFormattedInsert = {
 			content: InsertableTreeFieldFromImplicitField<typeof StringAtomContent>;
-			format: TPartialFormat;
+			format: InsertableTreeFieldFromImplicitField<typeof CharacterFormat>;
 		},
 	> extends TextAsTree.Members {
 		/**
@@ -732,11 +714,82 @@ export namespace FormattedTextAsTree {
 		): () => void;
 	}
 
-	// TODO: this removes a lot of type safety
-	type TTTT = Statics &
-		typeof schema.TextNode &
-		TreeNodeSchema<string, NodeKind, Members & TreeNode>;
-	const treeNode = schema.TextNode as TTTT;
+	/**
+	 * Schema identifier for the text node produced by `createSchema` for a given user scope.
+	 * @internal
+	 */
+	export type FormattedTextSchemaName<TUserScope extends string> = ScopedSchemaName<
+		`com.fluidframework.text.formatted<${TUserScope}>`,
+		"Text"
+	>;
+
+	/**
+	 * The allowed atom types for a schema produced by `createSchema` with the given extra atoms.
+	 * @internal
+	 */
+	export type FormattedTextAtoms<
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+	> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
+
+	/**
+	 * The {@link FormattedTextAsTree.Members} instantiation for a schema produced by `createSchema`.
+	 * @internal
+	 */
+	export type FormattedTextMembers<
+		FormatSchema extends ImplicitAllowedTypes,
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+	> = Members<
+		TreeFieldFromImplicitField<FormatSchema>,
+		Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+		FormattedAtom<
+			TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+			TreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
+		>,
+		{
+			content: InsertableTreeNodeFromImplicitAllowedTypes<
+				FormattedTextAtoms<ExtraAtomsSchema>
+			>;
+			format: InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>;
+		}
+	>;
+
+	/**
+	 * The schema type returned by `createSchema`.
+	 * @remarks
+	 * Expressing this explicitly (rather than letting `createSchema` infer it) keeps the only
+	 * type-exported `typeNameSymbol`/`typeSchemaSymbol` symbols (used by `WithType` as computed
+	 * property keys) hidden behind the nameable `ErasedSchemaSubclassable` alias. This lets the result
+	 * of `createSchema` be used directly as the `extends` clause of an exported class without hitting
+	 * `TS4020` ('extends' clause of exported class ... has or is using private name 'typeNameSymbol').
+	 * @internal
+	 */
+	export type FormattedTextSchema<
+		TUserScope extends string,
+		FormatSchema extends ImplicitAllowedTypes,
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+	> = Statics<
+		ErasedNode<
+			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			FormattedTextSchemaName<TUserScope>
+		>
+	> &
+		ErasedSchemaSubclassable<
+			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			FormattedTextSchemaName<TUserScope>
+		>;
+
+	export class Tree extends createSchema(
+		new SchemaFactoryBeta("default"),
+		CharacterFormat,
+		[StringLineAtom],
+		defaultFormat,
+	) {}
 
 	/**
 	 * Schema for a text node.
@@ -745,8 +798,6 @@ export namespace FormattedTextAsTree {
 	 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
 	 * @internal
 	 */
-	export const Tree = eraseSchemaDetails<Members, Statics>()(treeNode);
-	export type Tree = Members &
-		TreeNode &
-		WithType<"com.fluidframework.text.formatted<default>.Text">;
+	// export const Tree = eraseSchemaDetails<Members, Statics>()(TreeDefault);
+	// export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
 }
