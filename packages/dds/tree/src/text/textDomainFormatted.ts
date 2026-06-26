@@ -60,8 +60,16 @@ function createFormattedScopedFactory<TUserScope extends string>(
 	return createCustomizedFluidFrameworkScopedFactory(inputSchemaFactory, "text.formatted");
 }
 
+/**
+ * Schema factory for formatted text types which are not generic.
+ */
 const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
+/**
+ * Factory for formatted text schema as a function of the formatting and the embedded object (atom) types.
+ *
+ * TODO: This will eventually be exposed as the user facing API.
+ */
 function createSchema<
 	const TUserScope extends string,
 	const FormatSchema extends ImplicitAllowedTypes,
