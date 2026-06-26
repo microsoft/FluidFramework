@@ -26,13 +26,15 @@ import {
  */
 // eslint-disable-next-line import-x/no-internal-modules
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	asAlpha,
 	configuredSharedTreeAlpha,
 	FluidClientVersion,
 	ForestTypeOptimized,
 	incrementalEncodingPolicyForAllowedTypes,
+	incrementalSummaryHint,
+	SchemaFactoryAlpha,
 	TreeCompressionStrategy,
 	TreeViewConfigurationAlpha,
 	type TreeViewAlpha,
@@ -66,19 +68,24 @@ function getTinyliciousEndpoint(): string {
 	return `http://localhost:${tinyliciousPort}`;
 }
 
-const sf = new SchemaFactory("com.fluidframework.example.text-editor");
+const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
 
-export class TextEditorRoot extends sf.object("TextEditorRoot", {
-	plainText: TextAsTree.Tree,
-	formattedText: FormattedTextAsTree.Tree,
+export class TextEditorRoot extends sf.objectAlpha("TextEditorRoot", {
+	// Opt both the plain and formatted text into incremental summarization by marking the
+	// fields above their text nodes with incrementalSummaryHint.
+	plainText: sf.types([TextAsTree.Tree], { custom: { [incrementalSummaryHint]: true } }),
+	formattedText: sf.types([FormattedTextAsTree.Tree], {
+		custom: { [incrementalSummaryHint]: true },
+	}),
 }) {}
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
 
 /**
- * SharedTree configured to use the optimized "chunked" forest along
- * with incremental summarization. This applys to both plain and formatted text
- * if they have incrementalSummaryHint on any of their fields.
+ * SharedTree configured to use the optimized "chunked" forest along with incremental
+ * summarization. {@link incrementalEncodingPolicyForAllowedTypes} reads the
+ * {@link incrementalSummaryHint} from the {@link TextEditorRoot}, so both the
+ * plain and formatted text are encoded incrementally.
  */
 const SharedTree = configuredSharedTreeAlpha({
 	forest: ForestTypeOptimized,

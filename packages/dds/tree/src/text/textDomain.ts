@@ -18,7 +18,6 @@ import { TreeAlpha } from "../shared-tree/index.js";
 import {
 	eraseSchemaDetails,
 	getInnerNode,
-	incrementalSummaryHint,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
@@ -181,13 +180,7 @@ export function charactersFromString(value: string): Iterable<string> {
 	return value;
 }
 
-class StringArray extends sf.arrayAlpha(
-	"StringArray",
-	// Opt the character content into incremental summary optimization.
-	sf.types([SchemaFactory.string], {
-		custom: { [incrementalSummaryHint]: true },
-	}),
-) {
+class StringArray extends sf.array("StringArray", SchemaFactory.string) {
 	public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
 		const cursor = getInnerNode(this).borrowCursor();
 		cursor.enterField(EmptyKey);
@@ -266,17 +259,6 @@ export function processCharactersChangedDelta(
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
- * @remarks
- * The character content of a {@link TextAsTree.(Tree:type)} is opted in to incremental summarization:
- * its schema carries the {@link incrementalSummaryHint} metadata.
- * When incremental summarization is enabled on the tree, character content which does not change between
- * summaries is not re-encoded or re-uploaded to the service; instead the unchanged chunks are referenced by handle.
- * For large texts which are edited in only a few places at a time, this can substantially reduce summary upload size
- * and the CPU cost of producing each summary. Because the schema already opts its content in, enabling the optimization only
- * requires configuring with {@link configuredSharedTreeAlpha}
- *
- * See the {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/INCREMENTAL_SUMMARY.md}
- * for the full set of required options (including `minVersionForCollab`) and a complete setup example.
  * @privateRemarks
  * Currently this API only supports a really minimal feature set, and has no support for more advanced features like:
  * - Alternative character boundaries (e.g. grapheme clusters, paragraphs, tokens, etc.).
