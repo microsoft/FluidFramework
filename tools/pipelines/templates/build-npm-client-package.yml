@@ -1,7 +1,22 @@
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
-# build-npm-package template to build NPM packages/projects
+# build-npm-client-package template
+#
+# This template exists as a specialized variant of build-npm-package for the
+# client release group pipeline (Build - client packages). It was split from
+# the generic template because the client pipeline has additional behavior and
+# artifact contracts that other npm package pipelines do not require.
+#
+# Key differences from build-npm-package:
+# - Captures and publishes build output archive (build_output_archive) for
+#   downstream test pipelines.
+# - Runs tests in dedicated jobs (coverage + per-task fan-out) rather than only
+#   inline in the main build job.
+# - Builds and publishes the devtools browser extension artifact.
+# - Includes client-specific telemetry and artifact shaping used by internal
+#   CI and follow-on workflows.
+#
 
 parameters:
 - name: buildDirectory
@@ -74,19 +89,11 @@ parameters:
   type: string
   default: repo
 
-- name: packageManager
-  type: string
-  default: pnpm
-
 # Parameter for modifying the 'types' field in the package.json.
 # If the value 'none' is provided, the 'types' field in package.json will remain unchanged.
 - name: packageTypesOverride
   type: string
   default: none
-
-- name: packageManagerInstallCommand
-  type: string
-  default: 'pnpm i --frozen-lockfile'
 
 # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
 # group
@@ -332,8 +339,6 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
-                  installPnpm: ${{ eq(parameters.packageManager, 'pnpm') }}
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
                   # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                   # whenever legacy package versions are added or removed. Including it in the pnpm store
                   # cache key ensures a cache miss whenever the set of compat packages changes.
@@ -355,7 +360,7 @@ extends:
                       # Ideally, #73628 removes include-install-build-tools template use in include-set-package-version
                       # making it a non-issue. For now, second pnpm install is skipped to preserve the client version
                       # for all remaining steps.
-                      installPnpmForRepoBuildTools: ${{ ne(parameters.packageManager, 'pnpm') }}
+                      installPnpmForRepoBuildTools: false
                       tagName: '${{ parameters.tagName }}'
                       interdependencyRange: '${{ parameters.interdependencyRange }}'
                       packageTypesOverride: '${{ parameters.packageTypesOverride }}'
@@ -395,7 +400,7 @@ extends:
                   - task: Bash@3
                     displayName: npm pack
                     env:
-                      PACKAGE_MANAGER: '${{ parameters.packageManager }}'
+                      PACKAGE_MANAGER: 'pnpm'
                       RELEASE_GROUP: '${{ parameters.tagName }}'
                       STAGING_PATH: $(Build.ArtifactStagingDirectory)
                     inputs:
@@ -462,29 +467,28 @@ extends:
                   # At this point we want to publish the artifact with the _api-extractor-temp folder,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
-              - ${{ if eq(parameters.packageManager, 'pnpm') }}:
-                # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
-                # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
-                # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
-                # at the beginning of the CI job.
-                - task: Bash@3
-                  displayName: Reset lockfile
-                  inputs:
-                    targetType: inline
-                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                    script: |
-                      set -eu -o pipefail
-                      git checkout HEAD -- pnpm-lock.yaml
+              # Reset the pnpm-lock.yaml file since it's been modified by the versioning. But for dependency caching we want
+              # the cache key (which is based on the contents of the lockfile) to be the unmodified file. So we reset the
+              # lockfile as the last step so that when the dependency cache is uploaded, the cache key matches what it was
+              # at the beginning of the CI job.
+              - task: Bash@3
+                displayName: Reset lockfile
+                inputs:
+                  targetType: inline
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  script: |
+                    set -eu -o pipefail
+                    git checkout HEAD -- pnpm-lock.yaml
 
-                # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
-                - task: Bash@3
-                  displayName: Prune pnpm store
-                  inputs:
-                    targetType: inline
-                    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
-                    script: |
-                      set -eu -o pipefail
-                      pnpm store prune
+              # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
+              - task: Bash@3
+                displayName: Prune pnpm store
+                inputs:
+                  targetType: inline
+                  workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
+                  script: |
+                    set -eu -o pipefail
+                    pnpm store prune
 
               - task: Bash@3
                 displayName: Check for extraneous modified files
@@ -614,8 +618,6 @@ extends:
               - template: /tools/pipelines/templates/include-install.yml@self
                 parameters:
                   buildDirectory: '${{ parameters.buildDirectory }}'
-                  installPnpm: ${{ eq(parameters.packageManager, 'pnpm') }}
-                  packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
                   # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                   # whenever legacy package versions are added or removed. Including it in the pnpm store
                   # cache key ensures a cache miss whenever the set of compat packages changes.
@@ -630,7 +632,7 @@ extends:
                   # Note that skipping pnpm install means client pnpm version must suffice for build-tools.
                   # Ideally, #73628 removes this whole template use making it a non-issue. For now, second
                   # pnpm install is skipped to preserve the client version for any remaining steps.
-                  installPnpmForRepoBuildTools: ${{ ne(parameters.packageManager, 'pnpm') }}
+                  installPnpmForRepoBuildTools: false
                   # This shares the store with the client installs (above).
                   pnpmStorePath: $(Pipeline.Workspace)/.pnpm-store
 
@@ -788,8 +790,6 @@ extends:
                 - template: /tools/pipelines/templates/include-install.yml@self
                   parameters:
                     buildDirectory: '${{ parameters.buildDirectory }}'
-                    installPnpm: ${{ eq(parameters.packageManager, 'pnpm') }}
-                    packageManagerInstallCommand: '${{ parameters.packageManagerInstallCommand }}'
                     # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
                     # whenever legacy package versions are added or removed. Including it in the pnpm store
                     # cache key ensures a cache miss whenever the set of compat packages changes.

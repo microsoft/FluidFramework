@@ -16,7 +16,7 @@ import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal"
 
 import type { IJsonCodec } from "../codec/index.js";
 import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
-import type { JsonCompatibleReadOnly } from "../util/index.js";
+import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
 import type { EditManagerEncodingContext } from "./editManagerCodecs.js";
@@ -85,10 +85,8 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly idCompressor: IIdCompressor,
 		minVersionForCollab: MinimumVersionForCollab,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
-		/** See {@link EditManagerEncodingContext.healUnresolvableIdentifiersOnDecode}. */
-		private readonly healUnresolvableIdentifiersOnDecode?: boolean,
-		/** See {@link EditManagerEncodingContext.sharedObjectId}. */
-		private readonly sharedObjectId?: string,
+		/** See {@link IdentifierHealingConfig}. */
+		private readonly healing?: IdentifierHealingConfig,
 	) {
 		super(
 			EditManagerSummarizer.key,
@@ -111,8 +109,7 @@ export class EditManagerSummarizer<TChangeset>
 			idCompressor: this.idCompressor,
 			schema: this.schemaAndPolicy,
 			isSummary: true,
-			healUnresolvableIdentifiersOnDecode: this.healUnresolvableIdentifiersOnDecode,
-			sharedObjectId: this.sharedObjectId,
+			healing: this.healing,
 		};
 		const jsonCompatible = this.codec.encode(this.editManager.getSummaryData(), context);
 		const dataString = stringify(jsonCompatible);
@@ -137,8 +134,7 @@ export class EditManagerSummarizer<TChangeset>
 		const data = this.codec.decode(summary, {
 			idCompressor: this.idCompressor,
 			isSummary: true,
-			healUnresolvableIdentifiersOnDecode: this.healUnresolvableIdentifiersOnDecode,
-			sharedObjectId: this.sharedObjectId,
+			healing: this.healing,
 		});
 		this.editManager.loadSummaryData(data);
 	}
