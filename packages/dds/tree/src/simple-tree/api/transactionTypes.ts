@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces";
+
 import type { TreeNode } from "../core/index.js";
 
 /**
@@ -126,6 +128,21 @@ export type TransactionResult =
 	| Omit<TransactionResultFailed<unknown>, "value">;
 
 /**
+ * A type-erased function that post-processes the change produced when a transaction is committed.
+ * @remarks
+ * Supply one via {@link RunTransactionParams.postProcessor} to "minimize" the change that a transaction produces, so that
+ * the resulting squashed change contains no extraneous information (e.g. data for nodes that were both created and removed
+ * within the transaction, or changes whose effects cancel out to nothing).
+ *
+ * This type intentionally hides its internal representation: its concrete shape is an implementation detail of
+ * `@fluidframework/tree`. Obtain a value of this type from a `@fluidframework/tree` helper rather than constructing one
+ * directly.
+ * @system @sealed @alpha
+ */
+export interface TransactionPostProcessor
+	extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {}
+
+/**
  * The parameters for the {@link RunTransaction | RunTransaction} API.
  * @alpha
  * @input
@@ -146,4 +163,18 @@ export interface RunTransactionParams {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
+	/**
+	 * An optional {@link TransactionPostProcessor | post-processor} applied to the change produced when this transaction is
+	 * committed, in order to "minimize" it so that the resulting squashed change contains no extraneous information.
+	 * @remarks
+	 * When omitted, the transaction's edits are squashed without any such processing (the existing behavior).
+	 *
+	 * The post-processor is applied once, when the outermost transaction that was started with one is committed. Supplying
+	 * a post-processor on a nested transaction that is already enclosed by a transaction started with one has no additional
+	 * effect.
+	 *
+	 * Note: minimization is not yet implemented. Supplying a post-processor currently has no observable effect beyond
+	 * reserving the behavior; a real post-processor will be provided in a future change.
+	 */
+	readonly postProcessor?: TransactionPostProcessor;
 }

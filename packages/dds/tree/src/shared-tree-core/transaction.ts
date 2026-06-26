@@ -40,15 +40,17 @@ export enum TransactionResult {
 
 /**
  * A simple API for managing transactions.
+ * @typeParam TOptions - The type of the options passed to {@link Transactor.start | start}.
  */
-export interface Transactor {
+export interface Transactor<TOptions> {
 	/**
 	 * Start a new transaction.
+	 * @param options - Options controlling how the transaction is committed.
 	 * @remarks
 	 * If a transaction is already in progress when this new transaction starts, then this transaction will be "nested" inside of it,
 	 * i.e. the outer transaction will still be in progress after this new transaction is committed or aborted.
 	 */
-	start(): void;
+	start(options?: TOptions): void;
 	/**
 	 * Close this transaction by squashing its edits and committing them as a single edit.
 	 * @remarks If this is the root checkout and there are no ongoing transactions remaining, the squashed edit will be submitted to Fluid.
@@ -89,8 +91,9 @@ export interface TransactionEvents {
 
 /**
  * Callbacks for transaction lifecycle events.
+ * @typeParam TOptions - The type of the options passed to {@link Transactor.start | start}.
  */
-export interface Callbacks {
+export interface Callbacks<TOptions> {
 	/**
 	 * Called when the current transaction is popped from the {@link TransactionStack | stack}.
 	 */
@@ -104,37 +107,42 @@ export interface Callbacks {
 	 * Put another way, a transaction always results in a call to exactly one `OnPush` callback - whichever is closest to the transaction.
 	 * The event "bubbles up" to (and no further past) its first registered callback.
 	 */
-	readonly onPush?: OnPush;
+	readonly onPush?: OnPush<TOptions>;
 }
 
 /**
  * A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
  * @remarks This function may return other functions that will be called when the transaction is popped from the stack or a nested transaction is pushed onto the stack.
  * This function runs just before the transaction begins, so if this is the beginning of an outermost (not nested) transaction then {@link Transactor.size} will be 0 during its execution.
+ * @typeParam TOptions - The type of the options passed to {@link Transactor.start | start}.
+ * @param options - The options passed to {@link Transactor.start | start}.
  */
-export type OnPush = () => Callbacks | void;
+export type OnPush<TOptions> = (options?: TOptions) => Callbacks<TOptions> | void;
 
 /**
  * A function that will be called when a transaction is popped from the {@link TransactionStack | stack}.
  * @remarks This function runs just after the transaction ends, so if this is the end of an outermost (not nested) transaction then {@link Transactor.size} will be 0 during its execution.
+ * @param result - The result of the transaction.
  */
 export type OnPop = (result: TransactionResult) => void;
 
 /**
  * A frame in the transaction stack.
+ * @typeParam TOptions - The type of the options passed to {@link Transactor.start | start}.
  */
-interface TransactionStackFrame {
+interface TransactionStackFrame<TOptions> {
 	/** The callbacks provided when this transaction frame was pushed onto the stack. */
-	readonly callbacks: Callbacks;
+	readonly callbacks: Callbacks<TOptions>;
 }
 
 /**
  * An implementation of {@link Transactor} that uses a stack to manage transactions.
  * @remarks Using a stack allows transactions to nest - i.e. an inner transaction may be started while an outer transaction is already in progress.
+ * @typeParam TOptions - The type of the options passed to {@link Transactor.start | start}.
  */
-export class TransactionStack implements Transactor, IDisposable {
-	readonly #stack: TransactionStackFrame[] = [];
-	readonly #onPush?: OnPush;
+export class TransactionStack<TOptions> implements Transactor<TOptions>, IDisposable {
+	readonly #stack: TransactionStackFrame<TOptions>[] = [];
+	readonly #onPush?: OnPush<TOptions>;
 
 	readonly #events = createEmitter<TransactionEvents>();
 	public get events(): Listenable<TransactionEvents> {
@@ -150,7 +158,7 @@ export class TransactionStack implements Transactor, IDisposable {
 	 * Construct a new {@link TransactionStack}.
 	 * @param onPush - A {@link OnPush | function} that will be called when a transaction begins.
 	 */
-	public constructor(onPush?: OnPush) {
+	public constructor(onPush?: OnPush<TOptions>) {
 		this.#onPush = onPush;
 	}
 
@@ -159,11 +167,11 @@ export class TransactionStack implements Transactor, IDisposable {
 		return this.#stack.length;
 	}
 
-	public start(): void {
+	public start(options?: TOptions): void {
 		this.ensureNotDisposed();
 		const last = getLast(this.#stack);
 		const onPushCurrent = last === undefined ? this.#onPush : last.callbacks.onPush;
-		const { onPush, onPop } = onPushCurrent?.() ?? {};
+		const { onPush, onPop } = onPushCurrent?.(options) ?? {};
 		this.#stack.push({
 			callbacks: { onPop, onPush: onPush ?? onPushCurrent },
 		});
@@ -217,6 +225,60 @@ export type OnPopWithViewUpdate<TChange> = (
 ) => void;
 
 /**
+ * Specifies when a {@link ChangeProcessor} should be invoked relative to nested transactions that supply it.
+ */
+export enum ChangeProcessorApplicability {
+	/**
+	 * Invoke the processor only once, when the outermost transaction that supplied it is committed.
+	 * @remarks Supplying the same processor on a transaction already enclosed by one that supplied it has no
+	 * additional effect. Note that two sibling (sequential) nested transactions are each "outermost" within their own
+	 * subtree, so each will invoke the processor.
+	 */
+	Outermost,
+	/**
+	 * Invoke the processor every time a transaction that supplied it is committed, including nested transactions.
+	 */
+	Always,
+}
+
+/**
+ * Post-processes the squashed change produced when a transaction is committed.
+ * @remarks A change processor receives the composed (squashed) change and returns a change with the same observable
+ * effect but otherwise transformed. The first such transformation is "minimization" (removing extraneous information
+ * from the change, e.g. data for nodes that were both created and removed within the transaction), but this interface
+ * is intentionally general so that other post-processing can be added in the future.
+ *
+ * This is the internal counterpart of the type-erased post-processor exposed on the public transaction API. The public
+ * boundary type-erases this (see the conversion helpers in the `shared-tree` layer) so that its internal change
+ * representation does not leak into the public API.
+ */
+export interface ChangeProcessor<TChange> {
+	/**
+	 * When this processor should be invoked relative to nested transactions that supply it.
+	 */
+	readonly applicability: ChangeProcessorApplicability;
+	/**
+	 * Processes the given (squashed) change, returning a change with the same observable effect.
+	 */
+	readonly processChange: (change: TChange) => TChange;
+}
+
+/**
+ * Options for {@link Transactor.start | starting} a transaction.
+ */
+export interface SquashingTransactionOptions<TChange> {
+	/**
+	 * An optional {@link ChangeProcessor} applied to the squashed change produced when a transaction that was started
+	 * with this option is committed.
+	 * @remarks When omitted, the transaction's edits are squashed without any post-processing (the existing behavior).
+	 *
+	 * How often the processor is invoked across nested transactions is governed by its
+	 * {@link ChangeProcessor.applicability | applicability}.
+	 */
+	readonly postProcessor?: ChangeProcessor<TChange>;
+}
+
+/**
  * An implementation of {@link Transactor} that {@link TransactionStack | uses a stack} and a {@link SharedTreeBranch | branch} to manage transactions.
  * @remarks Given a branch, this class will fork the branch when a transaction begins and squash the forked branch back into the original branch when the transaction ends.
  * This class provides conveniences for interacting with the {@link SquashingTransactionStack.activeBranch | active branch} in a way that is stable across transaction boundaries.
@@ -225,7 +287,7 @@ export type OnPopWithViewUpdate<TChange> = (
 export class SquashingTransactionStack<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-> extends TransactionStack {
+> extends TransactionStack<SquashingTransactionOptions<TChange>> {
 	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
 
 	/**
@@ -284,15 +346,41 @@ export class SquashingTransactionStack<
 	 * Construct a new {@link SquashingTransactionStack}.
 	 * @param branch - The {@link SquashingTransactionStack.branch | branch} that will be forked off of when a transaction begins.
 	 * @param onPush - A function that will be called when a transaction is pushed to the {@link TransactionStack | stack}.
+	 * @remarks To post-process the squashed change produced when a transaction is committed (for example, to "minimize"
+	 * it so that it contains no extraneous information), start the transaction with a
+	 * {@link SquashingTransactionOptions.postProcessor | post-processor}. The post-processor is injected via the transaction
+	 * options rather than baked into this stack, so different transactions may supply different post-processors (or none).
 	 */
 	public constructor(
 		public readonly branch: SharedTreeBranch<TEditor, TChange>,
 		mintRevisionTag: () => RevisionTag,
 		onPush?: () => OnPopWithViewUpdate<TChange> | void,
 	) {
+		// A stack of the post-processors to apply when each in-progress transaction commits, ordered from outermost to
+		// innermost. Each in-progress transaction contributes exactly one entry: either the processor to apply when it
+		// commits, or `undefined` when none should be applied.
+		const postProcessorStack: (ChangeProcessor<TChange> | undefined)[] = [];
+		// Determines the entry to push for a transaction that was started with the given `requested` processor (if any).
+		// A processor with "outermost" applicability that is already active in an enclosing transaction resolves to
+		// `undefined` so that it is only applied once (at the outermost transaction that supplied it).
+		const resolvePostProcessor = (
+			requested: ChangeProcessor<TChange> | undefined,
+		): ChangeProcessor<TChange> | undefined => {
+			if (
+				requested?.applicability === ChangeProcessorApplicability.Outermost &&
+				postProcessorStack.includes(requested)
+			) {
+				return undefined;
+			}
+			return requested;
+		};
+
 		super(
 			// Invoked when an outer transaction starts
-			(): Callbacks => {
+			(
+				startOptions?: SquashingTransactionOptions<TChange>,
+			): Callbacks<SquashingTransactionOptions<TChange>> => {
+				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
 				const rebaser = this.branch.changeFamily.rebaser;
@@ -309,6 +397,7 @@ export class SquashingTransactionStack<
 				// Invoked when an outer transaction ends
 				const onOuterTransactionPop: OnPop = (result) => {
 					assert(this.size === 0, 0xcae /* The outer transaction should be ending */);
+					const postProcessor = postProcessorStack.pop();
 					transactionBranch.editor.exitTransaction();
 
 					const sourcePath: GraphCommit<TChange>[] = [];
@@ -357,16 +446,20 @@ export class SquashingTransactionStack<
 								}
 								// Squash all the new commits on the transaction branch into a new commit on the original branch
 								const squash = rebaser.compose(transactionSteps);
+								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
+								// "minimize" it so that it contains no extraneous information).
+								const change =
+									postProcessor === undefined ? squash : postProcessor.processChange(squash);
 
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
-									this.branch.apply(tagChange(squash, transactionRevision));
+									this.branch.apply(tagChange(change, transactionRevision));
 									// The view is already up-to-date so there's nothing more to do
 								} else {
 									// Some changes were made on `branch` since the transaction began
 									const unrebasedHead = mintCommit(startHead, {
-										change: squash,
+										change,
 										revision: transactionRevision,
 									});
 									// We need to rebase the transaction commit on top of the new changes
@@ -407,13 +500,17 @@ export class SquashingTransactionStack<
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
-				const onNestedTransactionPush: OnPush = () => {
+				const onNestedTransactionPush: OnPush<SquashingTransactionOptions<TChange>> = (
+					nestedStartOptions,
+				) => {
+					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
 					transactionBranch.editor.enterTransaction();
 					return {
 						// Invoked when a nested transaction ends
 						onPop: (result) => {
+							const nestedPostProcessor = postProcessorStack.pop();
 							transactionBranch.editor.exitTransaction();
 							switch (result) {
 								case TransactionResult.Abort: {
@@ -422,6 +519,26 @@ export class SquashingTransactionStack<
 									break;
 								}
 								case TransactionResult.Commit: {
+									// When this nested transaction supplied a post-processor that should be applied here, squash its
+									// edits into a single (post-processed) commit on the transaction branch rather than leaving them to
+									// be squashed only when the outermost transaction is committed.
+									if (nestedPostProcessor !== undefined) {
+										const nestedSteps: GraphCommit<TChange>[] = [];
+										findAncestor(
+											[transactionBranch.getHead(), nestedSteps],
+											(c) => c === nestedStartHead,
+										);
+										if (nestedSteps.length > 0) {
+											assert(
+												transactionRevision !== undefined,
+												"Expected transaction revision in the presence of transaction steps",
+											);
+											const squash = rebaser.compose(nestedSteps);
+											const processedSquash = nestedPostProcessor.processChange(squash);
+											transactionBranch.removeAfter(nestedStartHead);
+											transactionBranch.apply(tagChange(processedSquash, transactionRevision));
+										}
+									}
 									break;
 								}
 								default: {

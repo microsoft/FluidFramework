@@ -179,17 +179,18 @@ export {
 } from "./storedSchema.js";
 
 export {
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParams,
+	type TransactionCallbackStatus,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
+	type TransactionPostProcessor,
 	type TransactionResult,
 	type TransactionResultExt,
-	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type VoidTransactionCallbackStatus,
 	type WithValue,
 	rollback,
 } from "./transactionTypes.js";
