@@ -1,0 +1,18 @@
+trigger: none
+pr: none
+pool:
+  vmImage: ubuntu-latest
+steps:
+  - checkout: none
+  - task: AzureCLI@2
+    displayName: 'Write cutover marker to NEW account only'
+    inputs:
+      azureSubscription: 'fluid-docs-torus'
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -eu -o pipefail
+        echo "fluidframeworkcdn cutover marker - if you can read this via storage.fluidframework.com, AFD is on the new account" > marker.txt
+        az storage blob upload --account-name fluidframeworkcdn --container-name static \
+          --name "migration-marker.txt" --file marker.txt --auth-mode login --overwrite --content-type "text/plain"
+        echo "MARKER WRITTEN to fluidframeworkcdn/static/migration-marker.txt"
