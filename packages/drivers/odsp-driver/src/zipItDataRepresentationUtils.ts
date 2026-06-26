@@ -128,11 +128,12 @@ export function iteratePairs<T>(it: IterableIterator<T>): IterableIterator<[T, T
 		next: () => {
 			const a = it.next();
 			if (a.done) {
+				// Note: there is no assertion here that b is also done.
 				return { value: undefined, done: true };
 			}
 			const b = it.next();
 			assert(b.done !== true, 0x22b /* "Should be a pair" */);
-			return { value: [a.value, b.value], done: b.done };
+			return { value: [a.value, b.value], done: false };
 		},
 		[Symbol.iterator]: () => {
 			return res;

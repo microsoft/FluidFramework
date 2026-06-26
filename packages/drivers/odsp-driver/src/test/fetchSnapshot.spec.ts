@@ -120,7 +120,6 @@ describe("Tests1 for snapshot fetch", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			logger,
 		);
@@ -684,7 +683,7 @@ describe("Tests1 for snapshot fetch", () => {
 
 	it("Location redirection error without shareLink skips redeem", async () => {
 		// No shareLinkInfo set on resolved URL
-		resolved.shareLinkInfo = undefined;
+		delete resolved.shareLinkInfo;
 
 		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
 

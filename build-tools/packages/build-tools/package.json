@@ -24,6 +24,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.inexactOptionalPropertyTypes.json",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" nyc",
 		"compile": "fluid-build . --task compile",
 		"eslint": "eslint --quiet --format stylish src",
@@ -65,6 +66,7 @@
 		"type-fest": "^2.19.0",
 		"typescript-5.4": "npm:typescript@~5.4.5",
 		"typescript-5.9": "npm:typescript@~5.9.3",
+		"typescript-6.0": "npm:typescript@~6.0.3",
 		"yaml": "^2.8.1"
 	},
 	"devDependencies": {
@@ -85,5 +87,12 @@
 	},
 	"engines": {
 		"node": ">=22.22.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:inexactOptionalPropertyTypes": [
+				"^tsc"
+			]
+		}
 	}
 }

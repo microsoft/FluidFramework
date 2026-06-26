@@ -15,9 +15,9 @@ import type {
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
+	createChildLogger,
 	type TelemetryLoggerExt,
 	UsageError,
-	createChildLogger,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { Client } from "./client.js";

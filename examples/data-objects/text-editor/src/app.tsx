@@ -4,7 +4,11 @@
  */
 
 import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/azure-client";
-import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
+import {
+	createDevtoolsLogger,
+	initializeDevtools,
+	type DevtoolsProps,
+} from "@fluidframework/devtools/beta";
 import {
 	FormattedMainView,
 	QuillMainView as PlainQuillView,
@@ -99,6 +103,11 @@ interface DualUserViews {
 	user1: TreeViewAlpha<typeof TextEditorRoot>;
 	user2: TreeViewAlpha<typeof TextEditorRoot>;
 	containerId: string;
+	/**
+	 * Properties for (re)initializing Devtools. Held so the UI can toggle Devtools on and off at runtime
+	 * (see {@link DevtoolsToggle}).
+	 */
+	devtoolsProps?: DevtoolsProps;
 }
 
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
@@ -210,8 +219,9 @@ async function initFluid(): Promise<DualUserViews> {
 
 	console.log(`User 2 connected to document: ${containerId}`);
 
-	// Initialize Devtools
-	initializeDevtools({
+	// Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
+	// by the React layer.
+	const devtoolsProps: DevtoolsProps = {
 		logger: devtoolsLogger,
 		initialContainers: [
 			{
@@ -223,12 +233,13 @@ async function initFluid(): Promise<DualUserViews> {
 				containerKey: "User 2 Container",
 			},
 		],
-	});
+	};
 
 	return {
 		user1: user1View,
 		user2: user2View,
 		containerId,
+		devtoolsProps,
 	};
 }
 
@@ -415,6 +426,56 @@ const UserPanel: FC<{
 	);
 };
 
+/**
+ * Button that enables/disables Fluid Devtools at runtime.
+ */
+const DevtoolsToggle: FC<{
+	devtoolsProps: DevtoolsProps | undefined;
+}> = ({ devtoolsProps }) => {
+	// Devtools defaults to off
+	const [enabled, setEnabled] = useState(false);
+
+	// Handles initialization and cleanup of devtools instance
+	useEffect(() => {
+		if (devtoolsProps === undefined) {
+			return;
+		}
+		if (enabled) {
+			const instance = initializeDevtools(devtoolsProps);
+			return () => {
+				if (!instance.disposed) {
+					instance.dispose();
+				}
+			};
+		}
+		return undefined;
+	}, [enabled, devtoolsProps]);
+
+	return (
+		<button
+			type="button"
+			onClick={() => setEnabled((value) => !value)}
+			title={
+				enabled
+					? "Disable Fluid Devtools (recommended before capturing a performance trace.)"
+					: "Enable Fluid Devtools (Devtools visualizes every node on every edit)"
+			}
+			style={{
+				padding: "6px 12px",
+				borderRadius: "4px",
+				border: "1px solid #ccc",
+				background: enabled ? "#e6f4ea" : "#f5f5f5",
+				color: "#333",
+				fontSize: "13px",
+				fontWeight: 600,
+				cursor: "pointer",
+			}}
+		>
+			{`Devtools: ${enabled ? "On" : "Off"}`}
+		</button>
+	);
+};
+
 export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 	return (
 		<div
@@ -426,6 +487,15 @@ export const App: FC<{ views: DualUserViews }> = ({ views }) => {
 				flexDirection: "column",
 			}}
 		>
+			<div
+				style={{
+					marginBottom: "12px",
+					display: "flex",
+					justifyContent: "flex-start",
+				}}
+			>
+				<DevtoolsToggle devtoolsProps={views.devtoolsProps} />
+			</div>
 			<div
 				style={{
 					flex: 1,

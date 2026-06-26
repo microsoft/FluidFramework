@@ -25,11 +25,11 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
+	createChildLogger,
 	DataProcessingError,
+	tagCodeArtifacts,
 	type TelemetryLoggerExt,
 	ThresholdCounter,
-	createChildLogger,
-	tagCodeArtifacts,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
