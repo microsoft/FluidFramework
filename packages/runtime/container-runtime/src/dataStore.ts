@@ -13,8 +13,8 @@ import type {
 	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	TelemetryDataTag,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -58,7 +58,7 @@ export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
 	channelCollection: ChannelCollection,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
@@ -194,7 +194,7 @@ class DataStore implements IDataStore {
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
 		private readonly channelCollection: ChannelCollection,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly parentContext = channelCollection.parentContext,
 	) {
 		this.pendingAliases = channelCollection.pendingAliases;

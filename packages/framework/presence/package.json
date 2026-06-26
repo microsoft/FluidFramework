@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/presence",
-	"version": "2.103.0",
+	"version": "2.111.0",
 	"description": "A component for lightweight data sharing within a single session",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -102,7 +102,6 @@
 		"@fluid-internal/presence-definitions": "workspace:~",
 		"@fluid-internal/presence-runtime": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~",
 		"@fluidframework/runtime-definitions": "workspace:~"
 	},
 	"devDependencies": {
@@ -114,7 +113,7 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

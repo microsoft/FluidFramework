@@ -23,10 +23,13 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeStorageService,
 } from "@fluidframework/runtime-definitions/internal";
+import { dataStoreLoadTelemetryProps } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
-	ThresholdCounter,
 	createChildLogger,
+	DataProcessingError,
+	tagCodeArtifacts,
+	type TelemetryLoggerExt,
+	ThresholdCounter,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -52,7 +55,7 @@ export class RemoteChannelContext implements IChannelContext {
 	private channel: IChannel | undefined;
 	private readonly services: ChannelServiceEndpoints;
 	private readonly summarizerNode: ISummarizerNodeWithGC;
-	private readonly subLogger: ITelemetryLoggerExt;
+	private readonly subLogger: TelemetryLoggerExt;
 	private readonly thresholdOpsCounter: ThresholdCounter;
 	private static readonly pendingOpsCountThreshold = 1000;
 
@@ -71,9 +74,21 @@ export class RemoteChannelContext implements IChannelContext {
 	) {
 		assert(!this.id.includes("/"), 0x310 /* Channel context ID cannot contain slashes */);
 
+		// `channelType` is not known until the LazyPromise body runs `loadChannelFactoryAndAttributes`.
+		// Pass a getter to `tagCodeArtifacts` so events log the type as soon as it's available.
+		let channelType: string | undefined;
+
 		this.subLogger = createChildLogger({
 			logger: runtime.logger,
 			namespace: "RemoteChannelContext",
+			properties: {
+				all: {
+					...tagCodeArtifacts({
+						channelId: this.id,
+						channelType: () => channelType,
+					}),
+				},
+			},
 		});
 
 		this.services = createChannelServiceEndpoints(
@@ -88,44 +103,60 @@ export class RemoteChannelContext implements IChannelContext {
 		);
 
 		this.channelP = new LazyPromise<IChannel>(async () => {
-			const { attributes, factory } = await loadChannelFactoryAndAttributes(
-				dataStoreContext,
-				this.services,
-				this.id,
-				registry,
-				attachMessageType,
-			);
+			try {
+				const { attributes, factory } = await loadChannelFactoryAndAttributes(
+					dataStoreContext,
+					this.services,
+					this.id,
+					registry,
+					attachMessageType,
+				);
+				channelType = attributes.type;
 
-			const channel = await loadChannel(
-				runtime,
-				attributes,
-				factory,
-				this.services,
-				this.subLogger,
-				this.id,
-			);
+				const channel = await loadChannel(
+					runtime,
+					attributes,
+					factory,
+					this.services,
+					this.subLogger,
+					this.id,
+				);
 
-			assert(
-				this.pendingMessagesState !== undefined,
-				0xa6c /* pending messages state is undefined */,
-			);
-			for (const messageCollection of this.pendingMessagesState.messageCollections) {
-				this.services.deltaConnection.processMessages(messageCollection);
+				assert(
+					this.pendingMessagesState !== undefined,
+					0xa6c /* pending messages state is undefined */,
+				);
+				for (const messageCollection of this.pendingMessagesState.messageCollections) {
+					this.services.deltaConnection.processMessages(messageCollection);
+				}
+				this.thresholdOpsCounter.send(
+					"ProcessPendingOps",
+					this.pendingMessagesState.pendingCount,
+				);
+
+				// Commit changes.
+				this.channel = channel;
+				this.pendingMessagesState = undefined;
+				this.isLoaded = true;
+
+				// Because have some await between we created the service and here, the connection state might have changed
+				// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
+				this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
+				return this.channel;
+			} catch (error) {
+				const errorWrapped = DataProcessingError.wrapIfUnrecognized(
+					error,
+					"remoteChannelContextFailedToLoadChannel",
+				);
+				errorWrapped.addTelemetryProperties({
+					...dataStoreLoadTelemetryProps(dataStoreContext),
+					...tagCodeArtifacts({ channelId: id, channelType }),
+				});
+
+				// "Realize" is another name for instantiating the channel for a context
+				this.subLogger.sendErrorEvent({ eventName: "RealizeError" }, errorWrapped);
+				throw errorWrapped;
 			}
-			this.thresholdOpsCounter.send(
-				"ProcessPendingOps",
-				this.pendingMessagesState.pendingCount,
-			);
-
-			// Commit changes.
-			this.channel = channel;
-			this.pendingMessagesState = undefined;
-			this.isLoaded = true;
-
-			// Because have some await between we created the service and here, the connection state might have changed
-			// and we don't propagate the connection state when we are not loaded.  So we have to set it again here.
-			this.services.deltaConnection.setConnectionState(dataStoreContext.connected);
-			return this.channel;
 		});
 
 		this.summarizerNode = createSummarizerNode(

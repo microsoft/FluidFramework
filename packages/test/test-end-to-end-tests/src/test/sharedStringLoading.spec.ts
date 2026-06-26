@@ -43,6 +43,9 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 					"fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure",
 			},
 			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed" },
+			{
+				eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:RealizeError",
+			},
 			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest" },
 			{ eventName: "TestException" },
 		],

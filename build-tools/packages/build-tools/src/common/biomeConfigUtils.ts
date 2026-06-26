@@ -54,7 +54,10 @@ export async function getClosestBiomeConfigPath(
 	stopAt?: string,
 ): Promise<string> {
 	return (await findUp)
-		.findUp(["biome.json", "biome.jsonc"], { cwd, stopAt })
+		.findUp(["biome.json", "biome.jsonc"], {
+			cwd,
+			...(stopAt === undefined ? {} : { stopAt }),
+		})
 		.then((config) => {
 			if (config === undefined) {
 				throw new Error(`Can't find biome config file`);
