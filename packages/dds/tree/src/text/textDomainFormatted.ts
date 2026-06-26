@@ -144,11 +144,12 @@ function createSchema<
 			value: string,
 			format?: TreeFieldFromImplicitField<FormatSchema>,
 		): TextNode {
-			// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
-			// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
-			// Thus the array construction here is necessary to avoid a runtime error.
-			return new TextNode({
+			// Use `this` rather than `TextNode` so the more derived schema class is constructed when using this as a static on a subclass.
+			return new this({
 				content: [
+					// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
+					// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
+					// Thus the array construction here is necessary to avoid a runtime error.
 					...textAtomsFromString(
 						value,
 						format ?? TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable),
