@@ -608,7 +608,7 @@ export namespace FormattedTextAsTree {
 	 * @see {@link FormattedTextAsTree.(Tree:class)} for schema.
 	 * @internal
 	 */
-	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFFormattedInsert>
+	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFormattedInsert>
 		extends TextAsTree.Members {
 		/**
 		 * Format to use by default for text inserted with non-formatted APIs.
@@ -645,7 +645,7 @@ export namespace FormattedTextAsTree {
 		 */
 		insertWithFormattingAt(
 			index: number,
-			additionalCharacters: Iterable<TFFormattedInsert>,
+			additionalCharacters: Iterable<TFormattedInsert>,
 		): void;
 
 		/**
