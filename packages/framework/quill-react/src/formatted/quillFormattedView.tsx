@@ -91,8 +91,13 @@ export const FormattedMainView = forwardRef<FormattedEditorHandle, FormattedMain
 FormattedMainView.displayName = "FormattedMainView";
 
 /** Create a StringAtom containing a StringLineAtom with the given line tag. */
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- TODO: add type for this.
-function createLineAtom(lineTag: FormattedTextAsTree.LineTag, indent: number = 0) {
+function createLineAtom(
+	lineTag: FormattedTextAsTree.LineTag,
+	indent: number = 0,
+): FormattedTextAsTree.FormattedAtomInsertable<
+	FormattedTextAsTree.CharacterFormat,
+	FormattedTextAsTree.StringLineAtom
+> {
 	return {
 		content: new FormattedTextAsTree.StringLineAtom({
 			tag: lineTag,

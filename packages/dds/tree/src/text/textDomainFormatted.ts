@@ -5,6 +5,7 @@
 
 import { assert, compareArrays, debugAssert, fail } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import {
 	EmptyKey,
 	forEachNodeSubsequence,
@@ -724,6 +725,15 @@ export namespace FormattedTextAsTree {
 	}
 
 	/**
+	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
+	 * @internal
+	 */
+	export interface FormattedAtomInsertable<TFormat, TContent> {
+		readonly content: TContent;
+		readonly format: TFormat;
+	}
+
+	/**
 	 * Schema identifier for the text node produced by `createSchema` for a given user scope.
 	 * @internal
 	 */
@@ -758,12 +768,10 @@ export namespace FormattedTextAsTree {
 			TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 			TreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
 		>,
-		{
-			content: InsertableTreeNodeFromImplicitAllowedTypes<
-				FormattedTextAtoms<ExtraAtomsSchema>
-			>;
-			format: InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>;
-		}
+		FormattedAtomInsertable<
+			InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>,
+			InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
+		>
 	>;
 
 	/**
