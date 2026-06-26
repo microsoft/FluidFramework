@@ -443,7 +443,10 @@ function createSchema<
 	const Tree = eraseSchemaDetailsSubclassable<Members, FormattedTextAsTree.Statics<Tree>>()(
 		TextNode,
 	);
-	type Tree = ErasedNode<Members, FormattedTextAsTree.FormattedTextSchemaName<TUserScope>>;
+	type Tree = ErasedNode<
+		Members,
+		FormattedTextAsTree.FormattedTextSchemaIdentifier<TUserScope>
+	>;
 
 	return Tree;
 }
@@ -605,15 +608,8 @@ export namespace FormattedTextAsTree {
 	 * @see {@link FormattedTextAsTree.(Tree:class)} for schema.
 	 * @internal
 	 */
-	export interface Members<
-		TFormatTree = TreeFieldFromImplicitField<typeof CharacterFormat>,
-		TPartialFormat = Partial<TreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>>,
-		TFormattedAtom = FormattedAtom,
-		TFFormattedInsert = {
-			content: InsertableTreeFieldFromImplicitField<typeof StringAtomContent>;
-			format: InsertableTreeFieldFromImplicitField<typeof CharacterFormat>;
-		},
-	> extends TextAsTree.Members {
+	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFFormattedInsert>
+		extends TextAsTree.Members {
 		/**
 		 * Format to use by default for text inserted with non-formatted APIs.
 		 * @remarks
@@ -711,16 +707,20 @@ export namespace FormattedTextAsTree {
 	}
 
 	/**
-	 * Schema identifier for the text node produced by `createSchema` for a given user scope.
+	 * Schema identifier for the a generic formatted text schema.
+	 * @privateRemarks
+	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
 	 * @internal
 	 */
-	export type FormattedTextSchemaName<TUserScope extends string> = ScopedSchemaName<
+	export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<
 		`com.fluidframework.text.formatted<${TUserScope}>`,
 		"Text"
 	>;
 
 	/**
-	 * The allowed atom types for a schema produced by `createSchema` with the given extra atoms.
+	 * Helper for expressing the full set of formatted text atoms for a given schema.
+	 * @privateRemarks
+	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
 	 * @internal
 	 */
 	export type FormattedTextAtoms<
@@ -730,7 +730,10 @@ export namespace FormattedTextAsTree {
 	> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
 
 	/**
-	 * The {@link FormattedTextAsTree.Members} instantiation for a schema produced by `createSchema`.
+	 * Helper for configuring {@link FormattedTextAsTree.Members}.
+	 * @privateRemarks
+	 * Eventually this should probably be inlined into `FormattedTextAsTree.Members` or made a system type in a system namespace.
+	 * The approach should be evaluated after settling on a redesign of the `formatRange` API as that will impact what the type parameters are.
 	 * @internal
 	 */
 	export type FormattedTextMembers<
@@ -752,13 +755,7 @@ export namespace FormattedTextAsTree {
 	>;
 
 	/**
-	 * The schema type returned by `createSchema`.
-	 * @remarks
-	 * Expressing this explicitly (rather than letting `createSchema` infer it) keeps the only
-	 * type-exported `typeNameSymbol`/`typeSchemaSymbol` symbols (used by `WithType` as computed
-	 * property keys) hidden behind the nameable `ErasedSchemaSubclassable` alias. This lets the result
-	 * of `createSchema` be used directly as the `extends` clause of an exported class without hitting
-	 * `TS4020` ('extends' clause of exported class ... has or is using private name 'typeNameSymbol').
+	 * A generic type for a formatted text schema.
 	 * @internal
 	 */
 	export type FormattedTextSchema<
@@ -770,12 +767,12 @@ export namespace FormattedTextAsTree {
 	> = Statics<
 		ErasedNode<
 			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
-			FormattedTextSchemaName<TUserScope>
+			FormattedTextSchemaIdentifier<TUserScope>
 		>
 	> &
 		ErasedSchemaSubclassable<
 			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
-			FormattedTextSchemaName<TUserScope>
+			FormattedTextSchemaIdentifier<TUserScope>
 		>;
 
 	export class Tree extends createSchema(
@@ -784,14 +781,4 @@ export namespace FormattedTextAsTree {
 		[StringLineAtom],
 		defaultFormat,
 	) {}
-
-	/**
-	 * Schema for a text node.
-	 * @remarks
-	 * See {@link FormattedTextAsTree.Members} for the API.
-	 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
-	 * @internal
-	 */
-	// export const Tree = eraseSchemaDetails<Members, Statics>()(TreeDefault);
-	// export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
 }
