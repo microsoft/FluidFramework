@@ -193,18 +193,25 @@ function createSchema<
 				"FormattedTextAsTree.formatRange",
 			);
 
-			const branch = TreeAlpha.branch(this);
+			const fieldFormats = Object.entries(format) as [
+				keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+				unknown,
+			][];
 
-			const applyFormatting = (): void => {
+			TreeAlpha.context(this).runTransaction(() => {
 				for (let i = formatStart; i < formatEnd; i++) {
 					const atom = this.content[i];
-					if (atom === undefined) {
-						throw new UsageError("Index out of bounds while formatting text range.");
+					// Range validated above, so this should never fail.
+					assert(atom !== undefined, "Index out of bounds while formatting text range.");
+					const formatNode: TreeNode | TreeValue = atom.format;
+					const atomFormatSchema = TreeStatic.schema(formatNode);
+					if (!isObjectNodeSchema(atomFormatSchema)) {
+						// TODO: redesign this API to work with all allowed FormatSchema types.
+						throw new UsageError(
+							"formatRange currently only supports object nodes for the format.",
+						);
 					}
-					for (const [key, value] of Object.entries(format) as [
-						keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-						unknown,
-					][]) {
+					for (const [key, value] of fieldFormats) {
 						// Object.entries should only return string keyed enumerable own properties.
 						// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
 						assert(
@@ -212,20 +219,13 @@ function createSchema<
 							0xcc8 /* Object.entries returned a non-string key. */,
 						);
 
-						const formatNode: TreeNode | TreeValue = atom.format;
-						const atomFormatSchema = TreeStatic.schema(formatNode);
-						if (!isObjectNodeSchema(atomFormatSchema)) {
-							// TODO: redesign this API to work with all allowed FormatSchema types.
-							throw new UsageError("Expected an object node for the format.");
-						}
-
-						const f = atomFormatSchema.fields.get(key);
-						if (f === undefined) {
+						const field = atomFormatSchema.fields.get(key);
+						if (field === undefined) {
 							throw new UsageError(`Unknown format key: ${key}`);
 						}
 
 						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-						const clonedValue = TreeBeta.clone(TreeBeta.create(f, value as never)) as
+						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
 							| TreeNode
 							| TreeValue;
 
@@ -237,40 +237,16 @@ function createSchema<
 						)[key] = clonedValue;
 					}
 				}
-			};
-
-			if (branch === undefined) {
-				// If this node does not have a corresponding branch, then it is unhydrated.
-				// I.e., it is not part of a collaborative session yet.
-				// Therefore, we don't need to run the edits as a transaction.
-				// Note: for unhydrated nodes each atom edit fires a separate `treeChanged` event,
-				// so formatting N atoms will produce N callbacks on `onContentChanged` subscribers
-				// instead of the single callback that hydrated (transacted) edits produce.
-				// `withBufferedTreeEvents` is not a viable mitigation here: when more than one atom's
-				// `format` field changes within the same buffered scope, the kernel's per-field
-				// dedup logic discards the delta (see `treeNodeKernel.ts` `#fieldMarksBuffer`),
-				// which is worse for incremental consumers than N well-formed callbacks.
-				// Use `runTransaction` on a hydrated node (i.e. after inserting into the document)
-				// if batched events matter.
-				applyFormatting();
-			} else {
-				// Wrap all formatting operations in a single transaction for atomicity.
-				branch.runTransaction(() => {
-					applyFormatting();
-				});
-			}
+			});
 		}
+
 		/**
-		 * Returns the character string at the given atom index, or `undefined` if out of bounds.
-		 * @remarks
-		 * Line atoms expand to `"\n"`; text atoms return their underlying code point(s).
+		 * Returns the {@link  FormattedTextAsTree.TextAtom.content} at the given atom index, or `undefined` if out of bounds.
 		 */
 		private getAtomCharacterAt(index: number): string | undefined {
 			const atom = this.content[index];
 			if (atom === undefined) return undefined;
-			return atom.content instanceof FormattedTextAsTree.StringLineAtom
-				? "\n"
-				: atom.content.content;
+			return atom.content.content;
 		}
 
 		public onCharactersChanged(
@@ -300,6 +276,7 @@ function createSchema<
 		public getUniformRun(startIndex: number, endIndex?: number): number {
 			return this.content.getUniformRun(startIndex, endIndex);
 		}
+
 		public getString(startIndex: number, endIndex?: number): string {
 			return this.content.getString(startIndex, endIndex);
 		}
