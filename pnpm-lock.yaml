@@ -13158,6 +13158,9 @@ importers:
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
+      dependency-cruiser:
+        specifier: ^17.3.2
+        version: 17.3.2
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
