@@ -123,7 +123,7 @@ Benefits:
 
 Future consideration:
 
-- It may be useful for the view to expose a current/default policy object (either `StoredFromViewSchemaGenerationOptions` or similar) in the future, but that would still be part of the same unified API shape.
+- It may be useful to have the view expose the same type, `StoredFromViewSchemaGenerationOptions`, for what is currently in the stored schema
 - That could let callers test whether a specific upgrade is already included.
 - That could clarify that the exposed policy is the default used when no custom options are declared.
 - Callers could build wrapper policies from that baseline instead of reconstructing it.
