@@ -54,6 +54,38 @@ describe("runtime schema upgrade API", () => {
 		assert.equal(view.root, "test");
 	});
 
+	it("initialize can enable a staged schema upgrade via storedSchemaGenerationOptions", () => {
+		const enabled = new Set([stringUpgrade]);
+		const view = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: schemaB,
+				storedSchemaGenerationOptions: {
+					includeStaged: (upgrade) => enabled.has(upgrade),
+					includeStagedOptional: (upgrade) => enabled.has(upgrade),
+				},
+			}),
+		);
+
+		view.initialize("test");
+
+		assert.equal(view.root, "test");
+	});
+
+	it("rejects configuration providing both enabledUpgrades and storedSchemaGenerationOptions", () => {
+		assert.throws(
+			() =>
+				new TreeViewConfigurationAlpha({
+					schema: schemaB,
+					enabledUpgrades: [stringUpgrade],
+					storedSchemaGenerationOptions: {
+						includeStaged: () => false,
+						includeStagedOptional: () => false,
+					},
+				}),
+			/cannot both be provided/,
+		);
+	});
+
 	it("initialize without upgrades keeps staged schema upgrades disabled", () => {
 		const view = independentView(
 			new TreeViewConfigurationAlpha({

@@ -35,12 +35,12 @@ import {
 	normalizeFieldSchema,
 	checkSchemaCompatibility,
 	type InsertableContent,
+	type StoredFromViewSchemaGenerationOptions,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
 	type ReadSchema,
-	type SchemaUpgrade,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
 	type VoidTransactionCallbackStatus,
@@ -106,9 +106,9 @@ export class SchematizingSimpleTreeView<
 	 */
 	private readonly viewSchema: TreeSchema;
 	/**
-	 * Staged schema upgrades from the view configuration, frozen at construction time.
+	 * Stored-schema generation policy from the view configuration, frozen at construction time.
 	 */
-	private readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
+	private readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -155,13 +155,18 @@ export class SchematizingSimpleTreeView<
 			config instanceof TreeViewConfigurationAlpha && config.enabledUpgrades !== undefined
 				? [...config.enabledUpgrades]
 				: undefined;
+		const storedSchemaGenerationOptions =
+			config instanceof TreeViewConfigurationAlpha
+				? config.storedSchemaGenerationOptions
+				: undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
 			schema: config.schema,
 			enableSchemaValidation: config.enableSchemaValidation,
 			preventAmbiguity: config.preventAmbiguity,
 			enabledUpgrades,
+			storedSchemaGenerationOptions,
 		});
-		this.enabledUpgrades = configAlpha.enabledUpgrades;
+		this.storedSchemaGenerationOptions = configAlpha.storedSchemaGenerationOptions;
 
 		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
 		this.viewSchema = configAlpha;
@@ -209,7 +214,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema, this.enabledUpgrades);
+			const schema = toInitialSchema(this.config.schema, this.storedSchemaGenerationOptions);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -267,7 +272,10 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(this.viewSchema.root, this.enabledUpgrades);
+		const newSchema = toUpgradeSchema(
+			this.viewSchema.root,
+			this.storedSchemaGenerationOptions,
+		);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
@@ -443,7 +451,7 @@ export class SchematizingSimpleTreeView<
 		const compatibility = checkSchemaCompatibility(
 			this.viewSchema,
 			this.checkout.storedSchema,
-			this.enabledUpgrades,
+			this.storedSchemaGenerationOptions,
 		);
 		return {
 			...compatibility,

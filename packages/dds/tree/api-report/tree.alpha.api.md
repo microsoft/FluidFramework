@@ -669,6 +669,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 // @alpha
 export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
     readonly enabledUpgrades?: Iterable<SchemaUpgrade>;
+    readonly storedSchemaGenerationOptions?: StoredFromViewSchemaGenerationOptions;
 }
 
 // @alpha @sealed
@@ -1364,6 +1365,12 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly versionComparer?: (a: string, b: string) => number;
 }
 
+// @alpha
+export interface StoredFromViewSchemaGenerationOptions {
+    includeStaged(upgrade: SchemaUpgrade): boolean;
+    includeStagedOptional(upgrade: SchemaUpgrade): boolean;
+}
+
 // @beta @system
 export namespace System_TableSchema {
     // @sealed @system
@@ -2004,6 +2011,7 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 }
 
 // @public @sealed

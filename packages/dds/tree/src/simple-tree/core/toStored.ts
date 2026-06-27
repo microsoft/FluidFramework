@@ -6,18 +6,19 @@
 import type { SchemaUpgrade } from "./allowedTypes.js";
 
 /**
- * Options for transforming a view simple-schema to a stored simple-schema (See {@link TreeStoredSchema}).
+ * Options for transforming a view simple-schema to a stored simple-schema.
+ * @alpha
  */
 export interface StoredFromViewSchemaGenerationOptions {
 	/**
-	 * Determines whether to include {@link SchemaStaticsBeta.staged | staged} allowed types in the resulting stored schema.
+	 * Determines whether to include staged allowed types in the resulting stored schema.
 	 * @remarks
 	 * Due to caching, the behavior of this function must be pure.
 	 */
 	includeStaged(upgrade: SchemaUpgrade): boolean;
 
 	/**
-	 * Determines whether to treat a {@link SchemaFactoryAlpha.stagedOptional | staged optional} field as optional
+	 * Determines whether to treat a staged optional field as optional
 	 * (rather than required) in the resulting stored schema.
 	 * @remarks
 	 * Due to caching, the behavior of this function must be pure.

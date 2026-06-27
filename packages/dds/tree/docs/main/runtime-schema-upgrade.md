@@ -94,8 +94,25 @@ Key properties of this shape:
 
 ### Accepting `StoredFromViewSchemaGenerationOptions`
 
-In addition to an application-owned collection of `SchemaUpgrade` values, the construction-time configuration model can support accepting a full `StoredFromViewSchemaGenerationOptions` policy object in view configuration.
+In addition to an application-owned collection of `SchemaUpgrade` values, view construction also accepts a full `StoredFromViewSchemaGenerationOptions` policy object via `TreeViewConfigurationAlpha.storedSchemaGenerationOptions`.
 This keeps policy selection at view construction time while allowing advanced callers to configure staged-type and staged-optional inclusion directly.
+
+```typescript
+const enabled = new Set<SchemaUpgrade>([fooSchemaUpgrade]);
+
+const view = tree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		storedSchemaGenerationOptions: {
+			includeStaged: (upgrade) => enabled.has(upgrade),
+			includeStagedOptional: (upgrade) => enabled.has(upgrade),
+		},
+	}),
+);
+```
+
+`enabledUpgrades` and `storedSchemaGenerationOptions` are mutually exclusive in one configuration object.
+If both are provided, construction throws a `UsageError`.
 
 Benefits:
 

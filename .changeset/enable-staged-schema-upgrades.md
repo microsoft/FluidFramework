@@ -34,6 +34,81 @@ const view = alphaTree.viewWith(
 When configured `enabledUpgrades` is omitted or empty, staged schema upgrades remain disabled.
 The document's stored schema continues to allow only the schema that has already been enabled, so clients can understand the staged schema in code but cannot write data that depends on it yet.
 
+Advanced callers can also provide `storedSchemaGenerationOptions` directly in `TreeViewConfigurationAlpha` to control staged inclusion with custom policy functions.
+`enabledUpgrades` and `storedSchemaGenerationOptions` are mutually exclusive and cannot both be provided.
+
+For example, advanced applications can provide custom policy functions to decide which staged upgrades to include based on their own criteria:
+
+```typescript
+const stagedType = SchemaFactoryBeta.staged(NewNodeSchema);
+const schemaUpgrade = stagedType.metadata.stagedSchemaUpgrade;
+assert(schemaUpgrade !== undefined);
+
+const enabledFeatures = new Set<SchemaUpgrade>([schemaUpgrade]);
+
+const view = tree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		storedSchemaGenerationOptions: {
+			includeStaged: (upgrade) => enabledFeatures.has(upgrade),
+			includeStagedOptional: (upgrade) => enabledFeatures.has(upgrade),
+		},
+	}),
+);
+```
+
+This approach is useful for scenarios such as:
+- Fine-grained rollout control based on feature sets rather than individual feature flags
+- A/B testing different schema configurations
+- Integration test suites that want to exercise specific schema states
+
+#### Pre-built Policy Options
+
+For convenience, two pre-built policy options are provided:
+
+**Restrictive** (default behavior):
+
+```typescript
+import {
+	restrictiveStoredSchemaGenerationOptions,
+	TreeViewConfigurationAlpha,
+} from "@fluidframework/tree";
+
+const view = tree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchema,
+		storedSchemaGenerationOptions: restrictiveStoredSchemaGenerationOptions,
+	}),
+);
+```
+
+The restrictive option excludes all staged schema upgrades, producing the most conservative stored schema.
+
+**Permissive** (for testing):
+
+```typescript
+import {
+	permissiveStoredSchemaGenerationOptions,
+	TreeViewConfigurationAlpha,
+} from "@fluidframework/tree";
+
+// Test scenario: upgrade documents with all staged features enabled
+const testView = tree.viewWith(
+	new TreeViewConfigurationAlpha({
+		schema: AppSchemaWithAllStagedFeatures,
+		storedSchemaGenerationOptions: permissiveStoredSchemaGenerationOptions,
+	}),
+);
+
+testView.upgradeSchema();
+
+// Now verify that the application handles the upgraded schema correctly
+validateAllFeatures(testView.root);
+```
+
+The permissive option includes all staged schema upgrades, allowing applications to test future document shapes.
+It is useful in test and validation scenarios where you want to create or upgrade documents with all possible staged features enabled, verifying that the application handles these future schemas correctly.
+
 ### Production
 
 For production rollout, applications can use feature flags to control when staged schema upgrades are enabled.

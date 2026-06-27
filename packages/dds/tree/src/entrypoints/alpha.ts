@@ -319,5 +319,6 @@ export {
 	replaceVerboseTreeHandles,
 	trackDirtyNodes,
 	ITreeViewConfigurationAlpha,
+	StoredFromViewSchemaGenerationOptions,
 	// #endregion
 } from "../index.js";

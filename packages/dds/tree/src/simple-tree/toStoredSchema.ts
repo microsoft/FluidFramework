@@ -69,10 +69,20 @@ const viewToStoredCache = new WeakMap<
 >();
 
 /**
- * Maximally restrictive transformation of a view to stored schema.
+ * Restrictive policy for generating stored schema from view schema.
  * @remarks
- * This should only be used when the intent is to produce a stored schema is as restrictive as possible while still being compatible with the input view schema.
- * This is typically used for cases where backwards compatibility with past versions of an application is required, like {@link toUpgradeSchema} or {@link toInitialSchema}.
+ * Excludes all staged schema upgrades.
+ *
+ * Use this when you want the most conservative stored schema for compatibility-sensitive
+ * scenarios, or when staged schema upgrades should remain disabled.
+ *
+ * This is the default behavior when no staged upgrades are enabled.
+ *
+ * @privateRemarks
+ * Internal call paths which default to restrictive behavior include schema initialization and
+ * upgrade generation when callers do not opt into staged upgrades.
+ *
+ * @alpha
  */
 export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
 	{
@@ -81,16 +91,24 @@ export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGener
 	};
 
 /**
- * Maximally permissive transformation of a view to stored schema.
+ * Permissive policy for generating stored schema from view schema.
  * @remarks
- * This should only be used when the intent is to produce a stored schema which allows as much as possible while still being compatible with the input view schema.
- * This is typically used for cases where forwards compatibility with future versions of an application is required, like {@link toUnhydratedSchema}.
+ * Includes all staged schema upgrades.
  *
- * This is unable to include unknown optional fields in the output, which makes it not truly maximally permissive.
+ * Use this for testing, validation, and rollout rehearsal scenarios where you want to exercise
+ * future document shapes before enabling staged upgrades broadly.
  *
- * TODO: {@link StoredFromViewSchemaGenerationOptions} could be updated to allow a way to inject extra optional fields.
- * If done, then this could take in an existing stored schema, and attempt to generate a valid superset.
- * This could be useful to use as the schema for unhydrated content cloned from hydrated content.
+ * This policy does not add unknown optional fields, so it is not a true maximal superset
+ * of every possible stored schema.
+ *
+ * @privateRemarks
+ * This policy is used by unhydrated-schema generation.
+ *
+ * TODO: StoredFromViewSchemaGenerationOptions could be updated to allow injection of extra
+ * optional fields. If added, this policy could potentially take an existing stored schema and
+ * generate a valid superset for scenarios such as cloning hydrated content to unhydrated form.
+ *
+ * @alpha
  */
 export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
 	includeStaged: () => true,
@@ -122,14 +140,43 @@ function storedSchemaGenerationOptionsForUpgrades(
 	};
 }
 
+function isStoredFromViewSchemaGenerationOptions(
+	upgradesOrOptions: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
+): upgradesOrOptions is StoredFromViewSchemaGenerationOptions {
+	return (
+		typeof upgradesOrOptions === "object" &&
+		"includeStaged" in upgradesOrOptions &&
+		"includeStagedOptional" in upgradesOrOptions
+	);
+}
+
+/**
+ * Resolves a collection of staged schema upgrades into stored-schema generation options.
+ * @remarks
+ * If `upgradesOrOptions` is omitted, returns restrictive options.
+ */
+export function resolveStoredSchemaGenerationOptions(
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
+): StoredFromViewSchemaGenerationOptions {
+	if (upgradesOrOptions === undefined) {
+		return restrictiveStoredSchemaGenerationOptions;
+	}
+
+	if (isStoredFromViewSchemaGenerationOptions(upgradesOrOptions)) {
+		return upgradesOrOptions;
+	}
+
+	return storedSchemaGenerationOptionsForUpgrades(upgradesOrOptions);
+}
+
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
  */
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
-	upgrades?: Iterable<SchemaUpgrade>,
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
 ): TreeStoredSchema {
-	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
 }
 
 /**
@@ -137,9 +184,9 @@ export function toUpgradeSchema(
  */
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
-	upgrades?: Iterable<SchemaUpgrade>,
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
 ): TreeStoredSchema {
-	return toStoredSchema(root, storedSchemaGenerationOptionsForUpgrades(upgrades));
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
 }
 
 /**

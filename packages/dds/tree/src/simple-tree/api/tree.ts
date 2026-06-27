@@ -452,19 +452,21 @@ export interface TreeViewAlpha<
 	set root(newRoot: InsertableField<TSchema>);
 
 	/**
-	 * Modifies the stored schema to match this view's schema, enabling any staged schema upgrades
-	 * specified in {@link ITreeViewConfigurationAlpha.enabledUpgrades} when the view was constructed.
+	 * Modifies the stored schema to match this view's schema, enabling staged schema upgrades based on
+	 * the construction-time policy from {@link ITreeViewConfigurationAlpha.enabledUpgrades} or
+	 * {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions}.
 	 * @remarks
 	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
 	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * If no upgrades were provided at view construction, this behaves like the base {@link TreeView.upgradeSchema}.
+	 * If no upgrades or explicit policy were provided at view construction, this behaves like the base
+	 * {@link TreeView.upgradeSchema}.
 	 *
 	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include the same upgrade token will cause `upgradeSchema` to throw a
-	 * `UsageError` because the requested target would narrow the stored schema.
-	 * Keep previously enabled upgrade tokens in the view configuration for as long as any document may contain them.
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 * Keep previously enabled staged members in the view policy for as long as any document may contain them.
 	 *
 	 * Full end-to-end staged schema upgrade examples can be found in the
 	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
@@ -478,12 +480,12 @@ export interface TreeViewAlpha<
 	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
-	 * Uses staged schema upgrades from {@link ITreeViewConfigurationAlpha.enabledUpgrades} when generating
-	 * the initial stored schema.
+	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.enabledUpgrades} or
+	 * {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions} when generating the initial stored schema.
 	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include the same upgrade token will cause a subsequent `upgradeSchema` call
-	 * to throw a `UsageError` because the stored schema already contains the upgraded members and the new
-	 * target would narrow it.
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
+	 * the upgraded members and the new target would narrow it.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.

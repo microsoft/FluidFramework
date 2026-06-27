@@ -59,6 +59,7 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
+	type StoredFromViewSchemaGenerationOptions,
 	ExpectStored,
 	createSchemaUpgrade,
 } from "./core/index.js";
