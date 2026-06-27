@@ -25,44 +25,44 @@
 // ),
 // ```
 const unavailable = (name: string): never => {
-    throw new Error(
-        `${name} is unavailable: the summaryDelayLoadedModule chunk was stubbed out of the bundle.`,
-    );
+	throw new Error(
+		`${name} is unavailable: the summaryDelayLoadedModule chunk was stubbed out of the bundle.`,
+	);
 };
 
 export class Summarizer {
-    public constructor() {
-        unavailable("Summarizer");
-    }
+	public constructor() {
+		unavailable("Summarizer");
+	}
 }
 
 export class RunWhileConnectedCoordinator {
-    public constructor() {
-        unavailable("RunWhileConnectedCoordinator");
-    }
+	public constructor() {
+		unavailable("RunWhileConnectedCoordinator");
+	}
 }
 
 export class RunningSummarizer {
-    public constructor() {
-        unavailable("RunningSummarizer");
-    }
+	public constructor() {
+		unavailable("RunningSummarizer");
+	}
 }
 
 export class SummarizeHeuristicData {
-    public constructor() {
-        unavailable("SummarizeHeuristicData");
-    }
+	public constructor() {
+		unavailable("SummarizeHeuristicData");
+	}
 }
 
 export class SummarizeHeuristicRunner {
-    public constructor() {
-        unavailable("SummarizeHeuristicRunner");
-    }
+	public constructor() {
+		unavailable("SummarizeHeuristicRunner");
+	}
 }
 
 export const defaultMaxAttempts = 2;
 export const defaultMaxAttemptsForSubmitFailures = 5;
 export const neverCancelledSummaryToken = Object.freeze({
-    cancelled: false as const,
-    waitCancelled: new Promise<never>(() => {}),
+	cancelled: false as const,
+	waitCancelled: new Promise<never>(() => {}),
 });
