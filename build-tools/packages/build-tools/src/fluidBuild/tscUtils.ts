@@ -3,12 +3,15 @@
  * Licensed under the MIT License.
  */
 
+import { createRequire } from "node:module";
 import * as fs from "fs";
 import * as path from "path";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
 import type * as ts60Types from "typescript-6.0";
 import { sha256 } from "./hash.js";
+
+const require = createRequire(import.meta.url);
 
 type tsTypes = typeof ts54Types | typeof ts59Types | typeof ts60Types;
 
@@ -280,7 +283,7 @@ function createTscUtil<TSTypes extends tsTypes>(tsLib: TSTypes): TscUtil<TSTypes
 					options: { build: true },
 					fileNames: buildResult.projects,
 					errors: [],
-				} satisfies ts54Types.ParsedCommandLine satisfies ts59Types.ParsedCommandLine;
+				} satisfies ts54Types.ParsedCommandLine satisfies ts59Types.ParsedCommandLine satisfies ts60Types.ParsedCommandLine;
 				return result as ReturnType<TSTypes["parseCommandLine"]>;
 			}
 
