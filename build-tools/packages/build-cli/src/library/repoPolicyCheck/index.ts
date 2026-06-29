@@ -11,6 +11,7 @@ import { handler as fluidCaseHandler } from "./fluidCase.js";
 import { handlers as lockfileHandlers } from "./lockfiles.js";
 import { handler as noJsFileHandler } from "./noJsFiles.js";
 import { handlers as npmPackageContentsHandlers } from "./npmPackages.js";
+import { handler as pipelineTriggerPathsHandler } from "./pipelineTriggerPaths.js";
 import { handlers as pnpmHandlers } from "./pnpm.js";
 import { handler as yamlTabsHandler } from "./spacesOverTabsInYaml.js";
 
@@ -26,6 +27,7 @@ export const policyHandlers: Handler[] = [
 	...pnpmHandlers,
 	...fluidBuildTasks,
 	noJsFileHandler,
+	pipelineTriggerPathsHandler,
 	yamlTabsHandler,
 ];
 

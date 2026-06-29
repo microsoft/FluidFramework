@@ -41,7 +41,13 @@ trigger:
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
+    - tools/pipelines/templates/include-install.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-test-task.yml
+    - tools/pipelines/templates/include-upload-release-reports.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-npm-package.yml
@@ -50,6 +56,9 @@ trigger:
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml
+    - tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml
     - scripts/*
 
 pr:
@@ -67,12 +76,24 @@ pr:
     - tools/pipelines/build-benchmark-tool.yml
     - tools/pipelines/templates/build-npm-package.yml
     - tools/pipelines/templates/include-build-lint.yml
+    - tools/pipelines/templates/include-git-tag-steps.yml
+    - tools/pipelines/templates/include-install-build-tools.yml
+    - tools/pipelines/templates/include-install.yml
+    - tools/pipelines/templates/include-publish-npm-package-deployment.yml
+    - tools/pipelines/templates/include-publish-npm-package-steps.yml
+    - tools/pipelines/templates/include-publish-npm-package.yml
     - tools/pipelines/templates/include-set-package-version.yml
+    - tools/pipelines/templates/include-test-task.yml
+    - tools/pipelines/templates/include-upload-release-reports.yml
+    - tools/pipelines/templates/include-vars-telemetry-generator.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/upload-dev-manifest.yml
+    - tools/pipelines/templates/upload-server-manifest.yml
+    - tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml
+    - tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml
     - scripts/*
 
 variables:
