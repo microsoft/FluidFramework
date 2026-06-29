@@ -27,7 +27,6 @@
 	],
 	"scripts": {
 		"build": "fluid-build --task build",
-		"build:commonjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json",
 		"build:compile": "fluid-build --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:manifest": "oclif manifest",
