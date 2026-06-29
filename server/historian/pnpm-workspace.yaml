@@ -11,16 +11,6 @@
 packages:
   - "packages/*"
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
-onlyBuiltDependencies:
-  - core-js
-  - node-rdkafka
-  - snappy
-  - unrs-resolver
-  - zookeeper
-
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 minimumReleaseAgeExclude:
@@ -56,3 +46,81 @@ trustPolicyExclude:
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+linkWorkspacePackages: true
+strictPeerDependencies: true
+updateNotifier: false
+
+# Use the number of cores on the machine by default.
+workspaceConcurrency: 0
+
+overrides:
+  # Resolve a known vulnerability in express 4.21.2.
+  express@>=4 <5: ^4.22.1
+
+  # Resolve known ReDoS vulnerabilities in diff. diff@7.x has no fix so it is bumped to 8.0.3.
+  diff@>=5 <6: ^5.2.2
+  diff@>=7 <8: ^8.0.3
+  diff@>=8 <9: ^8.0.3
+
+  # Keep a single @types/node version.
+  '@types/node': ~22.19.17
+
+  # Force ESLint 9.x for flat config support across all packages.
+  eslint: ~9.39.2
+
+  jws: ^3.2.3
+
+  # mongodb>@aws-sdk/credential-providers is not needed and brings in a large transitive
+  # dependency tree (including fast-xml-parser); drop it.
+  mongodb>@aws-sdk/credential-providers: '-'
+
+  nanoid: ^3.3.9
+
+  # oclif includes AWS features we do not use; drop to reduce lockfile churn.
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
+
+  # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+
+  # Resolve known vulnerabilities in older versions.
+  qs: ^6.15.0
+
+  # Resolve a Component Governance alert.
+  simple-git: ^3.32.3
+
+  socket.io-parser: ^4.2.6
+
+  # Resolve multiple tar vulnerabilities; 6.x line is EOL with no backports.
+  tar: ^7.5.11
+
+  # sharp <0.32.6 has a vulnerability flagged by Component Governance (GHSA-54xq-cgqr-rpm3),
+  # pulled in transitively via jssm-viz-cli.
+  sharp: ^0.33.2
+
+  # Resolve known security vulnerabilities across all major version ranges.
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+
+  # Resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists.
+  serialize-javascript@>=6 <7: ^7.0.4
+
+  # Resolve known vulnerabilities in picomatch.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+
+allowBuilds:
+  core-js: true
+  node-rdkafka: true
+  snappy: true
+  unrs-resolver: true
+  zookeeper: true
