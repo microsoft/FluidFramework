@@ -24,9 +24,9 @@ import type {
 	TokenFetchOptions,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
-	type MonitoringContext,
 	createChildMonitoringContext,
+	type MonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { HostStoragePolicyInternal } from "./contracts.js";

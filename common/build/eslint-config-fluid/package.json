@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "13.0.0",
+	"version": "14.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -55,7 +55,7 @@
 		"@types/mocha": "~10.0.10",
 		"@types/node": "~22.19.17",
 		"@types/sort-json": "^2.0.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
 		"mocha": "^11.7.5",

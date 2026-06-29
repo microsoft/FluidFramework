@@ -179,7 +179,7 @@ describe("Tests for prefetching snapshot", () => {
 				.removeEntries({
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
@@ -277,7 +277,7 @@ describe("Tests for prefetching snapshot", () => {
 				file: {
 					docId: resolved.hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				},
 			};
 			await localCache.put(cacheEntry, value);
@@ -328,7 +328,7 @@ describe("Tests for prefetching snapshot", () => {
 				file: {
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				},
 			};
 			await localCache.put(cacheEntry, value);
@@ -522,7 +522,7 @@ describe("Tests for prefetching snapshot", () => {
 				.removeEntries({
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
@@ -671,7 +671,7 @@ describe("Tests for prefetching snapshot", () => {
 				.removeEntries({
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
@@ -776,7 +776,7 @@ describe("Tests for prefetching snapshot", () => {
 				file: {
 					docId: resolved.hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				},
 			};
 			await localCache.put(cacheEntry, valueWithGroupId);
@@ -831,7 +831,7 @@ describe("Tests for prefetching snapshot", () => {
 				file: {
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				},
 			};
 			await localCache.put(cacheEntry, valueWithGroupId);
@@ -925,7 +925,7 @@ describe("Tests for prefetching snapshot", () => {
 				.removeEntries({
 					docId: hashedDocumentId,
 					resolvedUrl: resolved,
-					fileVersion: resolved.fileVersion,
+					...(resolved.fileVersion === undefined ? {} : { fileVersion: resolved.fileVersion }),
 				})
 				.catch(() => {});
 			snapshotPrefetchResultCache.remove(snapshotPrefetchCacheKey);
