@@ -522,7 +522,7 @@ export namespace FormattedTextAsTree {
 	 */
 	export interface Statics<TTree> {
 		/**
-		 * Construct a a node of `this` schema from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
+		 * Construct a node of `this` schema from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
 		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
 		fromString(value: string): TTree;
@@ -542,7 +542,7 @@ export namespace FormattedTextAsTree {
 	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
-	 * @see {@link FormattedTextAsTree.createSchema} for creating whose nodes implement this.
+	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
 	 * @internal
 	 */
 	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFormattedInsert>
