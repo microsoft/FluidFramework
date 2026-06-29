@@ -78,7 +78,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
 }
 
 /**
- * Converts an enum into a collection of schema which can be used in a union.
+ * Converts an enum into a collection of schemas which can be used in a union.
  *
  * @typeParam TScope - The scope of the provided factory.
  * There is a known issue where if a factory is provided that is typed as a {@link SchemaFactoryAlpha}, and its scope contains a "." character,
@@ -88,7 +88,7 @@ export function singletonSchema<TScope extends string, TName extends string | nu
  * @remarks
  * The string value of the enum is used as the name of the schema: callers must ensure that it is stable and unique.
  * Numeric enums values have the value implicitly converted into a string.
- * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryBeta.scopedFactory}) to avoid the enum members colliding with other schema.
+ * Consider making a dedicated schema factory with a nested scope (for example using {@link SchemaFactoryBeta.scopedFactory}) to avoid the enum members colliding with other schemas.
  * @example
  * ```typescript
  * const schemaFactory = new SchemaFactory("com.myApp");
@@ -213,7 +213,7 @@ export function enumEntries(
 }
 
 /**
- * Converts an array of distinct strings into a collection of schema which can be used like an enum style union.
+ * Converts an array of distinct strings into a collection of schemas which can be used like an enum style union.
  * @remarks
  * The returned collection is also a function which can be used to convert strings into {@link Unhydrated} nodes in the union.
  * Each node type has a `.value` getter which returns the associated string.
