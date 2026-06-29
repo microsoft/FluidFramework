@@ -30,8 +30,10 @@ flowchart TD
 
 - **Package compatibility** arises because applications depend on Fluid packages using version ranges which guarantee compatibility according to our [API support levels](./docs/docs/build/releases-and-apitags.mdx#api-support-levels) for both Type compatibility and runtime behavior.
 - **Layer compatibility** arises because Fluid's modular design consists of four distinct layers (Driver, Loader, Runtime, and Datastore), each of which can be versioned independently. These layers must interoperate at runtime even when they're at different versions. They interact by calling APIs (mostly internal) on other layers and the signatures and behavior of these APIs must be compatible.
-- **Cross-client compatibility** arises because multiple clients collaborating on the same document in real-time by exchanging ops may be running different versions of Fluid during rolling upgrades or version transitions.
-- **Data-at-rest compatibility** arises because documents (stored as summaries/snapshots, which can include training ops) may be opened by any currently in use version (older or newer than the one which saved it), or any potential future version, which could much newer than the version which saved it.
+- **Cross-client compatibility**: multiple clients collaborating on the same document (in real-time or asynchronously) may be running different versions of Fluid during rolling upgrades or version transitions.
+This requires that all data which crosses between clients (mainly persisted data like ops and summaries) must use formats supported by all currently in use versions.
+- **Data-at-rest compatibility**: all past persisted data formats (mainly summaries, including any potential trailing ops) must remain supported in all future versions.
+Fluid is intended to never require service-side data migrations, so this support must be maintained in the Fluid Client to avoid losing access to old documents.
 
 This document defines and explains each compatibility type in detail, describing what it means, why it matters, and the scenarios it enables. Understanding these distinctions helps both Fluid Framework maintainers and application developers reason about version compatibility and upgrade strategies.
 
@@ -102,16 +104,23 @@ This diagram shows different Fluid layers with different versions in a client:
 
 ## Cross-client compatibility
 
-Cross-client compatibility guarantees that clients within a supported set of versions
-should be able to fully collaborate with each other. For example: Fluid supports
-cross-client compatibility within at least an 18-month window enforced through designated
-compatibility checkpoints (see the
-[Cross-Client Compatibility Policy](./CrossClientCompatibility.md#cross-client-compatibility-policy)
-for details). This means that clients running versions of Fluid within this window
-can participate in the same collaboration session and successfully read incoming
-changes while writing their own with confidence. What makes this different from the
-data-at-rest compatibility promise is that lower-version clients can read content
-written by a higher-version collaborator, not just the other way around.
+Cross-client compatibility guarantees applications can request that compatibility is maintained with clients at least as old as the `MinimumVersionForCollab` they specify, ensuring all clients should be able to fully collaborate with each other.
+
+Since the rollout schedule of a given application is controlled by the application and not the framework,
+the application specifies which versions must be supported.
+This is done using a [MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias).
+
+Fluid supports `MinimumVersionForCollab` back to releases at least 18-months ago,
+and will only ever change the minimum supported version in a major release (as doing so is a breaking change).
+This means users of Fluid are given at least 18-months to roll out any version while being able to maintain collaboration across the rollout.
+
+Details on exactly how this is tracked can be found in
+[Cross-Client Compatibility Policy](./CrossClientCompatibility.md#cross-client-compatibility-policy).
+
+What makes this different from the
+data-at-rest compatibility promise is that:
+1. This dictates what can be written (to ensure lower-version clients can read content written by a higher-version collaborator), whereas data-at-rest only dictates maintaining support for reading specific formats.
+2. The support window is bounded: data-at-rest requires support for reading data from any previous version, while Cross-client compatibility only requires support for writing in formats old enough to be read by the oldest supported `MinimumVersionForCollab`.
 
 ### Motivation
 
