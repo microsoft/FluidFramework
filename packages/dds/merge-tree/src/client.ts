@@ -960,6 +960,89 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 		};
 	}
 
+	private resetAnnotateOp(
+		resetOp: IMergeTreeAnnotateMsg | IMergeTreeAnnotateAdjustMsg,
+		segment: ISegmentLeaf,
+		segmentPosition: number,
+	): IMergeTreeDeltaOp | undefined {
+		assert(
+			segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) === true,
+			0x036 /* "Segment has no pending properties" */,
+		);
+		// if the segment has been removed or obliterated, there's no need to send the annotate op
+		// unless the remove was local, in which case the annotate must have come
+		// before the remove
+		if (!isRemovedAndAcked(segment)) {
+			return resetOp.props === undefined
+				? createAdjustRangeOp(
+						segmentPosition,
+						segmentPosition + segment.cachedLength,
+						resetOp.adjust,
+					)
+				: createAnnotateRangeOp(
+						segmentPosition,
+						segmentPosition + segment.cachedLength,
+						resetOp.props,
+					);
+		}
+		return undefined;
+	}
+
+	private resetInsertOp(
+		resetOp: IMergeTreeInsertMsg,
+		segment: ISegmentLeaf,
+		segmentPosition: number,
+		squash: boolean,
+	): IMergeTreeDeltaOp | undefined {
+		if (isInserted(segment) && opstampUtils.isSquashedOp(segment.insert)) {
+			return undefined;
+		}
+		assert(
+			isInserted(segment) && opstampUtils.isLocal(segment.insert),
+			0x037 /* "Segment already has assigned sequence number" */,
+		);
+		const removeInfo = toRemovalInfo(segment);
+
+		const unusedStamp: OperationStamp = { seq: 0, clientId: 0 };
+		if (removeInfo !== undefined && squash) {
+			assert(
+				removeInfo.removes.length === 1 ||
+					opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
+				0xbaf /* Expected only one local remove */,
+			);
+			this.squashInsertion(segment);
+			return undefined;
+		} else if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
+			assert(
+				removeInfo.removes[0].type === "sliceRemove",
+				0xb5c /* Remove on insertion must be caused by obliterate. */,
+			);
+			errorIfOptionNotTrue(this._mergeTree.options, "mergeTreeEnableObliterateReconnect");
+			// the segment was remotely obliterated, so is considered removed
+			// we set the seq to the universal seq and remove the local seq,
+			// so its length is not considered for subsequent local changes
+			// this allows us to not send the op as even the local client will ignore the segment
+			overwriteInfo<IHasInsertionInfo>(segment, {
+				insert: {
+					type: "insert",
+					seq: UniversalSequenceNumber,
+					localSeq: undefined,
+					clientId: NonCollabClient,
+				},
+			});
+			this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
+			return undefined;
+		}
+
+		const segInsertOp: ISegment = segment.clone();
+		const opProps =
+			isObject(resetOp.seg) && "props" in resetOp.seg && isObject(resetOp.seg.props)
+				? { ...resetOp.seg.props }
+				: undefined;
+		segInsertOp.properties = opProps;
+		return createInsertSegmentOp(segmentPosition, segInsertOp);
+	}
+
 	private resetPendingDeltaToOps(
 		resetOp: IMergeTreeDeltaOp,
 
@@ -1174,82 +1257,12 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			let newOp: IMergeTreeDeltaOp | undefined;
 			switch (resetOp.type) {
 				case MergeTreeDeltaType.ANNOTATE: {
-					assert(
-						segment.propertyManager?.hasPendingProperties(resetOp.props ?? resetOp.adjust) ===
-							true,
-						0x036 /* "Segment has no pending properties" */,
-					);
-					// if the segment has been removed or obliterated, there's no need to send the annotate op
-					// unless the remove was local, in which case the annotate must have come
-					// before the remove
-					if (!isRemovedAndAcked(segment)) {
-						newOp =
-							resetOp.props === undefined
-								? createAdjustRangeOp(
-										segmentPosition,
-										segmentPosition + segment.cachedLength,
-										resetOp.adjust,
-									)
-								: createAnnotateRangeOp(
-										segmentPosition,
-										segmentPosition + segment.cachedLength,
-										resetOp.props,
-									);
-					}
+					newOp = this.resetAnnotateOp(resetOp, segment, segmentPosition);
 					break;
 				}
 
 				case MergeTreeDeltaType.INSERT: {
-					if (isInserted(segment) && opstampUtils.isSquashedOp(segment.insert)) {
-						break;
-					}
-					assert(
-						isInserted(segment) && opstampUtils.isLocal(segment.insert),
-						0x037 /* "Segment already has assigned sequence number" */,
-					);
-					const removeInfo = toRemovalInfo(segment);
-
-					const unusedStamp: OperationStamp = { seq: 0, clientId: 0 };
-					if (removeInfo !== undefined && squash) {
-						assert(
-							removeInfo.removes.length === 1 ||
-								opstampUtils.isAcked(removeInfo.removes[removeInfo.removes.length - 2]),
-							0xbaf /* Expected only one local remove */,
-						);
-						this.squashInsertion(segment);
-						break;
-					} else if (removeInfo !== undefined && opstampUtils.isAcked(removeInfo.removes[0])) {
-						assert(
-							removeInfo.removes[0].type === "sliceRemove",
-							0xb5c /* Remove on insertion must be caused by obliterate. */,
-						);
-						errorIfOptionNotTrue(
-							this._mergeTree.options,
-							"mergeTreeEnableObliterateReconnect",
-						);
-						// the segment was remotely obliterated, so is considered removed
-						// we set the seq to the universal seq and remove the local seq,
-						// so its length is not considered for subsequent local changes
-						// this allows us to not send the op as even the local client will ignore the segment
-						overwriteInfo<IHasInsertionInfo>(segment, {
-							insert: {
-								type: "insert",
-								seq: UniversalSequenceNumber,
-								localSeq: undefined,
-								clientId: NonCollabClient,
-							},
-						});
-						this._mergeTree.blockUpdatePathLengths(segment.parent, unusedStamp, true);
-						break;
-					}
-
-					const segInsertOp: ISegment = segment.clone();
-					const opProps =
-						isObject(resetOp.seg) && "props" in resetOp.seg && isObject(resetOp.seg.props)
-							? { ...resetOp.seg.props }
-							: undefined;
-					segInsertOp.properties = opProps;
-					newOp = createInsertSegmentOp(segmentPosition, segInsertOp);
+					newOp = this.resetInsertOp(resetOp, segment, segmentPosition, squash);
 					break;
 				}
 
@@ -1270,11 +1283,19 @@ export class Client extends TypedEventEmitter<IClientEvents> {
 			}
 
 			if (newOp) {
+				let newPreviousProps: WeakMap<ISegmentLeaf, PropertySet> | undefined;
+				if (segmentGroup.previousProps) {
+					const sourceProps = segmentGroup.previousProps.get(segment);
+					newPreviousProps = new WeakMap();
+					if (sourceProps !== undefined) {
+						newPreviousProps.set(segment, sourceProps);
+					}
+				}
 				const newSegmentGroup: SegmentGroup = {
 					segments: [],
 					localSeq: segmentGroup.localSeq,
 					refSeq: this.getCollabWindow().currentSeq,
-					previousProps: segmentGroup.previousProps?.slice(0),
+					previousProps: newPreviousProps,
 				};
 
 				segment.segmentGroups.enqueue(newSegmentGroup);
