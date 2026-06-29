@@ -231,6 +231,7 @@ declare type current_as_old_for_Interface_IValueChanged = requireAssignableTo<Ty
  * typeValidation.broken:
  * "TypeAlias_SharedDirectory": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_TypeAlias_SharedDirectory = requireAssignableTo<TypeOnly<old.SharedDirectory>, TypeOnly<current.SharedDirectory>>
 
 /*
