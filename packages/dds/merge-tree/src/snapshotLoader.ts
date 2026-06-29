@@ -15,9 +15,9 @@ import type {
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
 import {
-	type ITelemetryLoggerExt,
-	UsageError,
 	createChildLogger,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { Client } from "./client.js";
@@ -43,14 +43,14 @@ import type { RemoveOperationStamp } from "./stamps.js";
 import * as opstampUtils from "./stamps.js";
 
 export class SnapshotLoader {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		private readonly runtime: IFluidDataStoreRuntime,
 
 		private readonly client: Client,
 		private readonly mergeTree: MergeTree,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		private readonly serializer: IFluidSerializer,
 	) {
 		this.logger = createChildLogger({ logger, namespace: "SnapshotLoader" });

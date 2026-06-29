@@ -10,8 +10,8 @@ import createIgnore from "ignore";
 import * as path from "path";
 import { glob as tinyglobbyGlob } from "tinyglobby";
 
-import type { PackageJson } from "../../common/npmPackage";
-import { lookUpDirSync } from "../../common/utils";
+import type { PackageJson } from "../../common/npmPackage.js";
+import { lookUpDirSync } from "../../common/utils.js";
 
 export function getEsLintConfigFilePath(dir: string): string | undefined {
 	// ESLint 9 flat config files (checked first as they take precedence)
@@ -187,14 +187,15 @@ export async function globFn(pattern: string, options: GlobFnOptions = {}): Prom
 	const { cwd, nodir = true, dot = false, absolute = false, ignore, follow = true } = options;
 
 	// Map options from glob/globby-style to tinyglobby-style
-	const results = await tinyglobbyGlob(pattern, {
-		cwd,
+	const globOptions = {
 		onlyFiles: nodir,
 		dot,
 		absolute,
-		ignore: ignore === undefined ? undefined : Array.isArray(ignore) ? ignore : [ignore],
 		followSymbolicLinks: follow,
-	});
+		...(cwd === undefined ? {} : { cwd }),
+		...(ignore === undefined ? {} : { ignore: Array.isArray(ignore) ? ignore : [ignore] }),
+	};
+	const results = await tinyglobbyGlob(pattern, globOptions);
 
 	// When nodir is false (i.e., onlyFiles is false), tinyglobby returns directories
 	// with trailing slashes. Remove them for backwards compatibility with the glob package.

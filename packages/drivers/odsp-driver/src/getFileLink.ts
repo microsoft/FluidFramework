@@ -14,9 +14,9 @@ import {
 	type IOdspResolvedUrl,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
-	PerformanceEvent,
 	isFluidError,
+	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
@@ -47,7 +47,7 @@ export const getFileLink = mockify(
 	async (
 		getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 		resolvedUrl: IOdspResolvedUrl,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): Promise<string> => {
 		const cacheKey = `${resolvedUrl.siteUrl}_${resolvedUrl.driveId}_${resolvedUrl.itemId}`;
 		const maybeFileLinkCacheEntry = fileLinkCache.get(cacheKey);
@@ -120,7 +120,7 @@ export const getFileLink = mockify(
 async function getFileLinkWithLocationRedirectionHandling(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	resolvedUrl: IOdspResolvedUrl,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Promise<string> {
 	// We can have chains of location redirection one after the other, so have a for loop
 	// so that we can keep handling the same type of error. Set max number of redirection to 5.
@@ -165,7 +165,7 @@ async function getFileLinkWithLocationRedirectionHandling(
 async function getFileLinkCore(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	fileItem: FileItemLite,
 ): Promise<string> {
 	// ODSP link requires extra call to return link that is resistant to file being renamed or moved to different folder
@@ -262,7 +262,7 @@ const isFileItemLite = (maybeFileItemLite: unknown): maybeFileItemLite is FileIt
 async function getFileItemLite(
 	getToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	odspUrlParts: IOdspUrlParts,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): Promise<FileItemLite> {
 	return PerformanceEvent.timedExecAsync(
 		logger,

@@ -43,9 +43,7 @@ export const TableView: FC<{ tableModel: TableDataObject }> = ({ tableModel }) =
 	useTree(table);
 
 	const handleAppendNewRow = (): void => {
-		table.insertRows({
-			rows: [new Row({ cells: {} })],
-		});
+		table.insertRows([new Row({ cells: {} })]);
 	};
 
 	const handleRowDragStart = (index: number): void => {

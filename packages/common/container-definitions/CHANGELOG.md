@@ -1,5 +1,40 @@
 # @fluidframework/container-definitions
 
+## 2.110.0
+
+### Minor Changes
+
+- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+
+  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+  This property was previously marked `@deprecated Do not use.`
+
+  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+
+  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+  No replacement is needed — offline load is on by default.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+### Minor Changes
+
+- Add optional `getPendingLocalState` to `IContainer` ([#27269](https://github.com/microsoft/FluidFramework/pull/27269)) [1f12b8e36e](https://github.com/microsoft/FluidFramework/commit/1f12b8e36ec8e4a743a65905de8d5ccf5e9337a0)
+
+  `IContainer` now exposes `getPendingLocalState?(): Promise<string>`. The serialized blob can be passed back as `pendingLocalState` to `loadExistingContainer` (or `ILoader.resolve`) to rehydrate an attached container at the same position without data loss.
+
+  The member is optional during this minor release so external implementers of `IContainer` (test mocks, wrapper containers, partner runtimes) remain forward-compatible. A future breaking release will make it required.
+
+  The `ContainerAlpha` interface and `asLegacyAlpha` helper in `@fluidframework/container-loader` continue to expose this functionality at `@legacy @alpha` for callers that prefer the typed-required shape.
+
+  Lifecycle: misuse of this API can result in duplicate op submission and potential document corruption. The blob returned MUST be discarded if and when the container emits a `"connected"` event — any subsequent rehydrate from that blob would submit the same ops a second time. The container must also be neither closed nor disposed when calling; otherwise the call throws `UsageError`.
+
+  Runtime behavior is unchanged.
+
 ## 2.101.0
 
 ### Minor Changes

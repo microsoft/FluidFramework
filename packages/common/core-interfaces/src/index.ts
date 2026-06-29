@@ -5,6 +5,8 @@
 
 export type { BrandedType } from "./brandedType.js";
 
+export type { AllOrNone } from "./allOrNone.js";
+
 export type { IDisposable } from "./disposable.js";
 
 export type {

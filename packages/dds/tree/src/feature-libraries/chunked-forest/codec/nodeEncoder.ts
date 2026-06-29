@@ -4,7 +4,6 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -24,10 +23,11 @@ import {
 	type NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
-import type {
-	EncodedChunkShapeV1OrV2,
-	EncodedFieldShape,
-	EncodedValueShape,
+import {
+	SpecialField,
+	type EncodedChunkShape,
+	type EncodedFieldShape,
+	type EncodedValueShape,
 } from "./format/index.js";
 
 /**
@@ -36,10 +36,7 @@ import type {
  * The fact this is also a Shape is an implementation detail of the encoder: that allows the shape it uses to be itself,
  * which is an easy way to keep all the related code together without extra objects.
  */
-export class NodeShapeBasedEncoder
-	extends Shape<EncodedChunkShapeV1OrV2>
-	implements NodeEncoder
-{
+export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements NodeEncoder {
 	/**
 	 * Set of keys for fields that are encoded using {@link NodeShapeBasedEncoder.specializedFieldEncoders}.
 	 * TODO: Ensure uniform chunks, encoding and identifier generation sort fields the same.
@@ -72,21 +69,9 @@ export class NodeShapeBasedEncoder
 	}
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, context: EncoderContext): Value {
-		if (this.value === 0) {
+		if (this.value === SpecialField.Identifier) {
 			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
-			if (isStableId(cursor.value)) {
-				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
-				if (sessionSpaceCompressedId !== undefined) {
-					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
-					// Summaries can only contain finalized op-space ids unless they also include the originator's session id somewhere.
-					// This is not the case for forest summaries at the time of writing, so non-finalized ids are instead written using
-					// their long form (by falling through to the original cursor value).
-					// A scenario where such ids can appear in the summary is in the attach summary of a tree being attached to an already-attached container.
-					if (!context.isSummary || isFinalId(opSpaceId)) {
-						return opSpaceId;
-					}
-				}
-			}
+			return context.encodePossiblyCompressedId(cursor.value);
 		}
 		return cursor.value;
 	}
@@ -94,7 +79,7 @@ export class NodeShapeBasedEncoder
 	public encodeNode(
 		cursor: ITreeCursorSynchronous,
 		context: EncoderContext,
-		outputBuffer: BufferFormat<EncodedChunkShapeV1OrV2>,
+		outputBuffer: BufferFormat<EncodedChunkShape>,
 	): void {
 		if (this.type === undefined) {
 			outputBuffer.push(new IdentifierToken(cursor.type));
@@ -108,7 +93,7 @@ export class NodeShapeBasedEncoder
 			cursor.exitField();
 		}
 
-		const otherFieldsBuffer: BufferFormat<EncodedChunkShapeV1OrV2> = [];
+		const otherFieldsBuffer: BufferFormat<EncodedChunkShape> = [];
 
 		forEachField(cursor, () => {
 			const key = cursor.getFieldKey();
@@ -129,8 +114,8 @@ export class NodeShapeBasedEncoder
 
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
-		shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
-	): EncodedChunkShapeV1OrV2 {
+		shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
+	): EncodedChunkShape {
 		return {
 			c: {
 				type: encodeOptionalIdentifier(this.type, identifiers),
@@ -143,7 +128,7 @@ export class NodeShapeBasedEncoder
 
 	public countReferencedShapesAndIdentifiers(
 		identifiers: Counter<string>,
-		shapeDiscovered: (shape: Shape<EncodedChunkShapeV1OrV2>) => void,
+		shapeDiscovered: (shape: Shape<EncodedChunkShape>) => void,
 	): void {
 		if (this.type !== undefined) {
 			identifiers.add(this.type);
@@ -159,7 +144,7 @@ export class NodeShapeBasedEncoder
 		}
 	}
 
-	public get shape(): Shape<EncodedChunkShapeV1OrV2> {
+	public get shape(): Shape<EncodedChunkShape> {
 		return this;
 	}
 }
@@ -167,7 +152,7 @@ export class NodeShapeBasedEncoder
 export function encodeFieldShapes(
 	fieldEncoders: readonly KeyedFieldEncoder[],
 	identifiers: DeduplicationTable<string>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): EncodedFieldShape[] | undefined {
 	if (fieldEncoders.length === 0) {
 		return undefined;
@@ -196,14 +181,14 @@ function encodeOptionalIdentifier(
 
 function encodeOptionalFieldShape(
 	encoder: FieldEncoder | undefined,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number | undefined {
 	return encoder === undefined ? undefined : dedupShape(encoder.shape, shapes);
 }
 
 function dedupShape(
-	shape: Shape<EncodedChunkShapeV1OrV2>,
-	shapes: DeduplicationTable<Shape<EncodedChunkShapeV1OrV2>>,
+	shape: Shape<EncodedChunkShape>,
+	shapes: DeduplicationTable<Shape<EncodedChunkShape>>,
 ): number {
 	return shapes.valueToIndex.get(shape) ?? fail(0xb51 /* missing shape */);
 }

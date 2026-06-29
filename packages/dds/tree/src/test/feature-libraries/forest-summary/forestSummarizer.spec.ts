@@ -39,7 +39,6 @@ import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import {
@@ -69,6 +68,7 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	makeTestFieldBatchContexts,
 	testIdCompressor,
 	testRevisionTagCodec,
 	type TreeStoredContentStrict,
@@ -102,19 +102,18 @@ function createForestSummarizer(args: {
 		forestType,
 		shouldEncodeIncrementally,
 	});
-	const encoderContext: FieldBatchEncodingContext = {
+	const { encode: encoderContext, decode: decoderContext } = makeTestFieldBatchContexts({
 		encodeType,
-		idCompressor: testIdCompressor,
-		originatorId: testIdCompressor.localSessionId,
-		isSummary: false,
+		isSummary: true,
 		schema: { schema: initialContent.schema, policy: defaultSchemaPolicy },
-	};
+	});
 	return {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
 			testRevisionTagCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			testIdCompressor,
 			0 /* initialSequenceNumber */,
@@ -452,7 +451,7 @@ describe("ForestSummarizer", () => {
 					{
 						fooArray: new FooArray(["value1", "value2"]),
 					},
-					2 /* incrementalNodeCount */,
+					1 /* incrementalNodeCount */,
 				);
 			});
 
@@ -810,6 +809,10 @@ describe("ForestSummarizer", () => {
 			});
 		});
 
+		// NOTE: The 4-depth schema, `makeChangeAtDepth` helper, and the parameterized change
+		// sequences below are mirrored by the end-to-end tests in
+		// `packages/test/test-end-to-end-tests/src/test/treeIncrementalSummary.spec.ts`.
+		// Changes to the scenarios here should be mirrored there (and vice versa).
 		describe("4-depth schema with parameterized incremental summarization", () => {
 			/**
 			 * A 4-depth nested schema where each level's map field carries

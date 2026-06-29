@@ -16,7 +16,7 @@ import type {
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces/internal";
 import { Deferred } from "@fluidframework/core-utils/internal";
-import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
+import type { ISharedMap } from "@fluidframework/map/internal";
 import {
 	DataObjectFactoryType,
 	ITestFluidObject,
@@ -52,6 +52,7 @@ const timeoutMs = 100;
 const realServiceTimeoutMs = 1000;
 
 describeCompat("Refresh snapshot lifecycle", "NoCompat", (getTestObjectProvider, apis) => {
+	const { SharedMap } = apis.dds;
 	const mapId = "map";
 	const registry: ChannelFactoryRegistry = [[mapId, SharedMap.getFactory()]];
 	const configProvider = (settings: Record<string, ConfigTypes>): IConfigProviderBase => ({

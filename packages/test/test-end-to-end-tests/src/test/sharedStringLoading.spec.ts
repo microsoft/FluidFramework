@@ -6,7 +6,6 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import { Loader } from "@fluidframework/container-loader/internal";
 import { IFluidHandle } from "@fluidframework/core-interfaces";
 import {
 	IDocumentServiceFactory,
@@ -30,6 +29,7 @@ import { pkgVersion } from "../packageVersion.js";
 // REVIEW: enable compat testing?
 describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 	const { SharedString } = apis.dds;
+	const { Loader } = apis.loader;
 
 	itExpects(
 		"Failure to Load in Shared String",
@@ -43,6 +43,9 @@ describeCompat("SharedString", "NoCompat", (getTestObjectProvider, apis) => {
 					"fluid:telemetry:FluidDataStoreRuntime:SharedSegmentSequence.MergeTreeClient:SnapshotLoader:CatchupOpsLoadFailure",
 			},
 			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:SequenceLoadFailed" },
+			{
+				eventName: "fluid:telemetry:FluidDataStoreRuntime:RemoteChannelContext:RealizeError",
+			},
 			{ eventName: "fluid:telemetry:FluidDataStoreRuntime:GetChannelFailedInRequest" },
 			{ eventName: "TestException" },
 		],

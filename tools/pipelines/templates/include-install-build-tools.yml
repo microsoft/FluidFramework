@@ -3,16 +3,29 @@
 
 # include-install-build-tools
 #
-# This template can be included in pipelines to install the Fluid build-tools locally so flub can be used in the
+# This template can be included in pipelines to install the Fluid build-tools globally so flub can be used in the
 # pipeline.
+# Note that the preferred pattern for using the build tools is to declare a dev dependency on them, and just use that version.
+# Using this template is discouraged as it is introducing another dependency mechanism into the pipeline,
+# Can cause complications with the global pnpm installs overriding each other, and in slower than simply using a pre-build dev dependency.
+# Additionally, using this template requires triggering the pipeline for any changes to build tools or we risk breaking the pipeline.
 
 parameters:
 - name: buildDirectory
   type: string
 
+# The version of the build tools to install, or "repo" to install the one from the repository.
+# If "repo" is selected, this includes a global install of whatever version of pnpm build-tools uses,
+# which can overwrite an already installed version (like the one used by the package/release-group being built).
+# If anything except "repo" is selected, this results in a lock-less install, which could pull in untested
+# and un-audited versions of the many dependencies of build-tools.
 - name: buildToolsVersionToInstall
   type: string
   default: repo
+
+- name: installPnpmForRepoBuildTools
+  type: boolean
+  default: true
 
 # The path to the pnpm store.
 - name: pnpmStorePath
@@ -23,11 +36,12 @@ steps:
   # These steps should ONLY run if we're using the repo version of the build tools. These steps are mutually exclusive
   # with the next group of steps.
   - ${{ if eq(parameters.buildToolsVersionToInstall, 'repo') }}:
-    - template: /tools/pipelines/templates/include-install-pnpm.yml@self
-      parameters:
-        buildDirectory: $(FluidFrameworkDirectory)/build-tools
-        pnpmStorePath: ${{ parameters.pnpmStorePath }}
-        enableCache: false
+    - ${{ if parameters.installPnpmForRepoBuildTools }}:
+      - template: /tools/pipelines/templates/include-install-pnpm.yml@self
+        parameters:
+          buildDirectory: $(FluidFrameworkDirectory)/build-tools
+          pnpmStorePath: ${{ parameters.pnpmStorePath }}
+          enableCache: false
 
     - task: Bash@3
       name: InstallBuildTools

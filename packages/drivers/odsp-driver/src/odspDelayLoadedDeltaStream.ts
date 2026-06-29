@@ -576,6 +576,6 @@ export class OdspDelayLoadedDeltaStream {
 	public dispose(error?: unknown): void {
 		this.clearJoinSessionTimer();
 		this.currentConnection?.dispose();
-		this.currentConnection = undefined;
+		delete this.currentConnection;
 	}
 }

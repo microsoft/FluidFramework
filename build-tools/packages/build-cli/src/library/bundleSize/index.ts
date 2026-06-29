@@ -4,27 +4,25 @@
  */
 
 export {
-	ADOSizeComparator,
-	BundleFileData,
-	GetBundleSummariesFromAnalyzerArgs,
-	getAnalyzerFilePathsFromFolder,
-	getAnalyzerJsonFromContents,
-	getAnalyzerJsonFromFileSystem,
-	getAnalyzerPathsFromFileSystem,
-	getBundleSummariesFromAnalyzer,
-	IADOConstants,
-	SizeComparison,
-} from "./ADO/index.js";
-export { bundlesContainNoChanges, compareBundles } from "./compareBundles.js";
+	type CollectAndCompareBundlesOptions,
+	collectAndCompareBundles,
+} from "./collectAndCompareBundles.js";
+export { type CollectBundleOptions, collectBundle } from "./collectBundle.js";
+export { type CompareBundlesOptions, compareBundles } from "./compareBundles.js";
+export { compareJsonReportsByPackage } from "./compareJsonReports.js";
+export { extractAnalyzerJsonsFromArtifact } from "./extractAnalyzerJsonsFromArtifact.js";
 export {
-	BundleComparison,
-	BundleMetric,
-	BundleMetricSet,
-	BundleSummaries,
+	bundleSizeArtifactsBaselinePipeline,
+	bundleSizeArtifactsPrPipeline,
+} from "./pipelineConstants.js";
+export {
+	type ReadAnalyzerJsonsResult,
+	readAnalyzerJsonsFromFileSystem,
+} from "./readAnalyzerJsonsFromFileSystem.js";
+export { sourcePackageFromAnalyzerPath } from "./sourcePackageFromAnalyzerPath.js";
+export type {
+	AnalyzerJsonByPackage,
+	BundleData,
+	BundlesComparison,
+	PackageComparison,
 } from "./types.js";
-export {
-	GetBuildOptions,
-	getAllFilesInDirectory,
-	getBuilds,
-	pickFreshestCanonicalRemote,
-} from "./utilities/index.js";
