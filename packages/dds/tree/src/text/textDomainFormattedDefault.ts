@@ -33,7 +33,7 @@ const defaultFormat = {
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @remarks
  * This is a default parameterization of the generic {@link FormattedTextAsTree} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
- * It is unlikely this meeds the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedTextAsTree}.
+ * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedTextAsTree}.
  * @internal
  */
 export namespace FormattedTextAsTreeDefault {
