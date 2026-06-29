@@ -4,25 +4,9 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
-import sharedConfig, { importInternalModulesAllowed } from "../../eslint.config.data.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
+import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [
-	...strict,
-	...sharedConfig,
-	{
-		rules: {
-			"import-x/no-internal-modules": [
-				"error",
-				{
-					// This example consumes the Claims DDS and the container/runtime plumbing
-					// through their `/internal` entry points, since no public consumption path
-					// for Claims exists yet.
-					allow: [...importInternalModulesAllowed, "@fluidframework/*/internal"],
-				},
-			],
-		},
-	},
-];
+const config: Linter.Config[] = [...recommended, ...sharedConfig];
 
 export default config;
