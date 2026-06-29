@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+
 import {
 	CursorLocationType,
 	EmptyKey,
@@ -12,6 +14,7 @@ import {
 	type JsonableTree,
 	TreeStoredSchemaRepository,
 	type TreeNodeSchemaIdentifier,
+	type TreeValue,
 	type Value,
 	mapCursorField,
 	tryGetChunk,
@@ -27,6 +30,8 @@ import {
 	chunkField,
 	chunkFieldSingle,
 	chunkRange,
+	coalesceUniformChunks,
+	tryCoalesceUniformChunks,
 	combineChunks,
 	defaultChunkPolicy,
 	insertValues,
@@ -90,6 +95,20 @@ function expectEqual(a: ShapeInfo, b: ShapeInfo): void {
 		assert(b instanceof TreeShape);
 		assert(a.equals(b));
 		assert(b.equals(a));
+	}
+}
+
+/**
+ * Asserts that `chunks` is structurally identical to `snapshot` (same length, same element
+ * identities). Used by tests that need to confirm a function did not mutate the chunks array.
+ */
+function assertChunksUnchanged(
+	chunks: readonly TreeChunk[],
+	snapshot: readonly TreeChunk[],
+): void {
+	assert.equal(chunks.length, snapshot.length);
+	for (let i = 0; i < snapshot.length; i++) {
+		assert.equal(chunks[i], snapshot[i]);
 	}
 }
 
@@ -886,13 +905,6 @@ describe("chunkTree", () => {
 		);
 		const compressor = { policy: chunker, idCompressor: undefined };
 
-		function assertChunksUnchanged(chunks: TreeChunk[], snapshot: readonly TreeChunk[]): void {
-			assert.equal(chunks.length, snapshot.length);
-			for (let i = 0; i < snapshot.length; i++) {
-				assert.equal(chunks[i], snapshot[i]);
-			}
-		}
-
 		function assertChunksUnshared(chunks: readonly TreeChunk[]): void {
 			for (const chunk of chunks) {
 				assert.equal(chunk.isShared(), false);
@@ -1028,6 +1040,276 @@ describe("chunkTree", () => {
 
 			assert.equal(boundaryIndex, 0);
 			assert.equal(chunks.length, 0);
+		});
+	});
+
+	describe("coalesceUniformChunks", () => {
+		const numberType: TreeNodeSchemaIdentifier = brand(numberSchema.identifier);
+		const nullType: TreeNodeSchemaIdentifier = brand(nullSchema.identifier);
+		const numberShape = new TreeShape(numberType, true, []);
+		const nullShape = new TreeShape(nullType, false, []);
+
+		// Small per-chunk cap so tests can exercise the boundary easily; with a leaf shape
+		// (valuesPerTopLevelNode = 1) the cap is effectively the topLevelLength limit.
+		// Unused fields set to POSITIVE_INFINITY to make their irrelevance to coalescing explicit.
+		const policy: ChunkPolicy = {
+			sequenceChunkSplitThreshold: Number.POSITIVE_INFINITY,
+			sequenceChunkInlineThreshold: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCount: Number.POSITIVE_INFINITY,
+			uniformChunkNodeCountDynamicTargetMax: 10,
+			shapeFromSchema: () => polymorphic,
+		};
+
+		function numbersChunk(values: readonly TreeValue[]): UniformChunk {
+			return new UniformChunk(numberShape.withTopLevelLength(values.length), [...values]);
+		}
+
+		function assertNumbersChunk(chunk: TreeChunk, expected: readonly TreeValue[]): void {
+			assert(chunk instanceof UniformChunk);
+			assert.equal(chunk.topLevelLength, expected.length);
+			assert.deepEqual(chunk.values, expected);
+		}
+
+		describe("tryCoalesceUniformChunks", () => {
+			it("returns undefined when either side is not a UniformChunk", () => {
+				const basic = new BasicChunk(numberType, new Map(), 99);
+				const uc = numbersChunk([1, 2]);
+				assert.equal(tryCoalesceUniformChunks(basic, uc, policy), undefined);
+				assert.equal(tryCoalesceUniformChunks(uc, basic, policy), undefined);
+			});
+
+			it("returns undefined when the shapes differ", () => {
+				const left = numbersChunk([1, 2]);
+				const right = new UniformChunk(nullShape.withTopLevelLength(2), []);
+				assert.equal(tryCoalesceUniformChunks(left, right, policy), undefined);
+			});
+
+			it("returns undefined when the combined topLevelLength would exceed the cap", () => {
+				// cap = 10, combined would be 11.
+				const left = numbersChunk(makeArray(6, (index) => index));
+				const right = numbersChunk([6, 7, 8, 9, 10]);
+				assert.equal(tryCoalesceUniformChunks(left, right, policy), undefined);
+			});
+
+			it("asserts when the two sides carry different idCompressors", () => {
+				// Documents the single-forest invariant: every chunk in a ChunkedForest shares
+				// the forest's idCompressor, so this case should never arise via legitimate
+				// callers. Silently merging would decompress one side's compressed-id values
+				// under the wrong compressor.
+				const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+				const otherCompressor = createIdCompressor();
+				const left = new UniformChunk(
+					stringShape.withTopLevelLength(1),
+					[testIdCompressor.generateCompressedId()],
+					testIdCompressor,
+				);
+				const right = new UniformChunk(
+					stringShape.withTopLevelLength(1),
+					[otherCompressor.generateCompressedId()],
+					otherCompressor,
+				);
+				assert.throws(() => tryCoalesceUniformChunks(left, right, policy));
+			});
+
+			it("uses TreeShape.equals when shape identity differs", () => {
+				// Two distinct TreeShape instances for the same type. Reference identity fails,
+				// but .equals() returns true, so the merge should proceed.
+				const shapeA = new TreeShape(numberType, true, []);
+				const shapeB = new TreeShape(numberType, true, []);
+				assert(shapeA !== shapeB);
+				assert(shapeA.equals(shapeB));
+				const left = new UniformChunk(shapeA.withTopLevelLength(1), [1]);
+				const right = new UniformChunk(shapeB.withTopLevelLength(1), [2]);
+				const result = tryCoalesceUniformChunks(left, right, policy);
+				assert(result !== undefined);
+				assertNumbersChunk(result, [1, 2]);
+			});
+
+			it("preserves an idCompressor present on either side of the merge", () => {
+				// Strings with mayContainCompressedIds carry the idCompressor on the chunk.
+				const stringShape = new TreeShape(brand(stringSchema.identifier), true, [], true);
+				const compressedId = testIdCompressor.generateCompressedId();
+				const left = new UniformChunk(
+					stringShape.withTopLevelLength(1),
+					[compressedId],
+					testIdCompressor,
+				);
+				const right = new UniformChunk(
+					stringShape.withTopLevelLength(1),
+					[compressedId],
+					testIdCompressor,
+				);
+				const result = tryCoalesceUniformChunks(left, right, policy);
+				assert(result !== undefined);
+				assert.equal(result.idCompressor, testIdCompressor);
+			});
+
+			it("grows `left` in place when `left.isShared()` is false", () => {
+				// `left` and `right` start with the only ref each (the local variable), so
+				// `left.isShared()` is false and the merge takes the in-place path.
+				const left = numbersChunk([1, 2]);
+				const right = numbersChunk([3, 4]);
+
+				const result = tryCoalesceUniformChunks(left, right, policy);
+
+				assert.equal(result, left, "result should be the same object as left");
+				assertNumbersChunk(left, [1, 2, 3, 4]);
+				// `left` is handed back holding its single ref: refcount 1.
+				assert.equal(left.isShared(), false);
+				assert.equal(left.isUnreferenced(), false);
+				// `right`'s only ref was released by the merge: refcount 0.
+				assert.equal(right.isUnreferenced(), true);
+			});
+
+			it("creates a new chunk and releases both inputs when `left.isShared()` is true", () => {
+				const left = numbersChunk([1, 2]);
+				const right = numbersChunk([3, 4]);
+				// Adding an extra ref to left forces the new-chunk path.
+				left.referenceAdded();
+
+				const result = tryCoalesceUniformChunks(left, right, policy);
+
+				assert(result !== undefined);
+				assert(result !== left, "result should be a fresh chunk, not left");
+				assertNumbersChunk(result, [1, 2, 3, 4]);
+				// The fresh chunk holds the single ref handed back to the caller: refcount 1.
+				assert.equal(result.isShared(), false);
+				assert.equal(result.isUnreferenced(), false);
+				// `left`'s slot-ref was released, leaving only the extra ref added above: refcount 1.
+				assert.equal(left.isShared(), false);
+				assert.equal(left.isUnreferenced(), false);
+				// `right`'s only ref was released by the merge: refcount 0.
+				assert.equal(right.isUnreferenced(), true);
+			});
+		});
+
+		it("merges two adjacent same-shape UniformChunks", () => {
+			const field: TreeChunk[] = [numbersChunk([1, 2]), numbersChunk([3, 4])];
+			coalesceUniformChunks(field, policy);
+			assert.equal(field.length, 1);
+			assertNumbersChunk(field[0], [1, 2, 3, 4]);
+		});
+
+		it("does not merge chunks with different shape types", () => {
+			const field: TreeChunk[] = [
+				numbersChunk([1, 2]),
+				new UniformChunk(nullShape.withTopLevelLength(2), []),
+			];
+			const snapshot = [...field];
+			coalesceUniformChunks(field, policy);
+			assertChunksUnchanged(field, snapshot);
+		});
+
+		it("does not merge when either neighbor is not a UniformChunk", () => {
+			const basicLeft = new BasicChunk(numberType, new Map(), 99);
+			const leftBasicField: TreeChunk[] = [basicLeft, numbersChunk([1, 2])];
+			const leftSnapshot = [...leftBasicField];
+			coalesceUniformChunks(leftBasicField, policy);
+			assertChunksUnchanged(leftBasicField, leftSnapshot);
+
+			const basicRight = new BasicChunk(numberType, new Map(), 99);
+			const rightBasicField: TreeChunk[] = [numbersChunk([1, 2]), basicRight];
+			const rightSnapshot = [...rightBasicField];
+			coalesceUniformChunks(rightBasicField, policy);
+			assertChunksUnchanged(rightBasicField, rightSnapshot);
+		});
+
+		it("merges a run of small chunks down to one via in-place growth", () => {
+			// Five single-node chunks, all same shape and combined under the cap. The first
+			// chunk is unshared, so the run accumulates into it in place.
+			const head = numbersChunk([1]);
+			const field: TreeChunk[] = [
+				head,
+				numbersChunk([2]),
+				numbersChunk([3]),
+				numbersChunk([4]),
+				numbersChunk([5]),
+			];
+
+			coalesceUniformChunks(field, policy);
+
+			assert.equal(field.length, 1);
+			assert.equal(field[0], head, "merge run reused the leftmost chunk");
+			assertNumbersChunk(field[0], [1, 2, 3, 4, 5]);
+		});
+
+		it("respects the per-chunk cap when growing", () => {
+			// Six 2-node chunks = 12 total; cap = 10, so the result is two chunks (10 + 2).
+			const field: TreeChunk[] = makeArray(6, (i) => numbersChunk([i * 2, i * 2 + 1]));
+
+			coalesceUniformChunks(field, policy);
+
+			assert.equal(field.length, 2);
+			assertNumbersChunk(field[0], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+			assertNumbersChunk(field[1], [10, 11]);
+		});
+
+		it("is a no-op when the range covers fewer than two chunks", () => {
+			const emptyField: TreeChunk[] = [];
+			coalesceUniformChunks(emptyField, policy);
+			assert.equal(emptyField.length, 0);
+
+			const singleField: TreeChunk[] = [numbersChunk([1, 2, 3])];
+			const singleSnapshot = [...singleField];
+			coalesceUniformChunks(singleField, policy);
+			assertChunksUnchanged(singleField, singleSnapshot);
+
+			// Explicit empty range on a multi-chunk field.
+			const field: TreeChunk[] = [numbersChunk([1, 2]), numbersChunk([3, 4])];
+			const snapshot = [...field];
+			coalesceUniformChunks(field, policy, { start: 0, end: 0 });
+			assertChunksUnchanged(field, snapshot);
+		});
+
+		it("only considers chunks within the supplied range", () => {
+			// All adjacencies are mergeable, but the range restricts attention to the first pair.
+			const field: TreeChunk[] = [
+				numbersChunk([1]),
+				numbersChunk([2]),
+				numbersChunk([3]),
+				numbersChunk([4]),
+			];
+
+			coalesceUniformChunks(field, policy, { start: 0, end: 2 });
+
+			assert.equal(field.length, 3);
+			assertNumbersChunk(field[0], [1, 2]);
+			assertNumbersChunk(field[1], [3]);
+			assertNumbersChunk(field[2], [4]);
+		});
+
+		it("keeps chunk count at the optimal partition under repeated mid-field edits", () => {
+			// Steady-state stress: each round simulates a mid-field edit by calling
+			// splitFieldAtIndex at the field's midpoint and splicing a fresh same-shape chunk
+			// at the seam, then coalescing. Because the coalesce now operates over the full
+			// touched range in one pass, the field stays at the optimal partition
+			// `ceil(total / cap)` after every round.
+			//
+			// splitFieldAtIndex routes through `chunkRange`, which calls `shapeFromSchema`.
+			// The block's `policy` returns `polymorphic`, which would send chunkRange down
+			// the BasicChunk slow path and leave coalesce with nothing to merge. Override
+			// just `shapeFromSchema` so the halves come out as UniformChunks.
+			const cap = policy.uniformChunkNodeCountDynamicTargetMax;
+			let nextValue = cap;
+			const splitCompressor = {
+				policy: { ...policy, shapeFromSchema: () => numberShape },
+				idCompressor: undefined,
+			};
+			const field: TreeChunk[] = [numbersChunk(makeArray(cap, (index) => index))];
+
+			for (let round = 0; round < 20; round++) {
+				const total = field.reduce((n, c) => n + c.topLevelLength, 0);
+				const insertIndex = splitFieldAtIndex(field, Math.floor(total / 2), splitCompressor);
+				field.splice(insertIndex, 0, numbersChunk([nextValue++]));
+				coalesceUniformChunks(field, policy);
+
+				const optimal = Math.ceil((total + 1) / cap);
+				assert.equal(
+					field.length,
+					optimal,
+					`round ${round}: expected ${optimal} chunks, got ${field.length}`,
+				);
+			}
 		});
 	});
 });
