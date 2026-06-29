@@ -4,6 +4,7 @@
  */
 
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -441,6 +442,8 @@ export class SummarizerNode implements IRootSummarizerNode {
 				return { isSummaryTracked, isSummaryNewer };
 			},
 			{ start: true, end: true, cancel: "error" },
+			undefined, // sampleThreshold
+			LogLevel.info,
 		);
 	}
 	/**

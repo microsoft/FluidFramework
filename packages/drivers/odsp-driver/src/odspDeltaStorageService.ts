@@ -122,6 +122,9 @@ export class OdspDeltaStorageService {
 					// This may change in the future, if so, we need to adjust and receive "end" value from server in such case.
 					return { messages, partialResult: false };
 				},
+				undefined, // markers
+				undefined, // sampleThreshold
+				LogLevel.info,
 			);
 		});
 	}

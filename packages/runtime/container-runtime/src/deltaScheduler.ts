@@ -5,6 +5,7 @@
 
 import { performanceNow, type TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IDeltaManagerFull } from "@fluidframework/container-definitions/internal";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IContainerRuntimeBaseEvents } from "@fluidframework/runtime-definitions/internal";
 import { formatTick, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -146,17 +147,21 @@ export class DeltaScheduler {
 			// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 			this.schedulingLog.totalProcessingTime += currentTime - this.processingStartTime!;
 
-			this.logger.sendTelemetryEvent({
-				eventName: "InboundOpsProcessingTime",
-				opsRemainingToProcess: this.schedulingLog.opsRemainingToProcess,
-				numberOfTurns: this.schedulingLog.numberOfTurns,
-				processingTime: formatTick(this.schedulingLog.totalProcessingTime),
-				opsProcessed:
-					this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
-				batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
-				duration: formatTick(currentTime - this.schedulingLog.startTime),
-				schedulingCount: this.schedulingCount,
-			});
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "InboundOpsProcessingTime",
+					opsRemainingToProcess: this.schedulingLog.opsRemainingToProcess,
+					numberOfTurns: this.schedulingLog.numberOfTurns,
+					processingTime: formatTick(this.schedulingLog.totalProcessingTime),
+					opsProcessed:
+						this.schedulingLog.lastSequenceNumber - this.schedulingLog.firstSequenceNumber + 1,
+					batchesProcessed: this.schedulingLog.numberOfBatchesProcessed,
+					duration: formatTick(currentTime - this.schedulingLog.startTime),
+					schedulingCount: this.schedulingCount,
+				},
+				undefined, // error
+				LogLevel.info,
+			);
 
 			this.schedulingLog = undefined;
 		}

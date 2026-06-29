@@ -8,6 +8,7 @@ import type {
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IResolvedUrl,
@@ -457,6 +458,8 @@ export function toInstrumentedOdspTokenFetcher(
 					},
 				),
 			{ cancel: "generic" },
+			undefined, // sampleThreshold
+			LogLevel.info,
 		);
 	};
 }

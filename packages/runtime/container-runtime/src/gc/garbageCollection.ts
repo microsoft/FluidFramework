@@ -5,6 +5,7 @@
 
 import type { ICriticalContainerError } from "@fluidframework/container-definitions";
 import type { IRequest } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces/internal";
 import { assert, LazyPromise, Timer } from "@fluidframework/core-utils/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import {
@@ -448,6 +449,9 @@ export class GarbageCollector implements IGarbageCollector {
 					details: { initialized, unrefNodeCount: this.unreferencedNodesState.size },
 				});
 			},
+			undefined, // markers
+			undefined, // sampleThreshold
+			LogLevel.info,
 		);
 	}
 
