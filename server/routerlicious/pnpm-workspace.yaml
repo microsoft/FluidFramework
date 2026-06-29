@@ -58,29 +58,29 @@ peerDependencyRules:
   # @types/node is only needed for compilation and not needed at runtime.
   # oclif includes some AWS-related features, but we don't use them.
   ignoreMissing:
-    - '@types/node'
-    - '@aws-sdk/*'
+    - "@types/node"
+    - "@aws-sdk/*"
 
 overrides:
   # Pin @typescript-eslint/* to 8.52.0 to avoid 8.53.0, which may not be available in the ADO package feed.
-  '@typescript-eslint/tsconfig-utils': 8.52.0
-  '@typescript-eslint/project-service': 8.52.0
+  "@typescript-eslint/tsconfig-utils": 8.52.0
+  "@typescript-eslint/project-service": 8.52.0
 
   # Pin @babel/* to 7.27.x to avoid 7.28.x versions, which may not be available in the ADO package feed.
-  '@babel/core': 7.27.7
-  '@babel/parser': 7.27.7
-  '@babel/code-frame': 7.27.1
-  '@babel/generator': 7.27.5
-  '@babel/helper-compilation-targets': 7.27.2
-  '@babel/helper-module-imports': 7.27.1
-  '@babel/helper-module-transforms': 7.27.3
-  '@babel/helper-string-parser': 7.27.1
-  '@babel/helper-validator-identifier': 7.27.1
-  '@babel/helpers': 7.27.6
-  '@babel/template': 7.27.2
-  '@babel/traverse': 7.27.7
-  '@babel/types': 7.27.7
-  '@babel/runtime': 7.27.6
+  "@babel/core": 7.27.7
+  "@babel/parser": 7.27.7
+  "@babel/code-frame": 7.27.1
+  "@babel/generator": 7.27.5
+  "@babel/helper-compilation-targets": 7.27.2
+  "@babel/helper-module-imports": 7.27.1
+  "@babel/helper-module-transforms": 7.27.3
+  "@babel/helper-string-parser": 7.27.1
+  "@babel/helper-validator-identifier": 7.27.1
+  "@babel/helpers": 7.27.6
+  "@babel/template": 7.27.2
+  "@babel/traverse": 7.27.7
+  "@babel/types": 7.27.7
+  "@babel/runtime": 7.27.6
 
   # Resolve known ReDoS vulnerabilities in diff.
   diff@>=4 <5: ^4.0.4
@@ -94,11 +94,11 @@ overrides:
 
   # mongodb>@aws-sdk/credential-providers is not needed and brings in a large transitive
   # dependency tree (including fast-xml-parser); drop it.
-  mongodb>@aws-sdk/credential-providers: '-'
+  mongodb>@aws-sdk/credential-providers: "-"
 
   # oclif includes AWS features we do not use; drop to reduce lockfile churn.
-  oclif>@aws-sdk/client-cloudfront: '-'
-  oclif>@aws-sdk/client-s3: '-'
+  oclif>@aws-sdk/client-cloudfront: "-"
+  oclif>@aws-sdk/client-s3: "-"
 
   # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
   js-yaml@<4: ^3.14.2
@@ -141,7 +141,7 @@ overrides:
   picomatch@>=4 <5: ^4.0.4
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.58.1': patches/@microsoft__api-extractor@7.58.1.patch
+  "@microsoft/api-extractor@7.58.1": patches/@microsoft__api-extractor@7.58.1.patch
 
 allowBuilds:
   classic-level: true

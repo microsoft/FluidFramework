@@ -66,7 +66,7 @@ overrides:
   diff@>=8 <9: ^8.0.3
 
   # Keep a single @types/node version.
-  '@types/node': ~22.19.17
+  "@types/node": ~22.19.17
 
   # Force ESLint 9.x for flat config support across all packages.
   eslint: ~9.39.2
@@ -75,13 +75,13 @@ overrides:
 
   # mongodb>@aws-sdk/credential-providers is not needed and brings in a large transitive
   # dependency tree (including fast-xml-parser); drop it.
-  mongodb>@aws-sdk/credential-providers: '-'
+  mongodb>@aws-sdk/credential-providers: "-"
 
   nanoid: ^3.3.9
 
   # oclif includes AWS features we do not use; drop to reduce lockfile churn.
-  oclif>@aws-sdk/client-cloudfront: '-'
-  oclif>@aws-sdk/client-s3: '-'
+  oclif>@aws-sdk/client-cloudfront: "-"
+  oclif>@aws-sdk/client-s3: "-"
 
   # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
   js-yaml@<4: ^3.14.2
