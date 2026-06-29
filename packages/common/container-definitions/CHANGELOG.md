@@ -1,5 +1,24 @@
 # @fluidframework/container-definitions
 
+## 2.110.0
+
+### Minor Changes
+
+- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+
+  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+  This property was previously marked `@deprecated Do not use.`
+
+  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+
+  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+  No replacement is needed — offline load is on by default.
+
+## 2.103.0
+
+Dependency updates only.
+
 ## 2.102.0
 
 ### Minor Changes

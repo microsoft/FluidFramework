@@ -119,10 +119,14 @@ stages:
         # Checkout the FluidFramework repo (for workspace scripts and source code)
         - checkout: self
           path: $(FluidFrameworkDirectory)
+          fetchDepth: 1
+          fetchTags: false
 
         # Checkout ff_pipeline_host (provides telemetry-generator and trips-setup/cleanup)
         - checkout: ff_pipeline_host
           path: $(FFPipelineHostDirectory)
+          fetchDepth: 1
+          fetchTags: false
 
         - task: Bash@3
           displayName: Print parameter/variable values for troubleshooting
@@ -142,20 +146,30 @@ stages:
 
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
-        # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
-        - template: /tools/pipelines/templates/include-install.yml@self
-          parameters:
-            packageManager: pnpm
-            buildDirectory: $(FFPipelineHostDirectory)
-            packageManagerInstallCommand: pnpm install
-            primaryRegistry: $(ado-feeds-ff-download-only)
-
         # Install FluidFramework dependencies
         - template: /tools/pipelines/templates/include-install.yml@self
           parameters:
-            packageManager: pnpm
             buildDirectory: $(FluidFrameworkDirectory)
-            packageManagerInstallCommand: pnpm install
+            installDependenciesDescription: Install FluidFramework dependencies
+            installPnpm: true
+            primaryRegistry: $(ado-feeds-ff-download-only)
+            # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
+            # whenever legacy package versions are added or removed. Including it in the pnpm store
+            # cache key ensures a cache miss whenever the set of compat packages changes.
+            # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
+            # internal tooling dependencies change.
+            additionalLockFilePaths: '$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(FFPipelineHostDirectory)/pnpm-lock.yaml'
+
+        # Install ff_pipeline_host dependencies (provides telemetry-generator and trips-setup/cleanup)
+        - template: /tools/pipelines/templates/include-install.yml@self
+          parameters:
+            buildDirectory: $(FFPipelineHostDirectory)
+            installDependenciesDescription: Install ff_pipeline_host dependencies
+            # Note that skipping pnpm install means client pnpm version must suffice for ff_pipeline_host.
+            # TODO #74732: consider separating pnpm stores and caches if later ff_pipeline_host
+            # steps can remain version agnostic and then this install can be restored to take
+            # place before FluidFramework install.
+            installPnpm: false
             primaryRegistry: $(ado-feeds-ff-download-only)
 
         # Build the workspace so compiled test code is available for benchmarks

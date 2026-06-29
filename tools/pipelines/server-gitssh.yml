@@ -83,16 +83,7 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
+    # No package.json; disable package-manager setup.
+    installPackages: false
     enableDockerImagePull: false
     tagName: gitssh
-    # Override the default docker.io registry in the Dockerfile to pull the base image from a
-    # mirror, since 1ES network isolation policies (CfsClean/CfsClean2) block egress to
-    # registry-1.docker.io from our build pool. On the internal project, use our internal ACR
-    # mirror (containerRegistryUrl comes from the container-registry-info variable group). On the
-    # public project, fall back to MCR's Docker Hub mirror — it's frozen at alpine 3.16 which
-    # happens to match our pin, and it's the only mirror reachable from public build pools.
-    # See tools/pipelines/README.md.
-    ${{ if eq(variables['System.TeamProject'], 'internal') }}:
-      additionalBuildArguments: --build-arg BASE_IMAGE_REGISTRY=$(containerRegistryUrl)/mirror/docker
-    ${{ else }}:
-      additionalBuildArguments: --build-arg BASE_IMAGE_REGISTRY=mcr.microsoft.com/mirror/docker

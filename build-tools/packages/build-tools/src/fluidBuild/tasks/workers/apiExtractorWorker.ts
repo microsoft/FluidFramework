@@ -35,14 +35,14 @@ export async function apiExtractorWorker(message: WorkerMessage): Promise<Worker
 			showVerboseMessages: true,
 			messageCallback: (message) => messages.push(message),
 		});
-	return {
-		code: result.succeeded ? 0 : 1,
-		error: result.succeeded
-			? undefined
-			: // This error does not appear to be used in fluid-build's output,
+	return result.succeeded
+		? { code: 0 }
+		: {
+				code: 1,
+				// This error does not appear to be used in fluid-build's output,
 				// but populate it with useful information anyway.
-				new Error(
+				error: new Error(
 					`Number of Errors: ${result.errorCount}. Messages: ${JSON.stringify(messages.map((m) => m.text))}`,
 				),
-	};
+			};
 }
