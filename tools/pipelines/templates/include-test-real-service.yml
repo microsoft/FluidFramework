@@ -246,13 +246,18 @@ stages:
 
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
+            # Install pnpm based on the FF repo settings as it has an engine requirement whereas
+            # ff_pipeline_host does not yet. So long a FF repo's pnpm version is compatible with
+            # ff_pipeline_host this single install and ordering of steps will suffice. If the
+            # needs diverge, then additional coordination may be required.
             buildDirectory: $(FluidFrameworkDirectory)
             # The compat-workspaces lockfile is committed to the FluidFramework repo and changes
             # whenever legacy package versions are added or removed. Including it in the pnpm store
             # cache key ensures a cache miss whenever the set of compat packages changes.
             # The ff_pipeline_host lockfile is included so the cache key also invalidates when the
             # internal tooling dependencies change.
-            additionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
+            additionalOptionalCacheKey: '$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml | $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml'
+            requiredCacheKey: '"$(Pipeline.Workspace)/$(FluidFrameworkDirectory)/packages/test/test-version-utils/compat-workspaces/full/pnpm-lock.yaml" | "$(Pipeline.Workspace)/$(FFPipelineHostDirectory)/pnpm-lock.yaml"'
 
         - template: /tools/pipelines/templates/include-setup-npmrc-for-download.yml@self
 
@@ -377,7 +382,7 @@ stages:
                 set -eu -o pipefail
 
                 # Increase the maximum time to wait for a tenant to 1 hour to accommodate multiple test runs at the same time.
-                pnpm exec trips-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                pnpm exec tenant-setup --waitTime=3600 --accessToken=$SYSTEM_ACCESSTOKEN --odspEndpoint=${{ parameters.odspTenantType }}
                 echo "##vso[task.setvariable variable=tenantSetupSuccess;]true"
 
         # run the test
@@ -391,7 +396,7 @@ stages:
             # resolves via Node's standard module resolution when set.
             ${{ each pair in parameters.env }}:
               ${{ pair.key }}: ${{ pair.value }}
-            # The ODSP tenant setup script (trips-setup --useFic) sets login__odsp__fic__test__users
+            # The ODSP tenant setup script (tenant-setup) sets login__odsp__fic__test__users
             # and token__package__import__location as pipeline variables. The e2e test workload reads
             # those plus login__microsoft__clientId (sourced from prague-key-vault).
             ${{ if or(eq(parameters.odspTenantType, 'dogfood'), eq(parameters.odspTenantType, 'prod')) }}:
@@ -479,7 +484,7 @@ stages:
               workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
               script: |
                 set -eu -o pipefail
-                pnpm exec trips-cleanup --odspEndpoint=${{ parameters.odspTenantType }} --useFic
+                pnpm exec tenant-cleanup --odspEndpoint=${{ parameters.odspTenantType }}
             condition: eq(variables['tenantSetupSuccess'], 'true')
 
         # Stop the docker environment if running against it

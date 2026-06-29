@@ -21,7 +21,7 @@ import { suitesWithAndWithoutProduction } from "../utils.js";
 describe("textDomainFormatted", () => {
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.92.0", "formattedText");
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.111.0", "formattedText");
 	});
 
 	it("basic unformatted use", () => {
@@ -125,7 +125,7 @@ describe("textDomainFormatted", () => {
 		const text = FormattedTextAsTree.Tree.fromString("abcde");
 
 		text.insertWithFormattingAt(3, [
-			new FormattedTextAsTree.StringAtom({
+			{
 				content: new FormattedTextAsTree.StringLineAtom({
 					tag: FormattedTextAsTree.LineTag("h5"),
 					indent: 0,
@@ -137,7 +137,7 @@ describe("textDomainFormatted", () => {
 					size: 12,
 					font: "Arial",
 				}),
-			}),
+			},
 		]);
 		let index = 0;
 		let currentRun = text.getUniformRun(0, text.characterCount());

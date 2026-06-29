@@ -7,9 +7,10 @@ import * as fs from "fs";
 import * as path from "path";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 import { sha256 } from "./hash.js";
 
-type tsTypes = typeof ts54Types | typeof ts59Types;
+type tsTypes = typeof ts54Types | typeof ts59Types | typeof ts60Types;
 
 /**
  * Matches fluid-tsc command start.
@@ -101,7 +102,10 @@ function filterIncrementalOptions(options: any): Record<string, unknown> {
 }
 
 function convertOptionPaths<
-	TCompilerOptions extends ts54Types.CompilerOptions | ts59Types.CompilerOptions,
+	TCompilerOptions extends
+		| ts54Types.CompilerOptions
+		| ts59Types.CompilerOptions
+		| ts60Types.CompilerOptions,
 >(
 	options: TCompilerOptions,
 	base: string,
@@ -385,4 +389,140 @@ export function getTscUtils(path: string): TscUtil {
 // Local paths should be normalized to make any comparisons.
 export function normalizeSlashes(path: string): string {
 	return path.replace(/\\/g, "/");
+}
+
+/**
+ * A parsed tsc config, as returned by {@link getResolvedTsConfig}. This is the union of the
+ * supported TypeScript versions' `ParsedCommandLine` types.
+ */
+export type ResolvedTsConfig =
+	| ts54Types.ParsedCommandLine
+	| ts59Types.ParsedCommandLine
+	| ts60Types.ParsedCommandLine;
+
+/**
+ * Resolves the effective tsc compiler options for a project by parsing its config file
+ * (including any `extends`) and merging in the option overrides from the parsed command line.
+ * Command line options take precedence. Relative paths from the command line are resolved
+ * relative to {@link packageDir}; the config file is parsed relative to its own directory.
+ *
+ * @param tscUtils - Utilities bound to the TypeScript version used by the package.
+ * @param packageDir - The package directory, used to resolve relative command line paths.
+ * @param parsedCommand - The parsed tsc command line (see {@link TscUtil.parseCommandLine}).
+ * @param configFileFullPath - The absolute path to the project's config file.
+ * @returns The resolved config, or `undefined` if the config could not be read or parsed.
+ */
+export function getResolvedTsConfig(
+	tscUtils: TscUtil,
+	packageDir: string,
+	parsedCommand: ResolvedTsConfig,
+	configFileFullPath: string,
+): ResolvedTsConfig | undefined {
+	const config = tscUtils.readConfigFile(configFileFullPath);
+	if (!config) {
+		return undefined;
+	}
+
+	// Fix up relative paths from the command line based on the package directory.
+	const commandOptions = tscUtils.convertOptionPaths(
+		parsedCommand.options,
+		packageDir,
+		path.resolve,
+	);
+
+	// Parse the config file relative to the config file directory, with command line options
+	// taking precedence.
+	const ts = tscUtils.tsLib;
+	const options = ts.parseJsonConfigFileContent(
+		config,
+		ts.sys,
+		path.dirname(configFileFullPath),
+		tscUtils.castOptionsUnionToIntersection(commandOptions),
+		configFileFullPath,
+	);
+
+	if (options.errors.length) {
+		return undefined;
+	}
+	return options;
+}
+
+/**
+ * Computes the default incremental build info file name (`*.tsbuildinfo`) for a config file,
+ * matching how tsc derives it from the config file name.
+ */
+function getTsBuildInfoFileName(configFileFullPath: string): string {
+	const configFileParsed = path.parse(configFileFullPath);
+	if (configFileParsed.ext === ".json") {
+		return `${configFileParsed.name}.tsbuildinfo`;
+	}
+	return `${configFileParsed.name}${configFileParsed.ext}.tsbuildinfo`;
+}
+
+/**
+ * Remaps a file that would be emitted next to the config/source into the configured output
+ * directory, matching how tsc places emitted files (and the incremental build info file).
+ */
+export function remapOutFile(
+	options: ResolvedTsConfig,
+	directory: string,
+	fileName: string,
+): string {
+	if (options.options.outDir) {
+		if (options.options.rootDir) {
+			const relative = path.relative(options.options.rootDir, directory);
+			return path.join(options.options.outDir, relative, fileName);
+		}
+		return path.join(options.options.outDir, fileName);
+	}
+	return path.join(directory, fileName);
+}
+
+/**
+ * Computes the incremental build info (`*.tsbuildinfo`) file that a tsc invocation would write,
+ * relative to the package as configured, or `undefined` if the invocation is not incremental
+ * (and therefore does not write one).
+ *
+ * @param options - The resolved config (see {@link getResolvedTsConfig}).
+ * @param configFileFullPath - The absolute path to the project's config file.
+ */
+export function getTsBuildInfoFileFromConfig(
+	options: ResolvedTsConfig,
+	configFileFullPath: string,
+): string | undefined {
+	if (!options.options.incremental) {
+		return undefined;
+	}
+
+	if (options.options.tsBuildInfoFile) {
+		return options.options.tsBuildInfoFile;
+	}
+
+	const outFile = options.options.out ? options.options.out : options.options.outFile;
+	if (outFile) {
+		return `${outFile}.tsbuildinfo`;
+	}
+
+	const tsBuildInfoFileName = getTsBuildInfoFileName(configFileFullPath);
+	return remapOutFile(options, path.parse(configFileFullPath).dir, tsBuildInfoFileName);
+}
+
+/**
+ * Computes the absolute path of the incremental build info (`*.tsbuildinfo`) file that a tsc
+ * invocation would write, or `undefined` if the invocation is not incremental.
+ *
+ * @param options - The resolved config (see {@link getResolvedTsConfig}).
+ * @param packageDir - The package directory, used to resolve a relative build info path.
+ * @param configFileFullPath - The absolute path to the project's config file.
+ */
+export function getTsBuildInfoFullPath(
+	options: ResolvedTsConfig,
+	packageDir: string,
+	configFileFullPath: string,
+): string | undefined {
+	const infoFile = getTsBuildInfoFileFromConfig(options, configFileFullPath);
+	if (infoFile === undefined) {
+		return undefined;
+	}
+	return path.isAbsolute(infoFile) ? infoFile : path.join(packageDir, infoFile);
 }

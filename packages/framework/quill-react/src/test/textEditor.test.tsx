@@ -1012,13 +1012,13 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("Hello\n");
 				tree.removeRange(5, 6);
 				tree.insertWithFormattingAt(5, [
-					new FormattedTextAsTree.StringAtom({
+					{
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("h1"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
-					}),
+					},
 				]);
 
 				const ops = buildDeltaFromTree(tree);
@@ -1029,13 +1029,13 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("item\n");
 				tree.removeRange(4, 5);
 				tree.insertWithFormattingAt(4, [
-					new FormattedTextAsTree.StringAtom({
+					{
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("li"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
-					}),
+					},
 				]);
 
 				const ops = buildDeltaFromTree(tree);
@@ -1050,13 +1050,13 @@ describe("textEditor", () => {
 			it("includes indent when present in line atom", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
-					new FormattedTextAsTree.StringAtom({
+					{
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("ol"),
 							indent: 2,
 						}),
 						format: createPlainFormat(),
-					}),
+					},
 				]);
 
 				const ops = buildDeltaFromTree(tree);
@@ -1069,13 +1069,13 @@ describe("textEditor", () => {
 			it("indent is omitted when 0 in line atom", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
-					new FormattedTextAsTree.StringAtom({
+					{
 						content: new FormattedTextAsTree.StringLineAtom({
 							tag: FormattedTextAsTree.LineTag("ol"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
-					}),
+					},
 				]);
 
 				const ops = buildDeltaFromTree(tree);

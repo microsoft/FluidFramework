@@ -11,13 +11,6 @@
 packages:
   - "packages/*"
 
-allowBuilds:
-  '@biomejs/biome': true
-  core-js: true
-  es5-ext: true
-  sharp: true
-  unrs-resolver: true
-
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 resolutionMode: highest
@@ -143,7 +136,9 @@ updateConfig:
     - type-fest
     - typescript
 
-# pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every `pnpm run <script>`.
-# That breaks CI flows that modifies versions via `flub bump` then runs script like `pnpm run format`.
-# We may want to enable this in the future, but doing so requires changes to the pipelines, so we restore the pnpm 10 defaults for now.
-verifyDepsBeforeRun: false
+allowBuilds:
+  '@biomejs/biome': true
+  core-js: true
+  es5-ext: true
+  sharp: true
+  unrs-resolver: true
