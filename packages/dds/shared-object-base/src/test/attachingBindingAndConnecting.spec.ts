@@ -211,6 +211,7 @@ describe("SharedObject attaching binding and connecting", () => {
 							},
 							connected,
 						}),
+						loadingFromPendingState: undefined,
 					}),
 				);
 
@@ -255,6 +256,7 @@ describe("SharedObject attaching binding and connecting", () => {
 						attach(handler) {},
 						connected: overrides.runtime?.connected ?? false,
 					}),
+					loadingFromPendingState: undefined,
 				}),
 			);
 
@@ -382,6 +384,7 @@ describe("SharedObject attaching binding and connecting", () => {
 							},
 							connected,
 						}),
+						loadingFromPendingState: undefined,
 					}),
 				);
 
