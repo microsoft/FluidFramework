@@ -4,7 +4,7 @@
  */
 
 import { assert } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { TelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 
 import { StablePlace } from './ChangeTypes.js';
 import { fail } from './Common.js';
@@ -53,7 +53,7 @@ export enum HistoryEditFactoryEvents {
 export function revert(
 	changes: readonly ChangeInternal[],
 	before: RevisionView,
-	logger?: ITelemetryLoggerExt,
+	logger?: TelemetryLoggerExt,
 	emit?: (event: string, ...args: any[]) => void
 ): ChangeInternal[] | undefined {
 	const result: ChangeInternal[] = [];

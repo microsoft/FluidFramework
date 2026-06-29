@@ -10,11 +10,11 @@ import type {
 	ITelemetryBaseProperties,
 } from "@fluidframework/core-interfaces";
 import {
-	type ITelemetryLoggerExt,
-	type ITelemetryLoggerPropertyBags,
 	createMultiSinkLogger,
 	eventNamespaceSeparator,
 	formatTick,
+	type ITelemetryLoggerPropertyBags,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 // This import style is necessary to ensure the emitted JS code works in both CJS and ESM.
 import debugPkg from "debug";
@@ -38,7 +38,7 @@ export class DebugLogger implements ITelemetryBaseLogger {
 		namespace: string,
 		baseLogger?: ITelemetryBaseLogger,
 		properties?: ITelemetryLoggerPropertyBags,
-	): ITelemetryLoggerExt {
+	): TelemetryLoggerExt {
 		// Setup base logger upfront, such that host can disable it (if needed)
 		const debug = registerDebug(namespace);
 

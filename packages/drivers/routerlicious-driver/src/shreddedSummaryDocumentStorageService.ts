@@ -15,8 +15,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { buildGitTreeHierarchy } from "@fluidframework/driver-utils/internal";
 import type {
-	ITelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	PerformanceEvent,
@@ -59,7 +59,7 @@ export class ShreddedSummaryDocumentStorageService implements IDocumentStorageSe
 	constructor(
 		protected readonly id: string,
 		protected readonly manager: GitManager,
-		protected readonly logger: ITelemetryLoggerExt,
+		protected readonly logger: TelemetryLoggerExt,
 		public readonly policies: IDocumentStorageServicePolicies,
 		driverPolicies?: IRouterliciousDriverPolicies,
 		blobCache?: ICache<ArrayBufferLike>,

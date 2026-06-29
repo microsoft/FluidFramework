@@ -65,13 +65,15 @@ parameters:
     type: string
     default: repo
 
-  - name: packageManager
-    type: string
-    default: npm
+  # If true, perform package-manager setup/install (set false for packages without package.json, e.g. gitssh).
+  - name: installPackages
+    type: boolean
+    default: true
 
-  - name: packageManagerInstallCommand
-    type: string
-    default: 'npm ci --unsafe-perm'
+  # If true, install only root dependencies for version-setting scenarios in packages with native deps.
+  - name: installWorkspaceRootOnly
+    type: boolean
+    default: false
 
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
@@ -95,7 +97,7 @@ parameters:
   # internal and public 1ES build pools (egress to docker.io is blocked by network isolation policies).
   - name: baseImageRegistry
     type: string
-    default: 'fluidpublicmirror-ccbba5fhdscnchft.azurecr.io/mirror/docker'
+    default: 'fluidmirror-a5dqhgefbwhmbtag.azurecr.io/mirror/docker'
 
   # If the build is running for a test branch
   - name: testBuild
@@ -235,8 +237,8 @@ extends:
                 containerBaseDir=${{ parameters.containerBaseDir }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
-                packageManager=${{ parameters.packageManager }}
-                packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
+                installPackages=${{ parameters.installPackages }}
+                installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -279,7 +281,7 @@ extends:
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
-                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "True" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
@@ -297,6 +299,11 @@ extends:
                 fi
               fi
 
+              if [[ "${{ parameters.installPackages }}" != "True" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]installPackages: false is incompatible with setVersion: true (version-setting requires dependencies to be installed)."
+                exit -1;
+              fi
+
         # for npm ci in component detection and set version
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
@@ -307,22 +314,27 @@ extends:
               buildDirectory: ${{ parameters.buildDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
 
         # Set version
-        - ${{ if eq(parameters.setVersion, true) }}:
+        - ${{ if and(eq(parameters.setVersion, true), eq(parameters.installPackages, true)) }}:
           - task: Bash@3
             displayName: Install dependencies
             retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
               workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-              script: |
-                set -eu -o pipefail
-                ${{ parameters.packageManagerInstallCommand }}
+              ${{ if eq(parameters.installWorkspaceRootOnly, true) }}:
+                script: |
+                  set -eu -o pipefail
+                  pnpm i --frozen-lockfile --workspace-root
+              ${{ else }}:
+                script: |
+                  set -eu -o pipefail
+                  pnpm i --frozen-lockfile
 
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
@@ -388,7 +400,15 @@ extends:
               dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
               context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
               image: $(baseContainerTag)
-              buildArguments: --target base $(DockerBuildArgs.output)
+              # CI's build container has no egress to registry.npmjs.org under 1ES network
+              # isolation. Pass the authenticated .npmrc set up by include-install-pnpm.yml
+              # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
+              # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
+              # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
+              ${{ if eq(parameters.installPackages, true) }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              ${{ else }}:
+                buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
               enableNetwork: true
               enableCache: true
@@ -529,7 +549,12 @@ extends:
             dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
             context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            buildArguments: $(DockerBuildArgs.output)
+            # See the base-image build above for the rationale. Passed here too because
+            # a cache miss could re-execute the base stage layers during this build.
+            ${{ if eq(parameters.installPackages, true) }}:
+              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            ${{ else }}:
+              buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
             enableNetwork: true
             enableCache: true
@@ -566,7 +591,7 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
             displayName: Prune pnpm store
@@ -578,16 +603,11 @@ extends:
                 pnpm store prune
 
         templateContext:
-          # 'Fluid Public Mirror Container Registry' is required on every run for base-image pulls
-          # (anonymous pull disabled). The push connection $(containerRegistryConnection) is only
-          # added when pushing in the internal project (it's empty in the public project).
+          # The push connection $(containerRegistryConnection) is only added when pushing in the
+          # internal project (it's empty in the public project).
           ${{ if and(eq(parameters.shouldPushDockerImage, true), eq(variables['System.TeamProject'], 'internal')) }}:
             authenticatedContainerRegistries:
             - serviceConnection: $(containerRegistryConnection)
-            - serviceConnection: 'Fluid Public Mirror Container Registry'
-          ${{ else }}:
-            authenticatedContainerRegistries:
-            - serviceConnection: 'Fluid Public Mirror Container Registry'
           outputParentDirectory: $(Build.ArtifactStagingDirectory)
           outputs:
           - ${{ if eq(parameters.pack, true) }}:

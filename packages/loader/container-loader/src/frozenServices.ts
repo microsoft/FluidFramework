@@ -200,10 +200,7 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		return this._disposed;
 	}
 
-	constructor(
-		readOnly: boolean,
-		private readonly documentStorageService?: IDocumentStorageService,
-	) {
+	constructor(readOnly: boolean, documentStorageService?: IDocumentStorageService) {
 		let rejectFn!: (error: Error) => void;
 		const promise = new Promise<never>((_, reject) => {
 			rejectFn = reject;
@@ -225,15 +222,16 @@ class FrozenDocumentStorageService implements IDocumentStorageService, IDisposab
 		this.createBlob = readOnly
 			? frozenDocumentStorageServiceHandler
 			: async () => this.disposalDeferred.promise;
+		this.readBlob =
+			documentStorageService?.readBlob.bind(documentStorageService) ??
+			frozenReadBlobOfflineHandler;
 	}
 
 	getSnapshotTree = frozenDocumentStorageServiceHandler;
 	getSnapshot = frozenDocumentStorageServiceHandler;
 	getVersions = frozenDocumentStorageServiceHandler;
 	createBlob: IDocumentStorageService["createBlob"];
-	readBlob =
-		this.documentStorageService?.readBlob.bind(this.documentStorageService) ??
-		frozenReadBlobOfflineHandler;
+	readBlob: IDocumentStorageService["readBlob"];
 	uploadSummaryWithContext = frozenDocumentStorageServiceHandler;
 	downloadSummary = frozenDocumentStorageServiceHandler;
 

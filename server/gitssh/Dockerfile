@@ -10,7 +10,7 @@
 # docker.io/library, so the same manifest digest pin resolves correctly against either registry.
 # See tools/pipelines/README.md for how to maintain the mirror (upgrades, additions).
 ARG BASE_IMAGE_REGISTRY=docker.io
-FROM ${BASE_IMAGE_REGISTRY}/library/alpine:3.16@sha256:452e7292acee0ee16c332324d7de05fa2c99f9994ecc9f0779c602916a672ae4
+FROM ${BASE_IMAGE_REGISTRY}/library/alpine:3.23.4@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e68878dd4a5019afde11
 
 # Install Git and OpenSSH so we can run a git server
 RUN apk add --no-cache git

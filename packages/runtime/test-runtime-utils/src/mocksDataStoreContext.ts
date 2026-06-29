@@ -40,7 +40,7 @@ import { MockDeltaManager } from "./mockDeltas.js";
  */
 export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public isLocalDataStore: boolean = true;
-	public packagePath: readonly string[] = undefined as any;
+	public packagePath: readonly string[] = []; // unused besides logging
 
 	public options: Record<string | number, any> = {};
 	public clientId: string | undefined = uuid();

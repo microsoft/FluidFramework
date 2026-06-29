@@ -100,10 +100,11 @@ extends:
     releaseKind: ${{ parameters.releaseKind }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     dockerBuildBumpsVersion: true
-    packageManagerInstallCommand: 'pnpm config set recursive-install false ; pnpm i ; pnpm config set recursive-install true'
+    # Root-only install: gitrest has native deps that don't install in CI; the real build runs in Docker.
+    # Root deps are still needed for the version-setting step.
+    installWorkspaceRootOnly: true
     # The --build-context is needed because the Dockerfile copies files from the repo root.
     additionalBuildArguments: --build-context root=$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
-    packageManager: pnpm
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/gitrest
     containerName: fluidframework/routerlicious/gitrest
     test: test
