@@ -6,7 +6,7 @@
 import { bufferToString } from '@fluid-internal/client-utils';
 import { AttachState } from '@fluidframework/container-definitions';
 import { ITelemetryBaseProperties } from '@fluidframework/core-interfaces';
-import { assert } from '@fluidframework/core-utils/internal';
+import { assert, compareArrays } from '@fluidframework/core-utils/internal';
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -62,6 +62,7 @@ import {
 	StableNodeId,
 	isDetachedSequenceId,
 } from './Identifiers.js';
+import type { ISharedTree } from './ISharedTree.js';
 import { initialTree } from './InitialTree.js';
 import {
 	CachingLogViewer,
@@ -386,6 +387,8 @@ const stashedSessionId = '8477b8d5-cf6c-4673-8345-8f076a8f9bc6' as SessionId;
 
 /**
  * A {@link https://github.com/microsoft/FluidFramework/blob/main/experimental/dds/tree/README.md | distributed tree}.
+ * @deprecated Direct usage of the SharedTree class is deprecated. Use the {@link ISharedTree} interface
+ * to reference tree instances instead. The class will be removed from the public API surface in a future release.
  * @alpha
  */
 export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeIdContext {
@@ -979,12 +982,12 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 *
 	 * - state of caches
 	 */
-	public equals(sharedTree: SharedTree): boolean {
+	public equals(sharedTree: ISharedTree): boolean {
 		if (!areRevisionViewsSemanticallyEqual(this.currentView, this, sharedTree.currentView, sharedTree)) {
 			return false;
 		}
 
-		return this.editLog.equals(sharedTree.editLog);
+		return compareArrays(this.edits.editIds, sharedTree.edits.editIds);
 	}
 
 	/**
@@ -1226,7 +1229,7 @@ export class SharedTree extends SharedObject<ISharedTreeEvents> implements NodeI
 	 * @returns a list containing `EditId`s for all applied edits.
 	 */
 	public mergeEditsFrom(
-		other: SharedTree,
+		other: ISharedTree,
 		edits: Iterable<Edit<InternalizedChange>>,
 		stableIdRemapper?: (id: StableNodeId) => StableNodeId
 	): EditId[] {
