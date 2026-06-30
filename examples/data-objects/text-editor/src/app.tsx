@@ -145,7 +145,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	treeView.initialize(
 		new TextEditorRoot({
 			plainText: TextAsTree.Tree.fromString(""),
-			formattedText: FormattedTextAsTree.Tree.fromString(""),
+			formattedText: FormattedTextAsTreeDefault.Tree.fromString(""),
 		}),
 	);
 

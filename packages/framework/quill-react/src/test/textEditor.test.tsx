@@ -8,14 +8,17 @@ import { strict as assert } from "node:assert";
 import { toPropTreeNode, createUndoRedo, type UndoRedo } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { TreeAlpha, type TreeViewAlpha } from "@fluidframework/tree/alpha";
-import { independentView, TextAsTree } from "@fluidframework/tree/internal";
+import {
+	FormattedTextAsTreeDefault,
+	independentView,
+	TextAsTree,
+} from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import DeltaPackage from "quill-delta";
 
 import {
 	clipboardFormatMatcher,
-	FormattedTextAsTree,
 	FormattedMainView,
 	parseCssFontFamily,
 	parseCssFontSize,
@@ -34,16 +37,18 @@ type Delta = DeltaPackage.default;
 const Delta = DeltaPackage.default;
 
 // Configuration for creating formatted text views
-const formattedTreeConfig = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
+const formattedTreeConfig = new TreeViewConfiguration({
+	schema: FormattedTextAsTreeDefault.Tree,
+});
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
  */
 function createFormattedTreeView(initialValue = ""): {
-	tree: FormattedTextAsTree.Tree;
+	tree: FormattedTextAsTreeDefault.Tree;
 } {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
 	return { tree: treeView.root };
 }
 
@@ -52,9 +57,9 @@ function createFormattedTreeView(initialValue = ""): {
  */
 function createFormattedTreeViewWithEvents(
 	initialValue = "",
-): TreeViewAlpha<typeof FormattedTextAsTree.Tree> {
+): TreeViewAlpha<typeof FormattedTextAsTreeDefault.Tree> {
 	const treeView = independentView(formattedTreeConfig);
-	treeView.initialize(FormattedTextAsTree.Tree.fromString(initialValue));
+	treeView.initialize(FormattedTextAsTreeDefault.Tree.fromString(initialValue));
 	return treeView;
 }
 
@@ -379,8 +384,8 @@ describe("textEditor", () => {
 		});
 
 		// Helper to create default format
-		function createPlainFormat(): FormattedTextAsTree.CharacterFormat {
-			return new FormattedTextAsTree.CharacterFormat({
+		function createPlainFormat(): FormattedTextAsTreeDefault.CharacterFormat {
+			return new FormattedTextAsTreeDefault.CharacterFormat({
 				bold: false,
 				italic: false,
 				underline: false,
@@ -413,7 +418,7 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("strong"), "Initially: no <strong>");
 
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: true,
 								italic: false,
 								underline: false,
@@ -430,7 +435,7 @@ describe("textEditor", () => {
 
 						it("deletes bold text and removes <strong> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: true,
 								italic: false,
 								underline: false,
@@ -477,7 +482,7 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("em"), "Initially: no <em>");
 
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: true,
 								underline: false,
@@ -494,7 +499,7 @@ describe("textEditor", () => {
 
 						it("deletes italic text and removes <em> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: true,
 								underline: false,
@@ -538,7 +543,7 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("u"), "Initially: no <u>");
 
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: true,
@@ -555,7 +560,7 @@ describe("textEditor", () => {
 
 						it("deletes underlined text and removes <u> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: true,
@@ -602,7 +607,7 @@ describe("textEditor", () => {
 								"Initially: no .ql-size-huge",
 							);
 
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: false,
@@ -619,7 +624,7 @@ describe("textEditor", () => {
 
 						it("deletes huge size text and removes .ql-size-huge", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: false,
@@ -672,7 +677,7 @@ describe("textEditor", () => {
 								"Initially: no .ql-font-monospace",
 							);
 
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: false,
@@ -689,7 +694,7 @@ describe("textEditor", () => {
 
 						it("deletes monospace font text and removes .ql-font-monospace", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTree.CharacterFormat({
+							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
 								bold: false,
 								italic: false,
 								underline: false,
@@ -1013,8 +1018,8 @@ describe("textEditor", () => {
 				tree.removeRange(5, 6);
 				tree.insertWithFormattingAt(5, [
 					{
-						content: new FormattedTextAsTree.StringLineAtom({
-							tag: FormattedTextAsTree.LineTag("h1"),
+						content: new FormattedTextAsTreeDefault.StringLineAtom({
+							tag: FormattedTextAsTreeDefault.LineTag("h1"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1030,8 +1035,8 @@ describe("textEditor", () => {
 				tree.removeRange(4, 5);
 				tree.insertWithFormattingAt(4, [
 					{
-						content: new FormattedTextAsTree.StringLineAtom({
-							tag: FormattedTextAsTree.LineTag("li"),
+						content: new FormattedTextAsTreeDefault.StringLineAtom({
+							tag: FormattedTextAsTreeDefault.LineTag("li"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
@@ -1051,8 +1056,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTree.StringLineAtom({
-							tag: FormattedTextAsTree.LineTag("ol"),
+						content: new FormattedTextAsTreeDefault.StringLineAtom({
+							tag: FormattedTextAsTreeDefault.LineTag("ol"),
 							indent: 2,
 						}),
 						format: createPlainFormat(),
@@ -1070,8 +1075,8 @@ describe("textEditor", () => {
 				const { tree } = createFormattedTreeView("abc");
 				tree.insertWithFormattingAt(3, [
 					{
-						content: new FormattedTextAsTree.StringLineAtom({
-							tag: FormattedTextAsTree.LineTag("ol"),
+						content: new FormattedTextAsTreeDefault.StringLineAtom({
+							tag: FormattedTextAsTreeDefault.LineTag("ol"),
 							indent: 0,
 						}),
 						format: createPlainFormat(),
