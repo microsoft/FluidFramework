@@ -228,14 +228,21 @@ async function initFluid(): Promise<{
 		initialUsers.push(await connectUser(id, containerId, devtoolsLogger));
 	}
 
-	// Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
-	// by the React layer (see {@link DevtoolsToggle}).
+	const firstUser = initialUsers[0];
+	if (firstUser === undefined) {
+		throw new Error("Expected at least one initial user.");
+	}
+
+	// Devtools starts disabled and is toggled on/off at runtime by the React layer
+	// (see {@link DevtoolsToggle}).
 	const devtoolsProps: DevtoolsProps = {
 		logger: devtoolsLogger,
-		initialContainers: initialUsers.map((user) => ({
-			container: user.container,
-			containerKey: `User ${user.id} Container`,
-		})),
+		initialContainers: [
+			{
+				container: firstUser.container,
+				containerKey: `User ${firstUser.id} Container`,
+			},
+		],
 	};
 
 	return { containerId, devtoolsLogger, devtoolsProps, initialUsers };
@@ -502,10 +509,10 @@ export const App: FC<{
 }> = ({ containerId, devtoolsLogger, devtoolsProps, initialUsers }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
 	// ID is never reused.
-	const nextId = useRef(initialUserCount + 1);
+	const nextIdRef = useRef(initialUserCount + 1);
 
 	const addUser = useCallback(() => {
-		connectUser(nextId.current++, containerId, devtoolsLogger)
+		connectUser(nextIdRef.current++, containerId, devtoolsLogger)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
 	}, [containerId, devtoolsLogger]);
@@ -516,8 +523,8 @@ export const App: FC<{
 		setUsers((prev) => prev.filter((candidate) => candidate !== user));
 	}, []);
 
-	// Keep at least one user so the app always shows a view to work with.
-	const canRemove = users.length > 1;
+	// The first user is static: it is never removable and never can be removed.
+	const firstUserId = initialUsers[0]?.id;
 
 	return (
 		<div
@@ -559,7 +566,7 @@ export const App: FC<{
 						color={colorForIndex(index)}
 						container={user.container}
 						treeView={user.treeView}
-						onRemove={canRemove ? () => removeUser(user) : undefined}
+						onRemove={user.id === firstUserId ? undefined : () => removeUser(user)}
 					/>
 				))}
 			</div>
