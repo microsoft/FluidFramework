@@ -37,8 +37,8 @@ import type {
 	RunTransactionParamsBeta,
 	TransactionCallbackStatusAlpha,
 	TransactionCallbackStatusBeta,
-	TransactionResult,
-	TransactionResultWithValue,
+	TransactionVoidResult,
+	TransactionValueResult,
 	VoidTransactionCallbackStatusAlpha,
 	VoidTransactionCallbackStatusBeta,
 	WithValue,
@@ -194,7 +194,7 @@ export interface TreeContextAlpha {
 	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
 	 * @param params - Optional {@link RunTransactionParamsAlpha | parameters} for the transaction.
-	 * @returns A {@link TransactionResultWithValue | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
@@ -216,7 +216,7 @@ export interface TreeContextAlpha {
 	runTransaction<TValue>(
 		transaction: () => WithValue<TValue>,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultWithValue<TValue, TValue>;
+	): TransactionValueResult<TValue, TValue>;
 
 	/**
 	 * An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value.
@@ -228,7 +228,7 @@ export interface TreeContextAlpha {
 	runTransaction(
 		transaction: () => void,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResult;
+	): TransactionVoidResult;
 
 	/**
 	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
@@ -244,7 +244,7 @@ export interface TreeContextAlpha {
 	runTransactionAsync<TValue>(
 		transaction: () => Promise<WithValue<TValue>>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultWithValue<TValue, TValue>>;
+	): Promise<TransactionValueResult<TValue, TValue>>;
 
 	/**
 	 * An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
@@ -256,7 +256,7 @@ export interface TreeContextAlpha {
 	runTransactionAsync(
 		transaction: () => Promise<void>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResult>;
+	): Promise<TransactionVoidResult>;
 
 	/**
 	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
@@ -317,7 +317,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultWithValue<TSuccessValue, TFailureValue>;
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 
 	/**
 	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
@@ -329,7 +329,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	runTransaction(
 		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResult;
+	): TransactionVoidResult;
 
 	/**
 	 * An asynchronous version of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction}.
@@ -339,7 +339,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 
 	/**
 	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
@@ -351,7 +351,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResult>;
+	): Promise<TransactionVoidResult>;
 
 	/**
 	 * Apply a serialized change to this branch.
@@ -490,7 +490,7 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 *
 	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
 	 *
-	 * @returns A {@link TransactionResultWithValue | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
 	 *
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
@@ -518,8 +518,8 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 		transaction: () => TOut,
 		params?: RunTransactionParamsBeta,
 	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
-		? TransactionResultWithValue<TSuccessValue, TFailureValue>
-		: TransactionResult;
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
 
 	/**
 	 * An asynchronous version of {@link TreeViewBeta.runTransaction | runTransaction}.
@@ -543,8 +543,8 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 		params?: RunTransactionParamsBeta,
 	): Promise<
 		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
-			? TransactionResultWithValue<TSuccessValue, TFailureValue>
-			: TransactionResult
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
 	>;
 }
 

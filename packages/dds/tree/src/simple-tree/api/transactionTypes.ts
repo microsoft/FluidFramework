@@ -135,17 +135,17 @@ export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailu
  * @sealed
  * @beta
  */
-export type TransactionResultWithValue<TSuccessValue, TFailureValue> =
+export type TransactionValueResult<TSuccessValue, TFailureValue> =
 	| TransactionResultSuccess<TSuccessValue>
 	| TransactionResultFailed<TFailureValue>;
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionResultWithValue}
+ * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionValueResult}
  * but with the `value` field omitted. This is useful when the transaction callback doesn't need to return a value.
  * @sealed
  * @beta
  */
-export type TransactionResult =
+export type TransactionVoidResult =
 	| Omit<TransactionResultSuccess<unknown>, "value">
 	| Omit<TransactionResultFailed<unknown>, "value">;
 

@@ -37,4 +37,5 @@ With the introduction of new beta types, existing alpha types have been replaced
 
 **Other Renames**
 
-- `TransactionResultExt` (alpha) -> `TransactionResultWithValue` (beta)
+- `TransactionResult` (alpha) -> `TransactionVoidResult` (beta)
+- `TransactionResultExt` (alpha) -> `TransactionValueResult` (beta)

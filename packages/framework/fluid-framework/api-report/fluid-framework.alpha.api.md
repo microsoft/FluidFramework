@@ -2091,9 +2091,6 @@ export type TransactionLabels = Set<unknown> & {
 };
 
 // @beta @sealed
-export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
-
-// @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
     success: false;
 }
@@ -2104,7 +2101,10 @@ export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSucc
 }
 
 // @beta @sealed
-export type TransactionResultWithValue<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
+export type TransactionValueResult<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
+
+// @beta @sealed
+export type TransactionVoidResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
 
 // @public
 export type TransformedEvent<TThis, E, A extends any[]> = (event: E, listener: (...args: ReplaceIEventThisPlaceHolder<A, TThis>) => void) => TThis;
@@ -2210,10 +2210,10 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     fork(): TreeBranchAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
     isMissingEditsFrom(branch: TreeBranch): boolean;
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionResultWithValue<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionResult;
-    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
-    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>, params?: RunTransactionParamsAlpha): Promise<TransactionResult>;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
+    runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
+    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
 }
 
 // @alpha @sealed
@@ -2248,10 +2248,10 @@ export enum TreeCompressionStrategy {
 // @alpha
 export interface TreeContextAlpha {
     isBranch(): this is TreeBranchAlpha;
-    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionResultWithValue<TValue, TValue>;
-    runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionResult;
-    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionResultWithValue<TValue, TValue>>;
-    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionResult>;
+    runTransaction<TValue>(transaction: () => WithValue<TValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TValue, TValue>;
+    runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
+    runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
+    runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
 }
 
 // @beta @input
@@ -2421,8 +2421,8 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
-    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionResultWithValue<TSuccessValue, TFailureValue> : TransactionResult;
-    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionResultWithValue<TSuccessValue, TFailureValue> : TransactionResult>;
+    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult;
+    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionValueResult<TSuccessValue, TFailureValue> : TransactionVoidResult>;
 }
 
 // @public @sealed

@@ -189,10 +189,10 @@ export {
 	type VoidTransactionCallbackStatusBeta,
 	type TransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusBeta,
-	type TransactionResult,
-	type TransactionResultWithValue,
-	type TransactionResultSuccess,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
 	type WithValue,
 	rollback,
 } from "./transactionTypes.js";

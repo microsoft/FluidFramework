@@ -59,7 +59,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
-	type TransactionResult,
+	type TransactionVoidResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -4359,7 +4359,7 @@ describe("treeNodeApi", () => {
 			const node = new Obj({ n: 3 });
 			const context = TreeAlpha.context(node);
 
-			let transactionPromise: Promise<TransactionResult> | undefined;
+			let transactionPromise: Promise<TransactionVoidResult> | undefined;
 			const expectedError = validateUsageError(
 				/An asynchronous transaction cannot be started while another transaction is already in progress/,
 			);

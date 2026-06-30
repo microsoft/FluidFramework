@@ -9,8 +9,8 @@ import type {
 	TreeContextAlpha,
 	TreeBranchAlpha,
 	RunTransactionParamsAlpha,
-	TransactionResult,
-	TransactionResultWithValue,
+	TransactionVoidResult,
+	TransactionValueResult,
 	WithValue,
 } from "../simple-tree/index.js";
 
@@ -31,12 +31,15 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	public runTransaction<TValue>(
 		t: () => WithValue<TValue>,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultWithValue<TValue, TValue>;
-	public runTransaction(t: () => void, _params?: RunTransactionParamsAlpha): TransactionResult;
+	): TransactionValueResult<TValue, TValue>;
+	public runTransaction(
+		t: () => void,
+		_params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction(
 		t: () => WithValue<unknown> | void,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultWithValue<unknown, unknown> | TransactionResult {
+	): TransactionValueResult<unknown, unknown> | TransactionVoidResult {
 		for (const constraint of params?.preconditions ?? []) {
 			assertValidConstraint(constraint, false);
 		}
@@ -51,15 +54,15 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	public runTransactionAsync<TValue>(
 		t: () => Promise<WithValue<TValue>>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultWithValue<TValue, TValue>>;
+	): Promise<TransactionValueResult<TValue, TValue>>;
 	public runTransactionAsync(
 		t: () => Promise<void>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResult>;
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync(
 		t: () => Promise<WithValue<unknown> | void>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultWithValue<unknown, unknown> | TransactionResult> {
+	): Promise<TransactionValueResult<unknown, unknown> | TransactionVoidResult> {
 		if (this.transactionCount > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -78,7 +81,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	private static wrapTransactionResult<TValue>(
 		value: WithValue<TValue> | void,
-	): TransactionResultWithValue<TValue, TValue> | TransactionResult {
+	): TransactionValueResult<TValue, TValue> | TransactionVoidResult {
 		if (value?.value !== undefined) {
 			return { success: true, value: value.value };
 		}
