@@ -38,7 +38,7 @@ import {
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/internal";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -81,7 +81,7 @@ const sf = new SchemaFactory("com.fluidframework.example.text-editor");
 
 export class TextEditorRoot extends sf.object("TextEditorRoot", {
 	plainText: TextAsTree.Tree,
-	formattedText: FormattedTextAsTree.Tree,
+	formattedText: FormattedTextAsTreeDefault.Tree,
 }) {}
 
 export const treeConfig = new TreeViewConfiguration({ schema: TextEditorRoot });
@@ -125,7 +125,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	treeView.initialize(
 		new TextEditorRoot({
 			plainText: TextAsTree.Tree.fromString(""),
-			formattedText: FormattedTextAsTree.Tree.fromString(""),
+			formattedText: FormattedTextAsTreeDefault.Tree.fromString(""),
 		}),
 	);
 
