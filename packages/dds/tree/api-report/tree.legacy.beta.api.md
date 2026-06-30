@@ -905,12 +905,12 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 
 // @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
-    success: false;
+    readonly success: false;
 }
 
 // @beta @sealed
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
-    success: true;
+    readonly success: true;
 }
 
 // @beta @sealed

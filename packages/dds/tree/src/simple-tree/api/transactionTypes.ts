@@ -117,7 +117,7 @@ export type VoidTransactionCallbackStatusAlpha = Omit<
  */
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
 	/** The success flag for a transaction that completed without being {@link TransactionCallbackStatusBeta | rolled back}. */
-	success: true;
+	readonly success: true;
 }
 
 /**
@@ -127,7 +127,7 @@ export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSucc
  */
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
 	/** The failure flag for a transaction that was {@link TransactionCallbackStatusBeta | rolled back}. */
-	success: false;
+	readonly success: false;
 }
 
 /**
