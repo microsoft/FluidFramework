@@ -1296,9 +1296,6 @@ export const MapNodeSchema: {
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
-// @public @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
-
 // @alpha @input
 export type MinimumVersionForCollaboration = `2.${bigint}.0`;
 
