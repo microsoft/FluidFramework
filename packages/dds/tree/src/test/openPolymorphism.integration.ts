@@ -69,7 +69,7 @@ interface ItemExtensions {
  * An Item node.
  * @remarks
  * Open polymorphic collection which libraries can provide additional implementations of, similar to TypeScript interfaces.
- * Implementations should declare schema whose nodes extends this interface, and have the schema statically implement ItemSchema.
+ * Implementations should declare schemas whose nodes extend this interface, and have the schemas statically implement ItemSchema.
  */
 type Item = TreeNode & ItemExtensions & ObjectFromSchemaRecord<typeof itemFields>;
 

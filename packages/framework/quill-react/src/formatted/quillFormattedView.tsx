@@ -94,14 +94,17 @@ FormattedMainView.displayName = "FormattedMainView";
 function createLineAtom(
 	lineTag: FormattedTextAsTree.LineTag,
 	indent: number = 0,
-): FormattedTextAsTree.StringAtom {
-	return new FormattedTextAsTree.StringAtom({
+): FormattedTextAsTree.FormattedAtomInsertable<
+	FormattedTextAsTree.CharacterFormat,
+	FormattedTextAsTree.StringLineAtom
+> {
+	return {
 		content: new FormattedTextAsTree.StringLineAtom({
 			tag: lineTag,
 			indent,
 		}),
 		format: new FormattedTextAsTree.CharacterFormat(quillAttributesToFormat()),
-	});
+	};
 }
 
 /**
