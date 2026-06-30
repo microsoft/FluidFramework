@@ -48,7 +48,7 @@ import {
 	type TreeView,
 	type ValidateRecursiveSchema,
 } from "../../simple-tree/index.js";
-import { FormattedTextAsTree, TextAsTree } from "../../text/index.js";
+import { FormattedTextAsTreeDefault, TextAsTree } from "../../text/index.js";
 import { configuredSharedTree } from "../../treeFactory.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -577,12 +577,12 @@ describe("TextDomain benchmarks", () => {
 
 		const plainTextViewConfiguration = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 		const formattedTextViewConfiguration = new TreeViewConfiguration({
-			schema: FormattedTextAsTree.Tree,
+			schema: FormattedTextAsTreeDefault.Tree,
 		});
 
 		/**
 		 * The subset of the text-node API the whole-document benchmarks use. Both {@link TextAsTree.Tree}
-		 * and {@link FormattedTextAsTree.Tree} share these, so the read/edit helpers below work
+		 * and {@link FormattedTextAsTreeDefault.Tree} share these, so the read/edit helpers below work
 		 * against either domain (and against an unhydrated node).
 		 */
 		type TextRoot = TreeNode & {
@@ -733,23 +733,23 @@ describe("TextDomain benchmarks", () => {
 					buildDocument: (size) =>
 						buildTextView(
 							formattedTextViewConfiguration,
-							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+							FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 					buildForest: (size) =>
 						getForestOf(
 							buildTextView(
 								formattedTextViewConfiguration,
-								FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+								FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
 								forest,
 							),
 						),
 					makeUnhydratedRoot: (size) =>
-						FormattedTextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+						FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							formattedTextViewConfiguration,
-							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+							FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)),
 							forest,
 						),
 				},
