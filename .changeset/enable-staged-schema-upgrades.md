@@ -11,7 +11,7 @@ making it easier to separate code rollout from feature rollout.
 
 ### API
 
-Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the config object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
+Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the configuration object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 
 The `enabledUpgrades` list contains `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
@@ -168,11 +168,8 @@ This also means partial rollback is currently difficult in practice: callers usu
 
 ### Testing
 
-The same API also makes staged schema upgrades easier to test before production rollout.
-Tests and validation tools can create or upgrade documents with a specific set of staged upgrades enabled in view construction options, then verify that older and newer application versions behave correctly with the resulting stored schema.
-This gives applications a direct way to exercise future document shapes without permanently enabling those upgrades for all new documents.
-
-For example, a compatibility test can start with an existing document, verify that the staged shape is not writable yet, then explicitly enable the staged schema upgrade and validate the upgraded document shape:
+These APIs can be used to test scenerios emulating when future application versions create documents which allow or contain the staged types.
+Without such testing, it is often impractical to ensure staging accomplished its goal of preparing the current version of the application (and not just the schema) to be able to handle documents with the new types.
 
 ```typescript
 const currentView = currentAppTree.viewWith(
