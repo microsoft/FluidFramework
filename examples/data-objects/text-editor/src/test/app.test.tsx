@@ -5,12 +5,13 @@
 
 import { strict as assert } from "node:assert";
 
+import { createDevtoolsLogger } from "@fluidframework/devtools/beta";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree, type TreeViewAlpha } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import { TextAsTree, independentView } from "fluid-framework/alpha";
 
-import { App, TextEditorRoot, treeConfig } from "../app.js";
+import { App, TextEditorRoot, type UserView, treeConfig } from "../app.js";
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
@@ -26,17 +27,26 @@ function createFormattedTreeView(initialValue = ""): TreeViewAlpha<typeof TextEd
 	return treeView;
 }
 
+/**
+ * Creates a {@link UserView}
+ */
+function createUserView(id: number, initialValue: string): UserView {
+	return {
+		id,
+		container: { dispose: () => {} } as unknown as UserView["container"],
+		treeView: createFormattedTreeView(initialValue),
+	};
+}
+
 // TODO add collaboration tests when rich formatting is supported using TestContainerRuntimeFactory from
 // @fluidframework/test-utils to test rich formatting data sync between multiple collaborators
 describe("app", () => {
 	it("renders MainView", () => {
 		const content = (
 			<App
-				views={{
-					user1: createFormattedTreeView("Text A"),
-					user2: createFormattedTreeView("Text B"),
-					containerId: "test",
-				}}
+				containerId="test"
+				devtoolsLogger={createDevtoolsLogger()}
+				initialUsers={[createUserView(1, "Text A"), createUserView(2, "Text B")]}
 			/>
 		);
 		const rendered = render(content);
