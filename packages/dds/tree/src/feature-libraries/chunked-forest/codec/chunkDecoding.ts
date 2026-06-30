@@ -5,7 +5,6 @@
 
 import { assert, unreachableCase, oob } from "@fluidframework/core-utils/internal";
 import type {
-	IIdCompressor,
 	OpSpaceCompressedId,
 	SessionSpaceCompressedId,
 } from "@fluidframework/id-compressor";
@@ -17,7 +16,12 @@ import type {
 	Value,
 	TreeChunk,
 } from "../../../core/index.js";
-import { assertValidIndex, brand, decompressIdentifierIfNeeded } from "../../../util/index.js";
+import {
+	assertValidIndex,
+	brand,
+	decompressIdentifierIfNeeded,
+	type IdDecodingContext,
+} from "../../../util/index.js";
 import { BasicChunk } from "../basicChunk.js";
 import { emptyChunk } from "../emptyChunk.js";
 import { SequenceChunk } from "../sequenceChunk.js";
@@ -54,31 +58,6 @@ import {
 	SpecialField,
 	supportsIncrementalEncoding,
 } from "./format/index.js";
-
-/**
- * Context for decoding identifiers.
- * @remarks
- * See {@link FieldBatchDecodingContext} for the production implementation of this.
- *
- * This intentionally avoids exposing anything which depends on the underlying id-compressor's session ID to avoid confusion with the session ID of the compressor which encoded the data.
- * If the session ID of the encoder which encoded the data is known, that information is baked into `resolveEncodedId`.
- */
-export interface IdDecodingContext {
-	/**
-	 * Compressor which can decompress session-space identifiers from {@link resolveEncodedId} as needed.
-	 */
-	readonly idCompressor: Pick<IIdCompressor, "decompress">;
-	/**
-	 * Resolves an encoded op-space identifier to either a session-space ID
-	 * (which {@link idCompressor} can decompress if needed)
-	 * or a string (which passes through unchanged).
-	 * @remarks
-	 * In contexts where non-final identifiers can't be supported (where no originator session is available),
-	 * if a non-final identifier is encountered, this may throw or perform a data healing workaround.
-	 * See {@link FieldBatchDecodingContext.forOp} and {@link FieldBatchDecodingContext.forSummary} for details.
-	 */
-	readonly resolveEncodedId: (id: OpSpaceCompressedId) => SessionSpaceCompressedId | string;
-}
 
 /**
  * Decode `chunk` into a TreeChunk.
