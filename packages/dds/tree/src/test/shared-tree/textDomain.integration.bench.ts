@@ -745,7 +745,9 @@ describe("TextDomain benchmarks", () => {
 							),
 						),
 					makeUnhydratedRoot: (size) =>
-						FormattedTextAsTreeDefault.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+						FormattedTextAsTreeDefault.Tree.fromString(
+							makeTestString(size),
+						) as unknown as TextRoot,
 					attachSummary: (size) =>
 						getTextAttachSummary(
 							formattedTextViewConfiguration,
