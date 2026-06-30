@@ -10,7 +10,7 @@ import type {
 	TreeBranchAlpha,
 	RunTransactionParamsAlpha,
 	TransactionResult,
-	TransactionResultExt,
+	TransactionResultWithValue,
 	WithValue,
 } from "../simple-tree/index.js";
 
@@ -31,12 +31,12 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	public runTransaction<TValue>(
 		t: () => WithValue<TValue>,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultExt<TValue, TValue>;
+	): TransactionResultWithValue<TValue, TValue>;
 	public runTransaction(t: () => void, _params?: RunTransactionParamsAlpha): TransactionResult;
 	public runTransaction(
 		t: () => WithValue<unknown> | void,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultExt<unknown, unknown> | TransactionResult {
+	): TransactionResultWithValue<unknown, unknown> | TransactionResult {
 		for (const constraint of params?.preconditions ?? []) {
 			assertValidConstraint(constraint, false);
 		}
@@ -51,7 +51,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	public runTransactionAsync<TValue>(
 		t: () => Promise<WithValue<TValue>>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultExt<TValue, TValue>>;
+	): Promise<TransactionResultWithValue<TValue, TValue>>;
 	public runTransactionAsync(
 		t: () => Promise<void>,
 		params?: RunTransactionParamsAlpha,
@@ -59,7 +59,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 	public async runTransactionAsync(
 		t: () => Promise<WithValue<unknown> | void>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
+	): Promise<TransactionResultWithValue<unknown, unknown> | TransactionResult> {
 		if (this.transactionCount > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -78,7 +78,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	private static wrapTransactionResult<TValue>(
 		value: WithValue<TValue> | void,
-	): TransactionResultExt<TValue, TValue> | TransactionResult {
+	): TransactionResultWithValue<TValue, TValue> | TransactionResult {
 		if (value?.value !== undefined) {
 			return { success: true, value: value.value };
 		}

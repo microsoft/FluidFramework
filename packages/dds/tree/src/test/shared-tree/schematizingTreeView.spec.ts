@@ -31,7 +31,7 @@ import {
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
 	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionResultWithValue,
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -828,7 +828,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { value: view.root.content };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResultExt<number, undefined> = {
+				const expectedResult: TransactionResultWithValue<number, undefined> = {
 					success: true,
 					value: 43,
 				};
@@ -847,7 +847,7 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 				// The transaction is rolled back. So, the content is reverted to the original value.
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResultExt<undefined, number> = {
+				const expectedResult: TransactionResultWithValue<undefined, number> = {
 					success: false,
 					// Note that this is the value that was returned before the transaction was rolled back.
 					value: 43,

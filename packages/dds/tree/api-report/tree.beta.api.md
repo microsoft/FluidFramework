@@ -895,9 +895,6 @@ export type TransactionConstraint = NodeInDocumentConstraint;
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
 
 // @beta
-export type TransactionResultExt<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
-
-// @beta
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
     success: false;
 }
@@ -906,6 +903,9 @@ export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailu
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
     success: true;
 }
+
+// @beta
+export type TransactionResultWithValue<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
 
 // @public @sealed
 export interface Tree extends TreeNodeApi {
@@ -1103,9 +1103,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>, params?: RunTransactionParamsBeta): TransactionResultExt<TSuccessValue, TFailureValue>;
+    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>, params?: RunTransactionParamsBeta): TransactionResultWithValue<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusBeta | void, params?: RunTransactionParamsBeta): TransactionResult;
-    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsBeta): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsBeta): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
     runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusBeta | void>, params?: RunTransactionParamsBeta): Promise<TransactionResult>;
 }
 

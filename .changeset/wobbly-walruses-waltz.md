@@ -34,3 +34,7 @@ With the introduction of new beta types, existing alpha types have been replaced
 | `RunTransactionParams` | `RunTransactionParamsAlpha` | `RunTransactionParamsBeta` |
 | `TransactionCallbackStatus` | `TransactionCallbackStatusAlpha` | `TransactionCallbackStatusBeta` |
 | `VoidTransactionCallbackStatus` | `VoidTransactionCallbackStatusAlpha` | `VoidTransactionCallbackStatusBeta` |
+
+**Other Renames**
+
+- `TransactionResultExt` (alpha) -> `TransactionResultWithValue` (beta)

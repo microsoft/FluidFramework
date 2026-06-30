@@ -284,7 +284,7 @@ export {
 	type TransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusBeta,
 	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionResultWithValue,
 	type TransactionResultSuccess,
 	type TransactionResultFailed,
 	rollback,

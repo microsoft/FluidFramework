@@ -44,7 +44,7 @@ import {
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
 	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionResultWithValue,
 	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
@@ -274,7 +274,7 @@ export class SchematizingSimpleTreeView<
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+	): TransactionResultWithValue<TSuccessValue, TFailureValue>;
 	public runTransaction(
 		transaction: () => VoidTransactionCallbackStatusAlpha | void,
 		params?: RunTransactionParamsAlpha,
@@ -285,7 +285,7 @@ export class SchematizingSimpleTreeView<
 			| VoidTransactionCallbackStatusAlpha
 			| void,
 		params?: RunTransactionParamsAlpha,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+	): TransactionResultWithValue<TSuccessValue, TFailureValue> | TransactionResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);
 	}
@@ -293,7 +293,7 @@ export class SchematizingSimpleTreeView<
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
 		params?: RunTransactionParamsAlpha,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
 		params?: RunTransactionParamsAlpha,
@@ -305,7 +305,7 @@ export class SchematizingSimpleTreeView<
 			| void
 		>,
 		params: RunTransactionParamsAlpha | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+	): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue> | TransactionResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
 			// breaker.break() sets brokenBy synchronously before throwing.
