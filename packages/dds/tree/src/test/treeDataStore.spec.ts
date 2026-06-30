@@ -64,7 +64,7 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 
 		// Someday it would be nice to support this pattern, but that is longer term.
 		// const container1 = await service.attachContainer(createContainer(myFactory));

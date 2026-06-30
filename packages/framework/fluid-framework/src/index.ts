@@ -109,12 +109,16 @@ export type {
 	FluidContainer,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	MinimumVersionForCollab,
+	MinimumVersionForCollaboration,
 	Registry,
 	RegistryKey,
 	ServiceClient,
 	ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
+// TODO: This re-export is currently needed because tree's `CodecWriteOptionsBeta` (surfaced via
+// `export * from "@fluidframework/tree/alpha"`) references `MinimumVersionForCollab`. It is distinct
+// from the new `MinimumVersionForCollaboration` type used by the ServiceClient APIs.
+export type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 export {
 	basicKey,
 	registryLookup,

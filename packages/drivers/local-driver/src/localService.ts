@@ -40,7 +40,7 @@ import { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
 import { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 import { pkgVersion } from "./packageVersion.js";
 
-const defaultServiceOptions: ServiceOptions = { minVersionForCollab: pkgVersion };
+const defaultServiceOptions: ServiceOptions = { minVersionForCollaboration: pkgVersion };
 
 /**
  * Creates and returns a document service for local use.
@@ -197,7 +197,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollab,
+				options.minVersionForCollaboration,
 				containerRuntimeLoader,
 				root,
 			),
@@ -223,7 +223,7 @@ export class EphemeralServiceContainer<TData>
 			documentServiceFactory,
 			codeLoader: makeCodeLoader(
 				registry,
-				options.minVersionForCollab,
+				options.minVersionForCollaboration,
 				containerRuntimeLoader,
 			),
 		});

@@ -100,31 +100,29 @@ export function basicKey<T>(type: string): RegistryKey<T, T> {
 /**
  * Oldest version of Fluid Framework client packages to support collaborating with.
  * @remarks
- * String in a SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
+ * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
- * When specifying a given `MinimumVersionForCollab`, any client with a version that is greater than or equal to the specified version will be considered compatible.
+ * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
+ * to the specified `MinimumVersionForCollaboration`.
  *
- * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the current version.
+ * Cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
- * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
- * Since TypeScript cannot enforce them all for literals in code,
- * it may be useful to use `validateMinimumVersionForCollab` values which may come from constants in the codebase typed as a `MinimumVersionForCollab`.
- *
+ * The higher the version specified, the more features and optimizations will be enabled. *
  * @privateRemarks
- * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
- * See remarks for {@link @fluidframework/runtime-utils#MinimumMinorSemanticVersion} for more details.
+ * This is similar to, and a subset of, the `MinimumVersionForCollab` type in `@fluidframework/runtime-definitions`.
+ * This differs in that:
+ * - This avoids the shorthand "collab" to instead align with our preferred whole word naming convention.
+ * - This is `alpha` instead of `public`.
+ * - This is available to drivers due to its location in `driver-definitions` instead of `runtime-definitions`.
+ * - This does not allow requesting collaboration with pre-2.0.0 versions, including the special case of `2.0.0-defaults`.
+ * - Patch versions cannot be set: a given minor release is not guaranteed to be greater or equal compat wise to all patches of the previous release, so we do not enable features based on patch versions (instead fall back to the next minor if needed).
+ * Therefore allowing patch versions here could be misleading and could lead to bugs.
  *
- * Since this type is marked with `@input`, it can be generalized to allow more cases in the future as a non-breaking change.
- *
- * TODO: before stabilizing this further, some restrictions should be considered (since once stabilized, this can be relaxed, but not more constrained).
- * For example it might make sense to constrain this to something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
  *
  * @input
- * @public
+ * @alpha
  */
-export type MinimumVersionForCollab =
-	| `${1 | 2}.${bigint}.${bigint}`
-	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+export type MinimumVersionForCollaboration = `2.${bigint}.0`;
 
 /**
  * Options for configuring a {@link ServiceClient}.
@@ -137,7 +135,7 @@ export type MinimumVersionForCollab =
  * @alpha
  */
 export interface ServiceOptions {
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 
 /**

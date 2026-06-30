@@ -96,7 +96,7 @@ export interface AzureServiceOptions {
     // (undocumented)
     readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 
 // @public @deprecated

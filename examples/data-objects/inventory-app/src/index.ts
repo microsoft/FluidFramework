@@ -20,7 +20,7 @@ import type { Inventory } from "./schema.js";
 import { MainView } from "./view/index.js";
 
 const serviceOptions = {
-	minVersionForCollab: "2.100.0",
+	minVersionForCollaboration: "2.100.0",
 } as const;
 
 const service =

@@ -1299,6 +1299,9 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 // @public @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
+// @alpha @input
+export type MinimumVersionForCollaboration = `2.${bigint}.0`;
+
 // @public
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;
@@ -1725,7 +1728,7 @@ export interface ServiceClient {
 // @alpha @input
 export interface ServiceOptions {
     // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 
 // @alpha @sealed

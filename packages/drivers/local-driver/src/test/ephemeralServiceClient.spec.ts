@@ -23,20 +23,20 @@ describe("EphemeralServiceClient", () => {
 	});
 
 	it("createContainer returns a detached container without an id", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		assert.strictEqual(detached.id, undefined);
 	});
 
 	it("attach gives the container an id", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const attached = await detached.attach();
 		assert.notStrictEqual(attached.id, undefined);
 	});
 
 	it("loadContainer returns a container with the same id as the original", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const container1 = await detached.attach();
 		const container2 = await service.loadContainer(container1.id, stubFactory);
@@ -44,7 +44,7 @@ describe("EphemeralServiceClient", () => {
 	});
 
 	it("attach throws UsageError when container is already attached", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		await detached.attach();
 		// detached is the same object as attached; its id is now set, so attach() should throw.
@@ -55,7 +55,7 @@ describe("EphemeralServiceClient", () => {
 	});
 
 	it("closeEphemeralContainers closes all open containers without throwing", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		await detached.attach();
 		await closeEphemeralContainers();
@@ -64,7 +64,7 @@ describe("EphemeralServiceClient", () => {
 	});
 
 	it("two containers in the same session share the same in-memory server", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const container1 = await detached.attach();
 		const container2 = await service.loadContainer(container1.id, stubFactory);
@@ -75,7 +75,7 @@ describe("EphemeralServiceClient", () => {
 	});
 
 	it("multiple attach calls each produce unique ids", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached1 = await service.createContainer(stubFactory);
 		const detached2 = await service.createContainer(stubFactory);
 		const container1 = await detached1.attach();

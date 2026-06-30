@@ -20,7 +20,7 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
-	MinimumVersionForCollab,
+	MinimumVersionForCollaboration,
 	Registry,
 	ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
@@ -45,7 +45,7 @@ import { isAzureRemoteConnectionConfig } from "./utils.js";
  */
 export interface AzureServiceOptions {
 	readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 	readonly logger?: ITelemetryBaseLogger;
 	readonly configProvider?: IConfigProviderBase;
 }
@@ -138,11 +138,16 @@ export class AzureServiceContainer<TData>
 		root: DataStoreKind<T>,
 	): Promise<AzureServiceContainer<T>> {
 		const loaderOptions = makeContainerLoaderOptions(options);
-		const { minVersionForCollab } = options;
+		const { minVersionForCollaboration } = options;
 
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "no-dynamic-package", config: {} },
-			codeLoader: makeCodeLoader(registry, minVersionForCollab, containerRuntimeLoader, root),
+			codeLoader: makeCodeLoader(
+				registry,
+				minVersionForCollaboration,
+				containerRuntimeLoader,
+				root,
+			),
 			...loaderOptions,
 		});
 
@@ -161,7 +166,7 @@ export class AzureServiceContainer<TData>
 		id: string,
 	): Promise<AzureServiceContainer<T> & FluidContainerAttached<T>> {
 		const loaderOptions = makeContainerLoaderOptions(options);
-		const { minVersionForCollab } = options;
+		const { minVersionForCollaboration } = options;
 
 		const { connection } = options;
 		const url = new URL(connection.endpoint);
@@ -171,7 +176,7 @@ export class AzureServiceContainer<TData>
 
 		const containerInner = await loadExistingContainer({
 			request: { url: url.href },
-			codeLoader: makeCodeLoader(registry, minVersionForCollab, containerRuntimeLoader),
+			codeLoader: makeCodeLoader(registry, minVersionForCollaboration, containerRuntimeLoader),
 			...loaderOptions,
 		});
 

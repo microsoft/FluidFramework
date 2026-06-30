@@ -35,7 +35,7 @@ export const diceRollerDataStoreKind = treeDataStoreKind({
 const fluidClient = process.env.FLUID_CLIENT;
 
 const serviceOptions = {
-	minVersionForCollab: "2.100.0",
+	minVersionForCollaboration: "2.100.0",
 } as const;
 
 /**

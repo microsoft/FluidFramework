@@ -81,7 +81,7 @@ async function initFluid(): Promise<DualUserViews> {
 	const devtoolsLogger = createDevtoolsLogger();
 
 	const options: TinyliciousServiceOptions = {
-		minVersionForCollab: "2.100.0",
+		minVersionForCollaboration: "2.100.0",
 		// TODO: logger
 		// TODO: user ids.
 	};

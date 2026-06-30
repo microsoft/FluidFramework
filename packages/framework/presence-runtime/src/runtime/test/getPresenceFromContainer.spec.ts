@@ -26,7 +26,7 @@ describe("getPresenceFromContainer", () => {
 	});
 
 	it("returns PresenceWithNotifications from an attached container", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const container = await detached.attach();
 
@@ -42,7 +42,7 @@ describe("getPresenceFromContainer", () => {
 	});
 
 	it("returns same presence instance on repeated calls for the same container", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const container = await detached.attach();
 
@@ -52,7 +52,7 @@ describe("getPresenceFromContainer", () => {
 	});
 
 	it("shares presence state between two containers in the same session", async () => {
-		const service = createEphemeralServiceClient({ minVersionForCollab: "2.20.0" });
+		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
 		const detached = await service.createContainer(stubFactory);
 		const container1 = await detached.attach();
 		const container2 = await service.loadContainer(container1.id, stubFactory);
