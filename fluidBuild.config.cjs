@@ -80,7 +80,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: [
+				"check:inexactOptionalPropertyTypes",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -165,6 +172,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		"check:inexactOptionalPropertyTypes": ["^build:esnext", "^api-extractor:esnext"],
 		"check:format": {
 			dependencies: [],
 			script: true,

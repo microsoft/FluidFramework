@@ -409,6 +409,7 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	TextAsTree,
 	FormattedTextAsTree,
+	FormattedTextAsTreeDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";

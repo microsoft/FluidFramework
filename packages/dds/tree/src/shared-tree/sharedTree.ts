@@ -45,6 +45,7 @@ import {
 } from "../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
+	FieldBatchDecodingContext,
 	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
@@ -58,6 +59,7 @@ import {
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
+	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 import { schemaCodecBuilder } from "../feature-libraries/index.js";
@@ -235,24 +237,29 @@ export class SharedTreeKernel
 		);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
-		const encoderContext = {
+		const encoderContext: FieldBatchEncodingContext = {
 			schema: {
 				schema,
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: idCompressor.localSessionId,
 			idCompressor,
 			// ForestSummarizer is the only consumer of this context, and it
 			// only invokes the codec in summary encode / load paths.
 			isSummary: true,
-			healUnresolvableIdentifiersOnDecode: options.healUnresolvableIdentifiersOnDecode,
-			sharedObjectId: sharedObject.id,
 		};
+		const decoderContext = FieldBatchDecodingContext.forSummary({
+			idCompressor,
+			healing:
+				options.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id }
+					: undefined,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			idCompressor,
 			initialSequenceNumber,
@@ -603,6 +610,11 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * "Unresolvable" in the public-facing remarks corresponds to non-finalized short IDs persisted without
 	 * any corresponding context for their originating session. See id-compressor internal documentation
 	 * for more details.
+	 *
+	 * Internally this boolean is translated into {@link IdentifierHealingConfig} once the shared-object
+	 * id is known (in `SharedTreeCore`'s constructor) and threaded through the codec contexts as a
+	 * single `healing?` field from there on. The presence/absence of that config is the heal-on/heal-off
+	 * discriminator inside the codec layer.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
