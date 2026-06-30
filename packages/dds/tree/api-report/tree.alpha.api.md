@@ -1987,10 +1987,8 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
 export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema> extends TreeView<TSchema>, TreeBranch {
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
-    runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>, params?: RunTransactionParamsBeta): TransactionResultWithValue<TSuccessValue, TFailureValue>;
-    runTransaction(transaction: () => VoidTransactionCallbackStatusBeta | void, params?: RunTransactionParamsBeta): TransactionResult;
-    runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsBeta): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
-    runTransactionAsync(transaction: () => Promise<VoidTransactionCallbackStatusBeta | void>, params?: RunTransactionParamsBeta): Promise<TransactionResult>;
+    runTransaction<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => TOut, params?: RunTransactionParamsBeta): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionResultWithValue<TSuccessValue, TFailureValue> : TransactionResult;
+    runTransactionAsync<TOut extends TransactionCallbackStatusBeta<unknown, unknown> | VoidTransactionCallbackStatusBeta | void>(transaction: () => Promise<TOut>, params?: RunTransactionParamsBeta): Promise<TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue> ? TransactionResultWithValue<TSuccessValue, TFailureValue> : TransactionResult>;
 }
 
 // @public @sealed

@@ -59,7 +59,7 @@ export interface WithValue<TValue> {
 }
 
 /**
- * Contains a value and status returned from a user-supplied {@link TreeViewBeta.(runTransaction:1) | transaction callback}.
+ * Contains a value and status returned from a user-supplied {@link TreeViewBeta.runTransaction | transaction callback}.
  * @input
  * @beta
  */
@@ -74,7 +74,7 @@ export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	  });
 
 /**
- * The result of a {@link TreeViewBeta.(runTransaction:2) | transaction} that doesn't return a value.
+ * The result of a {@link TreeViewBeta.runTransaction | transaction} that doesn't return a value.
  * @input
  * @beta
  */
@@ -121,7 +121,7 @@ export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSucc
 }
 
 /**
- * The result of a {@link TreeViewBeta.(runTransaction:1) | transaction} that was rolled back.
+ * The result of a {@link TreeViewBeta.runTransaction | transaction} that was rolled back.
  * @sealed
  * @beta
  */

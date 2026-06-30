@@ -4305,7 +4305,9 @@ describe("treeNodeApi", () => {
 			const unhydratedObj = new Obj({ n: 3 });
 			for (const obj of [hydratedObj, unhydratedObj]) {
 				const context = TreeAlpha.context(obj);
-				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
+				context.runTransaction(() => {
+					obj.n = 4;
+				}); // Transaction with no return value
 				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
 				assert.ok(value.success);
 				assert.equal(obj.n, value.value);
@@ -4329,9 +4331,14 @@ describe("treeNodeApi", () => {
 		it("can successfully run transactions with constraints", () => {
 			const node = hydrate(Obj, { n: 3 });
 			const context = TreeAlpha.context(node);
-			context.runTransaction(() => (node.n = 4), {
-				preconditions: [{ type: "nodeInDocument", node }],
-			});
+			context.runTransaction(
+				() => {
+					node.n = 4;
+				},
+				{
+					preconditions: [{ type: "nodeInDocument", node }],
+				},
+			);
 			assert.equal(node.n, 4);
 		});
 

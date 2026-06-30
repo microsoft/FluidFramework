@@ -218,7 +218,13 @@ export interface TreeContextAlpha {
 		params?: RunTransactionParamsAlpha,
 	): TransactionResultWithValue<TValue, TValue>;
 
-	/** An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value. */
+	/**
+	 * An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
+	 */
 	runTransaction(
 		transaction: () => void,
 		params?: RunTransactionParamsAlpha,
@@ -240,7 +246,13 @@ export interface TreeContextAlpha {
 		params?: RunTransactionParamsAlpha,
 	): Promise<TransactionResultWithValue<TValue, TValue>>;
 
-	/** An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value. */
+	/**
+	 * An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
+	 */
 	runTransactionAsync(
 		transaction: () => Promise<void>,
 		params?: RunTransactionParamsAlpha,
@@ -309,6 +321,10 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	/**
 	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
 	 */
 	runTransaction(
 		transaction: () => VoidTransactionCallbackStatusAlpha | void,
@@ -327,6 +343,10 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	/**
 	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
 	runTransactionAsync(
 		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
@@ -464,10 +484,14 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 
 	/**
 	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
+	 *
 	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusBeta | value or rollback signal}.
 	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 *
 	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
+	 *
 	 * @returns A {@link TransactionResultWithValue | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 *
 	 * @remarks
 	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
 	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
@@ -485,21 +509,21 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 *
 	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
 	 */
-	runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>,
+	runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
 		params?: RunTransactionParamsBeta,
-	): TransactionResultWithValue<TSuccessValue, TFailureValue>;
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionResultWithValue<TSuccessValue, TFailureValue>
+		: TransactionResult;
 
 	/**
-	 * An overload of {@link TreeViewBeta.(runTransaction:1) | runTransaction } which does not return a value.
-	 */
-	runTransaction(
-		transaction: () => VoidTransactionCallbackStatusBeta | void,
-		params?: RunTransactionParamsBeta,
-	): TransactionResult;
-
-	/**
-	 * An asynchronous version of {@link TreeViewBeta.(runTransaction:1) | runTransaction}.
+	 * An asynchronous version of {@link TreeViewBeta.runTransaction | runTransaction}.
+	 *
 	 * @remarks
 	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
 	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
@@ -509,18 +533,19 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
 	 *
 	 * An asynchronous transaction may not be started while any other transaction is in progress in this view.
 	 */
-	runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatusBeta<TSuccessValue, TFailureValue>>,
+	runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
 		params?: RunTransactionParamsBeta,
-	): Promise<TransactionResultWithValue<TSuccessValue, TFailureValue>>;
-
-	/**
-	 * An overload of {@link TreeViewBeta.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
-	 */
-	runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatusBeta | void>,
-		params?: RunTransactionParamsBeta,
-	): Promise<TransactionResult>;
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionResultWithValue<TSuccessValue, TFailureValue>
+			: TransactionResult
+	>;
 }
 
 /**
@@ -549,9 +574,12 @@ export interface TreeViewAlpha<
 /**
  * Information about a view schema's compatibility with the document's stored schema.
  *
+ * @see
  * See SharedTree's README for more information about choosing a compatibility policy.
+ *
  * @privateRemarks
  * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
+ *
  * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
