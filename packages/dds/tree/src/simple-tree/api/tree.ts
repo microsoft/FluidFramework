@@ -11,17 +11,14 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
-// This is referenced by doc comments.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
-	// This is referenced by doc comments.
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
-// This is referenced by doc comments.
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
 import type { Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
