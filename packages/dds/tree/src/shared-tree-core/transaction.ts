@@ -225,40 +225,51 @@ export type OnPopWithViewUpdate<TChange> = (
 ) => void;
 
 /**
- * Specifies when a {@link ChangeProcessor} should be invoked relative to nested transactions that supply it.
+ * Informs the caller of {@link ChangeProcessor} what context it should be invoked for.
+ * @remarks This is purely a recommendation to the caller of the processor and
+ * not a strict rule.
  */
 export enum ChangeProcessorApplicability {
 	/**
-	 * Invoke the processor only once, when the outermost transaction that supplied it is committed.
-	 * @remarks Supplying the same processor on a transaction already enclosed by one that supplied it has no
-	 * additional effect. Note that two sibling (sequential) nested transactions are each "outermost" within their own
-	 * subtree, so each will invoke the processor.
+	 * Invoke the processor if no later (outer) instance of this change processor
+	 * may be applied to related changes before changes are "visible".
+	 *
+	 * @remarks
+	 * This designation is meant for processors that only need to be applied
+	 * once to a set of related changes independent of scope or nesting,
+	 * with the understanding that the processor should still be applied no
+	 * later than when the changes are "visible" (e.g. committed to a branch).
+	 * For example, a processor that removes extraneous information from a
+	 * change (e.g. data for nodes that were both created and removed within a
+	 * transaction) only needs to be applied once to the squashed change
+	 * produced by the outermost transaction.
 	 */
 	IfOutermost,
 	/**
-	 * Invoke the processor every time a transaction that supplied it is committed, including nested transactions.
+	 * Invoke the processor in all contexts.
 	 */
 	Always,
 }
 
 /**
- * Post-processes the squashed change produced when a transaction is committed.
- * @remarks A change processor receives the composed (squashed) change and returns a change with the same observable
- * effect but otherwise transformed. The first such transformation is "minimization" (removing extraneous information
- * from the change, e.g. data for nodes that were both created and removed within the transaction), but this interface
- * is intentionally general so that other post-processing can be added in the future.
+ * Processes a change altering its representation.
  *
- * This is the internal counterpart of the type-erased post-processor exposed on the public transaction API. The public
- * boundary type-erases this (see the conversion helpers in the `shared-tree` layer) so that its internal change
- * representation does not leak into the public API.
+ * @remarks
+ * A change processor receives a change and returns a change with the
+ * same observable effect but otherwise transformed.
+ *
+ * Currently this is the internal counterpart of the type-erased post-processor
+ * exposed on the public transaction API. The public boundary type-erases this
+ * (see the conversion helpers in the `shared-tree` layer) so that its internal
+ * change representation does not leak into the public API.
  */
 export interface ChangeProcessor<TChange> {
 	/**
-	 * When this processor should be invoked relative to nested transactions that supply it.
+	 * Informs what context it should be invoked for.
 	 */
 	readonly applicability: ChangeProcessorApplicability;
 	/**
-	 * Processes the given (squashed) change, returning a change with the same observable effect.
+	 * Processes the given change, returning a change with the same observable effect.
 	 */
 	readonly processChange: (change: TChange) => TChange;
 }
@@ -270,7 +281,9 @@ export interface SquashingTransactionOptions<TChange> {
 	/**
 	 * An optional {@link ChangeProcessor} applied to the squashed change produced when a transaction that was started
 	 * with this option is committed.
-	 * @remarks When omitted, the transaction's edits are squashed without any post-processing (the existing behavior).
+	 *
+	 * @remarks
+	 * When omitted, the transaction's edits are squashed without any post-processing.
 	 *
 	 * How often the processor is invoked across nested transactions is governed by its
 	 * {@link ChangeProcessor.applicability | applicability}.
