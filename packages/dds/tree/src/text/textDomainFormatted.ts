@@ -16,14 +16,12 @@ import {
 import { currentObserver, buildNodeComparator } from "../feature-libraries/index.js";
 import { TreeAlpha, Tree as TreeStatic } from "../shared-tree/index.js";
 import {
-	enumFromStrings,
 	getInnerNode,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	TreeArrayNode,
 	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
-	SchemaFactoryBeta,
 	isObjectNodeSchema,
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
@@ -41,6 +39,7 @@ import type {
 	ScopedSchemaName,
 	ErasedSchemaSubclassable,
 	ErasedNode,
+	SchemaFactoryBeta,
 } from "../simple-tree/index.js";
 import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
 
@@ -66,417 +65,421 @@ function createFormattedScopedFactory<TUserScope extends string>(
  */
 const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
-/**
- * Factory for formatted text schema as a function of the formatting and the embedded object (atom) types.
- *
- * TODO: This will eventually be exposed as the user facing API.
- */
-function createSchema<
-	const TUserScope extends string,
-	const FormatSchema extends ImplicitAllowedTypes,
-	const ExtraAtomsSchema extends readonly LazyItem<
-		TreeNodeSchema<string, NodeKind, FormattedTextAsTree.TextAtom & TreeNode>
-	>[],
->(
-	inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
-	formatSchema: FormatSchema,
-	extraAtoms: ExtraAtomsSchema,
-	defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
-): FormattedTextAsTree.FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema> {
-	const atoms = [FormattedTextAsTree.StringTextAtom, ...extraAtoms] as const;
-
-	const sf = createFormattedScopedFactory(inputSchemaFactory);
-
-	type Members = FormattedTextAsTree.FormattedTextMembers<FormatSchema, ExtraAtomsSchema>;
-
-	class TextNode
-		extends sf.object("Text", {
-			content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
-		})
-		implements Members
-	{
-		public defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
-			TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
-
-		public insertAt(index: number, additionalCharacters: string): void {
-			this.content.insertAt(
-				index,
-				TreeArrayNode.spread(textAtomsFromString(additionalCharacters, this.defaultFormat)),
-			);
-		}
-
-		public removeRange(index: number | undefined, end: number | undefined): void {
-			this.content.removeRange(index, end);
-		}
-
-		public characters(): Iterable<string> {
-			return mapIterable(this.content, (atom) => atom.content.content);
-		}
-
-		public charactersCopy(): string[] {
-			const result = this.content.charactersCopy();
-			debugAssert(
-				() =>
-					compareArrays(result, this.charactersCopy_reference()) ||
-					"invalid charactersCopy optimizations",
-			);
-			return result;
-		}
-
-		public characterCount(): number {
-			return this.content.length;
-		}
-
-		public fullString(): string {
-			const result = this.content.fullString();
-			debugAssert(
-				() => result === this.fullString_reference() || "invalid fullString optimizations",
-			);
-			return result;
-		}
-
-		/**
-		 * A non-optimized reference implementation of fullString.
-		 */
-		public fullString_reference(): string {
-			return [...this.characters()].join("");
-		}
-
-		/**
-		 * Unoptimized trivially correct implementation of charactersCopy.
-		 */
-		public charactersCopy_reference(): string[] {
-			return [...this.characters()];
-		}
-
-		public static fromString(
-			value: string,
-			format?: TreeFieldFromImplicitField<FormatSchema>,
-		): TextNode {
-			// Use `this` rather than `TextNode` so the more derived schema class is constructed when using this as a static on a subclass.
-			return new this({
-				content: [
-					// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
-					// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
-					// Thus the array construction here is necessary to avoid a runtime error.
-					...textAtomsFromString(
-						value,
-						format ?? TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable),
-					),
-				],
-			});
-		}
-
-		public charactersWithFormatting(): readonly StringAtom[] {
-			return this.content;
-		}
-		public insertWithFormattingAt(
-			index: number,
-			additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
-		): void {
-			this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
-		}
-
-		public formatRange(
-			start: number | undefined,
-			end: number | undefined,
-			format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
-		): void {
-			const formatStart = start ?? 0;
-			validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
-
-			const formatEnd = Math.min(this.content.length, end ?? this.content.length);
-			validateIndexRange(
-				formatStart,
-				formatEnd,
-				this.content,
-				"FormattedTextAsTree.formatRange",
-			);
-
-			const fieldFormats = Object.entries(format) as [
-				keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-				unknown,
-			][];
-
-			TreeAlpha.context(this).runTransaction(() => {
-				for (let i = formatStart; i < formatEnd; i++) {
-					const atom = this.content[i];
-					// Range validated above, so this should never fail.
-					assert(atom !== undefined, "Index out of bounds while formatting text range.");
-					const formatNode: TreeNode | TreeValue = atom.format;
-					const atomFormatSchema = TreeStatic.schema(formatNode);
-					if (!isObjectNodeSchema(atomFormatSchema)) {
-						// TODO: redesign this API to work with all allowed FormatSchema types.
-						throw new UsageError(
-							"formatRange currently only supports object nodes for the format.",
-						);
-					}
-					for (const [key, value] of fieldFormats) {
-						// Object.entries should only return string keyed enumerable own properties.
-						// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-						assert(
-							typeof key === "string",
-							0xcc8 /* Object.entries returned a non-string key. */,
-						);
-
-						const field = atomFormatSchema.fields.get(key);
-						if (field === undefined) {
-							throw new UsageError(`Unknown format key: ${key}`);
-						}
-
-						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
-							| TreeNode
-							| TreeValue;
-
-						(
-							formatNode as unknown as Record<
-								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-								TreeNode | TreeValue
-							>
-						)[key] = clonedValue;
-					}
-				}
-			});
-		}
-
-		/**
-		 * Returns the {@link  FormattedTextAsTree.TextAtom.content} at the given atom index, or `undefined` if out of bounds.
-		 */
-		private getAtomCharacterAt(index: number): string | undefined {
-			const atom = this.content[index];
-			if (atom === undefined) return undefined;
-			return atom.content.content;
-		}
-
-		public onCharactersChanged(
-			callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
-		): () => void {
-			return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
-				processCharactersChangedDelta(
-					delta,
-					(index) => this.getAtomCharacterAt(index),
-					callback,
-				),
-			);
-		}
-
-		public onContentChanged(
-			callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
-		): () => void {
-			return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
-				processCharactersChangedDelta(
-					delta,
-					(index) => this.getAtomCharacterAt(index),
-					callback,
-				),
-			);
-		}
-
-		public getUniformRun(startIndex: number, endIndex?: number): number {
-			return this.content.getUniformRun(startIndex, endIndex);
-		}
-
-		public getString(startIndex: number, endIndex?: number): string {
-			return this.content.getString(startIndex, endIndex);
-		}
-	}
-
-	function textAtomsFromString(
-		value: string,
-		format: TreeFieldFromImplicitField<FormatSchema>,
-	): Iterable<StringAtom> {
-		const result = mapIterable(charactersFromString(value), (char) => {
-			const textAtom = new FormattedTextAsTree.StringTextAtom({ content: char });
-			const data = {
-				content: textAtom,
-				format: TreeBeta.clone<FormatSchema>(format),
-			};
-			return new StringAtom(data as never); // Generic break type safety here. TODO: try and make safer.
-		});
-		return result;
-	}
-
-	class StringArray extends sf.array("StringArray", [() => StringAtom]) {
-		public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
-			const innerNode = getInnerNode(this);
-			// Since the cursor will be used to read content from the tree and won't track observations,
-			// treat it as if it observed the whole subtree.
-			currentObserver?.observeNodeDeep(innerNode);
-			const cursor = innerNode.borrowCursor();
-			cursor.enterField(EmptyKey);
-			const result = f(cursor);
-			cursor.exitField();
-			return result;
-		}
-
-		private getCharactersSubarray(startIndex: number, endIndex: number): string[] {
-			return this.withBorrowedSequenceCursor((cursor) => {
-				const result: string[] = [];
-				forEachNodeSubsequence(cursor, startIndex, endIndex, () => {
-					debugAssert(
-						() =>
-							(cursor.type as string) === StringAtom.identifier ||
-							"invalid fullString type optimizations",
-					);
-					cursor.enterField(EmptyKey);
-					cursor.enterNode(0);
-					let content: string;
-					switch (cursor.type) {
-						case FormattedTextAsTree.StringTextAtom.identifier: {
-							cursor.enterField(EmptyKey);
-							cursor.enterNode(0);
-							content = cursor.value as string;
-							debugAssert(
-								() => typeof content === "string" || "invalid fullString type optimizations",
-							);
-							cursor.exitNode();
-							cursor.exitField();
-							break;
-						}
-						case FormattedTextAsTree.StringLineAtom.identifier: {
-							content = "\n";
-							break;
-						}
-						default: {
-							fail(0xcde /* Unsupported node type in text array */, () => `${cursor.type}`);
-						}
-					}
-					cursor.exitNode();
-					cursor.exitField();
-					result.push(content);
-				});
-				return result;
-			});
-		}
-
-		public charactersCopy(): string[] {
-			return this.getCharactersSubarray(0, this.length);
-		}
-
-		public fullString(): string {
-			return this.charactersCopy().join("");
-		}
-
-		public getString(startIndex: number, endIndex: number = this.length): string {
-			validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getString");
-			return this.getCharactersSubarray(startIndex, endIndex).join("");
-		}
-
-		public getUniformRun(startIndex: number, endIndex: number = this.length): number {
-			validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
-			if (endIndex === startIndex) {
-				throw new UsageError("endIndex must be greater than startIndex for getUniformRun.");
-			}
-			const arrayLength = this.length;
-			return this.withBorrowedSequenceCursor((cursor) => {
-				cursor.enterNode(startIndex);
-
-				// Capture the content type of the first atom
-				cursor.enterField(EmptyKey);
-				cursor.enterNode(0);
-				const contentType = cursor.type;
-				cursor.exitNode();
-				cursor.exitField();
-
-				// Build a comparator from the format subtree of the first atom
-				// This compares by field key
-				cursor.enterField(formatKey);
-				cursor.enterNode(0);
-				const formatComparator = buildNodeComparator(cursor);
-				cursor.exitNode();
-				cursor.exitField();
-
-				let runLength = 1;
-				const limit = Math.min(endIndex, arrayLength) - startIndex;
-
-				while (runLength < limit && cursor.nextNode()) {
-					// Compare atom type
-					cursor.enterField(EmptyKey);
-					cursor.enterNode(0);
-					const typeMatches = cursor.type === contentType;
-					cursor.exitNode();
-					cursor.exitField();
-					if (!typeMatches) {
-						break;
-					}
-
-					// Compare format subtree using the compiled comparator
-					cursor.enterField(formatKey);
-					cursor.enterNode(0);
-					const formatMatches = formatComparator(cursor);
-					cursor.exitNode();
-					cursor.exitField();
-
-					if (formatMatches !== true) {
-						break;
-					}
-
-					runLength++;
-				}
-				cursor.exitNode();
-				return runLength;
-			});
-		}
-	}
-
-	/**
-	 * A unit of the text, with formatting.
-	 */
-	class StringAtom
-		extends sf.object("StringAtom", {
-			content: SchemaFactory.required(atoms, { key: EmptyKey }),
-			format: SchemaFactory.required(formatSchema),
-		})
-		implements
-			FormattedTextAsTree.FormattedAtom<
-				TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-				TreeNodeFromImplicitAllowedTypes<typeof atoms>
-			> {}
-
-	/**
-	 * Schema for a text node.
-	 * @remarks
-	 * See {@link FormattedTextAsTree.Members} for the API.
-	 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
-	 */
-	const Tree = eraseSchemaDetailsSubclassable<Members, FormattedTextAsTree.Statics<Tree>>()(
-		TextNode,
-	);
-	type Tree = ErasedNode<
-		Members,
-		FormattedTextAsTree.FormattedTextSchemaIdentifier<TUserScope>
-	>;
-
-	return Tree;
-}
-
-const defaultFormat = {
-	bold: false,
-	italic: false,
-	underline: false,
-	size: 12,
-	font: "Arial",
-} as const;
-
 const formatKey: FieldKey = brand("format");
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
+ * @remarks
+ * This is generic over formatting an embedded object/atom types.
+ * See {@link FormattedTextAsTreeDefault} for a default parameterization.
  * @privateRemarks
- * This has hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
- * We will want to generalize this with a more generic schema factory function like with table.
- * Then either that and/or the output from it can be package exported.
- * This version is just an initial prototype.
+ * TODO:
+ * - Add more comprehensive tests for generic parameterizations other than default.
+ * - Sort out API around overwriting subsets of formatting information.
  * @internal
  */
 export namespace FormattedTextAsTree {
+	/**
+	 * Factory for formatted text schema as a function of the formatting and the embedded object (atom) types.
+	 */
+	export function createSchema<
+		const TUserScope extends string,
+		const FormatSchema extends ImplicitAllowedTypes,
+		const ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+	>(
+		inputSchemaFactory: SchemaFactoryBeta<TUserScope>,
+		formatSchema: FormatSchema,
+		extraAtoms: ExtraAtomsSchema,
+		defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>,
+	): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema> {
+		const atoms = [StringTextAtom, ...extraAtoms] as const;
+
+		const sf = createFormattedScopedFactory(inputSchemaFactory);
+		class TextNode
+			extends sf.object("Text", {
+				content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
+			})
+			implements FormattedTextMembers<FormatSchema, ExtraAtomsSchema>
+		{
+			public defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
+				TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
+
+			public insertAt(index: number, additionalCharacters: string): void {
+				this.content.insertAt(
+					index,
+					TreeArrayNode.spread(textAtomsFromString(additionalCharacters, this.defaultFormat)),
+				);
+			}
+
+			public removeRange(index: number | undefined, end: number | undefined): void {
+				this.content.removeRange(index, end);
+			}
+
+			public characters(): Iterable<string> {
+				return mapIterable(this.content, (atom) => atom.content.content);
+			}
+
+			public charactersCopy(): string[] {
+				const result = this.content.charactersCopy();
+				debugAssert(
+					() =>
+						compareArrays(result, this.charactersCopy_reference()) ||
+						"invalid charactersCopy optimizations",
+				);
+				return result;
+			}
+
+			public characterCount(): number {
+				return this.content.length;
+			}
+
+			public fullString(): string {
+				const result = this.content.fullString();
+				debugAssert(
+					() => result === this.fullString_reference() || "invalid fullString optimizations",
+				);
+				return result;
+			}
+
+			/**
+			 * A non-optimized reference implementation of fullString.
+			 */
+			public fullString_reference(): string {
+				return [...this.characters()].join("");
+			}
+
+			/**
+			 * Unoptimized trivially correct implementation of charactersCopy.
+			 */
+			public charactersCopy_reference(): string[] {
+				return [...this.characters()];
+			}
+
+			public static fromString(
+				value: string,
+				format?: TreeFieldFromImplicitField<FormatSchema>,
+			): TextNode {
+				// Use `this` rather than `TextNode` so the more derived schema class is constructed when using this as a static on a subclass.
+				return new this({
+					content: [
+						// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
+						// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
+						// Thus the array construction here is necessary to avoid a runtime error.
+						...textAtomsFromString(
+							value,
+							format ?? TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable),
+						),
+					],
+				});
+			}
+
+			public charactersWithFormatting(): readonly StringAtom[] {
+				return this.content;
+			}
+			public insertWithFormattingAt(
+				index: number,
+				additionalCharacters: Iterable<InsertableTypedNode<typeof StringAtom>>,
+			): void {
+				this.content.insertAt(index, TreeArrayNode.spread(additionalCharacters));
+			}
+
+			public formatRange(
+				start: number | undefined,
+				end: number | undefined,
+				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+			): void {
+				const formatStart = start ?? 0;
+				validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
+
+				const formatEnd = Math.min(this.content.length, end ?? this.content.length);
+				validateIndexRange(
+					formatStart,
+					formatEnd,
+					this.content,
+					"FormattedTextAsTree.formatRange",
+				);
+
+				const fieldFormats = Object.entries(format) as [
+					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+					unknown,
+				][];
+
+				TreeAlpha.context(this).runTransaction(() => {
+					for (let i = formatStart; i < formatEnd; i++) {
+						const atom = this.content[i];
+						// Range validated above, so this should never fail.
+						assert(atom !== undefined, "Index out of bounds while formatting text range.");
+						const formatNode: TreeNode | TreeValue = atom.format;
+						const atomFormatSchema = TreeStatic.schema(formatNode);
+						if (!isObjectNodeSchema(atomFormatSchema)) {
+							// TODO: redesign this API to work with all allowed FormatSchema types.
+							throw new UsageError(
+								"formatRange currently only supports object nodes for the format.",
+							);
+						}
+						for (const [key, value] of fieldFormats) {
+							// Object.entries should only return string keyed enumerable own properties.
+							// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+							assert(
+								typeof key === "string",
+								0xcc8 /* Object.entries returned a non-string key. */,
+							);
+
+							const field = atomFormatSchema.fields.get(key);
+							if (field === undefined) {
+								throw new UsageError(`Unknown format key: ${key}`);
+							}
+
+							// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+							const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
+								| TreeNode
+								| TreeValue;
+
+							(
+								formatNode as unknown as Record<
+									keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+									TreeNode | TreeValue
+								>
+							)[key] = clonedValue;
+						}
+					}
+				});
+			}
+
+			/**
+			 * Returns the {@link  FormattedTextAsTree.TextAtom.content} at the given atom index, or `undefined` if out of bounds.
+			 */
+			private getAtomCharacterAt(index: number): string | undefined {
+				const atom = this.content[index];
+				if (atom === undefined) return undefined;
+				return atom.content.content;
+			}
+
+			public onCharactersChanged(
+				callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+			): () => void {
+				return TreeAlpha.on(this.content, "nodeChanged", ({ delta }) =>
+					processCharactersChangedDelta(
+						delta,
+						(index) => this.getAtomCharacterAt(index),
+						callback,
+					),
+				);
+			}
+
+			public onContentChanged(
+				callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void,
+			): () => void {
+				return TreeAlpha.on(this.content, "treeChanged", ({ delta }) =>
+					processCharactersChangedDelta(
+						delta,
+						(index) => this.getAtomCharacterAt(index),
+						callback,
+					),
+				);
+			}
+
+			public getUniformRun(startIndex: number, endIndex?: number): number {
+				return this.content.getUniformRun(startIndex, endIndex);
+			}
+
+			public getString(startIndex: number, endIndex?: number): string {
+				return this.content.getString(startIndex, endIndex);
+			}
+		}
+
+		function textAtomsFromString(
+			value: string,
+			format: TreeFieldFromImplicitField<FormatSchema>,
+		): Iterable<StringAtom> {
+			const result = mapIterable(charactersFromString(value), (char) => {
+				const textAtom = new StringTextAtom({ content: char });
+				const data = {
+					content: textAtom,
+					format: TreeBeta.clone<FormatSchema>(format),
+				};
+				return new StringAtom(data as never); // Generic break type safety here. TODO: try and make safer.
+			});
+			return result;
+		}
+
+		class StringArray extends sf.array("StringArray", [() => StringAtom]) {
+			public withBorrowedSequenceCursor<T>(f: (cursor: ITreeCursorSynchronous) => T): T {
+				const innerNode = getInnerNode(this);
+				// Since the cursor will be used to read content from the tree and won't track observations,
+				// treat it as if it observed the whole subtree.
+				currentObserver?.observeNodeDeep(innerNode);
+				const cursor = innerNode.borrowCursor();
+				cursor.enterField(EmptyKey);
+				const result = f(cursor);
+				cursor.exitField();
+				return result;
+			}
+
+			private getCharactersSubarray(startIndex: number, endIndex: number): string[] {
+				const slowPathIndexes: number[] = [];
+				const result: string[] = [];
+				this.withBorrowedSequenceCursor((cursor) => {
+					forEachNodeSubsequence(cursor, startIndex, endIndex, () => {
+						debugAssert(
+							() =>
+								(cursor.type as string) === StringAtom.identifier ||
+								"invalid fullString type optimizations",
+						);
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						let content: string;
+						switch (cursor.type) {
+							case StringTextAtom.identifier: {
+								cursor.enterField(EmptyKey);
+								cursor.enterNode(0);
+								content = cursor.value as string;
+								debugAssert(
+									() => typeof content === "string" || "invalid fullString type optimizations",
+								);
+								cursor.exitNode();
+								cursor.exitField();
+								break;
+							}
+							// TODO: we could optimize this for constant cases via an optional symbol on the atom schema holding the constant.
+							// A less general optimization could just include cases for build in types with constant values
+							// (like below commented code: currently this would cause a cyclical dependency but could be refactored).
+							// case FormattedTextAsTree.StringLineAtom.identifier: {
+							// 	content = "\n";
+							// 	break;
+							// }
+							default: {
+								slowPathIndexes.push(result.length);
+								content = ""; // Placeholder for slow path content
+							}
+						}
+						cursor.exitNode();
+						cursor.exitField();
+						result.push(content);
+					});
+				});
+
+				// Fill in slow path cases not optimized above.
+				for (const index of slowPathIndexes) {
+					const node =
+						this[index + startIndex] ??
+						fail("getCharactersSubarray failed to find index after index range was checked");
+					result[index] = node.content.content;
+				}
+
+				return result;
+			}
+
+			public charactersCopy(): string[] {
+				return this.getCharactersSubarray(0, this.length);
+			}
+
+			public fullString(): string {
+				return this.charactersCopy().join("");
+			}
+
+			public getString(startIndex: number, endIndex: number = this.length): string {
+				validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getString");
+				return this.getCharactersSubarray(startIndex, endIndex).join("");
+			}
+
+			public getUniformRun(startIndex: number, endIndex: number = this.length): number {
+				validateIndexRange(startIndex, endIndex, this, "FormattedTextAsTree.getUniformRun");
+				if (endIndex === startIndex) {
+					throw new UsageError("endIndex must be greater than startIndex for getUniformRun.");
+				}
+				const arrayLength = this.length;
+				return this.withBorrowedSequenceCursor((cursor) => {
+					cursor.enterNode(startIndex);
+
+					// Capture the content type of the first atom
+					cursor.enterField(EmptyKey);
+					cursor.enterNode(0);
+					const contentType = cursor.type;
+					cursor.exitNode();
+					cursor.exitField();
+
+					// Build a comparator from the format subtree of the first atom
+					// This compares by field key
+					cursor.enterField(formatKey);
+					cursor.enterNode(0);
+					const formatComparator = buildNodeComparator(cursor);
+					cursor.exitNode();
+					cursor.exitField();
+
+					let runLength = 1;
+					const limit = Math.min(endIndex, arrayLength) - startIndex;
+
+					while (runLength < limit && cursor.nextNode()) {
+						// Compare atom type
+						cursor.enterField(EmptyKey);
+						cursor.enterNode(0);
+						const typeMatches = cursor.type === contentType;
+						cursor.exitNode();
+						cursor.exitField();
+						if (!typeMatches) {
+							break;
+						}
+
+						// Compare format subtree using the compiled comparator
+						cursor.enterField(formatKey);
+						cursor.enterNode(0);
+						const formatMatches = formatComparator(cursor);
+						cursor.exitNode();
+						cursor.exitField();
+
+						if (formatMatches !== true) {
+							break;
+						}
+
+						runLength++;
+					}
+					cursor.exitNode();
+					return runLength;
+				});
+			}
+		}
+
+		/**
+		 * A unit of the text, with formatting.
+		 */
+		class StringAtom
+			extends sf.object("StringAtom", {
+				content: SchemaFactory.required(atoms, { key: EmptyKey }),
+				format: SchemaFactory.required(formatSchema),
+			})
+			implements
+				FormattedAtom<
+					TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+					TreeNodeFromImplicitAllowedTypes<typeof atoms>
+				> {}
+
+		/**
+		 * Schema for a text node.
+		 * @remarks
+		 * See {@link FormattedTextAsTree.Members} for the API.
+		 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
+		 */
+		const Tree = eraseSchemaDetailsSubclassable<
+			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			Statics<Tree>
+		>()(TextNode);
+		type Tree = ErasedNode<
+			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			FormattedTextSchemaIdentifier<TUserScope>
+		>;
+
+		return Tree;
+	}
+
 	/**
 	 * Portion of a string with formatting.
 	 * @sealed
 	 * @internal
 	 */
-	export interface FormattedAtom<TFormat = CharacterFormat, TText = StringAtomContent> {
+	export interface FormattedAtom<TFormat, TText> {
 		readonly content: TText;
 		format: TFormat;
 	}
@@ -490,20 +493,6 @@ export namespace FormattedTextAsTree {
 		 * The content of the text atom, viewed as a string.
 		 */
 		readonly content: string;
-	}
-
-	/**
-	 * Formatting options for characters.
-	 * @internal
-	 */
-	export class CharacterFormat extends sfStatic.objectAlpha("CharacterFormat", {
-		bold: SchemaFactory.boolean,
-		italic: SchemaFactory.boolean,
-		underline: SchemaFactory.boolean,
-		size: SchemaFactory.number,
-		font: SchemaFactory.string,
-	}) {
-		public static readonly defaultFormat = new CharacterFormat(defaultFormat);
 	}
 
 	/**
@@ -528,64 +517,12 @@ export namespace FormattedTextAsTree {
 		implements TextAtom {}
 
 	/**
-	 * Tag with which a line in text can be formatted from HTML.
-	 * @internal
-	 */
-	export const LineTag = enumFromStrings(sfStatic.scopedFactory("lineTag"), [
-		"h1",
-		"h2",
-		"h3",
-		"h4",
-		"h5",
-		"li",
-		"ol",
-		"checked",
-		"unchecked",
-		"blockquote",
-		"codeBlock",
-	]);
-	/**
-	 * {@inheritdoc FormattedTextAsTree.(LineTag:variable)}
-	 * @internal
-	 */
-	export type LineTag = TreeNodeFromImplicitAllowedTypes<typeof LineTag.schema>;
-
-	/**
-	 * Unit in the string representing a new line character with line formatting.
-	 * @remarks
-	 * This aligns with how Quill represents line formatting.
-	 * Quill formats line attributes (headers, list, blockquote, etc... ) on the newline character
-	 * and only lines using this atom can have line-specific formatting.
-	 * The optional indent level mirrors Quill's indent attribute,
-	 * which is applies to the line before the line break.
-	 * Any tagged line can be indented independently.
-	 * @internal
-	 */
-	export class StringLineAtom extends sfStatic.object("StringLineAtom", {
-		tag: LineTag.schema,
-		indent: SchemaFactory.number,
-	}) {
-		public readonly content = "\n";
-	}
-
-	/**
-	 * Types of "atoms" that make up the text.
-	 * @internal
-	 */
-	export const StringAtomContent = [StringTextAtom, StringLineAtom] as const;
-	/**
-	 * {@inheritdoc FormattedTextAsTree.(StringAtomContent:variable)}
-	 * @internal
-	 */
-	export type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
-
-	/**
 	 * Statics for text nodes.
 	 * @internal
 	 */
-	export interface Statics<TTree = Tree> {
+	export interface Statics<TTree> {
 		/**
-		 * Construct a {@link FormattedTextAsTree.(Tree:class)} from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
+		 * Construct a node of `this` schema from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
 		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
 		fromString(value: string): TTree;
@@ -605,7 +542,7 @@ export namespace FormattedTextAsTree {
 	 * and navigation/selection (which typically uses grapheme clusters).
 	 *
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
-	 * @see {@link FormattedTextAsTree.(Tree:class)} for schema.
+	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
 	 * @internal
 	 */
 	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFormattedInsert>
@@ -774,11 +711,4 @@ export namespace FormattedTextAsTree {
 			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
 		>;
-
-	export class Tree extends createSchema(
-		new SchemaFactoryBeta("default"),
-		CharacterFormat,
-		[StringLineAtom],
-		defaultFormat,
-	) {}
 }
