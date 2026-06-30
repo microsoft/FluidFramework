@@ -4,6 +4,9 @@
 
 ```ts
 
+// @alpha
+export function createOdspServiceClient(options: OdspServiceOptions): ServiceClient;
+
 // @beta
 export type IOdspAudience = IServiceAudience<OdspMember>;
 
@@ -83,6 +86,18 @@ export interface OdspMember extends IMember {
     email: string;
     id: string;
     name: string;
+}
+
+// @alpha
+export interface OdspServiceOptions {
+    // (undocumented)
+    readonly configProvider?: IConfigProviderBase;
+    // (undocumented)
+    readonly connection: OdspConnectionConfig;
+    // (undocumented)
+    readonly logger?: ITelemetryBaseLogger;
+    // (undocumented)
+    readonly minVersionForCollab: MinimumVersionForCollab_2;
 }
 
 // @beta

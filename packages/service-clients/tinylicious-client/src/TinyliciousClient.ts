@@ -14,7 +14,7 @@ import {
 	type ILoaderProps,
 } from "@fluidframework/container-loader/internal";
 import type { ConfigTypes, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/driver-definitions";
+import type { IClient, MinimumVersionForCollab } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentServiceFactory,
 	IUrlResolver,
@@ -32,7 +32,6 @@ import {
 	resolveCompatibilityModeToMinVersionForCollab,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import {
 	InsecureTinyliciousTokenProvider,

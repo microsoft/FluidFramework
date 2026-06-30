@@ -10,7 +10,10 @@ export {
 	SharedObjectCore,
 	type ISharedObjectKind,
 	type SharedObjectKind,
+	type SharedObjectKindAlpha,
 	createSharedObjectKind,
+	createSharedObjectKindAlpha,
+	type SharedObjectKey,
 } from "./sharedObject.js";
 export type { ISharedObject, ISharedObjectEvents } from "./types.js";
 export {
@@ -32,3 +35,11 @@ export {
 	type SharedObjectOptions,
 	mergeAPIs,
 } from "./sharedObjectKernel.js";
+export { dataStoreKind, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
+export { makeStubDataStoreKind } from "./stubSharedObject.js";
+export type {
+	DataStoreOptions,
+	SharedObjectCreator,
+	SharedObjectRegistry,
+	DataStoreContext,
+} from "./dataStoreKind.js";

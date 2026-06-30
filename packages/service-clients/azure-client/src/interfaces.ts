@@ -8,11 +8,10 @@ import type {
 	IConfigProviderBase,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IUser } from "@fluidframework/driver-definitions";
+import type { IUser, MinimumVersionForCollab } from "@fluidframework/driver-definitions";
 import type { ICompressionStorageConfig } from "@fluidframework/driver-utils";
 import type { ContainerSchema, IMember, IServiceAudience } from "@fluidframework/fluid-static";
 import type { ITokenProvider } from "@fluidframework/routerlicious-driver";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 
 /**
  * Props for initializing a new AzureClient instance

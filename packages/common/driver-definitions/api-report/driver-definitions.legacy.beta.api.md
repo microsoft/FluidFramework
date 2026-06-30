@@ -734,6 +734,9 @@ export enum MessageType {
     SummaryNack = "summaryNack"
 }
 
+// @public @input
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
 // @beta @legacy
 export enum NackErrorType {
     BadRequestError = "BadRequestError",

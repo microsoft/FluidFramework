@@ -3,10 +3,13 @@
  * Licensed under the MIT License.
  */
 
+import { fail } from "node:assert";
+
 import { IContainerContext, IRuntime } from "@fluidframework/container-definitions/internal";
 import {
 	ContainerRuntime,
 	DefaultSummaryConfiguration,
+	FluidDataStoreRegistry,
 	type IContainerRuntimeOptionsInternal,
 } from "@fluidframework/container-runtime/internal";
 import {
@@ -60,6 +63,20 @@ interface backCompat_ContainerRuntime {
 		existing?: boolean,
 		containerRuntimeCtor?: typeof ContainerRuntime,
 	): Promise<ContainerRuntime>;
+}
+
+// loadRuntime API before commit 3ee4253aa98: took registryEntries instead of registry.
+interface backCompat_ContainerRuntime_loadRuntime {
+	loadRuntime(params: {
+		context: IContainerContext;
+		registryEntries: NamedFluidDataStoreRegistryEntries;
+		existing: boolean;
+		requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
+		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
+		runtimeOptions?: IContainerRuntimeOptionsInternal;
+		containerScope?: FluidObject;
+		minVersionForCollab?: MinimumVersionForCollab;
+	}): Promise<ContainerRuntime>;
 }
 
 /**
@@ -171,20 +188,46 @@ export const createTestContainerRuntimeFactory = (
 			// This usage of `containerRuntimeCtor.loadRuntime`, an `@internal` API, called on past versions of this package,
 			// adds an extra constraint that makes changing that API more difficult than it otherwise would be.
 			// Actual customers / apps should not be dependent on stability of this API, but this code is, at least for now.
-			return containerRuntimeCtor.loadRuntime({
-				context,
-				registryEntries: [
-					["default", Promise.resolve(this.dataStoreFactory)],
-					[this.type, Promise.resolve(this.dataStoreFactory)],
-				],
-				// eslint-disable-next-line import-x/no-deprecated
-				requestHandler: buildRuntimeRequestHandler(getDefaultObject, ...this.requestHandlers),
-				provideEntryPoint,
-				runtimeOptions: this.runtimeOptions,
-				containerScope: context.scope,
-				existing,
-				minVersionForCollab: this.minVersionForCollab,
-			});
+			const registryEntries: NamedFluidDataStoreRegistryEntries = [
+				["default", Promise.resolve(this.dataStoreFactory)],
+				[this.type, Promise.resolve(this.dataStoreFactory)],
+			];
+			// eslint-disable-next-line import-x/no-deprecated
+			const requestHandler = buildRuntimeRequestHandler(
+				getDefaultObject,
+				...this.requestHandlers,
+			);
+
+			const loadRuntimeVersion = containerRuntimeCtor.loadRuntimeAPIVersion ?? 1;
+			switch (loadRuntimeVersion) {
+				case 1:
+					// Old loadRuntime: took registryEntries instead of registry.
+					return (
+						containerRuntimeCtor as unknown as backCompat_ContainerRuntime_loadRuntime
+					).loadRuntime({
+						context,
+						registryEntries,
+						requestHandler,
+						provideEntryPoint,
+						runtimeOptions: this.runtimeOptions,
+						containerScope: context.scope,
+						existing,
+						minVersionForCollab: this.minVersionForCollab,
+					});
+				case 2:
+					return containerRuntimeCtor.loadRuntime({
+						context,
+						registry: new FluidDataStoreRegistry(registryEntries),
+						requestHandler,
+						provideEntryPoint,
+						runtimeOptions: this.runtimeOptions,
+						containerScope: context.scope,
+						existing,
+						minVersionForCollab: this.minVersionForCollab,
+					});
+				default:
+					fail();
+			}
 		}
 	};
 };
