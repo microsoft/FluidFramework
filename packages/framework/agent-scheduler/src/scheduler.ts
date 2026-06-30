@@ -30,10 +30,10 @@ import type {
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type TelemetryLoggerExt,
-	UsageError,
 	createChildLogger,
 	tagCodeArtifacts,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

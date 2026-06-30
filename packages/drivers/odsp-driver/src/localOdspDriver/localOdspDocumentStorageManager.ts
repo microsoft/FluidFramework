@@ -13,8 +13,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/driver-utils/internal";
 import {
-	type TelemetryLoggerExt,
 	loggerToMonitoringContext,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";

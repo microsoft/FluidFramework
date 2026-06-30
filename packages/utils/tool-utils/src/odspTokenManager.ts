@@ -3,17 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type {
 	IPublicClientConfig,
 	IOdspTokens,
-	TokenRequestCredentials,
-} from "@fluidframework/odsp-doclib-utils/internal";
-import {
-	fetchTokens,
-	getOdspScope,
-	pushScope,
-	refreshTokens,
 } from "@fluidframework/odsp-doclib-utils/internal";
 import { Mutex } from "async-mutex";
 
@@ -39,17 +31,11 @@ export const getMicrosoftConfiguration = (): IPublicClientConfig => ({
 /**
  * @internal
  */
-export type LoginCredentials =
-	| {
-			type: "password";
-			username: string;
-			password: string;
-	  }
-	| {
-			type: "fic";
-			username: string;
-			fetchToken(scopeEndpoint: "push" | "storage"): Promise<string>;
-	  };
+export interface LoginCredentials {
+	type: "fic";
+	username: string;
+	fetchToken(scopeEndpoint: "push" | "storage"): Promise<string>;
+}
 
 /**
  * @internal
@@ -110,25 +96,21 @@ export class OdspTokenManager {
 	}
 
 	public async getOdspTokens(
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting odsp tokens");
-		return this.getTokens(false, server, clientConfig, credentials, forceRefresh, forceReauth);
+		return this.getTokens(false, credentials, forceRefresh, forceReauth);
 	}
 
 	public async getPushTokens(
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh = false,
 		forceReauth = false,
 	): Promise<IOdspTokens> {
 		debug("Getting push tokens");
-		return this.getTokens(true, server, clientConfig, credentials, forceRefresh, forceReauth);
+		return this.getTokens(true, credentials, forceRefresh, forceReauth);
 	}
 
 	private async getTokenFromCache(
@@ -160,8 +142,6 @@ export class OdspTokenManager {
 
 	private async getTokens(
 		isPush: boolean,
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
@@ -170,14 +150,7 @@ export class OdspTokenManager {
 			// Don't solely rely on tokenCache lock, ensure serialized execution of
 			// cache update to avoid multiple fetch.
 			return this.cacheMutex.runExclusive(async () => {
-				return this.getTokensCore(
-					isPush,
-					server,
-					clientConfig,
-					credentials,
-					forceRefresh,
-					forceReauth,
-				);
+				return this.getTokensCore(isPush, credentials, forceRefresh, forceReauth);
 			});
 		};
 		if (!forceReauth && !forceRefresh) {
@@ -201,13 +174,10 @@ export class OdspTokenManager {
 
 	private async getTokensCore(
 		isPush: boolean,
-		server: string,
-		clientConfig: IPublicClientConfig,
 		credentials: LoginCredentials,
 		forceRefresh: boolean,
 		forceReauth: boolean,
 	): Promise<IOdspTokens> {
-		const scope = isPush ? pushScope : getOdspScope(server);
 		const cacheKey = OdspTokenManager.getCacheKey(isPush, credentials);
 		let tokens: IOdspTokens | undefined;
 		if (!forceReauth) {
@@ -216,16 +186,9 @@ export class OdspTokenManager {
 			if (tokensFromCache) {
 				if (forceRefresh || !isValidAndNotExpiredToken(tokensFromCache)) {
 					try {
-						if (credentials.type === "fic") {
-							const scopeEndpoint = isPush ? "push" : "storage";
-							const newTokenData = await credentials.fetchToken(scopeEndpoint);
-							tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
-						} else if (credentials.type === "password") {
-							// For OAuth flows, use refresh token
-							tokens = await refreshTokens(server, scope, clientConfig, tokensFromCache);
-						} else {
-							unreachableCase(credentials);
-						}
+						const scopeEndpoint = isPush ? "push" : "storage";
+						const newTokenData = await credentials.fetchToken(scopeEndpoint);
+						tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
 						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
 						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
@@ -240,26 +203,8 @@ export class OdspTokenManager {
 			}
 		}
 
-		switch (credentials.type) {
-			case "password": {
-				tokens = await this.acquireTokensWithPassword(
-					server,
-					scope,
-					clientConfig,
-					credentials.username,
-					credentials.password,
-				);
-				break;
-			}
-			case "fic": {
-				const tokenData = await credentials.fetchToken(isPush ? "push" : "storage");
-				tokens = this.ficTokenToIOdspTokens(tokenData, isPush);
-				break;
-			}
-			default: {
-				unreachableCase(credentials);
-			}
-		}
+		const tokenData = await credentials.fetchToken(isPush ? "push" : "storage");
+		tokens = this.ficTokenToIOdspTokens(tokenData, isPush);
 
 		if (!isValidAndNotExpiredToken(tokens)) {
 			throw new Error(
@@ -270,21 +215,6 @@ export class OdspTokenManager {
 
 		await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 		return tokens;
-	}
-
-	private async acquireTokensWithPassword(
-		server: string,
-		scope: string,
-		clientConfig: IPublicClientConfig,
-		username: string,
-		password: string,
-	): Promise<IOdspTokens> {
-		const credentials: TokenRequestCredentials = {
-			grant_type: "password",
-			username,
-			password,
-		};
-		return fetchTokens(server, scope, clientConfig, credentials);
 	}
 
 	private ficTokenToIOdspTokens(token: string, isPush: boolean): IOdspTokens {
