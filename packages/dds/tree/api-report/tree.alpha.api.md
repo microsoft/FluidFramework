@@ -1638,14 +1638,14 @@ export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty:
 
 // @alpha @input
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
-    preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
+    readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
 // @beta @input
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
-    rollback?: false;
+    readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
-    rollback: true;
+    readonly rollback: true;
 });
 
 // @public
@@ -2128,7 +2128,7 @@ export interface WithType<out TName extends string = string, out TKind extends N
 
 // @beta @input
 export interface WithValue<TValue> {
-    value: TValue;
+    readonly value: TValue;
 }
 
 // (No @packageDocumentation comment for this package)

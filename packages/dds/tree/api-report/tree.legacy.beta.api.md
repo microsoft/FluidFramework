@@ -895,9 +895,9 @@ export namespace TableSchema {
 
 // @beta @input
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
-    rollback?: false;
+    readonly rollback?: false;
 }) | (WithValue<TFailureValue> & {
-    rollback: true;
+    readonly rollback: true;
 });
 
 // @public
@@ -1206,7 +1206,7 @@ export interface WithType<out TName extends string = string, out TKind extends N
 
 // @beta @input
 export interface WithValue<TValue> {
-    value: TValue;
+    readonly value: TValue;
 }
 
 // (No @packageDocumentation comment for this package)

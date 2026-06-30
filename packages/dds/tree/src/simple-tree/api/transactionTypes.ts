@@ -55,7 +55,7 @@ export interface NoChangeConstraint {
  */
 export interface WithValue<TValue> {
 	/** The user-supplied value. */
-	value: TValue;
+	readonly value: TValue;
 }
 
 /**
@@ -66,11 +66,11 @@ export interface WithValue<TValue> {
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
-			rollback?: false;
+			readonly rollback?: false;
 	  })
 	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
-			rollback: true;
+			readonly rollback: true;
 	  });
 
 /**
@@ -97,7 +97,7 @@ export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
 		 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
 		 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
 		 */
-		preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
+		readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 	};
 
 /**
