@@ -837,6 +837,29 @@ describe("sharedTreeView", () => {
 
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
+
+		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			const forks: (typeof view)[] = [];
+			view.events.on("changed", () => {
+				forks.push(view.fork());
+			});
+
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
+			});
+
+			assert.equal(forks.length, 1);
+
+			assert.deepEqual(forks[0].disposed, false);
+			assert.deepEqual(forks[0].root, ["A"]);
+
+			assert.deepEqual(view.root, ["A"]);
+		});
 	});
 
 	describe("disposal", () => {
@@ -1241,6 +1264,37 @@ describe("sharedTreeView", () => {
 			stacks.unsubscribe();
 		});
 
+		it("are disposed upon rollback of the commit they would revert", () => {
+			// Setup
+			const sf = new SchemaFactory("Enrichment Schema");
+			class Node extends sf.object("Node", { id: sf.string }) {}
+			const NodeArray = sf.array(Node);
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const init = view.checkout.mainBranch.getHead();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.root.insertAtEnd({ id: "A" });
+			view.root[0].id = "B";
+			assert.equal(undoStack.length, 2);
+			const [undo1, undo2] = undoStack;
+
+			// Act
+			view.checkout.mainBranch.removeAfter(init);
+
+			// Consistency check
+			assert.equal(view.root.length, 0);
+
+			// Verify
+			assert.equal(undo1.status, RevertibleStatus.Disposed);
+			assert.equal(undo2.status, RevertibleStatus.Disposed);
+
+			// Cleanup
+			unsubscribe();
+		});
+
 		for (const ageToTest of [0, 1, 5]) {
 			itView(`Telemetry logs track reversion age (${ageToTest})`, ({ view, logger }) => {
 				let revertible: Revertible | undefined;
@@ -1316,15 +1370,6 @@ describe("sharedTreeView", () => {
 			});
 		});
 
-		it("create a branch", () => {
-			expectErrorDuringEdit({
-				duringEdit: (view) => view.fork(),
-				// RegExp (loose) match: forking surfaces the guard error possibly wrapped, so the
-				// full message is not pinned here.
-				error: /Branching is forbidden during a change event callback/,
-			});
-		});
-
 		it("rebase a branch", () => {
 			expectErrorDuringEdit({
 				duringEdit: (view) => view.rebaseOnto(view),
@@ -1362,6 +1407,37 @@ describe("sharedTreeView", () => {
 				duringEdit: (view) => view.dispose(),
 				error: "Disposing a view is forbidden during a change event callback",
 			});
+		});
+
+		it("run a transaction", () => {
+			expectErrorDuringEdit({
+				duringEdit: (view) => view.runTransaction(() => {}),
+				error: "Running a transaction is forbidden during a change event callback",
+			});
+		});
+
+		it("run an async transaction", async () => {
+			const view = getView(
+				new TreeViewConfiguration({ enableSchemaValidation, schema: NumberNode }),
+			);
+			view.initialize({ number: 3 });
+
+			// Unlike the synchronous cases above, `runTransactionAsync` surfaces the guard as a
+			// rejected promise rather than a synchronous throw, so it is captured and awaited here.
+			let asyncTransaction: Promise<unknown> | undefined;
+			Tree.on(view.root, "nodeChanged", () => {
+				asyncTransaction = view.runTransactionAsync(async () => {});
+			});
+
+			view.root.number = 0;
+
+			assert(asyncTransaction !== undefined, "Async transaction should have been attempted.");
+			await assert.rejects(
+				asyncTransaction,
+				validateUsageError(
+					"Running a transaction is forbidden during a change event callback",
+				),
+			);
 		});
 	});
 

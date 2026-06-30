@@ -57,6 +57,7 @@ import {
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
+	findCommonAncestor,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -74,7 +75,6 @@ import {
 	SquashingTransactionStack,
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
-	onForkTransitive,
 	type SharedTreeBranchChange,
 	type Transactor,
 } from "../shared-tree-core/index.js";
@@ -256,8 +256,8 @@ export interface ITreeCheckout
 	fork(): ITreeCheckout;
 
 	/**
-	 * Replaces all schema with the provided schema.
-	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 * Replaces all schemas with the provided schema.
+	 * Can overwrite preexisting schemas, and removes unmentioned schemas.
 	 *
 	 * @param newSchema - The new schema to replace the existing schema.
 	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
@@ -307,7 +307,6 @@ export function createTreeCheckout(
 		chunkCompressionStrategy?: TreeCompressionStrategy;
 		logger?: TelemetryLoggerExt;
 		breaker?: Breakable;
-		disposeForksAfterTransaction?: boolean;
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
@@ -354,7 +353,6 @@ export function createTreeCheckout(
 		args?.removedRoots,
 		args?.logger,
 		breaker,
-		args?.disposeForksAfterTransaction,
 	);
 }
 
@@ -485,9 +483,9 @@ export class TreeCheckout implements ITreeCheckout {
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
-	 * Set of revertibles maintained for automatic disposal
+	 * Revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<RevertibleAlpha>();
+	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -526,7 +524,6 @@ export class TreeCheckout implements ITreeCheckout {
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
-		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -658,9 +655,6 @@ export class TreeCheckout implements ITreeCheckout {
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
-			const disposeForks = this.disposeForksAfterTransaction
-				? trackForksForDisposal(this)
-				: undefined;
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
 			return (result, viewUpdate: SharedTreeChange | undefined) => {
@@ -687,7 +681,6 @@ export class TreeCheckout implements ITreeCheckout {
 						unreachableCase(result);
 					}
 				}
-				disposeForks?.();
 			};
 		});
 	}
@@ -753,7 +746,7 @@ export class TreeCheckout implements ITreeCheckout {
 								revision,
 								this.#transaction.activeBranch.fork(commit),
 							);
-							this.revertibles.add(revertible);
+							this.revertibles.set(revision, revertible);
 							return revertible;
 						};
 
@@ -791,6 +784,11 @@ export class TreeCheckout implements ITreeCheckout {
 					this.#events.emit("changed", metadata, getRevertible);
 				});
 				withinEventContext = false;
+			}
+		} else if (event.type === "remove") {
+			// Commits that are rolled back should no longer be revertible
+			for (const commit of event.removedCommits) {
+				this.revertibles.get(commit.revision)?.dispose();
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
@@ -936,6 +934,15 @@ export class TreeCheckout implements ITreeCheckout {
 
 	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
 		this.checkNotDisposed();
+		// Starting a transaction is an edit, so it is forbidden from within a change-event
+		// callback (where the edit lock is held), the same as direct edits. For the async
+		// entry point this throw is captured as a rejected promise by the `async` wrapper.
+		//
+		// Note: because runTransaction/runTransactionAsync are `@breakingMethod`, this throw also
+		// puts the checkout into a broken state (unlike a direct edit, which throws recoverably).
+		// That is the same pre-existing broken-state limitation tracked by the TODO in
+		// `emitChangedLocked`, not something specific to transactions.
+		this.editLock.checkUnlocked("Running a transaction");
 		if (isAsync && this.transaction.size > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -1125,7 +1132,7 @@ export class TreeCheckout implements ITreeCheckout {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				checkout.disposeRevertible(revertible, revision);
+				checkout.disposeRevertible(revision);
 				onRevertibleDisposed?.(revertible);
 			},
 		};
@@ -1198,7 +1205,6 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("A view cannot be forked while it has a pending transaction.");
 		}
 
-		this.editLock.checkUnlocked("Branching");
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
 		const forkBreaker = new Breakable("TreeCheckout");
@@ -1215,7 +1221,6 @@ export class TreeCheckout implements ITreeCheckout {
 			this._removedRoots.clone(),
 			this.logger,
 			forkBreaker,
-			this.disposeForksAfterTransaction,
 		);
 		this.#events.emit("fork", checkout);
 		return checkout;
@@ -1276,6 +1281,19 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public rebaseOnto(branch: TreeBranch): void {
 		getCheckout(branch).rebase(this);
+	}
+
+	public isMissingEditsFrom(branch: TreeBranch): boolean {
+		const branchCheckout = getCheckout(branch);
+		const targetPath: GraphCommit<unknown>[] = [];
+		const ancestor = findCommonAncestor(this.mainBranch.getHead(), [
+			branchCheckout.mainBranch.getHead(),
+			targetPath,
+		]);
+		if (ancestor === undefined) {
+			throw new UsageError("Branches do not share a common ancestor.");
+		}
+		return targetPath.length > 0;
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1367,15 +1385,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private purgeRevertibles(): void {
-		for (const revertible of this.revertibles) {
+		for (const revertible of this.revertibles.values()) {
 			revertible.dispose();
 		}
 	}
 
-	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
+	private disposeRevertible(revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
-		this.revertibles.delete(revertible);
+		this.revertibles.delete(revision);
 	}
 
 	private revertRevertible(
@@ -1721,34 +1739,6 @@ class EditLock {
 		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
 		this.locked = false;
 	}
-}
-
-/**
- * Keeps track of all new forks created until the returned function is invoked, which will dispose all of those for.
- * The returned function may only be called once.
- *
- * @param checkout - The tree checkout for which you want to monitor forks for disposal.
- * @returns a function which can be called to dispose all of the tracked forks.
- */
-function trackForksForDisposal(checkout: TreeCheckout): () => void {
-	const forks = new Set<TreeCheckout>();
-	const onDisposeUnSubscribes: (() => void)[] = [];
-	const onForkUnSubscribe = onForkTransitive(checkout, (fork) => {
-		forks.add(fork);
-		onDisposeUnSubscribes.push(fork.events.on("dispose", () => forks.delete(fork)));
-	});
-	let disposed = false;
-	return () => {
-		assert(!disposed, 0xaa9 /* Forks may only be disposed once */);
-		for (const fork of forks) {
-			fork.dispose();
-		}
-		for (const unsubscribe of onDisposeUnSubscribes) {
-			unsubscribe();
-		}
-		onForkUnSubscribe();
-		disposed = true;
-	};
 }
 
 function verboseFromCursor(
