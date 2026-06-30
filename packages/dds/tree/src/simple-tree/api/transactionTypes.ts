@@ -107,6 +107,7 @@ export type VoidTransactionCallbackStatusAlpha = Omit<
 
 /**
  * The result of a {@link TreeViewBeta.(runTransaction:1) | transaction} that completed successfully.
+ * @sealed
  * @beta
  */
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
@@ -116,6 +117,7 @@ export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSucc
 
 /**
  * The result of a {@link TreeViewBeta.(runTransaction:1) | transaction} that was rolled back.
+ * @sealed
  * @beta
  */
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
@@ -125,6 +127,7 @@ export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailu
 
 /**
  * The result of the {@link RunTransaction | RunTransaction} API.
+ * @sealed
  * @beta
  */
 export type TransactionResultWithValue<TSuccessValue, TFailureValue> =
@@ -134,6 +137,7 @@ export type TransactionResultWithValue<TSuccessValue, TFailureValue> =
 /**
  * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionResultWithValue}
  * but with the `value` field omitted. This is useful when the transaction callback doesn't need to return a value.
+ * @sealed
  * @beta
  */
 export type TransactionResult =

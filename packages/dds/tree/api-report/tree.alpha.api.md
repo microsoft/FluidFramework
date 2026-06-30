@@ -1659,20 +1659,20 @@ export type TransactionLabels = Set<unknown> & {
     tree?: LabelTree;
 };
 
-// @beta
+// @beta @sealed
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
 
-// @beta
+// @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
     success: false;
 }
 
-// @beta
+// @beta @sealed
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
     success: true;
 }
 
-// @beta
+// @beta @sealed
 export type TransactionResultWithValue<TSuccessValue, TFailureValue> = TransactionResultSuccess<TSuccessValue> | TransactionResultFailed<TFailureValue>;
 
 // @public @sealed
