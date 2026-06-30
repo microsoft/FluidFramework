@@ -2717,7 +2717,7 @@ importers:
         specifier: ^18.3.5
         version: 18.3.7(@types/react@18.3.15)
       assert:
-        specifier: ^2.1.0
+        specifier: ^2.0.0
         version: 2.1.0
       eslint:
         specifier: catalog:eslint
@@ -2756,7 +2756,7 @@ importers:
         specifier: ^2.0.3
         version: 2.0.8
       tinylicious:
-        specifier: ^7.0.0
+        specifier: ^7.0.1
         version: 7.0.1
       ts-loader:
         specifier: ^9.5.1
@@ -4069,7 +4069,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/dds/sequence
       assert:
-        specifier: ^2.1.0
+        specifier: ^2.0.0
         version: 2.1.0
       debug:
         specifier: ^4.3.4
