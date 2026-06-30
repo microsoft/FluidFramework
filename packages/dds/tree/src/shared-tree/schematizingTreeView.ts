@@ -151,10 +151,6 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const enabledUpgrades =
-			config instanceof TreeViewConfigurationAlpha && config.enabledUpgrades !== undefined
-				? [...config.enabledUpgrades]
-				: undefined;
 		const storedSchemaGenerationOptions =
 			config instanceof TreeViewConfigurationAlpha
 				? config.storedSchemaGenerationOptions
@@ -163,7 +159,6 @@ export class SchematizingSimpleTreeView<
 			schema: config.schema,
 			enableSchemaValidation: config.enableSchemaValidation,
 			preventAmbiguity: config.preventAmbiguity,
-			enabledUpgrades,
 			storedSchemaGenerationOptions,
 		});
 		this.storedSchemaGenerationOptions = configAlpha.storedSchemaGenerationOptions;
