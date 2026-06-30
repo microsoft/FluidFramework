@@ -35,7 +35,7 @@ import {
 } from "../../shared-tree/index.js";
 import {
 	createTransactionPostProcessor,
-	type TransactionChangeProcessor,
+	type TransactionPostProcessorInternal,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/transactionPostProcessor.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -852,12 +852,12 @@ describe("sharedTreeView", () => {
 		 * into each `start` call and to count how many times the transaction is committed.
 		 */
 		function spyOnTransactor(checkout: ITreeCheckout): {
-			readonly postProcessors: (TransactionChangeProcessor | undefined)[];
+			readonly postProcessors: (TransactionPostProcessorInternal | undefined)[];
 			readonly commits: number;
 		} {
 			const transactor = checkout.transaction;
 			const result = {
-				postProcessors: [] as (TransactionChangeProcessor | undefined)[],
+				postProcessors: [] as (TransactionPostProcessorInternal | undefined)[],
 				commits: 0,
 			};
 			const originalStart = transactor.start.bind(transactor);
@@ -875,7 +875,7 @@ describe("sharedTreeView", () => {
 
 		// A do-nothing post-processor used to demonstrate the public -> internal conversion: it is created from an
 		// identity change processor, and the checkout should extract that same processor back out and inject it at start time.
-		const noopChangeProcessor: TransactionChangeProcessor = {
+		const noopChangeProcessor: TransactionPostProcessorInternal = {
 			applicability: ChangeProcessorApplicability.IfOutermost,
 			processChange: (change) => change,
 		};
