@@ -360,7 +360,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 		}
 		for (const key of Object.keys(snapshot.trees)) {
-			const value = snapshot[key] as ISnapshotTree;
+			// snapshot.trees[key], not snapshot[key]: ISnapshotTree subtrees live in the `trees`
+			// map, not as direct properties on the snapshot object. Using snapshot[key] always
+			// returns undefined, silently preventing any recursion into subtrees.
+			const value = snapshot.trees[key];
 			if (value !== undefined) {
 				const found = this.hasCompressionMarkup(value);
 				if (found) {
@@ -400,14 +403,29 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 	 */
 	public override async readBlob(id: string): Promise<ArrayBufferLike> {
 		const originalBlob = await super.readBlob(id);
-		if (this._isCompressionEnabled) {
-			const decompressedBlob =
-				DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
-			//			console.log(`Miso summary-blob Blob read END : ${id} ${decompressedBlob.byteLength}`);
-			return decompressedBlob;
-		} else {
-			return originalBlob;
-		}
+		// Always attempt to decode rather than guarding on _isCompressionEnabled.
+		//
+		// _isCompressionEnabled is set by hasCompressionMarkup(), which must find the
+		// ".metadata.blobHeaders" markup blob in the snapshot tree. Two independent failures
+		// can prevent that:
+		//
+		// 1. The recursion bug fixed above: hasCompressionMarkup() used snapshot[key] instead
+		//    of snapshot.trees[key], so it never descended into subtrees. With DDS types that
+		//    nest ".metadata" below the root (e.g. SharedTree's "sheetSetData/" subtree in
+		//    Fluid 2.82+), the markup blob was never found and _isCompressionEnabled stayed false.
+		//
+		// 2. Backend dropping the empty markup blob: some historian/gitrest deployments do not
+		//    round-trip the empty ".metadata.blobHeaders" blob (content=""), so even with the
+		//    recursion fixed the markup may be absent from the snapshot returned by the server.
+		//
+		// In both cases the compressed blob (first byte 0xB1 = LZ4 prefix) was returned raw,
+		// reaching JSON.parse as U+FFFD garbage and throwing "Failed to get Channel".
+		//
+		// decodeBlob() is safe to call unconditionally: it inspects the first byte of the blob
+		// for the 0xBx algorithm prefix written by encodeBlob(). If present it decompresses;
+		// if not, it returns the blob unchanged. This makes decompression content-driven rather
+		// than metadata-driven, eliminating both failure modes.
+		return DocumentStorageServiceCompressionAdapter.decodeBlob(originalBlob);
 	}
 
 	/**
