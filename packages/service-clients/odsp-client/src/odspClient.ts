@@ -18,7 +18,7 @@ import type {
 	IRequest,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
-import type { IClient } from "@fluidframework/driver-definitions";
+import type { IClient, MinimumVersionForCollab } from "@fluidframework/driver-definitions";
 import type { IDocumentServiceFactory } from "@fluidframework/driver-definitions/internal";
 import type { ContainerAttachProps, ContainerSchema } from "@fluidframework/fluid-static";
 import {
@@ -34,7 +34,6 @@ import {
 	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 

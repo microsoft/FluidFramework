@@ -97,7 +97,7 @@ export interface OdspServiceOptions {
     // (undocumented)
     readonly logger?: ITelemetryBaseLogger;
     // (undocumented)
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinimumVersionForCollab_2;
 }
 
 // @beta

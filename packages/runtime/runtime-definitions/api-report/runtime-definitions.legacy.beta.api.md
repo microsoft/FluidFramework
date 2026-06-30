@@ -429,7 +429,6 @@ export type StagingModeChangedEvent = {
     readonly commit: boolean;
 };
 
-
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;
 

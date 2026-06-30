@@ -97,6 +97,9 @@ export interface IUser {
     id: string;
 }
 
+// @public @input
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
 // @public
 export type SummaryObject = ISummaryTree | ISummaryBlob | ISummaryHandle | ISummaryAttachment;
 

@@ -120,7 +120,7 @@ export function basicKey<T>(type: string): RegistryKey<T, T> {
  * For example it might make sense to constrain this to something like `"1.4.0" | typeof defaultMinVersionForCollab | 2.${bigint}.0"`.
  *
  * @input
- * @beta
+ * @public
  */
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`

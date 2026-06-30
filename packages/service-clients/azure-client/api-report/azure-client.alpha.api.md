@@ -7,15 +7,29 @@
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    // @deprecated
     createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinimumVersionForCollab): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+        services: AzureContainerServices;
+    }>;
+    // @deprecated
     getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, minVersionForCollab: MinimumVersionForCollab): Promise<{
+        container: IFluidContainer<TContainerSchema>;
+    }>;
+    // @deprecated
     viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, compatibilityMode: CompatibilityMode): Promise<{
         container: IFluidContainer<TContainerSchema>;
     }>;
@@ -85,7 +99,7 @@ export interface AzureServiceOptions {
     readonly minVersionForCollab: MinimumVersionForCollab;
 }
 
-// @public
+// @public @deprecated
 export type CompatibilityMode = "1" | "2";
 
 // @alpha
@@ -104,7 +118,7 @@ export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
 
 // @public
 export interface ITelemetryBaseLogger {
-    minLogLevel?: LogLevel;
+    minLogLevel?: LogLevel | undefined;
     send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
 }
 

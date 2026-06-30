@@ -549,6 +549,9 @@ export type MapNodeInsertableData<T extends ImplicitAllowedTypes> = Iterable<rea
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
+// @public @input
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
 // @public
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;

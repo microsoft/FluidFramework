@@ -734,7 +734,7 @@ export enum MessageType {
     SummaryNack = "summaryNack"
 }
 
-// @beta @input
+// @public @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy

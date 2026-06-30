@@ -14,7 +14,7 @@ import {
 } from "@fluidframework/quill-react/internal";
 import {
 	toPropTreeNode,
-	UndoRedoStacks,
+	createUndoRedo,
 	type UndoRedo,
 	PlainTextMainView,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -24,7 +24,7 @@ import {
 	type TinyliciousServiceOptions,
 } from "@fluidframework/tinylicious-driver/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree } from "@fluidframework/tree/internal";
+import { asAlpha, FormattedTextAsTree } from "@fluidframework/tree/internal";
 import { SchemaFactory, TreeViewConfiguration, type TreeView } from "fluid-framework";
 import {
 	TextAsTree,
@@ -173,10 +173,7 @@ const UserPanel: FC<{
 	treeView: TreeView<typeof TextEditorRoot>;
 }> = ({ label, color, treeView }) => {
 	// Create undo/redo stack for this user's tree view
-	const undoRedo: UndoRedo = useMemo(
-		() => new UndoRedoStacks(treeView.events),
-		[treeView.events],
-	);
+	const undoRedo: UndoRedo = useMemo(() => createUndoRedo(asAlpha(treeView)), [treeView]);
 
 	// Cleanup on unmount
 	useEffect(() => {

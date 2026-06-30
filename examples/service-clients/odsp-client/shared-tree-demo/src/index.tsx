@@ -3,7 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import ReactDOM from "react-dom";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createRoot } from "react-dom/client";
 
 import { appDataStoreKind, service } from "./fluid.js";
 // eslint-disable-next-line import-x/no-unassigned-import
@@ -15,6 +16,7 @@ async function start(): Promise<void> {
 	const app = document.createElement("div");
 	app.id = "app";
 	document.body.append(app);
+	const root = createRoot(app);
 
 	// Get the root item id from the URL.
 	// If there is no item id, the app will create a new container.
@@ -29,10 +31,7 @@ async function start(): Promise<void> {
 		const canvasSize = { x: 10, y: 10 }; // characters across and down
 
 		// Render immediately so the app is interactive before attaching
-		ReactDOM.render(
-			<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
-			app,
-		);
+		root.render(<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />);
 
 		// Populate with initial letter data
 		const used: { x: number; y: number }[] = [];
@@ -59,10 +58,7 @@ async function start(): Promise<void> {
 		});
 
 		// Re-render with populated data
-		ReactDOM.render(
-			<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
-			app,
-		);
+		root.render(<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />);
 
 		// Attach uploads the container to ODSP and returns a stable item ID
 		const attached = await container.attach();
@@ -75,10 +71,7 @@ async function start(): Promise<void> {
 		const cellSize = { x: 32, y: 32 };
 		const canvasSize = { x: 10, y: 10 };
 
-		ReactDOM.render(
-			<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
-			app,
-		);
+		root.render(<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />);
 	}
 }
 
