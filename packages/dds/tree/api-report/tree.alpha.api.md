@@ -1636,12 +1636,12 @@ export namespace TextAsTree {
 // @alpha
 export function trackDirtyNodes(view: TreeViewAlpha<ImplicitFieldSchema>, dirty: DirtyTreeMap): () => void;
 
-// @alpha
+// @alpha @input
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> = TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
     preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
 };
 
-// @beta
+// @beta @input
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
     rollback?: false;
 }) | (WithValue<TFailureValue> & {
@@ -2115,10 +2115,10 @@ export interface ViewContent {
     readonly tree: JsonCompatible<IFluidHandle>;
 }
 
-// @alpha
+// @alpha @input
 export type VoidTransactionCallbackStatusAlpha = Omit<TransactionCallbackStatusAlpha<unknown, unknown>, "value">;
 
-// @beta
+// @beta @input
 export type VoidTransactionCallbackStatusBeta = Omit<TransactionCallbackStatusBeta<unknown, unknown>, "value">;
 
 // @public @sealed
@@ -2128,7 +2128,7 @@ export interface WithType<out TName extends string = string, out TKind extends N
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 
-// @beta
+// @beta @input
 export interface WithValue<TValue> {
     value: TValue;
 }

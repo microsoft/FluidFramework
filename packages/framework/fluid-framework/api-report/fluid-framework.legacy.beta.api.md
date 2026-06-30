@@ -1672,7 +1672,7 @@ export interface Tagged<V, T extends string = string> {
 // @public
 export type TelemetryBaseEventPropertyType = string | number | boolean | undefined;
 
-// @beta
+// @beta @input
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> = (WithValue<TSuccessValue> & {
     rollback?: false;
 }) | (WithValue<TFailureValue> & {
@@ -1978,7 +1978,7 @@ export interface ViewableTree {
     viewWith<TRoot extends ImplicitFieldSchema>(config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
-// @beta
+// @beta @input
 export type VoidTransactionCallbackStatusBeta = Omit<TransactionCallbackStatusBeta<unknown, unknown>, "value">;
 
 // @public @sealed
@@ -1988,7 +1988,7 @@ export interface WithType<out TName extends string = string, out TKind extends N
     get [typeSchemaSymbol](): TreeNodeSchemaClass<TName, TKind, TreeNode, never, boolean, TInfo>;
 }
 
-// @beta
+// @beta @input
 export interface WithValue<TValue> {
     value: TValue;
 }

@@ -50,6 +50,7 @@ export interface NoChangeConstraint {
 
 /**
  * Contains a value returned from a transaction.
+ * @input
  * @beta
  */
 export interface WithValue<TValue> {
@@ -59,6 +60,7 @@ export interface WithValue<TValue> {
 
 /**
  * Contains a value and status returned from a user-supplied {@link TreeViewBeta.(runTransaction:1) | transaction callback}.
+ * @input
  * @beta
  */
 export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
@@ -73,6 +75,7 @@ export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 
 /**
  * The result of a {@link TreeViewBeta.(runTransaction:2) | transaction} that doesn't return a value.
+ * @input
  * @beta
  */
 export type VoidTransactionCallbackStatusBeta = Omit<
@@ -82,6 +85,7 @@ export type VoidTransactionCallbackStatusBeta = Omit<
 
 /**
  * {@link TransactionCallbackStatusBeta} extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
+ * @input
  * @alpha
  */
 export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
@@ -98,6 +102,7 @@ export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
 
 /**
  * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
+ * @input
  * @alpha
  */
 export type VoidTransactionCallbackStatusAlpha = Omit<
@@ -146,8 +151,8 @@ export type TransactionResult =
 
 /**
  * The parameters for the {@link RunTransaction | RunTransaction} API.
- * @beta
  * @input
+ * @beta
  */
 export interface RunTransactionParamsBeta {
 	/**
@@ -162,8 +167,8 @@ export interface RunTransactionParamsBeta {
 
 /**
  * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
- * @alpha
  * @input
+ * @alpha
  */
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	/**
