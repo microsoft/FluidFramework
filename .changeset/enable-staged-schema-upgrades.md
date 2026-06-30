@@ -11,7 +11,7 @@ making it easier to separate code rollout from feature rollout.
 
 ### API
 
-Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the config object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
+Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the configuration object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 
 The `enabledUpgrades` list contains `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
