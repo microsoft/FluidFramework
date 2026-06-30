@@ -32,9 +32,11 @@ import {
 import type { IForestSubscription } from "../../core/index.js";
 import {
 	ForestTypeOptimized,
+	ForestTypeReference,
 	Tree,
 	TreeAlpha,
 	createIndependentTreeAlpha,
+	type ForestType,
 	type ITreePrivate,
 } from "../../shared-tree/index.js";
 import {
@@ -618,10 +620,9 @@ describe("TextDomain benchmarks", () => {
 		function buildTextView<TSchema extends ImplicitFieldSchema>(
 			viewConfiguration: TreeViewConfiguration<TSchema>,
 			content: InsertableTreeFieldFromImplicitField<TSchema>,
+			forest: ForestType,
 		): TextDocumentView {
-			const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
-				viewConfiguration,
-			);
+			const view = createIndependentTreeAlpha({ forest }).viewWith(viewConfiguration);
 			view.initialize(content);
 			return view as unknown as TextDocumentView;
 		}
@@ -631,18 +632,18 @@ describe("TextDomain benchmarks", () => {
 			return view.root;
 		}
 
-		/** The SharedTree factory the summary-size and load benchmarks build on. */
-		const wholeDocumentTreeFactory = configuredSharedTree({
-			forest: ForestTypeOptimized,
-		}).getFactory();
+		/** The SharedTree factory the summary-size and load benchmarks build on, for a given forest. */
+		const getTreeFactory = (forest: ForestType) =>
+			configuredSharedTree({ forest }).getFactory();
 
 		/**
-		 * Builds an attached text document of `content` and returns its attach summary together with the
-		 * `idCompressor` that produced it.
+		 * Builds an attached text document of `content` on `forest` and returns its attach summary together
+		 * with the `idCompressor` that produced it.
 		 */
 		function getTextAttachSummary<TSchema extends ImplicitFieldSchema>(
 			viewConfiguration: TreeViewConfiguration<TSchema>,
 			content: InsertableTreeFieldFromImplicitField<TSchema>,
+			forest: ForestType,
 		): {
 			readonly summary: ISummaryTree;
 			readonly idCompressor: ReturnType<typeof createIdCompressor>;
@@ -651,7 +652,7 @@ describe("TextDomain benchmarks", () => {
 			const runtime = new MockFluidDataStoreRuntime({ idCompressor });
 			const containerRuntimeFactory = new MockContainerRuntimeFactory();
 			containerRuntimeFactory.createContainerRuntime(runtime);
-			const tree = wholeDocumentTreeFactory.create(runtime, "tree");
+			const tree = getTreeFactory(forest).create(runtime, "tree");
 			tree.connect({
 				deltaConnection: runtime.createDeltaConnection(),
 				objectStorage: new MockStorage(),
@@ -673,6 +674,8 @@ describe("TextDomain benchmarks", () => {
 		 */
 		interface TextDomain {
 			readonly name: string;
+			/** The forest this domain's documents are built on (used by the load benchmark's factory). */
+			readonly forest: ForestType;
 			/** Builds a hydrated document of `size` characters, whose root is a {@link TextRoot}. */
 			buildDocument(size: number): TextDocumentView;
 			/** Builds the forest of a `size` character document in isolation (no retained view). */
@@ -689,52 +692,69 @@ describe("TextDomain benchmarks", () => {
 			};
 		}
 
-		const textDomains: readonly TextDomain[] = [
-			{
-				name: "plain",
-				buildDocument: (size) =>
-					buildTextView(
-						plainTextViewConfiguration,
-						TextAsTree.Tree.fromString(makeTestString(size)),
-					),
-				buildForest: (size) =>
-					getForestOf(
+		// The forests swept: the optimized "chunked" forest the app ships with, and the reference
+		// "ObjectForest". Each text domain is built once per forest so the two can be compared side by side.
+		const forests = [
+			{ name: "chunked", forest: ForestTypeOptimized },
+			{ name: "object", forest: ForestTypeReference },
+		] as const;
+
+		const textDomains: readonly TextDomain[] = forests.flatMap(
+			({ name: forestName, forest }) => [
+				{
+					name: `plain (${forestName})`,
+					forest,
+					buildDocument: (size) =>
 						buildTextView(
 							plainTextViewConfiguration,
 							TextAsTree.Tree.fromString(makeTestString(size)),
+							forest,
 						),
-					),
-				makeUnhydratedRoot: (size) =>
-					TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
-				attachSummary: (size) =>
-					getTextAttachSummary(
-						plainTextViewConfiguration,
-						TextAsTree.Tree.fromString(makeTestString(size)),
-					),
-			},
-			{
-				name: "formatted",
-				buildDocument: (size) =>
-					buildTextView(
-						formattedTextViewConfiguration,
-						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
-					),
-				buildForest: (size) =>
-					getForestOf(
+					buildForest: (size) =>
+						getForestOf(
+							buildTextView(
+								plainTextViewConfiguration,
+								TextAsTree.Tree.fromString(makeTestString(size)),
+								forest,
+							),
+						),
+					makeUnhydratedRoot: (size) =>
+						TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+					attachSummary: (size) =>
+						getTextAttachSummary(
+							plainTextViewConfiguration,
+							TextAsTree.Tree.fromString(makeTestString(size)),
+							forest,
+						),
+				},
+				{
+					name: `formatted (${forestName})`,
+					forest,
+					buildDocument: (size) =>
 						buildTextView(
 							formattedTextViewConfiguration,
 							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+							forest,
 						),
-					),
-				makeUnhydratedRoot: (size) =>
-					FormattedTextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
-				attachSummary: (size) =>
-					getTextAttachSummary(
-						formattedTextViewConfiguration,
-						FormattedTextAsTree.Tree.fromString(makeTestString(size)),
-					),
-			},
-		];
+					buildForest: (size) =>
+						getForestOf(
+							buildTextView(
+								formattedTextViewConfiguration,
+								FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+								forest,
+							),
+						),
+					makeUnhydratedRoot: (size) =>
+						FormattedTextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
+					attachSummary: (size) =>
+						getTextAttachSummary(
+							formattedTextViewConfiguration,
+							FormattedTextAsTree.Tree.fromString(makeTestString(size)),
+							forest,
+						),
+				},
+			],
+		);
 
 		/**
 		 * Types `count` single characters at the middle of the document. One `insertAt` per character,
@@ -948,16 +968,12 @@ describe("TextDomain benchmarks", () => {
 											),
 											objectStorage: new MockStorage(summaryTree),
 										};
-										// Load with the same compressor that produced the summary.
+										// Load with the same compressor that produced the summary, on the domain's forest.
 										const datastoreRuntime = new MockFluidDataStoreRuntime({
 											idCompressor,
 										});
-										await wholeDocumentTreeFactory.load(
-											datastoreRuntime,
-											"test",
-											services,
-											wholeDocumentTreeFactory.attributes,
-										);
+										const factory = getTreeFactory(domain.forest);
+										await factory.load(datastoreRuntime, "test", services, factory.attributes);
 									});
 								},
 							}),
