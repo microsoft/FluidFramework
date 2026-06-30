@@ -876,7 +876,7 @@ describe("sharedTreeView", () => {
 		// A do-nothing post-processor used to demonstrate the public -> internal conversion: it is created from an
 		// identity change processor, and the checkout should extract that same processor back out and inject it at start time.
 		const noopChangeProcessor: TransactionChangeProcessor = {
-			applicability: ChangeProcessorApplicability.Outermost,
+			applicability: ChangeProcessorApplicability.IfOutermost,
 			processChange: (change) => change,
 		};
 		const noopPostProcessor = createTransactionPostProcessor(noopChangeProcessor);

@@ -234,7 +234,7 @@ export enum ChangeProcessorApplicability {
 	 * additional effect. Note that two sibling (sequential) nested transactions are each "outermost" within their own
 	 * subtree, so each will invoke the processor.
 	 */
-	Outermost,
+	IfOutermost,
 	/**
 	 * Invoke the processor every time a transaction that supplied it is committed, including nested transactions.
 	 */
@@ -367,7 +367,7 @@ export class SquashingTransactionStack<
 			requested: ChangeProcessor<TChange> | undefined,
 		): ChangeProcessor<TChange> | undefined => {
 			if (
-				requested?.applicability === ChangeProcessorApplicability.Outermost &&
+				requested?.applicability === ChangeProcessorApplicability.IfOutermost &&
 				postProcessorStack.includes(requested)
 			) {
 				return undefined;

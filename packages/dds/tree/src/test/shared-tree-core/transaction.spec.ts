@@ -445,7 +445,7 @@ describe("SquashingTransactionStacks", () => {
 		it("is not invoked when the transaction is aborted", () => {
 			// Setup
 			const { transaction, postProcessor, received } = createWithSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 			);
 			transaction.start({ postProcessor });
 			editBranch(transaction.activeBranch, "A");
@@ -460,7 +460,7 @@ describe("SquashingTransactionStacks", () => {
 		it(`invokes an "outermost" post-processor once for the outermost transaction started`, () => {
 			// Setup
 			const { transaction, postProcessor, received } = createWithSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 			);
 			transaction.start({ postProcessor });
 			editBranch(transaction.activeBranch, "A");
@@ -485,7 +485,7 @@ describe("SquashingTransactionStacks", () => {
 		it(`invokes the "outermost" post-processor for an inner transaction when the outer has no post-processor`, () => {
 			// Setup
 			const { transaction, postProcessor, received } = createWithSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 			);
 			transaction.start(); // outer transaction without a post-processor
 			editBranch(transaction.activeBranch, "A");
@@ -513,12 +513,12 @@ describe("SquashingTransactionStacks", () => {
 			const branch = createBranch();
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 			const outerOutermost = createSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 				received,
 				"outer",
 			);
 			const innerOutermost = createSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 				received,
 				"inner",
 			);
@@ -611,7 +611,7 @@ describe("SquashingTransactionStacks", () => {
 			const branch = createBranch();
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 			const postProcessor = createSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 				received,
 				"outermost",
 			);
@@ -650,7 +650,7 @@ describe("SquashingTransactionStacks", () => {
 			const branch = createBranch();
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
 			const postProcessor = createSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 				received,
 				"outermost",
 			);
@@ -691,7 +691,7 @@ describe("SquashingTransactionStacks", () => {
 				"always",
 			);
 			const outermost = createSpyProcessor(
-				ChangeProcessorApplicability.Outermost,
+				ChangeProcessorApplicability.IfOutermost,
 				received,
 				"outermost",
 			);
@@ -732,7 +732,7 @@ describe("SquashingTransactionStacks", () => {
 			// A post-processor that replaces the squashed change with an empty change.
 			const replacement = defaultChangeFamily.rebaser.compose([]);
 			const postProcessor: ChangeProcessor<DefaultChangeset> = {
-				applicability: ChangeProcessorApplicability.Outermost,
+				applicability: ChangeProcessorApplicability.IfOutermost,
 				processChange: () => replacement,
 			};
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
