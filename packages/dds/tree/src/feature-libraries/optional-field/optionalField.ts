@@ -395,7 +395,7 @@ export interface OptionalFieldEditor extends FieldEditor<OptionalChangeset> {
 
 	/**
 	 * Creates a change which sets the field's content to the node already in the field.
-	 * The intial change has no effect, but will ensure that the node is in this field
+	 * The initial change has no effect, but will ensure that the node is in this field
 	 * after rebasing over other changes.
 	 * This is only valid to create if the field is not empty.
 	 * @param pinId - The ID to use for moving the current content.
