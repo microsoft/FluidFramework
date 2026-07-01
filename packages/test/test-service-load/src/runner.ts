@@ -70,6 +70,7 @@ async function main(): Promise<void> {
 		.requiredOption("-s, --seed <number>", "Seed for this runners random number generator")
 		.requiredOption("-o, --outputDir <path>", "Path for log output files")
 		.option("-e, --driverEndpoint <endpoint>", "Which endpoint should the driver target?")
+		.option("--driverTenantName <name>", "The tenant name for the driver")
 		.option(
 			"-l, --log <filter>",
 			"Filter debug logging. If not provided, uses DEBUG env variable.",
@@ -80,6 +81,7 @@ async function main(): Promise<void> {
 
 	const driver: TestDriverTypes = commander.driver;
 	const endpoint: DriverEndpoint | undefined = commander.driverEndpoint;
+	const tenantName: string | undefined = commander.driverTenantName;
 	const profileName: string = commander.profile;
 	const url: string = commander.url;
 	const runId: number = commander.runId;
@@ -97,6 +99,7 @@ async function main(): Promise<void> {
 		runId,
 		driverType: driver,
 		driverEndpointName: endpoint,
+		driverTenantName: tenantName,
 		profile: profileName,
 	});
 

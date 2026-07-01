@@ -98,6 +98,7 @@ const main = async (): Promise<void> => {
 	const { logger, flush } = await createLogger(outputDir, "orchestrator", {
 		driverType: testDriver.type,
 		driverEndpointName: testDriver.endpointName,
+		driverTenantName: testDriver.tenantName,
 		profile: profileName,
 		runId: undefined,
 	});
