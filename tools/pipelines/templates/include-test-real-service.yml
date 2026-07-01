@@ -171,6 +171,8 @@ stages:
         - checkout: ff_pipeline_host
           path: $(FFPipelineHostDirectory)
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         # ADO doesn't support checking out refs that are determined at pipeline queue time as ours likely would be
         # (where the ref is a function of one of the pipeline resource inputs). See docs here:
