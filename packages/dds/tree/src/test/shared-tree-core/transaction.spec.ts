@@ -531,8 +531,8 @@ describe("SquashingTransactionStacks", () => {
 			transaction.commit(); // inner commit
 
 			// Verify
-			// The inner transaction is the outermost one that supplied specific
-			// post-processor, so it is post-processed when committed.
+			// The inner transaction is the outermost one that supplied that
+			// specific post-processor, so it is post-processed when committed.
 			assert.equal(received.length, 1);
 			assert.deepEqual(
 				received.map((r) => r.processor),
@@ -543,8 +543,8 @@ describe("SquashingTransactionStacks", () => {
 			transaction.commit(); // outer commit
 
 			// Verify
-			// The outermost transaction supplied unique post-processor, so
-			// committing outer does invoke post-processor.
+			// The outermost transaction supplied a unique post-processor, so
+			// committing outer does invoke that post-processor.
 			assert.equal(received.length, 2);
 			assert.deepEqual(
 				received.map((r) => r.processor),
