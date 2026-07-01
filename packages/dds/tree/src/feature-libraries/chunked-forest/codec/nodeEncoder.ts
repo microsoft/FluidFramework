@@ -28,6 +28,7 @@ import {
 	type EncodedChunkShape,
 	type EncodedFieldShape,
 	type EncodedValueShape,
+	type EncodedChunkShapeVTextExperimental,
 } from "./format/index.js";
 
 /**

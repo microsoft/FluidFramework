@@ -118,13 +118,12 @@ function makeFieldBatchCodec(
 		},
 		decode: (
 			data: EncodedFieldBatchV1OrV2,
-			fieldBatchContext: FieldBatchEncodingContext,
+			fieldBatchContext: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
 			return decode(data, {
 				idCompressor: fieldBatchContext.idCompressor,
-				originatorId: fieldBatchContext.originatorId,
-				isSummary: false,
+				resolveEncodedId: fieldBatchContext.resolveEncodedId,
 			}).map((chunk) => chunk.cursor());
 		},
 		schema: format,
@@ -135,7 +134,7 @@ function makeFieldBatchCodec(
 			// For experimental (string) versions, provide a stable floor entry to satisfy this
 			// while the experimental entry itself uses minVersionForCollab: undefined.
 			minVersionForCollab: lowestMinVersionForCollab,
-			formatVersion: version,
+			formatVersion: isExperimental ? FieldBatchFormatVersion.v1 : version,
 			codec: {
 				encode: (
 					data: FieldBatch,

@@ -26,6 +26,7 @@ import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunk
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
+	FieldBatchDecodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
@@ -98,6 +99,7 @@ import {
 } from "../../../testTrees.js";
 import {
 	assertIsSessionId,
+	fieldCursorFromInsertable,
 	makeTestFieldBatchContexts,
 	testIdCompressor,
 } from "../../../utils.js";
@@ -479,11 +481,13 @@ describe("schemaBasedEncoding", () => {
 		const decodeRoundTrip = (
 			encoded: EncodedFieldBatchV2 | EncodedFieldBatchVTextExperimental,
 		): ReturnType<typeof decode> => {
-			const decoded = decode(encoded as unknown as Parameters<typeof decode>[0], {
-				idCompressor: testIdCompressor,
-				originatorId: testIdCompressor.localSessionId,
-				isSummary: false,
-			});
+			const decoded = decode(
+				encoded as unknown as Parameters<typeof decode>[0],
+				FieldBatchDecodingContext.forOp({
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				}),
+			);
 			assert.equal(decoded.length, 1);
 			return decoded;
 		};
@@ -654,7 +658,7 @@ describe("schemaBasedEncoding", () => {
 				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
 				testIdCompressor,
 				mockIncEncoder,
-				false,
+				true,
 			);
 
 			assert.equal(countSpecializedShapes(encoded), 1);
@@ -708,7 +712,7 @@ describe("schemaBasedEncoding", () => {
 				[fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc)],
 				testIdCompressor,
 				incEncoder,
-				false,
+				true,
 			);
 
 			assert.equal(countSpecializedShapes(encoded), 1);
@@ -892,7 +896,7 @@ describe("schemaBasedEncoding", () => {
 				[cursorForJsonableTreeField(tree)],
 				testIdCompressor,
 				incEncoder,
-				false,
+				true,
 			);
 
 			// Without the fix, the repeated body value would have been folded into a specialized

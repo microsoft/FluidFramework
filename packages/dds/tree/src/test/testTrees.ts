@@ -62,7 +62,7 @@ import {
 	permissiveStoredSchemaGenerationOptions,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
-import { FormattedTextAsTree } from "../text/index.js";
+import { FormattedTextAsTreeDefault } from "../text/index.js";
 import { brand, Breakable } from "../util/index.js";
 
 // eslint-disable-next-line import-x/no-internal-modules
@@ -297,19 +297,19 @@ export const testSimpleTrees: readonly TestSimpleTree[] = [
 
 export const testTrees: readonly TestTree[] = [
 	...testSimpleTrees.map(convertSimpleTreeTest),
-	// FormattedTextAsTree.Tree includes LineTag enum types (multiple empty objects with no
+	// FormattedTextAsTreeDefault.Tree includes LineTag enum types (multiple empty objects with no
 	// distinguishing fields) which require permissive schema options.
 	{
 		name: "formatted-text",
 		schemaData: toStoredSchema(
-			FormattedTextAsTree.Tree,
+			FormattedTextAsTreeDefault.Tree,
 			permissiveStoredSchemaGenerationOptions,
 		),
 		treeFactory: (): JsonableTree[] =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(
-					FormattedTextAsTree.Tree,
-					FormattedTextAsTree.Tree.fromString("Hello, world! This is formatted text."),
+					FormattedTextAsTreeDefault.Tree,
+					FormattedTextAsTreeDefault.Tree.fromString("Hello, world! This is formatted text."),
 				),
 			),
 		policy: defaultSchemaPolicy,
@@ -317,14 +317,14 @@ export const testTrees: readonly TestTree[] = [
 	{
 		name: "formatted-text-uniform",
 		schemaData: toStoredSchema(
-			FormattedTextAsTree.Tree,
+			FormattedTextAsTreeDefault.Tree,
 			permissiveStoredSchemaGenerationOptions,
 		),
 		treeFactory: (): JsonableTree[] =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(
-					FormattedTextAsTree.Tree,
-					FormattedTextAsTree.Tree.fromString("a".repeat(20)),
+					FormattedTextAsTreeDefault.Tree,
+					FormattedTextAsTreeDefault.Tree.fromString("a".repeat(20)),
 				),
 			),
 		policy: defaultSchemaPolicy,
