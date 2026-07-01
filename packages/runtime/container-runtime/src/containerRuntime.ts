@@ -152,8 +152,8 @@ import type {
 	IEventSampler,
 	IFluidErrorBase,
 	ITelemetryGenericEventExt,
-	TelemetryLoggerExt,
 	MonitoringContext,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import {
 	DataCorruptionError,
@@ -2869,7 +2869,7 @@ export class ContainerRuntime
 		// @see {@link ContainerRuntime.loadRuntime2} (awaits `applyStashedOpsAt`)
 		assert(
 			!this.pendingStateManager.isApplyingStashedOps,
-			"replayPendingStates must not be called during stashed-op apply window",
+			0xd01 /* replayPendingStates must not be called during stashed-op apply window */,
 		);
 
 		// Replaying is an internal operation and we don't want to generate noise while doing it.

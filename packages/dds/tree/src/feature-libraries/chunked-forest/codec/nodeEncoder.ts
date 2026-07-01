@@ -4,7 +4,6 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { isFinalId, isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -24,10 +23,11 @@ import {
 	type NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
-import type {
-	EncodedChunkShape,
-	EncodedFieldShape,
-	EncodedValueShape,
+import {
+	SpecialField,
+	type EncodedChunkShape,
+	type EncodedFieldShape,
+	type EncodedValueShape,
 } from "./format/index.js";
 
 /**
@@ -69,21 +69,9 @@ export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements N
 	}
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, context: EncoderContext): Value {
-		if (this.value === 0) {
+		if (this.value === SpecialField.Identifier) {
 			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
-			if (isStableId(cursor.value)) {
-				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
-				if (sessionSpaceCompressedId !== undefined) {
-					const opSpaceId = context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
-					// Summaries can only contain finalized op-space ids unless they also include the originator's session id somewhere.
-					// This is not the case for forest summaries at the time of writing, so non-finalized ids are instead written using
-					// their long form (by falling through to the original cursor value).
-					// A scenario where such ids can appear in the summary is in the attach summary of a tree being attached to an already-attached container.
-					if (!context.isSummary || isFinalId(opSpaceId)) {
-						return opSpaceId;
-					}
-				}
-			}
+			return context.encodePossiblyCompressedId(cursor.value);
 		}
 		return cursor.value;
 	}

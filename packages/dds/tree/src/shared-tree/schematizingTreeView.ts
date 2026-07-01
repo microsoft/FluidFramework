@@ -529,5 +529,9 @@ export class SchematizingSimpleTreeView<
 		this.checkout.rebaseOnto(context);
 	}
 
+	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
+	}
+
 	// #endregion Branching
 }

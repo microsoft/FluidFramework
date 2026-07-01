@@ -1076,6 +1076,7 @@ export interface RunTransaction {
 // @alpha @input
 export interface RunTransactionParams {
     readonly label?: unknown;
+    readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
@@ -1522,12 +1523,12 @@ export namespace TableSchema {
     export function column<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateColumnOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.ColumnSchemaBase<TUserScope, TCell, TProps>;
-    // @input
+    // @deprecated @input
     export interface InsertColumnsParameters<TColumn extends ImplicitAllowedTypes> {
         readonly columns: InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[];
         readonly index?: number | undefined;
     }
-    // @input
+    // @deprecated @input
     export interface InsertRowsParameters<TRow extends ImplicitAllowedTypes> {
         readonly index?: number | undefined;
         readonly rows: InsertableTreeNodeFromImplicitAllowedTypes<TRow>[];
@@ -1542,7 +1543,7 @@ export namespace TableSchema {
     export function row<const TUserScope extends string, const TCell extends ImplicitAllowedTypes, const TProps extends ImplicitFieldSchema>(params: System_TableSchema.CreateRowOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell> & {
         readonly props: TProps;
     }): System_TableSchema.RowSchemaBase<TUserScope, TCell, TProps>;
-    // @input
+    // @deprecated @input
     export interface SetCellParameters<TCell extends ImplicitAllowedTypes, TColumn extends ImplicitAllowedTypes, TRow extends ImplicitAllowedTypes> {
         readonly cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>;
         readonly key: CellKey<TColumn, TRow>;
@@ -1555,8 +1556,14 @@ export namespace TableSchema {
         getColumn(index: number): TreeNodeFromImplicitAllowedTypes<TColumn> | undefined;
         getRow(id: string): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
         getRow(index: number): TreeNodeFromImplicitAllowedTypes<TRow> | undefined;
+        insertColumns(columns: readonly InsertableTreeNodeFromImplicitAllowedTypes<TColumn>[], index?: number): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+        // @deprecated
         insertColumns(params: InsertColumnsParameters<TColumn>): TreeNodeFromImplicitAllowedTypes<TColumn>[];
+        insertRows(rows: readonly InsertableTreeNodeFromImplicitAllowedTypes<TRow>[], index?: number): TreeNodeFromImplicitAllowedTypes<TRow>[];
+        // @deprecated
         insertRows(params: InsertRowsParameters<TRow>): TreeNodeFromImplicitAllowedTypes<TRow>[];
+        removeCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
+        // @deprecated
         removeCell(key: CellKey<TColumn, TRow>): TreeNodeFromImplicitAllowedTypes<TCell> | undefined;
         removeColumns(index?: number | undefined, count?: number | undefined): TreeNodeFromImplicitAllowedTypes<TColumn>[];
         removeColumns(columns: readonly TreeNodeFromImplicitAllowedTypes<TColumn>[]): TreeNodeFromImplicitAllowedTypes<TColumn>[];
@@ -1565,6 +1572,8 @@ export namespace TableSchema {
         removeRows(rows: readonly TreeNodeFromImplicitAllowedTypes<TRow>[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         removeRows(rows: readonly string[]): TreeNodeFromImplicitAllowedTypes<TRow>[];
         readonly rows: System_TableSchema.RearrangeableList<TRow>;
+        setCell(row: string | number | TreeNodeFromImplicitAllowedTypes<TRow>, column: string | number | TreeNodeFromImplicitAllowedTypes<TColumn>, cell: InsertableTreeNodeFromImplicitAllowedTypes<TCell>): void;
+        // @deprecated
         setCell(params: SetCellParameters<TCell, TColumn, TRow>): void;
     }
     export function table<const TUserScope extends string, const TCell extends ImplicitAllowedTypes>(params: System_TableSchema.TableFactoryOptionsBase<TUserScope, SchemaFactoryBeta<TUserScope>, TCell>): System_TableSchema.TableSchemaBase<TUserScope, TCell, System_TableSchema.ColumnSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>, System_TableSchema.RowSchemaBase<TUserScope, TCell, System_TableSchema.DefaultPropsType>>;
@@ -1643,6 +1652,10 @@ export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstra
 export type TransactionLabels = Set<unknown> & {
     tree?: LabelTree;
 };
+
+// @alpha @sealed @system
+export interface TransactionPostProcessor extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {
+}
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
@@ -1760,6 +1773,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     // (undocumented)
     fork(): TreeBranchAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    isMissingEditsFrom(branch: TreeBranch): boolean;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>, params?: RunTransactionParams): TransactionResultExt<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatus | void, params?: RunTransactionParams): TransactionResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>, params?: RunTransactionParams): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;

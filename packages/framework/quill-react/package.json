@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/quill-react",
-	"version": "2.103.0",
+	"version": "2.111.0",
 	"description": "Utilities for integrating content powered by the Fluid Framework into React applications that utilize the Quill rich text editor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -119,7 +119,7 @@
 		"@types/react": "^18.3.11",
 		"@types/react-dom": "^18.3.1",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

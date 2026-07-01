@@ -16,12 +16,12 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type IEventSampler,
-	type TelemetryLoggerExt,
-	type ISampledTelemetryLogger,
 	createChildLogger,
 	createSampledLogger,
 	formatTick,
+	type IEventSampler,
+	type ISampledTelemetryLogger,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
