@@ -50,8 +50,16 @@ export default class GenerateBundleAnalysisRepo extends BaseCommand<
 		}),
 		"package-dir": Flags.string({
 			description:
-				"Package root whose webpack bundles are built and whose analyzer.json is collected.",
+				"Package root whose 'build:compile' is run to compile the package and its dependencies.",
 			default: ".",
+		}),
+		"webpack-dir": Flags.string({
+			description:
+				"Directory whose 'webpack' build is run and whose analyzer.json is collected. Defaults " +
+				"to --package-dir. Set this when the webpack config lives in a different directory than " +
+				"the package being compiled (e.g. a scenario subdirectory that reuses its parent " +
+				"package's compiled output). The collected stats are saved under this directory's " +
+				"compareBundlesOutput.",
 		}),
 		...BaseCommand.flags,
 	} as const;
@@ -60,11 +68,13 @@ export default class GenerateBundleAnalysisRepo extends BaseCommand<
 		const { flags } = this;
 
 		const packageDir = resolve(flags["package-dir"]);
-		const analysisDir = resolve(packageDir, "compareBundlesOutput", "analysis");
+		const webpackDir = resolve(flags["webpack-dir"] ?? flags["package-dir"]);
+		const analysisDir = resolve(webpackDir, "compareBundlesOutput", "analysis");
 
 		const common = {
 			forceCleanBuild: false,
 			packageDir,
+			webpackDir,
 			analysisDir,
 		};
 
