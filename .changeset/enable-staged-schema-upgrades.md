@@ -11,9 +11,12 @@ making it easier to separate code rollout from feature rollout.
 
 ### API
 
-Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the configuration object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
+Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the configuration
+object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 
-The `enabledUpgrades` list contains `SchemaUpgrade` objects obtained from schema factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature) or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
+The `enabledUpgrades` list contains `SchemaUpgrade` objects obtained from schema
+factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature)
+or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
 ```typescript
 const stagedType = SchemaFactoryBeta.staged(NewNodeSchema);
@@ -32,12 +35,15 @@ const view = alphaTree.viewWith(
 ```
 
 When configured `enabledUpgrades` is omitted or empty, staged schema upgrades remain disabled.
-The document's stored schema continues to allow only the schema that has already been enabled, so clients can understand the staged schema in code but cannot write data that depends on it yet.
+The document's stored schema continues to allow only the schema that has already been enabled,
+so clients can understand the staged schema in code but cannot write data that depends on it yet.
 
-Advanced callers can also provide `storedSchemaGenerationOptions` directly in `TreeViewConfigurationAlpha` to control staged inclusion with custom policy functions.
+Advanced callers can also provide `storedSchemaGenerationOptions` directly in `TreeViewConfigurationAlpha` to control
+staged inclusion with custom policy functions.
 `enabledUpgrades` and `storedSchemaGenerationOptions` are mutually exclusive and cannot both be provided.
 
-For example, advanced applications can provide custom policy functions to decide which staged upgrades to include based on their own criteria:
+For example, advanced applications can provide custom policy functions to decide which staged upgrades to
+include based on their own criteria:
 
 ```typescript
 const stagedType = SchemaFactoryBeta.staged(NewNodeSchema);
@@ -58,8 +64,8 @@ const view = tree.viewWith(
 ```
 
 This approach is useful for scenarios such as:
+
 - Fine-grained rollout control based on feature sets rather than individual feature flags
-- A/B testing different schema configurations
 - Integration test suites that want to exercise specific schema states
 
 #### Pre-built Policy Options
@@ -107,14 +113,18 @@ validateAllFeatures(testView.root);
 ```
 
 The permissive option includes all staged schema upgrades, allowing applications to test future document shapes.
-It is useful in test and validation scenarios where you want to create or upgrade documents with all possible staged features enabled, verifying that the application handles these future schemas correctly.
+It is useful in test and validation scenarios where you want to create or upgrade documents with all possible staged
+features enabled, verifying that the application handles these future schemas correctly.
 
 ### Production
 
 For production rollout, applications can use feature flags to control when staged schema upgrades are enabled.
-Previously, enabling the staged schema in stored schema required a code change that removed the staged schema wrapper from the schema definition.
-With this API, applications can keep the staged schema in code and use construction-time view configuration to decide at runtime which documents should enable it.
-For example, an application that is adding checklist items to a task document can deploy clients that understand the new checklist schema first, then enable the stored-schema upgrade only for documents where the feature flag is enabled:
+Previously, enabling the staged schema in stored schema required a code change that removed the staged schema
+wrapper from the schema definition.
+With this API, applications can keep the staged schema in code and use construction-time view configuration to
+decide at runtime which documents should enable it.
+For example, an application that is adding checklist items to a task document can deploy clients that understand the
+new checklist schema first, then enable the stored-schema upgrade only for documents where the feature flag is enabled:
 
 ```typescript
 const sf = new SchemaFactoryBeta("example-app");
@@ -158,18 +168,25 @@ if (view.compatibility.canInitialize) {
 ```
 
 Once a staged schema upgrade has been enabled in a document's stored schema, that change is permanent for that document.
-If `upgradeSchema` is later called from a view configured without a previously enabled upgrade token (including when a client loads an already-upgraded document without configuring that token), the call throws a `UsageError`.
+If `upgradeSchema` is later called from a view configured without a previously enabled upgrade token (including when
+a client loads an already-upgraded document without configuring that token), the call throws a `UsageError`.
 The stored schema already contains the upgraded members and the new target would narrow it, which is not permitted.
 
-In practice this means that when a staged schema upgrade is enabled via a feature flag, subsequent `upgradeSchema` calls must use views configured with that token for as long as any document may have already been upgraded.
-Once all documents have been upgraded, the staged schema wrapper can be removed entirely, at which point the token is no longer needed.
+In practice this means that when a staged schema upgrade is enabled via a feature flag, subsequent `upgradeSchema`
+calls must use views configured with that token for as long as any document may have already been upgraded.
+Once all documents have been upgraded, the staged schema wrapper can be removed entirely, at which point the token
+is no longer needed.
 
-This also means partial rollback is currently difficult in practice: callers usually cannot target only documents that have not already been upgraded, so disabling the flag after some upgrades have happened can still lead to `UsageError` if `upgradeSchema` is called from views configured without previously enabled tokens.
+This also means partial rollback is currently difficult in practice: callers usually cannot target only documents
+that have not already been upgraded, so disabling the flag after some upgrades have happened can still
+lead to `UsageError` if `upgradeSchema` is called from views configured without previously enabled tokens.
 
 ### Testing
 
-These APIs can be used to test scenerios emulating when future application versions create documents which allow or contain the staged types.
-Without such testing, it is often impractical to ensure staging accomplished its goal of preparing the current version of the application (and not just the schema) to be able to handle documents with the new types.
+These APIs can be used to test scenarios emulating when future application versions create documents which allow
+or contain the staged types.
+Without such testing, it is often impractical to ensure staging accomplished its goal of preparing the current
+version of the application (and not just the schema) to be able to handle documents with the new types.
 
 ```typescript
 const currentView = currentAppTree.viewWith(
