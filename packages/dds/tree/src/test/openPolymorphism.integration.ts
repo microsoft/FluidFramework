@@ -10,7 +10,6 @@ import { validateUsageError } from "@fluidframework/test-runtime-utils/internal"
 import { Tree } from "../shared-tree/index.js";
 import {
 	allowUnused,
-	Component,
 	evaluateLazySchema,
 	SchemaFactory,
 	TreeBeta,
@@ -22,6 +21,7 @@ import {
 	type Unhydrated,
 } from "../simple-tree/index.js";
 import type { requireAssignableTo } from "../util/index.js";
+import { Component } from "../componentApi.js";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.

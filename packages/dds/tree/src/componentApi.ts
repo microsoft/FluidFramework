@@ -5,7 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { getOrCreate } from "../../util/index.js";
+import { getOrCreate } from "./util/index.js";
 
 /**
  * Utilities for composing application "components" which contribute to a shared configuration.
@@ -26,6 +26,8 @@ import { getOrCreate } from "../../util/index.js";
  * Because the configuration is provided lazily, components may reference (including recursively) types contributed by
  * other components, as long as nothing evaluates the lazy references until composition has completed.
  * Use {@link Component.composeComponents} to combine a set of components into a {@link Component.ComposedComponents}.
+ *
+ * See {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts|openPolymorphism.integration.ts} for worked examples of this pattern.
  *
  * @privateRemarks
  * The examples and integration tests for this pattern live in `openPolymorphism.integration.ts`.

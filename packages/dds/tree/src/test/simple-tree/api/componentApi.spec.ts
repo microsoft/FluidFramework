@@ -7,7 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { Component } from "../../../simple-tree/index.js";
+import { Component } from "../../../componentApi.js";
 
 /**
  * Unit tests for the {@link Component} composition utilities.
