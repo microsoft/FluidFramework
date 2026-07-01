@@ -624,6 +624,9 @@ describe("TextDomain benchmarks", () => {
 		): TextDocumentView {
 			const view = createIndependentTreeAlpha({ forest }).viewWith(viewConfiguration);
 			view.initialize(content);
+			// `viewWith` types the view over the caller's `TSchema`, but the two domains use different node
+			// schemas whose nodes both implement the `TextRoot` editing surface. The compiler can't prove
+			// that for the open generic, so erase through `unknown` to the shared `TextDocumentView` handle.
 			return view as unknown as TextDocumentView;
 		}
 
@@ -718,6 +721,8 @@ describe("TextDomain benchmarks", () => {
 								forest,
 							),
 						),
+					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
+					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
 						TextAsTree.Tree.fromString(makeTestString(size)) as unknown as TextRoot,
 					attachSummary: (size) =>
@@ -744,6 +749,8 @@ describe("TextDomain benchmarks", () => {
 								forest,
 							),
 						),
+					// The concrete schema node implements the `TextRoot` surface, but the compiler can't see it
+					// as that structural type, so erase through `unknown`.
 					makeUnhydratedRoot: (size) =>
 						FormattedTextAsTreeDefault.Tree.fromString(
 							makeTestString(size),
