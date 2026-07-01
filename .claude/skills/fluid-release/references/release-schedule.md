@@ -4,6 +4,7 @@ Dates are in MM/DD/YY format. The schedule is ordered newest-first.
 
 | Proposed Date | Released Date | Release Type | Release Ver | "main" Ver | Release Notes |
 |---------------|---------------|--------------|-------------|------------|---------------|
+| 06/22/26 | | minor+beta/legacy breaks | 2.110.0 | 2.111.0 | |
 | 06/06/26 | | minor | 2.103.0 | 2.110.0 | |
 | 05/26/26 | | minor | 2.102.0 | 2.103.0 | |
 | 05/11/26 | | minor | 2.101.0 | 2.102.0 | |
