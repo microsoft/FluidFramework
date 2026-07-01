@@ -3,7 +3,7 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Add `Component` utilities for composing open-polymorphic schema
+Add Component utilities for composing open-polymorphic schema
 
 A new `@alpha` `Component` namespace is now exported from `@fluidframework/tree` (and re-exported from `fluid-framework`). It provides utilities for composing independently authored application "components" that contribute to a shared configuration, which is useful for implementing ["open polymorphism"](https://en.wikipedia.org/wiki/Polymorphism_(computer_science)) schema patterns where the set of allowed types for a field or collection can be extended by separate libraries.
 
