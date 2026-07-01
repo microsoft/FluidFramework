@@ -14,6 +14,8 @@ import type {
 	IFluidDataStoreContext,
 } from "@fluidframework/runtime-definitions/internal";
 
+export { getPresenceFromContainer } from "@fluid-internal/presence-runtime/extension";
+
 function assertContextHasExtensionProvider(
 	context: IFluidDataStoreContext,
 ): asserts context is FluidDataStoreContextInternal {

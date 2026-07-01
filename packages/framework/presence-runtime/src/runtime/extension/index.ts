@@ -4,3 +4,4 @@
  */
 
 export { ContainerPresenceFactory, extensionId } from "./containerPresence.js";
+export { getPresenceFromContainer } from "./getPresenceFromContainer.js";

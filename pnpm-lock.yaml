@@ -2667,28 +2667,28 @@ importers:
 
   examples/data-objects/inventory-app:
     dependencies:
-      '@fluid-example/example-utils':
+      '@fluidframework/azure-client':
         specifier: workspace:~
-        version: link:../../utils/example-utils
+        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/tree':
+      '@fluidframework/tinylicious-driver':
         specifier: workspace:~
-        version: link:../../../packages/dds/tree
+        version: link:../../../packages/drivers/tinylicious-driver
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../utils/webpack-fluid-loader
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -2703,7 +2703,7 @@ importers:
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -2713,6 +2713,12 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.15)
+      assert:
+        specifier: ^2.0.0
+        version: 2.1.0
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)
@@ -2725,6 +2731,9 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@26.1.0)
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.103.0)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -2734,12 +2743,21 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
       source-map-loader:
         specifier: ^5.0.0
         version: 5.0.0(webpack@5.103.0)
+      start-server-and-test:
+        specifier: ^2.0.3
+        version: 2.0.8
+      tinylicious:
+        specifier: ^7.0.1
+        version: 7.0.1
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.1(typescript@5.4.5)(webpack@5.103.0)
@@ -3775,21 +3793,15 @@ importers:
 
   examples/data-objects/text-editor:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/quill-react':
         specifier: workspace:~
         version: link:../../../packages/framework/quill-react
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/test-runtime-utils':
+      '@fluidframework/tinylicious-driver':
         specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
+        version: link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3809,9 +3821,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../utils/webpack-fluid-loader
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -4397,18 +4406,12 @@ importers:
       '@fluidframework/presence':
         specifier: workspace:~
         version: link:../../../../packages/framework/presence
-      '@fluidframework/routerlicious-driver':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../../../packages/drivers/routerlicious-driver
-      '@fluidframework/telemetry-utils':
+        version: link:../../../../packages/runtime/runtime-utils
+      '@fluidframework/tinylicious-driver':
         specifier: workspace:~
-        version: link:../../../../packages/utils/telemetry-utils
-      assert:
-        specifier: ^2.0.0
-        version: 2.1.0
-      axios:
-        specifier: 1.15.1
-        version: 1.15.1(debug@4.4.3)
+        version: link:../../../../packages/drivers/tinylicious-driver
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -9603,6 +9606,9 @@ importers:
       '@fluidframework/core-utils':
         specifier: workspace:~
         version: link:../../common/core-utils
+      '@fluidframework/datastore':
+        specifier: workspace:~
+        version: link:../../runtime/datastore
       '@fluidframework/datastore-definitions':
         specifier: workspace:~
         version: link:../../runtime/datastore-definitions
@@ -9682,6 +9688,9 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -10067,6 +10076,18 @@ importers:
       '@fluid-internal/client-utils':
         specifier: workspace:~
         version: link:../../common/client-utils
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -10088,6 +10109,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/server-local-server':
         specifier: ^7.0.1
         version: 7.0.1
@@ -10134,6 +10158,9 @@ importers:
       '@fluidframework/local-driver-previous':
         specifier: npm:@fluidframework/local-driver@2.110.0
         version: '@fluidframework/local-driver@2.110.0'
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
@@ -10683,9 +10710,24 @@ importers:
 
   packages/drivers/tinylicious-driver:
     dependencies:
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -10695,6 +10737,12 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
       jsrsasign:
         specifier: ^11.1.1
         version: 11.1.1
@@ -11727,9 +11775,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(webpack-cli@5.1.4)
@@ -11745,6 +11790,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -11848,6 +11896,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11876,6 +11927,12 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -13804,9 +13861,18 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -13819,9 +13885,9 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../../drivers/routerlicious-driver
-      '@fluidframework/runtime-definitions':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -13847,9 +13913,6 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)
-      '@fluidframework/container-runtime':
-        specifier: workspace:~
-        version: link:../../runtime/container-runtime
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5))(eslint@9.39.1(jiti@2.6.1))(typescript@5.4.5)
@@ -14164,6 +14227,12 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -14173,6 +14242,9 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../framework/fluid-static
@@ -14188,9 +14260,9 @@ importers:
       '@fluidframework/odsp-driver-definitions':
         specifier: workspace:~
         version: link:../../drivers/odsp-driver-definitions
-      '@fluidframework/runtime-definitions':
+      '@fluidframework/runtime-utils':
         specifier: workspace:~
-        version: link:../../runtime/runtime-definitions
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -16014,9 +16086,15 @@ importers:
       '@fluidframework/devtools-core':
         specifier: workspace:~
         version: link:../devtools-core
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -20359,6 +20437,11 @@ packages:
 
   '@types/react-dom@18.3.3':
     resolution: {integrity: sha512-uTYkxTLkYp41nq/ULXyXMtkNT1vu5fXJoqad6uTNCOGat5t9cLgF4vMNLBXsTOXpdOI44XzKPY1M5RRm0bQHuw==}
+    peerDependencies:
+      '@types/react': ^18.0.0
+
+  '@types/react-dom@18.3.7':
+    resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
     peerDependencies:
       '@types/react': ^18.0.0
 
@@ -33182,6 +33265,16 @@ snapshots:
       '@types/react': 18.3.15
       '@types/react-dom': 18.3.3(@types/react@18.3.15)
 
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.15))(@types/react@18.3.15)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@testing-library/dom': 10.4.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.15
+      '@types/react-dom': 18.3.7(@types/react@18.3.15)
+
   '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.1)':
     dependencies:
       '@testing-library/dom': 10.4.1
@@ -33558,6 +33651,10 @@ snapshots:
   '@types/range-parser@1.2.7': {}
 
   '@types/react-dom@18.3.3(@types/react@18.3.15)':
+    dependencies:
+      '@types/react': 18.3.15
+
+  '@types/react-dom@18.3.7(@types/react@18.3.15)':
     dependencies:
       '@types/react': 18.3.15
 
