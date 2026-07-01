@@ -17,6 +17,130 @@ import { Component } from "../../../componentApi.js";
  * individual behaviors of the API in isolation.
  */
 describe("Component", () => {
+	// A trivial example that uses none of the lazy array collections.
+	it("Minimal self contained example", () => {
+		type MyComponent = string;
+		type MyComponentFactory = Component.Factory<{}, MyComponent>;
+
+		const a: MyComponentFactory = () => "a";
+		const b: MyComponentFactory = () => "b";
+
+		const composed = Component.composeComponents([a, b], (all) => all.components);
+
+		assert.deepEqual(composed.components, ["a", "b"]);
+	});
+
+	it("self contained demo", () => {
+		/**
+		 * Some arbitrary item type to collect from the components.
+		 */
+		interface MyItem {
+			readonly name: string;
+			readonly data: unknown;
+		}
+
+		interface MyComponent {
+			items?: Component.LazyArray<MyItem>;
+		}
+
+		interface InputConfig {
+			readonly includeUnstableFeatures: boolean;
+		}
+
+		interface ComposeConfig {
+			readonly input: InputConfig;
+			readonly lazy: () => LazyComposeConfig;
+		}
+
+		interface LazyComposeConfig {
+			/**
+			 * The items contributed by all components, lazily evaluated.
+			 * @remarks
+			 * Components can refer to (and capture) this array during construction,
+			 * but can't evaluate its items until after composition completes.
+			 */
+			readonly items: readonly (() => MyItem)[];
+		}
+
+		interface OutputConfig {
+			readonly items: readonly MyItem[];
+		}
+
+		type MyComponentFactory = Component.Factory<ComposeConfig, MyComponent>;
+
+		// Example showing how a component could use configuration settings when computing its output.
+		const unstableItem = { name: "unstable", data: 1 };
+		const unstableComponent: MyComponentFactory = (config) => ({
+			items: () => (config().input.includeUnstableFeatures ? [() => unstableItem] : []),
+		});
+
+		// Example showing how a component can consume composed configuration values co-recursively.
+		const recursiveComponent: MyComponentFactory = (config) => {
+			return {
+				items: () => [
+					Component.memoize(() => ({ name: "recursive", data: config().lazy().items })),
+				],
+			};
+		};
+
+		function myConfigure(
+			inputConfig: InputConfig,
+			allComponents: readonly MyComponentFactory[],
+		): OutputConfig {
+			const composed = Component.composeComponents(allComponents, (c) => {
+				const config: ComposeConfig = {
+					input: inputConfig,
+					lazy: () => lazy,
+				};
+				return config;
+			});
+
+			// At this point it is now legal to evaluate lazy values:
+			const lazy = {
+				items: composed.getComposed("items"),
+			};
+			const items = composed.config.lazy().items.map((x) => x());
+			const items2 = composed.getComposed("items");
+			assert.deepEqual(composed.config.lazy().items, items2);
+
+			return { items };
+		}
+
+		assert.deepEqual(myConfigure({ includeUnstableFeatures: true }, []).items, []);
+		assert.deepEqual(
+			myConfigure({ includeUnstableFeatures: false }, [unstableComponent]).items,
+			[],
+		);
+		assert.deepEqual(
+			myConfigure({ includeUnstableFeatures: true }, [unstableComponent]).items,
+			[unstableItem],
+		);
+
+		{
+			const composed = myConfigure({ includeUnstableFeatures: true }, [recursiveComponent]);
+			assert.equal(composed.items.length, 1);
+			const item = composed.items[0];
+			const data = item.data as (() => unknown)[];
+			assert.equal(data.length, 1);
+			const innerItem = data[0]() as MyItem;
+			assert.equal(innerItem, item);
+		}
+		{
+			const composed = myConfigure({ includeUnstableFeatures: true }, [
+				unstableComponent,
+				recursiveComponent,
+			]);
+			assert.equal(composed.items.length, 2);
+			assert.equal(composed.items[0], unstableItem);
+			const item = composed.items[1];
+			const data = item.data as (() => unknown)[];
+			assert.equal(data.length, 2);
+			assert.equal(data[0](), unstableItem);
+			const innerItem = data[1]() as MyItem;
+			assert.equal(innerItem, item);
+		}
+	});
+
 	// The composed configuration used by these tests.
 	interface TestConfig {
 		readonly items: readonly (() => string)[];
@@ -125,5 +249,33 @@ describe("Component", () => {
 			["a", "b"],
 		);
 		assert.deepEqual(composed.config.items, []);
+	});
+
+	describe("memoize", () => {
+		it("evaluates the factory only once and caches the result", () => {
+			let calls = 0;
+			const value = {};
+			const cached = Component.memoize(() => {
+				calls += 1;
+				return value;
+			});
+
+			assert.equal(calls, 0); // Not evaluated until first call.
+			assert.equal(cached(), value);
+			assert.equal(cached(), value);
+			assert.equal(calls, 1);
+		});
+
+		it("caches a returned undefined", () => {
+			let calls = 0;
+			const cached = Component.memoize(() => {
+				calls += 1;
+				return undefined;
+			});
+
+			assert.equal(cached(), undefined);
+			assert.equal(cached(), undefined);
+			assert.equal(calls, 1);
+		});
 	});
 });

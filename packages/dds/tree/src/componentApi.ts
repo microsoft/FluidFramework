@@ -11,15 +11,20 @@ import { getOrCreate } from "./util/index.js";
  * Utilities for composing application "components" which contribute to a shared configuration.
  *
  * @remarks
- * This namespace helps implement "open polymorphism" design patterns for schema, where the set of allowed types
+ * Nothing in this namespace is specific to tree schema,
+ * however it is designed to be able to handle needs to components which woth with {@link TreeSchema}.
+ *
+ * This is mainly used to implement "open polymorphism", where the set of allowed types
  * for a field or collection can be extended by independently authored libraries (components) instead of being
  * fixed up front.
  *
- * Tree's stored schema do not support open polymorphism: all possible implementations must be explicitly listed.
- * View schema can however emulate it by carefully controlling evaluation order:
+ * This basically amounts to dependency injection, where the "injection" is done at "composition" time to build the schema.
+ *
+ * Tree's schema do not natively support open polymorphism: all possible implementations must be explicitly listed.
+ * These tools work around these limitations by carefully controlling evaluation order:
  * the source code can be structured in an open polymorphism style which at runtime evaluates into closed polymorphism
- * by having each component register its implementations into a central collection (typically used as
- * {@link AllowedTypes}).
+ * by having each component register its implementations into a central collection (typically an
+ * {@link AllowedTypes} array).
  *
  * Each component is expressed as a {@link Component.Factory}: a function which receives a lazy reference to the
  * composed configuration and returns the content that component contributes.
@@ -69,6 +74,32 @@ export namespace Component {
 	export type LazyArray<T> = () => readonly (() => T)[];
 
 	/**
+	 * Wrap a 0 argument function to cache the result.
+	 * @remarks
+	 * Do not use for impure functions.
+	 *
+	 * Generally {@link Component} utilities have built in caching in most cases,
+	 * but this is occasionally helpful when manually implementing laziness.
+	 *
+	 * Note that this takes a different approach than use in {@link evaluateLazySchema} where the function evaluation is done using a utility that adds caching.
+	 *
+	 * @param factory - The factory function to memoize.
+	 * @returns A function that returns the cached result of the factory.
+	 * @alpha
+	 */
+	export const memoize = <T>(factory: () => T): (() => T) => {
+		let run = false;
+		let cached: T;
+		return () => {
+			if (!run) {
+				cached = factory();
+				run = true;
+			}
+			return cached;
+		};
+	};
+
+	/**
 	 * An item which can be configured (evaluated) against a composed configuration to produce a result.
 	 *
 	 * @remarks
@@ -95,20 +126,32 @@ export namespace Component {
 
 	/**
 	 * Implementation of {@link Component.ComposedComponents}.
-	 * @remarks
-	 * Not exported: instances are created via {@link Component.composeComponents}.
 	 */
 	class Config<TConfig, TComponent> implements ComposedComponents<TConfig, TComponent> {
 		public readonly componentsMap: ReadonlyMap<Factory<TConfig, TComponent>, TComponent>;
 
-		public readonly evaluatedMap: Map<Configurable<TConfig, unknown, TComponent>, unknown> =
+		/**
+		 * Cache of results produced by {@link Component.ComposedComponents.getConfigured}.
+		 *
+		 * @remarks
+		 * Maps each {@link Component.Configurable} to the result of evaluating it against this composition.
+		 * This ensures a given `Configurable` is only configured once: subsequent lookups return the cached result.
+		 */
+		private readonly evaluatedMap: Map<Configurable<TConfig, unknown, TComponent>, unknown> =
 			new Map();
+
+		/**
+		 * Cache of results produced by {@link Component.ComposedComponents.getComposed}.
+		 *
+		 * @remarks
+		 * Maps each composed property to the array produced for it.
+		 * This ensures a given property is only composed once: subsequent lookups return the same array
+		 * (including the same lazy values), so repeated calls with the same property are reference-stable.
+		 */
+		private readonly composedMap: Map<keyof TComponent, readonly unknown[]> = new Map();
 
 		public readonly components: readonly TComponent[];
 
-		/**
-		 * Portion of the config computed first.
-		 */
 		public readonly config: TConfig;
 
 		public constructor(
@@ -144,10 +187,14 @@ export namespace Component {
 		public getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(
 			configurable: TConfigurable,
 		): ReturnType<TConfigurable["configure"]> {
-			const found: unknown = getOrCreate(this.evaluatedMap, configurable, (c) =>
-				c.configure(this.config, this),
-			);
-			return found as ReturnType<TConfigurable["configure"]>;
+			const configured: unknown = getOrCreate(this.evaluatedMap, configurable, (c) => {
+				const result = c.configure(this.config, this);
+				if (result === undefined) {
+					throw new UsageError("Configurable must not return undefined");
+				}
+				return result;
+			});
+			return configured as ReturnType<TConfigurable["configure"]>;
 		}
 
 		public getComposed<
@@ -160,15 +207,21 @@ export namespace Component {
 			},
 		>(
 			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[] {
-			const result = this.components.flatMap((c) => {
-				const prop = c[property] as LazyArray<unknown> | undefined;
-				if (prop === undefined) {
-					return [];
-				}
-				return prop();
-			});
-			return result as (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
+		): readonly (Exclude<TComponent[TKey], undefined> extends LazyArray<infer U>
+			? () => U
+			: never)[] {
+			const result = getOrCreate(this.composedMap, property, () =>
+				this.components.flatMap((c) => {
+					const prop = c[property] as LazyArray<unknown> | undefined;
+					if (prop === undefined) {
+						return [];
+					}
+					return prop();
+				}),
+			);
+			return result as (Exclude<TComponent[TKey], undefined> extends LazyArray<infer U>
+				? () => U
+				: never)[];
 		}
 	}
 
@@ -239,6 +292,9 @@ export namespace Component {
 
 		/**
 		 * Compose the contents of a {@link Component.LazyArray} property from all components.
+		 * @remarks
+		 * The result is cached when first evaluated, so subsequent calls with the same `property` return the
+		 * same result.
 		 * @param property - The property of the components to compose.
 		 * @returns The concatenation of the lazy values contributed by each component for `property`.
 		 * Components which omit the property contribute nothing.
@@ -253,6 +309,8 @@ export namespace Component {
 			},
 		>(
 			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
+		): readonly (Exclude<TComponent[TKey], undefined> extends LazyArray<infer U>
+			? () => U
+			: never)[];
 	}
 }
