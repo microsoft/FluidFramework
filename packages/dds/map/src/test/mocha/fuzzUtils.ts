@@ -213,14 +213,37 @@ export interface DeleteSubDirectory {
 }
 
 /**
+ * Represents a set-sort-key operation on a key in a directory.
+ */
+export interface DirSetSortKey {
+	type: "setSortKey";
+	path: string;
+	key: string;
+	sortKey: string | undefined;
+}
+
+/**
+ * Represents a set-sort-key operation on a child subdirectory.
+ */
+export interface DirSetSubDirectorySortKey {
+	type: "setSubDirectorySortKey";
+	path: string;
+	name: string;
+	sortKey: string | undefined;
+}
+
+/**
  * Represents a directory key operation.
  */
-export type DirKeyOperation = DirSetKey | DirDeleteKey | DirClearKeys;
+export type DirKeyOperation = DirSetKey | DirDeleteKey | DirClearKeys | DirSetSortKey;
 
 /**
  * Represents a subdirectory operation.
  */
-export type SubDirectoryOperation = CreateSubDirectory | DeleteSubDirectory;
+export type SubDirectoryOperation =
+	| CreateSubDirectory
+	| DeleteSubDirectory
+	| DirSetSubDirectorySortKey;
 
 /**
  * Represents a directory operation.
@@ -235,11 +258,14 @@ export interface DirOperationGenerationConfig {
 	maxSubDirectoryChild?: number;
 	subDirectoryNamePool?: string[];
 	keyNamePool?: string[];
+	sortKeyPool?: (string | undefined)[];
 	setKeyWeight?: number;
 	deleteKeyWeight?: number;
 	clearKeysWeight?: number;
 	createSubDirWeight?: number;
 	deleteSubDirWeight?: number;
+	setSortKeyWeight?: number;
+	setSubDirectorySortKeyWeight?: number;
 }
 
 /**
@@ -250,11 +276,14 @@ export const dirDefaultOptions: Required<DirOperationGenerationConfig> = {
 	maxSubDirectoryChild: 3,
 	subDirectoryNamePool: ["dir1", "dir2", "dir3"],
 	keyNamePool: ["prop1", "prop2", "prop3"],
+	sortKeyPool: ["A", "B", "C", "", undefined],
 	setKeyWeight: 5,
 	deleteKeyWeight: 2,
 	clearKeysWeight: 1,
 	createSubDirWeight: 2,
 	deleteSubDirWeight: 1,
+	setSortKeyWeight: 2,
+	setSubDirectorySortKeyWeight: 2,
 };
 
 /**
@@ -406,6 +435,28 @@ export function makeDirOperationGenerator(
 		};
 	}
 
+	async function setSortKey(state: DirFuzzTestState): Promise<DirSetSortKey> {
+		const { random } = state;
+		return {
+			type: "setSortKey",
+			key: random.pick(options.keyNamePool),
+			path: pickAbsolutePathForKeyOps(state, false),
+			sortKey: random.pick(options.sortKeyPool),
+		};
+	}
+
+	async function setSubDirectorySortKey(
+		state: DirFuzzTestState,
+	): Promise<DirSetSubDirectorySortKey> {
+		const { random } = state;
+		return {
+			type: "setSubDirectorySortKey",
+			name: random.pick(options.subDirectoryNamePool),
+			path: pickAbsolutePathForCreateDirectoryOp(state),
+			sortKey: random.pick(options.sortKeyPool),
+		};
+	}
+
 	return createWeightedAsyncGenerator<DirOperation, DirFuzzTestState>([
 		[createSubDirectory, options.createSubDirWeight],
 		[
@@ -425,6 +476,8 @@ export function makeDirOperationGenerator(
 			options.clearKeysWeight,
 			(state: DirFuzzTestState): boolean => state.client.channel.size > 0,
 		],
+		[setSortKey, options.setSortKeyWeight],
+		[setSubDirectorySortKey, options.setSubDirectorySortKeyWeight],
 	]);
 }
 
@@ -507,6 +560,16 @@ export function makeDirReducer(
 			assert(dir);
 			dir.delete(key);
 		},
+		setSortKey: ({ client }, { path, key, sortKey }) => {
+			const dir = client.channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.setSortKey(key, sortKey);
+		},
+		setSubDirectorySortKey: ({ client }, { path, name, sortKey }) => {
+			const dir = client.channel.getWorkingDirectory(path);
+			assert(dir);
+			dir.setSubDirectorySortKey(name, sortKey);
+		},
 	});
 
 	return withLogging(reducer);
@@ -535,7 +598,8 @@ export const baseDirModel: DDSFuzzModel<DirectoryFactory, DirOperation> = {
 			if (
 				isOperationType<DirSetKey>("set", op) ||
 				isOperationType<DirDeleteKey>("delete", op) ||
-				isOperationType<DirClearKeys>("clear", op)
+				isOperationType<DirClearKeys>("clear", op) ||
+				isOperationType<DirSetSortKey>("setSortKey", op)
 			) {
 				const lastPath = op.path.lastIndexOf("/");
 				if (lastPath !== -1) {

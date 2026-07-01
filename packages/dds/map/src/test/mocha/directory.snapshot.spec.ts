@@ -151,3 +151,187 @@ describe("SharedDirectory Snapshot Tests", () => {
 		});
 	}
 });
+
+describe("SharedDirectory Snapshot Tests — sort keys", () => {
+	function createDetachedDirectory(id: string): SharedDirectory {
+		const runtimeFactory = new MockContainerRuntimeFactory();
+		const dataStoreRuntime = new MockFluidDataStoreRuntime({ clientId: id });
+		runtimeFactory.createContainerRuntime(dataStoreRuntime);
+		const factory = SharedDirectory.getFactory();
+		return factory.create(dataStoreRuntime, id) as SharedDirectory;
+	}
+
+	interface RawDataObject {
+		storage?: Record<string, unknown>;
+		subdirectories?: Record<string, RawDataObject>;
+		ci?: unknown;
+		sortKeys?: Record<string, string>;
+		subdirectorySortKeys?: Record<string, string>;
+	}
+
+	function stripSortKeys(serializedSnapshot: string): string {
+		const snapshotTree = JSON.parse(serializedSnapshot) as {
+			entries: { path: string; value: { contents: string; encoding: string } }[];
+		};
+		for (const entry of snapshotTree.entries) {
+			const parsed = JSON.parse(entry.value.contents) as {
+				blobs: string[];
+				content: RawDataObject;
+			};
+			const stack: RawDataObject[] = [parsed.content];
+			while (stack.length > 0) {
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+				const current = stack.pop()!;
+				delete current.sortKeys;
+				delete current.subdirectorySortKeys;
+				if (current.subdirectories) {
+					for (const child of Object.values(current.subdirectories)) {
+						stack.push(child);
+					}
+				}
+			}
+			entry.value.contents = JSON.stringify(parsed);
+		}
+		return JSON.stringify(snapshotTree);
+	}
+
+	it("T58: Snapshot with sort keys reloads with same key iteration order", async () => {
+		const original = createDetachedDirectory("T58");
+		original.set("a", 1);
+		original.set("b", 2);
+		original.set("c", 3);
+		original.set("d", 4);
+		original.set("e", 5);
+		original.setSortKey("a", "3");
+		original.setSortKey("b", "1");
+		original.setSortKey("c", "2");
+
+		const serialized = serialize(original);
+		const loaded = await loadSharedDirectory("T58-loaded", serialized);
+
+		assert.deepStrictEqual([...loaded.keysByOrder()], [...original.keysByOrder()]);
+		assert.deepStrictEqual(
+			[...loaded.keysByOrder()],
+			["b", "c", "a", "d", "e"],
+			"sort-keyed entries first (lex order), then unkeyed in insertion order",
+		);
+	});
+
+	it("T59: Old-format snapshot (no sortKeys fields) loads cleanly", async () => {
+		const oldFormatContent = {
+			blobs: [],
+			content: {
+				ci: { csn: 0, ccIds: [] },
+				storage: {
+					a: { type: "Plain", value: 1 },
+					b: { type: "Plain", value: 2 },
+					c: { type: "Plain", value: 3 },
+				},
+			},
+		};
+		const snapshotTree = {
+			entries: [
+				{
+					path: "header",
+					mode: "100644",
+					type: "Blob",
+					value: {
+						contents: JSON.stringify(oldFormatContent),
+						encoding: "utf8",
+					},
+				},
+			],
+		};
+		const loaded = await loadSharedDirectory("T59-loaded", JSON.stringify(snapshotTree));
+
+		assert.deepStrictEqual(
+			[...loaded.keysByOrder()],
+			[...loaded.keys()],
+			"fast-path: keysByOrder equals keys() when no sort keys in snapshot",
+		);
+		assert.deepStrictEqual([...loaded.keysByOrder()], ["a", "b", "c"]);
+	});
+
+	it("T60: Snapshot round-trip preserves subdirectory sort keys", async () => {
+		const original = createDetachedDirectory("T60");
+		original.createSubDirectory("alpha");
+		original.createSubDirectory("beta");
+		original.createSubDirectory("gamma");
+		original.setSubDirectorySortKey("alpha", "3");
+		original.setSubDirectorySortKey("beta", "1");
+		original.setSubDirectorySortKey("gamma", "2");
+
+		const serialized = serialize(original);
+		const loaded = await loadSharedDirectory("T60-loaded", serialized);
+
+		const originalOrder = [...original.subdirectoriesByOrder()].map(([name]) => name);
+		const loadedOrder = [...loaded.subdirectoriesByOrder()].map(([name]) => name);
+		assert.deepStrictEqual(loadedOrder, originalOrder);
+		assert.deepStrictEqual(loadedOrder, ["beta", "gamma", "alpha"]);
+	});
+
+	it("T61: Snapshot round-trip preserves nested sort keys", async () => {
+		const original = createDetachedDirectory("T61");
+		original.set("k1", "v1");
+		original.set("k2", "v2");
+		original.setSortKey("k1", "B");
+		original.setSortKey("k2", "A");
+
+		original.createSubDirectory("child1");
+		original.createSubDirectory("child2");
+		original.setSubDirectorySortKey("child1", "Z");
+		original.setSubDirectorySortKey("child2", "Y");
+
+		const child1 = original.getSubDirectory("child1");
+		assert(child1 !== undefined);
+		child1.set("nested1", "n1");
+		child1.set("nested2", "n2");
+		child1.setSortKey("nested1", "9");
+		child1.setSortKey("nested2", "1");
+
+		const serialized = serialize(original);
+		const loaded = await loadSharedDirectory("T61-loaded", serialized);
+
+		assert.deepStrictEqual([...loaded.keysByOrder()], [...original.keysByOrder()]);
+		assert.deepStrictEqual(
+			[...loaded.subdirectoriesByOrder()].map(([n]) => n),
+			[...original.subdirectoriesByOrder()].map(([n]) => n),
+		);
+		const loadedChild = loaded.getSubDirectory("child1");
+		assert(loadedChild !== undefined);
+		assert.deepStrictEqual([...loadedChild.keysByOrder()], [...child1.keysByOrder()]);
+		assert.deepStrictEqual([...loadedChild.keysByOrder()], ["nested2", "nested1"]);
+	});
+
+	it("T62: Stripped snapshot (forward-compat lossy) loads cleanly", async () => {
+		const original = createDetachedDirectory("T62");
+		original.set("a", 1);
+		original.set("b", 2);
+		original.setSortKey("a", "M");
+		original.setSortKey("b", "Z");
+		original.createSubDirectory("sub");
+		original.setSubDirectorySortKey("sub", "X");
+		const sub = original.getSubDirectory("sub");
+		assert(sub !== undefined);
+		sub.set("nested", "v");
+		sub.setSortKey("nested", "N");
+
+		const serialized = serialize(original);
+		const stripped = stripSortKeys(serialized);
+		const loaded = await loadSharedDirectory("T62-loaded", stripped);
+
+		assert.deepStrictEqual(
+			[...loaded.keysByOrder()],
+			[...loaded.keys()],
+			"stripped snapshot falls back to default iteration",
+		);
+		assert.deepStrictEqual([...loaded.keysByOrder()], ["a", "b"]);
+		assert.deepStrictEqual(
+			[...loaded.subdirectoriesByOrder()].map(([n]) => n),
+			[...loaded.subdirectories()].map(([n]) => n),
+		);
+		const loadedSub = loaded.getSubDirectory("sub");
+		assert(loadedSub !== undefined);
+		assert.deepStrictEqual([...loadedSub.keysByOrder()], [...loadedSub.keys()]);
+	});
+});
