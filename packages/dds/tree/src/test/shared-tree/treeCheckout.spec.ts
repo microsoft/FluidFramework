@@ -23,12 +23,21 @@ import {
 } from "../../core/index.js";
 import { FieldKinds, MockNodeIdentifierManager } from "../../feature-libraries/index.js";
 import {
+	ChangeProcessorApplicability,
+	type SquashingTransactionOptions,
+} from "../../shared-tree-core/index.js";
+import {
 	Tree,
 	TreeCheckout,
 	type ITreeCheckout,
 	createTreeCheckout,
 	type SharedTreeChange,
 } from "../../shared-tree/index.js";
+import {
+	createTransactionPostProcessor,
+	type TransactionPostProcessorInternal,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../shared-tree/transactionPostProcessor.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 import {
@@ -838,6 +847,154 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
+		/**
+		 * Wraps `checkout.transaction` to record the {@link SquashingTransactionOptions.postProcessor | post-processor} injected
+		 * into each `start` call and to count how many times the transaction is committed.
+		 */
+		function spyOnTransactor(checkout: ITreeCheckout): {
+			readonly postProcessors: (TransactionPostProcessorInternal | undefined)[];
+			readonly commits: number;
+		} {
+			const transactor = checkout.transaction;
+			const result = {
+				postProcessors: [] as (TransactionPostProcessorInternal | undefined)[],
+				commits: 0,
+			};
+			const originalStart = transactor.start.bind(transactor);
+			transactor.start = (options?: SquashingTransactionOptions<SharedTreeChange>): void => {
+				result.postProcessors.push(options?.postProcessor);
+				originalStart(options);
+			};
+			const originalCommit = transactor.commit.bind(transactor);
+			transactor.commit = (): void => {
+				result.commits += 1;
+				originalCommit();
+			};
+			return result;
+		}
+
+		// A do-nothing post-processor used to demonstrate the public -> internal conversion: it is created from an
+		// identity change processor, and the checkout should extract that same processor back out and inject it at start time.
+		const noopChangeProcessor: TransactionPostProcessorInternal = {
+			applicability: ChangeProcessorApplicability.IfOutermost,
+			processChange: (change) => change,
+		};
+		const noopPostProcessor = createTransactionPostProcessor(noopChangeProcessor);
+
+		it("converts a post-processor and injects it as the post-processor at transaction start", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const spy = spyOnTransactor(view.checkout);
+
+			// Act
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("A");
+				},
+				{ postProcessor: noopPostProcessor },
+			);
+
+			// Verify
+			// The change processor extracted from the post-processor is the same one it was created from.
+			assert.deepEqual(spy.postProcessors, [noopChangeProcessor]);
+			assert.equal(spy.commits, 1);
+			assert.deepEqual(view.root, ["A"]);
+		});
+
+		it("injects no post-processor when no params are provided to runTransaction", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const spy = spyOnTransactor(view.checkout);
+
+			// Act
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
+			});
+
+			// Verify
+			assert.deepEqual(spy.postProcessors, [undefined]);
+			assert.equal(spy.commits, 1);
+			assert.deepEqual(view.root, ["A"]);
+		});
+
+		it("injects the post-processor at start for the outermost transaction only", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const spy = spyOnTransactor(view.checkout);
+
+			// Act
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("A");
+					view.runTransaction(() => {
+						view.root.insertAtEnd("B");
+					});
+				},
+				{ postProcessor: noopPostProcessor },
+			);
+
+			// Verify
+			// Outer start first (post-processor injected), then inner start (no params, so no post-processor).
+			assert.deepEqual(spy.postProcessors, [noopChangeProcessor, undefined]);
+			assert.equal(spy.commits, 2);
+			assert.deepEqual(view.root, ["A", "B"]);
+		});
+
+		it("converts and injects a post-processor through runTransactionAsync", async () => {
+			// Setup
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const spy = spyOnTransactor(view.checkout);
+
+			// Act
+			await view.runTransactionAsync(
+				async () => {
+					view.root.insertAtEnd("A");
+				},
+				{ postProcessor: noopPostProcessor },
+			);
+
+			// Verify
+			assert.deepEqual(spy.postProcessors, [noopChangeProcessor]);
+			assert.equal(spy.commits, 1);
+			assert.deepEqual(view.root, ["A"]);
+		});
+
+		it("does not commit (and so does not apply the post-processor) when rolled back", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const spy = spyOnTransactor(view.checkout);
+
+			// Act
+			view.runTransaction(
+				() => {
+					view.root.insertAtEnd("A");
+					return { rollback: true };
+				},
+				{ postProcessor: noopPostProcessor },
+			);
+
+			// Verify
+			// The transaction is started with the post-processor injected, but a rolled-back transaction aborts rather than commits.
+			assert.deepEqual(spy.postProcessors, [noopChangeProcessor]);
+			assert.equal(spy.commits, 0);
+			assert.deepEqual(view.root, []);
+		});
+
 		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
 			const provider = new TestTreeProviderLite(1);
 			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
@@ -1262,6 +1419,37 @@ describe("sharedTreeView", () => {
 			assert.equal(viewBranch.root[0], "A");
 
 			stacks.unsubscribe();
+		});
+
+		it("are disposed upon rollback of the commit they would revert", () => {
+			// Setup
+			const sf = new SchemaFactory("Enrichment Schema");
+			class Node extends sf.object("Node", { id: sf.string }) {}
+			const NodeArray = sf.array(Node);
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: NodeArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+			const init = view.checkout.mainBranch.getHead();
+			const { undoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
+
+			view.root.insertAtEnd({ id: "A" });
+			view.root[0].id = "B";
+			assert.equal(undoStack.length, 2);
+			const [undo1, undo2] = undoStack;
+
+			// Act
+			view.checkout.mainBranch.removeAfter(init);
+
+			// Consistency check
+			assert.equal(view.root.length, 0);
+
+			// Verify
+			assert.equal(undo1.status, RevertibleStatus.Disposed);
+			assert.equal(undo2.status, RevertibleStatus.Disposed);
+
+			// Cleanup
+			unsubscribe();
 		});
 
 		for (const ageToTest of [0, 1, 5]) {

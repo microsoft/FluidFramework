@@ -1,5 +1,15 @@
 # @fluidframework/fluid-static
 
+## 2.110.0
+
+### Minor Changes
+
+- minVersionForCollabOverride removed from createTreeContainerRuntimeFactory props argument ([#27540](https://github.com/microsoft/FluidFramework/pull/27540)) [da469ffe44a](https://github.com/microsoft/FluidFramework/commit/da469ffe44a189ba8741e8d98a62f82ecf6bc348)
+
+  Instead specify `minVersionForCollaboration` property directly.
+  (Deprecated `compatibilityMode` property should also be removed.)
+  See [#27356](https://github.com/microsoft/FluidFramework/issues/27356) and [#23289](https://github.com/microsoft/FluidFramework/issues/23289).
+
 ## 2.103.0
 
 Dependency updates only.

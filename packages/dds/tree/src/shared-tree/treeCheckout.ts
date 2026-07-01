@@ -76,6 +76,7 @@ import {
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
 	type SharedTreeBranchChange,
+	type SquashingTransactionOptions,
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
@@ -117,6 +118,7 @@ import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -206,6 +208,11 @@ export interface CheckoutEvents {
 }
 
 /**
+ * A collection of functions for managing transactions on a {@link ITreeCheckout}.
+ */
+export type TreeTransactor = Transactor<SquashingTransactionOptions<SharedTreeChange>>;
+
+/**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
@@ -251,13 +258,13 @@ export interface ITreeCheckout
 	/**
 	 * A collection of functions for managing transactions.
 	 */
-	readonly transaction: Transactor;
+	readonly transaction: TreeTransactor;
 
 	fork(): ITreeCheckout;
 
 	/**
-	 * Replaces all schema with the provided schema.
-	 * Can over-write preexisting schema, and removes unmentioned schema.
+	 * Replaces all schemas with the provided schema.
+	 * Can overwrite preexisting schemas, and removes unmentioned schemas.
 	 *
 	 * @param newSchema - The new schema to replace the existing schema.
 	 * @param allowNonSupersetSchema - Whether to allow non-superset schemas.
@@ -483,9 +490,9 @@ export class TreeCheckout implements ITreeCheckout {
 	private readonly views = new Set<TreeView<ImplicitFieldSchema>>();
 
 	/**
-	 * Set of revertibles maintained for automatic disposal
+	 * Revertibles maintained for automatic disposal
 	 */
-	private readonly revertibles = new Set<RevertibleAlpha>();
+	private readonly revertibles = new Map<RevisionTag, RevertibleAlpha>();
 
 	/**
 	 * Each branch's head commit corresponds to a revertible commit.
@@ -746,7 +753,7 @@ export class TreeCheckout implements ITreeCheckout {
 								revision,
 								this.#transaction.activeBranch.fork(commit),
 							);
-							this.revertibles.add(revertible);
+							this.revertibles.set(revision, revertible);
 							return revertible;
 						};
 
@@ -784,6 +791,11 @@ export class TreeCheckout implements ITreeCheckout {
 					this.#events.emit("changed", metadata, getRevertible);
 				});
 				withinEventContext = false;
+			}
+		} else if (event.type === "remove") {
+			// Commits that are rolled back should no longer be revertible
+			for (const commit of event.removedCommits) {
+				this.revertibles.get(commit.revision)?.dispose();
 			}
 		} else if (this.isRemoteChangeEvent(event)) {
 			// TODO: figure out how to plumb through commit kind info for remote changes
@@ -944,7 +956,9 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.pushLabelFrame(params?.label);
-		this.transaction.start();
+		this.transaction.start({
+			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
 	}
@@ -1127,7 +1141,7 @@ export class TreeCheckout implements ITreeCheckout {
 						"Unable to dispose a revertible that has already been disposed.",
 					);
 				}
-				checkout.disposeRevertible(revertible, revision);
+				checkout.disposeRevertible(revision);
 				onRevertibleDisposed?.(revertible);
 			},
 		};
@@ -1175,7 +1189,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		return this.#transaction;
 	}
 	/**
@@ -1380,15 +1394,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private purgeRevertibles(): void {
-		for (const revertible of this.revertibles) {
+		for (const revertible of this.revertibles.values()) {
 			revertible.dispose();
 		}
 	}
 
-	private disposeRevertible(revertible: RevertibleAlpha, revision: RevisionTag): void {
+	private disposeRevertible(revision: RevisionTag): void {
 		this.revertibleCommitBranches.get(revision)?.dispose();
 		this.revertibleCommitBranches.delete(revision);
-		this.revertibles.delete(revertible);
+		this.revertibles.delete(revision);
 	}
 
 	private revertRevertible(
