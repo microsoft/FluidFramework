@@ -4,10 +4,10 @@
     "",
     "com.fluidframework.leaf.string",
     "bold",
-    "italic",
-    "underline",
-    "size",
     "font",
+    "italic",
+    "size",
+    "underline",
     "com.fluidframework.leaf.number",
     "com.fluidframework.leaf.boolean"
   ],
@@ -45,7 +45,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted.Text",
+        "type": "com.fluidframework.text.formatted<default>.Text",
         "value": false,
         "fields": [
           [
@@ -77,7 +77,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted.StringArray",
+        "type": "com.fluidframework.text.formatted<default>.StringArray",
         "value": false,
         "fields": [
           [
@@ -92,7 +92,7 @@
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted.StringAtom",
+        "type": "com.fluidframework.text.formatted<default>.StringAtom",
         "value": false,
         "fields": [
           [
@@ -119,7 +119,7 @@
           ],
           [
             3,
-            1
+            13
           ],
           [
             4,
@@ -127,18 +127,18 @@
           ],
           [
             5,
-            13
+            14
           ],
           [
             6,
-            14
+            1
           ]
         ]
       }
     },
     {
       "c": {
-        "type": "com.fluidframework.text.formatted.CharacterFormat",
+        "type": "com.fluidframework.text.formatted.default.CharacterFormat",
         "value": false,
         "fields": [
           [
@@ -146,11 +146,11 @@
             2
           ],
           [
-            3,
+            4,
             2
           ],
           [
-            4,
+            6,
             2
           ],
           [
@@ -158,17 +158,9 @@
             15
           ],
           [
-            6,
+            3,
             3
           ]
-        ]
-      }
-    },
-    {
-      "c": {
-        "type": 7,
-        "value": [
-          12
         ]
       }
     },
@@ -177,6 +169,14 @@
         "type": 1,
         "value": [
           "Arial"
+        ]
+      }
+    },
+    {
+      "c": {
+        "type": 7,
+        "value": [
+          12
         ]
       }
     },
