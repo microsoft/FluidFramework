@@ -40,7 +40,7 @@ steps:
         # for manifest files for a particular build (immutable) or for those for a particular
         # release (updates with our release cycle), but using a shorter TTL for all risks only small
         # perf losses while remaining simple.
-        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT_NEW) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
+        az storage blob upload -f "$file" -c 'manifest-files' -n "$blobName" --account-name $(STORAGE_ACCOUNT) --content-cache max-age=300 --auth-mode login --overwrite true --verbose
       done
 
 # Clean up the working folders unconditionally so a failed upload task can't leave stale
