@@ -270,6 +270,7 @@ export {
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 
 	TransactionLabels, 
+	TransactionPostProcessor, 
 	TreeAlpha, 
 	TreeArrayNodeAlpha, 
 	TreeBranchAlpha, 

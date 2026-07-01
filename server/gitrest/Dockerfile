@@ -38,7 +38,6 @@ WORKDIR $GITREST_ROOT
 
 COPY package*.json ./
 COPY pnpm*.yaml ./
-COPY .npmrc ./
 COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 
 COPY packages/gitrest/package*.json packages/gitrest/

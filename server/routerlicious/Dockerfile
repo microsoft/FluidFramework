@@ -57,7 +57,6 @@ WORKDIR $ROUTERLICIOUS_ROOT
 # Copy over the package and package-lock and install prior to the other code to optimize Docker's file system cache on rebuilds
 COPY package*.json ./
 COPY pnpm*.yaml ./
-COPY .npmrc ./
 COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 COPY patches/*.* ./patches/
 

@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces";
+
 import type { TreeNode } from "../core/index.js";
 
 /**
@@ -150,6 +152,27 @@ export type TransactionVoidResult =
 	| Omit<TransactionResultFailed<unknown>, "value">;
 
 /**
+ * A type-erased function that post-processes the change produced when a transaction is committed.
+ *
+ * @remarks
+ * Supply one via {@link RunTransactionParamsAlpha.postProcessor} to process/alter
+ * the change that a transaction produces. For example a post-processor could
+ * remove extraneous information, so that the resulting squashed change contains
+ * no extraneous information.
+ *
+ * This type intentionally hides its internal representation: its concrete shape
+ * is an implementation detail of `@fluidframework/tree`. Obtain a value of this
+ * type from a `@fluidframework/tree` helper or constant rather than constructing
+ * one directly.
+ *
+ * @alpha
+ * @sealed
+ * @system
+ */
+export interface TransactionPostProcessor
+	extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {}
+
+/**
  * The parameters for the {@link RunTransaction | RunTransaction} API.
  * @input
  * @beta
@@ -178,4 +201,21 @@ export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
 	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
 	 */
 	readonly preconditions?: readonly TransactionConstraintAlpha[];
+
+	/**
+	 * An optional {@link TransactionPostProcessor | post-processor} applied to
+	 * the change produced when this transaction is committed.
+	 * @remarks
+	 * When omitted, the transaction's edits are squashed without any such processing.
+	 *
+	 * Specific post-processors are applied according to their own rules for
+	 * optimization and other post-processing tasks in a transaction stack. For
+	 * example a "minimization" post-processor may be applied once for the
+	 * outermost transaction in a stack as it will process all nested edits and
+	 * there is no benefit from multiple applications.
+	 *
+	 * Note: minimization is not yet implemented. Supplying a post-processor currently has no observable effect beyond
+	 * reserving the behavior; a real post-processor will be provided in a future change.
+	 */
+	readonly postProcessor?: TransactionPostProcessor;
 }

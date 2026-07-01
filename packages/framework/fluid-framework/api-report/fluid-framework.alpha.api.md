@@ -1487,6 +1487,7 @@ export interface RunTransaction {
 
 // @alpha @input
 export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
+    readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
@@ -2089,6 +2090,10 @@ export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstra
 export type TransactionLabels = Set<unknown> & {
     tree?: LabelTree;
 };
+
+// @alpha @sealed @system
+export interface TransactionPostProcessor extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {
+}
 
 // @beta @sealed
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
