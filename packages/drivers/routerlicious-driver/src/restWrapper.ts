@@ -5,7 +5,7 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, delay } from "@fluidframework/core-utils/internal";
 import type { RateLimiter } from "@fluidframework/driver-utils/internal";
 import { GenericNetworkError, NonRetryableError } from "@fluidframework/driver-utils/internal";
 import {
@@ -47,6 +47,9 @@ const buildRequestInitConfig = (requestConfig: RequestConfig): RequestInit => {
 	};
 	return requestInit;
 };
+
+// Transport-level failures that are safe to retry on a fresh socket.
+const transientNetworkErrorPattern = /socket hang up|ECONNRESET|EPIPE/i;
 
 export interface IR11sResponse<T> {
 	content: T;
@@ -117,6 +120,14 @@ class RouterliciousRestWrapper extends RestWrapper {
 	 */
 	private readonly retryCounter = new Map<string, number>();
 
+	/**
+	 * Maximum number of attempts (1 initial + retries) for a single fetch that fails with a transient network error.
+	 */
+	private static readonly maxNetworkErrorAttempts = 3;
+
+	/** Delay between transient network-error retries. */
+	private static readonly networkErrorRetryDelayMs = 250;
+
 	constructor(
 		logger: TelemetryLoggerExt,
 		private readonly rateLimiter: RateLimiter,
@@ -169,9 +180,17 @@ class RouterliciousRestWrapper extends RestWrapper {
 		const fetchRequestConfig = buildRequestInitConfig(translatedConfig);
 
 		const res = await this.rateLimiter.schedule(async () => {
-			const perfStart = performanceNow();
-			const result = await fetch(completeRequestUrl, fetchRequestConfig).catch(
-				async (error) => {
+			// Retry transient transport failures (e.g. a pooled socket closed by the peer while
+			// this process's execution context was frozen) on a fresh socket before surfacing the error.
+			for (let attempt = 1; ; attempt++) {
+				const perfStart = performanceNow();
+				try {
+					const result = await fetch(completeRequestUrl, fetchRequestConfig);
+					return {
+						response: result,
+						duration: performanceNow() - perfStart,
+					};
+				} catch (error: any) {
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
 					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 
@@ -187,12 +206,34 @@ class RouterliciousRestWrapper extends RestWrapper {
 					const errorMessage = isNetworkError
 						? `NetworkError: ${error.message}`
 						: safeStringify(error);
+
+					// A self-signed-cert failure is permanent, never transient — exclude it from retry.
+					const isSelfSignedCertError = errorMessage.includes(
+						"failed, reason: self signed certificate",
+					);
+					const errorCode: unknown = error?.code ?? error?.cause?.code;
+					const isTransientNetworkError =
+						!isSelfSignedCertError &&
+						(isNetworkError ||
+							(typeof errorCode === "string" &&
+								transientNetworkErrorPattern.test(errorCode)) ||
+							transientNetworkErrorPattern.test(error?.message ?? "") ||
+							transientNetworkErrorPattern.test(error?.cause?.message ?? ""));
+					if (
+						isTransientNetworkError &&
+						canRetry &&
+						attempt < RouterliciousRestWrapper.maxNetworkErrorAttempts
+					) {
+						await delay(RouterliciousRestWrapper.networkErrorRetryDelayMs);
+						continue;
+					}
+
 					// If a service is temporarily down or a browser resource limit is reached, RestWrapper will throw
 					// a network error with no status code (e.g. err:ERR_CONN_REFUSED or err:ERR_FAILED) and
 					// the error message will start with NetworkError as defined in restWrapper.ts
 					// If there exists a self-signed SSL certificates error, throw a NonRetryableError
 					// TODO: instead of relying on string matching, filter error based on the error code like we do for websocket connections
-					const err = errorMessage.includes("failed, reason: self signed certificate")
+					const err = isSelfSignedCertError
 						? new NonRetryableError(
 								errorMessage,
 								RouterliciousErrorTypes.sslCertError,
@@ -204,12 +245,8 @@ class RouterliciousRestWrapper extends RestWrapper {
 								telemetryProps,
 							);
 					throw err;
-				},
-			);
-			return {
-				response: result,
-				duration: performanceNow() - perfStart,
-			};
+				}
+			}
 		});
 
 		const response = res.response;
