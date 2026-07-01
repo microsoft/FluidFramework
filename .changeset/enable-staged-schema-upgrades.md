@@ -9,7 +9,7 @@ SharedTree now supports enabling selected staged schema upgrades when initializi
 This lets applications deploy code that understands a schema change before enabling that change in documents,
 making it easier to separate code rollout from feature rollout.
 
-### API
+#### API
 
 Select the schema upgrades to enable during view creation by passing an `enabledUpgrades` list in the configuration
 object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
@@ -35,8 +35,6 @@ const view = alphaTree.viewWith(
 ```
 
 When configured `enabledUpgrades` is omitted or empty, staged schema upgrades remain disabled.
-The document's stored schema continues to allow only the schema that has already been enabled,
-so clients can understand the staged schema in code but cannot write data that depends on it yet.
 
 Advanced callers can also provide `storedSchemaGenerationOptions` directly in `TreeViewConfigurationAlpha` to control
 staged inclusion with custom policy functions.
@@ -68,7 +66,7 @@ This approach is useful for scenarios such as:
 - Fine-grained rollout control based on feature sets rather than individual feature flags
 - Integration test suites that want to exercise specific schema states
 
-#### Pre-built Policy Options
+##### Pre-built Policy Options
 
 For convenience, two pre-built policy options are provided:
 
@@ -116,7 +114,7 @@ The permissive option includes all staged schema upgrades, allowing applications
 It is useful in test and validation scenarios where you want to create or upgrade documents with all possible staged
 features enabled, verifying that the application handles these future schemas correctly.
 
-### Production
+#### Production
 
 For production rollout, applications can use feature flags to control when staged schema upgrades are enabled.
 Previously, enabling the staged schema in stored schema required a code change that removed the staged schema
@@ -181,7 +179,7 @@ This also means partial rollback is currently difficult in practice: callers usu
 that have not already been upgraded, so disabling the flag after some upgrades have happened can still
 lead to `UsageError` if `upgradeSchema` is called from views configured without previously enabled tokens.
 
-### Testing
+#### Testing
 
 These APIs can be used to test scenarios emulating when future application versions create documents which allow
 or contain the staged types.
