@@ -37,6 +37,27 @@ const typescriptVersions = Object.entries(typescriptHostPackageJson.devDependenc
 
 const execFileAsync = promisify(execFile);
 
+function resolveCompilerPath(tscName: string): string {
+	const compilerDir = path.join(typescriptHostDir, "node_modules", tscName);
+	const compilerPackageJsonPath = path.join(compilerDir, "package.json");
+	const compilerPackageJson = JSON.parse(readFileSync(compilerPackageJsonPath, "utf8")) as {
+		bin?: string | Record<string, string>;
+	};
+	const { bin } = compilerPackageJson;
+
+	if (bin === undefined) {
+		throw new Error(`No executable bin found for ${tscName}`);
+	}
+
+	const binPath = typeof bin === "string" ? bin : (bin.tsc ?? bin.tsgo);
+
+	if (binPath === undefined) {
+		throw new Error(`No "tsc" executable bin found in ${tscName}`);
+	}
+
+	return path.join(compilerDir, binPath);
+}
+
 /**
  * Invokes the provided version of tsc to compile code, validating that it type checks with that version of TypeScript.
  * @param tscName - The name of the TypeScript compiler package to use. Use the package aliases defined in `@fluid-example/typescript-versions-host/package.json`.
@@ -48,16 +69,21 @@ async function compileTest(
 	args: string[],
 	project: string = "./tsconfig.test.json",
 ): Promise<void> {
-	const result = execFileAsync(
-		path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc"),
-		["--project", project, "--noEmit", ...args],
-		{},
-	);
+	const compilerPath = resolveCompilerPath(tscName);
+	const result = execFileAsync(compilerPath, ["--project", project, "--noEmit", ...args], {});
 
 	try {
 		await result;
 	} catch (error) {
-		throw new Error((error as Record<string, string>).stdout);
+		const compilerError = error as {
+			stdout?: string;
+			stderr?: string;
+			message?: string;
+		};
+		const details = [compilerError.stdout, compilerError.stderr, compilerError.message]
+			.filter((x): x is string => x !== undefined && x.length > 0)
+			.join("\n");
+		throw new Error(`Failed to compile with ${tscName}:\n${details}`);
 	}
 }
 
