@@ -65,6 +65,7 @@ export {
 	singletonSchema,
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
+export { Component } from "./componentApi.js";
 export {
 	deltaMarksToArrayOps,
 	getIdentifierFromNode,

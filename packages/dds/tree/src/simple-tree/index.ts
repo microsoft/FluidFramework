@@ -89,6 +89,7 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
+	Component,
 	treeNodeApi,
 	type TreeNodeApi,
 	type ArrayNodeDeltaOp,

@@ -187,6 +187,7 @@ export {
 	adaptEnum,
 	enumFromStrings,
 	singletonSchema,
+	Component,
 	type UnsafeUnknownSchema,
 	type TreeViewAlpha,
 	type TreeViewBeta,

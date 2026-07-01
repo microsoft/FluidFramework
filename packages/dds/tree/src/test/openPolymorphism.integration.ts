@@ -5,12 +5,12 @@
 
 import { strict as assert } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree } from "../shared-tree/index.js";
 import {
 	allowUnused,
+	Component,
 	evaluateLazySchema,
 	SchemaFactory,
 	TreeBeta,
@@ -21,7 +21,7 @@ import {
 	type TreeNodeSchema,
 	type Unhydrated,
 } from "../simple-tree/index.js";
-import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
+import type { requireAssignableTo } from "../util/index.js";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.
@@ -571,171 +571,5 @@ export namespace ComponentMinimal {
 			(component): LazyArray<TItem> => component(lazyConfiguration),
 		);
 		return itemTypes;
-	}
-}
-
-/**
- * Utilities for helping implement various application component design patterns.
- */
-export namespace Component {
-	/**
-	 * Function which takes in a lazy configuration and returns a collection of schema types.
-	 * @remarks
-	 * This allows the schema to reference items from the configuration, which could include themselves recursively.
-	 *
-	 * The execution of this function may not evaluate `lazyConfiguration` (doing so will error):
-	 * instead the returned `TComponent` can capture the `lazyConfiguration` and evaluate it at a later time (after all components have been composed).
-	 */
-	export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
-
-	/**
-	 * A function which returns an array of lazy values (like {@link AllowedTypes} where all of the values are lazy) which evaluate to `T`.
-	 */
-	export type LazyArray<T> = () => readonly (() => T)[];
-
-	class Config<TConfig, TComponent> implements ComposedComponents<TConfig, TComponent> {
-		public readonly componentsMap: ReadonlyMap<Factory<TConfig, TComponent>, TComponent>;
-
-		public readonly evaluatedMap: Map<Configurable<TConfig, unknown, TComponent>, unknown> =
-			new Map();
-
-		public readonly components: readonly TComponent[];
-
-		/**
-		 * Portion of the config computed first.
-		 */
-		public readonly config: TConfig;
-
-		public constructor(
-			allComponents: readonly Factory<TConfig, TComponent>[],
-			lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
-		) {
-			// eslint-disable-next-line no-undef-init
-			let config: TConfig | undefined = undefined;
-			const lazyConfigInner = () => {
-				if (config === undefined) {
-					throw new Error("Configuration not yet available");
-				}
-				return config;
-			};
-			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
-			this.components = [...this.componentsMap.values()];
-			config = lazyConfiguration(this);
-			this.config = config;
-		}
-
-		public getComponent<TFactory extends Factory<TConfig, TComponent>>(
-			factory: TFactory,
-		): ReturnType<TFactory> {
-			const found = this.componentsMap.get(factory);
-			if (found === undefined) {
-				throw new UsageError("Requested component not included in this configuration");
-			}
-			return found as ReturnType<TFactory>;
-		}
-
-		public getConfigured<TEvaluatable extends Configurable<TConfig, unknown, TComponent>>(
-			factory: TEvaluatable,
-		): ReturnType<TEvaluatable["configure"]> {
-			const found: unknown = getOrAddInMap(
-				this.evaluatedMap,
-				factory,
-				factory.configure(this.config, this),
-			);
-			if (found === undefined) {
-				throw new UsageError("Requested component not included in this configuration");
-			}
-			return found as ReturnType<TEvaluatable["configure"]>;
-		}
-
-		public getComposed<
-			TKey extends keyof {
-				[Property in keyof TComponent as TComponent[Property] extends LazyArray<unknown>
-					? Property
-					: never]: boolean;
-			},
-		>(
-			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[] {
-			const result = this.components.flatMap((c) => {
-				const prop = c[property] as LazyArray<unknown>;
-				if (prop === undefined) {
-					return [];
-				}
-				return prop();
-			});
-			return result as (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
-		}
-	}
-
-	export interface Configurable<TConfigPartial, out TResult, TComponentInner> {
-		configure(
-			config: TConfigPartial,
-			components: ComposedComponents<TConfigPartial, TComponentInner>,
-		): TResult;
-	}
-
-	/**
-	 * Combine multiple {@link ComponentMinimal.ComponentSchemaCollection}s into a single {@link AllowedTypes} array.
-	 */
-	export function composeComponents<TConfig, TComponentInner>(
-		allComponents: readonly Factory<TConfig, TComponentInner>[],
-		lazyConfiguration: (composed: ComposedComponents<TConfig, TComponentInner>) => TConfig,
-	): ComposedComponents<TConfig, TComponentInner> {
-		const config = new Config<TConfig, TComponentInner>(allComponents, lazyConfiguration);
-		return config;
-	}
-
-	/**
-	 * The result of composing multiple components.
-	 * @remarks
-	 * Create using {@link Component.composeComponents}.
-	 * @sealed
-	 */
-	export interface ComposedComponents<TConfig, TComponent> {
-		/**
-		 * The components which were composed.
-		 */
-		readonly components: readonly TComponent[];
-		/**
-		 * The configuration which was provided when composing.
-		 */
-		readonly config: TConfig;
-
-		/**
-		 * Get a component by its factory.
-		 *
-		 * @param factory - The factory to indicate which component to lookup. Must have been provided when composing.
-		 * @returns The component created by the provided factory.
-		 * This result is cached during composition and not reevaluated.
-		 */
-		getComponent<TFactory extends Factory<TConfig, TComponent>>(
-			factory: TFactory,
-		): ReturnType<TFactory>;
-
-		/**
-		 * Configure a {@link Configurable}.
-		 * @remarks
-		 * The result is cached when first evaluated.
-		 */
-		getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(
-			configurable: TConfigurable,
-		): ReturnType<TConfigurable["configure"]>;
-
-		/**
-		 * Compose the contents of a lazy array property from all components.
-		 * @param property - The property of the components to compose.
-		 */
-		getComposed<
-			TKey extends keyof {
-				[Property in keyof TComponent as TComponent[Property] extends
-					| LazyArray<unknown>
-					| undefined
-					? Property
-					: never]: boolean;
-			},
-		>(
-			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
 	}
 }
