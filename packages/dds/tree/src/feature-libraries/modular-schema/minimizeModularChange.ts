@@ -6,8 +6,9 @@
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 /**
- * "Minimizes" a {@link ModularChangeset} so that it contains no extraneous information, i.e. no data that has no net
- * effect on the document.
+ * "Minimizes" a {@link ModularChangeset} so that it contains no extraneous
+ * information, i.e. no new content that isn't observable from document tree
+ * and no edits without net observed effect on the document tree.
  * @remarks
  * "Extraneous information" includes, for example, data for nodes that were both created and removed within the same
  * transaction, or changes whose effects cancel out to nothing. Minimizing reduces the size of an edit without altering
