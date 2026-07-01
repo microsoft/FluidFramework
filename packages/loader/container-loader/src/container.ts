@@ -2452,6 +2452,7 @@ export class Container
 				getAttachState: () => this.attachState,
 				getConnected: () => this.connected,
 				getConnectionState: () => this.connectionState,
+				getResolvedUrl: () => this.resolvedUrl,
 				clientDetails: this._deltaManager.clientDetails,
 				existing,
 				taggedLogger: this.subLogger,

@@ -26,6 +26,7 @@ import type { IClientDetails, IQuorumClients } from "@fluidframework/driver-defi
 import type {
 	ISnapshot,
 	IDocumentMessage,
+	IResolvedUrl,
 	ISnapshotTree,
 	ISummaryContent,
 	IVersion,
@@ -57,6 +58,7 @@ export interface IContainerContextConfig
 				| "getLoadedFromVersion"
 				| "supportedFeatures"
 				| "id"
+				| "resolvedUrl"
 				| "snapshotWithContents"
 			>
 		>
@@ -68,6 +70,7 @@ export interface IContainerContextConfig
 	readonly getClientId: () => string | undefined;
 	readonly getAttachState: () => AttachState;
 	readonly getConnected: () => boolean;
+	readonly getResolvedUrl: () => IResolvedUrl | undefined;
 	readonly existing: boolean;
 	readonly taggedLogger: TelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
@@ -79,8 +82,8 @@ export interface IContainerContextConfig
  */
 export class ContainerContext
 	implements
-		Required<Omit<IContainerContext, "snapshotWithContents">>,
-		Pick<IContainerContext, "snapshotWithContents">,
+		Required<Omit<IContainerContext, "snapshotWithContents" | "resolvedUrl">>,
+		Pick<IContainerContext, "snapshotWithContents" | "resolvedUrl">,
 		IProvideLayerCompatDetails
 {
 	/**
@@ -146,10 +149,15 @@ export class ContainerContext
 	private readonly _getContainerDiagnosticId: () => string | undefined;
 	private readonly _getConnected: () => boolean;
 	private readonly _getAttachState: () => AttachState;
+	private readonly _getResolvedUrl: () => IResolvedUrl | undefined;
 	private readonly version: IVersion | undefined;
 
 	public get clientId(): string | undefined {
 		return this._getClientId();
+	}
+
+	public get resolvedUrl(): IResolvedUrl | undefined {
+		return this._getResolvedUrl();
 	}
 
 	/**
@@ -206,6 +214,7 @@ export class ContainerContext
 		this._getContainerDiagnosticId = config.getContainerDiagnosticId;
 		this._getConnected = config.getConnected;
 		this._getAttachState = config.getAttachState;
+		this._getResolvedUrl = config.getResolvedUrl;
 		this.version = config.version;
 	}
 
