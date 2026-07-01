@@ -8,7 +8,8 @@ import type { TransactionPostProcessor } from "../simple-tree/index.js";
 
 import { minimizeModularChangeset } from "../feature-libraries/index.js";
 
-import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
+import { mapDataChanges } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
 
 /**
@@ -21,14 +22,7 @@ import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
  * Schema changes are left unchanged.
  */
 function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
-	return {
-		changes: change.changes.map(
-			(inner): SharedTreeInnerChange =>
-				inner.type === "data"
-					? { type: "data", innerChange: minimizeModularChangeset(inner.innerChange) }
-					: inner,
-		),
-	};
+	return mapDataChanges(change, (innerChange) => minimizeModularChangeset(innerChange));
 }
 
 /**
