@@ -1494,6 +1494,7 @@ export interface RunTransaction {
 // @alpha @input
 export interface RunTransactionParams {
     readonly label?: unknown;
+    readonly postProcessor?: TransactionPostProcessor;
     readonly preconditions?: readonly TransactionConstraintAlpha[];
 }
 
@@ -2094,6 +2095,10 @@ export type TransactionConstraintAlpha = TransactionConstraint | NoChangeConstra
 export type TransactionLabels = Set<unknown> & {
     tree?: LabelTree;
 };
+
+// @alpha @sealed @system
+export interface TransactionPostProcessor extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {
+}
 
 // @alpha
 export type TransactionResult = Omit<TransactionResultSuccess<unknown>, "value"> | Omit<TransactionResultFailed<unknown>, "value">;
