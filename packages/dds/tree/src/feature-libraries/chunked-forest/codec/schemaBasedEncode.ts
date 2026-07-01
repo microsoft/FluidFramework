@@ -25,7 +25,13 @@ import {
 	forEachField,
 	forEachNode,
 } from "../../../core/index.js";
-import { type Brand, brand, getLast, oneFromIterable } from "../../../util/index.js";
+import {
+	type Brand,
+	brand,
+	compareStrings,
+	getLast,
+	oneFromIterable,
+} from "../../../util/index.js";
 
 import type { IncrementalEncoder } from "./codecs.js";
 import {
@@ -116,8 +122,8 @@ export function schemaCompressedEncodeV2(
  * @remarks
  * Enables the specialized node shape ('f') optimization. See {@link SpecializedNodeShapeEncoder}.
  *
- * `minOccurrencesForSpecialization` defaults to {@link defaultMinOccurrencesForSpecialization}; tests
- * override it to exercise the specialization heuristic on small inputs.
+ * Which cohorts are folded into specialized shapes is decided by an estimated byte-gain rule
+ * (see {@link VTextObjectNodeEncoder.choosePinnedFold}) — there is no fixed occurrence threshold.
  */
 export function schemaCompressedEncodeVTextExperimental(
 	schema: StoredSchemaCollection,
@@ -126,7 +132,6 @@ export function schemaCompressedEncodeVTextExperimental(
 	idCompressor: IIdCompressor,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	isSummary: boolean,
-	minOccurrencesForSpecialization: number = defaultMinOccurrencesForSpecialization,
 ): EncodedFieldBatchVTextExperimental {
 	const context = buildContextVText(
 		schema,
@@ -135,7 +140,6 @@ export function schemaCompressedEncodeVTextExperimental(
 		incrementalEncoder,
 		brand(FieldBatchFormatVersion.vTextExperimental),
 		isSummary,
-		minOccurrencesForSpecialization,
 	);
 	return compressedEncode(fieldBatch, context);
 }
@@ -291,7 +295,6 @@ function buildContextVText(
 	incrementalEncoder: IncrementalEncoder | undefined,
 	version: FieldBatchFormatVersion,
 	isSummary: boolean,
-	minOccurrencesForSpecialization: number,
 ): EncoderContext {
 	const context: VTextEncoderContext = new VTextEncoderContext(
 		(fieldBuilder: FieldEncodeBuilder, schemaName: TreeNodeSchemaIdentifier) =>
@@ -301,7 +304,6 @@ function buildContextVText(
 				schemaName,
 				incrementalEncoder,
 				context,
-				minOccurrencesForSpecialization,
 				() => context.currentBatch(),
 			),
 		(nodeBuilder: NodeEncodeBuilder, fieldSchema: TreeFieldStoredSchema) =>
@@ -329,7 +331,6 @@ function getNodeEncoderVText(
 	schemaName: TreeNodeSchemaIdentifier,
 	incrementalEncoder: IncrementalEncoder | undefined,
 	context: EncoderContext,
-	minOccurrencesForSpecialization: number,
 	currentBatch: () => VTextBatchState,
 ): NodeEncoder {
 	const baseEncoder = getNodeEncoder(
@@ -345,6 +346,11 @@ function getNodeEncoderVText(
 	if (schema instanceof ObjectNodeStoredSchema) {
 		for (const [key, field] of schema.objectNodeFields ?? []) {
 			if (context.fieldShapes.get(field.kind)?.multiplicity !== Multiplicity.Single) {
+				continue;
+			}
+			// Identifier fields must keep the base SpecialField.Identifier encoding (id-compressor
+			// op-space normalization)
+			if (field.kind === identifierFieldKindIdentifier) {
 				continue;
 			}
 			// Defer to the caller's incremental policy: if a field is meant to be encoded
@@ -377,29 +383,65 @@ function getNodeEncoderVText(
 		return baseEncoder;
 	}
 
+	// The cohort key concatenates field values in this array's order, so the order must be stable
+	// across all nodes of this type for keys to be comparable. Sort by field key.
+	specializableFields.sort((a, b) => compareStrings(a.key, b.key));
+
 	assert(
 		baseEncoder instanceof NodeShapeBasedEncoder,
 		"VText node encoder policy expects NodeShapeBasedEncoder as base",
 	);
-	return new VTextObjectNodeEncoder(
-		baseEncoder,
-		specializableFields,
-		minOccurrencesForSpecialization,
-		currentBatch,
-	);
+	return new VTextObjectNodeEncoder(baseEncoder, specializableFields, currentBatch);
 }
 
 /**
- * Default minimum number of occurrences of a given leaf-value tuple in a batch required to
- * generate a {@link SpecializedNodeShapeEncoder} for it.
- * @remarks
- * Tuples below this threshold encode through the base {@link NodeShapeBasedEncoder}. A specialized
- * shape entry costs roughly `2 + 2 * fieldCount` tokens in the shape table; each instance using
- * the specialized shape saves `fieldCount` stream tokens. The encoder runs a counting pass over
- * the batch before encoding so that, when a tuple does cross the threshold, *every* occurrence
- * (including the first) uses the specialized shape.
+ * Estimated bytes of the per-instance shape-index dispatch token every instance pays once its node
+ * type resolves to `numShapes` shapes (via {@link AnyShape}). This tax is what makes folding
+ * low-value cohorts a net loss. The index is a number, so its width grows with the shape count; the
+ * `+ 2` is its delimiter plus the fact that the index is into the (larger) global shape table — so
+ * a few cohorts fold cheaply while many marginal cohorts do not.
+ *
+ * This and the shape-cost constants below are estimates of the encoded JSON wire sizes, not exact
+ * counts — calibrated so the fold decision matches real encoder output on the size tests, which are
+ * the ground truth.
  */
-const defaultMinOccurrencesForSpecialization = 8;
+function dispatchTokenBytes(numShapes: number): number {
+	return String(Math.max(1, numShapes) - 1).length + 2;
+}
+
+/** Estimated serialized bytes of a specialized ('f') shape's own wrapper (its `base` + `fields` framing). */
+const specializedShapeWrapperBytes = 16;
+
+/** Estimated serialized bytes added per overridden field in a specialized shape (its `[keyRef, shapeRef]` entry). */
+const overrideFieldBytes = 6;
+
+/** Estimated bytes of one constant leaf shape's `{ c: { type, value } }` framing (the value's own bytes are counted via {@link valueByteEstimate}). */
+const constantLeafShapeWrapperBytes = 24;
+
+/**
+ * Estimated bytes of a value's separator in the flat data array. Folding a field removes the value's
+ * characters AND its position, so the per-instance saving is {@link valueByteEstimate} plus this —
+ * which matters most for multi-field nodes (a 3-coordinate point drops three values and separators).
+ */
+const dataSeparatorBytes = 1;
+
+/** Estimated inline data bytes of a leaf value: strings include their quotes, numbers/booleans their literal length. */
+function valueByteEstimate(value: Value): number {
+	switch (typeof value) {
+		case "string": {
+			return value.length + 2;
+		}
+		case "number": {
+			return String(value).length;
+		}
+		case "boolean": {
+			return 1;
+		}
+		default: {
+			return fail("specializable leaf value must be string, number, or boolean");
+		}
+	}
+}
 
 /**
  * A single-valued boolean, string, or number leaf field of an ObjectNode whose value
@@ -424,66 +466,72 @@ function valueKey(value: Value): string {
 }
 
 /**
- * Identifies a "cohort": the set of nodes that share identical {@link SpecializableField} leaf
- * values and so can encode through one {@link SpecializedNodeShapeEncoder}.
- *
- * @remarks
- * Built by {@link VTextObjectNodeEncoder.specializationKey} as the concatenation of one
- * length-prefixed {@link valueKey} segment per specializable field.
+ * Identifies a cohort: same-typed nodes sharing identical {@link SpecializableField} leaf values, so
+ * they can encode through one {@link SpecializedNodeShapeEncoder}. Built by
+ * {@link VTextObjectNodeEncoder.cohortKeyFromValues} as length-prefixed {@link valueKey} segments.
  */
-type SpecializationKey = Brand<string, "tree.SpecializationKey">;
+type CohortKey = Brand<string, "tree.CohortKey">;
 
 /**
- * Per-encoder bookkeeping for one batch, keyed by specialization key (a "cohort" of node instances
- * that share identical specializable-field values).
- *
- * @remarks
- * A cohort's members share one {@link SpecializationKey}, so they can all encode through a single
- * {@link SpecializedNodeShapeEncoder} that constant-folds the shared field values into the shape
- * table. Tracks how often each cohort occurs (filled by the count pass, read by the encode pass)
- * and the specialized shape cached for cohorts that have crossed the specialization threshold.
+ * What the count pass records about one whole-node cohort: how many nodes share this exact
+ * combination of all specializable-field values, plus those values (captured once so the fold
+ * decision can choose which fields to pin and build the shapes without re-walking a cursor).
  */
-interface CohortState {
-	/** How many times each cohort occurs in the batch. */
-	readonly counts: Map<SpecializationKey, number>;
-	/** The specialized shape cached for each cohort that has crossed the threshold. */
-	readonly specializedEncoders: Map<SpecializationKey, SpecializedNodeShapeEncoder>;
-	/**
-	 * Memoized declared shape for the batch; `undefined` until first computed.
-	 *
-	 * @remarks
-	 * Its inputs ({@link counts} and {@link specializedEncoders}) are final once the count pass
-	 * completes, so it is computed once and reused. This keeps per-node encoding O(1) rather than
-	 * O(distinct cohorts), which matters when values are unique (cohort count grows with N).
-	 */
-	declared?: DeclaredShape;
+interface Cohort {
+	count: number;
+	/** Every specializable-field leaf value, in the encoder's (sorted) field order. */
+	readonly values: readonly Value[];
 }
 
 /**
- * The shape declared for a node in a batch: a concrete node shape when the batch is monomorphic
- * (which is also a {@link NodeEncoder}, so it can encode the node directly), or {@link AnyShape}
- * when instances span multiple shapes and need per-instance dispatch.
+ * A cohort over the chosen pinned fields only: nodes that agree on every pinned field (their
+ * non-pinned fields may differ). This is the unit that actually folds into one specialized shape.
+ */
+interface PinnedCohort {
+	count: number;
+	/** The pinned-field leaf values, in pinned-field order. */
+	readonly values: readonly Value[];
+}
+
+/**
+ * Per-encoder bookkeeping for one batch. The count pass fills {@link CohortState.cohorts}; the fold
+ * {@link CohortState.decision} is then derived from it lazily, once, on first access.
+ */
+interface CohortState {
+	/** Every whole-node cohort observed in the batch, keyed by its all-fields {@link CohortKey}. */
+	readonly cohorts: Map<CohortKey, Cohort>;
+	/** The fold decision, computed lazily once on first access. */
+	decision?: FoldDecision;
+}
+
+/** What {@link VTextObjectNodeEncoder.choosePinnedFold} decides for one batch. */
+interface FoldDecision {
+	/** Indices into `specializableFields` chosen for pinning. */
+	readonly pinnedFieldIndices: readonly number[];
+	/** Specialized shapes for the folded pinned cohorts, keyed by their pinned-field {@link CohortKey}. */
+	readonly foldedEncoders: ReadonlyMap<CohortKey, SpecializedNodeShapeEncoder>;
+	/** The shape the parent declares for this node type (a single shape, or {@link AnyShape}). */
+	readonly declared: DeclaredShape;
+}
+
+/**
+ * The shape declared for a node type in a batch: a single concrete shape when monomorphic (it is
+ * itself a {@link NodeEncoder}), or {@link AnyShape} when instances span multiple shapes.
  */
 type DeclaredShape = NodeShapeBasedEncoder | SpecializedNodeShapeEncoder | AnyShape;
 
 /**
- * Specialization state for a single {@link compressedEncode} call (one "batch").
- *
- * @remarks
- * Created fresh per call (including recursive incremental sub-chunk calls), so two batches never
- * share it. Holds one {@link CohortState} per encoder instance, accessed via {@link forEncoder},
- * so encoders never collide.
+ * Specialization state for one {@link compressedEncode} call (a "batch"). Created fresh per call
+ * (including recursive incremental sub-chunks), holding one {@link CohortState} per encoder instance.
  */
 class VTextBatchState {
 	private readonly perEncoder: Map<object, CohortState> = new Map();
 
-	/**
-	 * The {@link CohortState} for `encoder`, created empty on first access.
-	 */
+	/** The {@link CohortState} for `encoder`, created empty on first access. */
 	public forEncoder(encoder: object): CohortState {
 		let state = this.perEncoder.get(encoder);
 		if (state === undefined) {
-			state = { counts: new Map(), specializedEncoders: new Map() };
+			state = { cohorts: new Map() };
 			this.perEncoder.set(encoder, state);
 		}
 		return state;
@@ -491,13 +539,15 @@ class VTextBatchState {
 }
 
 /**
- * Encodes ObjectNodes using {@link SpecializedNodeShapeEncoder} shapes that constant-fold
- * required single-valued leaf fields whose values are predictable across a batch.
+ * Encodes ObjectNodes using {@link SpecializedNodeShapeEncoder} ('f') shapes that constant-fold
+ * required single-valued leaf fields whose values repeat across a batch.
  *
  * @remarks
- * Uses a two-pass encode: pass 1 ({@link countNode}) counts each leaf-value tuple's
- * occurrences, pass 2 ({@link encodeNode}) specializes tuples that cross
- * {@link defaultMinOccurrencesForSpecialization}.
+ * Two passes. Pass 1 ({@link VTextObjectNodeEncoder.countNode}) groups this type's nodes into
+ * whole-node cohorts. {@link VTextObjectNodeEncoder.choosePinnedFold} then chooses which fields to
+ * pin and which cohorts to fold, by estimated byte gain (not a fixed count). Pinning a subset of
+ * fields lets mixed data (e.g. records with a unique id) fold its repetitive fields while leaving
+ * unique ones in the stream. Pass 2 ({@link VTextObjectNodeEncoder.encodeNode}) emits accordingly.
  */
 class VTextObjectNodeEncoder implements NodeEncoder {
 	private readonly constantNodeEncoders: Map<string, NodeShapeBasedEncoder> = new Map();
@@ -505,7 +555,6 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	public constructor(
 		private readonly base: NodeShapeBasedEncoder,
 		private readonly specializableFields: readonly SpecializableField[],
-		private readonly minOccurrencesForSpecialization: number,
 		private readonly currentBatch: () => VTextBatchState,
 	) {}
 
@@ -514,24 +563,18 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 	}
 
 	/**
-	 * Counting-pass entry point. Records this node's tuple key without producing output, and once a
-	 * cohort crosses the threshold, eagerly creates its specialized shape.
-	 *
-	 * @remarks
-	 * The specialized shape is created here (during counting, while a cohort-member cursor is in
-	 * hand) rather than lazily in {@link resolveShape}, so that {@link declaredShape} — which has no
-	 * cursor and may be read before this node's `encodeNode` runs (e.g. via polymorphic AnyShape
-	 * dispatch by a parent) — always finds the specialized shape for a fired cohort. Any
-	 * cohort-member cursor produces the same specialized shape, so it does not matter which member
-	 * crosses the threshold.
+	 * Counting-pass entry point: tallies this node's whole-node cohort, capturing the cohort's leaf
+	 * values on first sight so its shape can be built later without a cursor.
 	 */
 	public countNode(cursor: ITreeCursorSynchronous, batch: VTextBatchState): void {
 		const state = batch.forEncoder(this);
-		const key = this.specializationKey(cursor);
-		const count = (state.counts.get(key) ?? 0) + 1;
-		state.counts.set(key, count);
-		if (count >= this.minOccurrencesForSpecialization && !state.specializedEncoders.has(key)) {
-			state.specializedEncoders.set(key, this.createSpecialized(cursor));
+		const values = this.readValues(cursor);
+		const key = this.cohortKeyFromValues(values);
+		const existing = state.cohorts.get(key);
+		if (existing === undefined) {
+			state.cohorts.set(key, { count: 1, values });
+		} else {
+			existing.count += 1;
 		}
 	}
 
@@ -543,130 +586,241 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 		const batch = this.currentBatch();
 		const declared = this.declaredShape(batch);
 		if (declared instanceof AnyShape) {
-			// Instances of this node resolve to more than one shape in this batch, so the data must
-			// be prefixed with the per-instance shape (resolved per node) via AnyShape (`d`) dispatch.
+			// This type resolves to more than one shape, so each instance prefixes its own shape
+			// index via AnyShape (`d`) dispatch.
 			AnyShape.encodeNode(cursor, context, outputBuffer, this.resolveShape(cursor, batch));
 		} else {
-			// Every instance resolves to `declared`, which the parent declares directly (see
-			// VTextObjectNodeEncoder.shape); emit only the node's data, with no per-instance
-			// shape token — and without recomputing this node's specialization key.
+			// Every instance resolves to `declared`, which the parent references directly: emit only
+			// the node's data, with no per-instance shape token.
 			declared.encodeNode(cursor, context, outputBuffer);
 		}
 	}
 
 	/**
-	 * The shape the parent declares for this node in the current batch: the single shape every
-	 * instance resolves to when the batch is monomorphic, otherwise {@link AnyShape} (which makes
-	 * each instance prefix its own shape index in the data).
-	 *
-	 * @remarks
-	 * The result is constant for a batch (its inputs are final once counting completes), so it is
-	 * memoized on {@link CohortState.declared} — computing it per `encodeNode` call would be
-	 * O(distinct cohorts) per node, i.e. O(N²) when values are unique. See
-	 * {@link VTextObjectNodeEncoder.computeDeclaredShape} for the derivation.
+	 * The shape the parent declares for this node. Lazily runs (and memoizes) the fold decision on
+	 * first access. Counting is complete by the encode pass. Keeping per-node encoding O(1).
 	 */
 	private declaredShape(batch: VTextBatchState): DeclaredShape {
 		const state = batch.forEncoder(this);
-		state.declared ??= this.computeDeclaredShape(state);
-		return state.declared;
+		state.decision ??= this.choosePinnedFold(state.cohorts);
+		return state.decision.declared;
 	}
 
 	/**
-	 * Derives the {@link declaredShape} from the finalized {@link CohortState.counts}: cohorts at or
-	 * above the threshold resolve to their specialized shape, every other cohort to
-	 * {@link VTextObjectNodeEncoder.base} — mirroring {@link resolveShape}. The batch is monomorphic
-	 * exactly when that yields a single distinct shape; a concrete result lets the parent reference
-	 * it directly, avoiding a per-instance shape-index token. A fired cohort's specialized shape is
-	 * created during the count pass (see {@link countNode}), so it is always present here.
+	 * Picks the pinned-field set and the cohorts to fold by greedy elimination: pin every field
+	 * except fully-unique ones, then while nothing folds profitably, drop the remaining field with
+	 * the most distinct values and retry. This is what lets mixed data fold while uniform data folds
+	 * on the first try.
+	 *
+	 * TODO: This greedy heuristic is not guaranteed to find the optimal fold. A more expensive search
+	 * could explore every combination of pinned fields instead.
 	 */
-	private computeDeclaredShape(state: CohortState): DeclaredShape {
-		let firedKey: SpecializationKey | undefined;
-		let firedCount = 0;
-		let hasUnfired = false;
-		for (const [key, count] of state.counts) {
-			if (count >= this.minOccurrencesForSpecialization) {
-				firedKey = key;
-				firedCount += 1;
-			} else {
-				hasUnfired = true;
+	private choosePinnedFold(cohorts: ReadonlyMap<CohortKey, Cohort>): FoldDecision {
+		let totalInstances = 0;
+		for (const cohort of cohorts.values()) {
+			totalInstances += cohort.count;
+		}
+		const distinctValueCount = this.distinctValueCounts(cohorts);
+		// Drop fully-unique fields up front; a field with no repeated value can never form a
+		// reusable cohort, only fragment one.
+		let pinned = this.specializableFields
+			.map((_field, index) => index)
+			.filter((index) => (distinctValueCount[index] ?? 0) < totalInstances);
+
+		while (pinned.length > 0) {
+			const fold = this.foldPinnedCohorts(this.buildPinnedCohorts(cohorts, pinned), pinned);
+			if (fold.folded.size > 0) {
+				return {
+					pinnedFieldIndices: pinned,
+					foldedEncoders: fold.folded,
+					declared: fold.declared,
+				};
+			}
+			// Nothing folded with this set: drop the field with the most distinct values and retry.
+			pinned = this.withoutMostDistinctValues(pinned, distinctValueCount);
+		}
+		return { pinnedFieldIndices: [], foldedEncoders: new Map(), declared: this.base };
+	}
+
+	/** Distinct-value count of each specializable field, computed in one pass over the cohorts. */
+	private distinctValueCounts(cohorts: ReadonlyMap<CohortKey, Cohort>): number[] {
+		const seen = this.specializableFields.map(() => new Set<string>());
+		for (const cohort of cohorts.values()) {
+			for (const [index, distinct] of seen.entries()) {
+				distinct.add(valueKey(cohort.values[index]));
 			}
 		}
-		if (firedCount === 0) {
-			// No cohort fired (or no instances at all): every instance uses the base shape.
-			return this.base;
+		return seen.map((distinct) => distinct.size);
+	}
+
+	/** Returns `pinned` without the field that has the most distinct values. */
+	private withoutMostDistinctValues(
+		pinned: readonly number[],
+		distinctValueCount: readonly number[],
+	): number[] {
+		let worst = -1;
+		let worstDistinctValueCount = -1;
+		for (const index of pinned) {
+			const fieldDistinctValueCount = distinctValueCount[index] ?? 0;
+			if (fieldDistinctValueCount > worstDistinctValueCount) {
+				worstDistinctValueCount = fieldDistinctValueCount;
+				worst = index;
+			}
 		}
-		if (firedCount === 1 && !hasUnfired && firedKey !== undefined) {
-			// A single cohort fired and nothing falls back to base: one specialized shape for all.
-			// The specialized encoder is created during the count pass (see countNode), so it is
-			// always present here — even when `shape` is read before this node's `encodeNode` runs
-			// (e.g. when a parent dispatches polymorphically via AnyShape).
-			return (
-				state.specializedEncoders.get(firedKey) ??
-				fail("fired cohort missing its specialized shape")
-			);
-		}
-		// Instances span multiple shapes: polymorphic dispatch.
-		return AnyShape.instance;
+		return pinned.filter((index) => index !== worst);
 	}
 
 	/**
-	 * Returns the specialized shape for this node's cohort if it crossed the threshold, otherwise
-	 * the base encoder. The specialized shape is created during the count pass (see
-	 * {@link countNode}) and cached per specialization key, giving stable shape identity.
+	 * Folds the worthwhile cohorts and returns them with the declared shape (or an empty set + the
+	 * base shape if none is worth it). Folding makes the type polymorphic, so every instance then
+	 * pays a per-instance dispatch token; the decision weighs saved bytes against shape cost and that
+	 * tax. A single cohort covering every instance stays monomorphic. Many low-value cohorts can't
+	 * beat the tax, so nothing folds.
+	 */
+	private foldPinnedCohorts(
+		pinnedCohorts: ReadonlyMap<CohortKey, PinnedCohort>,
+		pinned: readonly number[],
+	): { folded: Map<CohortKey, SpecializedNodeShapeEncoder>; declared: DeclaredShape } {
+		const folded = new Map<CohortKey, SpecializedNodeShapeEncoder>();
+		if (pinnedCohorts.size === 1) {
+			const [key, cohort] = oneFromIterable(pinnedCohorts) ?? fail("size-1 map has one entry");
+			if (this.cohortMarginalGain(cohort) > 0) {
+				// One shape for every instance: monomorphic, no dispatch tax.
+				const encoder = this.createSpecialized(pinned, cohort.values);
+				folded.set(key, encoder);
+				return { folded, declared: encoder };
+			}
+		} else if (pinnedCohorts.size > 1) {
+			let totalInstances = 0;
+			let summedMarginal = 0;
+			const candidates: [CohortKey, PinnedCohort][] = [];
+			for (const entry of pinnedCohorts) {
+				totalInstances += entry[1].count;
+				const marginal = this.cohortMarginalGain(entry[1]);
+				if (marginal > 0) {
+					summedMarginal += marginal;
+					candidates.push(entry);
+				}
+			}
+			// Folding any cohort here makes the type polymorphic, so all instances pay the dispatch
+			// tax. The type resolves to one shape per folded cohort, plus the base shape if any cohort
+			// is left unfolded — and the dispatch index width grows with that shape count.
+			const distinctShapes =
+				candidates.length + (candidates.length < pinnedCohorts.size ? 1 : 0);
+			if (summedMarginal - totalInstances * dispatchTokenBytes(distinctShapes) > 0) {
+				for (const [key, cohort] of candidates) {
+					folded.set(key, this.createSpecialized(pinned, cohort.values));
+				}
+				return { folded, declared: AnyShape.instance };
+			}
+		}
+		return { folded, declared: this.base };
+	}
+
+	/**
+	 * Re-groups the whole-node cohorts into cohorts keyed only by the pinned fields, summing counts
+	 * for nodes that agree on the pinned fields but differ elsewhere.
+	 */
+	private buildPinnedCohorts(
+		cohorts: ReadonlyMap<CohortKey, Cohort>,
+		pinned: readonly number[],
+	): Map<CohortKey, PinnedCohort> {
+		const pinnedCohorts = new Map<CohortKey, PinnedCohort>();
+		for (const cohort of cohorts.values()) {
+			const values = pinned.map((f) => cohort.values[f]);
+			const key = this.cohortKeyFromValues(values);
+			const existing = pinnedCohorts.get(key);
+			if (existing === undefined) {
+				pinnedCohorts.set(key, { count: cohort.count, values });
+			} else {
+				existing.count += cohort.count;
+			}
+		}
+		return pinnedCohorts;
+	}
+
+	/**
+	 * Estimated bytes saved by folding one pinned cohort, before the batch-wide dispatch tax: the
+	 * per-instance data removed (each pinned value's inline bytes plus its separator) times the member
+	 * count, minus the one-time cost of the cohort's specialized shape.
+	 */
+	private cohortMarginalGain(cohort: PinnedCohort): number {
+		let perInstanceSaving = 0;
+		let shapeCost = specializedShapeWrapperBytes;
+		for (const value of cohort.values) {
+			const valueBytes = valueByteEstimate(value);
+			perInstanceSaving += valueBytes + dataSeparatorBytes;
+			shapeCost += overrideFieldBytes + constantLeafShapeWrapperBytes + valueBytes;
+		}
+		return cohort.count * perInstanceSaving - shapeCost;
+	}
+
+	/**
+	 * The specialized shape for this node's pinned cohort if it was folded, otherwise the base
+	 * encoder. Used only on the polymorphic ({@link AnyShape}) path, so the batch is already
+	 * finalized.
 	 */
 	private resolveShape(
 		cursor: ITreeCursorSynchronous,
 		batch: VTextBatchState,
 	): NodeShapeBasedEncoder | SpecializedNodeShapeEncoder {
-		const state = batch.forEncoder(this);
-		const key = this.specializationKey(cursor);
-		return state.specializedEncoders.get(key) ?? this.base;
+		const decision =
+			batch.forEncoder(this).decision ?? fail("resolveShape requires a finalized batch");
+		const allValues = this.readValues(cursor);
+		const pinnedValues = decision.pinnedFieldIndices.map((f) => allValues[f]);
+		return decision.foldedEncoders.get(this.cohortKeyFromValues(pinnedValues)) ?? this.base;
 	}
 
-	/**
-	 * Build the {@link SpecializationKey} for the node at the cursor's current position from its
-	 * {@link SpecializableField} leaf values. See {@link SpecializationKey} for the key syntax.
-	 *
-	 * @remarks
-	 * Runs once per node in the count pass (and again per node in the encode pass for polymorphic
-	 * cohorts), so the key is built by concatenation rather than a `JSON.stringify` per node.
-	 */
-	private specializationKey(cursor: ITreeCursorSynchronous): SpecializationKey {
-		let key = "";
+	/** Reads this node's {@link SpecializableField} leaf values, in the encoder's fixed field order. */
+	private readValues(cursor: ITreeCursorSynchronous): Value[] {
+		const values: Value[] = [];
 		for (const field of this.specializableFields) {
 			cursor.enterField(brand(field.key));
 			const hasNode = cursor.firstNode();
 			assert(hasNode, "required specializable field must contain a node");
-			const part = valueKey(cursor.value);
-			key += `${part.length}:${part}`;
+			values.push(cursor.value);
 			cursor.exitNode();
 			cursor.exitField();
+		}
+		return values;
+	}
+
+	/**
+	 * Builds a {@link CohortKey} from leaf values: one length-prefixed {@link valueKey} segment per
+	 * field (the length prefix keeps `["a","b"]` distinct from `["ab"]`). Cheap concatenation rather
+	 * than `JSON.stringify`, since it runs per node.
+	 */
+	private cohortKeyFromValues(values: readonly Value[]): CohortKey {
+		let key = "";
+		for (const value of values) {
+			const part = valueKey(value);
+			key += `${part.length}:${part}`;
 		}
 		return brand(key);
 	}
 
 	/**
-	 * Builds a {@link SpecializedNodeShapeEncoder} that bakes the current node's leaf-field values
-	 * into the shape: each {@link SpecializableField} becomes a constant {@link NodeShapeBasedEncoder}
-	 * (cached per leaf type + value) so instances of this cohort emit zero data for those fields.
+	 * Builds an `f` shape that bakes a pinned cohort's values in: each pinned field becomes a constant
+	 * {@link NodeShapeBasedEncoder} (cached per leaf type + value) so members emit no data for it;
+	 * non-pinned fields stay as the base shape's variable encoders. `pinned` indexes
+	 * {@link specializableFields}; `values` are its values in that order.
 	 */
-	private createSpecialized(cursor: ITreeCursorSynchronous): SpecializedNodeShapeEncoder {
-		const overrides: KeyedFieldEncoder[] = [];
-		for (const field of this.specializableFields) {
-			cursor.enterField(brand(field.key));
-			const hasNode = cursor.firstNode();
-			assert(hasNode, "required specializable field must contain a node");
-			const value = cursor.value;
+	private createSpecialized(
+		pinned: readonly number[],
+		values: readonly Value[],
+	): SpecializedNodeShapeEncoder {
+		const overrides: KeyedFieldEncoder[] = pinned.map((fieldIndex, i) => {
+			const field =
+				this.specializableFields[fieldIndex] ?? fail("pinned field index out of range");
+			const value = values[i];
 			const cacheKey = `${field.leafType}:${valueKey(value)}`;
 			let nodeEncoder = this.constantNodeEncoders.get(cacheKey);
 			if (nodeEncoder === undefined) {
 				nodeEncoder = new NodeShapeBasedEncoder(field.leafType, [value], [], undefined);
 				this.constantNodeEncoders.set(cacheKey, nodeEncoder);
 			}
-			overrides.push({ key: field.key, encoder: asFieldEncoder(nodeEncoder) });
-			cursor.exitNode();
-			cursor.exitField();
-		}
+			return { key: field.key, encoder: asFieldEncoder(nodeEncoder) };
+		});
 		return new SpecializedNodeShapeEncoder(this.base, overrides);
 	}
 }

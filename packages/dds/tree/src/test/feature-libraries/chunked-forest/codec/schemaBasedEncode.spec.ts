@@ -73,7 +73,6 @@ import {
 	jsonableTreeFromFieldCursor,
 } from "../../../../feature-libraries/index.js";
 import {
-	booleanSchema,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	numberSchema,
@@ -512,37 +511,27 @@ describe("schemaBasedEncoding", () => {
 			};
 		};
 
-		it("round-trips an object with boolean fields and emits f shapes", () => {
+		it("round-trips an object with a leaf field and emits f shapes", () => {
 			const sf = new SchemaFactoryAlpha("test");
-			class CharacterFormat extends sf.object("CharacterFormat", {
-				bold: sf.boolean,
-				italic: sf.boolean,
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
 			}) {}
 
-			const storedSchema = toStoredSchema(
-				CharacterFormat,
-				restrictiveStoredSchemaGenerationOptions,
-			);
+			const storedSchema = toStoredSchema(TextNode, restrictiveStoredSchemaGenerationOptions);
 
-			const makeFormat = (bold: boolean, italic: boolean): JsonableTree => ({
-				type: brand<TreeNodeSchemaIdentifier>(CharacterFormat.identifier),
+			const makeText = (text: string): JsonableTree => ({
+				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
 				fields: {
-					bold: [
-						{ type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier), value: bold },
-					],
-					italic: [
-						{ type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier), value: italic },
+					text: [
+						{ type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier), value: text },
 					],
 				},
 			});
 
-			// Use a small specialization threshold so the test stays compact while still exercising the heuristic
-			//   {bold:true, italic:false}  — appears 2 times (≥ threshold) → should specialize.
-			//   {bold:false, italic:true}  — appears 1 time  (<  threshold) → should not.
-			const minOccurrencesForSpecialization = 2;
-			const aboveThreshold = Array.from({ length: 2 }, () => makeFormat(true, false));
-			const belowThreshold = [makeFormat(false, true)];
-			const tree = [...aboveThreshold, ...belowThreshold];
+			// One repeated value (a cohort worth folding under the byte-gain rule) plus one unique
+			// value (folding it would cost more than it saves), so exactly one cohort folds.
+			const repeated = "the quick brown fox".repeat(4);
+			const tree = [makeText(repeated), makeText(repeated), makeText("unique value")];
 
 			const encoded = schemaCompressedEncodeVTextExperimental(
 				storedSchema,
@@ -551,10 +540,9 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
-			// Exactly one specialized shape: only the above-threshold tuple is folded.
+			// Exactly one specialized shape: only the worthwhile cohort is folded.
 			assert.equal(countSpecializedShapes(encoded), 1);
 
 			// Round-trip: decode and compare to original tree.
@@ -565,30 +553,26 @@ describe("schemaBasedEncoding", () => {
 		});
 
 		it("does not force AnyShape indirection when every instance resolves to one shape", () => {
-			// When all members of a nested array resolve to a single shape (one cohort, above
-			// threshold), the array's element shape should reference that concrete shape directly
+			// When all members of a nested array resolve to a single shape (one cohort worth
+			// folding), the array's element shape should reference that concrete shape directly
 			// rather than AnyShape (`d`), which would otherwise prepend a shape-index token to
 			// every element's data. See PR #27515 review on schemaBasedEncode.ts:516.
 			const sf = new SchemaFactoryAlpha("test");
-			class CharacterFormat extends sf.object("CharacterFormat", {
-				bold: sf.boolean,
-				italic: sf.boolean,
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
 			}) {}
-			class CharacterArray extends sf.array("CharacterArray", CharacterFormat) {}
+			class TextArray extends sf.array("TextArray", TextNode) {}
 			class Doc extends sf.object("Doc", {
-				chars: CharacterArray,
+				texts: TextArray,
 			}) {}
 
 			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
 
-			const minOccurrencesForSpecialization = 2;
-			// Three identical formats → one cohort above threshold → all three resolve to the
-			// same specialized shape, so the array is monomorphic.
-			const chars = Array.from(
-				{ length: 3 },
-				() => new CharacterFormat({ bold: false, italic: false }),
-			);
-			const doc = new Doc({ chars: new CharacterArray(chars) });
+			// Three identical worthwhile values → one folded cohort → all three resolve to the same
+			// specialized shape, so the array is monomorphic.
+			const repeated = "monomorphic value".repeat(4);
+			const texts = Array.from({ length: 3 }, () => new TextNode({ text: repeated }));
+			const doc = new Doc({ texts: new TextArray(texts) });
 
 			const expected = jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable<UnsafeUnknownSchema>(Doc, doc),
@@ -601,13 +585,12 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
 			// One specialized shape: the single folded cohort.
 			assert.equal(countSpecializedShapes(encoded), 1);
 
-			// The nested array (`a`) for the `chars` field must point its element shape at the
+			// The nested array (`a`) for the `texts` field must point its element shape at the
 			// specialized (`f`) / concrete (`c`) shape, not at AnyShape (`d`).
 			const nestedArrayShapes = encoded.shapes.filter(
 				(shape): shape is { a: number } => "a" in shape,
@@ -629,19 +612,18 @@ describe("schemaBasedEncoding", () => {
 
 		it("incremental: outer count skips incremental fields, sub-chunks make their own decisions", () => {
 			// Schema:
-			//   CharacterFormat — VText specialization candidate (two required boolean leaves).
-			//   Doc             — has an inline CharacterArray field and an incremental one
-			//                     (marked with incrementalSummaryHint on its allowed types).
+			//   TextNode — VText specialization candidate (one required string leaf).
+			//   Doc      — has an inline TextArray field and an incremental one
+			//              (marked with incrementalSummaryHint on its allowed types).
 			const sf = new SchemaFactoryAlpha("test");
-			class CharacterFormat extends sf.object("CharacterFormat", {
-				bold: sf.boolean,
-				italic: sf.boolean,
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
 			}) {}
-			class CharacterArray extends sf.array("CharacterArray", CharacterFormat) {}
+			class TextArray extends sf.array("TextArray", TextNode) {}
 			class Doc extends sf.object("Doc", {
-				inline: sf.optional(CharacterArray),
+				inline: sf.optional(TextArray),
 				inc: sf.optional(
-					sf.types([{ type: CharacterArray, metadata: {} }], {
+					sf.types([{ type: TextArray, metadata: {} }], {
 						custom: { [incrementalSummaryHint]: true },
 					}),
 				),
@@ -649,19 +631,15 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
 
-			// Use a lowered threshold of 2 so the test stays compact.
-			//   Outer inline:  2 × (true, false)  ≥ threshold → should specialize.
-			//   Outer inline:  1 × (false, true)   < threshold → should NOT specialize.
-			//   Sub-chunk:     1 × (false, true)   < threshold → should NOT specialize.
-			// If the outer counted sub-chunk nodes, (false, true) would reach 2 → 2 specialized
-			// shapes instead of 1. The assertion below catches that.
-			const minOccurrencesForSpecialization = 2;
-			const inline = [
-				...Array.from({ length: 2 }, () => new CharacterFormat({ bold: true, italic: false })),
-				new CharacterFormat({ bold: false, italic: true }),
-			];
-			const inc = new CharacterArray([new CharacterFormat({ bold: false, italic: true })]);
-			const doc = new Doc({ inline: new CharacterArray(inline), inc });
+			// "a" appears twice inline — a cohort worth folding. "b" appears once inline and once in
+			// the incremental sub-chunk. If the outer count pass (wrongly) counted the sub-chunk
+			// node, "b" would reach 2 and also fold, giving 2 specialized shapes instead of 1.
+			const a = "alpha value here".repeat(6);
+			const b = "bravo value here".repeat(6);
+			const makeText = (text: string): TextNode => new TextNode({ text });
+			const inline = [makeText(a), makeText(a), makeText(b)];
+			const inc = new TextArray([makeText(b)]);
+			const doc = new Doc({ inline: new TextArray(inline), inc });
 
 			const subEncodings: EncodedFieldBatchV2[] = [];
 			const mockIncEncoder = makeChunkingIncrementalEncoder(
@@ -678,7 +656,6 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncEncoder,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
 			assert.equal(countSpecializedShapes(encoded), 1);
@@ -695,26 +672,25 @@ describe("schemaBasedEncoding", () => {
 			// non-undefined fieldKey reaches a Map/Record/Leaf parent. So encoding any tree
 			// containing a Map node would crash during the count pass before the fix.
 			const sf = new SchemaFactoryAlpha("test");
-			class CharacterFormat extends sf.object("CharacterFormat", {
-				bold: sf.boolean,
-				italic: sf.boolean,
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
 			}) {}
-			class FormatMap extends sf.map("FormatMap", CharacterFormat) {}
+			class TextMap extends sf.map("TextMap", TextNode) {}
 			class Doc extends sf.object("Doc", {
-				map: FormatMap,
+				map: TextMap,
 			}) {}
 
 			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
 
-			// Two CharacterFormat children inside a Map: same boolean tuple, threshold=2 →
-			// the count pass must visit both (correctly evaluating the Map parent's policy
-			// once with undefined fieldKey) and the encode pass must specialize.
-			const minOccurrencesForSpecialization = 2;
+			// Two TextNode children inside a Map sharing one worthwhile value: the count pass must
+			// visit both (correctly evaluating the Map parent's policy once with undefined fieldKey)
+			// and the encode pass must fold them into one specialized shape.
+			const repeated = "value in a map".repeat(6);
 			const doc = new Doc({
-				map: new FormatMap(
+				map: new TextMap(
 					new Map([
-						["a", new CharacterFormat({ bold: true, italic: false })],
-						["b", new CharacterFormat({ bold: true, italic: false })],
+						["a", new TextNode({ text: repeated })],
+						["b", new TextNode({ text: repeated })],
 					]),
 				),
 			});
@@ -734,7 +710,6 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				incEncoder,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
 			assert.equal(countSpecializedShapes(encoded), 1);
@@ -773,34 +748,29 @@ describe("schemaBasedEncoding", () => {
 			);
 		});
 
-		it("specializes two distinct above-threshold tuples into separate shapes", () => {
+		it("folds multiple worthwhile cohorts into separate specialized shapes", () => {
 			const sf = new SchemaFactoryAlpha("test");
-			class Format extends sf.object("Format", {
-				bold: sf.boolean,
-				italic: sf.boolean,
+			class TextNode extends sf.object("TextNode", {
+				text: sf.string,
 			}) {}
 
-			const storedSchema = toStoredSchema(Format, restrictiveStoredSchemaGenerationOptions);
+			const storedSchema = toStoredSchema(TextNode, restrictiveStoredSchemaGenerationOptions);
 
-			const makeFormat = (bold: boolean, italic: boolean): JsonableTree => ({
-				type: brand<TreeNodeSchemaIdentifier>(Format.identifier),
+			const makeText = (text: string): JsonableTree => ({
+				type: brand<TreeNodeSchemaIdentifier>(TextNode.identifier),
 				fields: {
-					bold: [
-						{ type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier), value: bold },
-					],
-					italic: [
-						{
-							type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier),
-							value: italic,
-						},
+					text: [
+						{ type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier), value: text },
 					],
 				},
 			});
 
-			const minOccurrencesForSpecialization = 2;
+			// Two distinct repeated values, each worth folding on its own → two specialized shapes.
+			const first = "first distinct value".repeat(4);
+			const second = "second distinct value".repeat(4);
 			const tree = [
-				...Array.from({ length: 2 }, () => makeFormat(true, false)),
-				...Array.from({ length: 2 }, () => makeFormat(false, true)),
+				...Array.from({ length: 2 }, () => makeText(first)),
+				...Array.from({ length: 2 }, () => makeText(second)),
 			];
 
 			const encoded = schemaCompressedEncodeVTextExperimental(
@@ -810,7 +780,6 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
 			assert.equal(countSpecializedShapes(encoded), 2);
@@ -827,7 +796,7 @@ describe("schemaBasedEncoding", () => {
 			// measured net-negative on the corpus and required a multi-pass counting loop.
 			const sf = new SchemaFactoryAlpha("test");
 			class Inner extends sf.object("Inner", {
-				flag: sf.boolean,
+				text: sf.string,
 			}) {}
 			class Outer extends sf.object("Outer", {
 				child: Inner,
@@ -835,7 +804,7 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(Outer, restrictiveStoredSchemaGenerationOptions);
 
-			const minOccurrencesForSpecialization = 2;
+			const repeated = "shared inner value".repeat(4);
 			const tree: JsonableTree[] = Array.from({ length: 2 }, () => ({
 				type: brand<TreeNodeSchemaIdentifier>(Outer.identifier),
 				fields: {
@@ -843,10 +812,10 @@ describe("schemaBasedEncoding", () => {
 						{
 							type: brand<TreeNodeSchemaIdentifier>(Inner.identifier),
 							fields: {
-								flag: [
+								text: [
 									{
-										type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier),
-										value: true,
+										type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+										value: repeated,
 									},
 								],
 							},
@@ -862,7 +831,6 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				undefined,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
 			// Only Inner (the leaf-bearing node) specializes; Outer (sub-object field) does not.
@@ -878,39 +846,41 @@ describe("schemaBasedEncoding", () => {
 			assert.deepEqual(resultTree, tree);
 		});
 
-		it("does not specialize a boolean field that the incremental policy marks as incremental", () => {
-			// Regression: getNodeEncoderVText used to include all required boolean leaves in
-			// boolFields without consulting the incremental policy. If a policy marked a
-			// boolean field as incremental, getNodeEncoder would substitute incrementalFieldEncoder
-			// in the base shape, but VText would still pull a constant value out and emit a
-			// specialized shape — silently overriding the caller's incremental decision.
+		it("does not specialize a leaf field that the incremental policy marks as incremental", () => {
+			// Regression: getNodeEncoderVText used to include all required leaves without consulting
+			// the incremental policy. If a policy marked a field as incremental, getNodeEncoder would
+			// substitute incrementalFieldEncoder in the base shape, but VText would still pull a
+			// constant value out and emit a specialized shape — silently overriding the caller's
+			// incremental decision.
 			const sf = new SchemaFactoryAlpha("test");
 			class Format extends sf.object("Format", {
-				bold: sf.boolean,
+				body: sf.string,
 			}) {}
 
 			const storedSchema = toStoredSchema(Format, restrictiveStoredSchemaGenerationOptions);
 
-			const minOccurrencesForSpecialization = 2;
+			// A repeated long value that WOULD fold into a specialized shape if it were not excluded
+			// by the incremental policy.
+			const repeated = "incremental body".repeat(6);
 			const tree = Array.from(
 				{ length: 5 },
 				(): JsonableTree => ({
 					type: brand<TreeNodeSchemaIdentifier>(Format.identifier),
 					fields: {
-						bold: [
+						body: [
 							{
-								type: brand<TreeNodeSchemaIdentifier>(booleanSchema.identifier),
-								value: true,
+								type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+								value: repeated,
 							},
 						],
 					},
 				}),
 			);
 
-			// Custom policy that marks Format.bold as incremental. The policy returns false
+			// Custom policy that marks Format.body as incremental. The policy returns false
 			// for the root field (parent undefined) and for any other call.
 			const customPolicy = (nodeId: string | undefined, fieldKey?: string): boolean =>
-				nodeId === Format.identifier && fieldKey === "bold";
+				nodeId === Format.identifier && fieldKey === "body";
 
 			let chunkEncoderCalls = 0;
 			const incEncoder = makeChunkingIncrementalEncoder(customPolicy, () => {
@@ -924,13 +894,65 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				incEncoder,
 				false,
-				minOccurrencesForSpecialization,
 			);
 
-			// Without the fix, the bold field would have been folded into a specialized shape
-			// (count=5 >= threshold=2), producing 1 specialized shape and 0 incremental calls.
+			// Without the fix, the repeated body value would have been folded into a specialized
+			// shape, producing 1 specialized shape and 0 incremental calls.
 			assert.equal(countSpecializedShapes(encoded), 0);
 			assert.ok(chunkEncoderCalls > 0);
+		});
+
+		it("does not specialize identifier fields (they require id-compressor encoding)", () => {
+			// Regression: getNodeEncoderVText selected specializable fields by leaf ValueSchema
+			// (String/Number/Boolean) without checking field.kind. An identifier field is a
+			// required single string leaf, so it passed the filter and VText would constant-fold
+			// its value into a specialized shape — bypassing the SpecialField.Identifier op-space
+			// normalization the base path applies (see getFieldEncoder), which breaks cross-session
+			// summary reads.
+			const sf = new SchemaFactoryAlpha("test");
+			class Doc extends sf.object("Doc", {
+				id: sf.identifier,
+			}) {}
+
+			const storedSchema = toStoredSchema(Doc, restrictiveStoredSchemaGenerationOptions);
+
+			// Repeat one id across several nodes so that, if the identifier field were treated as
+			// an ordinary string leaf, its value would fold into a specialized shape.
+			const compressedId = testIdCompressor.generateCompressedId();
+			const stableId = testIdCompressor.decompress(compressedId);
+			const tree = Array.from(
+				{ length: 5 },
+				(): JsonableTree => ({
+					type: brand<TreeNodeSchemaIdentifier>(Doc.identifier),
+					fields: {
+						id: [
+							{
+								type: brand<TreeNodeSchemaIdentifier>(stringSchema.identifier),
+								value: stableId,
+							},
+						],
+					},
+				}),
+			);
+
+			const encoded = schemaCompressedEncodeVTextExperimental(
+				storedSchema,
+				defaultSchemaPolicy,
+				[cursorForJsonableTreeField(tree)],
+				testIdCompressor,
+				undefined,
+				false,
+			);
+
+			// Without the fix, the repeated identifier value folds into one specialized shape,
+			// silently overriding the id-compressor encoding.
+			assert.equal(countSpecializedShapes(encoded), 0);
+
+			// The identifier values must still round-trip through the base SpecialField.Identifier path.
+			const decoded = decodeRoundTrip(encoded);
+			const firstChunk = decoded[0] ?? assert.fail("expected at least one decoded chunk");
+			const resultTree = jsonableTreeFromFieldCursor(firstChunk.cursor());
+			assert.deepEqual(resultTree, tree);
 		});
 	});
 
