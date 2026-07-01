@@ -12,13 +12,16 @@ export {
 } from "./branch.js";
 
 export {
-	TransactionResult,
-	type Transactor,
-	type TransactionEvents,
-	TransactionStack,
-	SquashingTransactionStack,
-	type OnPush,
+	type ChangeProcessor,
 	type OnPop,
+	type OnPush,
+	type SquashingTransactionOptions,
+	type TransactionEvents,
+	type Transactor,
+	ChangeProcessorApplicability,
+	SquashingTransactionStack,
+	TransactionResult,
+	TransactionStack,
 } from "./transaction.js";
 
 export {

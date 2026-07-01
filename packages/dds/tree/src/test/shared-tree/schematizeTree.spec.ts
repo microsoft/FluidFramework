@@ -27,6 +27,7 @@ import type {
 	ITreeCheckout,
 	CheckoutEvents,
 	ISharedTreeEditor,
+	TreeTransactor,
 } from "../../shared-tree/index.js";
 import {
 	canInitialize,
@@ -34,7 +35,6 @@ import {
 	initializerFromChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizeTree.js";
-import type { Transactor } from "../../shared-tree-core/index.js";
 import {
 	SchemaFactory,
 	type ImplicitFieldSchema,
@@ -179,7 +179,7 @@ describe("schematizeTree", () => {
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			forest: { isEmpty } as IForestSubscription,
 			editor: undefined as unknown as ISharedTreeEditor,
-			transaction: undefined as unknown as Transactor,
+			transaction: undefined as unknown as TreeTransactor,
 			fork(): ITreeCheckout {
 				throw new Error("Function not implemented.");
 			},

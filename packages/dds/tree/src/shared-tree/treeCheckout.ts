@@ -76,6 +76,7 @@ import {
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
 	type SharedTreeBranchChange,
+	type SquashingTransactionOptions,
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
@@ -117,6 +118,7 @@ import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -206,6 +208,11 @@ export interface CheckoutEvents {
 }
 
 /**
+ * A collection of functions for managing transactions on a {@link ITreeCheckout}.
+ */
+export type TreeTransactor = Transactor<SquashingTransactionOptions<SharedTreeChange>>;
+
+/**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
@@ -251,7 +258,7 @@ export interface ITreeCheckout
 	/**
 	 * A collection of functions for managing transactions.
 	 */
-	readonly transaction: Transactor;
+	readonly transaction: TreeTransactor;
 
 	fork(): ITreeCheckout;
 
@@ -949,7 +956,9 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.pushLabelFrame(params?.label);
-		this.transaction.start();
+		this.transaction.start({
+			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
 	}
@@ -1180,7 +1189,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		return this.#transaction;
 	}
 	/**
