@@ -8,10 +8,10 @@ import path from "node:path";
 import type { VersionBumpType } from "@fluid-tools/version-tools";
 import type { Logger } from "@fluidframework/build-tools";
 import { compareAsc, formatISO, parseISO } from "date-fns";
-import globby from "globby";
 import matter from "gray-matter";
 import issueParser from "issue-parser";
 import { simpleGit } from "simple-git";
+import { glob } from "tinyglobby";
 
 import type { ReleaseNotesSectionName } from "../config.js";
 import type { ReleasePackage } from "../releaseGroups.js";
@@ -271,7 +271,7 @@ function compareChangesets<T extends Pick<Changeset, "commit" | "additionalMetad
  */
 export async function loadChangesets(dir: string, log?: Logger): Promise<Changeset[]> {
 	const repo = simpleGit({ baseDir: dir });
-	const changesetFiles = await globby(["*.md", "!README.md"], { cwd: dir, absolute: true });
+	const changesetFiles = await glob(["*.md", "!README.md"], { cwd: dir, absolute: true });
 	const changesets: Changeset[] = [];
 
 	for (const file of changesetFiles) {
