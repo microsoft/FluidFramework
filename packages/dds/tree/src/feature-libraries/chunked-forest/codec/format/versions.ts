@@ -32,6 +32,10 @@ export const FieldBatchFormatVersion = strictEnum("FieldBatchFormatVersion", {
 	v2: 2,
 	/**
 	 * Experimental codec with optimizations for text.
+	 * @remarks
+	 * Uses a non-numeric ("text") version on purpose: this format is still experimental and must
+	 * not claim a permanent numbered slot until it is finalized (a numbered version must be
+	 * supported/loadable forever and never tweaked).
 	 */
 	vTextExperimental: "text",
 });

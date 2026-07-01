@@ -1,0 +1,160 @@
+{
+  "version": 1,
+  "nodes": {
+    "com.fluidframework.leaf.boolean": {
+      "leaf": 2
+    },
+    "com.fluidframework.leaf.number": {
+      "leaf": 0
+    },
+    "com.fluidframework.leaf.string": {
+      "leaf": 1
+    },
+    "com.fluidframework.text.formatted.StringTextAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.default.CharacterFormat": {
+      "object": {
+        "bold": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        },
+        "font": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.string"
+          ]
+        },
+        "italic": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        },
+        "size": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "underline": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.boolean"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.default.StringLineAtom": {
+      "object": {
+        "indent": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.leaf.number"
+          ]
+        },
+        "tag": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.default.lineTag.blockquote",
+            "com.fluidframework.text.formatted.default.lineTag.checked",
+            "com.fluidframework.text.formatted.default.lineTag.codeBlock",
+            "com.fluidframework.text.formatted.default.lineTag.h1",
+            "com.fluidframework.text.formatted.default.lineTag.h2",
+            "com.fluidframework.text.formatted.default.lineTag.h3",
+            "com.fluidframework.text.formatted.default.lineTag.h4",
+            "com.fluidframework.text.formatted.default.lineTag.h5",
+            "com.fluidframework.text.formatted.default.lineTag.li",
+            "com.fluidframework.text.formatted.default.lineTag.ol",
+            "com.fluidframework.text.formatted.default.lineTag.unchecked"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted.default.lineTag.blockquote": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.checked": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.codeBlock": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.h1": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.h2": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.h3": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.h4": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.h5": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.li": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.ol": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted.default.lineTag.unchecked": {
+      "object": {}
+    },
+    "com.fluidframework.text.formatted<default>.StringArray": {
+      "object": {
+        "": {
+          "kind": "Sequence",
+          "types": [
+            "com.fluidframework.text.formatted<default>.StringAtom"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<default>.StringAtom": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.StringTextAtom",
+            "com.fluidframework.text.formatted.default.StringLineAtom"
+          ]
+        },
+        "format": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted.default.CharacterFormat"
+          ]
+        }
+      }
+    },
+    "com.fluidframework.text.formatted<default>.Text": {
+      "object": {
+        "": {
+          "kind": "Value",
+          "types": [
+            "com.fluidframework.text.formatted<default>.StringArray"
+          ]
+        }
+      }
+    }
+  },
+  "root": {
+    "kind": "Value",
+    "types": [
+      "com.fluidframework.text.formatted<default>.Text"
+    ]
+  }
+}
