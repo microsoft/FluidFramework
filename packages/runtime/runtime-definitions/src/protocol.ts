@@ -142,6 +142,44 @@ export interface IRuntimeMessageCollection {
 }
 
 /**
+ * A single message to resubmit, as part of an {@link IRuntimeResubmitMessageCollection}.
+ * @legacy @beta
+ * @sealed
+ */
+export interface IRuntimeResubmitMessage {
+	/**
+	 * The contents of the original message that was submitted.
+	 */
+	readonly contents: unknown;
+	/**
+	 * The local metadata associated with the original message that was submitted.
+	 */
+	readonly localOpMetadata: unknown;
+}
+
+/**
+ * A collection of messages to be resubmitted together as a "bunch".
+ * @remarks
+ * All messages in a resubmit collection share the same target — that is, they are
+ * for the same DDS — and share a single `squash` setting. This mirrors the inbound
+ * "bunch" shape of {@link IRuntimeMessageCollection} for the outbound resubmit path,
+ * allowing DDSes to handle a contiguous run of resubmits in one call.
+ * @legacy @beta
+ * @sealed
+ */
+export interface IRuntimeResubmitMessageCollection {
+	/**
+	 * If true, the DDS should avoid resubmitting any "unnecessary intermediate state" created
+	 * by these messages. Applies uniformly to every message in the collection.
+	 */
+	readonly squash: boolean;
+	/**
+	 * The messages to resubmit, in original submission order.
+	 */
+	readonly messages: readonly IRuntimeResubmitMessage[];
+}
+
+/**
  * Outgoing {@link IFluidDataStoreChannel} message structures.
  * @internal
  *

@@ -146,6 +146,7 @@ export interface IFluidDataStoreChannel extends IDisposable {
     // (undocumented)
     request(request: IRequest): Promise<IResponse>;
     reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
+    reSubmitMessages?(type: string, collection: IRuntimeResubmitMessageCollection): void;
     rollback?(type: string, content: any, localOpMetadata: unknown): void;
     // (undocumented)
     setAttachState(attachState: AttachState.Attaching | AttachState.Attached): void;
@@ -295,6 +296,18 @@ export interface IRuntimeMessagesContent {
     readonly clientSequenceNumber: number;
     readonly contents: unknown;
     readonly localOpMetadata: unknown;
+}
+
+// @beta @sealed @legacy
+export interface IRuntimeResubmitMessage {
+    readonly contents: unknown;
+    readonly localOpMetadata: unknown;
+}
+
+// @beta @sealed @legacy
+export interface IRuntimeResubmitMessageCollection {
+    readonly messages: readonly IRuntimeResubmitMessage[];
+    readonly squash: boolean;
 }
 
 // @beta @legacy

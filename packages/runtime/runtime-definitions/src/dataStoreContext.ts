@@ -41,6 +41,7 @@ import type {
 import type {
 	IInboundSignalMessage,
 	IRuntimeMessageCollection,
+	IRuntimeResubmitMessageCollection,
 	IRuntimeStorageService,
 } from "./protocol.js";
 import type {
@@ -479,6 +480,21 @@ export interface IFluidDataStoreChannel extends IDisposable {
 	 */
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	reSubmit(type: string, content: any, localOpMetadata: unknown, squash: boolean): void;
+
+	/**
+	 * Ask the DDS to resubmit a bunch of contiguous messages of the same type.
+	 * @remarks
+	 * The bunched form of {@link IFluidDataStoreChannel.reSubmit}, mirroring the inbound
+	 * {@link IFluidDataStoreChannel.processMessages} shape so DDSes that benefit from
+	 * processing a contiguous run together can do so on resubmit.
+	 *
+	 * The default implementation provided by the runtime simply loops over
+	 * `collection.messages` calling the single-op {@link IFluidDataStoreChannel.reSubmit}
+	 * path; implementers may override to take advantage of the bunch.
+	 * @param type - The type shared by all messages in the collection.
+	 * @param collection - The bunch of messages to resubmit, with a shared `squash` flag.
+	 */
+	reSubmitMessages?(type: string, collection: IRuntimeResubmitMessageCollection): void;
 
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- TODO (#28746): breaking change
 	applyStashedOp(content: any): Promise<unknown>;

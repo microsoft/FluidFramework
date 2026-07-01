@@ -64,6 +64,8 @@ export type {
 	InboundAttachMessage,
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
+	IRuntimeResubmitMessage,
+	IRuntimeResubmitMessageCollection,
 	ISequencedMessageEnvelope,
 	IRuntimeStorageService,
 } from "./protocol.js";

@@ -35,6 +35,7 @@ import {
 	totalBlobSizePropertyName,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
+	type IRuntimeResubmitMessageCollection,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	toDeltaManagerInternal,
@@ -549,6 +550,15 @@ export abstract class SharedObjectCore<
 			},
 			reSubmit: (content: unknown, localOpMetadata: unknown, squash: boolean) => {
 				this.reSubmit(content, localOpMetadata, squash);
+			},
+			reSubmitMessages: (collection: IRuntimeResubmitMessageCollection) => {
+				// Default implementation iterates the bunch and dispatches each entry through the
+				// existing single-op reSubmit dispatcher (reSubmitCore vs reSubmitSquashed). DDSes
+				// that can take advantage of seeing the contiguous run together may override the
+				// IDeltaHandler attached here.
+				for (const { contents, localOpMetadata } of collection.messages) {
+					this.reSubmit(contents, localOpMetadata, collection.squash);
+				}
 			},
 			applyStashedOp: (content: unknown): void => {
 				this.applyStashedOp(parseHandles(content, this.serializer));

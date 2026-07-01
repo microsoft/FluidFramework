@@ -190,6 +190,21 @@ function stubChannelCollection(
 		.stub<Parameters<ChannelCollection["reSubmitContainerMessage"]>, void>()
 		.callsFake(containerRuntime.submitMessage.bind(containerRuntime));
 
+	// Bunched form: replay each entry as a singleton FluidDataStoreOp through submitMessage.
+	const reSubmitBunchedFake = sandbox
+		.stub<Parameters<ChannelCollection["reSubmitContainerMessages"]>, void>()
+		.callsFake((entries, squash) => {
+			for (const { envelope, localOpMetadata } of entries) {
+				containerRuntime.submitMessage(
+					{
+						type: ContainerMessageType.FluidDataStoreOp,
+						contents: envelope,
+					},
+					localOpMetadata,
+				);
+			}
+		});
+
 	const stub = Sinon.createStubInstance(
 		// createSubInstance does not work with property methods (which are
 		// used for stricter typing); so, override via a subclass here.
@@ -199,6 +214,10 @@ function stubChannelCollection(
 				..._args: Parameters<ChannelCollection["reSubmitContainerMessage"]>
 			): void {}
 			// @ts-expect-error -- redefine as instance method for stubbing
+			public reSubmitContainerMessages(
+				..._args: Parameters<ChannelCollection["reSubmitContainerMessages"]>
+			): void {}
+			// @ts-expect-error -- redefine as instance method for stubbing
 			public rollbackDataStoreOp(
 				..._args: Parameters<ChannelCollection["rollbackDataStoreOp"]>
 			) {}
@@ -206,6 +225,7 @@ function stubChannelCollection(
 		{
 			setConnectionState: sandbox.stub(),
 			reSubmitContainerMessage: reSubmitFake,
+			reSubmitContainerMessages: reSubmitBunchedFake,
 			rollbackDataStoreOp: sandbox.stub(),
 			notifyStagingMode: sandbox.stub(),
 			dispose: sandbox.stub(),
@@ -1540,6 +1560,18 @@ describe("Runtime", () => {
 					setConnectionState: (_connected: boolean, _clientId?: string) => {},
 					// Pass data store op right back to ContainerRuntime
 					reSubmitContainerMessage: containerRuntime.submitMessage.bind(containerRuntime),
+					// Bunched form: replay each entry as a singleton through submitMessage.
+					reSubmitContainerMessages: (entries, _squash) => {
+						for (const { envelope, localOpMetadata } of entries) {
+							containerRuntime.submitMessage(
+								{
+									type: ContainerMessageType.FluidDataStoreOp,
+									contents: envelope,
+								},
+								localOpMetadata,
+							);
+						}
+					},
 				} satisfies Partial<ChannelCollection>;
 
 				return patched;
@@ -4606,19 +4638,20 @@ describe("Runtime", () => {
 				controls.commitChanges();
 
 				assert(
-					channelCollectionStub.reSubmitContainerMessage.calledOnce,
-					"Expected reSubmit to be called once. Prestaging op should not be resubmitted",
+					channelCollectionStub.reSubmitContainerMessages.calledOnce,
+					"Expected reSubmitContainerMessages to be called once. Prestaging op should not be resubmitted",
 				);
 				assert(
-					channelCollectionStub.reSubmitContainerMessage.calledWithExactly(
-						{
-							type: ContainerMessageType.FluidDataStoreOp,
-							contents: { address: "2", contents: stagedOpContents },
-						},
-						"LOCAL_OP_METADATA",
+					channelCollectionStub.reSubmitContainerMessages.calledWithExactly(
+						[
+							{
+								envelope: { address: "2", contents: stagedOpContents },
+								localOpMetadata: "LOCAL_OP_METADATA",
+							},
+						],
 						/* squash: */ false, // False by default on commitChanges
 					),
-					"Unexpected args for reSubmit",
+					"Unexpected args for reSubmitContainerMessages",
 				);
 				assert(
 					channelCollectionStub.notifyStagingMode.getCall(1)?.calledWithExactly(false),
@@ -4632,6 +4665,84 @@ describe("Runtime", () => {
 				);
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
 				assert.equal(submittedOps[1].contents.address, "2", "Unexpected staged op address");
+			});
+
+			it("commitChanges bunches contiguous same-data-store ops into one reSubmitContainerMessages call", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+				const controls = containerRuntime.enterStagingMode();
+
+				// Three contiguous ops targeting data store "ds1" with the same DDS op type.
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("a"), "md-a");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("b"), "md-b");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("c"), "md-c");
+				containerRuntime.flush();
+
+				controls.commitChanges();
+
+				assert(
+					channelCollectionStub.reSubmitContainerMessages.calledOnce,
+					"Expected exactly one bunched reSubmitContainerMessages call for the contiguous run",
+				);
+				const [entries, squash] =
+					channelCollectionStub.reSubmitContainerMessages.firstCall.args;
+				assert.strictEqual(entries.length, 3, "Expected all three entries in one bunch");
+				assert.strictEqual(squash, false, "commitChanges default should not squash");
+				assert.deepStrictEqual(
+					entries.map((e) => e.envelope.address),
+					["ds1", "ds1", "ds1"],
+					"All entries should target the same data store address",
+				);
+				assert.deepStrictEqual(
+					entries.map((e) => e.localOpMetadata),
+					["md-a", "md-b", "md-c"],
+					"Each entry's localOpMetadata should be preserved",
+				);
+			});
+
+			it("commitChanges splits bunches when the data store address changes", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+				const controls = containerRuntime.enterStagingMode();
+
+				// Two ops to ds1, then one to ds2, then two more to ds1 — should produce 3 bunches.
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("a"), "md-a");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("b"), "md-b");
+				submitDataStoreOp(containerRuntime, "ds2", genTestDataStoreMessage("c"), "md-c");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("d"), "md-d");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("e"), "md-e");
+				containerRuntime.flush();
+
+				controls.commitChanges();
+
+				// All five entries arrive in a single contiguous reSubmitContainerMessages call;
+				// the per-address grouping happens inside ChannelCollection.
+				assert(
+					channelCollectionStub.reSubmitContainerMessages.calledOnce,
+					"Expected single reSubmitContainerMessages call carrying the contiguous run",
+				);
+				const [entries] = channelCollectionStub.reSubmitContainerMessages.firstCall.args;
+				assert.deepStrictEqual(
+					entries.map((e) => e.envelope.address),
+					["ds1", "ds1", "ds2", "ds1", "ds1"],
+					"Entries should preserve submission order across address changes",
+				);
+			});
+
+			it("commitChanges with squash propagates the flag on the bunched call", () => {
+				const channelCollectionStub = stubChannelCollection(containerRuntime);
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("a"), "md-a");
+				submitDataStoreOp(containerRuntime, "ds1", genTestDataStoreMessage("b"), "md-b");
+				containerRuntime.flush();
+
+				controls.commitChanges({ squash: true });
+
+				assert(
+					channelCollectionStub.reSubmitContainerMessages.calledOnce,
+					"Expected one bunched reSubmitContainerMessages call",
+				);
+				const [, squash] = channelCollectionStub.reSubmitContainerMessages.firstCall.args;
+				assert.strictEqual(squash, true, "squash flag should propagate to the bunched call");
 			});
 
 			it("discardChanges drops staged ops", () => {
