@@ -11,8 +11,10 @@ import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
+	type StoredFromViewSchemaGenerationOptions,
 	type TreeNodeSchema,
 } from "../core/index.js";
+import type { SchemaUpgrade } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	isArrayNodeSchema,
@@ -26,6 +28,7 @@ import {
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 import {
+	resolveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toUnhydratedSchema,
 	transformSimpleSchema,
@@ -156,6 +159,38 @@ export interface ITreeViewConfiguration<
 }
 
 /**
+ * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
+ * @alpha
+ */
+export interface ITreeViewConfigurationAlpha<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> extends ITreeViewConfiguration<TSchema> {
+	/**
+	 * Staged schema upgrades to enable for this view when calling `initialize` or `upgradeSchema`.
+	 * @remarks
+	 * These upgrades are fixed at view construction time and cannot be changed afterwards.
+	 *
+	 * Each item is a {@link SchemaUpgrade} value obtained from a staged schema factory API.
+	 *
+	 * When omitted or empty, staged schema members remain disabled and `initialize`/`upgradeSchema`
+	 * generate the most restrictive stored schema compatible with the view schema.
+	 */
+	readonly enabledUpgrades?: Iterable<SchemaUpgrade>;
+
+	/**
+	 * Explicit policy for generating stored schema from the view schema.
+	 * @remarks
+	 * This policy is fixed at view construction time and cannot be changed afterwards.
+	 *
+	 * If provided, this policy is used directly for compatibility checks and for
+	 * `initialize` / `upgradeSchema` schema generation.
+	 *
+	 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.enabledUpgrades}.
+	 */
+	readonly storedSchemaGenerationOptions?: StoredFromViewSchemaGenerationOptions;
+}
+
+/**
  * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
@@ -252,14 +287,40 @@ export class TreeViewConfigurationAlpha<
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
 	>;
 
-	public constructor(props: ITreeViewConfiguration<TSchema>) {
+	/**
+	 * The staged schema upgrades declared for this view, as provided at construction time.
+	 */
+	public readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
+
+	/**
+	 * Stored-schema generation policy for this view, fixed at construction time.
+	 */
+	public readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
+
+	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
+		if (
+			props.enabledUpgrades !== undefined &&
+			props.storedSchemaGenerationOptions !== undefined
+		) {
+			throw new UsageError(
+				"`enabledUpgrades` and `storedSchemaGenerationOptions` cannot both be provided.",
+			);
+		}
+		this.enabledUpgrades =
+			props.enabledUpgrades === undefined ? undefined : [...props.enabledUpgrades];
+		if (this.enabledUpgrades?.length === 0) {
+			this.enabledUpgrades = undefined;
+		}
+		this.storedSchemaGenerationOptions =
+			props.storedSchemaGenerationOptions ??
+			resolveStoredSchemaGenerationOptions(this.enabledUpgrades);
 
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root);
+		toInitialSchema(this.root, this.storedSchemaGenerationOptions);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }

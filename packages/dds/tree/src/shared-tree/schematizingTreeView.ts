@@ -23,6 +23,7 @@ import {
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
 	type FlexTreeRequiredField,
+	allowsRepoSuperset,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -32,8 +33,9 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
+	type StoredFromViewSchemaGenerationOptions,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
 	type InsertableField,
@@ -57,6 +59,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -98,7 +101,14 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	/**
+	 * The schema for this view, captured at construction time for compatibility checking.
+	 */
+	private readonly viewSchema: TreeSchema;
+	/**
+	 * Stored-schema generation policy from the view configuration, frozen at construction time.
+	 */
+	private readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -141,9 +151,20 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const storedSchemaGenerationOptions =
+			config instanceof TreeViewConfigurationAlpha
+				? config.storedSchemaGenerationOptions
+				: undefined;
+		const configAlpha = new TreeViewConfigurationAlpha({
+			schema: config.schema,
+			enableSchemaValidation: config.enableSchemaValidation,
+			preventAmbiguity: config.preventAmbiguity,
+			storedSchemaGenerationOptions,
+		});
+		this.storedSchemaGenerationOptions = configAlpha.storedSchemaGenerationOptions;
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -188,7 +209,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema, this.storedSchemaGenerationOptions);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -246,19 +267,21 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const compatibility = this.compatibility;
-		if (compatibility.isEquivalent) {
+		const newSchema = toUpgradeSchema(
+			this.viewSchema.root,
+			this.storedSchemaGenerationOptions,
+		);
+		const storedSchema = this.checkout.storedSchema.clone();
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+			throw new UsageError(
+				"Existing stored schema cannot be upgraded to the requested schema.",
+			);
+		}
+		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
 			// No-op
 			return;
 		}
 
-		if (!compatibility.canUpgrade) {
-			throw new UsageError(
-				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
-			);
-		}
-
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
@@ -347,12 +370,8 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
-
-		this.currentCompatibility = {
-			...compatibility,
-			canInitialize: canInitialize(this.checkout),
-		};
+		const compatibility = this.computeCompatibility();
+		this.currentCompatibility = compatibility;
 
 		const anchors = this.checkout.forest.anchors;
 		const slots = anchors.slots;
@@ -421,6 +440,18 @@ export class SchematizingSimpleTreeView<
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
+	}
+
+	private computeCompatibility(): SchemaCompatibilityStatus {
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.storedSchemaGenerationOptions,
+		);
+		return {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 	}
 
 	private runSchemaEdit(edit: () => void): void {

@@ -399,7 +399,8 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the document's stored schema changes,
+	 * which may change this compatibility status.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
 	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
@@ -461,6 +462,45 @@ export interface TreeViewAlpha<
 
 	set root(newRoot: InsertableField<TSchema>);
 
+	/**
+	 * Modifies the stored schema to match this view's schema, enabling staged schema upgrades based on
+	 * the construction-time policy from {@link ITreeViewConfigurationAlpha.enabledUpgrades} or
+	 * {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions}.
+	 * @remarks
+	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
+	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
+	 *
+	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
+	 * If no upgrades or explicit policy were provided at view construction, this behaves like the base
+	 * {@link TreeView.upgradeSchema}.
+	 *
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 * Keep previously enabled staged members in the view policy for as long as any document may contain them.
+	 *
+	 * Full end-to-end staged schema upgrade examples can be found in the
+	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
+	 *
+	 */
+	upgradeSchema(): void;
+
+	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * @remarks
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.enabledUpgrades} or
+	 * {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions} when generating the initial stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
+	 * the upgraded members and the new target would narrow it.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 */
 	initialize(content: InsertableField<TSchema>): void;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
@@ -485,7 +525,7 @@ export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
  *
  * See SharedTree's README for more information about choosing a compatibility policy.
  * @privateRemarks
- * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
+ * See {@link checkSchemaCompatibility} for the implementation of this compatibility checking.
  * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
