@@ -4,7 +4,7 @@
  */
 
 // This file re-exports the public/legacy API surface for bundle-size testing.
-/* eslint-disable import-x/no-internal-modules */
+/* eslint-disable import-x/no-internal-modules -- legacy imports trigger this rule. */
 
 export {
 	ContainerRuntimeFactoryWithDefaultDataStore,

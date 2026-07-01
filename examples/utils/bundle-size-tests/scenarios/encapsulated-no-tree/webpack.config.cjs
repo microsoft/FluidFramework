@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import path from "node:path";
+const path = require("node:path");
 
-import TerserPlugin from "terser-webpack-plugin";
-import { default as webpack } from "webpack";
-import { BundleAnalyzerPlugin } from "webpack-bundle-analyzer";
+const TerserPlugin = require("terser-webpack-plugin");
+const webpack = require("webpack");
+const { BundleAnalyzerPlugin } = require("webpack-bundle-analyzer");
 
 const bundleName = "encapsulated-no-tree.js";
 
-const config: webpack.Configuration = {
+const config = {
 	devtool: "source-map",
 	entry: {
 		[bundleName]: path.resolve(__dirname, "./src/index.ts"),
@@ -78,4 +78,4 @@ const config: webpack.Configuration = {
 	},
 };
 
-export default config;
+module.exports = config;
