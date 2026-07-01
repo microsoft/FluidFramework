@@ -262,6 +262,7 @@ export {
 	TransactionCallbackStatus, 
 	TransactionConstraintAlpha, 
 	TransactionLabels, 
+	TransactionPostProcessor, 
 	TransactionResult, 
 	TransactionResultExt, 
 	TransactionResultFailed, 

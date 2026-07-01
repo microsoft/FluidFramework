@@ -39,7 +39,6 @@ import {
 	ForestSummarizer,
 	TreeCompressionStrategy,
 	defaultSchemaPolicy,
-	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../../../feature-libraries/index.js";
 import {
@@ -69,6 +68,7 @@ import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
 import {
 	checkoutWithContent,
 	fieldCursorFromInsertable,
+	makeTestFieldBatchContexts,
 	testIdCompressor,
 	testRevisionTagCodec,
 	type TreeStoredContentStrict,
@@ -102,19 +102,18 @@ function createForestSummarizer(args: {
 		forestType,
 		shouldEncodeIncrementally,
 	});
-	const encoderContext: FieldBatchEncodingContext = {
+	const { encode: encoderContext, decode: decoderContext } = makeTestFieldBatchContexts({
 		encodeType,
-		idCompressor: testIdCompressor,
-		originatorId: testIdCompressor.localSessionId,
-		isSummary: false,
+		isSummary: true,
 		schema: { schema: initialContent.schema, policy: defaultSchemaPolicy },
-	};
+	});
 	return {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
 			testRevisionTagCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			testIdCompressor,
 			0 /* initialSequenceNumber */,

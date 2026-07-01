@@ -24,6 +24,7 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
+import type { IdentifierHealingConfig } from "../util/index.js";
 
 import type { SummaryData } from "./editManager.js";
 import { makeV1toV4andV6CodecWithVersion } from "./editManagerCodecsV1toV4.js";
@@ -37,8 +38,8 @@ export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 	readonly isSummary: boolean;
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	readonly sharedObjectId?: string;
+	/** See {@link IdentifierHealingConfig}. */
+	readonly healing?: IdentifierHealingConfig;
 }
 
 /**

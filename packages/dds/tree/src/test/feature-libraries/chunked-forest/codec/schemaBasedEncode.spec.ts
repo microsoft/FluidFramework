@@ -26,7 +26,6 @@ import { decode } from "../../../../feature-libraries/chunked-forest/codec/chunk
 // eslint-disable-next-line import-x/no-internal-modules
 import { IdentifierToken } from "../../../../feature-libraries/chunked-forest/codec/chunkEncodingGeneric.js";
 import {
-	type FieldBatchEncodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalEncoder,
@@ -99,7 +98,7 @@ import {
 } from "../../../testTrees.js";
 import {
 	assertIsSessionId,
-	fieldCursorFromInsertable,
+	makeTestFieldBatchContexts,
 	testIdCompressor,
 } from "../../../utils.js";
 
@@ -409,7 +408,7 @@ describe("schemaBasedEncoding", () => {
 				testIdCompressor,
 				mockIncrementalEncoder,
 				brand(FieldBatchFormatVersion.v2), // Use v2 or higher for incremental encoding support
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const log: TreeFieldStoredSchema[] = [];
@@ -978,13 +977,12 @@ describe("schemaBasedEncoding", () => {
 					);
 					checkFieldEncode(anyFieldEncoder, context, tree, idCompressor);
 
-					const fieldBatchContext: FieldBatchEncodingContext = {
-						encodeType: TreeCompressionStrategy.Compressed,
-						originatorId: testIdCompressor.localSessionId,
-						isSummary: false,
-						schema: { schema: storedSchema, policy: defaultSchemaPolicy },
-						idCompressor,
-					};
+					const { encode: fieldBatchEncodeContext, decode: fieldBatchDecodeContext } =
+						makeTestFieldBatchContexts({
+							encodeType: TreeCompressionStrategy.Compressed,
+							schema: { schema: storedSchema, policy: defaultSchemaPolicy },
+							idCompressor,
+						});
 					const idCompressorCore = toIdCompressorWithCore(idCompressor);
 					idCompressorCore.finalizeCreationRange(idCompressorCore.takeNextCreationRange());
 					const codec = fieldBatchCodecBuilder.build({
@@ -1001,8 +999,11 @@ describe("schemaBasedEncoding", () => {
 					});
 					// End to end test
 					// rootFieldSchema is not being used in encoding, so we currently have some limitations. Schema based optimizations for root case don't trigger.
-					const encoded = codec.encode([cursorForJsonableTreeField(tree)], fieldBatchContext);
-					const result = codec.decode(encoded, fieldBatchContext);
+					const encoded = codec.encode(
+						[cursorForJsonableTreeField(tree)],
+						fieldBatchEncodeContext,
+					);
+					const result = codec.decode(encoded, fieldBatchDecodeContext);
 					const resultTree = result.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual(resultTree, [tree]);
 

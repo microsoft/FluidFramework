@@ -315,7 +315,6 @@ export const shortCodeMap = {
 	"0x1e7": "caching was not performed!",
 	"0x1e8": "reentrancy",
 	"0x1e9": "Pending ops",
-	"0x1ec": "No refresh token provided.",
 	"0x1ed": "Share link should be present",
 	"0x1f0": "Unexpected mismatch in readonly",
 	"0x1f5": "Attached state should have storage",
@@ -1440,7 +1439,6 @@ export const shortCodeMap = {
 	"0xaa6": "Cannot submit a commit while a transaction is in progress",
 	"0xaa7": "Checkout has already been locked",
 	"0xaa8": "Checkout has not been locked",
-	"0xaa9": "Forks may only be disposed once",
 	"0xaaa": "All local changes should be applied to the trunk before loading from summary",
 	"0xaab": "must be segment leaf",
 	"0xaac": "must have removedClient ids",
@@ -1941,5 +1939,10 @@ export const shortCodeMap = {
 	"0xcfe": "duplicate field key in base node shape",
 	"0xcff": "duplicate field key in specialized node shape",
 	"0xd00": "expected existing field index",
-	"0xd01": "replayPendingStates must not be called during stashed-op apply window"
+	"0xd01": "replayPendingStates must not be called during stashed-op apply window",
+	"0xd02": "Claims: unexpected op type",
+	"0xd03": "Claims: unexpected op type in rollback",
+	"0xd04": "Claims: only claim ops should be stashed",
+	"0xd05": "Column ID not found in cache",
+	"0xd06": "No constraints generated for column references."
 };

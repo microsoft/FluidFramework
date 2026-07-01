@@ -4,7 +4,12 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import type {
+	IIdCompressor,
+	OpSpaceCompressedId,
+	SessionId,
+	SessionSpaceCompressedId,
+} from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type { TSchema } from "@sinclair/typebox";
 
@@ -22,10 +27,15 @@ import {
 	type StoredSchemaCollection,
 	type TreeChunk,
 } from "../../../core/index.js";
-import { brandedNumberType, type Brand } from "../../../util/index.js";
+import {
+	brandedNumberType,
+	forceDecodeEncodedIdWithoutSession,
+	type Brand,
+	type IdentifierHealingConfig,
+} from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
-import { decode } from "./chunkDecoding.js";
+import { decode, type IdDecodingContext } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
@@ -106,44 +116,139 @@ export interface IncrementalDecoder {
  */
 export interface IncrementalEncoderDecoder extends IncrementalEncoder, IncrementalDecoder {}
 
+/**
+ * Encode-side context for {@link FieldBatchCodec}.
+ *
+ * Carries only the data the encoder actually consumes. Originator-session
+ * lookup, heal flags, and the incremental *decoder* live on
+ * {@link FieldBatchDecodingContext}.
+ */
 export interface FieldBatchEncodingContext {
 	readonly encodeType: TreeCompressionStrategy;
 	readonly idCompressor: IIdCompressor;
-	readonly originatorId: SessionId;
 	readonly schema?: SchemaAndPolicy;
 	/**
-	 * An encoder / decoder for encoding and decoding of incremental fields.
-	 * This will be defined if incremental encoding is supported and enabled.
+	 * Encoder for incremental fields. Defined when incremental encoding is
+	 * supported and enabled.
 	 */
-	readonly incrementalEncoderDecoder?: IncrementalEncoderDecoder;
+	readonly incrementalEncoder?: IncrementalEncoder;
 	/**
-	 * `true` when encoding to or decoding from a summary blob. `false` for
-	 * op-stream encode/decode paths and for utility encoders that are not
-	 * tied to a persisted document. Healing behavior is gated on this flag.
+	 * `true` when encoding to a summary blob. `false` for op-stream encode
+	 * paths and for utility encoders that aren't tied to a persisted document.
+	 *
+	 * @remarks
+	 * Used by the node encoder to decide whether non-finalized op-space ids
+	 * can be written into the batch (they can't, for summaries).
 	 */
 	readonly isSummary: boolean;
-	/**
-	 * If `true`, when an op-space compressed ID encountered while decoding
-	 * cannot be resolved by the local id-compressor (e.g. the attach-summary
-	 * blob's originator session state was stripped), a deterministic stable
-	 * UUID derived from `sharedObjectId` is returned instead of throwing.
-	 * @remarks
-	 * Off by default. Used only to recover documents whose attach summary was
-	 * written with non-finalized op-space IDs before the encode-side fix
-	 * shipped. Only takes effect when `isSummary` is also `true`.
-	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
-	 */
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	/**
-	 * The SharedTree's shared-object id, used as input to the deterministic
-	 * UUID derivation when `healUnresolvableIdentifiersOnDecode` triggers. Required
-	 * for that path; ignored otherwise.
-	 * @remarks
-	 * This allows us to ensure that multiple attaches,
-	 * in the same or different documents, with the same session offsets, get different UUIDs.
-	 */
-	readonly sharedObjectId?: string;
 }
+
+/**
+ * Decode-side context for {@link FieldBatchCodec}.
+ *
+ * Carries the per-call `resolveEncodedId` function that encapsulates the
+ * originator-session lookup and (for the forest-summarizer's legacy heal path)
+ * the deterministic UUIDv5 synthesis. Heal and originator-session flags live
+ * inside that function, not on this context.
+ *
+ * Constructed via one of the two named static factories — {@link forOp} or
+ * {@link forSummary} — depending on the call site's semantics. The constructor
+ * is private; there is no general-purpose builder, because the choice between
+ * op-style and summary-style decoding is load-bearing (different invariants
+ * apply, and bugs in this area are typically the result of conflating them).
+ */
+export class FieldBatchDecodingContext implements IdDecodingContext {
+	private constructor(
+		/**
+		 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
+		 */
+		private readonly hasOriginatorSessionId: boolean,
+
+		public readonly idCompressor: Pick<IIdCompressor, "decompress">,
+
+		public readonly resolveEncodedId: (
+			id: OpSpaceCompressedId,
+		) => SessionSpaceCompressedId | string,
+
+		/**
+		 * Decoder for incremental fields. Defined when the encoded batch contains
+		 * incremental chunks. Only populated on summary-style contexts; op-style
+		 * contexts always have this undefined.
+		 */
+		public readonly incrementalDecoder?: IncrementalDecoder,
+	) {}
+
+	/**
+	 * Construct a decode context for an op.
+	 *
+	 * The originator is the session that produced the encoded form (carried
+	 * alongside the op envelope by the caller). Heal-on-decode is *not*
+	 * available — an unresolvable id during op decode indicates a real bug,
+	 * not a recoverable state, so the resolver throws rather than synthesizing
+	 * a UUID. Incremental decoding is not used for ops.
+	 */
+	public static forOp(opts: {
+		readonly idCompressor: IIdCompressor;
+		readonly originatorId: SessionId;
+	}): FieldBatchDecodingContext {
+		const { idCompressor, originatorId } = opts;
+		return new FieldBatchDecodingContext(true, idCompressor, (id) =>
+			idCompressor.normalizeToSessionSpace(id, originatorId),
+		);
+	}
+
+	/**
+	 * Construct a decode context for a summary blob.
+	 *
+	 * Summaries must contain only ids resolvable without an originator — either
+	 * finalized op-space ids, or (when {@link IdentifierHealingConfig} is supplied
+	 * via `healing`) non-final ids that get healed into deterministic UUIDv5
+	 * strings. Incremental decoding is attached via {@link withIncrementalDecoder}.
+	 *
+	 * @privateRemarks
+	 * In the future (if adding a summary format which includes the session id),
+	 * this could allow providing an originator ID to allow for op-space compressed identifiers in attach summaries.
+	 * Non-attach summaries should only have finalized compressed identifiers (due to only being made by summary clients which never allocate identifiers since they never edit).
+	 * Since only non-attach summaries can be incremental, incremental summaries should never have non finalized identifiers.
+	 * `withIncrementalDecoder` has logic to guard against cases which expect session-relative identifiers in incremental chunks,
+	 * as does the encoding-side assert in the {@link EncoderContext}.
+	 */
+	public static forSummary(opts: {
+		readonly idCompressor: IIdCompressor;
+		readonly healing?: IdentifierHealingConfig;
+	}): FieldBatchDecodingContext {
+		const { idCompressor, healing } = opts;
+		return new FieldBatchDecodingContext(false, idCompressor, (id) =>
+			forceDecodeEncodedIdWithoutSession(id, idCompressor, healing),
+		);
+	}
+
+	/**
+	 * Returns a copy of this context with `incrementalDecoder` swapped in. Used by
+	 * the forest summarizer to attach the per-call incremental builder to a base
+	 * decode context.
+	 */
+	public withIncrementalDecoder(
+		incrementalDecoder: IncrementalDecoder,
+	): FieldBatchDecodingContext {
+		// As different incremental chunks may come from different sessions,
+		// for now we simply enforce that we do not provide an originator session ID
+		// when we might be dealing with incremental chunks.
+		// This mitigates the risk of using incorrect originator session ID identifiers in incremental chunks.
+		// See also private remarks on forSummary.
+		assert(
+			!this.hasOriginatorSessionId,
+			"withIncrementalDecoder can only be called on contexts without an originator session ID",
+		);
+		return new FieldBatchDecodingContext(
+			false,
+			this.idCompressor,
+			this.resolveEncodedId,
+			incrementalDecoder,
+		);
+	}
+}
+
 /**
  * @remarks
  * Fields in this batch currently don't have field schema for the root, which limits optimizations.
@@ -151,7 +256,8 @@ export interface FieldBatchEncodingContext {
 export type FieldBatchCodec = VersionDispatchingCodec<
 	FieldBatch,
 	FieldBatchEncodingContext,
-	FieldBatchFormatVersion
+	FieldBatchFormatVersion,
+	FieldBatchDecodingContext
 >;
 
 /**
@@ -169,7 +275,7 @@ function makeFieldBatchCodecForVersion(
 		isSummary: boolean,
 	) => EncodedFieldBatchV1OrV2,
 	encodedFieldBatchType: TSchema,
-): CodecAndSchema<FieldBatch, FieldBatchEncodingContext> {
+): CodecAndSchema<FieldBatch, FieldBatchEncodingContext, FieldBatchDecodingContext> {
 	return {
 		encode: (
 			data: FieldBatch,
@@ -194,7 +300,7 @@ function makeFieldBatchCodecForVersion(
 						0xca0 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 					);
 					// Incremental encoding is only supported for CompressedIncremental.
-					incrementalEncoder = context.incrementalEncoderDecoder;
+					incrementalEncoder = context.incrementalEncoder;
 				}
 				// fallthrough
 				case TreeCompressionStrategy.Compressed: {
@@ -225,20 +331,10 @@ function makeFieldBatchCodecForVersion(
 		},
 		decode: (
 			data: EncodedFieldBatchV1OrV2,
-			context: FieldBatchEncodingContext,
+			context: FieldBatchDecodingContext,
 		): FieldBatch => {
 			// TODO: consider checking data is in schema.
-			return decode(
-				data,
-				{
-					idCompressor: context.idCompressor,
-					originatorId: context.originatorId,
-					isSummary: context.isSummary,
-					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
-					sharedObjectId: context.sharedObjectId,
-				},
-				context.incrementalEncoderDecoder,
-			).map((chunk) => chunk.cursor());
+			return decode(data, context, context.incrementalDecoder).map((chunk) => chunk.cursor());
 		},
 		schema: encodedFieldBatchType,
 	};
