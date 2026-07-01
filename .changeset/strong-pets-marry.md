@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": tree
 ---
 Add an opt-in postProcessor option when running a transaction
