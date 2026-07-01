@@ -771,13 +771,21 @@ class VTextObjectNodeEncoder implements NodeEncoder {
 		return decision.foldedEncoders.get(this.cohortKeyFromValues(pinnedValues)) ?? this.base;
 	}
 
-	/** Reads this node's {@link SpecializableField} leaf values, in the encoder's fixed field order. */
+	/**
+	 * Reads this node's {@link SpecializableField} leaf values, in the encoder's fixed field order.
+	 *
+	 * @remarks
+	 * Only required single-valued leaf fields are read. Optional fields are intentionally left out.
+	 */
 	private readValues(cursor: ITreeCursorSynchronous): Value[] {
 		const values: Value[] = [];
 		for (const field of this.specializableFields) {
 			cursor.enterField(brand(field.key));
-			const hasNode = cursor.firstNode();
-			assert(hasNode, "required specializable field must contain a node");
+			assert(
+				cursor.getFieldLength() === 1,
+				"specializable field must contain exactly one node",
+			);
+			cursor.firstNode();
 			values.push(cursor.value);
 			cursor.exitNode();
 			cursor.exitField();
