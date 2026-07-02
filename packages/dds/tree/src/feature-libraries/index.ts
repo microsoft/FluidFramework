@@ -109,11 +109,14 @@ export {
 	FieldBatchFormatVersion,
 	makeTreeChunker,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
 } from "./chunked-forest/index.js";
 
 export {

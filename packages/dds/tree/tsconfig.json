@@ -5,6 +5,11 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
+		// Avoid emitting __classPrivateFieldGet/Set, __esDecorate, __runInitializers, etc.
+		// inline in every compiled module. Webpack's concatenateModules cannot dedupe these
+		// across modules (each gets unique scope-local var names), so without importHelpers
+		// the bundle accumulates ~17 copies of the same helpers (~1KB each).
+		"importHelpers": true,
 		"noImplicitAny": true,
 		"preserveConstEnums": true,
 		// Allow unused locals.

@@ -86,3 +86,38 @@ export function validateIndexRange(
 	validateIndex(startIndex, array, apiName, true);
 	validateIndex(endIndex, array, apiName, true);
 }
+
+/**
+ * A half-open `[start, end)` range of array indices.
+ */
+export interface IndexRange {
+	/** Start index, inclusive. */
+	readonly start: number;
+	/** End index, exclusive. */
+	readonly end: number;
+}
+
+/**
+ * Walks `array` in order and collects the indices of every element for which `predicate` returns
+ * `true` into contiguous `[start, end)` ranges.
+ * @param array - The array (or array-like) to scan.
+ * @param shouldInclude - Returns `true` for elements whose indices should be included.
+ * @returns The collected ranges in ascending order. The returned array is empty if no elements match.
+ */
+export function collectContiguousRanges<T>(
+	array: { readonly length: number; readonly [index: number]: T },
+	shouldInclude: (item: T) => boolean,
+): readonly IndexRange[] {
+	const ranges: { start: number; end: number }[] = [];
+	for (let i = 0; i < array.length; i++) {
+		if (shouldInclude(array[i] as T)) {
+			const last = ranges[ranges.length - 1];
+			if (last?.end === i) {
+				last.end = i + 1;
+			} else {
+				ranges.push({ start: i, end: i + 1 });
+			}
+		}
+	}
+	return ranges;
+}

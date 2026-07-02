@@ -23,9 +23,9 @@ import type {
 } from "@fluidframework/runtime-definitions/internal";
 import { addBlobToSummary } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	tagCodeArtifacts,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { ChannelDeltaConnection } from "./channelDeltaConnection.js";
@@ -84,7 +84,7 @@ export function createChannelServiceEndpoints(
 	dirtyFn: () => void,
 	isAttachedAndVisible: () => boolean,
 	storageService: IRuntimeStorageService,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	tree?: ISnapshotTree,
 	extraBlobs?: Map<string, ArrayBufferLike>,
 ): ChannelServiceEndpoints {
@@ -191,7 +191,7 @@ export async function loadChannel(
 	attributes: IChannelAttributes,
 	factory: IChannelFactory,
 	services: ChannelServiceEndpoints,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	channelId: string,
 ): Promise<IChannel> {
 	// Compare snapshot version to collaborative object version

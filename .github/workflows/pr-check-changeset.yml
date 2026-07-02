@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'changeset-required')
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           fetch-depth: "0" # all history
@@ -30,10 +30,10 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }} # Check out the head commit, not the merge commit
 
       # install and configure node, pnpm and the changeset tools
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version-file: .nvmrc

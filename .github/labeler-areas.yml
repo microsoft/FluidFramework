@@ -103,8 +103,8 @@
 "area: website":
   changed-files:
     - any-glob-to-any-file:
-      - docs/**
-      - "!docs/content/**"
+      - website/**
+      - "!website/docs/**"
 
 "breaking change":
   changed-files:
@@ -124,7 +124,9 @@ dependencies:
 
 documentation:
   changed-files:
-    - any-glob-to-any-file: docs/content/**
+    - any-glob-to-any-file:
+      - website/docs/**
+      - website/src/**
 
 # flag changes to public APIs so they can be reviewed to see if they're breaking
 "public api change":

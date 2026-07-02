@@ -1,5 +1,14 @@
 # @fluidframework/eslint-config-fluid Changelog
 
+## [13.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v13.0.0)
+
+### Restrict the named `Type` import from `@sinclair/typebox`
+
+A new `no-restricted-syntax` selector flags `import { Type } from "@sinclair/typebox"`. The named `Type` export is the
+monolithic `TypeBuilder` aggregate, so importing it pulls in every builder and defeats tree-shaking. Import the
+namespace instead — `import * as Type from "@sinclair/typebox"` — so member access like `Type.Object(...)` lets the
+bundler prune unused builders.
+
 ## [12.0.0](https://github.com/microsoft/FluidFramework/releases/tag/eslint-config-fluid_v12.0.0)
 
 <!-- Add new changelog entries here. -->

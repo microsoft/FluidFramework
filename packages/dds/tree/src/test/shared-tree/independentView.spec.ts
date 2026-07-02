@@ -5,6 +5,15 @@
 
 import { strict as assert } from "node:assert";
 
+import {
+	createIdCompressor,
+	createSessionId,
+	isFinalId,
+	deserializeIdCompressor,
+	serializeIdCompressor,
+	toIdCompressorWithCore,
+} from "@fluidframework/id-compressor/internal";
+
 import { FluidClientVersion } from "../../codec/index.js";
 import {
 	independentInitializedView,
@@ -182,6 +191,72 @@ describe("independentView", () => {
 			const view = tree.viewWith(config);
 			assert.equal(view.root, 1);
 		});
+
+		for (const finalize of [true, false]) {
+			it(`initialized with compressed identifiers from another compressor ${finalize ? "with finalize" : "without finalize"}`, () => {
+				const minVersionForCollab = FluidClientVersion.v2_0;
+				const schemaFactory = new SchemaFactory("test");
+				class HasIdentifier extends schemaFactory.object("HasIdentifier", {
+					id: schemaFactory.identifier,
+				}) {}
+
+				const sourceCompressor = createIdCompressor(createSessionId());
+				const localId = sourceCompressor.generateCompressedId();
+				const identifier = sourceCompressor.decompress(localId);
+				const sourceTree = TreeAlpha.create(HasIdentifier, { id: identifier });
+
+				if (finalize) {
+					const sourceCore = toIdCompressorWithCore(sourceCompressor);
+					const range = sourceCore.takeNextCreationRange();
+					if (range.ids !== undefined) {
+						sourceCore.finalizeCreationRange(range);
+					}
+				}
+
+				// Session space id should be stable over time, and not change after they become final.
+				assert.equal(sourceCompressor.tryRecompress(identifier), localId);
+
+				const opSpace = sourceCompressor.normalizeToOpSpace(localId);
+				assert.equal(isFinalId(opSpace), finalize);
+
+				const compressed = TreeAlpha.exportCompressed(sourceTree, {
+					minVersionForCollab,
+					idCompressor: sourceCompressor,
+				});
+
+				const found = JSON.stringify(compressed).includes(identifier);
+				assert.equal(found, !finalize);
+
+				// Rehydrate a separate compressor from summary-style state (no local session data)
+				// so this mirrors cross-client/import behavior. A different session id ensures
+				// the target compressor is not acting as the source session.
+				const targetCompressor = deserializeIdCompressor(
+					serializeIdCompressor(sourceCompressor, false),
+					createSessionId(),
+				);
+				assert(targetCompressor.localSessionId !== sourceCompressor.localSessionId);
+
+				const decoded = targetCompressor.tryNormalizeToSessionSpaceWithoutSession(opSpace);
+				assert.equal(
+					decoded,
+					finalize ? (targetCompressor.tryRecompress(identifier) ?? assert.fail()) : undefined,
+				);
+
+				const config = new TreeViewConfigurationAlpha({ schema: HasIdentifier });
+				const tree = createIndependentTreeAlpha({
+					forest: ForestTypeExpensiveDebug,
+					jsonValidator: ajvValidator,
+					content: {
+						schema: extractPersistedSchema(config.schema, minVersionForCollab, () => true),
+						tree: compressed,
+						idCompressor: targetCompressor,
+					},
+				});
+
+				const view = tree.viewWith(config);
+				assert.equal(view.root.id, identifier);
+			});
+		}
 
 		it("oddly allowed jsonValidator", () => {
 			const config = new TreeViewConfigurationAlpha({ schema: SchemaFactory.number });

@@ -1,6 +1,9 @@
 {
 	"extends": "@fluidframework/build-common/ts-common-config.json",
 	"compilerOptions": {
+		"paths": {
+			"@fluidframework/server-lambdas-driver": ["../index.ts"],
+		},
 		"strictNullChecks": false,
 		"rootDir": "./",
 		"outDir": "../../dist/test",

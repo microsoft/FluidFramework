@@ -13,6 +13,7 @@ import type {
 	SchemaAndPolicy,
 } from "../core/index.js";
 import {
+	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
@@ -26,8 +27,8 @@ export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
 	readonly isSummary: boolean;
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	readonly sharedObjectId?: string;
+	/** See {@link IdentifierHealingConfig}. */
+	readonly healing?: IdentifierHealingConfig;
 }
 
 /**

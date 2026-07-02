@@ -5,6 +5,7 @@
 
 import { Spinner } from "@fluentui/react-components";
 import {
+	CloseDataVisualization,
 	DataVisualization,
 	type FluidObjectNode,
 	GetDataVisualization,
@@ -70,6 +71,8 @@ export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 		messageRelay.on("message", messageHandler);
 
 		// POST Request for FluidObjectNode.
+		// This also registers our interest in the object, so the devtools will broadcast automatic updates for it
+		// until we send the corresponding CloseDataVisualization message below.
 		messageRelay.postMessage(
 			GetDataVisualization.createMessage({
 				containerKey,
@@ -80,6 +83,15 @@ export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 		// Callback to clean up our message handlers.
 		return (): void => {
 			messageRelay.off("message", messageHandler);
+
+			// Signal that we are no longer displaying this object, so the devtools can stop broadcasting updates for
+			// it once no other consumers remain interested.
+			messageRelay.postMessage(
+				CloseDataVisualization.createMessage({
+					containerKey,
+					fluidObjectId,
+				}),
+			);
 		};
 	}, [containerKey, fluidObjectId, messageRelay]);
 

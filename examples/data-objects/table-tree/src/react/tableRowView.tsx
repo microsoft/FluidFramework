@@ -83,15 +83,7 @@ export const TableRowView: FC<TableRowViewProps> = ({
 						<TableCellView
 							cell={cell}
 							hint={hint}
-							onUpdateCell={(newValue) =>
-								table.setCell({
-									key: {
-										column,
-										row,
-									},
-									cell: newValue,
-								})
-							}
+							onUpdateCell={(newValue) => table.setCell(row, column, newValue)}
 						/>
 					</TableCell>
 				);

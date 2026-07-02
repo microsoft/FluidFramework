@@ -80,7 +80,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: [
+				"check:inexactOptionalPropertyTypes",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -145,11 +152,12 @@ module.exports = {
 		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
-		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
+		// With most packages in client building ESM first, there is ideally just "build:esnext" and "api-extractor:esnext" dependencies.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor.
-		"build:docs": ["tsc", "build:esnext"],
-		"ci:build:docs": ["tsc", "build:esnext"],
+		// therefore we need to require both before running api-extractor until other packages are
+		// updated to use ESM entrypoints or customize their build configs.
+		"build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
+		"ci:build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
 			script: true,
@@ -165,6 +173,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		"check:inexactOptionalPropertyTypes": ["^build:esnext", "^api-extractor:esnext"],
 		"check:format": {
 			dependencies: [],
 			script: true,
@@ -347,7 +356,7 @@ module.exports = {
 			"tools/markdown-magic/test/package.json",
 
 			// Not a real package
-			"docs/api/",
+			"website/api/",
 
 			// Source to output package.json files - not real packages
 			// These should only be files that are not in an pnpm workspace.
@@ -390,7 +399,7 @@ module.exports = {
 				"server/routerlicious/packages/tinylicious/src/index.ts",
 
 				// minified DOMPurify is not a source file, so it doesn't need a header.
-				"docs/static/dompurify/purify.min.js",
+				"website/static/dompurify/purify.min.js",
 
 				// printed ESLint configs do not need headers
 				".*/.eslint-print-configs/.*",
@@ -428,9 +437,9 @@ module.exports = {
 				"^packages/.+/.mocharc.js$",
 
 				// Avoids MIME-type issues in the browser.
-				"docs/static/trusted-types-policy.js",
-				"docs/static/dompurify/purify.min.js",
-				"docs/static/js/add-code-copy-button.js",
+				"website/static/trusted-types-policy.js",
+				"website/static/dompurify/purify.min.js",
+				"website/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",
 				"examples/data-objects/monaco/loaders/compile.js",
 				"examples/service-clients/odsp-client/shared-tree-demo/tailwind.config.js",
@@ -504,7 +513,7 @@ module.exports = {
 				// this package has a irregular build pattern, so our clean script rule doesn't apply.
 				"tools/markdown-magic/package.json",
 				// Docs directory breaks cleaning down into multiple scripts.
-				"docs/package.json",
+				"website/package.json",
 			],
 			"npm-strange-package-name": [
 				"server/gitrest/package.json",

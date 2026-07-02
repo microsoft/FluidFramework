@@ -102,16 +102,3 @@ export type {
 } from "./telemetryTypesUndeprecated.js";
 export { TelemetryEventBatcher } from "./telemetryEventBatcher.js";
 export { allowIncompatibleLayersKey, validateLayerCompatibility } from "./layerCompatError.js";
-
-import type { TelemetryLoggerExt } from "./telemetryTypes.js";
-
-/**
- * Renamed version of TelemetryLoggerExt for convenience of internal use.
- * Where "`ITelemetryLoggerExt`" is exposed in customer API surface, true
- * `ITelemetryLoggerExt` (that is an erased type) must be used. To access
- * use `@fluidframework/telemetry-utils/legacy` import spec. All internal
- * usages should be promoted to `TelemetryLoggerExt` naming.
- *
- * @internal
- */
-export type ITelemetryLoggerExt = TelemetryLoggerExt;

@@ -8,9 +8,9 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import type {
 	TreeContextAlpha,
 	TreeBranchAlpha,
-	RunTransactionParams,
-	TransactionResult,
-	TransactionResultExt,
+	RunTransactionParamsAlpha,
+	TransactionVoidResult,
+	TransactionValueResult,
 	WithValue,
 } from "../simple-tree/index.js";
 
@@ -30,13 +30,16 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	public runTransaction<TValue>(
 		t: () => WithValue<TValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TValue, TValue>;
-	public runTransaction(t: () => void, _params?: RunTransactionParams): TransactionResult;
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+	public runTransaction(
+		t: () => void,
+		_params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction(
 		t: () => WithValue<unknown> | void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<unknown, unknown> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<unknown, unknown> | TransactionVoidResult {
 		for (const constraint of params?.preconditions ?? []) {
 			assertValidConstraint(constraint, false);
 		}
@@ -50,16 +53,16 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	public runTransactionAsync<TValue>(
 		t: () => Promise<WithValue<TValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TValue, TValue>>;
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
 	public runTransactionAsync(
 		t: () => Promise<void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync(
 		t: () => Promise<WithValue<unknown> | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<unknown, unknown> | TransactionResult> {
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<unknown, unknown> | TransactionVoidResult> {
 		if (this.transactionCount > 0) {
 			throw new UsageError(
 				"An asynchronous transaction cannot be started while another transaction is already in progress.",
@@ -78,7 +81,7 @@ export class UnhydratedTreeContext implements TreeContextAlpha {
 
 	private static wrapTransactionResult<TValue>(
 		value: WithValue<TValue> | void,
-	): TransactionResultExt<TValue, TValue> | TransactionResult {
+	): TransactionValueResult<TValue, TValue> | TransactionVoidResult {
 		if (value?.value !== undefined) {
 			return { success: true, value: value.value };
 		}

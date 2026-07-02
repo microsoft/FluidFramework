@@ -39,6 +39,16 @@ pnpm run build
 pnpm run typetests:gen
 ```
 
+### Refresh compat workspace versions
+
+Re-run `update-compat-versions` now that the newly released version is published to npm. This typically shifts N-1 to the just-released version and slides the back-compat window accordingly:
+
+```bash
+pnpm run --filter=@fluid-private/test-version-utils update-compat-versions
+```
+
+Include any changes (in `compat-workspaces/` and `CompatibilityCheckpoints.md`) in the same PR as the type test baseline updates.
+
 Commit and create a PR targeting `main`.
 
 - **Interactive:** Pause and confirm before creating the PR.

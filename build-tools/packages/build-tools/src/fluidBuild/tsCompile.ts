@@ -6,11 +6,12 @@
 import path from "path";
 import type * as ts54Types from "typescript-5.4";
 import type * as ts59Types from "typescript-5.9";
+import type * as ts60Types from "typescript-6.0";
 import { defaultLogger } from "../common/logging.js";
 import type { UnionToIntersection } from "./tscUtils.js";
 import { getTscUtils, normalizeSlashes } from "./tscUtils.js";
 
-type tsDiagnostic = ts54Types.Diagnostic | ts59Types.Diagnostic;
+type tsDiagnostic = ts54Types.Diagnostic | ts59Types.Diagnostic | ts60Types.Diagnostic;
 
 function castDiagnosticsUnionArrayToIntersection(
 	diagnostics: tsDiagnostic[],
@@ -157,7 +158,9 @@ export function tsCompile(
 				tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
 			),
 			host,
-			projectReferences: commandLine.projectReferences,
+			...(commandLine.projectReferences === undefined
+				? {}
+				: { projectReferences: commandLine.projectReferences }),
 		};
 		const program = incremental
 			? baseTs.createIncrementalProgram(param)

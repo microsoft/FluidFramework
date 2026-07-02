@@ -5,6 +5,8 @@
 
 import { execFileSync } from "node:child_process";
 
+import type { CommandLogger } from "../../logging.js";
+
 /**
  * A remote ref paired with its locally-resolved tip commit.
  */
@@ -138,12 +140,15 @@ function pickFreshest(candidates: RemoteCandidate[]): RemoteCandidate[] {
  * the rest, pick the tip that isn't a strict ancestor of any other's; ties
  * (identical or divergent tips) resolve to the first candidate in config order.
  *
+ * @param logger - Optional sink for the candidate-table, skipped-entry, and
+ * per-remote-failure diagnostics. Omit to run silently (e.g. for `--json` callers).
  * @returns The selected remote's name, or `undefined` if no remote matches
  * `filter` or none have a locally-resolvable `<name>/<branch>`.
  */
 export function pickFreshestRemote(
 	branch: string,
 	filter: (url: string) => boolean,
+	logger?: CommandLogger,
 ): string | undefined {
 	const eligible = listRemotes().filter((r) => filter(r.url));
 
@@ -160,10 +165,10 @@ export function pickFreshestRemote(
 			tip = resolveTip(ref);
 		} catch (error) {
 			// Don't let an unexpected git failure for one remote kill the whole
-			// selection — log to stderr and treat the candidate as skipped so
-			// the other remotes still get a chance to be picked.
+			// selection — warn and treat the candidate as skipped so the other
+			// remotes still get a chance to be picked.
 			const detail = error instanceof Error ? error.message : String(error);
-			console.error(`  ${ref} — unexpected error resolving tip; skipped (${detail})`);
+			logger?.warning(`  ${ref} — unexpected error resolving tip; skipped (${detail})`);
 			skipped.push(ref);
 			continue;
 		}
@@ -175,7 +180,7 @@ export function pickFreshestRemote(
 	}
 
 	if (candidates.length === 0) {
-		console.log(`No eligible remote has [${skipped.join(", ")}] fetched locally.`);
+		logger?.info(`No eligible remote has [${skipped.join(", ")}] fetched locally.`);
 		return undefined;
 	}
 
@@ -187,16 +192,16 @@ export function pickFreshestRemote(
 		// Fall back to the first candidate so we still produce *a* baseline
 		// instead of crashing the whole command.
 		const detail = error instanceof Error ? error.message : String(error);
-		console.error(
+		logger?.warning(
 			`Unexpected error comparing tips; falling back to first candidate (${detail})`,
 		);
 		freshest = [candidates[0]];
 	}
 	const selected = freshest[0];
 
-	console.log(`Eligible remotes:`);
+	logger?.info(`Eligible remotes:`);
 	for (const ref of skipped) {
-		console.log(`  ${ref} — not fetched locally; skipped`);
+		logger?.info(`  ${ref} — not fetched locally; skipped`);
 	}
 	for (const candidate of candidates) {
 		const marker =
@@ -205,7 +210,7 @@ export function pickFreshestRemote(
 				: freshest.includes(candidate)
 					? " (also freshest; tie-broken by config order)"
 					: ` (ancestor of ${selected.ref})`;
-		console.log(`  ${candidate.ref} → ${candidate.tip.slice(0, 10)}${marker}`);
+		logger?.info(`  ${candidate.ref} → ${candidate.tip.slice(0, 10)}${marker}`);
 	}
 
 	return selected.name;

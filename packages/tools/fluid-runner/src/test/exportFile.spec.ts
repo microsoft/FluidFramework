@@ -10,7 +10,7 @@ import path from "path";
 import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import-x/no-internal-modules */
-import { createContainerAndExecute, exportFile } from "../exportFile.js";
+import { createFluidRunnerContainerAndExecute, exportFile } from "../exportFile.js";
 import { getSnapshotFileContent } from "../utils.js";
 
 import { _dirname } from "./dirname.cjs";
@@ -56,7 +56,7 @@ describe("exportFile", () => {
 			});
 
 			it("Execution result is correct", async () => {
-				const result = await createContainerAndExecute(
+				const result = await createFluidRunnerContainerAndExecute(
 					getSnapshotFileContent(path.join(snapshotFolder, snapshotFileName)),
 					fluidExport,
 					new MockLogger().toTelemetryLogger(),

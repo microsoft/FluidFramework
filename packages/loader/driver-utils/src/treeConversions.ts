@@ -64,7 +64,9 @@ export function convertSummaryTreeToSnapshotITree(summaryTree: ISummaryTree): IT
 	}
 	return {
 		entries,
-		unreferenced: summaryTree.unreferenced,
-		groupId: summaryTree.groupId,
+		...(summaryTree.unreferenced === undefined
+			? {}
+			: { unreferenced: summaryTree.unreferenced }),
+		...(summaryTree.groupId === undefined ? {} : { groupId: summaryTree.groupId }),
 	};
 }

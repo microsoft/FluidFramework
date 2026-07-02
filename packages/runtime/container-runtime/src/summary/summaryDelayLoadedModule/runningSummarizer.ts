@@ -18,12 +18,12 @@ import {
 	type ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 import {
-	type MonitoringContext,
-	UsageError,
 	createChildLogger,
 	createChildMonitoringContext,
 	isFluidError,
-	type ITelemetryLoggerExt,
+	type MonitoringContext,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { opSize } from "../../opProperties.js";
@@ -432,9 +432,7 @@ export class RunningSummarizer
 	 * but only if they're logging about that same summary.
 	 * @param summaryOpRefSeq - RefSeq number of the summary op, to ensure the log correlation will be correct
 	 */
-	public tryGetCorrelatedLogger = (
-		summaryOpRefSeq: number,
-	): ITelemetryLoggerExt | undefined =>
+	public tryGetCorrelatedLogger = (summaryOpRefSeq: number): TelemetryLoggerExt | undefined =>
 		this.heuristicData.lastAttempt.refSequenceNumber === summaryOpRefSeq
 			? this.mc.logger
 			: undefined;

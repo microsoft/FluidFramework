@@ -10,10 +10,10 @@ import { assert, Timer } from "@fluidframework/core-utils/internal";
 import type { IClient, ISequencedClient } from "@fluidframework/driver-definitions";
 import type { IAnyDriverError } from "@fluidframework/driver-definitions/internal";
 import {
-	type TelemetryEventCategory,
-	type ITelemetryLoggerExt,
 	type MonitoringContext,
 	PerformanceEvent,
+	type TelemetryEventCategory,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { CatchUpMonitor, type ICatchUpMonitor } from "./catchUpMonitor.js";
@@ -33,7 +33,7 @@ const JoinSignalTimeoutMs = 10000;
  * Constructor parameter type for passing in dependencies needed by the ConnectionStateHandler
  */
 export interface IConnectionStateHandlerInputs {
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 	mc: MonitoringContext;
 	/**
 	 * Log to telemetry any change in state, included to Connecting
@@ -201,7 +201,7 @@ class ConnectionStateHandlerPassThrough
 
 	// #region IConnectionStateHandlerInputs
 
-	public get logger(): ITelemetryLoggerExt {
+	public get logger(): TelemetryLoggerExt {
 		return this.inputs.logger;
 	}
 	public get mc(): MonitoringContext {

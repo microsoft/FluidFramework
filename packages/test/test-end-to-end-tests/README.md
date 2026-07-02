@@ -1,5 +1,17 @@
 # @fluid-private/test-end-to-end-tests
 
+## Table of Contents
+
+-   [Introduction](#introduction)
+-   [How-to](#how-to)
+    -   [Writing Compat-Correct Tests](#writing-compat-correct-tests)
+    -   [Writing Tests That Take Summaries](#writing-tests-that-take-summaries)
+-   [Debugging](#debugging)
+-   ["Real Service" Tests](#real-service-tests)
+    -   [Endpoint names](#endpoint-names)
+
+## Introduction
+
 This package hosts end-to-end tests for the Fluid Framework.
 The tests are end-to-end in the sense that they construct, load, and orchestrate collaborative scenarios involving containers
 in much the same way a real application using Fluid would.
@@ -35,6 +47,12 @@ _"`SharedMap` import from `@fluidframework/map/internal` is restricted from bein
 
 For a worked example of an entire test file written this way, see [`sharedStringEndToEndTests.spec.ts`](src/test/sharedStringEndToEndTests.spec.ts). That same [directory](src/test) contains more complex examples too.
 
+### Writing Tests That Take Summaries
+
+Many e2e tests need to drive **summaries** on demand — configuring interactive containers so they don't summarize on their own, spinning up a dedicated summarizer, taking summaries at controlled points, and loading new containers or summarizers from a specific summary. Doing this incorrectly is a common source of flaky tests.
+
+**For the full pattern — the two container configurations, how to take and inspect a summary, how to load from a specific summary, and the rules that keep these tests deterministic — see [WritingTestsThatTakeSummaries.md](./WritingTestsThatTakeSummaries.md).**
+
 ## Debugging
 
 This package contains a VSCode workspace with launch targets for debugging e2e tests with common configurations.
@@ -53,7 +71,7 @@ The tests under the `real-service-tests` dir target a live production service li
 These are run via `npm run test:realsvc:mocha`, and are included in the CI such that a test failure doesn't
 fail the pipeline - since a service outage or network hiccup could cause a failure when no code defect is present.
 
-### Enpdoint names
+### Endpoint names
 
 When running tests against ODSP or R11s, be mindful of a second parameter/flag usually referred to as the "endpoint name".
 This should match the target environment you want to run against or the test driver might configure things in a way

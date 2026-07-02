@@ -87,9 +87,9 @@
 		"ws": "^7.5.10"
 	},
 	"devDependencies": {
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "^0.65.0",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
+		"@fluidframework/build-tools": "^0.65.0",
 		"@fluidframework/eslint-config-fluid": "^9.0.0",
 		"@fluidframework/server-local-server": "workspace:~",
 		"@fluidframework/server-routerlicious-base-previous": "npm:@fluidframework/server-routerlicious-base@7.0.0",
@@ -112,7 +112,7 @@
 		"@types/supertest": "^2.0.5",
 		"@types/ws": "^6.0.1",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"eslint": "~8.57.0",
 		"mocha": "^10.8.2",
 		"prettier": "~3.0.3",

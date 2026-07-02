@@ -8,9 +8,9 @@ releasing the Fluid Framework.
 The `server-*` pipelines run on a 1ES build pool whose network isolation blocks egress to Docker
 Hub, so each server Dockerfile makes its base-image registry overridable via
 `ARG BASE_IMAGE_REGISTRY` and CI overrides it to a mirrored copy on a public-accessible ACR
-(`fluidpublicmirror-ccbba5fhdscnchft.azurecr.io`; the suffix is ACR's Domain Name Label (DNL)
+(`fluidmirror-a5dqhgefbwhmbtag.azurecr.io`; the suffix is ACR's Domain Name Label (DNL)
 hash, added to the login-server FQDN to prevent subdomain-takeover attacks — `az acr` CLI
-commands still take the bare registry name `fluidpublicmirror`). The same mirror is used by both
+commands still take the bare registry name `fluidmirror`). The same mirror is used by both
 the `internal` and `public` ADO projects. Local builds default to Docker Hub and need no changes.
 
 ```dockerfile
@@ -23,11 +23,8 @@ build-arg automatically via its `baseImageRegistry` parameter, which defaults to
 FQDN. Callers can override it if they need a different mirror (e.g. for testing).
 
 The mirror namespace `mirror/docker/library/<image>` is byte-identical to Docker Hub's path, so the
-same Dockerfile reference works against either registry. Anonymous pull is disabled on the mirror,
-so credentials for the `Fluid Public Mirror Container Registry` ADO service connection are flowed
-into the docker build step via `templateContext.authenticatedContainerRegistries` in
-[`templates/build-docker-service.yml`](./templates/build-docker-service.yml). Each ADO project has
-its own service connection (same name) backed by its own AcrPull-only service principal.
+same Dockerfile reference works against either registry. Anonymous pull is enabled on the mirror,
+so no credentials are needed for the base-image pulls.
 
 ### Upgrading a pinned base image
 
@@ -38,10 +35,10 @@ its own service connection (same name) backed by its own AcrPull-only service pr
    ```
 
 2. Import it into the mirror. The command requires permission to perform
-   `Microsoft.ContainerRegistry/registries/importImage/action` on `fluidpublicmirror` (held by the
+   `Microsoft.ContainerRegistry/registries/importImage/action` on `fluidmirror` (held by the
    `Contributor` role, but **not** by `AcrPull`):
    ```bash
-   az acr import --name fluidpublicmirror \
+   az acr import --name fluidmirror \
      --source "docker.io/library/node@<new digest>" \
      --image  "mirror/docker/library/node:<new tag>"
    ```

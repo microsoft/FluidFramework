@@ -38,7 +38,6 @@ WORKDIR $GITREST_ROOT
 
 COPY package*.json ./
 COPY pnpm*.yaml ./
-COPY .npmrc ./
 COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 
 COPY packages/gitrest/package*.json packages/gitrest/
@@ -60,6 +59,11 @@ ENV PATH="$PNPM_HOME:$GITREST_ROOT/node_modules/.bin:$PATH"
 RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
     && npm install -g "$PNPM_VERSION"
+
+# Forward any pnpm trust policy overrides from the host environment.
+# This is needed because tools/pipelines/templates/include-install-pnpm.yml uses these options to work around CI package mirror limitations.
+ARG PNPM_CONFIG_TRUST_POLICY
+ARG PNPM_CONFIG_MINIMUM_RELEASE_AGE
 
 # Using a cache mount for the pnpm store improves the incremental docker build.
 # pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set

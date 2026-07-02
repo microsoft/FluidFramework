@@ -21,7 +21,7 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 /**
@@ -281,7 +281,7 @@ export class SummaryCollection extends TypedEventEmitter<ISummaryCollectionOpEve
 		this.deltaManager.off("op", listener);
 	}
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	public constructor(
 		private readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>,
 		logger: ITelemetryBaseLogger,

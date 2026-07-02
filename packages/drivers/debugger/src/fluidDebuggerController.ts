@@ -337,7 +337,7 @@ export class DebugReplayController extends ReplayController implements IDebugger
 
 				this.stepsToPlay = await this.stepsDeferred.promise;
 
-				this.stepsDeferred = undefined;
+				delete this.stepsDeferred;
 				this.ui.disableNextOpButton(true);
 			}
 

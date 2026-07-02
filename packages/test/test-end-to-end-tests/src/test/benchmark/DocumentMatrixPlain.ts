@@ -32,7 +32,7 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import type { ISharedDirectory } from "@fluidframework/map/internal";
 import { SharedMatrix } from "@fluidframework/matrix/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	ITestContainerConfig,
@@ -123,7 +123,7 @@ export class DocumentMatrixPlain implements IDocumentLoaderAndSummarizer {
 		return this._mainContainer;
 	}
 
-	public get logger(): ITelemetryLoggerExt | undefined {
+	public get logger(): TelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 

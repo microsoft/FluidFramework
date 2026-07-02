@@ -34,17 +34,17 @@ import {
 } from "@fluidframework/driver-definitions/internal";
 import { NonRetryableError, isRuntimeMessage } from "@fluidframework/driver-utils/internal";
 import {
-	type ITelemetryErrorEventExt,
-	type ITelemetryGenericEventExt,
-	type ITelemetryLoggerExt,
 	DataCorruptionError,
 	DataProcessingError,
-	UsageError,
+	EventEmitterWithErrorHandling,
 	extractSafePropertiesFromMessage,
 	isFluidError,
+	type ITelemetryErrorEventExt,
+	type ITelemetryGenericEventExt,
 	normalizeError,
 	safeRaiseEvent,
-	EventEmitterWithErrorHandling,
+	type TelemetryLoggerExt,
+	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
@@ -133,7 +133,7 @@ function isClientMessage(message: ISequencedDocumentMessage | IDocumentMessage):
  */
 function logIfFalse(
 	condition: boolean,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	event: string | ITelemetryGenericEventExt,
 ): condition is true {
 	if (condition) {
@@ -420,7 +420,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 	constructor(
 		private readonly serviceProvider: () => IDocumentService | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly _active: () => boolean,
 		createConnectionManager: (props: IConnectionManagerFactoryArgs) => TConnectionManager,
 	) {

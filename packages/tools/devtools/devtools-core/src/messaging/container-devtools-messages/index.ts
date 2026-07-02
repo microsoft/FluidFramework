@@ -9,6 +9,7 @@
 
 export { AudienceSummary } from "./AudienceSummary.js";
 export { CloseContainer } from "./CloseContainer.js";
+export { CloseDataVisualization } from "./CloseDataVisualization.js";
 export { ConnectContainer } from "./ConnectContainer.js";
 export { ContainerDevtoolsFeatures } from "./ContainerDevtoolsFeatures.js";
 export { ContainerStateChange } from "./ContainerStateChange.js";

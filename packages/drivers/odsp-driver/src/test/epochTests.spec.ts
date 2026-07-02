@@ -55,7 +55,6 @@ describe("Tests for Epoch Tracker", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			createChildLogger(),
 		);
@@ -82,7 +81,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
+			file: { docId: hashedDocumentId, resolvedUrl },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
@@ -118,7 +117,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
+			file: { docId: hashedDocumentId, resolvedUrl },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };

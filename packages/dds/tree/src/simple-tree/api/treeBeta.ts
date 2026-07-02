@@ -37,6 +37,8 @@ import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchem
 import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by docs
+import type { ObjectSchemaOptions } from "./schemaFactory.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";

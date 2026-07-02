@@ -116,6 +116,6 @@ export const DebugView: FC<IDebugViewProps> = ({ attach }) => {
 			</div>
 		);
 	} else {
-		return <></>;
+		return null;
 	}
 };

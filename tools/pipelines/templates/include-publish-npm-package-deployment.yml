@@ -80,7 +80,14 @@ jobs:
                 echo "Creating package.json with npm overrides"
 
                 # Manual overrides - add new entries here as needed, using same syntax supported by the pnpm overrides field
-                manual_overrides='{}'
+                # oclif includes some AWS-related features, but we don't use them, so we drop those transitive
+                # @aws-sdk dependencies. These deps release very frequently and a new release can break the
+                # lockfile-less install here (e.g. a new @aws-sdk/* version that can't be resolved from the feed).
+                # Keep in sync with the same overrides in the root pnpm-workspace.yaml / build-tools package.json.
+                manual_overrides='{
+                  "oclif>@aws-sdk/client-cloudfront": "-",
+                  "oclif>@aws-sdk/client-s3": "-"
+                }'
                 # Build overrides for local tarballs so interdependencies resolve correctly
                 tarball_overrides='{}'
                 for tgz in *.tgz; do

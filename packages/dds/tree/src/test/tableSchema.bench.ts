@@ -102,10 +102,8 @@ function runBenchmarks(options: BenchmarkConfig): void {
  * Note: These benchmarks are designed to closely match the SharedMatrix benchmarks in the `matrix` package.
  * If you modify or add tests here, consider updating the corresponding SharedMatrix benchmarks as well
  * to ensure consistency and comparability between the two implementations.
- *
- * TODO: AB#71782: Investigate why these tests are so slow / possibly contain cross-test contamination and address those issue, then re-enable these tests.
  */
-describe.skip("TableSchema Benchmarks", () => {
+describe("TableSchema Benchmarks", () => {
 	configureBenchmarkHooks();
 
 	// The value to be set in the cells of the tree.
@@ -148,10 +146,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							operation: (table) => {
 								for (let i = 0; i < count; i++) {
 									const column = new Column({});
-									table.insertColumns({
-										index: Math.floor(table.columns.length / 2),
-										columns: [column],
-									});
+									table.insertColumns([column], Math.floor(table.columns.length / 2));
 								}
 							},
 							maxBenchmarkDurationSeconds,
@@ -164,10 +159,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							beforeOperation: (table, undoRedoManager) => {
 								for (let i = 0; i < count; i++) {
 									const column = new Column({});
-									table.insertColumns({
-										index: Math.floor(table.columns.length / 2),
-										columns: [column],
-									});
+									table.insertColumns([column], Math.floor(table.columns.length / 2));
 								}
 								assert(undoRedoManager.canUndo);
 							},
@@ -189,10 +181,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							beforeOperation: (table, undoRedoManager) => {
 								for (let i = 0; i < count; i++) {
 									const column = new Column({});
-									table.insertColumns({
-										index: Math.floor(table.columns.length / 2),
-										columns: [column],
-									});
+									table.insertColumns([column], Math.floor(table.columns.length / 2));
 								}
 								for (let i = 0; i < count; i++) {
 									undoRedoManager.undo();
@@ -219,10 +208,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							operation: (table) => {
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: Array.from({ length: count }, () => new Column({})),
-								});
+								table.insertColumns(
+									Array.from({ length: count }, () => new Column({})),
+									Math.floor(table.columns.length / 2),
+								);
 							},
 							maxBenchmarkDurationSeconds,
 						});
@@ -232,10 +221,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							beforeOperation: (table, undoRedoManager) => {
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: Array.from({ length: count }, () => new Column({})),
-								});
+								table.insertColumns(
+									Array.from({ length: count }, () => new Column({})),
+									Math.floor(table.columns.length / 2),
+								);
 								assert(undoRedoManager.canUndo);
 							},
 							operation: (_table, undoRedoManager) => {
@@ -253,10 +242,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							beforeOperation: (table, undoRedoManager) => {
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: Array.from({ length: count }, () => new Column({})),
-								});
+								table.insertColumns(
+									Array.from({ length: count }, () => new Column({})),
+									Math.floor(table.columns.length / 2),
+								);
 								undoRedoManager.undo();
 								assert(!undoRedoManager.canUndo);
 								assert(undoRedoManager.canRedo);
@@ -282,10 +271,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							operation: (table) => {
 								for (let i = 0; i < count; i++) {
 									const row = new Row({ cells: {} });
-									table.insertRows({
-										index: Math.floor(table.rows.length / 2),
-										rows: [row],
-									});
+									table.insertRows([row], Math.floor(table.rows.length / 2));
 								}
 							},
 							maxBenchmarkDurationSeconds,
@@ -298,10 +284,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							beforeOperation: (table, undoRedoManager) => {
 								for (let i = 0; i < count; i++) {
 									const row = new Row({ cells: {} });
-									table.insertRows({
-										index: Math.floor(table.rows.length / 2),
-										rows: [row],
-									});
+									table.insertRows([row], Math.floor(table.rows.length / 2));
 								}
 								assert(undoRedoManager.canUndo);
 							},
@@ -323,10 +306,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							beforeOperation: (table, undoRedoManager) => {
 								for (let i = 0; i < count; i++) {
 									const row = new Row({ cells: {} });
-									table.insertRows({
-										index: Math.floor(table.rows.length / 2),
-										rows: [row],
-									});
+									table.insertRows([row], Math.floor(table.rows.length / 2));
 								}
 								for (let i = 0; i < count; i++) {
 									undoRedoManager.undo();
@@ -353,10 +333,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							operation: (table) => {
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-								});
+								table.insertRows(
+									Array.from({ length: count }, () => new Row({ cells: {} })),
+									Math.floor(table.rows.length / 2),
+								);
 							},
 							maxBenchmarkDurationSeconds,
 						});
@@ -366,10 +346,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							beforeOperation: (table, undoRedoManager) => {
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-								});
+								table.insertRows(
+									Array.from({ length: count }, () => new Row({ cells: {} })),
+									Math.floor(table.rows.length / 2),
+								);
 								assert(undoRedoManager.canUndo);
 							},
 							operation: (_table, undoRedoManager) => {
@@ -387,10 +367,10 @@ describe.skip("TableSchema Benchmarks", () => {
 							tableSize,
 							initialCellValue,
 							beforeOperation: (table, undoRedoManager) => {
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: Array.from({ length: count }, () => new Row({ cells: {} })),
-								});
+								table.insertRows(
+									Array.from({ length: count }, () => new Row({ cells: {} })),
+									Math.floor(table.rows.length / 2),
+								);
 								undoRedoManager.undo();
 								assert(!undoRedoManager.canUndo);
 								assert(undoRedoManager.canRedo);
@@ -415,15 +395,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -436,15 +410,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 							}
 							assert(undoRedoManager.canUndo);
 						},
@@ -469,15 +437,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 							}
 							for (let i = 0; i < count; i++) {
 								// Undo insert row
@@ -512,15 +474,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						operation: (table) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 								table.removeColumns([column]);
 								table.removeRows([row]);
 							}
@@ -535,15 +491,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 								table.removeColumns([column]);
 								table.removeRows([row]);
 							}
@@ -574,15 +524,9 @@ describe.skip("TableSchema Benchmarks", () => {
 						beforeOperation: (table, undoRedoManager) => {
 							for (let i = 0; i < count; i++) {
 								const column = new Column({});
-								table.insertColumns({
-									index: Math.floor(table.columns.length / 2),
-									columns: [column],
-								});
+								table.insertColumns([column], Math.floor(table.columns.length / 2));
 								const row = new Row({ id: `row-${i}`, cells: {} });
-								table.insertRows({
-									index: Math.floor(table.rows.length / 2),
-									rows: [row],
-								});
+								table.insertRows([row], Math.floor(table.rows.length / 2));
 								table.removeColumns([column]);
 								table.removeRows([row]);
 							}
@@ -952,10 +896,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.setCell({
-									key: { row: row.id, column: column.id },
-									cell: initialCellValue,
-								});
+								table.setCell(row.id, column.id, initialCellValue);
 							}
 						},
 						maxBenchmarkDurationSeconds,
@@ -969,10 +910,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.setCell({
-									key: { row: row.id, column: column.id },
-									cell: initialCellValue,
-								});
+								table.setCell(row.id, column.id, initialCellValue);
 							}
 							assert(undoRedoManager.canUndo);
 						},
@@ -995,10 +933,7 @@ describe.skip("TableSchema Benchmarks", () => {
 							for (let i = 0; i < count; i++) {
 								const row = table.rows[Math.floor(table.rows.length / 2)];
 								const column = table.columns[Math.floor(table.columns.length / 2)];
-								table.setCell({
-									key: { row: row.id, column: column.id },
-									cell: initialCellValue,
-								});
+								table.setCell(row.id, column.id, initialCellValue);
 							}
 							for (let i = 0; i < count; i++) {
 								undoRedoManager.undo();

@@ -35,6 +35,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.inexactOptionalPropertyTypes.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
@@ -45,7 +46,6 @@
 		"format:biome": "biome check --write .",
 		"lint": "npm run eslint",
 		"lint:fix": "npm run eslint:fix",
-		"postpack": "npm run clean:manifest",
 		"test": "npm run test:mocha",
 		"test:coverage": "c8 npm run test",
 		"test:mocha": "mocha --forbid-only \"lib/test/**/*.test.js\"",
@@ -83,7 +83,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "~2.4.5",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.63.0",
+		"@fluidframework/build-tools-bin": "npm:@fluidframework/build-tools@~0.65.0",
 		"@microsoft/api-extractor": "^7.58.1",
 		"@oclif/test": "^4.1.18",
 		"@types/chai": "^5.2.3",
@@ -103,6 +103,13 @@
 	},
 	"engines": {
 		"node": ">=22.22.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:inexactOptionalPropertyTypes": [
+				"^tsc"
+			]
+		}
 	},
 	"oclif": {
 		"bin": "fluv",

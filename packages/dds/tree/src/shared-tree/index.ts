@@ -30,6 +30,7 @@ export {
 	TreeCheckout,
 	type ITreeCheckout,
 	type CheckoutEvents,
+	type TreeTransactor,
 } from "./treeCheckout.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";

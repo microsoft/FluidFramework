@@ -430,7 +430,7 @@ function toEitherTelemetryLoggerExt(
  * exactly an {@link ITelemetryLoggerExt}.
  */
 export function createChildLogger(props?: {
-	logger?: ITelemetryBaseLogger;
+	logger?: ITelemetryBaseLogger | undefined;
 	namespace?: string;
 	properties?: ITelemetryLoggerPropertyBags;
 }): TelemetryLoggerExt & ITelemetryLoggerExt {
@@ -453,8 +453,8 @@ export class ChildLogger extends TelemetryLogger {
 	 * @param properties - Base properties to add to all events
 	 */
 	public static create(
-		baseLogger?: ITelemetryBaseLogger,
-		namespace?: string,
+		baseLogger: ITelemetryBaseLogger | undefined,
+		namespace: string | undefined,
 		properties?: ITelemetryLoggerPropertyBags,
 	): TelemetryLogger {
 		// if we are creating a child of a child, rather than nest, which will increase
@@ -675,7 +675,11 @@ export class MultiSinkLogger extends TelemetryLogger {
 export interface IPerformanceEventMarkers {
 	start?: true;
 	end?: true;
-	cancel?: "generic" | "error"; // tells wether to issue "generic" or "error" category cancel event
+	cancel?: "generic" | "error"; // tells whether to issue "generic" or "error" category cancel event
+	/**
+	 * If specified, _end events whose duration is greater than this threshold are logged as essential.
+	 */
+	endEventEssentialDurationThresholdMs?: number;
 }
 
 /**
@@ -801,9 +805,9 @@ export class PerformanceEvent {
 		return performanceNow() - this.startTime;
 	}
 
-	private event?: ITelemetryGenericEventExt;
+	private event: ITelemetryGenericEventExt | undefined;
 	private readonly startTime = performanceNow();
-	private startMark?: string;
+	private startMark: string | undefined;
 
 	private constructor(
 		private readonly logger: TelemetryLoggerExt,
@@ -895,7 +899,36 @@ export class PerformanceEvent {
 			event.duration = this.duration;
 		}
 
-		this.logger.sendPerformanceEvent(event, error, this.logLevel);
+		this.logger.sendPerformanceEvent(event, error, this.getLogLevel(eventNameSuffix, event));
+	}
+
+	/**
+	 * Get the LogLevel for performance events.
+	 * @param eventNameSuffix - The suffix of the event name.
+	 * @param event - The telemetry performance event.
+	 * @returns The log level for the event.
+	 *
+	 */
+	private getLogLevel(
+		eventNameSuffix: string,
+		event: ITelemetryPerformanceEventExt,
+	): typeof LogLevel.verbose | typeof LogLevel.info | undefined {
+		if (eventNameSuffix === "cancel") {
+			// 	When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
+			return undefined;
+		}
+
+		if (
+			eventNameSuffix === "end" &&
+			event.duration !== undefined &&
+			this.markers.endEventEssentialDurationThresholdMs !== undefined &&
+			event.duration > this.markers.endEventEssentialDurationThresholdMs
+		) {
+			// When undefined is returned, the LogLevel will be set to LogLevel.essential. See ChildLogger.send
+			return undefined;
+		}
+
+		return this.logLevel;
 	}
 
 	private static readonly eventHits = new Map<string, number>();

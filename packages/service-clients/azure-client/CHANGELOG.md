@@ -1,5 +1,19 @@
 # @fluidframework/azure-client
 
+## 2.110.0
+
+### Minor Changes
+
+- ITelemetryBaseLogger.minLogLevel may be undefined ([#27546](https://github.com/microsoft/FluidFramework/pull/27546)) [6afb933be51](https://github.com/microsoft/FluidFramework/commit/6afb933be5119722134d3e9c4ca61dfaf8024d8a)
+
+  Typing for `ITelemetryBaseLogger.minLogLevel` is updated to reflect that in some implementations `minLogLevel` is present but evaluates to `undefined`.
+  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/common/core-interfaces/README.md#supported-tools), there is no apparent type change.
+  If a type error is experienced, make sure to check for `undefined` or use `?? LogLevel.info` when reading.
+
+## 2.103.0
+
+Dependency updates only.
+
 ## 2.102.0
 
 ### Minor Changes

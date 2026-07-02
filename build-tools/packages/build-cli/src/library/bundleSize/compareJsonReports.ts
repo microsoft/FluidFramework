@@ -40,7 +40,7 @@ function jsonReportToBundleSizes(
  * Bundles present only in one side encode added/removed via field presence
  * (see {@link BundlesComparison}).
  */
-function compareJsonReports(
+export function compareJsonReports(
 	base: BundleAnalyzerPlugin.JsonReport | undefined,
 	compare: BundleAnalyzerPlugin.JsonReport | undefined,
 ): BundlesComparison {

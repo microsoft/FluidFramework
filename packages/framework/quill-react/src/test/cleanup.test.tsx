@@ -8,7 +8,7 @@ import { strict as assert } from "node:assert";
 import { toPropTreeNode } from "@fluidframework/react/internal";
 import { TreeViewConfiguration } from "@fluidframework/tree";
 import { independentView } from "@fluidframework/tree/alpha";
-import { FormattedTextAsTree, TextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/internal";
 import { cleanup as rtlCleanup, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 import Quill from "quill";
@@ -25,11 +25,11 @@ function createPlainRoot(text = ""): ReturnType<typeof toPropTreeNode<TextAsTree
 
 function createFormattedRoot(
 	text = "",
-): ReturnType<typeof toPropTreeNode<FormattedTextAsTree.Tree>> {
+): ReturnType<typeof toPropTreeNode<FormattedTextAsTreeDefault.Tree>> {
 	const view = independentView(
-		new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree }),
+		new TreeViewConfiguration({ schema: FormattedTextAsTreeDefault.Tree }),
 	);
-	view.initialize(FormattedTextAsTree.Tree.fromString(text));
+	view.initialize(FormattedTextAsTreeDefault.Tree.fromString(text));
 	return toPropTreeNode(view.root);
 }
 

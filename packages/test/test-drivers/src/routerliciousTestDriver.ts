@@ -44,7 +44,7 @@ const dockerConfig = (driverPolicies?: IRouterliciousDriverPolicies): IConfig =>
 	},
 	tenantId: "fluid",
 	tenantSecret: "create-new-tenants-if-going-to-production",
-	driverPolicies,
+	...(driverPolicies === undefined ? {} : { driverPolicies }),
 });
 
 function getConfig(
@@ -68,7 +68,7 @@ function getConfig(
 			},
 			tenantId,
 			tenantSecret,
-			driverPolicies,
+			...(driverPolicies !== undefined ? { driverPolicies } : {}),
 		};
 	}
 	assert(fluidHost !== undefined, "Missing Fluid host");
@@ -81,7 +81,7 @@ function getConfig(
 		},
 		tenantId,
 		tenantSecret,
-		driverPolicies,
+		...(driverPolicies !== undefined ? { driverPolicies } : {}),
 	};
 }
 
@@ -169,6 +169,7 @@ export class RouterliciousTestDriver implements ITestDriver {
 	}
 
 	public readonly type = "routerlicious";
+	public readonly endpointName?: string;
 	public get version(): string {
 		return this.api.version;
 	}
@@ -178,8 +179,12 @@ export class RouterliciousTestDriver implements ITestDriver {
 		private readonly serviceEndpoints: IServiceEndpoint,
 		private readonly api: RouterliciousDriverApiType = RouterliciousDriverApi,
 		private readonly driverPolicies: IRouterliciousDriverPolicies | undefined,
-		public readonly endpointName?: string,
-	) {}
+		endpointName?: string,
+	) {
+		if (endpointName !== undefined) {
+			this.endpointName = endpointName;
+		}
+	}
 
 	async createContainerUrl(testId: string, containerUrl?: IResolvedUrl): Promise<string> {
 		const containerId = containerUrl && "id" in containerUrl ? containerUrl.id : testId;

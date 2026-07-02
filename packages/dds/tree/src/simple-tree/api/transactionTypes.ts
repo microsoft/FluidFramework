@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import type { ErasedType } from "@fluidframework/core-interfaces";
+
 import type { TreeNode } from "../core/index.js";
 
 /**
@@ -50,94 +52,132 @@ export interface NoChangeConstraint {
 
 /**
  * Contains a value returned from a transaction.
- * @alpha
+ * @input
+ * @beta
  */
 export interface WithValue<TValue> {
 	/** The user-supplied value. */
-	value: TValue;
+	readonly value: TValue;
 }
 
 /**
- * Contains a value and status returned from a user-supplied {@link TreeBranchAlpha.(runTransaction:1) | transaction callback}.
- * @alpha
+ * Contains a value and status returned from a user-supplied {@link TreeViewBeta.runTransaction | transaction callback}.
+ * @input
+ * @beta
  */
-export type TransactionCallbackStatus<TSuccessValue, TFailureValue> = (
+export type TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> =
 	| (WithValue<TSuccessValue> & {
 			/** Indicates that the transaction callback ran successfully. */
-			rollback?: false;
+			readonly rollback?: false;
 	  })
 	| (WithValue<TFailureValue> & {
 			/** Indicates that the transaction callback failed and the transaction should be rolled back. */
-			rollback: true;
-	  })
-) & {
-	/**
-	 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
-	 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
-	 * locally or on remote clients, the revert will be ignored.
-	 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
-	 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
-	 */
-	preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
-};
+			readonly rollback: true;
+	  });
 
 /**
- * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
- * @alpha
+ * The result of a {@link TreeViewBeta.runTransaction | transaction} that doesn't return a value.
+ * @input
+ * @beta
  */
-export type VoidTransactionCallbackStatus = Omit<
-	TransactionCallbackStatus<unknown, unknown>,
+export type VoidTransactionCallbackStatusBeta = Omit<
+	TransactionCallbackStatusBeta<unknown, unknown>,
 	"value"
 >;
 
 /**
- * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that completed successfully.
+ * {@link TransactionCallbackStatusBeta} extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
+ * @input
  * @alpha
  */
+export type TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue> =
+	TransactionCallbackStatusBeta<TSuccessValue, TFailureValue> & {
+		/**
+		 * An optional list of {@link TransactionConstraintAlpha | constraints} that will be checked when the commit corresponding
+		 * to this transaction is reverted. If any of these constraints are not met when the revert is being applied either
+		 * locally or on remote clients, the revert will be ignored.
+		 * These constraints must also be met at the time they are first introduced. If they are not met after the transaction
+		 * callback returns, then `runTransaction` (which invokes the transaction callback) will throw a `UsageError`.
+		 */
+		readonly preconditionsOnRevert?: readonly TransactionConstraintAlpha[];
+	};
+
+/**
+ * The result of a {@link TreeBranchAlpha.(runTransaction:2) | transaction} that doesn't return a value.
+ * @input
+ * @alpha
+ */
+export type VoidTransactionCallbackStatusAlpha = Omit<
+	TransactionCallbackStatusAlpha<unknown, unknown>,
+	"value"
+>;
+
+/**
+ * The result of a {@link TreeViewBeta.(runTransaction:1) | transaction} that completed successfully.
+ * @sealed
+ * @beta
+ */
 export interface TransactionResultSuccess<TSuccessValue> extends WithValue<TSuccessValue> {
-	/** The success flag for a transaction that completed without being {@link TransactionCallbackStatus | rolled back}. */
-	success: true;
+	/** The success flag for a transaction that completed without being {@link TransactionCallbackStatusBeta | rolled back}. */
+	readonly success: true;
 }
 
 /**
- * The result of a {@link TreeBranchAlpha.(runTransaction:1) | transaction} that was rolled back.
- * @alpha
+ * The result of a {@link TreeViewBeta.runTransaction | transaction} that was rolled back.
+ * @sealed
+ * @beta
  */
 export interface TransactionResultFailed<TFailureValue> extends WithValue<TFailureValue> {
-	/** The failure flag for a transaction that was {@link TransactionCallbackStatus | rolled back}. */
-	success: false;
+	/** The failure flag for a transaction that was {@link TransactionCallbackStatusBeta | rolled back}. */
+	readonly success: false;
 }
 
 /**
  * The result of the {@link RunTransaction | RunTransaction} API.
- * @alpha
+ * @sealed
+ * @beta
  */
-export type TransactionResultExt<TSuccessValue, TFailureValue> =
+export type TransactionValueResult<TSuccessValue, TFailureValue> =
 	| TransactionResultSuccess<TSuccessValue>
 	| TransactionResultFailed<TFailureValue>;
 
 /**
- * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionResultExt}
+ * The result of the {@link RunTransaction | RunTransaction} API. This is the same as {@link TransactionValueResult}
  * but with the `value` field omitted. This is useful when the transaction callback doesn't need to return a value.
- * @alpha
+ * @sealed
+ * @beta
  */
-export type TransactionResult =
+export type TransactionVoidResult =
 	| Omit<TransactionResultSuccess<unknown>, "value">
 	| Omit<TransactionResultFailed<unknown>, "value">;
 
 /**
- * The parameters for the {@link RunTransaction | RunTransaction} API.
+ * A type-erased function that post-processes the change produced when a transaction is committed.
+ *
+ * @remarks
+ * Supply one via {@link RunTransactionParamsAlpha.postProcessor} to process/alter
+ * the change that a transaction produces. For example a post-processor could
+ * remove extraneous information, so that the resulting squashed change contains
+ * no extraneous information.
+ *
+ * This type intentionally hides its internal representation: its concrete shape
+ * is an implementation detail of `@fluidframework/tree`. Obtain a value of this
+ * type from a `@fluidframework/tree` helper or constant rather than constructing
+ * one directly.
+ *
  * @alpha
- * @input
+ * @sealed
+ * @system
  */
-export interface RunTransactionParams {
-	/**
-	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
-	 * @remarks
-	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
-	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
-	 */
-	readonly preconditions?: readonly TransactionConstraintAlpha[];
+export interface TransactionPostProcessor
+	extends ErasedType<"@fluidframework/tree.TransactionPostProcessor"> {}
+
+/**
+ * The parameters for the {@link RunTransaction | RunTransaction} API.
+ * @input
+ * @beta
+ */
+export interface RunTransactionParamsBeta {
 	/**
 	 * A label for this transaction that allows it to be correlated with later edits (e.g. for controlling undo/redo grouping).
 	 * @remarks
@@ -146,4 +186,36 @@ export interface RunTransactionParams {
 	 * If there is a nested transaction, only the outermost transaction label will be used.
 	 */
 	readonly label?: unknown;
+}
+
+/**
+ * The parameters for the {@link RunTransaction | RunTransaction} API, extended with alpha-only {@link TransactionConstraintAlpha | constraint} options.
+ * @input
+ * @alpha
+ */
+export interface RunTransactionParamsAlpha extends RunTransactionParamsBeta {
+	/**
+	 * An optional list of {@link TransactionConstraintAlpha | constraints} that are checked just before the transaction begins.
+	 * @remarks
+	 * If any of the constraints are not met when `runTransaction` is called, an error will be thrown.
+	 * If any of the constraints are not met after the transaction has been ordered by the service, it will be rolled back on this client and ignored by all other clients.
+	 */
+	readonly preconditions?: readonly TransactionConstraintAlpha[];
+
+	/**
+	 * An optional {@link TransactionPostProcessor | post-processor} applied to
+	 * the change produced when this transaction is committed.
+	 * @remarks
+	 * When omitted, the transaction's edits are squashed without any such processing.
+	 *
+	 * Specific post-processors are applied according to their own rules for
+	 * optimization and other post-processing tasks in a transaction stack. For
+	 * example a "minimization" post-processor may be applied once for the
+	 * outermost transaction in a stack as it will process all nested edits and
+	 * there is no benefit from multiple applications.
+	 *
+	 * Note: minimization is not yet implemented. Supplying a post-processor currently has no observable effect beyond
+	 * reserving the behavior; a real post-processor will be provided in a future change.
+	 */
+	readonly postProcessor?: TransactionPostProcessor;
 }

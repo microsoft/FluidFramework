@@ -7,9 +7,7 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
 import type { ICodecFamily, IJsonCodec } from "../../codec/index.js";
 import type { SchemaAndPolicy } from "../../core/index.js";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
-import type { FieldBatchEncodingContext } from "../../feature-libraries/index.js";
-import type { JsonCompatibleReadOnly } from "../../util/index.js";
+import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
 export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
@@ -39,17 +37,10 @@ export interface ChangeEncodingContext {
 	 */
 	readonly isSummary: boolean;
 	/**
-	 * If `true`, identifier values that the local id-compressor cannot resolve
-	 * during decode are healed into deterministic stable UUIDs instead of
-	 * throwing. See {@link FieldBatchEncodingContext.healUnresolvableIdentifiersOnDecode}.
+	 * Heal-on-decode workaround configuration. See {@link IdentifierHealingConfig}.
 	 * Only takes effect when `isSummary` is also `true`.
 	 */
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	/**
-	 * The SharedTree's shared-object id, used as input to the deterministic
-	 * UUID derivation when {@link healUnresolvableIdentifiersOnDecode} triggers.
-	 */
-	readonly sharedObjectId?: string;
+	readonly healing?: IdentifierHealingConfig;
 }
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<

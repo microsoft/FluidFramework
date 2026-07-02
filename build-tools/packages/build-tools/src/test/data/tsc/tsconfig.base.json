@@ -1,0 +1,7 @@
+{
+	"compilerOptions": {
+		"incremental": true,
+		"outDir": "./lib",
+		"strict": true,
+	},
+}

@@ -23,13 +23,13 @@ const config: Linter.Config[] = [
 			],
 			"unicorn/prefer-module": "off",
 			"unicorn/prefer-negative-index": "off",
-			"import/no-nodejs-modules": "off",
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 	{
 		files: ["src/**/test/**"],
 		rules: {
-			"import/no-extraneous-dependencies": [
+			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
 					"devDependencies": true,

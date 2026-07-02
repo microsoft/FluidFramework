@@ -30,7 +30,7 @@ import {
 import { IContainerRuntimeBase } from "@fluidframework/runtime-definitions/internal";
 import { toDeltaManagerInternal } from "@fluidframework/runtime-utils/internal";
 import { ITaskManager, TaskManager } from "@fluidframework/task-manager/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { TestConfiguration } from "./testConfigFile.js";
 import { printStatus } from "./utils.js";
@@ -42,7 +42,7 @@ export interface IRunConfig {
 	testConfig: TestConfiguration;
 	verbose: boolean;
 	random: IRandom;
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 	loaderConfig?: ILoaderOptions;
 }
 

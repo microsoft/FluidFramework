@@ -15,7 +15,7 @@ import type {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { IWholeFlatSnapshot } from "./contracts.js";
 import type { IR11sResponse } from "./restWrapper.js";
@@ -24,7 +24,7 @@ import type { IGitManager } from "./storageContracts.js";
 export class RetriableGitManager implements IGitManager {
 	constructor(
 		private readonly internalGitManager: IGitManager,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {}
 
 	public async getCommits(

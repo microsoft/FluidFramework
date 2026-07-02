@@ -41,7 +41,7 @@ export class OdspUrlResolver implements IUrlResolver {
 			const odspDriverUrlResolver: IUrlResolver = new OdspDriverUrlResolver();
 			return odspDriverUrlResolver.resolve({
 				url: urlToBeResolved,
-				headers: request.headers,
+				...(request.headers === undefined ? {} : { headers: request.headers }),
 			});
 		}
 		return undefined;

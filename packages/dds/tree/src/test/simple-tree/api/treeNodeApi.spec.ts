@@ -59,7 +59,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
-	type TransactionResult,
+	type TransactionVoidResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -3199,6 +3199,32 @@ describe("treeNodeApi", () => {
 
 			assert.deepEqual(eventLog, [new Set(["prop1"])]);
 		});
+
+		describe("editing the tree from within a change event listener throws", () => {
+			// Each node-level change event holds the edit lock while it fires, so attempting to
+			// edit the tree from within the listener throws a UsageError. Covered for `nodeChanged`
+			// and `treeChanged` separately in case their implementations ever diverge.
+			const sf = new SchemaFactory("on-edit-throws");
+			class TestObject extends sf.object("TestObject", {
+				value: sf.number,
+			}) {}
+
+			for (const eventName of ["nodeChanged", "treeChanged"] as const) {
+				it(`editing from a '${eventName}' listener throws`, () => {
+					const view = getView(new TreeViewConfiguration({ schema: TestObject }));
+					view.initialize({ value: 0 });
+
+					Tree.on(view.root, eventName, () => {
+						view.root.value = 2;
+					});
+
+					assert.throws(
+						() => (view.root.value = 1),
+						validateUsageError("Editing the tree is forbidden during a change event callback"),
+					);
+				});
+			}
+		});
 	});
 
 	describe("tree.clone", () => {
@@ -4279,7 +4305,9 @@ describe("treeNodeApi", () => {
 			const unhydratedObj = new Obj({ n: 3 });
 			for (const obj of [hydratedObj, unhydratedObj]) {
 				const context = TreeAlpha.context(obj);
-				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
+				context.runTransaction(() => {
+					obj.n = 4;
+				}); // Transaction with no return value
 				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
 				assert.ok(value.success);
 				assert.equal(obj.n, value.value);
@@ -4303,9 +4331,14 @@ describe("treeNodeApi", () => {
 		it("can successfully run transactions with constraints", () => {
 			const node = hydrate(Obj, { n: 3 });
 			const context = TreeAlpha.context(node);
-			context.runTransaction(() => (node.n = 4), {
-				preconditions: [{ type: "nodeInDocument", node }],
-			});
+			context.runTransaction(
+				() => {
+					node.n = 4;
+				},
+				{
+					preconditions: [{ type: "nodeInDocument", node }],
+				},
+			);
 			assert.equal(node.n, 4);
 		});
 
@@ -4326,7 +4359,7 @@ describe("treeNodeApi", () => {
 			const node = new Obj({ n: 3 });
 			const context = TreeAlpha.context(node);
 
-			let transactionPromise: Promise<TransactionResult> | undefined;
+			let transactionPromise: Promise<TransactionVoidResult> | undefined;
 			const expectedError = validateUsageError(
 				/An asynchronous transaction cannot be started while another transaction is already in progress/,
 			);

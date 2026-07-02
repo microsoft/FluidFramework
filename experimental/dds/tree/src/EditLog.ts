@@ -6,7 +6,7 @@
 import { TypedEventEmitter } from '@fluid-internal/client-utils';
 import type { IEvent } from '@fluidframework/core-interfaces';
 import { assert, compareArrays } from '@fluidframework/core-utils/internal';
-import { ITelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
+import { TelemetryLoggerExt } from '@fluidframework/telemetry-utils/internal';
 import { BTree } from '@tylerbu/sorted-btree-es6';
 
 import type { ChangeCompressor } from './ChangeCompression.js';
@@ -265,7 +265,7 @@ export class EditLog<TChange = unknown> extends TypedEventEmitter<IEditLogEvents
 	 */
 	public constructor(
 		summary: EditLogSummary<TChange, EditHandle<TChange>> = { editIds: [], editChunks: [] },
-		private readonly logger?: ITelemetryLoggerExt,
+		private readonly logger?: TelemetryLoggerExt,
 		editAddedHandlers: readonly EditAddedHandler<TChange>[] = [],
 		private readonly targetLength = Infinity,
 		private readonly evictionFrequency = targetLength * 2,

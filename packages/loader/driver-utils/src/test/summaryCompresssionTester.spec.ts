@@ -150,7 +150,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	async downloadSummary(handle: ISummaryHandle): Promise<ISummaryTree> {
 		return this._uploadedSummary!;
 	}
-	disposed?: boolean | undefined;
+	disposed?: boolean;
 	dispose?(error?: Error | undefined): void {
 		throw new Error("Method not implemented.");
 	}

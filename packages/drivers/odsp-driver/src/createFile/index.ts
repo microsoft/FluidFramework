@@ -3,10 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 export async function useCreateNewModule<T = void>(
-	odspLogger: ITelemetryLoggerExt,
+	odspLogger: TelemetryLoggerExt,
 	func: (
 		// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 		m: typeof import("./createNewModule.js") /* webpackChunkName: "createNewModule" */,

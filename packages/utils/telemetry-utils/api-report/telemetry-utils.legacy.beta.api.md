@@ -18,25 +18,8 @@ export class EventEmitterWithErrorHandling<TEvent extends IEvent = IEvent> exten
     emit(event: EventEmitterEventType, ...args: unknown[]): boolean;
 }
 
-// @beta @deprecated @legacy
-export interface ITelemetryErrorEventExt extends ITelemetryPropertiesExt {
-    eventName: string;
-}
-
-// @beta @deprecated @legacy
-export interface ITelemetryGenericEventExt extends ITelemetryPropertiesExt {
-    category?: TelemetryEventCategory;
-    eventName: string;
-}
-
 // @beta @sealed @legacy
-export interface ITelemetryLoggerExt extends ITelemetryBaseLogger {
-    // @deprecated
-    sendErrorEvent(event: ITelemetryErrorEventExt, error?: unknown): void;
-    // @deprecated
-    sendPerformanceEvent(event: ITelemetryPerformanceEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.info): void;
-    // @deprecated
-    sendTelemetryEvent(event: ITelemetryGenericEventExt, error?: unknown, logLevel?: typeof LogLevel.verbose | typeof LogLevel.info): void;
+export interface ITelemetryLoggerExt extends ErasedType<"TelemetryLoggerExt">, ITelemetryBaseLogger {
 }
 
 // @beta @legacy (undocumented)
@@ -50,16 +33,8 @@ export interface ITelemetryLoggerPropertyBags {
     error?: ITelemetryLoggerPropertyBag;
 }
 
-// @beta @deprecated @legacy
-export interface ITelemetryPerformanceEventExt extends ITelemetryGenericEventExt {
-    duration?: number;
-}
-
 // @beta @legacy
 export type ITelemetryPropertiesExt = Record<string, TelemetryEventPropertyTypeExt | Tagged<TelemetryEventPropertyTypeExt>>;
-
-// @beta @deprecated @legacy
-export type TelemetryEventCategory = "generic" | "error" | "performance";
 
 // @beta @legacy
 export type TelemetryEventPropertyTypeExt = string | number | boolean | undefined | (string | number | boolean)[] | Record<string, string | number | boolean | undefined | (string | number | boolean)[]>;

@@ -4,8 +4,8 @@
  */
 
 interface CommonOptions {
-	defaultRoot?: string;
-	root?: string;
+	defaultRoot: string | undefined;
+	root: string | undefined;
 	timer: boolean;
 	logtime: boolean;
 	quiet: boolean;

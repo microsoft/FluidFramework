@@ -7,12 +7,6 @@
 packages:
   - "."
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
-onlyBuiltDependencies:
-  - unrs-resolver
-
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 resolutionMode: highest
@@ -41,3 +35,31 @@ trustPolicyExclude:
   # and also used by other workspaces in this repo, so allowing it seems like a minimal risk.
   - "semver@5.7.2"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+strictPeerDependencies: true
+updateNotifier: false
+
+overrides:
+  # Resolve a known ReDoS vulnerability in diff.
+  diff@>=5 <6: ^5.2.2
+
+  # Resolve known js-yaml vulnerability (CVE-2025-64718: prototype pollution via merge keys).
+  js-yaml: ^4.1.1
+
+  # Resolve known security vulnerabilities across all major version ranges.
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+
+  # Resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists.
+  serialize-javascript@>=6 <7: ^7.0.4
+
+  # Resolve known vulnerabilities in picomatch.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+
+allowBuilds:
+  unrs-resolver: true

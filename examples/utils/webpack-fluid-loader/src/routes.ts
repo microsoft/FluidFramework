@@ -9,7 +9,6 @@ import path from "path";
 import { getOdspCredentials } from "@fluid-private/test-drivers";
 import { IFluidPackage } from "@fluidframework/container-definitions/internal";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IPublicClientConfig } from "@fluidframework/odsp-doclib-utils/internal";
 import {
 	LoginCredentials,
 	OdspTokenManager,
@@ -27,19 +26,6 @@ import { RouteOptions } from "./loader.js";
 const tokenManager = new OdspTokenManager(odspTokensCache);
 
 const getThisOrigin = (options: RouteOptions): string => `http://localhost:${options.port}`;
-
-function getPublicClientConfig(): IPublicClientConfig {
-	const clientId = process.env.local__testing__clientId;
-	if (!clientId) {
-		// See the "SharePoint" section of webpack-fluid-loader's README for prerequisites to running examples against odsp.
-		throw new Error(
-			"Client ID environment variable not set: local__testing__clientId. Did you run the getkeys tool?",
-		);
-	}
-	return {
-		clientId,
-	};
-}
 
 function getTestTenantCredentials(mode: "spo" | "spo-df"): {
 	credentials: LoginCredentials;
@@ -167,7 +153,6 @@ const makeAfterMiddlewares = (
 	if (options.mode === "spo-df" || options.mode === "spo") {
 		const { credentials, server } = getTestTenantCredentials(options.mode);
 		options.server = server;
-		const clientConfig = getPublicClientConfig();
 
 		readyP = async (req: express.Request, res: express.Response) => {
 			if (req.baseUrl === "/favicon.ico") {
@@ -177,15 +162,11 @@ const makeAfterMiddlewares = (
 
 			const [odspTokens, pushTokens] = await Promise.all([
 				tokenManager.getOdspTokens(
-					server,
-					clientConfig,
 					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
 				),
 				tokenManager.getPushTokens(
-					server,
-					clientConfig,
 					credentials,
 					undefined /* forceRefresh */,
 					options.forceReauth,
@@ -233,10 +214,8 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig } = getTestTenantCredentials(options.mode);
 				const tokens = await tokenManager.getOdspTokens(
-					server,
-					getPublicClientConfig(),
 					tokenConfig,
 					undefined /* forceRefresh */,
 					true /* forceReauth */,
@@ -255,11 +234,9 @@ const makeAfterMiddlewares = (
 					return;
 				}
 
-				const { credentials: tokenConfig, server } = getTestTenantCredentials(options.mode);
+				const { credentials: tokenConfig } = getTestTenantCredentials(options.mode);
 				options.pushAccessToken = (
 					await tokenManager.getPushTokens(
-						server,
-						getPublicClientConfig(),
 						tokenConfig,
 						undefined /* forceRefresh */,
 						true /* forceReauth */,

@@ -274,14 +274,14 @@ describe("FluidDataStoreRuntime Tests", () => {
 					assert(isFluidError(error), "thrown error should be a Fluid error");
 					const props = error.getTelemetryProperties();
 					assert.deepStrictEqual(
-						props.fluidDataStoreId,
+						props.dataStoreId,
 						{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
-						"error should carry tagged fluidDataStoreId",
+						"error should carry tagged dataStoreId",
 					);
 					assert.deepStrictEqual(
-						props.fullPackageName,
+						props.dataStorePackagePath,
 						{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
-						"error should carry tagged fullPackageName",
+						"error should carry tagged dataStorePackagePath",
 					);
 					return true;
 				},
@@ -296,14 +296,14 @@ describe("FluidDataStoreRuntime Tests", () => {
 				"EntryPointInitializationFailure event should have been logged",
 			);
 			assert.deepStrictEqual(
-				failureEvent.fluidDataStoreId,
+				failureEvent.dataStoreId,
 				{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
-				"event should include tagged fluidDataStoreId",
+				"event should include tagged dataStoreId",
 			);
 			assert.deepStrictEqual(
-				failureEvent.fullPackageName,
+				failureEvent.dataStorePackagePath,
 				{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
-				"event should include tagged fullPackageName",
+				"event should include tagged dataStorePackagePath",
 			);
 		});
 	});

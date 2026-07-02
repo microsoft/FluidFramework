@@ -3,7 +3,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - "docs/**"
+      - "website/**"
       - "*.md"
       - "**/*.md"
       - "!.changeset/**"
@@ -13,7 +13,7 @@ on:
 
 defaults:
   run:
-    working-directory: ./docs
+    working-directory: ./website
 
 permissions:
   contents: read
@@ -26,20 +26,20 @@ jobs:
     runs-on: ubuntu-latest
     name: Build site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
-          cache-dependency-path: docs/pnpm-lock.yaml
+          cache-dependency-path: website/pnpm-lock.yaml
       - name: Build site artifact
         run: |
           pnpm i --frozen-lockfile
@@ -52,7 +52,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: fluidframework-site
-          path: docs/build
+          path: website/build
           retention-days: 3
 
   # Run linter checks against the website content and infrastructure.
@@ -60,20 +60,20 @@ jobs:
     runs-on: ubuntu-latest
     name: pnpm lint
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
-          cache-dependency-path: docs/pnpm-lock.yaml
+          cache-dependency-path: website/pnpm-lock.yaml
       - name: pnpm lint
         run: |
           pnpm i --frozen-lockfile
@@ -85,27 +85,27 @@ jobs:
     name: 🧪 Website Tests
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
-          cache-dependency-path: docs/pnpm-lock.yaml
+          cache-dependency-path: website/pnpm-lock.yaml
 
       - name: Download site artifact
         # release notes: https://github.com/actions/download-artifact/releases/tag/v6.0.0
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
           name: fluidframework-site
-          path: docs/build
+          path: website/build
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
       - name: Run tests
@@ -118,20 +118,20 @@ jobs:
     name: 🔗 Broken Link Check
     needs: build_site
     steps:
-      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
         with:
           submodules: false
 
-      # release notes: https://github.com/pnpm/action-setup/releases/tag/v4.2.0
+      # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
       - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
 
-      # release notes: https://github.com/actions/setup-node/releases/tag/v6.0.0
+      # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
       - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
         with:
           node-version: "22"
           cache: "pnpm"
-          cache-dependency-path: docs/pnpm-lock.yaml
+          cache-dependency-path: website/pnpm-lock.yaml
       - name: Create results folder
         run: mkdir -p ./results
 
@@ -140,7 +140,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # ratchet:actions/download-artifact@v8
         with:
           name: fluidframework-site
-          path: docs/build
+          path: website/build
       - name: Install dependencies
         run: "pnpm i --frozen-lockfile"
       - name: Check for broken links
@@ -163,5 +163,5 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: website-validation-results
-          path: ./docs/results
+          path: ./website/results
           retention-days: 3

@@ -68,7 +68,7 @@ USER node
 # PNPM_HOME is where `pnpm add -g` places binary shims; adding it to PATH makes
 # globally-installed pnpm packages (e.g. @fluid-tools/build-cli) invokable.
 ENV PNPM_HOME="/home/node/.local/share/pnpm"
-ENV PATH="${PNPM_HOME}:/home/node/.local/bin:/home/node/.cargo/bin:${PATH}"
+ENV PATH="${PNPM_HOME}/bin:/home/node/.local/bin:/home/node/.cargo/bin:${PATH}"
 
 # Optionally install Playwright CLI
 ARG INSTALL_PLAYWRIGHT_CLI=false

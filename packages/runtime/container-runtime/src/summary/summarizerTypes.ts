@@ -24,8 +24,8 @@ import type {
 import type { ISummaryStats } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryContext } from "@fluidframework/runtime-utils/internal";
 import type {
-	ITelemetryLoggerExt,
 	ITelemetryLoggerPropertyBag,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { SummarizeReason } from "./summarizerUtils.js";
@@ -79,7 +79,7 @@ export interface IRefreshSummaryAckOptions {
 	/**
 	 * Telemetry logger to which telemetry events will be forwarded.
 	 */
-	readonly summaryLogger: ITelemetryLoggerExt;
+	readonly summaryLogger: TelemetryLoggerExt;
 }
 
 /**
@@ -157,7 +157,7 @@ export interface ISubmitSummaryOptions extends ISummarizeOptions {
 	/**
 	 * Logger to use for correlated summary events
 	 */
-	readonly summaryLogger: ITelemetryLoggerExt;
+	readonly summaryLogger: TelemetryLoggerExt;
 	/**
 	 * Tells when summary process should be cancelled
 	 */

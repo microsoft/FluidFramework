@@ -35,6 +35,7 @@ import {
 import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
 	type FieldBatchCodec,
+	FieldBatchDecodingContext,
 	type TreeChunk,
 	chunkFieldSingle,
 	defaultChunkPolicy,
@@ -328,7 +329,6 @@ export function encodeDetachedNodes(
 				trees: fieldsCodec.encode(treesToEncode, {
 					encodeType: chunkCompressionStrategy,
 					schema: context.schema,
-					originatorId: context.originatorId,
 					idCompressor: context.idCompressor,
 					isSummary: context.isSummary,
 				}),
@@ -350,14 +350,18 @@ export function decodeDetachedNodes(
 		return undefined;
 	}
 
-	const chunks = fieldsCodec.decode(encoded.trees, {
-		encodeType: chunkCompressionStrategy,
-		originatorId: context.originatorId,
-		idCompressor: context.idCompressor,
-		isSummary: context.isSummary,
-		healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
-		sharedObjectId: context.sharedObjectId,
-	});
+	const chunks = fieldsCodec.decode(
+		encoded.trees,
+		context.isSummary
+			? FieldBatchDecodingContext.forSummary({
+					idCompressor: context.idCompressor,
+					healing: context.healing,
+				})
+			: FieldBatchDecodingContext.forOp({
+					idCompressor: context.idCompressor,
+					originatorId: context.originatorId,
+				}),
+	);
 	const getChunk = (index: number): TreeChunk => {
 		assert(index < chunks.length, 0x898 /* out of bounds index for build chunk */);
 		return chunkFieldSingle(chunks[index] ?? oob(), {

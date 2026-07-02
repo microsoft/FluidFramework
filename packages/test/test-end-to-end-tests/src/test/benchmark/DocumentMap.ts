@@ -33,7 +33,7 @@ import {
 	SharedMap,
 } from "@fluidframework/map/internal";
 import type { IFluidDataStoreContext } from "@fluidframework/runtime-definitions/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import {
 	ChannelFactoryRegistry,
 	createSummarizerFromFactory,
@@ -127,7 +127,7 @@ export class DocumentMap implements IDocumentLoaderAndSummarizer {
 		return this._dataObjectFactory;
 	}
 	private readonly runtimeFactory: ContainerRuntimeFactoryWithDefaultDataStore;
-	public get logger(): ITelemetryLoggerExt | undefined {
+	public get logger(): TelemetryLoggerExt | undefined {
 		return this.props.logger;
 	}
 	public get mainContainer(): IContainer | undefined {

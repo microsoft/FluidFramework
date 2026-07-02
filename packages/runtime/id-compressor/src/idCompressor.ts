@@ -412,10 +412,9 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 		}
 	}
 
-	public normalizeToSessionSpace(
+	public tryNormalizeToSessionSpaceWithoutSession(
 		id: OpSpaceCompressedId,
-		originSessionId: SessionId,
-	): SessionSpaceCompressedId {
+	): SessionSpaceCompressedId | undefined {
 		if (isFinalId(id)) {
 			const containingCluster = this.localSession.getClusterByAllocatedFinal(id);
 			if (containingCluster === undefined) {
@@ -430,12 +429,28 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 					return alignedLocal;
 				} else {
 					if (genCountFromLocalId(alignedLocal) > this.localGenCount) {
+						// The ID is not valid in this compressor. It is either from a future version of this compressor, or another compressor.
+						// Since IDs from other compressors often are valid in this one, but uncompress incorrectly,
+						// we cannot rely on this function (tryNormalizeToSessionSpaceWithoutSession) to validate that the IDs are from the same compressor.
+						// Since such validation can not be robust, this "try" function is explicitly documented not to be allowed to be used for this case.
+						// Therefore, as documented in the API docs for this function, calls can not rely on a specific output in this case,
+						// and therefore the document behavior of throwing makes the most sense (helps catch bugs).
 						throw new Error("Unknown op space ID.");
 					}
 					return id as unknown as SessionSpaceCompressedId;
 				}
 			}
 		} else {
+			return undefined;
+		}
+	}
+
+	public normalizeToSessionSpace(
+		id: OpSpaceCompressedId,
+		originSessionId: SessionId,
+	): SessionSpaceCompressedId {
+		const normalizedWithoutSession = this.tryNormalizeToSessionSpaceWithoutSession(id);
+		if (normalizedWithoutSession === undefined) {
 			const localToNormalize = id as unknown as LocalCompressedId;
 			if (originSessionId === this.localSessionId) {
 				if (this.normalizer.contains(localToNormalize)) {
@@ -456,6 +471,8 @@ export class IdCompressor implements IIdCompressor, IIdCompressorCore {
 				}
 				return correspondingFinal as unknown as SessionSpaceCompressedId;
 			}
+		} else {
+			return normalizedWithoutSession;
 		}
 	}
 

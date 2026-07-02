@@ -7,11 +7,5 @@
 		"outDir": "./lib",
 		"noImplicitAny": true,
 		"noImplicitOverride": true,
-		// `skipLibCheck` set to handle improper handling of exactOptionalPropertyTypes
-		// in upstream packages (mainly merge-tree and container-runtime) required via
-		// fluid-static (for isInternalFluidContainer).
-		// Could alternatively build with exactOptionalPropertyTypes: false.
-		// This can go away once getPresence.ts is removed from the package.
-		"skipLibCheck": true,
 	},
 }

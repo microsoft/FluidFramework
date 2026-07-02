@@ -339,7 +339,7 @@ export class SchemaFactory<
 	/**
 	 * Construct a SchemaFactory with a given {@link SchemaFactory.scope|scope}.
 	 * @remarks
-	 * There are no restrictions on mixing schema from different schema factories.
+	 * There are no restrictions on mixing schemas from different schema factories.
 	 * Typically each library will create one or more SchemaFactories and use them to define its schema.
 	 */
 	public constructor(
@@ -698,7 +698,7 @@ export class SchemaFactory<
 		const same = compareSets({ a: inputTypes, b: outputTypes });
 		if (!same) {
 			throw new UsageError(
-				`Structurally named schema collision: two schema named "${fullName}" were defined with different input schema.`,
+				`Structurally named schema collision: two schemas named "${fullName}" were defined with different input schemas.`,
 			);
 		}
 		return structural;

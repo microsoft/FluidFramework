@@ -186,19 +186,19 @@ export class OdspDriverUrlResolverForShareLink implements IUrlResolver {
 // @beta @legacy (undocumented)
 export interface OdspFluidDataStoreLocator extends IOdspUrlParts {
     // (undocumented)
-    appName?: string;
+    appName?: string | undefined;
     // (undocumented)
-    containerPackageName?: string;
+    containerPackageName?: string | undefined;
     // (undocumented)
-    context?: string;
+    context?: string | undefined;
     // (undocumented)
     dataStorePath: string;
     // (undocumented)
-    fileVersion?: string;
+    fileVersion?: string | undefined;
 }
 
-// @beta @deprecated @legacy
-export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, fetchBinarySnapshotFormat?: boolean, snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
+// @beta @legacy
+export function prefetchLatestSnapshot(resolvedUrl: IResolvedUrl, getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>, persistedCache: IPersistedCache, _forceAccessTokenViaAuthorizationHeader: boolean, logger: ITelemetryBaseLogger, hostSnapshotFetchOptions: ISnapshotOptions | undefined, enableRedeemFallback?: boolean, _fetchBinarySnapshotFormat?: boolean, _snapshotFormatFetchType?: SnapshotFormatSupportType, odspDocumentServiceFactory?: OdspDocumentServiceFactory): Promise<boolean>;
 
 // @beta @legacy
 export interface ShareLinkFetcherProps {

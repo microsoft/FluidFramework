@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree, type TreeViewAlpha } from "@fluidframework/tree/internal";
+import { FormattedTextAsTreeDefault, type TreeViewAlpha } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import { TextAsTree, independentView } from "fluid-framework/alpha";
 
@@ -20,7 +20,7 @@ function createFormattedTreeView(initialValue = ""): TreeViewAlpha<typeof TextEd
 	treeView.initialize(
 		new TextEditorRoot({
 			plainText: TextAsTree.Tree.fromString(initialValue),
-			formattedText: FormattedTextAsTree.Tree.fromString(initialValue),
+			formattedText: FormattedTextAsTreeDefault.Tree.fromString(initialValue),
 		}),
 	);
 	return treeView;

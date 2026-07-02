@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	type FetchSource,
 	type FiveDaysMs,
@@ -227,7 +227,7 @@ export abstract class OdspDocumentStorageServiceBase implements IDocumentStorage
 		context: ISummaryContext,
 	): Promise<string>;
 
-	public async downloadSummary(commit: ISummaryHandle): Promise<ISummaryTree> {
+	public async downloadSummary(): Promise<ISummaryTree> {
 		throw new Error("Not implemented yet");
 	}
 

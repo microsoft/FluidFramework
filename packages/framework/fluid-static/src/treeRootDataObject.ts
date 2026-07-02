@@ -247,7 +247,7 @@ export function createTreeContainerRuntimeFactory(props: {
 	/**
 	 * Legacy compatibility mode for the container.
 	 */
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- specify minVersionForCollaboration instead; see #23289
 	readonly compatibilityMode: CompatibilityMode;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
@@ -259,29 +259,20 @@ export function createTreeContainerRuntimeFactory(props: {
 	 * If not provided, only the default options for the given compatibilityMode will be used.
 	 */
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	/**
-	 * Optional override for minimum version for collaboration.
-	 * @remarks
-	 * If not provided, the default for the given compatibilityMode will be used.
-	 * Rather than defining this, omit `compatibilityMode` and pass `minVersionForCollaboration` directly.
-	 */
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
 
 // Implementation
 export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
-	// eslint-disable-next-line import-x/no-deprecated
+	// eslint-disable-next-line import-x/no-deprecated -- specify minVersionForCollaboration instead; see #23289
 	readonly compatibilityMode?: CompatibilityMode;
 	readonly minVersionForCollaboration?: MinimumVersionForCollab;
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-	readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory {
 	const {
 		compatibilityMode,
 		minVersionForCollaboration,
-		minVersionForCollabOverride,
 		rootDataStoreRegistry,
 		runtimeOptionOverrides,
 		schema,
@@ -295,9 +286,7 @@ export function createTreeContainerRuntimeFactory(props: {
 			"Either minVersionForCollaboration or compatibilityMode (deprecated) must be provided.",
 		);
 	} else {
-		minVersionForCollab =
-			minVersionForCollabOverride ??
-			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
+		minVersionForCollab = resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);
 	}
 
 	const [registryEntries, sharedObjects] = parseDataObjectsFromSharedObjects(schema);

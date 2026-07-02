@@ -85,7 +85,7 @@ export const ensureVersionLoaded = async (
 	baseVersion: string,
 	version: number | string,
 ): Promise<void> => {
-	const requestedStr = getRequestedVersion(baseVersion, version);
+	const requestedStr = getRequestedVersion({ baseVersion, requested: version });
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -217,7 +217,7 @@ async function loadPackages(
 }
 
 async function loadLoader(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion({ baseVersion, requested });
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -237,7 +237,7 @@ async function loadContainerRuntime(
 	baseVersion: string,
 	requested?: number | string,
 ): Promise<void> {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion({ baseVersion, requested });
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -273,7 +273,7 @@ async function loadDataRuntime(
 	baseVersion: string,
 	requested?: number | string,
 ): Promise<void> {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion({ baseVersion, requested });
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}
@@ -345,7 +345,7 @@ async function loadDataRuntime(
 }
 
 async function loadDriver(baseVersion: string, requested?: number | string): Promise<void> {
-	const requestedStr = getRequestedVersion(baseVersion, requested);
+	const requestedStr = getRequestedVersion({ baseVersion, requested });
 	if (semver.satisfies(pkgVersion, requestedStr)) {
 		return;
 	}

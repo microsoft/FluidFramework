@@ -11,11 +11,11 @@ import type {
 import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
 import {
-	type IFluidErrorBase,
-	type ITelemetryLoggerExt,
-	LoggingError,
-	UsageError,
 	createChildLogger,
+	type IFluidErrorBase,
+	LoggingError,
+	type TelemetryLoggerExt,
+	UsageError,
 	wrapErrorAndLog,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -67,7 +67,7 @@ export class SummarizingWarning
 	static wrap(
 		error: unknown,
 		logged: boolean = false,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 	): SummarizingWarning {
 		const newErrorFn = (errMsg: string): SummarizingWarning =>
 			new SummarizingWarning(errMsg, logged);
@@ -91,7 +91,7 @@ export class Summarizer extends TypedEventEmitter<ISummarizerEvents> implements 
 		return this;
 	}
 
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 	private runningSummarizer?: RunningSummarizer;
 	private _disposed: boolean = false;
 	private starting: boolean = false;

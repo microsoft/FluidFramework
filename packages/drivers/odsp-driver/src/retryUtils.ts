@@ -10,7 +10,7 @@ import {
 	getRetryDelayFromError,
 } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { Odsp409Error } from "./epochTracker.js";
 
@@ -20,7 +20,7 @@ import { Odsp409Error } from "./epochTracker.js";
 export async function runWithRetry<T>(
 	api: () => Promise<T>,
 	callName: string,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	checkDisposed?: () => void,
 ): Promise<T> {
 	let retryAfter = 1000;

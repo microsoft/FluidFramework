@@ -38,8 +38,10 @@ export class SummaryTreeAssembler {
 		return {
 			type: SummaryType.Tree,
 			tree: { ...this.summaryTree },
-			unreferenced: this.props?.unreferenced,
-			groupId: this.props?.groupId,
+			...(this.props?.unreferenced === undefined
+				? {}
+				: { unreferenced: this.props.unreferenced }),
+			...(this.props?.groupId === undefined ? {} : { groupId: this.props.groupId }),
 		};
 	}
 
@@ -94,8 +96,8 @@ export function convertSnapshotAndBlobsToSummaryTree(
 	blobs: Map<string, ArrayBuffer>,
 ): ISummaryTree {
 	const assembler = new SummaryTreeAssembler({
-		unreferenced: snapshot.unreferenced,
-		groupId: snapshot.groupId,
+		...(snapshot.unreferenced === undefined ? {} : { unreferenced: snapshot.unreferenced }),
+		...(snapshot.groupId === undefined ? {} : { groupId: snapshot.groupId }),
 	});
 	for (const [path, id] of Object.entries(snapshot.blobs)) {
 		const blob = blobs.get(id);

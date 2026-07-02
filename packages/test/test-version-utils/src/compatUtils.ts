@@ -195,12 +195,16 @@ export async function getVersionedTestObjectProvider(
 ): Promise<TestObjectProvider> {
 	// This path is not cross-client compat, so the same set of APIs is used for both creating and
 	// loading containers; the "ForLoading" APIs mirror the ones used for creating.
-	const loader = getLoaderApi(getRequestedVersion(baseVersion, loaderVersion));
+	const loader = getLoaderApi(getRequestedVersion({ baseVersion, requested: loaderVersion }));
 	const containerRuntime = getContainerRuntimeApi(
-		getRequestedVersion(baseVersion, runtimeVersion),
+		getRequestedVersion({ baseVersion, requested: runtimeVersion }),
 	);
-	const dataRuntime = getDataRuntimeApi(getRequestedVersion(baseVersion, dataRuntimeVersion));
-	const driver = getDriverApi(getRequestedVersion(baseVersion, driverConfig?.version));
+	const dataRuntime = getDataRuntimeApi(
+		getRequestedVersion({ baseVersion, requested: dataRuntimeVersion }),
+	);
+	const driver = getDriverApi(
+		getRequestedVersion({ baseVersion, requested: driverConfig?.version }),
+	);
 	return getVersionedTestObjectProviderFromApis(
 		{
 			loader,

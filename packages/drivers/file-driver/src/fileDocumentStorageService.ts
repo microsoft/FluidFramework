@@ -156,8 +156,8 @@ export const FileSnapshotWriterClassFactory = <TBase extends ReaderConstructor>(
 
 		public reset(): void {
 			this.blobsWriter = new Map<string, ArrayBufferLike>();
-			this.latestWriterTree = undefined;
-			this.docId = undefined;
+			delete this.latestWriterTree;
+			delete this.docId;
 		}
 
 		public onSnapshotHandler(snapshot: IFileSnapshot): void {

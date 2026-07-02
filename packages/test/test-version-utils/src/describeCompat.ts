@@ -230,16 +230,28 @@ function getVersionedApis(config: CompatConfig): CompatApis {
 	// Outside of cross-client compat, the same set of APIs is used for both creating and loading
 	// containers, so the "ForLoading" APIs mirror the ones above.
 	const dataRuntimeApi = getDataRuntimeApi(
-		getRequestedVersion(testBaseVersion(config.dataRuntime), config.dataRuntime),
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.dataRuntime),
+			requested: config.dataRuntime,
+		}),
 	);
 	const containerRuntimeApi = getContainerRuntimeApi(
-		getRequestedVersion(testBaseVersion(config.containerRuntime), config.containerRuntime),
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.containerRuntime),
+			requested: config.containerRuntime,
+		}),
 	);
 	const driverApi = getDriverApi(
-		getRequestedVersion(testBaseVersion(config.driver), config.driver),
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.driver),
+			requested: config.driver,
+		}),
 	);
 	const loaderApi = getLoaderApi(
-		getRequestedVersion(testBaseVersion(config.loader), config.loader),
+		getRequestedVersion({
+			baseVersion: testBaseVersion(config.loader),
+			requested: config.loader,
+		}),
 	);
 	return {
 		mode,

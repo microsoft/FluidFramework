@@ -38,6 +38,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
+	FieldBatchDecodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalDecoder,
@@ -104,11 +105,39 @@ function makeLoggingDecoder(log: string[], chunk: TreeChunk, message?: string): 
 		},
 	};
 }
-const idDecodingContext = {
-	idCompressor: testIdCompressor,
-	originatorId: testIdCompressor.localSessionId,
-	isSummary: false,
-};
+/**
+ * Builds an {@link IdDecodingContext} for tests by composing a `resolveEncodedId`
+ * from the legacy-shaped fields (`originatorId`, `isSummary`, heal flags).
+ * Mirrors what `FieldBatchCodec.decode` does internally so test coverage of
+ * `chunkDecoding.readValue` continues to exercise the same end-to-end behavior.
+ */
+function makeTestIdDecodingContext(opts: {
+	originatorId?: SessionId;
+	isSummary?: boolean;
+	healUnresolvableIdentifiersOnDecode?: boolean;
+	sharedObjectId?: string;
+}): IdDecodingContext {
+	// Borrow the resolver from a FieldBatchDecodingContext; readValue only cares
+	// about idCompressor + resolveEncodedId. The choice of factory mirrors the
+	// production split: summary-style for the heal tests, op-style for the rest.
+	const { idCompressor, resolveEncodedId } =
+		opts.isSummary === true
+			? FieldBatchDecodingContext.forSummary({
+					idCompressor: testIdCompressor,
+					healing:
+						opts.healUnresolvableIdentifiersOnDecode === true &&
+						opts.sharedObjectId !== undefined
+							? { sharedObjectId: opts.sharedObjectId }
+							: undefined,
+				})
+			: FieldBatchDecodingContext.forOp({
+					idCompressor: testIdCompressor,
+					originatorId: opts.originatorId ?? testIdCompressor.localSessionId,
+				});
+	return { idCompressor, resolveEncodedId };
+}
+
+const idDecodingContext: IdDecodingContext = makeTestIdDecodingContext({});
 
 describe("chunkDecoding", () => {
 	describe("decode", () => {
@@ -193,16 +222,15 @@ describe("chunkDecoding", () => {
 				// non-finalized op-space id during a summary load and healing is not
 				// available. See `chunkDecoding.ts`.
 				const nonFinalizedDuringSummaryError =
-					/Summary could not be loaded due incorrectly encoded identifier\./;
+					"Summary could not be loaded due to an incorrectly encoded identifier.";
 
 				it("throws when the heal flag is not enabled", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
-					const ctx: IdDecodingContext = {
-						idCompressor: testIdCompressor,
+					const ctx = makeTestIdDecodingContext({
 						originatorId,
 						isSummary: true,
 						sharedObjectId: "doc-a",
-					};
+					});
 					assert.throws(
 						() => readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx),
 						nonFinalizedDuringSummaryError,
@@ -211,13 +239,12 @@ describe("chunkDecoding", () => {
 
 				it("heals to a stable UUID when enabled during a summary load", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
-					const ctx: IdDecodingContext = {
-						idCompressor: testIdCompressor,
+					const ctx = makeTestIdDecodingContext({
 						originatorId,
 						isSummary: true,
 						healUnresolvableIdentifiersOnDecode: true,
 						sharedObjectId: "doc-a",
-					};
+					});
 					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, ctx);
 					assert.equal(typeof result, "string");
 					assert.equal(result, "d5d534e7-5e2c-53c3-b26c-9fd81e6fbc37");
@@ -228,26 +255,32 @@ describe("chunkDecoding", () => {
 					const originator1 = "originator-1" as SessionId;
 					const originator2 = "originator-2" as SessionId;
 					const heal = (originatorId: SessionId): unknown =>
-						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
-							idCompressor: testIdCompressor,
-							originatorId,
-							isSummary: true,
-							healUnresolvableIdentifiersOnDecode: true,
-							sharedObjectId: "doc-a",
-						});
+						readValue(
+							makeStream(opSpaceId),
+							SpecialField.Identifier,
+							makeTestIdDecodingContext({
+								originatorId,
+								isSummary: true,
+								healUnresolvableIdentifiersOnDecode: true,
+								sharedObjectId: "doc-a",
+							}),
+						);
 					assert.equal(heal(originator1), heal(originator2));
 				});
 
 				it("produces different UUIDs for different sharedObjectIds", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
 					const heal = (sharedObjectId: string): unknown =>
-						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
-							idCompressor: testIdCompressor,
-							originatorId,
-							isSummary: true,
-							healUnresolvableIdentifiersOnDecode: true,
-							sharedObjectId,
-						});
+						readValue(
+							makeStream(opSpaceId),
+							SpecialField.Identifier,
+							makeTestIdDecodingContext({
+								originatorId,
+								isSummary: true,
+								healUnresolvableIdentifiersOnDecode: true,
+								sharedObjectId,
+							}),
+						);
 					assert.notEqual(heal("doc-a"), heal("doc-b"));
 				});
 
@@ -262,25 +295,27 @@ describe("chunkDecoding", () => {
 					);
 					assert.notEqual(opSpaceA, opSpaceB);
 					const heal = (opSpaceId: number): unknown =>
-						readValue(makeStream(opSpaceId), SpecialField.Identifier, {
-							idCompressor: testIdCompressor,
-							originatorId: foreignSession,
-							isSummary: true,
-							healUnresolvableIdentifiersOnDecode: true,
-							sharedObjectId: "doc-a",
-						});
+						readValue(
+							makeStream(opSpaceId),
+							SpecialField.Identifier,
+							makeTestIdDecodingContext({
+								originatorId: foreignSession,
+								isSummary: true,
+								healUnresolvableIdentifiersOnDecode: true,
+								sharedObjectId: "doc-a",
+							}),
+						);
 					assert.notEqual(heal(opSpaceA), heal(opSpaceB));
 				});
 
 				it("does not heal during op decode (isSummary === false)", () => {
 					const { opSpaceId, originatorId } = makeUnresolvableOpSpaceId();
-					const ctx: IdDecodingContext = {
-						idCompressor: testIdCompressor,
+					const ctx = makeTestIdDecodingContext({
 						originatorId,
 						isSummary: false,
 						healUnresolvableIdentifiersOnDecode: true,
 						sharedObjectId: "doc-a",
-					};
+					});
 					// Not a summary, so chunkDecoding's non-finalized-id branch does not
 					// fire; the id-compressor's own resolution failure is the symptom.
 					// Match the *type* of failure rather than its specific message, since
@@ -297,13 +332,15 @@ describe("chunkDecoding", () => {
 					const compressedId = testIdCompressor.generateCompressedId();
 					const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
 					const expected = testIdCompressor.decompress(compressedId);
-					const result = readValue(makeStream(opSpaceId), SpecialField.Identifier, {
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-						isSummary: true,
-						healUnresolvableIdentifiersOnDecode: true,
-						sharedObjectId: "doc-a",
-					});
+					const result = readValue(
+						makeStream(opSpaceId),
+						SpecialField.Identifier,
+						makeTestIdDecodingContext({
+							isSummary: true,
+							healUnresolvableIdentifiersOnDecode: true,
+							sharedObjectId: "doc-a",
+						}),
+					);
 					assert.equal(result, expected);
 				});
 			});

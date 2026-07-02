@@ -62,8 +62,8 @@ export async function renderMarkdownDocuments(
 
 	logger?.verbose("Rendering documents as Markdown...");
 
-	const renderedDocuments = await Promise.all(
-		documents.map((document) => renderDocumentAsMarkdown(document, options)),
+	const renderedDocuments = documents.map((document) =>
+		renderDocumentAsMarkdown(document, options),
 	);
 
 	logger?.success("Documents rendered as Markdown!");
