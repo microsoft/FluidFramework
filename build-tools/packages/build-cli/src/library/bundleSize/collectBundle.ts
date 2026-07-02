@@ -14,7 +14,7 @@ import {
 } from "node:fs";
 import { dirname, relative, resolve } from "node:path";
 
-import { findGitRootSync } from "@fluid-tools/build-infrastructure";
+import { findGitRootSync, type PackageJson } from "@fluid-tools/build-infrastructure";
 import { simpleGit } from "simple-git";
 
 import { pickFreshestRemote } from "../git/pickFreshestRemote.js";
@@ -220,27 +220,16 @@ function cleanWorkspace(repoRoot: string): void {
 /**
  * Throws a user-facing error unless the package at `packageRoot` declares `webpack` as a
  * devDependency. The scenario bundle is built with `pnpm exec webpack` from this package, so webpack
- * must be one of its devDependencies. Only the package `name` is read from the manifest; its
- * declared dependencies are then obtained from `pnpm list` (scoped to that package) rather than by
- * hand-parsing the dependency lists.
+ * must be one of its devDependencies.
  */
 function ensureWebpackInstalled(packageRoot: string): void {
-	const { name } = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8")) as {
-		name: string;
-	};
-	const output = execSync(`pnpm list --filter "${name}" --json --depth 0`, {
-		cwd: packageRoot,
-		encoding: "utf8",
-	});
-	const projects = JSON.parse(output) as {
-		devDependencies?: Record<string, unknown>;
-	}[];
-	const hasWebpack = projects.some(
-		(project) => project.devDependencies?.webpack !== undefined,
-	);
-	if (!hasWebpack) {
+	const packageJsonPath = resolve(packageRoot, "package.json");
+	const { name, devDependencies } = JSON.parse(
+		readFileSync(packageJsonPath, "utf8"),
+	) as PackageJson;
+	if (devDependencies?.webpack === undefined) {
 		throw new Error(
-			`webpack is required to build the bundle but is not a dependency of ${name} (${packageRoot}). ` +
+			`webpack is required to build the bundle but is not a devDependency of ${name} (${packageRoot}). ` +
 				`Add "webpack" (and "webpack-cli") to that package's devDependencies and run \`pnpm install\`.`,
 		);
 	}
