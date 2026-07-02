@@ -4669,14 +4669,13 @@ function handleComposeRenameCollision(
 	// Therefore `composeAttachDetach` will be called for this node, and we will compose the renames correctly in `applyPendingComposeRenames`.
 	// Either rename can be safely used here, as it will be overwritten later.
 
-	// This case can happen when both changes contains a composite move,
+	// The case where both renames target the same node can happen when both changes contains a composite move,
 	// and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
 	// The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
 	// For an example of the above scenario,
-	// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]",
-	// or "Two renames from same ID" for an example of a collision of the source IDs.
+	// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
 
-	// Since either rename can be safely used if the conflicting renames refer to the same nodes,
+	// Since either rename can be safely dropped if the conflicting renames refer to the same nodes,
 	// the following comments assume that the conflicting renames are referring to different nodes,
 	// with `change1` renaming node A, and `change2` renaming node B.
 	switch (collisionType) {
