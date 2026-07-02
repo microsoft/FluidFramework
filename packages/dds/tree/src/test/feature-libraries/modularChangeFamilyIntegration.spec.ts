@@ -115,6 +115,7 @@ const tag1: RevisionTag = mintRevisionTag();
 const tag2: RevisionTag = mintRevisionTag();
 const tag3: RevisionTag = mintRevisionTag();
 const tag4: RevisionTag = mintRevisionTag();
+const tag5: RevisionTag = mintRevisionTag();
 
 const rootPath: NormalizedUpPath = {
 	detachedNodeId: undefined,
@@ -2099,7 +2100,7 @@ describe("ModularChangeFamily integration", () => {
 			assertEqual(composed, expected);
 		});
 
-		it("[return2, move1] and [move2, move3]", () => {
+		it("Root renames from same ID", () => {
 			const [changeReceiver, getChanges] = testChangeReceiver(family);
 			const editor = new DefaultEditBuilder(
 				family,
@@ -2132,9 +2133,11 @@ describe("ModularChangeFamily integration", () => {
 				tag2,
 			);
 
+			// This change has a rename from `moveId2` to `moveId1` as part of a composite move.
 			const composedA = makeAnonChange(family.compose([rollback2, move1]));
-			const composedB = makeAnonChange(family.compose([move2, move3]));
 
+			// This change has a rename from `moveId2` to `moveId3` as part of a composite move.
+			const composedB = makeAnonChange(family.compose([move2, move3]));
 			const composed = family.compose([composedA, composedB]);
 
 			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(2) };
@@ -2174,6 +2177,71 @@ describe("ModularChangeFamily integration", () => {
 				]),
 			);
 
+			assertEqual(composed, expected);
+		});
+
+		it("Root renames to same ID", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.sequenceField(fieldAPath).remove(0, 1);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 0);
+			editor.sequenceField(fieldAPath).remove(0, 1);
+
+			const [remove1Untagged, move2Untagged, remove3Untagged] = getChanges();
+			const remove1 = tagChangeInline(remove1Untagged, tag1);
+
+			const move2Original = tagChangeInline(move2Untagged, tag2);
+			const move2Rebased = tagChange(
+				family.rebase(
+					move2Original,
+					remove1,
+					revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				),
+				tag2,
+			);
+
+			const return2 = tagRollbackInverse(family.invert(move2Original, true, tag4), tag4, tag2);
+			const remove3 = tagChangeInline(remove3Untagged, tag3);
+			const revive3 = tagRollbackInverse(family.invert(remove3, true, tag5), tag5, tag3);
+
+			// This change will have a rename from `detachId3` before attaching with `moveId2`.
+			const composition1 = family.compose([revive3, return2]);
+
+			// This change will have a detach with `detachId1` and a rename and attach with `moveId2`
+			const composition2 = family.compose([remove1, move2Rebased]);
+			const composed = family.compose([
+				makeAnonChange(composition1),
+				makeAnonChange(composition2),
+			]);
+
+			const moveId2: ChangeAtomId = { revision: tag2, localId: brand(1) };
+			const detachId3: ChangeAtomId = { revision: tag3, localId: brand(3) };
+			const fieldAId = { nodeId: undefined, field: fieldA };
+
+			const expected = Change.build(
+				{
+					family,
+					maxId: 3,
+					revisions: [
+						{ revision: tag5, rollbackOf: tag3 },
+						{ revision: tag4, rollbackOf: tag2 },
+						{ revision: tag1 },
+						{ revision: tag2 },
+					],
+					renames: [{ oldId: detachId3, newId: moveId2, count: 1, detachLocation: fieldAId }],
+				},
+				Change.field(fieldA, sequenceIdentifier, [
+					MarkMaker.attach(1, moveId2, { cellId: detachId3 }),
+					MarkMaker.tomb(tag2, brand(1)),
+				]),
+			);
 			assertEqual(composed, expected);
 		});
 
@@ -2349,6 +2417,7 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+	});
 
 	describe("invert", () => {
 		it("Cross-field move of edited node", () => {
