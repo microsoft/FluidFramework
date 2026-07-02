@@ -2349,6 +2349,59 @@ describe("ModularChangeFamily integration", () => {
 
 			assertEqual(composed, expected);
 		});
+
+		it("Two renames from same ID", () => {
+			const [changeReceiver, getChanges] = testChangeReceiver(family);
+			const editor = new DefaultEditBuilder(
+				family,
+				mintRevisionTag,
+				changeReceiver,
+				codecOptions,
+			);
+
+			const fieldAPath = { parent: undefined, field: fieldA };
+			editor.move(fieldAPath, 0, 1, fieldAPath, 0);
+			editor.move(fieldAPath, 0, 1, fieldAPath, 0);
+			editor.sequenceField(fieldAPath).remove(0, 1);
+
+			const [move1Untagged, move2Untagged, remove3Untagged] = getChanges();
+			const move1 = tagChangeInline(move1Untagged, tag1);
+			const move2Original = tagChangeInline(move2Untagged, tag2);
+			const move2Rebased = tagChange(
+				family.rebase(
+					move2Original,
+					move1,
+					revisionMetadataSourceFromInfo([{ revision: tag1 }, { revision: tag2 }]),
+				),
+				tag2,
+			);
+
+			const remove3 = tagChangeInline(remove3Untagged, tag3);
+			const rollback2 = tagRollbackInverse(
+				family.invert(move2Original, true, tag4),
+				tag4,
+				tag2,
+			);
+
+			// The four edits above represent part of a sandwich rebase where [move2Original, remove3] rebasing over [move1].
+			// The four edits in the final composition will be [rollback2, move1, move2Rebased, remove3].
+
+			// This change will have a rename from move ID 2 to move ID 1 as part of a composite move.
+			const composition1 = family.compose([rollback2, move1]);
+
+			// This change will have a detach from ID 2 and a rename to ID 3.
+			const composition2 = family.compose([move2Original, remove3]);
+
+			// This tests composing two changes which rename the same node with the same initial ID (ID 2).
+			// The composition should have a detach with ID 2 and a rename to ID 3.
+			const composed = family.compose([
+				makeAnonChange(composition1),
+				makeAnonChange(composition2),
+			]);
+
+			const expected = Change.build({ family });
+			assertEqual(composed, expected);
+		});
 	});
 
 	describe("invert", () => {

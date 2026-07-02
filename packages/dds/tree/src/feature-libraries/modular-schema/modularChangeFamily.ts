@@ -4661,36 +4661,45 @@ function handleComposeRenameCollision(
 	// It is possible for `change1` and `change2` to both have a rename from the same root ID,
 	// or for both to have a rename to the same root ID.
 	// These cases should only be possible when `change1` contains a rollback of a revision in `change2`,
-	// as otherwise detach IDs are not reused.
+	// as otherwise detach IDs are not reused across changesets.
+	// The conflicting renames can either either be renames of the same node or renames of different nodes.
+	// If the renames refer to the same node, the node must be attached in the document state between `change1` and `change2`,
+	// as if it were detached, `change1`'s output ID would have to match `change2`'s input ID.
+	// So we can assume `change1` attaches the node after its rename, and `change2` detaches it before its rename.
+	// Therefore `composeAttachDetach` will be called for this node, and we will compose the renames correctly in `applyPendingComposeRenames`.
+	// Either rename can be safely used here, as it will be overwritten later.
+
+	// This case can happen when both changes contains a composite move,
+	// and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
+	// The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
+	// For an example of the above scenario,
+	// see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]",
+	// or "Two renames from same ID" for an example of a collision of the source IDs.
+
+	// Since either rename can be safely used if the conflicting renames refer to the same nodes,
+	// the following comments assume that the conflicting renames are referring to different nodes,
+	// with `change1` renaming node A, and `change2` renaming node B.
 	switch (collisionType) {
 		case RenameCollisionType.Source: {
-			// `change1` and `change2` both have renames from the same ID.
-			// They must be renaming different nodes, with `change1` renaming node A and `change2` renaming node B.
-			// This is only legal if `change2` detaches node B before renaming it.
-			// `change1` must attach node B, otherwise the composition would not be representable.
-			// We will get the correct rename for node B in `applyPendingComposeRenames`,
-			// so here we can safely ignore the rename for B, and preserve the rename for A.
+			// The case where the renames refer to different nodes can only occur when `change1` contains
+			// a rollback of a revision R which deattaches of node A using ID 1, and `change2`` contains a rebased version
+			// of R which instead detaches node B with ID 1.
+			// If `change1` does not contain a rename or attach of B, then the composition would have to represent
+			// R's detach of B with ID 1, the rename of B from ID 1, and the rename of A from ID 1.
+			// This is not representable in our format, so rebasing policy must avoid this scenario by
+			// requiring that R only change its detach target when rebasing over an attach of B.
+			// `change1` will contain the revision which did this attach, and so will have either an attach or rename for B.
+			// If `change1` also had a rename for B, it would have composed with `change2`'s rename, and we would not have a collision.
+			// If `change1` has an attach for B, then it will compose with `change2`'s detach,
+			// and we will create the correct rename for B in `composeAttachDetach`.
+			// Therefore it is safe to discard the rename for B here.
 			return RenameCollisionPolicy.DropNew;
 		}
 		case RenameCollisionType.Destination: {
-			// `change1` and `change2` both have renames to the same ID.
-			// This can happen in two cases:
-			//  1) `change1` and `change2` both rename the same node.
-			// 		`change2` may rename the node from `renameEntry.start`, while `change1` also renames the node from `renameEntry.start`.
-			// 		This should only be possible if `change1` attaches the node after its rename, and `change2` detaches it before its rename.
-			// 		We can safely overwrite the first rename, as we `composeAttachDetach` should be called for this node,
-			// 		and the correct rename will be created then (and then overwrite this rename again in `applyPendingComposeRenames`).
-			//
-			// 		This case can happen when both changes contains a composite move,
-			// 		and the detach of `change1`'s move is a rollback of the detach part of `change2`'s composite move.
-			// 		The moves in both `change1` and `change2` will have the same detach ID, but different renames for that ID.
-			// 		For an example of the above scenario,
-			// 		see the ModularChangeFamily integration composition test "[return2, move1] and [move2, move3]".
-			// 	2) `change1` renames node A, and `change2` renames a different node B.
-			// 		This is only legal if `change2` also renames node A to some other ID.
-			// 		If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
-			// 		If we process the rename of node B first, we can safely overwrite change1's rename of node A,
-			// 		as it will be recovered when processing `change2`'s rename of node A.
+			// If the renames target different nodes, then `change2` must also rename node A to some other ID.
+			// If we process `change2`'s rename of node A before its rename of node B, we will not encounter a conflict.
+			// If we process the rename of node B first, we can safely overwrite change1's rename of node A,
+			// as it will be recovered when processing `change2`'s rename of node A.
 			return RenameCollisionPolicy.OverwriteOld;
 		}
 		default: {
