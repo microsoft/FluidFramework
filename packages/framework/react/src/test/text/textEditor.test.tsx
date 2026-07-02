@@ -137,7 +137,6 @@ describe("Plain TextArea view", () => {
 
 					assert.equal(getTextareaValue(rendered.container), "👋🌍!🎉");
 				});
-
 			});
 		}
 	});
