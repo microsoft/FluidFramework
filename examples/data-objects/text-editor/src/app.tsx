@@ -7,7 +7,8 @@ import { AzureClient, type AzureLocalConnectionConfig } from "@fluidframework/az
 import {
 	createDevtoolsLogger,
 	initializeDevtools,
-	type DevtoolsProps,
+	type ContainerDevtoolsProps,
+	type IDevtoolsLogger,
 } from "@fluidframework/devtools/beta";
 import {
 	FormattedMainView,
@@ -134,8 +135,6 @@ const colorForIndex = (index: number): string =>
 
 const initialUserCount = 2;
 
-type DevtoolsLogger = ReturnType<typeof createDevtoolsLogger>;
-
 /** One connected user's container + view. `id` is just a stable React key. */
 export interface UserView {
 	id: number;
@@ -145,6 +144,15 @@ export interface UserView {
 
 const makeUserId = (id: number): string =>
 	`user${id}-${Math.random().toString(36).slice(2, 6)}`;
+
+/**
+ * Devtools registration props for one user's container. Keyed by user id, which is
+ * never reused, so keys stay unique across add/remove cycles.
+ */
+const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => ({
+	container: user.container,
+	containerKey: `User ${user.id} Container`,
+});
 
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
@@ -190,13 +198,36 @@ async function loadExistingContainer(
 }
 
 /**
+ * Bound on how long {@link disposeContainerOnceSaved} waits for unacknowledged edits
+ * before disposing anyway (the container may never save while disconnected).
+ */
+const disposeSavedTimeoutMs = 5000;
+
+/**
+ * Disposes a user's container, first waiting (bounded) for any local edits to be
+ * acknowledged by the service. Disposing while `isDirty` would silently drop those
+ * edits, and the other users would never see them.
+ */
+async function disposeContainerOnceSaved(
+	container: IFluidContainer<typeof containerSchema>,
+): Promise<void> {
+	if (container.isDirty) {
+		await Promise.race([
+			new Promise<void>((resolve) => container.once("saved", () => resolve())),
+			new Promise<void>((resolve) => setTimeout(resolve, disposeSavedTimeoutMs)),
+		]);
+	}
+	container.dispose();
+}
+
+/**
  * Connects one user (its own Fluid client) to an existing document.
  * Shared by the initial load and the "Add user" button.
  */
 async function connectUser(
 	id: number,
 	containerId: string,
-	devtoolsLogger: DevtoolsLogger,
+	devtoolsLogger: IDevtoolsLogger,
 ): Promise<UserView> {
 	const client = new AzureClient({
 		connection: getConnectionConfig(makeUserId(id)),
@@ -208,8 +239,7 @@ async function connectUser(
 
 async function initFluid(): Promise<{
 	containerId: string;
-	devtoolsLogger: DevtoolsLogger;
-	devtoolsProps: DevtoolsProps;
+	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
 }> {
 	console.log(`Connecting to Tinylicious at: ${getTinyliciousEndpoint()}`);
@@ -248,17 +278,7 @@ async function initFluid(): Promise<{
 		initialUsers.push(await connectUser(id, containerId, devtoolsLogger));
 	}
 
-	// Build the Devtools initialization props. Devtools starts disabled and is toggled on/off at runtime
-	// by the React layer (see {@link DevtoolsToggle}).
-	const devtoolsProps: DevtoolsProps = {
-		logger: devtoolsLogger,
-		initialContainers: initialUsers.map((user) => ({
-			container: user.container,
-			containerKey: `User ${user.id} Container`,
-		})),
-	};
-
-	return { containerId, devtoolsLogger, devtoolsProps, initialUsers };
+	return { containerId, devtoolsLogger, initialUsers };
 }
 
 const viewLabels = {
@@ -319,7 +339,9 @@ const UserPanel: FC<{
 		return () => {
 			manager.dispose();
 			treeView.dispose();
-			container.dispose();
+			disposeContainerOnceSaved(container).catch((error: unknown) =>
+				console.error("Failed to dispose container:", error),
+			);
 		};
 	}, [manager, treeView, container]);
 
@@ -358,7 +380,6 @@ const UserPanel: FC<{
 				padding: "10px",
 				display: "flex",
 				flexDirection: "column",
-				overflowY: "auto",
 			}}
 		>
 			<div
@@ -420,6 +441,7 @@ const UserPanel: FC<{
 							marginBottom: "12px",
 							boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
 							overflow: "hidden",
+							flexShrink: 0,
 						}}
 					>
 						<button
@@ -466,48 +488,22 @@ const UserPanel: FC<{
 
 /**
  * Button that enables/disables Fluid Devtools at runtime.
+ * The Devtools instance itself is managed by the app, which keeps its set of
+ * registered containers in sync as users are added and removed.
  */
 const DevtoolsToggle: FC<{
-	devtoolsProps: DevtoolsProps | undefined;
-}> = ({ devtoolsProps }) => {
-	// Devtools defaults to off
-	const [enabled, setEnabled] = useState(false);
-
-	// Handles initialization and cleanup of devtools instance
-	useEffect(() => {
-		if (devtoolsProps === undefined) {
-			return;
-		}
-		if (enabled) {
-			const instance = initializeDevtools(devtoolsProps);
-			return () => {
-				if (!instance.disposed) {
-					instance.dispose();
-				}
-			};
-		}
-		return undefined;
-	}, [enabled, devtoolsProps]);
-
+	enabled: boolean;
+	onToggle: () => void;
+}> = ({ enabled, onToggle }) => {
 	return (
 		<button
 			type="button"
-			onClick={() => setEnabled((value) => !value)}
+			onClick={onToggle}
 			title={
 				enabled
 					? "Disable Fluid Devtools (recommended before capturing a performance trace.)"
 					: "Enable Fluid Devtools (Devtools visualizes every node on every edit)"
 			}
-			style={{
-				padding: "6px 12px",
-				borderRadius: "4px",
-				border: "1px solid #ccc",
-				background: enabled ? "#e6f4ea" : "#f5f5f5",
-				color: "#333",
-				fontSize: "13px",
-				fontWeight: 600,
-				cursor: "pointer",
-			}}
 		>
 			{`Devtools: ${enabled ? "On" : "Off"}`}
 		</button>
@@ -516,22 +512,45 @@ const DevtoolsToggle: FC<{
 
 export const App: FC<{
 	containerId: string;
-	devtoolsLogger: DevtoolsLogger;
-	devtoolsProps: DevtoolsProps;
+	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
-}> = ({ containerId, devtoolsLogger, devtoolsProps, initialUsers }) => {
+}> = ({ containerId, devtoolsLogger, initialUsers }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
-	// ID is never reused.
-	const nextId = useRef(initialUserCount + 1);
+	// IDs are never reused: seed past the largest initial id so added users can't
+	// collide with `initialUsers` (React keys and Devtools keys both rely on this).
+	const nextIdRef = useRef(Math.max(0, ...initialUsers.map((user) => user.id)) + 1);
+
+	// Devtools defaults to off and is toggled at runtime (see DevtoolsToggle).
+	const [devtoolsEnabled, setDevtoolsEnabled] = useState(false);
+	// (Re)initializes Devtools with the current users' containers whenever it's enabled
+	// or the user set changes. Recreating the instance on add/remove keeps registration
+	// fully declarative, and add/remove is rare enough that the re-init cost is fine.
+	// Devtools can also dispose itself (its `beforeunload` handler fires even for
+	// navigations that end up canceled), hence the guard before dispose.
+	useEffect(() => {
+		if (!devtoolsEnabled) {
+			return;
+		}
+		const devtools = initializeDevtools({
+			logger: devtoolsLogger,
+			initialContainers: users.map((user) => devtoolsContainerProps(user)),
+		});
+		return () => {
+			if (!devtools.disposed) {
+				devtools.dispose();
+			}
+		};
+	}, [devtoolsEnabled, devtoolsLogger, users]);
 
 	const addUser = useCallback(() => {
-		connectUser(nextId.current++, containerId, devtoolsLogger)
+		connectUser(nextIdRef.current++, containerId, devtoolsLogger)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
 	}, [containerId, devtoolsLogger]);
 
-	// Drop the user from the list; its UserPanel disposes the view and container as
-	// it unmounts (see the teardown effect in UserPanel).
+	// Drop the user from the list; the Devtools effect above re-initializes without it
+	// and its UserPanel disposes the view and container as it unmounts (see the teardown
+	// effect in UserPanel).
 	const removeUser = useCallback((user: UserView) => {
 		setUsers((prev) => prev.filter((candidate) => candidate !== user));
 	}, []);
@@ -543,7 +562,7 @@ export const App: FC<{
 		<div
 			style={{
 				padding: "20px",
-				height: "100vh",
+				minHeight: "100vh",
 				boxSizing: "border-box",
 				display: "flex",
 				flexDirection: "column",
@@ -560,7 +579,10 @@ export const App: FC<{
 				<button type="button" onClick={addUser}>
 					+ Add user
 				</button>
-				<DevtoolsToggle devtoolsProps={devtoolsProps} />
+				<DevtoolsToggle
+					enabled={devtoolsEnabled}
+					onToggle={() => setDevtoolsEnabled((value) => !value)}
+				/>
 			</div>
 			<div
 				style={{
@@ -569,7 +591,6 @@ export const App: FC<{
 					gap: "20px",
 					alignItems: "stretch",
 					overflowX: "auto",
-					minHeight: 0,
 				}}
 			>
 				{users.map((user, index) => (
@@ -592,13 +613,12 @@ async function start(): Promise<void> {
 	if (!rootElement) return;
 
 	try {
-		const { containerId, devtoolsLogger, devtoolsProps, initialUsers } = await initFluid();
+		const { containerId, devtoolsLogger, initialUsers } = await initFluid();
 		const root = createRoot(rootElement);
 		root.render(
 			<App
 				containerId={containerId}
 				devtoolsLogger={devtoolsLogger}
-				devtoolsProps={devtoolsProps}
 				initialUsers={initialUsers}
 			/>,
 		);

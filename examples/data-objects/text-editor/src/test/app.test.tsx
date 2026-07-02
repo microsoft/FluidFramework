@@ -46,7 +46,6 @@ describe("app", () => {
 			<App
 				containerId="test"
 				devtoolsLogger={createDevtoolsLogger()}
-				devtoolsProps={{ logger: createDevtoolsLogger(), initialContainers: [] }}
 				initialUsers={[createUserView(1, "Text A"), createUserView(2, "Text B")]}
 			/>
 		);
