@@ -667,10 +667,11 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 }
 
 // @alpha
-export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
-    readonly enabledUpgrades?: Iterable<SchemaUpgrade>;
-    readonly storedSchemaGenerationOptions?: StoredFromViewSchemaGenerationOptions;
-}
+export type ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ITreeViewConfiguration<TSchema> & ({
+    readonly enabledUpgrades: Iterable<SchemaUpgrade>;
+} | {
+    readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
+} | {});
 
 // @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
@@ -968,6 +969,9 @@ export interface ObservationResults<TResult> {
 export type Off = Off_2;
 
 // @alpha
+export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
+
+// @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
 // @beta @system
@@ -1026,6 +1030,9 @@ export function replaceVerboseTreeHandles<T>(tree: VerboseTree, replacer: Handle
 export type RestrictiveReadonlyRecord<K extends symbol | string, T> = {
     readonly [P in symbol | string]: P extends K ? T : never;
 };
+
+// @alpha
+export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 
 // @public @system
 export type RestrictiveStringRecord<T> = {
@@ -2014,7 +2021,6 @@ export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchem
     constructor(props: ITreeViewConfigurationAlpha<TSchema>);
     // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
-    readonly enabledUpgrades: readonly SchemaUpgrade[] | undefined;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
     readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
