@@ -235,9 +235,10 @@ export namespace Component {
         getComponent<TFactory extends Factory<TConfig, TComponent>>(factory: TFactory): ReturnType<TFactory>;
         getComposed<TKey extends keyof {
             [Property in keyof TComponent as TComponent[Property] extends LazyArray<unknown> | undefined ? Property : never]: boolean;
-        }>(property: TKey): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
+        }>(property: TKey): readonly (Exclude<TComponent[TKey], undefined> extends LazyArray<infer U> ? () => U : never)[];
         getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(configurable: TConfigurable): ReturnType<TConfigurable["configure"]>;
     }
+    const memoize: <T>(factory: () => T) => (() => T);
     export interface Configurable<TConfigPartial, out TResult, TComponent> {
         configure(config: TConfigPartial, components: ComposedComponents<TConfigPartial, TComponent>): TResult;
     }
