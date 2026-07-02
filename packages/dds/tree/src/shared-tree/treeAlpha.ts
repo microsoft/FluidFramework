@@ -104,7 +104,7 @@ import {
 	UnhydratedParent,
 	ParentObjectBase,
 } from "./parentObject.js";
-import type { TreeNodeParent } from "./parentObject.js";
+import type { ParentObject, TreeNodeParent } from "./parentObject.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
 
@@ -487,15 +487,9 @@ export interface TreeAlpha {
 	 * @see {@link (TreeAlpha:interface).key2}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
-	// TODO: Consider using overloads to preserve stricter types for TreeNode callers:
-	//   child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
-	//   child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
-	// The current single signature widens `key` to `string | number | undefined` for all callers,
-	// even though `undefined` is only valid for ParentObject parents.
-	child(
-		node: TreeNodeParent,
-		key: string | number | undefined,
-	): TreeNode | TreeLeafValue | undefined;
+	child(node: TreeNode, key: string | number): TreeNode | TreeLeafValue | undefined;
+	child(node: ParentObject, key: undefined): TreeNode | TreeLeafValue | undefined;
+	child(node: TreeNodeParent, key: string | number | undefined): TreeNode | TreeLeafValue | undefined;
 
 	/**
 	 * Gets the children of the provided node, paired with their property keys under the node.
@@ -528,11 +522,9 @@ export interface TreeAlpha {
 	 * @see {@link (TreeNodeApi:interface).parent}
 	 * @see {@link (TreeAlpha:interface).parent2}
 	 */
-	// TODO: Consider using overloads to return `[string | number, ...]` for TreeNode parents
-	// and `[undefined, ...]` for ParentObject parents, so TreeNode callers keep the stricter key type.
-	children(
-		node: TreeNodeParent,
-	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
+	children(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+	children(node: ParentObject): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
+	children(node: TreeNodeParent): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]>;
 
 	/**
 	 * Track observations of any TreeNode content.
@@ -892,6 +884,80 @@ function trackObservations<TResult>(
 	};
 }
 
+function treeAlphaChildren(node: TreeNode): Iterable<[propertyKey: string | number, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(node: ParentObject): Iterable<[propertyKey: undefined, child: TreeNode | TreeLeafValue]>;
+function treeAlphaChildren(
+	node: TreeNodeParent,
+): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
+	// Handle ParentObject cases via polymorphic dispatch
+	if (node instanceof ParentObjectBase) {
+		return node.getChildren();
+	}
+
+	if (!isTreeNode(node)) {
+		fail("Unknown ParentObject type");
+	}
+
+	// Handle TreeNode case
+	const flexNode = getInnerNode(node);
+	debugAssert(
+		() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
+	);
+
+	const schema = treeNodeApi.schema(node);
+
+	const result: [string | number | undefined, TreeNode | TreeLeafValue][] = [];
+	switch (schema.kind) {
+		case NodeKind.Array: {
+			const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
+			if (sequence === undefined) {
+				break;
+			}
+
+			for (let index = 0; index < sequence.length; index++) {
+				const childFlexTree = sequence.at(index);
+				assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
+				const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
+				result.push([index, childTree]);
+			}
+			break;
+		}
+		case NodeKind.Map:
+		case NodeKind.Record: {
+			for (const [key, flexField] of flexNode.fields) {
+				const childTreeNode = tryGetTreeNodeForField(flexField);
+				if (childTreeNode !== undefined) {
+					result.push([key, childTreeNode]);
+				}
+			}
+			break;
+		}
+		case NodeKind.Object: {
+			assert(isObjectNodeSchema(schema), 0xbc5 /* Expected object schema. */);
+			for (const [propertyKey, fieldSchema] of schema.fields) {
+				const storedKey = fieldSchema.storedKey;
+				const flexField = flexNode.tryGetField(brand(String(storedKey)));
+				if (flexField !== undefined) {
+					const childTreeNode = tryGetTreeNodeForField(flexField);
+					assert(
+						childTreeNode !== undefined,
+						0xbc6 /* Expected child tree node for field. */,
+					);
+					result.push([propertyKey, childTreeNode]);
+				}
+			}
+			break;
+		}
+		case NodeKind.Leaf: {
+			fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
+		}
+		default: {
+			unreachableCase(schema.kind);
+		}
+	}
+	return result;
+}
+
 /**
  * Extensions to {@link (Tree:variable)} and {@link (TreeBeta:variable)} which are not yet stable.
  * @see {@link (TreeAlpha:interface)}.
@@ -1167,77 +1233,7 @@ export const TreeAlpha: TreeAlpha = {
 		}
 	},
 
-	children(
-		node: TreeNodeParent,
-	): Iterable<[propertyKey: string | number | undefined, child: TreeNode | TreeLeafValue]> {
-		// Handle ParentObject cases via polymorphic dispatch
-		if (node instanceof ParentObjectBase) {
-			return node.getChildren();
-		}
-
-		if (!isTreeNode(node)) {
-			fail("Unknown ParentObject type");
-		}
-
-		// Handle TreeNode case
-		const flexNode = getInnerNode(node);
-		debugAssert(
-			() => !flexNode.context.isDisposed() || "The provided tree node has been disposed.",
-		);
-
-		const schema = treeNodeApi.schema(node);
-
-		const result: [string | number | undefined, TreeNode | TreeLeafValue][] = [];
-		switch (schema.kind) {
-			case NodeKind.Array: {
-				const sequence = flexNode.tryGetField(EmptyKey) as FlexTreeSequenceField | undefined;
-				if (sequence === undefined) {
-					break;
-				}
-
-				for (let index = 0; index < sequence.length; index++) {
-					const childFlexTree = sequence.at(index);
-					assert(childFlexTree !== undefined, 0xbc4 /* Sequence child was undefined. */);
-					const childTree = getOrCreateNodeFromInnerUnboxedNode(childFlexTree);
-					result.push([index, childTree]);
-				}
-				break;
-			}
-			case NodeKind.Map:
-			case NodeKind.Record: {
-				for (const [key, flexField] of flexNode.fields) {
-					const childTreeNode = tryGetTreeNodeForField(flexField);
-					if (childTreeNode !== undefined) {
-						result.push([key, childTreeNode]);
-					}
-				}
-				break;
-			}
-			case NodeKind.Object: {
-				assert(isObjectNodeSchema(schema), 0xbc5 /* Expected object schema. */);
-				for (const [propertyKey, fieldSchema] of schema.fields) {
-					const storedKey = fieldSchema.storedKey;
-					const flexField = flexNode.tryGetField(brand(String(storedKey)));
-					if (flexField !== undefined) {
-						const childTreeNode = tryGetTreeNodeForField(flexField);
-						assert(
-							childTreeNode !== undefined,
-							0xbc6 /* Expected child tree node for field. */,
-						);
-						result.push([propertyKey, childTreeNode]);
-					}
-				}
-				break;
-			}
-			case NodeKind.Leaf: {
-				fail(0xbc7 /* Leaf schema associated with non-leaf tree node. */);
-			}
-			default: {
-				unreachableCase(schema.kind);
-			}
-		}
-		return result;
-	},
+	children: treeAlphaChildren,
 
 	tagContentSchema<TSchema extends TreeNodeSchema, TNode extends InsertableField<TSchema>>(
 		schema: TSchema,
@@ -1308,7 +1304,7 @@ export const TreeAlpha: TreeAlpha = {
 			return treeNodeApi.on(node, eventName, listener);
 		}
 
-		fail("Unknown ParentObject type");
+		unreachableCase(node as never);
 	},
 };
 
