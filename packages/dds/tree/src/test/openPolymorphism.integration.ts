@@ -37,6 +37,7 @@ import { Component } from "../componentApi.js";
  * View schema however can emulate it by carefully controlling evaluation order:
  * the source code can be structured in an open polymorphism style which at runtime evaluate into closed polymorphism by having each implementation register itself into a central {@link AllowedTypes}.
  * There are a few ways to do this, some of which are demonstrated below.
+ * Of particular note is the {@link Component} design pattern, which leverages utilities in the {@link Component} namespace.
  */
 
 /**
@@ -108,9 +109,10 @@ class TextItem
 }
 
 describe("Open Polymorphism design pattern examples and tests for them", () => {
+	// A simple pattern for doing open polymorphism with a mutable static registry.
 	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work.
-	describe.skip("mutable static registry", () => {
-		it("without customizeSchemaTyping", () => {
+	describe("mutable static registry", () => {
+		it.skip("without customizeSchemaTyping", () => {
 			// -------------
 			// Registry for items. If using this pattern, this would typically be defined alongside the Item interface.
 
@@ -182,7 +184,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			assert.throws(() => ItemTypes.push(TextItem));
 		});
 
-		it("recursive case", () => {
+		it.skip("recursive case", () => {
 			const ItemTypes: ItemSchema[] = [];
 
 			// Example recursive item implementation
@@ -210,6 +212,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 	});
 
 	// Example component design pattern which avoids the mutable static registry and instead composes declarative components.
+	// This doesn't rely on any "components" framework, and rather just implements the minimal subset it needs inline.
 	it("components", () => {
 		/**
 		 * Example application component interface.
@@ -273,7 +276,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		});
 	});
 
-	// Example using a components library (`Component` namespace below).
+	// Example using the simplified/minimal `ComponentMinimal` library below.
 	// Same as the above, but with some reusable logic factored out.
 	it("ComponentMinimal library", () => {
 		/**
@@ -360,7 +363,103 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		);
 	});
 
+	// Examples using the package exported `Component` library.
 	describe("Component library", () => {
+		// Same as the above, but using the `Component` library
+		// This has minimal changes from the above example to keep it well aligned with the others,
+		// and thus isn't necessarily the cleanest example of use of the `Component` library.
+		// There are more dedicated examples of the `Component` library below, as well as in its own test suite.
+		it("Example", () => {
+			/**
+			 * Example application component interface.
+			 */
+			type MyAppComponent = Component.Factory<MyAppConfigPartial, MyAppConfigPartial>;
+
+			function createContainer(config: MyAppConfigPartial): ItemSchema {
+				class Container extends sf.array("Container", config.allowedItemTypes()) {}
+				class ContainerItem extends sf.object("ContainerItem", {
+					...itemFields,
+					container: Container,
+				}) {
+					public static readonly description = "Text";
+					public static default(): TextItem {
+						return new TextItem({ text: "", location: { x: 0, y: 0 } });
+					}
+
+					public foo(): void {}
+				}
+
+				return ContainerItem;
+			}
+
+			// An example component which recursively depends on all components.
+			const containerComponent: MyAppComponent = (lazyConfig) => ({
+				allowedItemTypes: () => [() => createContainer(lazyConfig())],
+			});
+
+			const textComponent: MyAppComponent = () => ({
+				allowedItemTypes: () => [() => TextItem],
+			});
+
+			/**
+			 * Subset of `MyAppConfig` which is available while composing components.
+			 * Also used as content type for the component factories in this example.
+			 */
+			interface MyAppConfigPartial {
+				/**
+				 * {@link AllowedTypes} containing all ItemSchema contributed by components.
+				 */
+				readonly allowedItemTypes: Component.LazyArray<ItemSchema>;
+			}
+
+			/**
+			 * Example configuration type for an application.
+			 *
+			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 */
+			interface MyAppConfig extends MyAppConfigPartial {
+				/**
+				 * Set of all ItemSchema contributed by components.
+				 * @remarks
+				 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
+				 *
+				 * This is included to demonstrate how and where to use evaluated schema.
+				 */
+				readonly items: ReadonlySet<ItemSchema>;
+			}
+
+			/**
+			 * The application specific compose logic.
+			 *
+			 * Information from the components can be aggregated into the configuration.
+			 */
+			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+				// Compose all components
+				const composed = Component.composeComponents(
+					allComponents,
+					(lazyConfig): MyAppConfigPartial => ({
+						allowedItemTypes: () => lazyConfig.getComposed("allowedItemTypes"),
+					}),
+				);
+				const config: MyAppConfigPartial = composed.config;
+				const ItemTypes = composed.config.allowedItemTypes();
+				// At this point it is now legal to evaluate lazy schema:
+				// This is equivalent to normalizeAllowedTypes(ItemTypes).evaluateSet(), but preserves more type information.
+				const items = new Set(ItemTypes.map(evaluateLazySchema));
+				return { ...config, items };
+			}
+
+			const appConfig = composeComponents([containerComponent, textComponent]);
+
+			// Export the tree config appropriate for this schema.
+			// This is passed into the SharedTree when it is initialized.
+			// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
+			const treeConfig = new TreeViewConfiguration(
+				// Schema for the root
+				{ schema: appConfig.allowedItemTypes() },
+			);
+		});
+
 		// An open polymorphic collection of schema with implementations provided by components.
 		it("minimal open polymorphism", () => {
 			/**
