@@ -12,7 +12,7 @@ import { getOrCreate } from "./util/index.js";
  *
  * @remarks
  * Nothing in this namespace is specific to tree schema,
- * however it is designed to be able to handle needs to components which woth with {@link TreeSchema}.
+ * however it is designed to be able to handle the needs of components which work with {@link TreeSchema}.
  *
  * This is mainly used to implement "open polymorphism", where the set of allowed types
  * for a field or collection can be extended by independently authored libraries (components) instead of being
