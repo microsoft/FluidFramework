@@ -218,6 +218,35 @@ function cleanWorkspace(repoRoot: string): void {
 }
 
 /**
+ * Throws a user-facing error unless the package at `packageRoot` declares `webpack` as a
+ * devDependency. The scenario bundle is built with `pnpm exec webpack` from this package, so webpack
+ * must be one of its devDependencies. Only the package `name` is read from the manifest; its
+ * declared dependencies are then obtained from `pnpm list` (scoped to that package) rather than by
+ * hand-parsing the dependency lists.
+ */
+function ensureWebpackInstalled(packageRoot: string): void {
+	const { name } = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8")) as {
+		name: string;
+	};
+	const output = execSync(`pnpm list --filter "${name}" --json --depth 0`, {
+		cwd: packageRoot,
+		encoding: "utf8",
+	});
+	const projects = JSON.parse(output) as {
+		devDependencies?: Record<string, unknown>;
+	}[];
+	const hasWebpack = projects.some(
+		(project) => project.devDependencies?.webpack !== undefined,
+	);
+	if (!hasWebpack) {
+		throw new Error(
+			`webpack is required to build the bundle but is not a dependency of ${name} (${packageRoot}). ` +
+				`Add "webpack" (and "webpack-cli") to that package's devDependencies and run \`pnpm install\`.`,
+		);
+	}
+}
+
+/**
  * Compiles the package and its dependencies (in `packageRoot`), then builds the webpack bundles
  * (in `webpackRoot`). These are usually the same directory, but may differ when the webpack config
  * lives in a separate directory (e.g. a scenario) that reuses its parent package's compiled output.
@@ -228,16 +257,16 @@ function buildPackage(packageRoot: string, webpackRoot: string): void {
 	console.log(`\nCompiling the package and its dependencies in ${packageRoot}...`);
 	run("npm run build:compile", packageRoot);
 	console.log(`\nBuilding bundles with webpack in ${webpackRoot}...`);
+	ensureWebpackInstalled(packageRoot);
 	if (resolve(webpackRoot) === resolve(packageRoot)) {
 		// Same directory: run the package's own `webpack` script.
 		run("npm run webpack", webpackRoot);
 	} else {
-		// The webpack directory differs from the package directory (e.g. a scenario with its own
-		// webpack config but no package.json). `npm run webpack` would walk up to the package's
-		// package.json and run with cwd at the package root, building the wrong config. Invoke
-		// webpack directly with cwd = webpackRoot so its own (auto-detected) webpack.config is used
-		// and process.cwd()-relative outputs land here.
-		run("npx webpack", webpackRoot);
+		// The scenario dir has no package.json, so `pnpm exec` there falls back to a workspace-
+		// recursive exec and fails. Run webpack from packageRoot instead and point it at the
+		// scenario config with --config.
+		const scenarioConfig = resolve(webpackRoot, "webpack.config.cjs");
+		run(`pnpm exec webpack --config "${scenarioConfig}"`, packageRoot);
 	}
 }
 

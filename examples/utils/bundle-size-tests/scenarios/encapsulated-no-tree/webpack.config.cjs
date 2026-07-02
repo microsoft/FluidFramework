@@ -54,7 +54,7 @@ const config = {
 		filename: bundleName,
 		library: {
 			name: "encapsulatedNoTree",
-			type: "jsonp",
+			type: "var",
 		},
 		path: path.resolve(__dirname, "../../build/scenarios/encapsulated-no-tree"),
 	},

@@ -43,7 +43,7 @@ export default class CheckBundleAnalysisReposComparison extends BaseCommand<
 		}),
 		"webpack-dir": Flags.string({
 			description:
-				"Directory whose compareBundlesOutput holds the bundle stats to compare. Matches the " +
+				"Directory whose compareBundlesOutput subdirectory holds the bundle stats to compare. Matches the " +
 				"--webpack-dir passed to 'flub generate bundleAnalysisRepo' (defaults to the current " +
 				"directory).",
 			default: ".",
