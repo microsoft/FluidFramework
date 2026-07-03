@@ -19,7 +19,7 @@ type CaughtUpListener = () => void;
 export interface ICatchUpMonitor extends IDisposable {
 	/**
 	 * Evaluate whether the container is already caught up, synchronously notifying the listener if so.
-	 * Must be called after the owner has stored its reference to the monitor.
+	 * @remarks Must be called after the owner has stored its reference to the monitor.
 	 */
 	start(): void;
 }
