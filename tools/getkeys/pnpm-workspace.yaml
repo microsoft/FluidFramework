@@ -9,7 +9,17 @@ trustPolicy: no-downgrade
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
-trustPolicyExclude: []
+trustPolicyExclude:
+  # semver@5.7.2 and semver@6.3.1 — legacy maintenance lines (last published 2023-07-10
+  # and 2023-04-26 respectively, by lukekarrys).
+  # Prior trusted: semver@7.5.4 (provenance, 2023-07-07, by npm-cli-ops).
+  # Different publisher account because the 5.x and 6.x maintenance lines are
+  # hand-published by lukekarrys (a long-time npm/node-semver maintainer), while the
+  # current 7.x line publishes through the npm-cli OIDC/Actions pipeline. The 5.x/6.x
+  # lines will not be retroactively re-published with provenance. Pulled in by widely-
+  # used legacy tooling that pins ^5 / ^6.
+  - "semver@5.7.2 || 6.3.1"
+
 strictDepBuilds: true
 
 engineStrict: true
