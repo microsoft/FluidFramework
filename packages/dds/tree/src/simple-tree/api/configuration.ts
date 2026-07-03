@@ -177,7 +177,7 @@ export type ITreeViewConfigurationAlpha<
 				 * When provided, staged schema upgrades are enabled.
 				 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions}.
 				 */
-				readonly enabledUpgrades: Iterable<SchemaUpgrade>;
+				readonly enabledStagedUpgrades: Iterable<SchemaUpgrade>;
 		  }
 		| {
 				/**
@@ -188,12 +188,12 @@ export type ITreeViewConfigurationAlpha<
 				 * If provided, this policy is used directly for compatibility checks and for
 				 * `initialize` / `upgradeSchema` schema generation.
 				 *
-				 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.enabledUpgrades}.
+				 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.enabledStagedUpgrades}.
 				 */
 				readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 		  }
 
-		// Neither enabledUpgrades nor storedSchemaGenerationOptions provided
+		// Neither enabledStagedUpgrades nor storedSchemaGenerationOptions provided
 		// Staged schema members remain disabled and initialize/upgradeSchema
 		// generate the most restrictive stored schema compatible with the view schema.
 		| {}
@@ -307,10 +307,10 @@ export class TreeViewConfigurationAlpha<
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 
-		if ("enabledUpgrades" in props) {
-			this.storedSchemaGenerationOptions = resolveStoredSchemaGenerationOptions([
-				...props.enabledUpgrades,
-			]);
+		if ("enabledStagedUpgrades" in props) {
+			this.storedSchemaGenerationOptions = resolveStoredSchemaGenerationOptions(
+				props.enabledStagedUpgrades,
+			);
 		} else if ("storedSchemaGenerationOptions" in props) {
 			this.storedSchemaGenerationOptions = props.storedSchemaGenerationOptions;
 		} else {

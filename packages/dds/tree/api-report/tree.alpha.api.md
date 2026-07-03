@@ -668,7 +668,7 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
 
 // @alpha
 export type ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> = ITreeViewConfiguration<TSchema> & ({
-    readonly enabledUpgrades: Iterable<SchemaUpgrade>;
+    readonly enabledStagedUpgrades: Iterable<SchemaUpgrade>;
 } | {
     readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
 } | {});
