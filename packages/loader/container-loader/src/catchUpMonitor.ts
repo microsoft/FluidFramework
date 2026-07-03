@@ -68,6 +68,7 @@ export class CatchUpMonitor implements ICatchUpMonitor {
 
 	/**
 	 * Evaluate whether the container is already caught up, synchronously notifying the listener if so.
+	 * @remarks
 	 * Must be called by the owner after storing its reference to this monitor, so that any re-entrancy
 	 * triggered by the listener observes a fully-constructed, assigned monitor.
 	 */
