@@ -63,7 +63,6 @@ const StringArraySchemaConfig = { schema: StringArray, enableSchemaValidation: t
 type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchemaConfig.schema>;
 
 class Box extends sf.object("Box", {
-	label: sf.optional(sf.string),
 	value: sf.optional(sf.string),
 }) {}
 const BoxArray = sf.array("BoxArray", Box);
