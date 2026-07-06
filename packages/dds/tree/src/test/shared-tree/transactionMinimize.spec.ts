@@ -8,10 +8,14 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import type { JsonCompatibleReadOnly } from "@fluidframework/tree/alpha";
-import { minimize } from "@fluidframework/tree/alpha";
+import {
+	FluidClientVersion,
+	createIndependentTreeAlpha,
+	minimize,
+} from "@fluidframework/tree/alpha";
 
-import type { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import { getView } from "../utils.js";
+import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+import { createSnapshotCompressor } from "../utils.js";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
@@ -55,13 +59,31 @@ function countDestroys(change: SharedTreeChange): number {
 
 const sf = new SchemaFactory("transaction-minimize");
 const StringArray = sf.array(sf.string);
-const StringArraySchema = { schema: StringArray, enableSchemaValidation: true } as const;
-type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchema.schema>;
+const StringArraySchemaConfig = { schema: StringArray, enableSchemaValidation: true } as const;
+type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchemaConfig.schema>;
 
-class Box extends sf.object("Box", { value: sf.optional(sf.string) }) {}
+class Box extends sf.object("Box", {
+	label: sf.optional(sf.string),
+	value: sf.optional(sf.string),
+}) {}
 const BoxArray = sf.array(Box);
-const BoxArraySchema = { schema: BoxArray, enableSchemaValidation: true } as const;
-type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchema.schema>;
+const BoxArraySchemaConfig = { schema: BoxArray, enableSchemaValidation: true } as const;
+type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchemaConfig.schema>;
+
+const StringOrBoxArraySchemaConfig = {
+	schema: [sf.array(sf.string), sf.array([sf.string, Box])],
+	enableSchemaValidation: true,
+} as const;
+
+const sf2 = new SchemaFactory("transaction-minimize");
+class UpgradedBox extends sf2.object("Box", {
+	label: sf2.string,
+	value: sf2.optional(sf2.string),
+}) {}
+const UpgradedBoxArraySchemaConfig = {
+	schema: sf2.array(UpgradedBox),
+	enableSchemaValidation: true,
+} as const;
 
 /** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
 const minimizeParams = { postProcessor: minimize } as const;
@@ -77,6 +99,8 @@ interface ScenarioTargetView {
 	initialize(content: never): void;
 }
 
+type Tree = ReturnType<typeof createIndependentTreeAlpha>;
+
 /**
  * A transaction scenario: the content a view is initialized with, plus the sequence of edits to apply to the
  * strongly-typed root node within a single minimized transaction.
@@ -87,26 +111,47 @@ interface TransactionScenario<TView extends ScenarioTargetView> {
 	/** The content the view is initialized with before the transaction runs. */
 	readonly initialContent: Parameters<TView["initialize"]>[0];
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
-	readonly apply: (root: TView["root"]) => void;
+	readonly apply: (root: TView["root"], tree: Tree, view?: TView) => void;
 }
 
 type StringArrayScenario = TransactionScenario<StringArrayView>;
 type BoxArrayScenario = TransactionScenario<BoxArrayView>;
 
+/**
+ * Given the TreeViewConfiguration, returns a tree and an uninitialized view.
+ *
+ * @see {@link ../utils.ts#getView} that is basis for this helper.
+ */
+function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+): { tree: Tree; view: SchematizingSimpleTreeView<TSchema> } {
+	const tree = createIndependentTreeAlpha({
+		idCompressor: createSnapshotCompressor(),
+		minVersionForCollab: FluidClientVersion.v2_80,
+	});
+	const view = tree.viewWith(config);
+	assert(view instanceof SchematizingSimpleTreeView);
+	return { tree, view };
+}
+
 /** Creates a {@link StringArray} view initialized with the given content. */
-function createStringArrayView(
-	initialContent: StringArrayScenario["initialContent"],
-): StringArrayView {
-	const view = getView(new TreeViewConfiguration(StringArraySchema));
-	view.initialize(initialContent);
-	return view;
+function createStringArrayView(initialContent: StringArrayScenario["initialContent"]): {
+	tree: Tree;
+	view: StringArrayView;
+} {
+	const treeAndView = getTreeAndView(new TreeViewConfiguration(StringArraySchemaConfig));
+	treeAndView.view.initialize(initialContent);
+	return treeAndView;
 }
 
 /** Creates a {@link BoxArray} view initialized with the given content. */
-function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]): BoxArrayView {
-	const view = getView(new TreeViewConfiguration(BoxArraySchema));
-	view.initialize(initialContent);
-	return view;
+function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]): {
+	tree: Tree;
+	view: BoxArrayView;
+} {
+	const treeAndView = getTreeAndView(new TreeViewConfiguration(BoxArraySchemaConfig));
+	treeAndView.view.initialize(initialContent);
+	return treeAndView;
 }
 
 /**
@@ -120,6 +165,7 @@ function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]):
  */
 function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
 	view: SchematizingSimpleTreeView<TSchema>,
+	tree: Tree,
 	scenario: TransactionScenario<SchematizingSimpleTreeView<TSchema>>,
 ): JsonString<unknown> {
 	let changeJson: JsonCompatibleReadOnly | undefined;
@@ -127,7 +173,7 @@ function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
 		changeJson = metadata.getChange();
 	});
-	view.runTransaction(() => scenario.apply(view.root), minimizeParams);
+	view.runTransaction(() => scenario.apply(view.root, tree), minimizeParams);
 	unsubscribe();
 	assert(
 		changeJson !== undefined,
@@ -145,8 +191,8 @@ function runStringArrayScenario(scenario: StringArrayScenario): {
 	view: StringArrayView;
 	stringifiedChange: JsonString<unknown>;
 } {
-	const view = createStringArrayView(scenario.initialContent);
-	const stringifiedChange = serializeScenarioChange(view, scenario);
+	const { tree, view } = createStringArrayView(scenario.initialContent);
+	const stringifiedChange = serializeScenarioChange(view, tree, scenario);
 	return { view, stringifiedChange };
 }
 
@@ -158,13 +204,13 @@ function runStringArrayScenario(scenario: StringArrayScenario): {
 async function runStringArrayScenarioAsync(
 	scenario: StringArrayScenario,
 ): Promise<{ view: StringArrayView; stringifiedChange: JsonString<unknown> }> {
-	const view = createStringArrayView(scenario.initialContent);
+	const { tree, view } = createStringArrayView(scenario.initialContent);
 	let changeJson: JsonCompatibleReadOnly | undefined;
 	const unsubscribe = view.events.on("changed", (metadata) => {
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
 		changeJson = metadata.getChange();
 	});
-	await view.runTransactionAsync(async () => scenario.apply(view.root), minimizeParams);
+	await view.runTransactionAsync(async () => scenario.apply(view.root, tree), minimizeParams);
 	unsubscribe();
 	assert(
 		changeJson !== undefined,
@@ -182,8 +228,8 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
 	view: BoxArrayView;
 	stringifiedChange: JsonString<unknown>;
 } {
-	const view = createBoxArrayView(scenario.initialContent);
-	const stringifiedChange = serializeScenarioChange(view, scenario);
+	const { tree, view } = createBoxArrayView(scenario.initialContent);
+	const stringifiedChange = serializeScenarioChange(view, tree, scenario);
 	return { view, stringifiedChange };
 }
 
@@ -495,12 +541,70 @@ const scenarioBoxValueSetThenBoxRemoved = {
 		root.removeAt(0);
 	},
 } as const satisfies BoxArrayScenario;
+
+const scenarioBoxEditBeforeSchemaChange = {
+	initialContent: [{ value: undefined }],
+	apply: (root, tree, view) => {
+		root[0].value = "x☠️";
+		view?.dispose();
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(UpgradedBoxArraySchemaConfig));
+		view2.upgradeSchema();
+		return view2;
+	},
+} as const satisfies BoxArrayScenario;
+
+const scenarioEditBeforeSchemaChange = {
+	initialContent: [],
+	apply: (root, tree) => {
+		root.insertAtEnd("A☠️");
+		root.insertAtEnd("B❤️");
+		root.removeAt(0);
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		view2.upgradeSchema();
+	},
+} as const satisfies StringArrayScenario;
+
+const scenarioEditAfterSchemaChange = {
+	initialContent: ["A❤️"],
+	apply: (_root, tree) => {
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		view2.upgradeSchema();
+		// const box = new Box({ value: "C☠️" });
+		// view2.root.insertAtEnd(box);
+		// box.value = "D❤️";
+	},
+} as const satisfies StringArrayScenario;
+
+const scenarioEditBeforeAndAfterSchemaChange = {
+	initialContent: [],
+	apply: (root, tree, view) => {
+		root.insertAtEnd("A☠️");
+		root.insertAtEnd("B❤️");
+		root.removeAt(0);
+
+		view?.dispose();
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		view2.upgradeSchema();
+
+		// const box = new Box({ value: "C☠️" });
+		// view2.root.insertAtEnd(box);
+		// box.value = "D❤️";
+	},
+} as const satisfies StringArrayScenario;
+
 // #endregion
 
 const someSurvivingMarkerRegex = /❤️/;
 const transientMarkerRegex = /☠️/;
 
-describe("transaction minimize post-processor", () => {
+describe.only("transaction minimize post-processor", () => {
 	it("can be supplied as a transaction post-processor without error", () => {
 		const { view } = runStringArrayScenario(scenarioAInserted);
 		assert.deepEqual([...view.root], ["A❤️"]);
@@ -658,9 +762,77 @@ describe("transaction minimize post-processor", () => {
 			assert.deepEqual(view.root, []);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
+
+		it.only("BOX - reflects edits made before a schema change", () => {
+			// const { view, stringifiedChange } = runStringArrayScenario(
+			// 	scenarioEditBeforeSchemaChange,
+			// );
+			const { tree, view } = getTreeAndView(new TreeViewConfiguration(BoxArraySchemaConfig));
+			let changeJson: JsonCompatibleReadOnly | undefined;
+			const unsubscribe = view.events.on("changed", (metadata) => {
+				assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+				changeJson = metadata.getChange();
+			});
+			view.initialize(scenarioBoxEditBeforeSchemaChange.initialContent);
+			const result = view.runTransaction(() => {
+				return { value: scenarioBoxEditBeforeSchemaChange.apply(view.root, tree, view) };
+			}, minimizeParams);
+			unsubscribe();
+			assert(
+				changeJson !== undefined,
+				"expected a local change to be produced by the transaction",
+			);
+			const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+
+			assert.deepEqual([...result.value.root], ["B❤️"]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects edits made before a schema change", () => {
+			// const { view, stringifiedChange } = runStringArrayScenario(
+			// 	scenarioEditBeforeSchemaChange,
+			// );
+			const { tree, view } = getTreeAndView(
+				new TreeViewConfiguration(StringArraySchemaConfig),
+			);
+			let changeJson: JsonCompatibleReadOnly | undefined;
+			const unsubscribe = view.events.on("changed", (metadata) => {
+				assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+				changeJson = metadata.getChange();
+			});
+			view.runTransaction(() => {
+				view.initialize(scenarioEditBeforeSchemaChange.initialContent);
+				scenarioEditBeforeAndAfterSchemaChange.apply(view.root, tree, view);
+			}, minimizeParams);
+			unsubscribe();
+			assert(
+				changeJson !== undefined,
+				"expected a local change to be produced by the transaction",
+			);
+			const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+
+			assert.deepEqual([...view.root], ["B❤️"]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects edits made after a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditAfterSchemaChange,
+			);
+			assert.deepEqual([...view.root], ["A❤️", "D❤️"]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects edits made before and after a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditBeforeAndAfterSchemaChange,
+			);
+			assert.deepEqual([...view.root], ["B❤️", "D❤️"]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
 	});
 
-	// post-processor infrastructure is agnotic to the transation being async or sync, so this test is just for "good measure".
+	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
 	it("preserves the observable result across an async transaction", async () => {
 		const { view, stringifiedChange } =
 			await runStringArrayScenarioAsync(scenarioAReplacedByB);
