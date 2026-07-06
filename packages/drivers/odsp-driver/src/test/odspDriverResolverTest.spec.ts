@@ -7,6 +7,11 @@ import { strict as assert } from "node:assert";
 
 import type { IRequest } from "@fluidframework/core-interfaces";
 import { DriverHeader } from "@fluidframework/driver-definitions/internal";
+import {
+	type ISharingLinkKind,
+	SharingLinkRole,
+	SharingLinkScope,
+} from "@fluidframework/odsp-driver-definitions/internal";
 
 import { createOdspCreateContainerRequest } from "../createOdspCreateContainerRequest.js";
 import { createOdspUrl } from "../createOdspUrl.js";
@@ -39,6 +44,66 @@ describe("Odsp Driver Resolver", () => {
 			filePath,
 		)}`;
 		assert.strictEqual(request.url, url, "Request url should match");
+	});
+
+	it("Can create new request with progId", async () => {
+		const progId = "Cowork Prog/Id";
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+			undefined /* createShareLinkType */,
+			undefined /* containerPackageInfo */,
+			progId,
+		);
+
+		const [, queryString] = request.url.split("?");
+		const searchParams = new URLSearchParams(queryString);
+		assert.strictEqual(searchParams.get("progId"), progId, "ProgID should match");
+		assert(
+			request.url.includes(`progId=${encodeURIComponent(progId)}`),
+			"ProgID should be encoded in the request URL",
+		);
+	});
+
+	it("Can create new request with share link, container package name, and progId", async () => {
+		const progId = "Cowork Prog/Id";
+		const createShareLinkType: ISharingLinkKind = {
+			scope: SharingLinkScope.users,
+			role: SharingLinkRole.edit,
+		};
+
+		request = createOdspCreateContainerRequest(
+			siteUrl,
+			driveId,
+			filePath,
+			fileName,
+			createShareLinkType,
+			{ name: packageName },
+			progId,
+		);
+
+		const [, queryString] = request.url.split("?");
+		const searchParams = new URLSearchParams(queryString);
+		assert.strictEqual(searchParams.get("driveId"), driveId, "Drive id should match");
+		assert.strictEqual(searchParams.get("path"), filePath, "filePath should match");
+		assert.strictEqual(
+			searchParams.get("containerPackageName"),
+			packageName,
+			"Container package name should match",
+		);
+		assert.strictEqual(
+			searchParams.get("createLinkScope"),
+			createShareLinkType.scope,
+			"Share link scope should match",
+		);
+		assert.strictEqual(
+			searchParams.get("createLinkRole"),
+			createShareLinkType.role,
+			"Share link role should match",
+		);
+		assert.strictEqual(searchParams.get("progId"), progId, "ProgID should match");
 	});
 
 	it("Should resolve createNew request", async () => {

@@ -130,6 +130,7 @@ export class OdspDocumentServiceFactoryCore
 				filePath,
 				filename: odspResolvedUrl.fileName,
 				createLinkType: createShareLinkParam,
+				progId: searchParams.get("progId") ?? undefined,
 			};
 		} else {
 			throw new Error("A new or existing file must be specified to create container!");

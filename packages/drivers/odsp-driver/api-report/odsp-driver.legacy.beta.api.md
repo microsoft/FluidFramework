@@ -11,7 +11,7 @@ export function checkUrl(documentUrl: URL): DriverPreCheckInfo | undefined;
 export function createLocalOdspDocumentServiceFactory(localSnapshot: Uint8Array | string): IDocumentServiceFactory;
 
 // @beta @legacy
-export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined): IRequest;
+export function createOdspCreateContainerRequest(siteUrl: string, driveId: string, filePath: string, fileName: string, createShareLinkType?: ISharingLinkKind, containerPackageInfo?: IContainerPackageInfo | undefined, progId?: string): IRequest;
 
 // @beta @legacy
 export function createOdspUrl(l: OdspFluidDataStoreLocator): string;
