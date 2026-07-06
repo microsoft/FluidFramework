@@ -69,18 +69,21 @@ const BoxArray = sf.array("BoxArray", Box);
 const BoxArraySchemaConfig = { schema: BoxArray, enableSchemaValidation: true } as const;
 type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchemaConfig.schema>;
 
-const StringOrBoxArraySchemaConfig = {
-	schema: [sf.array(sf.string), sf.array([sf.string, Box])],
-	enableSchemaValidation: true,
-} as const;
+class LabeledBox extends sf.object("LabeledBox", {
+	label: sf.string,
+	value: sf.optional(sf.string),
+}) {}
+const LabeledBoxArray = sf.array("LabeledBoxArray", LabeledBox);
 
+// A second schema factory is used to avoid collisions with the first factory's
+// schema names and altering the schema to check upgrading.
 const sf2 = new SchemaFactory("transaction-minimize");
-class UpgradedBox extends sf2.object("Box", {
-	label: sf2.string,
+class LabelOptionalBox extends sf2.object("LabeledBox", {
+	label: sf2.optional(sf2.string),
 	value: sf2.optional(sf2.string),
 }) {}
 const UpgradedBoxArraySchemaConfig = {
-	schema: sf2.array(UpgradedBox),
+	schema: sf2.array("LabeledBoxArray", LabelOptionalBox),
 	enableSchemaValidation: true,
 } as const;
 
@@ -115,6 +118,9 @@ interface TransactionScenario<TView extends ScenarioTargetView> {
 
 type StringArrayScenario = TransactionScenario<StringArrayView>;
 type BoxArrayScenario = TransactionScenario<BoxArrayView>;
+type LabeledBoxArrayScenario = TransactionScenario<
+	SchematizingSimpleTreeView<typeof LabeledBoxArray>
+>;
 
 /**
  * Given the TreeViewConfiguration, returns a tree and an uninitialized view.
@@ -555,59 +561,61 @@ const scenarioBoxValueSetThenBoxRemoved = {
 const scenarioEditBeforeSchemaChange = {
 	initialContent: [],
 	apply: (root, tree, view) => {
-		root[0].value = "x☠️";
-		view?.dispose();
-
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(UpgradedBoxArraySchemaConfig));
-		view2.upgradeSchema();
-		return view2;
-	},
-} as const satisfies BoxArrayScenario;
-
-const scenarioEditBeforeSchemaChange = {
-	initialContent: [],
-	apply: (root, tree) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtEnd("B❤️");
+		root.insertAtEnd(new LabeledBox({ label: "A☠️" }));
+		root.insertAtEnd(new LabeledBox({ label: "B❤️" }));
 		root.removeAt(0);
 
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		// !!! replace the remaining lines with just `return view` to test that edits are okay without schema upgrade.
+		// return view;
+
+		// before upgrade edits are complete; dispose view to permit upgrade
+		view?.dispose();
+
+		// Update schema which now allows labels in boxes to be optional.
+		const view2 = tree.viewWith(new TreeViewConfiguration(UpgradedBoxArraySchemaConfig));
 		view2.upgradeSchema();
+
+		return view2;
 	},
-} as const satisfies StringArrayScenario;
+} as const satisfies LabeledBoxArrayScenario;
 
 const scenarioEditAfterSchemaChange = {
-	initialContent: ["A❤️"],
-	apply: (_root, tree) => {
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+	initialContent: [new LabeledBox({ label: "A❤️" })],
+	apply: (_root, tree, view) => {
+		// Force dispose view to permit upgrade
+		view?.dispose();
+
+		// Update schema which now allows labels in boxes to be optional.
+		const view2 = tree.viewWith(new TreeViewConfiguration(UpgradedBoxArraySchemaConfig));
 		view2.upgradeSchema();
-		// const box = new Box({ value: "C☠️" });
-		// view2.root.insertAtEnd(box);
-		// box.value = "D❤️";
+		const box = new LabelOptionalBox({ label: "C☠️" });
+		view2.root.insertAtEnd(box);
+		delete box.label;
+
+		return view2;
 	},
-} as const satisfies StringArrayScenario;
+} as const satisfies LabeledBoxArrayScenario;
 
 const scenarioEditBeforeAndAfterSchemaChange = {
 	initialContent: [],
 	apply: (root, tree, view) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtEnd("B❤️");
+		root.insertAtEnd(new LabeledBox({ label: "A☠️" }));
+		root.insertAtEnd(new LabeledBox({ label: "B☠️" }));
 		root.removeAt(0);
 
+		// before upgrade edits are complete; dispose view to permit upgrade
 		view?.dispose();
 
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		// Update schema which now allows labels in boxes to be optional.
+		const view2 = tree.viewWith(new TreeViewConfiguration(UpgradedBoxArraySchemaConfig));
 		view2.upgradeSchema();
 
-		// const box = new Box({ value: "C☠️" });
-		// view2.root.insertAtEnd(box);
-		// box.value = "D❤️";
+		// remove label from the first box, which is now allowed by the upgraded schema
+		delete view2.root[0].label;
+
+		return view2;
 	},
-} as const satisfies StringArrayScenario;
+} as const satisfies LabeledBoxArrayScenario;
 
 // #endregion
 
@@ -618,7 +626,7 @@ const scenarioEditBeforeAndAfterSchemaChange = {
 const someSurvivingMarkerRegex = /❤️/;
 const transientMarkerRegex = /☠️/;
 
-describe.only("transaction minimize post-processor", () => {
+describe("transaction minimize post-processor", () => {
 	it("can be supplied as a transaction post-processor without error", () => {
 		const { view } = runStringArrayScenario(scenarioAInserted);
 		assert.deepEqual([...view.root], ["A❤️"]);
@@ -777,72 +785,96 @@ describe.only("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
-		it.only("BOX - reflects edits made before a schema change", () => {
-			// const { view, stringifiedChange } = runStringArrayScenario(
-			// 	scenarioEditBeforeSchemaChange,
-			// );
-			const { tree, view } = getTreeAndView(new TreeViewConfiguration(BoxArraySchemaConfig));
-			let changeJson: JsonCompatibleReadOnly | undefined;
-			const unsubscribe = view.events.on("changed", (metadata) => {
-				assert(metadata.isLocal, "expected a local change to be produced by the transaction");
-				changeJson = metadata.getChange();
-			});
-			view.initialize(scenarioBoxEditBeforeSchemaChange.initialContent);
-			const result = view.runTransaction(() => {
-				return { value: scenarioBoxEditBeforeSchemaChange.apply(view.root, tree, view) };
-			}, minimizeParams);
-			unsubscribe();
-			assert(
-				changeJson !== undefined,
-				"expected a local change to be produced by the transaction",
-			);
-			const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
-
-			assert.deepEqual([...result.value.root], ["B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
-		});
-
-		it("reflects edits made before a schema change", () => {
-			// const { view, stringifiedChange } = runStringArrayScenario(
+		it.only("reflects edits made before a schema change", () => {
+			// const { view, stringifiedChange } = runXxxScenario(
 			// 	scenarioEditBeforeSchemaChange,
 			// );
 			const { tree, view } = getTreeAndView(
-				new TreeViewConfiguration(StringArraySchemaConfig),
+				new TreeViewConfiguration({
+					schema: LabeledBoxArray,
+					enableSchemaValidation: true,
+				}),
 			);
+			view.initialize(scenarioEditBeforeSchemaChange.initialContent);
+			let changeJson: JsonCompatibleReadOnly | undefined;
+			const unsubscribe = view.events.on("changed", (metadata) => {
+				assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+				if (changeJson !== undefined) {
+					debugger;
+				}
+				// assert(
+				// 	changeJson === undefined,
+				// 	"expected only one change to be produced by the transaction",
+				// );
+				changeJson = metadata.getChange();
+			});
+			const result = view.runTransaction(() => {
+				return { value: scenarioEditBeforeSchemaChange.apply(view.root, tree, view) };
+			}, minimizeParams);
+			unsubscribe();
+			assert(changeJson !== undefined, "expected a change to be produced by the transaction");
+			const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+			const viewAfter = result.value;
+
+			assert.equal(viewAfter.root.length, 1);
+			assert.equal(viewAfter.root[0].label, "B❤️");
+			// assert.deepEqual([...viewAfter.root], [{ label: "B❤️" }]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+		});
+
+		it.only("reflects edits made after a schema change", () => {
+			// const { view, stringifiedChange } = runXxxScenario(
+			// 	scenarioEditAfterSchemaChange,
+			// );
+			const { tree, view } = getTreeAndView(
+				new TreeViewConfiguration({
+					schema: LabeledBoxArray,
+					enableSchemaValidation: true,
+				}),
+			);
+			view.initialize(scenarioEditAfterSchemaChange.initialContent);
 			let changeJson: JsonCompatibleReadOnly | undefined;
 			const unsubscribe = view.events.on("changed", (metadata) => {
 				assert(metadata.isLocal, "expected a local change to be produced by the transaction");
 				changeJson = metadata.getChange();
 			});
-			view.runTransaction(() => {
-				view.initialize(scenarioEditBeforeSchemaChange.initialContent);
-				scenarioEditBeforeAndAfterSchemaChange.apply(view.root, tree, view);
+			const result = view.runTransaction(() => {
+				return { value: scenarioEditAfterSchemaChange.apply(view.root, tree, view) };
 			}, minimizeParams);
 			unsubscribe();
-			assert(
-				changeJson !== undefined,
-				"expected a local change to be produced by the transaction",
-			);
+			assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 			const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
-
-			assert.deepEqual([...view.root], ["B❤️"]);
+			const viewAfter = result.value;
+			assert.equal(viewAfter.root.length, 2);
+			assert.equal(viewAfter.root[0].label, "A❤️");
+			assert.equal(viewAfter.root[1].label, undefined);
+			// assert.deepEqual([...viewAfter.root], [{ label: "A❤️" }, {}]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 		});
 
-		it("reflects edits made after a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditAfterSchemaChange,
+		it("throws when edits made before and after a schema change", () => {
+			// const { view, stringifiedChange } = runXxxScenario(
+			// 	scenarioEditBeforeAndAfterSchemaChange,
+			// );
+			const { tree, view } = getTreeAndView(
+				new TreeViewConfiguration({
+					schema: LabeledBoxArray,
+					enableSchemaValidation: true,
+				}),
 			);
-			assert.deepEqual([...view.root], ["A❤️", "D❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
-		});
-
-		it("reflects edits made before and after a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditBeforeAndAfterSchemaChange,
+			view.initialize(scenarioEditBeforeAndAfterSchemaChange.initialContent);
+			assert.throws(
+				() =>
+					// This transaction is expected to throw because the schema is upgraded mid-transaction, which is not allowed.
+					view.runTransaction(() => {
+						return {
+							value: scenarioEditBeforeAndAfterSchemaChange.apply(view.root, tree, view),
+						};
+					}, minimizeParams),
+				/At most one edit group can be minimized, but 2 were found/,
 			);
-			assert.deepEqual([...view.root], ["B❤️", "D❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 	});
 
