@@ -73,9 +73,12 @@ export function useTreeSynchronizedString(
 
 		return tree.onCharactersChanged((ops) => {
 			if (ops === undefined) {
-				// A delta could not be computed (e.g. during a schema upgrade, or when the tree is out
-				// of sync with the delta), so re-read the whole string. Any tracked selection is clamped
-				// into the new text, since a shrinking edit could otherwise leave it out of bounds.
+				// No incremental delta is available for this change, so re-read the whole string.
+				// This happens when the character field's marks couldn't be composed into a single
+				// delta — e.g. the field was modified across multiple batches within one flush (such
+				// as an interleaved schema change) — or when the tree is out of sync with the delta.
+				// Any tracked selection is clamped into the new text, since a shrinking edit could
+				// otherwise leave it out of bounds.
 				const reread = tree.fullString();
 				textRef.current = reread;
 				setText(reread);
