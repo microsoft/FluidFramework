@@ -58,7 +58,7 @@ function countDestroys(change: SharedTreeChange): number {
 }
 
 const sf = new SchemaFactory("transaction-minimize");
-const StringArray = sf.array(sf.string);
+const StringArray = sf.array("StringArray", sf.string);
 const StringArraySchemaConfig = { schema: StringArray, enableSchemaValidation: true } as const;
 type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchemaConfig.schema>;
 
@@ -66,7 +66,7 @@ class Box extends sf.object("Box", {
 	label: sf.optional(sf.string),
 	value: sf.optional(sf.string),
 }) {}
-const BoxArray = sf.array(Box);
+const BoxArray = sf.array("BoxArray", Box);
 const BoxArraySchemaConfig = { schema: BoxArray, enableSchemaValidation: true } as const;
 type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchemaConfig.schema>;
 
@@ -240,6 +240,7 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
 // transaction, so their data is extraneous and should be dropped by minimization. Nodes tagged with "❤️" are
 // created within the transaction and survive to the end, so their data must be retained.
 
+// #region String Array scenarios
 /**
  * Inserts "A❤️" at the end of the root.
  * @remarks
@@ -510,6 +511,10 @@ const scenarioPreExistingContentRemoved = {
 	},
 } as const satisfies StringArrayScenario;
 
+// #endregion
+
+// #region Box Array scenarios
+
 /**
  * Starts from a single {@link Box} with no value, then sets its `value` field twice.
  * @remarks
@@ -542,8 +547,10 @@ const scenarioBoxValueSetThenBoxRemoved = {
 	},
 } as const satisfies BoxArrayScenario;
 
-const scenarioBoxEditBeforeSchemaChange = {
-	initialContent: [{ value: undefined }],
+// #region Schema upgrade scenarios
+
+const scenarioEditBeforeSchemaChange = {
+	initialContent: [],
 	apply: (root, tree, view) => {
 		root[0].value = "x☠️";
 		view?.dispose();
@@ -598,6 +605,10 @@ const scenarioEditBeforeAndAfterSchemaChange = {
 		// box.value = "D❤️";
 	},
 } as const satisfies StringArrayScenario;
+
+// #endregion
+
+// #endregion
 
 // #endregion
 
