@@ -115,6 +115,7 @@ async function createAndLoadRuntime(
 		clientDetails: { capabilities: { interactive: true } },
 		closeFn: (error): void => {},
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 		getLoadedFromVersion: () => undefined,
 		ILayerCompatDetails: compatibilityDetails,
 	};

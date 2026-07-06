@@ -260,6 +260,18 @@ export interface IContainerEvents extends IEvent {
 	(event: "saved", listener: (dirty: boolean) => void);
 
 	/**
+	 * Emitted when {@link IContainer.hasStagedChanges} changes value, i.e. when staged changes are first
+	 * introduced, or when they are all discarded or committed.
+	 *
+	 * @remarks Listener parameters:
+	 *
+	 * - `hasStagedChanges`: The new value of {@link IContainer.hasStagedChanges}.
+	 *
+	 * @see {@link IContainer.hasStagedChanges}
+	 */
+	(event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void);
+
+	/**
 	 * Emitted when the some of the properties related to the container are initialized or updated.
 	 * This emitted metadata will the props which are updated. If consumer wants to read full set of
 	 * metadata then they can read it off the container from {@link IContainer.containerMetadata} prop.
@@ -382,6 +394,15 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
 	 * Whether or not there are any local changes that have not been saved.
 	 */
 	readonly isDirty: boolean;
+
+	/**
+	 * Whether or not there are any staged changes, i.e. changes submitted while the container runtime was in
+	 * Staging Mode that have not yet been discarded or committed.
+	 *
+	 * @remarks This is distinct from {@link IContainer.isDirty}: a container may be dirty due to ordinary
+	 * unacknowledged local changes without having any staged changes, and vice versa.
+	 */
+	readonly hasStagedChanges: boolean;
 
 	/**
 	 * Disposes the container. If not already closed, this acts as a closure and then disposes runtime resources.

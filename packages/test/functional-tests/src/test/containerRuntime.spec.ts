@@ -66,6 +66,7 @@ describe("Container Runtime", () => {
 				clientDetails: { capabilities: { interactive: true } },
 				closeFn: (_error?: ICriticalContainerError): void => {},
 				updateDirtyContainerState: (_dirty: boolean) => {},
+				updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 				getLoadedFromVersion: () => undefined,
 				clientId: "test-client-1",
 				connected: true,

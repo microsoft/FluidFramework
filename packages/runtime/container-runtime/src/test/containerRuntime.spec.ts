@@ -291,6 +291,7 @@ describe("Runtime", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 			getLoadedFromVersion: () => loadedFromVersion,
 			submitFn: (
 				_type: MessageType,
@@ -724,6 +725,7 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
+							updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 							submitFn: (
 								_type: MessageType,
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -976,6 +978,7 @@ describe("Runtime", () => {
 							return ++submittedOpsCount; // clientSequenceNumber
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
+						updateStagedChangesState: (hasStagedChanges: boolean) => {},
 						getLoadedFromVersion: () => undefined,
 					});
 
@@ -1113,6 +1116,7 @@ describe("Runtime", () => {
 					taggedLogger: new MockLogger(),
 					clientDetails: { capabilities: { interactive: true } },
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
 					getLoadedFromVersion: () => undefined,
@@ -1202,6 +1206,7 @@ describe("Runtime", () => {
 						}
 					},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					getLoadedFromVersion: () => undefined,
 				};
 			};
@@ -1211,6 +1216,7 @@ describe("Runtime", () => {
 					replayPendingStates: () => [],
 					hasPendingMessages: (): boolean => pendingMessages > 0,
 					hasPendingUserChanges: (): boolean => pendingMessages > 0,
+					hasStagedChanges: (): boolean => false,
 					processInboundMessages: (inbound: InboundMessageResult, _local: boolean) => {
 						const messages =
 							inbound.type === "fullBatch" ? inbound.messages : [inbound.nextMessage];
@@ -1923,6 +1929,7 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
+					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					getLoadedFromVersion: () => undefined,
 				};
 			};

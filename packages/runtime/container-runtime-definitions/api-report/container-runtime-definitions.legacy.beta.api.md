@@ -18,6 +18,7 @@ export interface IContainerRuntime extends IProvideFluidDataStoreRegistry, ICont
     // (undocumented)
     readonly flushMode: FlushMode;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
+    readonly hasStagedChanges: boolean;
     readonly isDirty: boolean;
     // (undocumented)
     readonly options: Record<string | number, any>;
@@ -36,6 +37,7 @@ export interface IContainerRuntimeEvents extends IContainerRuntimeBaseEvents, IS
     (event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void): any;
     // (undocumented)
     (event: "connected", listener: (clientId: string) => void): any;
+    (event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void): any;
 }
 
 // @beta @deprecated @legacy (undocumented)

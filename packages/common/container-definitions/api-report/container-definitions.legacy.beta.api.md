@@ -166,6 +166,7 @@ export interface IContainer extends IEventProvider<IContainerEvents> {
     getPendingLocalState?(): Promise<string>;
     getQuorum(): IQuorumClients;
     getSpecifiedCodeDetails(): IFluidCodeDetails | undefined;
+    readonly hasStagedChanges: boolean;
     readonly isDirty: boolean;
     proposeCodeDetails(codeDetails: IFluidCodeDetails): Promise<boolean>;
     readonly readOnlyInfo: ReadOnlyInfo;
@@ -223,6 +224,7 @@ export interface IContainerContext {
     readonly taggedLogger: ITelemetryBaseLogger;
     // (undocumented)
     updateDirtyContainerState(dirty: boolean): void;
+    updateStagedChangesState(hasStagedChanges: boolean): void;
 }
 
 // @beta @legacy
@@ -239,6 +241,7 @@ export interface IContainerEvents extends IEvent {
     (event: "op", listener: (message: ISequencedDocumentMessage) => void): any;
     (event: "dirty", listener: (dirty: boolean) => void): any;
     (event: "saved", listener: (dirty: boolean) => void): any;
+    (event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void): any;
     (event: "metadataUpdate", listener: (metadata: Record<string, string>) => void): any;
 }
 

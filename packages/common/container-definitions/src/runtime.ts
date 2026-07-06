@@ -460,6 +460,12 @@ export interface IContainerContext {
 	updateDirtyContainerState(dirty: boolean): void;
 
 	/**
+	 * Notifies the container of the current staged-changes state, i.e. whether there are changes submitted
+	 * while in Staging Mode that have not yet been discarded or committed.
+	 */
+	updateStagedChangesState(hasStagedChanges: boolean): void;
+
+	/**
 	 * @deprecated This has been deprecated. It was used internally and there is no replacement.
 	 */
 	readonly supportedFeatures?: ReadonlyMap<string, unknown>;

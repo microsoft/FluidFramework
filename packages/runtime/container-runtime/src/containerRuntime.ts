@@ -1523,6 +1523,7 @@ export class ContainerRuntime
 
 	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
+	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
@@ -1777,6 +1778,9 @@ export class ContainerRuntime
 		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
+		this.on("hasStagedChangesChanged", (hasStagedChanges) =>
+			context.updateStagedChangesState(hasStagedChanges),
+		);
 
 		// Telemetry for when the container is attached and subsequently saved for the first time.
 		// These events are useful for investigating the validity of container "saved" eventing upon attach.
@@ -2195,6 +2199,10 @@ export class ContainerRuntime
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
+
+		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
+		context.updateStagedChangesState(this.lastEmittedHasStagedChanges);
 
 		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
 		// so we should flush now to clear the way for the next ops.
@@ -3906,10 +3914,12 @@ export class ContainerRuntime
 				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					return this.pendingStateManager.replayPendingStates({
+					const batchInfos = this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
+					this.updateHasStagedChangesState();
+					return batchInfos;
 				}, "commit");
 			},
 		};
@@ -4034,6 +4044,25 @@ export class ContainerRuntime
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
 		);
+	}
+
+	/**
+	 * Returns true if there are any staged changes, i.e. changes submitted while in Staging Mode
+	 * (see {@link IContainerRuntimeBase.enterStagingMode}) that have not yet been discarded or committed.
+	 *
+	 * @remarks This is distinct from {@link ContainerRuntime.isDirty}: a container may be dirty due to
+	 * ordinary unacknowledged local changes without having any staged changes, and vice versa.
+	 */
+	public get hasStagedChanges(): boolean {
+		// Rather than recomputing this in the moment, just regurgitate the last emitted state.
+		return this.lastEmittedHasStagedChanges;
+	}
+
+	/**
+	 * Returns true if there are currently any staged (not yet discarded or committed) user changes pending.
+	 */
+	private computeCurrentHasStagedChanges(): boolean {
+		return this.pendingStateManager.hasStagedChanges();
 	}
 
 	/**
@@ -4871,13 +4900,31 @@ export class ContainerRuntime
 	private updateDocumentDirtyState(): void {
 		const dirty: boolean = this.computeCurrentDirtyState();
 
-		if (this.lastEmittedDirty === dirty) {
+		if (this.lastEmittedDirty !== dirty) {
+			this.lastEmittedDirty = dirty;
+			if (this.emitDirtyDocumentEvent) {
+				this.emit(dirty ? "dirty" : "saved");
+			}
+		}
+
+		this.updateHasStagedChangesState();
+	}
+
+	/**
+	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
+	 * This is called alongside {@link ContainerRuntime.updateDocumentDirtyState} since staged changes are a subset
+	 * of the pending state that dirty tracking already monitors for changes.
+	 */
+	private updateHasStagedChangesState(): void {
+		const hasStagedChanges: boolean = this.computeCurrentHasStagedChanges();
+
+		if (this.lastEmittedHasStagedChanges === hasStagedChanges) {
 			return;
 		}
 
-		this.lastEmittedDirty = dirty;
+		this.lastEmittedHasStagedChanges = hasStagedChanges;
 		if (this.emitDirtyDocumentEvent) {
-			this.emit(dirty ? "dirty" : "saved");
+			this.emit("hasStagedChangesChanged", hasStagedChanges);
 		}
 	}
 

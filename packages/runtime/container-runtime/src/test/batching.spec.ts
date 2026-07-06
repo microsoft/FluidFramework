@@ -46,6 +46,7 @@ describe("Runtime batching", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 			getLoadedFromVersion: () => undefined,
 			clientId: mockClientId,
 			connected: true,

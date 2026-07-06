@@ -334,6 +334,25 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
+	 * Checks the pending messages to see if any of them are staged (submitted while in Staging Mode) and
+	 * represent user changes (aka "dirtyable" messages).
+	 */
+	public hasStagedChanges(): boolean {
+		for (let i = 0; i < this.pendingMessages.length; i++) {
+			const element = this.pendingMessages.get(i);
+			if (
+				element !== undefined &&
+				element.batchInfo.staged === true &&
+				hasTypicalRuntimeOp(element) && // Empty batches don't count towards user changes
+				isContainerMessageDirtyable(element.runtimeOp)
+			) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * The minimumPendingMessageSequenceNumber is the minimum of the first pending message and the first initial message.
 	 *
 	 * We need this so that we can properly keep local data and maintain the correct sequence window.

@@ -109,7 +109,14 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {},
+		"broken": {
+			"Interface_IContainer": {
+				"forwardCompat": false
+			},
+			"Interface_IContainerContext": {
+				"forwardCompat": false
+			}
+		},
 		"entrypoint": "legacy"
 	}
 }

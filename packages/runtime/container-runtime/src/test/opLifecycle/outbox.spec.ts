@@ -91,6 +91,7 @@ describe("Outbox", () => {
 			>,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (_dirty: boolean) => {},
+			updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 			submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 				state.individualOpsSubmitted.push({ type, contents, batch, appData });
 				state.opsSubmitted++;
@@ -110,6 +111,7 @@ describe("Outbox", () => {
 		>,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (_dirty: boolean) => {},
+		updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 		submitFn: (type: MessageType, contents: unknown, batch: boolean, appData?: unknown) => {
 			state.individualOpsSubmitted.push({ type, contents, batch, appData });
 			state.opsSubmitted++;
