@@ -154,6 +154,18 @@ const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => ({
 	containerKey: `User ${user.id} Container`,
 });
 
+/**
+ * Creates a document root holding the given text as both plain and formatted text.
+ * Used to initialize new documents; exported so tests can initialize in-memory views
+ * with the same shape.
+ */
+export function createInitialRoot(text = ""): TextEditorRoot {
+	return new TextEditorRoot({
+		plainText: TextAsTree.Tree.fromString(text),
+		formattedText: FormattedTextAsTreeDefault.Tree.fromString(text),
+	});
+}
+
 async function createAndAttachNewContainer(client: AzureClient): Promise<{
 	container: IFluidContainer<typeof containerSchema>;
 	containerId: string;
@@ -165,13 +177,7 @@ async function createAndAttachNewContainer(client: AzureClient): Promise<{
 		container.initialObjects.tree.viewWith(treeConfig),
 	);
 
-	// Initialize tree with root containing both plain and formatted text
-	treeView.initialize(
-		new TextEditorRoot({
-			plainText: TextAsTree.Tree.fromString(""),
-			formattedText: FormattedTextAsTreeDefault.Tree.fromString(""),
-		}),
-	);
+	treeView.initialize(createInitialRoot());
 
 	const containerId = await container.attach();
 
@@ -195,20 +201,6 @@ async function loadExistingContainer(
 		container,
 		treeView,
 	};
-}
-
-/**
- * Disposes a user's container, first waiting for any local edits to be acknowledged
- * by the service. Disposing while `isDirty` would silently drop those edits, and the
- * other users would never see them.
- */
-async function disposeContainerOnceSaved(
-	container: IFluidContainer<typeof containerSchema>,
-): Promise<void> {
-	if (container.isDirty) {
-		await new Promise<void>((resolve) => container.once("saved", () => resolve()));
-	}
-	container.dispose();
 }
 
 /**
@@ -330,9 +322,10 @@ const UserPanel: FC<{
 		return () => {
 			manager.dispose();
 			treeView.dispose();
-			disposeContainerOnceSaved(container).catch((error: unknown) =>
-				console.error("Failed to dispose container:", error),
-			);
+			// Note: disposing while `isDirty` drops any local edits not yet acknowledged
+			// by the service. Acceptable for this demo, and it avoids waiting on an ack
+			// that may never arrive (e.g. if the service is unreachable).
+			container.dispose();
 		};
 	}, [manager, treeView, container]);
 
@@ -505,7 +498,12 @@ export const App: FC<{
 	containerId: string;
 	devtoolsLogger: IDevtoolsLogger;
 	initialUsers: UserView[];
-}> = ({ containerId, devtoolsLogger, initialUsers }) => {
+	/**
+	 * How "Add user" connects a new user to the document. Defaults to
+	 * {@link connectUser}; tests inject a fake to avoid a real service connection.
+	 */
+	connectUser?: typeof connectUser;
+}> = ({ containerId, devtoolsLogger, initialUsers, connectUser: connect = connectUser }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
 	// IDs are never reused: seed past the largest initial id so added users can't
 	// collide with `initialUsers` (React keys and Devtools keys both rely on this).
@@ -534,16 +532,21 @@ export const App: FC<{
 	}, [devtoolsEnabled, devtoolsLogger, users]);
 
 	const addUser = useCallback(() => {
-		connectUser(nextIdRef.current++, containerId, devtoolsLogger)
+		connect(nextIdRef.current++, containerId, devtoolsLogger)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
-	}, [containerId, devtoolsLogger]);
+	}, [connect, containerId, devtoolsLogger]);
 
 	// Drop the user from the list; the Devtools effect above re-initializes without it
 	// and its UserPanel disposes the view and container as it unmounts (see the teardown
 	// effect in UserPanel).
+	// The length check makes the "keep at least one user" invariant authoritative here:
+	// `canRemove` below only gates the buttons, which isn't enough if two removals land
+	// in the same render batch (both handlers would see a stale `canRemove === true`).
 	const removeUser = useCallback((user: UserView) => {
-		setUsers((prev) => prev.filter((candidate) => candidate !== user));
+		setUsers((prev) =>
+			prev.length > 1 ? prev.filter((candidate) => candidate !== user) : prev,
+		);
 	}, []);
 
 	// Keep at least one user so the app always shows a view to work with.

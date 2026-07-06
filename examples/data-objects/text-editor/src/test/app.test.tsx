@@ -6,24 +6,17 @@
 import { strict as assert } from "node:assert";
 
 import { createDevtoolsLogger } from "@fluidframework/devtools/beta";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTreeDefault, type TreeViewAlpha } from "@fluidframework/tree/internal";
-import { render } from "@testing-library/react";
-import { TextAsTree, independentView } from "fluid-framework/alpha";
+import { fireEvent, render } from "@testing-library/react";
+import { independentView } from "fluid-framework/alpha";
 
-import { App, TextEditorRoot, type UserView, treeConfig } from "../app.js";
+import { App, type UserView, createInitialRoot, treeConfig } from "../app.js";
 
 /**
  * Creates a TreeView for formatted text, initialized with the provided initial value.
  */
-function createFormattedTreeView(initialValue = ""): TreeViewAlpha<typeof TextEditorRoot> {
+function createFormattedTreeView(initialValue = ""): UserView["treeView"] {
 	const treeView = independentView(treeConfig);
-	treeView.initialize(
-		new TextEditorRoot({
-			plainText: TextAsTree.Tree.fromString(initialValue),
-			formattedText: FormattedTextAsTreeDefault.Tree.fromString(initialValue),
-		}),
-	);
+	treeView.initialize(createInitialRoot(initialValue));
 	return treeView;
 }
 
@@ -52,6 +45,29 @@ describe("app", () => {
 		const rendered = render(content);
 		assert.match(rendered.baseElement.textContent ?? "", /Text A/);
 		assert.match(rendered.baseElement.textContent ?? "", /Text B/);
+	});
+
+	it("removes and adds users", async () => {
+		const rendered = render(
+			<App
+				containerId="test"
+				devtoolsLogger={createDevtoolsLogger()}
+				initialUsers={[createUserView(1, "Text A"), createUserView(2, "Text B")]}
+				connectUser={async (id) => createUserView(id, `Text of added user ${id}`)}
+			/>,
+		);
+
+		// Remove the second user; with one user left, removal is no longer offered.
+		fireEvent.click(rendered.getByRole("button", { name: "Remove User 2" }));
+		assert.doesNotMatch(rendered.baseElement.textContent ?? "", /Text B/);
+		assert.match(rendered.baseElement.textContent ?? "", /Text A/);
+		assert.equal(rendered.queryAllByRole("button", { name: /^Remove User/ }).length, 0);
+
+		// Add a user: a new panel appears once the (fake) connection resolves, connected
+		// with a fresh id (3) rather than reusing the removed user's.
+		fireEvent.click(rendered.getByRole("button", { name: "+ Add user" }));
+		await rendered.findByText("User 2");
+		assert.match(rendered.baseElement.textContent ?? "", /Text of added user 3/);
 	});
 
 	// TODO: schema compatibility snapshot tests.
