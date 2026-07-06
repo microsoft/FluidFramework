@@ -229,7 +229,7 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 		// See also private remarks on forSummary.
 		assert(
 			!this.hasOriginatorSessionId,
-			"withIncrementalDecoder can only be called on contexts without an originator session ID",
+			0xd0c /* withIncrementalDecoder can only be called on contexts without an originator session ID */,
 		);
 		return new FieldBatchDecodingContext(
 			false,
