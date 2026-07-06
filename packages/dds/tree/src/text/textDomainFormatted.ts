@@ -210,7 +210,10 @@ export namespace FormattedTextAsTree {
 					for (let i = formatStart; i < formatEnd; i++) {
 						const atom = this.content[i];
 						// Range validated above, so this should never fail.
-						assert(atom !== undefined, "Index out of bounds while formatting text range.");
+						assert(
+							atom !== undefined,
+							0xd08 /* Index out of bounds while formatting text range. */,
+						);
 						const formatNode: TreeNode | TreeValue = atom.format;
 						const atomFormatSchema = TreeStatic.schema(formatNode);
 						if (!isObjectNodeSchema(atomFormatSchema)) {
@@ -365,7 +368,9 @@ export namespace FormattedTextAsTree {
 				for (const index of slowPathIndexes) {
 					const node =
 						this[index + startIndex] ??
-						fail("getCharactersSubarray failed to find index after index range was checked");
+						fail(
+							0xd09 /* getCharactersSubarray failed to find index after index range was checked */,
+						);
 					result[index] = node.content.content;
 				}
 

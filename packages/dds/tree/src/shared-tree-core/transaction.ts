@@ -544,7 +544,7 @@ export class SquashingTransactionStack<
 										if (nestedSteps.length > 0) {
 											assert(
 												transactionRevision !== undefined,
-												"Expected transaction revision in the presence of transaction steps",
+												0xd07 /* Expected transaction revision in the presence of transaction steps */,
 											);
 											const squash = rebaser.compose(nestedSteps);
 											const processedSquash = nestedPostProcessor.processChange(squash);
