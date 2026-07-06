@@ -198,24 +198,15 @@ async function loadExistingContainer(
 }
 
 /**
- * Bound on how long {@link disposeContainerOnceSaved} waits for unacknowledged edits
- * before disposing anyway (the container may never save while disconnected).
- */
-const disposeSavedTimeoutMs = 5000;
-
-/**
- * Disposes a user's container, first waiting (bounded) for any local edits to be
- * acknowledged by the service. Disposing while `isDirty` would silently drop those
- * edits, and the other users would never see them.
+ * Disposes a user's container, first waiting for any local edits to be acknowledged
+ * by the service. Disposing while `isDirty` would silently drop those edits, and the
+ * other users would never see them.
  */
 async function disposeContainerOnceSaved(
 	container: IFluidContainer<typeof containerSchema>,
 ): Promise<void> {
 	if (container.isDirty) {
-		await Promise.race([
-			new Promise<void>((resolve) => container.once("saved", () => resolve())),
-			new Promise<void>((resolve) => setTimeout(resolve, disposeSavedTimeoutMs)),
-		]);
+		await new Promise<void>((resolve) => container.once("saved", () => resolve()));
 	}
 	container.dispose();
 }
