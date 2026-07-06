@@ -171,14 +171,15 @@ function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
 	let changeJson: JsonCompatibleReadOnly | undefined;
 	const unsubscribe = view.events.on("changed", (metadata) => {
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+		assert(
+			changeJson === undefined,
+			"expected only one change to be produced by the transaction",
+		);
 		changeJson = metadata.getChange();
 	});
 	view.runTransaction(() => scenario.apply(view.root, tree), minimizeParams);
 	unsubscribe();
-	assert(
-		changeJson !== undefined,
-		"expected a local change to be produced by the transaction",
-	);
+	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 	return JsonStringify<Readonly<unknown> | null>(changeJson);
 }
 
@@ -770,7 +771,7 @@ describe.only("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runBoxArrayScenario(
 				scenarioBoxValueSetThenBoxRemoved,
 			);
-			assert.deepEqual(view.root, []);
+			assert.equal(view.root.length, 0);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
