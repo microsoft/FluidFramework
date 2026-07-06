@@ -110,7 +110,7 @@ interface TransactionScenario<TView extends ScenarioTargetView> {
 	/** The content the view is initialized with before the transaction runs. */
 	readonly initialContent: Parameters<TView["initialize"]>[0];
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
-	readonly apply: (root: TView["root"], tree: Tree, view?: TView) => void;
+	readonly apply: (root: TView["root"], tree: Tree, view: TView) => void;
 }
 
 type StringArrayScenario = TransactionScenario<StringArrayView>;
@@ -176,7 +176,7 @@ function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
 		);
 		changeJson = metadata.getChange();
 	});
-	view.runTransaction(() => scenario.apply(view.root, tree), minimizeParams);
+	view.runTransaction(() => scenario.apply(view.root, tree, view), minimizeParams);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 	return JsonStringify<Readonly<unknown> | null>(changeJson);
@@ -210,7 +210,10 @@ async function runStringArrayScenarioAsync(
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
 		changeJson = metadata.getChange();
 	});
-	await view.runTransactionAsync(async () => scenario.apply(view.root, tree), minimizeParams);
+	await view.runTransactionAsync(
+		async () => scenario.apply(view.root, tree, view),
+		minimizeParams,
+	);
 	unsubscribe();
 	assert(
 		changeJson !== undefined,
