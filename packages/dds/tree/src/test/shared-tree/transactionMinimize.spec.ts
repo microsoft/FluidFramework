@@ -8,10 +8,14 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
 import type { JsonCompatibleReadOnly } from "@fluidframework/tree/alpha";
-import { minimize } from "@fluidframework/tree/alpha";
+import {
+	FluidClientVersion,
+	createIndependentTreeAlpha,
+	minimize,
+} from "@fluidframework/tree/alpha";
 
-import type { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import { getView } from "../utils.js";
+import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+import { createSnapshotCompressor } from "../utils.js";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
@@ -54,14 +58,28 @@ function countDestroys(change: SharedTreeChange): number {
 }
 
 const sf = new SchemaFactory("transaction-minimize");
-const StringArray = sf.array(sf.string);
-const StringArraySchema = { schema: StringArray, enableSchemaValidation: true } as const;
-type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchema.schema>;
+const RootStringArray = sf.array("RootArray", sf.string);
+const StringArraySchemaConfig = {
+	schema: RootStringArray,
+	enableSchemaValidation: true,
+} as const;
+type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchemaConfig.schema>;
 
-class Box extends sf.object("Box", { value: sf.optional(sf.string) }) {}
-const BoxArray = sf.array(Box);
-const BoxArraySchema = { schema: BoxArray, enableSchemaValidation: true } as const;
-type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchema.schema>;
+class Box extends sf.object("Box", {
+	value: sf.optional(sf.string),
+}) {}
+const BoxArray = sf.array("BoxArray", Box);
+const BoxArraySchemaConfig = { schema: BoxArray, enableSchemaValidation: true } as const;
+type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchemaConfig.schema>;
+
+// A second schema factory is used to avoid collisions with the first factory's
+// schema names and altering the schema to check upgrading.
+const sf2 = new SchemaFactory("transaction-minimize");
+const RootStringOrBoxArray = sf2.array("RootArray", [sf2.string, Box]);
+const StringOrBoxArraySchemaConfig = {
+	schema: RootStringOrBoxArray,
+	enableSchemaValidation: true,
+} as const;
 
 /** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
 const minimizeParams = { postProcessor: minimize } as const;
@@ -77,40 +95,69 @@ interface ScenarioTargetView {
 	initialize(content: never): void;
 }
 
+type Tree = ReturnType<typeof createIndependentTreeAlpha>;
+
 /**
  * A transaction scenario: the content a view is initialized with, plus the sequence of edits to apply to the
  * strongly-typed root node within a single minimized transaction.
  * @typeParam TView - The view type the scenario runs against. Both the initial content and the root node the edits
  * are applied to are derived from this type.
  */
-interface TransactionScenario<TView extends ScenarioTargetView> {
+interface TransactionScenario<
+	TView extends ScenarioTargetView,
+	TApplyReturn /* extends void | SchematizingSimpleTreeView<ImplicitFieldSchema> */ = void,
+> {
 	/** The content the view is initialized with before the transaction runs. */
 	readonly initialContent: Parameters<TView["initialize"]>[0];
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
-	readonly apply: (root: TView["root"]) => void;
+	readonly apply: (root: TView["root"], tree: Tree, view: TView) => TApplyReturn;
 }
 
 type StringArrayScenario = TransactionScenario<StringArrayView>;
 type BoxArrayScenario = TransactionScenario<BoxArrayView>;
 
-/** Creates a {@link StringArray} view initialized with the given content. */
-function createStringArrayView(
-	initialContent: StringArrayScenario["initialContent"],
-): StringArrayView {
-	const view = getView(new TreeViewConfiguration(StringArraySchema));
-	view.initialize(initialContent);
-	return view;
+/**
+ * Given the TreeViewConfiguration, returns a tree and an uninitialized view.
+ *
+ * @see ../utils.ts#getView that is basis for this helper.
+ */
+function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
+	config: TreeViewConfiguration<TSchema>,
+): { tree: Tree; view: SchematizingSimpleTreeView<TSchema> } {
+	const tree = createIndependentTreeAlpha({
+		idCompressor: createSnapshotCompressor(),
+		minVersionForCollab: FluidClientVersion.v2_80,
+	});
+	const view = tree.viewWith(config);
+	assert(view instanceof SchematizingSimpleTreeView);
+	return { tree, view };
+}
+
+/** Creates a {@link RootStringArray} view initialized with the given content. */
+function createStringArrayView(initialContent: StringArrayScenario["initialContent"]): {
+	tree: Tree;
+	view: StringArrayView;
+} {
+	const treeAndView = getTreeAndView(new TreeViewConfiguration(StringArraySchemaConfig));
+	treeAndView.view.initialize(initialContent);
+	return treeAndView;
 }
 
 /** Creates a {@link BoxArray} view initialized with the given content. */
-function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]): BoxArrayView {
-	const view = getView(new TreeViewConfiguration(BoxArraySchema));
-	view.initialize(initialContent);
-	return view;
+function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]): {
+	tree: Tree;
+	view: BoxArrayView;
+} {
+	const treeAndView = getTreeAndView(new TreeViewConfiguration(BoxArraySchemaConfig));
+	treeAndView.view.initialize(initialContent);
+	return treeAndView;
 }
 
 /**
- * Runs a scenario in a single minimized transaction and returns the persisted (serialized) change as a JSON string.
+ * Runs a scenario in a single minimized transaction.
+ *
+ * @returns The resulting scenario view and the persisted (serialized) change as a JSON string.
+ *
  * @remarks
  * The persisted change is the operation SharedTree writes for document storage. It is obtained via the alpha
  * `getChange` API surfaced on the local {@link https://fluidframework.com | "changed"} event. Unlike the in-memory
@@ -118,22 +165,38 @@ function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]):
  * traverse), the serialized change fully encodes inserted node values, so tests can assert that transient content
  * (tagged with ☠️) was stripped by inspecting the JSON text.
  */
-function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
+function runScenarioTransaction<TSchema extends ImplicitFieldSchema, TApplyReturn = void>(
 	view: SchematizingSimpleTreeView<TSchema>,
-	scenario: TransactionScenario<SchematizingSimpleTreeView<TSchema>>,
-): JsonString<unknown> {
+	tree: Tree,
+	scenario: TransactionScenario<SchematizingSimpleTreeView<TSchema>, TApplyReturn>,
+): {
+	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
+	stringifiedChange: JsonString<unknown>;
+} {
 	let changeJson: JsonCompatibleReadOnly | undefined;
-	const unsubscribe = view.events.on("changed", (metadata) => {
+	// Be sure to listen to checkout "changed" instead of view "changed" because the latter
+	// might get disposed during the transaction.
+	const unsubscribe = view.checkout.events.on("changed", (metadata) => {
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+		assert(
+			changeJson === undefined,
+			"expected only one change to be produced by the transaction",
+		);
 		changeJson = metadata.getChange();
 	});
-	view.runTransaction(() => scenario.apply(view.root), minimizeParams);
-	unsubscribe();
-	assert(
-		changeJson !== undefined,
-		"expected a local change to be produced by the transaction",
+	const result = view.runTransaction(
+		() => ({ value: scenario.apply(view.root, tree, view) }),
+		minimizeParams,
 	);
-	return JsonStringify<Readonly<unknown> | null>(changeJson);
+	unsubscribe();
+	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
+	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+	return {
+		view: (result.value ?? view) as TApplyReturn extends void
+			? SchematizingSimpleTreeView<TSchema>
+			: TApplyReturn,
+		stringifiedChange,
+	};
 }
 
 /**
@@ -141,13 +204,14 @@ function serializeScenarioChange<TSchema extends ImplicitFieldSchema>(
  * @returns The resulting view and the persisted (serialized) change as a JSON string.
  * @remarks This is the shared setup + act used by each string-array test case.
  */
-function runStringArrayScenario(scenario: StringArrayScenario): {
-	view: StringArrayView;
+function runStringArrayScenario<TApplyReturn = void>(
+	scenario: TransactionScenario<StringArrayView, TApplyReturn>,
+): {
+	view: TApplyReturn extends void ? StringArrayView : TApplyReturn;
 	stringifiedChange: JsonString<unknown>;
 } {
-	const view = createStringArrayView(scenario.initialContent);
-	const stringifiedChange = serializeScenarioChange(view, scenario);
-	return { view, stringifiedChange };
+	const { tree, view } = createStringArrayView(scenario.initialContent);
+	return runScenarioTransaction(view, tree, scenario);
 }
 
 /**
@@ -158,18 +222,22 @@ function runStringArrayScenario(scenario: StringArrayScenario): {
 async function runStringArrayScenarioAsync(
 	scenario: StringArrayScenario,
 ): Promise<{ view: StringArrayView; stringifiedChange: JsonString<unknown> }> {
-	const view = createStringArrayView(scenario.initialContent);
+	const { tree, view } = createStringArrayView(scenario.initialContent);
 	let changeJson: JsonCompatibleReadOnly | undefined;
 	const unsubscribe = view.events.on("changed", (metadata) => {
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
+		assert(
+			changeJson === undefined,
+			"expected only one change to be produced by the transaction",
+		);
 		changeJson = metadata.getChange();
 	});
-	await view.runTransactionAsync(async () => scenario.apply(view.root), minimizeParams);
-	unsubscribe();
-	assert(
-		changeJson !== undefined,
-		"expected a local change to be produced by the transaction",
+	await view.runTransactionAsync(
+		async () => scenario.apply(view.root, tree, view),
+		minimizeParams,
 	);
+	unsubscribe();
+	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 	return { view, stringifiedChange: JsonStringify<Readonly<unknown> | null>(changeJson) };
 }
 
@@ -182,8 +250,8 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
 	view: BoxArrayView;
 	stringifiedChange: JsonString<unknown>;
 } {
-	const view = createBoxArrayView(scenario.initialContent);
-	const stringifiedChange = serializeScenarioChange(view, scenario);
+	const { tree, view } = createBoxArrayView(scenario.initialContent);
+	const { stringifiedChange } = runScenarioTransaction(view, tree, scenario);
 	return { view, stringifiedChange };
 }
 
@@ -194,6 +262,7 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
 // transaction, so their data is extraneous and should be dropped by minimization. Nodes tagged with "❤️" are
 // created within the transaction and survive to the end, so their data must be retained.
 
+// #region String Array scenarios
 /**
  * Inserts "A❤️" at the end of the root.
  * @remarks
@@ -464,6 +533,10 @@ const scenarioPreExistingContentRemoved = {
 	},
 } as const satisfies StringArrayScenario;
 
+// #endregion
+
+// #region Box Array scenarios
+
 /**
  * Starts from a single {@link Box} with no value, then sets its `value` field twice.
  * @remarks
@@ -495,6 +568,106 @@ const scenarioBoxValueSetThenBoxRemoved = {
 		root.removeAt(0);
 	},
 } as const satisfies BoxArrayScenario;
+
+// #endregion
+
+// #region Schema upgrade scenarios
+
+/**
+ * Starts from an empty root, inserts a transient "A☠️" and a surviving "B❤️", then upgrades the schema to allow {@link Box} nodes in the root array.
+ * @remarks
+ * Steps (root state shown after each):
+ *
+ * 1. insert "A☠️"    -\> `["A☠️"]`
+ * 2. insert "B❤️"    -\> `["A☠️", "B❤️"]`
+ * 3. remove at 0     -\> `["B❤️"]`
+ * 4. upgrade schema  -\> `["B❤️"]`
+ */
+const scenarioEditBeforeSchemaChange = {
+	initialContent: [],
+	apply: (root, tree, view) => {
+		root.insertAtEnd("A☠️");
+		root.insertAtEnd("B❤️");
+		root.removeAt(0);
+
+		// before upgrade edits are complete; dispose view to permit upgrade
+		view.dispose();
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		assert(view2 instanceof SchematizingSimpleTreeView);
+		view2.upgradeSchema();
+
+		return view2;
+	},
+} as const satisfies StringArrayScenario;
+
+/**
+ * Performs schema upgrade to allow {@link Box} nodes in the root array, inserts a {@link Box} with value "C☠️", and finally sets its value to "D❤️".
+ * @remarks
+ * Steps (root state shown after each):
+ *
+ * 0. initial                 -\> `["A❤️"]`
+ * 1. upgrade schema          -\> `["A❤️"]`
+ * 2. insert Box "C☠️"       -\> `["A❤️", Box: "C☠️"]`
+ * 3. set Box value to "D❤️" -\> `["A❤️", Box: "D❤️"]`
+ */
+const scenarioEditAfterSchemaChange = {
+	initialContent: ["A❤️"],
+	apply: (_root, tree, view) => {
+		// Force dispose view to permit upgrade
+		view.dispose();
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		assert(view2 instanceof SchematizingSimpleTreeView);
+		view2.upgradeSchema();
+
+		const box = new Box({ value: "C☠️" });
+		view2.root.insertAtEnd(box);
+		box.value = "D❤️";
+
+		return view2;
+	},
+} as const satisfies StringArrayScenario;
+
+/**
+ * Combines {@link scenarioEditBeforeSchemaChange} and {@link scenarioEditAfterSchemaChange} to perform edits on both sides of a schema change.
+ * @remarks
+ * Steps (root state shown after each):
+ *
+ * 1. insert "A☠️"           -\> `["A☠️"]`
+ * 2. insert "B❤️"           -\> `["A☠️", "B❤️"]`
+ * 3. remove at 0             -\> `["B❤️"]`
+ * 4. upgrade schema          -\> `["B❤️"]`
+ * 5. insert Box "C☠️"       -\> `["B❤️", Box: "C☠️"]`
+ * 6. set Box value to "D❤️" -\> `["B❤️", Box: "D❤️"]`
+ */
+const scenarioEditBeforeAndAfterSchemaChange = {
+	initialContent: [],
+	apply: (root, tree, view) => {
+		root.insertAtEnd("A☠️");
+		root.insertAtEnd("B❤️");
+		root.removeAt(0);
+
+		// before upgrade edits are complete; dispose view to permit upgrade
+		view.dispose();
+
+		// Update schema which now allows Boxes in root array.
+		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+		assert(view2 instanceof SchematizingSimpleTreeView);
+		view2.upgradeSchema();
+
+		const box = new Box({ value: "C☠️" });
+		view2.root.insertAtEnd(box);
+		box.value = "D❤️";
+
+		return view2;
+	},
+} as const satisfies StringArrayScenario;
+
+// #endregion
+
 // #endregion
 
 const someSurvivingMarkerRegex = /❤️/;
@@ -655,12 +828,43 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runBoxArrayScenario(
 				scenarioBoxValueSetThenBoxRemoved,
 			);
-			assert.deepEqual(view.root, []);
+			assert.equal(view.root.length, 0);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects edits made before a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditBeforeSchemaChange,
+			);
+			assert.deepEqual([...view.root], ["B❤️"]);
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects edits made after a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditAfterSchemaChange,
+			);
+			assert.equal(view.root.length, 2);
+			assert.equal(view.root[0], "A❤️");
+			const box = view.root[1];
+			assert(box instanceof Box);
+			assert.deepEqual({ ...box }, { value: "D❤️" });
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 	});
 
-	// post-processor infrastructure is agnotic to the transation being async or sync, so this test is just for "good measure".
+	it("throws when edits are made before and after a schema change", () => {
+		assert.throws(
+			() =>
+				// This transaction is expected to throw because edits are made
+				// before and after a schema change, which is not allowed by
+				// the current minimization implementation.
+				runStringArrayScenario(scenarioEditBeforeAndAfterSchemaChange),
+			/At most one edit group can be minimized, but 2 were found/,
+		);
+	});
+
+	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
 	it("preserves the observable result across an async transaction", async () => {
 		const { view, stringifiedChange } =
 			await runStringArrayScenarioAsync(scenarioAReplacedByB);
@@ -783,6 +987,26 @@ describe("transaction minimize post-processor", () => {
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build should be removed.
 			assert.equal(countBuilds(change), 0);
+		});
+
+		it("keeps only edits' surviving builds made before a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditBeforeSchemaChange,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Only the final value "B❤️" survives the transaction, so exactly one build should remain.
+			assert.equal(countBuilds(change), 1);
+		});
+
+		it("keeps only edits' surviving builds made after a schema change", () => {
+			const { view, stringifiedChange } = runStringArrayScenario(
+				scenarioEditAfterSchemaChange,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Only the final Box value "D❤️" survives the transaction, so exactly one build should remain.
+			assert.equal(countBuilds(change), 1);
 		});
 	});
 });
