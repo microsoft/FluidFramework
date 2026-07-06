@@ -9,8 +9,6 @@ export {
 } from "./plainTextView.js";
 export {
 	applyTextEdit,
-	applyTextOps,
-	type ApplyTextOpsResult,
 	syncTextToTree,
 	type TextSelection,
 } from "./plainUtils.js";

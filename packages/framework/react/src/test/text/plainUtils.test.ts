@@ -77,7 +77,7 @@ describe("plainUtils", () => {
 			return view;
 		}
 
-		it("applies the edit directly to an unhydrated (non-branch) node", () => {
+		it("applies the edit to an unhydrated (non-branch) node", () => {
 			const root = TextAsTree.Tree.fromString("hello");
 			applyTextEdit(root, "hello world");
 			assert.equal(root.fullString(), "hello world");

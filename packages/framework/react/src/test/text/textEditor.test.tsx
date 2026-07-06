@@ -173,6 +173,18 @@ describe("Plain TextArea view", () => {
 			assert.equal(result.current.text, "Oh Hello");
 			assert.deepEqual(result.current.selection, { start: 8, end: 8 });
 		});
+
+		it("leaves the selection undefined when none was provided", () => {
+			const text = TextAsTree.Tree.fromString("Hello");
+			const { result } = renderHook(() => useTreeSynchronizedString(text));
+
+			assert.equal(result.current.selection, undefined);
+
+			// The text still syncs, but no selection is fabricated after an edit.
+			act(() => text.insertAt(5, " World"));
+			assert.equal(result.current.text, "Hello World");
+			assert.equal(result.current.selection, undefined);
+		});
 	});
 
 	describe("toolbar", () => {

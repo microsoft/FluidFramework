@@ -115,12 +115,13 @@ export function applyTextOps(
 /**
  * Apply a user text edit to `root`, replacing its content with `newText`.
  * @remarks
- * When `root` belongs to a branch, the edit is wrapped in a transaction tagged with `label` so it
- * can be independently undone/redone; otherwise the edit is applied directly.
+ * The edit is wrapped in a single transaction tagged with `label`, so the remove + insert pair it
+ * produces is applied atomically and can be reverted as a unit. When `root` belongs to a branch, the
+ * `label` is surfaced in that branch's change metadata for undo/redo grouping.
  *
  * The diff and the underlying tree mutation are performed by {@link syncTextToTree}; this function
- * only adds the branch-aware transaction wrapping on top. Call {@link syncTextToTree} directly if you
- * want the mutation without a transaction.
+ * only adds the transaction wrapping on top. Call {@link syncTextToTree} directly if you want the
+ * mutation without a transaction.
  *
  * `label` defaults to `root` itself, giving each tree node its own independent undo/redo history.
  *
@@ -153,12 +154,9 @@ export function applyTextEdit(
 	newText: string,
 	label: unknown = root,
 ): void {
-	const context = TreeAlpha.context(root);
-	if (context.isBranch()) {
-		context.runTransaction(() => syncTextToTree(root, newText), { label });
-	} else {
-		syncTextToTree(root, newText);
-	}
+	// `runTransaction` is callable on any context (a branch or an unhydrated node), so no branch check
+	// is needed here; the `label` is used for undo/redo grouping where the context supports it.
+	TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, newText), { label });
 }
 
 /**

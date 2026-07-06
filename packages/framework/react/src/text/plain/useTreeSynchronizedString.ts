@@ -16,11 +16,13 @@ export interface SynchronizedString {
 	/** The tree's current text. */
 	readonly text: string;
 	/**
-	 * A selection range tracked across edits.
+	 * A selection range tracked across edits, or `undefined` when no selection is being tracked.
 	 * @remarks
-	 * Seeded from `initialSelection` and adjusted by {@link applyTextOps} as the text changes. It
-	 * follows the same logical position across edits, but the hook does not observe the user's live
-	 * caret, so a consumer that needs an accurate caret should track the element's selection itself.
+	 * Seeded from the `initialSelection` passed to {@link useTreeSynchronizedString} and adjusted by
+	 * {@link applyTextOps} so it follows the same logical position as the text changes.
+	 *
+	 * This is not a live caret: the hook does not observe the user's actual cursor, so a consumer that
+	 * needs the real caret position must read it from the rendered element itself.
 	 */
 	readonly selection: TextSelection | undefined;
 }
@@ -30,13 +32,14 @@ export interface SynchronizedString {
  * string: it returns the tree's current text (and a tracked selection), recomputed whenever the
  * tree's characters change.
  * @remarks
- * This is the small, broadly-applicable primitive for reading a text tree in React. It owns only the
- * subscription and the incremental {@link applyTextOps} apply (with a full re-read fallback). It
- * makes no assumption about how the string is rendered (`<input>`, `<textarea>`, contenteditable,
+ * This makes no assumption about how the string is rendered (`<input>`, `<textarea>`, contenteditable,
  * canvas, …) and intentionally does **not** handle writing back to the tree.
  *
- * The consumer supplies the other direction (string → tree) themselves, typically by calling
- * {@link applyTextEdit} from their input's change handler:
+ * The consumer supplies the other direction (string → tree) themselves. Different text APIs report
+ * their edits in different formats, so there is no one-size-fits-all mapping; prefer translating the
+ * API's own change delta into an incremental tree edit whenever it exposes one. For simple APIs like
+ * `<textarea>`, whose change events only surface the fully-updated string, {@link applyTextEdit}
+ * provides a naive diff-and-apply that is sufficient:
  *
  * ```tsx
  * const { text } = useTreeSynchronizedString(tree);
@@ -64,30 +67,41 @@ export function useTreeSynchronizedString(
 	selectionRef.current = selection;
 
 	useEffect(() => {
-		// Re-seed when the bound node changes.
 		const full = tree.fullString();
 		textRef.current = full;
 		setText(full);
 
 		return tree.onCharactersChanged((ops) => {
 			if (ops === undefined) {
-				// No incremental delta available — re-read the whole string (selection unchanged).
+				// A delta could not be computed (e.g. during a schema upgrade, or when the tree is out
+				// of sync with the delta), so re-read the whole string. Any tracked selection is clamped
+				// into the new text, since a shrinking edit could otherwise leave it out of bounds.
 				const reread = tree.fullString();
 				textRef.current = reread;
 				setText(reread);
+				if (selectionRef.current !== undefined) {
+					const clamp = (offset: number): number =>
+						Math.min(Math.max(offset, 0), reread.length);
+					const clamped = {
+						start: clamp(selectionRef.current.start),
+						end: clamp(selectionRef.current.end),
+					};
+					selectionRef.current = clamped;
+					setSelection(clamped);
+				}
 				return;
 			}
 
-			const oldText = textRef.current;
-			const oldSelection = selectionRef.current ?? {
-				start: oldText.length,
-				end: oldText.length,
-			};
-			const result = applyTextOps(oldText, oldSelection, ops);
+			// Only track a selection if the consumer supplied one; otherwise leave it undefined and
+			// discard the range returned by applyTextOps.
+			const oldSelection = selectionRef.current;
+			const result = applyTextOps(textRef.current, oldSelection ?? { start: 0, end: 0 }, ops);
 			textRef.current = result.value;
-			selectionRef.current = result.selection;
 			setText(result.value);
-			setSelection(result.selection);
+			if (oldSelection !== undefined) {
+				selectionRef.current = result.selection;
+				setSelection(result.selection);
+			}
 		});
 	}, [tree]);
 
