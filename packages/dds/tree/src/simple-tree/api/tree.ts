@@ -276,19 +276,20 @@ export interface TreeContextAlpha {
 /**
  * Provides APIs for querying information about the history of a {@link TreeBranchAlpha}.
  * @remarks
- * The history of a branch is the sequence of commits leading up to (and including) its current state.
+ * The history of a branch is the sequence of commits leading up to its current state.
  * @sealed @alpha
  */
 export interface TreeBranchHistory {
 	/**
-	 * The number of commits currently in this branch's history.
+	 * The number of commits in this branch's history.
 	 * @remarks
-	 * This reflects the commits that this branch's SharedTree currently retains in memory for this branch -
-	 * that is, those made since the branch was forked or last {@link TreeBranch.rebaseOnto | rebased}, plus any commits made directly on this branch.
-	 * Retaining a large number of commits can consume significant memory.
-	 * {@link TreeBranch.rebaseOnto | Rebasing} or {@link TreeBranch.dispose | disposing} branches that are no longer needed helps bound this size.
+	 * This number grows when any of the following occurs:
+	 * - A new edit is made on this branch (either through editing or by reverting an existing commit on this branch).
+	 * - A branch that contains commits not already on this branch is merged into this branch.
+	 * - The branch is rebased onto another branch that contains commits not already on this branch.
+	 * This number shrinks when past commits are trimmed from the history.
 	 */
-	readonly size: number;
+	readonly commitCount: number;
 }
 
 /**

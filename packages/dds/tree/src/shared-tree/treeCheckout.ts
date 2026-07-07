@@ -513,6 +513,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
+	public readonly history: TreeBranchHistory;
 
 	public constructor(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
@@ -536,6 +537,21 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+
+		const getHead = (): GraphCommit<SharedTreeChange> => this.mainBranch.getHead();
+		this.history = {
+			get commitCount(): number {
+				let size = 0;
+				for (
+					let commit: GraphCommit<SharedTreeChange> | undefined = getHead();
+					commit !== undefined;
+					commit = commit.parent
+				) {
+					size++;
+				}
+				return size;
+			},
+		};
 	}
 
 	/**
@@ -889,24 +905,6 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public isBranch(): this is TreeBranchAlpha {
 		return true;
-	}
-
-	public get history(): TreeBranchHistory {
-		const checkout = this;
-		return {
-			get size(): number {
-				let size = 0;
-				for (
-					let commit: GraphCommit<SharedTreeChange> | undefined =
-						checkout.mainBranch.getHead();
-					commit !== undefined;
-					commit = commit.parent
-				) {
-					size++;
-				}
-				return size;
-			},
-		};
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(
