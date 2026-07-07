@@ -84,8 +84,6 @@ stages:
     parameters:
       stageId: e2e_odsp_client_odsp_server
       stageDisplayName: e2e - odsp-client with ODSP service
-      # TODO: Remove condition to re-enable ODSP client tests. ADO#58239
-      condition: false
       poolBuild: Small-eastus2
       testPackageDirectory: ${{ variables.testOdspPackageDirectory }}
       testCommand: test:realsvc:odsp
