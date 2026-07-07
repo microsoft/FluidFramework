@@ -639,6 +639,20 @@ export interface SharedTreeOptions
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+
+	/**
+	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
+	 * the collaboration window.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
+	 * are outside the collaboration window) and they are not otherwise retained (e.g. by revertibles or
+	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
+	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -771,6 +785,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
+	retainHistory: false,
 };
 
 /**
