@@ -3725,6 +3725,11 @@ export class ContainerRuntime
 			this.closeFn(error2);
 			throw error2;
 		}
+
+		// Flushing may have moved a staged batch from the Outbox into the PendingStateManager,
+		// which is what hasStagedChanges checks. Update the cached state in case it changed
+		// (e.g. this can be the first time hasStagedChanges becomes true after entering Staging Mode).
+		this.updateHasStagedChangesState();
 	}
 
 	/**
@@ -4048,7 +4053,8 @@ export class ContainerRuntime
 
 	/**
 	 * Returns true if there are any staged changes, i.e. changes submitted while in Staging Mode
-	 * (see {@link IContainerRuntimeBase.enterStagingMode}) that have not yet been discarded or committed.
+	 * (see {@link @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.enterStagingMode})
+	 * that have not yet been discarded or committed.
 	 *
 	 * @remarks This is distinct from {@link ContainerRuntime.isDirty}: a container may be dirty due to
 	 * ordinary unacknowledged local changes without having any staged changes, and vice versa.

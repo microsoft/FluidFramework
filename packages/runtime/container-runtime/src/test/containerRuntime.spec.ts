@@ -1184,6 +1184,67 @@ describe("Runtime", () => {
 			});
 		});
 
+		describe("Staged changes flag", () => {
+			const createMockContext = (
+				attachState: AttachState,
+				addPendingMsg: boolean,
+			): Partial<IContainerContext> => {
+				const pendingState = {
+					pending: {
+						pendingStates: [
+							{
+								type: "message",
+								content: `{"type": "${ContainerMessageType.BlobAttach}", "contents": {}}`,
+							},
+						],
+					},
+					savedOps: [],
+				};
+
+				return {
+					deltaManager: new MockDeltaManager(),
+					audience: new MockAudience(),
+					quorum: new MockQuorumClients(),
+					taggedLogger: new MockLogger(),
+					clientDetails: { capabilities: { interactive: true } },
+					updateDirtyContainerState: (_dirty: boolean) => {},
+					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
+					attachState,
+					pendingLocalState: addPendingMsg ? pendingState : undefined,
+					getLoadedFromVersion: () => undefined,
+				};
+			};
+
+			// Stashed/initial pending ops from a previous session are never considered "staged" —
+			// only ops submitted while in Staging Mode are. So hasStagedChanges should always start
+			// false at load time, regardless of attach state or pending ops.
+			for (const attachState of [
+				AttachState.Attached,
+				AttachState.Attaching,
+				AttachState.Detached,
+			]) {
+				for (const addPendingMsg of [false, true]) {
+					it(`should NOT be set to have staged changes when loaded (attachState=${AttachState[attachState]}, pendingOps=${addPendingMsg})`, async () => {
+						const mockContext = createMockContext(attachState, addPendingMsg);
+						const updateStagedChangesStateStub = sandbox.stub(
+							mockContext,
+							"updateStagedChangesState",
+						);
+						await ContainerRuntime.loadRuntime2({
+							context: mockContext as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: undefined,
+							containerScope: {},
+							provideEntryPoint: mockProvideEntryPoint,
+						});
+						assert.deepStrictEqual(updateStagedChangesStateStub.calledOnce, true);
+						assert.deepStrictEqual(updateStagedChangesStateStub.args, [[false]]);
+					});
+				}
+			}
+		});
+
 		describe("Pending state progress tracking", () => {
 			const maxReconnects = 7; // 7 is the default used by ContainerRuntime for the max reconnection attempts
 
@@ -2344,6 +2405,9 @@ describe("Runtime", () => {
 								case "pendingMessagesCount": {
 									return 0;
 								}
+								case "hasStagedChanges": {
+									return () => false;
+								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
 								}
@@ -2391,6 +2455,9 @@ describe("Runtime", () => {
 								}
 								case "pendingMessagesCount": {
 									return 5;
+								}
+								case "hasStagedChanges": {
+									return () => false;
 								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
@@ -2462,6 +2529,9 @@ describe("Runtime", () => {
 								}
 								case "pendingMessagesCount": {
 									return 5;
+								}
+								case "hasStagedChanges": {
+									return () => false;
 								}
 								default: {
 									assert.fail(`unexpected access to pendingStateManager.${p}`);
@@ -4714,6 +4784,77 @@ describe("Runtime", () => {
 				assert.equal(containerRuntime.isDirty, false, "Runtime should not be dirty anymore");
 			});
 
+			it("hasStagedChanges reflects staged ops lifecycle, reset by discardChanges", () => {
+				stubChannelCollection(containerRuntime);
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes before entering staging mode",
+				);
+
+				const controls = containerRuntime.enterStagingMode();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes immediately after entering staging mode (no ops yet)",
+				);
+
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes after submitting and flushing a staged op",
+				);
+
+				controls.discardChanges();
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after discardChanges",
+				);
+			});
+
+			it("hasStagedChanges reflects staged ops lifecycle, reset by commitChanges", () => {
+				stubChannelCollection(containerRuntime);
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes before entering staging mode",
+				);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				submitDataStoreOp(
+					containerRuntime,
+					"1",
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes after submitting and flushing a staged op",
+				);
+
+				controls.commitChanges();
+
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after commitChanges",
+				);
+			});
+
 			describe("stagingModeAutoFlushThreshold", () => {
 				let runtimeWithThreshold: ContainerRuntime_WithPrivates;
 				let mockContext: Partial<IContainerContext>;
@@ -5482,6 +5623,173 @@ describe("Runtime", () => {
 						1,
 						"No exit event should fire on dispose — only the original enter event",
 					);
+				});
+			});
+
+			describe("hasStagedChangesChanged event", () => {
+				it("emits with true after submitting and flushing a staged op, and hasStagedChanges is true when handler runs", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					const hasStagedChangesAtEventTime: boolean[] = [];
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) => {
+						events.push(hasStagedChanges);
+						hasStagedChangesAtEventTime.push(containerRuntime.hasStagedChanges);
+					});
+
+					containerRuntime.enterStagingMode();
+					assert.equal(
+						events.length,
+						0,
+						"Entering staging mode alone (no ops) should not emit hasStagedChangesChanged",
+					);
+
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+
+					assert.equal(events.length, 1, "Expected exactly one event after flush");
+					assert.equal(events[0], true, "Event payload should be true");
+					assert.equal(
+						hasStagedChangesAtEventTime[0],
+						true,
+						"hasStagedChanges should be true when the event fires",
+					);
+				});
+
+				it("emits with false after commitChanges", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+
+					const controls = containerRuntime.enterStagingMode();
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					controls.commitChanges();
+
+					assert.equal(events.length, 1, "Expected exactly one event after commitChanges");
+					assert.equal(events[0], false, "Event payload should be false");
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false after commitChanges",
+					);
+				});
+
+				it("emits with false after discardChanges", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+
+					const controls = containerRuntime.enterStagingMode();
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					controls.discardChanges();
+
+					assert.equal(events.length, 1, "Expected exactly one event after discardChanges");
+					assert.equal(events[0], false, "Event payload should be false");
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false after discardChanges",
+					);
+				});
+
+				it("does not emit again for a second staged op in the same staging session", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					containerRuntime.enterStagingMode();
+
+					submitDataStoreOp(
+						containerRuntime,
+						"1",
+						genTestDataStoreMessage("staged-op-1"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+					assert.equal(events.length, 1, "Expected one event after the first staged op");
+
+					submitDataStoreOp(
+						containerRuntime,
+						"2",
+						genTestDataStoreMessage("staged-op-2"),
+						"LOCAL_OP_METADATA",
+					);
+					containerRuntime.flush();
+					assert.equal(
+						events.length,
+						1,
+						"Should not emit again while hasStagedChanges stays true",
+					);
+				});
+
+				it("fires during orderSequentially's internal staging mode usage (EnableRollback=true), unlike stagingModeChanged", async () => {
+					// orderSequentially with EnableRollback calls enterStagingModeCore(silent=true) internally,
+					// which suppresses stagingModeChanged. hasStagedChangesChanged is driven by
+					// updateDocumentDirtyState/updateHasStagedChangesState instead, which are not gated by
+					// the `silent` flag, so it CAN fire in this scenario.
+					const context = getMockContext({
+						settings: { "Fluid.ContainerRuntime.EnableRollback": true },
+					}) as IContainerContext;
+					const { runtime: rawRuntime } = await ContainerRuntime.loadRuntime2({
+						context,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+					});
+					const runtime = rawRuntime as unknown as ContainerRuntime_WithPrivates;
+					stubChannelCollection(runtime);
+					submittedOps.length = 0;
+
+					const stagingModeChangedEvents: StagingModeChangedEvent[] = [];
+					const hasStagedChangesChangedEvents: boolean[] = [];
+					runtime.on("stagingModeChanged", (e) => stagingModeChangedEvents.push(e));
+					runtime.on("hasStagedChangesChanged", (e) => hasStagedChangesChangedEvents.push(e));
+
+					// internally enters staging mode then commits
+					runtime.orderSequentially(() => {
+						submitDataStoreOp(runtime, "1", genTestDataStoreMessage("op1"));
+					});
+
+					assert.equal(
+						stagingModeChangedEvents.length,
+						0,
+						"stagingModeChanged should NOT fire for successful orderSequentially",
+					);
+					assert.equal(
+						runtime.hasStagedChanges,
+						false,
+						"hasStagedChanges should be false once orderSequentially completes",
+					);
+
+					runtime.dispose();
 				});
 			});
 		});

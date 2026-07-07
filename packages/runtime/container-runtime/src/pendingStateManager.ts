@@ -341,8 +341,7 @@ export class PendingStateManager implements IDisposable {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
 			if (
-				element !== undefined &&
-				element.batchInfo.staged === true &&
+				element?.batchInfo.staged === true &&
 				hasTypicalRuntimeOp(element) && // Empty batches don't count towards user changes
 				isContainerMessageDirtyable(element.runtimeOp)
 			) {
