@@ -2360,8 +2360,18 @@ export class ContainerRuntime
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
+			// Import the delay-loaded module by its leaf path rather than through the `./summary/index.js` barrel,
+			// which is also statically imported above for summarization dependencies every client loads
+			// (SummaryManager, SummaryCollection, SummarizerClientElection, etc.). A bundler that traces re-exports
+			// per symbol (e.g. webpack honoring sideEffects + providedExports) already keeps the summarizer out of
+			// the initial chunk even if this dynamic import targets the barrel, because the barrel's static importers
+			// use only non-summarizer symbols. A bundler without that analysis would instead treat the
+			// statically-imported barrel as making the whole summarizer subgraph available and fold it into the
+			// initial chunk. Targeting summaryDelayLoadedModule/index.js directly makes the split deterministic
+			// across bundlers.
 			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+				// eslint-disable-next-line import-x/no-internal-modules -- Needed to import the delay-loaded module directly.
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/summaryDelayLoadedModule/index.js"
 			);
 			this._summarizer = new module.Summarizer(
 				this /* ISummarizerRuntime */,

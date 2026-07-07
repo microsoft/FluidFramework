@@ -75,6 +75,7 @@ export type {
 export {
 	AudienceSummary,
 	CloseContainer,
+	CloseDataVisualization,
 	ConnectContainer,
 	ContainerDevtoolsFeatures,
 	ContainerList,
