@@ -7,35 +7,35 @@ import { strict } from "node:assert";
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 
-import { asAlpha } from "../../api.js";
-import { FluidClientVersion, type ICodecOptions } from "../../codec/index.js";
+import { asAlpha } from "../../../api.js";
+import { FluidClientVersion, type ICodecOptions } from "../../../codec/index.js";
 import {
 	findCommonAncestor,
 	type ChangeMetadata,
 	type GraphCommit,
 	type RevisionTag,
-} from "../../core/index.js";
-import { FormatValidatorBasic } from "../../external-utilities/index.js";
+} from "../../../core/index.js";
+import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	independentInitializedView,
 	TreeAlpha,
 	type ForestOptions,
 	type TreeCheckout,
 	type ViewContent,
-} from "../../shared-tree/index.js";
+} from "../../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
 	type TreeViewAlpha,
 	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
+} from "../../../simple-tree/api/index.js";
 import {
 	TreeViewConfiguration,
 	type ImplicitFieldSchema,
 	type UnsafeUnknownSchema,
-} from "../../simple-tree/index.js";
-import { configuredSharedTree } from "../../treeFactory.js";
-import { hasSome, type JsonCompatibleReadOnly } from "../../util/index.js";
-import { TestTreeProviderLite, StringArray } from "../utils.js";
+} from "../../../simple-tree/index.js";
+import { configuredSharedTree } from "../../../treeFactory.js";
+import { hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
+import { TestTreeProviderLite, StringArray } from "../../utils.js";
 
 /**
  * Gets the head commit of a view.
@@ -695,7 +695,7 @@ describe("Host and Sandbox Demo", () => {
 	});
 
 	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
-	it(`All permutations`, function () {
+	it("All permutations", function () {
 		this.timeout(60_000 * 10);
 		/**
 		 * The number of {@link Step | steps} in each scenario.
