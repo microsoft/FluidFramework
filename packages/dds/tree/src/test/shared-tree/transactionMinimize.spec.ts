@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import type { ImplicitFieldSchema } from "@fluidframework/tree";
-import type { JsonCompatibleReadOnly } from "@fluidframework/tree/alpha";
+import type {
+	InsertableField,
+	JsonCompatibleReadOnly,
+	ReadableField,
+} from "@fluidframework/tree/alpha";
 import {
 	FluidClientVersion,
 	createIndependentTreeAlpha,
@@ -59,18 +63,11 @@ function countDestroys(change: SharedTreeChange): number {
 
 const sf = new SchemaFactory("transaction-minimize");
 const RootStringArray = sf.array("RootArray", sf.string);
-const StringArraySchemaConfig = {
-	schema: RootStringArray,
-	enableSchemaValidation: true,
-} as const;
-type StringArrayView = SchematizingSimpleTreeView<typeof StringArraySchemaConfig.schema>;
 
 class Box extends sf.object("Box", {
 	value: sf.optional(sf.string),
 }) {}
 const BoxArray = sf.array("BoxArray", Box);
-const BoxArraySchemaConfig = { schema: BoxArray, enableSchemaValidation: true } as const;
-type BoxArrayView = SchematizingSimpleTreeView<typeof BoxArraySchemaConfig.schema>;
 
 // A second schema factory is used to avoid collisions with the first factory's
 // schema names and altering the schema to check upgrading.
@@ -84,37 +81,37 @@ const StringOrBoxArraySchemaConfig = {
 /** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
 const minimizeParams = { postProcessor: minimize } as const;
 
-/**
- * The subset of a tree view a {@link TransactionScenario} depends on: the strongly-typed root node it edits and
- * the `initialize` signature from which the required initial content type is derived.
- * @remarks Used as the generic constraint instead of {@link SchematizingSimpleTreeView} directly because that type
- * is invariant in its schema, so a concretely-typed view does not satisfy a `SchematizingSimpleTreeView<ImplicitFieldSchema>` constraint.
- */
-interface ScenarioTargetView {
-	readonly root: unknown;
-	initialize(content: never): void;
-}
-
 type Tree = ReturnType<typeof createIndependentTreeAlpha>;
 
 /**
- * A transaction scenario: the content a view is initialized with, plus the sequence of edits to apply to the
- * strongly-typed root node within a single minimized transaction.
- * @typeParam TView - The view type the scenario runs against. Both the initial content and the root node the edits
- * are applied to are derived from this type.
+ * A transaction scenario: the schema/content a view is initialized with, plus the sequence of edits to apply to
+ * the strongly-typed root node within a single minimized transaction.
+ * @typeParam TSchema - The schema of the view the scenario runs against. The initial content and the root node the
+ * edits are applied to are both derived from this schema.
+ * @remarks The scenario is parameterized by its schema (rather than by the concrete view type) so that a single
+ * generic helper can both create the view from {@link TransactionScenario.schema} and run the transaction.
  */
-interface TransactionScenario<
-	TView extends ScenarioTargetView,
-	TApplyReturn /* extends void | SchematizingSimpleTreeView<ImplicitFieldSchema> */ = void,
-> {
+interface TransactionScenario<TSchema extends ImplicitFieldSchema, TApplyReturn> {
+	/** The schema the view is created with before the transaction runs. */
+	readonly schema: TSchema;
 	/** The content the view is initialized with before the transaction runs. */
-	readonly initialContent: Parameters<TView["initialize"]>[0];
+	readonly initialContent: InsertableField<TSchema>;
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
-	readonly apply: (root: TView["root"], tree: Tree, view: TView) => TApplyReturn;
+	readonly apply: (
+		root: ReadableField<TSchema>,
+		tree: Tree,
+		view: SchematizingSimpleTreeView<TSchema>,
+	) => TApplyReturn;
 }
 
-type StringArrayScenario = TransactionScenario<StringArrayView>;
-type BoxArrayScenario = TransactionScenario<BoxArrayView>;
+type StringArrayScenario = TransactionScenario<
+	typeof RootStringArray,
+	void | SchematizingSimpleTreeView<ImplicitFieldSchema>
+>;
+type BoxArrayScenario = TransactionScenario<
+	typeof BoxArray,
+	void | SchematizingSimpleTreeView<ImplicitFieldSchema>
+>;
 
 /**
  * Given the TreeViewConfiguration, returns a tree and an uninitialized view.
@@ -133,28 +130,22 @@ function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
 	return { tree, view };
 }
 
-/** Creates a {@link RootStringArray} view initialized with the given content. */
-function createStringArrayView(initialContent: StringArrayScenario["initialContent"]): {
-	tree: Tree;
-	view: StringArrayView;
-} {
-	const treeAndView = getTreeAndView(new TreeViewConfiguration(StringArraySchemaConfig));
-	treeAndView.view.initialize(initialContent);
-	return treeAndView;
-}
-
-/** Creates a {@link BoxArray} view initialized with the given content. */
-function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]): {
-	tree: Tree;
-	view: BoxArrayView;
-} {
-	const treeAndView = getTreeAndView(new TreeViewConfiguration(BoxArraySchemaConfig));
-	treeAndView.view.initialize(initialContent);
+/** Creates the tree and view for a scenario, initialized with the scenario's initial content. */
+function createScenarioView<TSchema extends ImplicitFieldSchema>(
+	scenario: TransactionScenario<TSchema, unknown>,
+): { tree: Tree; view: SchematizingSimpleTreeView<TSchema> } {
+	const treeAndView = getTreeAndView(
+		new TreeViewConfiguration({
+			schema: scenario.schema,
+			enableSchemaValidation: true,
+		}),
+	);
+	treeAndView.view.initialize(scenario.initialContent);
 	return treeAndView;
 }
 
 /**
- * Runs a scenario in a single minimized transaction.
+ * Runs a {@link TransactionScenario} in a single minimized transaction.
  *
  * @returns The resulting scenario view and the persisted (serialized) change as a JSON string.
  *
@@ -165,14 +156,14 @@ function createBoxArrayView(initialContent: BoxArrayScenario["initialContent"]):
  * traverse), the serialized change fully encodes inserted node values, so tests can assert that transient content
  * (tagged with ☠️) was stripped by inspecting the JSON text.
  */
-function runScenarioTransaction<TSchema extends ImplicitFieldSchema, TApplyReturn = void>(
-	view: SchematizingSimpleTreeView<TSchema>,
-	tree: Tree,
-	scenario: TransactionScenario<SchematizingSimpleTreeView<TSchema>, TApplyReturn>,
+function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
+	scenario: TransactionScenario<TSchema, TApplyReturn>,
 ): {
 	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
 	stringifiedChange: JsonString<unknown>;
 } {
+	const { tree, view } = createScenarioView(scenario);
+
 	let changeJson: JsonCompatibleReadOnly | undefined;
 	// Be sure to listen to checkout "changed" instead of view "changed" because the latter
 	// might get disposed during the transaction.
@@ -190,6 +181,7 @@ function runScenarioTransaction<TSchema extends ImplicitFieldSchema, TApplyRetur
 	);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
+
 	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
 	return {
 		view: (result.value ?? view) as TApplyReturn extends void
@@ -200,31 +192,22 @@ function runScenarioTransaction<TSchema extends ImplicitFieldSchema, TApplyRetur
 }
 
 /**
- * Runs a string-array {@link TransactionScenario} within a single minimized transaction.
- * @returns The resulting view and the persisted (serialized) change as a JSON string.
- * @remarks This is the shared setup + act used by each string-array test case.
- */
-function runStringArrayScenario<TApplyReturn = void>(
-	scenario: TransactionScenario<StringArrayView, TApplyReturn>,
-): {
-	view: TApplyReturn extends void ? StringArrayView : TApplyReturn;
-	stringifiedChange: JsonString<unknown>;
-} {
-	const { tree, view } = createStringArrayView(scenario.initialContent);
-	return runScenarioTransaction(view, tree, scenario);
-}
-
-/**
- * Like {@link runStringArrayScenario}, but runs the scenario's edits within an async transaction.
+ * Like {@link runScenario}, but runs the scenario's edits within an async transaction.
  * @remarks The post-processor infrastructure is agnostic to whether the transaction is sync or async, so this
  * exists to exercise that path "for good measure".
  */
-async function runStringArrayScenarioAsync(
-	scenario: StringArrayScenario,
-): Promise<{ view: StringArrayView; stringifiedChange: JsonString<unknown> }> {
-	const { tree, view } = createStringArrayView(scenario.initialContent);
+async function runScenarioAsync<TSchema extends ImplicitFieldSchema, TApplyReturn>(
+	scenario: TransactionScenario<TSchema, TApplyReturn>,
+): Promise<{
+	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
+	stringifiedChange: JsonString<unknown>;
+}> {
+	const { tree, view } = createScenarioView(scenario);
+
 	let changeJson: JsonCompatibleReadOnly | undefined;
-	const unsubscribe = view.events.on("changed", (metadata) => {
+	// Be sure to listen to checkout "changed" instead of view "changed" because the latter
+	// might get disposed during the transaction.
+	const unsubscribe = view.checkout.events.on("changed", (metadata) => {
 		assert(metadata.isLocal, "expected a local change to be produced by the transaction");
 		assert(
 			changeJson === undefined,
@@ -232,27 +215,20 @@ async function runStringArrayScenarioAsync(
 		);
 		changeJson = metadata.getChange();
 	});
-	await view.runTransactionAsync(
-		async () => scenario.apply(view.root, tree, view),
+	const result = await view.runTransactionAsync(
+		async () => ({ value: scenario.apply(view.root, tree, view) }),
 		minimizeParams,
 	);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
-	return { view, stringifiedChange: JsonStringify<Readonly<unknown> | null>(changeJson) };
-}
 
-/**
- * Runs a box-array {@link TransactionScenario} within a single minimized transaction.
- * @returns The resulting view and the persisted (serialized) change as a JSON string.
- * @remarks This is the shared setup + act used by each box-array test case.
- */
-function runBoxArrayScenario(scenario: BoxArrayScenario): {
-	view: BoxArrayView;
-	stringifiedChange: JsonString<unknown>;
-} {
-	const { tree, view } = createBoxArrayView(scenario.initialContent);
-	const { stringifiedChange } = runScenarioTransaction(view, tree, scenario);
-	return { view, stringifiedChange };
+	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+	return {
+		view: (result.value ?? view) as TApplyReturn extends void
+			? SchematizingSimpleTreeView<TSchema>
+			: TApplyReturn,
+		stringifiedChange,
+	};
 }
 
 // #region Scenario definitions
@@ -271,6 +247,7 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
  * 1. insert "A❤️" -\> `["A❤️"]`
  */
 const scenarioAInserted = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️");
@@ -286,6 +263,7 @@ const scenarioAInserted = {
  * 2. insert "B❤️" -\> `["A❤️", "B❤️"]`
  */
 const scenarioAThenBInserted = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️");
@@ -302,6 +280,7 @@ const scenarioAThenBInserted = {
  * 2. remove at 0  -\> `[]`
  */
 const scenarioAAddedThenRemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A☠️");
@@ -319,6 +298,7 @@ const scenarioAAddedThenRemoved = {
  * 3. remove at 1   -\> `["A❤️"]`
  */
 const scenarioAKeptAndBTransient = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️");
@@ -337,6 +317,7 @@ const scenarioAKeptAndBTransient = {
  * 3. remove at 0   -\> `["B❤️"]`
  */
 const scenarioAReplacedByB = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A☠️");
@@ -359,6 +340,7 @@ const scenarioAReplacedByB = {
  * 3. remove at 1           -\> `["B❤️"]`
  */
 const scenarioBInsertedBeforeAThenARemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A☠️");
@@ -378,6 +360,7 @@ const scenarioBInsertedBeforeAThenARemoved = {
  * 2. remove at 1                 -\> `["A❤️", "C❤️"]`
  */
 const scenarioAbcInsertedThenBRemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️", "B☠️", "C❤️");
@@ -397,6 +380,7 @@ const scenarioAbcInsertedThenBRemoved = {
  * 3. move "C❤️" to start  -\> `["C❤️", "A❤️", "B❤️"]`
  */
 const scenarioAThenBCInsertedThenRearranged = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️");
@@ -418,6 +402,7 @@ const scenarioAThenBCInsertedThenRearranged = {
  * 3. remove at 0                -\> `["A❤️", "C❤️"]`
  */
 const scenarioABCInsertedThenBMovedThenRemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️", "B☠️", "C❤️");
@@ -439,6 +424,7 @@ const scenarioABCInsertedThenBMovedThenRemoved = {
  * 3. remove range [0, 2)        -\> `["C❤️"]`
  */
 const scenarioABCInsertedThenBMovedThenBAndARemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A☠️", "B☠️", "C❤️");
@@ -461,6 +447,7 @@ const scenarioABCInsertedThenBMovedThenBAndARemoved = {
  * 4. remove at 0                 -\> `["A❤️"]`
  */
 const scenarioABCInsertedThenBMovedThenCAndBRemoved = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root) => {
 		root.insertAtEnd("A❤️", "B☠️", "C☠️");
@@ -485,6 +472,7 @@ const scenarioABCInsertedThenBMovedThenCAndBRemoved = {
  * 2. remove at 1  -\> `["X", "Y"]`
  */
 const scenarioPreExistingContentAndTransientInsert = {
+	schema: RootStringArray,
 	initialContent: ["X", "Y"],
 	apply: (root) => {
 		root.insertAt(1, "A☠️");
@@ -506,6 +494,7 @@ const scenarioPreExistingContentAndTransientInsert = {
  * 2. remove at 1          -\> `["X", "B❤️"]`
  */
 const scenarioPreExistingContentAndSurvivingInsert = {
+	schema: RootStringArray,
 	initialContent: ["X"],
 	apply: (root) => {
 		root.insertAtEnd("A☠️", "B❤️");
@@ -525,6 +514,7 @@ const scenarioPreExistingContentAndSurvivingInsert = {
  * 1. move "Z" to start -\> `["Z", "X", "Y"]`
  */
 const scenarioPreExistingContentRearranged = {
+	schema: RootStringArray,
 	initialContent: ["X", "Y", "Z"],
 	apply: (root) => {
 		root.moveToStart(2);
@@ -542,6 +532,7 @@ const scenarioPreExistingContentRearranged = {
  * 1. remove "Y" -\> `["X", "Z"]`
  */
 const scenarioPreExistingContentRemoved = {
+	schema: RootStringArray,
 	initialContent: ["X", "Y", "Z"],
 	apply: (root) => {
 		root.removeAt(1);
@@ -562,6 +553,7 @@ const scenarioPreExistingContentRemoved = {
  * 2. set to "y❤️" -\> `[Box: "y❤️"]`
  */
 const scenarioBoxValueSetTwice = {
+	schema: BoxArray,
 	initialContent: [{ value: undefined }],
 	apply: (root) => {
 		root[0].value = "x☠️";
@@ -579,6 +571,7 @@ const scenarioBoxValueSetTwice = {
  * 2. remove box   -\> `[]`
  */
 const scenarioBoxValueSetThenBoxRemoved = {
+	schema: BoxArray,
 	initialContent: [{ value: undefined }],
 	apply: (root) => {
 		root[0].value = "x☠️";
@@ -601,6 +594,7 @@ const scenarioBoxValueSetThenBoxRemoved = {
  * 4. upgrade schema  -\> `["B❤️"]`
  */
 const scenarioEditBeforeSchemaChange = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root, tree, view) => {
 		root.insertAtEnd("A☠️");
@@ -630,6 +624,7 @@ const scenarioEditBeforeSchemaChange = {
  * 3. set Box value to "D❤️" -\> `["A❤️", Box: "D❤️"]`
  */
 const scenarioEditAfterSchemaChange = {
+	schema: RootStringArray,
 	initialContent: ["A❤️"],
 	apply: (_root, tree, view) => {
 		// Force dispose view to permit upgrade
@@ -661,6 +656,7 @@ const scenarioEditAfterSchemaChange = {
  * 6. set Box value to "D❤️" -\> `["B❤️", Box: "D❤️"]`
  */
 const scenarioEditBeforeAndAfterSchemaChange = {
+	schema: RootStringArray,
 	initialContent: [],
 	apply: (root, tree, view) => {
 		root.insertAtEnd("A☠️");
@@ -692,13 +688,13 @@ const transientMarkerRegex = /☠️/;
 
 describe("transaction minimize post-processor", () => {
 	it("can be supplied as a transaction post-processor without error", () => {
-		const { view } = runStringArrayScenario(scenarioAInserted);
+		const { view } = runScenario(scenarioAInserted);
 		assert.deepEqual([...view.root], ["A❤️"]);
 	});
 
 	describe("self-tests - no minimization applicable", () => {
 		it("embeds surviving markers but not transient marker for a purely additive scenario", () => {
-			const { stringifiedChange } = runStringArrayScenario(scenarioAThenBInserted);
+			const { stringifiedChange } = runScenario(scenarioAThenBInserted);
 			// Sanity check for the serialization mechanism: content that survives the
 			// transaction is present in the persisted change, so tests can meaningfully
 			// assert on its absence for transient content.
@@ -712,9 +708,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("result carries no build when pre-existing content is only rearranged", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioPreExistingContentRearranged,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioPreExistingContentRearranged);
 			assert.deepEqual([...view.root], ["Z", "X", "Y"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -725,9 +719,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("result carries no build when pre-existing content is only removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioPreExistingContentRemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioPreExistingContentRemoved);
 			assert.deepEqual([...view.root], ["X", "Z"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -738,9 +730,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("reflects the order of only-rearranged inserted nodes and keeps every build", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioAThenBCInsertedThenRearranged,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioAThenBCInsertedThenRearranged);
 			assert.deepEqual([...view.root], ["C❤️", "A❤️", "B❤️"]);
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -756,47 +746,43 @@ describe("transaction minimize post-processor", () => {
 	// actually implemented.
 	describe("preserves the observable result", () => {
 		it("keeps inserted nodes", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAThenBInserted);
+			const { view, stringifiedChange } = runScenario(scenarioAThenBInserted);
 			assert.deepEqual([...view.root], ["A❤️", "B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("nets a create-then-remove to no change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAAddedThenRemoved);
+			const { view, stringifiedChange } = runScenario(scenarioAAddedThenRemoved);
 			assert.deepEqual([...view.root], []);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps only the persisted node when a transient node is also created", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAKeptAndBTransient);
+			const { view, stringifiedChange } = runScenario(scenarioAKeptAndBTransient);
 			assert.deepEqual([...view.root], ["A❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a node replaced within the transaction", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAReplacedByB);
+			const { view, stringifiedChange } = runScenario(scenarioAReplacedByB);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the surviving node when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioBInsertedBeforeAThenARemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioBInsertedBeforeAThenARemoved);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioAbcInsertedThenBRemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioAbcInsertedThenBRemoved);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when an inserted node is moved then removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenRemoved,
 			);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
@@ -804,7 +790,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the trailing node when a moved node and its successor from leading node are removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenBAndARemoved,
 			);
 			assert.deepEqual([...view.root], ["C❤️"]);
@@ -812,7 +798,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the leading node when a moved node and its insertion companion are removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenCAndBRemoved,
 			);
 			assert.deepEqual([...view.root], ["A❤️"]);
@@ -820,7 +806,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("leaves pre-existing content unchanged when a transient node is inserted then removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioPreExistingContentAndTransientInsert,
 			);
 			assert.deepEqual([...view.root], ["X", "Y"]);
@@ -828,7 +814,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps pre-existing content and the surviving inserted node", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioPreExistingContentAndSurvivingInsert,
 			);
 			assert.deepEqual([...view.root], ["X", "B❤️"]);
@@ -836,31 +822,25 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("reflects only the final value of a field set multiple times", () => {
-			const { view, stringifiedChange } = runBoxArrayScenario(scenarioBoxValueSetTwice);
+			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetTwice);
 			assert.equal(view.root[0].value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final empty array when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runBoxArrayScenario(
-				scenarioBoxValueSetThenBoxRemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetThenBoxRemoved);
 			assert.equal(view.root.length, 0);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made before a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditBeforeSchemaChange,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioEditBeforeSchemaChange);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made after a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditAfterSchemaChange,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioEditAfterSchemaChange);
 			assert.equal(view.root.length, 2);
 			assert.equal(view.root[0], "A❤️");
 			const box = view.root[1];
@@ -876,15 +856,14 @@ describe("transaction minimize post-processor", () => {
 				// This transaction is expected to throw because edits are made
 				// before and after a schema change, which is not allowed by
 				// the current minimization implementation.
-				runStringArrayScenario(scenarioEditBeforeAndAfterSchemaChange),
+				runScenario(scenarioEditBeforeAndAfterSchemaChange),
 			/At most one edit group can be minimized, but 2 were found/,
 		);
 	});
 
 	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
 	it("preserves the observable result across an async transaction", async () => {
-		const { view, stringifiedChange } =
-			await runStringArrayScenarioAsync(scenarioAReplacedByB);
+		const { view, stringifiedChange } = await runScenarioAsync(scenarioAReplacedByB);
 		assert.deepEqual([...view.root], ["B❤️"]);
 		assert.match(stringifiedChange, someSurvivingMarkerRegex);
 	});
@@ -894,7 +873,7 @@ describe("transaction minimize post-processor", () => {
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
 	describe.skip("removes extraneous data from the squashed change (expected to fail until minimize is implemented)", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAAddedThenRemoved);
+			const { view, stringifiedChange } = runScenario(scenarioAAddedThenRemoved);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build/destroy should be removed.
@@ -903,7 +882,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the persisted node's build when a transient node is also created", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAKeptAndBTransient);
+			const { view, stringifiedChange } = runScenario(scenarioAKeptAndBTransient);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "A❤️" survives the transaction, so exactly one build should remain.
@@ -911,7 +890,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the final node's build when a node is replaced", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(scenarioAReplacedByB);
+			const { view, stringifiedChange } = runScenario(scenarioAReplacedByB);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
@@ -919,9 +898,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the surviving node's build when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioBInsertedBeforeAThenARemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioBInsertedBeforeAThenARemoved);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
@@ -929,9 +906,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps the surrounding builds when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioAbcInsertedThenBRemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioAbcInsertedThenBRemoved);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// "A❤️" and "C❤️" survive but "B☠️" is removed, so A-B-C build should be split, leaving two.
@@ -939,7 +914,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("drops the build for an inserted node that is moved then removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenRemoved,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -949,7 +924,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the trailing node's [modified] build when a moved node and its successor from leading node build are removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenBAndARemoved,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -959,7 +934,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the leading node's build when a moved node and its insertion companion are removed", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioABCInsertedThenBMovedThenCAndBRemoved,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -969,7 +944,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("carries no build for a transient insert over pre-existing content", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioPreExistingContentAndTransientInsert,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -979,7 +954,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the surviving inserted node's build over pre-existing content", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
+			const { view, stringifiedChange } = runScenario(
 				scenarioPreExistingContentAndSurvivingInsert,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -989,7 +964,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the final value's build when a field is set multiple times", () => {
-			const { view, stringifiedChange } = runBoxArrayScenario(scenarioBoxValueSetTwice);
+			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetTwice);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so exactly one build should remain.
@@ -997,9 +972,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("carries no build when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runBoxArrayScenario(
-				scenarioBoxValueSetThenBoxRemoved,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetThenBoxRemoved);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build should be removed.
@@ -1007,9 +980,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditBeforeSchemaChange,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioEditBeforeSchemaChange);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "B❤️" survives the transaction, so exactly one build should remain.
@@ -1017,9 +988,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only edits' surviving builds made after a schema change", () => {
-			const { view, stringifiedChange } = runStringArrayScenario(
-				scenarioEditAfterSchemaChange,
-			);
+			const { view, stringifiedChange } = runScenario(scenarioEditAfterSchemaChange);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final Box value "D❤️" survives the transaction, so exactly one build should remain.
