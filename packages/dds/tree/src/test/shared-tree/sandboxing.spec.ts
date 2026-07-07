@@ -694,19 +694,35 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
 	});
 
-	const NUM_STEPS = 6;
-	it(`All scenarios with ${NUM_STEPS} steps`, function () {
+	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
+	it(`All permutations`, function () {
 		this.timeout(60_000 * 10);
+		/**
+		 * The number of {@link Step | steps} in each scenario.
+		 */
+		const maxSteps = 4;
+		/**
+		 * A potential action that could be taken at each step of a run.
+		 */
 		enum Step {
+			/** Make an edit on the host */
 			HostEdit = "He",
+			/** Make an edit on the view (AKA sandbox) */
 			ViewEdit = "Ve",
+			/** Make an edit on the peer */
 			PeerEdit = "Pe",
+			/** Make the host receive a sequenced edit from the peer */
 			SequenceEdit = "Se",
+			/** Make the host receive its own sequenced edit */
 			SequenceAck = "Sa",
+			/** Notify the view of an update sent by the host. */
 			Host2ViewEdit = "H2Ve",
-			Host2ViewAck = "H2Va",
-			View2HostEdit = "V2He",
+			/** Notify the host of an update ack sent by the view. */
 			View2HostAck = "V2Ha",
+			/** Notify the host of an outbound edit sent by the view. */
+			View2HostEdit = "V2He",
+			/** Notify the view of an outbound edit ack sent by the host. */
+			Host2ViewAck = "H2Va",
 		}
 
 		type Ack = "Ack";
@@ -720,6 +736,13 @@ describe("Host and Sandbox Demo", () => {
 			dispatchToHost(): void;
 		}
 
+		/**
+		 * Generates a set of interop functions that keep messages in queues,
+		 * making it possible to control which queue progresses and when.
+		 * @param getHost - A function that returns the host instance.
+		 * @param getSandbox - A function that returns the sandbox instance.
+		 * @returns An object containing the queued interop functions.
+		 */
 		function buildQueueInterop(
 			getHost: () => Host<typeof StringArray>,
 			getSandbox: () => Sandbox<typeof StringArray>,
@@ -764,15 +787,15 @@ describe("Host and Sandbox Demo", () => {
 		type Edit = "Edit";
 		const Edit: Edit = "Edit";
 		let scenario = 0;
+		/**
+		 * The steps that could be taken at each step of a run.
+		 * The inner arrays represents alternative steps that could be taken at that step of the run.
+		 * The outer array represents the steps of the run.
+		 *
+		 * Note: to test a specific scenario, you can initialize `potential` with a specific sequence of steps.
+		 * E.g., `[[Step.ViewEdit], [Step.ViewEdit], [Step.View2HostEdit], [Step.SequenceAck], [Step.View2HostEdit], [Step.SequenceAck]]`.
+		 */
 		const potential: Step[][] = [[Step.ViewEdit, Step.HostEdit, Step.PeerEdit]];
-		// const potential: Step[][] = [
-		// 	[Step.ViewEdit],
-		// 	[Step.ViewEdit],
-		// 	[Step.View2HostEdit],
-		// 	[Step.SequenceAck],
-		// 	[Step.View2HostEdit],
-		// 	[Step.SequenceAck],
-		// ];
 		while (hasSome(potential)) {
 			scenario += 1;
 			const { teardown, peer, host, sandbox, provider, interop, logger } = setupCustom(
@@ -795,7 +818,7 @@ describe("Host and Sandbox Demo", () => {
 				}
 			});
 			const actual: Step[] = [];
-			while (actual.length < NUM_STEPS) {
+			while (actual.length < maxSteps) {
 				if (actual.length === potential.length) {
 					const potentialNext: Step[] = [Step.ViewEdit, Step.HostEdit, Step.PeerEdit];
 					if (hasSome(serviceQueue)) {
@@ -866,7 +889,11 @@ describe("Host and Sandbox Demo", () => {
 					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
 
-				if (actual.length === NUM_STEPS) {
+				if (host.updatePromise === undefined) {
+					strict.equal(host.local.isMissingEditsFrom(host.main), false);
+				}
+
+				if (actual.length === maxSteps) {
 					potential.push([]);
 					do {
 						potential.pop();
