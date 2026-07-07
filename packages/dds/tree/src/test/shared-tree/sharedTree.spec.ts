@@ -977,6 +977,9 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
+		assert(provider.trees[0].kernel.checkout.history.commitCount > 10);
+		assert(provider.trees[1].kernel.checkout.history.commitCount > 10);
+
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
 		view2.root.insertAtStart("");
@@ -984,26 +987,8 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-		// if we'll ever expose some memory stats in which the trunk length would be included.
-		// If we do then this test should be updated to use that code path.
-		interface EditManagerKludge {
-			kernel?: {
-				editManager?: EditManager<
-					ChangeFamilyEditor,
-					unknown,
-					ChangeFamily<ChangeFamilyEditor, unknown>
-				>;
-			};
-		}
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(provider.trees[0].kernel.checkout.history.commitCount < 10);
+		assert(provider.trees[1].kernel.checkout.history.commitCount < 10);
 	});
 
 	it("can process changes while detached", async () => {
