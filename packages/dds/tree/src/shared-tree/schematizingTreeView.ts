@@ -57,6 +57,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeBranchHistory,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -531,6 +532,10 @@ export class SchematizingSimpleTreeView<
 
 	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
 		return this.checkout.isMissingEditsFrom(context);
+	}
+
+	public get history(): TreeBranchHistory {
+		return this.checkout.history;
 	}
 
 	// #endregion Branching

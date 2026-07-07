@@ -274,6 +274,24 @@ export interface TreeContextAlpha {
 }
 
 /**
+ * Provides APIs for querying information about the history of a {@link TreeBranchAlpha}.
+ * @remarks
+ * The history of a branch is the sequence of commits leading up to (and including) its current state.
+ * @sealed @alpha
+ */
+export interface TreeBranchHistory {
+	/**
+	 * The number of commits currently in this branch's history.
+	 * @remarks
+	 * This reflects the commits that this branch's SharedTree currently retains in memory for this branch -
+	 * that is, those made since the branch was forked or last {@link TreeBranch.rebaseOnto | rebased}, plus any commits made directly on this branch.
+	 * Retaining a large number of commits can consume significant memory.
+	 * {@link TreeBranch.rebaseOnto | Rebasing} or {@link TreeBranch.dispose | disposing} branches that are no longer needed helps bound this size.
+	 */
+	readonly size: number;
+}
+
+/**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
@@ -286,6 +304,11 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * Events for the branch
 	 */
 	readonly events: Listenable<TreeBranchEvents>;
+
+	/**
+	 * APIs for querying the history of this branch.
+	 */
+	readonly history: TreeBranchHistory;
 
 	/**
 	 * Returns true if this branch has the given schema as its root schema.

@@ -186,6 +186,7 @@ import {
 	SchemaFactory,
 	type TreeView,
 	type TreeBranchAlpha,
+	type TreeBranchHistory,
 	type TreeBranchEvents,
 	type ITree,
 	type UnsafeUnknownSchema,
@@ -1554,6 +1555,9 @@ export class MockTreeCheckout implements ITreeCheckout {
 	}
 	public isMissingEditsFrom(branch: unknown): never {
 		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
+	}
+	public get history(): TreeBranchHistory {
+		throw new Error("'history' property not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

@@ -88,6 +88,7 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
+	type TreeBranchHistory,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -888,6 +889,24 @@ export class TreeCheckout implements ITreeCheckout {
 
 	public isBranch(): this is TreeBranchAlpha {
 		return true;
+	}
+
+	public get history(): TreeBranchHistory {
+		const checkout = this;
+		return {
+			get size(): number {
+				let size = 0;
+				for (
+					let commit: GraphCommit<SharedTreeChange> | undefined =
+						checkout.mainBranch.getHead();
+					commit !== undefined;
+					commit = commit.parent
+				) {
+					size++;
+				}
+				return size;
+			},
+		};
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(

@@ -267,6 +267,7 @@ export {
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type TreeBranchEvents,
+	type TreeBranchHistory,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,

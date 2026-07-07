@@ -470,4 +470,38 @@ describe("simple-tree tree", () => {
 			assert.equal(viewB.isMissingEditsFrom(viewA), true);
 		});
 	});
+
+	describe("history", () => {
+		it("size reflects the number of commits in the branch", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const sizeAfterInit = viewA.history.size;
+			assert(sizeAfterInit > 0);
+
+			viewA.root = 4;
+			assert.equal(viewA.history.size, sizeAfterInit + 1);
+
+			viewA.root = 5;
+			assert.equal(viewA.history.size, sizeAfterInit + 2);
+		});
+
+		it("increases independently on forked branches", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			const initialSize = viewA.history.size;
+			assert.equal(viewB.history.size, initialSize);
+
+			viewA.root = 4;
+			assert.equal(viewA.history.size, initialSize + 1);
+			assert.equal(viewB.history.size, initialSize);
+
+			viewB.root = 5;
+			assert.equal(viewA.history.size, initialSize + 1);
+			assert.equal(viewB.history.size, initialSize + 1);
+		});
+	});
 });
