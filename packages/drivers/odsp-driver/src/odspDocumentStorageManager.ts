@@ -662,7 +662,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.odspResolvedUrl,
 				this.getAuthHeader,
 				snapshotOptions,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 				putInCache,
@@ -704,7 +703,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 					this.odspResolvedUrl,
 					this.getAuthHeader,
 					snapshotOptionsWithoutBlobs,
-					!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 					this.logger,
 					snapshotDownloader,
 					putInCache,
@@ -886,7 +884,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				this.snapshotUrl!,
 				id,
 				this.fetchFullSnapshot,
-				!!this.hostPolicy.sessionOptions?.forceAccessTokenViaAuthorizationHeader,
 				this.logger,
 				snapshotDownloader,
 			);

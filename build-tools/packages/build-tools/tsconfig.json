@@ -17,6 +17,6 @@
 		"types": ["node"],
 		"exactOptionalPropertyTypes": true,
 	},
-	"include": ["src/**/*.ts", "src/**/*.cts"],
+	"include": ["src/**/*.ts"],
 	"exclude": ["src/test/**/*", "dist", "node_modules"],
 }

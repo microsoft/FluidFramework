@@ -117,7 +117,7 @@ export function decodeOriginatorlessEncodedId(
 	const sessionSpaceId = idCompressor.tryNormalizeToSessionSpaceWithoutSession(id);
 	assert(
 		sessionSpaceId !== undefined,
-		"OriginatorlessEncodedId must be a finalized compressed id at runtime",
+		0xd0a /* OriginatorlessEncodedId must be a finalized compressed id at runtime */,
 	);
 	return sessionSpaceId;
 }
@@ -211,7 +211,7 @@ export function decompressIdentifierIfNeeded(
 		return id;
 	} else {
 		const decompressed = idCompressor.decompress(id);
-		assert(typeof decompressed === "string", "Decompressed id must be a string");
+		assert(typeof decompressed === "string", 0xd0b /* Decompressed id must be a string */);
 		return decompressed;
 	}
 }

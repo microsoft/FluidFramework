@@ -26,9 +26,7 @@ overrides:
   picomatch@>=4 <5: ^4.0.4
 
 patchedDependencies:
-  '@microsoft/api-extractor@7.58.1':
-    hash: 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
-    path: ../../../patches/@microsoft__api-extractor@7.58.1.patch
+  '@microsoft/api-extractor@7.58.1': 949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa
 
 importers:
 
