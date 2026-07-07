@@ -146,7 +146,7 @@ export interface FieldBatchEncodingContext {
  */
 export class FieldBatchDecodingContext extends IdDecodingContext {
 	private constructor(
-		private readonly opts: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+		private readonly options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
 		/**
 		 * Decoder for incremental fields. Defined when the encoded batch contains
 		 * incremental chunks. Only populated on summary-style contexts; op-style
@@ -154,7 +154,7 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 		 */
 		public readonly incrementalDecoder?: IncrementalDecoder,
 	) {
-		super(opts);
+		super(options);
 	}
 
 	/**
@@ -166,8 +166,8 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 	 * not a recoverable state, so the resolver throws rather than synthesizing
 	 * a UUID. Incremental decoding is not used for ops.
 	 */
-	public static forOp(opts: IdDecoderOptionsWithOriginator): FieldBatchDecodingContext {
-		return new FieldBatchDecodingContext(opts);
+	public static forOp(options: IdDecoderOptionsWithOriginator): FieldBatchDecodingContext {
+		return new FieldBatchDecodingContext(options);
 	}
 
 	/**
@@ -187,9 +187,9 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 	 * as does the encoding-side assert in the {@link EncoderContext}.
 	 */
 	public static forSummary(
-		opts: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+		options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
 	): FieldBatchDecodingContext {
-		return new FieldBatchDecodingContext(opts);
+		return new FieldBatchDecodingContext(options);
 	}
 
 	/**
@@ -209,7 +209,7 @@ export class FieldBatchDecodingContext extends IdDecodingContext {
 			!this.hasOriginatorSessionId,
 			0xd0c /* withIncrementalDecoder can only be called on contexts without an originator session ID */,
 		);
-		return new FieldBatchDecodingContext(this.opts, incrementalDecoder);
+		return new FieldBatchDecodingContext(this.options, incrementalDecoder);
 	}
 }
 

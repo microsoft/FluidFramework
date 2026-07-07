@@ -155,7 +155,7 @@ export function tryDecodeEncodedIdWithoutSession(
  * Carried by decode-side contexts ({@link IdDecoderOptionsOriginatorless},
  * `ChangeEncodingContext.healing`,
  * `EditManagerEncodingContext.healing`, etc.) when the workaround is enabled.
- * Presence enables healing; `undefined` opts out. There is no separate boolean,
+ * Presence enables healing; `undefined` means healing is disabled. There is no separate boolean,
  * which makes it impossible to enable healing without supplying the namespace
  * input.
  */
@@ -285,18 +285,20 @@ export class IdDecodingContext {
 
 	/**
 	 * Creates a new instance of the context.
-	 * @param opts - The options for creating the context.
+	 * @param options - The options for creating the context.
 	 */
-	public constructor(opts: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator) {
-		this.idCompressor = opts.idCompressor;
-		if ("originatorId" in opts) {
+	public constructor(
+		options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+	) {
+		this.idCompressor = options.idCompressor;
+		if ("originatorId" in options) {
 			this.hasOriginatorSessionId = true;
 			this.resolveEncodedId = (id): SessionSpaceCompressedId | string =>
-				opts.idCompressor.normalizeToSessionSpace(id, opts.originatorId);
+				options.idCompressor.normalizeToSessionSpace(id, options.originatorId);
 		} else {
 			this.hasOriginatorSessionId = false;
 			this.resolveEncodedId = (id): SessionSpaceCompressedId | string =>
-				forceDecodeEncodedIdWithoutSession(id, opts.idCompressor, opts.healing);
+				forceDecodeEncodedIdWithoutSession(id, options.idCompressor, options.healing);
 		}
 	}
 }
