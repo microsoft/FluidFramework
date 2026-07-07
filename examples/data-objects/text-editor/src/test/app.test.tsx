@@ -21,9 +21,15 @@ function createFormattedTreeView(initialValue = ""): UserView["treeView"] {
 }
 
 /**
- * Creates a {@link UserView}
+ * Creates a {@link UserView} for rendering {@link App} in tests without a Fluid service:
+ * the tree is an in-memory `independentView` seeded with `initialValue` (no collaboration,
+ * no network), and the container is a stub whose `dispose` is a no-op.
+ * Use this instead of the app's real `connectUser`, which requires a running service.
+ *
+ * @param id - Distinguishes this user from others in the same test.
+ * @param initialValue - The document text the user's view starts with.
  */
-function createUserView(id: number, initialValue: string): UserView {
+function createTestUserView(id: string, initialValue: string): UserView {
 	return {
 		id,
 		container: { dispose: () => {} } as unknown as UserView["container"],
@@ -39,7 +45,7 @@ describe("app", () => {
 			<App
 				containerId="test"
 				devtoolsLogger={createDevtoolsLogger()}
-				initialUsers={[createUserView(1, "Text A"), createUserView(2, "Text B")]}
+				initialUsers={[createTestUserView("a", "Text A"), createTestUserView("b", "Text B")]}
 			/>
 		);
 		const rendered = render(content);
@@ -52,8 +58,8 @@ describe("app", () => {
 			<App
 				containerId="test"
 				devtoolsLogger={createDevtoolsLogger()}
-				initialUsers={[createUserView(1, "Text A"), createUserView(2, "Text B")]}
-				connectUser={async (id) => createUserView(id, `Text of added user ${id}`)}
+				initialUsers={[createTestUserView("a", "Text A"), createTestUserView("b", "Text B")]}
+				connectUser={async () => createTestUserView("added", "Text of added user")}
 			/>,
 		);
 
@@ -63,11 +69,10 @@ describe("app", () => {
 		assert.match(rendered.baseElement.textContent ?? "", /Text A/);
 		assert.equal(rendered.queryAllByRole("button", { name: /^Remove User/ }).length, 0);
 
-		// Add a user: a new panel appears once the (fake) connection resolves, connected
-		// with a fresh id (3) rather than reusing the removed user's.
+		// Add a user: a new panel appears once the connection resolves.
 		fireEvent.click(rendered.getByRole("button", { name: "+ Add user" }));
 		await rendered.findByText("User 2");
-		assert.match(rendered.baseElement.textContent ?? "", /Text of added user 3/);
+		assert.match(rendered.baseElement.textContent ?? "", /Text of added user/);
 	});
 
 	// TODO: schema compatibility snapshot tests.

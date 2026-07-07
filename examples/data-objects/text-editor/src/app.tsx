@@ -49,15 +49,7 @@ import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/int
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
-import {
-	type CSSProperties,
-	type FC,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from "react";
+import { type CSSProperties, type FC, useCallback, useEffect, useMemo, useState } from "react";
 // eslint-disable-next-line import-x/no-internal-modules
 import { createRoot } from "react-dom/client";
 
@@ -128,22 +120,52 @@ function getConnectionConfig(userId: string): AzureLocalConnectionConfig {
 
 type ViewType = "plainTextarea" | "plainQuill" | "formatted";
 
-// Panel colors are one base hex offset by the panel's left-to-right position, so
-// they're deterministic and identical across browsers (no stored palette).
-const colorForIndex = (index: number): string =>
-	`#${((0x4a90d9 + index * 0x2a1f3c) % 0x1000000).toString(16).padStart(6, "0")}`;
+/**
+ * Colors are derived arithmetically from the index and are identical across browsers without a
+ * stored palette.
+ *
+ * @param index - The index of the user panel
+ * @returns The hex color string for the given index
+ */
+function colorForIndex(index: number): string {
+	return `#${((0x4a90d9 + index * 0x2a1f3c) % 0x1000000).toString(16).padStart(6, "0")}`;
+}
 
 const initialUserCount = 2;
 
-/** One connected user's container + view. `id` is just a stable React key. */
-export interface UserView {
-	id: number;
-	container: IFluidContainer<typeof containerSchema>;
-	treeView: TreeViewAlpha<typeof TextEditorRoot>;
+/**
+ * Identifies one user in this app.
+ *
+ * Serves as the React key for the user's panel, the key for its Devtools registration,
+ * and the user id reported to the Fluid service's audience. Ids are randomly generated
+ * and never reused within a page, so a removed user's id is not given to a later-added
+ * one.
+ */
+type UserId = string;
+
+/**
+ * Generates a fresh {@link UserId}.
+ *
+ * Random so simulated users stay unique in the document's audience even across page
+ * reloads and multiple tabs open on the same document.
+ */
+function makeUserId(): UserId {
+	return Math.random().toString(36).slice(2, 10);
 }
 
-const makeUserId = (id: number): string =>
-	`user${id}-${Math.random().toString(36).slice(2, 6)}`;
+/** One user's connection to the document, as shown in a single panel. */
+export interface UserView {
+	/** Identifies this user using {@link UserId}. */
+	readonly id: UserId;
+	/**
+	 * This user's own container. Held so the app can register it with Devtools and
+	 * dispose it when the panel is removed. Everything the panel renders comes from
+	 * {@link UserView.treeView}.
+	 */
+	readonly container: IFluidContainer<typeof containerSchema>;
+	/** This user's view of the shared text, rendered and edited by the panel. */
+	readonly treeView: TreeViewAlpha<typeof TextEditorRoot>;
+}
 
 /**
  * Devtools registration props for one user's container. Keyed by user id, which is
@@ -204,16 +226,18 @@ async function loadExistingContainer(
 }
 
 /**
- * Connects one user (its own Fluid client) to an existing document.
- * Shared by the initial load and the "Add user" button.
+ * Connects one user (its own Fluid client, under a fresh {@link UserId}) to an
+ * existing document. Shared by the initial load and the "Add user" button.
+ * @param containerId - Identifies the document (Fluid container) to load.
+ * @param devtoolsLogger - Shared logger which routes this client's telemetry to Devtools.
  */
 async function connectUser(
-	id: number,
 	containerId: string,
 	devtoolsLogger: IDevtoolsLogger,
 ): Promise<UserView> {
+	const id = makeUserId();
 	const client = new AzureClient({
-		connection: getConnectionConfig(makeUserId(id)),
+		connection: getConnectionConfig(id),
 		logger: devtoolsLogger,
 	});
 	const { container, treeView } = await loadExistingContainer(client, containerId);
@@ -243,22 +267,28 @@ async function initFluid(): Promise<{
 			);
 		}
 		containerId = rawContainerId;
-		initialUsers.push(await connectUser(1, containerId, devtoolsLogger));
+		initialUsers.push(await connectUser(containerId, devtoolsLogger));
 	} else {
 		// First user creates and attaches the new document.
+		const userId = makeUserId();
 		const client = new AzureClient({
-			connection: getConnectionConfig(makeUserId(1)),
+			connection: getConnectionConfig(userId),
 			logger: devtoolsLogger,
 		});
 		const created = await createAndAttachNewContainer(client);
 		containerId = created.containerId;
 		// eslint-disable-next-line require-atomic-updates
 		location.hash = containerId;
-		initialUsers.push({ id: 1, container: created.container, treeView: created.treeView });
+		initialUsers.push({
+			id: userId,
+			container: created.container,
+			treeView: created.treeView,
+		});
 	}
 
-	for (let id = initialUsers.length + 1; id <= initialUserCount; id++) {
-		initialUsers.push(await connectUser(id, containerId, devtoolsLogger));
+	// Connect the remaining initial users (the first was connected/created above).
+	for (let i = initialUsers.length; i < initialUserCount; i++) {
+		initialUsers.push(await connectUser(containerId, devtoolsLogger));
 	}
 
 	return { containerId, devtoolsLogger, initialUsers };
@@ -505,9 +535,6 @@ export const App: FC<{
 	connectUser?: typeof connectUser;
 }> = ({ containerId, devtoolsLogger, initialUsers, connectUser: connect = connectUser }) => {
 	const [users, setUsers] = useState<UserView[]>(initialUsers);
-	// IDs are never reused: seed past the largest initial id so added users can't
-	// collide with `initialUsers` (React keys and Devtools keys both rely on this).
-	const nextIdRef = useRef(Math.max(0, ...initialUsers.map((user) => user.id)) + 1);
 
 	// Devtools defaults to off and is toggled at runtime (see DevtoolsToggle).
 	const [devtoolsEnabled, setDevtoolsEnabled] = useState(false);
@@ -532,7 +559,7 @@ export const App: FC<{
 	}, [devtoolsEnabled, devtoolsLogger, users]);
 
 	const addUser = useCallback(() => {
-		connect(nextIdRef.current++, containerId, devtoolsLogger)
+		connect(containerId, devtoolsLogger)
 			.then((user) => setUsers((prev) => [...prev, user]))
 			.catch((error: unknown) => console.error("Failed to add user:", error));
 	}, [connect, containerId, devtoolsLogger]);
