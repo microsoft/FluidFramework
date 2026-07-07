@@ -78,6 +78,16 @@ const StringOrBoxArraySchemaConfig = {
 	enableSchemaValidation: true,
 } as const;
 
+class BoxWithASecret extends sf2.object("Box", {
+	value: sf2.optional(sf2.string),
+	secret: sf2.optional(sf2.string),
+}) {}
+const SketchyBoxArray = sf2.array("BoxArray", BoxWithASecret);
+const SketchyBoxArraySchemaConfig = {
+	schema: SketchyBoxArray,
+	enableSchemaValidation: true,
+} as const;
+
 /** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
 const minimizeParams = { postProcessor: minimize } as const;
 
@@ -155,6 +165,11 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>(
  * {@link SharedTreeChange} (whose inserted node contents live in tree chunks that a naive `JSON.stringify` does not
  * traverse), the serialized change fully encodes inserted node values, so tests can assert that transient content
  * (tagged with ☠️) was stripped by inspecting the JSON text.
+ *
+ * Additional work needs to be done to inspect any modifications to detached node content.
+ * Scenarios may need to define other edits to perform that will reattach detached nodes
+ * to the document, so that minimization can be verified to have stripped any extraneous
+ * modifications thereof.
  */
 function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
@@ -744,7 +759,7 @@ describe("transaction minimize post-processor", () => {
 	// These tests only assert the observable end state of the document. Minimization must never change the
 	// observable result of a transaction, so these are expected to PASS regardless of whether minimization is
 	// actually implemented.
-	describe("preserves the observable result", () => {
+	describe("preserves the observable result and new content appears in change", () => {
 		it("keeps inserted nodes", () => {
 			const { view, stringifiedChange } = runScenario(scenarioAThenBInserted);
 			assert.deepEqual([...view.root], ["A❤️", "B❤️"]);
@@ -862,16 +877,75 @@ describe("transaction minimize post-processor", () => {
 	});
 
 	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
-	it("preserves the observable result across an async transaction", async () => {
+	it("preserves the observable result across an async transaction and new content appears in change", async () => {
 		const { view, stringifiedChange } = await runScenarioAsync(scenarioAReplacedByB);
 		assert.deepEqual([...view.root], ["B❤️"]);
 		assert.match(stringifiedChange, someSurvivingMarkerRegex);
 	});
 
+	/**
+	 * Attempts to inject a hidden property using temporary schema change, then reverts to the original schema.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial                 -\> `[Box: { value: "A❤️" }]`
+	 * 1. upgrade schema          -\> `[Box: { value: "A❤️" }]`
+	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A❤️", secret: "B☠️" }]`
+	 * 3. downgrade schema        -\> stored: `[Box: { value: "A❤️", secret: "B☠️" }]  visible: { value: "A❤️" }`
+	 *
+	 * This invariant is independent of minimization, but is critical behavior for
+	 * minimization criteria as minimize only operates on data edits.
+	 */
+	it("temporary schema change throws restoring schema", () => {
+		let scenarioStuffHiddenSecretInBoxReachedSchemaRollback = false;
+
+		assert.throws(() => {
+			const { view, stringifiedChange } = runScenario({
+				schema: BoxArray,
+				initialContent: [new Box({ value: "A❤️" })],
+				apply: (root, tree, view1) => {
+					// Force dispose view to permit upgrade
+					view1.dispose();
+
+					// Update schema which now allows Boxes with secrets in root array.
+					const view2 = tree.viewWith(new TreeViewConfiguration(SketchyBoxArraySchemaConfig));
+					view2.upgradeSchema();
+
+					view2.root[0].secret = "B☠️";
+					view2.dispose();
+
+					// Restore schema which does now allows Boxes with secrets in root array.
+					const view3 = tree.viewWith(
+						new TreeViewConfiguration({
+							schema: BoxArray,
+							enableSchemaValidation: true,
+						}),
+					);
+					assert(view3 instanceof SchematizingSimpleTreeView);
+					scenarioStuffHiddenSecretInBoxReachedSchemaRollback = true;
+					view3.upgradeSchema();
+
+					return view3;
+				},
+			} as const satisfies BoxArrayScenario);
+			assert.equal(
+				// @ts-expect-error -- Property 'secret' does not exist on type 'Box'.
+				view.root[0].secret,
+				"B☠️",
+			);
+			assert.match(stringifiedChange, transientMarkerRegex);
+		}, /Existing stored schema cannot be upgraded/);
+
+		assert(
+			scenarioStuffHiddenSecretInBoxReachedSchemaRollback,
+			"scenario did not reach schema rollback step",
+		);
+	});
+
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
-	describe.skip("removes extraneous data from the squashed change (expected to fail until minimize is implemented)", () => {
+	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
 			const { view, stringifiedChange } = runScenario(scenarioAAddedThenRemoved);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
