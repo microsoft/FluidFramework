@@ -133,7 +133,6 @@ export class ContainerContext
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
-	public readonly updateStagedChangesState: (hasStagedChanges: boolean) => void;
 	public readonly getAbsoluteUrl: (relativeUrl: string) => Promise<string | undefined>;
 	public readonly clientDetails: IClientDetails;
 	public readonly existing: boolean;
@@ -193,7 +192,6 @@ export class ContainerContext
 		this.disposeFn = config.disposeFn;
 		this.closeFn = config.closeFn;
 		this.updateDirtyContainerState = config.updateDirtyContainerState;
-		this.updateStagedChangesState = config.updateStagedChangesState;
 		this.getAbsoluteUrl = config.getAbsoluteUrl;
 		this.clientDetails = config.clientDetails;
 		this.existing = config.existing;

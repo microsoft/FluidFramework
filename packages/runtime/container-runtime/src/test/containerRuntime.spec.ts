@@ -291,7 +291,6 @@ describe("Runtime", () => {
 			clientDetails: { capabilities: { interactive: true } },
 			closeFn: (_error?: ICriticalContainerError): void => {},
 			updateDirtyContainerState: (_dirty: boolean) => {},
-			updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 			getLoadedFromVersion: () => loadedFromVersion,
 			submitFn: (
 				_type: MessageType,
@@ -725,7 +724,6 @@ describe("Runtime", () => {
 								}
 							},
 							updateDirtyContainerState: (_dirty: boolean) => {},
-							updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 							submitFn: (
 								_type: MessageType,
 								// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -978,7 +976,6 @@ describe("Runtime", () => {
 							return ++submittedOpsCount; // clientSequenceNumber
 						},
 						updateDirtyContainerState: (dirty: boolean) => {},
-						updateStagedChangesState: (hasStagedChanges: boolean) => {},
 						getLoadedFromVersion: () => undefined,
 					});
 
@@ -1116,7 +1113,6 @@ describe("Runtime", () => {
 					taggedLogger: new MockLogger(),
 					clientDetails: { capabilities: { interactive: true } },
 					updateDirtyContainerState: (_dirty: boolean) => {},
-					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
 					getLoadedFromVersion: () => undefined,
@@ -1208,7 +1204,6 @@ describe("Runtime", () => {
 					taggedLogger: new MockLogger(),
 					clientDetails: { capabilities: { interactive: true } },
 					updateDirtyContainerState: (_dirty: boolean) => {},
-					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					attachState,
 					pendingLocalState: addPendingMsg ? pendingState : undefined,
 					getLoadedFromVersion: () => undefined,
@@ -1226,11 +1221,7 @@ describe("Runtime", () => {
 				for (const addPendingMsg of [false, true]) {
 					it(`should NOT be set to have staged changes when loaded (attachState=${AttachState[attachState]}, pendingOps=${addPendingMsg})`, async () => {
 						const mockContext = createMockContext(attachState, addPendingMsg);
-						const updateStagedChangesStateStub = sandbox.stub(
-							mockContext,
-							"updateStagedChangesState",
-						);
-						await ContainerRuntime.loadRuntime2({
+						const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 							context: mockContext as IContainerContext,
 							registry: new FluidDataStoreRegistry([]),
 							existing: false,
@@ -1238,8 +1229,7 @@ describe("Runtime", () => {
 							containerScope: {},
 							provideEntryPoint: mockProvideEntryPoint,
 						});
-						assert.deepStrictEqual(updateStagedChangesStateStub.calledOnce, true);
-						assert.deepStrictEqual(updateStagedChangesStateStub.args, [[false]]);
+						assert.deepStrictEqual(containerRuntime.hasStagedChanges, false);
 					});
 				}
 			}
@@ -1267,7 +1257,6 @@ describe("Runtime", () => {
 						}
 					},
 					updateDirtyContainerState: (_dirty: boolean) => {},
-					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					getLoadedFromVersion: () => undefined,
 				};
 			};
@@ -1990,7 +1979,6 @@ describe("Runtime", () => {
 					clientDetails: { capabilities: { interactive: true } },
 					closeFn: (_error?: ICriticalContainerError): void => {},
 					updateDirtyContainerState: (_dirty: boolean) => {},
-					updateStagedChangesState: (_hasStagedChanges: boolean) => {},
 					getLoadedFromVersion: () => undefined,
 				};
 			};

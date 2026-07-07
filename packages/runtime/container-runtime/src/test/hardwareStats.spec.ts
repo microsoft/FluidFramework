@@ -51,7 +51,6 @@ describe("Hardware Stats", () => {
 		taggedLogger: mockLogger,
 		clientDetails: { capabilities: { interactive: true } },
 		updateDirtyContainerState: (dirty: boolean) => {},
-		updateStagedChangesState: (hasStagedChanges: boolean) => {},
 		getLoadedFromVersion: () => undefined,
 	};
 
@@ -98,7 +97,6 @@ describe("Hardware Stats", () => {
 			taggedLogger: mockLogger,
 			clientDetails: { capabilities: { interactive: true } },
 			updateDirtyContainerState: (dirty: boolean) => {},
-			updateStagedChangesState: (hasStagedChanges: boolean) => {},
 			getLoadedFromVersion: () => undefined,
 		};
 	});

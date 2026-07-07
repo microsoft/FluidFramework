@@ -1778,9 +1778,6 @@ export class ContainerRuntime
 		// customer should observe dirty state on the runtime (the owner of dirty state) directly, rather than on the IContainer.
 		this.on("dirty", () => context.updateDirtyContainerState(true));
 		this.on("saved", () => context.updateDirtyContainerState(false));
-		this.on("hasStagedChangesChanged", (hasStagedChanges) =>
-			context.updateStagedChangesState(hasStagedChanges),
-		);
 
 		// Telemetry for when the container is attached and subsequently saved for the first time.
 		// These events are useful for investigating the validity of container "saved" eventing upon attach.
@@ -2202,7 +2199,6 @@ export class ContainerRuntime
 
 		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
-		context.updateStagedChangesState(this.lastEmittedHasStagedChanges);
 
 		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
 		// so we should flush now to clear the way for the next ops.

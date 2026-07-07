@@ -49,16 +49,6 @@ export interface IContainerRuntimeEvents
 		ISummarizerEvents {
 	(event: "dirty" | "disconnected" | "saved" | "attached", listener: () => void);
 	(event: "connected", listener: (clientId: string) => void);
-
-	/**
-	 * Emitted when {@link IContainerRuntime.hasStagedChanges} changes value, i.e. when staged changes
-	 * (submitted while in Staging Mode) are first introduced, or when they are all discarded or committed.
-	 *
-	 * Listener parameters:
-	 *
-	 * - `hasStagedChanges`: The new value of {@link IContainerRuntime.hasStagedChanges}.
-	 */
-	(event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void);
 }
 
 /**
@@ -205,15 +195,6 @@ export interface IContainerRuntime
 	 * either were not sent out to delta stream or were not yet acknowledged.
 	 */
 	readonly isDirty: boolean;
-
-	/**
-	 * Returns true if there are any staged changes, i.e. changes submitted while in Staging Mode that have
-	 * not yet been discarded or committed.
-	 *
-	 * @remarks This is distinct from {@link IContainerRuntime.isDirty}: a container may be dirty due to
-	 * ordinary unacknowledged local changes without having any staged changes, and vice versa.
-	 */
-	readonly hasStagedChanges: boolean;
 
 	/**
 	 * Get an absolute url for a provided container-relative request.

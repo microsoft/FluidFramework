@@ -169,7 +169,6 @@ const detachedContainerRefSeqNumber = 0;
 
 const dirtyContainerEvent = "dirty";
 const savedContainerEvent = "saved";
-const hasStagedChangesChangedContainerEvent = "hasStagedChangesChanged";
 
 const packageNotFactoryError = "Code package does not implement IRuntimeFactory";
 
@@ -559,7 +558,6 @@ export class Container
 	private readonly connectionTransitionTimes: number[] = [];
 	private _loadedFromVersion: IVersion | undefined;
 	private _dirtyContainer = false;
-	private _hasStagedChanges = false;
 	private attachmentData: AttachmentData = { state: AttachState.Detached };
 	private readonly serializedStateManager: SerializedStateManager;
 	private readonly _containerId: string;
@@ -688,17 +686,6 @@ export class Container
 	 */
 	public get isDirty(): boolean {
 		return this._dirtyContainer;
-	}
-
-	/**
-	 * Returns true if there are any staged changes, i.e. changes submitted while the container runtime was
-	 * in Staging Mode that have not yet been discarded or committed.
-	 *
-	 * @remarks This is distinct from {@link Container.isDirty}: a container may be dirty due to ordinary
-	 * unacknowledged local changes without having any staged changes, and vice versa.
-	 */
-	public get hasStagedChanges(): boolean {
-		return this._hasStagedChanges;
 	}
 
 	/**
@@ -2459,7 +2446,6 @@ export class Container
 				disposeFn: (error?: ICriticalContainerError) => this.dispose(error),
 				closeFn: (error?: ICriticalContainerError) => this.close(error),
 				updateDirtyContainerState: this.updateDirtyContainerState,
-				updateStagedChangesState: this.updateStagedChangesState,
 				getAbsoluteUrl: this.getAbsoluteUrl,
 				getContainerDiagnosticId: () => this.resolvedUrl?.id,
 				getClientId: () => this.clientId,
@@ -2498,14 +2484,6 @@ export class Container
 		}
 		this._dirtyContainer = dirty;
 		this.emit(dirty ? dirtyContainerEvent : savedContainerEvent);
-	};
-
-	private readonly updateStagedChangesState = (hasStagedChanges: boolean): void => {
-		if (this._hasStagedChanges === hasStagedChanges) {
-			return;
-		}
-		this._hasStagedChanges = hasStagedChanges;
-		this.emit(hasStagedChangesChangedContainerEvent, hasStagedChanges);
 	};
 
 	/**

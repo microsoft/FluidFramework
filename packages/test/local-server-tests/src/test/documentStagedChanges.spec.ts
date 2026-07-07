@@ -27,8 +27,8 @@ import {
 	TestFluidObjectFactory,
 } from "@fluidframework/test-utils/internal";
 
-// enterStagingMode/commitChanges/discardChanges are exposed on the (legacy, beta) IContainerRuntimeBase,
-// which is what a data store context's `containerRuntime` is typed as.
+// enterStagingMode/commitChanges/discardChanges/hasStagedChanges are exposed on the (legacy, beta)
+// IContainerRuntimeBase, which is what a data store context's `containerRuntime` is typed as.
 type IContainerRuntime_WithHasStagedChanges = IContainerRuntime & IContainerRuntimeBase;
 
 describe("Document Staged Changes", () => {
@@ -48,8 +48,6 @@ describe("Document Staged Changes", () => {
 	let sharedMap: ISharedMap;
 	let wasMarkedStagedRuntimeCount: number;
 	let wasMarkedUnstagedRuntimeCount: number;
-	let wasMarkedStagedContainerCount: number;
-	let wasMarkedUnstagedContainerCount: number;
 
 	/**
 	 * Increments the appropriate count when the "hasStagedChangesChanged" event is fired
@@ -67,19 +65,6 @@ describe("Document Staged Changes", () => {
 				"hasStagedChanges should match the event payload when the handler runs",
 			);
 		});
-
-		container.on("hasStagedChangesChanged", (hasStagedChanges) => {
-			if (hasStagedChanges) {
-				wasMarkedStagedContainerCount += 1;
-			} else {
-				wasMarkedUnstagedContainerCount += 1;
-			}
-			assert.equal(
-				container.hasStagedChanges,
-				hasStagedChanges,
-				"container.hasStagedChanges should match the event payload when the handler runs",
-			);
-		});
 	}
 
 	function checkStagedChangesState(
@@ -94,11 +79,6 @@ describe("Document Staged Changes", () => {
 			`Runtime hasStagedChanges not expected ${when}`,
 		);
 		assert.equal(
-			container.hasStagedChanges,
-			expectedHasStagedChanges,
-			`Container hasStagedChanges not expected ${when}`,
-		);
-		assert.equal(
 			wasMarkedStagedRuntimeCount,
 			expectedStagedCount,
 			`Runtime "staged" transition count not expected ${when}`,
@@ -107,16 +87,6 @@ describe("Document Staged Changes", () => {
 			wasMarkedUnstagedRuntimeCount,
 			expectedUnstagedCount,
 			`Runtime "unstaged" transition count not expected ${when}`,
-		);
-		assert.equal(
-			wasMarkedStagedContainerCount,
-			expectedStagedCount,
-			`Container "staged" transition count not expected ${when}`,
-		);
-		assert.equal(
-			wasMarkedUnstagedContainerCount,
-			expectedUnstagedCount,
-			`Container "unstaged" transition count not expected ${when}`,
 		);
 	}
 
@@ -171,8 +141,6 @@ describe("Document Staged Changes", () => {
 
 		wasMarkedStagedRuntimeCount = 0;
 		wasMarkedUnstagedRuntimeCount = 0;
-		wasMarkedStagedContainerCount = 0;
-		wasMarkedUnstagedContainerCount = 0;
 
 		registerHasStagedChangesChangedHandlers();
 	});

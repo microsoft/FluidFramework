@@ -139,7 +139,6 @@ class MockContext implements IContainerContext {
 	public readonly taggedLogger = new MockLogger();
 
 	public readonly updateDirtyContainerState = (): void => {};
-	public readonly updateStagedChangesState = (): void => {};
 	public readonly getLoadedFromVersion = (): undefined => undefined;
 	public readonly submitBatchFn = (): number => 1;
 	public readonly submitSummaryFn = (): number => 1;
