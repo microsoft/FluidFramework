@@ -8,7 +8,7 @@ const path = require("path");
 const { merge } = require("webpack-merge");
 
 module.exports = (env) => {
-	const { production, view = "quill" } = env;
+	const { production } = env;
 
 	return merge(
 		{
