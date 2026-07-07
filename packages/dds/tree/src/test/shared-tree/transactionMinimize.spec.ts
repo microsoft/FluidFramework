@@ -267,6 +267,7 @@ function runBoxArrayScenario(scenario: BoxArrayScenario): {
  * Inserts "A❤️" at the end of the root.
  * @remarks
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️" -\> `["A❤️"]`
  */
 const scenarioAInserted = {
@@ -280,6 +281,7 @@ const scenarioAInserted = {
  * Inserts "A❤️" then "B❤️" at the end of the root.
  * @remarks
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️" -\> `["A❤️"]`
  * 2. insert "B❤️" -\> `["A❤️", "B❤️"]`
  */
@@ -295,6 +297,7 @@ const scenarioAThenBInserted = {
  * Inserts "A☠️" and then removes it, leaving the root empty.
  * @remarks
  * Steps (root state shown after each):
+ *
  * 1. insert "A☠️" -\> `["A☠️"]`
  * 2. remove at 0  -\> `[]`
  */
@@ -310,6 +313,7 @@ const scenarioAAddedThenRemoved = {
  * Inserts "A❤️" (which persists) and a transient "B☠️" that is removed within the same transaction.
  * @remarks
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️"  -\> `["A❤️"]`
  * 2. insert "B☠️"  -\> `["A❤️", "B☠️"]`
  * 3. remove at 1   -\> `["A❤️"]`
@@ -327,6 +331,7 @@ const scenarioAKeptAndBTransient = {
  * Inserts "A☠️", then inserts "B❤️" at the end, then removes "A☠️", so only "B❤️" remains.
  * @remarks
  * Steps (root state shown after each):
+ *
  * 1. insert "A☠️"  -\> `["A☠️"]`
  * 2. insert "B❤️"  -\> `["A☠️", "B❤️"]`
  * 3. remove at 0   -\> `["B❤️"]`
@@ -348,6 +353,7 @@ const scenarioAReplacedByB = {
  * inserted and then removed after being moved within the same transaction.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A☠️"          -\> `["A☠️"]`
  * 2. insert "B❤️" at start -\> `["B❤️", "A☠️"]`
  * 3. remove at 1           -\> `["B❤️"]`
@@ -367,6 +373,7 @@ const scenarioBInsertedBeforeAThenARemoved = {
  * "B☠️" is built and then removed in the same transaction, so its build is extraneous; only "A❤️" and "C❤️" survive.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
  * 2. remove at 1                 -\> `["A❤️", "C❤️"]`
  */
@@ -384,6 +391,7 @@ const scenarioAbcInsertedThenBRemoved = {
  * All three nodes survive the transaction (only their order changes), so both builds are expected to remain.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️"         -\> `["A❤️"]`
  * 2. insert "B❤️", "C❤️"  -\> `["A❤️", "B❤️", "C❤️"]`
  * 3. move "C❤️" to start  -\> `["C❤️", "A❤️", "B❤️"]`
@@ -404,6 +412,7 @@ const scenarioAThenBCInsertedThenRearranged = {
  * extraneous; only "A❤️" and "C❤️" survive.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
  * 2. move "B☠️" to start        -\> `["B☠️", "A❤️", "C❤️"]`
  * 3. remove at 0                -\> `["A❤️", "C❤️"]`
@@ -424,6 +433,7 @@ const scenarioABCInsertedThenBMovedThenRemoved = {
  * their builds and moves are extraneous; only "C❤️" survives.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A☠️", "B☠️", "C❤️" -\> `["A☠️", "B☠️", "C❤️"]`
  * 2. move "B☠️" to start        -\> `["B☠️", "A☠️", "C❤️"]`
  * 3. remove range [0, 2)        -\> `["C❤️"]`
@@ -444,6 +454,7 @@ const scenarioABCInsertedThenBMovedThenBAndARemoved = {
  * their builds and moves are extraneous; only "A❤️" survives.
  *
  * Steps (root state shown after each):
+ *
  * 1. insert "A❤️", "B☠️", "C☠️" -\> `["A❤️", "B☠️", "C☠️"]`
  * 2. move "B☠️" to start         -\> `["B☠️", "A❤️", "C☠️"]`
  * 3. remove at 2                 -\> `["B☠️", "A❤️"]`
@@ -468,6 +479,7 @@ const scenarioABCInsertedThenBMovedThenCAndBRemoved = {
  * leaving zero builds.
  *
  * Steps (root state shown after each):
+ *
  * 0. initial      -\> `["X", "Y"]`
  * 1. insert "A☠️" -\> `["X", "A☠️", "Y"]`
  * 2. remove at 1  -\> `["X", "Y"]`
@@ -488,6 +500,7 @@ const scenarioPreExistingContentAndTransientInsert = {
  * "B❤️" survives, so exactly one build should remain.
  *
  * Steps (root state shown after each):
+ *
  * 0. initial              -\> `["X"]`
  * 1. insert "A☠️", "B❤️" -\> `["X", "A☠️", "B❤️"]`
  * 2. remove at 1          -\> `["X", "B❤️"]`
@@ -507,6 +520,7 @@ const scenarioPreExistingContentAndSurvivingInsert = {
  * No nodes are created by this transaction (only existing nodes are moved), so the change should carry no builds.
  *
  * Steps (root state shown after each):
+ *
  * 0. initial           -\> `["X", "Y", "Z"]`
  * 1. move "Z" to start -\> `["Z", "X", "Y"]`
  */
@@ -523,6 +537,7 @@ const scenarioPreExistingContentRearranged = {
  * No nodes are created by this transaction (only an existing node is removed), so the change should carry no builds.
  *
  * Steps (root state shown after each):
+ *
  * 0. initial    -\> `["X", "Y", "Z"]`
  * 1. remove "Y" -\> `["X", "Z"]`
  */
@@ -541,6 +556,7 @@ const scenarioPreExistingContentRemoved = {
  * Starts from a single {@link Box} with no value, then sets its `value` field twice.
  * @remarks
  * Steps:
+ *
  * 0. initial      -\> `[Box: undefined]`
  * 1. set to "x☠️" -\> `[Box: "x☠️"]`
  * 2. set to "y❤️" -\> `[Box: "y❤️"]`
@@ -557,6 +573,7 @@ const scenarioBoxValueSetTwice = {
  * Starts from a single {@link Box} with no value, sets its `value` field, then removes the box.
  * @remarks
  * Steps:
+ *
  * 0. initial      -\> `[Box: undefined]`
  * 1. set to "x☠️" -\> `[Box: "x☠️"]`
  * 2. remove box   -\> `[]`
