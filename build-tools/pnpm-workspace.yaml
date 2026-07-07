@@ -47,3 +47,103 @@ trustPolicyExclude:
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+linkWorkspacePackages: true
+strictPeerDependencies: true
+updateNotifier: false
+
+# pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every `pnpm run <script>`.
+# That breaks CI flows that modifies versions via `flub bump` then runs script like `pnpm run format`.
+# We may want to enable this in the future, but doing so requires changes to the pipelines, so we restore the pnpm 10 defaults for now.
+verifyDepsBeforeRun: false
+
+# Use the number of cores on the machine by default.
+workspaceConcurrency: 0
+
+peerDependencyRules:
+  # @types/node is only needed for compilation and not needed at runtime.
+  # oclif includes some AWS-related features, but we don't use them.
+  ignoreMissing:
+    - '@types/node'
+    - '@aws-sdk/*'
+
+overrides:
+  # commitizen@4.3.1 (latest/final) pins lodash to exactly 4.17.21.
+  # Override to allow resolution to a newer patched version.
+  lodash: ^4.18.1
+
+  # @types/glob@7.x uses minimatch.IOptions/IMinimatch interfaces.
+  # Force @types/minimatch@5 which still includes these legacy definitions.
+  '@types/glob>@types/minimatch': ~5.1.2
+
+  # Resolve known ReDoS vulnerabilities in diff.
+  diff@>=4 <5: ^4.0.4
+  diff@>=7 <8: ^8.0.3
+  diff@>=8 <9: ^8.0.3
+
+  # Keep a single @types/node version to avoid duplicate oclif dependency trees.
+  '@types/node': ~22.19.17
+
+  # jssm-viz-cli brings in ESLint 8.x transitively; force ESLint 9.x workspace-wide.
+  eslint: ~9.39.2
+
+  json5@<1.0.2: ^1.0.2
+  json5@>=2.0.0 <2.2.2: ^2.2.2
+
+  # mdast-util-gfm@3.1.0 imports ToMarkdownOptions from mdast-util-gfm-footnote;
+  # version 2.0.0 does not export it, so pin to a fixed version.
+  mdast-util-gfm-footnote: ^2.1.0
+
+  # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+
+  jws: ^3.2.3
+
+  # Fix unsanitized class-attribute injection vulnerability.
+  mdast-util-to-hast: ^13.2.1
+
+  # oclif includes AWS features we do not use; drop to reduce lockfile churn.
+  oclif>@aws-sdk/client-cloudfront: '-'
+  oclif>@aws-sdk/client-s3: '-'
+
+  # Resolve known vulnerabilities in older versions.
+  qs: ^6.15.0
+
+  # Resolve a Component Governance alert.
+  simple-git: ^3.32.3
+
+  sharp: ^0.34.5
+
+  # Resolve multiple tar vulnerabilities; 6.x line is EOL with no backports.
+  tar: ^7.5.11
+
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+
+  # Resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists.
+  serialize-javascript@>=6 <7: ^7.0.4
+
+  # Resolve known vulnerabilities in picomatch.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+updateConfig:
+  ignoreDependencies:
+    - latest-version
+    - read-pkg-up
+    - type-fest
+    - typescript
+
+allowBuilds:
+  '@biomejs/biome': true
+  core-js: true
+  es5-ext: true
+  sharp: true
+  unrs-resolver: true

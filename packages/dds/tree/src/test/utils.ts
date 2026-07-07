@@ -119,6 +119,8 @@ import {
 	type FieldKindIdentifier,
 	type TreeNodeSchemaIdentifier,
 	type TreeFieldStoredSchema,
+	type SchemaAndPolicy,
+	RevertibleStatus,
 } from "../core/index.js";
 import { FormatValidatorBasic } from "../external-utilities/index.js";
 import {
@@ -145,6 +147,11 @@ import {
 	type FullSchemaPolicy,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	FieldBatchDecodingContext,
+	type FieldBatchEncodingContext,
+	type IncrementalEncoder,
+	type IncrementalDecoder,
+	TreeCompressionStrategy,
 } from "../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FieldChangeDelta } from "../feature-libraries/modular-schema/index.js";
@@ -171,8 +178,8 @@ import {
 	type ForestType,
 	ForestTypeReference,
 	type SharedTreeOptionsInternal,
+	type TreeTransactor,
 } from "../shared-tree/index.js";
-import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -1360,10 +1367,14 @@ export function createTestUndoRedoStacks(
 	const unsubscribe = (): void => {
 		unsubscribeFromChangedEvent();
 		for (const revertible of undoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 		for (const revertible of redoStack) {
-			revertible.dispose();
+			if (revertible.status !== RevertibleStatus.Disposed) {
+				revertible.dispose();
+			}
 		}
 	};
 	return { undoStack, redoStack, unsubscribe };
@@ -1382,6 +1393,57 @@ export function mintRevisionTag(): RevisionTag {
 }
 
 export const testRevisionTagCodec = new RevisionTagCodec(testIdCompressor);
+
+/**
+ * Constructs a matched encode/decode context pair for {@link FieldBatchCodec}
+ * tests. When `isSummary` is true the decode side is built with
+ * {@link FieldBatchDecodingContext.forSummary} (heal-aware, originatorless);
+ * otherwise it uses {@link FieldBatchDecodingContext.forOp}.
+ */
+export function makeTestFieldBatchContexts(opts: {
+	readonly encodeType: TreeCompressionStrategy;
+	readonly isSummary?: boolean;
+	readonly idCompressor?: IIdCompressor;
+	readonly originatorId?: SessionId;
+	readonly schema?: SchemaAndPolicy;
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+	readonly sharedObjectId?: string;
+	readonly incrementalEncoder?: IncrementalEncoder;
+	readonly incrementalDecoder?: IncrementalDecoder;
+}): {
+	readonly encode: FieldBatchEncodingContext;
+	readonly decode: FieldBatchDecodingContext;
+} {
+	const idCompressor = opts.idCompressor ?? testIdCompressor;
+	const isSummary = opts.isSummary ?? false;
+	return {
+		encode: {
+			encodeType: opts.encodeType,
+			idCompressor,
+			isSummary,
+			schema: opts.schema,
+			incrementalEncoder: opts.incrementalEncoder,
+		},
+		decode: isSummary
+			? (() => {
+					const summary = FieldBatchDecodingContext.forSummary({
+						idCompressor,
+						healing:
+							opts.healUnresolvableIdentifiersOnDecode === true &&
+							opts.sharedObjectId !== undefined
+								? { sharedObjectId: opts.sharedObjectId }
+								: undefined,
+					});
+					return opts.incrementalDecoder === undefined
+						? summary
+						: summary.withIncrementalDecoder(opts.incrementalDecoder);
+				})()
+			: FieldBatchDecodingContext.forOp({
+					idCompressor,
+					originatorId: opts.originatorId ?? idCompressor.localSessionId,
+				}),
+	};
+}
 
 /**
  * Given the TreeViewConfiguration, returns an uninitialized view.
@@ -1468,7 +1530,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {
@@ -1507,7 +1569,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		throw new Error("Method 'getRebaseChanges' not implemented in MockTreeCheckout.");
 	}
 	public isMissingEditsFrom(branch: unknown): never {
-		throw new Error("Method 'hasNewEdits' not implemented in MockTreeCheckout.");
+		throw new Error("Method 'isMissingEditsFrom' not implemented in MockTreeCheckout.");
 	}
 	public dispose(): void {
 		throw new Error("Method 'dispose' not implemented in MockTreeCheckout.");

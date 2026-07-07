@@ -207,7 +207,7 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 		if (messageEnvelope.type === MessageType.Operation) {
 			const op = messageContent.contents as IClaimOperation<T>;
 
-			assert(op.type === "claim", "Claims: unexpected op type");
+			assert(op.type === "claim", 0xd02 /* Claims: unexpected op type */);
 
 			const entry = this.claims.get(op.key);
 			// Accept if the key is unclaimed (trySetClaim) or if the caller's
@@ -286,7 +286,7 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 	 */
 	protected rollback(content: unknown, _localOpMetadata: unknown): void {
 		const op = content as IClaimOperation<T>;
-		assert(op.type === "claim", "Claims: unexpected op type in rollback");
+		assert(op.type === "claim", 0xd03 /* Claims: unexpected op type in rollback */);
 		const pending = this.pendingClaims.get(op.key);
 		if (pending === undefined) {
 			return;
@@ -297,7 +297,7 @@ export class Claims<T = unknown> extends SharedObject implements IClaims<T> {
 
 	protected applyStashedOp(content: unknown): void {
 		const op = content as IClaimOperation<T>;
-		assert(op.type === "claim", "Claims: only claim ops should be stashed");
+		assert(op.type === "claim", 0xd04 /* Claims: only claim ops should be stashed */);
 		// Track stashed ops as pending so the key is guarded against duplicate
 		// trySetClaim/compareAndSetClaim calls and handles are visited by GC.
 		// No external caller awaits this promise, so resolve is a no-op.

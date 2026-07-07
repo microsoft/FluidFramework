@@ -165,3 +165,18 @@ export {
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
+
+export {
+	type OriginatorlessEncodedId,
+	type OriginatorDependentEncodedId,
+	type IdentifierHealingConfig,
+	EncodedIdType,
+	encodePossiblyCompressedId,
+	type IdEncodingContext,
+	type EncodedId,
+	decodeOriginatorlessEncodedId,
+	decodeEncodedIdWithOriginator,
+	tryDecodeEncodedIdWithoutSession,
+	forceDecodeEncodedIdWithoutSession,
+	decompressIdentifierIfNeeded,
+} from "./compressedIds.js";

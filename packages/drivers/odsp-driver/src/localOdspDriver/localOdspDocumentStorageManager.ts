@@ -7,7 +7,6 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	ISnapshot,
-	ISnapshotFetchOptions,
 	ISummaryContext,
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
@@ -66,7 +65,7 @@ export class LocalOdspDocumentStorageService extends OdspDocumentStorageServiceB
 		return this.getSnapshotVersion();
 	}
 
-	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+	public async getSnapshot(): Promise<ISnapshot> {
 		this.throwUsageError("getSnapshot");
 	}
 

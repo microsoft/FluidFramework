@@ -1,5 +1,114 @@
 # fluid-framework
 
+## 2.111.0
+
+### Minor Changes
+
+- Add an opt-in postProcessor option when running a transaction ([#27610](https://github.com/microsoft/FluidFramework/pull/27610)) [ee981100f3f](https://github.com/microsoft/FluidFramework/commit/ee981100f3fa5fb9b5ea26b9ef62efa7e0691b69)
+
+  `RunTransactionParams` now accepts an optional `postProcessor` (used by `runTransaction` and `runTransactionAsync`). When supplied, the edits made during the transaction are post-processed when the transaction is committed, transforming the resulting squashed change. For example, post-processing could be used to "minimize" the change so that it contains no extraneous information. Such extraneous information includes data for nodes that were both created and removed within the transaction, or changes whose effects cancel out to nothing.
+
+  `postProcessor` is a type-erased handle (`TransactionPostProcessor`) whose concrete representation is an implementation detail of `@fluidframework/tree`. It is opt-in: when it is omitted the existing behavior is preserved.
+
+  Note: minimization is the first intended implementation and use of post-processing, but it is not yet available.
+
+- TreeView transaction APIs have been promoted to beta ([#27592](https://github.com/microsoft/FluidFramework/pull/27592)) [1ed11dbeddd](https://github.com/microsoft/FluidFramework/commit/1ed11dbeddd98fd0b788aad6f74b6d480249ce28)
+
+  The [TreeViewBeta](https://fluidframework.com/docs/api/fluid-framework/treeviewbeta-interface) interface exposes `runTransaction` and `runTransactionAsync` methods.
+
+  The [asBeta](https://fluidframework.com/docs/api/fluid-framework/#asbeta-function) helper function can be used to down-cast a `TreeView` to a `TreeViewBeta`.
+
+  ```typescript
+  import { asBeta } from "fluid-framework/beta";
+  // ...
+  const view = asBeta(tree.viewWith(config));
+  const result = view.runTransaction(() => {
+    // ... make edits to the tree ...
+  });
+  if (result.success === false) {
+    // ... handle the failed transaction ...
+  }
+  ```
+
+  > [!IMPORTANT]
+  > Transaction constraints are not yet available as a part of the beta transaction APIs.
+  > These capabilities can still be accessed via the updated alpha APIs.
+
+  **Type Name Changes**
+
+  With the introduction of new beta types, existing alpha types have been replaced with new alpha and beta variants.
+
+  | Old                             | New Alpha                            | New Beta                            |
+  | ------------------------------- | ------------------------------------ | ----------------------------------- |
+  | `RunTransactionParams`          | `RunTransactionParamsAlpha`          | `RunTransactionParamsBeta`          |
+  | `TransactionCallbackStatus`     | `TransactionCallbackStatusAlpha`     | `TransactionCallbackStatusBeta`     |
+  | `VoidTransactionCallbackStatus` | `VoidTransactionCallbackStatusAlpha` | `VoidTransactionCallbackStatusBeta` |
+
+  **Other Renames**
+  - `TransactionResult` (alpha) -> `TransactionVoidResult` (beta)
+  - `TransactionResultExt` (alpha) -> `TransactionValueResult` (beta)
+
+## 2.110.0
+
+### Minor Changes
+
+- TreeBranchAlpha.isMissingEditsFrom ([#27583](https://github.com/microsoft/FluidFramework/pull/27583)) [ef92f1f1cd8](https://github.com/microsoft/FluidFramework/commit/ef92f1f1cd880ed361e9f8efa49fb23c4ee64ca3)
+
+  Adds a new method (`isMissingEditsFrom(branch: TreeBranch): boolean`) to `TreeBranchAlpha`.
+  `isMissingEditsFrom` can be used to determine whether there are edits on the given `branch` that have not yet been merged into this branch.
+
+- Forks created on "changed" event are no longer auto-disposed ([#27580](https://github.com/microsoft/FluidFramework/pull/27580)) [ae64be7688e](https://github.com/microsoft/FluidFramework/commit/ae64be7688e26da9bfc5c0286e50d3df0647ff3a)
+
+  The "changed" event is emitted from a `TreeBranch` when a change is made to the branch.
+  Previously, when this event was fired due to a transaction being committed, it was possible to fork the branch in response to the "changed" event, but such a fork would be automatically disposed immediately after the event callback.
+  This was a bug. Such forks are no longer disposed automatically.
+
+- Editing a SharedTree during its change-event callbacks now consistently throws ([#27285](https://github.com/microsoft/FluidFramework/pull/27285)) [255d4505ed5](https://github.com/microsoft/FluidFramework/commit/255d4505ed574676735c6f2078199e5b29dede2a)
+
+  Editing a `SharedTree` from inside one of its change-event callbacks has always been forbidden, but some paths were not being caught: edits and the start of a transaction (along with branch operations, reverts, etc.) made while the tree was emitting its post-change notification ran to completion instead of throwing.
+
+  Such edits would apply to the tree, trigger further change notifications, and could re-enter the same listener for the resulting commits.
+  This can produce infinite edit loops, redundant work across clients, incorrect attribution, broken undo/redo grouping, and pollution of the outer commit's label data.
+
+  This release closes those gaps: both editing the tree and starting a transaction during a change-event callback now throw the same canonical `UsageError` as the other change-event callbacks:
+
+  > Editing the tree is forbidden during a change event callback
+
+  > Running a transaction is forbidden during a change event callback
+
+  More generally, edits should not be made in response to changes to the document.
+  See [Editing in response to change events](https://fluidframework.com/docs/data-structures/tree/events#editing-in-response-to-change-events) for why, and for the recommended alternatives.
+
+- TableSchema (beta) methods now accept positional arguments ([#27545](https://github.com/microsoft/FluidFramework/pull/27545)) [e121ff71f3e](https://github.com/microsoft/FluidFramework/commit/e121ff71f3ebed80c656315486933fe2d6859b32)
+
+  The `insertColumns`, `insertRows`, `setCell`, and `removeCell` methods on `TableSchema.Table` now accept positional arguments in addition to the existing property-bag form.
+  The new overloads remove a layer of object construction at call sites and make the common cases more concise.
+
+  The existing property-bag overloads continue to work but are now deprecated.
+  They will be removed in a future release.
+
+  #### Migration
+
+  ```typescript
+  // ...
+
+  // Before
+  table.insertColumns({ columns: [columnA, columnB] });
+  table.insertColumns({ index: 0, columns: [columnA] });
+  table.insertRows({ rows: [rowA, rowB] });
+  table.insertRows({ index: 0, rows: [rowA] });
+  table.setCell({ key: { column, row }, cell });
+  table.removeCell({ column, row });
+
+  // After
+  table.insertColumns([columnA, columnB]);
+  table.insertColumns([columnA], 0);
+  table.insertRows([rowA, rowB]);
+  table.insertRows([rowA], 0);
+  table.setCell(row, column, cell);
+  table.removeCell(row, column);
+  ```
+
 ## 2.103.0
 
 Dependency updates only.
