@@ -44,7 +44,7 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
  * contains no extraneous information.
  *
  * @remarks
- * Supply this via {@link RunTransactionParams.postProcessor} when {@link RunTransaction | running a transaction}.
+ * Supply this via {@link RunTransactionParamsAlpha.postProcessor} when {@link RunTransaction | running a transaction}.
  * "Extraneous information" includes, for example, data for nodes that were both
  * created and removed within the transaction, or changes whose effects cancel
  * out to nothing. Minimizing the change reduces the size of the edit that is
