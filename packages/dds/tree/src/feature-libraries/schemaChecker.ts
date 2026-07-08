@@ -62,8 +62,8 @@ export function throwOutOfSchema(
 	throw new UsageError(formatSchemaValidationError(maybeError, context));
 }
 
-// Exported for testing purposes.
-export function formatSchemaValidationError(
+// Not exported: internal helper used by throwOutOfSchema.
+function formatSchemaValidationError(
 	error: SchemaValidationError,
 	context: SchemaValidationErrorContext | undefined,
 ): string {

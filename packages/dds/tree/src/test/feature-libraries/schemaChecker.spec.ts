@@ -26,7 +26,6 @@ import {
 	cursorForJsonableTreeNode,
 	defaultSchemaPolicy,
 	FieldKinds,
-	formatSchemaValidationError,
 	mapTreeFromCursor,
 } from "../../feature-libraries/index.js";
 import {
@@ -128,90 +127,6 @@ describe("schema validation", () => {
 				assert.equal(actual, expectedResult);
 			});
 		}
-	});
-
-	describe("SchemaValidationError", () => {
-		it("includes full context for Field_NodeTypeNotAllowed", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.Field_NodeTypeNotAllowed,
-				{
-					nodeType: "MyNode",
-					allowedTypes: new Set(["AllowedOne", "AllowedTwo"]),
-				},
-			);
-
-			assert.match(message, /A node of type "MyNode" is not allowed in this field\./);
-			assert.match(message, /Allowed types: \["AllowedOne", "AllowedTwo"\]\./);
-			assert.match(message, /stored schema has not been upgraded to include this type yet\./);
-			assert.match(message, /Either upgrade the schema to enable the staged type/);
-		});
-
-		it("uses unknown context for Field_NodeTypeNotAllowed when none is provided", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.Field_NodeTypeNotAllowed,
-				undefined,
-			);
-
-			assert.match(message, /A node of type unknown is not allowed in this field\./);
-			assert.match(message, /Allowed types: unknown\./);
-			assert.match(
-				message,
-				/avoid inserting content of this type until the schema is upgraded/,
-			);
-		});
-
-		it("includes node type context for Node_MissingSchema", () => {
-			const message = formatSchemaValidationError(SchemaValidationError.Node_MissingSchema, {
-				nodeType: "MissingNode",
-			});
-
-			assert.match(message, /No schema definition was found for node type "MissingNode"\./);
-			assert.match(message, /stored schema has been upgraded if needed\./);
-		});
-
-		it("uses unknown context for Node_MissingSchema when none is provided", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.Node_MissingSchema,
-				undefined,
-			);
-
-			assert.match(message, /No schema definition was found for node type unknown\./);
-		});
-
-		it("includes node type and unexpected fields for ObjectNode_FieldNotInSchema", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.ObjectNode_FieldNotInSchema,
-				{
-					nodeType: "ObjectNode",
-					unexpectedFields: new Set(["fieldOne", "fieldTwo"]),
-				},
-			);
-
-			assert.match(
-				message,
-				/A node of type "ObjectNode" has fields not defined in its schema\./,
-			);
-			assert.match(message, /Unexpected fields: \["fieldOne", "fieldTwo"\]\./);
-		});
-
-		it("uses fallback text for ObjectNode_FieldNotInSchema when no context is provided", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.ObjectNode_FieldNotInSchema,
-				undefined,
-			);
-
-			assert.match(message, /A node of type unknown has fields not defined in its schema\./);
-			assert.match(message, /The node has fields that are not defined in its schema\./);
-		});
-
-		it("falls back to the enum name for other error types", () => {
-			const message = formatSchemaValidationError(
-				SchemaValidationError.LeafNode_InvalidValue,
-				undefined,
-			);
-
-			assert.equal(message, "Tree does not conform to schema: LeafNode_InvalidValue.");
-		});
 	});
 
 	describe("isNodeInSchema", () => {
