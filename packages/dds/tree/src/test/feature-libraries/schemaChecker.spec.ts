@@ -130,7 +130,7 @@ describe("schema validation", () => {
 		}
 	});
 
-	describe("formatSchemaValidationError", () => {
+	describe("SchemaValidationError", () => {
 		it("includes full context for Field_NodeTypeNotAllowed", () => {
 			const message = formatSchemaValidationError(
 				SchemaValidationError.Field_NodeTypeNotAllowed,
