@@ -15,6 +15,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  * Determines the compatibility of a stored document
  * (based on its stored schema) with a viewer (based on its view schema).
  *
+ * @remarks
  * Adapters can be provided to handle differences between the two schema.
  * Adapters should only use to types in the `view` SchemaRepository.
  *
