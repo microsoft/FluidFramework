@@ -112,6 +112,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 	// A simple pattern for doing open polymorphism with a mutable static registry.
 	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work.
 	describe("mutable static registry", () => {
+		// See note on describe block for why this is skipped.
 		it.skip("without customizeSchemaTyping", () => {
 			// -------------
 			// Registry for items. If using this pattern, this would typically be defined alongside the Item interface.
@@ -184,6 +185,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			assert.throws(() => ItemTypes.push(TextItem));
 		});
 
+		// See note on describe block for why this is skipped.
 		it.skip("recursive case", () => {
 			const ItemTypes: ItemSchema[] = [];
 
