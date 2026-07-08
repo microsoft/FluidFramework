@@ -42,6 +42,9 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
   # Resolve a known ReDoS vulnerability in diff.
   diff@>=5 <6: ^5.2.2
 

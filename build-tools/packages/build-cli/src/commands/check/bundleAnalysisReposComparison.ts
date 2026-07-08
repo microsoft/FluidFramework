@@ -41,12 +41,19 @@ export default class CheckBundleAnalysisReposComparison extends BaseCommand<
 				"'current_<epoch>').",
 			default: "current",
 		}),
+		"webpack-dir": Flags.string({
+			description:
+				"Directory whose compareBundlesOutput subdirectory holds the bundle stats to compare. Matches the " +
+				"--webpack-dir passed to 'flub generate bundleAnalysisRepo' (defaults to the current " +
+				"directory).",
+			default: ".",
+		}),
 		...BaseCommand.flags,
 	} as const;
 
 	public async run(): Promise<void> {
 		const { flags } = this;
-		const outputDir = resolve("compareBundlesOutput");
+		const outputDir = resolve(flags["webpack-dir"], "compareBundlesOutput");
 		compareBundles({
 			analysisDirectory: resolve(outputDir, "analysis"),
 			outputDirectory: outputDir,

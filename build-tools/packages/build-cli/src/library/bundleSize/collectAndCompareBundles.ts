@@ -31,8 +31,14 @@ export interface CollectAndCompareBundlesOptions {
 	readonly forceCleanBuild: boolean;
 	/** For debugging only: keep the inner base-repo clone after collecting the base bundle. */
 	readonly keepBaseRepo: boolean;
-	/** Package root whose webpack bundles are built and compared. */
+	/** Package root whose `build:compile` is run to compile the package and its dependencies. */
 	readonly packageDir: string;
+	/**
+	 * Directory whose `webpack` build is run and whose `analyzer.json` is collected. Defaults to
+	 * {@link CollectAndCompareBundlesOptions.packageDir}. Set this when the webpack config lives in a
+	 * different directory than the package being compiled (e.g. a scenario subdirectory).
+	 */
+	readonly webpackDir?: string;
 	/** Directory under which per-label analyzer stats are saved. */
 	readonly analysisDir: string;
 	/** Directory where the comparison reports are written. */
@@ -57,6 +63,7 @@ export async function collectAndCompareBundles(
 		forceCleanBuild,
 		keepBaseRepo,
 		packageDir,
+		webpackDir,
 		analysisDir,
 		outputDir,
 	} = options;
@@ -72,6 +79,7 @@ export async function collectAndCompareBundles(
 			mode: "local",
 			forceCleanBuild,
 			packageDir,
+			webpackDir,
 			analysisDir,
 		});
 
@@ -86,6 +94,7 @@ export async function collectAndCompareBundles(
 			label: baseLabel,
 			forceCleanBuild,
 			packageDir,
+			webpackDir,
 			analysisDir,
 			baseRepoDir: innerRepoRoot,
 		});
