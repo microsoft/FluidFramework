@@ -36,7 +36,7 @@ export {
 	type FieldChangeEncodingContext,
 	type FieldChangeRebaser,
 	type FieldEditor,
-	type NestedChangesIndices,
+	type NestedChangesInfo,
 	type NodeChangeComposer,
 	type NodeChangeInverter,
 	type NodeChangeRebaser,

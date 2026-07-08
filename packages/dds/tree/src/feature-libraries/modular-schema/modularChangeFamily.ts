@@ -104,6 +104,7 @@ import {
 	type NodeChangeset,
 	type NodeId,
 } from "./modularChangeTypes.js";
+import { nodeChangeFromId } from "./modularChangeUtils.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1417,10 +1418,8 @@ export class ModularChangeFamily
 	): void {
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
-			for (const [nodeId, inputIndex, _outputIndex] of handler.getNestedChanges(
-				field.change,
-			)) {
-				const isInputDetached = inputIndex === undefined;
+			for (const { nodeId, inputDetachedId } of handler.getNestedChanges(field.change)) {
+				const isInputDetached = inputDetachedId !== undefined;
 				const inputAttachState =
 					parentInputAttachState === NodeAttachState.Detached || isInputDetached
 						? NodeAttachState.Detached
@@ -1677,7 +1676,7 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of fieldChanges.entries()) {
 			const fieldId = { nodeId: nodeParent, field };
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _index] of handler.getNestedChanges(fieldChange.change)) {
+			for (const { nodeId: child } of handler.getNestedChanges(fieldChange.change)) {
 				const parentFieldId = getParentFieldId(change, child);
 				assert(
 					areEqualFieldIds(parentFieldId, fieldId),
@@ -3092,12 +3091,6 @@ function rebasedFieldIdFromBaseId(table: RebaseTable, baseId: FieldId): FieldId 
 
 function rebasedNodeIdFromBaseNodeId(table: RebaseTable, baseId: NodeId): NodeId {
 	return getFromChangeAtomIdMap(table.baseToRebasedNodeId, baseId) ?? baseId;
-}
-
-function nodeChangeFromId(nodes: ChangeAtomIdBTree<NodeChangeset>, id: NodeId): NodeChangeset {
-	const node = getFromChangeAtomIdMap(nodes, id);
-	assert(node !== undefined, 0x9ca /* Unknown node ID */);
-	return node;
 }
 
 function fieldIdFromFieldIdKey([revision, localId, field]: FieldIdKey): FieldId {
