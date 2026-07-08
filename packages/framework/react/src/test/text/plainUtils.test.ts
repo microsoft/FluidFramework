@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TextAsTree } from "@fluidframework/tree/internal";
+import { TextAsTree, TreeAlpha } from "@fluidframework/tree/internal";
 import {
 	independentView,
 	TreeViewConfiguration,
@@ -13,9 +13,14 @@ import {
 } from "@fluidframework/tree/alpha";
 
 import { createUndoRedo } from "../../undoRedo.js";
-// Allow import of file being tested
-// eslint-disable-next-line import-x/no-internal-modules
-import { applyTextEdit, applyTextOps, computeSync } from "../../text/plain/plainUtils.js";
+/* eslint-disable import-x/no-internal-modules -- Allow import of the file being tested. */
+import {
+	applyTextOps,
+	collapseSelectionOnReread,
+	computeSync,
+	syncTextToTree,
+} from "../../text/plain/plainUtils.js";
+/* eslint-enable import-x/no-internal-modules */
 
 describe("plainUtils", () => {
 	describe("applyTextOps", () => {
@@ -68,46 +73,97 @@ describe("plainUtils", () => {
 			]);
 			assert.deepEqual(result, { value: "lo", selection: { start: 2, end: 2 } });
 		});
+
+		it("collapses a selection to a caret when its whole range is removed", () => {
+			// "abcdef" with selection "cd" (2-4); remove "bcde" (1-5), which fully contains the selection.
+			// Both offsets pull back to the removal start, leaving a collapsed caret.
+			const result = applyTextOps("abcdef", { start: 2, end: 4 }, [
+				{ type: "retain", count: 1 },
+				{ type: "remove", count: 4 },
+				{ type: "retain", count: 1 },
+			]);
+			assert.deepEqual(result, { value: "af", selection: { start: 1, end: 1 } });
+		});
+
+		it("leaves a selection unchanged when the edit is entirely after it", () => {
+			// "abcdef" with selection "a" (0-1); remove "de" (3-5), which is past the selection.
+			const result = applyTextOps("abcdef", { start: 0, end: 1 }, [
+				{ type: "retain", count: 3 },
+				{ type: "remove", count: 2 },
+				{ type: "retain", count: 1 },
+			]);
+			assert.deepEqual(result, { value: "abcf", selection: { start: 0, end: 1 } });
+		});
+
+		it("shifts a collapsed caret right when text is inserted before it", () => {
+			// "ab" with a collapsed caret at the end (2); insert "XYZ" at the caret.
+			const result = applyTextOps("ab", { start: 2, end: 2 }, [
+				{ type: "retain", count: 2 },
+				{ type: "insert", text: "XYZ" },
+			]);
+			assert.deepEqual(result, { value: "abXYZ", selection: { start: 5, end: 5 } });
+		});
 	});
 
-	describe("applyTextEdit", () => {
+	describe("collapseSelectionOnReread", () => {
+		it("returns undefined when no selection is tracked", () => {
+			assert.equal(collapseSelectionOnReread(undefined, 5), undefined);
+		});
+
+		it("collapses a range to a caret at its start, rather than preserving the range", () => {
+			// The whole point of the policy: a range must NOT survive the reread as a range, even when
+			// both offsets still fit in the new text (which is where independent clamping went wrong).
+			assert.deepEqual(collapseSelectionOnReread({ start: 0, end: 5 }, 7), {
+				start: 0,
+				end: 0,
+			});
+		});
+
+		it("clamps the caret into the new (shorter) text", () => {
+			assert.deepEqual(collapseSelectionOnReread({ start: 10, end: 12 }, 3), {
+				start: 3,
+				end: 3,
+			});
+		});
+
+		it("keeps an already-collapsed caret in place when still in range", () => {
+			assert.deepEqual(collapseSelectionOnReread({ start: 2, end: 2 }, 5), {
+				start: 2,
+				end: 2,
+			});
+		});
+	});
+
+	describe("syncTextToTree", () => {
 		function createTextView(initial: string): TreeViewAlpha<typeof TextAsTree.Tree> {
 			const view = independentView(new TreeViewConfiguration({ schema: TextAsTree.Tree }));
 			view.initialize(TextAsTree.Tree.fromString(initial));
 			return view;
 		}
 
-		it("applies the edit to an unhydrated (non-branch) node", () => {
+		it("replaces the tree's content with the new text", () => {
 			const root = TextAsTree.Tree.fromString("hello");
-			applyTextEdit(root, "hello world");
+			syncTextToTree(root, "hello world");
 			assert.equal(root.fullString(), "hello world");
 		});
 
-		it("wraps the edit in a transaction tagged with the given label when on a branch", () => {
+		it("is atomically undoable when wrapped in a labeled transaction", () => {
 			const view = createTextView("hello");
 			const label = Symbol("editor");
 			const manager = createUndoRedo(view);
 
-			applyTextEdit(view.root, "hello world", label);
+			// The reference pattern used by callers: wrap the sync in a labeled transaction so the
+			// remove + insert pair is reverted together in a single undo step.
+			TreeAlpha.context(view.root).runTransaction(
+				() => syncTextToTree(view.root, "hello world"),
+				{
+					label,
+				},
+			);
 			assert.equal(view.root.fullString(), "hello world");
 
-			// The edit was a single transaction tagged with `label`, so a label-scoped undo
-			// reverts the whole edit in one step.
 			assert(manager.canUndo(label));
 			manager.undo(label);
-			assert.equal(view.root.fullString(), "hello");
-			manager.dispose();
-		});
-
-		it("defaults the transaction label to the root node when none is given", () => {
-			const view = createTextView("hello");
-			const manager = createUndoRedo(view);
-
-			applyTextEdit(view.root, "hello world");
-
-			// With no explicit label, the edit is tagged with `root` itself.
-			assert(manager.canUndo(view.root));
-			manager.undo(view.root);
 			assert.equal(view.root.fullString(), "hello");
 			manager.dispose();
 		});

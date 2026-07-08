@@ -3,11 +3,9 @@
  * Licensed under the MIT License.
  */
 
-import {
-	type TextAsTree,
-	TreeAlpha,
-	utf16LengthForCodePoints,
-} from "@fluidframework/tree/internal";
+import { type TextAsTree, utf16LengthForCodePoints } from "@fluidframework/tree/internal";
+
+import { clamp } from "../../utilities.js";
 
 /**
  * A text selection or cursor range expressed as UTF-16 code-unit offsets.
@@ -53,7 +51,7 @@ export interface ApplyTextOpsResult {
  * `onCharactersChanged` delivers `undefined` (rather than an op list) when an incremental delta is
  * unavailable; in that case skip this function and re-read the whole text via `root.fullString()`.
  *
- * Writing the result back must not re-enter the tree — see {@link applyTextEdit} for the re-entrancy pattern.
+ * Writing the result back must not re-enter the tree — see {@link syncTextToTree} for the re-entrancy pattern.
  * @internal
  */
 export function applyTextOps(
@@ -108,22 +106,54 @@ export function applyTextOps(
 
 	// Clamp to a valid range within `value` so the result can be written back without further checks.
 	// A stale input selection (e.g. beyond `oldValue`) can otherwise land outside the new value.
-	const clamp = (offset: number): number => Math.min(Math.max(offset, 0), value.length);
-	return { value, selection: { start: clamp(newCursorStart), end: clamp(newCursorEnd) } };
+	return {
+		value,
+		selection: {
+			start: clamp(newCursorStart, 0, value.length),
+			end: clamp(newCursorEnd, 0, value.length),
+		},
+	};
 }
 
 /**
- * Apply a user text edit to `root`, replacing its content with `newText`.
+ * Collapse a tracked selection to a single caret, for use when a text change arrives without an
+ * incremental delta and the whole string must be re-read.
  * @remarks
- * The edit is wrapped in a single transaction tagged with `label`, so the remove + insert pair it
- * produces is applied atomically and can be reverted as a unit. When `root` belongs to a branch, the
- * `label` is surfaced in that branch's change metadata for undo/redo grouping.
+ * When no delta is available (see {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}),
+ * there is no reliable way to map a selection *range* across the edit: preserving `start`/`end`
+ * independently can leave a range spanning characters unrelated to the original selection (e.g. when a
+ * batch deletes the selected text and inserts new text of similar length). To avoid presenting a
+ * misleading highlight, the range is collapsed to a caret at the (clamped) previous `start` offset,
+ * which keeps the caret near its prior position in the common benign case while never selecting
+ * unrelated characters.
  *
- * The diff and the underlying tree mutation are performed by {@link syncTextToTree}; this function
- * only adds the transaction wrapping on top. Call {@link syncTextToTree} directly if you want the
- * mutation without a transaction.
+ * Returns `undefined` when `selection` is `undefined`, so an untracked selection stays untracked.
+ * @param selection - The selection to collapse, or `undefined` if none is tracked.
+ * @param length - The length of the re-read text; the caret is clamped to `[0, length]`.
+ * @internal
+ */
+export function collapseSelectionOnReread(
+	selection: TextSelection | undefined,
+	length: number,
+): TextSelection | undefined {
+	if (selection === undefined) {
+		return undefined;
+	}
+	const caret = clamp(selection.start, 0, length);
+	return { start: caret, end: caret };
+}
+
+/**
+ * Sync `newText` into the provided `root` tree by applying the minimal remove + insert pair
+ * needed to transform the tree's current content into `newText`.
+ * @remarks
+ * The diff is computed by finding the longest shared prefix/suffix between current and new content
+ * and replacing only the middle span.
  *
- * `label` defaults to `root` itself, giving each tree node its own independent undo/redo history.
+ * To make the edit atomically undoable/redoable, wrap this call in a transaction, e.g.
+ * `TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, newText), { label })`. The
+ * `label` correlates the edit for undo/redo grouping where the context supports it (see
+ * {@link @fluidframework/tree#TreeContextAlpha.runTransaction}).
  *
  * Mutating the tree synchronously fires
  * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}. If you also subscribe to that
@@ -141,30 +171,12 @@ export function applyTextOps(
  * function onUserInput(newText: string): void {
  *   updating = true;
  *   try {
- *     applyTextEdit(root, newText);
+ *     syncTextToTree(root, newText);
  *   } finally {
  *     updating = false;
  *   }
  * }
  * ```
- * @internal
- */
-export function applyTextEdit(
-	root: TextAsTree.Tree,
-	newText: string,
-	label: unknown = root,
-): void {
-	// `runTransaction` is callable on any context (a branch or an unhydrated node), so no branch check
-	// is needed here; the `label` is used for undo/redo grouping where the context supports it.
-	TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, newText), { label });
-}
-
-/**
- * Sync `newText` into the provided `root` tree by applying the minimal remove + insert pair
- * needed to transform the tree's current content into `newText`.
- * @remarks
- * The diff is computed by finding the longest shared prefix/suffix between current and new content
- * and replacing only the middle span.
  * @internal
  */
 export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {

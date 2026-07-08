@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import type { TextAsTree } from "@fluidframework/tree/internal";
+import { TreeAlpha, type TextAsTree } from "@fluidframework/tree/internal";
 import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
 
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 
-import { applyTextEdit } from "./plainUtils.js";
+import { syncTextToTree } from "./plainUtils.js";
 import { useTreeSynchronizedString } from "./useTreeSynchronizedString.js";
 
 /**
@@ -48,7 +48,8 @@ export const MainView: FC<MainViewProps> = ({ root, undoRedo, editLabel }) => {
  *
  * @remarks
  * A controlled textarea driven by {@link useTreeSynchronizedString} (tree → string); local edits
- * are written back to the tree via {@link applyTextEdit} (string → tree). Doubles as a reference
+ * are written back to the tree via {@link syncTextToTree}, wrapped in a transaction so each edit is
+ * atomically undoable/redoable (string → tree). Doubles as a reference
  * for binding a text input to a {@link @fluidframework/tree#TextAsTree.Tree}.
  */
 const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) => {
@@ -73,11 +74,14 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 		}
 	}, [text, selection]);
 
-	// String → tree: write the user's edit back into the tree.
+	// String → tree: write the user's edit back into the tree, wrapped in a transaction tagged with
+	// `effectiveLabel` so the remove + insert pair is applied atomically and undone/redone as a unit.
 	const onChange = useCallback(
 		(event: ChangeEvent<HTMLTextAreaElement>) => {
 			isLocalEditRef.current = true;
-			applyTextEdit(root, event.target.value, effectiveLabel);
+			TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, event.target.value), {
+				label: effectiveLabel,
+			});
 		},
 		[root, effectiveLabel],
 	);

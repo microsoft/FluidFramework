@@ -8,7 +8,6 @@ export {
 	type MainViewProps as PlainTextMainViewProps,
 } from "./plainTextView.js";
 export {
-	applyTextEdit,
 	syncTextToTree,
 	type TextSelection,
 } from "./plainUtils.js";

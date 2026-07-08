@@ -6,7 +6,7 @@
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import { useEffect, useRef, useState } from "react";
 
-import { applyTextOps, type TextSelection } from "./plainUtils.js";
+import { applyTextOps, collapseSelectionOnReread, type TextSelection } from "./plainUtils.js";
 
 /**
  * The value returned by {@link useTreeSynchronizedString}.
@@ -20,6 +20,10 @@ export interface SynchronizedString {
 	 * @remarks
 	 * Seeded from the `initialSelection` passed to {@link useTreeSynchronizedString} and adjusted by
 	 * {@link applyTextOps} so it follows the same logical position as the text changes.
+	 *
+	 * When an incremental delta is unavailable and the hook must re-read the whole string, the range
+	 * cannot be faithfully mapped across the edit, so it is collapsed to a single caret at the
+	 * (clamped) previous start offset.
 	 *
 	 * This is not a live caret: the hook does not observe the user's actual cursor, so a consumer that
 	 * needs the real caret position must read it from the rendered element itself.
@@ -38,15 +42,18 @@ export interface SynchronizedString {
  * The consumer supplies the other direction (string → tree) themselves. Different text APIs report
  * their edits in different formats, so there is no one-size-fits-all mapping; prefer translating the
  * API's own change delta into an incremental tree edit whenever it exposes one. For simple APIs like
- * `<textarea>`, whose change events only surface the fully-updated string, {@link applyTextEdit}
- * provides a naive diff-and-apply that is sufficient:
+ * `<textarea>`, whose change events only surface the fully-updated string, {@link syncTextToTree}
+ * provides a naive diff-and-apply that is sufficient (wrap it in a transaction to make the edit
+ * atomically undoable):
  *
  * ```tsx
  * const { text } = useTreeSynchronizedString(tree);
  * return (
  *   <textarea
  *     value={text}
- *     onChange={(e) => applyTextEdit(tree, e.target.value)}
+ *     onChange={(e) =>
+ *       TreeAlpha.context(tree).runTransaction(() => syncTextToTree(tree, e.target.value))
+ *     }
  *   />
  * );
  * ```
@@ -77,20 +84,17 @@ export function useTreeSynchronizedString(
 				// This happens when the character field's marks couldn't be composed into a single
 				// delta — e.g. the field was modified across multiple batches within one flush (such
 				// as an interleaved schema change) — or when the tree is out of sync with the delta.
-				// Any tracked selection is clamped into the new text, since a shrinking edit could
-				// otherwise leave it out of bounds.
 				const reread = tree.fullString();
 				textRef.current = reread;
 				setText(reread);
+				// Without a delta we can't know how the text mutated, so we can't faithfully move a
+				// selection range across the edit. Collapse it to a caret rather than leave a range
+				// spanning what may now be unrelated characters — see collapseSelectionOnReread. A
+				// consumer that needs an accurate caret should read it from the rendered element.
 				if (selectionRef.current !== undefined) {
-					const clamp = (offset: number): number =>
-						Math.min(Math.max(offset, 0), reread.length);
-					const clamped = {
-						start: clamp(selectionRef.current.start),
-						end: clamp(selectionRef.current.end),
-					};
-					selectionRef.current = clamped;
-					setSelection(clamped);
+					const collapsed = collapseSelectionOnReread(selectionRef.current, reread.length);
+					selectionRef.current = collapsed;
+					setSelection(collapsed);
 				}
 				return;
 			}

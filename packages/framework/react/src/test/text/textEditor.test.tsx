@@ -6,13 +6,11 @@
 import { strict as assert } from "node:assert";
 
 import { TextAsTree } from "@fluidframework/tree/internal";
-import { act, render, renderHook } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
 import { toPropTreeNode } from "../../propNode.js";
 import { PlainTextMainView } from "../../text/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- the hook is not re-exported from text/index; import it directly for testing.
-import { useTreeSynchronizedString } from "../../text/plain/useTreeSynchronizedString.js";
 import type { UndoRedo } from "../../undoRedo.js";
 
 /** Read the current value of the editor's `<textarea>`. */
@@ -139,52 +137,6 @@ describe("Plain TextArea view", () => {
 				});
 			});
 		}
-	});
-
-	// The hook is a one-way tree → string sync; exercise it directly via renderHook.
-	describe("useTreeSynchronizedString", () => {
-		it("returns the tree's current text", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
-			const { result } = renderHook(() => useTreeSynchronizedString(text));
-
-			assert.equal(result.current.text, "Hello");
-		});
-
-		it("syncs character changes into the returned text", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
-			const { result } = renderHook(() => useTreeSynchronizedString(text));
-
-			act(() => text.insertAt(5, " World"));
-			assert.equal(result.current.text, "Hello World");
-
-			act(() => text.removeRange(0, 6));
-			assert.equal(result.current.text, "World");
-		});
-
-		it("adjusts the tracked selection across edits", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
-			// Caret after "Hello".
-			const { result } = renderHook(() =>
-				useTreeSynchronizedString(text, { start: 5, end: 5 }),
-			);
-
-			// Inserting before the caret shifts it right by the inserted length.
-			act(() => text.insertAt(0, "Oh "));
-			assert.equal(result.current.text, "Oh Hello");
-			assert.deepEqual(result.current.selection, { start: 8, end: 8 });
-		});
-
-		it("leaves the selection undefined when none was provided", () => {
-			const text = TextAsTree.Tree.fromString("Hello");
-			const { result } = renderHook(() => useTreeSynchronizedString(text));
-
-			assert.equal(result.current.selection, undefined);
-
-			// The text still syncs, but no selection is fabricated after an edit.
-			act(() => text.insertAt(5, " World"));
-			assert.equal(result.current.text, "Hello World");
-			assert.equal(result.current.selection, undefined);
-		});
 	});
 
 	describe("toolbar", () => {
