@@ -13,7 +13,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+import {
+	mapIterable,
+	type IdentifierHealingConfig,
+	type JsonCompatibleReadOnly,
+	type Mutable,
+} from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
@@ -34,14 +39,8 @@ export interface EditManagerEncodingContext {
 	 * but it is carried explicitly so downstream codecs can read it.
 	 */
 	readonly isSummary: boolean;
-	/**
-	 * See {@link ChangeEncodingContext.healUnresolvableIdentifiersOnDecode}.
-	 */
-	readonly healUnresolvableIdentifiersOnDecode?: boolean;
-	/**
-	 * See {@link ChangeEncodingContext.sharedObjectId}.
-	 */
-	readonly sharedObjectId?: string;
+	/** See {@link IdentifierHealingConfig}. */
+	readonly healing?: IdentifierHealingConfig;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -207,8 +206,7 @@ export function decodeSharedBranch<TChangeset>(
 					idCompressor: context.idCompressor,
 					revision: undefined,
 					isSummary: context.isSummary,
-					healUnresolvableIdentifiersOnDecode: context.healUnresolvableIdentifiersOnDecode,
-					sharedObjectId: context.sharedObjectId,
+					healing: context.healing,
 				}),
 		),
 		peerLocalBranches: new Map(
@@ -232,9 +230,7 @@ export function decodeSharedBranch<TChangeset>(
 								idCompressor: context.idCompressor,
 								revision: undefined,
 								isSummary: context.isSummary,
-								healUnresolvableIdentifiersOnDecode:
-									context.healUnresolvableIdentifiersOnDecode,
-								sharedObjectId: context.sharedObjectId,
+								healing: context.healing,
 							},
 						),
 					),

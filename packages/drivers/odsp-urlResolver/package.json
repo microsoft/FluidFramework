@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/odsp-urlresolver",
-	"version": "2.110.0",
+	"version": "2.112.0",
 	"description": "Url Resolver for odsp urls.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -87,11 +87,11 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.101.0",
+		"@fluidframework/odsp-urlresolver-previous": "npm:@fluidframework/odsp-urlresolver@2.110.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",

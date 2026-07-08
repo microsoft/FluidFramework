@@ -15,9 +15,9 @@ import {
 	type IOdspUrlParts,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import {
-	type TelemetryLoggerExt,
 	loggerToMonitoringContext,
 	PerformanceEvent,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type { ICreateFileResponse, IRenameFileResponse } from "./../contracts.js";

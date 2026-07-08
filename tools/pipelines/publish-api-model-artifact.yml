@@ -212,7 +212,7 @@ stages:
                 displayName: 'Upload JSON'
                 continueOnError: true
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
@@ -223,7 +223,7 @@ stages:
                 continueOnError: true
                 condition: eq(variables['Build.SourceBranchName'], 'main')
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |
@@ -234,7 +234,7 @@ stages:
                 continueOnError: true
                 condition: eq(variables.isLatestMinorOfMajorTrain, true)
                 inputs:
-                  azureSubscription: 'fluid-docs'
+                  azureSubscription: 'fluid-docs-torus'
                   scriptType: bash
                   scriptLocation: inlineScript
                   inlineScript: |

@@ -41,11 +41,11 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -272,40 +272,40 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
 			// breaker.break() sets brokenBy synchronously before throwing.
@@ -527,6 +527,10 @@ export class SchematizingSimpleTreeView<
 
 	public rebaseOnto(context: TreeBranchAlpha): void {
 		this.checkout.rebaseOnto(context);
+	}
+
+	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	// #endregion Branching

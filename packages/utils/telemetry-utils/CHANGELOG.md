@@ -1,5 +1,19 @@
 # @fluidframework/telemetry-utils
 
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- Deprecated ITelemetryLoggerExt methods and related types removed ([#27476](https://github.com/microsoft/FluidFramework/pull/27476)) [fb992c35c4e](https://github.com/microsoft/FluidFramework/commit/fb992c35c4ea2fa70a5f6afe968f0dd783f82081)
+
+  Methods on `ITelemetryLoggerExt` are removed except for `send` inherited from `ITelemetryBaseLogger`.
+
+  See issue [#26910](https://github.com/microsoft/FluidFramework/issues/26910) for complete details.
+
 ## 2.103.0
 
 Dependency updates only.
