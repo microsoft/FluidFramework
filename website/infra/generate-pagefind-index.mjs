@@ -6,11 +6,6 @@
 import { spawnSync } from "node:child_process";
 import process from "node:process";
 
-if (process.env.PAGEFIND_SEARCH !== "true") {
-	console.log("Skipping Pagefind index generation. Set PAGEFIND_SEARCH=true to enable it.");
-	process.exit(0);
-}
-
 const result = spawnSync("pagefind", ["--site", "build"], {
 	shell: process.platform === "win32",
 	stdio: "inherit",

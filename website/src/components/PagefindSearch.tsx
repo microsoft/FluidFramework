@@ -36,10 +36,16 @@ interface SearchResult {
 	excerpt: string;
 }
 
+type PagefindWindow = Window & {
+	fluidFrameworkPagefind?: PagefindModule;
+};
+
 type SearchState = "idle" | "loading" | "ready" | "unavailable" | "error";
 
 const maximumResults = 8;
 const maximumResultsBeforeDeduplication = 24;
+const pagefindLoaderPath = "/pagefind-loader.js";
+const pagefindLoadedEventName = "fluid-framework-pagefind-loaded";
 let pagefindLoadPromise: Promise<PagefindModule> | undefined;
 
 function getSearchNavbarItemClassName(
@@ -69,15 +75,53 @@ function textFromHtml(html: string | undefined): string {
 	return element.textContent ?? "";
 }
 
+function getPagefindWindow(): PagefindWindow {
+	return window as PagefindWindow;
+}
+
 async function loadPagefind(): Promise<PagefindModule> {
 	if (ExecutionEnvironment.canUseDOM !== true) {
 		throw new Error("Pagefind can only load in the browser.");
 	}
 
-	pagefindLoadPromise ??= import(
-		// eslint-disable-next-line import/no-unresolved -- Pagefind generates this browser module into build/pagefind after Docusaurus builds.
-		/* webpackIgnore: true */ "/pagefind/pagefind.js"
-	) as Promise<PagefindModule>;
+	const pagefindWindow = getPagefindWindow();
+	const loadedPagefind = pagefindWindow.fluidFrameworkPagefind;
+	if (loadedPagefind !== undefined) {
+		return loadedPagefind;
+	}
+
+	pagefindLoadPromise ??= new Promise<PagefindModule>((resolve, reject) => {
+		function resolvePagefind(): void {
+			const resolvedPagefind = pagefindWindow.fluidFrameworkPagefind;
+			if (resolvedPagefind === undefined) {
+				reject(new Error("Pagefind loader did not initialize."));
+				return;
+			}
+
+			resolve(resolvedPagefind);
+		}
+
+		function rejectPagefind(): void {
+			window.removeEventListener(pagefindLoadedEventName, resolvePagefind);
+			reject(new Error("Pagefind loader failed to load."));
+		}
+
+		window.addEventListener(pagefindLoadedEventName, resolvePagefind, { once: true });
+
+		const existingLoader = document.querySelector<HTMLScriptElement>(
+			`script[src="${pagefindLoaderPath}"]`,
+		);
+		if (existingLoader !== null) {
+			return;
+		}
+
+		const loader = document.createElement("script");
+		loader.async = true;
+		loader.src = pagefindLoaderPath;
+		loader.type = "module";
+		loader.addEventListener("error", rejectPagefind, { once: true });
+		document.head.append(loader);
+	});
 
 	return pagefindLoadPromise.then(async (pagefind) => {
 		await pagefind.init?.();

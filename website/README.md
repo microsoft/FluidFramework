@@ -27,50 +27,31 @@ Before you can use this, you'll need to ensure our API documentation has been bu
 So start by running:
 
 ```shell
-npm run build:generate-content
+pnpm run build:generate-content
 ```
 
 Then, run:
 
 ```shell
-npm start
+pnpm start
 ```
 
-##### Typesense Search
+##### Pagefind Search
 
-The search function on the website is implemented with Typesense.
-To test search locally, you must first build and then use either:
+The search function on the website is implemented with Pagefind.
+The website build runs Pagefind after Docusaurus emits the static site and writes the search bundle to `build/pagefind`.
 
--   `pnpm run start`
--   `pnpm run serve`
+To test search locally, build and serve the static site:
 
-Both commands work as long a you have the appropriate values set in your `.env` file (for example: TYPESENSE_HOST and TYPESENSE_API_KEY).
-Note: This setup and the required API keys are limited to Microsoft internal employees; detailed instructions can be found on the internal wiki.
+```shell
+pnpm run build
+pnpm run serve
+```
 
 Note: the Docusaurus build is fairly slow.
 If you don't need to test search, it is recommended to run `pnpm run start` instead.
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
-
-##### Pagefind Search
-
-Pagefind can be enabled as an opt-in replacement for Typesense search.
-When enabled, the website build runs Pagefind after Docusaurus emits the static site and writes the search bundle to `build/pagefind`.
-
-To build and serve the site with Pagefind search enabled, set the following value in your `.env` file:
-
-```
-PAGEFIND_SEARCH=true
-```
-
-Then run:
-
-```shell
-npm run build
-npm run serve
-```
-
-The default build skips Pagefind search unless `PAGEFIND_SEARCH` is set to `true`.
 
 ### Local API docs build
 
@@ -83,7 +64,7 @@ To include repo-local API documentation when building the site locally, you will
     ```
 
 So long as the `LOCAL_API_DOCS` environment variable is set to `true`, local API documentation will be included when building the site.
-To remove the local API docs, simply remove the above variable or set it to `false`, `npm run clean` and rebuild as needed.
+To remove the local API docs, simply remove the above variable or set it to `false`, `pnpm run clean` and rebuild as needed.
 
 ## User Telemetry
 
@@ -319,6 +300,7 @@ The following npm scripts are supported in this directory:
 | `build:docusaurus` | Build the website with Docusaurus. |
 | `build:generate-content` | Generate site content. Includes API documentation, as well as content generated / embedded by `markdown-magic`. |
 | `build:markdown-magic` | Run `markdown-magic` to generate / embed contents in Markdown files. |
+| `build:pagefind` | `node ./infra/generate-pagefind-index.mjs` |
 | `build:site` | Build the site, including API documentation. |
 | `build:test` | TSC build of the test code as a sanity check. |
 | `check-links` | Run link validation on the website. Requires the website to be running locally, either via `start` or `serve`. |
