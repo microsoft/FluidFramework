@@ -250,6 +250,9 @@ tag **`Flaky Test`** *(reconsider this tag if the failure is deterministic — s
   (`{op:"Replace", path:"/fields/System.Description", value:…}`, `format:"Markdown"`). Do **not** use `fields` for update.
 - **GitHub link gotcha:** in ADO text a bare `#12345` (and `AB#12345`) auto-links to a *work item*, not a GitHub
   PR/issue. Always use a full URL, e.g. `[PR #27637](https://github.com/microsoft/FluidFramework/pull/27637)`.
+- **Angle-bracket gotcha:** ADO strips `<...>` tokens as HTML even inside Markdown code fences — a stack frame like
+  `at Object.<anonymous> (…)` loses the `<anonymous>`. HTML-escape them in the source: write `&lt;anonymous&gt;`
+  (renders as `<anonymous>`). Same for any `<T>` / html-ish text in error output.
 
 ### Description template
 ```markdown
