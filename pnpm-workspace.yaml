@@ -60,6 +60,12 @@ overrides:
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
 
+  # Resolve a known security vulnerability.
+  "@github/copilot": ^1.0.43
+
+  # Resolve a known security vulnerability.
+  "@nevware21/ts-utils": ^0.14.0
+
   # Uncomment all or some below and run `pnpm install --no-frozen-lockfile` to apply
   # these overrides to use locally built build-tools packages.
   # "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
@@ -70,12 +76,12 @@ overrides:
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
-  # axios pre-1.0 needs an override to stay current on a version with no reported CVEs.
+  # axios pre-1.0 is forced to a patched release to resolve known vulnerabilities.
   # Caret dependencies aren't enough on a pre-1.0 package.
-  axios@<0.30.0: ^0.30.0
+  axios@<1: ^0.32.0
 
-  # Force vulnerable axios ^1.15.0 requests to the patched 1.15.1.
-  axios@^1.15.0: 1.15.1
+  # Force vulnerable axios ^1.15.0 requests to the patched 1.16.0.
+  axios@^1.15.0: 1.16.0
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
@@ -87,9 +93,15 @@ overrides:
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
 
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
   # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
   # Stays within @langchain/anthropic's declared ^4.4.1 range.
   fast-xml-parser: ^4.5.4
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
 
   # nodegit is replaced with an empty package here because it's currently only used by good-fences for
   # features we do not need, and has issues building when changing node versions.
@@ -99,7 +111,7 @@ overrides:
 
   # Resolve a known security vulnerability.
   # The consumer declares ^0.3.x so the override is needed to cross the minor version boundary.
-  langsmith: ^0.5.15
+  langsmith: ^0.6.0
 
   # Resolve a known security vulnerability.
   minimatch@>=3 <4: ^3.1.5
@@ -129,8 +141,8 @@ overrides:
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
 
-  # Resolve a CG alert.
-  simple-git: ^3.32.3
+  # Resolve a known security vulnerability.
+  simple-git: ^3.36.0
 
   # codemirror and marked overrides are because simplemde uses * versions, and the fully up-to-date
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.
@@ -138,11 +150,19 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
-  systeminformation: ^5.31.0
+  systeminformation: ^5.31.6
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
+
+  # Resolve a known security vulnerability. No patched release exists in the 0.0.x/0.1.x lines,
+  # so affected consumers are moved forward to the patched 0.2.x line.
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability. The 7.x line already permits the patched 7.5.11 via
+  # existing caret ranges, so only the 8.x line needs to be forced forward here.
+  ws@>=8 <9: ^8.21.0
 
 packages:
   - "azure/packages/**"
