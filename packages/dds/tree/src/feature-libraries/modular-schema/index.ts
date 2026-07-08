@@ -43,7 +43,7 @@ export {
 	type ToDelta,
 	NodeAttachState,
 	type FieldChangeEncodingContext,
-	type NestedChangesIndices,
+	type NestedChangesInfo as NestedChangesIndices,
 	EditFilterStatus,
 } from "./fieldChangeHandler.js";
 export type {

@@ -18,7 +18,7 @@ import { brandConst } from "../../util/index.js";
 import type {
 	FieldChangeDelta,
 	FieldChangeHandler,
-	NestedChangesIndices,
+	NestedChangesInfo,
 	NodeChangeComposer,
 	NodeChangePruner,
 	NodeChangeRebaser,
@@ -84,9 +84,8 @@ function compose(
 	return composed;
 }
 
-function getNestedChanges(change: GenericChangeset): NestedChangesIndices {
-	// For generic changeset, the indices in the input and output contexts are the same.
-	return change.toArray().map(([index, nodeChange]) => [nodeChange, index, index]);
+function getNestedChanges(change: GenericChangeset): NestedChangesInfo {
+	return change.toArray().map(([_index, nodeChange]) => [nodeChange, undefined, undefined]);
 }
 
 function rebaseGenericChange(

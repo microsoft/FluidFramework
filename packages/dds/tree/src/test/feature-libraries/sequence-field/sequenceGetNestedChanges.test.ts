@@ -5,10 +5,10 @@
 
 import { strict as assert } from "node:assert";
 
-import type { RevisionTag } from "../../../core/index.js";
+import type { ChangeAtomId, RevisionTag } from "../../../core/index.js";
 import type { NodeId } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { NestedChangesIndices } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
+import type { NestedChangesInfo } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { sequenceFieldChangeHandler } from "../../../feature-libraries/sequence-field/sequenceFieldChangeHandler.js";
 import { brand } from "../../../util/index.js";
@@ -28,27 +28,30 @@ export function testGetNestedChanges(): void {
 			assert.deepEqual(actual, []);
 		});
 		it("includes changes to nodes in the field", () => {
+			const detachId: ChangeAtomId = { revision: tag1, localId: brand(42) };
 			const change = [
-				Mark.remove(1, brand(42), { changes: nodeId1 }),
+				Mark.remove(1, detachId, { changes: nodeId1 }),
 				{ count: 42 },
 				Mark.modify(nodeId2),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [
-				[nodeId1, 0, undefined],
-				[nodeId2, 43, 42],
+			const expected: NestedChangesInfo = [
+				[nodeId1, undefined, detachId],
+				[nodeId2, undefined, undefined],
 			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
+			const cellId1: ChangeAtomId = { revision: tag1, localId: brand(42) };
+			const cellId2: ChangeAtomId = { revision: tag1, localId: brand(43) };
 			const change = [
-				Mark.revive(1, { revision: tag1, localId: brand(42) }, { changes: nodeId1 }),
-				Mark.modify(nodeId2, { revision: tag1, localId: brand(43) }),
+				Mark.revive(1, cellId1, { changes: nodeId1 }),
+				Mark.modify(nodeId2, cellId2),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [
-				[nodeId1, undefined, 0],
-				[nodeId2, undefined, undefined],
+			const expected: NestedChangesInfo = [
+				[nodeId1, cellId1, undefined],
+				[nodeId2, cellId2, cellId2],
 			];
 			assert.deepEqual(actual, expected);
 		});
