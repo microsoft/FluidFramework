@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/typescript-versions-host",
-	"version": "2.111.0",
+	"version": "2.111.1",
 	"private": true,
 	"description": "Provides aliased TypeScript versions for build tests",
 	"homepage": "https://fluidframework.com",

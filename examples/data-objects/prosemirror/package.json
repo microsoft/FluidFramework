@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/prosemirror",
-	"version": "2.111.0",
+	"version": "2.111.1",
 	"private": true,
 	"description": "ProseMirror",
 	"homepage": "https://fluidframework.com",
