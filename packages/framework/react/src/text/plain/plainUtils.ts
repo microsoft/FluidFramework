@@ -157,7 +157,7 @@ export function collapseSelectionOnReread(
  *
  * Mutating the tree synchronously fires
  * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}. If you also subscribe to that
- * event to apply remote edits to your view (e.g. via {@link applyTextOps}), set a re-entrancy flag
+ * event to apply remote edits to your view (e.g. via `applyTextOps`), set a re-entrancy flag
  * before calling this and ignore the event while it is set — otherwise the edit you just made is
  * echoed straight back onto your view. For example:
  *
