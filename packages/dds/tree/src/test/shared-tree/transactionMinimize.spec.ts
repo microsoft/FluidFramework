@@ -91,7 +91,7 @@ const SketchyBoxArraySchemaConfig = {
 /** Transaction parameters that request {@link minimize | minimization} of the resulting change. */
 const minimizeParams = { postProcessor: minimize } as const;
 
-type Tree = ReturnType<typeof createIndependentTreeAlpha>;
+type ViewableTreeAlpha = ReturnType<typeof createIndependentTreeAlpha>;
 
 /**
  * A transaction scenario: the schema/content a view is initialized with, plus the sequence of edits to apply to
@@ -109,7 +109,7 @@ interface TransactionScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
 	readonly apply: (
 		root: ReadableField<TSchema>,
-		tree: Tree,
+		tree: ViewableTreeAlpha,
 		view: SchematizingSimpleTreeView<TSchema>,
 	) => TApplyReturn;
 }
@@ -130,7 +130,7 @@ type BoxArrayScenario = TransactionScenario<
  */
 function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-): { tree: Tree; view: SchematizingSimpleTreeView<TSchema> } {
+): { tree: ViewableTreeAlpha; view: SchematizingSimpleTreeView<TSchema> } {
 	const tree = createIndependentTreeAlpha({
 		idCompressor: createSnapshotCompressor(),
 		minVersionForCollab: FluidClientVersion.v2_80,
@@ -143,7 +143,7 @@ function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
 /** Creates the tree and view for a scenario, initialized with the scenario's initial content. */
 function createScenarioView<TSchema extends ImplicitFieldSchema>(
 	scenario: TransactionScenario<TSchema, unknown>,
-): { tree: Tree; view: SchematizingSimpleTreeView<TSchema> } {
+): { tree: ViewableTreeAlpha; view: SchematizingSimpleTreeView<TSchema> } {
 	const treeAndView = getTreeAndView(
 		new TreeViewConfiguration({
 			schema: scenario.schema,
@@ -173,7 +173,9 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>(
  */
 function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
+	{ doNotMinimize = false }: { doNotMinimize?: boolean } = {},
 ): {
+	tree: ViewableTreeAlpha;
 	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
 	stringifiedChange: JsonString<unknown>;
 } {
@@ -192,13 +194,14 @@ function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 	});
 	const result = view.runTransaction(
 		() => ({ value: scenario.apply(view.root, tree, view) }),
-		minimizeParams,
+		doNotMinimize ? undefined : minimizeParams,
 	);
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 
 	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
 	return {
+		tree,
 		view: (result.value ?? view) as TApplyReturn extends void
 			? SchematizingSimpleTreeView<TSchema>
 			: TApplyReturn,
@@ -214,6 +217,7 @@ function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 async function runScenarioAsync<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
 ): Promise<{
+	tree: ViewableTreeAlpha;
 	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
 	stringifiedChange: JsonString<unknown>;
 }> {
@@ -239,6 +243,7 @@ async function runScenarioAsync<TSchema extends ImplicitFieldSchema, TApplyRetur
 
 	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
 	return {
+		tree,
 		view: (result.value ?? view) as TApplyReturn extends void
 			? SchematizingSimpleTreeView<TSchema>
 			: TApplyReturn,
@@ -253,449 +258,450 @@ async function runScenarioAsync<TSchema extends ImplicitFieldSchema, TApplyRetur
 // transaction, so their data is extraneous and should be dropped by minimization. Nodes tagged with "❤️" are
 // created within the transaction and survive to the end, so their data must be retained.
 
-// #region String Array scenarios
-/**
- * Inserts "A❤️" at the end of the root.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️" -\> `["A❤️"]`
- */
-const scenarioAInserted = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️");
-	},
-} as const satisfies StringArrayScenario;
+// #region Array (of strings) scenarios
+const arrayScenarios = {
+	/**
+	 * Inserts "A❤️" at the end of the root.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️" -\> `["A❤️"]`
+	 */
+	A_inserted: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️");
+		},
+	} as const,
 
-/**
- * Inserts "A❤️" then "B❤️" at the end of the root.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️" -\> `["A❤️"]`
- * 2. insert "B❤️" -\> `["A❤️", "B❤️"]`
- */
-const scenarioAThenBInserted = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️");
-		root.insertAtEnd("B❤️");
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️" then "B❤️" at the end of the root.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️" -\> `["A❤️"]`
+	 * 2. insert "B❤️" -\> `["A❤️", "B❤️"]`
+	 */
+	A_then_B_inserted: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️");
+			root.insertAtEnd("B❤️");
+		},
+	} as const,
 
-/**
- * Inserts "A☠️" and then removes it, leaving the root empty.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️" -\> `["A☠️"]`
- * 2. remove at 0  -\> `[]`
- */
-const scenarioAAddedThenRemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A☠️");
-		root.removeAt(0);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A☠️" and then removes it, leaving the root empty.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️" -\> `["A☠️"]`
+	 * 2. remove at 0  -\> `[]`
+	 */
+	A_added_then_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A☠️");
+			root.removeAt(0);
+		},
+	} as const,
 
-/**
- * Inserts "A❤️" (which persists) and a transient "B☠️" that is removed within the same transaction.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️"  -\> `["A❤️"]`
- * 2. insert "B☠️"  -\> `["A❤️", "B☠️"]`
- * 3. remove at 1   -\> `["A❤️"]`
- */
-const scenarioAKeptAndBTransient = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️");
-		root.insertAtEnd("B☠️");
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️" (which persists) and a transient "B☠️" that is removed within the same transaction.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️"  -\> `["A❤️"]`
+	 * 2. insert "B☠️"  -\> `["A❤️", "B☠️"]`
+	 * 3. remove at 1   -\> `["A❤️"]`
+	 */
+	A_kept_and_B_transient: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️");
+			root.insertAtEnd("B☠️");
+			root.removeAt(1);
+		},
+	} as const,
 
-/**
- * Inserts "A☠️", then inserts "B❤️" at the end, then removes "A☠️", so only "B❤️" remains.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️"  -\> `["A☠️"]`
- * 2. insert "B❤️"  -\> `["A☠️", "B❤️"]`
- * 3. remove at 0   -\> `["B❤️"]`
- */
-const scenarioAReplacedByB = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtEnd("B❤️");
-		root.removeAt(0);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A☠️", then inserts "B❤️" at the end, then removes "A☠️", so only "B❤️" remains.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️"  -\> `["A☠️"]`
+	 * 2. insert "B❤️"  -\> `["A☠️", "B❤️"]`
+	 * 3. remove at 0   -\> `["B❤️"]`
+	 */
+	A_replaced_by_B: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A☠️");
+			root.insertAtEnd("B❤️");
+			root.removeAt(0);
+		},
+	} as const,
 
-/**
- * Inserts "A☠️", inserts "B❤️" in front of "A☠️", then removes "A☠️", so only "B❤️" remains.
- * @remarks
- * Unlike {@link scenarioAReplacedByB}, "B❤️" is inserted ahead of "A☠️" rather than after it. This relocates "A☠️"
- * (it shifts from index 0 to index 1) before it is removed, exercising minimization's tracking of content that is
- * inserted and then removed after being moved within the same transaction.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️"          -\> `["A☠️"]`
- * 2. insert "B❤️" at start -\> `["B❤️", "A☠️"]`
- * 3. remove at 1           -\> `["B❤️"]`
- */
-const scenarioBInsertedBeforeAThenARemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtStart("B❤️");
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A☠️", inserts "B❤️" in front of "A☠️", then removes "A☠️", so only "B❤️" remains.
+	 * @remarks
+	 * Unlike {@link arrayScenarios.A_replaced_by_B}, "B❤️" is inserted ahead of "A☠️" rather than after it. This relocates "A☠️"
+	 * (it shifts from index 0 to index 1) before it is removed, exercising minimization's tracking of content that is
+	 * inserted and then removed after being moved within the same transaction.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️"          -\> `["A☠️"]`
+	 * 2. insert "B❤️" at start -\> `["B❤️", "A☠️"]`
+	 * 3. remove at 1           -\> `["B❤️"]`
+	 */
+	B_inserted_before_A_then_A_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A☠️");
+			root.insertAtStart("B❤️");
+			root.removeAt(1);
+		},
+	} as const,
 
-/**
- * Inserts "A❤️", "B☠️", "C❤️" and then removes the middle node "B☠️", splitting the inserted run so "A❤️" and "C❤️" remain.
- * @remarks
- * "B☠️" is built and then removed in the same transaction, so its build is extraneous; only "A❤️" and "C❤️" survive.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
- * 2. remove at 1                 -\> `["A❤️", "C❤️"]`
- */
-const scenarioAbcInsertedThenBRemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️", "B☠️", "C❤️");
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️", "B☠️", "C❤️" and then removes the middle node "B☠️", splitting the inserted run so "A❤️" and "C❤️" remain.
+	 * @remarks
+	 * "B☠️" is built and then removed in the same transaction, so its build is extraneous; only "A❤️" and "C❤️" survive.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
+	 * 2. remove at 1                 -\> `["A❤️", "C❤️"]`
+	 */
+	ABC_inserted_then_B_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️", "B☠️", "C❤️");
+			root.removeAt(1);
+		},
+	} as const,
 
-/**
- * Inserts "A❤️", then "B❤️", "C❤️", and then rearranges them by moving "C❤️" to the start.
- * @remarks
- * All three nodes survive the transaction (only their order changes), so both builds are expected to remain.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️"         -\> `["A❤️"]`
- * 2. insert "B❤️", "C❤️"  -\> `["A❤️", "B❤️", "C❤️"]`
- * 3. move "C❤️" to start  -\> `["C❤️", "A❤️", "B❤️"]`
- */
-const scenarioAThenBCInsertedThenRearranged = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️");
-		root.insertAtEnd("B❤️", "C❤️");
-		root.moveToStart(2);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️", then "B❤️", "C❤️", and then rearranges them by moving "C❤️" to the start.
+	 * @remarks
+	 * All three nodes survive the transaction (only their order changes), so both builds are expected to remain.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️"         -\> `["A❤️"]`
+	 * 2. insert "B❤️", "C❤️"  -\> `["A❤️", "B❤️", "C❤️"]`
+	 * 3. move "C❤️" to start  -\> `["C❤️", "A❤️", "B❤️"]`
+	 */
+	A_then_BC_inserted_then_rearranged: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️");
+			root.insertAtEnd("B❤️", "C❤️");
+			root.moveToStart(2);
+		},
+	} as const,
 
-/**
- * Inserts "A❤️", "B☠️", "C❤️", moves "B☠️" to the start, and then removes it.
- * @remarks
- * "B☠️" is built, relocated, and then removed all within the same transaction, so both its build and its move are
- * extraneous; only "A❤️" and "C❤️" survive.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
- * 2. move "B☠️" to start        -\> `["B☠️", "A❤️", "C❤️"]`
- * 3. remove at 0                -\> `["A❤️", "C❤️"]`
- */
-const scenarioABCInsertedThenBMovedThenRemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️", "B☠️", "C❤️");
-		root.moveToStart(1);
-		root.removeAt(0);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️", "B☠️", "C❤️", moves "B☠️" to the start, and then removes it.
+	 * @remarks
+	 * "B☠️" is built, relocated, and then removed all within the same transaction, so both its build and its move are
+	 * extraneous; only "A❤️" and "C❤️" survive.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️", "B☠️", "C❤️" -\> `["A❤️", "B☠️", "C❤️"]`
+	 * 2. move "B☠️" to start        -\> `["B☠️", "A❤️", "C❤️"]`
+	 * 3. remove at 0                -\> `["A❤️", "C❤️"]`
+	 */
+	ABC_inserted_then_B_moved_then_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️", "B☠️", "C❤️");
+			root.moveToStart(1);
+			root.removeAt(0);
+		},
+	} as const,
 
-/**
- * Inserts "A☠️", "B☠️", "C❤️", moves "B☠️" to the start, and then removes both "B☠️" and "A☠️".
- * @remarks
- * "A☠️" and "B☠️" are built, "B☠️" is relocated, and then both are removed all within the same transaction, so both
- * their builds and moves are extraneous; only "C❤️" survives.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️", "B☠️", "C❤️" -\> `["A☠️", "B☠️", "C❤️"]`
- * 2. move "B☠️" to start        -\> `["B☠️", "A☠️", "C❤️"]`
- * 3. remove range [0, 2)        -\> `["C❤️"]`
- */
-const scenarioABCInsertedThenBMovedThenBAndARemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A☠️", "B☠️", "C❤️");
-		root.moveToStart(1);
-		root.removeRange(0, 2);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A☠️", "B☠️", "C❤️", moves "B☠️" to the start, and then removes both "B☠️" and "A☠️".
+	 * @remarks
+	 * "A☠️" and "B☠️" are built, "B☠️" is relocated, and then both are removed all within the same transaction, so both
+	 * their builds and moves are extraneous; only "C❤️" survives.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️", "B☠️", "C❤️" -\> `["A☠️", "B☠️", "C❤️"]`
+	 * 2. move "B☠️" to start        -\> `["B☠️", "A☠️", "C❤️"]`
+	 * 3. remove range [0, 2)        -\> `["C❤️"]`
+	 */
+	ABC_inserted_then_B_moved_then_B_and_A_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A☠️", "B☠️", "C❤️");
+			root.moveToStart(1);
+			root.removeRange(0, 2);
+		},
+	} as const,
 
-/**
- * Inserts "A❤️", "B☠️", "C☠️", moves "B☠️" to the start, and then removes both "C☠️" and "B☠️".
- * @remarks
- * "B☠️" and "C☠️" are built, "B☠️" is relocated, and then both are removed all within the same transaction, so both
- * their builds and moves are extraneous; only "A❤️" survives.
- *
- * Steps (root state shown after each):
- *
- * 1. insert "A❤️", "B☠️", "C☠️" -\> `["A❤️", "B☠️", "C☠️"]`
- * 2. move "B☠️" to start         -\> `["B☠️", "A❤️", "C☠️"]`
- * 3. remove at 2                 -\> `["B☠️", "A❤️"]`
- * 4. remove at 0                 -\> `["A❤️"]`
- */
-const scenarioABCInsertedThenBMovedThenCAndBRemoved = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root) => {
-		root.insertAtEnd("A❤️", "B☠️", "C☠️");
-		root.moveToStart(1);
-		root.removeAt(2);
-		root.removeAt(0);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Inserts "A❤️", "B☠️", "C☠️", moves "B☠️" to the start, and then removes both "C☠️" and "B☠️".
+	 * @remarks
+	 * "B☠️" and "C☠️" are built, "B☠️" is relocated, and then both are removed all within the same transaction, so both
+	 * their builds and moves are extraneous; only "A❤️" survives.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A❤️", "B☠️", "C☠️" -\> `["A❤️", "B☠️", "C☠️"]`
+	 * 2. move "B☠️" to start         -\> `["B☠️", "A❤️", "C☠️"]`
+	 * 3. remove at 2                 -\> `["B☠️", "A❤️"]`
+	 * 4. remove at 0                 -\> `["A❤️"]`
+	 */
+	ABC_inserted_then_B_moved_then_C_and_B_removed: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root) => {
+			root.insertAtEnd("A❤️", "B☠️", "C☠️");
+			root.moveToStart(1);
+			root.removeAt(2);
+			root.removeAt(0);
+		},
+	} as const,
 
-/**
- * Starts from pre-existing content `["X", "Y"]` and inserts a transient "A☠️" that is removed before the
- * transaction closes, leaving the document unchanged.
- * @remarks
- * The pre-existing nodes "X" and "Y" are not created by this transaction, so they contribute no builds to its
- * change. "A☠️" is built and removed within the transaction, so its build is extraneous and should be dropped,
- * leaving zero builds.
- *
- * Steps (root state shown after each):
- *
- * 0. initial      -\> `["X", "Y"]`
- * 1. insert "A☠️" -\> `["X", "A☠️", "Y"]`
- * 2. remove at 1  -\> `["X", "Y"]`
- */
-const scenarioPreExistingContentAndTransientInsert = {
-	schema: RootStringArray,
-	initialContent: ["X", "Y"],
-	apply: (root) => {
-		root.insertAt(1, "A☠️");
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Starts from pre-existing content `["X", "Y"]` and inserts a transient "A☠️" that is removed before the
+	 * transaction closes, leaving the document unchanged.
+	 * @remarks
+	 * The pre-existing nodes "X" and "Y" are not created by this transaction, so they contribute no builds to its
+	 * change. "A☠️" is built and removed within the transaction, so its build is extraneous and should be dropped,
+	 * leaving zero builds.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial      -\> `["X", "Y"]`
+	 * 1. insert "A☠️" -\> `["X", "A☠️", "Y"]`
+	 * 2. remove at 1  -\> `["X", "Y"]`
+	 */
+	preexisting_content_and_transient_insert: {
+		schema: RootStringArray,
+		initialContent: ["X", "Y"],
+		apply: (root) => {
+			root.insertAt(1, "A☠️");
+			root.removeAt(1);
+		},
+	} as const,
 
-/**
- * Starts from pre-existing content `["X"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
- * before the transaction closes.
- * @remarks
- * "X" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
- * "B❤️" survives, so exactly one build should remain.
- *
- * Steps (root state shown after each):
- *
- * 0. initial              -\> `["X"]`
- * 1. insert "A☠️", "B❤️" -\> `["X", "A☠️", "B❤️"]`
- * 2. remove at 1          -\> `["X", "B❤️"]`
- */
-const scenarioPreExistingContentAndSurvivingInsert = {
-	schema: RootStringArray,
-	initialContent: ["X"],
-	apply: (root) => {
-		root.insertAtEnd("A☠️", "B❤️");
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Starts from pre-existing content `["X"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
+	 * before the transaction closes.
+	 * @remarks
+	 * "X" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
+	 * "B❤️" survives, so exactly one build should remain.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial              -\> `["X"]`
+	 * 1. insert "A☠️", "B❤️" -\> `["X", "A☠️", "B❤️"]`
+	 * 2. remove at 1          -\> `["X", "B❤️"]`
+	 */
+	preexisting_content_and_surviving_insert: {
+		schema: RootStringArray,
+		initialContent: ["X"],
+		apply: (root) => {
+			root.insertAtEnd("A☠️", "B❤️");
+			root.removeAt(1);
+		},
+	} as const,
 
-/**
- * Starts from pre-existing content `["X", "Y", "Z"]` and rearranges it by moving "Z" to the start, without
- * creating or removing any nodes.
- * @remarks
- * No nodes are created by this transaction (only existing nodes are moved), so the change should carry no builds.
- *
- * Steps (root state shown after each):
- *
- * 0. initial           -\> `["X", "Y", "Z"]`
- * 1. move "Z" to start -\> `["Z", "X", "Y"]`
- */
-const scenarioPreExistingContentRearranged = {
-	schema: RootStringArray,
-	initialContent: ["X", "Y", "Z"],
-	apply: (root) => {
-		root.moveToStart(2);
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Starts from pre-existing content `["X", "Y", "Z"]` and rearranges it by moving "Z" to the start, without
+	 * creating or removing any nodes.
+	 * @remarks
+	 * No nodes are created by this transaction (only existing nodes are moved), so the change should carry no builds.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial           -\> `["X", "Y", "Z"]`
+	 * 1. move "Z" to start -\> `["Z", "X", "Y"]`
+	 */
+	preexisting_content_rearranged: {
+		schema: RootStringArray,
+		initialContent: ["X", "Y", "Z"],
+		apply: (root) => {
+			root.moveToStart(2);
+		},
+	} as const,
 
-/**
- * Starts from pre-existing content `["X", "Y", "Z"]` and removes "Y".
- * @remarks
- * No nodes are created by this transaction (only an existing node is removed), so the change should carry no builds.
- *
- * Steps (root state shown after each):
- *
- * 0. initial    -\> `["X", "Y", "Z"]`
- * 1. remove "Y" -\> `["X", "Z"]`
- */
-const scenarioPreExistingContentRemoved = {
-	schema: RootStringArray,
-	initialContent: ["X", "Y", "Z"],
-	apply: (root) => {
-		root.removeAt(1);
-	},
-} as const satisfies StringArrayScenario;
-
+	/**
+	 * Starts from pre-existing content `["X", "Y", "Z"]` and removes "Y".
+	 * @remarks
+	 * No nodes are created by this transaction (only an existing node is removed), so the change should carry no builds.
+	 *
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial    -\> `["X", "Y", "Z"]`
+	 * 1. remove "Y" -\> `["X", "Z"]`
+	 */
+	preexisting_content_removed: {
+		schema: RootStringArray,
+		initialContent: ["X", "Y", "Z"],
+		apply: (root) => {
+			root.removeAt(1);
+		},
+	} as const,
+} as const satisfies Record<string, StringArrayScenario>;
 // #endregion
 
-// #region Box Array scenarios
+// #region Object (Array of Boxes) scenarios
+const objectScenarios = {
+	/**
+	 * Starts from a single {@link Box} with no value, then sets its `value` field twice.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial      -\> `[Box: undefined]`
+	 * 1. set to "x☠️" -\> `[Box: "x☠️"]`
+	 * 2. set to "y❤️" -\> `[Box: "y❤️"]`
+	 */
+	Box_value_set_twice: {
+		schema: BoxArray,
+		initialContent: [{ value: undefined }],
+		apply: (root) => {
+			root[0].value = "x☠️";
+			root[0].value = "y❤️";
+		},
+	} as const,
 
-/**
- * Starts from a single {@link Box} with no value, then sets its `value` field twice.
- * @remarks
- * Steps:
- *
- * 0. initial      -\> `[Box: undefined]`
- * 1. set to "x☠️" -\> `[Box: "x☠️"]`
- * 2. set to "y❤️" -\> `[Box: "y❤️"]`
- */
-const scenarioBoxValueSetTwice = {
-	schema: BoxArray,
-	initialContent: [{ value: undefined }],
-	apply: (root) => {
-		root[0].value = "x☠️";
-		root[0].value = "y❤️";
-	},
-} as const satisfies BoxArrayScenario;
-
-/**
- * Starts from a single {@link Box} with no value, sets its `value` field, then removes the box.
- * @remarks
- * Steps:
- *
- * 0. initial      -\> `[Box: undefined]`
- * 1. set to "x☠️" -\> `[Box: "x☠️"]`
- * 2. remove box   -\> `[]`
- */
-const scenarioBoxValueSetThenBoxRemoved = {
-	schema: BoxArray,
-	initialContent: [{ value: undefined }],
-	apply: (root) => {
-		root[0].value = "x☠️";
-		root.removeAt(0);
-	},
-} as const satisfies BoxArrayScenario;
-
+	/**
+	 * Starts from a single {@link Box} with no value, sets its `value` field, then removes the box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial      -\> `[Box: undefined]`
+	 * 1. set to "x☠️" -\> `[Box: "x☠️"]`
+	 * 2. remove box   -\> `[]`
+	 */
+	Box_value_set_then_Box_removed: {
+		schema: BoxArray,
+		initialContent: [{ value: undefined }],
+		apply: (root) => {
+			root[0].value = "x☠️";
+			root.removeAt(0);
+		},
+	} as const,
+} as const satisfies Record<string, BoxArrayScenario>;
 // #endregion
 
 // #region Schema upgrade scenarios
+const schemaUpgradeScenarios = {
+	/**
+	 * Starts from an empty root, inserts a transient "A☠️" and a surviving "B❤️", then upgrades the schema to allow {@link Box} nodes in the root array.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️"    -\> `["A☠️"]`
+	 * 2. insert "B❤️"    -\> `["A☠️", "B❤️"]`
+	 * 3. remove at 0     -\> `["B❤️"]`
+	 * 4. upgrade schema  -\> `["B❤️"]`
+	 */
+	edit_before_schema_change: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root, tree, view) => {
+			root.insertAtEnd("A☠️");
+			root.insertAtEnd("B❤️");
+			root.removeAt(0);
 
-/**
- * Starts from an empty root, inserts a transient "A☠️" and a surviving "B❤️", then upgrades the schema to allow {@link Box} nodes in the root array.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️"    -\> `["A☠️"]`
- * 2. insert "B❤️"    -\> `["A☠️", "B❤️"]`
- * 3. remove at 0     -\> `["B❤️"]`
- * 4. upgrade schema  -\> `["B❤️"]`
- */
-const scenarioEditBeforeSchemaChange = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root, tree, view) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtEnd("B❤️");
-		root.removeAt(0);
+			// before upgrade edits are complete; dispose view to permit upgrade
+			view.dispose();
 
-		// before upgrade edits are complete; dispose view to permit upgrade
-		view.dispose();
+			// Update schema which now allows Boxes in root array.
+			const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+			assert(view2 instanceof SchematizingSimpleTreeView);
+			view2.upgradeSchema();
 
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
-		assert(view2 instanceof SchematizingSimpleTreeView);
-		view2.upgradeSchema();
+			return view2;
+		},
+	} as const,
 
-		return view2;
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Performs schema upgrade to allow {@link Box} nodes in the root array, inserts a {@link Box} with value "C☠️", and finally sets its value to "D❤️".
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 0. initial                 -\> `["A❤️"]`
+	 * 1. upgrade schema          -\> `["A❤️"]`
+	 * 2. insert Box "C☠️"       -\> `["A❤️", Box: "C☠️"]`
+	 * 3. set Box value to "D❤️" -\> `["A❤️", Box: "D❤️"]`
+	 */
+	edit_after_schema_change: {
+		schema: RootStringArray,
+		initialContent: ["A❤️"],
+		apply: (_root, tree, view) => {
+			// Force dispose view to permit upgrade
+			view.dispose();
 
-/**
- * Performs schema upgrade to allow {@link Box} nodes in the root array, inserts a {@link Box} with value "C☠️", and finally sets its value to "D❤️".
- * @remarks
- * Steps (root state shown after each):
- *
- * 0. initial                 -\> `["A❤️"]`
- * 1. upgrade schema          -\> `["A❤️"]`
- * 2. insert Box "C☠️"       -\> `["A❤️", Box: "C☠️"]`
- * 3. set Box value to "D❤️" -\> `["A❤️", Box: "D❤️"]`
- */
-const scenarioEditAfterSchemaChange = {
-	schema: RootStringArray,
-	initialContent: ["A❤️"],
-	apply: (_root, tree, view) => {
-		// Force dispose view to permit upgrade
-		view.dispose();
+			// Update schema which now allows Boxes in root array.
+			const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+			assert(view2 instanceof SchematizingSimpleTreeView);
+			view2.upgradeSchema();
 
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
-		assert(view2 instanceof SchematizingSimpleTreeView);
-		view2.upgradeSchema();
+			const box = new Box({ value: "C☠️" });
+			view2.root.insertAtEnd(box);
+			box.value = "D❤️";
 
-		const box = new Box({ value: "C☠️" });
-		view2.root.insertAtEnd(box);
-		box.value = "D❤️";
+			return view2;
+		},
+	} as const,
 
-		return view2;
-	},
-} as const satisfies StringArrayScenario;
+	/**
+	 * Combines {@link arrayScenarios.edit_before_schema_change} and {@link arrayScenarios.edit_after_schema_change} to perform edits on both sides of a schema change.
+	 * @remarks
+	 * Steps (root state shown after each):
+	 *
+	 * 1. insert "A☠️"           -\> `["A☠️"]`
+	 * 2. insert "B❤️"           -\> `["A☠️", "B❤️"]`
+	 * 3. remove at 0             -\> `["B❤️"]`
+	 * 4. upgrade schema          -\> `["B❤️"]`
+	 * 5. insert Box "C☠️"       -\> `["B❤️", Box: "C☠️"]`
+	 * 6. set Box value to "D❤️" -\> `["B❤️", Box: "D❤️"]`
+	 */
+	edit_before_and_after_schema_change: {
+		schema: RootStringArray,
+		initialContent: [],
+		apply: (root, tree, view) => {
+			root.insertAtEnd("A☠️");
+			root.insertAtEnd("B❤️");
+			root.removeAt(0);
 
-/**
- * Combines {@link scenarioEditBeforeSchemaChange} and {@link scenarioEditAfterSchemaChange} to perform edits on both sides of a schema change.
- * @remarks
- * Steps (root state shown after each):
- *
- * 1. insert "A☠️"           -\> `["A☠️"]`
- * 2. insert "B❤️"           -\> `["A☠️", "B❤️"]`
- * 3. remove at 0             -\> `["B❤️"]`
- * 4. upgrade schema          -\> `["B❤️"]`
- * 5. insert Box "C☠️"       -\> `["B❤️", Box: "C☠️"]`
- * 6. set Box value to "D❤️" -\> `["B❤️", Box: "D❤️"]`
- */
-const scenarioEditBeforeAndAfterSchemaChange = {
-	schema: RootStringArray,
-	initialContent: [],
-	apply: (root, tree, view) => {
-		root.insertAtEnd("A☠️");
-		root.insertAtEnd("B❤️");
-		root.removeAt(0);
+			// before upgrade edits are complete; dispose view to permit upgrade
+			view.dispose();
 
-		// before upgrade edits are complete; dispose view to permit upgrade
-		view.dispose();
+			// Update schema which now allows Boxes in root array.
+			const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
+			assert(view2 instanceof SchematizingSimpleTreeView);
+			view2.upgradeSchema();
 
-		// Update schema which now allows Boxes in root array.
-		const view2 = tree.viewWith(new TreeViewConfiguration(StringOrBoxArraySchemaConfig));
-		assert(view2 instanceof SchematizingSimpleTreeView);
-		view2.upgradeSchema();
+			const box = new Box({ value: "C☠️" });
+			view2.root.insertAtEnd(box);
+			box.value = "D❤️";
 
-		const box = new Box({ value: "C☠️" });
-		view2.root.insertAtEnd(box);
-		box.value = "D❤️";
+			return view2;
+		},
+	} as const,
 
-		return view2;
-	},
-} as const satisfies StringArrayScenario;
-
-// #endregion
-
+	// #endregion
+} as const satisfies Record<string, StringArrayScenario>;
 // #endregion
 
 const someSurvivingMarkerRegex = /❤️/;
@@ -703,13 +709,13 @@ const transientMarkerRegex = /☠️/;
 
 describe("transaction minimize post-processor", () => {
 	it("can be supplied as a transaction post-processor without error", () => {
-		const { view } = runScenario(scenarioAInserted);
+		const { view } = runScenario(arrayScenarios.A_inserted);
 		assert.deepEqual([...view.root], ["A❤️"]);
 	});
 
 	describe("self-tests - no minimization applicable", () => {
 		it("embeds surviving markers but not transient marker for a purely additive scenario", () => {
-			const { stringifiedChange } = runScenario(scenarioAThenBInserted);
+			const { stringifiedChange } = runScenario(arrayScenarios.A_then_B_inserted);
 			// Sanity check for the serialization mechanism: content that survives the
 			// transaction is present in the persisted change, so tests can meaningfully
 			// assert on its absence for transient content.
@@ -723,7 +729,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("result carries no build when pre-existing content is only rearranged", () => {
-			const { view, stringifiedChange } = runScenario(scenarioPreExistingContentRearranged);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.preexisting_content_rearranged,
+			);
 			assert.deepEqual([...view.root], ["Z", "X", "Y"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -734,7 +742,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("result carries no build when pre-existing content is only removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioPreExistingContentRemoved);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.preexisting_content_removed,
+			);
 			assert.deepEqual([...view.root], ["X", "Z"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -745,7 +755,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("reflects the order of only-rearranged inserted nodes and keeps every build", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAThenBCInsertedThenRearranged);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.A_then_BC_inserted_then_rearranged,
+			);
 			assert.deepEqual([...view.root], ["C❤️", "A❤️", "B❤️"]);
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
@@ -761,44 +773,48 @@ describe("transaction minimize post-processor", () => {
 	// actually implemented.
 	describe("preserves the observable result and new content appears in change", () => {
 		it("keeps inserted nodes", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAThenBInserted);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_then_B_inserted);
 			assert.deepEqual([...view.root], ["A❤️", "B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("nets a create-then-remove to no change", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAAddedThenRemoved);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.deepEqual([...view.root], []);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps only the persisted node when a transient node is also created", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAKeptAndBTransient);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_kept_and_B_transient);
 			assert.deepEqual([...view.root], ["A❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a node replaced within the transaction", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAReplacedByB);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_replaced_by_B);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the surviving node when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBInsertedBeforeAThenARemoved);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.B_inserted_before_A_then_A_removed,
+			);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAbcInsertedThenBRemoved);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.ABC_inserted_then_B_removed,
+			);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when an inserted node is moved then removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenRemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_removed,
 			);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
@@ -806,7 +822,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the trailing node when a moved node and its successor from leading node are removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenBAndARemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_B_and_A_removed,
 			);
 			assert.deepEqual([...view.root], ["C❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
@@ -814,7 +830,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the leading node when a moved node and its insertion companion are removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenCAndBRemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_C_and_B_removed,
 			);
 			assert.deepEqual([...view.root], ["A❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
@@ -822,7 +838,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("leaves pre-existing content unchanged when a transient node is inserted then removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioPreExistingContentAndTransientInsert,
+				arrayScenarios.preexisting_content_and_transient_insert,
 			);
 			assert.deepEqual([...view.root], ["X", "Y"]);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
@@ -830,32 +846,38 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps pre-existing content and the surviving inserted node", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioPreExistingContentAndSurvivingInsert,
+				arrayScenarios.preexisting_content_and_surviving_insert,
 			);
 			assert.deepEqual([...view.root], ["X", "B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetTwice);
+			const { view, stringifiedChange } = runScenario(objectScenarios.Box_value_set_twice);
 			assert.equal(view.root[0].value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final empty array when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetThenBoxRemoved);
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.Box_value_set_then_Box_removed,
+			);
 			assert.equal(view.root.length, 0);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made before a schema change", () => {
-			const { view, stringifiedChange } = runScenario(scenarioEditBeforeSchemaChange);
+			const { view, stringifiedChange } = runScenario(
+				schemaUpgradeScenarios.edit_before_schema_change,
+			);
 			assert.deepEqual([...view.root], ["B❤️"]);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made after a schema change", () => {
-			const { view, stringifiedChange } = runScenario(scenarioEditAfterSchemaChange);
+			const { view, stringifiedChange } = runScenario(
+				schemaUpgradeScenarios.edit_after_schema_change,
+			);
 			assert.equal(view.root.length, 2);
 			assert.equal(view.root[0], "A❤️");
 			const box = view.root[1];
@@ -871,16 +893,54 @@ describe("transaction minimize post-processor", () => {
 				// This transaction is expected to throw because edits are made
 				// before and after a schema change, which is not allowed by
 				// the current minimization implementation.
-				runScenario(scenarioEditBeforeAndAfterSchemaChange),
+				runScenario(schemaUpgradeScenarios.edit_before_and_after_schema_change),
 			/At most one edit group can be minimized, but 2 were found/,
 		);
 	});
 
 	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
 	it("preserves the observable result across an async transaction and new content appears in change", async () => {
-		const { view, stringifiedChange } = await runScenarioAsync(scenarioAReplacedByB);
+		const { view, stringifiedChange } = await runScenarioAsync(arrayScenarios.A_replaced_by_B);
 		assert.deepEqual([...view.root], ["B❤️"]);
 		assert.match(stringifiedChange, someSurvivingMarkerRegex);
+	});
+
+	function beautifyScenarioName(scenarioName: string): string {
+		return scenarioName
+			.replaceAll("_", " ") // Replace underscores with spaces
+			.replaceAll(/([A-Z])([A-Z])/g, "$1,$2"); // Insert comma between uppercase letters
+	}
+
+	describe("produces the same observable result as not minimized", () => {
+		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: unminimizedTree } = runScenario(scenario, {
+					doNotMinimize: true,
+				});
+				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+			});
+		}
+		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: unminimizedTree } = runScenario(scenario, {
+					doNotMinimize: true,
+				});
+				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+			});
+		}
+		for (const [scenarioName, scenario] of Object.entries(schemaUpgradeScenarios).filter(
+			([name]) => name !== "edit_before_and_after_schema_change", // This scenario is expected to throw, so skip it for this test.
+		)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: unminimizedTree } = runScenario(scenario, {
+					doNotMinimize: true,
+				});
+				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+			});
+		}
 	});
 
 	/**
@@ -947,7 +1007,7 @@ describe("transaction minimize post-processor", () => {
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
 	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAAddedThenRemoved);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build/destroy should be removed.
@@ -956,7 +1016,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the persisted node's build when a transient node is also created", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAKeptAndBTransient);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_kept_and_B_transient);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "A❤️" survives the transaction, so exactly one build should remain.
@@ -964,7 +1024,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the final node's build when a node is replaced", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAReplacedByB);
+			const { view, stringifiedChange } = runScenario(arrayScenarios.A_replaced_by_B);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
@@ -972,7 +1032,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the surviving node's build when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBInsertedBeforeAThenARemoved);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.B_inserted_before_A_then_A_removed,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
@@ -980,7 +1042,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps the surrounding builds when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioAbcInsertedThenBRemoved);
+			const { view, stringifiedChange } = runScenario(
+				arrayScenarios.ABC_inserted_then_B_removed,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// "A❤️" and "C❤️" survive but "B☠️" is removed, so A-B-C build should be split, leaving two.
@@ -989,7 +1053,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("drops the build for an inserted node that is moved then removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenRemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_removed,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -999,7 +1063,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the trailing node's [modified] build when a moved node and its successor from leading node build are removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenBAndARemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_B_and_A_removed,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1009,7 +1073,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the leading node's build when a moved node and its insertion companion are removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioABCInsertedThenBMovedThenCAndBRemoved,
+				arrayScenarios.ABC_inserted_then_B_moved_then_C_and_B_removed,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1019,7 +1083,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("carries no build for a transient insert over pre-existing content", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioPreExistingContentAndTransientInsert,
+				arrayScenarios.preexisting_content_and_transient_insert,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1029,7 +1093,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the surviving inserted node's build over pre-existing content", () => {
 			const { view, stringifiedChange } = runScenario(
-				scenarioPreExistingContentAndSurvivingInsert,
+				arrayScenarios.preexisting_content_and_surviving_insert,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1038,7 +1102,7 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the final value's build when a field is set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetTwice);
+			const { view, stringifiedChange } = runScenario(objectScenarios.Box_value_set_twice);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so exactly one build should remain.
@@ -1046,7 +1110,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("carries no build when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runScenario(scenarioBoxValueSetThenBoxRemoved);
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.Box_value_set_then_Box_removed,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build should be removed.
@@ -1054,7 +1120,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
-			const { view, stringifiedChange } = runScenario(scenarioEditBeforeSchemaChange);
+			const { view, stringifiedChange } = runScenario(
+				schemaUpgradeScenarios.edit_before_schema_change,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "B❤️" survives the transaction, so exactly one build should remain.
@@ -1062,7 +1130,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only edits' surviving builds made after a schema change", () => {
-			const { view, stringifiedChange } = runScenario(scenarioEditAfterSchemaChange);
+			const { view, stringifiedChange } = runScenario(
+				schemaUpgradeScenarios.edit_after_schema_change,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final Box value "D❤️" survives the transaction, so exactly one build should remain.
