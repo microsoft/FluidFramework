@@ -21,7 +21,7 @@ import type {
 } from "../../../feature-libraries/index.js";
 import type {
 	FieldChangeDelta,
-	NestedChangesIndices,
+	NestedChangesInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -976,37 +976,42 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [[nodeId1, 0, 0]];
+			const expected: NestedChangesInfo = [[nodeId1, undefined, undefined]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being removed from the field", () => {
+			const rootId: ChangeAtomId = { revision: tag, localId: brand(41) };
 			const change: OptionalChangeset = Change.atOnce(
 				Change.child(nodeId1),
-				Change.clear("self", brand(41)),
+				Change.clear("self", rootId),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [[nodeId1, 0, undefined]];
+			const expected: NestedChangesInfo = [[nodeId1, undefined, rootId]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being moved into from the field", () => {
+			const rootId: ChangeAtomId = { revision: tag, localId: brand(42) };
 			const change: OptionalChangeset = Change.atOnce(
 				Change.reserve("self", brand(41)),
-				Change.childAt(brand(42), nodeId1),
-				Change.move(brand(42), "self"),
+				Change.childAt(rootId, nodeId1),
+				Change.move(rootId, "self"),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [[nodeId1, undefined, 0]];
+			const expected: NestedChangesInfo = [[nodeId1, rootId, undefined]];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
+			const rootId1: ChangeAtomId = { revision: tag, localId: brand(41) };
+			const rootId2: ChangeAtomId = { revision: tag, localId: brand(42) };
+
 			const change: OptionalChangeset = Change.atOnce(
-				Change.childAt(brand(41), nodeId1),
-				Change.childAt(brand(42), nodeId2),
+				Change.childAt(rootId1, nodeId1),
+				Change.childAt(rootId2, nodeId2),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesIndices = [
-				[nodeId1, undefined, undefined],
-				[nodeId2, undefined, undefined],
+			const expected: NestedChangesInfo = [
+				[nodeId1, rootId1, rootId1],
+				[nodeId2, rootId2, rootId2],
 			];
 			assert.deepEqual(actual, expected);
 		});

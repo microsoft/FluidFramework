@@ -46,7 +46,7 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesIndices,
+	type NestedChangesInfo,
 	type FieldChangeDelta,
 	FlexFieldKind,
 	type EditFilterFunc,
@@ -738,28 +738,39 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 	// True iff the content of the field changes in some way
-	const isFieldContentChanged =
-		change.valueReplace !== undefined && change.valueReplace.src !== "self";
+	const detachId = change.valueReplace?.dst;
 
 	// The node that is moved into the field (if any).
 	const nodeMovedIntoField = change.valueReplace?.src;
 
+	const inputToOutputDetachId = getBidirectionalMaps(change.moves).srcToDst;
+
+	const getOutputDetachId = (
+		inputDetachId: ChangeAtomId | undefined,
+	): ChangeAtomId | undefined => {
+		if (inputDetachId === undefined) {
+			return detachId;
+		}
+		if (areEqualRegisterIdsOpt(inputDetachId, nodeMovedIntoField)) {
+			// This node is reattached by this change.
+			return undefined;
+		}
+
+		return (
+			tryGetFromNestedMap(
+				inputToOutputDetachId,
+				inputDetachId.revision,
+				inputDetachId.localId,
+			) ?? inputDetachId
+		);
+	};
+
 	return change.childChanges.map(([register, nodeId]) => {
-		// The node is removed in the input context iif register is not self.
-		const inputIndex = register === "self" ? 0 : undefined;
-		const outputIndex =
-			register === "self"
-				? // If the node starts out as not-removed, it is removed in the output context iff the field content is changed
-					isFieldContentChanged
-					? undefined
-					: 0
-				: // If the node starts out as removed, then it remains removed in the output context iff it is not the node that is moved into the field
-					areEqualRegisterIdsOpt(register, nodeMovedIntoField)
-					? 0
-					: undefined;
-		return [nodeId, inputIndex, outputIndex];
+		// The node is attached in the input context iif register is self.
+		const inputDetachId = register === "self" ? undefined : register;
+		return [nodeId, inputDetachId, getOutputDetachId(inputDetachId)];
 	});
 }
 

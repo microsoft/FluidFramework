@@ -19,7 +19,7 @@ import {
 	CrossFieldTarget,
 	type NodeId,
 	type CrossFieldKeyRange,
-	type NestedChangesIndices,
+	type NestedChangesInfo,
 } from "../modular-schema/index.js";
 
 import type {
@@ -62,28 +62,28 @@ export function createEmpty(): Changeset {
 	return [];
 }
 
-export function getNestedChanges(change: Changeset): NestedChangesIndices {
-	const output: NestedChangesIndices = [];
-	let inputIndex = 0;
-	let outputIndex = 0;
-	for (const mark of change) {
-		const { changes, count } = mark;
-		if (changes !== undefined) {
-			output.push([
-				changes,
-				areInputCellsEmpty(mark) ? undefined : inputIndex /* inputIndex */,
-				areOutputCellsEmpty(mark) ? undefined : outputIndex /* outputIndex */,
-			]);
-		}
-		if (!areInputCellsEmpty(mark)) {
-			inputIndex += count;
-		}
+export function getNestedChanges(change: Changeset): NestedChangesInfo {
+	const output: NestedChangesInfo = [];
 
-		if (!areOutputCellsEmpty(mark)) {
-			outputIndex += count;
+	for (const mark of change) {
+		if (mark.changes !== undefined) {
+			output.push([mark.changes, mark.cellId, getOutputRootId(mark)]);
 		}
 	}
 	return output;
+}
+
+function getOutputRootId(mark: Mark): ChangeAtomId | undefined {
+	if (mark.type === "MoveOut" && mark.finalEndpoint !== undefined) {
+		return mark.finalEndpoint;
+	}
+	if (isAttach(mark)) {
+		return undefined;
+	}
+	if (isDetach(mark)) {
+		return getDetachedNodeId(mark);
+	}
+	return mark.cellId;
 }
 
 export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {
