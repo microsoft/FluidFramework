@@ -122,9 +122,6 @@ importers:
       docusaurus-plugin-sass:
         specifier: ^0.2.5
         version: 0.2.5(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(sass@1.81.0)(webpack@5.96.1)
-      docusaurus-theme-search-typesense:
-        specifier: 0.23.1-0
-        version: 0.23.1-0(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(@docusaurus/theme-common@3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(@types/react@19.2.14)(acorn@8.15.0)(algoliasearch@5.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
       dompurify:
         specifier: ^3.2.6
         version: 3.2.6
@@ -13934,51 +13931,6 @@ snapshots:
       - fibers
       - node-sass
       - webpack
-
-  docusaurus-theme-search-typesense@0.23.1-0(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(@docusaurus/theme-common@3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(@types/react@19.2.14)(acorn@8.15.0)(algoliasearch@5.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4):
-    dependencies:
-      '@docusaurus/core': 3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4)
-      '@docusaurus/logger': 3.6.2
-      '@docusaurus/plugin-content-docs': 3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/theme-common': 3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/theme-translations': 3.6.2
-      '@docusaurus/utils': 3.6.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/utils-validation': 3.6.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      algoliasearch-helper: 3.22.5(algoliasearch@5.15.0)
-      clsx: 2.1.1
-      eta: 2.2.0
-      fs-extra: 11.3.2
-      lodash: 4.18.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      tslib: 2.8.1
-      typesense-docsearch-react: 3.4.1(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@types/react@19.2.14)(algoliasearch@5.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      typesense-instantsearch-adapter: 2.9.0-6(@babel/runtime@7.28.4)
-      utility-types: 3.11.0
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-      - '@babel/runtime'
-      - '@docusaurus/faster'
-      - '@mdx-js/react'
-      - '@parcel/css'
-      - '@rspack/core'
-      - '@swc/core'
-      - '@swc/css'
-      - '@types/react'
-      - acorn
-      - algoliasearch
-      - bufferutil
-      - csso
-      - debug
-      - esbuild
-      - eslint
-      - lightningcss
-      - supports-color
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - vue-template-compiler
-      - webpack-cli
 
   dom-converter@0.2.0:
     dependencies:
