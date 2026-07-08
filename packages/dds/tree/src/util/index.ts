@@ -179,4 +179,7 @@ export {
 	tryDecodeEncodedIdWithoutSession,
 	forceDecodeEncodedIdWithoutSession,
 	decompressIdentifierIfNeeded,
+	IdDecodingContext,
+	type IdDecoderOptionsOriginatorless,
+	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";
