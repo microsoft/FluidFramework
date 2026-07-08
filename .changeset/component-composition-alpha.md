@@ -15,4 +15,4 @@ const composed = Component.composeComponents(allComponents, (c) => ({
 }));
 ```
 
-See the worked examples in `openPolymorphism.integration.ts` for end-to-end usage with SharedTree schema.
+See the worked examples in [openPolymorphism.integration.ts](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts) for end-to-end usage with SharedTree schema.
