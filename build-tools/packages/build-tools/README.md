@@ -247,17 +247,19 @@ the current state and previous build will determine whether the task needs to be
 
 ### Environment Variables
 
-The following environment variables can be used to control incremental build behavior. By default, some tasks use
-file timestamps for incremental detection. Setting these variables to `"1"` enables content-based hashing instead,
-which avoids false rebuilds when timestamps change without meaningful content modification (e.g., after git operations
-or file copies).
+The following environment variables can be used to control `fluid-build` behavior. By default, some tasks use file
+timestamps for incremental detection. Setting the `FLUID_BUILD_ENABLE_*_HASH` variables to `"1"` enables content-based
+hashing instead, which avoids false rebuilds when timestamps change without meaningful content modification (e.g., after
+git operations or file copies).
 
-| Variable | Task | Description |
-|----------|------|-------------|
-| `FLUID_BUILD_ENABLE_COPYFILES_HASH` | CopyfilesTask | Enables content hashing for copyfiles tasks |
-| `FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH` | TypeValidationTask | Enables content hashing for type validation tasks |
-| `FLUID_BUILD_ENABLE_GOODFENCE_HASH` | GoodFence | Enables content hashing for good-fence tasks |
-| `FLUID_BUILD_ENABLE_DEPCRUISE_HASH` | DepCruiseTask | Enables content hashing for dependency-cruiser tasks |
+| Variable | Value | Description |
+|----------|-------|-------------|
+| `FLUID_BUILD_ENABLE_COPYFILES_HASH` | `1` | Enables content hashing for copyfiles tasks |
+| `FLUID_BUILD_ENABLE_TYPEVALIDATION_HASH` | `1` | Enables content hashing for type validation tasks |
+| `FLUID_BUILD_ENABLE_GOODFENCE_HASH` | `1` | Enables content hashing for good-fence tasks |
+| `FLUID_BUILD_ENABLE_DEPCRUISE_HASH` | `1` | Enables content hashing for dependency-cruiser tasks |
+| `FLUID_BUILD_EXTENDED_METRICS_DISPLAY` | `true` or `1` | Displays extended build cache metrics |
+| `FLUID_BUILD_TEST_RANDOM_ORDER` | `true` | Randomizes glob result ordering to help detect ordering dependencies in tests |
 
 Example:
 

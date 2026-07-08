@@ -144,6 +144,12 @@ overrides:
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
 
+  # Uncomment the lines below and run pnpm install to link the in-repo copy of build tools
+  # See https://github.com/microsoft/FluidFramework/blob/main/build-tools/README.md#testing-build-tools-changes-in-the-client-release-group
+  # "@fluid-tools/build-cli": "link:./build-tools/packages/build-cli"
+  # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
+  # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
+
 packages:
   - "azure/packages/**"
   - "examples/**"
