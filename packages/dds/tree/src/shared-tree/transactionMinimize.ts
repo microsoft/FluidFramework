@@ -32,7 +32,7 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
 	).length;
 	if (countOfDataChanges > 1) {
 		throw new UsageError(
-			`At most one edit group can be minimized, but ${countOfDataChanges} were found. To workaround this limitation, limit pair at most one content edit with any schema changes.`,
+			`At most one edit group can be minimized, but ${countOfDataChanges} were found. To workaround this limitation, pair at most one content edit with any schema changes.`,
 		);
 	}
 	return mapDataChanges(change, (dataChange) => minimizeModularChangeset(dataChange));
