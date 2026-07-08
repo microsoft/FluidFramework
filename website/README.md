@@ -52,6 +52,26 @@ If you don't need to test search, it is recommended to run `pnpm run start` inst
 This is faster, and will watch for content changes and update automatically.
 You will still need to build the API documentation first.
 
+##### Pagefind Search
+
+Pagefind can be enabled as an opt-in replacement for Typesense search.
+When enabled, the website build runs Pagefind after Docusaurus emits the static site and writes the search bundle to `build/pagefind`.
+
+To build and serve the site with Pagefind search enabled, set the following value in your `.env` file:
+
+```
+PAGEFIND_SEARCH=true
+```
+
+Then run:
+
+```shell
+npm run build
+npm run serve
+```
+
+The default build skips Pagefind search unless `PAGEFIND_SEARCH` is set to `true`.
+
 ### Local API docs build
 
 To include repo-local API documentation when building the site locally, you will first need to do the following:

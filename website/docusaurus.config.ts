@@ -13,10 +13,12 @@ import DocsVersions from "./config/docs-versions.mjs";
 
 dotenv.config();
 const includeLocalApiDocs = process.env.LOCAL_API_DOCS === "true";
+const usePagefindSearch = process.env.PAGEFIND_SEARCH === "true";
 const TYPESENSE_HOST = process.env.TYPESENSE_HOST;
 const TYPESENSE_API_KEY = process.env.TYPESENSE_API_KEY;
 
-const isTypesenseConfigured = TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
+const isTypesenseConfigured =
+	usePagefindSearch !== true && TYPESENSE_HOST !== undefined && TYPESENSE_API_KEY !== undefined;
 
 // Each entry is [field, weight, allowedTypos]. Order determines priority: first = highest ranked.
 // allowedTypos controls typo tolerance per field: 0 = exact match only, 1 = one typo allowed.
@@ -134,7 +136,11 @@ const config: Config = {
 				// We can add support for blog posts in the future.
 				blog: undefined,
 				theme: {
-					customCss: ["./src/css/custom.scss", "./src/css/typography.scss"],
+					customCss: [
+						"./src/css/custom.scss",
+						"./src/css/typography.scss",
+						...(usePagefindSearch ? ["./src/css/pagefindSearch.css"] : []),
+					],
 				},
 			} satisfies Preset.Options,
 		],
@@ -171,6 +177,14 @@ const config: Config = {
 				src: "assets/fluid-icon.svg",
 			},
 			items: [
+				...(usePagefindSearch
+					? [
+							{
+								type: "custom-pagefindSearch",
+								position: "right",
+							},
+						]
+					: []),
 				{
 					type: "docsVersionDropdown",
 					position: "left",
