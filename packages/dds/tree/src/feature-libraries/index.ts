@@ -27,6 +27,7 @@ export {
 	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
+export { ComparisonForest, assertForestsEqual } from "./comparison-forest/index.js";
 export {
 	SchemaSummarizer,
 	schemaCodecBuilder,
