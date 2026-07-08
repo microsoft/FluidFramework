@@ -74,18 +74,18 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 
 ## Cross-client Compatibility Configuration and Enforcement
 
-### minVersionForCollab
+### minimumDocumentRuntimeVersion / minVersionForCollab
 
-`minVersionForCollab` is the primary mechanism for configuring cross-client compatibility. It is a container runtime load parameter (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)) that specifies the minimum Fluid version that is allowed to collaborate on a document. It serves two purposes:
+`minimumDocumentRuntimeVersion` is the preferred container runtime load parameter for configuring cross-client compatibility. It is defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) and specifies the minimum Fluid version required to open or process documents created or loaded by the runtime. This parameter is also surfaced by the older name `minVersionForCollab` for compatibility. It serves two purposes:
 
 1. **Cross-client compatibility enforcement**: Clients running a Fluid version older than what the document requires will be blocked from joining the collaboration session, preventing data corruption or runtime errors. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
-2. **Feature gating**: It automatically enables or disables features based on the specified version to ensure all collaborating clients can understand the resulting data format. For example, if `minVersionForCollab` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
+2. **Feature gating**: It automatically enables or disables features based on the specified version to ensure all collaborating clients can understand the resulting data format. For example, if `minimumDocumentRuntimeVersion` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
 
-If `minVersionForCollab` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints. Passing a value below the supported floor is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
+If `minimumDocumentRuntimeVersion` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints. Passing a value below the supported floor is not permitted — the runtime will fail to instantiate and throw a `UsageError` (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)). For details on the default value, see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts).
 
 ### What This Means for an Application
 
-As an application developer, you need to manage your Fluid Framework version upgrades carefully to ensure uninterrupted collaboration for your users. It is **highly recommended** to explicitly configure `minVersionForCollab` and monitor your client version distribution. Setting `minVersionForCollab` explicitly surfaces version mismatches at build and verification time. This prevents a release from shipping and silently raising the floor, locking older clients out.
+As an application developer, you need to manage your Fluid Framework version upgrades carefully to ensure uninterrupted collaboration for your users. It is **highly recommended** to explicitly configure `minimumDocumentRuntimeVersion` and monitor your client version distribution. Setting `minimumDocumentRuntimeVersion` explicitly surfaces version mismatches at build and verification time. This prevents a release from shipping and silently raising the floor, locking older clients out.
 
 #### Encapsulated vs Declarative Models
 
@@ -126,7 +126,7 @@ You do not need to manage individual runtime options directly.
 
 #### Configuring Cross-Client Compatibility (Encapsulated Model)
 
-If you construct a container runtime directly, cross-client compatibility is configured by setting `minVersionForCollab` in the `LoadContainerRuntimeParams` passed into the `loadContainerRuntime` function:
+If you construct a container runtime directly, cross-client compatibility is configured by setting `minimumDocumentRuntimeVersion` in the `LoadContainerRuntimeParams` passed into the `loadContainerRuntime` function:
 
 ```typescript
 const loadContainerRuntimeParams: LoadContainerRuntimeParams = {
@@ -139,18 +139,18 @@ const loadContainerRuntimeParams: LoadContainerRuntimeParams = {
 	containerScope,
 	provideEntryPoint,
 	// Configure cross-client compatibility by setting the minimum version
-	minVersionForCollab: "2.0.0",
+	minimumDocumentRuntimeVersion: "2.0.0",
 };
 const runtime = await loadContainerRuntime(loadContainerRuntimeParams);
 ```
 
-`minVersionForCollab` is a semver string representing the minimum Fluid version allowed to collaborate on a document. It automatically configures default values for runtime options to ensure compatibility with the specified version. For example, setting `minVersionForCollab` to `"2.0.0"` enables features like grouped batching that are safe for all 2.x clients.
+`minimumDocumentRuntimeVersion` is a semver string representing the minimum Fluid version required to open or process a document. It automatically configures default values for runtime options to ensure compatibility with the specified version. For example, setting `minimumDocumentRuntimeVersion` to `"2.0.0"` enables features like grouped batching that are safe for all 2.x clients. `minVersionForCollab` remains accepted as a compatibility alias.
 
-You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `minVersionForCollab` value. If there is a mismatch (e.g., enabling a 2.x feature with `minVersionForCollab: "1.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
+You may also set individual runtime options via `IContainerRuntimeOptions`, but they must be consistent with your `minimumDocumentRuntimeVersion` value. If there is a mismatch (e.g., enabling a 2.x feature with `minimumDocumentRuntimeVersion: "1.0.0"`), a `UsageError` will be thrown (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor)).
 
-If `minVersionForCollab` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor is not permitted and will throw a `UsageError`.
+If `minimumDocumentRuntimeVersion` is not explicitly set, the runtime uses a default derived from the currently supported compatibility checkpoints (see `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)). Passing a value below the supported floor is not permitted and will throw a `UsageError`.
 
-Setting `minVersionForCollab` explicitly is **highly recommended**. Set it to the oldest Fluid Framework
+Setting `minimumDocumentRuntimeVersion` explicitly is **highly recommended**. Set it to the oldest Fluid Framework
 version your users are [saturated](#terminology) on. This will ensure:
 
 1. Older and newer clients can collaborate with each other safely.
@@ -162,7 +162,7 @@ We recommend following the below pattern to ensure cross-client compatibility. K
 
 1. Observe the distribution of Fluid versions across your application's clients. See [Observing Client Version Distribution](./FluidCompatibilityConsiderations.md#observing-client-version-distribution) for how to do this using telemetry.
 2. Update your compatibility configuration to match the oldest deployed version that your clients are
-   [saturated](#terminology) on. In both the declarative and encapsulated models, set `minVersionForCollab`
+   [saturated](#terminology) on. In both the declarative and encapsulated models, set `minimumDocumentRuntimeVersion`
    to that saturated version (e.g., `"2.10.0"`).
 3. Verify that the configured compatibility checkpoint is within the supported compatibility window of the Fluid Framework version you want to upgrade to. If it is, bump your Fluid Framework dependencies and update your lock file (so a newer version isn't picked up implicitly); no further action is required. If not, wait for further saturation and return to step 1.
 4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients running a version older than the configured `minVersionForCollab` may be blocked from accessing the document.

@@ -41,3 +41,13 @@
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+/**
+ * Oldest version of Fluid Framework client packages required to open or process documents created or loaded by a container runtime.
+ * @remarks
+ * This is the preferred name for new API surfaces. It is currently equivalent to {@link MinimumVersionForCollab}.
+ *
+ * @input
+ * @public
+ */
+export type MinimumDocumentRuntimeVersion = MinimumVersionForCollab;

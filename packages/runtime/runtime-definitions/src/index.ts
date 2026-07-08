@@ -94,7 +94,10 @@ export {
 	currentSummarizeStepPropertyName,
 	totalBlobSizePropertyName,
 } from "./summary.js";
-export type { MinimumVersionForCollab } from "./compatibilityDefinitions.js";
+export type {
+	MinimumDocumentRuntimeVersion,
+	MinimumVersionForCollab,
+} from "./compatibilityDefinitions.js";
 
 export {
 	type ContainerRuntimeBaseAlpha,

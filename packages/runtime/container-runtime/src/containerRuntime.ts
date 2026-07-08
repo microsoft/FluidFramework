@@ -130,6 +130,7 @@ import type {
 	ISummarizerNodeWithGC,
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
+	MinimumDocumentRuntimeVersion,
 	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
@@ -798,6 +799,28 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
+	 * Minimum version of the FF runtime that is required to open or process new documents.
+	 * The input should be a string that represents the minimum version of the FF runtime that should be
+	 * supported by documents created or loaded by this runtime. The format of the string must be in valid
+	 * semver format.
+	 *
+	 * The inputted version will be used to determine the default configuration for
+	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
+	 *
+	 * @example
+	 * minimumDocumentRuntimeVersion: "2.0.0"
+	 *
+	 * @privateRemarks
+	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
+	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
+	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
+	 * understand the new op type. If a customer were to set minimumDocumentRuntimeVersion to 2.0.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set minimumDocumentRuntimeVersion to 1.0.0, then `bar` would be set to
+	 * disable `foo` by default.
+	 */
+	minimumDocumentRuntimeVersion?: MinimumDocumentRuntimeVersion;
+
+	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
 	 * The input should be a string that represents the minimum version of the FF runtime that should be
 	 * supported for collaboration. The format of the string must be in valid semver format.
@@ -815,6 +838,8 @@ export interface LoadContainerRuntimeParams {
 	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * @remarks Prefer {@link LoadContainerRuntimeParams.minimumDocumentRuntimeVersion} for new usages.
 	 */
 	minVersionForCollab?: MinimumVersionForCollab;
 }
@@ -828,6 +853,23 @@ export async function loadContainerRuntime(
 	params: LoadContainerRuntimeParams,
 ): Promise<IContainerRuntime & IRuntime> {
 	return ContainerRuntime.loadRuntime(params);
+}
+
+function getMinVersionForCollabFromParams(
+	minimumDocumentRuntimeVersion: MinimumDocumentRuntimeVersion | undefined,
+	minVersionForCollab: MinimumVersionForCollab | undefined,
+): MinimumVersionForCollab {
+	if (
+		minimumDocumentRuntimeVersion !== undefined &&
+		minVersionForCollab !== undefined &&
+		minimumDocumentRuntimeVersion !== minVersionForCollab
+	) {
+		throw new UsageError(
+			"minimumDocumentRuntimeVersion and minVersionForCollab must match when both are provided.",
+		);
+	}
+
+	return minimumDocumentRuntimeVersion ?? minVersionForCollab ?? defaultMinVersionForCollab;
 }
 
 /**
@@ -960,8 +1002,13 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			minVersionForCollab = defaultMinVersionForCollab,
+			minimumDocumentRuntimeVersion,
+			minVersionForCollab: legacyMinVersionForCollab,
 		} = params;
+		const minVersionForCollab = getMinVersionForCollabFromParams(
+			minimumDocumentRuntimeVersion,
+			legacyMinVersionForCollab,
+		);
 
 		// If taggedLogger exists, use it. Otherwise, wrap the vanilla logger:
 		// back-compat: Remove the TaggedLoggerAdapter fallback once all the host are using loader > 0.45

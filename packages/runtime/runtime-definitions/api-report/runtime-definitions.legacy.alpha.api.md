@@ -399,6 +399,9 @@ export interface LocalAttributionKey {
 }
 
 // @public @input
+export type MinimumDocumentRuntimeVersion = MinimumVersionForCollab;
+
+// @public @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy

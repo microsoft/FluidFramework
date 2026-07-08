@@ -4157,6 +4157,45 @@ describe("Runtime", () => {
 				]);
 			});
 
+			it("minimumDocumentRuntimeVersion = 1.0.0", async () => {
+				const minimumDocumentRuntimeVersion = "1.0.0";
+				const logger = new MockLogger();
+				await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {},
+					provideEntryPoint: mockProvideEntryPoint,
+					minimumDocumentRuntimeVersion,
+				});
+
+				logger.assertMatchAny([
+					{
+						eventName: "ContainerRuntime:ContainerLoadStats",
+						category: "generic",
+						minVersionForCollab: minimumDocumentRuntimeVersion,
+					},
+				]);
+			});
+
+			it("throws when minimumDocumentRuntimeVersion and minVersionForCollab differ", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext() as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							minimumDocumentRuntimeVersion: "2.0.0",
+							minVersionForCollab: "1.0.0",
+						}),
+					(error: Error) =>
+						error.message ===
+						"minimumDocumentRuntimeVersion and minVersionForCollab must match when both are provided.",
+				);
+			});
+
 			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
 				const minVersionForCollab = "2.0.0-defaults";
 				const logger = new MockLogger();
