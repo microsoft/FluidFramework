@@ -9,7 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import type { Revertible } from "../../../core/index.js";
+import { CommitKind, type ChangeMetadata, type Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -424,6 +424,46 @@ describe("simple-tree tree", () => {
 				viewA.applyChange(change);
 			});
 			assert.equal(viewA.root, 5);
+		});
+
+		it("does not generate a commit when generateCommit is false", () => {
+			// Setup
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+
+			const changedFired: ChangeMetadata[] = [];
+			viewA.events.on("changed", (metadata) => {
+				changedFired.push(metadata);
+			});
+
+			const headCommitBefore = viewA.checkout.mainBranch.getHead();
+
+			// Act
+			viewA.applyChange(change, false);
+
+			// Verify
+			const headCommitAfter = viewA.checkout.mainBranch.getHead();
+			assert.equal(headCommitAfter, headCommitBefore);
+			assert.equal(viewA.root, 4);
+			assert.equal(changedFired.length, 1);
+			const { isLocal, getChange, getRevertible, kind, labels, label } = changedFired[0];
+			assert.equal(isLocal, true);
+			assert.equal(kind, CommitKind.Default);
+			assert.equal(labels.size, 0);
+			assert.equal(label, undefined);
+			assert.equal(getChange(), change);
+			assert.equal(getRevertible(), undefined);
 		});
 	});
 

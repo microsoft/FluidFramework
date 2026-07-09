@@ -858,7 +858,10 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
+	public applySerializedChange(
+		serializedChange: JsonCompatibleReadOnly,
+		generateCommit: boolean = true,
+	): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
@@ -875,15 +878,29 @@ export class TreeCheckout implements ITreeCheckout {
 			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+
+		if (generateCommit) {
+			// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+			this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		} else {
+			this.applyInternalChange(decodedChange);
+			this.emitChangedLocked(() => {
+				this.#events.emit("changed", {
+					isLocal: true,
+					kind: CommitKind.Default,
+					labels: new Set<unknown>(),
+					getChange: () => serializedChange,
+					getRevertible: () => undefined,
+				});
+			});
+		}
 	}
 
 	// #region TreeBranchAlpha
 
 	@throwIfBroken
-	public applyChange(change: JsonCompatibleReadOnly): void {
-		this.applySerializedChange(change);
+	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
+		this.applySerializedChange(change, generateCommit);
 	}
 
 	public isBranch(): this is TreeBranchAlpha {
@@ -1772,7 +1789,11 @@ function verboseFromCursor(
 
 interface SerializedChange {
 	version: 1;
-	revision: RevisionTag;
+	/**
+	 * The revision associated with the change.
+	 * Undefined if the change is not associated with a revision (e.g. a rebase).
+	 */
+	revision: RevisionTag | undefined;
 	change: JsonCompatibleReadOnly;
 	originatorId: SessionId;
 }
@@ -1784,7 +1805,9 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	const change = value as Partial<SerializedChange>;
 	return (
 		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
+		(change.revision === undefined ||
+			change.revision === "root" ||
+			typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
 		change.change !== undefined

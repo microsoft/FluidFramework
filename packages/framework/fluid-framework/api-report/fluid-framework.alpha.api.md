@@ -2231,7 +2231,7 @@ export interface TreeBranch extends IDisposable {
 
 // @alpha @sealed
 export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
-    applyChange(change: JsonCompatibleReadOnly): void;
+    applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
