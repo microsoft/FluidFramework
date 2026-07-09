@@ -137,7 +137,7 @@ export function applyTextOps(
  *
  * When text is inserted at exactly the offset where the selection begins, that offset is treated as
  * part of the shared prefix, so it stays where it was rather than moving past the inserted text. An
- * empty selection (a caret) therefore stays just before the inserted text. For a non-empty range,
+ * empty selection therefore stays just before the inserted text. For a non-empty range,
  * the start stays put while the end shifts, so the range widens to also cover the inserted text.
  *
  * Returns `undefined` when `selection` is `undefined`, so an untracked selection stays untracked.

@@ -74,9 +74,9 @@ describe("plainUtils", () => {
 			assert.deepEqual(result, { value: "lo", selection: { start: 2, end: 2 } });
 		});
 
-		it("collapses a selection to a caret when its whole range is removed", () => {
+		it("collapses a range to an empty selection when its whole range is removed", () => {
 			// "abcdef" with selection "cd" (2-4); remove "bcde" (1-5), which fully contains the selection.
-			// Both offsets pull back to the removal start, leaving a collapsed caret.
+			// Both offsets pull back to the removal start, leaving an empty selection.
 			const result = applyTextOps("abcdef", { start: 2, end: 4 }, [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 4 },
@@ -95,8 +95,8 @@ describe("plainUtils", () => {
 			assert.deepEqual(result, { value: "abcf", selection: { start: 0, end: 1 } });
 		});
 
-		it("shifts a collapsed caret right when text is inserted before it", () => {
-			// "ab" with a collapsed caret at the end (2); insert "XYZ" at the caret.
+		it("shifts an empty selection right when text is inserted before it", () => {
+			// "ab" with an empty selection at the end (2); insert "XYZ" at that position.
 			const result = applyTextOps("ab", { start: 2, end: 2 }, [
 				{ type: "retain", count: 2 },
 				{ type: "insert", text: "XYZ" },

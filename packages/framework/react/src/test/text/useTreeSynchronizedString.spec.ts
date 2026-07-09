@@ -60,13 +60,13 @@ describe("useTreeSynchronizedString", () => {
 				useTreeSynchronizedString(text, { start: 5, end: 5 }),
 			);
 
-			// Inserting before the caret shifts it right by the inserted length.
+			// Inserting before the selection shifts it right by the inserted length.
 			act(() => text.insertAt(0, "Oh "));
 			assert.equal(result.current.text, "Oh Hello");
 			assert.deepEqual(result.current.selection, { start: 8, end: 8 });
 		});
 
-		it("collapses the selection to a caret when its range is deleted", () => {
+		it("collapses the selection to an empty range when its text is deleted", () => {
 			const text = TextAsTree.Tree.fromString("Hello");
 			// Select the whole word.
 			const { result } = renderHook(() =>
