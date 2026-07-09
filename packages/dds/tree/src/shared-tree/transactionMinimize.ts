@@ -51,7 +51,7 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
  * submitted to (and stored by) the service without altering the observable
  * effect of the transaction.
  *
- * The current implementation is limited and is unable to guarentee that the
+ * The current implementation is limited and is unable to guarantee that the
  * resulting change is fully minimized if multiple distinct edit groups are
  * present in the transaction. Transaction edit groups are divided by schema
  * changes, so this limitation is only relevant for transactions that contain
