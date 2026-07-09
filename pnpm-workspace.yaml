@@ -55,8 +55,6 @@ minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
 ]
 
-registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
-
 overrides:
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
@@ -216,6 +214,8 @@ peerDependencyRules:
 # Hoist these dependencies to the root workspace
 publicHoistPattern:
   - '@arethetypeswrong/cli'
+
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
 
 resolutionMode: highest
 
