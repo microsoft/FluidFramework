@@ -1,4 +1,5 @@
 ---
+"@fluidframework/aqueduct": minor
 "@fluidframework/azure-client": minor
 "@fluidframework/container-runtime": minor
 "@fluidframework/datastore": minor
@@ -8,6 +9,7 @@
 "@fluidframework/test-runtime-utils": minor
 "@fluidframework/tinylicious-client": minor
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": feature
 ---
 

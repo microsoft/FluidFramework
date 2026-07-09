@@ -206,7 +206,7 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinDocumentRuntimeVersion;
 }
 
 // @public
@@ -387,7 +387,7 @@ export namespace ExtensibleUnionNode {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema, minVersionForCollab: MinimumVersionForCollab, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, minVersionForCollab: MinDocumentRuntimeVersion, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
 
 // @alpha @system
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;

@@ -144,7 +144,6 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
-	 * @public
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
@@ -206,7 +205,6 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
-	 * @public
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
@@ -275,7 +273,6 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Loaded container instance at the specified version.
-	 * @public
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
 		id: string,

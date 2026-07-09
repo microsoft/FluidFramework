@@ -98,7 +98,7 @@ export enum AttachState {
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinDocumentRuntimeVersion;
 }
 
 // @public
