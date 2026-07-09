@@ -22,8 +22,8 @@ import {
 	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
 	schemaCodecBuilder,
+	combineChunks,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -235,6 +235,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		// (finalized compressed ids or strings), so summary-style decode is correct.
 		const context = FieldBatchDecodingContext.forSummary({
 			idCompressor,
+			healing: undefined,
 		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,
