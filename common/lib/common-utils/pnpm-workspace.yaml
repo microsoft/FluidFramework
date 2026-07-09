@@ -66,7 +66,6 @@ overrides:
   keyv@>=4 <5: ^5.5.3
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
-  webpack@>=5 <6: ^5.104.1
 
   # Resolve a known security vulnerability.
   ws@>=8 <9: ^8.21.0
