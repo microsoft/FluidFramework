@@ -1399,7 +1399,7 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly versionComparer?: (a: string, b: string) => number;
 }
 
-// @alpha
+// @alpha @input
 export interface StoredFromViewSchemaGenerationOptions {
     includeStaged(upgrade: SchemaUpgrade): boolean;
     includeStagedOptional(upgrade: SchemaUpgrade): boolean;
