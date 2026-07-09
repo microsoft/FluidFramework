@@ -44,6 +44,7 @@ export {
 	NodeAttachState,
 	type FieldChangeEncodingContext,
 	type NestedChangesIndices,
+	EditFilterStatus,
 } from "./fieldChangeHandler.js";
 export type {
 	CrossFieldKey,

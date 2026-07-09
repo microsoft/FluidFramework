@@ -23,6 +23,7 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
+	type RangeQueryResult,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -35,6 +36,7 @@ import {
 	requiredIdentifier,
 } from "../fieldKindIdentifiers.js";
 import {
+	EditFilterStatus,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -466,9 +468,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return updated;
 	},
 
-	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChanges: change.childChanges, moves: [] };
-	},
+	filterEdits,
 };
 
 function replaceReplaceRevisions(
@@ -814,3 +814,49 @@ export const optional: Optional = new FlexFieldKind(
 		]),
 	},
 );
+
+function filterEdits(
+	change: OptionalChangeset,
+	filterDetach: (
+		id: ChangeAtomId,
+		count: number,
+		endpoint?: ChangeAtomId,
+	) => RangeQueryResult<EditFilterStatus>,
+	filterAttach: (
+		id: ChangeAtomId,
+		count: number,
+		endpoint?: ChangeAtomId,
+	) => RangeQueryResult<EditFilterStatus>,
+	preserveOtherEdits: boolean,
+): OptionalChangeset {
+	const filtered: Mutable<OptionalChangeset> = { ...change };
+	if (filtered.valueReplace !== undefined) {
+		if (isReplaceEffectful(filtered.valueReplace)) {
+			const detachId = getEffectfulDst(filtered.valueReplace);
+			const detachResult =
+				detachId === undefined ? undefined : filterDetach(detachId, 1).value;
+
+			const attachId = filtered.valueReplace.src;
+			const attachResult =
+				attachId === undefined ? undefined : filterAttach(attachId, 1).value;
+
+			if (detachResult === EditFilterStatus.Remove) {
+				assert(
+					attachId === undefined || attachResult === EditFilterStatus.Remove,
+					"Cannot remove detach without also removing attach",
+				);
+
+				delete filtered.valueReplace;
+			} else if (attachResult === EditFilterStatus.Remove) {
+				delete filtered.valueReplace.src;
+			}
+		} else if (!preserveOtherEdits) {
+			delete filtered.valueReplace;
+		}
+	}
+
+	if (!preserveOtherEdits) {
+		filtered.moves = [];
+	}
+	return filtered;
+}
