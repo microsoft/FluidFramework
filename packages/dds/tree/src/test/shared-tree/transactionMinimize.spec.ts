@@ -1426,9 +1426,9 @@ describe("transaction minimize post-processor", () => {
 	});
 
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
-	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
-	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
-	describe.skip("removes extraneous data from the squashed changes (expected to fail until minimize is implemented)", () => {
+	// present in the final document. They are NOT ALL EXPECTED TO PASS until the
+	// minimization algorithm is fully implemented.
+	describe("removes extraneous data from the squashed changes", () => {
 		it("drops the build and destroy for a create-then-remove", () => {
 			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
