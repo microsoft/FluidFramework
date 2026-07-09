@@ -6,7 +6,7 @@
 import type { TextAsTree } from "@fluidframework/tree/internal";
 import { useEffect, useRef, useState } from "react";
 
-import { applyTextOps, collapseSelectionOnReread, type TextSelection } from "./plainUtils.js";
+import { applyTextOps, remapSelectionOnReread, type TextSelection } from "./plainUtils.js";
 
 /**
  * The value returned by {@link useTreeSynchronizedString}.
@@ -22,8 +22,8 @@ export interface SynchronizedString {
 	 * {@link applyTextOps} so it follows the same logical position as the text changes.
 	 *
 	 * When an incremental delta is unavailable and the hook must re-read the whole string, the range
-	 * cannot be faithfully mapped across the edit, so it is collapsed to a single caret at the
-	 * (clamped) previous start offset.
+	 * cannot be mapped faithfully; the hook makes a best effort to remap it from the old/new text and
+	 * drops the selection (becomes `undefined`) when it can't place an endpoint reliably.
 	 *
 	 * This is not a live caret: the hook does not observe the user's actual cursor, so a consumer that
 	 * needs the real caret position must read it from the rendered element itself.
@@ -84,17 +84,20 @@ export function useTreeSynchronizedString(
 				// This happens when the character field's marks couldn't be composed into a single
 				// delta — e.g. the field was modified across multiple batches within one flush (such
 				// as an interleaved schema change) — or when the tree is out of sync with the delta.
+				const previous = textRef.current;
 				const reread = tree.fullString();
 				textRef.current = reread;
 				setText(reread);
-				// Without a delta we can't know how the text mutated, so we can't faithfully move a
-				// selection range across the edit. Collapse it to a caret rather than leave a range
-				// spanning what may now be unrelated characters — see collapseSelectionOnReread. A
-				// consumer that needs an accurate caret should read it from the rendered element.
+				// Without a delta we can't know exactly how the text mutated, so we can't faithfully
+				// move a selection range across the edit. Make a best effort by inferring a single
+				// contiguous edit from the old/new text (see remapSelectionOnReread); if an endpoint
+				// lands in the ambiguous replaced span, the selection is dropped rather than placed at
+				// an arbitrary position. A consumer that needs an accurate caret should read it from
+				// the rendered element.
 				if (selectionRef.current !== undefined) {
-					const collapsed = collapseSelectionOnReread(selectionRef.current, reread.length);
-					selectionRef.current = collapsed;
-					setSelection(collapsed);
+					const remapped = remapSelectionOnReread(selectionRef.current, previous, reread);
+					selectionRef.current = remapped;
+					setSelection(remapped);
 				}
 				return;
 			}

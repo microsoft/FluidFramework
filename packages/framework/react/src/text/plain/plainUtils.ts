@@ -116,31 +116,84 @@ export function applyTextOps(
 }
 
 /**
- * Collapse a tracked selection to a single caret, for use when a text change arrives without an
- * incremental delta and the whole string must be re-read.
+ * Best-effort remap of a tracked selection across a text change that arrived without an incremental
+ * delta (so the whole string had to be re-read).
  * @remarks
  * When no delta is available (see {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}),
- * there is no reliable way to map a selection *range* across the edit: preserving `start`/`end`
- * independently can leave a range spanning characters unrelated to the original selection (e.g. when a
- * batch deletes the selected text and inserts new text of similar length). To avoid presenting a
- * misleading highlight, the range is collapsed to a caret at the (clamped) previous `start` offset,
- * which keeps the caret near its prior position in the common benign case while never selecting
- * unrelated characters.
+ * the ops that transformed `oldText` into `newText` are unknown, so a selection range cannot be
+ * moved faithfully. This makes a best effort by inferring a single contiguous edit the same way
+ * {@link computeSync} does — the longest shared prefix/suffix between `oldText` and `newText`, with
+ * everything in between treated as one replaced span:
+ *
+ * - An offset within the shared prefix is unchanged.
+ * - An offset within the shared suffix shifts by the change in length.
+ * - An offset inside the replaced span has no faithful mapping.
+ *
+ * If either endpoint falls inside the replaced span, the whole selection is dropped (returns
+ * `undefined`) rather than placing an endpoint at an arbitrary position. Like the tree → string
+ * diff, this is intentionally not a general diff, so a batch whose real edit was not one contiguous
+ * span (e.g. deleting the selected text and inserting similar-length text elsewhere) may drop a
+ * selection that a smarter diff could have preserved — which is the safe direction to err.
+ *
+ * When text is inserted at exactly the offset where the selection begins, that offset is treated as
+ * part of the shared prefix, so it stays where it was rather than moving past the inserted text. An
+ * empty selection (a caret) therefore stays just before the inserted text. For a non-empty range,
+ * the start stays put while the end shifts, so the range widens to also cover the inserted text.
  *
  * Returns `undefined` when `selection` is `undefined`, so an untracked selection stays untracked.
- * @param selection - The selection to collapse, or `undefined` if none is tracked.
- * @param length - The length of the re-read text; the caret is clamped to `[0, length]`.
+ * @param selection - The selection to remap, or `undefined` if none is tracked.
+ * @param oldText - The text before the change (the value the selection indexes into).
+ * @param newText - The re-read text after the change.
  * @internal
  */
-export function collapseSelectionOnReread(
+export function remapSelectionOnReread(
 	selection: TextSelection | undefined,
-	length: number,
+	oldText: string,
+	newText: string,
 ): TextSelection | undefined {
 	if (selection === undefined) {
 		return undefined;
 	}
-	const caret = clamp(selection.start, 0, length);
-	return { start: caret, end: caret };
+
+	// Longest common prefix/suffix in UTF-16 code units — the unit `TextSelection` offsets use — so
+	// remapped offsets line up directly with the offsets a `<textarea>` reports.
+	let prefixLength = 0;
+	while (
+		prefixLength < oldText.length &&
+		prefixLength < newText.length &&
+		oldText[prefixLength] === newText[prefixLength]
+	) {
+		prefixLength++;
+	}
+	let suffixLength = 0;
+	while (
+		suffixLength + prefixLength < oldText.length &&
+		suffixLength + prefixLength < newText.length &&
+		oldText[oldText.length - 1 - suffixLength] === newText[newText.length - 1 - suffixLength]
+	) {
+		suffixLength++;
+	}
+
+	const oldSuffixStart = oldText.length - suffixLength;
+	const lengthDelta = newText.length - oldText.length;
+
+	const remapOffset = (offset: number): number | undefined => {
+		if (offset <= prefixLength) {
+			return offset; // within the shared prefix
+		}
+		if (offset >= oldSuffixStart) {
+			// Within the shared suffix; clamp guards against a stale offset past `oldText`.
+			return clamp(offset + lengthDelta, 0, newText.length);
+		}
+		return undefined; // inside the replaced span — no faithful mapping
+	};
+
+	const start = remapOffset(selection.start);
+	const end = remapOffset(selection.end);
+	if (start === undefined || end === undefined) {
+		return undefined;
+	}
+	return { start, end };
 }
 
 /**

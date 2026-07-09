@@ -16,8 +16,8 @@ import { createUndoRedo } from "../../undoRedo.js";
 /* eslint-disable import-x/no-internal-modules -- Allow import of the file being tested. */
 import {
 	applyTextOps,
-	collapseSelectionOnReread,
 	computeSync,
+	remapSelectionOnReread,
 	syncTextToTree,
 } from "../../text/plain/plainUtils.js";
 /* eslint-enable import-x/no-internal-modules */
@@ -105,31 +105,72 @@ describe("plainUtils", () => {
 		});
 	});
 
-	describe("collapseSelectionOnReread", () => {
+	describe("remapSelectionOnReread", () => {
 		it("returns undefined when no selection is tracked", () => {
-			assert.equal(collapseSelectionOnReread(undefined, 5), undefined);
+			assert.equal(remapSelectionOnReread(undefined, "abc", "abc"), undefined);
 		});
 
-		it("collapses a range to a caret at its start, rather than preserving the range", () => {
-			// The whole point of the policy: a range must NOT survive the reread as a range, even when
-			// both offsets still fit in the new text (which is where independent clamping went wrong).
-			assert.deepEqual(collapseSelectionOnReread({ start: 0, end: 5 }, 7), {
+		it("leaves a selection unchanged when the edit is entirely after it", () => {
+			// "abcdef" -> "abcXY"; the change is in the suffix region, selection "ab" (0-2) is in the
+			// shared prefix and does not move.
+			assert.deepEqual(remapSelectionOnReread({ start: 0, end: 2 }, "abcdef", "abcXY"), {
 				start: 0,
-				end: 0,
+				end: 2,
 			});
 		});
 
-		it("clamps the caret into the new (shorter) text", () => {
-			assert.deepEqual(collapseSelectionOnReread({ start: 10, end: 12 }, 3), {
+		it("shifts a selection in the shared suffix by the change in length", () => {
+			// "abcdef" -> "aXXXdef"; the middle "bc" became "XXX" (+1). Selection "ef" (4-6) is in the
+			// shared suffix and shifts right by 1.
+			assert.deepEqual(remapSelectionOnReread({ start: 4, end: 6 }, "abcdef", "aXXXdef"), {
+				start: 5,
+				end: 7,
+			});
+		});
+
+		it("shifts a shared-suffix selection left when the edit shortened the text", () => {
+			// "abcdef" -> "adef"; "bc" removed (-2). Selection "ef" (4-6) shifts left by 2.
+			assert.deepEqual(remapSelectionOnReread({ start: 4, end: 6 }, "abcdef", "adef"), {
+				start: 2,
+				end: 4,
+			});
+		});
+
+		it("remaps a pure insertion that lands before the selection", () => {
+			// "abc" -> "XYabc"; inserted at the start, selection "bc" (1-3) shifts right by 2.
+			assert.deepEqual(remapSelectionOnReread({ start: 1, end: 3 }, "abc", "XYabc"), {
 				start: 3,
-				end: 3,
+				end: 5,
 			});
 		});
 
-		it("keeps an already-collapsed caret in place when still in range", () => {
-			assert.deepEqual(collapseSelectionOnReread({ start: 2, end: 2 }, 5), {
+		it("drops the selection when an endpoint falls inside the replaced span", () => {
+			// "abcdef" -> "aZZZf"; "bcde" (1-5) became "ZZZ". Selection "cd" (2-4) is entirely inside
+			// the replaced span, so it cannot be placed and is dropped.
+			assert.equal(remapSelectionOnReread({ start: 2, end: 4 }, "abcdef", "aZZZf"), undefined);
+		});
+
+		it("drops the selection when only one endpoint is inside the replaced span", () => {
+			// "abcdef" -> "aZZf"; "bcde" became "ZZ". Selection "cf" (2-6): start 2 is inside the
+			// replaced span while end 6 is in the suffix, so the whole selection is dropped.
+			assert.equal(remapSelectionOnReread({ start: 2, end: 6 }, "abcdef", "aZZf"), undefined);
+		});
+
+		it("keeps an empty selection at the boundary of an insertion", () => {
+			// "abc" -> "abXYc"; insertion at offset 2. An empty selection at 2 stays at 2, just before
+			// the inserted text.
+			assert.deepEqual(remapSelectionOnReread({ start: 2, end: 2 }, "abc", "abXYc"), {
 				start: 2,
 				end: 2,
+			});
+		});
+
+		it("expands a range whose start sits exactly at an insertion point", () => {
+			// "abc" -> "aXYbc"; "XY" inserted right at the selection's start (offset 1). The start
+			// stays at 1 and the end shifts, so "bc" widens to "XYbc".
+			assert.deepEqual(remapSelectionOnReread({ start: 1, end: 3 }, "abc", "aXYbc"), {
+				start: 1,
+				end: 5,
 			});
 		});
 	});
