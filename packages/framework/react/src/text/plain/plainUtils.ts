@@ -12,7 +12,7 @@ import { clamp } from "../../utilities.js";
  * @remarks
  * These match the `selectionStart` / `selectionEnd` properties of an HTML `<input>` / `<textarea>`,
  * and the offsets used to index into a JavaScript string. A collapsed cursor has `start === end`.
- * @internal
+ * @alpha
  */
 export interface TextSelection {
 	/** UTF-16 offset of the start of the selection. */
@@ -23,7 +23,6 @@ export interface TextSelection {
 
 /**
  * The result of applying a character-level delta to an existing text value via {@link applyTextOps}.
- * @internal
  */
 export interface ApplyTextOpsResult {
 	/** The updated text value after applying the ops. */
@@ -52,7 +51,6 @@ export interface ApplyTextOpsResult {
  * unavailable; in that case skip this function and re-read the whole text via `root.fullString()`.
  *
  * Writing the result back must not re-enter the tree — see {@link syncTextToTree} for the re-entrancy pattern.
- * @internal
  */
 export function applyTextOps(
 	oldValue: string,
@@ -144,7 +142,6 @@ export function applyTextOps(
  * @param selection - The selection to remap, or `undefined` if none is tracked.
  * @param oldText - The text before the change (the value the selection indexes into).
  * @param newText - The re-read text after the change.
- * @internal
  */
 export function remapSelectionOnReread(
 	selection: TextSelection | undefined,
@@ -231,7 +228,7 @@ export function remapSelectionOnReread(
  *   }
  * }
  * ```
- * @internal
+ * @alpha
  */
 export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
 	const sync = computeSync(root.charactersCopy(), [...newText]);
@@ -264,7 +261,6 @@ export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
  * every keystroke.
  *
  * Exported for unit testing.
- * @internal
  */
 export function computeSync<T>(
 	existing: readonly T[],

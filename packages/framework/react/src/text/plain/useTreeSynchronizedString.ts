@@ -10,7 +10,7 @@ import { applyTextOps, remapSelectionOnReread, type TextSelection } from "./plai
 
 /**
  * The value returned by {@link useTreeSynchronizedString}.
- * @internal
+ * @alpha
  */
 export interface SynchronizedString {
 	/** The tree's current text. */
@@ -18,8 +18,8 @@ export interface SynchronizedString {
 	/**
 	 * A selection range tracked across edits, or `undefined` when no selection is being tracked.
 	 * @remarks
-	 * Seeded from the `initialSelection` passed to {@link useTreeSynchronizedString} and adjusted by
-	 * {@link applyTextOps} so it follows the same logical position as the text changes.
+	 * Seeded from the `initialSelection` passed to {@link useTreeSynchronizedString} and adjusted as
+	 * the tree's characters change so it follows the same logical position across edits.
 	 *
 	 * When an incremental delta is unavailable and the hook must re-read the whole string, the range
 	 * cannot be mapped faithfully; the hook makes a best effort to remap it from the old/new text and
@@ -57,7 +57,7 @@ export interface SynchronizedString {
  *   />
  * );
  * ```
- * @internal
+ * @alpha
  */
 export function useTreeSynchronizedString(
 	tree: TextAsTree.Tree,
