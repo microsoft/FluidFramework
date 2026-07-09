@@ -10,6 +10,7 @@ import { applyTextOps, remapSelectionOnReread, type TextSelection } from "./plai
 
 /**
  * The value returned by {@link useTreeSynchronizedString}.
+ * @sealed
  * @alpha
  */
 export interface SynchronizedString {
@@ -21,9 +22,8 @@ export interface SynchronizedString {
 	 * Seeded from the `initialSelection` passed to {@link useTreeSynchronizedString} and adjusted as
 	 * the tree's characters change so it follows the same logical position across edits.
 	 *
-	 * When an incremental delta is unavailable and the hook must re-read the whole string, the range
-	 * cannot be mapped faithfully; the hook makes a best effort to remap it from the old/new text and
-	 * drops the selection (becomes `undefined`) when it can't place an endpoint reliably.
+	 * Tracking is best-effort: in rare cases the selection may be dropped (become `undefined`) when it
+	 * cannot be mapped reliably across a change.
 	 *
 	 * This is not a live caret: the hook does not observe the user's actual cursor, so a consumer that
 	 * needs the real caret position must read it from the rendered element itself.

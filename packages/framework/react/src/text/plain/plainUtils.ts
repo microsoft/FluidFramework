@@ -16,6 +16,7 @@ import { clamp } from "../../utilities.js";
  * @remarks
  * These match the `selectionStart` / `selectionEnd` properties of an HTML `<input>` / `<textarea>`,
  * and the offsets used to index into a JavaScript string. A collapsed cursor has `start === end`.
+ * @input
  * @alpha
  */
 export interface TextSelection {
@@ -118,6 +119,37 @@ export function applyTextOps(
 }
 
 /**
+ * Find the lengths of the longest common prefix and suffix shared by `a` and `b`.
+ * @remarks
+ * Works on any indexable sequence, so both the tree diff (arrays of code points — see
+ * {@link computeSync}) and the selection remap (strings indexed by UTF-16 code unit — see
+ * {@link remapSelectionOnReread}) share one implementation. The prefix and suffix never overlap:
+ * their combined length never exceeds either input's length.
+ */
+function commonAffixLengths<T>(
+	a: ArrayLike<T>,
+	b: ArrayLike<T>,
+): { prefixLength: number; suffixLength: number } {
+	let prefixLength = 0;
+	while (
+		prefixLength < a.length &&
+		prefixLength < b.length &&
+		a[prefixLength] === b[prefixLength]
+	) {
+		prefixLength++;
+	}
+	let suffixLength = 0;
+	while (
+		suffixLength + prefixLength < a.length &&
+		suffixLength + prefixLength < b.length &&
+		a[a.length - 1 - suffixLength] === b[b.length - 1 - suffixLength]
+	) {
+		suffixLength++;
+	}
+	return { prefixLength, suffixLength };
+}
+
+/**
  * Best-effort remap of a tracked selection across a text change that arrived without an incremental
  * delta (so the whole string had to be re-read).
  * @remarks
@@ -158,22 +190,7 @@ export function remapSelectionOnReread(
 
 	// Longest common prefix/suffix in UTF-16 code units — the unit `TextSelection` offsets use — so
 	// remapped offsets line up directly with the offsets a `<textarea>` reports.
-	let prefixLength = 0;
-	while (
-		prefixLength < oldText.length &&
-		prefixLength < newText.length &&
-		oldText[prefixLength] === newText[prefixLength]
-	) {
-		prefixLength++;
-	}
-	let suffixLength = 0;
-	while (
-		suffixLength + prefixLength < oldText.length &&
-		suffixLength + prefixLength < newText.length &&
-		oldText[oldText.length - 1 - suffixLength] === newText[newText.length - 1 - suffixLength]
-	) {
-		suffixLength++;
-	}
+	const { prefixLength, suffixLength } = commonAffixLengths(oldText, newText);
 
 	const oldSuffixStart = oldText.length - suffixLength;
 	const lengthDelta = newText.length - oldText.length;
@@ -205,22 +222,19 @@ export function remapSelectionOnReread(
  * and replacing only the middle span. The resulting remove + insert pair is wrapped in a transaction
  * internally, so a single call applies (and undoes/redoes) as one atomic unit.
  *
- * To attach an undo/redo label, nest this inside your own transaction, e.g.
- * `TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, newText), { label })`. The
- * `label` correlates the edit for undo/redo grouping where the context supports it (see
- * {@link @fluidframework/tree#TreeContextAlpha.runTransaction}).
+ * @example Avoiding re-entrant edits
  *
  * Mutating the tree synchronously fires
  * {@link @fluidframework/tree#TextAsTree.Members.onCharactersChanged}. If you also subscribe to that
- * event to apply remote edits to your view (e.g. via `applyTextOps`), set a re-entrancy flag
+ * event to apply remote edits to your view, set a re-entrancy flag
  * before calling this and ignore the event while it is set — otherwise the edit you just made is
- * echoed straight back onto your view. For example:
+ * echoed straight back onto your view:
  *
  * ```typescript
  * let updating = false;
  * root.onCharactersChanged((ops) => {
  *   if (updating) return; // ignore the echo of our own local edit
- *   // ...apply ops to your view via applyTextOps...
+ *   // ...apply ops to your view...
  * });
  *
  * function onUserInput(newText: string): void {
@@ -271,24 +285,7 @@ export function computeSync<T>(
 	final: readonly T[],
 ): { remove?: { start: number; end: number }; insert?: { location: number; slice: T[] } } {
 	// Find common prefix and suffix to minimize changes
-
-	let prefixLength = 0;
-	while (
-		prefixLength < existing.length &&
-		prefixLength < final.length &&
-		existing[prefixLength] === final[prefixLength]
-	) {
-		prefixLength++;
-	}
-
-	let suffixLength = 0;
-	while (
-		suffixLength + prefixLength < existing.length &&
-		suffixLength + prefixLength < final.length &&
-		existing[existing.length - 1 - suffixLength] === final[final.length - 1 - suffixLength]
-	) {
-		suffixLength++;
-	}
+	const { prefixLength, suffixLength } = commonAffixLengths(existing, final);
 
 	// Locate middle replaced range in existing and final
 	const existingMiddleStart = prefixLength;

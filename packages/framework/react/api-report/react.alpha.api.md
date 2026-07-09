@@ -43,7 +43,7 @@ export interface SchemaIncompatibleProps {
     readonly upgradeSchema: () => void;
 }
 
-// @alpha
+// @alpha @sealed
 export interface SynchronizedString {
     readonly selection: TextSelection | undefined;
     readonly text: string;
@@ -52,7 +52,7 @@ export interface SynchronizedString {
 // @alpha
 export function syncTextToTree(root: TextAsTree.Tree, newText: string): void;
 
-// @alpha
+// @alpha @input
 export interface TextSelection {
     readonly end: number;
     readonly start: number;
