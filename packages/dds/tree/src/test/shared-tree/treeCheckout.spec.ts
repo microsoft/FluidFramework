@@ -48,7 +48,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 	type InsertableTreeFieldFromImplicitField,
-	type TransactionResult,
+	type TransactionVoidResult,
 	type TreeBranch,
 } from "../../simple-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -797,7 +797,7 @@ describe("sharedTreeView", () => {
 			const view = provider.trees[0].kernel.viewWith(config);
 			view.initialize([]);
 
-			let transactionPromise: Promise<TransactionResult> | undefined;
+			let transactionPromise: Promise<TransactionVoidResult> | undefined;
 			const expectedError = validateUsageError(
 				/An asynchronous transaction cannot be started while another transaction is already in progress/,
 			);
