@@ -334,17 +334,15 @@ export class PendingStateManager implements IDisposable {
 	}
 
 	/**
-	 * Checks the pending messages to see if any of them are staged (submitted while in Staging Mode) and
-	 * represent user changes (aka "dirtyable" messages).
+	 * Checks the pending messages to see if any of them are staged (submitted while in Staging Mode).
+	 * Unlike {@link PendingStateManager.hasPendingUserChanges}, this does not filter by "dirtyable" messages:
+	 * anything submitted while in Staging Mode counts as a staged change that must be committed or discarded,
+	 * regardless of whether it would otherwise count towards dirty tracking.
 	 */
 	public hasStagedChanges(): boolean {
 		for (let i = 0; i < this.pendingMessages.length; i++) {
 			const element = this.pendingMessages.get(i);
-			if (
-				element?.batchInfo.staged === true &&
-				hasTypicalRuntimeOp(element) && // Empty batches don't count towards user changes
-				isContainerMessageDirtyable(element.runtimeOp)
-			) {
+			if (element?.batchInfo.staged === true) {
 				return true;
 			}
 		}

@@ -1356,7 +1356,7 @@ describe("Pending State Manager", () => {
 			);
 		});
 
-		it("returns false if the pending message is staged but not dirtyable", () => {
+		it("returns true if the pending message is staged, even if not dirtyable", () => {
 			const pendingMessages: Partial<IPendingMessage>[] = [
 				{
 					runtimeOp: nonDirtyableOp,
@@ -1366,20 +1366,20 @@ describe("Pending State Manager", () => {
 			const psm = createPendingStateManager(pendingMessages as IPendingMessage[]);
 			assert.strictEqual(
 				psm.hasStagedChanges(),
-				false,
-				"Should be false with staged non-dirtyable op",
+				true,
+				"Should be true with staged non-dirtyable op: anything staged counts, regardless of dirtyability",
 			);
 		});
 
-		it("returns false if all staged messages are empty batches (runtimeOp undefined)", () => {
+		it("returns true if a staged message is an empty batch (runtimeOp undefined)", () => {
 			const psm = createPendingStateManager();
 			const { placeholderMessage } = opGroupingManager.createEmptyGroupedBatch("batchId", 0);
 			// Staged batches aren't actually sent, so clientSequenceNumber is undefined (matching real usage).
 			psm.onFlushEmptyBatch(placeholderMessage, undefined, true /* staged */);
 			assert.strictEqual(
 				psm.hasStagedChanges(),
-				false,
-				"Should be false for staged empty batch",
+				true,
+				"Should be true for a staged empty batch: the user entered staging mode and submitted something (even if empty), so it must be committed or discarded",
 			);
 		});
 

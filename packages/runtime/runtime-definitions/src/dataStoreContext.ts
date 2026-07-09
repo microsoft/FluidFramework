@@ -367,7 +367,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
 	 * not yet been discarded or committed.
 	 *
 	 * @remarks This is distinct from {@link @fluidframework/container-runtime-definitions#IContainerRuntime.isDirty}: a container may be dirty due to
-	 * ordinary unacknowledged local changes without having any staged changes, and vice versa.
+	 * ordinary unacknowledged local changes without having any staged changes.
 	 */
 	readonly hasStagedChanges: boolean;
 }

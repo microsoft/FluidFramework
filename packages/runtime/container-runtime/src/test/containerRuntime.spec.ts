@@ -4794,11 +4794,17 @@ describe("Runtime", () => {
 					genTestDataStoreMessage("staged-op"),
 					"LOCAL_OP_METADATA",
 				);
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes immediately after submitting a staged op (from Outbox), before flush",
+				);
+
 				containerRuntime.flush();
 				assert.equal(
 					containerRuntime.hasStagedChanges,
 					true,
-					"Should have staged changes after submitting and flushing a staged op",
+					"Should still have staged changes after flushing a staged op (now from PendingStateManager)",
 				);
 
 				controls.discardChanges();
@@ -5615,7 +5621,7 @@ describe("Runtime", () => {
 			});
 
 			describe("hasStagedChangesChanged event", () => {
-				it("emits with true after submitting and flushing a staged op, and hasStagedChanges is true when handler runs", () => {
+				it("emits with true after submitting a staged op (before flush), and hasStagedChanges is true when handler runs", () => {
 					stubChannelCollection(containerRuntime);
 					const events: boolean[] = [];
 					const hasStagedChangesAtEventTime: boolean[] = [];
@@ -5638,14 +5644,24 @@ describe("Runtime", () => {
 						genTestDataStoreMessage("staged-op"),
 						"LOCAL_OP_METADATA",
 					);
-					containerRuntime.flush();
 
-					assert.equal(events.length, 1, "Expected exactly one event after flush");
+					assert.equal(
+						events.length,
+						1,
+						"Expected exactly one event immediately after submitting (from Outbox), before flush",
+					);
 					assert.equal(events[0], true, "Event payload should be true");
 					assert.equal(
 						hasStagedChangesAtEventTime[0],
 						true,
 						"hasStagedChanges should be true when the event fires",
+					);
+
+					containerRuntime.flush();
+					assert.equal(
+						events.length,
+						1,
+						"Flushing should not emit again since hasStagedChanges was already true",
 					);
 				});
 
@@ -5771,6 +5787,11 @@ describe("Runtime", () => {
 						0,
 						"stagingModeChanged should NOT fire for successful orderSequentially",
 					);
+					assert.deepEqual(
+						hasStagedChangesChangedEvents,
+						[true, false],
+						"hasStagedChangesChanged SHOULD fire (true then false) since staged data genuinely existed transiently",
+					);
 					assert.equal(
 						runtime.hasStagedChanges,
 						false,
@@ -5778,6 +5799,50 @@ describe("Runtime", () => {
 					);
 
 					runtime.dispose();
+				});
+
+				it("never emits when entering and discarding staging mode with no ops submitted", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.discardChanges();
+
+					assert.equal(
+						events.length,
+						0,
+						"hasStagedChangesChanged should never fire since no ops were ever staged",
+					);
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should remain false throughout",
+					);
+				});
+
+				it("never emits when entering and committing staging mode with no ops submitted", () => {
+					stubChannelCollection(containerRuntime);
+					const events: boolean[] = [];
+					containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) =>
+						events.push(hasStagedChanges),
+					);
+
+					const controls = containerRuntime.enterStagingMode();
+					controls.commitChanges();
+
+					assert.equal(
+						events.length,
+						0,
+						"hasStagedChangesChanged should never fire since no ops were ever staged",
+					);
+					assert.equal(
+						containerRuntime.hasStagedChanges,
+						false,
+						"hasStagedChanges should remain false throughout",
+					);
 				});
 			});
 		});

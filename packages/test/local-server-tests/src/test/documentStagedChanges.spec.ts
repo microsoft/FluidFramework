@@ -7,7 +7,10 @@ import { strict as assert } from "assert";
 
 import { ContainerRuntimeFactoryWithDefaultDataStore } from "@fluidframework/aqueduct/internal";
 import { IContainer, IFluidCodeDetails } from "@fluidframework/container-definitions/internal";
-import type { ILoaderProps } from "@fluidframework/container-loader/internal";
+import {
+	loadExistingContainer,
+	type ILoaderProps,
+} from "@fluidframework/container-loader/internal";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/internal";
 import {
 	LocalDocumentServiceFactory,
@@ -33,6 +36,7 @@ type IContainerRuntime_WithHasStagedChanges = IContainerRuntime & IContainerRunt
 
 describe("Document Staged Changes", () => {
 	const documentId = "documentStagedChangesTest";
+	const documentLoadUrl = `https://localhost/${documentId}`;
 	const mapId = "mapKey";
 	const codeDetails: IFluidCodeDetails = {
 		package: "documentStagedChangesTestPackage",
@@ -41,6 +45,7 @@ describe("Document Staged Changes", () => {
 
 	let deltaConnectionServer: ILocalDeltaConnectionServer;
 	let documentServiceFactory: LocalDocumentServiceFactory;
+	let urlResolver: LocalResolver;
 	let loaderContainerTracker: LoaderContainerTracker;
 	let container: IContainer;
 	let dataObject: ITestFluidObject;
@@ -99,12 +104,11 @@ describe("Document Staged Changes", () => {
 		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
 			defaultFactory,
 			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
-			// Use a low threshold so staged ops are auto-flushed to the PendingStateManager (which is what
-			// hasStagedChanges checks) right away instead of waiting for the default (1000 ops) batch size.
+			// Use a low threshold so staged ops are auto-flushed out of the Outbox right away instead of
+			// waiting for the default (1000 ops) batch size.
 			runtimeOptions: { stagingModeAutoFlushThreshold: 1 },
 		});
 
-		const urlResolver = new LocalResolver();
 		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
 
 		const createDetachedContainerProps: ILoaderProps = {
@@ -121,9 +125,34 @@ describe("Document Staged Changes", () => {
 		return containerUsingProps;
 	}
 
+	async function loadContainer(): Promise<IContainer> {
+		const defaultFactory: TestFluidObjectFactory = new TestFluidObjectFactory(
+			[[mapId, SharedMap.getFactory()]],
+			"default",
+		);
+
+		const runtimeFactory = new ContainerRuntimeFactoryWithDefaultDataStore({
+			defaultFactory,
+			registryEntries: [[defaultFactory.type, Promise.resolve(defaultFactory)]],
+			runtimeOptions: { stagingModeAutoFlushThreshold: 1 },
+		});
+
+		const codeLoader = new LocalCodeLoader([[codeDetails, runtimeFactory]]);
+
+		const loadedContainer = await loadExistingContainer({
+			urlResolver,
+			documentServiceFactory,
+			codeLoader,
+			request: { url: documentLoadUrl },
+		});
+		loaderContainerTracker.addContainer(loadedContainer);
+		return loadedContainer;
+	}
+
 	beforeEach(async () => {
 		deltaConnectionServer = LocalDeltaConnectionServer.create();
 		documentServiceFactory = new LocalDocumentServiceFactory(deltaConnectionServer);
+		urlResolver = new LocalResolver();
 		loaderContainerTracker = new LoaderContainerTracker();
 
 		// Create the first container, component and DDSes.
@@ -274,5 +303,65 @@ describe("Document Staged Changes", () => {
 
 		assert.equal(containerRuntime.isDirty, false, "Should be clean after processing");
 		checkStagedChangesState("after processing", false, 1, 1);
+	});
+
+	it("is independent from isDirty/dirty on the commit path: isDirty stays true (in-flight ops) while hasStagedChanges flips false", async () => {
+		checkStagedChangesState("before staging mode", false, 0, 0);
+		assert.equal(containerRuntime.isDirty, false, "Should not be dirty before staging mode");
+
+		const stageControls = containerRuntime.enterStagingMode();
+
+		sharedMap.set("staged-key", "staged-value");
+		await Promise.resolve(); // Let the scheduled flush (turn-based) run
+		checkStagedChangesState("after staged edit", true, 1, 0);
+		assert.equal(containerRuntime.isDirty, true, "Should be dirty due to staged edit");
+
+		stageControls.commitChanges();
+
+		// Committing moves the previously-staged ops out of Staging Mode and resubmits them as ordinary
+		// (now in-flight, unacked) ops. So immediately after commitChanges, hasStagedChanges is false, but
+		// isDirty remains true since those ops haven't been acked by the server yet.
+		checkStagedChangesState("immediately after commitChanges", false, 1, 1);
+		assert.equal(
+			containerRuntime.isDirty,
+			true,
+			"Should still be dirty right after commitChanges, since committed ops are now in-flight/unacked",
+		);
+
+		await loaderContainerTracker.ensureSynchronized();
+
+		assert.equal(
+			containerRuntime.isDirty,
+			false,
+			"Should be clean once the committed ops are acked",
+		);
+		checkStagedChangesState("after processing committed changes", false, 1, 1);
+	});
+
+	it("hasStagedChanges is false on a freshly-loaded container (staged state is never persisted)", async () => {
+		// Enter staging mode and leave changes staged (never discard/commit) before loading a second container.
+		const stageControls = containerRuntime.enterStagingMode();
+		sharedMap.set("staged-key", "staged-value");
+		await Promise.resolve(); // Let the scheduled flush (turn-based) run
+		checkStagedChangesState("after staged edit, before loading second container", true, 1, 0);
+
+		// Load a second container from the same document. Staged state is local-only and never
+		// persisted to the summary/snapshot, so the freshly-loaded container should have no
+		// staged changes at all, regardless of what was left staged (and un-committed) on the
+		// container that produced the snapshot it loaded from.
+		const secondContainer = await loadContainer();
+		const secondDataObject = (await secondContainer.getEntryPoint()) as ITestFluidObject;
+		const secondContainerRuntime = secondDataObject.context
+			.containerRuntime as unknown as IContainerRuntime_WithHasStagedChanges;
+
+		assert.equal(
+			secondContainerRuntime.hasStagedChanges,
+			false,
+			"A freshly-loaded container should never report staged changes",
+		);
+
+		// Cleanup: discard the staged changes on the original container/runtime so it doesn't
+		// interfere with other tests via loaderContainerTracker.
+		stageControls.discardChanges();
 	});
 });
