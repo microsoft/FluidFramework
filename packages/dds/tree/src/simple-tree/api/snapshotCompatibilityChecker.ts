@@ -13,7 +13,7 @@ import { toInitialSchema } from "../toStoredSchema.js";
 import { createTreeSchema } from "../treeSchema.js";
 
 import { TreeViewConfigurationAlpha, TreeViewConfiguration } from "./configuration.js";
-import { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 import { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";
 import {
 	decodeSchemaCompatibilitySnapshot,
@@ -78,8 +78,7 @@ export function checkCompatibility(
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	const viewAsAlpha = new TreeViewConfigurationAlpha({ schema: view.schema });
 	const stored = toInitialSchema(viewWhichCreatedStoredSchema.schema);
-	const tester = new SchemaCompatibilityTester(viewAsAlpha);
-	return tester.checkCompatibility(stored);
+	return checkSchemaCompatibility(viewAsAlpha, stored);
 }
 
 /**
