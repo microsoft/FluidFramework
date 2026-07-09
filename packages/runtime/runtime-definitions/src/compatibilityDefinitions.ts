@@ -48,6 +48,5 @@ export type MinDocumentRuntimeVersion =
  * @input
  * @public
  * @deprecated 2.112.0. Removed in 3.0.0. Use {@link MinDocumentRuntimeVersion} instead.
- * See {@link https://github.com/microsoft/FluidFramework/issues/27180} for context.
  */
 export type MinimumVersionForCollab = MinDocumentRuntimeVersion;

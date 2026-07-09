@@ -838,7 +838,6 @@ export interface LoadContainerRuntimeParams {
 	 * disable `foo` by default.
 	 *
 	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link LoadContainerRuntimeParams.minDocumentRuntimeVersion} instead.
-	 * See {@link https://github.com/microsoft/FluidFramework/issues/27180} for context.
 	 */
 	minVersionForCollab?: MinDocumentRuntimeVersion;
 }
