@@ -7,6 +7,7 @@ import type { SchemaUpgrade } from "./allowedTypes.js";
 
 /**
  * Options for transforming a view simple-schema to a stored simple-schema.
+ * @input
  * @alpha
  */
 export interface StoredFromViewSchemaGenerationOptions {
