@@ -64,6 +64,7 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
+	validateViewConsistency,
 	viewCheckout,
 } from "../utils.js";
 
@@ -993,6 +994,97 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(spy.postProcessors, [noopChangeProcessor]);
 			assert.equal(spy.commits, 0);
 			assert.deepEqual(view.root, []);
+		});
+
+		// A eat-everything post-processor: it erases all changes, demonstrating
+		// a processor that modifies the change set.
+		const eraseChangesPostProcessor = createTransactionPostProcessor({
+			applicability: ChangeProcessorApplicability.Always,
+			processChange: () => ({ changes: [] }),
+		});
+
+		it("transacted view is consistent with inner change processor that makes changes (erases changes) and outer edits", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			// Act
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A", "B");
+				view.runTransaction(
+					() => {
+						view.root.insertAtStart("C", "D");
+						view.root.removeRange(1, 3);
+						assert.deepEqual(view.root, ["C", "B"]);
+					},
+					{ postProcessor: eraseChangesPostProcessor },
+				);
+				// Attempts to remove elements past the first element, which should
+				// remove "B" since only the original elements remain as the post
+				// processor erased the other changes.
+				view.root.removeRange(1);
+			});
+
+			// Verify
+			assert.deepEqual(view.root, ["A"]);
+			provider.synchronizeMessages();
+			const otherView = provider.trees[1].kernel.viewWith(config);
+			assert.deepEqual(otherView.root, ["A"]);
+			validateViewConsistency(view.checkout, otherView.checkout);
+		});
+
+		it("transacted view is consistent with inner change processor that makes changes (erases changes) and no outer edits", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize(["A", "B"]);
+
+			// Act
+			view.runTransaction(() => {
+				view.runTransaction(
+					() => {
+						view.root.insertAtStart("C", "D");
+						view.root.removeRange(1, 3);
+						assert.deepEqual(view.root, ["C", "B"]);
+					},
+					{ postProcessor: eraseChangesPostProcessor },
+				);
+			});
+
+			// Verify
+			assert.deepEqual(view.root, ["A", "B"]);
+			provider.synchronizeMessages();
+			const otherView = provider.trees[1].kernel.viewWith(config);
+			assert.deepEqual(otherView.root, ["A", "B"]);
+			validateViewConsistency(view.checkout, otherView.checkout);
+		});
+
+		it("transacted view is consistent with outer change processor that makes changes (erases changes)", () => {
+			// Setup
+			const provider = new TestTreeProviderLite(2);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize(["A", "B"]);
+
+			// Act
+			view.runTransaction(
+				() => {
+					view.root.insertAtStart("C", "D");
+					view.root.removeRange(1, 3);
+					assert.deepEqual(view.root, ["C", "B"]);
+				},
+				{ postProcessor: eraseChangesPostProcessor },
+			);
+
+			// Verify
+			assert.deepEqual(view.root, ["A", "B"]);
+			provider.synchronizeMessages();
+			const otherView = provider.trees[1].kernel.viewWith(config);
+			assert.deepEqual(otherView.root, ["A", "B"]);
+			validateViewConsistency(view.checkout, otherView.checkout);
 		});
 
 		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
