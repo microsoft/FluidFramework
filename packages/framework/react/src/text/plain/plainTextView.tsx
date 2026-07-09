@@ -74,8 +74,8 @@ const PlainTextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel
 		}
 	}, [text, selection]);
 
-	// String → tree: write the user's edit back into the tree, wrapped in a transaction tagged with
-	// `effectiveLabel` so the remove + insert pair is applied atomically and undone/redone as a unit.
+	// String → tree: write the user's edit back into the tree. `syncTextToTree` already applies its
+	// edits atomically; this outer transaction just tags them with `effectiveLabel` for undo/redo.
 	const onChange = useCallback(
 		(event: ChangeEvent<HTMLTextAreaElement>) => {
 			isLocalEditRef.current = true;

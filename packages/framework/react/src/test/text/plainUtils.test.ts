@@ -188,6 +188,22 @@ describe("plainUtils", () => {
 			assert.equal(root.fullString(), "hello world");
 		});
 
+		it("applies its remove + insert pair atomically without an outer transaction", () => {
+			const view = createTextView("hello");
+			const manager = createUndoRedo(view);
+
+			// "hello" -> "help" needs both a remove ("lo") and an insert ("p"). A single (unlabeled)
+			// undo must revert both back to "hello"; if the edits were not wrapped in a transaction,
+			// undo would revert only the last edit and leave the intermediate "hel".
+			syncTextToTree(view.root, "help");
+			assert.equal(view.root.fullString(), "help");
+
+			assert(manager.canUndo());
+			manager.undo();
+			assert.equal(view.root.fullString(), "hello");
+			manager.dispose();
+		});
+
 		it("is atomically undoable when wrapped in a labeled transaction", () => {
 			const view = createTextView("hello");
 			const label = Symbol("editor");

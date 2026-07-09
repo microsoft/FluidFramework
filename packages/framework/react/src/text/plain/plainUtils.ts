@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { type TextAsTree, utf16LengthForCodePoints } from "@fluidframework/tree/internal";
+import { type TextAsTree, TreeAlpha, utf16LengthForCodePoints } from "@fluidframework/tree/internal";
 
 import { clamp } from "../../utilities.js";
 
@@ -201,9 +201,10 @@ export function remapSelectionOnReread(
  * needed to transform the tree's current content into `newText`.
  * @remarks
  * The diff is computed by finding the longest shared prefix/suffix between current and new content
- * and replacing only the middle span.
+ * and replacing only the middle span. The resulting remove + insert pair is wrapped in a transaction
+ * internally, so a single call applies (and undoes/redoes) as one atomic unit.
  *
- * To make the edit atomically undoable/redoable, wrap this call in a transaction, e.g.
+ * To attach an undo/redo label, nest this inside your own transaction, e.g.
  * `TreeAlpha.context(root).runTransaction(() => syncTextToTree(root, newText), { label })`. The
  * `label` correlates the edit for undo/redo grouping where the context supports it (see
  * {@link @fluidframework/tree#TreeContextAlpha.runTransaction}).
@@ -235,12 +236,20 @@ export function remapSelectionOnReread(
 export function syncTextToTree(root: TextAsTree.Tree, newText: string): void {
 	const sync = computeSync(root.charactersCopy(), [...newText]);
 
-	if (sync.remove) {
-		root.removeRange(sync.remove.start, sync.remove.end);
+	if (sync.remove === undefined && sync.insert === undefined) {
+		return;
 	}
-	if (sync.insert) {
-		root.insertAt(sync.insert.location, sync.insert.slice.join(""));
-	}
+
+	// Wrap the remove + insert pair in a transaction so the two edits apply, and undo/redo, as a
+	// single atomic unit. Callers can nest this inside their own labeled transaction (see @remarks).
+	TreeAlpha.context(root).runTransaction(() => {
+		if (sync.remove) {
+			root.removeRange(sync.remove.start, sync.remove.end);
+		}
+		if (sync.insert) {
+			root.insertAt(sync.insert.location, sync.insert.slice.join(""));
+		}
+	});
 }
 
 /**
