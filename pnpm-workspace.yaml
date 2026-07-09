@@ -215,6 +215,8 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
+registry: https://pkgs.dev.azure.com/fluidframework/public/_packaging/publicPackages/npm/registry/
+
 resolutionMode: highest
 
 strictDepBuilds: true
