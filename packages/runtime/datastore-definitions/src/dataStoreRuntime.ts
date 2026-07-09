@@ -19,7 +19,7 @@ import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitio
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type {
 	IInboundSignalMessage,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
 import type { IChannel } from "./channel.js";
@@ -226,7 +226,7 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * DDSes may read this value to determine which feature flags should be enabled.Expand commentComment on line R313Resolved
 	 * This property is consumed by `SharedObjectFactory` (which are implementations of
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab?: MinDocumentRuntimeVersion;
 }

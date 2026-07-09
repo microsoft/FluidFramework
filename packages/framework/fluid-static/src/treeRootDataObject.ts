@@ -27,7 +27,7 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
@@ -138,7 +138,7 @@ class TreeContainerRuntimeFactory extends BaseContainerRuntimeFactory {
 	public constructor(
 		treeRootDataObjectFactory: TreeDataObjectFactory<TreeRootDataObject>,
 		config: {
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: MinDocumentRuntimeVersion;
 			runtimeOptions?: Partial<IContainerRuntimeOptions>;
 		},
 	) {
@@ -210,9 +210,9 @@ export function createTreeContainerRuntimeFactory(props: {
 
 	/**
 	 * Minimum Fluid Framework version required for collaboration as a
-	 * {@link @fluidframework/runtime-definitions#MinimumVersionForCollab} SemVer string.
+	 * {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion} SemVer string.
 	 */
-	readonly minVersionForCollaboration: MinimumVersionForCollab;
+	readonly minVersionForCollaboration: MinDocumentRuntimeVersion;
 	/**
 	 * Optional registry of data stores to pass to the DataObject factory.
 	 * If not provided, one will be created based on the schema.
@@ -266,7 +266,7 @@ export function createTreeContainerRuntimeFactory(props: {
 	readonly schema: TreeContainerSchema;
 	// eslint-disable-next-line import-x/no-deprecated -- specify minVersionForCollaboration instead; see #23289
 	readonly compatibilityMode?: CompatibilityMode;
-	readonly minVersionForCollaboration?: MinimumVersionForCollab;
+	readonly minVersionForCollaboration?: MinDocumentRuntimeVersion;
 	readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
 	readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory {
@@ -278,7 +278,7 @@ export function createTreeContainerRuntimeFactory(props: {
 		schema,
 	} = props;
 
-	let minVersionForCollab: MinimumVersionForCollab;
+	let minVersionForCollab: MinDocumentRuntimeVersion;
 	if (minVersionForCollaboration !== undefined) {
 		minVersionForCollab = minVersionForCollaboration;
 	} else if (compatibilityMode === undefined) {

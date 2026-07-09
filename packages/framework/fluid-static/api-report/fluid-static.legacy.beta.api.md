@@ -19,7 +19,7 @@ export interface ContainerSchema {
 // @beta @legacy
 export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
-    readonly minVersionForCollaboration: MinimumVersionForCollab;
+    readonly minVersionForCollaboration: MinDocumentRuntimeVersion;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
     readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
 }): IRuntimeFactory;

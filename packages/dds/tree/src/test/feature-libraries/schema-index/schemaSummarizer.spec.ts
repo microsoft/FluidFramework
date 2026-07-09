@@ -11,7 +11,7 @@ import {
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { FluidClientVersion, type CodecWriteOptions } from "../../../codec/index.js";
@@ -80,7 +80,7 @@ describe("schemaSummarizer", () => {
 
 	describe("Summary metadata validation", () => {
 		function createSchemaSummarizer(options?: {
-			minVersionForCollab?: MinimumVersionForCollab;
+			minVersionForCollab?: MinDocumentRuntimeVersion;
 		}): SchemaSummarizer {
 			const schema = new TreeStoredSchemaRepository();
 			const collabWindow: CollabWindow = {

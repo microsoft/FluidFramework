@@ -19,7 +19,7 @@ import {
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
-	type MinimumVersionForCollab,
+	type MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	ITestContainerConfig,
@@ -46,15 +46,15 @@ import { getRequestedVersion } from "./versionUtils.js";
 export const TestDataObjectType = "@fluid-example/test-dataStore";
 
 /**
- * Determines the MinimumVersionForCollab that should be used for compatibility tests.
+ * Determines the MinDocumentRuntimeVersion that should be used for compatibility tests.
  *
- * The MinimumVersionForCollab returned will be the lesser of the two versions:
+ * The MinDocumentRuntimeVersion returned will be the lesser of the two versions:
  * - runtimeVersion: The version of the runtime that is being used to create the container.
  * - runtimeVersionForLoading: The version of the runtime that is being used to load the container.
  * Outside of cross-client compat tests these two versions are the same, so the result is simply that
  * shared version.
  *
- * Note: The MinimumVersionForCollab returned will only be used if a minVersionForCollab was not provided
+ * Note: The MinDocumentRuntimeVersion returned will only be used if a minVersionForCollab was not provided
  * in the ITestContainerConfig object.
  *
  * For example, if we are running a cross-client compat test with the following versions:
@@ -65,7 +65,7 @@ export const TestDataObjectType = "@fluid-example/test-dataStore";
 function getMinVersionForCollab(
 	runtimeVersion: string,
 	runtimeVersionForLoading: string,
-): MinimumVersionForCollab {
+): MinDocumentRuntimeVersion {
 	assertValidMinVersionForCollab(runtimeVersion);
 	assertValidMinVersionForCollab(runtimeVersionForLoading);
 	// Use the lower of the two versions to ensure compatibility between the two runtimes.
@@ -76,11 +76,11 @@ function getMinVersionForCollab(
 }
 
 /**
- * Asserts the given version is valid semver and is type MinimumVersionForCollab.
+ * Asserts the given version is valid semver and is type MinDocumentRuntimeVersion.
  */
 function assertValidMinVersionForCollab(
 	version: string,
-): asserts version is MinimumVersionForCollab {
+): asserts version is MinDocumentRuntimeVersion {
 	if (semver.valid(version) === null) {
 		throw new Error(`Runtime version must be valid semver: ${version}`);
 	}

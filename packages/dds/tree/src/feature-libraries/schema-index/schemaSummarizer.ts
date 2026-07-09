@@ -10,7 +10,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
@@ -57,7 +57,7 @@ const supportedVersions = new Set<SchemaSummaryFormatVersion>([
  * Returns the summary version to use as per the given minimum version for collab.
  */
 function minVersionToSchemaSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: MinDocumentRuntimeVersion,
 ): SchemaSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return SchemaSummaryFormatVersion.v2;
@@ -76,7 +76,7 @@ export class SchemaSummarizer
 		private readonly schema: MutableTreeStoredSchema,
 		collabWindow: CollabWindow,
 		private readonly codec: IJsonCodec<TreeStoredSchema>,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: MinDocumentRuntimeVersion,
 	) {
 		super(
 			"Schema",

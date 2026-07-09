@@ -67,7 +67,7 @@ import type {
 	IFluidDataStoreFactory,
 	PackagePath,
 	IRuntimeStorageService,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	ContainerExtensionId,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
@@ -355,7 +355,7 @@ export abstract class FluidDataStoreContext
 	/**
 	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
 
 	private baseSnapshotSequenceNumber: number | undefined;
 

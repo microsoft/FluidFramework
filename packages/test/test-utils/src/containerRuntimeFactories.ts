@@ -28,7 +28,7 @@ import type {
 	IFluidDataStoreFactory,
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
@@ -69,9 +69,9 @@ export interface ContainerRuntimeFactoryWithDefaultDataStoreProps {
 
 	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details.
 	 */
-	readonly minVersionForCollab?: MinimumVersionForCollab;
+	readonly minVersionForCollab?: MinDocumentRuntimeVersion;
 }
 
 /**
@@ -120,7 +120,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 	/**
 	 * {@inheritDoc ContainerRuntimeFactoryWithDefaultDataStoreProps.minVersionForCollab}
 	 */
-	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	private readonly minVersionForCollab: MinDocumentRuntimeVersion | undefined;
 
 	public constructor(props: ContainerRuntimeFactoryWithDefaultDataStoreProps) {
 		super();
@@ -172,7 +172,7 @@ export class ContainerRuntimeFactoryWithDefaultDataStore
 			// eslint-disable-next-line import-x/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
-			minVersionForCollab: this.minVersionForCollab,
+			minDocumentRuntimeVersion: this.minVersionForCollab,
 		});
 	}
 

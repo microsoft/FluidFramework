@@ -4,7 +4,7 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { compare, gt, gte, lte, valid, parse } from "semver-ts";
 
@@ -31,7 +31,7 @@ import { pkgVersion } from "./packageVersion.js";
  * @internal
  */
 export const defaultMinVersionForCollab =
-	"2.0.0-defaults" as const satisfies MinimumVersionForCollab;
+	"2.0.0-defaults" as const satisfies MinDocumentRuntimeVersion;
 
 /**
  * We don't want allow a version before the major public release of the LTS version.
@@ -44,7 +44,7 @@ export const defaultMinVersionForCollab =
  *
  * @internal
  */
-export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinimumVersionForCollab;
+export const lowestMinVersionForCollab = "1.0.0" as const satisfies MinDocumentRuntimeVersion;
 
 /**
  * String in a valid semver format specifying bottom of a minor version
@@ -58,7 +58,7 @@ export type MinimumMinorSemanticVersion = `${bigint}.${bigint}.0` | `${bigint}.0
 
 /**
  * String in a valid semver format of a specific version at least specifying minor.
- * Unlike {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}, this type allows any bigint for the major version.
+ * Unlike {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}, this type allows any bigint for the major version.
  * Used as a more generic type that allows major versions other than 1 or 2.
  *
  * @internal
@@ -70,11 +70,11 @@ export type SemanticVersion =
 /**
  * Converts a record into a configuration map that associates each key with an instance of its value type that is based on a {@link MinimumMinorSemanticVersion}.
  * @remarks
- * For a given input {@link @fluidframework/runtime-definitions#MinimumVersionForCollab},
+ * For a given input {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion},
  * the corresponding configuration values can be found by using the entry in the inner objects with the highest {@link MinimumMinorSemanticVersion}
- * that does not exceed the given {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ * that does not exceed the given {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}.
  *
- * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ * Use {@link getConfigsForMinVersionForCollab} to retrieve the configuration for a given a {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}.
  *
  * See the remarks on {@link MinimumMinorSemanticVersion} for some limitation on how ConfigMaps must handle versioning.
  * @internal
@@ -118,7 +118,7 @@ export type ConfigValidationMap<T extends Record<string, unknown>> = {
  * @internal
  */
 export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersion, unknown>>(
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 	configMap: ConfigMap<T> & Record<keyof T, unknown>,
 ): T {
 	validateMinimumVersionForCollab(minVersionForCollab);
@@ -140,7 +140,7 @@ export function getConfigsForMinVersionForCollab<T extends Record<SemanticVersio
  * @internal
  */
 export function getConfigForMinVersionForCollab<T>(
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 	config: ConfigMapEntry<T>,
 ): T {
 	return getConfigForMinVersionForCollabIterable(
@@ -161,14 +161,17 @@ export function getConfigForMinVersionForCollab<T>(
  * @internal
  */
 export function getConfigForMinVersionForCollabIterable<T>(
-	minVersionForCollab: MinimumVersionForCollab,
-	entries: Iterable<readonly [MinimumMinorSemanticVersion | MinimumVersionForCollab, T]>, // [[typeof lowestMinVersionForCollab, T], ...[MinimumVersionForCollab, T][]],
+	minVersionForCollab: MinDocumentRuntimeVersion,
+	entries: Iterable<readonly [MinimumMinorSemanticVersion | MinDocumentRuntimeVersion, T]>, // [[typeof lowestMinVersionForCollab, T], ...[MinDocumentRuntimeVersion, T][]],
 ): T {
 	// Validate and strongly type the versions from the configMap.
-	const versions: [MinimumVersionForCollab, T][] = Array.from(entries, ([version, value]) => {
-		validateMinimumVersionForCollab(version);
-		return [version, value];
-	});
+	const versions: [MinDocumentRuntimeVersion, T][] = Array.from(
+		entries,
+		([version, value]) => {
+			validateMinimumVersionForCollab(version);
+			return [version, value];
+		},
+	);
 	return (selectVersionRoundedDown(minVersionForCollab, versions) ??
 		fail(0xcb8 /* No config map entry for version */))[1];
 }
@@ -227,13 +230,13 @@ export function checkValidMinVersionForCollabVerbose(minVersionForCollab: Semant
 
 /**
  * Checks if the minVersionForCollab is valid.
- * A valid minVersionForCollab is a MinimumVersionForCollab that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
+ * A valid minVersionForCollab is a MinDocumentRuntimeVersion that is at least `lowestMinVersionForCollab` and less than or equal to the current package version.
  *
  * @internal
  */
 export function isValidMinVersionForCollab(
 	minVersionForCollab: SemanticVersion,
-): minVersionForCollab is MinimumVersionForCollab {
+): minVersionForCollab is MinDocumentRuntimeVersion {
 	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
 		checkValidMinVersionForCollabVerbose(minVersionForCollab);
 	return isValidSemver && isGteLowestMinVersion && isLtePkgVersion;
@@ -262,34 +265,34 @@ const parsedPackageVersion = parse(pkgVersion) ?? fail(0xcb9 /* Invalid package 
  * To accommodate some uses of the second case, it might be useful to package export this in the future.
  *
  * @privateRemarks
- * Since this is used by validateMinimumVersionForCollab, the type case to MinimumVersionForCollab can not use it directly.
+ * Since this is used by validateMinimumVersionForCollab, the type case to MinDocumentRuntimeVersion can not use it directly.
  * Thus this is just `as` cast here, and a test confirms it is valid according to validateMinimumVersionForCollab.
  *
  * @internal
  */
 export const cleanedPackageVersion =
-	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinimumVersionForCollab;
+	`${parsedPackageVersion.major}.${parsedPackageVersion.minor}.${parsedPackageVersion.patch}` as MinDocumentRuntimeVersion;
 
 /**
- * Narrows the type of the provided {@link SemanticVersion} to a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}, throwing a UsageError if it is not valid.
+ * Narrows the type of the provided {@link SemanticVersion} to a {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}, throwing a UsageError if it is not valid.
  * @remarks
- * This is more strict than the type constraints imposed by `MinimumVersionForCollab`.
- * Currently there is no type which is used to separate semantically valid and typescript allowed MinimumVersionForCollab values:
- * thus users that care about strict validation may want to call this on un-validated `MinimumVersionForCollab` values.
+ * This is more strict than the type constraints imposed by `MinDocumentRuntimeVersion`.
+ * Currently there is no type which is used to separate semantically valid and typescript allowed MinDocumentRuntimeVersion values:
+ * thus users that care about strict validation may want to call this on un-validated `MinDocumentRuntimeVersion` values.
  * @param semanticVersion - The version to check.
- * @throws UsageError if the version is not a valid MinimumVersionForCollab.
+ * @throws UsageError if the version is not a valid MinDocumentRuntimeVersion.
  *
  * @internal
  */
 export function validateMinimumVersionForCollab(
 	semanticVersion: string,
-): asserts semanticVersion is MinimumVersionForCollab {
-	const minVersionForCollab = semanticVersion as MinimumVersionForCollab;
+): asserts semanticVersion is MinDocumentRuntimeVersion {
+	const minVersionForCollab = semanticVersion as MinDocumentRuntimeVersion;
 	const { isValidSemver, isGteLowestMinVersion, isLtePkgVersion } =
 		checkValidMinVersionForCollabVerbose(minVersionForCollab);
 	if (!(isValidSemver && isGteLowestMinVersion && isLtePkgVersion)) {
 		throw new UsageError(
-			`Version ${minVersionForCollab} is not a valid MinimumVersionForCollab. ` +
+			`Version ${minVersionForCollab} is not a valid MinDocumentRuntimeVersion. ` +
 				`It must be in a valid semver format, at least ${lowestMinVersionForCollab}, ` +
 				`and less than or equal to the current package version ${cleanedPackageVersion}. ` +
 				`Details: { isValidSemver: ${isValidSemver}, isGteLowestMinVersion: ${isGteLowestMinVersion}, isLtePkgVersion: ${isLtePkgVersion} }`,

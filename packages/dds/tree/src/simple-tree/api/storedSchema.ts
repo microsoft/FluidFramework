@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 
 import { FormatValidatorNoOp, type ICodecOptions } from "../../codec/index.js";
 import { schemaCodecBuilder } from "../../feature-libraries/index.js";
@@ -50,7 +50,7 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  */
 export function extractPersistedSchema(
 	schema: ImplicitFieldSchema,
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 	includeStaged: (upgrade: SchemaUpgrade) => boolean,
 ): JsonCompatible {
 	const stored = toStoredSchema(schema, {

@@ -11,7 +11,7 @@ import {
 	type ISummaryTree,
 	type SummaryObject,
 } from "@fluidframework/driver-definitions/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { DependentFormatVersion, FluidClientVersion } from "../../codec/index.js";
@@ -42,7 +42,7 @@ import { testIdCompressor } from "../utils.js";
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
 
 function createEditManagerSummarizer(options?: {
-	minVersionForCollab?: MinimumVersionForCollab;
+	minVersionForCollab?: MinDocumentRuntimeVersion;
 }) {
 	const family = testChangeFamilyFactory();
 	const editManager = editManagerFactory(family);

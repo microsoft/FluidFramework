@@ -5,7 +5,7 @@
 
 import type { ErasedType } from "@fluidframework/core-interfaces/internal";
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion as runtimeUtilsCleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 import type { Static, TAnySchema, TSchema } from "@sinclair/typebox";
 
@@ -149,7 +149,7 @@ export interface CodecWriteOptionsBeta {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinDocumentRuntimeVersion;
 }
 
 /**
@@ -472,7 +472,7 @@ export function withSchemaValidation<
 }
 
 /**
- * Versions of Fluid Framework client packages, usable as a {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}.
+ * Versions of Fluid Framework client packages, usable as a {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}.
  * @remarks
  * Versions with no notable impact may be omitted, and added later if needed.
  *
@@ -480,7 +480,7 @@ export function withSchemaValidation<
  * Each entry should document:
  * - The user-facing impact of opting into it (e.g. encoding efficiency improvements).
  * - Any new data formats introduced in that version.
- * - Whether those features/formats are enabled by default or require {@link MinimumVersionForCollab | minVersionForCollab} to be set accordingly.
+ * - Whether those features/formats are enabled by default or require {@link MinDocumentRuntimeVersion | minVersionForCollab} to be set accordingly.
  * @alpha
  */
 export const FluidClientVersion = {
@@ -540,14 +540,14 @@ export const FluidClientVersion = {
 	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
 	 */
 	v2_80: "2.80.0",
-} as const satisfies Record<string, MinimumVersionForCollab>;
+} as const satisfies Record<string, MinDocumentRuntimeVersion>;
 
 /**
  * An up to date version which includes all stable features.
  * @remarks
  * Use for cases when data is not persisted and thus would only ever be read by the the same version of the code which read this value.
  *
- * The pkgVersion from this package (tree) can not be used here as it is not guaranteed to be a valid MinimumVersionForCollab
+ * The pkgVersion from this package (tree) can not be used here as it is not guaranteed to be a valid MinDocumentRuntimeVersion
  * and would also unexpectedly disable features in prereleases and on CI if it didn't fail validation.
  * See {@link @fluidframework/runtime-utils/internal#cleanedPackageVersion} for more details on why cleanedPackageVersion is preferred over pkgVersion.
  *
@@ -558,7 +558,7 @@ export const FluidClientVersion = {
  * Reusing this from runtime-utils avoids duplicating the cleanup logic here as well as the cost or recomputing it.
  * If in the future for some reason this becomes not okay, runtime-utils could instead export a function that performs that cleanup logic which could be reused here.
  */
-export const currentVersion: MinimumVersionForCollab = runtimeUtilsCleanedPackageVersion;
+export const currentVersion: MinDocumentRuntimeVersion = runtimeUtilsCleanedPackageVersion;
 
 /**
  * TODO:

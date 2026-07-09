@@ -34,7 +34,7 @@ import {
 import { createAlwaysFinalizedIdCompressor } from "@fluidframework/id-compressor/internal/test-utils";
 import {
 	FlushMode,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle, toFluidHandleInternal } from "@fluidframework/runtime-utils/internal";
 import type {
@@ -1446,7 +1446,7 @@ export function getView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions & {
 		idCompressor?: IIdCompressor | undefined;
-		minVersionForCollab?: MinimumVersionForCollab;
+		minVersionForCollab?: MinDocumentRuntimeVersion;
 	} = {},
 ): SchematizingSimpleTreeView<TSchema> {
 	// Default to v2_80 to support noChange constraints in table operations

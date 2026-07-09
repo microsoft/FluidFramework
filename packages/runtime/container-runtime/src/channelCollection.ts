@@ -47,7 +47,7 @@ import type {
 	ISummarizeResult,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -150,7 +150,7 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: MinDocumentRuntimeVersion;
 }
 
 /**

@@ -72,7 +72,7 @@ export class FluidDataStoreRuntime extends TypedEventEmitter<IFluidDataStoreRunt
     // (undocumented)
     get logger(): ITelemetryLoggerExt;
     makeVisibleAndAttachGraph(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinDocumentRuntimeVersion;
     notifyReadOnlyState(readonly: boolean): void;
     // (undocumented)
     get objectsRoutingContext(): this;

@@ -21,7 +21,7 @@ import type { IRuntimeFactory } from "@fluidframework/container-definitions/lega
 import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions";
 import {
 	type MockLogger,
 	createChildLogger,
@@ -60,7 +60,7 @@ export function createAzureClient(
 		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: MinimumVersionForCollab;
+		minVersionForCollaboration: MinDocumentRuntimeVersion;
 	}) => IRuntimeFactory,
 ): AzureClient {
 	const args = process.argv.slice(2);

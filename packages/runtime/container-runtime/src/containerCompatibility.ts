@@ -5,7 +5,7 @@
 
 import {
 	FlushMode,
-	type MinimumVersionForCollab,
+	type MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	configValueToMinVersionForCollab,
@@ -93,9 +93,9 @@ export type RuntimeOptionKeysThatRequireExplicitSchemaControl = keyof Omit<
 /**
  * Mapping of RuntimeOptionsAffectingDocSchema to their compatibility related configs.
  *
- * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinimumVersionForCollab
- * to the appropriate default value for that property to supporting that MinimumVersionForCollab. If clients running MinimumVersionForCollab X are able to understand
- * the format changes introduced by the property, then the default value for that MinimumVersionForCollab will enable the feature associated with the property.
+ * Each key in this map corresponds to a property in RuntimeOptionsAffectingDocSchema. The value is an object that maps MinDocumentRuntimeVersion
+ * to the appropriate default value for that property to supporting that MinDocumentRuntimeVersion. If clients running MinDocumentRuntimeVersion X are able to understand
+ * the format changes introduced by the property, then the default value for that MinDocumentRuntimeVersion will enable the feature associated with the property.
  * Otherwise, the feature will be disabled.
  *
  * For example if the minVersionForCollab is a 1.x version (i.e. "1.5.0"), then the default value for `enableGroupedBatching` will be false since 1.x
@@ -215,7 +215,7 @@ const runtimeOptionsAffectingDocSchemaConfigValidationMap: ConfigValidationMap<R
  * Returns the default RuntimeOptionsAffectingDocSchema configuration for a given minVersionForCollab.
  */
 export function getMinVersionForCollabDefaults(
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 ): RuntimeOptionsAffectingDocSchema {
 	return getConfigsForMinVersionForCollab(
 		minVersionForCollab,
@@ -229,7 +229,7 @@ export function getMinVersionForCollabDefaults(
  * is set to "1.0.0", then we should throw a UsageError since 1.x clients do not support batching.
  * */
 export function validateRuntimeOptions(
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 	runtimeOptions: Partial<ContainerRuntimeOptionsInternal>,
 ): void {
 	validateConfigMapOverrides<RuntimeOptionsAffectingDocSchema>(

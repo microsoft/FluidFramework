@@ -4,7 +4,7 @@
  */
 
 import type { IIdCompressor } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 
 import {
@@ -144,7 +144,7 @@ export function makeEditManagerCodecBuilder<TChangeset>(): VersionDispatchingCod
  * with the provided change codec tree as a child.
  */
 export function getCodecTreeForEditManagerFormatWithChange(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: MinDocumentRuntimeVersion,
 	changeFormat: CodecTree,
 ): CodecTree {
 	const builder = makeEditManagerCodecBuilder();

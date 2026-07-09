@@ -4,19 +4,19 @@
  */
 
 /**
- * Oldest version of Fluid Framework client packages to support collaborating with.
+ * Oldest version of Fluid Framework client packages required to open or process documents created or loaded by a container runtime.
  * @remarks
  * A string in SemVer format indicating a specific version of the Fluid Framework client package, or the special case of {@link @fluidframework/runtime-utils#defaultMinVersionForCollab}.
  *
  * Collaboration with other clients is only supported when all Fluid Framework client packages used by the client have a version that is greater than or equal
- * to the specified `MinimumVersionForCollab`.
+ * to the specified `MinDocumentRuntimeVersion`.
  *
  * Must be at least {@link @fluidframework/runtime-utils#lowestMinVersionForCollab} and cannot exceed the version of any Fluid Framework client package in use by the local client.
  *
  * The higher the version specified, the more features and optimizations will be enabled.
  *
  * {@link @fluidframework/runtime-utils#validateMinimumVersionForCollab} can be used to check these invariants at runtime.
- * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `MinimumVersionForCollab`.
+ * Since TypeScript cannot enforce all of them for literals in code, it is useful for checking values sourced from constants typed as `MinDocumentRuntimeVersion`.
  *
  * @privateRemarks
  * Since this uses the semver notion of "greater" (which might not actually mean a later release, or supporting more features), care must be taken with how this is used.
@@ -38,16 +38,16 @@
  * @input
  * @public
  */
-export type MinimumVersionForCollab =
+export type MinDocumentRuntimeVersion =
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 /**
- * Oldest version of Fluid Framework client packages required to open or process documents created or loaded by a container runtime.
- * @remarks
- * This is the preferred name for new API surfaces. It is currently equivalent to {@link MinimumVersionForCollab}.
+ * Oldest version of Fluid Framework client packages to support collaborating with.
  *
  * @input
  * @public
+ * @deprecated 2.112.0. Removed in 3.0.0. Use {@link MinDocumentRuntimeVersion} instead.
+ * See {@link https://github.com/microsoft/FluidFramework/issues/27180} for context.
  */
-export type MinimumDocumentRuntimeVersion = MinimumVersionForCollab;
+export type MinimumVersionForCollab = MinDocumentRuntimeVersion;

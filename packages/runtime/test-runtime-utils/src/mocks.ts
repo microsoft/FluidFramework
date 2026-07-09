@@ -62,7 +62,7 @@ import {
 	type ITelemetryContext,
 	type IRuntimeMessageCollection,
 	type IRuntimeMessagesContent,
-	type MinimumVersionForCollab,
+	type MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	defaultMinVersionForCollab,
@@ -876,7 +876,7 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
-		minVersionForCollab?: MinimumVersionForCollab;
+		minVersionForCollab?: MinDocumentRuntimeVersion;
 		inStagingMode?: boolean;
 		isDirty?: boolean;
 	}) {
@@ -915,7 +915,7 @@ export class MockFluidDataStoreRuntime
 	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
 
 	public get IFluidHandleContext(): IFluidHandleContext {
 		return this;

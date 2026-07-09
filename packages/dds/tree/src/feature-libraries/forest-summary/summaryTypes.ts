@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollab,
 	lowestMinVersionForCollab,
@@ -19,7 +19,7 @@ import { summaryContentBlobKey as summaryContentBlobKeyV3 } from "./summaryForma
  * Returns the summary format version to use as per the given minimum version for collab.
  */
 export function minVersionToForestSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: MinDocumentRuntimeVersion,
 ): ForestSummaryFormatVersion {
 	return getConfigForMinVersionForCollab(version, {
 		[lowestMinVersionForCollab]: ForestSummaryFormatVersion.v2,

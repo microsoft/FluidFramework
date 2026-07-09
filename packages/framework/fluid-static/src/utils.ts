@@ -12,7 +12,7 @@ import type {
 } from "@fluidframework/datastore-definitions/internal";
 import type {
 	IFluidDataStoreContext,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	NamedFluidDataStoreRegistryEntry,
 } from "@fluidframework/runtime-definitions/internal";
 import type { ISharedObjectKind } from "@fluidframework/shared-object-base/internal";
@@ -148,9 +148,9 @@ export function makeFluidObject<
 }
 
 /**
- * Resolves the `compatibilityMode` input — either a `MinimumVersionForCollab`
+ * Resolves the `compatibilityMode` input — either a `MinDocumentRuntimeVersion`
  * SemVer string or a legacy `CompatibilityMode` value — into a precise
- * `MinimumVersionForCollab`.
+ * `MinDocumentRuntimeVersion`.
  *
  * TODO: AB#73679: This can be removed when the deprecated CompatibilityMode is removed
  *
@@ -158,8 +158,8 @@ export function makeFluidObject<
  */
 export function resolveCompatibilityModeToMinVersionForCollab(
 	// eslint-disable-next-line import-x/no-deprecated
-	compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
-): MinimumVersionForCollab {
+	compatibilityMode: MinDocumentRuntimeVersion | CompatibilityMode,
+): MinDocumentRuntimeVersion {
 	return compatibilityMode === "1"
 		? "1.0.0"
 		: compatibilityMode === "2"

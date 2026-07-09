@@ -13,7 +13,7 @@ import {
 } from "@fluidframework/driver-definitions";
 import type {
 	IExperimentalIncrementalSummaryContext,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
@@ -82,7 +82,7 @@ function createForestSummarizer(args: {
 	// The content and schema to initialize the forest with. By default, it is an empty forest.
 	initialContent?: TreeStoredContentStrict;
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
-	minVersionForCollab?: MinimumVersionForCollab;
+	minVersionForCollab?: MinDocumentRuntimeVersion;
 }): { forestSummarizer: ForestSummarizer; checkout: TreeCheckout } {
 	const {
 		initialContent = {

@@ -130,8 +130,7 @@ import type {
 	ISummarizerNodeWithGC,
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
-	MinimumDocumentRuntimeVersion,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -799,26 +798,25 @@ export interface LoadContainerRuntimeParams {
 	requestHandler?: (request: IRequest, runtime: IContainerRuntime) => Promise<IResponse>;
 
 	/**
-	 * Minimum version of the FF runtime that is required to open or process new documents.
+	 * Minimum version of the FF runtime that is required to open or process documents created or loaded by the runtime.
 	 * The input should be a string that represents the minimum version of the FF runtime that should be
-	 * supported by documents created or loaded by this runtime. The format of the string must be in valid
-	 * semver format.
+	 * supported for document runtime compatibility. The format of the string must be in valid semver format.
 	 *
 	 * The inputted version will be used to determine the default configuration for
 	 * {@link IContainerRuntimeOptionsInternal} to ensure compatibility with the specified version.
 	 *
 	 * @example
-	 * minimumDocumentRuntimeVersion: "2.0.0"
+	 * minDocumentRuntimeVersion: "2.0.0"
 	 *
 	 * @privateRemarks
 	 * Used to determine the default configuration for {@link IContainerRuntimeOptionsInternal} that affect the document schema.
 	 * For example, let's say that feature `foo` was added in 2.0 which introduces a new op type. Additionally, option `bar`
 	 * was added to `IContainerRuntimeOptionsInternal` in 2.0 to enable/disable `foo` since clients prior to 2.0 would not
-	 * understand the new op type. If a customer were to set minimumDocumentRuntimeVersion to 2.0.0, then `bar` would be set to
-	 * enable `foo` by default. If a customer were to set minimumDocumentRuntimeVersion to 1.0.0, then `bar` would be set to
+	 * understand the new op type. If a customer were to set minDocumentRuntimeVersion to 2.0.0, then `bar` would be set to
+	 * enable `foo` by default. If a customer were to set minDocumentRuntimeVersion to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 */
-	minimumDocumentRuntimeVersion?: MinimumDocumentRuntimeVersion;
+	minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
 
 	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
@@ -839,9 +837,10 @@ export interface LoadContainerRuntimeParams {
 	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
 	 *
-	 * @remarks Prefer {@link LoadContainerRuntimeParams.minimumDocumentRuntimeVersion} for new usages.
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link LoadContainerRuntimeParams.minDocumentRuntimeVersion} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27180} for context.
 	 */
-	minVersionForCollab?: MinimumVersionForCollab;
+	minVersionForCollab?: MinDocumentRuntimeVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -856,20 +855,16 @@ export async function loadContainerRuntime(
 }
 
 function getMinVersionForCollabFromParams(
-	minimumDocumentRuntimeVersion: MinimumDocumentRuntimeVersion | undefined,
-	minVersionForCollab: MinimumVersionForCollab | undefined,
-): MinimumVersionForCollab {
-	if (
-		minimumDocumentRuntimeVersion !== undefined &&
-		minVersionForCollab !== undefined &&
-		minimumDocumentRuntimeVersion !== minVersionForCollab
-	) {
+	minDocumentRuntimeVersion: MinDocumentRuntimeVersion | undefined,
+	minVersionForCollab: MinDocumentRuntimeVersion | undefined,
+): MinDocumentRuntimeVersion {
+	if (minDocumentRuntimeVersion !== undefined && minVersionForCollab !== undefined) {
 		throw new UsageError(
-			"minimumDocumentRuntimeVersion and minVersionForCollab must match when both are provided.",
+			"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
 		);
 	}
 
-	return minimumDocumentRuntimeVersion ?? minVersionForCollab ?? defaultMinVersionForCollab;
+	return minDocumentRuntimeVersion ?? minVersionForCollab ?? defaultMinVersionForCollab;
 }
 
 /**
@@ -1002,11 +997,11 @@ export class ContainerRuntime
 			runtimeOptions = {} satisfies IContainerRuntimeOptionsInternal,
 			containerScope = {},
 			containerRuntimeCtor = ContainerRuntime,
-			minimumDocumentRuntimeVersion,
+			minDocumentRuntimeVersion,
 			minVersionForCollab: legacyMinVersionForCollab,
 		} = params;
 		const minVersionForCollab = getMinVersionForCollabFromParams(
-			minimumDocumentRuntimeVersion,
+			minDocumentRuntimeVersion,
 			legacyMinVersionForCollab,
 		);
 
@@ -1687,7 +1682,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		public readonly minVersionForCollab: MinimumVersionForCollab,
+		public readonly minVersionForCollab: MinDocumentRuntimeVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,

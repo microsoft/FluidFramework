@@ -4,7 +4,7 @@
  */
 
 import { assert, debugAssert } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	getConfigForMinVersionForCollabIterable,
 	lowestMinVersionForCollab,
@@ -179,7 +179,7 @@ export interface CodecVersionBase<
 	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
 	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	readonly minVersionForCollab: MinDocumentRuntimeVersion | undefined;
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -499,7 +499,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		return this.buildDecoderInternal(options)[1];
 	}
 
-	public getCodecTree(clientVersion: MinimumVersionForCollab): CodecTree<TFormatVersion> {
+	public getCodecTree(clientVersion: MinDocumentRuntimeVersion): CodecTree<TFormatVersion> {
 		// TODO: add support for children codecs.
 		const selected = getWriteVersionNoOverrides(this.registry, clientVersion);
 		return {
@@ -611,9 +611,9 @@ function getWriteVersion<T extends CodecVersionBase>(
  */
 function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 	versions: readonly T[],
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 ): T {
-	const stableVersions: [MinimumMinorSemanticVersion | MinimumVersionForCollab, T][] = [];
+	const stableVersions: [MinimumMinorSemanticVersion | MinDocumentRuntimeVersion, T][] = [];
 	for (const version of versions) {
 		if (version.minVersionForCollab !== undefined) {
 			stableVersions.push([version.minVersionForCollab, version]);

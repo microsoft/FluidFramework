@@ -227,7 +227,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinDocumentRuntimeVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -392,10 +392,10 @@ export interface LocalAttributionKey {
 }
 
 // @public @input
-export type MinimumDocumentRuntimeVersion = MinimumVersionForCollab;
+export type MinDocumentRuntimeVersion = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
-// @public @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @public @deprecated @input
+export type MinimumVersionForCollab = MinDocumentRuntimeVersion;
 
 // @beta @legacy
 export type NamedFluidDataStoreRegistryEntries = Iterable<NamedFluidDataStoreRegistryEntry2>;

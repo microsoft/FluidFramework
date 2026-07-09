@@ -39,7 +39,7 @@ import {
 	resolveCompatibilityModeToMinVersionForCollab,
 } from "@fluidframework/fluid-static/internal";
 import { RouterliciousDocumentServiceFactory } from "@fluidframework/routerlicious-driver/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions";
 import { wrapConfigProviderWithDefaults } from "@fluidframework/telemetry-utils/internal";
 
 import { createAzureAudienceMember } from "./AzureAudience.js";
@@ -103,7 +103,7 @@ export class AzureClient {
 		minVersionForCollaboration,
 	}: {
 		schema: ContainerSchema;
-		minVersionForCollaboration: MinimumVersionForCollab;
+		minVersionForCollaboration: MinDocumentRuntimeVersion;
 	}) => IRuntimeFactory;
 
 	/**
@@ -144,10 +144,11 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
+	 * @public
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: MinDocumentRuntimeVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -159,7 +160,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema for the new container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns New detached container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinDocumentRuntimeVersion` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
@@ -173,7 +174,7 @@ export class AzureClient {
 	public async createContainer<const TContainerSchema extends ContainerSchema>(
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: MinDocumentRuntimeVersion | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -205,11 +206,12 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
+	 * @public
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: MinDocumentRuntimeVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -222,7 +224,7 @@ export class AzureClient {
 	 * @param containerSchema - Container schema used to access data objects in the container.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns Existing container instance along with associated services.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinDocumentRuntimeVersion` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async getContainer<TContainerSchema extends ContainerSchema>(
@@ -238,7 +240,7 @@ export class AzureClient {
 		id: string,
 		containerSchema: TContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: MinDocumentRuntimeVersion | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 		services: AzureContainerServices;
@@ -273,12 +275,13 @@ export class AzureClient {
 	 * @param minVersionForCollab - Minimum framework version required for collaboration, as a
 	 * SemVer string (e.g. `"1.0.0"`, `"2.100.0"`). Prefer the current Fluid Framework version so the container opts into the latest defaults.
 	 * @returns Loaded container instance at the specified version.
+	 * @public
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
 		id: string,
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: MinDocumentRuntimeVersion,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}>;
@@ -291,7 +294,7 @@ export class AzureClient {
 	 * @param version - Unique version of the source container in Azure Fluid Relay.
 	 * @param compatibilityMode - Legacy {@link @fluidframework/fluid-static#CompatibilityMode} value.
 	 * @returns Loaded container instance at the specified version.
-	 * @deprecated Pass a `MinimumVersionForCollab` SemVer string (e.g. `"2.0.0"`) instead. The legacy
+	 * @deprecated Pass a `MinDocumentRuntimeVersion` SemVer string (e.g. `"2.0.0"`) instead. The legacy
 	 * values `"1"` and `"2"` correspond to `"1.0.0"` and `"2.0.0"` respectively.
 	 */
 	public async viewContainerVersion<TContainerSchema extends ContainerSchema>(
@@ -308,7 +311,7 @@ export class AzureClient {
 		containerSchema: TContainerSchema,
 		version: AzureContainerVersion,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: MinDocumentRuntimeVersion | CompatibilityMode,
 	): Promise<{
 		container: IFluidContainer<TContainerSchema>;
 	}> {
@@ -378,7 +381,7 @@ export class AzureClient {
 	private getLoaderProps(
 		schema: ContainerSchema,
 		// eslint-disable-next-line import-x/no-deprecated
-		compatibilityMode: MinimumVersionForCollab | CompatibilityMode,
+		compatibilityMode: MinDocumentRuntimeVersion | CompatibilityMode,
 	): ILoaderProps {
 		const minVersionForCollaboration =
 			resolveCompatibilityModeToMinVersionForCollab(compatibilityMode);

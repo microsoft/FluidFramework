@@ -5,10 +5,10 @@
 ```ts
 
 // @public @input
-export type MinimumDocumentRuntimeVersion = MinimumVersionForCollab;
+export type MinDocumentRuntimeVersion = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
-// @public @input
-export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+// @public @deprecated @input
+export type MinimumVersionForCollab = MinDocumentRuntimeVersion;
 
 // (No @packageDocumentation comment for this package)
 

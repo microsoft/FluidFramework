@@ -1590,7 +1590,7 @@ function removeRangeFromArray<TNodeSchema extends ImplicitAllowedTypes>(
  *
  * Also note: these APIs leverage `SharedTree` functionality that was added in version `2.80.0`,
  * which is not compatible with previous versions of this library.
- * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+ * To ensure safe collaboration, you will need to configure the {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}
  * for the Fluid Runtime and/or `SharedTree` to at least `2.80.0`.
  * To set this minimum version for `SharedTree`, use {@link configuredSharedTreeBeta}.
  *

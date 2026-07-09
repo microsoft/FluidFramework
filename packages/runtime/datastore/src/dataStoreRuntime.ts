@@ -62,7 +62,7 @@ import {
 	notifiesReadOnlyState,
 	encodeHandlesInContainerRuntime,
 	type IFluidDataStorePolicies,
-	type MinimumVersionForCollab,
+	type MinDocumentRuntimeVersion,
 	currentSummarizeStepPrefix,
 	currentSummarizeStepPropertyName,
 } from "@fluidframework/runtime-definitions/internal";
@@ -391,7 +391,7 @@ export class FluidDataStoreRuntime
 	 * and we keep this property as private, but consumers may optimistically cast
 	 * to the internal interface to access this property.
 	 */
-	public readonly minVersionForCollab: MinimumVersionForCollab;
+	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
 
 	/**
 	 * Create an instance of a DataStore runtime.

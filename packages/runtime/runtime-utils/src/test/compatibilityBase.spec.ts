@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { isFluidError } from "@fluidframework/telemetry-utils/internal";
 import { compare } from "semver-ts";
 
@@ -100,7 +100,7 @@ describe("compatibilityBase", () => {
 		};
 
 		const testCases: {
-			minVersionForCollab: MinimumVersionForCollab;
+			minVersionForCollab: MinDocumentRuntimeVersion;
 			expectedConfig: ITestConfigMap;
 		}[] = [
 			{
@@ -433,7 +433,7 @@ describe("compatibilityBase", () => {
 
 	describe("minVersionForCollab validation", () => {
 		const testCases: {
-			version: MinimumVersionForCollab;
+			version: MinDocumentRuntimeVersion;
 			checks: {
 				isValidSemver: boolean;
 				isGteLowestMinVersion: boolean;
@@ -449,18 +449,18 @@ describe("compatibilityBase", () => {
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: true },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
-				version: "0.0.0" as MinimumVersionForCollab,
+				// Cast since this is not a valid MinDocumentRuntimeVersion, but is a valid semver.
+				version: "0.0.0" as MinDocumentRuntimeVersion,
 				checks: { isValidSemver: true, isGteLowestMinVersion: false, isLtePkgVersion: true },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab, but is a valid semver.
-				version: "1000000.0.0" as MinimumVersionForCollab,
+				// Cast since this is not a valid MinDocumentRuntimeVersion, but is a valid semver.
+				version: "1000000.0.0" as MinDocumentRuntimeVersion,
 				checks: { isValidSemver: true, isGteLowestMinVersion: true, isLtePkgVersion: false },
 			},
 			{
-				// Cast since this is not a valid MinimumVersionForCollab and is not a valid semver.
-				version: "1.2" as MinimumVersionForCollab,
+				// Cast since this is not a valid MinDocumentRuntimeVersion and is not a valid semver.
+				version: "1.2" as MinDocumentRuntimeVersion,
 				checks: { isValidSemver: false, isGteLowestMinVersion: false, isLtePkgVersion: false },
 			},
 		];

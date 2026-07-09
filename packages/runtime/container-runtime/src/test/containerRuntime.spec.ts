@@ -4110,7 +4110,7 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							// @ts-expect-error - Invalid version strings are not castable to MinimumVersionForCollab
+							// @ts-expect-error - Invalid version strings are not castable to MinDocumentRuntimeVersion
 							minVersionForCollab: version,
 						});
 					});
@@ -4157,8 +4157,8 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minimumDocumentRuntimeVersion = 1.0.0", async () => {
-				const minimumDocumentRuntimeVersion = "1.0.0";
+			it("minDocumentRuntimeVersion = 1.0.0", async () => {
+				const minDocumentRuntimeVersion = "1.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4166,19 +4166,19 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					minimumDocumentRuntimeVersion,
+					minDocumentRuntimeVersion,
 				});
 
 				logger.assertMatchAny([
 					{
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
-						minVersionForCollab: minimumDocumentRuntimeVersion,
+						minVersionForCollab: minDocumentRuntimeVersion,
 					},
 				]);
 			});
 
-			it("throws when minimumDocumentRuntimeVersion and minVersionForCollab differ", async () => {
+			it("throws when minDocumentRuntimeVersion and minVersionForCollab are both provided", async () => {
 				await assert.rejects(
 					async () =>
 						ContainerRuntime.loadRuntime2({
@@ -4187,12 +4187,12 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
-							minimumDocumentRuntimeVersion: "2.0.0",
-							minVersionForCollab: "1.0.0",
+							minDocumentRuntimeVersion: "2.0.0",
+							minVersionForCollab: "2.0.0",
 						}),
 					(error: Error) =>
 						error.message ===
-						"minimumDocumentRuntimeVersion and minVersionForCollab must match when both are provided.",
+						"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
 				);
 			});
 

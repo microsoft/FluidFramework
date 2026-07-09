@@ -4,7 +4,7 @@
  */
 
 import type { IContainerRuntimeOptionsInternal } from "@fluidframework/container-runtime/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { gte } from "semver-ts";
 
 /**
@@ -39,7 +39,7 @@ const minVersionForCollabToDefaultRuntimeOptions: Record<
  * @internal
  */
 export function defaultRuntimeOptionsForMinVersion(
-	minVersionForCollab: MinimumVersionForCollab,
+	minVersionForCollab: MinDocumentRuntimeVersion,
 ): IContainerRuntimeOptionsInternal {
 	return minVersionForCollabToDefaultRuntimeOptions[
 		gte(minVersionForCollab, "2.0.0") ? "2" : "1"

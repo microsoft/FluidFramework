@@ -314,7 +314,7 @@ export interface SnapshotSchemaCompatibilityOptions {
 	 * Such applications can set this to the oldest version currently deployed,
 	 * then rely on {@link snapshotSchemaCompatibility} to verify that no schema changes are made which would break collaboration with that (or newer) versions.
 	 *
-	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinimumVersionForCollab}
+	 * This is the same approach used by {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion}
 	 * except that type is specifically for use with the version of the Fluid Framework client packages,
 	 * and this corresponds to whatever versioning scheme is used with {@link SnapshotSchemaCompatibilityOptions.version}.
 	 */

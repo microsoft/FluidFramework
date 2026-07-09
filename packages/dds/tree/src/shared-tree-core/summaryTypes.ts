@@ -8,7 +8,7 @@ import type {
 	IExperimentalIncrementalSummaryContext,
 	ISummaryTreeWithStats,
 	ITelemetryContext,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 
 // TODO: Organize this to be adjacent to persisted types.
@@ -115,7 +115,7 @@ export const supportedSharedTreeSummaryFormatVersions =
  * Returns the summary version to use as per the given minimum version for collab.
  */
 export function minVersionToSharedTreeSummaryFormatVersion(
-	version: MinimumVersionForCollab,
+	version: MinDocumentRuntimeVersion,
 ): SharedTreeSummaryFormatVersion {
 	// Currently, version 2 is written which adds metadata blob to the summary.
 	return SharedTreeSummaryFormatVersion.v2;

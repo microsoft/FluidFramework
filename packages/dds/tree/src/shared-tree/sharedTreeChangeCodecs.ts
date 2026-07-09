@@ -4,7 +4,7 @@
  */
 
 import { fail } from "@fluidframework/core-utils/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 
 import {
 	type CodecTree,
@@ -122,7 +122,7 @@ export const dependenciesForChangeFormat = new Map<
 
 export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: MinDocumentRuntimeVersion,
 ): CodecTree {
 	const { modularChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);

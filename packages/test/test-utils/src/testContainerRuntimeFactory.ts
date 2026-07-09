@@ -26,7 +26,7 @@ import {
 import {
 	IFluidDataStoreFactory,
 	NamedFluidDataStoreRegistryEntries,
-	type MinimumVersionForCollab,
+	type MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import { RequestParser, RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
 
@@ -84,7 +84,7 @@ export const createTestContainerRuntimeFactory = (
 					},
 				},
 			},
-			public minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			public minVersionForCollab: MinDocumentRuntimeVersion | undefined = undefined,
 			// eslint-disable-next-line import-x/no-deprecated
 			public requestHandlers: RuntimeRequestHandler[] = [],
 		) {
@@ -183,7 +183,7 @@ export const createTestContainerRuntimeFactory = (
 				runtimeOptions: this.runtimeOptions,
 				containerScope: context.scope,
 				existing,
-				minVersionForCollab: this.minVersionForCollab,
+				minDocumentRuntimeVersion: this.minVersionForCollab,
 			});
 		}
 	};

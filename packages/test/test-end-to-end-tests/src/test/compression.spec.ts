@@ -22,7 +22,7 @@ import {
 // TODO:AB#6558: Once describeInstallVersions supports `apis`, this fallback can be removed.
 // eslint-disable-next-line @typescript-eslint/no-restricted-imports
 import { SharedMap, type ISharedMap } from "@fluidframework/map/internal";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import {
 	DataObjectFactoryType,
 	ITestContainerConfig,
@@ -66,7 +66,7 @@ const compressionSuite = (getProvider, apis?): void => {
 
 		async function setupContainers(
 			runtimeOptions: IContainerRuntimeOptionsInternal = defaultRuntimeOptions,
-			minVersionForCollab: MinimumVersionForCollab | undefined = undefined,
+			minVersionForCollab: MinDocumentRuntimeVersion | undefined = undefined,
 		): Promise<void> {
 			const createContainerConfig: ITestContainerConfig = {
 				registry: [["mapKey", SharedMapForCreate.getFactory()]],

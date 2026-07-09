@@ -8,7 +8,7 @@ import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node
 import fs from "node:fs";
 import path from "node:path";
 
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { cleanedPackageVersion } from "@fluidframework/runtime-utils/internal";
 
 import type { VersionDispatchingCodecBuilder, ICodecOptions } from "../../codec/index.js";
@@ -164,7 +164,7 @@ assert(existsSync(schemaCompatibilitySnapshotsFolder));
  */
 export function testSchemaCompatibilitySnapshots(
 	currentViewSchema: TreeViewConfiguration,
-	minVersionForCollaboration: MinimumVersionForCollab,
+	minVersionForCollaboration: MinDocumentRuntimeVersion,
 	domainName: string,
 	forceUpdate: boolean = false,
 ): void {

@@ -19,7 +19,7 @@ import type {
 	IRuntimeMessageCollection,
 	IRuntimeMessagesContent,
 	ISequencedMessageEnvelope,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidError,
@@ -621,7 +621,7 @@ describe("LegacyTypeAwareRegistry", () => {
 describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 	function createRuntime(
 		id: string,
-		minVersionForCollab: MinimumVersionForCollab,
+		minVersionForCollab: MinDocumentRuntimeVersion,
 	): FluidDataStoreRuntime_ForTesting {
 		const context = new MockFluidDataStoreContext(id);
 		context.minVersionForCollab = minVersionForCollab;

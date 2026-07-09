@@ -23,7 +23,7 @@ import {
 import type {
 	IFluidDataStoreRegistry,
 	IProvideFluidDataStoreRegistry,
-	MinimumVersionForCollab,
+	MinDocumentRuntimeVersion,
 	NamedFluidDataStoreRegistryEntries,
 } from "@fluidframework/runtime-definitions/internal";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/internal";
@@ -65,9 +65,9 @@ export interface BaseContainerRuntimeFactoryProps {
 	provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
 	/**
 	 * Minimum version of the FF runtime that is required to collaborate on new documents.
-	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details on this property.
+	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details on this property.
 	 */
-	minVersionForCollab?: MinimumVersionForCollab | undefined;
+	minVersionForCollab?: MinDocumentRuntimeVersion | undefined;
 }
 
 /**
@@ -95,7 +95,7 @@ export class BaseContainerRuntimeFactory
 	// eslint-disable-next-line import-x/no-deprecated
 	private readonly requestHandlers: RuntimeRequestHandler[];
 	private readonly provideEntryPoint: (runtime: IContainerRuntime) => Promise<FluidObject>;
-	private readonly minVersionForCollab: MinimumVersionForCollab | undefined;
+	private readonly minVersionForCollab: MinDocumentRuntimeVersion | undefined;
 
 	public constructor(props: BaseContainerRuntimeFactoryProps) {
 		super();
@@ -155,7 +155,7 @@ export class BaseContainerRuntimeFactory
 			// eslint-disable-next-line import-x/no-deprecated
 			requestHandler: buildRuntimeRequestHandler(...this.requestHandlers),
 			provideEntryPoint: this.provideEntryPoint,
-			minVersionForCollab: this.minVersionForCollab,
+			minDocumentRuntimeVersion: this.minVersionForCollab,
 		});
 	}
 
