@@ -5,7 +5,7 @@
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { minimizeModularChangeset } from "../feature-libraries/index.js";
+import { fieldKinds, minimizeModularChangeset } from "../feature-libraries/index.js";
 import { ChangeProcessorApplicability } from "../shared-tree-core/index.js";
 import type { TransactionPostProcessor } from "../simple-tree/index.js";
 
@@ -35,7 +35,9 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
 			`At most one edit group can be minimized, but ${countOfDataChanges} were found. To workaround this limitation, pair at most one content edit with any schema changes.`,
 		);
 	}
-	return mapDataChanges(change, (dataChange) => minimizeModularChangeset(dataChange));
+	return mapDataChanges(change, (dataChange) =>
+		minimizeModularChangeset(dataChange, fieldKinds),
+	);
 }
 
 /**
