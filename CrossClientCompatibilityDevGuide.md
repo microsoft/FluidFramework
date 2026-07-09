@@ -125,7 +125,7 @@ In [containerCompatibility.ts](./packages/runtime/container-runtime/src/containe
 > breaking change must go through it. If you are following the steps in this section, your option must
 > be configured in both maps below.
 
-**First map: `runtimeOptionsAffectingDocSchemaConfigMap`** — Handles the [Default Configurations](#default-configurations) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps `MinimumVersionForCollab` values to the appropriate default value for that option.
+**First map: `runtimeOptionsAffectingDocSchemaConfigMap`** — Handles the [Default Configurations](#default-configurations) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps `MinDocumentRuntimeVersion` values to the appropriate default value for that option.
 
 **Second map: `runtimeOptionsAffectingDocSchemaConfigValidationMap`** — Handles [Unsafe Configuration Prevention](#unsafe-configuration-prevention) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps config values to the minimum `minDocumentRuntimeVersion` required to use that value.
 
@@ -220,7 +220,7 @@ To tighten runtime enforcement:
    runtime. Include a changeset noting the raised minimum supported version,
    since this is a customer-visible breaking change. If
    `lowestMinVersionForCollab` advances across a major version boundary
-   (e.g., `2.x` → `3.x`), also narrow the `MinimumVersionForCollab` type in
+   (e.g., `2.x` → `3.x`), also narrow the `MinDocumentRuntimeVersion` type in
    [compatibilityDefinitions.ts](./packages/runtime/runtime-definitions/src/compatibilityDefinitions.ts)
    to drop the now-unsupported major from its definition.
 

@@ -104,13 +104,13 @@ This diagram shows different Fluid layers with different versions in a client:
 
 ## Cross-client compatibility
 
-Cross-client compatibility guarantees applications can request that compatibility is maintained with clients at least as old as the `MinimumVersionForCollab` they specify, ensuring all clients should be able to fully collaborate with each other.
+Cross-client compatibility guarantees applications can request that compatibility is maintained with clients at least as old as the `MinDocumentRuntimeVersion` they specify, ensuring all clients should be able to fully collaborate with each other.
 
 Since the rollout schedule of a given application is controlled by the application and not the framework,
 the application specifies which versions must be supported.
-This is done using a [MinimumVersionForCollab](https://fluidframework.com/docs/api/runtime-definitions/minimumversionforcollab-typealias).
+This is done using a [MinDocumentRuntimeVersion](https://fluidframework.com/docs/api/runtime-definitions/mindocumentruntimeversion-typealias).
 
-Fluid supports `MinimumVersionForCollab` back to releases at least 18-months ago,
+Fluid supports `MinDocumentRuntimeVersion` back to releases at least 18-months ago,
 and will only ever change the minimum supported version in a major release (as doing so is a breaking change).
 This means users of Fluid are given at least 18-months to roll out any version while being able to maintain collaboration across the rollout.
 
@@ -120,7 +120,7 @@ Details on exactly how this is tracked can be found in
 What makes this different from the
 data-at-rest compatibility promise is that:
 1. This dictates what can be written (to ensure lower-version clients can read content written by a higher-version collaborator), whereas data-at-rest only dictates maintaining support for reading specific formats.
-2. The support window is bounded: data-at-rest requires support for reading data from any previous version, while Cross-client compatibility only requires support for writing in formats old enough to be read by the oldest supported `MinimumVersionForCollab`.
+2. The support window is bounded: data-at-rest requires support for reading data from any previous version, while Cross-client compatibility only requires support for writing in formats old enough to be read by the oldest supported `MinDocumentRuntimeVersion`.
 
 ### Motivation
 
