@@ -30,7 +30,7 @@ import { getOrCreate } from "./util/index.js";
  * composed configuration and returns the content that component contributes.
  * Because the configuration is provided lazily, components may reference (including recursively) types contributed by
  * other components, as long as nothing evaluates the lazy references until composition has completed.
- * Use {@link Component.composeComponents} to combine a set of components into a {@link Component.ComposedComponents}.
+ * Use {@link Component.(composeComponents:1)} to combine a set of components into a {@link Component.ComposedComponents}.
  *
  * See {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/openPolymorphism.integration.ts|openPolymorphism.integration.ts} for worked examples of this pattern.
  *
@@ -52,13 +52,17 @@ export namespace Component {
 	 * instead the returned `TComponent` can capture `lazyConfiguration` and evaluate it at a later time
 	 * (after all components have been composed).
 	 *
-	 * @typeParam TConfig - The composed configuration type made available to components.
 	 * @typeParam TComponent - The content a component contributes.
+	 * @typeParam TConfig - The composed configuration type made available to components.
+	 * Defaults to the {@link Component.ComposedComponents} produced by composition: the common case where
+	 * components read composed content directly from the composition and no custom configuration type is needed.
 	 *
 	 * @input
 	 * @alpha
 	 */
-	export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
+	export type Factory<TComponent, TConfig = ComposedComponents<TComponent>> = (
+		lazyConfiguration: () => TConfig,
+	) => TComponent;
 
 	/**
 	 * A function which returns an array of lazy values which each evaluate to `T`.
@@ -120,15 +124,15 @@ export namespace Component {
 		 */
 		configure(
 			config: TConfigPartial,
-			components: ComposedComponents<TConfigPartial, TComponent>,
+			components: ComposedComponents<TComponent, TConfigPartial>,
 		): TResult;
 	}
 
 	/**
 	 * Implementation of {@link Component.ComposedComponents}.
 	 */
-	class Config<TConfig, TComponent> implements ComposedComponents<TConfig, TComponent> {
-		public readonly componentsMap: ReadonlyMap<Factory<TConfig, TComponent>, TComponent>;
+	class Config<TConfig, TComponent> implements ComposedComponents<TComponent, TConfig> {
+		public readonly componentsMap: ReadonlyMap<Factory<TComponent, TConfig>, TComponent>;
 
 		/**
 		 * Cache of results produced by {@link Component.ComposedComponents.getConfigured}.
@@ -155,8 +159,8 @@ export namespace Component {
 		public readonly config: TConfig;
 
 		public constructor(
-			allComponents: readonly Factory<TConfig, TComponent>[],
-			lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
+			allComponents: readonly Factory<TComponent, TConfig>[],
+			lazyConfiguration: (composed: ComposedComponents<TComponent, TConfig>) => TConfig,
 		) {
 			// eslint-disable-next-line no-undef-init -- Explicitly undefined: `config` is populated below, after all components have been constructed, and is read lazily via `lazyConfigInner`.
 			let config: TConfig | undefined = undefined;
@@ -174,7 +178,7 @@ export namespace Component {
 			this.config = config;
 		}
 
-		public getComponent<TFactory extends Factory<TConfig, TComponent>>(
+		public getComponent<TFactory extends Factory<TComponent, TConfig>>(
 			factory: TFactory,
 		): ReturnType<TFactory> {
 			const found = this.componentsMap.get(factory);
@@ -228,21 +232,45 @@ export namespace Component {
 	/**
 	 * Combine multiple {@link Component.Factory|components} into a single {@link Component.ComposedComponents}.
 	 *
+	 * @remarks
+	 * The {@link Component.ComposedComponents} itself is used as the configuration made available to components:
+	 * the simple case where components read composed content directly from the composition.
+	 * To produce a custom aggregated configuration, use the overload which takes a `lazyConfiguration` builder.
+	 *
+	 * @param allComponents - The components to compose.
+	 * @returns The composed components, from which configuration and per-component content can be read.
+	 *
+	 * @typeParam TComponent - The content each component contributes.
+	 *
+	 * @alpha
+	 */
+	export function composeComponents<TComponent>(
+		allComponents: readonly Factory<TComponent>[],
+	): ComposedComponents<TComponent>;
+	/**
+	 * Combine multiple {@link Component.Factory|components} into a single {@link Component.ComposedComponents}.
+	 *
 	 * @param allComponents - The components to compose.
 	 * @param lazyConfiguration - Builds the composed configuration from the composed components.
 	 * This is invoked once, after all components have been created, and can aggregate content contributed by the
 	 * components (for example via {@link Component.ComposedComponents.getComposed}).
 	 * @returns The composed components, from which configuration and per-component content can be read.
 	 *
-	 * @typeParam TConfig - The composed configuration type made available to components.
 	 * @typeParam TComponent - The content each component contributes.
+	 * @typeParam TConfig - The composed configuration type made available to components.
 	 *
 	 * @alpha
 	 */
-	export function composeComponents<TConfig, TComponent>(
-		allComponents: readonly Factory<TConfig, TComponent>[],
-		lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
-	): ComposedComponents<TConfig, TComponent> {
+	export function composeComponents<TComponent, TConfig>(
+		allComponents: readonly Factory<TComponent, TConfig>[],
+		lazyConfiguration: (composed: ComposedComponents<TComponent, TConfig>) => TConfig,
+	): ComposedComponents<TComponent, TConfig>;
+	export function composeComponents<TComponent, TConfig>(
+		allComponents: readonly Factory<TComponent, TConfig>[],
+		lazyConfiguration: (composed: ComposedComponents<TComponent, TConfig>) => TConfig = (
+			composed,
+		) => composed as unknown as TConfig,
+	): ComposedComponents<TComponent, TConfig> {
 		return new Config<TConfig, TComponent>(allComponents, lazyConfiguration);
 	}
 
@@ -250,14 +278,18 @@ export namespace Component {
 	 * The result of composing multiple components.
 	 *
 	 * @remarks
-	 * Create using {@link Component.composeComponents}.
+	 * Create using {@link Component.(composeComponents:1)}.
 	 *
-	 * @typeParam TConfig - The composed configuration type made available to components.
 	 * @typeParam TComponent - The content each component contributes.
+	 * @typeParam TConfig - The composed configuration type made available to components.
+	 * Defaults to the composition itself: the common case where no custom configuration type is needed.
 	 *
 	 * @sealed @alpha
 	 */
-	export interface ComposedComponents<TConfig, TComponent> {
+	export interface ComposedComponents<
+		TComponent,
+		TConfig = ComposedComponents<TComponent, unknown>,
+	> {
 		/**
 		 * The components which were composed.
 		 */
@@ -275,7 +307,7 @@ export namespace Component {
 		 * @returns The content created by the provided factory.
 		 * This result is cached during composition and not reevaluated.
 		 */
-		getComponent<TFactory extends Factory<TConfig, TComponent>>(
+		getComponent<TFactory extends Factory<TComponent, TConfig>>(
 			factory: TFactory,
 		): ReturnType<TFactory>;
 

@@ -20,12 +20,12 @@ describe("Component", () => {
 	// A trivial example that uses none of the lazy array collections.
 	it("Minimal self contained example", () => {
 		type MyComponent = string;
-		type MyComponentFactory = Component.Factory<{}, MyComponent>;
+		type MyComponentFactory = Component.Factory<MyComponent>;
 
 		const a: MyComponentFactory = () => "a";
 		const b: MyComponentFactory = () => "b";
 
-		const composed = Component.composeComponents([a, b], (all) => all.components);
+		const composed = Component.composeComponents([a, b]);
 
 		assert.deepEqual(composed.components, ["a", "b"]);
 	});
@@ -66,7 +66,7 @@ describe("Component", () => {
 			readonly items: readonly MyItem[];
 		}
 
-		type MyComponentFactory = Component.Factory<ComposeConfig, MyComponent>;
+		type MyComponentFactory = Component.Factory<MyComponent, ComposeConfig>;
 
 		// Example showing how a component could use configuration settings when computing its output.
 		const unstableItem = { name: "unstable", data: 1 };
@@ -152,11 +152,11 @@ describe("Component", () => {
 		readonly label?: string;
 	}
 
-	type TestFactory = Component.Factory<TestConfig, TestComponent>;
+	type TestFactory = Component.Factory<TestComponent, TestConfig>;
 
 	function compose(
 		components: readonly TestFactory[],
-	): Component.ComposedComponents<TestConfig, TestComponent> {
+	): Component.ComposedComponents<TestComponent, TestConfig> {
 		return Component.composeComponents(components, (composed) => ({
 			items: composed.getComposed("items"),
 		}));
