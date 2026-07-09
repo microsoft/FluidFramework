@@ -3,7 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { type TextAsTree, TreeAlpha, utf16LengthForCodePoints } from "@fluidframework/tree/internal";
+import {
+	type TextAsTree,
+	TreeAlpha,
+	utf16LengthForCodePoints,
+} from "@fluidframework/tree/internal";
 
 import { clamp } from "../../utilities.js";
 
