@@ -58,6 +58,7 @@ import {
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
+	rebaseBranch,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1325,13 +1326,15 @@ export class TreeCheckout implements ITreeCheckout {
 		return targetPath.length > 0;
 	}
 
-	public computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly {
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
 		const branchCheckout = getCheckout(branch);
-		const change = diffHistories(
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
 			this.changeFamily.rebaser,
 			this.#transaction.branch.getHead(),
 			branchCheckout.#transaction.branch.getHead(),
-			this.mintRevisionTag,
 		);
 
 		const context: ChangeEncodingContext = {
@@ -1340,7 +1343,12 @@ export class TreeCheckout implements ITreeCheckout {
 			revision: undefined,
 			isSummary: false,
 		};
-		const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const encodedChange = this.changeFamily.codecs
+			.resolve(4)
+			.encode(rebased.sourceChange, context);
 		return {
 			version: 1,
 			revision: undefined,

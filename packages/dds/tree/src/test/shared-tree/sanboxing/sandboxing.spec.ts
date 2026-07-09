@@ -184,6 +184,10 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 			}
 			this.mainHeadFromLastUpdate = this.main.fork();
 			const update = this.local.computeNetChangeIfRebasedOnto(this.mainHeadFromLastUpdate);
+			assert(
+				update !== undefined,
+				"Expected update to be defined since local is missing edits from main",
+			);
 			this.logger("Host:   sending update to sandbox");
 			this.sendUpdateToSandbox(update);
 		} else {
@@ -239,6 +243,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	private inFlight: number = 0;
 	private pushInProgress?: PromiseWithResolver;
 	private readonly offViewChanged: () => void;
+	private isApplyingInboundChanges: boolean = false;
 
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
@@ -252,7 +257,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	) {
 		this.view = independentInitializedView(config, options, content);
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			if (metadata.isLocal) {
+			if (metadata.isLocal && !this.isApplyingInboundChanges) {
 				const newChange = metadata.getChange();
 				this.logger(
 					`Sand: new outbound change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
@@ -288,7 +293,9 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			this.logger(`Sand: ignoring update from host (inFlight=${this.inFlight})`);
 			return;
 		}
+		this.isApplyingInboundChanges = true;
 		this.view.applyChange(update, false);
+		this.isApplyingInboundChanges = false;
 		this.logger("Sand: applied update from host");
 		this.sendAckOfInboundUpdate();
 	}

@@ -533,7 +533,9 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.isMissingEditsFrom(context);
 	}
 
-	public computeNetChangeIfRebasedOnto(context: TreeBranchAlpha): JsonCompatibleReadOnly {
+	public computeNetChangeIfRebasedOnto(
+		context: TreeBranchAlpha,
+	): JsonCompatibleReadOnly | undefined {
 		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
 
