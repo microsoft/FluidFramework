@@ -44,7 +44,7 @@ import { initializeForest } from "../initializeForest.js";
 
 const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 };
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
 const family = defaultChangeFamily;

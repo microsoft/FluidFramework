@@ -81,9 +81,19 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
 	public scope: FluidObject = undefined as any;
 
 	/**
+	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minDocumentRuntimeVersion}
+	 */
+	public minDocumentRuntimeVersion?: MinDocumentRuntimeVersion = defaultMinVersionForCollab;
+	/**
 	 * {@inheritdoc @fluidframework/runtime-definitions#IFluidDataStoreContext.minVersionForCollab}
 	 */
-	public minVersionForCollab: MinDocumentRuntimeVersion = defaultMinVersionForCollab;
+	public get minVersionForCollab(): MinDocumentRuntimeVersion {
+		return this.minDocumentRuntimeVersion ?? defaultMinVersionForCollab;
+	}
+
+	public set minVersionForCollab(value: MinDocumentRuntimeVersion) {
+		this.minDocumentRuntimeVersion = value;
+	}
 
 	constructor(
 		public readonly id: string = uuid(),

@@ -353,6 +353,11 @@ export abstract class FluidDataStoreContext
 	}
 
 	/**
+	 * {@inheritdoc IFluidDataStoreContext.minDocumentRuntimeVersion}
+	 */
+	public readonly minDocumentRuntimeVersion: MinDocumentRuntimeVersion;
+
+	/**
 	 * {@inheritdoc IFluidDataStoreContext.minVersionForCollab}
 	 */
 	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
@@ -466,7 +471,11 @@ export abstract class FluidDataStoreContext
 
 		this._containerRuntime = props.parentContext.containerRuntime;
 		this.parentContext = props.parentContext;
-		this.minVersionForCollab = props.parentContext.minVersionForCollab;
+		this.minDocumentRuntimeVersion =
+			props.parentContext.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			props.parentContext.minVersionForCollab;
+		this.minVersionForCollab = this.minDocumentRuntimeVersion;
 		this.id = props.id;
 		this.storage = props.storage;
 		this.scope = props.scope;

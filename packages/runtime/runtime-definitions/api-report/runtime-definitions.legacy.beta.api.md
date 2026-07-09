@@ -227,6 +227,8 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
+    readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+    // @deprecated
     readonly minVersionForCollab: MinDocumentRuntimeVersion;
     // (undocumented)
     readonly options: Record<string | number, any>;

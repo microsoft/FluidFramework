@@ -14,7 +14,7 @@ import type { OdspClient } from "@fluidframework/odsp-client/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 // `pkgVersion` is this package's own version, which tracks the Fluid Framework release group; we use it as
-// `minVersionForCollab` in tests so they exercise the latest defaults rather than a hardcoded version.
+// `minDocumentRuntimeVersion` in tests so they exercise the latest defaults rather than a hardcoded version.
 import { pkgVersion as currentVersion } from "../packageVersion.js";
 
 import { createOdspClient, getCredentials } from "./OdspClientFactory.js";

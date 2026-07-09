@@ -570,6 +570,12 @@ export interface IFluidParentContext
 	 * Consumed by {@link @fluidframework/container-runtime#FluidDataStoreContext}.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details.
 	 */
+	readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 *
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link IFluidParentContext.minDocumentRuntimeVersion} instead.
+	 */
 	readonly minVersionForCollab: MinDocumentRuntimeVersion;
 	readonly deltaManager: IDeltaManager<ISequencedDocumentMessage, IDocumentMessage>;
 	readonly storage: IRuntimeStorageService;

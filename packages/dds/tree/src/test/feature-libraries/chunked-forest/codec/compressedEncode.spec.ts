@@ -112,7 +112,7 @@ function makeFieldBatchCodec(
 > {
 	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
 		{
-			minVersionForCollab: lowestMinVersionForCollab,
+			minDocumentRuntimeVersion: lowestMinVersionForCollab,
 			formatVersion: version,
 			codec: {
 				encode: (
@@ -132,7 +132,7 @@ function makeFieldBatchCodec(
 			},
 		},
 	]);
-	return builder.build({ ...options, minVersionForCollab: lowestMinVersionForCollab });
+	return builder.build({ ...options, minDocumentRuntimeVersion: lowestMinVersionForCollab });
 }
 
 const fieldBatchVersion = brand<FieldBatchFormatVersion>(FieldBatchFormatVersion.v2);

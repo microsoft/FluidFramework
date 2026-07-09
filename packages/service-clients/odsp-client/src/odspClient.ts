@@ -115,15 +115,15 @@ export class OdspClient {
 	/**
 	 * Creates a new detached container instance backed by ODSP.
 	 * @param containerSchema - Container schema for the new container.
-	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * @param minDocumentRuntimeVersion - Minimum Fluid Framework version required for collaboration, as a
 	 * `MinDocumentRuntimeVersion` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
 	 * version so the container opts into the latest defaults.
 	 * @returns New detached container instance along with associated services.
 	 */
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		// OdspClient does not support 1.x clients, so we exclude it from the accepted `minVersionForCollab` values.
-		minVersionForCollab: Exclude<MinDocumentRuntimeVersion, `1.${string}`>,
+		// OdspClient does not support 1.x clients, so we exclude it from the accepted `minDocumentRuntimeVersion` values.
+		minDocumentRuntimeVersion: Exclude<MinDocumentRuntimeVersion, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -143,12 +143,12 @@ export class OdspClient {
 	}>;
 	public async createContainer<T extends ContainerSchema>(
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinDocumentRuntimeVersion, `1.${string}`> = "2.0.0",
+		minDocumentRuntimeVersion: Exclude<MinDocumentRuntimeVersion, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
+		const loaderProps = this.getLoaderProps(containerSchema, minDocumentRuntimeVersion);
 
 		const container = await createDetachedContainer({
 			...loaderProps,
@@ -172,7 +172,7 @@ export class OdspClient {
 	 * Accesses an existing container by its unique ID in ODSP.
 	 * @param id - Unique ID of the container in ODSP.
 	 * @param containerSchema - Container schema used to access data objects in the container.
-	 * @param minVersionForCollab - Minimum Fluid Framework version required for collaboration, as a
+	 * @param minDocumentRuntimeVersion - Minimum Fluid Framework version required for collaboration, as a
 	 * `MinDocumentRuntimeVersion` SemVer string (e.g. `"2.100.0"`). Prefer the current Fluid Framework
 	 * version so the container opts into the latest defaults.
 	 * @returns Existing container instance along with associated services.
@@ -180,7 +180,7 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinDocumentRuntimeVersion, `1.${string}`>,
+		minDocumentRuntimeVersion: Exclude<MinDocumentRuntimeVersion, `1.${string}`>,
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
@@ -203,12 +203,12 @@ export class OdspClient {
 	public async getContainer<T extends ContainerSchema>(
 		id: string,
 		containerSchema: T,
-		minVersionForCollab: Exclude<MinDocumentRuntimeVersion, `1.${string}`> = "2.0.0",
+		minDocumentRuntimeVersion: Exclude<MinDocumentRuntimeVersion, `1.${string}`> = "2.0.0",
 	): Promise<{
 		container: IOdspFluidContainer<T>;
 		services: IOdspContainerServices;
 	}> {
-		const loaderProps = this.getLoaderProps(containerSchema, minVersionForCollab);
+		const loaderProps = this.getLoaderProps(containerSchema, minDocumentRuntimeVersion);
 		const url = createOdspUrl({
 			siteUrl: this.connectionConfig.siteUrl,
 			driveId: this.connectionConfig.driveId,

@@ -99,7 +99,7 @@ function decodeV2(f: FormatV2): TreeStoredSchema {
  */
 export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema", [
 	{
-		minVersionForCollab: lowestMinVersionForCollab,
+		minDocumentRuntimeVersion: lowestMinVersionForCollab,
 		formatVersion: SchemaFormatVersion.v1,
 		codec: {
 			encode: (data: TreeStoredSchema) => encodeRepoV1(data),
@@ -108,7 +108,7 @@ export const schemaCodecBuilder = VersionDispatchingCodecBuilder.build("Schema",
 		},
 	},
 	{
-		minVersionForCollab: FluidClientVersion.v2_43,
+		minDocumentRuntimeVersion: FluidClientVersion.v2_43,
 		formatVersion: SchemaFormatVersion.v2,
 		codec: {
 			encode: (data: TreeStoredSchema) => encodeRepoV2(data),

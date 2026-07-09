@@ -149,9 +149,14 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		enrichmentConfig?: EnrichmentConfig<TChange>,
 		public readonly getEditor: () => TEditor = () => this.getLocalBranch().editor,
 	) {
+		const minDocumentRuntimeVersion =
+			options.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			options.minVersionForCollab ??
+			fail("minDocumentRuntimeVersion must be provided.");
 		super(
 			summarizablesTreeKey,
-			minVersionToSharedTreeSummaryFormatVersion(options.minVersionForCollab),
+			minVersionToSharedTreeSummaryFormatVersion(minDocumentRuntimeVersion),
 			supportedSharedTreeSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -195,7 +200,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.editManager,
 				editManagerCodec,
 				this.idCompressor,
-				options.minVersionForCollab,
+				minDocumentRuntimeVersion,
 				this.schemaAndPolicy,
 				options.healUnresolvableIdentifiersOnDecode === true
 					? { sharedObjectId: sharedObject.id }

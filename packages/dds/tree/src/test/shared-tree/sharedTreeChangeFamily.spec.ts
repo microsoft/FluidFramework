@@ -51,7 +51,7 @@ import {
 const dataChanges: ModularChangeset[] = [];
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
-	minVersionForCollab: currentVersion,
+	minDocumentRuntimeVersion: currentVersion,
 };
 const fieldBatchCodec: FieldBatchCodec = {
 	encode: () => assert.fail("Unexpected encode"),

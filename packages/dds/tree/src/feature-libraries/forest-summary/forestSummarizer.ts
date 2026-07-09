@@ -87,9 +87,17 @@ export class ForestSummarizer
 		initialSequenceNumber: number,
 		shouldEncodeIncrementally: IncrementalEncodingPolicy = defaultIncrementalEncodingPolicy,
 	) {
+		const minDocumentRuntimeVersion =
+			options.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			options.minVersionForCollab;
+		assert(
+			minDocumentRuntimeVersion !== undefined,
+			"minDocumentRuntimeVersion must be provided",
+		);
 		super(
 			forestSummaryKey,
-			minVersionToForestSummaryFormatVersion(options.minVersionForCollab),
+			minVersionToForestSummaryFormatVersion(minDocumentRuntimeVersion),
 			supportedForestSummaryFormatVersions,
 			true /* supportPreVersioningFormat */,
 		);
@@ -97,7 +105,7 @@ export class ForestSummarizer
 		this.codec = forestCodecBuilder.build(options);
 
 		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
-			options.minVersionForCollab,
+			minDocumentRuntimeVersion,
 		);
 		this.forestRootSummaryContentKey = getForestRootSummaryContentKey(
 			summaryFormatWriteVersion,

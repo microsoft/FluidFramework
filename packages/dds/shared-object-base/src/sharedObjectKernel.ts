@@ -136,14 +136,19 @@ class SharedObjectFromKernel<
 
 		// This cast is needed since IFluidDataStoreRuntimeInternalConfig does not extend IFluidDataStoreRuntime directly. This pattern
 		// allows us to avoid breaking changes to IFluidDataStoreRuntime by hiding internal members in a separate interface, but comes
-		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
+		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minDocumentRuntimeVersion` and the
 		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
 		// would emit an error.
-		const minVersionForCollab: MinDocumentRuntimeVersion | undefined = (
-			runtime as IFluidDataStoreRuntimeInternalConfig
-		).minVersionForCollab;
+		const runtimeConfig = runtime as IFluidDataStoreRuntimeInternalConfig;
+		const minDocumentRuntimeVersion: MinDocumentRuntimeVersion | undefined =
+			runtimeConfig.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			runtimeConfig.minVersionForCollab;
 
-		assert(minVersionForCollab !== undefined, 0xcee /* minVersionForCollab must be defined */);
+		assert(
+			minDocumentRuntimeVersion !== undefined,
+			"minDocumentRuntimeVersion must be defined",
+		);
 
 		this.#kernelArgs = {
 			sharedObject: this,
@@ -155,7 +160,7 @@ class SharedObjectFromKernel<
 			idCompressor: runtime.idCompressor,
 			lastSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			initialSequenceNumber: this.deltaManager.initialSequenceNumber,
-			minVersionForCollab,
+			minDocumentRuntimeVersion,
 		};
 	}
 
@@ -310,7 +315,7 @@ export interface KernelArgs {
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details.
 	 */
-	readonly minVersionForCollab: MinDocumentRuntimeVersion;
+	readonly minDocumentRuntimeVersion: MinDocumentRuntimeVersion;
 }
 
 /**

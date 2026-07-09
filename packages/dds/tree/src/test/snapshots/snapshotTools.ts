@@ -196,7 +196,7 @@ export function snapshotCodecFormats<TBuildOptions extends Record<string, unknow
 		.applyOptions({ ...options, jsonValidator: ajvValidator })
 		.map((version) => ({
 			version: version.formatVersion,
-			minVersionForCollab: version.minVersionForCollab,
+			minDocumentRuntimeVersion: version.minDocumentRuntimeVersion,
 			schema: version.codec.schema,
 		}));
 	takeJsonSnapshot(versions, `_${codec.name}_codec`);

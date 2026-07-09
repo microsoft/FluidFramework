@@ -149,7 +149,14 @@ export interface CodecWriteOptionsBeta {
 	 * Note that versions older than this should not result in data corruption if they access the data:
 	 * the data's format should be versioned and if they can't handle the format they should error.
 	 */
-	readonly minVersionForCollab: MinDocumentRuntimeVersion;
+	readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+
+	/**
+	 * The minimum version of the Fluid Framework client output must be encoded to be compatible with.
+	 *
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link CodecWriteOptionsBeta.minDocumentRuntimeVersion} instead.
+	 */
+	readonly minVersionForCollab?: MinDocumentRuntimeVersion;
 }
 
 /**
@@ -162,12 +169,12 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 	/**
 	 * Overrides the version of the codec to use for encoding.
 	 * @remarks
-	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * Without an override, the selected version will be based on {@link CodecWriteOptionsBeta.minDocumentRuntimeVersion}.
 	 */
 	readonly writeVersionOverrides?: ReadonlyMap<CodecName, FormatVersion>;
 
 	/**
-	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.minVersionForCollab}.
+	 * If true, suppress errors when `writeVersionOverrides` selects a version which may not be compatible with the {@link CodecWriteOptionsBeta.minDocumentRuntimeVersion}.
 	 */
 	readonly allowPossiblyIncompatibleWriteVersionOverrides?: boolean;
 }
@@ -480,7 +487,7 @@ export function withSchemaValidation<
  * Each entry should document:
  * - The user-facing impact of opting into it (e.g. encoding efficiency improvements).
  * - Any new data formats introduced in that version.
- * - Whether those features/formats are enabled by default or require {@link MinDocumentRuntimeVersion | minVersionForCollab} to be set accordingly.
+ * - Whether those features/formats are enabled by default or require `minDocumentRuntimeVersion` to be set accordingly.
  * @alpha
  */
 export const FluidClientVersion = {
@@ -493,10 +500,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.43 and newer.
 	 * @remarks
 	 * New formats introduced in 2.43:
-	 * - SchemaFormatVersion.v2 - written when minVersionForCollab \>= 2.43
-	 * - MessageFormatVersion.v4 - written when minVersionForCollab \>= 2.43
-	 * - EditManagerFormatVersion.v4 - written when minVersionForCollab \>= 2.43
-	 * - sequence-field/formatV3 - written when minVersionForCollab \>= 2.43
+	 * - SchemaFormatVersion.v2 - written when minDocumentRuntimeVersion \>= 2.43
+	 * - MessageFormatVersion.v4 - written when minDocumentRuntimeVersion \>= 2.43
+	 * - EditManagerFormatVersion.v4 - written when minDocumentRuntimeVersion \>= 2.43
+	 * - sequence-field/formatV3 - written when minDocumentRuntimeVersion \>= 2.43
 	 */
 	v2_43: "2.43.0",
 
@@ -504,7 +511,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.52 and newer.
 	 * @remarks
 	 * New formats introduced in 2.52:
-	 * - DetachedFieldIndexFormatVersion.v2 - written when minVersionForCollab \>= 2.52
+	 * - DetachedFieldIndexFormatVersion.v2 - written when minDocumentRuntimeVersion \>= 2.52
 	 */
 	v2_52: "2.52.0",
 
@@ -512,7 +519,7 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.73 and newer.
 	 * @remarks
 	 * New formats introduced in 2.73:
-	 * - FieldBatchFormatVersion.v2 - written when minVersionForCollab \>= 2.73
+	 * - FieldBatchFormatVersion.v2 - written when minDocumentRuntimeVersion \>= 2.73
 	 */
 	v2_73: "2.73.0",
 
@@ -525,8 +532,8 @@ export const FluidClientVersion = {
 	 * - SchemaSummaryFormatVersion.v2 - written by default
 	 * - EditManagerSummaryFormatVersion.v2 - written by default
 	 * - ForestSummaryFormatVersion.v2 - written by default
-	 * - ForestFormatVersion.v2 - written when minVersionForCollab \>= 2.74
-	 * - ForestSummaryFormatVersion.v3 - written when minVersionForCollab \>= 2.74
+	 * - ForestFormatVersion.v2 - written when minDocumentRuntimeVersion \>= 2.74
+	 * - ForestSummaryFormatVersion.v3 - written when minDocumentRuntimeVersion \>= 2.74
 	 */
 	v2_74: "2.74.0",
 
@@ -534,10 +541,10 @@ export const FluidClientVersion = {
 	 * Fluid Framework Client 2.80 and newer.
 	 * @remarks
 	 * New formats introduced in 2.80:
-	 * - MessageFormatVersion.v6 - written when minVersionForCollab \>= 2.80
-	 * - EditManagerFormatVersion.v6 - written when minVersionForCollab \>= 2.80
-	 * - SharedTreeChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
-	 * - ModularChangeFormatVersion.v5 - written when minVersionForCollab \>= 2.80
+	 * - MessageFormatVersion.v6 - written when minDocumentRuntimeVersion \>= 2.80
+	 * - EditManagerFormatVersion.v6 - written when minDocumentRuntimeVersion \>= 2.80
+	 * - SharedTreeChangeFormatVersion.v5 - written when minDocumentRuntimeVersion \>= 2.80
+	 * - ModularChangeFormatVersion.v5 - written when minDocumentRuntimeVersion \>= 2.80
 	 */
 	v2_80: "2.80.0",
 } as const satisfies Record<string, MinDocumentRuntimeVersion>;

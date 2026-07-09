@@ -239,7 +239,7 @@ function makeDetachedFieldIndex(): DetachedFieldIndex {
 describe("DetachedFieldIndex Codecs", () => {
 	const options: CodecWriteOptions = {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 	};
 
 	it("encodes with a version stamp.", () => {

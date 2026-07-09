@@ -385,11 +385,17 @@ export class FluidDataStoreRuntime
 	private readonly submitMessagesWithoutEncodingHandles: boolean;
 
 	/**
-	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 * See IFluidDataStoreRuntimeInternalConfig.minDocumentRuntimeVersion
 	 *
 	 * Note: this class doesn't declare that it implements IFluidDataStoreRuntimeInternalConfig,
 	 * and we keep this property as private, but consumers may optimistically cast
 	 * to the internal interface to access this property.
+	 */
+	public readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+	/**
+	 * See IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 *
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link FluidDataStoreRuntime.minDocumentRuntimeVersion} instead.
 	 */
 	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
 
@@ -565,7 +571,12 @@ export class FluidDataStoreRuntime
 		this.localChangesTelemetryCount =
 			this.mc.config.getNumber("Fluid.Telemetry.LocalChangesTelemetryCount") ?? 10;
 
-		this.minVersionForCollab = this.dataStoreContext.minVersionForCollab;
+		const minDocumentRuntimeVersion =
+			this.dataStoreContext.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			this.dataStoreContext.minVersionForCollab;
+		this.minDocumentRuntimeVersion = minDocumentRuntimeVersion;
+		this.minVersionForCollab = minDocumentRuntimeVersion;
 	}
 
 	/**

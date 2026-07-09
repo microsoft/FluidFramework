@@ -7,7 +7,7 @@
 // @public
 export class AzureClient {
     constructor(properties: AzureClientProps);
-    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minVersionForCollab: MinDocumentRuntimeVersion): Promise<{
+    createContainer<const TContainerSchema extends ContainerSchema>(containerSchema: TContainerSchema, minDocumentRuntimeVersion: MinDocumentRuntimeVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
@@ -16,7 +16,7 @@ export class AzureClient {
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
-    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minVersionForCollab: MinDocumentRuntimeVersion): Promise<{
+    getContainer<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, minDocumentRuntimeVersion: MinDocumentRuntimeVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
         services: AzureContainerServices;
     }>;
@@ -26,7 +26,7 @@ export class AzureClient {
         services: AzureContainerServices;
     }>;
     getContainerVersions(id: string, options?: AzureGetVersionsOptions): Promise<AzureContainerVersion[]>;
-    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, minVersionForCollab: MinDocumentRuntimeVersion): Promise<{
+    viewContainerVersion<TContainerSchema extends ContainerSchema>(id: string, containerSchema: TContainerSchema, version: AzureContainerVersion, minDocumentRuntimeVersion: MinDocumentRuntimeVersion): Promise<{
         container: IFluidContainer<TContainerSchema>;
     }>;
     // @deprecated

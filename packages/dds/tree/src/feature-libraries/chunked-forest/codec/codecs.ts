@@ -309,7 +309,7 @@ function makeFieldBatchCodecForVersion(
  */
 export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("FieldBatch", [
 	{
-		minVersionForCollab: lowestMinVersionForCollab,
+		minDocumentRuntimeVersion: lowestMinVersionForCollab,
 		formatVersion: FieldBatchFormatVersion.v1,
 		codec: makeFieldBatchCodecForVersion(
 			FieldBatchFormatVersion.v1,
@@ -319,7 +319,7 @@ export const fieldBatchCodecBuilder = VersionDispatchingCodecBuilder.build("Fiel
 		),
 	},
 	{
-		minVersionForCollab: FluidClientVersion.v2_73,
+		minDocumentRuntimeVersion: FluidClientVersion.v2_73,
 		formatVersion: FieldBatchFormatVersion.v2,
 		codec: makeFieldBatchCodecForVersion(
 			FieldBatchFormatVersion.v2,

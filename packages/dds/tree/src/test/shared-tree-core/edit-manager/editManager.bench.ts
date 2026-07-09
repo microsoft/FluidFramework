@@ -70,7 +70,7 @@ describe("EditManager - Bench", () => {
 
 	const defaultFamily = new DefaultChangeFamily(failCodecFamily, {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 	});
 	const sequencePrepend: Editor = (builder) => {
 		builder

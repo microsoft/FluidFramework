@@ -180,7 +180,7 @@ describe("staged allowed type upgrade", () => {
 				idCompressor,
 
 				// TODO: this should use the framework level options, not this packages temporary placeholder
-				minVersionForCollab: FluidClientVersion.v2_0,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 			}),
 
 			// TODO: we need a way to get the stored schema from independent views. Allow constructing a ViewAbleTree instead of a view directly (maybe an independentTree API?)?

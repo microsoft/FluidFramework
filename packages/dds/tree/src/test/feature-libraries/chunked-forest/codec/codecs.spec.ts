@@ -38,7 +38,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("uses v1 format for FluidClientVersion.v2_0", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_0,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -57,7 +57,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("uses v2 format for FluidClientVersion.v2_74", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -76,11 +76,11 @@ describe("fieldBatchCodecBuilder", () => {
 		it("can decode both formats when encoding either", () => {
 			const codec1 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_0,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 			});
 			const codec2 = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const { encode, decode } = makeTestFieldBatchContexts({
@@ -101,7 +101,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("succeeds for minVersionForCollab FluidClientVersion.v2_74", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -115,7 +115,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("fails for unsupported minVersionForCollab", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_0,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -134,7 +134,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("v1 codec encodes and decodes correctly", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_0,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
@@ -151,7 +151,7 @@ describe("fieldBatchCodecBuilder", () => {
 		it("v2 codec encodes and decodes correctly", () => {
 			const codec = fieldBatchCodecBuilder.build({
 				jsonValidator: ajvValidator,
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);

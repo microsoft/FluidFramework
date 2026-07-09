@@ -150,6 +150,10 @@ export interface IFluidParentContextPrivate
 	extends IFluidParentContext,
 		ContainerExtensionProvider {
 	readonly isReadOnly: () => boolean;
+	readonly minDocumentRuntimeVersion: MinDocumentRuntimeVersion;
+	/**
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link IFluidParentContextPrivate.minDocumentRuntimeVersion} instead.
+	 */
 	readonly minVersionForCollab: MinDocumentRuntimeVersion;
 }
 
@@ -264,7 +268,9 @@ export function formParentContext<
 		setChannelDirty: (address: string) => {
 			return context.setChannelDirty(address);
 		},
-		minVersionForCollab: context.minVersionForCollab,
+		minDocumentRuntimeVersion: context.minDocumentRuntimeVersion,
+		// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias for IFluidParentContext.
+		minVersionForCollab: context.minDocumentRuntimeVersion,
 		getExtension: context.getExtension.bind(context),
 	};
 }

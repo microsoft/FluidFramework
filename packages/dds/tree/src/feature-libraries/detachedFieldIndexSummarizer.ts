@@ -68,11 +68,11 @@ export class DetachedFieldIndexSummarizer
 {
 	public constructor(
 		private readonly detachedFieldIndex: DetachedFieldIndex,
-		minVersionForCollab: MinDocumentRuntimeVersion,
+		minDocumentRuntimeVersion: MinDocumentRuntimeVersion,
 	) {
 		super(
 			"DetachedFieldIndex",
-			minVersionToDetachedFieldIndexSummaryFormatVersion(minVersionForCollab),
+			minVersionToDetachedFieldIndexSummaryFormatVersion(minDocumentRuntimeVersion),
 			supportedVersions,
 			true,
 		);

@@ -45,7 +45,7 @@ describe("isAuditableFromOutcome", () => {
 	describe("using explicit SharedTreeChange constructs", () => {
 		const codecOptions = {
 			jsonValidator: ajvValidator,
-			minVersionForCollab: currentVersion,
+			minDocumentRuntimeVersion: currentVersion,
 		} as const satisfies CodecWriteOptions;
 		const modularFamily = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 		const dataChanges: ModularChangeset[] = [];

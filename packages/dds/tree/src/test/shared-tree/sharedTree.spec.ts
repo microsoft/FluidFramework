@@ -1733,7 +1733,7 @@ describe("SharedTree", () => {
 				1,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_74,
+					minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -1764,7 +1764,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
+					minDocumentRuntimeVersion: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -1818,7 +1818,7 @@ describe("SharedTree", () => {
 				2,
 				configuredSharedTree({
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: FluidClientVersion.v2_80,
+					minDocumentRuntimeVersion: FluidClientVersion.v2_80,
 				}).getFactory(),
 			);
 			const config = new TreeViewConfiguration({
@@ -2583,7 +2583,7 @@ describe("SharedTree", () => {
 
 			// Enable schema format v2
 			const tree = configuredSharedTree({
-				minVersionForCollab: FluidClientVersion.v2_43,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_43,
 			}).create(runtime);
 			const schemaFactory = new SchemaFactoryAlpha("com.example");
 
@@ -2693,7 +2693,7 @@ describe("SharedTree", () => {
 	it("summarize with pre-attach removed nodes", () => {
 		const runtime = new MockFluidDataStoreRuntime({
 			idCompressor: createIdCompressor(),
-			minVersionForCollab: FluidClientVersion.v2_52,
+			minDocumentRuntimeVersion: FluidClientVersion.v2_52,
 		});
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,

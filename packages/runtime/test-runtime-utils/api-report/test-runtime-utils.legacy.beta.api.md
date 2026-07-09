@@ -348,7 +348,9 @@ export class MockFluidDataStoreContext implements IFluidDataStoreContext {
     isLocalDataStore: boolean;
     // (undocumented)
     makeLocallyVisible(): void;
-    minVersionForCollab: MinDocumentRuntimeVersion;
+    minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+    get minVersionForCollab(): MinDocumentRuntimeVersion;
+    set minVersionForCollab(value: MinDocumentRuntimeVersion);
     // (undocumented)
     off(event: string | symbol, listener: (...args: any[]) => void): this;
     // (undocumented)
@@ -385,6 +387,7 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
         idCompressor?: IIdCompressor;
         attachState?: AttachState;
         registry?: readonly IChannelFactory[];
+        minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
         minVersionForCollab?: MinDocumentRuntimeVersion;
         inStagingMode?: boolean;
         isDirty?: boolean;
@@ -473,6 +476,8 @@ export class MockFluidDataStoreRuntime extends EventEmitter implements IFluidDat
     // (undocumented)
     makeVisibleAndAttachGraph(): void;
     // (undocumented)
+    readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+    // @deprecated (undocumented)
     readonly minVersionForCollab: MinDocumentRuntimeVersion;
     // (undocumented)
     notifyReadOnlyState(readonly: boolean): void;

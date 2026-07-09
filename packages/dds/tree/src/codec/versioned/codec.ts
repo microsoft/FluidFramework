@@ -69,7 +69,7 @@ function makeVersionedCodec<
 			if (!supportedVersions.has(versioned.version)) {
 				throw new UsageError(
 					`Unsupported version ${versioned.version} encountered while decoding data. Supported versions for this data are: ${[...supportedVersions].join(", ")}.
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified a "minDocumentRuntimeVersion" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 				);
 			}
 			const decoded = inner.decode(data, context);
@@ -127,7 +127,7 @@ export function makeDiscontinuedCodecAndSchema<
 	discontinuedSince: SemanticVersion,
 ): CodecVersion<TDecoded, unknown, TFormatVersion, ICodecOptions, unknown> {
 	return {
-		minVersionForCollab: undefined,
+		minDocumentRuntimeVersion: undefined,
 		formatVersion: discontinuedVersion,
 		codec: {
 			schema: JsonCompatibleReadOnlySchema,
@@ -175,11 +175,11 @@ export interface CodecVersionBase<
 	/**
 	 * When `undefined` the codec will never be selected as a write version except via override.
 	 * @remarks
-	 * This format will be used for decode if data in it needs to be decoded, regardless of `minVersionForCollab`.
+	 * This format will be used for decode if data in it needs to be decoded, regardless of `minDocumentRuntimeVersion`.
 	 * `undefined` should be used for unstable codec versions (with string FormatVersions),
 	 * as well as previously stabilized formats that are discontinued (meaning we always prefer to use some other format for encoding).
 	 */
-	readonly minVersionForCollab: MinDocumentRuntimeVersion | undefined;
+	readonly minDocumentRuntimeVersion: MinDocumentRuntimeVersion | undefined;
 	readonly formatVersion: TFormatVersion;
 	readonly codec: T;
 }
@@ -281,7 +281,7 @@ function normalizeCodecVersion<
 	};
 
 	return {
-		minVersionForCollab: codecVersion.minVersionForCollab,
+		minDocumentRuntimeVersion: codecVersion.minDocumentRuntimeVersion,
 		formatVersion: codecVersion.formatVersion,
 		codec,
 	};
@@ -382,20 +382,20 @@ export class VersionDispatchingCodecBuilder<
 			);
 			debugAssert(
 				() =>
-					codec.minVersionForCollab === undefined ||
+					codec.minDocumentRuntimeVersion === undefined ||
 					typeof codec.formatVersion !== "string" ||
-					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minVersionForCollab in ${name}`,
+					`unstable format ${JSON.stringify(codec.formatVersion)} (string formats) must not have a minDocumentRuntimeVersion in ${name}`,
 			);
 			formats.add(codec.formatVersion);
 			const normalizedCodec = normalizeCodecVersion(codec);
 			normalizedRegistry.push(normalizedCodec);
-			if (codec.minVersionForCollab !== undefined) {
+			if (codec.minDocumentRuntimeVersion !== undefined) {
 				debugAssert(
 					() =>
-						!versions.has(codec.minVersionForCollab) ||
-						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.minVersionForCollab)}`,
+						!versions.has(codec.minDocumentRuntimeVersion) ||
+						`Codec ${name} has multiple entries for version ${JSON.stringify(codec.minDocumentRuntimeVersion)}`,
 				);
-				versions.add(codec.minVersionForCollab);
+				versions.add(codec.minDocumentRuntimeVersion);
 			}
 		}
 
@@ -418,7 +418,7 @@ export class VersionDispatchingCodecBuilder<
 		options: TBuildOptions,
 	): EvaluatedCodecVersion<TDecoded, TEncodeContext, TFormatVersion, TDecodeContext>[] {
 		return this.registry.map((codec) => ({
-			minVersionForCollab: codec.minVersionForCollab,
+			minDocumentRuntimeVersion: codec.minDocumentRuntimeVersion,
 			formatVersion: codec.formatVersion,
 			codec: codec.codec(options),
 		}));
@@ -471,7 +471,7 @@ export class VersionDispatchingCodecBuilder<
 					if (codec === undefined) {
 						throw new UsageError(
 							`Unsupported version ${versioned.version} encountered while decoding ${this.name} data. Supported versions for this data are: ${versionList(applied)}.
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified a "minDocumentRuntimeVersion" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 						);
 					}
 					return codec.codec.decode(data, context);
@@ -519,8 +519,8 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 	 * @example
 	 * ```typescript
 	 * const builder = VersionDispatchingCodecBuilder.build('myCodec', [
-	 *   { minVersionForCollab: lowestMinVersionForCollab, formatVersion: 1, codec: { encode, decode, schema } },
-	 *   { minVersionForCollab: '2.100.0', formatVersion: 2, codec: { encode, decode, schema } },
+	 *   { minDocumentRuntimeVersion: lowestMinVersionForCollab, formatVersion: 1, codec: { encode, decode, schema } },
+	 *   { minDocumentRuntimeVersion: '2.100.0', formatVersion: 2, codec: { encode, decode, schema } },
 	 * ]);
 	 * ```
 	 */
@@ -573,13 +573,14 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 /**
  * Selects which format should be used when writing data.
  * @remarks
- * This either uses the override specified in the options, or selects the newest format compatible with the provided minVersionForCollab.
+ * This either uses the override specified in the options, or selects the newest format compatible with the provided minDocumentRuntimeVersion.
  */
 function getWriteVersion<T extends CodecVersionBase>(
 	name: CodecName,
 	options: CodecWriteOptions,
 	versions: readonly T[],
 ): T {
+	const minDocumentRuntimeVersion = getMinDocumentRuntimeVersionFromCodecWriteOptions(options);
 	if (options.writeVersionOverrides?.has(name) === true) {
 		const selectedFormatVersion = options.writeVersionOverrides.get(name);
 		const selected = versions.find((codec) => codec.formatVersion === selectedFormatVersion);
@@ -588,14 +589,14 @@ function getWriteVersion<T extends CodecVersionBase>(
 				`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)}. Supported versions are: ${versionList(versions)}.`,
 			);
 		} else if (options.allowPossiblyIncompatibleWriteVersionOverrides !== true) {
-			const selectedMinVersionForCollab = selected.minVersionForCollab;
-			if (selectedMinVersionForCollab === undefined) {
+			const selectedMinDocumentRuntimeVersion = selected.minDocumentRuntimeVersion;
+			if (selectedMinDocumentRuntimeVersion === undefined) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it has minDocumentRuntimeVersion undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
-			} else if (gt(selectedMinVersionForCollab, options.minVersionForCollab)) {
+			} else if (gt(selectedMinDocumentRuntimeVersion, minDocumentRuntimeVersion)) {
 				throw new UsageError(
-					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinVersionForCollab} and the requested oldest compatible client was ${options.minVersionForCollab}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "${name}" does not support requested format version ${JSON.stringify(selectedFormatVersion)} because it is only compatible back to client version ${selectedMinDocumentRuntimeVersion} and the requested oldest compatible client was ${minDocumentRuntimeVersion}. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				);
 			}
 		}
@@ -603,7 +604,26 @@ function getWriteVersion<T extends CodecVersionBase>(
 		return selected;
 	}
 
-	return getWriteVersionNoOverrides(versions, options.minVersionForCollab);
+	return getWriteVersionNoOverrides(versions, minDocumentRuntimeVersion);
+}
+
+function getMinDocumentRuntimeVersionFromCodecWriteOptions(
+	options: CodecWriteOptions,
+): MinDocumentRuntimeVersion {
+	const { minDocumentRuntimeVersion } = options;
+	// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias normalization.
+	const { minVersionForCollab } = options;
+	if (minDocumentRuntimeVersion !== undefined && minVersionForCollab !== undefined) {
+		throw new UsageError(
+			"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
+		);
+	}
+	if (minDocumentRuntimeVersion === undefined && minVersionForCollab === undefined) {
+		throw new UsageError("minDocumentRuntimeVersion must be provided.");
+	}
+	const version = minDocumentRuntimeVersion ?? minVersionForCollab;
+	assert(version !== undefined, "minDocumentRuntimeVersion must be provided.");
+	return version;
 }
 
 /**
@@ -611,17 +631,17 @@ function getWriteVersion<T extends CodecVersionBase>(
  */
 function getWriteVersionNoOverrides<T extends CodecVersionBase>(
 	versions: readonly T[],
-	minVersionForCollab: MinDocumentRuntimeVersion,
+	minDocumentRuntimeVersion: MinDocumentRuntimeVersion,
 ): T {
 	const stableVersions: [MinimumMinorSemanticVersion | MinDocumentRuntimeVersion, T][] = [];
 	for (const version of versions) {
-		if (version.minVersionForCollab !== undefined) {
-			stableVersions.push([version.minVersionForCollab, version]);
+		if (version.minDocumentRuntimeVersion !== undefined) {
+			stableVersions.push([version.minDocumentRuntimeVersion, version]);
 		}
 	}
 
 	const result: T = getConfigForMinVersionForCollabIterable(
-		minVersionForCollab,
+		minDocumentRuntimeVersion,
 		stableVersions,
 	);
 	return result;

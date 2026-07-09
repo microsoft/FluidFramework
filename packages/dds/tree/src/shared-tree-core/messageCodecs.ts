@@ -79,7 +79,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v1, "2.73.0"),
 		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v2, "2.73.0"),
 		{
-			minVersionForCollab: lowestMinVersionForCollab,
+			minDocumentRuntimeVersion: lowestMinVersionForCollab,
 			formatVersion: MessageFormatVersion.v3,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeV1ToV4CodecWithVersion(
@@ -91,7 +91,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 				),
 		},
 		{
-			minVersionForCollab: FluidClientVersion.v2_43,
+			minDocumentRuntimeVersion: FluidClientVersion.v2_43,
 			formatVersion: MessageFormatVersion.v4,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeV1ToV4CodecWithVersion(
@@ -104,7 +104,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 		},
 		makeDiscontinuedCodecAndSchema(MessageFormatVersion.v5, "2.74.0"),
 		{
-			minVersionForCollab: FluidClientVersion.v2_80,
+			minDocumentRuntimeVersion: FluidClientVersion.v2_80,
 			formatVersion: MessageFormatVersion.v6,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeV1ToV4CodecWithVersion(
@@ -116,7 +116,7 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 				),
 		},
 		{
-			minVersionForCollab: undefined,
+			minDocumentRuntimeVersion: undefined,
 			formatVersion: MessageFormatVersion.vSharedBranches,
 			codec: (options: MessageCodecBuilderOptions<TChangeset>) =>
 				makeSharedBranchesCodecWithVersion(

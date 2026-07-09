@@ -232,7 +232,7 @@ import {
 export const DefaultTestSharedTreeKind = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	// Default to v2_80 to support noChange constraints in table operations
-	minVersionForCollab: FluidClientVersion.v2_80,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_80,
 }) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 /**
@@ -686,7 +686,7 @@ export function validateTree(tree: ITreeCheckout, expected: JsonableTree[]): voi
 // case with schema format v2.
 const schemaCodec = schemaCodecBuilder.build({
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
+	minDocumentRuntimeVersion: currentVersion,
 });
 
 export function checkRemovedRootsAreSynchronized(trees: readonly ITreeCheckout[]): void {

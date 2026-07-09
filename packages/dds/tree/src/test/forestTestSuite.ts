@@ -432,7 +432,10 @@ export function testForest(config: ForestTestConfiguration): void {
 			idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
 			testRevisionTagCodec,
 			testIdCompressor,
-			{ jsonValidator: FormatValidatorBasic, minVersionForCollab: FluidClientVersion.v2_0 },
+			{
+				jsonValidator: FormatValidatorBasic,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_0,
+			},
 		);
 		const delta: DeltaFieldMap = new Map<FieldKey, DeltaFieldChanges>([
 			[rootFieldKey, { marks: [mark] }],

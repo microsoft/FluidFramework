@@ -118,7 +118,7 @@ export class DetachedFieldIndex implements ReadOnlyDetachedFieldIndex {
 	) {
 		this.options = options ?? {
 			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: FluidClientVersion.v2_0,
+			minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 		};
 		this.codec = detachedFieldIndexCodecBuilder.build({
 			...this.options,

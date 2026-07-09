@@ -42,7 +42,7 @@ import { testIdCompressor } from "../utils.js";
 import { editManagerFactory } from "./edit-manager/editManagerTestUtils.js";
 
 function createEditManagerSummarizer(options?: {
-	minVersionForCollab?: MinDocumentRuntimeVersion;
+	minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
 }) {
 	const family = testChangeFamilyFactory();
 	const editManager = editManagerFactory(family);
@@ -52,10 +52,11 @@ function createEditManagerSummarizer(options?: {
 	const changeFormatVersion = DependentFormatVersion.fromPairs(
 		Array.from(editManagerFormatVersions, (e) => [e, 1]),
 	);
-	const minVersionForCollab = options?.minVersionForCollab ?? FluidClientVersion.v2_74;
+	const minDocumentRuntimeVersion =
+		options?.minDocumentRuntimeVersion ?? FluidClientVersion.v2_74;
 	const codec = makeEditManagerCodecBuilder<TestChange>().build({
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab,
+		minDocumentRuntimeVersion,
 		changeCodecs: family.codecs,
 		dependentChangeFormatVersion: changeFormatVersion,
 		revisionTagCodec,
@@ -64,7 +65,7 @@ function createEditManagerSummarizer(options?: {
 		editManager,
 		codec,
 		testIdCompressor,
-		minVersionForCollab,
+		minDocumentRuntimeVersion,
 	);
 	return { summarizer, editManager };
 }
@@ -95,7 +96,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("loads with metadata blob with version 2", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({
@@ -151,7 +152,7 @@ describe("EditManagerSummarizer", () => {
 
 		it("fail to load with metadata blob with version > latest", async () => {
 			const { summarizer } = createEditManagerSummarizer({
-				minVersionForCollab: FluidClientVersion.v2_74,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 			});
 
 			const summary = summarizer.summarize({

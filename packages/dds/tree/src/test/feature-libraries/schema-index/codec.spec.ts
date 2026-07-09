@@ -34,7 +34,7 @@ import { type EncodingTestData, makeEncodingTestSuite } from "../../utils.js";
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: currentVersion,
+	minDocumentRuntimeVersion: currentVersion,
 };
 
 const schemaCodecs = makeCodecFamily(

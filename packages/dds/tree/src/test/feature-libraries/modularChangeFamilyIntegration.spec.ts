@@ -72,7 +72,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map([
 
 const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 };
 const family = new ModularChangeFamily(fieldKinds, failCodecFamily, codecOptions);
 

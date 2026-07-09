@@ -204,12 +204,12 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
-		const options: Required<SharedTreeOptionsInternal> = {
+		const options: SharedTreeOptionsInternalResolved = {
 			...defaultSharedTreeOptions,
 			...optionsParam,
 		};
-		if (options.minVersionForCollab < FluidClientVersion.v2_0) {
-			throw new UsageError("SharedTree requires minVersionForCollab of at least 2.0.0");
+		if (options.minDocumentRuntimeVersion < FluidClientVersion.v2_0) {
+			throw new UsageError("SharedTree requires minDocumentRuntimeVersion of at least 2.0.0");
 		}
 		const schema = new TreeStoredSchemaRepository();
 		const forest = buildConfiguredForest(
@@ -233,7 +233,7 @@ export class SharedTreeKernel
 				getCurrentSeq: lastSequenceNumber,
 			},
 			schemaCodec,
-			options.minVersionForCollab,
+			options.minDocumentRuntimeVersion,
 		);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
@@ -267,7 +267,7 @@ export class SharedTreeKernel
 		);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
 			removedRoots,
-			options.minVersionForCollab,
+			options.minDocumentRuntimeVersion,
 		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
@@ -647,6 +647,11 @@ export interface SharedTreeOptionsInternal
 	extends SharedTreeOptions,
 		Partial<SharedTreeCoreOptionsInternal> {}
 
+type SharedTreeOptionsInternalResolved = Required<
+	Omit<SharedTreeOptionsInternal, "minVersionForCollab">
+> &
+	Pick<SharedTreeOptionsInternal, "minVersionForCollab">;
+
 /**
  * Configuration options for SharedTree's internal tree storage.
  * @beta @input
@@ -763,9 +768,9 @@ export function buildConfiguredForest(
 	);
 }
 
-export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
+export const defaultSharedTreeOptions: SharedTreeOptionsInternalResolved = {
 	jsonValidator: FormatValidatorNoOp,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,

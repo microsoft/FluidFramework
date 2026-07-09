@@ -125,6 +125,15 @@ export class ModularChangeFamily
 		this.fieldKinds = fieldKinds;
 	}
 
+	private get minDocumentRuntimeVersion(): string {
+		return (
+			this.codecOptions.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			this.codecOptions.minVersionForCollab ??
+			fail("minDocumentRuntimeVersion must be provided.")
+		);
+	}
+
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
 		return this;
 	}
@@ -2664,6 +2673,15 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 		this.codecOptions = codecOptions;
 	}
 
+	private get minDocumentRuntimeVersion(): string {
+		return (
+			this.codecOptions.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias fallback.
+			this.codecOptions.minVersionForCollab ??
+			fail("minDocumentRuntimeVersion must be provided.")
+		);
+	}
+
 	public override enterTransaction(): void {
 		this.transactionDepth += 1;
 		if (this.transactionDepth === 1) {
@@ -2834,7 +2852,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraint(revision: RevisionTag): void {
-		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+		if (lt(this.minDocumentRuntimeVersion, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);
@@ -2849,7 +2867,7 @@ export class ModularEditBuilder extends EditBuilder<ModularChangeset> {
 	}
 
 	public addNoChangeConstraintOnRevert(revision: RevisionTag): void {
-		if (lt(this.codecOptions.minVersionForCollab, FluidClientVersion.v2_80)) {
+		if (lt(this.minDocumentRuntimeVersion, FluidClientVersion.v2_80)) {
 			throw new UsageError(
 				`No change constraints require min client version of at least ${FluidClientVersion.v2_80}`,
 			);

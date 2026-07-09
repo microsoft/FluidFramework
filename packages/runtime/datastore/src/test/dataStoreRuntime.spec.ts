@@ -618,13 +618,13 @@ describe("LegacyTypeAwareRegistry", () => {
 	});
 });
 
-describe("FluidDataStoreRuntime.minVersionForCollab", () => {
+describe("FluidDataStoreRuntime.minDocumentRuntimeVersion", () => {
 	function createRuntime(
 		id: string,
-		minVersionForCollab: MinDocumentRuntimeVersion,
+		minDocumentRuntimeVersion: MinDocumentRuntimeVersion,
 	): FluidDataStoreRuntime_ForTesting {
 		const context = new MockFluidDataStoreContext(id);
-		context.minVersionForCollab = minVersionForCollab;
+		context.minDocumentRuntimeVersion = minDocumentRuntimeVersion;
 		return new FluidDataStoreRuntime(
 			context,
 			{} as unknown as ISharedObjectRegistry,
@@ -633,8 +633,8 @@ describe("FluidDataStoreRuntime.minVersionForCollab", () => {
 		) as unknown as FluidDataStoreRuntime_ForTesting;
 	}
 
-	it("minVersionForCollab is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
+	it("minDocumentRuntimeVersion is read from the FluidDataStoreContext and stored on FluidDataStoreRuntime", () => {
 		const runtime = createRuntime("minVersionTest", "1.2.3");
-		assert.deepStrictEqual(runtime.minVersionForCollab, "1.2.3");
+		assert.deepStrictEqual(runtime.minDocumentRuntimeVersion, "1.2.3");
 	});
 });

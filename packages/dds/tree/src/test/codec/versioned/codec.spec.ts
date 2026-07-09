@@ -53,17 +53,17 @@ describe("versioned Codecs", () => {
 
 		const builder = VersionDispatchingCodecBuilder.build("Test", [
 			{
-				minVersionForCollab: lowestMinVersionForCollab,
+				minDocumentRuntimeVersion: lowestMinVersionForCollab,
 				formatVersion: 1,
 				codec: codecV1,
 			},
 			{
-				minVersionForCollab: FluidClientVersion.v2_43,
+				minDocumentRuntimeVersion: FluidClientVersion.v2_43,
 				formatVersion: 2,
 				codec: () => codecV2,
 			},
 			{
-				minVersionForCollab: undefined,
+				minDocumentRuntimeVersion: undefined,
 				formatVersion: "X",
 				codec: codecVX,
 			},
@@ -71,11 +71,11 @@ describe("versioned Codecs", () => {
 
 		it("round trip", () => {
 			const codec1 = builder.build({
-				minVersionForCollab: "2.0.0",
+				minDocumentRuntimeVersion: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const codec2 = builder.build({
-				minVersionForCollab: "2.55.0",
+				minDocumentRuntimeVersion: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const v1 = codec1.encode(42);
@@ -96,13 +96,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 
 		it("unstable version", () => {
 			const codecX = builder.build({
-				minVersionForCollab: "2.0.0",
+				minDocumentRuntimeVersion: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 				allowPossiblyIncompatibleWriteVersionOverrides: true,
 				writeVersionOverrides: new Map([["Test", "X"]]),
 			});
 			const codec2 = builder.build({
-				minVersionForCollab: "2.55.0",
+				minDocumentRuntimeVersion: "2.55.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 			const vx = codecX.encode(42);
@@ -119,7 +119,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.throws(
 				() =>
 					builder.build({
-						minVersionForCollab: "2.0.0",
+						minDocumentRuntimeVersion: "2.0.0",
 						jsonValidator: FormatValidatorBasic,
 						writeVersionOverrides: new Map([["Test", "X"]]),
 					}),
@@ -131,7 +131,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			assert.throws(
 				() =>
 					builder.build({
-						minVersionForCollab: "2.0.0",
+						minDocumentRuntimeVersion: "2.0.0",
 						jsonValidator: FormatValidatorBasic,
 						allowPossiblyIncompatibleWriteVersionOverrides: true,
 						writeVersionOverrides: new Map([["Test", "1"]]),
@@ -160,13 +160,13 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 			};
 			const contextualBuilder = VersionDispatchingCodecBuilder.build("Contextual", [
 				{
-					minVersionForCollab: lowestMinVersionForCollab,
+					minDocumentRuntimeVersion: lowestMinVersionForCollab,
 					formatVersion: 1,
 					codec: contextualCodec,
 				},
 			]);
 			const codec = contextualBuilder.build({
-				minVersionForCollab: "2.0.0",
+				minDocumentRuntimeVersion: "2.0.0",
 				jsonValidator: FormatValidatorBasic,
 			});
 
@@ -178,7 +178,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 		it("good builds", () => {
 			VersionDispatchingCodecBuilder.build("Test", [
 				{
-					minVersionForCollab: lowestMinVersionForCollab,
+					minDocumentRuntimeVersion: lowestMinVersionForCollab,
 					formatVersion: 1,
 					codec: codecV1,
 				},
@@ -212,7 +212,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								minDocumentRuntimeVersion: lowestMinVersionForCollab,
 								formatVersion: "1",
 								codec: codecV1,
 							},
@@ -226,7 +226,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: undefined,
+								minDocumentRuntimeVersion: undefined,
 								formatVersion: 1,
 								codec: codecV1,
 							},
@@ -240,12 +240,12 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								minDocumentRuntimeVersion: lowestMinVersionForCollab,
 								formatVersion: 1,
 								codec: codecV1,
 							},
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								minDocumentRuntimeVersion: lowestMinVersionForCollab,
 								formatVersion: 2,
 								codec: codecV1,
 							},
@@ -259,12 +259,12 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() =>
 						VersionDispatchingCodecBuilder.build("Test", [
 							{
-								minVersionForCollab: lowestMinVersionForCollab,
+								minDocumentRuntimeVersion: lowestMinVersionForCollab,
 								formatVersion: 1,
 								codec: codecV1,
 							},
 							{
-								minVersionForCollab: undefined,
+								minDocumentRuntimeVersion: undefined,
 								formatVersion: 1,
 								codec: codecV1,
 							},

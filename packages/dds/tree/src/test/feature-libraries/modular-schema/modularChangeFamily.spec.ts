@@ -187,7 +187,7 @@ const fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind> = new Map(
 
 const codecOptions: CodecWriteOptions = {
 	jsonValidator: ajvValidator,
-	minVersionForCollab: currentVersion,
+	minDocumentRuntimeVersion: currentVersion,
 };
 
 const codec = makeModularChangeCodecFamily(

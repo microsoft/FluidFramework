@@ -30,7 +30,7 @@ describe("uncompressedEncode", () => {
 				});
 				const codec = fieldBatchCodecBuilder.build({
 					jsonValidator: ajvValidator,
-					minVersionForCollab: currentVersion,
+					minDocumentRuntimeVersion: currentVersion,
 				});
 				const result = codec.encode([input], encode);
 				const decoded = codec.decode(result, decode);

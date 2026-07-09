@@ -199,7 +199,9 @@ export interface CodecWriteOptions extends ICodecOptions, CodecWriteOptionsBeta 
 
 // @beta @input
 export interface CodecWriteOptionsBeta {
-    readonly minVersionForCollab: MinDocumentRuntimeVersion;
+    readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+    // @deprecated
+    readonly minVersionForCollab?: MinDocumentRuntimeVersion;
 }
 
 // @public
@@ -333,7 +335,7 @@ export namespace ExtensibleUnionNode {
 type ExtractItemType<Item extends LazyItem> = Item extends () => infer Result ? Result : Item;
 
 // @alpha
-export function extractPersistedSchema(schema: ImplicitFieldSchema, minVersionForCollab: MinDocumentRuntimeVersion, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
+export function extractPersistedSchema(schema: ImplicitFieldSchema, minDocumentRuntimeVersion: MinDocumentRuntimeVersion, includeStaged: (upgrade: SchemaUpgrade) => boolean): JsonCompatible;
 
 // @alpha @system
 export type FactoryContent = IFluidHandle | string | number | boolean | null | Iterable<readonly [string, InsertableContent]> | readonly InsertableContent[] | FactoryContentObject;
@@ -1699,7 +1701,11 @@ export interface TreeAlpha {
     create<const TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(schema: UnsafeUnknownSchema extends TSchema ? ImplicitFieldSchema : TSchema & ImplicitFieldSchema, data: InsertableField<TSchema>): Unhydrated<TSchema extends ImplicitFieldSchema ? TreeFieldFromImplicitField<TSchema> : TreeNode | TreeLeafValue | undefined>;
     exportCompressed(tree: TreeNode | TreeLeafValue, options: {
         idCompressor?: IIdCompressor;
-    } & Pick<CodecWriteOptions, "minVersionForCollab">): JsonCompatible<IFluidHandle>;
+    } & ({
+        minDocumentRuntimeVersion: MinDocumentRuntimeVersion;
+    } | {
+        minVersionForCollab: MinDocumentRuntimeVersion;
+    })): JsonCompatible<IFluidHandle>;
     exportConcise(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): ConciseTree;
     exportConcise(node: TreeNode | TreeLeafValue | undefined, options?: TreeEncodingOptions): ConciseTree | undefined;
     exportVerbose(node: TreeNode | TreeLeafValue, options?: TreeEncodingOptions): VerboseTree;

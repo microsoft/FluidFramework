@@ -83,14 +83,14 @@ export class EditManagerSummarizer<TChangeset>
 			EditManagerEncodingContext
 		>,
 		private readonly idCompressor: IIdCompressor,
-		minVersionForCollab: MinDocumentRuntimeVersion,
+		minDocumentRuntimeVersion: MinDocumentRuntimeVersion,
 		private readonly schemaAndPolicy?: SchemaAndPolicy,
 		/** See {@link IdentifierHealingConfig}. */
 		private readonly healing?: IdentifierHealingConfig,
 	) {
 		super(
 			EditManagerSummarizer.key,
-			minVersionToEditManagerSummaryFormatVersion(minVersionForCollab),
+			minVersionToEditManagerSummaryFormatVersion(minDocumentRuntimeVersion),
 			supportedVersions,
 			true /* supportPreVersioningFormat */,
 		);

@@ -23,7 +23,7 @@ describe("snapshot tests", () => {
 				useSnapshotDirectory(`summary/${treeEncodeKey}/${versionKey}`);
 				const options: SharedTreeOptions = {
 					treeEncodeType,
-					minVersionForCollab:
+					minDocumentRuntimeVersion:
 						FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
 				};
 				const testTrees = generateTestTrees(options);

@@ -228,5 +228,11 @@ export interface IFluidDataStoreRuntimeInternalConfig {
 	 * {@link @fluidframework/datastore-definitions#IChannelFactory}).
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minDocumentRuntimeVersion} for more details.
 	 */
+	readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+	/**
+	 * Minimum version of the Fluid Framework runtime that is required to collaborate on new documents.
+	 *
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link IFluidDataStoreRuntimeInternalConfig.minDocumentRuntimeVersion} instead.
+	 */
 	readonly minVersionForCollab?: MinDocumentRuntimeVersion;
 }

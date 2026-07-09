@@ -172,7 +172,7 @@ describe("message codec", () => {
 			dependentChangeFormatVersion: DependentFormatVersion.fromUnique(1),
 			revisionTagCodec: testRevisionTagCodec,
 			jsonValidator: FormatValidatorBasic,
-			minVersionForCollab: currentVersion,
+			minDocumentRuntimeVersion: currentVersion,
 		});
 
 		const sessionId: SessionId = "sessionId" as SessionId;

@@ -1439,6 +1439,15 @@ export class ContainerRuntime
 		return this.documentsSchemaController.sessionSchema.runtime;
 	}
 
+	/**
+	 * Minimum version of the FF runtime that is required to collaborate on new documents.
+	 *
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link ContainerRuntime.minDocumentRuntimeVersion} instead.
+	 */
+	public get minVersionForCollab(): MinDocumentRuntimeVersion {
+		return this.minDocumentRuntimeVersion;
+	}
+
 	private _idCompressor: (IIdCompressor & IIdCompressorCore) | undefined;
 
 	// We accumulate Id compressor Ops while Id compressor is not loaded yet (only for "delayed" mode)
@@ -1681,7 +1690,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		public readonly minVersionForCollab: MinDocumentRuntimeVersion,
+		public readonly minDocumentRuntimeVersion: MinDocumentRuntimeVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,
@@ -2273,7 +2282,7 @@ export class ContainerRuntime
 			numUnsummarizedOps:
 				this.deltaManager.lastKnownSeqNumber -
 				(this.messageAtLastSummary?.sequenceNumber ?? 0),
-			minVersionForCollab: this.minVersionForCollab,
+			minVersionForCollab: this.minDocumentRuntimeVersion,
 			// logging hardware telemetry
 			deviceSpec: { ...getDeviceSpec() },
 		});

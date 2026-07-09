@@ -30,7 +30,7 @@ import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../uti
 
 const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 });
 
 type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;

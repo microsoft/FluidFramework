@@ -876,6 +876,10 @@ export class MockFluidDataStoreRuntime
 		idCompressor?: IIdCompressor;
 		attachState?: AttachState;
 		registry?: readonly IChannelFactory[];
+		minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+		/**
+		 * @deprecated 2.112.0. Removed in 3.0.0. Use `minDocumentRuntimeVersion` instead.
+		 */
 		minVersionForCollab?: MinDocumentRuntimeVersion;
 		inStagingMode?: boolean;
 		isDirty?: boolean;
@@ -902,7 +906,13 @@ export class MockFluidDataStoreRuntime
 			this.registry = new Map(registry.map((factory) => [factory.type, factory]));
 		}
 
-		this.minVersionForCollab = overrides?.minVersionForCollab ?? defaultMinVersionForCollab;
+		const minDocumentRuntimeVersion =
+			overrides?.minDocumentRuntimeVersion ??
+			// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias for tests.
+			overrides?.minVersionForCollab ??
+			defaultMinVersionForCollab;
+		this.minDocumentRuntimeVersion = minDocumentRuntimeVersion;
+		this.minVersionForCollab = minDocumentRuntimeVersion;
 		this.inStagingMode = overrides?.inStagingMode ?? false;
 		this.isDirty = overrides?.isDirty ?? false;
 	}
@@ -913,7 +923,12 @@ export class MockFluidDataStoreRuntime
 	public readonly entryPoint: IFluidHandleInternal<FluidObject>;
 
 	/**
+	 * @see IFluidDataStoreRuntimeInternalConfig.minDocumentRuntimeVersion
+	 */
+	public readonly minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
+	/**
 	 * @see IFluidDataStoreRuntimeInternalConfig.minVersionForCollab
+	 * @deprecated 2.112.0. Removed in 3.0.0. Use {@link MockFluidDataStoreRuntime.minDocumentRuntimeVersion} instead.
 	 */
 	public readonly minVersionForCollab: MinDocumentRuntimeVersion;
 

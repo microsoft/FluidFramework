@@ -94,7 +94,7 @@ import {
 
 const options: CodecWriteOptions = {
 	jsonValidator: FormatValidatorBasic,
-	minVersionForCollab: FluidClientVersion.v2_0,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 };
 
 const fieldBatchCodec = fieldBatchCodecBuilder.build(options);

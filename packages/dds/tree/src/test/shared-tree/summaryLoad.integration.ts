@@ -70,7 +70,7 @@ async function generateSummaryContent(
 	const options: SharedTreeOptions = {
 		jsonValidator: FormatValidatorBasic,
 		treeEncodeType,
-		minVersionForCollab:
+		minDocumentRuntimeVersion:
 			versionKey === cleanedPackageVersion
 				? cleanedPackageVersion
 				: FluidClientVersion[versionKey as keyof typeof FluidClientVersion],
@@ -166,7 +166,7 @@ describe("Summary load regression tests", () => {
 
 				const options: SharedTreeOptions = {
 					jsonValidator: FormatValidatorBasic,
-					minVersionForCollab: cleanedPackageVersion,
+					minDocumentRuntimeVersion: cleanedPackageVersion,
 				};
 				const dataStoreRuntime = new MockFluidDataStoreRuntime();
 				const factory = configuredSharedTree(options).getFactory();

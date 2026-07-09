@@ -12,6 +12,7 @@ import {
 } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionSpaceCompressedId } from "@fluidframework/id-compressor";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import type { MinDocumentRuntimeVersion } from "@fluidframework/runtime-definitions/internal";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -91,6 +92,26 @@ import { brand, extractFromOpaque, type JsonCompatible } from "../util/index.js"
 import { independentInitializedView, type ViewContent } from "./independentView.js";
 import { SchematizingSimpleTreeView, ViewSlot } from "./schematizingTreeView.js";
 import { UnhydratedTreeContext } from "./unhydratedTreeContext.js";
+
+type TreeAlphaCompressedExportOptions = { idCompressor?: IIdCompressor } & (
+	| { minDocumentRuntimeVersion: MinDocumentRuntimeVersion }
+	| {
+			/**
+			 * @deprecated 2.112.0. Removed in 3.0.0. Use `minDocumentRuntimeVersion` instead.
+			 */
+			minVersionForCollab: MinDocumentRuntimeVersion;
+	  }
+);
+
+function getMinDocumentRuntimeVersionFromTreeAlphaCompressedExportOptions(
+	options: TreeAlphaCompressedExportOptions,
+): MinDocumentRuntimeVersion {
+	if ("minDocumentRuntimeVersion" in options) {
+		return options.minDocumentRuntimeVersion;
+	}
+	// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias normalization.
+	return options.minVersionForCollab;
+}
 
 const identifier: TreeIdentifierUtils = (node: TreeNode): string | undefined => {
 	return getIdentifierFromNode(node, "uncompressed");
@@ -374,7 +395,15 @@ export interface TreeAlpha {
 	 */
 	exportCompressed(
 		tree: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & (
+			| { minDocumentRuntimeVersion: MinDocumentRuntimeVersion }
+			| {
+					/**
+					 * @deprecated 2.112.0. Removed in 3.0.0. Use `minDocumentRuntimeVersion` instead.
+					 */
+					minVersionForCollab: MinDocumentRuntimeVersion;
+			  }
+		),
 	): JsonCompatible<IFluidHandle>;
 
 	/**
@@ -931,12 +960,21 @@ export const TreeAlpha: TreeAlpha = {
 
 	exportCompressed(
 		node: TreeNode | TreeLeafValue,
-		options: { idCompressor?: IIdCompressor } & Pick<CodecWriteOptions, "minVersionForCollab">,
+		options: { idCompressor?: IIdCompressor } & (
+			| { minDocumentRuntimeVersion: MinDocumentRuntimeVersion }
+			| {
+					/**
+					 * @deprecated 2.112.0. Removed in 3.0.0. Use `minDocumentRuntimeVersion` instead.
+					 */
+					minVersionForCollab: MinDocumentRuntimeVersion;
+			  }
+		),
 	): JsonCompatible<IFluidHandle> {
 		const schema = tryGetSchema(node) ?? fail(0xacf /* invalid input */);
 		const codec = fieldBatchCodecBuilder.build({
 			jsonValidator: FormatValidatorNoOp,
-			minVersionForCollab: options.minVersionForCollab,
+			minDocumentRuntimeVersion:
+				getMinDocumentRuntimeVersionFromTreeAlphaCompressedExportOptions(options),
 		});
 		const cursor = borrowFieldCursorFromTreeNodeOrValue(node);
 		const batch: FieldBatch = [cursor];

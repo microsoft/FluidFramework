@@ -4096,12 +4096,12 @@ describe("Runtime", () => {
 				]);
 			});
 
-			// These are examples of minVersionForCollab inputs that are not valid.
-			// minVersionForCollab should be at least 1.0.0 and less than or equal to
+			// These are examples of minDocumentRuntimeVersion inputs that are not valid.
+			// minDocumentRuntimeVersion should be at least 1.0.0 and less than or equal to
 			// the current pkgVersion.
 			const invalidVersions = ["0.50.0", "100.0.0"] as const;
 			for (const version of invalidVersions) {
-				it(`throws when minVersionForCollab = ${version}`, async () => {
+				it(`throws when minDocumentRuntimeVersion = ${version}`, async () => {
 					const logger = new MockLogger();
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime2({
@@ -4111,13 +4111,13 @@ describe("Runtime", () => {
 							runtimeOptions: {},
 							provideEntryPoint: mockProvideEntryPoint,
 							// @ts-expect-error - Invalid version strings are not castable to MinDocumentRuntimeVersion
-							minVersionForCollab: version,
+							minDocumentRuntimeVersion: version,
 						});
 					});
 				});
 			}
 
-			it("minVersionForCollab = 1.0.0", async () => {
+			it("legacy minVersionForCollab = 1.0.0", async () => {
 				const minVersionForCollab = "1.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
@@ -4196,8 +4196,8 @@ describe("Runtime", () => {
 				);
 			});
 
-			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {
-				const minVersionForCollab = "2.0.0-defaults";
+			it('minDocumentRuntimeVersion = 2.0.0-defaults ("default")', async () => {
+				const minDocumentRuntimeVersion = "2.0.0-defaults";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4205,7 +4205,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+					minDocumentRuntimeVersion,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -4236,8 +4236,8 @@ describe("Runtime", () => {
 				]);
 			});
 
-			it("minVersionForCollab = 2.0.0 (explicit)", async () => {
-				const minVersionForCollab = "2.0.0";
+			it("minDocumentRuntimeVersion = 2.0.0 (explicit)", async () => {
+				const minDocumentRuntimeVersion = "2.0.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4245,7 +4245,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+					minDocumentRuntimeVersion,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -4271,20 +4271,20 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: minDocumentRuntimeVersion,
 					},
 				]);
 			});
 
-			it("minVersionForCollab = 2.20.0", async () => {
-				const minVersionForCollab = "2.20.0";
+			it("minDocumentRuntimeVersion = 2.20.0", async () => {
+				const minDocumentRuntimeVersion = "2.20.0";
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
 					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+					minDocumentRuntimeVersion,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -4310,7 +4310,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: minDocumentRuntimeVersion,
 					},
 				]);
 			});
@@ -4426,8 +4426,8 @@ describe("Runtime", () => {
 
 			// Note: We may need to update `expectedRuntimeOptions` for this test
 			// when we bump to certain versions.
-			it("minVersionForCollab = pkgVersion", async () => {
-				const minVersionForCollab = pkgVersion;
+			it("minDocumentRuntimeVersion = pkgVersion", async () => {
+				const minDocumentRuntimeVersion = pkgVersion;
 				const logger = new MockLogger();
 				await ContainerRuntime.loadRuntime2({
 					context: getMockContext({ logger }) as IContainerContext,
@@ -4435,7 +4435,7 @@ describe("Runtime", () => {
 					existing: false,
 					runtimeOptions: {},
 					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+					minDocumentRuntimeVersion,
 				});
 
 				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
@@ -4461,7 +4461,7 @@ describe("Runtime", () => {
 						eventName: "ContainerRuntime:ContainerLoadStats",
 						category: "generic",
 						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
+						minVersionForCollab: minDocumentRuntimeVersion,
 					},
 				]);
 			});
@@ -4478,12 +4478,12 @@ describe("Runtime", () => {
 				{ createBlobPayloadPending: true },
 				{ flushMode: FlushMode.TurnBased },
 			]) {
-				it(`throws if minVersionForCollab is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
+				it(`throws if minDocumentRuntimeVersion is incompatible with runtimeOptions: ${JSON.stringify(runtimeOption)}`, async () => {
 					const runtimeOptions = {
 						...runtimeOption,
 					} as unknown as IContainerRuntimeOptionsInternal;
 					const logger = new MockLogger();
-					const minVersionForCollab = "1.0.0";
+					const minDocumentRuntimeVersion = "1.0.0";
 					await assert.rejects(async () => {
 						await ContainerRuntime.loadRuntime2({
 							context: getMockContext({ logger }) as IContainerContext,
@@ -4491,7 +4491,7 @@ describe("Runtime", () => {
 							existing: false,
 							runtimeOptions,
 							provideEntryPoint: mockProvideEntryPoint,
-							minVersionForCollab,
+							minDocumentRuntimeVersion,
 						});
 					});
 				});

@@ -752,7 +752,7 @@ describe("SquashingTransactionStacks", () => {
 	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
 	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 		jsonValidator: FormatValidatorBasic,
-		minVersionForCollab: FluidClientVersion.v2_0,
+		minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 	});
 	const initialRevision = mintRevisionTag();
 

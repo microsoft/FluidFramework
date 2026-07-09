@@ -23,9 +23,9 @@ import type { ITree } from "@fluidframework/tree";
  * while in "2" mode we only support interop between 2.x clients.
  *
  * @deprecated Specify the minimum Fluid Framework version directly via the
- * `minVersionForCollab` parameter, which accepts a
+ * `minDocumentRuntimeVersion` parameter, which accepts a
  * {@link @fluidframework/runtime-definitions#MinDocumentRuntimeVersion} SemVer string. The
- * legacy mode "1" is equivalent to `minVersionForCollab: "1.0.0"`; mode "2" is
+ * legacy mode "1" is equivalent to `minDocumentRuntimeVersion: "1.0.0"`; mode "2" is
  * equivalent to `"2.0.0"`.
  *
  * @public

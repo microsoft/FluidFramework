@@ -37,7 +37,7 @@ import {
 
 interface IFoo {
 	foo: string;
-	minVersionForCollab: MinDocumentRuntimeVersion | undefined;
+	runtimeCompatibilityVersion: MinDocumentRuntimeVersion | undefined;
 }
 class SharedFooFactory implements IChannelFactory<IFoo> {
 	public static readonly Type: string = "SharedFoo";
@@ -60,7 +60,8 @@ class SharedFooFactory implements IChannelFactory<IFoo> {
 			foo: "bar",
 			attributes: this.attributes,
 			id,
-			minVersionForCollab: (runtime as FluidDataStoreRuntime).minVersionForCollab,
+			runtimeCompatibilityVersion: (runtime as FluidDataStoreRuntime)
+				.minDocumentRuntimeVersion,
 			// Note: other IChannel methods aren't relevant
 		} as IFoo & IChannel;
 	}
@@ -107,7 +108,7 @@ describe("createSharedObjectKind's return type", () => {
  * The options used to construct a `FooKernelFactory`.
  */
 interface FooOptionsInternal {
-	readonly minVersionForCollab: MinDocumentRuntimeVersion;
+	readonly runtimeCompatibilityVersion: MinDocumentRuntimeVersion;
 }
 
 /**
@@ -115,21 +116,21 @@ interface FooOptionsInternal {
  */
 interface FooKernelView extends IFoo {
 	readonly kernel: FooKernel;
-	readonly minVersionForCollab: MinDocumentRuntimeVersion | undefined;
+	readonly runtimeCompatibilityVersion: MinDocumentRuntimeVersion | undefined;
 	readonly foo: string;
 }
 
 /**
- * A minimal implementation of a `SharedKernel` that builds a view containing the `minVersionForCollab` it was
+ * A minimal implementation of a `SharedKernel` that builds a view containing the runtime compatibility version it was
  * constructed with. Does not provide any method implementations beyond the constructor.
  */
 class FooKernel implements SharedKernel {
 	public readonly view: FooKernelView;
 
-	constructor(minVersionForCollab: MinDocumentRuntimeVersion | undefined) {
+	constructor(runtimeCompatibilityVersion: MinDocumentRuntimeVersion | undefined) {
 		this.view = {
 			kernel: this,
-			minVersionForCollab,
+			runtimeCompatibilityVersion,
 			foo: "foo",
 		};
 	}
@@ -162,15 +163,15 @@ class FooKernel implements SharedKernel {
 	}
 }
 
-describe("createSharedObjectKind with minVersionForCollab", () => {
+describe("createSharedObjectKind with runtime compatibility version", () => {
 	/**
-	 * A simple KernelFactory that creates a `FooKernel` with the `minVersionForCollab` from its constructor arguments.
+	 * A simple KernelFactory that creates a `FooKernel` with the runtime compatibility version from its constructor arguments.
 	 * @param options - The options for the factory.
 	 * @returns A `SharedKernelFactory` that creates `FooKernelView` instances.
 	 */
 	function fooKernelFactory(options: FooOptionsInternal): SharedKernelFactory<FooKernelView> {
 		function fooFromKernelArgs(args: KernelArgs): FooKernel {
-			return new FooKernel(args.minVersionForCollab);
+			return new FooKernel(args.minDocumentRuntimeVersion);
 		}
 
 		return {
@@ -189,8 +190,8 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		};
 	}
 
-	it("SharedObject can be constructed with a minVersionForCollab from the runtime", () => {
-		const minVersionForCollab = "1.2.3";
+	it("SharedObject can be constructed with a runtime compatibility version from the runtime", () => {
+		const runtimeCompatibilityVersion = "1.2.3";
 		const type = "Foo";
 
 		const attributes: IChannelAttributes = {
@@ -200,7 +201,7 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		};
 
 		const options: FooOptionsInternal = {
-			minVersionForCollab,
+			runtimeCompatibilityVersion,
 		};
 
 		const sharedObjectOptions: SharedObjectOptions<IFoo> = {
@@ -213,10 +214,10 @@ describe("createSharedObjectKind with minVersionForCollab", () => {
 		const SharedFoo = makeSharedObjectKind(sharedObjectOptions);
 		const runtime = new MockFluidDataStoreRuntime({
 			registry: [SharedFoo.getFactory()],
-			minVersionForCollab,
+			minDocumentRuntimeVersion: runtimeCompatibilityVersion,
 		});
 		const foo = SharedFoo.create(runtime, "test-id");
 
-		assert.strictEqual(foo.minVersionForCollab, "1.2.3");
+		assert.strictEqual(foo.runtimeCompatibilityVersion, "1.2.3");
 	});
 });
