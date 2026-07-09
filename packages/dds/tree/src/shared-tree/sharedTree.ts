@@ -204,9 +204,20 @@ export class SharedTreeKernel
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
+		// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias normalization.
+		const { minDocumentRuntimeVersion, minVersionForCollab, ...otherOptions } = optionsParam;
+		if (minDocumentRuntimeVersion !== undefined && minVersionForCollab !== undefined) {
+			throw new UsageError(
+				"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
+			);
+		}
 		const options: SharedTreeOptionsInternalResolved = {
 			...defaultSharedTreeOptions,
-			...optionsParam,
+			...otherOptions,
+			minDocumentRuntimeVersion:
+				minDocumentRuntimeVersion ??
+				minVersionForCollab ??
+				defaultSharedTreeOptions.minDocumentRuntimeVersion,
 		};
 		if (options.minDocumentRuntimeVersion < FluidClientVersion.v2_0) {
 			throw new UsageError("SharedTree requires minDocumentRuntimeVersion of at least 2.0.0");

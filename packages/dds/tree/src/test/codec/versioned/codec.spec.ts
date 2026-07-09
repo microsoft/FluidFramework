@@ -90,7 +90,7 @@ describe("versioned Codecs", () => {
 			assert.throws(
 				() => codec1.decode({ version: 3, value2: 42 }),
 				validateUsageError(`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
+The client which encoded this data likely specified a "minDocumentRuntimeVersion" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`),
 			);
 		});
 
@@ -124,7 +124,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 						writeVersionOverrides: new Map([["Test", "X"]]),
 					}),
 				validateUsageError(
-					`Codec "Test" does not support requested format version "X" because it has minVersionForCollab undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
+					`Codec "Test" does not support requested format version "X" because it has minDocumentRuntimeVersion undefined. Use "allowPossiblyIncompatibleWriteVersionOverrides" to suppress this error if appropriate.`,
 				),
 			);
 
@@ -199,7 +199,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 					() => decoder.decode({ version: 3, value2: 42 }),
 					validateUsageError(
 						`Unsupported version 3 encountered while decoding Test data. Supported versions for this data are: [1,2,"X"].
-The client which encoded this data likely specified an "minVersionForCollab" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
+The client which encoded this data likely specified a "minDocumentRuntimeVersion" value which corresponds to a version newer than the version of this client ("${pkgVersion}").`,
 					),
 				);
 			});
@@ -218,7 +218,7 @@ The client which encoded this data likely specified an "minVersionForCollab" val
 							},
 						]),
 					validateAssertionError(
-						`Debug assert failed: unstable format "1" (string formats) must not have a minVersionForCollab in Test`,
+						`Debug assert failed: unstable format "1" (string formats) must not have a minDocumentRuntimeVersion in Test`,
 					),
 				);
 

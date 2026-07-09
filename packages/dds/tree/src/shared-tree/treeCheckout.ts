@@ -324,7 +324,22 @@ export function createTreeCheckout(
 		jsonValidator: FormatValidatorNoOp,
 		minDocumentRuntimeVersion: FluidClientVersion.v2_0,
 	};
-	const codecOptions: CodecWriteOptions = { ...defaultCodecOptions, ...args?.codecOptions };
+	// eslint-disable-next-line @typescript-eslint/no-deprecated -- Compatibility alias normalization.
+	const { minDocumentRuntimeVersion, minVersionForCollab, ...codecOptionsWithoutVersion } =
+		args?.codecOptions ?? {};
+	if (minDocumentRuntimeVersion !== undefined && minVersionForCollab !== undefined) {
+		throw new UsageError(
+			"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
+		);
+	}
+	const codecOptions: CodecWriteOptions = {
+		...defaultCodecOptions,
+		...codecOptionsWithoutVersion,
+		minDocumentRuntimeVersion:
+			minDocumentRuntimeVersion ??
+			minVersionForCollab ??
+			defaultCodecOptions.minDocumentRuntimeVersion,
+	};
 	const changeFamily =
 		args?.changeFamily ??
 		new SharedTreeChangeFamily(
