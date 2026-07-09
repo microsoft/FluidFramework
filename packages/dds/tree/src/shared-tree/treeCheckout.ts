@@ -884,6 +884,15 @@ export class TreeCheckout implements ITreeCheckout {
 			this.#transaction.branch.apply(tagChange(decodedChange, revision));
 		} else {
 			this.applyInternalChange(decodedChange);
+			this.emitChangedLocked(() => {
+				this.#events.emit("changed", {
+					isLocal: true,
+					kind: CommitKind.Default,
+					labels: new Set<unknown>(),
+					getChange: () => serializedChange,
+					getRevertible: () => undefined,
+				});
+			});
 		}
 	}
 
