@@ -60,7 +60,7 @@ export namespace Component {
 	 * @input
 	 * @alpha
 	 */
-	export type Factory<TComponent, TConfig = ComposedComponents<TComponent>> = (
+	export type Factory<TComponent, TConfig = ComposedDefault<TComponent>> = (
 		lazyConfiguration: () => TConfig,
 	) => TComponent;
 
@@ -275,6 +275,19 @@ export namespace Component {
 	}
 
 	/**
+	 * The default configuration type for a composition.
+	 * Also the type of ComposedComponents when using the default composition.
+	 * @privateRemarks
+	 * Declaring this as its own type makes the recursion possible instead of having to list the config parameter as unknown.
+	 * This makes it easier to understand what is going on when seeing this type in the intellisense.
+	 * @sealed @alpha
+	 */
+	export type ComposedDefault<TComponent> = ComposedComponents<
+		TComponent,
+		ComposedDefault<TComponent>
+	>;
+
+	/**
 	 * The result of composing multiple components.
 	 *
 	 * @remarks
@@ -286,10 +299,7 @@ export namespace Component {
 	 *
 	 * @sealed @alpha
 	 */
-	export interface ComposedComponents<
-		TComponent,
-		TConfig = ComposedComponents<TComponent, unknown>,
-	> {
+	export interface ComposedComponents<TComponent, TConfig = ComposedDefault<TComponent>> {
 		/**
 		 * The components which were composed.
 		 */
