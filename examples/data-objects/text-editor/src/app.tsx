@@ -97,7 +97,7 @@ const SharedTree = configuredSharedTreeAlpha({
 	shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(
 		new TreeViewConfigurationAlpha({ schema: TextEditorRoot }),
 	),
-	minVersionForCollab: FluidClientVersion.v2_74,
+	minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 });
 
 const containerSchema = {

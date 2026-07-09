@@ -79,7 +79,7 @@ const TreeFactory = configuredSharedTreeAlpha({
     forest: ForestTypeOptimized,
     treeEncodeType: TreeCompressionStrategy.CompressedIncremental,
     shouldEncodeIncrementally: incrementalEncodingPolicyForAllowedTypes(config),
-    minVersionForCollab: FluidClientVersion.v2_74,
+    minDocumentRuntimeVersion: FluidClientVersion.v2_74,
 });
 
 const sharedTree = TreeFactory.create(runtime, "tree");
@@ -92,7 +92,7 @@ All four of the following configuration options must be set for incremental summ
 | `forest` | `ForestTypeOptimized` |
 | `treeEncodeType` | `TreeCompressionStrategy.CompressedIncremental` |
 | `shouldEncodeIncrementally` | Result of `incrementalEncodingPolicyForAllowedTypes(config)` |
-| `minVersionForCollab` | `FluidClientVersion.v2_74` or higher |
+| `minDocumentRuntimeVersion` | `FluidClientVersion.v2_74` or higher |
 
 ## How `incrementalEncodingPolicyForAllowedTypes` Works
 

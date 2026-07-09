@@ -9,7 +9,7 @@ Cross-client compatibility ensures users on different Fluid Framework versions c
 This guide covers:
 
 - **Identifying Breaking Changes** - How to determine if a change affects cross-client compatibility
-- **Enforcing the Policy** - How `minVersionForCollab`, default configurations, and unsafe configuration prevention work together
+- **Enforcing the Policy** - How `minDocumentRuntimeVersion`, default configurations, and unsafe configuration prevention work together
 - **Safely Staging Breaking Changes** - Step-by-step process for shipping data-format changes
 - **Cleaning Up Old Feature Gates** - When and how to remove feature gates that have aged out of the compatibility window
 - **Designating a New Compatibility Checkpoint** - Checklist of updates required each time a new checkpoint is designated
@@ -42,15 +42,15 @@ However, there are many other types of changes that could impact cross-client co
 
 ## Cross-Client Compatibility Enforcement
 
-If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `minVersionForCollab` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
+If a change affects the data format (see above), it should be gated by a **container runtime option**. Runtime options are enforced via the `minDocumentRuntimeVersion` property to ensure customers do not accidentally break older clients by enabling cross-client compatibility breaking features prematurely.
 
-`minVersionForCollab` defines the minimum Fluid runtime version required for collaboration on a document. Customers are encouraged to set `minVersionForCollab` to the highest version their users are saturated on. If the customer does not set `minVersionForCollab`, a default value is assigned. `minVersionForCollab` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
+`minDocumentRuntimeVersion` defines the minimum Fluid runtime version required to open or process a document. Customers are encouraged to set `minDocumentRuntimeVersion` to the highest version their users are saturated on. If the customer does not set `minDocumentRuntimeVersion`, a default value is assigned. `minDocumentRuntimeVersion` controls the "default configurations" and "unsafe configuration prevention" mechanisms explained below.
 
 ### Default Configurations
 
-The runtime uses `minVersionForCollab` to automatically set certain container runtime options. This is handled by the `runtimeOptionsAffectingDocSchemaConfigMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
+The runtime uses `minDocumentRuntimeVersion` to automatically set certain container runtime options. This is handled by the `runtimeOptionsAffectingDocSchemaConfigMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** If `minVersionForCollab` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the lowest version we need to support collaboration with understands the associated data format changes. On the other hand, features such as `createBlobPayloadPending` remain disabled, as clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
+**Example:** If `minDocumentRuntimeVersion` is set to `"2.0.0"`, then features such as grouped batching are safely enabled, since the lowest version we need to support collaboration with understands the associated data format changes. On the other hand, features such as `createBlobPayloadPending` remain disabled, as clients need to be running runtime version 2.40.0 or later to understand the associated data format changes.
 
 ```typescript
 // Simplified view of the config map (see containerCompatibility.ts for full details)
@@ -67,13 +67,13 @@ const runtimeOptionsAffectingDocSchemaConfigMap: ConfigMap<RuntimeOptionsAffecti
 };
 ```
 
-> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minVersionForCollab`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minVersionForCollab` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
+> **Note on `"2.0.0-defaults"`:** This is a special version string (considered less than `"2.0.0"` by `semver`) used as the default when a customer does not explicitly set `minDocumentRuntimeVersion`. It exists to distinguish the unspecified case from an explicit `"2.0.0"` setting. Some options (e.g., `explicitSchemaControl`) use a threshold of `"2.0.0"` rather than `"2.0.0-defaults"`, meaning they only activate when the customer _explicitly_ sets `minDocumentRuntimeVersion` to `"2.0.0"` or higher. See `defaultMinVersionForCollab` in [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) for more information.
 
 ### Unsafe Configuration Prevention
 
-If a client tries to enable a runtime option that requires a version higher than the document's `minVersionForCollab`, the runtime will fail to instantiate and throw a `UsageError`. This is handled by the `runtimeOptionsAffectingDocSchemaConfigValidationMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
+If a client tries to enable a runtime option that requires a version higher than the document's `minDocumentRuntimeVersion`, the runtime will fail to instantiate and throw a `UsageError`. This is handled by the `runtimeOptionsAffectingDocSchemaConfigValidationMap` in [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts).
 
-**Example:** A container author sets `minVersionForCollab` to `"1.4.0"` and `enableGroupedBatching` to `true`. The runtime fails immediately stating that `minVersionForCollab` must be updated, since clients running runtime version 1.4.0 cannot understand the data format of grouped batching being enabled.
+**Example:** A container author sets `minDocumentRuntimeVersion` to `"1.4.0"` and `enableGroupedBatching` to `true`. The runtime fails immediately stating that `minDocumentRuntimeVersion` must be updated, since clients running runtime version 1.4.0 cannot understand the data format of grouped batching being enabled.
 
 ```typescript
 // Simplified view of the validation map (see containerCompatibility.ts for full details)
@@ -127,7 +127,7 @@ In [containerCompatibility.ts](./packages/runtime/container-runtime/src/containe
 
 **First map: `runtimeOptionsAffectingDocSchemaConfigMap`** — Handles the [Default Configurations](#default-configurations) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps `MinimumVersionForCollab` values to the appropriate default value for that option.
 
-**Second map: `runtimeOptionsAffectingDocSchemaConfigValidationMap`** — Handles [Unsafe Configuration Prevention](#unsafe-configuration-prevention) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps config values to the minimum `minVersionForCollab` required to use that value.
+**Second map: `runtimeOptionsAffectingDocSchemaConfigValidationMap`** — Handles [Unsafe Configuration Prevention](#unsafe-configuration-prevention) described above. Configure the entry corresponding to your runtime option as per the comments in the code. Each entry maps config values to the minimum `minDocumentRuntimeVersion` required to use that value.
 
 > The exact implementation of these configuration maps may change in the future. Refer to the code comments for the latest guidance as they should be the most up-to-date source of truth.
 
@@ -216,7 +216,7 @@ To tighten runtime enforcement:
    [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts)
    to match the oldest checkpoint still in the supported window.
    `lowestMinVersionForCollab` is the absolute minimum value a customer can
-   pass as `minVersionForCollab` — values below it cause a `UsageError` at
+   pass as `minDocumentRuntimeVersion` — values below it cause a `UsageError` at
    runtime. Include a changeset noting the raised minimum supported version,
    since this is a customer-visible breaking change. If
    `lowestMinVersionForCollab` advances across a major version boundary
@@ -250,7 +250,7 @@ compat cross-client - create with 1.4.0 (CC#1) + load with 2.101.0 (N)
   ✔ Example test
 ```
 
-To ensure your change is tested properly, write tests with multiple clients. If necessary, you can pass `minVersionForCollab` and container runtime options via `ITestContainerConfig` (defined in [testObjectProvider.ts](./packages/test/test-utils/src/testObjectProvider.ts)).
+To ensure your change is tested properly, write tests with multiple clients. If necessary, you can pass `minDocumentRuntimeVersion` and container runtime options via `ITestContainerConfig` (defined in [testObjectProvider.ts](./packages/test/test-utils/src/testObjectProvider.ts)).
 
 The `test-version-utils` package provides infrastructure for testing compatibility across different version combinations in CI/CD.
 
@@ -259,7 +259,7 @@ The `test-version-utils` package provides infrastructure for testing compatibili
 ### Core Implementation
 
 - [containerCompatibility.ts](./packages/runtime/container-runtime/src/containerCompatibility.ts) — `RuntimeOptionsAffectingDocSchema` type, configuration maps (`runtimeOptionsAffectingDocSchemaConfigMap`, `runtimeOptionsAffectingDocSchemaConfigValidationMap`), and validation logic
-- [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) — `minVersionForCollab` parameter and runtime initialization
+- [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts) — `minDocumentRuntimeVersion` parameter and runtime initialization
 - [documentSchema.ts](./packages/runtime/container-runtime/src/summary/documentSchema.ts) — `IDocumentSchemaFeatures` interface, `documentSchemaSupportedConfigs`, and `DocumentsSchemaController`
 - [compatibilityBase.ts](./packages/runtime/runtime-utils/src/compatibilityBase.ts) — `ConfigMap`, `ConfigValidationMap`, and `getConfigsForMinVersionForCollab` utilities
 

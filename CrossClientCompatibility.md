@@ -10,7 +10,7 @@ Cross-client compatibility is Fluid's ability to support collaboration between t
 2. **Multi-application ecosystems**: Different applications with different deployment schedules may host the same Fluid content. In such ecosystems, all applications integrating Fluid-based experiences must coordinate to respect the cross-client compatibility window. This avoids requiring all applications to be on exactly the same version, which would be impractical.
 
 > **Note:** The cross-client compatibility guarantee applies to all Fluid layers (Driver, Loader, Runtime, and
-> Datastore). However, the enforcement mechanisms described in this document — `minVersionForCollab`, feature
+> Datastore). However, the enforcement mechanisms described in this document — `minDocumentRuntimeVersion`, feature
 > gating, and client version checks — are currently implemented only at the **Runtime and Datastore layers**.
 > The Driver layer does not currently have cross-client compatibility concerns because it does not exchange data
 > formats between clients. Enforcement at the Loader layer may be added in the future. See the
@@ -111,7 +111,7 @@ compat internally (see
 #### Configuring Cross-Client Compatibility (Declarative Model)
 
 If you are using a service client (i.e. `AzureClient` or `OdspClient`), cross-client compatibility is
-configured by passing a `minVersionForCollab` SemVer string when creating or loading a container:
+configured by passing a `minDocumentRuntimeVersion` SemVer string when creating or loading a container:
 
 ```typescript
 // Creating a new container
@@ -167,7 +167,7 @@ We recommend following the below pattern to ensure cross-client compatibility. K
    [saturated](#terminology) on. In both the declarative and encapsulated models, set `minDocumentRuntimeVersion`
    to that saturated version (e.g., `"2.10.0"`).
 3. Verify that the configured compatibility checkpoint is within the supported compatibility window of the Fluid Framework version you want to upgrade to. If it is, bump your Fluid Framework dependencies and update your lock file (so a newer version isn't picked up implicitly); no further action is required. If not, wait for further saturation and return to step 1.
-4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients running a version older than the configured `minVersionForCollab` may be blocked from accessing the document.
+4. Monitor telemetry for warnings/errors to ensure safe rollout (see [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) below). At this point any clients running a version older than the configured `minDocumentRuntimeVersion` may be blocked from accessing the document.
 
 #### Errors and Warnings to Monitor
 
@@ -176,11 +176,11 @@ The following are errors and telemetry warnings you may see during and following
 <!-- prettier-ignore -->
 | Type | Signal | What it Means | What to Do |
 | --- | --- | --- | --- |
-| Telemetry Event | `MinVersionForCollabWarning` | Clients are joining with a version below your configured minimum, but are still able to understand the document's data format and therefore continue to collaborate. | If you see this warning message, it's likely a sign you updated `minVersionForCollab` too quickly. In future releases, ensure proper [saturation](#terminology) before updating. If these warning messages are ignored, you may risk seeing the below error in the future. |
-| `DataProcessingError` | `Document can't be opened with current version of the code` | An out-of-window client tried to join and was blocked due to being unable to collaborate with the newer client's document. | If this was unexpected, lower `minVersionForCollab` so newly-created documents will admit older clients. **Note:** documents whose schema has already been elevated by a higher-`minVersionForCollab` writer may continue to block older clients on those specific documents — lowering the configured value does not retroactively undo the elevation in the document's persisted schema. |
+| Telemetry Event | `MinVersionForCollabWarning` | Clients are joining with a version below your configured minimum, but are still able to understand the document's data format and therefore continue to collaborate. | If you see this warning message, it's likely a sign you updated `minDocumentRuntimeVersion` too quickly. In future releases, ensure proper [saturation](#terminology) before updating. If these warning messages are ignored, you may risk seeing the below error in the future. |
+| `DataProcessingError` | `Document can't be opened with current version of the code` | An out-of-window client tried to join and was blocked due to being unable to collaborate with the newer client's document. | If this was unexpected, lower `minDocumentRuntimeVersion` so newly-created documents will admit older clients. **Note:** documents whose schema has already been elevated by a higher-`minDocumentRuntimeVersion` writer may continue to block older clients on those specific documents — lowering the configured value does not retroactively undo the elevation in the document's persisted schema. |
 | `DataCorruptionError` | `Summary metadata mismatch` | An older out-of-window client (before 2.0.0-rc.3.0.0) tried to join and was blocked due to being unable to collaborate with the newer client's document. | Update the affected client to 2.0 or later. This signal only affects very old clients; modern cross-client enforcement surfaces through `MinVersionForCollabWarning` and the `DataProcessingError` row above. |
-| `UsageError` | `Incompatible Runtime Option` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper [saturation](#terminology)). |
-| `UsageError` | `Runtime option <name>:<value> requires runtime version <X>` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minVersionForCollab` (if there is proper [saturation](#terminology)). |
+| `UsageError` | `Incompatible Runtime Option` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minDocumentRuntimeVersion` (if there is proper [saturation](#terminology)). |
+| `UsageError` | `Runtime option <name>:<value> requires runtime version <X>` | You manually enabled a feature that requires a higher minimum than your document allows. | Turn the feature off or raise `minDocumentRuntimeVersion` (if there is proper [saturation](#terminology)). |
 
 ## Developer Guide
 
