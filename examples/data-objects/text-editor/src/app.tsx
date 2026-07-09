@@ -137,8 +137,8 @@ const initialUserCount = 2;
  * Identifies one user in this app.
  *
  * Serves as the React key for the user's panel, the key for its Devtools registration,
- * and the user id reported to the Fluid service's audience. Ids are randomly generated
- * and never reused within a page, so a removed user's id is not given to a later-added
+ * and the user ID reported to the Fluid service's audience. IDs are randomly generated
+ * and never reused within a page, so a removed user's ID is not given to a later-added
  * one.
  */
 type UserId = string;
@@ -538,6 +538,7 @@ export const App: FC<{
 
 	// Devtools defaults to off and is toggled at runtime (see DevtoolsToggle).
 	const [devtoolsEnabled, setDevtoolsEnabled] = useState(false);
+
 	// (Re)initializes Devtools with the current users' containers whenever it's enabled
 	// or the user set changes. Recreating the instance on add/remove keeps registration
 	// fully declarative, and add/remove is rare enough that the re-init cost is fine.
