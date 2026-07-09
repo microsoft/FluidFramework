@@ -3,19 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { performanceNow } from "@fluid-internal/client-utils";
+import { bufferToString, performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
+	type IDocumentAttributes,
+	type IPointInTimeMaterializationTarget,
 	type ISnapshot,
+	type ISnapshotFetchOptionsAlpha,
 	type ISnapshotFetchOptions,
 	type ISummaryContext,
 	type ICreateBlobResponse,
 	type IVersion,
 	type ISnapshotTree,
+	type PointInTimeMaterializationAvailability,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	getKeyForCacheEntry,
@@ -75,9 +79,22 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
+const historicalSnapshotVersionCount = 50;
+
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;
 	cacheSummarizerExpired?: boolean;
+}
+
+interface HistoricalSnapshotCandidate {
+	readonly sequenceNumber: number;
+	readonly snapshotTree: ISnapshotTree;
+}
+
+function getAttributesBlobId(snapshotTree: ISnapshotTree): string | undefined {
+	return (
+		snapshotTree.trees[".protocol"]?.blobs.attributes ?? snapshotTree.blobs[".attributes"]
+	);
 }
 
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
@@ -245,6 +262,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	 * @param snapshotFetchOptions - fetch options for snapshot.
 	 */
 	public async getSnapshot(snapshotFetchOptions?: ISnapshotFetchOptions): Promise<ISnapshot> {
+		const alphaSnapshotFetchOptions = snapshotFetchOptions as
+			| ISnapshotFetchOptionsAlpha
+			| undefined;
+		const loadToSequenceNumber = alphaSnapshotFetchOptions?.loadToSequenceNumber;
+		if (loadToSequenceNumber !== undefined) {
+			return this.fetchHistoricalSnapshot({
+				...alphaSnapshotFetchOptions,
+				loadToSequenceNumber,
+			});
+		}
+
 		// Don't consult cache if request is not for a particular loading group.
 		const { snapshot } = await this.fetchSnapshot({
 			...snapshotFetchOptions,
@@ -258,6 +286,122 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			...snapshot,
 			snapshotTree: this.combineProtocolAndAppSnapshotTree(snapshot.snapshotTree),
 		};
+	}
+
+	private async getSnapshotSequenceNumber(snapshotTree: ISnapshotTree): Promise<number> {
+		const attributesBlobId = getAttributesBlobId(snapshotTree);
+		if (attributesBlobId === undefined) {
+			throw new NonRetryableError(
+				"Historical snapshot candidate does not contain document attributes",
+				OdspErrorTypes.incorrectServerResponse,
+				{ driverVersion },
+			);
+		}
+
+		const attributesBuffer = await this.readBlob(attributesBlobId);
+		const attributes = JSON.parse(
+			bufferToString(attributesBuffer, "utf8"),
+		) as IDocumentAttributes;
+		return attributes.sequenceNumber;
+	}
+
+	private async findHistoricalSnapshotCandidate(
+		targetSequenceNumber: number,
+		batchId: string | undefined,
+		scenarioName: string | undefined,
+	): Promise<HistoricalSnapshotCandidate | undefined> {
+		const versions = await this.getVersions(
+			// eslint-disable-next-line unicorn/no-null
+			null,
+			historicalSnapshotVersionCount,
+			scenarioName,
+			FetchSource.noCache,
+		);
+		const requireReplayPastBatch = batchId !== undefined;
+
+		for (const version of versions) {
+			const snapshotTree = await this.getSnapshotTree(version, scenarioName);
+			if (snapshotTree === null) {
+				continue;
+			}
+
+			const sequenceNumber = await this.getSnapshotSequenceNumber(snapshotTree);
+			const satisfiesTarget = requireReplayPastBatch
+				? sequenceNumber < targetSequenceNumber
+				: sequenceNumber <= targetSequenceNumber;
+			if (satisfiesTarget) {
+				return { sequenceNumber, snapshotTree };
+			}
+		}
+
+		return undefined;
+	}
+
+	public async canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability> {
+		try {
+			const candidate = await this.findHistoricalSnapshotCandidate(
+				target.sequenceNumber,
+				target.batchId,
+				target.scenarioName,
+			);
+			return candidate === undefined
+				? {
+						status: "missingBaseVersion",
+						message: "No recent ODSP snapshot exists at or before the requested point.",
+					}
+				: {
+						status: "materializable",
+						baseSnapshotSequenceNumber: candidate.sequenceNumber,
+					};
+		} catch (error: unknown) {
+			const errorType = (error as Partial<{ errorType: string }>).errorType;
+			if (
+				errorType === OdspErrorTypes.authorizationError ||
+				errorType === OdspErrorTypes.fileNotFoundOrAccessDeniedError
+			) {
+				return {
+					status: "permissionOrAccessDenied",
+					message: error instanceof Error ? error.message : undefined,
+				};
+			}
+
+			return {
+				status: "unknownUnavailable",
+				message: error instanceof Error ? error.message : undefined,
+			};
+		}
+	}
+
+	private async fetchHistoricalSnapshot(
+		snapshotFetchOptions: ISnapshotFetchOptionsAlpha & { loadToSequenceNumber: number },
+	): Promise<ISnapshot> {
+		const targetSequenceNumber = snapshotFetchOptions.loadToSequenceNumber;
+		const candidate = await this.findHistoricalSnapshotCandidate(
+			targetSequenceNumber,
+			snapshotFetchOptions.loadToBatchId,
+			snapshotFetchOptions.scenarioName,
+		);
+
+		if (candidate !== undefined) {
+			const snapshot: ISnapshot = {
+				blobContents: new Map(),
+				latestSequenceNumber: candidate.sequenceNumber,
+				ops: [],
+				sequenceNumber: candidate.sequenceNumber,
+				snapshotFormatV: 1,
+				snapshotTree: candidate.snapshotTree,
+			};
+			this.initializeFromSnapshot(snapshot, false, true);
+			return snapshot;
+		}
+
+		throw new NonRetryableError(
+			"Unable to find an ODSP snapshot at or before the requested historical load target",
+			OdspErrorTypes.genericError,
+			{ driverVersion, targetSequenceNumber },
+		);
 	}
 
 	private async fetchSnapshot(

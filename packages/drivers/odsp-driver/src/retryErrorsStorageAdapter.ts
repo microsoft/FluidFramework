@@ -7,14 +7,17 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
+	IDocumentStorageServiceAlpha,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPointInTimeMaterializationTarget,
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	ICreateBlobResponse,
 	ISnapshotTree,
 	IVersion,
+	PointInTimeMaterializationAvailability,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	LoggingError,
@@ -56,6 +59,20 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 			}
 			throw new UsageError("getSnapshot should exist in storage adapter in ODSP driver");
 		}, "storage_getSnapshot");
+	}
+
+	public async canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability> {
+		return this.runWithRetry(async () => {
+			const storageServiceAlpha = this.internalStorageService as IDocumentStorageServiceAlpha;
+			return (
+				storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
+					status: "unknownUnavailable",
+					message: "Storage driver does not support point-in-time materialization checks.",
+				}
+			);
+		}, "storage_canMaterializePointInTime");
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {

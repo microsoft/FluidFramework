@@ -11,6 +11,7 @@ import { FluidErrorTypes, type ConfigTypes } from "@fluidframework/core-interfac
 import type {
 	IDocumentService,
 	IDocumentServiceFactory,
+	ISequencedDocumentMessage,
 	IResolvedUrl,
 	IUrlResolver,
 } from "@fluidframework/driver-definitions/internal";
@@ -25,6 +26,7 @@ import {
 import { v4 as uuid } from "uuid";
 
 import { Container } from "../container.js";
+import { evaluateLoadPauseTarget, type ILoadPauseTargetState } from "../loadPaused.js";
 import { Loader } from "../loader.js";
 import type { IPendingDetachedContainerState } from "../serializedStateManager.js";
 
@@ -211,6 +213,56 @@ describe("loader unit test", () => {
 		});
 		const container = await loader.createDetachedContainer({ package: "none" });
 		await container.attach({ url: "none" });
+	});
+});
+
+describe("loadContainerPaused target evaluation", () => {
+	function message(sequenceNumber: number, batchId?: string): ISequencedDocumentMessage {
+		return {
+			clientId: "client",
+			clientSequenceNumber: sequenceNumber,
+			contents: undefined,
+			minimumSequenceNumber: 0,
+			referenceSequenceNumber: sequenceNumber - 1,
+			sequenceNumber,
+			timestamp: sequenceNumber,
+			type: "op",
+			metadata: batchId === undefined ? undefined : { batchId },
+		};
+	}
+
+	it("continues replaying before the target sequence number", () => {
+		const state: ILoadPauseTargetState = { matchingBatchIdObserved: false };
+
+		assert.strictEqual(
+			evaluateLoadPauseTarget(message(4), 4, 5, undefined, state),
+			"continue",
+		);
+	});
+
+	it("pauses at the target sequence number when no batch ID is requested", () => {
+		const state: ILoadPauseTargetState = { matchingBatchIdObserved: false };
+
+		assert.strictEqual(evaluateLoadPauseTarget(message(5), 5, 5, undefined, state), "pause");
+	});
+
+	it("pauses at the target sequence number after observing the requested batch ID", () => {
+		const state: ILoadPauseTargetState = { matchingBatchIdObserved: false };
+
+		assert.strictEqual(
+			evaluateLoadPauseTarget(message(4, "batch-1"), 4, 5, "batch-1", state),
+			"continue",
+		);
+		assert.strictEqual(evaluateLoadPauseTarget(message(5), 5, 5, "batch-1", state), "pause");
+	});
+
+	it("reports a mismatch when the target sequence number is reached without the requested batch ID", () => {
+		const state: ILoadPauseTargetState = { matchingBatchIdObserved: false };
+
+		assert.strictEqual(
+			evaluateLoadPauseTarget(message(5, "other-batch"), 5, 5, "batch-1", state),
+			"batchMismatch",
+		);
 	});
 });
 

@@ -11,6 +11,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
+	type ISnapshotFetchOptionsAlpha,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -338,6 +339,79 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
+	});
+
+	it("GetSnapshot() with historical target selects the closest snapshot at or before the target", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
+				loadToSequenceNumber: 25,
+			};
+			const snapshot = await service.getSnapshot(snapshotFetchOptions);
+
+			assert.strictEqual(snapshot.sequenceNumber, 20);
+			assert.strictEqual(snapshot.snapshotTree.id, "version-20");
+		} finally {
+			restore();
+		}
+	});
+
+	it("GetSnapshot() with historical target and batch ID selects a snapshot strictly before the target", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
+				loadToSequenceNumber: 30,
+				loadToBatchId: "client_0_[42]",
+			};
+			const snapshot = await service.getSnapshot(snapshotFetchOptions);
+
+			assert.strictEqual(snapshot.sequenceNumber, 20);
+			assert.strictEqual(snapshot.snapshotTree.id, "version-20");
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() returns materializable when ODSP has a usable base snapshot", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await service.canMaterializePointInTime({ sequenceNumber: 25 });
+
+			assert.deepStrictEqual(availability, {
+				status: "materializable",
+				baseSnapshotSequenceNumber: 20,
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports missing base version when ODSP has no candidate", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await service.canMaterializePointInTime({
+				sequenceNumber: 10,
+				batchId: "client_0_[42]",
+			});
+
+			assert.strictEqual(availability.status, "missingBaseVersion");
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports access failure when ODSP cannot list versions", async () => {
+		const getVersionsStub = stub(service, "getVersions").rejects({
+			errorType: OdspErrorTypes.authorizationError,
+			message: "access denied",
+		});
+		try {
+			const availability = await service.canMaterializePointInTime({ sequenceNumber: 25 });
+
+			assert.strictEqual(availability.status, "permissionOrAccessDenied");
+		} finally {
+			getVersionsStub.restore();
+		}
 	});
 
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
@@ -836,3 +910,56 @@ const blobContents = new Map<string, ArrayBuffer>([
 		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
 	],
 ]);
+
+function createHistoricalSnapshotTree(sequenceNumber: number): ISnapshotTree {
+	return {
+		id: `version-${sequenceNumber}`,
+		blobs: {},
+		trees: {
+			".protocol": {
+				blobs: { attributes: `attributes-${sequenceNumber}` },
+				trees: {},
+			},
+			".app": {
+				blobs: {},
+				trees: {},
+			},
+		},
+	};
+}
+
+function mockHistoricalSnapshots(
+	service: OdspDocumentStorageService,
+	sequenceNumbers: number[],
+): { restore: () => void } {
+	const getVersionsStub = stub(service, "getVersions").resolves(
+		sequenceNumbers.map((sequenceNumber) => ({
+			id: `version-${sequenceNumber}`,
+			treeId: undefined!,
+		})),
+	);
+	const fetchTreeFromSnapshotStub = stub(
+		service as unknown as {
+			fetchTreeFromSnapshot: (id: string) => Promise<ISnapshotTree | undefined>;
+		},
+		"fetchTreeFromSnapshot",
+	).callsFake(async (id: string) => {
+		const sequenceNumber = Number(id.replace("version-", ""));
+		return createHistoricalSnapshotTree(sequenceNumber);
+	});
+	const readBlobStub = stub(service, "readBlob").callsFake(async (blobId: string) => {
+		const sequenceNumber = Number(blobId.replace("attributes-", ""));
+		return stringToBuffer(
+			JSON.stringify({ minimumSequenceNumber: 0, sequenceNumber }),
+			"utf8",
+		);
+	});
+
+	return {
+		restore: () => {
+			getVersionsStub.restore();
+			fetchTreeFromSnapshotStub.restore();
+			readBlobStub.restore();
+		},
+	};
+}

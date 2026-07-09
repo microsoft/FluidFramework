@@ -19,6 +19,7 @@ export {
 	type IContainerLoadDriverProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
+	type ILoadExistingContainerPropsAlpha,
 	type ILoadExistingContainerProps,
 	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,

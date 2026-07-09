@@ -20,6 +20,7 @@ export enum ConnectionState {
 
 // @alpha @sealed @legacy
 export interface ContainerAlpha extends IContainer {
+    canMaterializePointInTime(target: IPointInTimeMaterializationTarget): Promise<PointInTimeMaterializationAvailability>;
     getPendingLocalState(): Promise<string>;
 }
 
@@ -125,6 +126,12 @@ export interface ILoaderServices {
 export interface ILoadExistingContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
+}
+
+// @alpha @legacy
+export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainerProps {
+    readonly loadToBatchId?: string | undefined;
+    readonly loadToSequenceNumber?: number | undefined;
 }
 
 // @alpha @legacy

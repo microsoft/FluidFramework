@@ -8,6 +8,7 @@ import type {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IContainerPolicies,
+	ILoaderHeaderAlpha,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
@@ -62,6 +63,8 @@ import type {
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
 } from "./summarizerResultTypes.js";
+
+const loadToBatchIdHeader = "fluid-batch-id" satisfies keyof ILoaderHeaderAlpha;
 import {
 	getAttachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
@@ -222,6 +225,22 @@ export interface ILoadExistingContainerProps
 }
 
 /**
+ * Alpha props used to load a container to a point in document history.
+ * @legacy @alpha
+ */
+export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainerProps {
+	/**
+	 * Sequence number the loader should materialize before returning the container.
+	 */
+	readonly loadToSequenceNumber?: number | undefined;
+
+	/**
+	 * Batch ID expected at the target sequence number, when batch validation is required.
+	 */
+	readonly loadToBatchId?: string | undefined;
+}
+
+/**
  * Props used to load summarizer container.
  * @legacy @alpha
  */
@@ -300,10 +319,19 @@ export async function loadExistingContainer(
 	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(loadExistingContainerProps);
-	return loader.resolve(
-		loadExistingContainerProps.request,
-		loadExistingContainerProps.pendingLocalState,
-	);
+	const alphaProps = loadExistingContainerProps as ILoadExistingContainerPropsAlpha;
+	const headers = { ...loadExistingContainerProps.request.headers };
+	if (alphaProps.loadToSequenceNumber !== undefined) {
+		headers[LoaderHeader.sequenceNumber] = alphaProps.loadToSequenceNumber;
+	}
+	if (alphaProps.loadToBatchId !== undefined) {
+		headers[loadToBatchIdHeader] = alphaProps.loadToBatchId;
+	}
+	const request: IRequest = {
+		...loadExistingContainerProps.request,
+		headers,
+	};
+	return loader.resolve(request, loadExistingContainerProps.pendingLocalState);
 }
 
 /**

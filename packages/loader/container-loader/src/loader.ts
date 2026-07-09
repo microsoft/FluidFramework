@@ -9,6 +9,7 @@ import {
 	type IFluidModule,
 	type IHostLoader,
 	type ILoader,
+	type ILoaderHeaderAlpha,
 	type ILoaderOptions,
 	type IProvideFluidCodeDetailsComparer,
 	LoaderHeader,
@@ -46,6 +47,8 @@ import {
 	getAttachedContainerStateFromSerializedContainer,
 	tryParseCompatibleResolvedUrl,
 } from "./utils.js";
+
+const loadToBatchIdHeader = "fluid-batch-id" satisfies keyof ILoaderHeaderAlpha;
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -365,6 +368,10 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				loadMode: request.headers?.[LoaderHeader.loadMode],
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
+				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				loadToBatchId: request.headers?.[loadToBatchIdHeader],
 				pendingLocalState,
 			},
 			{

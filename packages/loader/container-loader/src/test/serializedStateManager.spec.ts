@@ -85,6 +85,7 @@ const eventEmitter = new EventEmitter();
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
+	public readonly snapshotFetchOptions: (ISnapshotFetchOptions | undefined)[] = [];
 	private snapshot: ISnapshotTree;
 
 	constructor(pls: SnapshotWithBlobs = pendingLocalState) {
@@ -105,9 +106,14 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 
 	public async getSnapshot(
-		_snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
+		snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
 	): Promise<ISnapshot> {
-		throw new Error("Method not implemented.");
+		this.snapshotFetchOptions.push(snapshotFetchOptions);
+		return {
+			...initialSnapshot,
+			blobContents: new Map(this.blobs),
+			snapshotTree: this.snapshot,
+		};
 	}
 	public async getSnapshotTree(
 		_version?: IVersion | undefined,
@@ -309,6 +315,32 @@ describe("serializedStateManager", () => {
 			const attributes = getAttributesFromPendingState(parsed);
 			assert.strictEqual(attributes.sequenceNumber, 0);
 			assert.strictEqual(attributes.minimumSequenceNumber, 0);
+		});
+
+		it("passes historical load target to getSnapshot options", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => true,
+			);
+
+			await serializedStateManager.fetchSnapshot(
+				"snapshotVersion",
+				undefined,
+				123,
+				"client_0_[42]",
+			);
+
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 1);
+			assert.deepStrictEqual(storageAdapter.snapshotFetchOptions[0], {
+				versionId: "snapshotVersion",
+				loadToSequenceNumber: 123,
+				loadToBatchId: "client_0_[42]",
+			});
 		});
 
 		it("get pending state again before getting latest snapshot", async () => {

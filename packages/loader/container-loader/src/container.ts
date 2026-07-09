@@ -62,8 +62,10 @@ import {
 	type ICommittedProposal,
 	type IDocumentAttributes,
 	type IDocumentMessage,
+	type IPointInTimeMaterializationTarget,
 	type IQuorumProposals,
 	type ISequencedProposal,
+	type PointInTimeMaterializationAvailability,
 	type ISnapshotTree,
 	type ISummaryContent,
 	type IVersion,
@@ -189,6 +191,16 @@ export interface IContainerLoadProps {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	readonly loadMode?: IContainerLoadMode;
+
+	/**
+	 * Sequence number the loader should materialize before returning the container.
+	 */
+	readonly loadToSequenceNumber?: number;
+
+	/**
+	 * Batch ID expected at the target sequence number, when batch validation is required.
+	 */
+	readonly loadToBatchId?: string;
 
 	/**
 	 * The pending state serialized from a previous container instance
@@ -325,7 +337,14 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
+		const {
+			version,
+			pendingLocalState,
+			loadMode,
+			resolvedUrl,
+			loadToSequenceNumber,
+			loadToBatchId,
+		} = loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -349,7 +368,14 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, resolvedUrl, pendingLocalState)
+						.load(
+							version,
+							mode,
+							resolvedUrl,
+							pendingLocalState,
+							loadToSequenceNumber,
+							loadToBatchId,
+						)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -668,6 +694,12 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
+	}
+
+	public async canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability> {
+		return this.storageAdapter.canMaterializePointInTime(target);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -1585,6 +1617,8 @@ export class Container
 		loadMode: IContainerLoadMode,
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined,
+		loadToBatchId: string | undefined,
 	): Promise<{
 		sequenceNumber: number;
 		version: string | undefined;
@@ -1629,7 +1663,12 @@ export class Container
 			snapshot: baseSnapshot,
 			version,
 			attributes,
-		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
+		} = await this.serializedStateManager.fetchSnapshot(
+			specifiedVersion,
+			pendingLocalState,
+			loadToSequenceNumber,
+			loadToBatchId,
+		);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 
@@ -2630,6 +2669,17 @@ export class Container
  * @alpha @legacy @sealed
  */
 export interface ContainerAlpha extends IContainer {
+	/**
+	 * Checks whether a point in document history can currently be materialized.
+	 * @remarks
+	 * This optional probe is intended for hosts that want to explain historical load failures before attempting a load.
+	 * If the underlying driver cannot answer, implementations should return `unknownUnavailable` rather than claiming
+	 * the point is unavailable for a specific reason.
+	 */
+	canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability>;
+
 	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
