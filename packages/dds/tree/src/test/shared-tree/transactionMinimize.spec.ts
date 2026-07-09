@@ -599,6 +599,25 @@ const objectScenarios = {
 			root.removeAt(0);
 		},
 	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a {@link Box} with value "x☠️", then sets its value to "y❤️".
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                 -\> `[]`
+	 * 1. insert Box "x☠️"       -\> `[Box: "x☠️"]`
+	 * 2. set Box value to "y❤️" -\> `[Box: "y❤️"]`
+	 */
+	add_Box_then_replace_value: {
+		schema: BoxArray,
+		initialContent: [],
+		apply: (root) => {
+			const box = new Box({ value: "x☠️" });
+			root.insertAtEnd(box);
+			box.value = "y❤️";
+		},
+	} as const,
 } as const satisfies Record<string, BoxArrayScenario>;
 // #endregion
 
@@ -866,6 +885,14 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
+		it("reflects only the final value of a field of newly inserted object when it is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_Box_then_replace_value,
+			);
+			assert.equal(view.root[0].value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
 		it("reflects edits made before a schema change", () => {
 			const { view, stringifiedChange } = runScenario(
 				schemaUpgradeScenarios.edit_before_schema_change,
@@ -1117,6 +1144,17 @@ describe("transaction minimize post-processor", () => {
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build should be removed.
 			assert.equal(countBuilds(change), 0);
+		});
+
+		it("keeps only the final value's builds when a field of newly inserted object is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_Box_then_replace_value,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Only the final value "y❤️" survives the transaction, so one or two builds should remain.
+			const builds = countBuilds(change);
+			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
