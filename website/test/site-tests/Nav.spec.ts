@@ -21,4 +21,15 @@ test.describe("Nav", () => {
 		const supportLink = page.getByRole("link", { name: /Support/ });
 		await expect(supportLink).toHaveAttribute("href", "/support/");
 	});
+
+	test("Search returns indexed website content", async ({ page }) => {
+		await page.getByRole("button", { name: "Search" }).click();
+
+		const searchInput = page.getByRole("searchbox");
+		await searchInput.fill("Fluid Framework");
+
+		await expect(
+			page.getByRole("link", { name: "Fluid Framework", exact: true }).first(),
+		).toBeVisible();
+	});
 });
