@@ -438,6 +438,7 @@ module.exports = {
 
 				// Avoids MIME-type issues in the browser.
 				"website/static/trusted-types-policy.js",
+				"website/static/pagefind-loader.js",
 				"website/static/dompurify/purify.min.js",
 				"website/static/js/add-code-copy-button.js",
 				"examples/data-objects/monaco/loaders/blobUrl.js",

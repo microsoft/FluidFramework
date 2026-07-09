@@ -90,6 +90,16 @@ module.exports = {
 			],
 		},
 
+		// Rules for standalone JavaScript modules (browser/static assets and infra scripts).
+		// These are native ES modules rather than TypeScript source, so they need the module
+		// source type to be parsed correctly.
+		{
+			files: ["**/*.mjs", "static/**/*.js"],
+			parserOptions: {
+				sourceType: "module",
+			},
+		},
+
 		// Rules for .md/.mdx documents
 		{
 			files: ["**/*.md", "**/*.mdx"],
