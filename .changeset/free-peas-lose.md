@@ -2,7 +2,6 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-
 Independent tree views now accept an optional telemetry logger
 
 The alpha `independentView`, `independentInitializedView`, and `createIndependentTreeAlpha` APIs now accept an optional `logger` on their options.
