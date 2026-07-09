@@ -28,10 +28,10 @@ export function filterEdits(
 ): Changeset {
 	const factory = new MarkListFactory();
 	const queue = new MarkQueueBase(change);
-	for (let mark = queue.peek(); mark !== undefined; ) {
+	for (let mark = queue.peek(); mark !== undefined; mark = queue.peek()) {
 		const filtered = filterMark(mark, filterDetach, filterAttach, preserveOtherEdits);
 		factory.push(filtered);
-		mark = queue.dequeueUpTo(filtered.count);
+		queue.dequeueUpTo(filtered.count);
 	}
 
 	return factory.list;
