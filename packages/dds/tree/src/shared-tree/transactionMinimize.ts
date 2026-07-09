@@ -61,10 +61,9 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
  * the implementation will throw a usage error:
  * "At most one edit group can be minimized..."
  *
- * @deprecated Note: minimization is not yet implemented. For now this is a
- * no-op that leaves the squashed change unchanged, so supplying it currently
- * has no observable effect beyond reserving the behavior. A real
- * implementation will be provided in a future change.
+ * @deprecated Note: minimization is not yet fully implemented. For now this
+ * alters some builds of the squashed change. A complete implementation will
+ * be provided in a future change.
  *
  * @alpha
  */
