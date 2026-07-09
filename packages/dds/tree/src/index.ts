@@ -77,7 +77,6 @@ export {
 	type ObservationResults,
 	type TreeIdentifierUtils,
 	independentView,
-	type IndependentViewLogger,
 	type IndependentViewOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,

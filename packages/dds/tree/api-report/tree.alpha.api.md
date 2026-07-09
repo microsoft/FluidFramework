@@ -243,7 +243,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & {
-    readonly logger?: IndependentViewLogger | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
 } & ((IndependentViewOptions & {
     content?: never;
 }) | (ICodecOptions & {
@@ -541,25 +541,16 @@ export const incrementalSummaryHint: unique symbol;
 
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & {
-    readonly logger?: IndependentViewLogger | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
 }, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
-export interface IndependentViewLogger {
-    minLogLevel?: number | undefined;
-    send(event: {
-        category: string;
-        eventName: string;
-    }, logLevel?: number): void;
-}
-
-// @alpha @input
 export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
     idCompressor?: IIdCompressor | undefined;
-    logger?: IndependentViewLogger | undefined;
+    logger?: ITelemetryBaseLogger | undefined;
 }
 
 // @public @system

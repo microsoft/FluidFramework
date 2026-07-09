@@ -59,36 +59,6 @@ import {
 import { createTreeCheckout } from "./treeCheckout.js";
 
 /**
- * Minimal telemetry logger interface accepted by the independent tree view APIs.
- *
- * @remarks
- * Structurally compatible with `ITelemetryBaseLogger` from `@fluidframework/core-interfaces`,
- * so any standard Fluid telemetry logger can be passed directly.
- *
- * @privateRemarks
- * This interface is declared locally rather than re-exporting `ITelemetryBaseLogger` so these
- * `@alpha` APIs do not pull `ITelemetryBaseLogger` (and its transitive `LogLevel` /
- * `ITelemetryBaseEvent` / `LogLevelConst` dependencies) into the public surface of aggregator
- * packages like `fluid-framework`, which inline every `@fluidframework/*` symbol they transitively
- * reference.
- *
- * @alpha @input
- */
-export interface IndependentViewLogger {
-	/**
-	 * Log a telemetry event.
-	 * @param event - The event to log. Must include a `category` and an `eventName`.
-	 * @param logLevel - Optional numeric log level for the event.
-	 */
-	send(event: { category: string; eventName: string }, logLevel?: number): void;
-
-	/**
-	 * Minimum log level to emit. Events with a lower level than this are dropped.
-	 */
-	minLogLevel?: number | undefined;
-}
-
-/**
  * {@link independentView} options.
  * @alpha @input
  */
@@ -105,7 +75,7 @@ export interface IndependentViewOptions extends ForestOptions, Partial<CodecWrit
 	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
 	 * If not provided, telemetry events are dropped.
 	 */
-	logger?: IndependentViewLogger | undefined;
+	logger?: ITelemetryBaseLogger | undefined;
 }
 
 /**
@@ -119,7 +89,7 @@ export type CreateIndependentTreeAlphaOptions = ForestOptions & {
 	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
 	 * If not provided, telemetry events are dropped.
 	 */
-	readonly logger?: IndependentViewLogger | undefined;
+	readonly logger?: ITelemetryBaseLogger | undefined;
 } & (
 		| (IndependentViewOptions & {
 				/**
@@ -172,7 +142,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
 	options: ForestOptions &
-		ICodecOptions & { readonly logger?: IndependentViewLogger | undefined },
+		ICodecOptions & { readonly logger?: ITelemetryBaseLogger | undefined },
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -254,11 +224,9 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	// The public-facing `IndependentViewLogger` is intentionally a structural subset of
-	// `ITelemetryBaseLogger`; cast at this boundary so we can hand it to the standard telemetry helpers.
 	const logger = extractTelemetryLoggerExt(
 		createChildLogger({
-			logger: options?.logger as ITelemetryBaseLogger | undefined,
+			logger: options?.logger,
 			namespace: "independentView",
 		}),
 	);

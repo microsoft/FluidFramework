@@ -14,8 +14,8 @@ making it possible to diagnose failures in scenarios that use independent tree v
 Events emitted by an independent tree view are tagged with the `independentView` namespace.
 If no logger is provided, behavior is unchanged and telemetry events continue to be dropped.
 
-The `logger` option is typed as the new alpha interface `IndependentViewLogger`, which is structurally compatible with `ITelemetryBaseLogger` from `@fluidframework/core-interfaces`.
-Any standard Fluid telemetry logger can be passed directly.
+The `logger` option is typed as `ITelemetryBaseLogger` from `@fluidframework/core-interfaces`,
+so any standard Fluid telemetry logger can be passed directly.
 
 ```typescript
 // ...

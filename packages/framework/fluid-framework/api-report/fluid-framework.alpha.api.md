@@ -285,7 +285,7 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 
 // @alpha
 export type CreateIndependentTreeAlphaOptions = ForestOptions & {
-    readonly logger?: IndependentViewLogger | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
 } & ((IndependentViewOptions & {
     content?: never;
 }) | (ICodecOptions & {
@@ -897,25 +897,16 @@ export const incrementalSummaryHint: unique symbol;
 
 // @alpha
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & {
-    readonly logger?: IndependentViewLogger | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
 }, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
-export interface IndependentViewLogger {
-    minLogLevel?: number | undefined;
-    send(event: {
-        category: string;
-        eventName: string;
-    }, logLevel?: number): void;
-}
-
-// @alpha @input
 export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
     idCompressor?: IIdCompressor | undefined;
-    logger?: IndependentViewLogger | undefined;
+    logger?: ITelemetryBaseLogger | undefined;
 }
 
 // @public
@@ -1036,6 +1027,20 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
 
 // @public @system
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
+
+// @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    minLogLevel?: LogLevel | undefined;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
 
 // @public
 export interface ITelemetryBaseProperties {
@@ -1218,6 +1223,23 @@ export interface LocalChangeMetadata extends CommitMetadata {
     readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
+}
+
+// @public
+export const LogLevel: LogLevelConst;
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    // @deprecated
+    readonly default: 20;
+    // @deprecated
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
 }
 
 // @public @sealed
