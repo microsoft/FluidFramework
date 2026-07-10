@@ -4069,11 +4069,15 @@ export class ContainerRuntime
 	 * they're moved to the PendingStateManager (where `pendingStateManager.hasStagedChanges()` looks).
 	 * So we also check the Outbox here, otherwise there would be a window between submit and flush where
 	 * staged changes exist but this would incorrectly report false.
+	 *
+	 * @remarks We don't care about the type of ops in the Outbox here (unlike dirty state), just whether
+	 * there's anything queued at all, for consistency with how `pendingStateManager.hasStagedChanges()`
+	 * doesn't discriminate by op type either.
 	 */
 	private computeCurrentHasStagedChanges(): boolean {
 		return (
 			this.pendingStateManager.hasStagedChanges() ||
-			(this.inStagingMode && this.outbox.containsUserChanges())
+			(this.inStagingMode && !this.outbox.isEmpty)
 		);
 	}
 

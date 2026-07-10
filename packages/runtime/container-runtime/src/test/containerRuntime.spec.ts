@@ -80,6 +80,7 @@ import {
 	ContainerRuntime,
 	type IContainerRuntimeOptions,
 	type IPendingRuntimeState,
+	agentSchedulerId,
 	defaultPendingOpsWaitTimeoutMs,
 	getSingleUseLegacyLogCallback,
 	type ContainerRuntimeOptionsInternal,
@@ -4846,6 +4847,46 @@ describe("Runtime", () => {
 					containerRuntime.hasStagedChanges,
 					false,
 					"Should not have staged changes after commitChanges",
+				);
+			});
+
+			it("hasStagedChanges is true for a non-dirtyable op sitting in the Outbox while staging", () => {
+				stubChannelCollection(containerRuntime);
+
+				const controls = containerRuntime.enterStagingMode();
+
+				// Submit an op that is NOT "dirtyable" (agentScheduler ops are excluded from dirty tracking
+				// via isContainerMessageDirtyable). hasStagedChanges doesn't care about op type though -
+				// unlike isDirty, it should become true as soon as anything is queued in the Outbox while staging.
+				submitDataStoreOp(
+					containerRuntime,
+					agentSchedulerId,
+					genTestDataStoreMessage("staged-op"),
+					"LOCAL_OP_METADATA",
+				);
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should have staged changes for a non-dirtyable op still sitting in the Outbox",
+				);
+				assert.equal(
+					containerRuntime.isDirty,
+					false,
+					"Should NOT be dirty for a non-dirtyable op, unlike hasStagedChanges",
+				);
+
+				containerRuntime.flush();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					true,
+					"Should still have staged changes after flushing the non-dirtyable op (now from PendingStateManager)",
+				);
+
+				controls.discardChanges();
+				assert.equal(
+					containerRuntime.hasStagedChanges,
+					false,
+					"Should not have staged changes after discardChanges",
 				);
 			});
 
