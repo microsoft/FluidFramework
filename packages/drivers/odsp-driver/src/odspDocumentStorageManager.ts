@@ -389,7 +389,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 
 			return {
-				status: "unknownUnavailable",
+				status: "notAvailable",
 				message: error instanceof Error ? error.message : undefined,
 			};
 		}

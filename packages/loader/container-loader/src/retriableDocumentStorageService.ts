@@ -91,7 +91,7 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 					const storageServiceAlpha = s as IDocumentStorageServiceAlpha;
 					return (
 						storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
-							status: "unknownUnavailable",
+							status: "notAvailable",
 							message: "Storage driver does not support point-in-time materialization checks.",
 						}
 					);

@@ -60,7 +60,10 @@ export async function loadContainerPaused(
 					? {}
 					: { [LoaderHeader.sequenceNumber]: loadToSequenceNumber }),
 				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
+				[LoaderHeader.loadMode]: {
+					opsBeforeReturn: loadToSequenceNumber === undefined ? undefined : "sequenceNumber",
+					deltaConnection: "none",
+				},
 			},
 		},
 	});
@@ -69,7 +72,7 @@ export async function loadContainerPaused(
 	container.forceReadonly?.(true);
 
 	const dm = container.deltaManager;
-	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
+	const lastProcessedSequenceNumber = dm.lastSequenceNumber;
 
 	const pauseContainer = (): void => {
 		assert(

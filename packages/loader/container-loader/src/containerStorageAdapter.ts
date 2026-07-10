@@ -247,7 +247,7 @@ export class ContainerStorageAdapter
 		const storageServiceAlpha = this._storageService as IDocumentStorageServiceAlpha;
 		return (
 			storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
-				status: "unknownUnavailable",
+				status: "notAvailable",
 				message: "Storage driver does not support point-in-time materialization checks.",
 			}
 		);

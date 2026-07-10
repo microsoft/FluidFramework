@@ -181,8 +181,8 @@ export type PointInTimeMaterializationAvailability =
 			readonly message?: string;
 	  }
 	| {
-			/** Availability could not be determined. */
-			readonly status: "unknownUnavailable";
+			/** Availability could not be determined because the probe is not available. */
+			readonly status: "notAvailable";
 			readonly message?: string;
 	  }
 	| {

@@ -68,7 +68,7 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 			const storageServiceAlpha = this.internalStorageService as IDocumentStorageServiceAlpha;
 			return (
 				storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
-					status: "unknownUnavailable",
+					status: "notAvailable",
 					message: "Storage driver does not support point-in-time materialization checks.",
 				}
 			);

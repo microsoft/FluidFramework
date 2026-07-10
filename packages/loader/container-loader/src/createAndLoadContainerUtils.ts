@@ -315,6 +315,11 @@ export async function loadExistingContainer(
 	const headers = { ...loadExistingContainerProps.request.headers };
 	if (alphaProps.loadToSequenceNumber !== undefined) {
 		headers[LoaderHeader.sequenceNumber] = alphaProps.loadToSequenceNumber;
+		headers[LoaderHeader.loadMode] = {
+			...headers[LoaderHeader.loadMode],
+			opsBeforeReturn: "sequenceNumber",
+			deltaConnection: "none",
+		};
 	}
 	const request: IRequest = {
 		...loadExistingContainerProps.request,

@@ -1657,10 +1657,19 @@ export class Container
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
 			attributes.sequenceNumber;
 		let opsBeforeReturnP: Promise<void> | undefined;
+		const opsBeforeReturn = loadMode.opsBeforeReturn as
+			| IContainerLoadMode["opsBeforeReturn"]
+			| "sequenceNumber";
+		const pauseContainer = (): void => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this._deltaManager.inbound.pause();
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this._deltaManager.outbound.pause();
+		};
 
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
-		switch (loadMode.opsBeforeReturn) {
+		switch (opsBeforeReturn) {
 			case undefined: {
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1669,6 +1678,43 @@ export class Container
 					loadMode.deltaConnection === "none" ? "none" : "all",
 					lastProcessedSequenceNumber,
 				);
+				break;
+			}
+			case "sequenceNumber": {
+				assert(loadToSequenceNumber !== undefined, "loadToSequenceNumber should be defined");
+				if (lastProcessedSequenceNumber > loadToSequenceNumber) {
+					throw new GenericError(
+						"Cannot satisfy request to load the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					);
+				}
+
+				let targetReached = (): void => {};
+				const targetReachedP = new Promise<void>((resolve) => {
+					targetReached = resolve;
+				});
+				opsBeforeReturnP = Promise.all([
+					this.attachDeltaManagerOpHandler(
+						attributes,
+						"sequenceNumber",
+						lastProcessedSequenceNumber,
+						loadToSequenceNumber,
+					),
+					targetReachedP,
+				]).then(() => {});
+
+				if (lastProcessedSequenceNumber === loadToSequenceNumber) {
+					pauseContainer();
+					targetReached();
+				} else {
+					const targetReachedHandler = (message: ISequencedDocumentMessage): void => {
+						if (message.sequenceNumber >= loadToSequenceNumber) {
+							pauseContainer();
+							this.off("op", targetReachedHandler);
+							targetReached();
+						}
+					};
+					this.on("op", targetReachedHandler);
+				}
 				break;
 			}
 			case "cached":
@@ -1681,7 +1727,7 @@ export class Container
 				break;
 			}
 			default: {
-				unreachableCase(loadMode.opsBeforeReturn);
+				unreachableCase(opsBeforeReturn);
 			}
 		}
 
@@ -2120,8 +2166,9 @@ export class Container
 
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
-		prefetchType?: "cached" | "all" | "none",
+		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
 		lastProcessedSequenceNumber?: number,
+		loadToSequenceNumber?: number,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
@@ -2134,6 +2181,7 @@ export class Container
 			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
+			loadToSequenceNumber,
 		);
 	}
 
@@ -2653,7 +2701,7 @@ export interface ContainerAlpha extends IContainer {
 	 * Checks whether a point in document history can currently be materialized.
 	 * @remarks
 	 * This optional probe is intended for hosts that want to explain historical load failures before attempting a load.
-	 * If the underlying driver cannot answer, implementations should return `unknownUnavailable` rather than claiming
+	 * If the underlying driver cannot answer, implementations should return `notAvailable` rather than claiming
 	 * the point is unavailable for a specific reason.
 	 */
 	canMaterializePointInTime(

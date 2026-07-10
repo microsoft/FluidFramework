@@ -715,6 +715,11 @@ export interface IContainerLoadMode {
 	 * Default value.
 	 */
 		| undefined
+		/**
+		 * Only fetch and apply trailing ops up until (and including) the specified sequence number.
+		 * Requires `ILoaderHeader[LoaderHeader.sequenceNumber]` to also be defined.
+		 */
+		| "sequenceNumber"
 		/*
 		 * Only cached trailing ops are applied before returning container.
 		 * Caching is optional and could be implemented by the driver.

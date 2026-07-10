@@ -78,16 +78,24 @@ It is more than finding a snapshot; it may also require replaying operations aft
 
 ```mermaid
 flowchart TD
-	A[Caller asks for historical point T] --> B[Loader carries T through the load path]
-	B --> C[ODSP driver receives T during snapshot fetch]
-	C --> D{Can ODSP find a base snapshot at or before T?}
-	D -->|No| E[Fail clearly]
-	D -->|Yes| F[Return base snapshot]
-	F --> G{Is the snapshot already at T?}
-	G -->|Yes| H[Pause and return container]
-	G -->|No, snapshot is before T| I[Replay operations until T]
-	G -->|No, snapshot is after T| J[Fail because Fluid cannot replay backward]
-	I --> H
+	A[Caller asks for point-in-time target T] --> B{Availability probe or load?}
+	B -->|Probe| C[ODSP searches for a base snapshot at or before T]
+	C --> D{Base snapshot found?}
+	D -->|No| E[Report missingBaseVersion]
+	D -->|Yes| F[Fetch replay ops from base snapshot to T]
+	F --> G{Replay ops complete?}
+	G -->|No| H[Report missingOps]
+	G -->|Yes| I[Report materializable]
+	B -->|Load| J[Loader carries T through the load path]
+	J --> K[ODSP driver receives T during snapshot fetch]
+	K --> L{Can ODSP find a base snapshot at or before T?}
+	L -->|No| M[Fail clearly]
+	L -->|Yes| N[Return base snapshot]
+	N --> O{Is the snapshot already at T?}
+	O -->|Yes| P[Pause and return container]
+	O -->|No, snapshot is before T| Q[Replay operations until T]
+	O -->|No, snapshot is after T| R[Fail because Fluid cannot replay backward]
+	Q --> P
 ```
 
 ## What each layer is responsible for
@@ -151,6 +159,7 @@ flowchart TD
 
 	subgraph StorageBoundary[Storage boundary]
 		H[IDocumentStorageService.getSnapshot options include loadToSequenceNumber when present]
+		AG[IDocumentStorageServiceAlpha.canMaterializePointInTime]
 	end
 
 	subgraph OdspDriver[ODSP driver layer]
@@ -167,6 +176,13 @@ flowchart TD
 		S[Return first usable base snapshot]
 		T[ISnapshot sequenceNumber = base snapshot sequenceNumber]
 		U[Throw non-retryable error: no snapshot at or before target]
+		AH[Find point-in-time base snapshot]
+		AI{Base snapshot found?}
+		AJ[Fetch replay ops from delta storage]
+		AK{Replay ops complete and contiguous through T?}
+		AL[Return materializable]
+		AM[Return missingBaseVersion]
+		AN[Return missingOps]
 	end
 
 	A --> B
@@ -204,6 +220,14 @@ flowchart TD
 	AD --> AE
 	AE --> AB
 	AB --> AF
+	B -->|Probe availability| AG
+	AG --> AH
+	AH --> AI
+	AI -->|No| AM
+	AI -->|Yes| AJ
+	AJ --> AK
+	AK -->|Yes| AL
+	AK -->|No| AN
 ```
 
 ## Why the target is a sequence number
@@ -326,7 +350,7 @@ Current or planned statuses include:
 - `materializable`: a usable base snapshot was found and the required trailing operations are available.
 - `missingBaseVersion`: no usable base snapshot was found.
 - `permissionOrAccessDenied`: the document or version history could not be accessed.
-- `unknownUnavailable`: availability could not be determined.
+- `notAvailable`: the availability probe is not available or could not determine availability.
 - `missingOps`: a base snapshot exists but required trailing operations are missing.
 
 ## What this implementation guarantees
@@ -337,7 +361,8 @@ This implementation guarantees that:
 - The loader carries that target down to storage snapshot fetch.
 - ODSP uses a historical snapshot search when it sees the target.
 - ODSP fails when it cannot find a usable base snapshot.
-- Hosts can ask ODSP whether a usable base snapshot appears to exist.
+- Hosts can ask ODSP whether the point-in-time load appears available.
+- ODSP reports `missingOps` when a usable base snapshot exists but the required replay operations are unavailable.
 
 ## What this implementation does not guarantee
 
@@ -345,7 +370,7 @@ This implementation does not guarantee that:
 
 - This flow works for non-ODSP drivers.
 - A snapshot fetch alone produces the final historical state.
-- ODSP has all trailing operations needed to replay from the base snapshot to the target.
+- Every requested point-in-time load is available; ODSP may still report missing base versions or missing replay operations.
 
 ## Technical reference
 
@@ -373,7 +398,7 @@ This section lists the main files and API names for contributors who need to wor
 - `packages/loader/container-loader/src/containerStorageAdapter.ts` forwards `canMaterializePointInTime` to storage.
 - `packages/loader/container-loader/src/retriableDocumentStorageService.ts` forwards `canMaterializePointInTime` through retry behavior.
 - `packages/loader/container-loader/src/protocolTreeDocumentStorageService.ts` forwards `canMaterializePointInTime` through protocol-tree wrapping.
-- `packages/drivers/odsp-driver/src/odspDocumentStorageManager.ts` implements ODSP historical snapshot selection and ODSP base-version availability checks.
+- `packages/drivers/odsp-driver/src/odspDocumentStorageManager.ts` implements ODSP historical snapshot selection, base-version availability checks, and replay-op availability checks.
 
 ## Testing guidance
 

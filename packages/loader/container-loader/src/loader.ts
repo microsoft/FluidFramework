@@ -358,6 +358,20 @@ export class Loader implements IHostLoader {
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
+		const loadToSequenceNumber = request.headers?.[LoaderHeader.sequenceNumber];
+		const opsBeforeReturn = request.headers?.[LoaderHeader.loadMode]?.opsBeforeReturn;
+		if (opsBeforeReturn === "sequenceNumber") {
+			if (
+				typeof loadToSequenceNumber !== "number" ||
+				!Number.isInteger(loadToSequenceNumber) ||
+				loadToSequenceNumber < 0
+			) {
+				throw new Error("sequenceNumber must be set to a non-negative integer");
+			}
+		} else if (loadToSequenceNumber !== undefined) {
+			throw new Error('opsBeforeReturn must be set to "sequenceNumber"');
+		}
+
 		return Container.load(
 			{
 				resolvedUrl,
@@ -365,8 +379,7 @@ export class Loader implements IHostLoader {
 				version: request.headers?.[LoaderHeader.version] ?? undefined,
 				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 				loadMode: request.headers?.[LoaderHeader.loadMode],
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				loadToSequenceNumber: request.headers?.[LoaderHeader.sequenceNumber],
+				loadToSequenceNumber,
 				pendingLocalState,
 			},
 			{
