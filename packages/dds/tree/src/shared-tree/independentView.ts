@@ -59,38 +59,41 @@ import {
 import { createTreeCheckout } from "./treeCheckout.js";
 
 /**
+ * Options for supplying a telemetry logger to an independent tree view.
+ * @remarks
+ * Events emitted by the independent tree are tagged with the `independentView` namespace.
+ * If no logger is provided, telemetry events are dropped.
+ * @alpha @input
+ */
+export interface IndependentViewTelemetryOptions {
+	/**
+	 * Optional logger for telemetry.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+}
+
+/**
  * {@link independentView} options.
  * @alpha @input
  */
-export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+export interface IndependentViewOptions
+	extends ForestOptions,
+		Partial<CodecWriteOptions>,
+		IndependentViewTelemetryOptions {
 	/**
 	 * Optional ID compressor for generating and compressing identifiers.
 	 * If not provided, a new one will be created.
 	 */
 	idCompressor?: IIdCompressor | undefined;
-
-	/**
-	 * Optional logger for telemetry.
-	 * @remarks
-	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
-	 * If not provided, telemetry events are dropped.
-	 */
-	logger?: ITelemetryBaseLogger | undefined;
 }
 
 /**
  * {@link createIndependentTreeAlpha} options.
  * @alpha
  */
-export type CreateIndependentTreeAlphaOptions = ForestOptions & {
-	/**
-	 * Optional logger for telemetry.
-	 * @remarks
-	 * Events emitted by the independent tree are tagged with the `independentView` namespace.
-	 * If not provided, telemetry events are dropped.
-	 */
-	readonly logger?: ITelemetryBaseLogger | undefined;
-} & (
+export type CreateIndependentTreeAlphaOptions = ForestOptions &
+	IndependentViewTelemetryOptions &
+	(
 		| (IndependentViewOptions & {
 				/**
 				 * Optional content for initializing the tree.
@@ -141,8 +144,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions &
-		ICodecOptions & { readonly logger?: ITelemetryBaseLogger | undefined },
+	options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(

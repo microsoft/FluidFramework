@@ -56,6 +56,7 @@ export {
 	type ViewContent,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,

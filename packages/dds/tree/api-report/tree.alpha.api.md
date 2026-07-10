@@ -242,9 +242,7 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view:
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
 
 // @alpha
-export type CreateIndependentTreeAlphaOptions = ForestOptions & {
-    readonly logger?: ITelemetryBaseLogger | undefined;
-} & ((IndependentViewOptions & {
+export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
     content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
@@ -540,17 +538,19 @@ export function incrementalEncodingPolicyForAllowedTypes(rootSchema: TreeSchema)
 export const incrementalSummaryHint: unique symbol;
 
 // @alpha
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & {
-    readonly logger?: ITelemetryBaseLogger | undefined;
-}, content: ViewContent): TreeViewAlpha<TSchema>;
+export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
-export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions>, IndependentViewTelemetryOptions {
     idCompressor?: IIdCompressor | undefined;
-    logger?: ITelemetryBaseLogger | undefined;
+}
+
+// @alpha @input
+export interface IndependentViewTelemetryOptions {
+    readonly logger?: ITelemetryBaseLogger | undefined;
 }
 
 // @public @system
