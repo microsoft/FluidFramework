@@ -1,5 +1,9 @@
 # @fluidframework/tree-agent-langchain
 
+## 2.111.0
+
+Dependency updates only.
+
 ## 2.110.0
 
 Dependency updates only.
