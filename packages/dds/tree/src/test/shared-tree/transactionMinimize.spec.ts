@@ -30,18 +30,28 @@ function getHeadChange<TSchema extends ImplicitFieldSchema>(
 }
 
 /**
- * Counts the total number of detached-node `builds` carried by the data changes within a {@link SharedTreeChange}.
- * @remarks A `build` is retained for every node created during the transaction. After minimization, a `build` should
- * only remain for nodes that are still present in the document once the transaction is squashed.
+ * Counts the detached-node `builds` carried by the data changes within a {@link SharedTreeChange}.
+ * @remarks A `build` is retained for every run of nodes created during the transaction. After minimization, a `build`
+ * should only remain for nodes that are still present in the document once the transaction is squashed.
+ * @returns An object with:
+ * - `builds`: the number of build entries (each entry is a chunk of one or more contiguous nodes).
+ * - `tops`: the total number of top-level nodes across all build entries (the sum of each chunk's `topLevelLength`).
  */
-function countBuilds(change: SharedTreeChange): number {
-	let total = 0;
+function countBuilds(change: SharedTreeChange): { builds: number; tops: number } {
+	let builds = 0;
+	let tops = 0;
 	for (const inner of change.changes) {
 		if (inner.type === "data") {
-			total += inner.innerChange.builds?.size ?? 0;
+			const innerBuilds = inner.innerChange.builds;
+			if (innerBuilds !== undefined) {
+				builds += innerBuilds.size;
+				for (const chunk of innerBuilds.values()) {
+					tops += chunk.topLevelLength;
+				}
+			}
 		}
 	}
-	return total;
+	return { builds, tops };
 }
 
 /**
@@ -784,7 +794,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// No nodes are created by the transaction (only moved), so the change should carry no builds.
-			assert.equal(countBuilds(change), 0);
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
 
 		it("result carries no build when pre-existing content is only removed", () => {
@@ -797,7 +807,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// No nodes are created by the transaction (only removed), so the change should carry no builds.
-			assert.equal(countBuilds(change), 0);
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
 
 		it("reflects the order of only-rearranged inserted nodes and keeps every build", () => {
@@ -810,7 +820,7 @@ describe("transaction minimize post-processor", () => {
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
-			assert.equal(countBuilds(change), 2);
+			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
 		});
 	});
 
@@ -1071,7 +1081,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build/destroy should be removed.
-			assert.equal(countBuilds(change), 0);
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 			assert.equal(countDestroys(change), 0);
 		});
 
@@ -1080,7 +1090,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "A❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only the final node's build when a node is replaced", () => {
@@ -1088,7 +1098,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only the surviving node's build when inserted content is relocated then removed", () => {
@@ -1098,7 +1108,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps the surrounding builds when a node in the middle of an inserted run is removed", () => {
@@ -1108,7 +1118,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// "A❤️" and "C❤️" survive but "B☠️" is removed, so A-B-C build should be split, leaving two.
-			assert.equal(countBuilds(change), 2);
+			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
 
 		it("drops the build for an inserted node that is moved then removed", () => {
@@ -1118,7 +1128,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// "B☠️" is removed despite being moved, so A-B-C build should be split, leaving two.
-			assert.equal(countBuilds(change), 2);
+			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
 
 		it("keeps only the trailing node's [modified] build when a moved node and its successor from leading node build are removed", () => {
@@ -1128,7 +1138,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// "A☠️" and the moved "B☠️" are removed, so only "C❤️"'s build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only the leading node's build when a moved node and its insertion companion are removed", () => {
@@ -1138,7 +1148,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The moved "B☠️" and "C☠️" are removed, so only "A❤️"'s build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("carries no build for a transient insert over pre-existing content", () => {
@@ -1148,7 +1158,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Pre-existing nodes are not built by this transaction and "A☠️" is removed, so no builds should remain.
-			assert.equal(countBuilds(change), 0);
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
 
 		it("keeps only the surviving inserted node's build over pre-existing content", () => {
@@ -1158,7 +1168,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only "B❤️" is created and survives ("A☠️" is removed; "X" pre-exists), so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only the final value's build when a field is set multiple times", () => {
@@ -1166,7 +1176,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("carries no build when only item's value of a field is set and then the item is removed", () => {
@@ -1176,7 +1186,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build should be removed.
-			assert.equal(countBuilds(change), 0);
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
 
 		it("keeps only the final value's builds when a field of newly inserted object is replaced", () => {
@@ -1186,8 +1196,13 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so one or two builds should remain.
-			const builds = countBuilds(change);
+			const { builds, tops } = countBuilds(change);
 			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
+			assert.equal(
+				tops,
+				builds,
+				`Expected top-level nodes ${tops} to match the number of builds ${builds}`,
+			);
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
@@ -1197,7 +1212,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "B❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only edits' surviving builds made after a schema change", () => {
@@ -1207,7 +1222,7 @@ describe("transaction minimize post-processor", () => {
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final Box value "D❤️" survives the transaction, so exactly one build should remain.
-			assert.equal(countBuilds(change), 1);
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 	});
 });
