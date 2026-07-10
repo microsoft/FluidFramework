@@ -23,15 +23,30 @@ test.describe("Nav", () => {
 		await expect(supportLink).toHaveAttribute("href", "/support/");
 	});
 
-	test("Search returns indexed website content", async ({ page }) => {
+	test("Search returns written documentation", async ({ page }) => {
 		await page.getByRole("button", { name: "Search" }).click();
 
 		const searchInput = page.getByRole("searchbox");
-		await searchInput.fill("Fluid Framework");
+		await searchInput.fill("SharedTree Quick Start");
 
-		await expect(
-			page.getByRole("link", { name: "Fluid Framework", exact: true }).first(),
-		).toBeVisible();
+		const writtenDocsResult = page
+			.getByRole("dialog")
+			.getByRole("link", { name: "SharedTree Quick Start", exact: true });
+		await expect(writtenDocsResult).toHaveAttribute("href", "/docs/start/tree-start/");
+		await expect(writtenDocsResult).toBeVisible();
+	});
+
+	test("Search returns generated API documentation", async ({ page }) => {
+		await page.getByRole("button", { name: "Search" }).click();
+
+		const searchInput = page.getByRole("searchbox");
+		await searchInput.fill("SharedTreeOptions Interface");
+
+		const apiDocsResult = page
+			.getByRole("dialog")
+			.locator('a[href="/docs/api/fluid-framework/sharedtreeoptions-interface/"]');
+		await expect(apiDocsResult).toHaveAccessibleName("SharedTreeOptions Interface");
+		await expect(apiDocsResult).toBeVisible();
 	});
 
 	test("Search opens after client-side navigation", async ({ page }) => {
