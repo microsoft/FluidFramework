@@ -109,74 +109,6 @@ export interface IDocumentDeltaStorageService {
 	): IStream<ISequencedDocumentMessage[]>;
 }
 
-/**
- * App- or service-provided marker that identifies a submitted operation from the submitting client's perspective.
- * @legacy @alpha
- */
-export interface IPointInTimeMarker {
-	/**
-	 * Sequence number the submitting client had observed when it submitted the operation.
-	 */
-	readonly referenceSequenceNumber: number;
-
-	/**
-	 * Connected client session that submitted the operation.
-	 */
-	readonly clientId: string;
-
-	/**
-	 * Submitting client's local outbound sequence number for the operation.
-	 */
-	readonly clientSequenceNumber: number;
-
-	/**
-	 * Scenario in which this API is called. This can be recorded by the driver or service for debugging.
-	 */
-	readonly scenarioName?: string;
-}
-
-/**
- * Result of resolving an app- or service-provided marker to the global Fluid sequence number.
- * @legacy @alpha
- */
-export type PointInTimeMarkerResolution =
-	| {
-			/** The marker was found in the service's retained history. */
-			readonly status: "resolved";
-			/** Global sequence number assigned by the service to the marked operation. */
-			readonly sequenceNumber: number;
-	  }
-	| {
-			/** The marker is no longer available due to service retention. */
-			readonly status: "markerExpired";
-			readonly message?: string;
-	  }
-	| {
-			/** The caller could not access the document or its retained operation history. */
-			readonly status: "permissionOrAccessDenied";
-			readonly message?: string;
-	  }
-	| {
-			/** Marker resolution could not be determined. */
-			readonly status: "unknownUnavailable";
-			readonly message?: string;
-	  };
-
-/**
- * Alpha delta storage extension for resolving app- or service-provided point-in-time markers.
- * @legacy @alpha
- */
-export interface IDocumentDeltaStorageServiceAlpha extends IDocumentDeltaStorageService {
-	/**
-	 * Resolves a client-perspective marker to the global Fluid sequence number used by historical loading.
-	 * @remarks
-	 * This API is intentionally separate from the load target. Historical loading still takes a global sequence number;
-	 * marker resolution is a prior step that a driver or service may implement using retained operation history or an
-	 * index maintained by the service.
-	 */
-	resolvePointInTimeMarker?(marker: IPointInTimeMarker): Promise<PointInTimeMarkerResolution>;
-}
-
 // DO NOT INCREASE THIS TYPE'S VALUE
 // If a driver started using a larger value,
 // internal assumptions of the Runtime's GC feature will be violated
@@ -257,11 +189,6 @@ export type PointInTimeMaterializationAvailability =
 			/** A base snapshot exists, but required trailing ops are unavailable. */
 			readonly status: "missingOps";
 			readonly baseSnapshotSequenceNumber?: number;
-			readonly message?: string;
-	  }
-	| {
-			/** The requested historical marker is no longer available due to service retention. */
-			readonly status: "markerExpired";
 			readonly message?: string;
 	  };
 

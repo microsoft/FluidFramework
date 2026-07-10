@@ -30,7 +30,7 @@ Historical loading has four main steps:
 
 1. The caller chooses the historical point it wants, called target `T`.
 2. The loader carries `T` down through the load path.
-3. The storage driver finds a snapshot at or before `T`.
+3. The ODSP driver finds a snapshot at or before `T`.
 4. Fluid replays operations after that snapshot until the document reaches `T`.
 
 ```text
@@ -79,8 +79,8 @@ It is more than finding a snapshot; it may also require replaying operations aft
 ```mermaid
 flowchart TD
 	A[Caller asks for historical point T] --> B[Loader carries T through the load path]
-	B --> C[Driver receives T during snapshot fetch]
-	C --> D{Can the driver find a base snapshot at or before T?}
+	B --> C[ODSP driver receives T during snapshot fetch]
+	C --> D{Can ODSP find a base snapshot at or before T?}
 	D -->|No| E[Fail clearly]
 	D -->|Yes| F[Return base snapshot]
 	F --> G{Is the snapshot already at T?}
@@ -105,17 +105,106 @@ The loader carries the target through the load path.
 It does not know whether the service has the needed historical data.
 It should not try to validate service-specific history.
 
-### Storage driver
+### ODSP driver
 
-The storage driver receives the target and decides how to find a useful base snapshot.
-Different drivers may support this differently.
-
-For ODSP, the driver searches recent ODSP versions and chooses a snapshot at or before the target.
+For this flow, ODSP receives the target and decides how to find a useful base snapshot.
+It searches recent ODSP versions and chooses a snapshot at or before the target.
 
 ### Runtime and delta processing
 
 After the base snapshot is loaded, Fluid may need to apply operations after that snapshot.
 This replay step is what brings the container from the base snapshot to the requested target.
+
+## Detailed layer flow
+
+The conceptual flow above hides some implementation details.
+This diagram shows how the same target moves through the loader, container, storage boundary, ODSP, and replay layers.
+
+```mermaid
+flowchart TD
+	subgraph HostApp[Host or app layer]
+		A[Caller requests existing container]
+		B{Point-in-time target?}
+	end
+
+	subgraph LoaderHelpers[Container-loader helper layer]
+		C[loadExistingContainer]
+		D[loadExistingContainer adds LoaderHeader.sequenceNumber = T]
+		E[Loader.resolve]
+		Y[Load with deltaConnection none and opsBeforeReturn undefined]
+		Z[Install op/closed/abort listeners]
+		AA{Base snapshot sequence}
+		AB[Pause inbound and outbound queues immediately]
+		AC[Close container: snapshot is newer than target]
+		AD[container.connect fetches trailing ops]
+		AE[Process ops until deltaManager.lastSequenceNumber reaches T]
+		AF[Disconnect and return paused readonly container]
+	end
+
+	subgraph ContainerLoad[Container load layer]
+		F[Container.load receives loadToSequenceNumber]
+		G[SerializedStateManager.fetchSnapshot]
+		V[Container initializes from base snapshot]
+		W{Using loadContainerPaused?}
+		X[Normal container load continues]
+	end
+
+	subgraph StorageBoundary[Storage boundary]
+		H[IDocumentStorageService.getSnapshot options include loadToSequenceNumber when present]
+	end
+
+	subgraph OdspDriver[ODSP driver layer]
+		I{ODSP getSnapshot sees loadToSequenceNumber?}
+		J[Normal latest snapshot flow]
+		K[Use latest/cache/network snapshot path]
+		L[Return latest snapshot]
+		M[Point-in-time ODSP snapshot flow]
+		N[getVersions top 50, no cache]
+		O[For each version: getSnapshotTree]
+		P[Read document attributes blob]
+		Q[Extract snapshot sequenceNumber]
+		R{sequenceNumber at or before T?}
+		S[Return first usable base snapshot]
+		T[ISnapshot sequenceNumber = base snapshot sequenceNumber]
+		U[Throw non-retryable error: no snapshot at or before target]
+	end
+
+	A --> B
+	B -->|No| C
+	B -->|Yes: loadToSequenceNumber = T| D
+	C --> E
+	D --> E
+	E --> F
+	F --> G
+	G --> H
+	H --> I
+	I -->|No| J
+	J --> K
+	K --> L
+	L --> V
+	I -->|Yes| M
+	M --> N
+	N --> O
+	O --> P
+	P --> Q
+	Q --> R
+	R -->|No| O
+	R -->|Yes| S
+	S --> T
+	R -->|No candidate found| U
+	T --> V
+	V --> W
+	W -->|No| X
+	W -->|Yes| Y
+	Y --> Z
+	Z --> AA
+	AA -->|At T| AB
+	AA -->|After T| AC
+	AA -->|Before T| AD
+	AD --> AE
+	AE --> AB
+	AB --> AF
+```
 
 ## Why the target is a sequence number
 
@@ -124,36 +213,13 @@ Snapshots record sequence numbers.
 Delta storage fetches operations by sequence ranges.
 Replay also uses sequence numbers.
 
-That makes sequence number is the most natural way to say:
+That makes sequence number the most natural way to say:
 
 ```text
 Load the document as it existed at this global point in history.
 ```
 
 A snapshot id alone is not enough because the target may fall between two snapshots.
-A client-local marker is also not enough because the loader and storage layer need the global sequence number.
-
-## App markers are not load targets
-
-An app may know about an operation using fields like:
-
-- `refSeq`
-- `clientId`
-- `clientSeq`
-
-Those fields describe an operation from a client's perspective.
-They are useful for identifying an operation, but they are not the global load coordinate.
-
-The intended flow is:
-
-```text
-app marker
-	-> resolve marker to global sequence number T
-	-> load to sequence number T
-```
-
-Marker resolution is separate from historical loading.
-The current prototype does not implement marker resolution in any driver.
 
 ## Caller-facing load shape
 
@@ -188,7 +254,7 @@ The loader propagation is intentionally simple:
 5. `IDocumentStorageService.getSnapshot` receives the target in snapshot fetch options.
 
 The loader does not decide which historical snapshot to use.
-That decision belongs to the storage driver.
+For this flow, that decision belongs to the ODSP driver.
 
 ## Replay and pause
 
@@ -266,7 +332,6 @@ Current or planned statuses include:
 - `permissionOrAccessDenied`: the document or version history could not be accessed.
 - `unknownUnavailable`: availability could not be determined.
 - `missingOps`: reserved for the future case where a base snapshot exists but required trailing operations are missing.
-- `markerExpired`: reserved for the future case where a historical marker can no longer be resolved.
 
 ## What this implementation guarantees
 
@@ -282,10 +347,9 @@ This implementation guarantees that:
 
 This implementation does not guarantee that:
 
-- Every driver supports historical loading.
+- This flow works for non-ODSP drivers.
 - A snapshot fetch alone produces the final historical state.
 - ODSP has all trailing operations needed to replay from the base snapshot to the target.
-- App markers can be resolved to sequence numbers.
 
 ## Technical reference
 
@@ -307,7 +371,6 @@ This section lists the main files and API names for contributors who need to wor
 
 - `packages/common/driver-definitions/src/storage.ts` defines `ISnapshotFetchOptionsAlpha.loadToSequenceNumber`.
 - `packages/common/driver-definitions/src/storage.ts` defines `IPointInTimeMaterializationTarget`, `PointInTimeMaterializationAvailability`, and `IDocumentStorageServiceAlpha.canMaterializePointInTime`.
-- `packages/common/driver-definitions/src/storage.ts` defines `IPointInTimeMarker`, `PointInTimeMarkerResolution`, and `IDocumentDeltaStorageServiceAlpha.resolvePointInTimeMarker`.
 
 ### Storage wrappers and ODSP implementation
 
@@ -330,15 +393,14 @@ Tests should cover behavior the current implementation actually provides:
 - ODSP `canMaterializePointInTime` reports `missingBaseVersion` when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `permissionOrAccessDenied` for access-related ODSP failures.
 
-Tests should avoid claiming that every driver materializes historical points.
+Tests should avoid claiming that this flow works for non-ODSP drivers.
 For ODSP, tests can claim base snapshot selection, but full final materialization requires replay to the requested target.
 
-As support expands, add tests for:
+As ODSP support expands, add tests for:
 
 - Successful historical materialization at a requested sequence number.
 - Loading when the base snapshot is older than the target and trailing operations are required.
 - Failure when trailing operations are unavailable.
-- Failure when a marker cannot be resolved.
 - Cache and no-cache behavior.
 - Telemetry or error properties that help diagnose unavailable historical loads.
 

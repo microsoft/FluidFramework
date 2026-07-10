@@ -25,7 +25,6 @@ export type {
 	FiveDaysMs,
 	IDeltasFetchResult,
 	IDeltaStorageService,
-	IDocumentDeltaStorageServiceAlpha,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
@@ -36,7 +35,6 @@ export type {
 	IDocumentStorageServiceAlpha,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
-	IPointInTimeMarker,
 	IPointInTimeMaterializationTarget,
 	ISnapshot,
 	ISnapshotFetchOptionsAlpha,
@@ -44,7 +42,6 @@ export type {
 	IStream,
 	IStreamResult,
 	ISummaryContext,
-	PointInTimeMarkerResolution,
 	PointInTimeMaterializationAvailability,
 } from "./storage.js";
 export { FetchSource, LoaderCachingPolicy } from "./storage.js";
