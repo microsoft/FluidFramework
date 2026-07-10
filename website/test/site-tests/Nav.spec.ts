@@ -8,6 +8,7 @@ import { test, expect } from "@playwright/test";
 test.describe("Nav", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/", { waitUntil: "domcontentloaded" });
+		await expect(page.locator("html")).toHaveAttribute("data-has-hydrated", "true");
 	});
 
 	// TODO:AB#24415: Fix and re-enable
@@ -31,5 +32,17 @@ test.describe("Nav", () => {
 		await expect(
 			page.getByRole("link", { name: "Fluid Framework", exact: true }).first(),
 		).toBeVisible();
+	});
+
+	test("Search opens after client-side navigation", async ({ page }) => {
+		await page
+			.locator(".navbar")
+			.getByRole("link", { name: /Community/ })
+			.click();
+		await expect(page).toHaveURL(/\/community\//);
+
+		await page.getByRole("button", { name: "Search" }).click();
+
+		await expect(page.getByRole("searchbox")).toBeVisible();
 	});
 });

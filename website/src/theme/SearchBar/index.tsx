@@ -3,15 +3,29 @@
  * Licensed under the MIT License.
  */
 
-import { createElement, type ReactElement, useEffect } from "react";
+import { type ReactElement, useEffect, useRef } from "react";
 
 const pagefindComponentScript = "/pagefind/pagefind-component-ui.js";
+let pagefindModalTrigger: HTMLElement | undefined;
+let pagefindModal: HTMLElement | undefined;
 
 /**
  * Renders the Pagefind component UI in Docusaurus's navbar search slot.
  */
 export default function SearchBar(): ReactElement {
+	const triggerContainer = useRef<HTMLSpanElement>(null);
+
 	useEffect(() => {
+		pagefindModalTrigger ??= document.createElement("pagefind-modal-trigger");
+		pagefindModalTrigger.setAttribute("placeholder", "Search");
+		triggerContainer.current?.append(pagefindModalTrigger);
+
+		pagefindModal ??= document.createElement("pagefind-modal");
+		pagefindModal.setAttribute("reset-on-close", "true");
+		if (!pagefindModal.isConnected) {
+			document.body.append(pagefindModal);
+		}
+
 		if (document.querySelector(`script[src="${pagefindComponentScript}"]`) !== null) {
 			return;
 		}
@@ -22,10 +36,5 @@ export default function SearchBar(): ReactElement {
 		document.head.append(script);
 	}, []);
 
-	return (
-		<>
-			{createElement("pagefind-modal-trigger", { placeholder: "Search" })}
-			{createElement("pagefind-modal", { "reset-on-close": true })}
-		</>
-	);
+	return <span ref={triggerContainer} />;
 }
