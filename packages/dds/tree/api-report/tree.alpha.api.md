@@ -220,11 +220,11 @@ export function comparePersistedSchema(persisted: JsonCompatible, view: Implicit
 
 // @alpha
 export namespace Component {
-    export function composeComponents<TComponent>(allComponents: readonly Factory<TComponent>[]): ComposedComponents<TComponent>;
-    export function composeComponents<TComponent, TConfig>(allComponents: readonly Factory<TComponent, TConfig>[], lazyConfiguration: (composed: ComposedComponents<TComponent, TConfig>) => TConfig): ComposedComponents<TComponent, TConfig>;
+    export function compose<TComponent>(allComponents: readonly Factory<TComponent>[]): Composed<TComponent>;
+    export function compose<TComponent, TConfig>(allComponents: readonly Factory<TComponent, TConfig>[], lazyConfiguration: (composed: Composed<TComponent, TConfig>) => TConfig): Composed<TComponent, TConfig>;
     const memoize: <T>(factory: () => T) => (() => T);
     // @sealed
-    export interface ComposedComponents<TComponent, TConfig = ComposedDefault<TComponent>> {
+    export interface Composed<TComponent, TConfig = ComposedDefault<TComponent>> {
         readonly components: readonly TComponent[];
         readonly config: TConfig;
         getComponent<TFactory extends Factory<TComponent, TConfig>>(factory: TFactory): ReturnType<TFactory>;
@@ -234,9 +234,9 @@ export namespace Component {
         getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(configurable: TConfigurable): ReturnType<TConfigurable["configure"]>;
     }
     // @sealed
-    export type ComposedDefault<TComponent> = ComposedComponents<TComponent, ComposedDefault<TComponent>>;
+    export type ComposedDefault<TComponent> = Composed<TComponent, ComposedDefault<TComponent>>;
     export interface Configurable<TConfigPartial, out TResult, TComponent> {
-        configure(config: TConfigPartial, components: ComposedComponents<TComponent, TConfigPartial>): TResult;
+        configure(config: TConfigPartial, components: Composed<TComponent, TConfigPartial>): TResult;
     }
     // @input
     export type Factory<TComponent, TConfig = ComposedDefault<TComponent>> = (lazyConfiguration: () => TConfig) => TComponent;

@@ -25,7 +25,7 @@ describe("Component", () => {
 		const a: MyComponentFactory = () => "a";
 		const b: MyComponentFactory = () => "b";
 
-		const composed = Component.composeComponents([a, b]);
+		const composed = Component.compose([a, b]);
 
 		assert.deepEqual(composed.components, ["a", "b"]);
 	});
@@ -87,7 +87,7 @@ describe("Component", () => {
 			inputConfig: InputConfig,
 			allComponents: readonly MyComponentFactory[],
 		): OutputConfig {
-			const composed = Component.composeComponents(allComponents, (c) => {
+			const composed = Component.compose(allComponents, (c) => {
 				const config: ComposeConfig = {
 					input: inputConfig,
 					lazy: () => lazy,
@@ -156,8 +156,8 @@ describe("Component", () => {
 
 	function compose(
 		components: readonly TestFactory[],
-	): Component.ComposedComponents<TestComponent, TestConfig> {
-		return Component.composeComponents(components, (composed) => ({
+	): Component.Composed<TestComponent, TestConfig> {
+		return Component.compose(components, (composed) => ({
 			items: composed.getComposed("items"),
 		}));
 	}
