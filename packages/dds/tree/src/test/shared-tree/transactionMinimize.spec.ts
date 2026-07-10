@@ -12,14 +12,10 @@ import type {
 	JsonCompatibleReadOnly,
 	ReadableField,
 } from "@fluidframework/tree/alpha";
-import {
-	FluidClientVersion,
-	createIndependentTreeAlpha,
-	minimize,
-} from "@fluidframework/tree/alpha";
+import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
 import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import { createSnapshotCompressor } from "../utils.js";
+import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 
@@ -101,7 +97,11 @@ type ViewableTreeAlpha = ReturnType<typeof createIndependentTreeAlpha>;
  * @remarks The scenario is parameterized by its schema (rather than by the concrete view type) so that a single
  * generic helper can both create the view from {@link TransactionScenario.schema} and run the transaction.
  */
-interface TransactionScenario<TSchema extends ImplicitFieldSchema, TApplyReturn> {
+interface TransactionScenario<
+	TSchema extends ImplicitFieldSchema,
+	TApplyReturn extends
+		void | SchematizingSimpleTreeView<ImplicitFieldSchema> = void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
+> {
 	/** The schema the view is created with before the transaction runs. */
 	readonly schema: TSchema;
 	/** The content the view is initialized with before the transaction runs. */
@@ -114,36 +114,37 @@ interface TransactionScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>
 	) => TApplyReturn;
 }
 
-type StringArrayScenario = TransactionScenario<
-	typeof RootStringArray,
-	void | SchematizingSimpleTreeView<ImplicitFieldSchema>
->;
-type BoxArrayScenario = TransactionScenario<
-	typeof BoxArray,
-	void | SchematizingSimpleTreeView<ImplicitFieldSchema>
->;
+type StringArrayScenario = TransactionScenario<typeof RootStringArray>;
+type BoxArrayScenario = TransactionScenario<typeof BoxArray>;
 
 /**
- * Given the TreeViewConfiguration, returns a tree and an uninitialized view.
+ * Given the TreeViewConfiguration, returns a tree, an uninitialized view,
+ * and the provider that has a secondary tree for consistency checking.
  *
  * @see ../utils.ts#getView that is basis for this helper.
  */
 function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-): { tree: ViewableTreeAlpha; view: SchematizingSimpleTreeView<TSchema> } {
-	const tree = createIndependentTreeAlpha({
-		idCompressor: createSnapshotCompressor(),
-		minVersionForCollab: FluidClientVersion.v2_80,
-	});
+): {
+	tree: ViewableTreeAlpha;
+	view: SchematizingSimpleTreeView<TSchema>;
+	provider: TestTreeProviderLite;
+} {
+	const provider = new TestTreeProviderLite(2);
+	const tree = provider.trees[0];
 	const view = tree.viewWith(config);
 	assert(view instanceof SchematizingSimpleTreeView);
-	return { tree, view };
+	return { tree, view, provider };
 }
 
 /** Creates the tree and view for a scenario, initialized with the scenario's initial content. */
 function createScenarioView<TSchema extends ImplicitFieldSchema>(
-	scenario: TransactionScenario<TSchema, unknown>,
-): { tree: ViewableTreeAlpha; view: SchematizingSimpleTreeView<TSchema> } {
+	scenario: TransactionScenario<TSchema>,
+): {
+	tree: ViewableTreeAlpha;
+	view: SchematizingSimpleTreeView<TSchema>;
+	provider: TestTreeProviderLite;
+} {
 	const treeAndView = getTreeAndView(
 		new TreeViewConfiguration({
 			schema: scenario.schema,
@@ -171,15 +172,23 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>(
  * to the document, so that minimization can be verified to have stripped any extraneous
  * modifications thereof.
  */
-function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
+function runScenario<
+	TSchema extends ImplicitFieldSchema,
+	TApplyReturn extends void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
+>(
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
-	{ doNotMinimize = false }: { doNotMinimize?: boolean } = {},
+	{
+		validateConsistency = false,
+		doNotMinimize = false,
+	}: { validateConsistency?: boolean; doNotMinimize?: boolean } = {},
 ): {
 	tree: ViewableTreeAlpha;
-	view: TApplyReturn extends void ? SchematizingSimpleTreeView<TSchema> : TApplyReturn;
+	view: TApplyReturn extends SchematizingSimpleTreeView<ImplicitFieldSchema>
+		? TApplyReturn
+		: SchematizingSimpleTreeView<TSchema>;
 	stringifiedChange: JsonString<unknown>;
 } {
-	const { tree, view } = createScenarioView(scenario);
+	const { tree, view, provider } = createScenarioView(scenario);
 
 	let changeJson: JsonCompatibleReadOnly | undefined;
 	// Be sure to listen to checkout "changed" instead of view "changed" because the latter
@@ -199,12 +208,27 @@ function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
 	unsubscribe();
 	assert(changeJson !== undefined, "expected a change to be produced by the transaction");
 
+	const viewOut = (result.value ??
+		view) as TApplyReturn extends SchematizingSimpleTreeView<ImplicitFieldSchema>
+		? TApplyReturn
+		: SchematizingSimpleTreeView<TSchema>;
+	// If requested, validate that the view is consistent with another view
+	//  of the same(remote) tree after the transaction.
+	if (validateConsistency) {
+		provider.synchronizeMessages();
+		const otherView = provider.trees[1].kernel.viewWith(
+			new TreeViewConfiguration({
+				schema: viewOut.schema,
+				enableSchemaValidation: true,
+			}),
+		);
+		validateViewConsistency(view.checkout, otherView.checkout);
+	}
+
 	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
 	return {
 		tree,
-		view: (result.value ?? view) as TApplyReturn extends void
-			? SchematizingSimpleTreeView<TSchema>
-			: TApplyReturn,
+		view: viewOut,
 		stringifiedChange,
 	};
 }
@@ -214,7 +238,10 @@ function runScenario<TSchema extends ImplicitFieldSchema, TApplyReturn>(
  * @remarks The post-processor infrastructure is agnostic to whether the transaction is sync or async, so this
  * exists to exercise that path "for good measure".
  */
-async function runScenarioAsync<TSchema extends ImplicitFieldSchema, TApplyReturn>(
+async function runScenarioAsync<
+	TSchema extends ImplicitFieldSchema,
+	TApplyReturn extends void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
+>(
 	scenario: TransactionScenario<TSchema, TApplyReturn>,
 ): Promise<{
 	tree: ViewableTreeAlpha;
@@ -938,10 +965,12 @@ describe("transaction minimize post-processor", () => {
 			.replaceAll(/([A-Z])(?=[A-Z])/g, "$1,"); // Insert comma between uppercase letters
 	}
 
-	describe("produces the same observable result as not minimized", () => {
+	describe("produces a consistent view and the same observable result as not minimized", () => {
 		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
+				});
 				const { tree: unminimizedTree } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
@@ -950,7 +979,9 @@ describe("transaction minimize post-processor", () => {
 		}
 		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
+				});
 				const { tree: unminimizedTree } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
@@ -961,7 +992,9 @@ describe("transaction minimize post-processor", () => {
 			([name]) => name !== "edit_before_and_after_schema_change", // This scenario is expected to throw, so skip it for this test.
 		)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario);
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
+				});
 				const { tree: unminimizedTree } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
