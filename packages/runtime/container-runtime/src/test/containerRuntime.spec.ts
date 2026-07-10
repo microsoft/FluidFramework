@@ -2768,7 +2768,8 @@ describe("Runtime", () => {
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false,
 						),
-					(error: Error) => error.message === "Duplicate batch - The same batch was sequenced twice",
+					(error: Error) =>
+						error.message === "Duplicate batch - The same batch was sequenced twice",
 					"Expected DataCorruptionError for duplicate batch with explicit batchId",
 				);
 				logger.assertMatchAny(
