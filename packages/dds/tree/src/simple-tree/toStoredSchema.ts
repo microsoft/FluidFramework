@@ -37,9 +37,9 @@ import {
 	ExpectStored,
 	NodeKind,
 	SchemaUpgrade,
+	StoredFromViewSchemaGenerationOptions,
 	Unchanged,
 	type SimpleSchemaTransformationOptions,
-	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
@@ -71,74 +71,22 @@ const viewToStoredCache = new WeakMap<
 /**
  * Restrictive policy for generating stored schema from view schema.
  * @remarks
- * Excludes all staged schema upgrades.
- *
- * Use this when you want the most conservative stored schema for compatibility-sensitive
- * scenarios, or when staged schema upgrades should remain disabled.
- *
- * This is the default behavior when no staged upgrades are enabled.
- *
- * @privateRemarks
- * Internal call paths which default to restrictive behavior include schema initialization and
- * upgrade generation when callers do not opt into staged upgrades.
- *
+ * Excludes all staged schema members.
+ * Prefer using `StoredFromViewSchemaGenerationOptions.restrictive`.
  * @alpha
  */
 export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
-	{
-		includeStaged: () => false,
-		includeStagedOptional: () => false,
-	};
+	StoredFromViewSchemaGenerationOptions.restrictive;
 
 /**
  * Permissive policy for generating stored schema from view schema.
  * @remarks
  * Includes all staged schema upgrades.
- *
- * Use this for testing, validation, and rollout rehearsal scenarios where you want to exercise
- * future document shapes before enabling staged upgrades broadly.
- *
- * This policy does not add unknown optional fields, so it is not a true maximal superset
- * of every possible stored schema.
- *
- * @privateRemarks
- * This policy is used by unhydrated-schema generation.
- *
- * TODO: StoredFromViewSchemaGenerationOptions could be updated to allow injection of extra
- * optional fields. If added, this policy could potentially take an existing stored schema and
- * generate a valid superset for scenarios such as cloning hydrated content to unhydrated form.
- *
+ * Prefer using `StoredFromViewSchemaGenerationOptions.permissive`.
  * @alpha
  */
-export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
-	includeStaged: () => true,
-	includeStagedOptional: () => true,
-};
-
-/**
- * Creates options for {@link toStoredSchema} that include only the staged schema upgrades
- * listed in the application-provided collection.
- *
- * @remarks
- * The `SchemaUpgrade` values are used to decide which staged allowed types or staged optional
- * fields are included in generated stored schema.
- *
- * If `upgrades` is omitted or empty, no staged schema upgrades are enabled.
- */
-function storedSchemaGenerationOptionsForUpgrades(
-	upgrades?: Iterable<SchemaUpgrade>,
-): StoredFromViewSchemaGenerationOptions {
-	const enabledUpgrades = upgrades === undefined ? [] : [...upgrades];
-	if (enabledUpgrades.length === 0) {
-		return restrictiveStoredSchemaGenerationOptions;
-	}
-
-	const enabledUpgradeSet = new Set(enabledUpgrades);
-	return {
-		includeStaged: (upgrade) => enabledUpgradeSet.has(upgrade),
-		includeStagedOptional: (upgrade) => enabledUpgradeSet.has(upgrade),
-	};
-}
+export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
+	StoredFromViewSchemaGenerationOptions.permissive;
 
 function isStoredFromViewSchemaGenerationOptions(
 	upgradesOrOptions: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
@@ -159,14 +107,14 @@ export function resolveStoredSchemaGenerationOptions(
 	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
 ): StoredFromViewSchemaGenerationOptions {
 	if (upgradesOrOptions === undefined) {
-		return restrictiveStoredSchemaGenerationOptions;
+		return StoredFromViewSchemaGenerationOptions.restrictive;
 	}
 
 	if (isStoredFromViewSchemaGenerationOptions(upgradesOrOptions)) {
 		return upgradesOrOptions;
 	}
 
-	return storedSchemaGenerationOptionsForUpgrades(upgradesOrOptions);
+	return StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(...upgradesOrOptions);
 }
 
 /**
@@ -196,7 +144,7 @@ export function toInitialSchema(
  *
  * TODO: this should get additional options to enable support for unknown optional fields.
  */
-export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
+export const toUnhydratedSchema = StoredFromViewSchemaGenerationOptions.permissive;
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.

@@ -28,6 +28,90 @@ export interface StoredFromViewSchemaGenerationOptions {
 }
 
 /**
+ * Utilities for creating {@link StoredFromViewSchemaGenerationOptions}.
+ *
+ * @remarks
+ * Use the properties and methods on this object to obtain stored-schema generation options
+ * for different scenarios:
+ *
+ * - `StoredFromViewSchemaGenerationOptions.restrictive` — no staged upgrades (default)
+ *
+ * - `StoredFromViewSchemaGenerationOptions.permissive` — all staged upgrades enabled
+ *
+ * - `StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(...)` — only specific upgrades enabled
+ *
+ * @example
+ * ```typescript
+ * // Enable specific upgrades:
+ * const options = StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(myUpgrade);
+ *
+ * // Use restrictive (default, no staged upgrades):
+ * const options = StoredFromViewSchemaGenerationOptions.restrictive;
+ *
+ * // Use permissive (all staged upgrades, useful for testing):
+ * const options = StoredFromViewSchemaGenerationOptions.permissive;
+ * ```
+ *
+ * @alpha
+ */
+export const StoredFromViewSchemaGenerationOptions: {
+	/**
+	 * Restrictive policy — excludes all staged schema members.
+	 *
+	 * @remarks
+	 * Use this when you want the most conservative stored schema for compatibility-sensitive
+	 * scenarios, or when staged schema upgrades should remain disabled.
+	 *
+	 * This is the default behavior when no staged upgrades are enabled.
+	 */
+	readonly restrictive: StoredFromViewSchemaGenerationOptions;
+	/**
+	 * Permissive policy — includes all staged schema upgrades.
+	 *
+	 * @remarks
+	 * Use this for testing, validation, and rollout rehearsal scenarios where you want to exercise
+	 * future document shapes before enabling staged upgrades broadly.
+	 */
+	readonly permissive: StoredFromViewSchemaGenerationOptions;
+	/**
+	 * Creates options that include only the specified staged schema upgrades.
+	 *
+	 * @param upgrades - The staged schema upgrades to enable.
+	 * @returns Options that include only the specified upgrades.
+	 *
+	 * @remarks
+	 * If an empty set of upgrades is passed, the result is equivalent to
+	 * {@link (StoredFromViewSchemaGenerationOptions:variable).restrictive | restrictive}.
+	 */
+	enabledStagedUpgrades(
+		...upgrades: SchemaUpgrade[]
+	): StoredFromViewSchemaGenerationOptions;
+} = {
+	restrictive: {
+		includeStaged: () => false,
+		includeStagedOptional: () => false,
+	},
+
+	permissive: {
+		includeStaged: () => true,
+		includeStagedOptional: () => true,
+	},
+
+	enabledStagedUpgrades(
+		...upgrades: SchemaUpgrade[]
+	): StoredFromViewSchemaGenerationOptions {
+		if (upgrades.length === 0) {
+			return StoredFromViewSchemaGenerationOptions.restrictive;
+		}
+		const enabledUpgradeSet = new Set(upgrades);
+		return {
+			includeStaged: (upgrade) => enabledUpgradeSet.has(upgrade),
+			includeStagedOptional: (upgrade) => enabledUpgradeSet.has(upgrade),
+		};
+	},
+};
+
+/**
  * Marker type indicating that the input schema is already a stored schema.
  */
 export const ExpectStored = Symbol("ExpectStored");

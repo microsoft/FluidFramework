@@ -14,7 +14,6 @@ import {
 	type StoredFromViewSchemaGenerationOptions,
 	type TreeNodeSchema,
 } from "../core/index.js";
-import type { SchemaUpgrade } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
 import {
 	isArrayNodeSchema,
@@ -162,42 +161,31 @@ export interface ITreeViewConfiguration<
  * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
  * @alpha
  */
-export type ITreeViewConfigurationAlpha<
+export interface ITreeViewConfigurationAlpha<
 	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
-> = ITreeViewConfiguration<TSchema> &
-	(
-		| {
-				/**
-				 * Staged schema upgrades to enable for this view when calling `initialize` or `upgradeSchema`.
-				 * @remarks
-				 * These upgrades are fixed at view construction time and cannot be changed afterwards.
-				 *
-				 * Each item is a {@link SchemaUpgrade} value obtained from a staged schema factory API.
-				 *
-				 * When provided, staged schema upgrades are enabled.
-				 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions}.
-				 */
-				readonly enabledStagedUpgrades: Iterable<SchemaUpgrade>;
-		  }
-		| {
-				/**
-				 * Explicit policy for generating stored schema from the view schema.
-				 * @remarks
-				 * This policy is fixed at view construction time and cannot be changed afterwards.
-				 *
-				 * If provided, this policy is used directly for compatibility checks and for
-				 * `initialize` / `upgradeSchema` schema generation.
-				 *
-				 * This option is mutually exclusive with {@link ITreeViewConfigurationAlpha.enabledStagedUpgrades}.
-				 */
-				readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
-		  }
-
-		// Neither enabledStagedUpgrades nor storedSchemaGenerationOptions provided
-		// Staged schema members remain disabled and initialize/upgradeSchema
-		// generate the most restrictive stored schema compatible with the view schema.
-		| {}
-	);
+> extends ITreeViewConfiguration<TSchema> {
+	/**
+	 * Policy for generating stored schema from the view schema.
+	 *
+	 * @remarks
+	 * This policy is fixed at view construction time and cannot be changed afterwards.
+	 *
+	 * If provided, this policy is used directly for compatibility checks and for
+	 * `initialize` / `upgradeSchema` schema generation.
+	 *
+	 * If omitted or `undefined`, defaults to {@link StoredFromViewSchemaGenerationOptions.restrictive}
+	 * which does not enable any staged schema upgrades.
+	 *
+	 * @example Enabling specific staged upgrades
+	 * ```typescript
+	 * const config = new TreeViewConfigurationAlpha({
+	 *   schema: MySchema,
+	 *   storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(myUpgrade),
+	 * });
+	 * ```
+	 */
+	readonly storedSchemaGenerationOptions?: StoredFromViewSchemaGenerationOptions;
+}
 
 /**
  * Configuration for {@link ViewableTree.viewWith}.
@@ -307,15 +295,9 @@ export class TreeViewConfigurationAlpha<
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 
-		if ("enabledStagedUpgrades" in props) {
-			this.storedSchemaGenerationOptions = resolveStoredSchemaGenerationOptions(
-				props.enabledStagedUpgrades,
-			);
-		} else if ("storedSchemaGenerationOptions" in props) {
-			this.storedSchemaGenerationOptions = props.storedSchemaGenerationOptions;
-		} else {
-			this.storedSchemaGenerationOptions = resolveStoredSchemaGenerationOptions(undefined);
-		}
+		this.storedSchemaGenerationOptions =
+			props.storedSchemaGenerationOptions ??
+			resolveStoredSchemaGenerationOptions(undefined);
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.storedSchemaGenerationOptions);

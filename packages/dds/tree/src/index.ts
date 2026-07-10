@@ -333,7 +333,7 @@ export {
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
-	type StoredFromViewSchemaGenerationOptions,
+	StoredFromViewSchemaGenerationOptions,
 	restrictiveStoredSchemaGenerationOptions,
 	permissiveStoredSchemaGenerationOptions,
 	type ArrayPlaceAnchor,
