@@ -935,7 +935,7 @@ describe("transaction minimize post-processor", () => {
 	function beautifyScenarioName(scenarioName: string): string {
 		return scenarioName
 			.replaceAll("_", " ") // Replace underscores with spaces
-			.replaceAll(/([A-Z])([A-Z])/g, "$1,$2"); // Insert comma between uppercase letters
+			.replaceAll(/([A-Z])(?=[A-Z])/g, "$1,"); // Insert comma between uppercase letters
 	}
 
 	describe("produces the same observable result as not minimized", () => {
