@@ -1682,9 +1682,30 @@ export class Container
 					);
 				}
 
-				let targetReached = (): void => {};
+				let targetReached = false;
+				let targetReachedHandler: ((message: ISequencedDocumentMessage) => void) | undefined;
+				const markTargetReached = (): void => {
+					targetReached = true;
+					pauseContainer();
+					if (targetReachedHandler !== undefined) {
+						this.off("op", targetReachedHandler);
+					}
+				};
+				if (lastProcessedSequenceNumber === loadToSequenceNumber) {
+					markTargetReached();
+				}
 				const targetReachedP = new Promise<void>((resolve) => {
-					targetReached = resolve;
+					if (targetReached) {
+						resolve();
+						return;
+					}
+					targetReachedHandler = (message: ISequencedDocumentMessage): void => {
+						if (message.sequenceNumber >= loadToSequenceNumber) {
+							markTargetReached();
+							resolve();
+						}
+					};
+					this.on("op", targetReachedHandler);
 				});
 				opsBeforeReturnP = Promise.all([
 					this.attachDeltaManagerOpHandler(
@@ -1694,21 +1715,13 @@ export class Container
 						loadToSequenceNumber,
 					),
 					targetReachedP,
-				]).then(() => {});
-
-				if (lastProcessedSequenceNumber === loadToSequenceNumber) {
-					pauseContainer();
-					targetReached();
-				} else {
-					const targetReachedHandler = (message: ISequencedDocumentMessage): void => {
-						if (message.sequenceNumber >= loadToSequenceNumber) {
-							pauseContainer();
+				])
+					.then(() => {})
+					.finally(() => {
+						if (targetReachedHandler !== undefined) {
 							this.off("op", targetReachedHandler);
-							targetReached();
 						}
-					};
-					this.on("op", targetReachedHandler);
-				}
+					});
 				break;
 			}
 			case "cached":

@@ -38,6 +38,7 @@ import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	extractSafePropertiesFromMessage,
+	GenericError,
 	isFluidError,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
@@ -624,6 +625,15 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 				cacheOnly,
 				fetchToSequenceNumber === undefined ? undefined : fetchToSequenceNumber + 1,
 			);
+			if (
+				prefetchType === "sequenceNumber" &&
+				fetchToSequenceNumber !== undefined &&
+				this.lastQueuedSequenceNumber < fetchToSequenceNumber
+			) {
+				throw new GenericError(
+					"Cannot satisfy request to load the container at the specified sequence number. Requested sequence number is not available.",
+				);
+			}
 
 			// Keep going with fetching ops from storage once we have all cached ops in.
 			// But do not block load and make this request async / not blocking this api.

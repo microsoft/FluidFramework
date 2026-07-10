@@ -40,7 +40,7 @@ choose target T
 	-> stop when the document reaches T
 ```
 
-The result is a usable container whose state matches the requested point in history.
+The result is a paused, read-only historical-view container whose state matches the requested point in history.
 This is what this document means by materializing a point in time.
 
 ## Key terms
@@ -71,7 +71,7 @@ Replay means applying operations after the base snapshot until the container rea
 
 ### Materialize
 
-To materialize a point in time means to reconstruct an actual usable container state for that point.
+To materialize a point in time means to reconstruct an actual paused, read-only historical-view container state for that point.
 It is more than finding a snapshot; it may also require replaying operations after the snapshot.
 
 ## Conceptual flow
@@ -93,9 +93,10 @@ flowchart TD
 	L -->|Yes| N[Return base snapshot]
 	N --> O{Is the snapshot already at T?}
 	O -->|Yes| P[Pause and return container]
-	O -->|No, snapshot is before T| Q[Replay operations until T]
+	O -->|No, snapshot is before T| Q{Replay operations until T?}
 	O -->|No, snapshot is after T| R[Fail because Fluid cannot replay backward]
-	Q --> P
+	Q -->|Yes| P
+	Q -->|No| S[Fail because required ops are unavailable]
 ```
 
 ## What each layer is responsible for
@@ -147,14 +148,15 @@ flowchart TD
 		V[Container initializes from base snapshot]
 		W{opsBeforeReturn is sequenceNumber?}
 		X[Normal container load continues]
-		Y[Attach delta manager op handler with sequence-number prefetch]
-		Z[Install target-reached listener]
+		Y[Attach delta manager op handler with bounded sequence-number prefetch]
+		Z[Install target-reached listener before bounded replay]
 		AA{Base snapshot sequence}
 		AB[Pause inbound and outbound queues immediately]
 		AC[Throw: snapshot is newer than target]
 		AD[Fetch trailing ops through T]
 		AE[Process ops until deltaManager.lastSequenceNumber reaches T]
 		AF[Return paused historical container]
+		BA[Throw: requested sequence number is unavailable]
 	end
 
 	subgraph StorageBoundary[Storage boundary]
@@ -211,13 +213,14 @@ flowchart TD
 	T --> V
 	V --> W
 	W -->|No| X
-	W -->|Yes| Y
-	Y --> Z
-	Z --> AA
+	W -->|Yes| AA
 	AA -->|At T| AB
 	AA -->|After T| AC
-	AA -->|Before T| AD
-	AD --> AE
+	AA -->|Before T| Z
+	Z --> Y
+	Y --> AD
+	AD -->|Missing ops before T| BA
+	AD -->|Ops through T queued| AE
 	AE --> AB
 	AB --> AF
 	B -->|Probe availability| AG
@@ -284,21 +287,24 @@ For this flow, that decision belongs to the ODSP driver.
 ## Replay and pause
 
 `loadContainerToSequenceNumber` uses the internal `"sequenceNumber"` load mode in `Container.load` to replay to a target and then stop.
-`loadContainerPaused` is a separate internal helper that uses the same sequence-number headers and returns a paused container; it also forces readonly mode.
+`loadContainerPaused` is a separate internal helper that preserves the existing paused-load path: it loads with `deltaConnection: "none"`, installs its own listener, calls `connect()` when it needs trailing ops, and forces readonly mode.
 
-The sequence-number load mode works like this:
+The new sequence-number load mode works like this:
 
 1. Load the container without processing trailing operations yet.
-2. Install a listener so the container can detect when the target operation has been processed.
-3. Fetch and process trailing operations only up to the requested sequence number.
-4. Pause once the container reaches the requested sequence number.
-5. Return the paused historical container.
+2. Check the base snapshot sequence number. If it is already at the target, pause immediately; if it is newer than the target, fail.
+3. Install a listener so the container can detect when the target operation has been processed.
+4. Attach the delta manager op handler and fetch trailing operations only up to the requested sequence number.
+5. Fail if the bounded fetch cannot queue enough operations to reach the target.
+6. Pause once the container reaches the requested sequence number.
+7. Return the paused historical container.
 
 Important cases:
 
 - If the base snapshot is already at the target, Fluid pauses immediately.
 - If the base snapshot is before the target, Fluid replays forward.
 - If the base snapshot is after the target, Fluid fails because it cannot replay backward.
+- If bounded replay exhausts available trailing operations before reaching the target, Fluid fails clearly instead of waiting forever.
 
 ## ODSP behavior
 
@@ -321,7 +327,7 @@ ODSP historical snapshot selection works like this:
 If no candidate exists, ODSP fails clearly instead of returning latest.
 Returning latest would make the caller think the historical target was honored when it was not.
 
-ODSP only chooses the base snapshot in this step.
+ODSP only chooses the base snapshot during historical `getSnapshot`.
 It does not prove that all operations after the snapshot are still available.
 
 ODSP emits `HistoricalSnapshotSelection` telemetry for point-in-time loads.
@@ -347,7 +353,7 @@ ODSP found a base snapshot at or before the target and verified that the replay 
 
 ### Availability statuses
 
-Current or planned statuses include:
+Current statuses include:
 
 - `materializable`: a usable base snapshot was found and the required trailing operations are available.
 - `missingBaseVersion`: no usable base snapshot was found.
@@ -386,9 +392,10 @@ This section lists the main files and API names for contributors who need to wor
 ### Loader and container propagation
 
 - `packages/loader/container-loader/src/loader.ts` reads the target from request headers and requires the internal `opsBeforeReturn: "sequenceNumber"` load mode when `LoaderHeader.sequenceNumber` is present.
-- `packages/loader/container-loader/src/container.ts` carries the target on `IContainerLoadProps`, forwards it into snapshot fetch, and exposes the alpha `canMaterializePointInTime(container, target)` free function.
+- `packages/loader/container-loader/src/container.ts` carries the target on `IContainerLoadProps`, forwards it into snapshot fetch, implements the internal sequence-number replay/pause mode, and exposes the alpha `canMaterializePointInTime(container, target)` free function.
 - `packages/loader/container-loader/src/serializedStateManager.ts` passes the target into `getSnapshot` options when loading from storage.
-- `packages/loader/container-loader/src/loadPaused.ts` replays operations forward and pauses once the requested sequence number is reached.
+- `packages/loader/container-loader/src/deltaManager.ts` bounds sequence-number replay fetches and rejects if queued operations cannot reach the target.
+- `packages/loader/container-loader/src/loadPaused.ts` is the legacy/internal paused-load helper; it does not use the new sequence-number load mode.
 
 ### Storage and driver APIs
 
@@ -409,7 +416,8 @@ Tests should cover behavior the current implementation actually provides:
 - `loadContainerToSequenceNumber` forwards `loadToSequenceNumber` into `LoaderHeader.sequenceNumber`.
 - Existing request headers are preserved while target headers are added or overwritten by the dedicated historical-load props.
 - `SerializedStateManager.fetchSnapshot` passes `loadToSequenceNumber` into snapshot fetch options when loading from storage.
-- `loadContainerPaused` pauses when the requested sequence number is reached.
+- The legacy/internal `loadContainerPaused` helper keeps its existing connect-driven paused-load behavior.
+- `loadContainerToSequenceNumber` pauses at the requested sequence number and rejects clearly when trailing operations cannot reach the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
@@ -440,6 +448,7 @@ Reviewers should verify that:
 - `Loader.resolve` rejects malformed sequence-number requests and requires the sequence-number header to be paired with the internal sequence-number load mode.
 - The target is not dropped between helper props, headers, container load props, and alpha snapshot fetch options.
 - The returned historical container is paused at the requested sequence number and should be treated as a read-only historical view.
+- If trailing operations cannot reach the requested sequence number, the load rejects with a clear unavailable-target error rather than hanging.
 - Loader/container code does not try to validate ODSP-specific historical availability; base snapshot selection and availability probing stay behind the storage/driver boundary.
 - Point-in-time materialization probing uses the standalone alpha `IPointInTimeMaterializationStorageService` capability rather than extending `IDocumentStorageService`.
 - ODSP historical `getSnapshot` skips the latest snapshot cache and does not fall back to latest when no usable historical base snapshot exists.

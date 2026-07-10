@@ -56,14 +56,8 @@ export async function loadContainerPaused(
 			url: request.url,
 			headers: {
 				...request.headers,
-				...(loadToSequenceNumber === undefined
-					? {}
-					: { [LoaderHeader.sequenceNumber]: loadToSequenceNumber }),
 				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
-				[LoaderHeader.loadMode]: {
-					opsBeforeReturn: loadToSequenceNumber === undefined ? undefined : "sequenceNumber",
-					deltaConnection: "none",
-				},
+				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 			},
 		},
 	});
@@ -72,7 +66,7 @@ export async function loadContainerPaused(
 	container.forceReadonly?.(true);
 
 	const dm = container.deltaManager;
-	const lastProcessedSequenceNumber = dm.lastSequenceNumber;
+	const lastProcessedSequenceNumber = dm.initialSequenceNumber;
 
 	const pauseContainer = (): void => {
 		assert(
@@ -115,7 +109,11 @@ export async function loadContainerPaused(
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
 		opHandler = (): void => {
-			if (dm.lastSequenceNumber >= loadToSequenceNumber) {
+			// If there is a specified sequence number, keep processing until we reach it.
+			if (
+				loadToSequenceNumber !== undefined &&
+				dm.lastSequenceNumber >= loadToSequenceNumber
+			) {
 				// Pause op processing once we have processed the desired number of ops.
 				pauseContainer();
 				resolve();

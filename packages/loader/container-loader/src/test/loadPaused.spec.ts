@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import { stringToBuffer, type IProvideLayerCompatDetails } from "@fluid-internal/client-utils";
+import {
+	stringToBuffer,
+	TypedEventEmitter,
+	type IProvideLayerCompatDetails,
+} from "@fluid-internal/client-utils";
 import {
 	isIDeltaManagerFull,
 	type ICodeDetailsLoader,
@@ -16,17 +20,25 @@ import type { IRequest } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
+	type IDocumentDeltaConnection,
+	type IDocumentDeltaConnectionEvents,
+	type IDocumentMessage,
 	type IDocumentService,
 	type IDocumentServiceFactory,
 	type IDocumentStorageService,
+	type IClientConfiguration,
 	type IResolvedUrl,
+	type ISignalClient,
+	type ISignalMessage,
 	type ISequencedDocumentMessage,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
 	type ISnapshotTree,
+	type ITokenClaims,
 	type IStream,
 	type IStreamResult,
 	type IVersion,
+	type ConnectionMode,
 	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
@@ -121,6 +133,47 @@ function createMessage(sequenceNumber: number): ISequencedDocumentMessage {
 	};
 }
 
+class TestDeltaConnection
+	extends TypedEventEmitter<IDocumentDeltaConnectionEvents>
+	implements IDocumentDeltaConnection
+{
+	public readonly claims: ITokenClaims = {
+		documentId: resolvedUrl.id,
+		exp: Math.round(Date.now() / 1000) + 60 * 60,
+		iat: Math.round(Date.now() / 1000),
+		scopes: ["doc:read"],
+		tenantId: "tenantId",
+		user: { id: "paused-load-test-user" },
+		ver: "1.0",
+	};
+
+	public readonly mode: ConnectionMode = "read";
+	public readonly existing = true;
+	public readonly version = "";
+	public readonly initialSignals: ISignalMessage[] = [];
+	public readonly initialClients: ISignalClient[] = [];
+	public readonly serviceConfiguration: IClientConfiguration = {
+		blockSize: 64 * 1024,
+		maxMessageSize: 16 * 1024,
+	};
+	public disposed = false;
+
+	public constructor(
+		public readonly clientId: string,
+		public readonly initialMessages: ISequencedDocumentMessage[],
+	) {
+		super();
+	}
+
+	public submit(_messages: IDocumentMessage[]): void {}
+
+	public submitSignal(_content: string, _targetClientId?: string): void {}
+
+	public dispose(): void {
+		this.disposed = true;
+	}
+}
+
 function streamFromMessages(
 	messages: ISequencedDocumentMessage[],
 ): IStream<ISequencedDocumentMessage[]> {
@@ -166,9 +219,14 @@ function createCodeLoader(): ICodeDetailsLoader {
 function createLoaderProps(
 	snapshotSequenceNumber: number,
 	deltaMessages: ISequencedDocumentMessage[],
-): { loaderProps: ILoaderProps; fetchRanges: { from: number; to: number | undefined }[] } {
+): {
+	loaderProps: ILoaderProps;
+	fetchRanges: { from: number; to: number | undefined }[];
+	getDeltaStreamConnectionCount: () => number;
+} {
 	const snapshot = createSnapshot(snapshotSequenceNumber);
 	const fetchRanges: { from: number; to: number | undefined }[] = [];
+	let deltaStreamConnectionCount = 0;
 	const storage: IDocumentStorageService = {
 		policies: {},
 		createBlob: async () => ({ id: "blob" }),
@@ -199,7 +257,10 @@ function createLoaderProps(
 		policies: {},
 		resolvedUrl,
 		connectToDeltaStorage: async () => deltaStorage,
-		connectToDeltaStream: async () => new Promise(() => {}),
+		connectToDeltaStream: async () => {
+			deltaStreamConnectionCount++;
+			return new TestDeltaConnection("paused-load-client", deltaMessages);
+		},
 		connectToStorage: async () => storage,
 		dispose: () => {},
 		off: (): IDocumentService => service,
@@ -218,6 +279,7 @@ function createLoaderProps(
 
 	return {
 		fetchRanges,
+		getDeltaStreamConnectionCount: () => deltaStreamConnectionCount,
 		loaderProps: {
 			codeLoader: createCodeLoader(),
 			documentServiceFactory,
@@ -234,7 +296,7 @@ function createLoaderProps(
 
 describe("loadContainerPaused", () => {
 	it("replays forward from a historical snapshot and pauses at the target sequence number", async () => {
-		const { loaderProps, fetchRanges } = createLoaderProps(5, [
+		const { loaderProps, fetchRanges, getDeltaStreamConnectionCount } = createLoaderProps(5, [
 			createMessage(6),
 			createMessage(7),
 			createMessage(8),
@@ -243,19 +305,23 @@ describe("loadContainerPaused", () => {
 		const container = await loadContainerPaused(loaderProps, request, 7);
 
 		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
-		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);
+		assert.deepStrictEqual(fetchRanges, []);
+		assert.strictEqual(getDeltaStreamConnectionCount(), 1);
 		assert(isIDeltaManagerFull(container.deltaManager));
 		assert.strictEqual(container.deltaManager.inbound.paused, true);
 		assert.strictEqual(container.deltaManager.outbound.paused, true);
 	});
 
 	it("pauses immediately when the loaded snapshot is already at the target sequence number", async () => {
-		const { loaderProps, fetchRanges } = createLoaderProps(7, [createMessage(8)]);
+		const { loaderProps, fetchRanges, getDeltaStreamConnectionCount } = createLoaderProps(7, [
+			createMessage(8),
+		]);
 
 		const container = await loadContainerPaused(loaderProps, request, 7);
 
 		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
 		assert.deepStrictEqual(fetchRanges, []);
+		assert.strictEqual(getDeltaStreamConnectionCount(), 0);
 		assert(isIDeltaManagerFull(container.deltaManager));
 		assert.strictEqual(container.deltaManager.inbound.paused, true);
 		assert.strictEqual(container.deltaManager.outbound.paused, true);
@@ -291,5 +357,20 @@ describe("loadContainerToSequenceNumber", () => {
 		assert(isIDeltaManagerFull(container.deltaManager));
 		assert.strictEqual(container.deltaManager.inbound.paused, true);
 		assert.strictEqual(container.deltaManager.outbound.paused, true);
+	});
+
+	it("rejects when delta storage does not have enough ops to reach the target sequence number", async () => {
+		const { loaderProps, fetchRanges } = createLoaderProps(5, [createMessage(6)]);
+		const loadProps: ILoadContainerToSequenceNumberProps = {
+			...loaderProps,
+			request,
+			loadToSequenceNumber: 7,
+		};
+
+		await assert.rejects(
+			loadContainerToSequenceNumber(loadProps),
+			/Requested sequence number is not available/u,
+		);
+		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);
 	});
 });
