@@ -25,6 +25,7 @@ import {
 	getRepoManagerFromWriteAPI,
 	getRepoManagerParamsFromRequest,
 	GitWholeSummaryManager,
+	isInvalidRepoPathComponent,
 	type IExternalWriterConfig,
 	type IFileSystemManager,
 	type IFileSystemManagerFactories,
@@ -42,6 +43,11 @@ import {
 } from "../utils";
 
 function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
+	// Prevent path traversal: `documentId` originates from the Storage-Routing-Id header
+	// and is concatenated directly into a filesystem path below.
+	if (!documentId || isInvalidRepoPathComponent(documentId)) {
+		throw new NetworkError(400, `Invalid document id: ${documentId}`);
+	}
 	return `${repoManager.path}/${documentId}`;
 }
 
