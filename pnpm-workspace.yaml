@@ -56,6 +56,18 @@ minimumReleaseAgeExclude: [
 ]
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  "@babel/core@>=7 <8": ^7.29.6
+  brace-expansion@>=5 <6: ^5.0.6
+  http-proxy-middleware@>=2 <3: ^2.0.10
+  ip-address@>=9 <10: ^10.1.1
+  keyv@>=4 <5: ^5.5.3
+  launch-editor@>=2 <3: ^2.14.1
+  on-headers@>=1 <2: ^1.1.0
+  postcss@>=8 <9: ^8.5.10
+  ts-deepmerge@>=7 <8: ^8.0.0
+  uuid@>=7 <12: ^11.1.1
+
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
@@ -135,7 +147,7 @@ overrides:
   picomatch@>=4 <5: ^4.0.4
 
   # Resolve a known vulnerability in older versions.
-  qs: ^6.15.0
+  qs: ^6.15.2
 
   # Resolve GHSA-5c6j-r48x-rmvq.
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
