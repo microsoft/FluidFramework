@@ -30,5 +30,5 @@ The `MinDocumentRuntimeVersion` type is also exported as the preferred name for 
 Additional compatibility-related APIs now surface the preferred naming as well:
 
 - `CodecWriteOptionsBeta` now supports `minDocumentRuntimeVersion` and keeps `minVersionForCollab` as a deprecated compatibility alias.
-- Runtime/datastore context surfaces now expose `minDocumentRuntimeVersion` while keeping `minVersionForCollab` as a deprecated compatibility alias where needed.
+- Runtime/Datastore context surfaces now expose `minDocumentRuntimeVersion` while keeping `minVersionForCollab` as a deprecated compatibility alias where needed.
 - Service client method parameter names now use `minDocumentRuntimeVersion`.
