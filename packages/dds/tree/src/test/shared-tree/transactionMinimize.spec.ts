@@ -73,6 +73,7 @@ const RootStringArray = sf.array("RootArray", sf.string);
 class Box extends sf.object("Box", {
 	value: sf.optional(sf.string),
 }) {}
+const OptionalBox = sf.optional(Box);
 const BoxArray = sf.array("BoxArray", Box);
 
 // A second schema factory is used to avoid collisions with the first factory's
@@ -115,7 +116,7 @@ interface TransactionScenario<
 	/** The schema the view is created with before the transaction runs. */
 	readonly schema: TSchema;
 	/** The content the view is initialized with before the transaction runs. */
-	readonly initialContent: InsertableField<TSchema>;
+	readonly initialContent: InsertableField<TSchema> | (() => InsertableField<TSchema>);
 	/** Applies the scenario's edits to the strongly-typed root node inside the transaction. */
 	readonly apply: (
 		root: ReadableField<TSchema>,
@@ -125,6 +126,7 @@ interface TransactionScenario<
 }
 
 type StringArrayScenario = TransactionScenario<typeof RootStringArray>;
+type BoxScenario = TransactionScenario<typeof OptionalBox>;
 type BoxArrayScenario = TransactionScenario<typeof BoxArray>;
 
 /**
@@ -147,21 +149,27 @@ function getTreeAndView<const TSchema extends ImplicitFieldSchema>(
 	return { tree, view, provider };
 }
 
+function isGeneratorFunction<T>(value: T | (() => T)): value is () => T {
+	return typeof value === "function";
+}
+
 /** Creates the tree and view for a scenario, initialized with the scenario's initial content. */
-function createScenarioView<TSchema extends ImplicitFieldSchema>(
-	scenario: TransactionScenario<TSchema>,
-): {
+function createScenarioView<TSchema extends ImplicitFieldSchema>({
+	schema,
+	initialContent,
+}: TransactionScenario<TSchema>): {
 	tree: ViewableTreeAlpha;
 	view: SchematizingSimpleTreeView<TSchema>;
 	provider: TestTreeProviderLite;
 } {
 	const treeAndView = getTreeAndView(
 		new TreeViewConfiguration({
-			schema: scenario.schema,
+			schema,
 			enableSchemaValidation: true,
 		}),
 	);
-	treeAndView.view.initialize(scenario.initialContent);
+	const data = isGeneratorFunction(initialContent) ? initialContent() : initialContent;
+	treeAndView.view.initialize(data);
 	return treeAndView;
 }
 
@@ -599,41 +607,45 @@ const arrayScenarios = {
 } as const satisfies Record<string, StringArrayScenario>;
 // #endregion
 
-// #region Object (Array of Boxes) scenarios
+// #region Object (optional Box) scenarios
 const objectScenarios = {
 	/**
-	 * Starts from a single {@link Box} with no value, then sets its `value` field twice.
+	 * Starts from a {@link Box} with no value, then sets its `value` field twice.
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial      -\> `[Box: undefined]`
-	 * 1. set to "x☠️" -\> `[Box: "x☠️"]`
-	 * 2. set to "y❤️" -\> `[Box: "y❤️"]`
+	 * 0. initial      -\> `Box: undefined`
+	 * 1. set to "x☠️" -\> `Box: "x☠️"`
+	 * 2. set to "y❤️" -\> `Box: "y❤️"`
 	 */
 	Box_value_set_twice: {
-		schema: BoxArray,
-		initialContent: [{ value: undefined }],
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({}),
 		apply: (root) => {
-			root[0].value = "x☠️";
-			root[0].value = "y❤️";
+			assert.ok(root);
+			root.value = "x☠️";
+			root.value = "y❤️";
 		},
 	} as const,
 
 	/**
-	 * Starts from a single {@link Box} with no value, sets its `value` field, then removes the box.
+	 * Starts from a {@link Box} with no value, sets its `value` field, then removes the box.
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial      -\> `[Box: undefined]`
-	 * 1. set to "x☠️" -\> `[Box: "x☠️"]`
-	 * 2. remove box   -\> `[]`
+	 * 0. initial      -\> `Box: undefined`
+	 * 1. set to "x☠️" -\> `Box: "x☠️"`
+	 * 2. remove box   -\> `undefined`
 	 */
 	Box_value_set_then_Box_removed: {
-		schema: BoxArray,
-		initialContent: [{ value: undefined }],
-		apply: (root) => {
-			root[0].value = "x☠️";
-			root.removeAt(0);
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({}),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root);
+			view.root.value = "x☠️";
+			view.root = undefined;
 		},
 	} as const,
 
@@ -642,20 +654,20 @@ const objectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                 -\> `[]`
-	 * 1. insert Box "x☠️"       -\> `[Box: "x☠️"]`
-	 * 2. set Box value to "y❤️" -\> `[Box: "y❤️"]`
+	 * 0. initial                 -\> `undefined`
+	 * 1. insert Box "x☠️"       -\> `Box: "x☠️"`
+	 * 2. set Box value to "y❤️" -\> `Box: "y❤️"`
 	 */
 	add_Box_then_replace_value: {
-		schema: BoxArray,
-		initialContent: [],
-		apply: (root) => {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
 			const box = new Box({ value: "x☠️" });
-			root.insertAtEnd(box);
+			view.root = box;
 			box.value = "y❤️";
 		},
 	} as const,
-} as const satisfies Record<string, BoxArrayScenario>;
+} as const satisfies Record<string, BoxScenario>;
 // #endregion
 
 // #region Schema upgrade scenarios
@@ -910,15 +922,15 @@ describe("transaction minimize post-processor", () => {
 
 		it("reflects only the final value of a field set multiple times", () => {
 			const { view, stringifiedChange } = runScenario(objectScenarios.Box_value_set_twice);
-			assert.equal(view.root[0].value, "y❤️");
+			assert.equal(view.root?.value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
-		it("reflects only the final empty array when only item's value of a field is set and then the item is removed", () => {
+		it("reflects only the final undefined root when only item's value of a field is set and then the item is removed", () => {
 			const { view, stringifiedChange } = runScenario(
 				objectScenarios.Box_value_set_then_Box_removed,
 			);
-			assert.equal(view.root.length, 0);
+			assert.equal(view.root, undefined);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
@@ -926,7 +938,7 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				objectScenarios.add_Box_then_replace_value,
 			);
-			assert.equal(view.root[0].value, "y❤️");
+			assert.equal(view.root?.value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
@@ -1033,7 +1045,7 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario({
 				schema: BoxArray,
 				initialContent: [new Box({ value: "A❤️" })],
-				apply: (root, tree, view1) => {
+				apply: (_root, tree, view1) => {
 					// Force dispose view to permit upgrade
 					view1.dispose();
 
@@ -1179,7 +1191,7 @@ describe("transaction minimize post-processor", () => {
 			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
-		it("carries no build when only item's value of a field is set and then the item is removed", () => {
+		it("carries no build when root's value of a field is set and then the root is removed", () => {
 			const { view, stringifiedChange } = runScenario(
 				objectScenarios.Box_value_set_then_Box_removed,
 			);
