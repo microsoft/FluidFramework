@@ -37,7 +37,7 @@ function createAzureClient(
 			},
 			props.scopes,
 		),
-		endpoint: "http://localhost:7070",
+		endpoint: "http://localhost:7073",
 		type: "local",
 	};
 	return new AzureClient({

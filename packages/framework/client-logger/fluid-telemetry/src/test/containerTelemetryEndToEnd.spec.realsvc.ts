@@ -37,7 +37,7 @@ describe("container telemetry E2E", () => {
 	}
 
 	before(() => {
-		tinyliciousClient = new TinyliciousClient({ connection: { port: 7070 } });
+		tinyliciousClient = new TinyliciousClient({ connection: { port: 7074 } });
 		schema = {
 			initialObjects: {
 				sharedTree1: SharedTree,
