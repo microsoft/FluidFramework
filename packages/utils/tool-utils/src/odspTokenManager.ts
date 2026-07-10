@@ -12,6 +12,7 @@ import { Mutex } from "async-mutex";
 import { debug } from "./debug.js";
 import type { IAsyncCache, IResources } from "./fluidToolRc.js";
 import { loadRC, lockRC, saveRC } from "./fluidToolRc.js";
+import { redactTokens } from "./redactTokens.js";
 
 // TODO: Add documentation
 // eslint-disable-next-line jsdoc/require-description
@@ -191,7 +192,8 @@ export class OdspTokenManager {
 						tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
 						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
-						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
+						const message = (error as Error)?.message ?? "unknown";
+						debug(`${cacheKeyToString(cacheKey)}: Error refreshing token: ${message}`);
 					}
 				} else {
 					tokens = tokensFromCache;
@@ -208,8 +210,7 @@ export class OdspTokenManager {
 
 		if (!isValidAndNotExpiredToken(tokens)) {
 			throw new Error(
-				`Acquired invalid tokens for ${cacheKeyToString(cacheKey)}. ` +
-					`Acquired token JSON: ${JSON.stringify(tokens)}`,
+				`Acquired invalid tokens for ${cacheKeyToString(cacheKey)}. ${redactTokens(tokens)}`,
 			);
 		}
 
