@@ -62,6 +62,7 @@ import {
 } from "./fetchSnapshot.js";
 import { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 import type { IOdspCache, IPrefetchSnapshotContents } from "./odspCache.js";
+import { OdspDeltaStorageService } from "./odspDeltaStorageService.js";
 import type { FlushResult } from "./odspDocumentDeltaConnection.js";
 import { OdspDocumentStorageServiceBase } from "./odspDocumentStorageServiceBase.js";
 import type { OdspSummaryUploadManager } from "./odspSummaryUploadManager.js";
@@ -353,14 +354,27 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				target.sequenceNumber,
 				target.scenarioName,
 			);
-			return candidate === undefined
+			if (candidate === undefined) {
+				return {
+					status: "missingBaseVersion",
+					message: "No recent ODSP snapshot exists at or before the requested point.",
+				};
+			}
+
+			const opsAvailable = await this.areReplayOpsAvailable(
+				candidate.sequenceNumber,
+				target.sequenceNumber,
+				target.scenarioName,
+			);
+			return opsAvailable
 				? {
-						status: "missingBaseVersion",
-						message: "No recent ODSP snapshot exists at or before the requested point.",
-					}
-				: {
 						status: "materializable",
 						baseSnapshotSequenceNumber: candidate.sequenceNumber,
+					}
+				: {
+						status: "missingOps",
+						baseSnapshotSequenceNumber: candidate.sequenceNumber,
+						message: "The base snapshot exists, but required replay ops are unavailable.",
 					};
 		} catch (error: unknown) {
 			const errorType = (error as Partial<{ errorType: string }>).errorType;
@@ -379,6 +393,47 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				message: error instanceof Error ? error.message : undefined,
 			};
 		}
+	}
+
+	private async areReplayOpsAvailable(
+		baseSnapshotSequenceNumber: number,
+		targetSequenceNumber: number,
+		scenarioName: string | undefined,
+	): Promise<boolean> {
+		if (baseSnapshotSequenceNumber >= targetSequenceNumber) {
+			return true;
+		}
+
+		const service = new OdspDeltaStorageService(
+			this.odspResolvedUrl.endpoints.deltaStorageUrl,
+			this.getAuthHeader,
+			this.epochTracker,
+			this.logger,
+		);
+		const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
+		let from = baseSnapshotSequenceNumber + 1;
+		while (from <= targetSequenceNumber) {
+			const to = Math.min(from + batchSize, targetSequenceNumber + 1);
+			const { messages } = await service.get(
+				from,
+				to,
+				{ targetSequenceNumber, baseSnapshotSequenceNumber },
+				scenarioName,
+			);
+			if (messages.length !== to - from) {
+				return false;
+			}
+
+			for (const [index, message] of messages.entries()) {
+				if (message.sequenceNumber !== from + index) {
+					return false;
+				}
+			}
+
+			from = to;
+		}
+
+		return true;
 	}
 
 	private async fetchHistoricalSnapshot(

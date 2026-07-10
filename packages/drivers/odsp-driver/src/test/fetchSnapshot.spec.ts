@@ -48,6 +48,7 @@ import {
 import {
 	createResponse,
 	mockFetchMultiple,
+	mockFetchOk,
 	notFound,
 	okResponse,
 	type MockResponse,
@@ -407,11 +408,32 @@ describe("Tests1 for snapshot fetch", () => {
 	it("canMaterializePointInTime() returns materializable when ODSP has a usable base snapshot", async () => {
 		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
 		try {
-			const availability = await service.canMaterializePointInTime({ sequenceNumber: 25 });
+			const availability = await mockFetchOk(
+				async () => service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				createDeltaStorageResponse(21, 25),
+			);
 
 			assert.deepStrictEqual(availability, {
 				status: "materializable",
 				baseSnapshotSequenceNumber: 20,
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports missing ops when replay range is incomplete", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await mockFetchOk(
+				async () => service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				createDeltaStorageResponse(21, 24),
+			);
+
+			assert.deepStrictEqual(availability, {
+				status: "missingOps",
+				baseSnapshotSequenceNumber: 20,
+				message: "The base snapshot exists, but required replay ops are unavailable.",
 			});
 		} finally {
 			restore();
@@ -956,6 +978,14 @@ function createHistoricalSnapshotTree(sequenceNumber: number): ISnapshotTree {
 				trees: {},
 			},
 		},
+	};
+}
+
+function createDeltaStorageResponse(from: number, to: number): { value: object[] } {
+	return {
+		value: Array.from({ length: to - from + 1 }, (_, index) => ({
+			sequenceNumber: from + index,
+		})),
 	};
 }
 

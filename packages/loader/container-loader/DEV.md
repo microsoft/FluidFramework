@@ -309,32 +309,25 @@ That is what the point-in-time availability API is for.
 The availability check answers questions like:
 
 - Did ODSP find a base snapshot?
+- Are the operations needed to replay from that snapshot to the target available?
 - Is the document or version history inaccessible?
 - Is the result unknown for some other reason?
 
 For ODSP today, `materializable` means:
 
 ```text
-ODSP found a base snapshot at or before the target.
+ODSP found a base snapshot at or before the target and verified that the replay ops are available.
 ```
-
-It does not yet mean:
-
-```text
-ODSP proved that every operation needed for replay is still available.
-```
-
-That later case is represented by the reserved `missingOps` status.
 
 ### Availability statuses
 
 Current or planned statuses include:
 
-- `materializable`: a usable base snapshot was found.
+- `materializable`: a usable base snapshot was found and the required trailing operations are available.
 - `missingBaseVersion`: no usable base snapshot was found.
 - `permissionOrAccessDenied`: the document or version history could not be accessed.
 - `unknownUnavailable`: availability could not be determined.
-- `missingOps`: reserved for the future case where a base snapshot exists but required trailing operations are missing.
+- `missingOps`: a base snapshot exists but required trailing operations are missing.
 
 ## What this implementation guarantees
 
@@ -392,8 +385,9 @@ Tests should cover behavior the current implementation actually provides:
 - `loadContainerPaused` pauses when the requested sequence number is reached.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
-- ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists.
+- ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
 - ODSP `canMaterializePointInTime` reports `missingBaseVersion` when recent versions contain no usable base snapshot.
+- ODSP `canMaterializePointInTime` reports `missingOps` when a usable base snapshot exists but required replay ops are missing.
 - ODSP `canMaterializePointInTime` reports `permissionOrAccessDenied` for access-related ODSP failures.
 
 Tests should avoid claiming that this flow works for non-ODSP drivers.
