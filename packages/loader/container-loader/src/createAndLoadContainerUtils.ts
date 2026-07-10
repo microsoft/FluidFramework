@@ -8,7 +8,6 @@ import type {
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
 	IContainerPolicies,
-	ILoaderHeaderAlpha,
 } from "@fluidframework/container-definitions/internal";
 import { LoaderHeader } from "@fluidframework/container-definitions/internal";
 import type {
@@ -63,8 +62,6 @@ import type {
 	OnDemandSummaryResults,
 	SummarizeOnDemandResults,
 } from "./summarizerResultTypes.js";
-
-const loadToBatchIdHeader = "fluid-batch-id" satisfies keyof ILoaderHeaderAlpha;
 import {
 	getAttachedContainerStateFromSerializedContainer,
 	getDocumentAttributes,
@@ -233,11 +230,6 @@ export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainer
 	 * Sequence number the loader should materialize before returning the container.
 	 */
 	readonly loadToSequenceNumber?: number | undefined;
-
-	/**
-	 * Batch ID expected at the target sequence number, when batch validation is required.
-	 */
-	readonly loadToBatchId?: string | undefined;
 }
 
 /**
@@ -323,9 +315,6 @@ export async function loadExistingContainer(
 	const headers = { ...loadExistingContainerProps.request.headers };
 	if (alphaProps.loadToSequenceNumber !== undefined) {
 		headers[LoaderHeader.sequenceNumber] = alphaProps.loadToSequenceNumber;
-	}
-	if (alphaProps.loadToBatchId !== undefined) {
-		headers[loadToBatchIdHeader] = alphaProps.loadToBatchId;
 	}
 	const request: IRequest = {
 		...loadExistingContainerProps.request,

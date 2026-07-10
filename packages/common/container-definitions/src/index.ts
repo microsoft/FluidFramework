@@ -38,7 +38,6 @@ export type {
 	IFluidModuleWithDetails,
 	IHostLoader,
 	ILoader,
-	ILoaderHeaderAlpha,
 	ILoaderHeader,
 	ILoaderOptions,
 	IProvideLoader,

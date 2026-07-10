@@ -17,6 +17,7 @@ import {
 	type IResolvedUrl,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
+	type ISnapshotFetchOptionsAlpha,
 	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
@@ -328,19 +329,40 @@ describe("serializedStateManager", () => {
 				() => true,
 			);
 
-			await serializedStateManager.fetchSnapshot(
-				"snapshotVersion",
-				undefined,
-				123,
-				"client_0_[42]",
-			);
+			await serializedStateManager.fetchSnapshot("snapshotVersion", undefined, 123);
 
 			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 1);
 			assert.deepStrictEqual(storageAdapter.snapshotFetchOptions[0], {
 				versionId: "snapshotVersion",
 				loadToSequenceNumber: 123,
-				loadToBatchId: "client_0_[42]",
 			});
+		});
+
+		it("does not pass historical load target to storage when loading from pending local state", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => true,
+			);
+
+			const { snapshot, attributes } = await serializedStateManager.fetchSnapshot(
+				undefined,
+				pendingLocalState,
+				123,
+			);
+
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 1);
+			assert.strictEqual(
+				(storageAdapter.snapshotFetchOptions[0] as ISnapshotFetchOptionsAlpha | undefined)
+					?.loadToSequenceNumber,
+				undefined,
+			);
+			assert.strictEqual(attributes.sequenceNumber, 0);
+			assert.strictEqual(getSnapshotTree(snapshot)?.id, snapshotTree.id);
 		});
 
 		it("get pending state again before getting latest snapshot", async () => {

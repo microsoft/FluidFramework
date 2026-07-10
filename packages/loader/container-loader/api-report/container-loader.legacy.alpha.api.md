@@ -130,7 +130,6 @@ export interface ILoadExistingContainerProps extends IContainerHostProps, IConta
 
 // @alpha @legacy
 export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainerProps {
-    readonly loadToBatchId?: string | undefined;
     readonly loadToSequenceNumber?: number | undefined;
 }
 

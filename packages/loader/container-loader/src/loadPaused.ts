@@ -10,60 +10,12 @@ import {
 } from "@fluidframework/container-definitions/internal";
 import type { IRequest, IErrorBase } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import { GenericError } from "@fluidframework/telemetry-utils/internal";
 
-import {
-	loadExistingContainer,
-	type ILoadExistingContainerPropsAlpha,
-} from "./createAndLoadContainerUtils.js";
+import { loadExistingContainer } from "./createAndLoadContainerUtils.js";
 import type { ILoaderProps } from "./loader.js";
 
 /* eslint-disable jsdoc/check-indentation */
-
-type LoadPauseTargetEvaluation = "continue" | "pause" | "batchMismatch";
-
-/**
- * Mutable state for tracking whether the requested batch ID has been seen while replaying toward a paused-load target.
- * @internal
- */
-export interface ILoadPauseTargetState {
-	matchingBatchIdObserved: boolean;
-}
-
-function getBatchId(message: ISequencedDocumentMessage): string | undefined {
-	const { metadata } = message;
-	return typeof metadata === "object" &&
-		metadata !== null &&
-		"batchId" in metadata &&
-		typeof metadata.batchId === "string"
-		? metadata.batchId
-		: undefined;
-}
-
-/**
- * Evaluates whether paused loading has reached the requested target after processing an op.
- * @internal
- */
-export function evaluateLoadPauseTarget(
-	message: ISequencedDocumentMessage,
-	lastSequenceNumber: number,
-	loadToSequenceNumber: number,
-	loadToBatchId: string | undefined,
-	state: ILoadPauseTargetState,
-): LoadPauseTargetEvaluation {
-	if (loadToBatchId !== undefined && getBatchId(message) === loadToBatchId) {
-		state.matchingBatchIdObserved = true;
-	}
-
-	if (lastSequenceNumber < loadToSequenceNumber) {
-		return "continue";
-	}
-
-	return loadToBatchId === undefined || state.matchingBatchIdObserved
-		? "pause"
-		: "batchMismatch";
-}
 
 /**
  * Loads container and leaves it in a state where it does not process any ops.
@@ -87,7 +39,6 @@ export function evaluateLoadPauseTarget(
  * @param loaderProps - The loader props to use to load the container.
  * @param request - request identifying container instance / load parameters. LoaderHeader.loadMode headers are ignored (see above)
  * @param loadToSequenceNumber - optional sequence number. If provided, ops are processed up to this sequence number.
- * @param loadToBatchId - optional batch ID. If provided, the matching batch metadata must be observed before pausing at loadToSequenceNumber.
  * @param signal - optional abort signal that can be used to cancel waiting for the ops.
  * @returns IContainer instance
  *
@@ -97,34 +48,22 @@ export async function loadContainerPaused(
 	loaderProps: ILoaderProps,
 	request: IRequest,
 	loadToSequenceNumber?: number,
-	loadToBatchIdOrSignal?: string | AbortSignal,
-	maybeSignal?: AbortSignal,
+	signal?: AbortSignal,
 ): Promise<IContainer> {
-	const loadToBatchId =
-		typeof loadToBatchIdOrSignal === "string" ? loadToBatchIdOrSignal : undefined;
-	const signal =
-		typeof loadToBatchIdOrSignal === "string" ? maybeSignal : loadToBatchIdOrSignal;
-
-	if (loadToBatchId !== undefined && loadToSequenceNumber === undefined) {
-		throw new GenericError(
-			"Cannot satisfy request to pause the container at a batch ID without a sequence number.",
-		);
-	}
-
-	const loadProps: ILoadExistingContainerPropsAlpha = {
+	const container = await loadExistingContainer({
 		...loaderProps,
-		loadToSequenceNumber,
-		loadToBatchId,
 		request: {
 			url: request.url,
 			headers: {
 				...request.headers,
+				...(loadToSequenceNumber === undefined
+					? {}
+					: { [LoaderHeader.sequenceNumber]: loadToSequenceNumber }),
 				// ensure we do not process any ops, such that we can examine container before ops starts to flow.
 				[LoaderHeader.loadMode]: { opsBeforeReturn: undefined, deltaConnection: "none" },
 			},
 		},
-	};
-	const container = await loadExistingContainer(loadProps);
+	});
 
 	// Force readonly mode - this will ensure we don't receive an error for the lack of join op
 	container.forceReadonly?.(true);
@@ -146,19 +85,11 @@ export async function loadContainerPaused(
 	// Happy path - we are already there.
 	if (
 		loadToSequenceNumber === undefined ||
-		(lastProcessedSequenceNumber === loadToSequenceNumber && loadToBatchId === undefined)
+		lastProcessedSequenceNumber === loadToSequenceNumber
 	) {
 		// If we have already reached the desired sequence number, call pauseContainer() to pause immediately.
 		pauseContainer();
 		return container;
-	}
-
-	if (lastProcessedSequenceNumber === loadToSequenceNumber && loadToBatchId !== undefined) {
-		const error = new GenericError(
-			"Cannot satisfy request to pause the container at the specified batch ID. Most recent snapshot is already at the specified sequence number, so batch metadata cannot be observed during replay.",
-		);
-		container.close(error);
-		throw error;
 	}
 
 	// If we are trying to pause at a specific sequence number, ensure the latest snapshot is not newer than the desired sequence number.
@@ -170,10 +101,9 @@ export async function loadContainerPaused(
 		throw error;
 	}
 
-	let opHandler: (message: ISequencedDocumentMessage) => void;
+	let opHandler: () => void;
 	let onAbort: () => void;
 	let onClose: (error?: IErrorBase) => void;
-	const targetState: ILoadPauseTargetState = { matchingBatchIdObserved: false };
 
 	const promise = new Promise<void>((resolve, reject) => {
 		onAbort = (): void => reject(new GenericError("Canceled due to cancellation request."));
@@ -181,21 +111,8 @@ export async function loadContainerPaused(
 		onClose = (error?: IErrorBase): void => reject(error);
 
 		// We need to setup a listener to stop op processing once we reach the desired sequence number (if specified).
-		opHandler = (message: ISequencedDocumentMessage): void => {
-			const evaluation = evaluateLoadPauseTarget(
-				message,
-				dm.lastSequenceNumber,
-				loadToSequenceNumber,
-				loadToBatchId,
-				targetState,
-			);
-			if (evaluation === "batchMismatch") {
-				reject(
-					new GenericError(
-						"Cannot satisfy request to pause the container at the specified batch ID. Matching batch metadata was not observed before the specified sequence number.",
-					),
-				);
-			} else if (evaluation === "pause") {
+		opHandler = (): void => {
+			if (dm.lastSequenceNumber >= loadToSequenceNumber) {
 				// Pause op processing once we have processed the desired number of ops.
 				pauseContainer();
 				resolve();

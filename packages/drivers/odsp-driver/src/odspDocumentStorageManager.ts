@@ -307,7 +307,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 	private async findHistoricalSnapshotCandidate(
 		targetSequenceNumber: number,
-		batchId: string | undefined,
 		scenarioName: string | undefined,
 	): Promise<HistoricalSnapshotCandidate | undefined> {
 		const versions = await this.getVersions(
@@ -317,8 +316,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			scenarioName,
 			FetchSource.noCache,
 		);
-		const requireReplayPastBatch = batchId !== undefined;
-
 		for (const version of versions) {
 			const snapshotTree = await this.getSnapshotTree(version, scenarioName);
 			if (snapshotTree === null) {
@@ -326,10 +323,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			}
 
 			const sequenceNumber = await this.getSnapshotSequenceNumber(snapshotTree);
-			const satisfiesTarget = requireReplayPastBatch
-				? sequenceNumber < targetSequenceNumber
-				: sequenceNumber <= targetSequenceNumber;
-			if (satisfiesTarget) {
+			if (sequenceNumber <= targetSequenceNumber) {
 				return { sequenceNumber, snapshotTree };
 			}
 		}
@@ -343,7 +337,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		try {
 			const candidate = await this.findHistoricalSnapshotCandidate(
 				target.sequenceNumber,
-				target.batchId,
 				target.scenarioName,
 			);
 			return candidate === undefined
@@ -380,7 +373,6 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		const targetSequenceNumber = snapshotFetchOptions.loadToSequenceNumber;
 		const candidate = await this.findHistoricalSnapshotCandidate(
 			targetSequenceNumber,
-			snapshotFetchOptions.loadToBatchId,
 			snapshotFetchOptions.scenarioName,
 		);
 

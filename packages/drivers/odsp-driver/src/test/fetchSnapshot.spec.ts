@@ -356,17 +356,23 @@ describe("Tests1 for snapshot fetch", () => {
 		}
 	});
 
-	it("GetSnapshot() with historical target and batch ID selects a snapshot strictly before the target", async () => {
+	it("GetSnapshot() with historical target fails when ODSP has no usable base snapshot", async () => {
 		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
 		try {
 			const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
-				loadToSequenceNumber: 30,
-				loadToBatchId: "client_0_[42]",
+				loadToSequenceNumber: 5,
 			};
-			const snapshot = await service.getSnapshot(snapshotFetchOptions);
-
-			assert.strictEqual(snapshot.sequenceNumber, 20);
-			assert.strictEqual(snapshot.snapshotTree.id, "version-20");
+			await assert.rejects(
+				async () => service.getSnapshot(snapshotFetchOptions),
+				(error: Partial<Error & { errorType: string }>) => {
+					assert.strictEqual(error.errorType, OdspErrorTypes.genericError);
+					assert.match(
+						error.message ?? "",
+						/ODSP snapshot at or before the requested historical load target/,
+					);
+					return true;
+				},
+			);
 		} finally {
 			restore();
 		}
@@ -390,8 +396,7 @@ describe("Tests1 for snapshot fetch", () => {
 		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
 		try {
 			const availability = await service.canMaterializePointInTime({
-				sequenceNumber: 10,
-				batchId: "client_0_[42]",
+				sequenceNumber: 5,
 			});
 
 			assert.strictEqual(availability.status, "missingBaseVersion");

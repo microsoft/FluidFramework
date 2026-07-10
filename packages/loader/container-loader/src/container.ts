@@ -198,11 +198,6 @@ export interface IContainerLoadProps {
 	readonly loadToSequenceNumber?: number;
 
 	/**
-	 * Batch ID expected at the target sequence number, when batch validation is required.
-	 */
-	readonly loadToBatchId?: string;
-
-	/**
 	 * The pending state serialized from a previous container instance
 	 */
 	readonly pendingLocalState?: IPendingContainerState;
@@ -337,14 +332,8 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const {
-			version,
-			pendingLocalState,
-			loadMode,
-			resolvedUrl,
-			loadToSequenceNumber,
-			loadToBatchId,
-		} = loadProps;
+		const { version, pendingLocalState, loadMode, resolvedUrl, loadToSequenceNumber } =
+			loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -368,14 +357,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(
-							version,
-							mode,
-							resolvedUrl,
-							pendingLocalState,
-							loadToSequenceNumber,
-							loadToBatchId,
-						)
+						.load(version, mode, resolvedUrl, pendingLocalState, loadToSequenceNumber)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -1618,7 +1600,6 @@ export class Container
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber: number | undefined,
-		loadToBatchId: string | undefined,
 	): Promise<{
 		sequenceNumber: number;
 		version: string | undefined;
@@ -1667,7 +1648,6 @@ export class Container
 			specifiedVersion,
 			pendingLocalState,
 			loadToSequenceNumber,
-			loadToBatchId,
 		);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;

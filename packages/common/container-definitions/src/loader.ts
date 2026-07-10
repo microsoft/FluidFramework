@@ -8,7 +8,6 @@ import type {
 	IEvent,
 	IEventProvider,
 	IRequest,
-	IRequestHeader,
 } from "@fluidframework/core-interfaces";
 import type {
 	IClient,
@@ -763,17 +762,6 @@ export interface ILoaderHeader {
 	[LoaderHeader.reconnect]: boolean;
 	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.version]: string | undefined;
-}
-
-/**
- * Alpha request headers for historical loading.
- * @legacy @alpha
- */
-export interface ILoaderHeaderAlpha extends IRequestHeader {
-	/**
-	 * Batch ID expected at the target sequence number, when batch validation is required.
-	 */
-	"fluid-batch-id": string;
 }
 
 /**

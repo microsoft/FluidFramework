@@ -259,7 +259,6 @@ export class SerializedStateManager implements IDisposable {
 		specifiedVersion: string | undefined,
 		pendingLocalState: IPendingContainerState | undefined,
 		loadToSequenceNumber?: number,
-		loadToBatchId?: string,
 	): Promise<{
 		snapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
@@ -273,7 +272,6 @@ export class SerializedStateManager implements IDisposable {
 				this.supportGetSnapshotApi(),
 				specifiedVersion,
 				loadToSequenceNumber,
-				loadToBatchId,
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
@@ -567,16 +565,9 @@ async function getSnapshot(
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
 	loadToSequenceNumber?: number,
-	loadToBatchId?: string,
 ): Promise<{ snapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
 	const { snapshot, version } = supportGetSnapshotApi
-		? await fetchISnapshot(
-				mc,
-				storageAdapter,
-				specifiedVersion,
-				loadToSequenceNumber,
-				loadToBatchId,
-			)
+		? await fetchISnapshot(mc, storageAdapter, specifiedVersion, loadToSequenceNumber)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
 	assert(snapshot !== undefined, 0x8e4 /* Snapshot should exist */);
 	return { snapshot, version };
@@ -595,12 +586,10 @@ export async function fetchISnapshot(
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
 	loadToSequenceNumber?: number,
-	loadToBatchId?: string,
 ): Promise<{ snapshot?: ISnapshot; version?: IVersion }> {
 	const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
 		versionId: specifiedVersion,
 		loadToSequenceNumber,
-		loadToBatchId,
 	};
 	const snapshot = await storageAdapter.getSnapshot?.(snapshotFetchOptions);
 	const version: IVersion | undefined =
