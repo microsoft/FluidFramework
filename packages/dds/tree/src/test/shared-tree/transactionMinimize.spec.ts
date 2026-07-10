@@ -6,7 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import type { ImplicitFieldSchema } from "@fluidframework/tree";
+import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
 import type {
 	InsertableField,
 	JsonCompatibleReadOnly,
@@ -70,9 +70,13 @@ function countDestroys(change: SharedTreeChange): number {
 const sf = new SchemaFactory("transaction-minimize");
 const RootStringArray = sf.array("RootArray", sf.string);
 
-class Box extends sf.object("Box", {
+class Box extends sf.objectRecursive("Box", {
 	value: sf.optional(sf.string),
+	nested: sf.optionalRecursive([() => Box]),
 }) {}
+{
+	type _check = ValidateRecursiveSchema<typeof Box>;
+}
 const OptionalBox = sf.optional(Box);
 const BoxArray = sf.array("BoxArray", Box);
 
@@ -85,10 +89,15 @@ const StringOrBoxArraySchemaConfig = {
 	enableSchemaValidation: true,
 } as const;
 
-class BoxWithASecret extends sf2.object("Box", {
+class BoxWithASecret extends sf2.objectRecursive("Box", {
 	value: sf2.optional(sf2.string),
+	nested: sf2.optionalRecursive([() => BoxWithASecret]),
 	secret: sf2.optional(sf2.string),
 }) {}
+{
+	type _check = ValidateRecursiveSchema<typeof BoxWithASecret>;
+}
+
 const SketchyBoxArray = sf2.array("BoxArray", BoxWithASecret);
 const SketchyBoxArraySchemaConfig = {
 	schema: SketchyBoxArray,
@@ -614,11 +623,13 @@ const objectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial      -\> `Box: undefined`
-	 * 1. set to "x☠️" -\> `Box: "x☠️"`
-	 * 2. set to "y❤️" -\> `Box: "y❤️"`
+	 * 0. initial      -\> `Box: <empty>`
+	 * 1. set to "x☠️" -\> `Box: { value: "x☠️" }`
+	 * 2. set to "y❤️" -\> `Box: { value: "y❤️" }`
+	 *
+	 * Classification: x☠️ comes in as new root and leaves as detached root
 	 */
-	Box_value_set_twice: {
+	root_Box_value_set_twice: {
 		schema: OptionalBox,
 		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => new Box({}),
@@ -630,15 +641,40 @@ const objectScenarios = {
 	} as const,
 
 	/**
+	 * Starts from a nested {@link Box} with no value, then sets its `value` field twice.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial      -\> `Box: { nested: Box: <empty> }`
+	 * 1. set to "x☠️" -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. set to "y❤️" -\> `Box: { nested: Box: { value: "y❤️" } }`
+	 *
+	 * Classification: x☠️ comes in as new root and leaves as detached root
+	 */
+	nested_Box_value_set_twice: {
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({ nested: new Box({}) }),
+		apply: (root) => {
+			assert.ok(root?.nested);
+			root.nested.value = "x☠️";
+			root.nested.value = "y❤️";
+		},
+	} as const,
+
+	/**
 	 * Starts from a {@link Box} with no value, sets its `value` field, then removes the box.
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial      -\> `Box: undefined`
-	 * 1. set to "x☠️" -\> `Box: "x☠️"`
+	 * 0. initial      -\> `Box: <empty>`
+	 * 1. set to "x☠️" -\> `Box: { value: "x☠️" }`
 	 * 2. remove box   -\> `undefined`
+	 *
+	 * Classification: x☠️ comes in as new root and leaves as nested under [detached] prior node
 	 */
-	Box_value_set_then_Box_removed: {
+
+	root_Box_value_set_then_root_Box_removed: {
 		schema: OptionalBox,
 		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => new Box({}),
@@ -650,21 +686,163 @@ const objectScenarios = {
 	} as const,
 
 	/**
+	 * Starts from a nested {@link Box} with no value, sets its `value` field, then removes the root box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial          -\> `Box: { nested: Box: <empty> } }`
+	 * 1. set to "x☠️"     -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. remove root box  -\> `undefined`
+	 *
+	 * Classification: x☠️ comes in as new root and leaves as nested under [detached] prior node
+	 */
+	nested_Box_value_set_then_root_Box_removed: {
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({ nested: new Box({}) }),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root?.nested);
+			view.root.nested.value = "x☠️";
+			view.root = undefined;
+		},
+	} as const,
+
+	/**
+	 * Starts from a nested {@link Box} with no value, sets its `value` field, then removes the nested box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial            -\> `Box: { nested: Box: <empty> }`
+	 * 1. set to "x☠️"       -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. remove nested box  -\> `Box: <empty>`
+	 *
+	 * Classification: x☠️ comes in as new root and leaves as nested under [detached] prior node
+	 */
+	nested_Box_value_set_then_nested_Box_removed: {
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({ nested: new Box({}) }),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root?.nested);
+			view.root.nested.value = "x☠️";
+			delete view.root.nested;
+		},
+	} as const,
+
+	/**
+	 * Starts from an empty {@link Box}, adds a nested {@link Box} with a `value` field, then removes the box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                             -\> `Box: <empty>`
+	 * 1. insert nested Box with value "x☠️"  -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. remove root box                     -\> `undefined`
+	 *
+	 * Classification: x☠️ comes in as new nested content and leaves as nested under [detached] prior node (same parent)
+	 */
+	nest_Box_with_value_then_root_Box_removed: {
+		schema: OptionalBox,
+		// The initial content is provided as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({}),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root);
+			view.root.nested = new Box({ value: "x☠️" });
+			view.root = undefined;
+		},
+	} as const,
+
+	/**
 	 * Starts from an empty root, inserts a {@link Box} with value "x☠️", then sets its value to "y❤️".
 	 * @remarks
 	 * Steps:
 	 *
 	 * 0. initial                 -\> `undefined`
-	 * 1. insert Box "x☠️"       -\> `Box: "x☠️"`
-	 * 2. set Box value to "y❤️" -\> `Box: "y❤️"`
+	 * 1. insert Box "x☠️"        -\> `Box: { value: "x☠️" }`
+	 * 2. set Box value to "y❤️"  -\> `Box: { value: "y❤️" }`
+	 *
+	 * Classification: x☠️ comes in as new nested content and leaves as detached root
 	 */
-	add_Box_then_replace_value: {
+	add_root_Box_then_replace_value: {
 		schema: OptionalBox,
 		initialContent: undefined,
 		apply: (_root, _tree, view) => {
-			const box = new Box({ value: "x☠️" });
-			view.root = box;
-			box.value = "y❤️";
+			const root = new Box({ value: "x☠️" });
+			view.root = root;
+			root.value = "y❤️";
+		},
+	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a nested {@link Box} with value "x☠️", then sets its value to "y❤️".
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                  -\> `undefined`
+	 * 1. insert nested Box "x☠️"  -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. set Box value to "y❤️"   -\> `Box: { nested: Box: { value: "y❤️" } }`
+	 *
+	 * Classification: x☠️ comes in as new nested content and leaves as detached root
+	 */
+	add_nested_Box_then_replace_value: {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
+			// Step 1: insert nested Box
+			const nested = new Box({ value: "x☠️" });
+			view.root = new Box({ nested });
+			// Step 2: set nested Box value
+			nested.value = "y❤️";
+		},
+	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a nested {@link Box} with value "x☠️", then replaces nested Box with new "y❤️" box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                              -\> `undefined`
+	 * 1. insert nested Box "x☠️"              -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 2. replace nested Box (with "y❤️" Box)  -\> `Box: { nested: Box: { value: "y❤️" } }`
+	 *
+	 * Classification: x☠️ comes in as new nested content and leaves as nested under [detached] new node (same parent)
+	 */
+	add_nested_Box_then_replace_nested_Box: {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
+			// Step 1: insert nested Box
+			const nested = new Box({ value: "x☠️" });
+			const root = new Box({ nested });
+			view.root = root;
+			// Step 2: replace nested Box
+			root.nested = new Box({ value: "y❤️" });
+		},
+	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a nested {@link Box}, sets value "x☠️", then replaces nested Box with new "y❤️" box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                              -\> `undefined`
+	 * 1. insert nested empty Box              -\> `Box: { nested: Box: <empty> }`
+	 * 2. set nested Box to "x☠️"              -\> `Box: { nested: Box: { value: "x☠️" } }`
+	 * 3. replace nested Box (with "y❤️" Box)  -\> `Box: { nested: Box: { value: "y❤️" } }`
+	 *
+	 * Classification: x☠️ comes in as new root content and leaves as nested under [detached] new node
+	 */
+	add_nested_Box_set_value_then_replace_nested_Box: {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
+			// Step 1: insert nested empty Box
+			const nested = new Box({});
+			const root = new Box({ nested });
+			view.root = root;
+			// Step 2: set nested Box to "x☠️"
+			nested.value = "x☠️";
+			// Step 3: replace nested Box
+			root.nested = new Box({ value: "y❤️" });
 		},
 	} as const,
 } as const satisfies Record<string, BoxScenario>;
@@ -920,25 +1098,85 @@ describe("transaction minimize post-processor", () => {
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
-		it("reflects only the final value of a field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(objectScenarios.Box_value_set_twice);
+		it("reflects only the final value of a root object field set multiple times", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.root_Box_value_set_twice,
+			);
 			assert.equal(view.root?.value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final undefined root when only item's value of a field is set and then the item is removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				objectScenarios.Box_value_set_then_Box_removed,
+				objectScenarios.root_Box_value_set_then_root_Box_removed,
 			);
 			assert.equal(view.root, undefined);
 			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
-		it("reflects only the final value of a field of newly inserted object when it is replaced", () => {
+		it("reflects only the final value of a field of newly inserted root object when it is replaced", () => {
 			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_Box_then_replace_value,
+				objectScenarios.add_root_Box_then_replace_value,
 			);
 			assert.equal(view.root?.value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects only the final value of a nested field set multiple times", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_twice,
+			);
+			assert.equal(view.root?.nested?.value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects an undefined root when a nested field is set and then the root object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_then_root_Box_removed,
+			);
+			assert.equal(view.root, undefined);
+			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects an empty root object when a nested field is set and then the nested field is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
+			);
+			assert.notEqual(view.root, undefined);
+			assert.equal(view.root?.nested, undefined);
+			assert.equal(view.root?.value, undefined);
+			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects an empty root when a nested object with a value is added and then the root object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nest_Box_with_value_then_root_Box_removed,
+			);
+			assert.equal(view.root, undefined);
+			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects only the final value of a field of a newly inserted nested object when nested field value is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_then_replace_value,
+			);
+			assert.equal(view.root?.nested?.value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects only the final value of a newly inserted nested object when nested object is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_then_replace_nested_Box,
+			);
+			assert.equal(view.root?.nested?.value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects only the final value of a newly inserted nested object whose value was set before it was replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_set_value_then_replace_nested_Box,
+			);
+			assert.equal(view.root?.nested?.value, "y❤️");
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
@@ -1184,7 +1422,9 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("keeps only the final value's build when a field is set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(objectScenarios.Box_value_set_twice);
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.root_Box_value_set_twice,
+			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so exactly one build should remain.
@@ -1193,7 +1433,7 @@ describe("transaction minimize post-processor", () => {
 
 		it("carries no build when root's value of a field is set and then the root is removed", () => {
 			const { view, stringifiedChange } = runScenario(
-				objectScenarios.Box_value_set_then_Box_removed,
+				objectScenarios.root_Box_value_set_then_root_Box_removed,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1203,11 +1443,99 @@ describe("transaction minimize post-processor", () => {
 
 		it("keeps only the final value's builds when a field of newly inserted object is replaced", () => {
 			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_Box_then_replace_value,
+				objectScenarios.add_root_Box_then_replace_value,
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// Only the final value "y❤️" survives the transaction, so one or two builds should remain.
+			const { builds, tops } = countBuilds(change);
+			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
+			assert.equal(
+				tops,
+				builds,
+				`Expected top-level nodes ${tops} to match the number of builds ${builds}`,
+			);
+		});
+
+		it("keeps only the final value's build when a nested field is set multiple times", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_twice,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Only the final value "y❤️" survives the transaction, so exactly one build should remain.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+
+		it("carries no build when a nested field is set and then the root object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_then_root_Box_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// No created node is present in the final document, so no builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
+		});
+
+		it("keeps one build when a nested field is set and then the nested object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The root node is present in the final document, so one build should remain.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+
+		it("carries no build when a nested object with a value is added and then the root object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nest_Box_with_value_then_root_Box_removed,
+			);
+			// assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// No created node is present in the final document, so no builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
+		});
+
+		it("keeps only the final value's builds when a field of a newly inserted nested object is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_then_replace_value,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The new root, nested, and the final value "y❤️" survive the transaction, so one or two builds should remain.
+			const { builds, tops } = countBuilds(change);
+			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
+			assert.equal(
+				tops,
+				builds,
+				`Expected top-level nodes ${tops} to match the number of builds ${builds}`,
+			);
+		});
+
+		it("keeps only the final value's builds when a newly inserted nested object is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_then_replace_nested_Box,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The new root and the final value "y❤️" box survive the transaction, so one or two builds should remain.
+			const { builds, tops } = countBuilds(change);
+			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
+			assert.equal(
+				tops,
+				builds,
+				`Expected top-level nodes ${tops} to match the number of builds ${builds}`,
+			);
+		});
+
+		it("keeps only the final value's builds when a newly inserted nested object's value is set before the nested object is replaced", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_nested_Box_set_value_then_replace_nested_Box,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The new root and the final value "y❤️" box survive the transaction, so one or two builds should remain.
 			const { builds, tops } = countBuilds(change);
 			assert(builds === 1 || builds === 2, `Expected 1 or 2 builds, but found ${builds}`);
 			assert.equal(
