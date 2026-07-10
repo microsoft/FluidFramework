@@ -300,10 +300,8 @@ describe("prepareForInsertion", () => {
 						content,
 						[myMapSchema, schemaFactory.string],
 						...schemaValidationPolicy,
-						toStoredSchema(
-							[myMapSchema, schemaFactory.string],
-							restrictiveStagedUpgradePolicy,
-						).rootFieldSchema,
+						toStoredSchema([myMapSchema, schemaFactory.string], restrictiveStagedUpgradePolicy)
+							.rootFieldSchema,
 					);
 				});
 

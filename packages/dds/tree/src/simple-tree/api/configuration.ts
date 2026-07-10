@@ -173,7 +173,7 @@ export interface ITreeViewConfigurationAlpha<
 	 * If provided, this policy is used directly for compatibility checks and for
 	 * `initialize` / `upgradeSchema` schema generation.
 	 *
-	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicy.restrictive}
+	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 * which does not enable any staged schema upgrades.
 	 *
 	 * @example Enabling specific staged upgrades
@@ -296,8 +296,7 @@ export class TreeViewConfigurationAlpha<
 		this.definitions = treeSchema.definitions;
 
 		this.stagedUpgradePolicy =
-			props.stagedUpgradePolicy ??
-			resolveStoredSchemaGenerationOptions(undefined);
+			props.stagedUpgradePolicy ?? resolveStoredSchemaGenerationOptions(undefined);
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy);

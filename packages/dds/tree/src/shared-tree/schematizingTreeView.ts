@@ -152,9 +152,7 @@ export class SchematizingSimpleTreeView<
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
 		const stagedUpgradePolicy =
-			config instanceof TreeViewConfigurationAlpha
-				? config.stagedUpgradePolicy
-				: undefined;
+			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
 			schema: config.schema,
 			enableSchemaValidation: config.enableSchemaValidation,
@@ -267,10 +265,7 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const newSchema = toUpgradeSchema(
-			this.viewSchema.root,
-			this.stagedUpgradePolicy,
-		);
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(

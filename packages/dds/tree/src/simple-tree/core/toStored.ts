@@ -28,33 +28,10 @@ export interface StagedSchemaUpgradePolicy {
 }
 
 /**
- * Utilities for creating {@link StagedSchemaUpgradePolicy}.
- *
- * @remarks
- * Use the properties and methods on this object to obtain stored-schema generation options
- * for different scenarios:
- *
- * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
- *
- * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
- *
- * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
- *
- * @example
- * ```typescript
- * // Enable specific upgrades:
- * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
- *
- * // Use restrictive (default, no staged upgrades):
- * const options = StagedSchemaUpgradePolicy.restrictive;
- *
- * // Use permissive (all staged upgrades, useful for testing):
- * const options = StagedSchemaUpgradePolicy.permissive;
- * ```
- *
+ * Provides factory methods for creating {@link (StagedSchemaUpgradePolicy:interface)} instances.
  * @alpha
  */
-export const StagedSchemaUpgradePolicy: {
+export interface StagedSchemaUpgradePolicyFactory {
 	/**
 	 * Restrictive policy — excludes all staged schema members.
 	 *
@@ -81,12 +58,39 @@ export const StagedSchemaUpgradePolicy: {
 	 *
 	 * @remarks
 	 * If an empty set of upgrades is passed, the result is equivalent to
-	 * {@link (StagedSchemaUpgradePolicy:variable).restrictive | restrictive}.
+	 * `StagedSchemaUpgradePolicy.restrictive`.
 	 */
-	enabledStagedUpgrades(
-		...upgrades: SchemaUpgrade[]
-	): StagedSchemaUpgradePolicy;
-} = {
+	enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy;
+}
+
+/**
+ * Utilities for creating staged schema upgrade policies.
+ *
+ * @remarks
+ * Use the properties and methods on this object to obtain staged-schema generation options
+ * for different scenarios:
+ *
+ * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
+ *
+ * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
+ *
+ * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
+ *
+ * @example
+ * ```typescript
+ * // Enable specific upgrades:
+ * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
+ *
+ * // Use restrictive (default, no staged upgrades):
+ * const options = StagedSchemaUpgradePolicy.restrictive;
+ *
+ * // Use permissive (all staged upgrades, useful for testing):
+ * const options = StagedSchemaUpgradePolicy.permissive;
+ * ```
+ *
+ * @alpha
+ */
+export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory = {
 	restrictive: {
 		includeStaged: () => false,
 		includeStagedOptional: () => false,
@@ -97,9 +101,7 @@ export const StagedSchemaUpgradePolicy: {
 		includeStagedOptional: () => true,
 	},
 
-	enabledStagedUpgrades(
-		...upgrades: SchemaUpgrade[]
-	): StagedSchemaUpgradePolicy {
+	enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy {
 		if (upgrades.length === 0) {
 			return StagedSchemaUpgradePolicy.restrictive;
 		}
@@ -128,9 +130,7 @@ export type Unchanged = typeof Unchanged;
 /**
  * Subset of {@link SimpleSchemaTransformationOptions} for when the output is a known to be a stored schema.
  */
-export type StoredSchemaGenerationOptions =
-	| StagedSchemaUpgradePolicy
-	| ExpectStored;
+export type StoredSchemaGenerationOptions = StagedSchemaUpgradePolicy | ExpectStored;
 
 /**
  * Options for transforming a schema.

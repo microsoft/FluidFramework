@@ -238,10 +238,8 @@ const allTheFieldsName: TreeNodeSchemaIdentifier = brand("test.allTheFields");
 
 const library = {
 	nodeSchema: new Map([
-		...toStoredSchema(
-			[Minimal, schemaStatics.number],
-			restrictiveStagedUpgradePolicy,
-		).nodeSchema,
+		...toStoredSchema([Minimal, schemaStatics.number], restrictiveStagedUpgradePolicy)
+			.nodeSchema,
 		[allTheFieldsName, allTheFields],
 	]),
 } satisfies Partial<TreeStoredSchema>;

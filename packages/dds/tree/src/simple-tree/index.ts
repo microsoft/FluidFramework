@@ -60,6 +60,7 @@ export {
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
 	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	ExpectStored,
 	createSchemaUpgrade,
 } from "./core/index.js";

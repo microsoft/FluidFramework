@@ -334,6 +334,7 @@ export {
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
 	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	restrictiveStagedUpgradePolicy,
 	permissiveStagedUpgradePolicy,
 	type ArrayPlaceAnchor,

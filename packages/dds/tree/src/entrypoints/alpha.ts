@@ -269,6 +269,7 @@ export {
 	SimpleRecordNodeSchema, 
 	SimpleTreeSchema, 
 	StagedSchemaUpgradePolicy, 
+	StagedSchemaUpgradePolicyFactory, 
 	TextAsTree, 
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 

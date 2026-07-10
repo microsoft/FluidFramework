@@ -25,8 +25,7 @@ describe("simple-tree create", () => {
 			createFromCursor(
 				SchemaFactory.string,
 				cursor,
-				toStoredSchema(SchemaFactory.string, restrictiveStagedUpgradePolicy)
-					.rootFieldSchema,
+				toStoredSchema(SchemaFactory.string, restrictiveStagedUpgradePolicy).rootFieldSchema,
 			);
 		});
 

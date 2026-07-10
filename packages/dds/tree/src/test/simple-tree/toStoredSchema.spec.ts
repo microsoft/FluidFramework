@@ -134,10 +134,7 @@ describe("toStoredSchema", () => {
 							testCase.schema,
 							restrictiveStagedUpgradePolicy,
 						);
-						const permissive = toStoredSchema(
-							testCase.schema,
-							permissiveStagedUpgradePolicy,
-						);
+						const permissive = toStoredSchema(testCase.schema, permissiveStagedUpgradePolicy);
 
 						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
 						// The permissive case, used for unhydrated trees, includes all staged schema features.
@@ -393,10 +390,7 @@ describe("toStoredSchema", () => {
 	describe("getStoredSchema", () => {
 		it("options", () => {
 			const v1 = getStoredSchema(
-				transformSimpleNodeSchema(
-					HasStagedAllowedTypes,
-					restrictiveStagedUpgradePolicy,
-				),
+				transformSimpleNodeSchema(HasStagedAllowedTypes, restrictiveStagedUpgradePolicy),
 			);
 			const v2 = getStoredSchema(
 				transformSimpleNodeSchema(
@@ -405,19 +399,13 @@ describe("toStoredSchema", () => {
 				),
 			);
 			const v1Permissive = getStoredSchema(
-				transformSimpleNodeSchema(
-					HasStagedAllowedTypes,
-					permissiveStagedUpgradePolicy,
-				),
+				transformSimpleNodeSchema(HasStagedAllowedTypes, permissiveStagedUpgradePolicy),
 			);
 			assert.notDeepEqual(v1.encodeV1(), v1Permissive.encodeV1());
 			assert.deepEqual(v1Permissive.encodeV1(), v2.encodeV1());
 
 			const stagedOptionalV1 = getStoredSchema(
-				transformSimpleNodeSchema(
-					HasStagedOptionalField,
-					restrictiveStagedUpgradePolicy,
-				),
+				transformSimpleNodeSchema(HasStagedOptionalField, restrictiveStagedUpgradePolicy),
 			);
 			const stagedOptionalV2 = getStoredSchema(
 				transformSimpleNodeSchema(
@@ -426,10 +414,7 @@ describe("toStoredSchema", () => {
 				),
 			);
 			const stagedOptionalV1Permissive = getStoredSchema(
-				transformSimpleNodeSchema(
-					HasStagedOptionalField,
-					permissiveStagedUpgradePolicy,
-				),
+				transformSimpleNodeSchema(HasStagedOptionalField, permissiveStagedUpgradePolicy),
 			);
 			assert.notDeepEqual(stagedOptionalV1.encodeV1(), stagedOptionalV1Permissive.encodeV1());
 			assert.deepEqual(stagedOptionalV1Permissive.encodeV1(), stagedOptionalV2.encodeV1());
