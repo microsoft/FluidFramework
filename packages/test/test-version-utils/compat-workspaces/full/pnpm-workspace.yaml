@@ -16,16 +16,22 @@ minimumReleaseAgeExclude:
   - "@fluid-tools/*"
   - "fluid-framework"
 overrides:
-  # axios, jsrsasign, serialize-javascript, and uuid, all overridden to address CVEs.
+  # axios, form-data, jsrsasign, qs, serialize-javascript, tmp, uuid, and ws, all
+  # overridden to address CVEs.
   # Since this pnpm workspace deliberately installs older versions of Fluid packages,
   # older dependency versions sometimes come in so we override them for security reasons.
   # As we drop support for older versions of Fluid, these overrides can be reviewed.
   # But as long as we support FF 1.x, these are probably all necessary.
   axios@<1: ^0.31.1
   axios@>=1 <2: ^1.15.2
+  form-data@>=4 <5: ^4.0.6
   jsrsasign@<12: ^11.1.1
+  qs@>=6 <7: ^6.15.2
   serialize-javascript@>=6 <7: ^7.0.5
-  uuid@>=11 <12: ^11.1.1
+  tmp@>=0.2 <0.3: ^0.2.6
+  uuid@>=7 <12: ^11.1.1
+  ws@>=7 <8: ^7.5.11
+  ws@>=8 <9: ^8.21.0
 
   # @fluidframework/test-utils>mocha: dropped here because this workspace only loads test-utils' primary export at runtime (see test-version-utils/src/testApi.ts) — it never invokes the legacy test-utils' bundled test runner. Removing mocha eliminates serialize-javascript@6.0.2 (GHSA-5c6j-r48x-rmvq) which would otherwise be pulled in transitively across all back-compat versions of @fluidframework/test-utils.
   "@fluidframework/test-utils>mocha": "-"

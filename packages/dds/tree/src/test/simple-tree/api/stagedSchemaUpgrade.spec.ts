@@ -19,13 +19,14 @@ import {
 } from "../../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	SchemaFactoryAlpha,
 	schemaStatics,
 	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	type ValidateRecursiveSchema,
+	type TreeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
@@ -224,26 +225,24 @@ describe("staged allowed type upgrade", () => {
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
-		let view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaA }),
-		);
+		let viewConfig: TreeSchema = new TreeViewConfigurationAlpha({ schema: schemaA });
 
 		// open document, and check its compatibility with our application
-		const compat = view.checkCompatibility(stored);
+		const compat = checkSchemaCompatibility(viewConfig, stored);
 		assert.deepEqual(compat, { canView: false, canUpgrade: true, isEquivalent: false });
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaA).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
 
 		// view schema is A
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// view schema is B (includes staged string)
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -253,15 +252,15 @@ describe("staged allowed type upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
 
 		// nothing has changed, so compatibility is the same
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// view schema now wants full support for string (not just staged)
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: false,
 			canUpgrade: true,
 			isEquivalent: false,
@@ -272,8 +271,8 @@ describe("staged allowed type upgrade", () => {
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
 		// validate C is now fully supported
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -345,18 +344,16 @@ describe("staged optional upgrade", () => {
 		const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(schemaA));
 
 		// View A: can view, can upgrade (no-op), is equivalent
-		let view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaA }),
-		);
-		assert.deepEqual(view.checkCompatibility(stored), {
+		let viewConfig: TreeSchema = new TreeViewConfigurationAlpha({ schema: schemaA });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// View B (staged optional): can view required stored, upgrade is a no-op
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -364,15 +361,15 @@ describe("staged optional upgrade", () => {
 
 		// Upgrading with B is a no-op — stored stays required
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// View C (fully optional) cannot yet view a required stored field
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: false,
 			canUpgrade: true,
 			isEquivalent: false,
@@ -382,7 +379,7 @@ describe("staged optional upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaC).rootFieldSchema));
 
 		// View C is now compatible and equivalent
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -390,16 +387,16 @@ describe("staged optional upgrade", () => {
 
 		// View B after full upgrade: can view (optional kinds match), but upgrade target
 		// is required which is no longer a valid upgrade from optional stored
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: false,
 			isEquivalent: false,
 		});
 
 		// View A (required) is no longer compatible with optional stored
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaA }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaA });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: false,
 			canUpgrade: false,
 			isEquivalent: false,
