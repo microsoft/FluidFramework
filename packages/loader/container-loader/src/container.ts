@@ -323,7 +323,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer, ContainerAlpha
+	implements IContainer
 {
 	/**
 	 * Load an existing container.
@@ -676,12 +676,6 @@ export class Container
 	 */
 	public getLoadedCodeDetails(): IFluidCodeDetails | undefined {
 		return this._loadedCodeDetails;
-	}
-
-	public async canMaterializePointInTime(
-		target: IPointInTimeMaterializationTarget,
-	): Promise<PointInTimeMaterializationAvailability> {
-		return this.storageAdapter.canMaterializePointInTime(target);
 	}
 
 	private _loadedModule: IFluidModuleWithDetails | undefined;
@@ -2698,17 +2692,6 @@ export class Container
  */
 export interface ContainerAlpha extends IContainer {
 	/**
-	 * Checks whether a point in document history can currently be materialized.
-	 * @remarks
-	 * This optional probe is intended for hosts that want to explain historical load failures before attempting a load.
-	 * If the underlying driver cannot answer, implementations should return `notAvailable` rather than claiming
-	 * the point is unavailable for a specific reason.
-	 */
-	canMaterializePointInTime(
-		target: IPointInTimeMaterializationTarget,
-	): Promise<PointInTimeMaterializationAvailability>;
-
-	/**
 	 * Get pending state from container. WARNING: misuse of this API can result in duplicate op
 	 * submission and potential document corruption. The blob returned MUST be deleted if and when this
 	 * container emits a "connected" event.
@@ -2730,4 +2713,29 @@ export interface ContainerAlpha extends IContainer {
  */
 export function asLegacyAlpha(base: IContainer): ContainerAlpha {
 	return base as ContainerAlpha;
+}
+
+/**
+ * Checks whether a point in document history can currently be materialized.
+ * @remarks
+ * This optional probe is intended for hosts that want to explain historical load failures before attempting a load.
+ * If the underlying driver cannot answer, implementations should return `notAvailable` rather than claiming
+ * the point is unavailable for a specific reason.
+ * @legacy @alpha
+ */
+export async function canMaterializePointInTime(
+	container: IContainer,
+	target: IPointInTimeMaterializationTarget,
+): Promise<PointInTimeMaterializationAvailability> {
+	if (!(container instanceof Container)) {
+		return {
+			status: "notAvailable",
+			message:
+				"Point-in-time materialization checks require a container-loader Container instance.",
+		};
+	}
+
+	return (
+		container as unknown as { readonly storageAdapter: ContainerStorageAdapter }
+	).storageAdapter.canMaterializePointInTime(target);
 }

@@ -37,7 +37,7 @@ import {
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
-import { Container, waitContainerToCatchUp } from "../container.js";
+import { Container, canMaterializePointInTime, waitContainerToCatchUp } from "../container.js";
 import { ProtocolHandler } from "../protocol.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
@@ -217,6 +217,7 @@ describe("Container", () => {
 				policies: {},
 				createBlob: async () => ({ id: "blob" }),
 				downloadSummary: async () => ({ tree: {}, type: SummaryType.Tree }),
+				// eslint-disable-next-line unicorn/no-null
 				getSnapshotTree: async () => null,
 				getVersions: async () => [],
 				readBlob: async () => new ArrayBuffer(0),
@@ -237,9 +238,9 @@ describe("Container", () => {
 				connectToDeltaStream: async () => new Promise(() => {}),
 				connectToStorage: async () => storage,
 				dispose: () => {},
-				off: () => service,
-				on: () => service,
-				once: () => service,
+				off: (): IDocumentService => service,
+				on: (): IDocumentService => service,
+				once: (): IDocumentService => service,
 			});
 
 			(
@@ -249,7 +250,7 @@ describe("Container", () => {
 			).storageAdapter.connectToService(service);
 
 			assert.deepStrictEqual(
-				await container.canMaterializePointInTime({ sequenceNumber: 123 }),
+				await canMaterializePointInTime(container, { sequenceNumber: 123 }),
 				{
 					status: "notAvailable",
 					message: "Storage driver does not support point-in-time materialization checks.",

@@ -14,9 +14,9 @@ import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
 	IDocumentService,
-	IDocumentStorageServiceAlpha,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPointInTimeMaterializationStorageService,
 	IPointInTimeMaterializationTarget,
 	ISnapshot,
 	ISnapshotFetchOptions,
@@ -244,9 +244,10 @@ export class ContainerStorageAdapter
 	public async canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
-		const storageServiceAlpha = this._storageService as IDocumentStorageServiceAlpha;
+		const pointInTimeStorageService = this
+			._storageService as Partial<IPointInTimeMaterializationStorageService>;
 		return (
-			storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
+			pointInTimeStorageService.canMaterializePointInTime?.(target) ?? {
 				status: "notAvailable",
 				message: "Storage driver does not support point-in-time materialization checks.",
 			}

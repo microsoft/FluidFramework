@@ -35,8 +35,8 @@ import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 import { loadContainerPaused } from "../loadPaused.js";
 import type { ILoaderProps } from "../loader.js";
 import {
-	loadExistingContainer,
-	type ILoadExistingContainerPropsAlpha,
+	loadContainerToSequenceNumber,
+	type ILoadContainerToSequenceNumberProps,
 } from "../createAndLoadContainerUtils.js";
 
 import { AbsentProperty, failSometimeProxy } from "./failProxy.js";
@@ -109,6 +109,7 @@ function createSnapshot(sequenceNumber: number): ISnapshot {
 
 function createMessage(sequenceNumber: number): ISequencedDocumentMessage {
 	return {
+		// eslint-disable-next-line unicorn/no-null
 		clientId: null,
 		clientSequenceNumber: -1,
 		contents: undefined,
@@ -201,9 +202,9 @@ function createLoaderProps(
 		connectToDeltaStream: async () => new Promise(() => {}),
 		connectToStorage: async () => storage,
 		dispose: () => {},
-		off: () => service,
-		on: () => service,
-		once: () => service,
+		off: (): IDocumentService => service,
+		on: (): IDocumentService => service,
+		once: (): IDocumentService => service,
 	});
 	const documentServiceFactory = failSometimeProxy<
 		IDocumentServiceFactory & IProvideLayerCompatDetails
@@ -270,20 +271,20 @@ describe("loadContainerPaused", () => {
 	});
 });
 
-describe("loadExistingContainer with loadToSequenceNumber", () => {
+describe("loadContainerToSequenceNumber", () => {
 	it("replays forward from a historical snapshot and returns paused at the target sequence number", async () => {
 		const { loaderProps, fetchRanges } = createLoaderProps(5, [
 			createMessage(6),
 			createMessage(7),
 			createMessage(8),
 		]);
-		const loadProps: ILoadExistingContainerPropsAlpha = {
+		const loadProps: ILoadContainerToSequenceNumberProps = {
 			...loaderProps,
 			request,
 			loadToSequenceNumber: 7,
 		};
 
-		const container = await loadExistingContainer(loadProps);
+		const container = await loadContainerToSequenceNumber(loadProps);
 
 		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
 		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);

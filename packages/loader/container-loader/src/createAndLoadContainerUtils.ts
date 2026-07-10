@@ -4,6 +4,7 @@
  */
 
 import type {
+	IContainerLoadMode,
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -14,6 +15,7 @@ import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
+	IRequestHeader,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
@@ -222,14 +224,21 @@ export interface ILoadExistingContainerProps
 }
 
 /**
- * Alpha props used to load a container to a point in document history.
+ * Props used to load a container to a point in document history.
  * @legacy @alpha
  */
-export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainerProps {
+export interface ILoadContainerToSequenceNumberProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
+	/**
+	 * The request to resolve the container.
+	 */
+	readonly request: IRequest;
+
 	/**
 	 * Sequence number the loader should materialize before returning the container.
 	 */
-	readonly loadToSequenceNumber?: number | undefined;
+	readonly loadToSequenceNumber: number;
 }
 
 /**
@@ -311,21 +320,41 @@ export async function loadExistingContainer(
 	loadExistingContainerProps: ILoadExistingContainerProps,
 ): Promise<IContainer> {
 	const loader = new Loader(loadExistingContainerProps);
-	const alphaProps = loadExistingContainerProps as ILoadExistingContainerPropsAlpha;
-	const headers = { ...loadExistingContainerProps.request.headers };
-	if (alphaProps.loadToSequenceNumber !== undefined) {
-		headers[LoaderHeader.sequenceNumber] = alphaProps.loadToSequenceNumber;
-		headers[LoaderHeader.loadMode] = {
-			...headers[LoaderHeader.loadMode],
+	return loader.resolve(
+		loadExistingContainerProps.request,
+		loadExistingContainerProps.pendingLocalState,
+	);
+}
+
+/**
+ * Loads a container to a point in document history.
+ * @param loadContainerToSequenceNumberProps - Services and properties necessary for loading the container.
+ * @remarks The returned container is paused at the requested sequence number and should be treated as a read-only historical view.
+ * @legacy @alpha
+ */
+export async function loadContainerToSequenceNumber(
+	loadContainerToSequenceNumberProps: ILoadContainerToSequenceNumberProps,
+): Promise<IContainer> {
+	const requestHeaders = loadContainerToSequenceNumberProps.request.headers as
+		| Partial<Record<string, unknown>>
+		| undefined;
+	const loadMode = requestHeaders?.[LoaderHeader.loadMode] as
+		| Partial<IContainerLoadMode>
+		| undefined;
+	const headers: IRequestHeader = {
+		...requestHeaders,
+		[LoaderHeader.sequenceNumber]: loadContainerToSequenceNumberProps.loadToSequenceNumber,
+		[LoaderHeader.loadMode]: {
+			...loadMode,
 			opsBeforeReturn: "sequenceNumber",
 			deltaConnection: "none",
-		};
-	}
+		},
+	};
 	const request: IRequest = {
-		...loadExistingContainerProps.request,
+		...loadContainerToSequenceNumberProps.request,
 		headers,
 	};
-	return loader.resolve(request, loadExistingContainerProps.pendingLocalState);
+	return loadExistingContainer({ ...loadContainerToSequenceNumberProps, request });
 }
 
 /**

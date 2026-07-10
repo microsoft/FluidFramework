@@ -598,10 +598,13 @@ export interface ISnapshotFetchOptionsAlpha extends ISnapshotFetchOptions {
 }
 
 /**
- * Alpha storage service extension for point-in-time materialization probes.
+ * Storage capability for point-in-time materialization probes.
+ * @remarks
+ * This capability is intentionally separate from {@link IDocumentStorageService} because point-in-time materialization
+ * is a specialized historical-load flow that most drivers are not expected to support.
  * @legacy @alpha
  */
-export interface IDocumentStorageServiceAlpha extends IDocumentStorageService {
+export interface IPointInTimeMaterializationStorageService {
 	/**
 	 * Checks whether a point in document history can currently be materialized.
 	 * @remarks
@@ -609,7 +612,7 @@ export interface IDocumentStorageServiceAlpha extends IDocumentStorageService {
 	 * the check. For example, a storage service may be able to determine base snapshot availability before a delta
 	 * storage retention probe exists.
 	 */
-	canMaterializePointInTime?(
+	canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability>;
 }

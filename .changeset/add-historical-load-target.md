@@ -9,18 +9,18 @@
 Add historical load target fields to loader APIs
 
 Loader requests can now carry a target sequence number using the existing `LoaderHeader.sequenceNumber` request header.
-Callers using `loadExistingContainer` can opt into the alpha `ILoadExistingContainerPropsAlpha` surface and pass `loadToSequenceNumber`, which is forwarded into request headers for the loader.
+Callers can use the alpha `loadContainerToSequenceNumber` API with `ILoadContainerToSequenceNumberProps.loadToSequenceNumber` to request a historical, paused container view.
 The target reaches snapshot fetch through `ISnapshotFetchOptionsAlpha.loadToSequenceNumber`.
 ODSP now uses `loadToSequenceNumber` to list recent versions and select a historical base snapshot at or before the target.
 `loadContainerPaused` can replay ops from a suitable base snapshot and pause at the requested sequence number.
-Hosts can also call the alpha `ContainerAlpha.canMaterializePointInTime` probe through `asLegacyAlpha(container)`, which delegates to optional alpha `IDocumentStorageServiceAlpha.canMaterializePointInTime` support when available.
+Hosts can also call the alpha `canMaterializePointInTime(container, target)` probe, which delegates to optional alpha `IPointInTimeMaterializationStorageService.canMaterializePointInTime` support when available.
 ODSP implements the probe for base snapshot and replay-op availability and reports whether the point is materializable, the base version is missing, required ops are missing, access was denied, or availability is unknown.
 
 ```typescript
-const loadProps: ILoadExistingContainerPropsAlpha = {
+const loadProps: ILoadContainerToSequenceNumberProps = {
 	// ...
 	request,
 	loadToSequenceNumber: 123,
 };
-await loadExistingContainer(loadProps);
+await loadContainerToSequenceNumber(loadProps);
 ```

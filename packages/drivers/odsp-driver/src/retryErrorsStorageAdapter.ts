@@ -7,9 +7,9 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ISummaryHandle, ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	FetchSource,
-	IDocumentStorageServiceAlpha,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPointInTimeMaterializationStorageService,
 	IPointInTimeMaterializationTarget,
 	ISnapshot,
 	ISnapshotFetchOptions,
@@ -65,9 +65,10 @@ export class RetryErrorsStorageAdapter implements IDocumentStorageService, IDisp
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
 		return this.runWithRetry(async () => {
-			const storageServiceAlpha = this.internalStorageService as IDocumentStorageServiceAlpha;
+			const pointInTimeStorageService = this
+				.internalStorageService as Partial<IPointInTimeMaterializationStorageService>;
 			return (
-				storageServiceAlpha.canMaterializePointInTime?.(target) ?? {
+				pointInTimeStorageService.canMaterializePointInTime?.(target) ?? {
 					status: "notAvailable",
 					message: "Storage driver does not support point-in-time materialization checks.",
 				}

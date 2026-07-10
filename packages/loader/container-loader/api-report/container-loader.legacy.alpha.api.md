@@ -8,6 +8,9 @@
 export function asLegacyAlpha(base: IContainer): ContainerAlpha;
 
 // @alpha @legacy
+export function canMaterializePointInTime(container: IContainer, target: IPointInTimeMaterializationTarget): Promise<PointInTimeMaterializationAvailability>;
+
+// @alpha @legacy
 export function captureFullContainerState(input: ICaptureFullContainerStateProps): Promise<string>;
 
 // @public
@@ -20,7 +23,6 @@ export enum ConnectionState {
 
 // @alpha @sealed @legacy
 export interface ContainerAlpha extends IContainer {
-    canMaterializePointInTime(target: IPointInTimeMaterializationTarget): Promise<PointInTimeMaterializationAvailability>;
     getPendingLocalState(): Promise<string>;
 }
 
@@ -99,6 +101,12 @@ export interface IFluidModuleWithDetails {
     module: IFluidModule;
 }
 
+// @alpha @legacy
+export interface ILoadContainerToSequenceNumberProps extends IContainerHostProps, IContainerDriverServices {
+    readonly loadToSequenceNumber: number;
+    readonly request: IRequest;
+}
+
 // @beta @legacy
 export interface ILoaderProps {
     readonly codeLoader: ICodeDetailsLoader;
@@ -126,11 +134,6 @@ export interface ILoaderServices {
 export interface ILoadExistingContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
-}
-
-// @alpha @legacy
-export interface ILoadExistingContainerPropsAlpha extends ILoadExistingContainerProps {
-    readonly loadToSequenceNumber?: number | undefined;
 }
 
 // @alpha @legacy
@@ -186,6 +189,9 @@ export interface IScribeProtocolState {
     // (undocumented)
     values: [string, ICommittedProposal][];
 }
+
+// @alpha @legacy
+export function loadContainerToSequenceNumber(loadContainerToSequenceNumberProps: ILoadContainerToSequenceNumberProps): Promise<IContainer>;
 
 // @beta @legacy
 export class Loader implements IHostLoader {

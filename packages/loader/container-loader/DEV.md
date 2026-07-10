@@ -131,35 +131,35 @@ This diagram shows how the same target moves through the loader, container, stor
 ```mermaid
 flowchart TD
 	subgraph HostApp[Host or app layer]
-		A[Caller requests existing container]
+		A[Caller requests a container]
 		B{Point-in-time target?}
 	end
 
 	subgraph LoaderHelpers[Container-loader helper layer]
 		C[loadExistingContainer]
-		D[loadExistingContainer adds LoaderHeader.sequenceNumber = T]
+		D[loadContainerToSequenceNumber builds a historical-load request]
 		E[Loader.resolve]
-		Y[Load with deltaConnection none and opsBeforeReturn undefined]
-		Z[Install op/closed/abort listeners]
-		AA{Base snapshot sequence}
-		AB[Pause inbound and outbound queues immediately]
-		AC[Close container: snapshot is newer than target]
-		AD[container.connect fetches trailing ops]
-		AE[Process ops until deltaManager.lastSequenceNumber reaches T]
-		AF[Disconnect and return paused readonly container]
 	end
 
 	subgraph ContainerLoad[Container load layer]
 		F[Container.load receives loadToSequenceNumber]
 		G[SerializedStateManager.fetchSnapshot]
 		V[Container initializes from base snapshot]
-		W{Using loadContainerPaused?}
+		W{opsBeforeReturn is sequenceNumber?}
 		X[Normal container load continues]
+		Y[Attach delta manager op handler with sequence-number prefetch]
+		Z[Install target-reached listener]
+		AA{Base snapshot sequence}
+		AB[Pause inbound and outbound queues immediately]
+		AC[Throw: snapshot is newer than target]
+		AD[Fetch trailing ops through T]
+		AE[Process ops until deltaManager.lastSequenceNumber reaches T]
+		AF[Return paused historical container]
 	end
 
 	subgraph StorageBoundary[Storage boundary]
 		H[IDocumentStorageService.getSnapshot options include loadToSequenceNumber when present]
-		AG[IDocumentStorageServiceAlpha.canMaterializePointInTime]
+		AG[IPointInTimeMaterializationStorageService.canMaterializePointInTime]
 	end
 
 	subgraph OdspDriver[ODSP driver layer]
@@ -247,15 +247,15 @@ A snapshot id alone is not enough because the target may fall between two snapsh
 
 ## Caller-facing load shape
 
-Callers can request historical loading by providing `loadToSequenceNumber` through the alpha load props:
+Callers can request historical loading through the dedicated alpha load API:
 
 ```typescript
-const loadProps: ILoadExistingContainerPropsAlpha = {
+const loadProps: ILoadContainerToSequenceNumberProps = {
 	request,
 	loadToSequenceNumber: 123,
 };
 
-await loadExistingContainer(loadProps);
+await loadContainerToSequenceNumber(loadProps);
 ```
 
 Internally, this is carried through the existing loader sequence-number header:
@@ -264,33 +264,35 @@ Internally, this is carried through the existing loader sequence-number header:
 LoaderHeader.sequenceNumber // "fluid-sequence-number"
 ```
 
-Typed props win over any existing sequence-number header when both are present.
-Other request headers are preserved.
+`loadContainerToSequenceNumber` preserves existing request headers, then overwrites the sequence-number header and sets an internal load mode with `opsBeforeReturn: "sequenceNumber"` and `deltaConnection: "none"`.
+The `"sequenceNumber"` load mode is intentionally not part of the public/beta `IContainerLoadMode` surface.
 
 ## Loader propagation
 
 The loader propagation is intentionally simple:
 
-1. `loadExistingContainer` writes the target into request headers.
-2. `Loader.resolve` reads the target from request headers.
-3. `Container.load` receives the target as part of load props.
-4. `SerializedStateManager.fetchSnapshot` passes the target to snapshot fetch.
-5. `IDocumentStorageService.getSnapshot` receives the target in snapshot fetch options.
+1. `loadContainerToSequenceNumber` writes the target and internal load mode into request headers, then delegates to `loadExistingContainer`.
+2. `loadExistingContainer` remains the normal load helper and does not inspect historical-load props.
+3. `Loader.resolve` reads the target and validates that it is paired with the internal sequence-number load mode.
+4. `Container.load` receives the target as part of load props.
+5. `SerializedStateManager.fetchSnapshot` passes the target to snapshot fetch.
+6. `IDocumentStorageService.getSnapshot` receives the target in alpha snapshot fetch options.
 
 The loader does not decide which historical snapshot to use.
 For this flow, that decision belongs to the ODSP driver.
 
 ## Replay and pause
 
-`loadContainerPaused` is the helper that proves Fluid can replay to a target and then stop.
+`loadContainerToSequenceNumber` uses the internal `"sequenceNumber"` load mode in `Container.load` to replay to a target and then stop.
+`loadContainerPaused` is a separate internal helper that uses the same sequence-number headers and returns a paused container; it also forces readonly mode.
 
-It works like this:
+The sequence-number load mode works like this:
 
 1. Load the container without processing trailing operations yet.
-2. Install listeners so the helper can see when operations are processed.
-3. Connect just long enough to fetch and process operations.
+2. Install a listener so the container can detect when the target operation has been processed.
+3. Fetch and process trailing operations only up to the requested sequence number.
 4. Pause once the container reaches the requested sequence number.
-5. Disconnect and return the paused readonly container.
+5. Return the paused historical container.
 
 Important cases:
 
@@ -379,19 +381,19 @@ This section lists the main files and API names for contributors who need to wor
 ### Caller-facing target
 
 - `packages/common/container-definitions/src/loader.ts` defines `LoaderHeader.sequenceNumber`.
-- `packages/loader/container-loader/src/createAndLoadContainerUtils.ts` defines `ILoadExistingContainerPropsAlpha.loadToSequenceNumber`.
+- `packages/loader/container-loader/src/createAndLoadContainerUtils.ts` defines `ILoadContainerToSequenceNumberProps.loadToSequenceNumber` and `loadContainerToSequenceNumber`.
 
 ### Loader and container propagation
 
-- `packages/loader/container-loader/src/loader.ts` reads the target from request headers.
-- `packages/loader/container-loader/src/container.ts` carries the target on `IContainerLoadProps` and forwards it into snapshot fetch.
+- `packages/loader/container-loader/src/loader.ts` reads the target from request headers and requires the internal `opsBeforeReturn: "sequenceNumber"` load mode when `LoaderHeader.sequenceNumber` is present.
+- `packages/loader/container-loader/src/container.ts` carries the target on `IContainerLoadProps`, forwards it into snapshot fetch, and exposes the alpha `canMaterializePointInTime(container, target)` free function.
 - `packages/loader/container-loader/src/serializedStateManager.ts` passes the target into `getSnapshot` options when loading from storage.
 - `packages/loader/container-loader/src/loadPaused.ts` replays operations forward and pauses once the requested sequence number is reached.
 
 ### Storage and driver APIs
 
 - `packages/common/driver-definitions/src/storage.ts` defines `ISnapshotFetchOptionsAlpha.loadToSequenceNumber`.
-- `packages/common/driver-definitions/src/storage.ts` defines `IPointInTimeMaterializationTarget`, `PointInTimeMaterializationAvailability`, and `IDocumentStorageServiceAlpha.canMaterializePointInTime`.
+- `packages/common/driver-definitions/src/storage.ts` defines `IPointInTimeMaterializationTarget`, `PointInTimeMaterializationAvailability`, and standalone `IPointInTimeMaterializationStorageService.canMaterializePointInTime`.
 
 ### Storage wrappers and ODSP implementation
 
@@ -404,8 +406,8 @@ This section lists the main files and API names for contributors who need to wor
 
 Tests should cover behavior the current implementation actually provides:
 
-- `loadExistingContainer` forwards `loadToSequenceNumber` into `LoaderHeader.sequenceNumber`.
-- Existing request headers are preserved while target headers are added or overwritten by typed props.
+- `loadContainerToSequenceNumber` forwards `loadToSequenceNumber` into `LoaderHeader.sequenceNumber`.
+- Existing request headers are preserved while target headers are added or overwritten by the dedicated historical-load props.
 - `SerializedStateManager.fetchSnapshot` passes `loadToSequenceNumber` into snapshot fetch options when loading from storage.
 - `loadContainerPaused` pauses when the requested sequence number is reached.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
@@ -430,9 +432,16 @@ As ODSP support expands, add tests for:
 
 Reviewers should verify that:
 
-- The target is not dropped between helper props, headers, container load props, and snapshot fetch options.
-- Existing request headers remain preserved.
-- Loader code does not try to validate service-specific historical availability.
-- ODSP historical `getSnapshot` does not fall back to latest when no usable historical base snapshot exists.
-- Availability statuses do not over-claim trailing operation or marker retention support.
-- Tests only assert behavior that the current implementation actually provides.
+- The caller-facing load API is the dedicated alpha `loadContainerToSequenceNumber` path, not alpha props added to beta `loadExistingContainer`.
+- `ILoadContainerToSequenceNumberProps` contains only the request, host/driver wiring, and `loadToSequenceNumber`; it does not accept `pendingLocalState`.
+- `loadExistingContainer` remains the normal latest-load helper and does not inspect historical-load props.
+- The historical helper preserves existing request headers, then overwrites `LoaderHeader.sequenceNumber` and the internal load mode required for this flow.
+- The internal `opsBeforeReturn: "sequenceNumber"` mode is not exposed through the public/beta `IContainerLoadMode` type.
+- `Loader.resolve` rejects malformed sequence-number requests and requires the sequence-number header to be paired with the internal sequence-number load mode.
+- The target is not dropped between helper props, headers, container load props, and alpha snapshot fetch options.
+- The returned historical container is paused at the requested sequence number and should be treated as a read-only historical view.
+- Loader/container code does not try to validate ODSP-specific historical availability; base snapshot selection and availability probing stay behind the storage/driver boundary.
+- Point-in-time materialization probing uses the standalone alpha `IPointInTimeMaterializationStorageService` capability rather than extending `IDocumentStorageService`.
+- ODSP historical `getSnapshot` skips the latest snapshot cache and does not fall back to latest when no usable historical base snapshot exists.
+- Availability statuses do not over-claim trailing operation availability, marker retention, or support from non-ODSP drivers.
+- Tests only assert behavior that the current implementation actually provides, with focused coverage for exact replay to the target and the unsupported-driver `notAvailable` fallback.
