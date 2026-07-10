@@ -11,10 +11,10 @@ making it easier to separate code rollout from feature rollout.
 
 #### API
 
-Select the schema upgrades to enable during view creation by passing `storedSchemaGenerationOptions` in the configuration
+Select the schema upgrades to enable during view creation by passing `stagedUpgradePolicy` in the configuration
 object used with [`ITreeAlpha.viewWith`](https://fluidframework.com/docs/api/tree/viewabletree-interface#viewwith-methodsignature).
 
-Use `StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(...)` with `SchemaUpgrade` objects obtained from schema
+Use `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` with `SchemaUpgrade` objects obtained from schema
 factory APIs such as [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature)
 or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
@@ -27,16 +27,16 @@ const alphaTree = asAlpha(tree);
 const view = alphaTree.viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchema,
-		storedSchemaGenerationOptions:
-			StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(schemaUpgrade),
+		stagedUpgradePolicy:
+			StagedSchemaUpgradePolicy.enabledStagedUpgrades(schemaUpgrade),
 	}),
 );
 ```
 
-When `storedSchemaGenerationOptions` is omitted or `undefined`, the default is
-`StoredFromViewSchemaGenerationOptions.restrictive` which does not enable any staged schema upgrades.
+When `stagedUpgradePolicy` is omitted or `undefined`, the default is
+`StagedSchemaUpgradePolicy.restrictive` which does not enable any staged schema upgrades.
 
-Advanced callers can also provide a custom `StoredFromViewSchemaGenerationOptions` policy object directly:
+Advanced callers can also provide a custom `StagedSchemaUpgradePolicy` policy object directly:
 
 ```typescript
 const enabledFeatures = new Set<SchemaUpgrade>([schemaUpgrade]);
@@ -44,7 +44,7 @@ const enabledFeatures = new Set<SchemaUpgrade>([schemaUpgrade]);
 const view = tree.viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchema,
-		storedSchemaGenerationOptions: {
+		stagedUpgradePolicy: {
 			includeStaged: (upgrade) => enabledFeatures.has(upgrade),
 			includeStagedOptional: (upgrade) => enabledFeatures.has(upgrade),
 		},
@@ -59,20 +59,20 @@ This approach is useful for scenarios such as:
 
 ##### Pre-built Policy Options
 
-The `StoredFromViewSchemaGenerationOptions` namespace provides convenient pre-built policies:
+The `StagedSchemaUpgradePolicy` namespace provides convenient pre-built policies:
 
 **Restrictive** (default behavior):
 
 ```typescript
 import {
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 } from "@fluidframework/tree";
 
 const view = tree.viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchema,
-		storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.restrictive,
+		stagedUpgradePolicy: StagedSchemaUpgradePolicy.restrictive,
 	}),
 );
 ```
@@ -83,7 +83,7 @@ The restrictive option excludes all staged schema upgrades, producing the most c
 
 ```typescript
 import {
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	TreeViewConfigurationAlpha,
 } from "@fluidframework/tree";
 
@@ -91,7 +91,7 @@ import {
 const testView = tree.viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchemaWithAllStagedFeatures,
-		storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.permissive,
+		stagedUpgradePolicy: StagedSchemaUpgradePolicy.permissive,
 	}),
 );
 
@@ -138,8 +138,8 @@ const alphaTree = asAlpha(tree);
 const view = alphaTree.viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchema,
-		storedSchemaGenerationOptions: enableChecklistItems
-			? StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(
+		stagedUpgradePolicy: enableChecklistItems
+			? StagedSchemaUpgradePolicy.enabledStagedUpgrades(
 					checklistItemSchemaUpgrade,
 				)
 			: undefined,
@@ -187,8 +187,8 @@ await ensureSynchronized();
 const nextView = asAlpha(nextAppTree).viewWith(
 	new TreeViewConfigurationAlpha({
 		schema: AppSchemaWithStagedChecklist,
-		storedSchemaGenerationOptions:
-			StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(
+		stagedUpgradePolicy:
+			StagedSchemaUpgradePolicy.enabledStagedUpgrades(
 				checklistItemSchemaUpgrade,
 			),
 	}),

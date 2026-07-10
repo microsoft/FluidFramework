@@ -34,8 +34,8 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	getStoredSchema,
-	permissiveStoredSchemaGenerationOptions,
-	restrictiveStoredSchemaGenerationOptions,
+	permissiveStagedUpgradePolicy,
+	restrictiveStagedUpgradePolicy,
 	toInitialSchema,
 	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
@@ -74,7 +74,7 @@ describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const schema = new SchemaFactory("com.example");
 			class A extends schema.object("A", {}) {}
-			const stored = toStoredSchema(A, restrictiveStoredSchemaGenerationOptions);
+			const stored = toStoredSchema(A, restrictiveStagedUpgradePolicy);
 			assert.equal(stored.rootFieldSchema.kind, FieldKinds.required.identifier);
 			assert.deepEqual(stored.rootFieldSchema.types, new Set([A.identifier]));
 			const storedNodeSchema = stored.nodeSchema.get(brand(A.identifier));
@@ -89,7 +89,7 @@ describe("toStoredSchema", () => {
 			class B extends schema.object("A", {}) {}
 
 			assert.throws(
-				() => toStoredSchema([A, B], restrictiveStoredSchemaGenerationOptions),
+				() => toStoredSchema([A, B], restrictiveStagedUpgradePolicy),
 				/identifier "com.example.A"/,
 			);
 		});
@@ -108,12 +108,12 @@ describe("toStoredSchema", () => {
 					) {
 						// If the document is relying on forwards compatibility options (staged schema or unknown optional fields),
 						// then we do not expect to be able to get the same stored schema as in the document by deriving a stored schema from the view schema.
-						// For cases just using staged schema, this validates that the staged schema is being discarded due to restrictiveStoredSchemaGenerationOptions,
+						// For cases just using staged schema, this validates that the staged schema is being discarded due to restrictiveStagedUpgradePolicy,
 						// but the main reason for this conditional is to avoid these cases breaking the "Matches document" case below.
 						it("Does not match document", () => {
 							const restrictive = toStoredSchema(
 								testCase.schema,
-								restrictiveStoredSchemaGenerationOptions,
+								restrictiveStagedUpgradePolicy,
 							);
 							assert.notDeepEqual(restrictive, testCase.schemaData);
 						});
@@ -123,7 +123,7 @@ describe("toStoredSchema", () => {
 						it("Matches document", () => {
 							const restrictive = toStoredSchema(
 								testCase.schema,
-								restrictiveStoredSchemaGenerationOptions,
+								restrictiveStagedUpgradePolicy,
 							);
 							assert.deepEqual(restrictive, testCase.schemaData);
 						});
@@ -132,11 +132,11 @@ describe("toStoredSchema", () => {
 					it("Restrictive and Permissive", () => {
 						const restrictive = toStoredSchema(
 							testCase.schema,
-							restrictiveStoredSchemaGenerationOptions,
+							restrictiveStagedUpgradePolicy,
 						);
 						const permissive = toStoredSchema(
 							testCase.schema,
-							permissiveStoredSchemaGenerationOptions,
+							permissiveStagedUpgradePolicy,
 						);
 
 						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
@@ -332,7 +332,7 @@ describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const stored = filterAllowedTypes(
 				SchemaFactoryAlpha.required(SchemaFactory.number).simpleAllowedTypes,
-				restrictiveStoredSchemaGenerationOptions,
+				restrictiveStagedUpgradePolicy,
 			);
 			assert.deepEqual(
 				stored,
@@ -345,12 +345,12 @@ describe("toStoredSchema", () => {
 				SchemaFactoryAlpha.required(
 					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
 				).simpleAllowedTypes,
-				restrictiveStoredSchemaGenerationOptions,
+				restrictiveStagedUpgradePolicy,
 			);
 			const staged = SchemaFactoryAlpha.staged(SchemaFactory.number);
 			const storedPermissive = filterAllowedTypes(
 				SchemaFactoryAlpha.required(SchemaFactoryAlpha.types([staged])).simpleAllowedTypes,
-				permissiveStoredSchemaGenerationOptions,
+				permissiveStagedUpgradePolicy,
 			);
 			const view = filterAllowedTypes(
 				SchemaFactoryAlpha.required(
@@ -395,19 +395,19 @@ describe("toStoredSchema", () => {
 			const v1 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedAllowedTypes,
-					restrictiveStoredSchemaGenerationOptions,
+					restrictiveStagedUpgradePolicy,
 				),
 			);
 			const v2 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedAllowedTypesAfterUpdate,
-					restrictiveStoredSchemaGenerationOptions,
+					restrictiveStagedUpgradePolicy,
 				),
 			);
 			const v1Permissive = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedAllowedTypes,
-					permissiveStoredSchemaGenerationOptions,
+					permissiveStagedUpgradePolicy,
 				),
 			);
 			assert.notDeepEqual(v1.encodeV1(), v1Permissive.encodeV1());
@@ -416,19 +416,19 @@ describe("toStoredSchema", () => {
 			const stagedOptionalV1 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedOptionalField,
-					restrictiveStoredSchemaGenerationOptions,
+					restrictiveStagedUpgradePolicy,
 				),
 			);
 			const stagedOptionalV2 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedOptionalFieldAfterUpdate,
-					restrictiveStoredSchemaGenerationOptions,
+					restrictiveStagedUpgradePolicy,
 				),
 			);
 			const stagedOptionalV1Permissive = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedOptionalField,
-					permissiveStoredSchemaGenerationOptions,
+					permissiveStagedUpgradePolicy,
 				),
 			);
 			assert.notDeepEqual(stagedOptionalV1.encodeV1(), stagedOptionalV1Permissive.encodeV1());

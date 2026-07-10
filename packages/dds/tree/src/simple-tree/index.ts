@@ -59,7 +59,7 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	ExpectStored,
 	createSchemaUpgrade,
 } from "./core/index.js";
@@ -319,8 +319,8 @@ export {
 	toUpgradeSchema,
 	toInitialSchema,
 	toUnhydratedSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	permissiveStoredSchemaGenerationOptions,
+	restrictiveStagedUpgradePolicy,
+	permissiveStagedUpgradePolicy,
 } from "./toStoredSchema.js";
 export {
 	numberSchema,

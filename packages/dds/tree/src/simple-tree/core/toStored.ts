@@ -10,7 +10,7 @@ import type { SchemaUpgrade } from "./allowedTypes.js";
  * @input
  * @alpha
  */
-export interface StoredFromViewSchemaGenerationOptions {
+export interface StagedSchemaUpgradePolicy {
 	/**
 	 * Determines whether to include staged allowed types in the resulting stored schema.
 	 * @remarks
@@ -28,33 +28,33 @@ export interface StoredFromViewSchemaGenerationOptions {
 }
 
 /**
- * Utilities for creating {@link StoredFromViewSchemaGenerationOptions}.
+ * Utilities for creating {@link StagedSchemaUpgradePolicy}.
  *
  * @remarks
  * Use the properties and methods on this object to obtain stored-schema generation options
  * for different scenarios:
  *
- * - `StoredFromViewSchemaGenerationOptions.restrictive` — no staged upgrades (default)
+ * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
  *
- * - `StoredFromViewSchemaGenerationOptions.permissive` — all staged upgrades enabled
+ * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
  *
- * - `StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(...)` — only specific upgrades enabled
+ * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
  *
  * @example
  * ```typescript
  * // Enable specific upgrades:
- * const options = StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(myUpgrade);
+ * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
  *
  * // Use restrictive (default, no staged upgrades):
- * const options = StoredFromViewSchemaGenerationOptions.restrictive;
+ * const options = StagedSchemaUpgradePolicy.restrictive;
  *
  * // Use permissive (all staged upgrades, useful for testing):
- * const options = StoredFromViewSchemaGenerationOptions.permissive;
+ * const options = StagedSchemaUpgradePolicy.permissive;
  * ```
  *
  * @alpha
  */
-export const StoredFromViewSchemaGenerationOptions: {
+export const StagedSchemaUpgradePolicy: {
 	/**
 	 * Restrictive policy — excludes all staged schema members.
 	 *
@@ -64,7 +64,7 @@ export const StoredFromViewSchemaGenerationOptions: {
 	 *
 	 * This is the default behavior when no staged upgrades are enabled.
 	 */
-	readonly restrictive: StoredFromViewSchemaGenerationOptions;
+	readonly restrictive: StagedSchemaUpgradePolicy;
 	/**
 	 * Permissive policy — includes all staged schema upgrades.
 	 *
@@ -72,7 +72,7 @@ export const StoredFromViewSchemaGenerationOptions: {
 	 * Use this for testing, validation, and rollout rehearsal scenarios where you want to exercise
 	 * future document shapes before enabling staged upgrades broadly.
 	 */
-	readonly permissive: StoredFromViewSchemaGenerationOptions;
+	readonly permissive: StagedSchemaUpgradePolicy;
 	/**
 	 * Creates options that include only the specified staged schema upgrades.
 	 *
@@ -81,11 +81,11 @@ export const StoredFromViewSchemaGenerationOptions: {
 	 *
 	 * @remarks
 	 * If an empty set of upgrades is passed, the result is equivalent to
-	 * {@link (StoredFromViewSchemaGenerationOptions:variable).restrictive | restrictive}.
+	 * {@link (StagedSchemaUpgradePolicy:variable).restrictive | restrictive}.
 	 */
 	enabledStagedUpgrades(
 		...upgrades: SchemaUpgrade[]
-	): StoredFromViewSchemaGenerationOptions;
+	): StagedSchemaUpgradePolicy;
 } = {
 	restrictive: {
 		includeStaged: () => false,
@@ -99,9 +99,9 @@ export const StoredFromViewSchemaGenerationOptions: {
 
 	enabledStagedUpgrades(
 		...upgrades: SchemaUpgrade[]
-	): StoredFromViewSchemaGenerationOptions {
+	): StagedSchemaUpgradePolicy {
 		if (upgrades.length === 0) {
-			return StoredFromViewSchemaGenerationOptions.restrictive;
+			return StagedSchemaUpgradePolicy.restrictive;
 		}
 		const enabledUpgradeSet = new Set(upgrades);
 		return {
@@ -129,7 +129,7 @@ export type Unchanged = typeof Unchanged;
  * Subset of {@link SimpleSchemaTransformationOptions} for when the output is a known to be a stored schema.
  */
 export type StoredSchemaGenerationOptions =
-	| StoredFromViewSchemaGenerationOptions
+	| StagedSchemaUpgradePolicy
 	| ExpectStored;
 
 /**
@@ -140,6 +140,6 @@ export type StoredSchemaGenerationOptions =
  * we will need to add a "ToView" option here.
  */
 export type SimpleSchemaTransformationOptions =
-	| StoredFromViewSchemaGenerationOptions
+	| StagedSchemaUpgradePolicy
 	| ExpectStored
 	| Unchanged;

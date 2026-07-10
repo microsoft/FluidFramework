@@ -193,7 +193,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	restrictiveStagedUpgradePolicy,
 	toInitialSchema,
 	toStoredSchema,
 	type SnapshotFileSystem,
@@ -1723,7 +1723,7 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const storedSchema =
-			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			toStoredSchema(schema, restrictiveStagedUpgradePolicy).nodeSchema.get(name) ??
 			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {

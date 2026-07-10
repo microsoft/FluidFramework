@@ -58,8 +58,8 @@ import {
 	type TreeView,
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	permissiveStoredSchemaGenerationOptions,
+	restrictiveStagedUpgradePolicy,
+	permissiveStagedUpgradePolicy,
 	type TreeViewConfiguration,
 } from "../simple-tree/index.js";
 import { brand, Breakable } from "../util/index.js";
@@ -240,7 +240,7 @@ const library = {
 	nodeSchema: new Map([
 		...toStoredSchema(
 			[Minimal, schemaStatics.number],
-			restrictiveStoredSchemaGenerationOptions,
+			restrictiveStagedUpgradePolicy,
 		).nodeSchema,
 		[allTheFieldsName, allTheFields],
 	]),
@@ -299,7 +299,7 @@ export const testTrees: readonly TestTree[] = [
 	test(
 		"numericSequence",
 		{
-			...toStoredSchema(factory.number, restrictiveStoredSchemaGenerationOptions),
+			...toStoredSchema(factory.number, restrictiveStagedUpgradePolicy),
 			rootFieldSchema: {
 				kind: FieldKinds.sequence.identifier,
 				types: numberSet,
@@ -310,7 +310,7 @@ export const testTrees: readonly TestTree[] = [
 	),
 	{
 		name: "node-with-identifier-field",
-		schemaData: toStoredSchema(HasIdentifierField, restrictiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(HasIdentifierField, restrictiveStagedUpgradePolicy),
 		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -322,7 +322,7 @@ export const testTrees: readonly TestTree[] = [
 	},
 	{
 		name: "identifier-field",
-		schemaData: toStoredSchema(factory.identifier, restrictiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(factory.identifier, restrictiveStagedUpgradePolicy),
 		treeFactory: (idCompressor?: IIdCompressor): JsonableTree[] => {
 			assert(idCompressor !== undefined, "idCompressor must be provided");
 			const id = idCompressor.decompress(idCompressor.generateCompressedId());
@@ -582,7 +582,7 @@ export const testDocuments: readonly TestDocument[] = [
 		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(MapWithStaged, permissiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(MapWithStaged, permissiveStagedUpgradePolicy),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(MapWithStaged, [["key", "text"]])),
 	},
@@ -634,7 +634,7 @@ export const testDocuments: readonly TestDocument[] = [
 		schema: NestedStagedOptional,
 		hasStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedStagedOptional, restrictiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(NestedStagedOptional, restrictiveStagedUpgradePolicy),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(NestedStagedOptional, { a: 5, b: "text" }),
@@ -663,7 +663,7 @@ export const testDocuments: readonly TestDocument[] = [
 		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedStagedOptional, permissiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(NestedStagedOptional, permissiveStagedUpgradePolicy),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(fieldCursorFromInsertable(NestedStagedOptional, {})),
 	},
@@ -673,7 +673,7 @@ export const testDocuments: readonly TestDocument[] = [
 		schema: NestedMultiStage,
 		hasStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedMultiStage, restrictiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(NestedMultiStage, restrictiveStagedUpgradePolicy),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(NestedMultiStage, { b: null, c: null }),
@@ -702,7 +702,7 @@ export const testDocuments: readonly TestDocument[] = [
 		hasStagedSchema: true,
 		requiresStagedSchema: true,
 		policy: defaultSchemaPolicy,
-		schemaData: toStoredSchema(NestedMultiStage, permissiveStoredSchemaGenerationOptions),
+		schemaData: toStoredSchema(NestedMultiStage, permissiveStagedUpgradePolicy),
 		treeFactory: () =>
 			jsonableTreeFromFieldCursor(
 				fieldCursorFromInsertable(NestedMultiStage, { a: 5, b: [], c: ["text"] }),

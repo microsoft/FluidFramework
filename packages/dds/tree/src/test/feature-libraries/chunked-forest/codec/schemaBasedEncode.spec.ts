@@ -69,7 +69,7 @@ import {
 } from "../../../../simple-tree/index.js";
 import {
 	toStoredSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	restrictiveStagedUpgradePolicy,
 	toInitialSchema,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../simple-tree/toStoredSchema.js";
@@ -226,7 +226,7 @@ describe("schemaBasedEncoding", () => {
 
 			const storedSchema = toStoredSchema(
 				SchemaFactoryAlpha.identifier(),
-				restrictiveStoredSchemaGenerationOptions,
+				restrictiveStagedUpgradePolicy,
 			);
 
 			const fieldEncoder = getFieldEncoder(

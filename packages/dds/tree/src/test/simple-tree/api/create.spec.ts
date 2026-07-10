@@ -12,7 +12,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/create.js";
 import {
-	restrictiveStoredSchemaGenerationOptions,
+	restrictiveStagedUpgradePolicy,
 	SchemaFactory,
 	toStoredSchema,
 } from "../../../simple-tree/index.js";
@@ -25,7 +25,7 @@ describe("simple-tree create", () => {
 			createFromCursor(
 				SchemaFactory.string,
 				cursor,
-				toStoredSchema(SchemaFactory.string, restrictiveStoredSchemaGenerationOptions)
+				toStoredSchema(SchemaFactory.string, restrictiveStagedUpgradePolicy)
 					.rootFieldSchema,
 			);
 		});
@@ -37,7 +37,7 @@ describe("simple-tree create", () => {
 					createFromCursor(
 						SchemaFactory.number,
 						cursor,
-						toStoredSchema(SchemaFactory.number, restrictiveStoredSchemaGenerationOptions)
+						toStoredSchema(SchemaFactory.number, restrictiveStagedUpgradePolicy)
 							.rootFieldSchema,
 					),
 				validateUsageError(
@@ -55,7 +55,7 @@ describe("simple-tree create", () => {
 					createFromCursor(
 						Obj,
 						cursor,
-						toStoredSchema(Obj, restrictiveStoredSchemaGenerationOptions).rootFieldSchema,
+						toStoredSchema(Obj, restrictiveStagedUpgradePolicy).rootFieldSchema,
 					),
 				validateUsageError(/does not conform to schema/),
 			);

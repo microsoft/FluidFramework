@@ -22,7 +22,7 @@ import {
 	extractPersistedSchema,
 	SchemaFactoryAlpha,
 	schemaStatics,
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
@@ -46,7 +46,7 @@ describe("runtime schema upgrade API", () => {
 		const view = independentView(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(stringUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
 			}),
 		);
 
@@ -55,12 +55,12 @@ describe("runtime schema upgrade API", () => {
 		assert.equal(view.root, "test");
 	});
 
-	it("initialize can enable a staged schema upgrade via storedSchemaGenerationOptions", () => {
+	it("initialize can enable a staged schema upgrade via stagedUpgradePolicy", () => {
 		const enabled = new Set([stringUpgrade]);
 		const view = independentView(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: {
+				stagedUpgradePolicy: {
 					includeStaged: (upgrade) => enabled.has(upgrade),
 					includeStagedOptional: (upgrade) => enabled.has(upgrade),
 				},
@@ -142,7 +142,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(stringUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -190,7 +190,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(stringUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -217,7 +217,7 @@ describe("staged allowed type upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(stringUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
 			}),
 		);
 		viewB.upgradeSchema();
@@ -407,7 +407,7 @@ describe("staged optional upgrade", () => {
 		const viewB2 = treeB2.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(optionalUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
 			}),
 		);
 		viewB2.upgradeSchema();
@@ -433,7 +433,7 @@ describe("staged optional upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(optionalUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
 			}),
 		);
 		viewB.upgradeSchema();
@@ -458,7 +458,7 @@ describe("staged optional upgrade", () => {
 		const viewB = treeB.viewWith(
 			new TreeViewConfigurationAlpha({
 				schema: schemaB,
-				storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(optionalUpgrade),
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
 			}),
 		);
 		viewB.upgradeSchema();

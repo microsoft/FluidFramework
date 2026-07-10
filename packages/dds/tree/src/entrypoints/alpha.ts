@@ -268,7 +268,7 @@ export {
 	SimpleObjectNodeSchema, 
 	SimpleRecordNodeSchema, 
 	SimpleTreeSchema, 
-	StoredFromViewSchemaGenerationOptions, 
+	StagedSchemaUpgradePolicy, 
 	TextAsTree, 
 	TransactionCallbackStatusAlpha, 
 	TransactionConstraintAlpha, 
@@ -320,12 +320,12 @@ export {
 	independentInitializedView, 
 	independentView, 
 	normalizeAllowedTypes, 
-	permissiveStoredSchemaGenerationOptions, 
+	permissiveStagedUpgradePolicy, 
 	persistedToSimpleSchema, 
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	restrictiveStoredSchemaGenerationOptions, 
+	restrictiveStagedUpgradePolicy, 
 	trackDirtyNodes
 	// #endregion
 } from "../index.js";

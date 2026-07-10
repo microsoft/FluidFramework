@@ -11,7 +11,7 @@ import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
-	type StoredFromViewSchemaGenerationOptions,
+	type StagedSchemaUpgradePolicy,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
@@ -173,18 +173,18 @@ export interface ITreeViewConfigurationAlpha<
 	 * If provided, this policy is used directly for compatibility checks and for
 	 * `initialize` / `upgradeSchema` schema generation.
 	 *
-	 * If omitted or `undefined`, defaults to {@link StoredFromViewSchemaGenerationOptions.restrictive}
+	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicy.restrictive}
 	 * which does not enable any staged schema upgrades.
 	 *
 	 * @example Enabling specific staged upgrades
 	 * ```typescript
 	 * const config = new TreeViewConfigurationAlpha({
 	 *   schema: MySchema,
-	 *   storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(myUpgrade),
+	 *   stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade),
 	 * });
 	 * ```
 	 */
-	readonly storedSchemaGenerationOptions?: StoredFromViewSchemaGenerationOptions;
+	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
 /**
@@ -287,7 +287,7 @@ export class TreeViewConfigurationAlpha<
 	/**
 	 * Stored-schema generation policy for this view, fixed at construction time.
 	 */
-	public readonly storedSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions;
+	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
 	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
@@ -295,12 +295,12 @@ export class TreeViewConfigurationAlpha<
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 
-		this.storedSchemaGenerationOptions =
-			props.storedSchemaGenerationOptions ??
+		this.stagedUpgradePolicy =
+			props.stagedUpgradePolicy ??
 			resolveStoredSchemaGenerationOptions(undefined);
 
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root, this.storedSchemaGenerationOptions);
+		toInitialSchema(this.root, this.stagedUpgradePolicy);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }

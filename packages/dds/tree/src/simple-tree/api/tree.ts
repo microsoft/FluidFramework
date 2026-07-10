@@ -566,7 +566,7 @@ export interface TreeViewAlpha<
 
 	/**
 	 * Modifies the stored schema to match this view's schema, enabling staged schema upgrades based on
-	 * the construction-time policy from {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions}.
+	 * the construction-time policy from {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy}.
 	 * @remarks
 	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
 	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
@@ -592,7 +592,7 @@ export interface TreeViewAlpha<
 	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
-	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.storedSchemaGenerationOptions} when generating the initial stored schema.
+	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
 	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
 	 * with a view that does not include equivalent staged members in its construction-time policy will cause
 	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains

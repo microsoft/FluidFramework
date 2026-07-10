@@ -37,7 +37,7 @@ import {
 	ExpectStored,
 	NodeKind,
 	SchemaUpgrade,
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	Unchanged,
 	type SimpleSchemaTransformationOptions,
 	type StoredSchemaGenerationOptions,
@@ -64,7 +64,7 @@ import { createTreeSchema } from "./treeSchema.js";
 // The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
 
 const viewToStoredCache = new WeakMap<
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
@@ -72,25 +72,25 @@ const viewToStoredCache = new WeakMap<
  * Restrictive policy for generating stored schema from view schema.
  * @remarks
  * Excludes all staged schema members.
- * Prefer using `StoredFromViewSchemaGenerationOptions.restrictive`.
+ * Prefer using `StagedSchemaUpgradePolicy.restrictive`.
  * @alpha
  */
-export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
-	StoredFromViewSchemaGenerationOptions.restrictive;
+export const restrictiveStagedUpgradePolicy: StagedSchemaUpgradePolicy =
+	StagedSchemaUpgradePolicy.restrictive;
 
 /**
  * Permissive policy for generating stored schema from view schema.
  * @remarks
  * Includes all staged schema upgrades.
- * Prefer using `StoredFromViewSchemaGenerationOptions.permissive`.
+ * Prefer using `StagedSchemaUpgradePolicy.permissive`.
  * @alpha
  */
-export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
-	StoredFromViewSchemaGenerationOptions.permissive;
+export const permissiveStagedUpgradePolicy: StagedSchemaUpgradePolicy =
+	StagedSchemaUpgradePolicy.permissive;
 
-function isStoredFromViewSchemaGenerationOptions(
-	upgradesOrOptions: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
-): upgradesOrOptions is StoredFromViewSchemaGenerationOptions {
+function isStagedSchemaUpgradePolicy(
+	upgradesOrOptions: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): upgradesOrOptions is StagedSchemaUpgradePolicy {
 	return (
 		typeof upgradesOrOptions === "object" &&
 		"includeStaged" in upgradesOrOptions &&
@@ -104,17 +104,17 @@ function isStoredFromViewSchemaGenerationOptions(
  * If `upgradesOrOptions` is omitted, returns restrictive options.
  */
 export function resolveStoredSchemaGenerationOptions(
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
-): StoredFromViewSchemaGenerationOptions {
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): StagedSchemaUpgradePolicy {
 	if (upgradesOrOptions === undefined) {
-		return StoredFromViewSchemaGenerationOptions.restrictive;
+		return StagedSchemaUpgradePolicy.restrictive;
 	}
 
-	if (isStoredFromViewSchemaGenerationOptions(upgradesOrOptions)) {
+	if (isStagedSchemaUpgradePolicy(upgradesOrOptions)) {
 		return upgradesOrOptions;
 	}
 
-	return StoredFromViewSchemaGenerationOptions.enabledStagedUpgrades(...upgradesOrOptions);
+	return StagedSchemaUpgradePolicy.enabledStagedUpgrades(...upgradesOrOptions);
 }
 
 /**
@@ -122,7 +122,7 @@ export function resolveStoredSchemaGenerationOptions(
  */
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
 }
@@ -132,7 +132,7 @@ export function toUpgradeSchema(
  */
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StoredFromViewSchemaGenerationOptions,
+	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
 }
@@ -144,7 +144,7 @@ export function toInitialSchema(
  *
  * TODO: this should get additional options to enable support for unknown optional fields.
  */
-export const toUnhydratedSchema = StoredFromViewSchemaGenerationOptions.permissive;
+export const toUnhydratedSchema = StagedSchemaUpgradePolicy.permissive;
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
@@ -161,7 +161,7 @@ export const toUnhydratedSchema = StoredFromViewSchemaGenerationOptions.permissi
  */
 export function toStoredSchema(
 	root: ImplicitFieldSchema,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
@@ -176,7 +176,7 @@ export function toStoredSchema(
  */
 export function transformSimpleSchema(
 	schema: SimpleTreeSchema<SchemaType.View>,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): SimpleTreeSchema<SchemaType.Stored>;
 
 /**
@@ -348,7 +348,7 @@ export function getStoredSchema(
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema<SchemaType.View>,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): SimpleNodeSchema<SchemaType.Stored>;
 
 /**
@@ -507,7 +507,7 @@ function allowedTypeFilter(
 	if (options === ExpectStored) {
 		if (data.isStaged !== undefined) {
 			throw new UsageError(
-				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StoredFromViewSchemaGenerationOptions` to process.",
+				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StagedSchemaUpgradePolicy` to process.",
 			);
 		}
 		return true;
@@ -529,7 +529,7 @@ function allowedTypeFilter(
 
 function isStoredFromView(
 	options: SimpleSchemaTransformationOptions,
-): options is StoredFromViewSchemaGenerationOptions {
+): options is StagedSchemaUpgradePolicy {
 	return typeof options === "object" && "includeStaged" in options;
 }
 
