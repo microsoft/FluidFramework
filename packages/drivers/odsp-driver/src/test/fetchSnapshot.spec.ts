@@ -351,6 +351,20 @@ describe("Tests1 for snapshot fetch", () => {
 
 			assert.strictEqual(snapshot.sequenceNumber, 20);
 			assert.strictEqual(snapshot.snapshotTree.id, "version-20");
+			assert(
+				mockLogger.matchAnyEvent([
+					{
+						eventName: "HistoricalSnapshotSelection",
+						targetSequenceNumber: 25,
+						baseSnapshotSequenceNumber: 20,
+						replayDistance: 5,
+						versionsScanned: 3,
+						candidateSnapshotReads: 3,
+						foundCandidate: true,
+					},
+				]),
+				"Historical snapshot selection telemetry should include scan and replay metrics",
+			);
 		} finally {
 			restore();
 		}
@@ -372,6 +386,18 @@ describe("Tests1 for snapshot fetch", () => {
 					);
 					return true;
 				},
+			);
+			assert(
+				mockLogger.matchAnyEvent([
+					{
+						eventName: "HistoricalSnapshotSelection",
+						targetSequenceNumber: 5,
+						versionsScanned: 4,
+						candidateSnapshotReads: 4,
+						foundCandidate: false,
+					},
+				]),
+				"Historical snapshot selection telemetry should include failed scan metrics",
 			);
 		} finally {
 			restore();

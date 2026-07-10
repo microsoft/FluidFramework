@@ -298,6 +298,9 @@ Returning latest would make the caller think the historical target was honored w
 ODSP only chooses the base snapshot in this step.
 It does not prove that all operations after the snapshot are still available.
 
+ODSP emits `HistoricalSnapshotSelection` telemetry for point-in-time loads.
+The event records the target sequence number, number of versions scanned, number of candidate snapshot reads, whether a base snapshot was found, the chosen base snapshot sequence number when available, and the replay distance from base snapshot to target when available.
+
 ## Availability checks
 
 Hosts may want to ask whether a historical point appears loadable before doing a full load.

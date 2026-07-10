@@ -91,6 +91,12 @@ interface HistoricalSnapshotCandidate {
 	readonly snapshotTree: ISnapshotTree;
 }
 
+interface HistoricalSnapshotSearchResult {
+	readonly candidate?: HistoricalSnapshotCandidate;
+	readonly versionsScanned: number;
+	readonly candidateSnapshotReads: number;
+}
+
 function getAttributesBlobId(snapshotTree: ISnapshotTree): string | undefined {
 	return (
 		snapshotTree.trees[".protocol"]?.blobs.attributes ?? snapshotTree.blobs[".attributes"]
@@ -308,7 +314,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private async findHistoricalSnapshotCandidate(
 		targetSequenceNumber: number,
 		scenarioName: string | undefined,
-	): Promise<HistoricalSnapshotCandidate | undefined> {
+	): Promise<HistoricalSnapshotSearchResult> {
 		const versions = await this.getVersions(
 			// eslint-disable-next-line unicorn/no-null
 			null,
@@ -316,7 +322,11 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			scenarioName,
 			FetchSource.noCache,
 		);
+		let versionsScanned = 0;
+		let candidateSnapshotReads = 0;
 		for (const version of versions) {
+			versionsScanned++;
+			candidateSnapshotReads++;
 			const snapshotTree = await this.getSnapshotTree(version, scenarioName);
 			if (snapshotTree === null) {
 				continue;
@@ -324,18 +334,22 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 
 			const sequenceNumber = await this.getSnapshotSequenceNumber(snapshotTree);
 			if (sequenceNumber <= targetSequenceNumber) {
-				return { sequenceNumber, snapshotTree };
+				return {
+					candidate: { sequenceNumber, snapshotTree },
+					versionsScanned,
+					candidateSnapshotReads,
+				};
 			}
 		}
 
-		return undefined;
+		return { versionsScanned, candidateSnapshotReads };
 	}
 
 	public async canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
 		try {
-			const candidate = await this.findHistoricalSnapshotCandidate(
+			const { candidate } = await this.findHistoricalSnapshotCandidate(
 				target.sequenceNumber,
 				target.scenarioName,
 			);
@@ -371,10 +385,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		snapshotFetchOptions: ISnapshotFetchOptionsAlpha & { loadToSequenceNumber: number },
 	): Promise<ISnapshot> {
 		const targetSequenceNumber = snapshotFetchOptions.loadToSequenceNumber;
-		const candidate = await this.findHistoricalSnapshotCandidate(
+		const searchResult = await this.findHistoricalSnapshotCandidate(
 			targetSequenceNumber,
 			snapshotFetchOptions.scenarioName,
 		);
+		const { candidate } = searchResult;
+		this.logger.sendTelemetryEvent({
+			eventName: "HistoricalSnapshotSelection",
+			targetSequenceNumber,
+			baseSnapshotSequenceNumber: candidate?.sequenceNumber,
+			replayDistance:
+				candidate === undefined ? undefined : targetSequenceNumber - candidate.sequenceNumber,
+			versionsScanned: searchResult.versionsScanned,
+			candidateSnapshotReads: searchResult.candidateSnapshotReads,
+			foundCandidate: candidate !== undefined,
+		});
 
 		if (candidate !== undefined) {
 			const snapshot: ISnapshot = {
