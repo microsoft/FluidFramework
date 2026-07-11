@@ -373,7 +373,9 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 */
 		it("can create a container with only read permission in read mode", async function () {
 			const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
-			const client = new TinyliciousClient({ connection: { tokenProvider, port: tinyliciousPort } });
+			const client = new TinyliciousClient({
+				connection: { tokenProvider, port: tinyliciousPort },
+			});
 
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
@@ -412,7 +414,9 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 				ScopeType.DocRead,
 				ScopeType.DocWrite,
 			]);
-			const client = new TinyliciousClient({ connection: { tokenProvider, port: tinyliciousPort } });
+			const client = new TinyliciousClient({
+				connection: { tokenProvider, port: tinyliciousPort },
+			});
 
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
