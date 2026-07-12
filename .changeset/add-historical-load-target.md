@@ -6,10 +6,10 @@
 "__section": legacy
 ---
 
-Add historical load target fields to loader APIs
+Add an API for loading historical containers that stop at a target sequence number
 
 Loader requests can now carry a target sequence number using the existing `LoaderHeader.sequenceNumber` request header.
-Callers can use the alpha `loadContainerToSequenceNumber` API with `ILoadContainerToSequenceNumberProps.loadToSequenceNumber` to request a historical, paused container view.
+Callers can use the alpha `loadContainerToSequenceNumber` API with `ILoadContainerToSequenceNumberProps.loadToSequenceNumber` to request a historical, read-only container view that stops at the requested sequence number.
 The target reaches snapshot fetch through `ISnapshotFetchOptionsAlpha.loadToSequenceNumber`.
 ODSP now uses `loadToSequenceNumber` to list recent versions and select a historical base snapshot at or before the target.
 `loadContainerPaused` can replay ops from a suitable base snapshot and pause at the requested sequence number.

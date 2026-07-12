@@ -433,6 +433,7 @@ export class Container
 	// If false, container gets closed on loss of connection.
 	private readonly _canReconnect: boolean;
 	private readonly clientDetailsOverride: IClientDetails | undefined;
+	private readonly isHistoricalLoad: boolean;
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
@@ -728,7 +729,7 @@ export class Container
 
 	constructor(
 		createProps: IContainerCreateProps,
-		loadProps?: Pick<IContainerLoadProps, "pendingLocalState">,
+		loadProps?: Pick<IContainerLoadProps, "loadToSequenceNumber" | "pendingLocalState">,
 	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
@@ -766,6 +767,7 @@ export class Container
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this.isHistoricalLoad = loadProps?.loadToSequenceNumber !== undefined;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -1162,6 +1164,10 @@ export class Container
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
+		} else if (this.isHistoricalLoad) {
+			throw new UsageError(
+				"Pending state cannot be captured from a historical point-in-time container",
+			);
 		}
 		assert(
 			this.attachmentData.state === AttachState.Attached,
@@ -1364,6 +1370,8 @@ export class Container
 			throw new UsageError(`The Container is closed and cannot be connected`);
 		} else if (this.attachState !== AttachState.Attached) {
 			throw new UsageError(`The Container is not attached and cannot be connected`);
+		} else if (this.isHistoricalLoad) {
+			throw new UsageError("Historical point-in-time containers cannot be connected");
 		} else if (!this.connected) {
 			// Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
 			// If there is gap, we will learn about it once connected, but the gap should be small (if any),
@@ -1684,21 +1692,38 @@ export class Container
 
 				let targetReached = false;
 				let targetReachedHandler: ((message: ISequencedDocumentMessage) => void) | undefined;
-				const markTargetReached = (): void => {
-					targetReached = true;
-					pauseContainer();
+				let targetReachedCloseHandler: ((error?: ICriticalContainerError) => void) | undefined;
+				const removeTargetReachedHandlers = (): void => {
 					if (targetReachedHandler !== undefined) {
 						this.off("op", targetReachedHandler);
 					}
+					if (targetReachedCloseHandler !== undefined) {
+						this.off("closed", targetReachedCloseHandler);
+					}
+				};
+				const markTargetReached = (): void => {
+					targetReached = true;
+					pauseContainer();
+					removeTargetReachedHandlers();
 				};
 				if (lastProcessedSequenceNumber === loadToSequenceNumber) {
 					markTargetReached();
 				}
-				const targetReachedP = new Promise<void>((resolve) => {
+				const targetReachedP = new Promise<void>((resolve, reject) => {
 					if (targetReached) {
 						resolve();
 						return;
 					}
+					targetReachedCloseHandler = (error?: ICriticalContainerError): void => {
+						reject(
+							normalizeError(
+								error ??
+									new GenericError(
+										"Container closed before reaching the requested historical sequence number.",
+									),
+							),
+						);
+					};
 					targetReachedHandler = (message: ISequencedDocumentMessage): void => {
 						if (message.sequenceNumber >= loadToSequenceNumber) {
 							markTargetReached();
@@ -1706,6 +1731,7 @@ export class Container
 						}
 					};
 					this.on("op", targetReachedHandler);
+					this.on("closed", targetReachedCloseHandler);
 				});
 				opsBeforeReturnP = Promise.all([
 					this.attachDeltaManagerOpHandler(
@@ -1717,11 +1743,7 @@ export class Container
 					targetReachedP,
 				])
 					.then(() => {})
-					.finally(() => {
-						if (targetReachedHandler !== undefined) {
-							this.off("op", targetReachedHandler);
-						}
-					});
+					.finally(removeTargetReachedHandlers);
 				break;
 			}
 			case "cached":
@@ -1794,6 +1816,8 @@ export class Container
 					{ eventName: "WaitOpProcessing" },
 					async () => this._deltaManager.inbound.waitTillProcessingDone(),
 				);
+
+				this.forceReadonly(true);
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this._deltaManager.inbound.pause();

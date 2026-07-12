@@ -11,12 +11,13 @@ import {
 	type IProvideLayerCompatDetails,
 } from "@fluid-internal/client-utils";
 import {
+	LoaderHeader,
 	isIDeltaManagerFull,
 	type ICodeDetailsLoader,
 	type IRuntime,
 	type IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
-import type { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest, IRequestHeader } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	type IDocumentDeltaStorageService,
@@ -42,10 +43,10 @@ import {
 	MessageType,
 	SummaryType,
 } from "@fluidframework/driver-definitions/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { loadContainerPaused } from "../loadPaused.js";
-import type { ILoaderProps } from "../loader.js";
+import { Loader, type ILoaderProps } from "../loader.js";
 import {
 	loadContainerToSequenceNumber,
 	type ILoadContainerToSequenceNumberProps,
@@ -223,9 +224,11 @@ function createLoaderProps(
 	loaderProps: ILoaderProps;
 	fetchRanges: { from: number; to: number | undefined }[];
 	getDeltaStreamConnectionCount: () => number;
+	getResolvedRequests: () => IRequest[];
 } {
 	const snapshot = createSnapshot(snapshotSequenceNumber);
 	const fetchRanges: { from: number; to: number | undefined }[] = [];
+	const resolvedRequests: IRequest[] = [];
 	let deltaStreamConnectionCount = 0;
 	const storage: IDocumentStorageService = {
 		policies: {},
@@ -280,6 +283,7 @@ function createLoaderProps(
 	return {
 		fetchRanges,
 		getDeltaStreamConnectionCount: () => deltaStreamConnectionCount,
+		getResolvedRequests: () => resolvedRequests,
 		loaderProps: {
 			codeLoader: createCodeLoader(),
 			documentServiceFactory,
@@ -288,7 +292,10 @@ function createLoaderProps(
 			scope: {},
 			urlResolver: {
 				getAbsoluteUrl: async () => resolvedUrl.url,
-				resolve: async () => resolvedUrl,
+				resolve: async (requestToResolve: IRequest) => {
+					resolvedRequests.push(requestToResolve);
+					return resolvedUrl;
+				},
 			},
 		},
 	};
@@ -338,6 +345,31 @@ describe("loadContainerPaused", () => {
 });
 
 describe("loadContainerToSequenceNumber", () => {
+	it("preserves existing request headers while overwriting historical load headers", async () => {
+		const { loaderProps, getResolvedRequests } = createLoaderProps(7, []);
+		const requestHeaders: IRequestHeader = {
+			customHeader: "preserved",
+			[LoaderHeader.loadMode]: { opsBeforeReturn: "cached" },
+			[LoaderHeader.sequenceNumber]: 99,
+		};
+		const loadProps: ILoadContainerToSequenceNumberProps = {
+			...loaderProps,
+			request: { ...request, headers: requestHeaders },
+			loadToSequenceNumber: 7,
+		};
+
+		await loadContainerToSequenceNumber(loadProps);
+
+		assert.strictEqual(getResolvedRequests().length, 1);
+		const resolvedHeaders = getResolvedRequests()[0].headers;
+		assert.strictEqual(resolvedHeaders?.customHeader, "preserved");
+		assert.strictEqual(resolvedHeaders?.[LoaderHeader.sequenceNumber], 7);
+		assert.deepStrictEqual(resolvedHeaders?.[LoaderHeader.loadMode], {
+			deltaConnection: "none",
+			opsBeforeReturn: "sequenceNumber",
+		});
+	});
+
 	it("replays forward from a historical snapshot and returns paused at the target sequence number", async () => {
 		const { loaderProps, fetchRanges } = createLoaderProps(5, [
 			createMessage(6),
@@ -354,9 +386,77 @@ describe("loadContainerToSequenceNumber", () => {
 
 		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
 		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);
+		assert.strictEqual(container.readOnlyInfo.readonly, true);
 		assert(isIDeltaManagerFull(container.deltaManager));
 		assert.strictEqual(container.deltaManager.inbound.paused, true);
 		assert.strictEqual(container.deltaManager.outbound.paused, true);
+		assert.throws(
+			() => container.connect(),
+			(error: Error) =>
+				error instanceof UsageError &&
+				error.message.includes("Historical point-in-time containers cannot be connected"),
+		);
+		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
+		assert(container.getPendingLocalState !== undefined);
+		await assert.rejects(
+			container.getPendingLocalState(),
+			(error: Error) =>
+				error instanceof UsageError &&
+				error.message.includes(
+					"Pending state cannot be captured from a historical point-in-time container",
+				),
+		);
+	});
+
+	it("pauses immediately when the loaded snapshot is already at the target sequence number", async () => {
+		const { loaderProps, fetchRanges, getDeltaStreamConnectionCount } = createLoaderProps(7, [
+			createMessage(8),
+		]);
+		const loadProps: ILoadContainerToSequenceNumberProps = {
+			...loaderProps,
+			request,
+			loadToSequenceNumber: 7,
+		};
+
+		const container = await loadContainerToSequenceNumber(loadProps);
+
+		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
+		assert.deepStrictEqual(fetchRanges, []);
+		assert.strictEqual(getDeltaStreamConnectionCount(), 0);
+		assert.strictEqual(container.readOnlyInfo.readonly, true);
+		assert(isIDeltaManagerFull(container.deltaManager));
+		assert.strictEqual(container.deltaManager.inbound.paused, true);
+		assert.strictEqual(container.deltaManager.outbound.paused, true);
+		assert.throws(
+			() => container.connect(),
+			(error: Error) =>
+				error instanceof UsageError &&
+				error.message.includes("Historical point-in-time containers cannot be connected"),
+		);
+		assert(container.getPendingLocalState !== undefined);
+		await assert.rejects(
+			container.getPendingLocalState(),
+			(error: Error) =>
+				error instanceof UsageError &&
+				error.message.includes(
+					"Pending state cannot be captured from a historical point-in-time container",
+				),
+		);
+	});
+
+	it("rejects when the loaded snapshot is newer than the target sequence number", async () => {
+		const { loaderProps, fetchRanges } = createLoaderProps(8, [createMessage(9)]);
+		const loadProps: ILoadContainerToSequenceNumberProps = {
+			...loaderProps,
+			request,
+			loadToSequenceNumber: 7,
+		};
+
+		await assert.rejects(
+			loadContainerToSequenceNumber(loadProps),
+			/Most recent snapshot is newer than the specified sequence number/u,
+		);
+		assert.deepStrictEqual(fetchRanges, []);
 	});
 
 	it("rejects when delta storage does not have enough ops to reach the target sequence number", async () => {
@@ -372,5 +472,47 @@ describe("loadContainerToSequenceNumber", () => {
 			/Requested sequence number is not available/u,
 		);
 		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);
+	});
+
+	it("rejects malformed manual sequence-number headers", async () => {
+		const { loaderProps } = createLoaderProps(5, []);
+		const loader = new Loader(loaderProps);
+
+		await assert.rejects(
+			loader.resolve({
+				url: request.url,
+				headers: { [LoaderHeader.sequenceNumber]: 7 },
+			}),
+			/opsBeforeReturn must be set to "sequenceNumber"/u,
+		);
+
+		await assert.rejects(
+			loader.resolve({
+				url: request.url,
+				headers: {
+					[LoaderHeader.loadMode]: {
+						deltaConnection: "none",
+						opsBeforeReturn: "sequenceNumber",
+					},
+				},
+			}),
+			/sequenceNumber must be set to a non-negative integer/u,
+		);
+
+		for (const invalidSequenceNumber of [-1, 1.5, "7"]) {
+			await assert.rejects(
+				loader.resolve({
+					url: request.url,
+					headers: {
+						[LoaderHeader.loadMode]: {
+							deltaConnection: "none",
+							opsBeforeReturn: "sequenceNumber",
+						},
+						[LoaderHeader.sequenceNumber]: invalidSequenceNumber,
+					},
+				}),
+				/sequenceNumber must be set to a non-negative integer/u,
+			);
+		}
 	});
 });

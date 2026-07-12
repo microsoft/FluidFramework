@@ -297,7 +297,13 @@ The new sequence-number load mode works like this:
 4. Attach the delta manager op handler and fetch trailing operations only up to the requested sequence number.
 5. Fail if the bounded fetch cannot queue enough operations to reach the target.
 6. Pause once the container reaches the requested sequence number.
-7. Return the paused historical container.
+7. Force the container readonly and return the paused historical container.
+
+Historical containers returned by `loadContainerToSequenceNumber` fail closed:
+
+- `connect()` throws a `UsageError` instead of resuming queues and moving the container past the target.
+- `getPendingLocalState()` throws a `UsageError` because pending state from a historical point cannot be safely retried against the latest document.
+- If the container closes while waiting for the target operation, the target wait rejects and removes its listeners.
 
 Important cases:
 
@@ -395,6 +401,7 @@ This section lists the main files and API names for contributors who need to wor
 - `packages/loader/container-loader/src/container.ts` carries the target on `IContainerLoadProps`, forwards it into snapshot fetch, implements the internal sequence-number replay/pause mode, and exposes the alpha `canMaterializePointInTime(container, target)` free function.
 - `packages/loader/container-loader/src/serializedStateManager.ts` passes the target into `getSnapshot` options when loading from storage.
 - `packages/loader/container-loader/src/deltaManager.ts` bounds sequence-number replay fetches and rejects if queued operations cannot reach the target.
+- `packages/loader/container-loader/src/container.ts` blocks `connect()` and `getPendingLocalState()` on historical containers with `UsageError`.
 - `packages/loader/container-loader/src/loadPaused.ts` is the legacy/internal paused-load helper; it does not use the new sequence-number load mode.
 
 ### Storage and driver APIs
@@ -415,9 +422,10 @@ Tests should cover behavior the current implementation actually provides:
 
 - `loadContainerToSequenceNumber` forwards `loadToSequenceNumber` into `LoaderHeader.sequenceNumber`.
 - Existing request headers are preserved while target headers are added or overwritten by the dedicated historical-load props.
+- `Loader.resolve` rejects malformed manual sequence-number headers, including missing, non-integer, negative, or unpaired sequence-number targets.
 - `SerializedStateManager.fetchSnapshot` passes `loadToSequenceNumber` into snapshot fetch options when loading from storage.
 - The legacy/internal `loadContainerPaused` helper keeps its existing connect-driven paused-load behavior.
-- `loadContainerToSequenceNumber` pauses at the requested sequence number and rejects clearly when trailing operations cannot reach the target.
+- `loadContainerToSequenceNumber` pauses at the requested sequence number, forces readonly, blocks `connect()` and `getPendingLocalState()`, and rejects clearly when trailing operations cannot reach the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
@@ -448,6 +456,7 @@ Reviewers should verify that:
 - `Loader.resolve` rejects malformed sequence-number requests and requires the sequence-number header to be paired with the internal sequence-number load mode.
 - The target is not dropped between helper props, headers, container load props, and alpha snapshot fetch options.
 - The returned historical container is paused at the requested sequence number and should be treated as a read-only historical view.
+- The returned historical container enforces that historical view by staying readonly and rejecting `connect()` and `getPendingLocalState()`.
 - If trailing operations cannot reach the requested sequence number, the load rejects with a clear unavailable-target error rather than hanging.
 - Loader/container code does not try to validate ODSP-specific historical availability; base snapshot selection and availability probing stay behind the storage/driver boundary.
 - Point-in-time materialization probing uses the standalone alpha `IPointInTimeMaterializationStorageService` capability rather than extending `IDocumentStorageService`.
