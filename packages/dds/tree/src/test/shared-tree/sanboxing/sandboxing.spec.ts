@@ -35,7 +35,7 @@ import {
 } from "../../../simple-tree/index.js";
 import { configuredSharedTree } from "../../../treeFactory.js";
 import { hasSome, type JsonCompatibleReadOnly } from "../../../util/index.js";
-import { TestTreeProviderLite, StringArray } from "../../utils.js";
+import { TestTreeProviderLite, StringArray, createTestUndoRedoStacks } from "../../utils.js";
 
 /**
  * Gets the head commit of a view.
@@ -294,7 +294,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			return;
 		}
 		this.isApplyingInboundChanges = true;
-		this.view.applyChange(update, false);
+		this.view.applyChange(update);
 		this.isApplyingInboundChanges = false;
 		this.logger("Sand: applied update from host");
 		this.sendAckOfInboundUpdate();
@@ -699,6 +699,74 @@ describe("Host and Sandbox Demo", () => {
 		// The peer edit is now reflected in the local and sandbox
 		strict.deepEqual([...host.local.root], ["H", "P"]);
 		strict.deepEqual([...sandbox.view.root], ["H", "P"]);
+	});
+
+	it("sandbox edits can be reverted", async () => {
+		const { peer, host, sandbox, provider } = setup([]);
+		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
+			sandbox.view.events,
+		);
+
+		// Before the sandbox has a chance to process the edits from the host, the peer makes an edit
+		sandbox.view.root.push("Sa");
+		sandbox.view.root.push("Sb");
+		sandbox.view.root.push("Sc");
+		strict.deepEqual([...sandbox.view.root], ["Sa", "Sb", "Sc"]);
+		strict.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
+
+		// The sandbox should have started the process of pushing the edit to the host
+		let pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		await pushPromise;
+
+		strict.deepEqual([...sandbox.view.root], ["Sa", "Sb", "Sc"]);
+		strict.deepEqual([...host.local.root], ["Sa", "Sb", "Sc"]);
+		strict.deepEqual([...host.main.root], ["Sa", "Sb", "Sc"]);
+
+		// Make an edit on the host
+		host.main.root.insertAtStart("H");
+		strict.deepEqual([...host.main.root], ["H", "Sa", "Sb", "Sc"]);
+
+		// Wait for the update to be applied to the sandbox
+		const updatePromise =
+			host.updatePromise ?? strict.fail("Expected update to be in progress");
+		await updatePromise;
+
+		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
+		strict.deepEqual([...sandbox.view.root], ["H", "Sa", "Sb", "Sc"]);
+
+		strict.deepEqual(
+			undoStack.length,
+			4,
+			"Expected inbound update to add an entry to the undo stack",
+		);
+		undoStack.pop()?.dispose();
+
+		// Undo the sandbox edits
+		undoStack.pop()?.revert();
+		undoStack.pop()?.revert();
+		undoStack.pop()?.revert();
+
+		// The sandbox should have started the process of pushing the edits to the host
+		pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		await pushPromise;
+
+		strict.deepEqual([...sandbox.view.root], ["H"]);
+		strict.deepEqual([...host.local.root], ["H"]);
+		strict.deepEqual([...host.main.root], ["H"]);
+		assert(redoStack.length === 3, "Expected redo stack to have 3 entries");
+
+		// Undo the sandbox edits
+		redoStack.pop()?.revert();
+		redoStack.pop()?.revert();
+		redoStack.pop()?.revert();
+
+		// The sandbox should have started the process of pushing the edits to the host
+		pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		await pushPromise;
+
+		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
+		strict.deepEqual([...sandbox.view.root], ["H", "Sa", "Sb", "Sc"]);
+		unsubscribe();
 	});
 
 	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.

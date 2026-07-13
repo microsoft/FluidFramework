@@ -356,8 +356,6 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Apply a serialized change to this branch.
 	 * @param change - the change to apply.
-	 * @param generateCommit - whether to generate a commit for this change. Defaults to true.
-	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
 	 * @remarks Changes may only be applied to a SharedTree with the same IdCompressor instance and branch state from which they were generated.
 	 * They may be created by one branch and applied to another, but only if both branches share the same history at the time of creation and application.
 	 *
@@ -365,7 +363,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * TODO: This method will support applying changes from different IdCompressor instances as long as they have the same local session ID.
 	 * Update the tests and docs to match when that is done.
 	 */
-	applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void;
+	applyChange(change: JsonCompatibleReadOnly): void;
 
 	/**
 	 * Determines if there are changes on the given branch that are not present on this branch.

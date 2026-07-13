@@ -426,42 +426,6 @@ describe("simple-tree tree", () => {
 			});
 			assert.equal(viewA.root, 5);
 		});
-
-		it("does not generate a commit when generateCommit is false", () => {
-			// Setup
-			const config = new TreeViewConfiguration({ schema: schema.number });
-			const viewA = getView(config);
-			viewA.initialize(3);
-			const viewB = viewA.fork();
-
-			let change: JsonCompatibleReadOnly | undefined;
-			viewB.events.on("changed", (metadata) => {
-				assert(metadata.isLocal);
-				change = metadata.getChange();
-			});
-
-			viewB.root = 4;
-			assert(change !== undefined);
-
-			const changedFired: ChangeMetadata[] = [];
-			viewA.events.on("changed", (metadata) => {
-				changedFired.push(metadata);
-			});
-
-			// Act
-			viewA.applyChange(change, false);
-
-			// Verify
-			assert.equal(viewA.root, 4);
-			assert.equal(changedFired.length, 1);
-			const { isLocal, getChange, getRevertible, kind, labels, label } = changedFired[0];
-			assert.equal(isLocal, true);
-			assert.equal(kind, CommitKind.Default);
-			assert.equal(labels.size, 0);
-			assert.equal(label, undefined);
-			assert.equal(getChange(), change);
-			assert.equal(getRevertible(), undefined);
-		});
 	});
 
 	describe("computeNetChangeIfRebasedOnto", () => {
@@ -493,7 +457,7 @@ describe("simple-tree tree", () => {
 
 				const change = appliedView.computeNetChangeIfRebasedOnto(targetView);
 				if (change !== undefined) {
-					appliedView.applyChange(change, false);
+					appliedView.applyChange(change);
 				}
 
 				assert.deepEqual([...appliedView.root], [...rebasedView.root]);

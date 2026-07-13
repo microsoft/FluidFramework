@@ -166,8 +166,8 @@ export class SchematizingSimpleTreeView<
 		return true;
 	}
 
-	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
-		this.checkout.applySerializedChange(change, generateCommit);
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.checkout.applySerializedChange(change);
 	}
 
 	public hasRootSchema<TSchema extends ImplicitFieldSchema>(

@@ -859,10 +859,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Applies the given serialized change (as was produced via a `"changed"` event of another checkout) to this checkout.
 	 */
 	@throwIfBroken
-	public applySerializedChange(
-		serializedChange: JsonCompatibleReadOnly,
-		generateCommit: boolean = true,
-	): void {
+	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
 		if (!isSerializedChange(serializedChange)) {
 			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
 		}
@@ -880,28 +877,15 @@ export class TreeCheckout implements ITreeCheckout {
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
 
-		if (generateCommit) {
-			// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-			this.#transaction.branch.apply(tagChange(decodedChange, revision));
-		} else {
-			this.applyInternalChange(decodedChange);
-			this.emitChangedLocked(() => {
-				this.#events.emit("changed", {
-					isLocal: true,
-					kind: CommitKind.Default,
-					labels: new Set<unknown>(),
-					getChange: () => serializedChange,
-					getRevertible: () => undefined,
-				});
-			});
-		}
+		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
+		this.#transaction.branch.apply(tagChange(decodedChange, revision));
 	}
 
 	// #region TreeBranchAlpha
 
 	@throwIfBroken
-	public applyChange(change: JsonCompatibleReadOnly, generateCommit?: boolean): void {
-		this.applySerializedChange(change, generateCommit);
+	public applyChange(change: JsonCompatibleReadOnly): void {
+		this.applySerializedChange(change);
 	}
 
 	public isBranch(): this is TreeBranchAlpha {
@@ -1349,9 +1333,10 @@ export class TreeCheckout implements ITreeCheckout {
 		const encodedChange = this.changeFamily.codecs
 			.resolve(4)
 			.encode(rebased.sourceChange, context);
+		const revision = this.mintRevisionTag();
 		return {
 			version: 1,
-			revision: undefined,
+			revision,
 			originatorId: this.idCompressor.localSessionId,
 			change: encodedChange,
 		} satisfies SerializedChange;
