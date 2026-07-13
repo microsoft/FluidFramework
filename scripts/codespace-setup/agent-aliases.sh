@@ -30,12 +30,7 @@ claude() {
 
 dev() {
 	_ensure_agency || return 1
-	agency claude --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
-}
-
-dev-copilot() {
-	_ensure_agency || return 1
-	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model opus
+	agency copilot --profile nori --mcp 'ado --org fluidframework' --mcp 'workiq' --mcp 'enghub' "$@" -- --model claude-opus-4.8
 }
 
 copilot() {
