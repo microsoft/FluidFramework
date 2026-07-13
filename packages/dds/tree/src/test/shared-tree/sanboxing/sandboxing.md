@@ -26,12 +26,22 @@ This is not feasible in practice as the host and sandbox should be running on di
 The code should be updated to serialize a sharded id-compressor.
 (See https://github.com/microsoft/FluidFramework/pull/26294).
 
-### Terser Update Format (optional)
+### Full-Duplex Architecture (optional)
 
-The implementation currently uses a `JsonCompatibleReadOnly` encoding of a SharedTree change for sending an update from the host to the sandbox.
-This contains more data than strictly necessary since such a change includes all metadata necessary to rebase changes.
-A more efficient implementation may be able use a `Delta` instead.
-Caution: this might cause issues with event notifications on the sandbox view.
+The current architecture has the merit of being replicable by application authors using their own protocols.
+This is because it does not require merge resolution capabilities within the sandbox.
+However, the current architecture relies on delaying updates to the sandbox as long as the sandbox has local changes.
+While this means the sandbox may experience delayed updates,
+and a very active sandbox editor could force the system toward more and more expensive rebase operations locally.
+
+The following alternative should be considered:
+* Maintain a copy of the trunk, main, and local sandbox branches on the sandbox.
+* Instead of performing merge resolution on behalf of the sandbox,
+  the host would just notify the sandbox of new commits on the trunk and main branches.
+  The sandbox would then be able to rebase its local branches accordingly.
+* When sending outbound edits from the sandbox to the host,
+  include the revisions of the latest commits on main and trunk branches at the time the edits were authored.
+  The host can use this information to update its own branches accordingly.
 
 ### Fix Memory Leak in Exhaustive Test (optional)
 
