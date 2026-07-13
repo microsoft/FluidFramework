@@ -34,6 +34,14 @@ describe("helpers", () => {
 		it("rejects absolute paths", () => {
 			assert.throws(() => getRepoPath("tenant", "/etc"), /Invalid repo name \(documentId\)/);
 		});
+		it("rejects Windows-style absolute paths", () => {
+			assert.throws(() => getRepoPath("tenant", "\\etc"), /Invalid repo name \(documentId\)/);
+			assert.throws(
+				() => getRepoPath("tenant", "C:\\etc"),
+				/Invalid repo name \(documentId\)/,
+			);
+			assert.throws(() => getRepoPath("C:\\etc", "doc"), /Invalid repo name \(tenantId\)/);
+		});
 		it("rejects an empty tenantId", () => {
 			assert.throws(() => getRepoPath(""), /Invalid repo name \(tenantId\)/);
 		});

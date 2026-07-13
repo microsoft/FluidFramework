@@ -42,7 +42,10 @@ import {
 	throwFileSystemErrorAsNetworkError,
 } from "../utils";
 
-function getFullSummaryDirectory(repoManager: IRepositoryManager, documentId: string): string {
+export function getFullSummaryDirectory(
+	repoManager: IRepositoryManager,
+	documentId: string,
+): string {
 	// Prevent path traversal: `documentId` originates from the Storage-Routing-Id header
 	// and is concatenated directly into a filesystem path below.
 	if (!documentId || isInvalidRepoPathComponent(documentId)) {
