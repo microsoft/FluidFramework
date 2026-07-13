@@ -11,7 +11,6 @@ import {
 	type AnchorSet,
 	type AnnouncedVisitor,
 	type DeltaVisitor,
-	type DeltaDetachedNodeId,
 	type FieldAnchor,
 	type FieldKey,
 	type ForestEvents,
@@ -20,12 +19,14 @@ import {
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
 	type JsonableTree,
-	type PlaceIndex,
-	type Range,
 	type TreeChunk,
 	type TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
+	combineVisitors,
+	createAnnouncedVisitor,
+	genericTreeKeys,
+	getGenericTreeField,
 	mapCursorField,
 } from "../../core/index.js";
 import type { Breakable } from "../../util/index.js";
@@ -85,6 +86,8 @@ export class ComparisonForest implements IEditableForest {
 	}
 
 	public allocateCursor(source?: string): ITreeSubscriptionCursor {
+		// Currently we just use the cursor from "main", but we could use "reference" or a custom cursor ensuring both match in behavior.
+		// TODO: Add a custom combined cursor type which validates two cursors match, and use it here.
 		return this.main.allocateCursor(source);
 	}
 
@@ -127,102 +130,88 @@ export class ComparisonForest implements IEditableForest {
 		const reference = this.reference;
 		const mainVisitor = main.acquireVisitor();
 		const referenceVisitor = reference.acquireVisitor();
-		const visitor: DeltaVisitor = {
-			free(): void {
-				mainVisitor.free();
-				referenceVisitor.free();
-				assertForestsEqual(main, reference);
-			},
-			create(content: readonly ITreeCursorSynchronous[], destination: FieldKey): void {
-				mainVisitor.create(content, destination);
-				referenceVisitor.create(content, destination);
-			},
-			destroy(detachedField: FieldKey, count: number): void {
-				mainVisitor.destroy(detachedField, count);
-				referenceVisitor.destroy(detachedField, count);
-			},
-			attach(source: FieldKey, count: number, destination: PlaceIndex): void {
-				mainVisitor.attach(source, count, destination);
-				referenceVisitor.attach(source, count, destination);
-			},
-			detach(
-				source: Range,
-				destination: FieldKey,
-				id: DeltaDetachedNodeId,
-				isReplaced: boolean,
-			): void {
-				mainVisitor.detach(source, destination, id, isReplaced);
-				referenceVisitor.detach(source, destination, id, isReplaced);
-			},
-			enterNode(index: number): void {
-				mainVisitor.enterNode(index);
-				referenceVisitor.enterNode(index);
-			},
-			exitNode(index: number): void {
-				mainVisitor.exitNode(index);
-				referenceVisitor.exitNode(index);
-			},
-			enterField(key: FieldKey): void {
-				mainVisitor.enterField(key);
-				referenceVisitor.enterField(key);
-			},
-			exitField(key: FieldKey): void {
-				mainVisitor.exitField(key);
-				referenceVisitor.exitField(key);
-			},
-		};
-		return visitor;
+		// A visitor which does nothing except assert the two forests match once the delta has been fully applied to both.
+		const comparisonVisitor = createAnnouncedVisitor({
+			free: () => assertForestsEqual(main, reference),
+		});
+		return combineVisitors([mainVisitor, referenceVisitor, comparisonVisitor]);
 	}
 }
 
 /**
- * Extracts the full contents of a forest (every detached field, keyed by field key) into a plain,
- * comparable representation.
+ * Extracts the full contents of a forest (every detached field, keyed by field key) as {@link JsonableTree}s.
  */
-function detachedFieldsContent(forest: IForestSubscription): Record<string, JsonableTree[]> {
+function detachedFieldsContent(forest: IForestSubscription): Map<FieldKey, JsonableTree[]> {
 	const cursor = forest.getCursorAboveDetachedFields();
-	const content: Record<string, JsonableTree[]> = {};
+	const content = new Map<FieldKey, JsonableTree[]>();
 	for (let hasField = cursor.firstField(); hasField; hasField = cursor.nextField()) {
-		content[cursor.getFieldKey()] = mapCursorField(cursor, jsonableTreeFromCursor);
+		content.set(cursor.getFieldKey(), mapCursorField(cursor, jsonableTreeFromCursor));
 	}
 	return content;
 }
 
 /**
- * Deep structural equality for the plain data produced by {@link detachedFieldsContent}.
+ * Structural equality for the {@link JsonableTree} content of two forests, keyed by detached field.
  *
  * @remarks
- * Object keys (for example field keys) are compared as an unordered set, so this is independent of the
- * order in which different forest implementations happen to enumerate fields. Array indices are just
- * numeric keys, so array elements are still compared position-by-position.
+ * Fields are compared as an unordered set of keys, so this is independent of the order in which different
+ * forest implementations enumerate fields. The nodes within each field are compared in order.
  *
- * This is implemented iteratively (using an explicit work stack rather than recursion) so that comparing
- * deeply nested trees does not risk exhausting the call stack.
+ * Implemented iteratively (using an explicit work stack rather than recursion) so that comparing deeply
+ * nested trees does not risk exhausting the call stack.
  */
-function deepEqual(a: unknown, b: unknown): boolean {
-	const stack: [unknown, unknown][] = [[a, b]];
+function forestContentEquals(
+	main: ReadonlyMap<FieldKey, JsonableTree[]>,
+	reference: ReadonlyMap<FieldKey, JsonableTree[]>,
+): boolean {
+	// Aligned pairs of nodes still to be compared.
+	const stack: [JsonableTree, JsonableTree][] = [];
+
+	// Queue each aligned pair of nodes from the two fields for comparison.
+	// Returns false if the fields have differing numbers of nodes.
+	const queueFieldNodes = (
+		mainNodes: JsonableTree[],
+		referenceNodes: JsonableTree[],
+	): boolean => {
+		if (mainNodes.length !== referenceNodes.length) {
+			return false;
+		}
+		for (let index = 0; index < mainNodes.length; index += 1) {
+			stack.push([mainNodes[index], referenceNodes[index]]);
+		}
+		return true;
+	};
+
+	if (main.size !== reference.size) {
+		return false;
+	}
+	for (const [key, mainNodes] of main) {
+		const referenceNodes = reference.get(key);
+		if (referenceNodes === undefined || !queueFieldNodes(mainNodes, referenceNodes)) {
+			return false;
+		}
+	}
+
 	for (let pair = stack.pop(); pair !== undefined; pair = stack.pop()) {
-		const [x, y] = pair;
-		if (Object.is(x, y)) {
-			continue;
-		}
-		if (typeof x !== "object" || typeof y !== "object" || x === null || y === null) {
+		const [mainNode, referenceNode] = pair;
+		if (mainNode.type !== referenceNode.type || !Object.is(mainNode.value, referenceNode.value)) {
 			return false;
 		}
-		if (Array.isArray(x) !== Array.isArray(y)) {
+		// JsonableTree never stores empty fields, so equal key counts plus a matching (non-empty) field
+		// for every key in `mainNode` implies `referenceNode` has no extra fields.
+		const mainKeys = genericTreeKeys(mainNode);
+		if (mainKeys.length !== genericTreeKeys(referenceNode).length) {
 			return false;
 		}
-		const xRecord = x as Record<string, unknown>;
-		const yRecord = y as Record<string, unknown>;
-		const xKeys = Object.keys(xRecord);
-		if (xKeys.length !== Object.keys(yRecord).length) {
-			return false;
-		}
-		for (const key of xKeys) {
-			if (!Object.prototype.hasOwnProperty.call(yRecord, key)) {
+		for (const key of mainKeys) {
+			if (
+				!queueFieldNodes(
+					getGenericTreeField(mainNode, key, false),
+					getGenericTreeField(referenceNode, key, false),
+				)
+			) {
 				return false;
 			}
-			stack.push([xRecord[key], yRecord[key]]);
 		}
 	}
 	return true;
@@ -232,9 +221,9 @@ function deepEqual(a: unknown, b: unknown): boolean {
  * Best-effort human readable serialization of forest content for error messages.
  * Falls back to a placeholder if the content is too deeply nested to serialize.
  */
-function describeContent(content: Record<string, JsonableTree[]>): string {
+function describeContent(content: ReadonlyMap<FieldKey, JsonableTree[]>): string {
 	try {
-		return JSON.stringify(content);
+		return JSON.stringify(Object.fromEntries(content));
 	} catch {
 		return "<content too large to serialize>";
 	}
@@ -250,9 +239,11 @@ export function assertForestsEqual(
 ): void {
 	const mainContent = detachedFieldsContent(main);
 	const referenceContent = detachedFieldsContent(reference);
-	if (!deepEqual(mainContent, referenceContent)) {
+	if (!forestContentEquals(mainContent, referenceContent)) {
 		fail(
-			`ComparisonForest: main forest diverged from reference forest after applying a delta.\nMain:      ${describeContent(mainContent)}\nReference: ${describeContent(referenceContent)}`,
+			"ComparisonForest: main forest diverged from reference forest after applying a delta",
+			() =>
+				`Main:      ${describeContent(mainContent)}\nReference: ${describeContent(referenceContent)}`,
 		);
 	}
 }
