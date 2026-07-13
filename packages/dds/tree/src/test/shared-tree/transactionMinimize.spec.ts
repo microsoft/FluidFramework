@@ -66,16 +66,39 @@ function countBuilds(change: SharedTreeChange): BuildStatistics {
 }
 
 /**
- * Counts the total number of detached-node `destroys` carried by the data changes within a {@link SharedTreeChange}.
+ * Classification of destroys within a SharedTreeChange.
  */
-function countDestroys(change: SharedTreeChange): number {
-	let total = 0;
+interface DestroyStatistics {
+	/**
+	 * The number of destroy entries (each entry is a run of one or more contiguous nodes).
+	 */
+	readonly destroys: number;
+	/**
+	 * The total number of top-level nodes across all destroy entries (the sum of each run's node count).
+	 */
+	readonly tops: number;
+}
+
+/**
+ * Counts the detached-node `destroys` carried by the data changes within a {@link SharedTreeChange}.
+ * @remarks A `destroy` is retained for every run of nodes destroyed during the transaction. After minimization, a
+ * `destroy` should only remain for pre-existing nodes that were created and then removed within the transaction.
+ */
+function countDestroys(change: SharedTreeChange): DestroyStatistics {
+	let destroys = 0;
+	let tops = 0;
 	for (const inner of change.changes) {
 		if (inner.type === "data") {
-			total += inner.innerChange.destroys?.size ?? 0;
+			const innerDestroys = inner.innerChange.destroys;
+			if (innerDestroys !== undefined) {
+				destroys += innerDestroys.size;
+				for (const count of innerDestroys.values()) {
+					tops += count;
+				}
+			}
 		}
 	}
-	return total;
+	return { destroys, tops };
 }
 
 const sf = new SchemaFactory("transaction-minimize");
@@ -147,6 +170,13 @@ interface TransactionScenario<
 	/** Expected build statistics for the scenario executed without minimization. */
 	readonly unminimizedExpectations?: {
 		readonly builds: BuildStatistics;
+		/**
+		 * Optional destory statistics for the scenario executed without minimization.
+		 * @remarks
+		 * If not provided, the implicit expectation for destroy statistics is no destroys:
+		 * `{ destroys: 0, tops: 0 }`
+		 */
+		readonly destroys?: DestroyStatistics;
 	};
 }
 
@@ -1362,7 +1392,7 @@ describe("transaction minimize post-processor", () => {
 	}
 
 	function assertUnminimizedExpectations(
-		expectations: { readonly builds: BuildStatistics },
+		expectations: { readonly builds: BuildStatistics; readonly destroys?: DestroyStatistics },
 		view: Pick<SchematizingSimpleTreeView<ImplicitFieldSchema>, "checkout">,
 		scenarioName: string,
 	) {
@@ -1371,6 +1401,11 @@ describe("transaction minimize post-processor", () => {
 			countBuilds(change),
 			expectations.builds,
 			`This is a testing failure - build counts for scenario ${scenarioName} did not match expectations.`,
+		);
+		assert.deepEqual(
+			countDestroys(change),
+			expectations.destroys ?? { destroys: 0, tops: 0 },
+			`This is a testing failure - destroy counts for scenario ${scenarioName} did not match expectations.`,
 		);
 	}
 
@@ -1384,7 +1419,7 @@ describe("transaction minimize post-processor", () => {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
-				// Testing self-check: verify that the unminimized view has the expected build counts.
+				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
 				assertUnminimizedExpectations(
 					scenario.unminimizedExpectations,
 					unminimizedView,
@@ -1401,7 +1436,7 @@ describe("transaction minimize post-processor", () => {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
-				// Testing self-check: verify that the unminimized view has the expected build counts.
+				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
 				assertUnminimizedExpectations(
 					scenario.unminimizedExpectations,
 					unminimizedView,
@@ -1420,7 +1455,7 @@ describe("transaction minimize post-processor", () => {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
-				// Testing self-check: verify that the unminimized view has the expected build counts.
+				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
 				assertUnminimizedExpectations(
 					scenario.unminimizedExpectations,
 					unminimizedView,
@@ -1499,7 +1534,7 @@ describe("transaction minimize post-processor", () => {
 			const change = getHeadChange(view);
 			// The created node is not present in the final document, so its build/destroy should be removed.
 			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
-			assert.equal(countDestroys(change), 0);
+			assert.deepEqual(countDestroys(change), { destroys: 0, tops: 0 });
 		});
 
 		it("keeps only the persisted node's build when a transient node is also created", () => {
