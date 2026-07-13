@@ -142,19 +142,8 @@ stages:
             customCommand: 'run build'
           env:
             INSTRUMENTATION_KEY: $(INSTRUMENTATION_KEY)
-
-        - task: Bash@3
-          displayName: 'Verify Pagefind search bundle'
-          inputs:
-            targetType: 'inline'
-            workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}/website
-            script: |
-              set -euo pipefail
-              test -f build/pagefind/pagefind.js
-              test -f build/pagefind/pagefind-component-ui.js
-              test -f build/pagefind/pagefind-component-ui.css
-              test -f build/pagefind/wasm.en.pagefind
-              find build/pagefind -maxdepth 1 -name 'pagefind.*.pf_meta' -print -quit | grep -q .
+            TYPESENSE_API_KEY: $(TYPESENSE_API_KEY)
+            TYPESENSE_HOST: $(TYPESENSE_HOST)
 
         - task: Bash@3
           displayName: 'Check inline script hashes correctness'
