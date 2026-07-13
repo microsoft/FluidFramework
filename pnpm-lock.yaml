@@ -5291,7 +5291,7 @@ importers:
         specifier: npm:typescript@~6.0.3
         version: typescript@6.0.3
       typescript-7.0:
-        specifier: npm:typescript@~7.0.0
+        specifier: npm:typescript@~7.0.2
         version: typescript@7.0.2
 
   examples/utils/webpack-fluid-loader:
