@@ -123,10 +123,7 @@ describe("getFullSummaryDirectory", () => {
 	const repoManager = { path: "/base/repo" } as IRepositoryManager;
 
 	it("builds a path from a valid documentId", () => {
-		assert.strictEqual(
-			getFullSummaryDirectory(repoManager, "doc-123"),
-			"/base/repo/doc-123",
-		);
+		assert.strictEqual(getFullSummaryDirectory(repoManager, "doc-123"), "/base/repo/doc-123");
 	});
 	it("rejects a bare upward traversal documentId", () => {
 		assert.throws(() => getFullSummaryDirectory(repoManager, ".."), /Invalid document id/);
@@ -143,16 +140,12 @@ describe("getFullSummaryDirectory", () => {
 	});
 	it("rejects an absolute documentId", () => {
 		assert.throws(() => getFullSummaryDirectory(repoManager, "/etc"), /Invalid document id/);
-		assert.throws(
-			() => getFullSummaryDirectory(repoManager, "C:\\etc"),
-			/Invalid document id/,
-		);
+		assert.throws(() => getFullSummaryDirectory(repoManager, "C:\\etc"), /Invalid document id/);
 	});
 	it("rejects an empty documentId", () => {
 		assert.throws(() => getFullSummaryDirectory(repoManager, ""), /Invalid document id/);
 	});
 });
-
 
 type GitFileSystem = "memfs" | "redisfs" | "hashmap-redisfs";
 
