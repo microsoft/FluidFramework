@@ -29,7 +29,7 @@
 
 .ffcom-not-found-description {
 	font-size: 18px;
-	color: #666c77;
+	color: var(--docsearch-muted-color);
 	max-width: 480px;
 	margin-bottom: 2rem;
 }
