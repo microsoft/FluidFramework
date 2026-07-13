@@ -23,12 +23,12 @@ import type { SchemaCompatibilityStatus } from "./tree.js";
  *
  * @param viewSchema - Schema for the view
  * @param stored - The stored schema to check compatibility against
- * @param upgradesOrOptions - Staged schema upgrades enabled for this view, or explicit stored-schema generation options
+ * @param stagedSchemaUpgrades - Staged schema upgrades enabled for this view, or explicit stored-schema generation options
  */
 export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): Omit<SchemaCompatibilityStatus, "canInitialize"> {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
@@ -44,7 +44,7 @@ export function checkSchemaCompatibility(
 		break;
 	}
 
-	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, upgradesOrOptions);
+	const wouldUpgradeTo = toUpgradeSchema(viewSchema.root, stagedSchemaUpgrades);
 
 	const canUpgrade = allowsRepoSuperset(policy, stored, wouldUpgradeTo);
 

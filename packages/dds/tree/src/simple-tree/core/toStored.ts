@@ -6,7 +6,7 @@
 import type { SchemaUpgrade } from "./allowedTypes.js";
 
 /**
- * Options for transforming a view simple-schema to a stored simple-schema.
+ * Policy controlling which staged schema upgrades are included when generating {@link TreeStoredSchema} from a view schema.
  * @input
  * @alpha
  */

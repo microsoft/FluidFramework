@@ -89,32 +89,32 @@ export const permissiveStagedUpgradePolicy: StagedSchemaUpgradePolicy =
 	StagedSchemaUpgradePolicy.permissive;
 
 function isStagedSchemaUpgradePolicy(
-	upgradesOrOptions: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): upgradesOrOptions is StagedSchemaUpgradePolicy {
+	stagedSchemaUpgrades: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): stagedSchemaUpgrades is StagedSchemaUpgradePolicy {
 	return (
-		typeof upgradesOrOptions === "object" &&
-		"includeStaged" in upgradesOrOptions &&
-		"includeStagedOptional" in upgradesOrOptions
+		typeof stagedSchemaUpgrades === "object" &&
+		"includeStaged" in stagedSchemaUpgrades &&
+		"includeStagedOptional" in stagedSchemaUpgrades
 	);
 }
 
 /**
  * Resolves a collection of staged schema upgrades into stored-schema generation options.
  * @remarks
- * If `upgradesOrOptions` is omitted, returns restrictive options.
+ * If `stagedSchemaUpgrades` is omitted, returns restrictive options.
  */
 export function resolveStoredSchemaGenerationOptions(
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): StagedSchemaUpgradePolicy {
-	if (upgradesOrOptions === undefined) {
+	if (stagedSchemaUpgrades === undefined) {
 		return StagedSchemaUpgradePolicy.restrictive;
 	}
 
-	if (isStagedSchemaUpgradePolicy(upgradesOrOptions)) {
-		return upgradesOrOptions;
+	if (isStagedSchemaUpgradePolicy(stagedSchemaUpgrades)) {
+		return stagedSchemaUpgrades;
 	}
 
-	return StagedSchemaUpgradePolicy.enabledStagedUpgrades(...upgradesOrOptions);
+	return StagedSchemaUpgradePolicy.enabledStagedUpgrades(...stagedSchemaUpgrades);
 }
 
 /**
@@ -122,9 +122,9 @@ export function resolveStoredSchemaGenerationOptions(
  */
 export function toUpgradeSchema(
 	root: ImplicitFieldSchema,
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
 }
 
 /**
@@ -132,9 +132,9 @@ export function toUpgradeSchema(
  */
 export function toInitialSchema(
 	root: ImplicitFieldSchema,
-	upgradesOrOptions?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
-	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(upgradesOrOptions));
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
 }
 
 /**

@@ -422,8 +422,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the document's stored schema changes,
-	 * which may change this compatibility status.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
 	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
@@ -438,6 +437,12 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the target stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -456,6 +461,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
 	 *
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the initial stored schema.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
@@ -563,28 +571,6 @@ export interface TreeViewAlpha<
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
-
-	/**
-	 * Modifies the stored schema to match this view's schema, enabling staged schema upgrades based on
-	 * the construction-time policy from {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy}.
-	 * @remarks
-	 * This will update the {@link TreeView.compatibility}, allowing access to `root`.
-	 * Beware that this may impact other clients' ability to view the document: see {@link SchemaCompatibilityStatus.canView} for more information.
-	 *
-	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
-	 * If no upgrades or explicit policy were provided at view construction, this behaves like the base
-	 * {@link TreeView.upgradeSchema}.
-	 *
-	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
-	 * with a view that does not include equivalent staged members in its construction-time policy will cause
-	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
-	 * Keep previously enabled staged members in the view policy for as long as any document may contain them.
-	 *
-	 * Full end-to-end staged schema upgrade examples can be found in the
-	 * {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts | staged schema upgrade tests}.
-	 *
-	 */
-	upgradeSchema(): void;
 
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
