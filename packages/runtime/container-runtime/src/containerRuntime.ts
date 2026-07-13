@@ -3244,13 +3244,14 @@ export class ContainerRuntime
 						"Duplicate batch - The same batch was sequenced twice",
 						{ batchId: batchStart.batchId },
 					);
-
+					const batchIdExplicit = batchStart.batchId !== undefined;
+					const otherBatchIdExplicit = result.otherBatchInfo?.batchIdExplicit ?? false;
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
-								batchIdExplicit: batchStart.batchId !== undefined,
+								batchIdExplicit,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
@@ -3261,7 +3262,7 @@ export class ContainerRuntime
 								// loaded from a summary snapshot rather than seen at runtime.
 								otherClientId: result.otherBatchInfo?.clientId,
 								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
-								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherBatchIdExplicit,
 								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
 								// For grouped batches, `keyMessage` is one of the sub-messages produced by
@@ -3274,10 +3275,12 @@ export class ContainerRuntime
 						},
 						error,
 					);
-					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
-					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
-					// or once we are able to identify batch duplication reason (forking vs service bug).
-					// throw error;
+					// Only throw the error if either the current batch or the other batch has an explicit batchId since that indicates a meaningful duplication scenario
+					// coming from our batch readings rather than a server outage scenario.
+					const shouldThrowOnDuplicate = batchIdExplicit || otherBatchIdExplicit;
+					if (shouldThrowOnDuplicate) {
+						throw error;
+					}
 				}
 			}
 
