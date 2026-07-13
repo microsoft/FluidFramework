@@ -23,21 +23,32 @@ import { JsonStringify } from "@fluidframework/core-interfaces/internal";
  * Reads the change associated with the head commit on the main branch.
  * @remarks This is the squashed change produced by the most recently committed transaction.
  */
-function getHeadChange<TSchema extends ImplicitFieldSchema>(
-	view: SchematizingSimpleTreeView<TSchema>,
+function getHeadChange(
+	view: Pick<SchematizingSimpleTreeView<ImplicitFieldSchema>, "checkout">,
 ): SharedTreeChange {
 	return view.checkout.mainBranch.getHead().change;
+}
+
+/**
+ * Classification of builds within a SharedTreeChange.
+ */
+interface BuildStatistics {
+	/**
+	 * The number of build entries (each entry is a chunk of one or more contiguous nodes).
+	 */
+	readonly builds: number;
+	/**
+	 * The total number of top-level nodes across all build entries (the sum of each chunk's `topLevelLength`).
+	 */
+	readonly tops: number;
 }
 
 /**
  * Counts the detached-node `builds` carried by the data changes within a {@link SharedTreeChange}.
  * @remarks A `build` is retained for every run of nodes created during the transaction. After minimization, a `build`
  * should only remain for nodes that are still present in the document once the transaction is squashed.
- * @returns An object with:
- * - `builds`: the number of build entries (each entry is a chunk of one or more contiguous nodes).
- * - `tops`: the total number of top-level nodes across all build entries (the sum of each chunk's `topLevelLength`).
  */
-function countBuilds(change: SharedTreeChange): { builds: number; tops: number } {
+function countBuilds(change: SharedTreeChange): BuildStatistics {
 	let builds = 0;
 	let tops = 0;
 	for (const inner of change.changes) {
@@ -132,6 +143,11 @@ interface TransactionScenario<
 		tree: ViewableTreeAlpha,
 		view: SchematizingSimpleTreeView<TSchema>,
 	) => TApplyReturn;
+
+	/** Expected build statistics for the scenario executed without minimization. */
+	readonly unminimizedExpectations?: {
+		readonly builds: BuildStatistics;
+	};
 }
 
 type StringArrayScenario = TransactionScenario<typeof RootStringArray>;
@@ -327,6 +343,9 @@ const arrayScenarios = {
 		apply: (root) => {
 			root.insertAtEnd("A❤️");
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
+		},
 	} as const,
 
 	/**
@@ -344,6 +363,9 @@ const arrayScenarios = {
 			root.insertAtEnd("A❤️");
 			root.insertAtEnd("B❤️");
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -360,6 +382,9 @@ const arrayScenarios = {
 		apply: (root) => {
 			root.insertAtEnd("A☠️");
 			root.removeAt(0);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
 		},
 	} as const,
 
@@ -380,6 +405,9 @@ const arrayScenarios = {
 			root.insertAtEnd("B☠️");
 			root.removeAt(1);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -398,6 +426,9 @@ const arrayScenarios = {
 			root.insertAtEnd("A☠️");
 			root.insertAtEnd("B❤️");
 			root.removeAt(0);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
 		},
 	} as const,
 
@@ -422,6 +453,9 @@ const arrayScenarios = {
 			root.insertAtStart("B❤️");
 			root.removeAt(1);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -440,6 +474,9 @@ const arrayScenarios = {
 		apply: (root) => {
 			root.insertAtEnd("A❤️", "B☠️", "C❤️");
 			root.removeAt(1);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 3 },
 		},
 	} as const,
 
@@ -461,6 +498,9 @@ const arrayScenarios = {
 			root.insertAtEnd("A❤️");
 			root.insertAtEnd("B❤️", "C❤️");
 			root.moveToStart(2);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 3 },
 		},
 	} as const,
 
@@ -484,6 +524,9 @@ const arrayScenarios = {
 			root.moveToStart(1);
 			root.removeAt(0);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 3 },
+		},
 	} as const,
 
 	/**
@@ -505,6 +548,9 @@ const arrayScenarios = {
 			root.insertAtEnd("A☠️", "B☠️", "C❤️");
 			root.moveToStart(1);
 			root.removeRange(0, 2);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 3 },
 		},
 	} as const,
 
@@ -530,6 +576,9 @@ const arrayScenarios = {
 			root.removeAt(2);
 			root.removeAt(0);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 3 },
+		},
 	} as const,
 
 	/**
@@ -553,6 +602,9 @@ const arrayScenarios = {
 			root.insertAt(1, "A☠️");
 			root.removeAt(1);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
+		},
 	} as const,
 
 	/**
@@ -575,6 +627,9 @@ const arrayScenarios = {
 			root.insertAtEnd("A☠️", "B❤️");
 			root.removeAt(1);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -594,6 +649,9 @@ const arrayScenarios = {
 		apply: (root) => {
 			root.moveToStart(2);
 		},
+		unminimizedExpectations: {
+			builds: { builds: 0, tops: 0 },
+		},
 	} as const,
 
 	/**
@@ -611,6 +669,9 @@ const arrayScenarios = {
 		initialContent: ["X", "Y", "Z"],
 		apply: (root) => {
 			root.removeAt(1);
+		},
+		unminimizedExpectations: {
+			builds: { builds: 0, tops: 0 },
 		},
 	} as const,
 } as const satisfies Record<string, StringArrayScenario>;
@@ -638,6 +699,9 @@ const objectScenarios = {
 			root.value = "x☠️";
 			root.value = "y❤️";
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -659,6 +723,9 @@ const objectScenarios = {
 			assert.ok(root?.nested);
 			root.nested.value = "x☠️";
 			root.nested.value = "y❤️";
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
 		},
 	} as const,
 
@@ -683,6 +750,9 @@ const objectScenarios = {
 			view.root.value = "x☠️";
 			view.root = undefined;
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
+		},
 	} as const,
 
 	/**
@@ -704,6 +774,9 @@ const objectScenarios = {
 			assert.ok(view.root?.nested);
 			view.root.nested.value = "x☠️";
 			view.root = undefined;
+		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
 		},
 	} as const,
 
@@ -727,6 +800,9 @@ const objectScenarios = {
 			view.root.nested.value = "x☠️";
 			delete view.root.nested;
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
+		},
 	} as const,
 
 	/**
@@ -749,6 +825,9 @@ const objectScenarios = {
 			view.root.nested = new Box({ value: "x☠️" });
 			view.root = undefined;
 		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
+		},
 	} as const,
 
 	/**
@@ -769,6 +848,9 @@ const objectScenarios = {
 			const root = new Box({ value: "x☠️" });
 			view.root = root;
 			root.value = "y❤️";
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
 		},
 	} as const,
 
@@ -793,6 +875,9 @@ const objectScenarios = {
 			// Step 2: set nested Box value
 			nested.value = "y❤️";
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -816,6 +901,9 @@ const objectScenarios = {
 			view.root = root;
 			// Step 2: replace nested Box
 			root.nested = new Box({ value: "y❤️" });
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
 		},
 	} as const,
 
@@ -844,6 +932,9 @@ const objectScenarios = {
 			// Step 3: replace nested Box
 			root.nested = new Box({ value: "y❤️" });
 		},
+		unminimizedExpectations: {
+			builds: { builds: 3, tops: 3 },
+		},
 	} as const,
 
 	/**
@@ -867,6 +958,9 @@ const objectScenarios = {
 			view.root = root;
 			// Step 2: remove nested Box
 			root.nested = undefined;
+		},
+		unminimizedExpectations: {
+			builds: { builds: 1, tops: 1 },
 		},
 	} as const,
 } as const satisfies Record<string, BoxScenario>;
@@ -902,6 +996,9 @@ const schemaUpgradeScenarios = {
 
 			return view2;
 		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
+		},
 	} as const,
 
 	/**
@@ -931,6 +1028,9 @@ const schemaUpgradeScenarios = {
 			box.value = "D❤️";
 
 			return view2;
+		},
+		unminimizedExpectations: {
+			builds: { builds: 2, tops: 2 },
 		},
 	} as const,
 
@@ -967,6 +1067,9 @@ const schemaUpgradeScenarios = {
 			box.value = "D❤️";
 
 			return view2;
+		},
+		unminimizedExpectations: {
+			builds: { builds: 4, tops: 4 },
 		},
 	} as const,
 
@@ -1258,16 +1361,35 @@ describe("transaction minimize post-processor", () => {
 			.replaceAll(/([A-Z])(?=[A-Z])/g, "$1,"); // Insert comma between uppercase letters
 	}
 
+	function assertUnminimizedExpectations(
+		expectations: { readonly builds: BuildStatistics },
+		view: Pick<SchematizingSimpleTreeView<ImplicitFieldSchema>, "checkout">,
+		scenarioName: string,
+	) {
+		const change = getHeadChange(view);
+		assert.deepEqual(
+			countBuilds(change),
+			expectations.builds,
+			`This is a testing failure - build counts for scenario ${scenarioName} did not match expectations.`,
+		);
+	}
+
 	describe("produces a consistent view and the same observable result as not minimized", () => {
 		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
 				});
-				const { tree: unminimizedTree } = runScenario(scenario, {
+				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+				// Testing self-check: verify that the unminimized view has the expected build counts.
+				assertUnminimizedExpectations(
+					scenario.unminimizedExpectations,
+					unminimizedView,
+					`arrayScenarios.${scenarioName}`,
+				);
 			});
 		}
 		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
@@ -1275,10 +1397,16 @@ describe("transaction minimize post-processor", () => {
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
 				});
-				const { tree: unminimizedTree } = runScenario(scenario, {
+				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+				// Testing self-check: verify that the unminimized view has the expected build counts.
+				assertUnminimizedExpectations(
+					scenario.unminimizedExpectations,
+					unminimizedView,
+					`objectScenarios.${scenarioName}`,
+				);
 			});
 		}
 		for (const [scenarioName, scenario] of Object.entries(schemaUpgradeScenarios).filter(
@@ -1288,10 +1416,16 @@ describe("transaction minimize post-processor", () => {
 				const { tree: minimizedTree } = runScenario(scenario, {
 					validateConsistency: true,
 				});
-				const { tree: unminimizedTree } = runScenario(scenario, {
+				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+				// Testing self-check: verify that the unminimized view has the expected build counts.
+				assertUnminimizedExpectations(
+					scenario.unminimizedExpectations,
+					unminimizedView,
+					`schemaUpgradeScenarios.${scenarioName}`,
+				);
 			});
 		}
 	});
