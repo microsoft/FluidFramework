@@ -845,6 +845,30 @@ const objectScenarios = {
 			root.nested = new Box({ value: "y❤️" });
 		},
 	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a box with "x❤️" and a nested {@link Box} with value "y☠️", then removes nested Box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                                  -\> `undefined`
+	 * 1. insert Box "x❤️" with nested Box "y☠️"  -\> `Box: { value: "x❤️", nested: Box: { value: "y☠️" } }`
+	 * 2. remove nested Box                        -\> `Box: { value: "x❤️" }`
+	 *
+	 * Classification: y☠️ comes in as new nested content and leaves nested under [detached] new node
+	 */
+	add_Box_with_nested_Box_then_remove_nested_Box: {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
+			// Step 1: insert nested Box
+			const nested = new Box({ value: "y☠️" });
+			const root = new Box({ value: "x❤️", nested });
+			view.root = root;
+			// Step 2: remove nested Box
+			root.nested = undefined;
+		},
+	} as const,
 } as const satisfies Record<string, BoxScenario>;
 // #endregion
 
@@ -1177,6 +1201,15 @@ describe("transaction minimize post-processor", () => {
 				objectScenarios.add_nested_Box_set_value_then_replace_nested_Box,
 			);
 			assert.equal(view.root?.nested?.value, "y❤️");
+			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		});
+
+		it("reflects the surviving object when a newly inserted object's nested object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_Box_with_nested_Box_then_remove_nested_Box,
+			);
+			assert.equal(view.root?.value, "x❤️");
+			assert.equal(view.root?.nested, undefined);
 			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
@@ -1543,6 +1576,16 @@ describe("transaction minimize post-processor", () => {
 				builds,
 				`Expected top-level nodes ${tops} to match the number of builds ${builds}`,
 			);
+		});
+
+		it("keeps only the surviving object's build when a newly inserted object's nested object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_Box_with_nested_Box_then_remove_nested_Box,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Only the surviving root object "x❤️" (without the removed nested "y☠️") remains, so exactly one build should remain.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
