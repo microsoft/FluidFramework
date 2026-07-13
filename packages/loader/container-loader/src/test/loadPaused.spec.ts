@@ -48,6 +48,7 @@ import { MockLogger, UsageError } from "@fluidframework/telemetry-utils/internal
 import { loadContainerPaused } from "../loadPaused.js";
 import { Loader, type ILoaderProps } from "../loader.js";
 import {
+	loadExistingContainer,
 	loadContainerToSequenceNumber,
 	type ILoadContainerToSequenceNumberProps,
 } from "../createAndLoadContainerUtils.js";
@@ -142,7 +143,7 @@ class TestDeltaConnection
 		documentId: resolvedUrl.id,
 		exp: Math.round(Date.now() / 1000) + 60 * 60,
 		iat: Math.round(Date.now() / 1000),
-		scopes: ["doc:read"],
+		scopes: ["doc:read", "doc:write"],
 		tenantId: "tenantId",
 		user: { id: "paused-load-test-user" },
 		ver: "1.0",
@@ -257,7 +258,7 @@ function createLoaderProps(
 		},
 	};
 	const service = failSometimeProxy<IDocumentService>({
-		policies: {},
+		policies: { supportGetSnapshotApi: true },
 		resolvedUrl,
 		connectToDeltaStorage: async () => deltaStorage,
 		connectToDeltaStream: async () => {
@@ -286,6 +287,10 @@ function createLoaderProps(
 		getResolvedRequests: () => resolvedRequests,
 		loaderProps: {
 			codeLoader: createCodeLoader(),
+			configProvider: {
+				getRawConfig: (name) =>
+					name === "Fluid.Container.UseLoadingGroupIdForSnapshotFetch2" ? true : undefined,
+			},
 			documentServiceFactory,
 			logger: new MockLogger(),
 			options: {},
@@ -490,6 +495,31 @@ describe("loadContainerToSequenceNumber", () => {
 			loader.resolve({
 				url: request.url,
 				headers: {
+					[LoaderHeader.loadMode]: { opsBeforeReturn: "sequenceNumber" },
+					[LoaderHeader.sequenceNumber]: 7,
+				},
+			}),
+			/deltaConnection must be set to "none"/u,
+		);
+
+		await assert.rejects(
+			loader.resolve({
+				url: request.url,
+				headers: {
+					[LoaderHeader.loadMode]: {
+						deltaConnection: "delayed",
+						opsBeforeReturn: "sequenceNumber",
+					},
+					[LoaderHeader.sequenceNumber]: 7,
+				},
+			}),
+			/deltaConnection must be set to "none"/u,
+		);
+
+		await assert.rejects(
+			loader.resolve({
+				url: request.url,
+				headers: {
 					[LoaderHeader.loadMode]: {
 						deltaConnection: "none",
 						opsBeforeReturn: "sequenceNumber",
@@ -515,4 +545,37 @@ describe("loadContainerToSequenceNumber", () => {
 			);
 		}
 	});
+});
+
+describe("normal load modes", () => {
+	it("does not force readonly for the default load mode", async () => {
+		const { loaderProps } = createLoaderProps(5, [createMessage(6)]);
+
+		const container = await loadExistingContainer({
+			...loaderProps,
+			request,
+		});
+
+		assert.notStrictEqual(container.readOnlyInfo.readonly, true);
+		assert.doesNotThrow(() => container.connect());
+	});
+
+	for (const opsBeforeReturn of ["cached", "all"] as const) {
+		it(`does not force readonly for opsBeforeReturn: ${opsBeforeReturn}`, async () => {
+			const { loaderProps } = createLoaderProps(5, [createMessage(6)]);
+
+			const container = await loadExistingContainer({
+				...loaderProps,
+				request: {
+					url: request.url,
+					headers: {
+						[LoaderHeader.loadMode]: { deltaConnection: "none", opsBeforeReturn },
+					},
+				},
+			});
+
+			assert.notStrictEqual(container.readOnlyInfo.readonly, true);
+			assert.doesNotThrow(() => container.connect());
+		});
+	}
 });

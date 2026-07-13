@@ -338,6 +338,24 @@ describe("serializedStateManager", () => {
 			});
 		});
 
+		it("rejects historical load target when getSnapshot API is unsupported", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+
+			await assert.rejects(
+				serializedStateManager.fetchSnapshot("snapshotVersion", undefined, 123),
+				/Historical point-in-time loads are not supported by this document storage service/u,
+			);
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 0);
+		});
+
 		it("does not pass historical load target to storage when loading from pending local state", async () => {
 			const storageAdapter = new MockStorageAdapter();
 			const serializedStateManager = new SerializedStateManager(

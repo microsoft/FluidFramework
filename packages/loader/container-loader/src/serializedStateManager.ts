@@ -566,6 +566,11 @@ async function getSnapshot(
 	specifiedVersion: string | undefined,
 	loadToSequenceNumber?: number,
 ): Promise<{ snapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
+	if (loadToSequenceNumber !== undefined && !supportGetSnapshotApi) {
+		throw new UsageError(
+			"Historical point-in-time loads are not supported by this document storage service",
+		);
+	}
 	const { snapshot, version } = supportGetSnapshotApi
 		? await fetchISnapshot(mc, storageAdapter, specifiedVersion, loadToSequenceNumber)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);

@@ -276,13 +276,14 @@ The loader propagation is intentionally simple:
 
 1. `loadContainerToSequenceNumber` writes the target and internal load mode into request headers, then delegates to `loadExistingContainer`.
 2. `loadExistingContainer` remains the normal load helper and does not inspect historical-load props.
-3. `Loader.resolve` reads the target and validates that it is paired with the internal sequence-number load mode.
+3. `Loader.resolve` reads the target and validates that it is paired with the internal sequence-number load mode and `deltaConnection: "none"`.
 4. `Container.load` receives the target as part of load props.
 5. `SerializedStateManager.fetchSnapshot` passes the target to snapshot fetch.
 6. `IDocumentStorageService.getSnapshot` receives the target in alpha snapshot fetch options.
 
 The loader does not decide which historical snapshot to use.
 For this flow, that decision belongs to the ODSP driver.
+Storage services must support the `getSnapshot` API for historical loads; otherwise Fluid fails clearly instead of falling back to the older snapshot-tree path, which cannot carry `loadToSequenceNumber`.
 
 ## Replay and pause
 
@@ -297,7 +298,9 @@ The new sequence-number load mode works like this:
 4. Attach the delta manager op handler and fetch trailing operations only up to the requested sequence number.
 5. Fail if the bounded fetch cannot queue enough operations to reach the target.
 6. Pause once the container reaches the requested sequence number.
-7. Force the container readonly and return the paused historical container.
+7. Force the container readonly only for the sequence-number historical path and return the paused historical container.
+
+Normal default, `"cached"`, and `"all"` loads also use the shared post-load wait block, but they must not be forced readonly.
 
 Historical containers returned by `loadContainerToSequenceNumber` fail closed:
 
@@ -310,6 +313,7 @@ Important cases:
 - If the base snapshot is already at the target, Fluid pauses immediately.
 - If the base snapshot is before the target, Fluid replays forward.
 - If the base snapshot is after the target, Fluid fails because it cannot replay backward.
+- If the storage service does not support `getSnapshot`, Fluid fails because the older snapshot-tree path cannot carry the historical target.
 - If bounded replay exhausts available trailing operations before reaching the target, Fluid fails clearly instead of waiting forever.
 
 ## ODSP behavior
@@ -422,10 +426,12 @@ Tests should cover behavior the current implementation actually provides:
 
 - `loadContainerToSequenceNumber` forwards `loadToSequenceNumber` into `LoaderHeader.sequenceNumber`.
 - Existing request headers are preserved while target headers are added or overwritten by the dedicated historical-load props.
-- `Loader.resolve` rejects malformed manual sequence-number headers, including missing, non-integer, negative, or unpaired sequence-number targets.
+- `Loader.resolve` rejects malformed manual sequence-number headers, including missing, non-integer, negative, unpaired, or connectable sequence-number targets.
 - `SerializedStateManager.fetchSnapshot` passes `loadToSequenceNumber` into snapshot fetch options when loading from storage.
+- `SerializedStateManager.fetchSnapshot` rejects historical loads when the storage service does not support the `getSnapshot` API.
 - The legacy/internal `loadContainerPaused` helper keeps its existing connect-driven paused-load behavior.
 - `loadContainerToSequenceNumber` pauses at the requested sequence number, forces readonly, blocks `connect()` and `getPendingLocalState()`, and rejects clearly when trailing operations cannot reach the target.
+- Default, `"cached"`, and `"all"` normal loads remain writable and are not forced readonly by the shared post-load wait block.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
 - ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
@@ -457,6 +463,7 @@ Reviewers should verify that:
 - The target is not dropped between helper props, headers, container load props, and alpha snapshot fetch options.
 - The returned historical container is paused at the requested sequence number and should be treated as a read-only historical view.
 - The returned historical container enforces that historical view by staying readonly and rejecting `connect()` and `getPendingLocalState()`.
+- Readonly enforcement is scoped to `opsBeforeReturn: "sequenceNumber"`; normal default, `"cached"`, and `"all"` loads remain writable.
 - If trailing operations cannot reach the requested sequence number, the load rejects with a clear unavailable-target error rather than hanging.
 - Loader/container code does not try to validate ODSP-specific historical availability; base snapshot selection and availability probing stay behind the storage/driver boundary.
 - Point-in-time materialization probing uses the standalone alpha `IPointInTimeMaterializationStorageService` capability rather than extending `IDocumentStorageService`.

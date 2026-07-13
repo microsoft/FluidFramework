@@ -379,6 +379,9 @@ export class Loader implements IHostLoader {
 			) {
 				throw new Error("sequenceNumber must be set to a non-negative integer");
 			}
+			if (loadMode?.deltaConnection !== "none") {
+				throw new Error('deltaConnection must be set to "none"');
+			}
 			loadToSequenceNumber = requestedLoadToSequenceNumber;
 		} else if (requestedLoadToSequenceNumber !== undefined) {
 			throw new Error('opsBeforeReturn must be set to "sequenceNumber"');

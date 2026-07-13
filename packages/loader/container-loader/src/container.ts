@@ -323,7 +323,7 @@ interface IContainerLifecycleEvents extends IEvent {
 
 export class Container
 	extends EventEmitterWithErrorHandling<IContainerEvents>
-	implements IContainer
+	implements IContainer, ContainerAlpha
 {
 	/**
 	 * Load an existing container.
@@ -1817,7 +1817,9 @@ export class Container
 					async () => this._deltaManager.inbound.waitTillProcessingDone(),
 				);
 
-				this.forceReadonly(true);
+				if (opsBeforeReturn === "sequenceNumber") {
+					this.forceReadonly(true);
+				}
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this._deltaManager.inbound.pause();
