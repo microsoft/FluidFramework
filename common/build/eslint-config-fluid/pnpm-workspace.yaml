@@ -34,7 +34,14 @@ updateNotifier: false
 # - Address vulnerabilities in brace-expansion, chokidar, diff, js-yaml, minimatch,
 #   serialize-javascript, and picomatch.
 overrides:
-  brace-expansion@>=1 <2: ^1.1.12
+  # Resolve known security vulnerabilities in transitive dependencies.
+  "@babel/core@>=7 <8": ^7.29.6
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  diff@>=7 <8: ^8.0.3
+  keyv@>=4 <5: ^5.5.3
+
+  brace-expansion@>=1 <2: ^1.1.13
   chokidar: ^5
   diff@>=5 <6: ^5.2.2
   js-yaml: ^4.1.1
