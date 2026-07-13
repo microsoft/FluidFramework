@@ -192,8 +192,7 @@ export class OdspTokenManager {
 						tokens = this.ficTokenToIOdspTokens(newTokenData, isPush);
 						await this.updateTokensCacheWithoutLock(cacheKey, tokens);
 					} catch (error) {
-						const message = (error as Error)?.message ?? "unknown";
-						debug(`${cacheKeyToString(cacheKey)}: Error refreshing token: ${message}`);
+						debug(`${cacheKeyToString(cacheKey)}: Error in refreshing token. ${error}`);
 					}
 				} else {
 					tokens = tokensFromCache;
