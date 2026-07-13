@@ -49,6 +49,19 @@ test.describe("Nav", () => {
 		await expect(apiDocsResult).toBeVisible();
 	});
 
+	test("Search labels documentation versions and prioritizes v2", async ({ page }) => {
+		await page.getByRole("button", { name: "Search" }).click();
+
+		const searchInput = page.getByRole("searchbox");
+		await searchInput.fill("Fluid Framework Documentation");
+
+		const results = page.getByRole("dialog").locator(".pf-result");
+		await expect(results.first().locator(".pf-result-version")).toHaveText("v2");
+		await expect(
+			results.locator(".pf-result-version", { hasText: "v1" }).first(),
+		).toBeVisible();
+	});
+
 	test("Search opens after client-side navigation", async ({ page }) => {
 		await page
 			.locator(".navbar")
