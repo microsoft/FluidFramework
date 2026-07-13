@@ -190,7 +190,7 @@ function streamFromMessages(
 	};
 }
 
-function createCodeLoader(): ICodeDetailsLoader {
+function createCodeLoader(processedSequenceNumbers: number[]): ICodeDetailsLoader {
 	return {
 		load: async () => ({
 			details: { package: "paused-load-test" },
@@ -206,7 +206,9 @@ function createCodeLoader(): ICodeDetailsLoader {
 								disposed: false,
 								getPendingLocalState: () => ({}),
 								ILayerCompatDetails: AbsentProperty,
-								process: () => {},
+								process: (message: ISequencedDocumentMessage) => {
+									processedSequenceNumbers.push(message.sequenceNumber);
+								},
 								setAttachState: () => {},
 								setConnectionStatus: () => {},
 							});
@@ -224,11 +226,13 @@ function createLoaderProps(
 ): {
 	loaderProps: ILoaderProps;
 	fetchRanges: { from: number; to: number | undefined }[];
+	processedSequenceNumbers: number[];
 	getDeltaStreamConnectionCount: () => number;
 	getResolvedRequests: () => IRequest[];
 } {
 	const snapshot = createSnapshot(snapshotSequenceNumber);
 	const fetchRanges: { from: number; to: number | undefined }[] = [];
+	const processedSequenceNumbers: number[] = [];
 	const resolvedRequests: IRequest[] = [];
 	let deltaStreamConnectionCount = 0;
 	const storage: IDocumentStorageService = {
@@ -286,7 +290,7 @@ function createLoaderProps(
 		getDeltaStreamConnectionCount: () => deltaStreamConnectionCount,
 		getResolvedRequests: () => resolvedRequests,
 		loaderProps: {
-			codeLoader: createCodeLoader(),
+			codeLoader: createCodeLoader(processedSequenceNumbers),
 			configProvider: {
 				getRawConfig: (name) =>
 					name === "Fluid.Container.UseLoadingGroupIdForSnapshotFetch2" ? true : undefined,
@@ -303,6 +307,7 @@ function createLoaderProps(
 				},
 			},
 		},
+		processedSequenceNumbers,
 	};
 }
 
@@ -376,7 +381,7 @@ describe("loadContainerToSequenceNumber", () => {
 	});
 
 	it("replays forward from a historical snapshot and returns paused at the target sequence number", async () => {
-		const { loaderProps, fetchRanges } = createLoaderProps(5, [
+		const { loaderProps, fetchRanges, processedSequenceNumbers } = createLoaderProps(5, [
 			createMessage(6),
 			createMessage(7),
 			createMessage(8),
@@ -391,6 +396,11 @@ describe("loadContainerToSequenceNumber", () => {
 
 		assert.strictEqual(container.deltaManager.lastSequenceNumber, 7);
 		assert.deepStrictEqual(fetchRanges, [{ from: 6, to: 8 }]);
+		assert.deepStrictEqual(processedSequenceNumbers, [6, 7]);
+		assert(
+			!processedSequenceNumbers.includes(8),
+			"Op beyond target sequence number should never be processed",
+		);
 		assert.strictEqual(container.readOnlyInfo.readonly, true);
 		assert(isIDeltaManagerFull(container.deltaManager));
 		assert.strictEqual(container.deltaManager.inbound.paused, true);

@@ -2201,7 +2201,7 @@ export class Container
 		attributes: IDocumentAttributes,
 		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
 		lastProcessedSequenceNumber?: number,
-		loadToSequenceNumber?: number,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,

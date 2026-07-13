@@ -578,7 +578,7 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		handler: IDeltaHandlerStrategy,
 		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
 		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
-		loadToSequenceNumber?: number,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<void> {
 		this.initSequenceNumber = snapshotSequenceNumber;
 		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;

@@ -85,20 +85,28 @@ export class RetriableDocumentStorageService implements IDocumentStorageService,
 	public async canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
-		return this.runWithRetry(
-			async () =>
-				this.internalStorageServiceP.then(async (s) => {
-					const pointInTimeStorageService =
-						s as Partial<IPointInTimeMaterializationStorageService>;
-					return (
-						pointInTimeStorageService.canMaterializePointInTime?.(target) ?? {
-							status: "notAvailable",
-							message: "Storage driver does not support point-in-time materialization checks.",
-						}
-					);
-				}),
-			"storage_canMaterializePointInTime",
-		);
+		try {
+			return await this.runWithRetry(
+				async () =>
+					this.internalStorageServiceP.then(async (s) => {
+						const pointInTimeStorageService =
+							s as Partial<IPointInTimeMaterializationStorageService>;
+						return (
+							pointInTimeStorageService.canMaterializePointInTime?.(target) ?? {
+								status: "notAvailable",
+								message:
+									"Storage driver does not support point-in-time materialization checks.",
+							}
+						);
+					}),
+				"storage_canMaterializePointInTime",
+			);
+		} catch (error: unknown) {
+			return {
+				status: "notAvailable",
+				message: error instanceof Error ? error.message : undefined,
+			};
+		}
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {

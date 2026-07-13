@@ -258,7 +258,7 @@ export class SerializedStateManager implements IDisposable {
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
 		pendingLocalState: IPendingContainerState | undefined,
-		loadToSequenceNumber?: number,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<{
 		snapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
@@ -564,7 +564,7 @@ async function getSnapshot(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
-	loadToSequenceNumber?: number,
+	loadToSequenceNumber: number | undefined = undefined,
 ): Promise<{ snapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
 	if (loadToSequenceNumber !== undefined && !supportGetSnapshotApi) {
 		throw new UsageError(
@@ -590,7 +590,7 @@ export async function fetchISnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
-	loadToSequenceNumber?: number,
+	loadToSequenceNumber: number | undefined = undefined,
 ): Promise<{ snapshot?: ISnapshot; version?: IVersion }> {
 	const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
 		versionId: specifiedVersion,

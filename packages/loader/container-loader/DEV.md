@@ -339,6 +339,7 @@ Returning latest would make the caller think the historical target was honored w
 
 ODSP only chooses the base snapshot during historical `getSnapshot`.
 It does not prove that all operations after the snapshot are still available.
+See [Tradeoffs](#tradeoffs) for historical snapshot blob-loading behavior.
 
 ODSP emits `HistoricalSnapshotSelection` telemetry for point-in-time loads.
 The event records the target sequence number, number of versions scanned, number of candidate snapshot reads, whether a base snapshot was found, the chosen base snapshot sequence number when available, and the replay distance from base snapshot to target when available.
@@ -361,6 +362,8 @@ For ODSP today, `materializable` means:
 ODSP found a base snapshot at or before the target and verified that the replay ops are available.
 ```
 
+See [Tradeoffs](#tradeoffs) for the probe's replay-op fetch cost and retry behavior.
+
 ### Availability statuses
 
 Current statuses include:
@@ -370,6 +373,32 @@ Current statuses include:
 - `permissionOrAccessDenied`: the document or version history could not be accessed.
 - `notAvailable`: the availability probe is not available or could not determine availability.
 - `missingOps`: a base snapshot exists but required trailing operations are missing.
+
+## Tradeoffs
+
+This is an opt-in alpha path, so the first implementation favors a small, explicit correctness surface over shared caching or broader driver assumptions.
+
+### Historical snapshot blobs are loaded on demand
+
+ODSP historical snapshot selection reads candidate snapshot trees and document attributes, but it does not download every blob in the chosen candidate snapshot before returning it.
+The returned historical `ISnapshot` starts with an empty `blobContents` map, so protocol and app blobs needed during container boot are fetched on demand through `readBlob`.
+
+This can add boot-latency round trips compared with the normal full snapshot path, but it avoids prefetching every candidate blob on this rare path.
+If historical-load boot latency becomes important, prefer an explicit batched blob prefetch for the chosen candidate snapshot rather than changing the selection scan to download full snapshots.
+
+### Availability probes may fetch replay ops twice
+
+The ODSP availability probe verifies replay-op availability by fetching the bounded replay range from `baseSnapshotSequenceNumber + 1` through the target sequence number in `opsBatchSize` pages and checking that the returned operations are contiguous.
+Those operations are discarded after the probe.
+A later historical load fetches the same replay range again through the normal delta-fetch path.
+
+This double-fetch is an accepted alpha cost of the opt-in feasibility probe.
+The probe is not a metadata-only guarantee and does not populate a shared replay cache.
+
+### Retryable probe failures are retried, then normalized
+
+Retryable ODSP failures from `canMaterializePointInTime` are allowed to escape ODSP status normalization so the storage retry layer can retry the advisory check.
+If those retries are exhausted, the container-loader adapter reports `notAvailable` rather than failing the caller's probe.
 
 ## What this implementation guarantees
 
@@ -433,8 +462,10 @@ Tests should cover behavior the current implementation actually provides:
 - `loadContainerToSequenceNumber` pauses at the requested sequence number, forces readonly, blocks `connect()` and `getPendingLocalState()`, and rejects clearly when trailing operations cannot reach the target.
 - Default, `"cached"`, and `"all"` normal loads remain writable and are not forced readonly by the shared post-load wait block.
 - ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
+- ODSP historical snapshot loads intentionally read candidate blob bodies on demand; tests should not assume `blobContents` is pre-populated as it is on the normal snapshot path.
 - ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
+- ODSP `canMaterializePointInTime` may download the bounded replay-op range to verify availability, and callers should not expect those ops to be cached for a following load.
 - ODSP `canMaterializePointInTime` reports `missingBaseVersion` when recent versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `missingOps` when a usable base snapshot exists but required replay ops are missing.
 - ODSP `canMaterializePointInTime` reports `permissionOrAccessDenied` for access-related ODSP failures.

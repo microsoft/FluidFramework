@@ -467,6 +467,24 @@ describe("Tests1 for snapshot fetch", () => {
 		}
 	});
 
+	it("canMaterializePointInTime() lets retryable errors escape storage probe normalization", async () => {
+		const retryableError = new Error("retryable probe failure") as Error & {
+			canRetry: boolean;
+			errorType: string;
+		};
+		retryableError.canRetry = true;
+		retryableError.errorType = OdspErrorTypes.genericNetworkError;
+		const getVersionsStub = stub(service, "getVersions").rejects(retryableError);
+		try {
+			await assert.rejects(
+				service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				(error: unknown) => error === retryableError,
+			);
+		} finally {
+			getVersionsStub.restore();
+		}
+	});
+
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
 		let success = false;
 		service["firstSnapshotFetchCall"] = false;

@@ -22,6 +22,7 @@ import {
 	type PointInTimeMaterializationAvailability,
 } from "@fluidframework/driver-definitions/internal";
 import {
+	canRetryOnError,
 	getKeyForCacheEntry,
 	NonRetryableError,
 	RateLimiter,
@@ -377,6 +378,10 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 						message: "The base snapshot exists, but required replay ops are unavailable.",
 					};
 		} catch (error: unknown) {
+			if (canRetryOnError(error)) {
+				throw error;
+			}
+
 			const errorType = (error as Partial<{ errorType: string }>).errorType;
 			if (
 				errorType === OdspErrorTypes.authorizationError ||
