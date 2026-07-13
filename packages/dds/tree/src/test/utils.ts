@@ -178,8 +178,8 @@ import {
 	type ForestType,
 	ForestTypeReference,
 	type SharedTreeOptionsInternal,
+	type TreeTransactor,
 } from "../shared-tree/index.js";
-import type { Transactor } from "../shared-tree-core/index.js";
 import {
 	type ImplicitFieldSchema,
 	type TreeViewConfiguration,
@@ -1517,7 +1517,7 @@ export class MockTreeCheckout implements ITreeCheckout {
 		}
 		return this.options.editor;
 	}
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		throw new Error("'transaction' property not implemented in MockTreeCheckout.");
 	}
 	public get events(): Listenable<CheckoutEvents> {

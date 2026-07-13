@@ -1,5 +1,53 @@
 # @fluidframework/tree
 
+## 2.111.0
+
+### Minor Changes
+
+- Add an opt-in postProcessor option when running a transaction ([#27610](https://github.com/microsoft/FluidFramework/pull/27610)) [ee981100f3f](https://github.com/microsoft/FluidFramework/commit/ee981100f3fa5fb9b5ea26b9ef62efa7e0691b69)
+
+  `RunTransactionParams` now accepts an optional `postProcessor` (used by `runTransaction` and `runTransactionAsync`). When supplied, the edits made during the transaction are post-processed when the transaction is committed, transforming the resulting squashed change. For example, post-processing could be used to "minimize" the change so that it contains no extraneous information. Such extraneous information includes data for nodes that were both created and removed within the transaction, or changes whose effects cancel out to nothing.
+
+  `postProcessor` is a type-erased handle (`TransactionPostProcessor`) whose concrete representation is an implementation detail of `@fluidframework/tree`. It is opt-in: when it is omitted the existing behavior is preserved.
+
+  Note: minimization is the first intended implementation and use of post-processing, but it is not yet available.
+
+- TreeView transaction APIs have been promoted to beta ([#27592](https://github.com/microsoft/FluidFramework/pull/27592)) [1ed11dbeddd](https://github.com/microsoft/FluidFramework/commit/1ed11dbeddd98fd0b788aad6f74b6d480249ce28)
+
+  The [TreeViewBeta](https://fluidframework.com/docs/api/fluid-framework/treeviewbeta-interface) interface exposes `runTransaction` and `runTransactionAsync` methods.
+
+  The [asBeta](https://fluidframework.com/docs/api/fluid-framework/#asbeta-function) helper function can be used to down-cast a `TreeView` to a `TreeViewBeta`.
+
+  ```typescript
+  import { asBeta } from "fluid-framework/beta";
+  // ...
+  const view = asBeta(tree.viewWith(config));
+  const result = view.runTransaction(() => {
+    // ... make edits to the tree ...
+  });
+  if (result.success === false) {
+    // ... handle the failed transaction ...
+  }
+  ```
+
+  > [!IMPORTANT]
+  > Transaction constraints are not yet available as a part of the beta transaction APIs.
+  > These capabilities can still be accessed via the updated alpha APIs.
+
+  **Type Name Changes**
+
+  With the introduction of new beta types, existing alpha types have been replaced with new alpha and beta variants.
+
+  | Old                             | New Alpha                            | New Beta                            |
+  | ------------------------------- | ------------------------------------ | ----------------------------------- |
+  | `RunTransactionParams`          | `RunTransactionParamsAlpha`          | `RunTransactionParamsBeta`          |
+  | `TransactionCallbackStatus`     | `TransactionCallbackStatusAlpha`     | `TransactionCallbackStatusBeta`     |
+  | `VoidTransactionCallbackStatus` | `VoidTransactionCallbackStatusAlpha` | `VoidTransactionCallbackStatusBeta` |
+
+  **Other Renames**
+  - `TransactionResult` (alpha) -> `TransactionVoidResult` (beta)
+  - `TransactionResultExt` (alpha) -> `TransactionValueResult` (beta)
+
 ## 2.110.0
 
 ### Minor Changes

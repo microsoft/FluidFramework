@@ -2360,8 +2360,18 @@ export class ContainerRuntime
 		if (this.isSummarizerClient) {
 			// We want to dynamically import any thing inside summaryDelayLoadedModule module only when we are the summarizer client,
 			// so that all non summarizer clients don't have to load the code inside this module.
+			// Import the delay-loaded module by its leaf path rather than through the `./summary/index.js` barrel,
+			// which is also statically imported above for summarization dependencies every client loads
+			// (SummaryManager, SummaryCollection, SummarizerClientElection, etc.). A bundler that traces re-exports
+			// per symbol (e.g. webpack honoring sideEffects + providedExports) already keeps the summarizer out of
+			// the initial chunk even if this dynamic import targets the barrel, because the barrel's static importers
+			// use only non-summarizer symbols. A bundler without that analysis would instead treat the
+			// statically-imported barrel as making the whole summarizer subgraph available and fold it into the
+			// initial chunk. Targeting summaryDelayLoadedModule/index.js directly makes the split deterministic
+			// across bundlers.
 			const module = await import(
-				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/index.js"
+				// eslint-disable-next-line import-x/no-internal-modules -- Needed to import the delay-loaded module directly.
+				/* webpackChunkName: "summarizerDelayLoadedModule" */ "./summary/summaryDelayLoadedModule/index.js"
 			);
 			this._summarizer = new module.Summarizer(
 				this /* ISummarizerRuntime */,
@@ -3234,13 +3244,14 @@ export class ContainerRuntime
 						"Duplicate batch - The same batch was sequenced twice",
 						{ batchId: batchStart.batchId },
 					);
-
+					const batchIdExplicit = batchStart.batchId !== undefined;
+					const otherBatchIdExplicit = result.otherBatchInfo?.batchIdExplicit ?? false;
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
-								batchIdExplicit: batchStart.batchId !== undefined,
+								batchIdExplicit,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
@@ -3251,7 +3262,7 @@ export class ContainerRuntime
 								// loaded from a summary snapshot rather than seen at runtime.
 								otherClientId: result.otherBatchInfo?.clientId,
 								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
-								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherBatchIdExplicit,
 								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
 								// For grouped batches, `keyMessage` is one of the sub-messages produced by
@@ -3264,10 +3275,12 @@ export class ContainerRuntime
 						},
 						error,
 					);
-					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
-					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
-					// or once we are able to identify batch duplication reason (forking vs service bug).
-					// throw error;
+					// Only throw the error if either the current batch or the other batch has an explicit batchId since that indicates a meaningful duplication scenario
+					// coming from our batch readings rather than a server outage scenario.
+					const shouldThrowOnDuplicate = batchIdExplicit || otherBatchIdExplicit;
+					if (shouldThrowOnDuplicate) {
+						throw error;
+					}
 				}
 			}
 

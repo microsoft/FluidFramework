@@ -117,7 +117,7 @@ export function decodeOriginatorlessEncodedId(
 	const sessionSpaceId = idCompressor.tryNormalizeToSessionSpaceWithoutSession(id);
 	assert(
 		sessionSpaceId !== undefined,
-		"OriginatorlessEncodedId must be a finalized compressed id at runtime",
+		0xd0a /* OriginatorlessEncodedId must be a finalized compressed id at runtime */,
 	);
 	return sessionSpaceId;
 }
@@ -152,9 +152,10 @@ export function tryDecodeEncodedIdWithoutSession(
  * the user-facing {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}
  * option — see that option for the user-facing rationale and trade-offs.
  *
- * Carried by decode-side contexts (`ChangeEncodingContext.healing`,
+ * Carried by decode-side contexts ({@link IdDecoderOptionsOriginatorless},
+ * `ChangeEncodingContext.healing`,
  * `EditManagerEncodingContext.healing`, etc.) when the workaround is enabled.
- * Presence enables healing; `undefined` opts out. There is no separate boolean,
+ * Presence enables healing; `undefined` means healing is disabled. There is no separate boolean,
  * which makes it impossible to enable healing without supplying the namespace
  * input.
  */
@@ -210,7 +211,94 @@ export function decompressIdentifierIfNeeded(
 		return id;
 	} else {
 		const decompressed = idCompressor.decompress(id);
-		assert(typeof decompressed === "string", "Decompressed id must be a string");
+		assert(typeof decompressed === "string", 0xd0b /* Decompressed id must be a string */);
 		return decompressed;
+	}
+}
+
+/**
+ * Options for creating an {@link IdDecodingContext} without an originator.
+ * @remarks
+ * Decodes {@link OriginatorlessEncodedId} instances, and optionally has a {@link IdentifierHealingConfig} fallback for {@link OriginatorDependentEncodedId} instances.
+ */
+export interface IdDecoderOptionsOriginatorless {
+	readonly idCompressor: IIdCompressor;
+	/**
+	 * Optional {@link IdentifierHealingConfig} to use for healing unresolvable identifiers.
+	 * @privateRemarks
+	 * This is a required field which can be undefined to make it explicit when this is not provided.
+	 * This explicitness helps ensure we we don't accidentally drop the healing config as that would break
+	 * an edge case which does not get a lot of testing.
+	 */
+	readonly healing: IdentifierHealingConfig | undefined;
+}
+
+/**
+ * Options for creating an {@link IdDecodingContext} with an originator.
+ * @remarks
+ * Decodes {@link OriginatorDependentEncodedId} instances.
+ */
+export interface IdDecoderOptionsWithOriginator {
+	readonly idCompressor: IIdCompressor;
+	/**
+	 * The ID of the session that encoded the ids.
+	 */
+	readonly originatorId: SessionId;
+}
+
+/**
+ * Context for decoding identifiers.
+ * @remarks
+ * Depended on how this is constructed, it may or may not handle {@link OriginatorDependentEncodedId} instances.
+ *
+ * This intentionally avoids exposing anything which depends on the underlying id-compressor's session ID to avoid confusion with the session ID of the compressor which encoded the data.
+ * If the session ID of the encoder which encoded the data is known, that information is baked into `resolveEncodedId`.
+ *
+ * @privateRemarks
+ * We have code (FieldBatchDecodingContext) which sometimes has a session ID and sometimes doesn't, so we need a flexible decoding context.
+ * Additionally, since this is about serialized data, having stronger types is often counterproductive, as it just relies more on type casts when parsing.
+ * This is why we use this flexible pattern rather than code strongly typed over which kind of encoded ids are expected.
+ */
+export class IdDecodingContext {
+	/**
+	 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
+	 */
+	protected readonly hasOriginatorSessionId: boolean;
+
+	/**
+	 * Compressor which can decompress session-space identifiers from {@link resolveEncodedId} as needed.
+	 */
+	public readonly idCompressor: Pick<IIdCompressor, "decompress">;
+
+	/**
+	 * Resolves an encoded op-space identifier to either a session-space ID
+	 * (which {@link idCompressor} can decompress if needed)
+	 * or a string (which passes through unchanged).
+	 * @remarks
+	 * In contexts where non-final identifiers can't be supported (where no originator session is available),
+	 * if a non-final identifier is encountered, this may throw or perform a data healing workaround.
+	 * See {@link FieldBatchDecodingContext.forOp} and {@link FieldBatchDecodingContext.forSummary} for details.
+	 */
+	public readonly resolveEncodedId: (
+		id: OpSpaceCompressedId,
+	) => SessionSpaceCompressedId | string;
+
+	/**
+	 * Creates a new instance of the context.
+	 * @param options - The options for creating the context.
+	 */
+	public constructor(
+		options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+	) {
+		this.idCompressor = options.idCompressor;
+		if ("originatorId" in options) {
+			this.hasOriginatorSessionId = true;
+			this.resolveEncodedId = (id): SessionSpaceCompressedId | string =>
+				options.idCompressor.normalizeToSessionSpace(id, options.originatorId);
+		} else {
+			this.hasOriginatorSessionId = false;
+			this.resolveEncodedId = (id): SessionSpaceCompressedId | string =>
+				forceDecodeEncodedIdWithoutSession(id, options.idCompressor, options.healing);
+		}
 	}
 }

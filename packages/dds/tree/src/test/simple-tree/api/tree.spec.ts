@@ -24,9 +24,13 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
+	type ImplicitFieldSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
+import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
 import { getView } from "../../utils.js";
 
 const schema = new SchemaFactory("com.example");
@@ -36,6 +40,21 @@ class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = SharedTree.getFactory();
+
+// Type tests
+{
+	// TreeViewBeta should be assignable to TreeView
+	type _checkBetaAssignableToPublic = requireAssignableTo<
+		TreeViewBeta<ImplicitFieldSchema>,
+		TreeView<ImplicitFieldSchema>
+	>;
+
+	// TreeViewAlpha should be assignable to TreeViewBeta
+	type _checkAlphaAssignableToBeta = requireAssignableTo<
+		TreeViewAlpha<ImplicitFieldSchema>,
+		TreeViewBeta<ImplicitFieldSchema>
+	>;
+}
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
@@ -99,7 +118,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/is not allowed in this field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -112,7 +134,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/is not allowed in this field/),
 			);
 		});
 	});
