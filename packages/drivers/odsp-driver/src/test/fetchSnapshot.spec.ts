@@ -39,6 +39,7 @@ import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
+import type { OdspVersionManager } from "../odspVersionManager.js";
 import {
 	type INewFileInfo,
 	type IOdspResponse,
@@ -453,17 +454,21 @@ describe("Tests1 for snapshot fetch", () => {
 		}
 	});
 
-	it("canMaterializePointInTime() reports access failure when ODSP cannot list versions", async () => {
-		const getVersionsStub = stub(service, "getVersions").rejects({
-			errorType: OdspErrorTypes.authorizationError,
-			message: "access denied",
-		});
+	it("canMaterializePointInTime() reports access failure when ODSP cannot list file versions", async () => {
+		const accessError = new Error("access denied") as Error & { errorType: string };
+		accessError.errorType = OdspErrorTypes.authorizationError;
+		const versionManager: Partial<OdspVersionManager> = {
+			findClosestSnapshotAtOrBefore: async () => {
+				throw accessError;
+			},
+		};
+		const { restore } = mockOdspVersionManager(service, versionManager);
 		try {
 			const availability = await service.canMaterializePointInTime({ sequenceNumber: 25 });
 
 			assert.strictEqual(availability.status, "permissionOrAccessDenied");
 		} finally {
-			getVersionsStub.restore();
+			restore();
 		}
 	});
 
@@ -474,14 +479,19 @@ describe("Tests1 for snapshot fetch", () => {
 		};
 		retryableError.canRetry = true;
 		retryableError.errorType = OdspErrorTypes.genericNetworkError;
-		const getVersionsStub = stub(service, "getVersions").rejects(retryableError);
+		const versionManager: Partial<OdspVersionManager> = {
+			findClosestSnapshotAtOrBefore: async () => {
+				throw retryableError;
+			},
+		};
+		const { restore } = mockOdspVersionManager(service, versionManager);
 		try {
 			await assert.rejects(
 				service.canMaterializePointInTime({ sequenceNumber: 25 }),
 				(error: unknown) => error === retryableError,
 			);
 		} finally {
-			getVersionsStub.restore();
+			restore();
 		}
 	});
 
@@ -1011,34 +1021,63 @@ function mockHistoricalSnapshots(
 	service: OdspDocumentStorageService,
 	sequenceNumbers: number[],
 ): { restore: () => void } {
-	const getVersionsStub = stub(service, "getVersions").resolves(
-		sequenceNumbers.map((sequenceNumber) => ({
-			id: `version-${sequenceNumber}`,
-			treeId: undefined!,
-		})),
-	);
-	const fetchTreeFromSnapshotStub = stub(
-		service as unknown as {
-			fetchTreeFromSnapshot: (id: string) => Promise<ISnapshotTree | undefined>;
+	const fetchSnapshotFromVersion = async (
+		fileVersionId: string,
+		fetchFullSnapshot: boolean,
+	): Promise<ISnapshot> => {
+		const sequenceNumber = Number(fileVersionId.replace("version-", ""));
+		const historicalBlobContents = new Map<string, ArrayBuffer>();
+		if (fetchFullSnapshot) {
+			historicalBlobContents.set(
+				`attributes-${sequenceNumber}`,
+				stringToBuffer(JSON.stringify({ minimumSequenceNumber: 0, sequenceNumber }), "utf8"),
+			);
+		}
+		return {
+			blobContents: historicalBlobContents,
+			latestSequenceNumber: sequenceNumber,
+			ops: [],
+			sequenceNumber,
+			snapshotFormatV: 1,
+			snapshotTree: createHistoricalSnapshotTree(sequenceNumber),
+		};
+	};
+	const versionManager: Partial<OdspVersionManager> = {
+		findClosestSnapshotAtOrBefore: async (targetSequenceNumber: number) => {
+			let versionsScanned = 0;
+			let candidateSnapshotReads = 0;
+			for (const sequenceNumber of sequenceNumbers) {
+				versionsScanned++;
+				candidateSnapshotReads++;
+				if (sequenceNumber <= targetSequenceNumber) {
+					return {
+						candidate: {
+							fileVersionId: `version-${sequenceNumber}`,
+							sequenceNumber,
+							snapshotTree: createHistoricalSnapshotTree(sequenceNumber),
+						},
+						versionsScanned,
+						candidateSnapshotReads,
+					};
+				}
+			}
+			return { versionsScanned, candidateSnapshotReads };
 		},
-		"fetchTreeFromSnapshot",
-	).callsFake(async (id: string) => {
-		const sequenceNumber = Number(id.replace("version-", ""));
-		return createHistoricalSnapshotTree(sequenceNumber);
-	});
-	const readBlobStub = stub(service, "readBlob").callsFake(async (blobId: string) => {
-		const sequenceNumber = Number(blobId.replace("attributes-", ""));
-		return stringToBuffer(
-			JSON.stringify({ minimumSequenceNumber: 0, sequenceNumber }),
-			"utf8",
-		);
-	});
+		fetchSnapshotFromVersion,
+	};
+	return mockOdspVersionManager(service, versionManager);
+}
+
+function mockOdspVersionManager(
+	service: OdspDocumentStorageService,
+	versionManager: Partial<OdspVersionManager>,
+): { restore: () => void } {
+	const originalVersionManager = service["odspVersionManager"];
+	service["odspVersionManager"] = versionManager as OdspVersionManager;
 
 	return {
 		restore: () => {
-			getVersionsStub.restore();
-			fetchTreeFromSnapshotStub.restore();
-			readBlobStub.restore();
+			service["odspVersionManager"] = originalVersionManager;
 		},
 	};
 }

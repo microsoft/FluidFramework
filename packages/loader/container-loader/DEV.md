@@ -30,12 +30,12 @@ Historical loading has four main steps:
 
 1. The caller chooses the historical point it wants, called target `T`.
 2. The loader carries `T` down through the load path.
-3. The ODSP driver finds a snapshot at or before `T`.
-4. Fluid replays operations after that snapshot until the document reaches `T`.
+3. ODSP historical support finds an ODSP file version whose Fluid snapshot sequence number is at or before `T`.
+4. Fluid loads from that ODSP file version and replays operations until the document reaches `T`.
 
 ```text
 choose target T
-	-> find a base snapshot at or before T
+	-> find an ODSP file version with a base snapshot at or before T
 	-> replay operations after the snapshot
 	-> stop when the document reaches T
 ```
@@ -74,163 +74,88 @@ Replay means applying operations after the base snapshot until the container rea
 To materialize a point in time means to reconstruct an actual paused, read-only historical-view container state for that point.
 It is more than finding a snapshot; it may also require replaying operations after the snapshot.
 
-## Conceptual flow
+## Package ownership
 
-```mermaid
-flowchart TD
-	A[Caller asks for point-in-time target T] --> B{Availability probe or load?}
-	B -->|Probe| C[ODSP searches for a base snapshot at or before T]
-	C --> D{Base snapshot found?}
-	D -->|No| E[Report missingBaseVersion]
-	D -->|Yes| F[Fetch replay ops from base snapshot to T]
-	F --> G{Replay ops complete?}
-	G -->|No| H[Report missingOps]
-	G -->|Yes| I[Report materializable]
-	B -->|Load| J[Loader carries T through the load path]
-	J --> K[ODSP driver receives T during snapshot fetch]
-	K --> L{Can ODSP find a base snapshot at or before T?}
-	L -->|No| M[Fail clearly]
-	L -->|Yes| N[Return base snapshot]
-	N --> O{Is the snapshot already at T?}
-	O -->|Yes| P[Pause and return container]
-	O -->|No, snapshot is before T| Q{Replay operations until T?}
-	O -->|No, snapshot is after T| R[Fail because Fluid cannot replay backward]
-	Q -->|Yes| P
-	Q -->|No| S[Fail because required ops are unavailable]
+The design is easiest to read by package boundary.
+The important rule is that `container-loader` stays driver agnostic: it loads, replays, pauses, and forces readonly, but it does not know how ODSP history works.
+
+- Host or Bohemia chooses the product point in time and converts it to Fluid sequence number `T`.
+- Future `odsp-container-loader` exposes the ODSP-specific point-in-time load helper for hosts. It hides request headers, storage-only load settings, and driver setup, then calls `loadContainerToSequenceNumber`.
+- Future `historical-driver` owns historical driver/storage orchestration. It chooses ODSP file version `V`, maps it to Fluid snapshot sequence `S`, composes version-bound and tip-bound ODSP reads, and exposes one snapshot/op stream view to the loader.
+- Existing `odsp-driver` owns ODSP protocol details: file-version endpoint calls, version-scoped snapshot/blob/op reads, tip-file op reads, auth, epoch tracking, and retry behavior.
+- Existing `container-loader` owns generic Fluid loading: carrying `loadToSequenceNumber`, validating the internal load mode, fetching the provided snapshot, replaying ops to `T`, pausing queues, forcing readonly, and returning the historical container.
+
+### Current prototype location
+
+`historical-driver` does not exist yet, so the prototype keeps part of that future responsibility in `odsp-driver`.
+`OdspVersionManager` is the temporary home for selecting an ODSP file version and mapping it to a Fluid sequence number.
+It currently calls the ODSP file versions endpoint, reads candidate version snapshots, finds the Fluid document attributes blob in `.protocol`, reads that blob from the same ODSP file version, and returns the closest usable version whose `attributes.sequenceNumber` is at or before target `T`.
+
+When the package split happens, the selection/orchestration responsibility should move to `historical-driver`.
+The raw ODSP I/O helpers can stay in `odsp-driver` or be reshaped into lower-level primitives that `historical-driver` calls.
+
+### ODSP file-version facts
+
+The ODSP historical path must use ODSP file-version history, not Fluid snapshot `getVersions`.
+The relevant ODSP endpoint is:
+
+```text
+/_api/v2.0/drives/{driveId}/items/{itemId}/versions
 ```
 
-## What each layer is responsible for
+An ODSP file version id is not itself a Fluid snapshot id or Fluid sequence number.
+To decide whether ODSP file version `V` is usable for target `T`, historical selection must:
 
-### Host or app
+1. Load `V`'s snapshot tree through the version-scoped snapshot URL.
+2. Find the Fluid document attributes blob, normally `.protocol`'s `attributes` blob entry. The current prototype also accepts the legacy root `.attributes` blob location.
+3. Read that attributes blob through the same ODSP file version's attachment URL.
+4. Use `attributes.sequenceNumber` as the Fluid snapshot sequence `S` for `V`.
+5. Choose the closest usable version where `S <= T`.
 
-The host decides which historical point it wants.
-It should provide a target sequence number, not a snapshot id and not a client-local marker.
+After choosing `V`, reads from that historical version must keep `versions/{fileVersionId}/` in the ODSP URL path.
+The existing ODSP URL resolver already supports this shape for:
 
-If the host starts with an app marker, it must first resolve that marker to a global sequence number.
+- `.../versions/{fileVersionId}/opStream/snapshots`
+- `.../versions/{fileVersionId}/opStream/attachments`
+- `.../versions/{fileVersionId}/opStream`
 
-### Container loader
+This is the boundary: do not discover history through Fluid storage `getVersions`, and do not mix a historical snapshot from ODSP file version `V` with blobs or ops accidentally read from the tip file.
 
-The loader carries the target through the load path.
-It does not know whether the service has the needed historical data.
-It should not try to validate service-specific history.
+## Load flow
 
-### ODSP driver
-
-For this flow, ODSP receives the target and decides how to find a useful base snapshot.
-It searches recent ODSP versions and chooses a snapshot at or before the target.
-
-### Runtime and delta processing
-
-After the base snapshot is loaded, Fluid may need to apply operations after that snapshot.
-This replay step is what brings the container from the base snapshot to the requested target.
-
-## Detailed layer flow
-
-The conceptual flow above hides some implementation details.
-This diagram shows how the same target moves through the loader, container, storage boundary, ODSP, and replay layers.
+This diagram shows the target architecture and notes where the current prototype sits.
+Read it from top to bottom.
 
 ```mermaid
-flowchart TD
-	subgraph HostApp[Host or app layer]
-		A[Caller requests a container]
-		B{Point-in-time target?}
-	end
+sequenceDiagram
+	participant Host as Host or Bohemia
+	participant OCL as odsp-container-loader (future)
+	participant HD as historical-driver (future)
+	participant ODSP as odsp-driver (existing)
+	participant CL as container-loader (existing)
 
-	subgraph LoaderHelpers[Container-loader helper layer]
-		C[loadExistingContainer]
-		D[loadContainerToSequenceNumber builds a historical-load request]
-		E[Loader.resolve]
-	end
+	Host->>OCL: Request point-in-time load for sequence T
+	OCL->>HD: Ask for ODSP historical storage for T
+	HD->>HD: Choose file version V with snapshot sequence S <= T
+	HD->>ODSP: Current prototype uses OdspVersionManager.findClosestSnapshotAtOrBefore(T)
+	ODSP->>ODSP: getOdspFileVersions()
+	ODSP->>ODSP: fetchSnapshotFromVersion(V, false)
+	ODSP->>ODSP: readBlobFromVersion(.protocol attributes)
+	ODSP-->>HD: Return file version V and snapshot sequence S
 
-	subgraph ContainerLoad[Container load layer]
-		F[Container.load receives loadToSequenceNumber]
-		G[SerializedStateManager.fetchSnapshot]
-		V[Container initializes from base snapshot]
-		W{opsBeforeReturn is sequenceNumber?}
-		X[Normal container load continues]
-		Y[Attach delta manager op handler with bounded sequence-number prefetch]
-		Z[Install target-reached listener before bounded replay]
-		AA{Base snapshot sequence}
-		AB[Pause inbound and outbound queues immediately]
-		AC[Throw: snapshot is newer than target]
-		AD[Fetch trailing ops through T]
-		AE[Process ops until deltaManager.lastSequenceNumber reaches T]
-		AF[Return paused historical container]
-		BA[Throw: requested sequence number is unavailable]
-	end
+	HD->>ODSP: Use version-bound ODSP service for V
+	ODSP-->>HD: fetchSnapshotFromVersion(V, true), blobs, version ops
+	HD->>ODSP: Use tip-bound ODSP service if V ops end before T
+	ODSP-->>HD: Tip-file ops for remaining range
 
-	subgraph StorageBoundary[Storage boundary]
-		H[IDocumentStorageService.getSnapshot options include loadToSequenceNumber when present]
-		AG[IPointInTimeMaterializationStorageService.canMaterializePointInTime]
-	end
-
-	subgraph OdspDriver[ODSP driver layer]
-		I{ODSP getSnapshot sees loadToSequenceNumber?}
-		J[Normal latest snapshot flow]
-		K[Use latest/cache/network snapshot path]
-		L[Return latest snapshot]
-		M[Point-in-time ODSP snapshot flow]
-		N[getVersions top 50, no cache]
-		O[For each version: getSnapshotTree]
-		P[Read document attributes blob]
-		Q[Extract snapshot sequenceNumber]
-		R{sequenceNumber at or before T?}
-		S[Return first usable base snapshot]
-		T[ISnapshot sequenceNumber = base snapshot sequenceNumber]
-		U[Throw non-retryable error: no snapshot at or before target]
-		AH[Find point-in-time base snapshot]
-		AI{Base snapshot found?}
-		AJ[Fetch replay ops from delta storage]
-		AK{Replay ops complete and contiguous through T?}
-		AL[Return materializable]
-		AM[Return missingBaseVersion]
-		AN[Return missingOps]
-	end
-
-	A --> B
-	B -->|No| C
-	B -->|Yes: loadToSequenceNumber = T| D
-	C --> E
-	D --> E
-	E --> F
-	F --> G
-	G --> H
-	H --> I
-	I -->|No| J
-	J --> K
-	K --> L
-	L --> V
-	I -->|Yes| M
-	M --> N
-	N --> O
-	O --> P
-	P --> Q
-	Q --> R
-	R -->|No| O
-	R -->|Yes| S
-	S --> T
-	R -->|No candidate found| U
-	T --> V
-	V --> W
-	W -->|No| X
-	W -->|Yes| AA
-	AA -->|At T| AB
-	AA -->|After T| AC
-	AA -->|Before T| Z
-	Z --> Y
-	Y --> AD
-	AD -->|Missing ops before T| BA
-	AD -->|Ops through T queued| AE
-	AE --> AB
-	AB --> AF
-	B -->|Probe availability| AG
-	AG --> AH
-	AH --> AI
-	AI -->|No| AM
-	AI -->|Yes| AJ
-	AJ --> AK
-	AK -->|Yes| AL
-	AK -->|No| AN
+	OCL->>CL: loadContainerToSequenceNumber(loadToSequenceNumber: T)
+	CL->>CL: Loader.resolve validates sequence-number load
+	CL->>CL: Container.load starts storage-only load
+	CL->>HD: SerializedStateManager.fetchSnapshot reads planned snapshot
+	HD-->>CL: Snapshot at S plus op stream toward T
+	CL->>CL: DeltaManager.fetchMissingDeltas(..., T)
+	CL->>CL: Pause queues and forceReadonly when T is reached
+	CL-->>Host: Return paused readonly historical container
 ```
 
 ## Why the target is a sequence number
@@ -321,28 +246,40 @@ Important cases:
 ODSP has two snapshot paths:
 
 - Normal load: return the latest snapshot, using the usual latest/cache path.
-- Historical load: search for a base snapshot at or before the requested target.
+- Historical load: use ODSP file-version history to search for a base snapshot at or before the requested target.
 
 For historical loads, ODSP intentionally skips the latest snapshot cache.
 A cached latest snapshot may be newer than the target, and a newer snapshot cannot be replayed backward.
 
 ODSP historical snapshot selection works like this:
 
-1. List recent ODSP versions.
-2. Read each candidate snapshot tree.
-3. Read the document attributes for that candidate.
-4. Find the candidate's sequence number.
-5. Return the first candidate whose sequence number is at or before the target.
+1. The ODSP version manager calls the ODSP file versions endpoint: `/_api/v2.0/drives/{driveId}/items/{itemId}/versions`.
+2. It lazily inspects ODSP file-version candidates.
+3. For each inspected file version, it uses version-scoped ODSP URLs such as `.../versions/{fileVersionId}/opStream/snapshots` and `.../versions/{fileVersionId}/opStream/attachments`.
+4. It locates the Fluid document attributes blob in the candidate snapshot tree, normally at `.protocol`'s `attributes` blob entry, with a legacy root `.attributes` fallback.
+5. It reads that attributes blob from the same ODSP file version, not from the tip file.
+6. It uses `attributes.sequenceNumber` to map the ODSP file-version id to the Fluid snapshot sequence number.
+7. It returns the closest usable base snapshot whose sequence number is at or before the target.
+
+The attributes step is the bridge between ODSP file-version history and Fluid history.
+The ODSP file version id only identifies a saved file version; the Fluid `.protocol` attributes blob tells us the Fluid sequence number for the snapshot inside that version.
 
 If no candidate exists, ODSP fails clearly instead of returning latest.
 Returning latest would make the caller think the historical target was honored when it was not.
 
-ODSP only chooses the base snapshot during historical `getSnapshot`.
-It does not prove that all operations after the snapshot are still available.
-See [Tradeoffs](#tradeoffs) for historical snapshot blob-loading behavior.
+The current rough implementation keeps this behind `OdspVersionManager` inside `@fluidframework/odsp-driver`.
+As described in [Package ownership](#package-ownership), the future `historical-driver` should own this selection/orchestration responsibility.
+
+ODSP file versions also scope the APIs used to load a version.
+Existing ODSP URL construction already supports embedding `versions/{fileVersionId}/` into snapshot, blob, attachment, and delta-storage URLs.
+Historical loading needs to use that machinery so reads from a chosen ODSP file version do not accidentally read from the tip file.
+
+ODSP only chooses the base version and base snapshot during historical `getSnapshot`.
+It does not, by itself, prove that all operations after the snapshot are still available.
+See [Tradeoffs](#tradeoffs) for replay-op stitching and historical snapshot blob behavior.
 
 ODSP emits `HistoricalSnapshotSelection` telemetry for point-in-time loads.
-The event records the target sequence number, number of versions scanned, number of candidate snapshot reads, whether a base snapshot was found, the chosen base snapshot sequence number when available, and the replay distance from base snapshot to target when available.
+The event records the target sequence number, number of versions scanned, number of candidate snapshot reads, whether a base snapshot was found, the chosen ODSP file-version id and base snapshot sequence number when available, and the replay distance from base snapshot to target when available.
 
 ## Availability checks
 
@@ -378,13 +315,24 @@ Current statuses include:
 
 This is an opt-in alpha path, so the first implementation favors a small, explicit correctness surface over shared caching or broader driver assumptions.
 
-### Historical snapshot blobs are loaded on demand
+### Historical snapshot and attributes reads use version-scoped ODSP URLs
 
-ODSP historical snapshot selection reads candidate snapshot trees and document attributes, but it does not download every blob in the chosen candidate snapshot before returning it.
-The returned historical `ISnapshot` starts with an empty `blobContents` map, so protocol and app blobs needed during container boot are fetched on demand through `readBlob`.
+ODSP historical snapshot selection reads candidate snapshot trees and document attributes from ODSP file-version URLs.
+Candidate inspection should stay lazy because each inspected ODSP file version may require a snapshot read and an attributes blob read.
 
-This can add boot-latency round trips compared with the normal full snapshot path, but it avoids prefetching every candidate blob on this rare path.
-If historical-load boot latency becomes important, prefer an explicit batched blob prefetch for the chosen candidate snapshot rather than changing the selection scan to download full snapshots.
+The selected ODSP file version can then be loaded through the same version-scoped URL family.
+This avoids mixing a historical snapshot with blobs from the tip file.
+
+The tradeoff is extra round trips while scanning candidates.
+If historical-load boot latency becomes important, prefer a version-manager cache or an explicit batched prefetch for the chosen candidate snapshot rather than downloading full snapshots for every candidate.
+
+### Replay may need version ops and tip ops
+
+An ODSP file version represents a point in the file's history, but the requested target sequence number may be after the end of that file version's contained op stream.
+In that case, historical materialization may need to read ops from the selected ODSP file version first, then continue from the live tip file's op stream for the remaining range.
+
+The future historical driver should own this stitching.
+It must also handle gaps between ODSP file versions caused by retention or restore behavior.
 
 ### Availability probes may fetch replay ops twice
 
@@ -406,7 +354,7 @@ This implementation guarantees that:
 
 - A caller can express a historical target as a sequence number.
 - The loader carries that target down to storage snapshot fetch.
-- ODSP uses a historical snapshot search when it sees the target.
+- ODSP uses ODSP file-version history when it sees the target.
 - ODSP fails when it cannot find a usable base snapshot.
 - Hosts can ask ODSP whether the point-in-time load appears available.
 - ODSP reports `missingOps` when a usable base snapshot exists but the required replay operations are unavailable.
@@ -417,6 +365,7 @@ This implementation does not guarantee that:
 
 - This flow works for non-ODSP drivers.
 - A snapshot fetch alone produces the final historical state.
+- Version-contained ops and tip-file ops are fully stitched by the current prototype.
 - Every requested point-in-time load is available; ODSP may still report missing base versions or missing replay operations.
 
 ## Technical reference
@@ -447,7 +396,10 @@ This section lists the main files and API names for contributors who need to wor
 - `packages/loader/container-loader/src/containerStorageAdapter.ts` forwards `canMaterializePointInTime` to storage.
 - `packages/loader/container-loader/src/retriableDocumentStorageService.ts` forwards `canMaterializePointInTime` through retry behavior.
 - `packages/loader/container-loader/src/protocolTreeDocumentStorageService.ts` forwards `canMaterializePointInTime` through protocol-tree wrapping.
-- `packages/drivers/odsp-driver/src/odspDocumentStorageManager.ts` implements ODSP historical snapshot selection, base-version availability checks, and replay-op availability checks.
+- `packages/drivers/odsp-driver/src/odspVersionManager.ts` enumerates ODSP file versions, inspects version-scoped snapshots and attributes blobs, and maps ODSP file versions to Fluid sequence numbers.
+- `packages/drivers/odsp-driver/src/odspDocumentStorageManager.ts` delegates ODSP historical base-version selection to `OdspVersionManager`, implements availability checks, and checks replay-op availability.
+- Future `historical-driver` should own version-bound/tip-bound service composition and replay-op stitching.
+- Future `odsp-container-loader` should own ODSP-specific container load helpers and depend on both ODSP driver behavior and the driver-agnostic container loader.
 
 ## Testing guidance
 
@@ -461,12 +413,15 @@ Tests should cover behavior the current implementation actually provides:
 - The legacy/internal `loadContainerPaused` helper keeps its existing connect-driven paused-load behavior.
 - `loadContainerToSequenceNumber` pauses at the requested sequence number, forces readonly, blocks `connect()` and `getPendingLocalState()`, and rejects clearly when trailing operations cannot reach the target.
 - Default, `"cached"`, and `"all"` normal loads remain writable and are not forced readonly by the shared post-load wait block.
-- ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest recent snapshot at or before the target.
-- ODSP historical snapshot loads intentionally read candidate blob bodies on demand; tests should not assume `blobContents` is pre-populated as it is on the normal snapshot path.
-- ODSP `getSnapshot({ loadToSequenceNumber })` fails when recent versions contain no usable base snapshot.
+- ODSP `getSnapshot({ loadToSequenceNumber })` selects the closest ODSP file version whose Fluid snapshot sequence number is at or before the target.
+- ODSP historical selection uses the ODSP file versions endpoint, not Fluid storage `getVersions`.
+- ODSP historical selection maps ODSP file version ids to Fluid sequence numbers by reading the Fluid `.protocol` attributes blob and using `attributes.sequenceNumber`.
+- ODSP historical snapshot selection reads attributes blobs from version-scoped ODSP file-version URLs, not from the tip file.
+- ODSP historical snapshot, blob, and op reads keep `versions/{fileVersionId}/` in the ODSP URL path for version-bound reads.
+- ODSP `getSnapshot({ loadToSequenceNumber })` fails when ODSP file versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `materializable` when a usable base snapshot exists and required replay ops are available.
 - ODSP `canMaterializePointInTime` may download the bounded replay-op range to verify availability, and callers should not expect those ops to be cached for a following load.
-- ODSP `canMaterializePointInTime` reports `missingBaseVersion` when recent versions contain no usable base snapshot.
+- ODSP `canMaterializePointInTime` reports `missingBaseVersion` when ODSP file versions contain no usable base snapshot.
 - ODSP `canMaterializePointInTime` reports `missingOps` when a usable base snapshot exists but required replay ops are missing.
 - ODSP `canMaterializePointInTime` reports `permissionOrAccessDenied` for access-related ODSP failures.
 
@@ -499,5 +454,8 @@ Reviewers should verify that:
 - Loader/container code does not try to validate ODSP-specific historical availability; base snapshot selection and availability probing stay behind the storage/driver boundary.
 - Point-in-time materialization probing uses the standalone alpha `IPointInTimeMaterializationStorageService` capability rather than extending `IDocumentStorageService`.
 - ODSP historical `getSnapshot` skips the latest snapshot cache and does not fall back to latest when no usable historical base snapshot exists.
+- ODSP historical selection uses ODSP file-version history, not Fluid storage `getVersions`.
+- ODSP historical selection reads `.protocol` attributes from the same ODSP file version before comparing a candidate to target `T`.
+- Version-bound snapshot, blob, and op reads keep the selected ODSP file version in the URL and do not fall back to tip-file URLs unless the historical driver intentionally switches to tip-file ops for the remaining range.
 - Availability statuses do not over-claim trailing operation availability, marker retention, or support from non-ODSP drivers.
 - Tests only assert behavior that the current implementation actually provides, with focused coverage for exact replay to the target and the unsupported-driver `notAvailable` fallback.

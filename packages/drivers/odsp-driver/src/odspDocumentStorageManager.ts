@@ -3,14 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { bufferToString, performanceNow } from "@fluid-internal/client-utils";
+import { performanceNow } from "@fluid-internal/client-utils";
 import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert, delay } from "@fluidframework/core-utils/internal";
 import { promiseRaceWithWinner } from "@fluidframework/driver-base/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import {
 	FetchSource,
-	type IDocumentAttributes,
 	type IPointInTimeMaterializationTarget,
 	type ISnapshot,
 	type ISnapshotFetchOptionsAlpha,
@@ -77,38 +76,21 @@ import {
 	useLegacyFlowWithoutGroupsForSnapshotFetch,
 	type TokenFetchOptionsEx,
 } from "./odspUtils.js";
+import { OdspVersionManager } from "./odspVersionManager.js";
 import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
-
-const historicalSnapshotVersionCount = 50;
 
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;
 	cacheSummarizerExpired?: boolean;
 }
 
-interface HistoricalSnapshotCandidate {
-	readonly sequenceNumber: number;
-	readonly snapshotTree: ISnapshotTree;
-}
-
-interface HistoricalSnapshotSearchResult {
-	readonly candidate?: HistoricalSnapshotCandidate;
-	readonly versionsScanned: number;
-	readonly candidateSnapshotReads: number;
-}
-
-function getAttributesBlobId(snapshotTree: ISnapshotTree): string | undefined {
-	return (
-		snapshotTree.trees[".protocol"]?.blobs.attributes ?? snapshotTree.blobs[".attributes"]
-	);
-}
-
 export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private odspSummaryModuleLoaded: boolean = false;
 	private summaryModuleP: Promise<OdspSummaryUploadManager> | undefined;
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
+	private odspVersionManager: OdspVersionManager | undefined;
 
 	private firstSnapshotFetchCall = true;
 	private _isFirstSnapshotFromNetwork: boolean | undefined;
@@ -296,62 +278,21 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		};
 	}
 
-	private async getSnapshotSequenceNumber(snapshotTree: ISnapshotTree): Promise<number> {
-		const attributesBlobId = getAttributesBlobId(snapshotTree);
-		if (attributesBlobId === undefined) {
-			throw new NonRetryableError(
-				"Historical snapshot candidate does not contain document attributes",
-				OdspErrorTypes.incorrectServerResponse,
-				{ driverVersion },
-			);
-		}
-
-		const attributesBuffer = await this.readBlob(attributesBlobId);
-		const attributes = JSON.parse(
-			bufferToString(attributesBuffer, "utf8"),
-		) as IDocumentAttributes;
-		return attributes.sequenceNumber;
-	}
-
-	private async findHistoricalSnapshotCandidate(
-		targetSequenceNumber: number,
-		scenarioName: string | undefined,
-	): Promise<HistoricalSnapshotSearchResult> {
-		const versions = await this.getVersions(
-			// eslint-disable-next-line unicorn/no-null
-			null,
-			historicalSnapshotVersionCount,
-			scenarioName,
-			FetchSource.noCache,
+	private getOdspVersionManager(): OdspVersionManager {
+		this.odspVersionManager ??= new OdspVersionManager(
+			this.odspResolvedUrl,
+			this.getAuthHeader,
+			this.logger,
+			this.epochTracker,
 		);
-		let versionsScanned = 0;
-		let candidateSnapshotReads = 0;
-		for (const version of versions) {
-			versionsScanned++;
-			candidateSnapshotReads++;
-			const snapshotTree = await this.getSnapshotTree(version, scenarioName);
-			if (snapshotTree === null) {
-				continue;
-			}
-
-			const sequenceNumber = await this.getSnapshotSequenceNumber(snapshotTree);
-			if (sequenceNumber <= targetSequenceNumber) {
-				return {
-					candidate: { sequenceNumber, snapshotTree },
-					versionsScanned,
-					candidateSnapshotReads,
-				};
-			}
-		}
-
-		return { versionsScanned, candidateSnapshotReads };
+		return this.odspVersionManager;
 	}
 
 	public async canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
 		try {
-			const { candidate } = await this.findHistoricalSnapshotCandidate(
+			const { candidate } = await this.getOdspVersionManager().findClosestSnapshotAtOrBefore(
 				target.sequenceNumber,
 				target.scenarioName,
 			);
@@ -445,7 +386,8 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		snapshotFetchOptions: ISnapshotFetchOptionsAlpha & { loadToSequenceNumber: number },
 	): Promise<ISnapshot> {
 		const targetSequenceNumber = snapshotFetchOptions.loadToSequenceNumber;
-		const searchResult = await this.findHistoricalSnapshotCandidate(
+		const odspVersionManager = this.getOdspVersionManager();
+		const searchResult = await odspVersionManager.findClosestSnapshotAtOrBefore(
 			targetSequenceNumber,
 			snapshotFetchOptions.scenarioName,
 		);
@@ -459,17 +401,17 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			versionsScanned: searchResult.versionsScanned,
 			candidateSnapshotReads: searchResult.candidateSnapshotReads,
 			foundCandidate: candidate !== undefined,
+			fileVersionId: candidate?.fileVersionId,
 		});
 
 		if (candidate !== undefined) {
-			const snapshot: ISnapshot = {
-				blobContents: new Map(),
-				latestSequenceNumber: candidate.sequenceNumber,
-				ops: [],
-				sequenceNumber: candidate.sequenceNumber,
-				snapshotFormatV: 1,
-				snapshotTree: candidate.snapshotTree,
-			};
+			const snapshot = await odspVersionManager.fetchSnapshotFromVersion(
+				candidate.fileVersionId,
+				true,
+				snapshotFetchOptions.scenarioName,
+			);
+			snapshot.latestSequenceNumber = candidate.sequenceNumber;
+			snapshot.sequenceNumber = candidate.sequenceNumber;
 			this.initializeFromSnapshot(snapshot, false, true);
 			return snapshot;
 		}
