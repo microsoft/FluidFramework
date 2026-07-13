@@ -2510,11 +2510,11 @@ describe("Runtime", () => {
 						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 						false,
 					);
-					// Duplicate-batch handling is currently log-only (the DataCorruptionError throw is
-					// suppressed while a live service bug can produce duplicates). So processing the
-					// duplicate should never throw; we instead verify the DuplicateBatch telemetry
-					// event is emitted iff detection is enabled for this variant.
-					assert.doesNotThrow(() =>
+					// Both batches here carry an explicit batchId (stamped in `metadata`), so when detection
+					// is enabled, the duplicate is a meaningful scenario (not a server-outage artifact) and
+					// should throw a DataCorruptionError, in addition to emitting DuplicateBatch telemetry.
+					// When tracking is disabled via the kill-switch, no detection occurs and processing succeeds.
+					const processDuplicate = (): void =>
 						containerRuntime.process(
 							{
 								sequenceNumber: 234,
@@ -2523,15 +2523,24 @@ describe("Runtime", () => {
 								metadata: { batchId: "batchId1" },
 							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
 							false,
-						),
-					);
+						);
 					const duplicateEvent = { eventName: "ContainerRuntime:DuplicateBatch" };
 					if (variant.expectDetection) {
+						assert.throws(
+							processDuplicate,
+							(error: Error) =>
+								error.message === "Duplicate batch - The same batch was sequenced twice",
+							"Expected DataCorruptionError for duplicate batch with explicit batchId",
+						);
 						logger.assertMatchAny(
 							[duplicateEvent],
 							"Expected DuplicateBatch telemetry when tracking is enabled",
 						);
 					} else {
+						assert.doesNotThrow(
+							processDuplicate,
+							"Should not throw when batch-id tracking is disabled",
+						);
 						logger.assertMatchNone(
 							[duplicateEvent],
 							"DuplicateBatch telemetry should not fire when tracking is disabled",
@@ -2745,22 +2754,72 @@ describe("Runtime", () => {
 				});
 
 				// Process an op with a duplicate batchId to what was loaded with.
-				// Detection is currently log-only (the DataCorruptionError throw is suppressed),
-				// so verify via telemetry rather than an exception.
-				assert.doesNotThrow(() =>
-					containerRuntime2.process(
-						{
-							sequenceNumber: 234,
-							type: MessageType.Operation,
-							contents: { type: ContainerMessageType.Rejoin, contents: undefined },
-							metadata: { batchId: "batchId1" },
-						} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
-						false,
-					),
+				// The incoming batch carries an explicit batchId, so this is a meaningful duplicate
+				// scenario and should throw a DataCorruptionError (in addition to emitting telemetry),
+				// even though the "other" batch info came from a snapshot (and thus has no explicit flag).
+				assert.throws(
+					() =>
+						containerRuntime2.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+								metadata: { batchId: "batchId1" },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					(error: Error) =>
+						error.message === "Duplicate batch - The same batch was sequenced twice",
+					"Expected DataCorruptionError for duplicate batch with explicit batchId",
 				);
 				logger.assertMatchAny(
 					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
 					"Expected duplicate batch detected after loading with recentBatchInfo",
+				);
+			});
+
+			it("Does not throw for a duplicate batch with no explicit batchId on either side (service-outage scenario)", async () => {
+				// When neither the incoming batch nor the previously-recorded batch has an explicit
+				// batchId (i.e. both batchIds were derived from clientId + batchStartCsn rather than
+				// stamped via resubmit), the duplicate is presumed to be caused by the known service bug
+				// that can redeliver batches, rather than a real container-forking issue. In that case we
+				// only log telemetry and must not throw a DataCorruptionError.
+				const logger = new MockLogger();
+				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+					context: getMockContext({ logger }) as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					runtimeOptions: {
+						enableRuntimeIdCompressor: "on",
+					},
+					provideEntryPoint: mockProvideEntryPoint,
+				});
+
+				// Note: no explicit `metadata.batchId` here, so the effective batchId is derived from
+				// (clientId, batchStartCsn), both of which are undefined/identical across the two calls below.
+				containerRuntime.process(
+					{
+						sequenceNumber: 123,
+						type: MessageType.Operation,
+						contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+					} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+					false,
+				);
+				assert.doesNotThrow(
+					() =>
+						containerRuntime.process(
+							{
+								sequenceNumber: 234,
+								type: MessageType.Operation,
+								contents: { type: ContainerMessageType.Rejoin, contents: undefined },
+							} satisfies Partial<ISequencedDocumentMessage> as ISequencedDocumentMessage,
+							false,
+						),
+					"Should not throw when neither batch has an explicit batchId",
+				);
+				logger.assertMatchAny(
+					[{ eventName: "ContainerRuntime:DuplicateBatch" }],
+					"Expected DuplicateBatch telemetry to still be logged",
 				);
 			});
 		});
