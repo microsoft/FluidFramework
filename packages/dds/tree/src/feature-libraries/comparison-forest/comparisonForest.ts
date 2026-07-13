@@ -194,7 +194,10 @@ function forestContentEquals(
 
 	for (let pair = stack.pop(); pair !== undefined; pair = stack.pop()) {
 		const [mainNode, referenceNode] = pair;
-		if (mainNode.type !== referenceNode.type || !Object.is(mainNode.value, referenceNode.value)) {
+		if (
+			mainNode.type !== referenceNode.type ||
+			!Object.is(mainNode.value, referenceNode.value)
+		) {
 			return false;
 		}
 		// JsonableTree never stores empty fields, so equal key counts plus a matching (non-empty) field
