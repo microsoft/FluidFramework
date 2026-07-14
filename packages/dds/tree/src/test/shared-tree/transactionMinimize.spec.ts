@@ -197,16 +197,17 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>({
  * @returns The resulting scenario view and the persisted (serialized) change as a JSON string.
  *
  * @remarks
- * The persisted change is the operation SharedTree writes for document storage. It is obtained via the alpha
- * `getChange` API surfaced on the local {@link https://fluidframework.com | "changed"} event. Unlike the in-memory
- * {@link SharedTreeChange} (whose inserted node contents live in tree chunks that a naive `JSON.stringify` does not
- * traverse), the serialized change fully encodes inserted node values, so tests can assert that transient content
- * (tagged with ☠️) was stripped by inspecting the JSON text.
+ * The persisted change is the operation SharedTree writes for document storage.
+ * It is obtained via the alpha `getChange` API surfaced on the local "changed"
+ * event. Unlike the in-memory {@link SharedTreeChange} (whose inserted node
+ * contents live in tree chunks that a naive `JSON.stringify` does not traverse),
+ * the serialized change fully encodes inserted node values, so tests can assert
+ * that transient content (tagged with ☠️) was stripped by inspecting the JSON text.
  *
  * Additional work needs to be done to inspect any modifications to detached node content.
- * Scenarios may need to define other edits to perform that will reattach detached nodes
- * to the document, so that minimization can be verified to have stripped any extraneous
- * modifications thereof.
+ * Scenarios may need to define other edits that will reattach detached nodes
+ * to the document, so that minimization can be verified to have stripped any
+ * extraneous modifications thereof.
  */
 function runScenario<
 	TSchema extends ImplicitFieldSchema,
@@ -1283,7 +1284,7 @@ describe("transaction minimize post-processor", () => {
 		);
 	});
 
-	// post-processor infrastructure is agnostic to the transation being async or sync, so this test is just for "good measure".
+	// post-processor infrastructure is agnostic to the transaction being async or sync, so this test is just for "good measure".
 	it("preserves the observable result across an async transaction and new content appears in change", async () => {
 		const { view, stringifiedChange } = await runScenarioAsync(arrayScenarios.A_replaced_by_B);
 		assert.deepEqual([...view.root], ["B❤️"]);
