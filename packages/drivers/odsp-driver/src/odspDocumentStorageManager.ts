@@ -81,6 +81,24 @@ import { pkgVersion as driverVersion } from "./packageVersion.js";
 
 export const defaultSummarizerCacheExpiryTimeout: number = 60 * 1000; // 60 seconds.
 
+type HistoricalBaseCandidate =
+	| {
+			readonly source: "odspVersion";
+			readonly fileVersionId: string;
+			readonly sequenceNumber: number;
+	  }
+	| {
+			readonly source: "latest";
+			readonly sequenceNumber: number;
+			readonly snapshot: ISnapshot;
+	  };
+
+interface HistoricalBaseSearchResult {
+	readonly candidates: HistoricalBaseCandidate[];
+	readonly versionsScanned: number;
+	readonly candidateSnapshotReads: number;
+}
+
 interface GetVersionsTelemetryProps {
 	cacheEntryAge?: number;
 	cacheSummarizerExpired?: boolean;
@@ -91,6 +109,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 	private summaryModuleP: Promise<OdspSummaryUploadManager> | undefined;
 	private odspSummaryUploadManager: OdspSummaryUploadManager | undefined;
 	private odspVersionManager: OdspVersionManager | undefined;
+	private historicalFileVersionId: string | undefined;
 
 	private firstSnapshotFetchCall = true;
 	private _isFirstSnapshotFromNetwork: boolean | undefined;
@@ -262,6 +281,7 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 				loadToSequenceNumber,
 			});
 		}
+		this.historicalFileVersionId = undefined;
 
 		// Don't consult cache if request is not for a particular loading group.
 		const { snapshot } = await this.fetchSnapshot({
@@ -288,36 +308,48 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return this.odspVersionManager;
 	}
 
+	public getHistoricalDeltaStorageUrl(): string | undefined {
+		return this.historicalFileVersionId === undefined
+			? undefined
+			: this.getOdspVersionManager().getDeltaStorageUrlForVersion(
+					this.historicalFileVersionId,
+				);
+	}
+
 	public async canMaterializePointInTime(
 		target: IPointInTimeMaterializationTarget,
 	): Promise<PointInTimeMaterializationAvailability> {
 		try {
-			const { candidate } = await this.getOdspVersionManager().findClosestSnapshotAtOrBefore(
+			const searchResult = await this.findHistoricalBaseCandidates(
 				target.sequenceNumber,
 				target.scenarioName,
 			);
-			if (candidate === undefined) {
+			for (const candidate of searchResult.candidates) {
+				const opsAvailable = await this.areReplayOpsAvailable(
+					candidate.sequenceNumber,
+					target.sequenceNumber,
+					target.scenarioName,
+				);
+				if (opsAvailable) {
+					return {
+						status: "materializable",
+						baseSnapshotSequenceNumber: candidate.sequenceNumber,
+					};
+				}
+			}
+
+			if (searchResult.candidates.length === 0) {
 				return {
 					status: "missingBaseVersion",
 					message: "No recent ODSP snapshot exists at or before the requested point.",
 				};
 			}
 
-			const opsAvailable = await this.areReplayOpsAvailable(
-				candidate.sequenceNumber,
-				target.sequenceNumber,
-				target.scenarioName,
-			);
-			return opsAvailable
-				? {
-						status: "materializable",
-						baseSnapshotSequenceNumber: candidate.sequenceNumber,
-					}
-				: {
-						status: "missingOps",
-						baseSnapshotSequenceNumber: candidate.sequenceNumber,
-						message: "The base snapshot exists, but required replay ops are unavailable.",
-					};
+			return {
+				status: "missingOps",
+				baseSnapshotSequenceNumber: searchResult.candidates[0].sequenceNumber,
+				message: "A base snapshot exists, but required replay ops are unavailable.",
+			};
 		} catch (error: unknown) {
 			if (canRetryOnError(error)) {
 				throw error;
@@ -382,16 +414,82 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 		return true;
 	}
 
+	private async findHistoricalBaseCandidates(
+		targetSequenceNumber: number,
+		scenarioName: string | undefined,
+	): Promise<HistoricalBaseSearchResult> {
+		const searchResult = await this.getOdspVersionManager().findSnapshotsAtOrBefore(
+			targetSequenceNumber,
+			scenarioName,
+		);
+		const candidates: HistoricalBaseCandidate[] = searchResult.candidates.map((candidate) => ({
+			source: "odspVersion",
+			fileVersionId: candidate.fileVersionId,
+			sequenceNumber: candidate.sequenceNumber,
+		}));
+		const latestCandidate =
+			await this.tryGetLatestHistoricalBaseCandidate(targetSequenceNumber);
+		if (latestCandidate !== undefined) {
+			candidates.push(latestCandidate);
+		}
+
+		candidates.sort((left, right) => right.sequenceNumber - left.sequenceNumber);
+		return {
+			candidates,
+			versionsScanned: searchResult.versionsScanned,
+			candidateSnapshotReads: searchResult.candidateSnapshotReads,
+		};
+	}
+
+	private async tryGetLatestHistoricalBaseCandidate(
+		targetSequenceNumber: number,
+	): Promise<HistoricalBaseCandidate | undefined> {
+		try {
+			const { snapshot: latestSnapshot } = await this.fetchSnapshot({
+				fetchSource: FetchSource.noCache,
+				loadingGroupIds: [],
+			});
+			const latestSequenceNumber = latestSnapshot.sequenceNumber;
+			if (latestSequenceNumber !== undefined && latestSequenceNumber <= targetSequenceNumber) {
+				return {
+					source: "latest",
+					sequenceNumber: latestSequenceNumber,
+					snapshot: latestSnapshot,
+				};
+			}
+		} catch (error: unknown) {
+			this.logger.sendTelemetryEvent(
+				{
+					eventName: "HistoricalLatestSnapshotProbeFailed",
+					targetSequenceNumber,
+				},
+				error,
+			);
+		}
+
+		return undefined;
+	}
+
 	private async fetchHistoricalSnapshot(
 		snapshotFetchOptions: ISnapshotFetchOptionsAlpha & { loadToSequenceNumber: number },
 	): Promise<ISnapshot> {
 		const targetSequenceNumber = snapshotFetchOptions.loadToSequenceNumber;
-		const odspVersionManager = this.getOdspVersionManager();
-		const searchResult = await odspVersionManager.findClosestSnapshotAtOrBefore(
+		const searchResult = await this.findHistoricalBaseCandidates(
 			targetSequenceNumber,
 			snapshotFetchOptions.scenarioName,
 		);
-		const { candidate } = searchResult;
+		let candidate: HistoricalBaseCandidate | undefined;
+		for (const baseCandidate of searchResult.candidates) {
+			const opsAvailable = await this.areReplayOpsAvailable(
+				baseCandidate.sequenceNumber,
+				targetSequenceNumber,
+				snapshotFetchOptions.scenarioName,
+			);
+			if (opsAvailable) {
+				candidate = baseCandidate;
+				break;
+			}
+		}
 		this.logger.sendTelemetryEvent({
 			eventName: "HistoricalSnapshotSelection",
 			targetSequenceNumber,
@@ -401,11 +499,13 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			versionsScanned: searchResult.versionsScanned,
 			candidateSnapshotReads: searchResult.candidateSnapshotReads,
 			foundCandidate: candidate !== undefined,
-			fileVersionId: candidate?.fileVersionId,
+			fileVersionId: candidate?.source === "odspVersion" ? candidate.fileVersionId : undefined,
+			baseSnapshotSource: candidate?.source,
 		});
 
-		if (candidate !== undefined) {
-			const snapshot = await odspVersionManager.fetchSnapshotFromVersion(
+		if (candidate?.source === "odspVersion") {
+			this.historicalFileVersionId = candidate.fileVersionId;
+			const snapshot = await this.getOdspVersionManager().fetchSnapshotFromVersion(
 				candidate.fileVersionId,
 				true,
 				snapshotFetchOptions.scenarioName,
@@ -415,9 +515,20 @@ export class OdspDocumentStorageService extends OdspDocumentStorageServiceBase {
 			this.initializeFromSnapshot(snapshot, false, true);
 			return snapshot;
 		}
+		if (candidate?.source === "latest") {
+			this.historicalFileVersionId = undefined;
+			const snapshot = {
+				...candidate.snapshot,
+				snapshotTree: this.combineProtocolAndAppSnapshotTree(candidate.snapshot.snapshotTree),
+			};
+			this.initializeFromSnapshot(snapshot, false, true);
+			return snapshot;
+		}
 
 		throw new NonRetryableError(
-			"Unable to find an ODSP snapshot at or before the requested historical load target",
+			searchResult.candidates.length === 0
+				? "Unable to find an ODSP snapshot at or before the requested historical load target"
+				: "Unable to find an ODSP snapshot at or before the requested historical load target with available replay ops",
 			OdspErrorTypes.genericError,
 			{ driverVersion, targetSequenceNumber },
 		);

@@ -47,6 +47,7 @@ export interface HistoricalSnapshotCandidate {
 
 export interface HistoricalSnapshotSearchResult {
 	readonly candidate?: HistoricalSnapshotCandidate;
+	readonly candidates?: HistoricalSnapshotCandidate[];
 	readonly versionsScanned: number;
 	readonly candidateSnapshotReads: number;
 }
@@ -66,6 +67,13 @@ function getOdspFileVersionUrlBase(
 	return `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/${version}`;
 }
 
+export function getOdspFileVersionsUrl(
+	odspResolvedUrl: Pick<IOdspResolvedUrl, "driveId" | "itemId" | "siteUrl">,
+): string {
+	const { driveId, itemId, siteUrl } = odspResolvedUrl;
+	return `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions`;
+}
+
 function getOdspFileVersionSnapshotUrl(
 	odspResolvedUrl: IOdspResolvedUrl,
 	fileVersionId: string,
@@ -80,6 +88,13 @@ function getOdspFileVersionAttachmentGETUrl(
 	return `${getOdspFileVersionUrlBase(odspResolvedUrl, fileVersionId)}opStream/attachments`;
 }
 
+function getOdspFileVersionDeltaStorageUrl(
+	odspResolvedUrl: IOdspResolvedUrl,
+	fileVersionId: string,
+): string {
+	return `${getOdspFileVersionUrlBase(odspResolvedUrl, fileVersionId)}opStream`;
+}
+
 export class OdspVersionManager {
 	public constructor(
 		private readonly odspResolvedUrl: IOdspResolvedUrl,
@@ -92,9 +107,24 @@ export class OdspVersionManager {
 		targetSequenceNumber: number,
 		scenarioName: string | undefined,
 	): Promise<HistoricalSnapshotSearchResult> {
+		const searchResult = await this.findSnapshotsAtOrBefore(
+			targetSequenceNumber,
+			scenarioName,
+		);
+		return {
+			...searchResult,
+			candidate: searchResult.candidates[0],
+		};
+	}
+
+	public async findSnapshotsAtOrBefore(
+		targetSequenceNumber: number,
+		scenarioName: string | undefined,
+	): Promise<Required<Omit<HistoricalSnapshotSearchResult, "candidate">>> {
 		const versions = await this.getOdspFileVersions(scenarioName);
 		let versionsScanned = 0;
 		let candidateSnapshotReads = 0;
+		const candidates: HistoricalSnapshotCandidate[] = [];
 		for (const version of versions) {
 			versionsScanned++;
 			candidateSnapshotReads++;
@@ -107,15 +137,13 @@ export class OdspVersionManager {
 				scenarioName,
 			);
 			if (sequenceNumber <= targetSequenceNumber) {
-				return {
-					candidate: { fileVersionId: version.id, sequenceNumber, snapshotTree },
-					versionsScanned,
-					candidateSnapshotReads,
-				};
+				candidates.push({ fileVersionId: version.id, sequenceNumber, snapshotTree });
 			}
 		}
 
-		return { versionsScanned, candidateSnapshotReads };
+		candidates.sort((left, right) => right.sequenceNumber - left.sequenceNumber);
+
+		return { candidates, versionsScanned, candidateSnapshotReads };
 	}
 
 	public async fetchSnapshotFromVersion(
@@ -147,6 +175,10 @@ export class OdspVersionManager {
 				snapshotDownloader,
 			);
 		});
+	}
+
+	public getDeltaStorageUrlForVersion(fileVersionId: string): string {
+		return getOdspFileVersionDeltaStorageUrl(this.odspResolvedUrl, fileVersionId);
 	}
 
 	private async getSnapshotSequenceNumber(
@@ -221,9 +253,7 @@ export class OdspVersionManager {
 		scenarioName: string | undefined,
 	): Promise<OdspFileVersion[]> {
 		return getWithRetryForTokenRefresh(async (options: TokenFetchOptionsEx) => {
-			const { driveId, itemId, siteUrl } = this.odspResolvedUrl;
-			const siteOrigin = new URL(siteUrl).origin;
-			const url = `${siteOrigin}/_api/v2.0/drives/${driveId}/items/${itemId}/versions`;
+			const url = getOdspFileVersionsUrl(this.odspResolvedUrl);
 			const method = "GET";
 			const storageToken = await this.getAuthHeader(
 				{ ...options, request: { url, method } },
