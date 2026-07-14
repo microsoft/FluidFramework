@@ -9,11 +9,14 @@ import type {
 	ChangeAtomId,
 	DeltaDetachedNodeId,
 	DeltaFieldMap,
+	DeltaRoot,
+	ExclusiveMapTree,
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
 import { makeAnonChange } from "../../core/index.js";
 import { brand } from "../../util/index.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
 
@@ -67,6 +70,29 @@ function detachedNodeIdSetHas(
 }
 
 /**
+ * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
+ *
+ * @remarks
+ * `DeltaRoot.global` describes modifications to nodes that are built and/or removed by the change,
+ * keyed by node ID. This builds a `revision -> localId -> fields` lookup so those per-node
+ * {@link DeltaFieldMap | field changes} can be resolved quickly (for example, when trimming transient
+ * content out of a surviving node's build tree).
+ */
+function indexGlobalById(
+	delta: DeltaRoot,
+): Map<RevisionTag | undefined, Map<number, DeltaFieldMap>> {
+	const globalById = new Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>();
+	if (delta.global !== undefined) {
+		for (const { id, fields } of delta.global) {
+			const byMinor = globalById.get(id.major) ?? new Map<number, DeltaFieldMap>();
+			byMinor.set(id.minor, fields);
+			globalById.set(id.major, byMinor);
+		}
+	}
+	return globalById;
+}
+
+/**
  * Collects the set of detached node IDs whose content ends up attached within the live document tree
  * once the given change is applied.
  *
@@ -82,22 +108,10 @@ function detachedNodeIdSetHas(
  * the live tree, so that content attached beneath a removed node is correctly treated as unused.
  */
 function collectAttachedDetachedNodeIds(
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	delta: DeltaRoot,
+	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
 ): DetachedNodeIdSet {
 	const attached: DetachedNodeIdSet = new Map();
-	const delta = intoDelta(makeAnonChange(change), fieldKinds);
-
-	// Index the nested changes of detached nodes by their ID for lookup as nodes become "live".
-	const globalById = new Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>();
-	if (delta.global !== undefined) {
-		for (const { id, fields } of delta.global) {
-			const byMinor = globalById.get(id.major) ?? new Map<number, DeltaFieldMap>();
-			byMinor.set(id.minor, fields);
-			globalById.set(id.major, byMinor);
-		}
-	}
-
 	// Worklist of detached node IDs newly discovered to be live, whose own nested content must be visited.
 	const worklist: DeltaDetachedNodeId[] = [];
 	const markLive = (major: RevisionTag | undefined, minor: number): void => {
@@ -163,6 +177,84 @@ function splitChunkIntoNodes(chunk: TreeChunk): TreeChunk[] {
 	return nodes;
 }
 
+/** Extracts the single top-level node of a chunk as a mutable {@link ExclusiveMapTree}. */
+function mapTreeFromNodeChunk(chunk: TreeChunk): ExclusiveMapTree {
+	const cursor = chunk.cursor();
+	cursor.firstNode();
+	return mapTreeFromCursor(cursor);
+}
+
+/**
+ * Trims transient content from a built node's in-memory tree, in place.
+ *
+ * @remarks
+ * `deltaFields` is the {@link DeltaFieldMap} describing the modifications made to the built node (as
+ * produced in the change's delta `global` section, keyed by the node's build ID). It is walked in
+ * lockstep with `node`'s fields: a `detach` mark whose target cell is not live removes the corresponding
+ * (transient) child from the tree, and a `fields` mark descends into a surviving child to trim its own
+ * transient descendants. Content brought in by `attach`-only marks lives in a separate build and is not
+ * inlined here, so those marks consume no existing child.
+ */
+function trimMapTree(
+	node: ExclusiveMapTree,
+	deltaFields: DeltaFieldMap,
+	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
+): void {
+	for (const [fieldKey, fieldChanges] of deltaFields) {
+		const children = node.fields.get(fieldKey);
+		if (children === undefined) {
+			continue;
+		}
+		const newChildren: ExclusiveMapTree[] = [];
+		let childIndex = 0;
+		for (const mark of fieldChanges.marks) {
+			if (mark.detach !== undefined) {
+				// The detached children are the field's existing (built) content being removed.
+				for (let offset = 0; offset < mark.count; offset += 1) {
+					const child = children[childIndex];
+					childIndex += 1;
+					if (child !== undefined && isLive(mark.detach.major, mark.detach.minor + offset)) {
+						// Detached to a cell that survives elsewhere: retain the content.
+						newChildren.push(child);
+					}
+				}
+			} else if (mark.fields !== undefined) {
+				// A surviving child that has its own nested modifications.
+				const child = children[childIndex];
+				childIndex += 1;
+				if (child !== undefined) {
+					trimMapTree(child, mark.fields, isLive);
+					newChildren.push(child);
+				}
+			} else if (mark.attach === undefined) {
+				// Unchanged run of existing children.
+				for (let offset = 0; offset < mark.count; offset += 1) {
+					const child = children[childIndex];
+					childIndex += 1;
+					if (child !== undefined) {
+						newChildren.push(child);
+					}
+				}
+			}
+			// Otherwise the mark only attaches new content from a separate build,
+			// which is not inlined in this node, so there is nothing to copy over.
+		}
+		// Any children beyond the marks are unchanged trailing content.
+		while (childIndex < children.length) {
+			const child = children[childIndex];
+			childIndex += 1;
+			if (child !== undefined) {
+				newChildren.push(child);
+			}
+		}
+		if (newChildren.length === 0) {
+			node.fields.delete(fieldKey);
+		} else {
+			node.fields.set(fieldKey, newChildren);
+		}
+	}
+}
+
 /**
  * "Minimizes" a {@link ModularChangeset} so that it contains no extraneous
  * information, i.e. no new content that isn't observable from document tree
@@ -201,7 +293,12 @@ export function minimizeModularChangeset(
 
 	assert(change.destroys === undefined, "No destroys expected in change to be minimized");
 
-	const attached = collectAttachedDetachedNodeIds(change, fieldKinds);
+	const delta = intoDelta(makeAnonChange(change), fieldKinds);
+	const globalById = indexGlobalById(delta);
+	const attached = collectAttachedDetachedNodeIds(delta, globalById);
+
+	const isLive = (revision: RevisionTag | undefined, localId: number): boolean =>
+		detachedNodeIdSetHas(attached, revision, localId);
 
 	// The set of all cells built by this change.
 	const builtCells: DetachedNodeIdSet = new Map();
@@ -217,6 +314,44 @@ export function minimizeModularChangeset(
 		detachedNodeIdSetHas(builtCells, id.revision, id.localId) &&
 		!detachedNodeIdSetHas(attached, id.revision, id.localId);
 
+	// Destinations of detaches that remove content built inline within a surviving node's build tree.
+	// Such content is trimmed out of the build (see the build rewrite below), so the field change that
+	// detaches it must treat its input as already empty.
+	const trimmedInputDetaches: DetachedNodeIdSet = new Map();
+	const collectTrimmedInputDetaches = (deltaFields: DeltaFieldMap | undefined): void => {
+		if (deltaFields === undefined) {
+			return;
+		}
+		for (const fieldChanges of deltaFields.values()) {
+			for (const mark of fieldChanges.marks) {
+				if (mark.detach !== undefined) {
+					for (let offset = 0; offset < mark.count; offset += 1) {
+						if (!isLive(mark.detach.major, mark.detach.minor + offset)) {
+							addToDetachedNodeIdSet(
+								trimmedInputDetaches,
+								mark.detach.major,
+								mark.detach.minor + offset,
+							);
+						}
+					}
+				}
+				if (mark.fields !== undefined) {
+					collectTrimmedInputDetaches(mark.fields);
+				}
+			}
+		}
+	};
+	for (const [[revision, localId], chunk] of builds.entries()) {
+		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
+			if (isLive(revision, localId + offset)) {
+				collectTrimmedInputDetaches(globalById.get(revision)?.get(localId + offset));
+			}
+		}
+	}
+	const isTrimmedInputDetach = (id: ChangeAtomId): boolean =>
+		detachedNodeIdSetHas(trimmedInputDetaches, id.revision, id.localId);
+	const transientContext = { isTransientBuildCell, isTrimmedInputDetach };
+
 	// Rebuild the field/node changes and their derived indexes, omitting the effects of transient nodes and any node
 	// changes that become unreferenced as a result.
 	const newNodeChanges = newChangeAtomIdBTree<NodeChangeset>();
@@ -228,13 +363,13 @@ export function minimizeModularChangeset(
 		fieldMap: FieldChangeMap,
 		parentNodeId: NodeId | undefined,
 	): FieldChangeMap {
-		const result: FieldChangeMap = new Map();
+		const rewritten: FieldChangeMap = new Map();
 		for (const [field, fieldChange] of fieldMap) {
 			const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 			const prunedChange: FieldChangeset =
 				handler.removeTransientEffects === undefined
 					? fieldChange.change
-					: brand(handler.removeTransientEffects(fieldChange.change, isTransientBuildCell));
+					: brand(handler.removeTransientEffects(fieldChange.change, transientContext));
 
 			const fieldId: FieldId = { nodeId: parentNodeId, field };
 			for (const { key, count } of handler.getCrossFieldKeys(prunedChange)) {
@@ -245,10 +380,10 @@ export function minimizeModularChangeset(
 			}
 
 			if (!handler.isEmpty(prunedChange)) {
-				result.set(field, { ...fieldChange, change: prunedChange });
+				rewritten.set(field, { ...fieldChange, change: prunedChange });
 			}
 		}
-		return result;
+		return rewritten;
 	}
 
 	function rewriteNode(nodeId: NodeId, parentFieldId: FieldId): void {
@@ -284,41 +419,42 @@ export function minimizeModularChangeset(
 
 	for (const [[revision, localId], chunk] of builds.entries()) {
 		const length = chunk.topLevelLength;
-		const usedFlags: boolean[] = [];
-		let usedCount = 0;
-		for (let offset = 0; offset < length; offset += 1) {
-			const used = detachedNodeIdSetHas(attached, revision, localId + offset);
-			usedFlags.push(used);
-			if (used) {
-				usedCount += 1;
-			}
-		}
-
-		if (usedCount === length) {
-			// Fully used: keep the build as-is.
-			newBuilds.set([revision, localId], chunk);
-			continue;
-		}
-
-		// Partially or fully unused: split into per-node chunks and keep only runs of used nodes.
 		const nodeChunks = splitChunkIntoNodes(chunk);
-		let index = 0;
-		while (index < length) {
-			if (usedFlags[index] !== true) {
+
+		// The chunks for a run of consecutive used nodes, flushed as a single build entry.
+		let runChunks: TreeChunk[] = [];
+		let runStart: number | undefined;
+		const flushRun = (): void => {
+			if (runStart !== undefined && runChunks.length > 0) {
+				newBuilds.set([revision, brand(runStart)], combineChunks(runChunks));
+			}
+			runChunks = [];
+			runStart = undefined;
+		};
+
+		for (let index = 0; index < length; index += 1) {
+			if (!isLive(revision, localId + index)) {
 				addToDetachedNodeIdSet(droppedBuildIds, revision, localId + index);
 				nodeChunks[index]?.referenceRemoved();
-				index += 1;
+				flushRun();
 				continue;
 			}
-			const runStart = index;
-			while (index < length && usedFlags[index] === true) {
-				index += 1;
+
+			// This top-level node survives. Trim any transient content nested within its built tree.
+			const globalFields = globalById.get(revision)?.get(localId + index);
+			let nodeChunk = nodeChunks[index];
+			assert(nodeChunk !== undefined, "Missing chunk for a built node");
+			if (globalFields !== undefined) {
+				const mapTree = mapTreeFromNodeChunk(nodeChunk);
+				trimMapTree(mapTree, globalFields, isLive);
+				nodeChunk.referenceRemoved();
+				nodeChunk = chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor);
 			}
-			newBuilds.set(
-				[revision, brand(localId + runStart)],
-				combineChunks(nodeChunks.slice(runStart, index)),
-			);
+
+			runStart ??= localId + index;
+			runChunks.push(nodeChunk);
 		}
+		flushRun();
 	}
 
 	return {

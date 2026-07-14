@@ -68,7 +68,7 @@ function getDetachMoveId(
  */
 export function removeTransientEffects(
 	change: Changeset,
-	isTransientBuildCell: IsTransientBuildCell,
+	{ isTransientBuildCell }: { readonly isTransientBuildCell: IsTransientBuildCell },
 ): Changeset {
 	// Move ids whose source content is transient. Any mark that attaches content via one of these moves
 	// is therefore also transient.

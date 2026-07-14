@@ -741,17 +741,29 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 function removeTransientEffects(
 	change: OptionalChangeset,
-	isTransientBuildCell: (id: ChangeAtomId) => boolean,
+	context: {
+		readonly isTransientBuildCell: (id: ChangeAtomId) => boolean;
+		readonly isTrimmedInputDetach: (id: ChangeAtomId) => boolean;
+	},
 ): OptionalChangeset {
+	const { isTransientBuildCell, isTrimmedInputDetach } = context;
 	const isTransientRegister = (id: RegisterId): boolean =>
 		id !== "self" && isTransientBuildCell(id);
+
+	// Whether the field's input content (the "self" register) was built inline within a surviving build
+	// tree and is being trimmed out of it. When so, the field is effectively empty at input.
+	const inputTrimmed =
+		change.valueReplace !== undefined &&
+		!change.valueReplace.isEmpty &&
+		isTrimmedInputDetach(change.valueReplace.dst);
 
 	// Drop moves whose source is a transient built cell: the moved content never surfaces.
 	const moves: Move[] = change.moves.filter(([src]) => !isTransientRegister(src));
 
-	// Drop child changes rooted at a transient built cell: that node does not survive.
+	// Drop child changes rooted at a transient built cell (that node does not survive) and, when the input
+	// content is being trimmed, child changes to that input content ("self"), which no longer exists.
 	const childChanges: ChildChange[] = change.childChanges.filter(
-		([register]) => !isTransientRegister(register),
+		([register]) => !isTransientRegister(register) && !(inputTrimmed && register === "self"),
 	);
 
 	let valueReplace: Mutable<Replace> | undefined =
@@ -760,6 +772,11 @@ function removeTransientEffects(
 		// If the content being attached is transient, it should not be attached at all.
 		if (valueReplace.src !== undefined && isTransientRegister(valueReplace.src)) {
 			valueReplace.src = undefined;
+		}
+		// If the input content being detached was built inline and is being trimmed out of its build,
+		// the field is effectively empty at input, so it should no longer detach anything.
+		if (inputTrimmed) {
+			valueReplace.isEmpty = true;
 		}
 		// A replace that attaches nothing into an already-empty field is a no-op.
 		if (valueReplace.isEmpty && valueReplace.src === undefined) {

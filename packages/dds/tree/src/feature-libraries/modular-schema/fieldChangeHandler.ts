@@ -120,8 +120,15 @@ export interface FieldChangeHandler<
 	 * removed, possibly after being moved, within the same change).
 	 *
 	 * @param change - The field change to prune.
-	 * @param isTransientBuildCell - Predicate returning `true` for a built cell (identified by the
-	 * {@link ChangeAtomId} that allocated it) whose content does not survive the enclosing change.
+	 * @param context - Predicates describing which content of the enclosing {@link ModularChangeset} is
+	 * transient:
+	 * - `isTransientBuildCell`: returns `true` for a built cell (identified by the {@link ChangeAtomId}
+	 * that allocated it) whose content does not survive the enclosing change. Effects that *attach*
+	 * such a cell should be removed.
+	 * - `isTrimmedInputDetach`: returns `true` for a detach destination (a {@link ChangeAtomId}) whose
+	 * detached content was built inline within a surviving node's build tree and is being trimmed out
+	 * of that build. A field that *detaches* its input to such a destination should treat its input as
+	 * already empty, since the built content it expected to detach is being removed from the build.
 	 * @returns `change` with every effect belonging to a transient node removed. Any child `NodeId`
 	 * referenced only by a removed effect will no longer be referenced by the result.
 	 *
@@ -131,7 +138,10 @@ export interface FieldChangeHandler<
 	 */
 	removeTransientEffects?(
 		change: TChangeset,
-		isTransientBuildCell: (id: ChangeAtomId) => boolean,
+		context: {
+			readonly isTransientBuildCell: (id: ChangeAtomId) => boolean;
+			readonly isTrimmedInputDetach: (id: ChangeAtomId) => boolean;
+		},
 	): TChangeset;
 
 	createEmpty(): TChangeset;
