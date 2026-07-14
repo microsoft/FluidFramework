@@ -1265,6 +1265,9 @@ export const MapNodeSchema: {
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
 
+// @alpha @deprecated
+export const minimize: TransactionPostProcessor;
+
 // @public
 export type Myself<M extends IMember = IMember> = M & {
     readonly currentConnection: string;

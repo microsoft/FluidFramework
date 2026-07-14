@@ -317,6 +317,7 @@ export {
 	incrementalSummaryHint, 
 	independentInitializedView, 
 	independentView, 
+	minimize, 
 	normalizeAllowedTypes, 
 	persistedToSimpleSchema, 
 	replaceConciseTreeHandles, 
