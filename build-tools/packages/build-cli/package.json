@@ -95,6 +95,8 @@
 		"async": "^3.2.6",
 		"azure-devops-node-api": "^11.2.0",
 		"change-case": "^5.4.4",
+		"chart.js": "^4.4.1",
+		"chartjs-adapter-date-fns": "^3.0.0",
 		"date-fns": "^3.6.0",
 		"debug": "^4.4.3",
 		"ejs": "^3.1.10",

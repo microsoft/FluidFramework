@@ -52,8 +52,10 @@ const checkRequestedVersionSatisfies = (
 	}
 };
 
+const describeOnlineRegistry = process.env.TF_BUILD === undefined ? describe : describe.skip;
+
 describe("versionUtils", () => {
-	describe("getRequestedVersion", () => {
+	describeOnlineRegistry("getRequestedVersion", () => {
 		function createTest(
 			baseVersion,
 			requested,
