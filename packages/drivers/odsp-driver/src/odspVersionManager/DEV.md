@@ -162,10 +162,23 @@ The manager only chooses the base. Materializing the document at an arbitrary ta
 that version read-only and replaying the ops between the base and the target — sourcing later ops from
 the live op stream when the historical range has been trimmed.
 
+Where would it live? In **this package**. Loading a historical file version is a storage-layer concern:
+it needs the version-scoped snapshot fetch, the epoch tracker, and authentication — all internal to this
+driver — and it consumes the version manager directly. A generic wrapping driver that only replays ops
+over an inner document service (the pattern `@fluidframework/replay-driver` uses) cannot reach the
+version-scoped base fetch, so the recomposition belongs beside `OdspDocumentService` /
+`OdspDocumentServiceFactory` rather than in a separate package. Because it consumes the version manager
+in-package, the version manager itself needs no exported surface; only the recomposed factory is exposed
+(as a legacy/alpha entry point) for the loader hookup to construct.
+
+A base is only needed when the live document's own snapshot no longer covers the target; when it does,
+loading paused at the target from the live snapshot suffices, and no historical version is loaded.
+
 ### Should this be exposed through the container loader? (Component C)
 
-Once Component B exists, a loader-facing entry point would let callers request "load at sequence
-number N" directly.
+Once Component B exists, a thin combining layer would construct the recomposed factory together with a
+standard loader, letting callers request "load at sequence number N" directly. It depends only on
+Component B's exposed factory, never on the version manager.
 
 ### Should there be an end-to-end test against a real ODSP file?
 

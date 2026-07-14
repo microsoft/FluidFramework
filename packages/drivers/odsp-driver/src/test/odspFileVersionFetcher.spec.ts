@@ -142,9 +142,7 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 
 		assert.equal(result, 448);
 		assert.ok(
-			urls[0]?.includes(
-				`/versions/42.0/opStream/snapshots/trees/latest?blobs=2`,
-			),
+			urls[0]?.includes(`/versions/42.0/opStream/snapshots/trees/latest?blobs=2`),
 			`expected the fileVersion snapshot URL, got ${urls[0]}`,
 		);
 	});
@@ -153,9 +151,8 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		// @q F-RESOLVE-02
 		await assert.rejects(
 			async () =>
-				withFetch(
-					[await createResponse(jsonHeaders, snapshotMissingSeq, 200)],
-					async () => fetcher.resolveSequenceNumber("42.0"),
+				withFetch([await createResponse(jsonHeaders, snapshotMissingSeq, 200)], async () =>
+					fetcher.resolveSequenceNumber("42.0"),
 				),
 			/42\.0/,
 		);
