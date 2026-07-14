@@ -876,7 +876,6 @@ export class TreeCheckout implements ITreeCheckout {
 			isSummary: false,
 		};
 		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
-
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
 		this.#transaction.branch.apply(tagChange(decodedChange, revision));
 	}
@@ -1806,7 +1805,7 @@ function verboseFromCursor(
 
 interface SerializedChange {
 	version: 1;
-	revision: RevisionTag | undefined;
+	revision: RevisionTag;
 	change: JsonCompatibleReadOnly;
 	originatorId: SessionId;
 }
@@ -1818,9 +1817,7 @@ function isSerializedChange(value: unknown): value is SerializedChange {
 	const change = value as Partial<SerializedChange>;
 	return (
 		change.version === 1 &&
-		(change.revision === undefined ||
-			change.revision === "root" ||
-			typeof change.revision === "number") &&
+		(change.revision === "root" || typeof change.revision === "number") &&
 		typeof change.originatorId === "string" &&
 		isStableId(change.originatorId) &&
 		change.change !== undefined

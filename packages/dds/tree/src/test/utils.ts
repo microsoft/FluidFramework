@@ -25,6 +25,7 @@ import type {
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	assertIsStableId,
@@ -223,7 +224,6 @@ import {
 	MockContainerRuntimeFactoryWithOpBunching,
 	type MockContainerRuntimeWithOpBunching,
 } from "./mocksForOpBunching.js";
-import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 
 // Testing utilities
 

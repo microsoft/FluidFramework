@@ -356,6 +356,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Apply a serialized change to this branch.
 	 * @param change - the change to apply.
+	 * Changes are acquired via `getChange` in a branch's {@link TreeBranchEvents.changed | "changed"} event.
 	 * @remarks Changes may only be applied to a SharedTree with the same IdCompressor instance and branch state from which they were generated.
 	 * They may be created by one branch and applied to another, but only if both branches share the same history at the time of creation and application.
 	 *
@@ -371,6 +372,8 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 *
 	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
 	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 *
+	 * @throws UsageError if the branches are unrelated.
 	 */
 	isMissingEditsFrom(branch: TreeBranch): boolean;
 

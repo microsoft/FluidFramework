@@ -9,7 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
-import { CommitKind, type ChangeMetadata, type Revertible } from "../../../core/index.js";
+import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
