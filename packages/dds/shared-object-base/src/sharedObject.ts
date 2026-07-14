@@ -995,7 +995,6 @@ export interface SharedObjectKind<out TSharedObject = unknown>
  * If you want lazy loading and need a key that does not eagerly load the {@link SharedObjectKind}, an alternative {@link SharedObjectKey} can be implemented.
  * @privateRemarks
  * TODO: A built in common pattern for the lazy key case should be provided.
- * TODO: this same key pattern should be applied to SharedObjectKind.
  * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
  * @input
  * @alpha
