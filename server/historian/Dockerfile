@@ -27,6 +27,17 @@ ENV RELEASE_GROUP=$RELEASE_GROUP
 ARG BUILD_ROOT=/usr/FluidFramework
 ARG HISTORIAN_ROOT=$BUILD_ROOT/server/historian
 
+# Debian package mirror. Defaults to the public Debian CDN so local and external-contributor builds
+# work unchanged. CI overrides APT_MIRROR to Microsoft's approved mirror
+# (debian-archive.trafficmanager.net) because 1ES network isolation (CFSClean3) blocks egress to
+# deb.debian.org from the build pool. The mirror is a drop-in that serves the main, updates, and
+# security suites. See tools/pipelines/README.md.
+ARG APT_MIRROR=deb.debian.org
+RUN if [ "$APT_MIRROR" != "deb.debian.org" ]; then \
+        find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+            -exec sed -i "s/deb.debian.org/$APT_MIRROR/g; s/security.debian.org/$APT_MIRROR/g" {} +; \
+    fi
+
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
