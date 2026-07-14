@@ -15,7 +15,13 @@
 	--ifm-color-primary-lightest: #4a00f6;
 	--ifm-code-font-size: 95%;
 	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
-	--docsearch-muted-color: #666c77;
+
+	// Search bar
+	--docsearch-muted-color: #666c77 !important;
+	--ifm-navbar-search-input-color: black;
+
+	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
+	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-light.svg");
 
 	//Text color for classes in code blocks. Ref: https://prismjs.com/tokens.html
 	--ifm-attr-name-color: #345094;
@@ -31,46 +37,16 @@
 	--ifm-color-primary-lighter: #23ceff;
 	--ifm-color-primary-lightest: #3cd3ff;
 	--docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
-	--docsearch-muted-color: #748497;
+
+	// Search bar
+	--docsearch-muted-color: #748497 !important;
+	--ifm-navbar-search-input-color: white;
+
+	// Workaround for <https://github.com/easyops-cn/docusaurus-search-local/issues/336>
+	--ifm-navbar-search-input-icon: url("@site/static/assets/search-icon-dark.svg");
 
 	//Text color for classes in code blocks
 	--ifm-attr-name-color: #00b3e6;
-}
-
-html[data-theme="dark"] {
-	--pf-text: #e5e5e5;
-	--pf-text-secondary: #a0a0a0;
-	--pf-text-muted: #949494;
-	--pf-background: #1a1a1a;
-	--pf-border: #333;
-	--pf-border-focus: #555;
-	--pf-skeleton: #2a2a2a;
-	--pf-skeleton-shine: #333;
-	--pf-hover: #252525;
-	--pf-mark: #e5e5e5;
-	--pf-scroll-shadow: rgba(255, 255, 255, 0.1);
-	--pf-outline-focus: #58a6ff;
-	--pf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-	--pf-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-	--pf-shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.5);
-	--pf-error-bg: #2a1a1a;
-	--pf-error-border: #5c2828;
-	--pf-error-text: #f87171;
-	--pf-error-text-secondary: #ef4444;
-	--pf-modal-backdrop: rgba(0, 0, 0, 0.7);
-}
-
-.pf-result-version {
-	display: inline-block;
-	margin-left: 0.5rem;
-	padding: 0.125rem 0.375rem;
-	border: 1px solid var(--pf-border);
-	border-radius: 0.25rem;
-	color: var(--pf-text-secondary);
-	font-size: 0.75rem;
-	font-weight: 600;
-	line-height: 1rem;
-	vertical-align: text-bottom;
 }
 
 .token.attr-name {
