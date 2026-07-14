@@ -469,7 +469,7 @@ export class SquashingTransactionStack<
 									// one that was applied to the view as the transaction's edits
 									// were made. Roll back the transaction's changes on the transaction
 									// branch (which rolls back the view) and apply the post-processed
-									// change in their place so that the view fully reflects modified
+									// change in their place so that the view fully reflects the modified
 									// `change`.
 									transactionBranch.removeAfter(startHead);
 									transactionBranch.apply(tagChange(change, transactionRevision));
