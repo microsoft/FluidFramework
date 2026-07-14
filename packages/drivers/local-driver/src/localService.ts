@@ -167,7 +167,14 @@ const localServer: ILocalDeltaConnectionServer =
 
 const urlResolver = new LocalResolver();
 const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
-// const createCreateNewRequest = (id: string) => createLocalResolverCreateNewRequest(id);
+/**
+ * Create a request to open an existing document.
+ *
+ * @param documentId - the existing document to open.
+ * @privateRemarks
+ * Like createLocalResolverCreateNewRequest, but without the option to create a new document.
+ * TODO: At some point we should avoid specifying the URL in so many places, but the current APIs don't accommodate it yet.
+ */
 const createLoadExistingRequest = (documentId: string): IRequest => {
 	return { url: `http://localhost:3000/${documentId}` };
 };
@@ -176,7 +183,7 @@ let documentIdCounter = 0;
 
 /**
  * A Fluid container backed by an ephemeral (in-memory) local service, implementing
- * {@link @fluidframework/runtime-definitions#FluidContainerWithService}.
+ * {@link @fluidframework/driver-definitions#FluidContainerWithService}.
  *
  * @remarks
  * Data is stored in-memory and shared only within the same browser session via the module-level

@@ -47,7 +47,7 @@ const statelessSharedObjectKind = makeSharedObjectKind<IFluidLoadable>({
 });
 
 /**
- * Creates a trivial stub {@link @fluidframework/runtime-definitions#DataStoreKind} backed by a
+ * Creates a trivial stub {@link @fluidframework/driver-definitions#DataStoreKind} backed by a
  * stateless shared object.
  * Useful in tests that need a valid data store but don't care about the content.
  * @internal

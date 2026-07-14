@@ -29,7 +29,7 @@ import type {
 import type { ISharedObject } from "./types.js";
 
 /**
- * A {@link @fluidframework/runtime-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
+ * A {@link @fluidframework/driver-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
  * @remarks
  * Supports lazy code loading in a limited way (a single lazy load per registry).
  * @privateRemarks
@@ -92,9 +92,9 @@ export function sharedObjectRegistryFromIterable(
 }
 
 /**
- * Options which define how to construct a particular {@link @fluidframework/runtime-definitions#DataStoreKind}.
+ * Options which define how to construct a particular {@link @fluidframework/driver-definitions#DataStoreKind}.
  * @remarks
- * Use {@link dataStoreKind} to create a {@link @fluidframework/runtime-definitions#DataStoreKind} from these options.
+ * Use {@link dataStoreKind} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
  * @input
  * @alpha
  */
@@ -102,7 +102,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	/**
 	 * The type identifier for the data object factory.
 	 * @remarks
-	 * Persisted identifier which specifies which {@link @fluidframework/runtime-definitions#DataStoreKind} to use when loading it.
+	 * Persisted identifier which specifies which {@link @fluidframework/driver-definitions#DataStoreKind} to use when loading it.
 	 * @privateRemarks
 	 * Equivalent to `DataObjectFactoryProps.type`.
 	 */
@@ -139,7 +139,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 }
 
 /**
- * Creates a {@link @fluidframework/runtime-definitions#DataStoreKind} from {@link DataStoreOptions}.
+ * Creates a {@link @fluidframework/driver-definitions#DataStoreKind} from {@link DataStoreOptions}.
  * @alpha
  */
 export function dataStoreKind<T, TRoot extends IFluidLoadable>(
@@ -156,18 +156,15 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(
 	});
 }
 
-async function convertRegistry(
-	registry: SharedObjectRegistry,
-): Promise<ISharedObjectRegistry> {
-	const lookup = await registry();
-
-	const converted: ISharedObjectRegistry = {
+function convertRegistry(
+	lookup: Registry<SharedObjectKindAlpha<IFluidLoadable>>,
+): ISharedObjectRegistry {
+	return {
 		get: (type: string) => {
 			const entry = lookup(type);
 			return (entry as unknown as ISharedObjectKind<IFluidLoadable>)?.getFactory();
 		},
 	};
-	return converted;
 }
 
 const rootSharedObjectId = "root";
@@ -180,8 +177,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 	const sharedObjectRegistry = await options.registry();
 	const runtime: FluidDataStoreRuntime = new FluidDataStoreRuntime(
 		context,
-		// TODO: avoid duplicate evaluation of registry
-		await convertRegistry(options.registry),
+		convertRegistry(sharedObjectRegistry),
 		existing,
 		async (rt: IFluidDataStoreRuntime) => {
 			const innerContext: DataStoreContext = {

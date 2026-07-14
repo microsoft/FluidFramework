@@ -13,7 +13,7 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
  *
  * Before stabilizing any of this past beta, it should be evaluated if this requirement needs to be relaxed, and if so how to do that.
  * Regardless of if its relaxed or not, what ever rules are put in place should be runtime and compile time enforced as much as possible.
- * See `LayerCompatibilityUnified.md` for more details..
+ * See `LayerCompatibilityUnified.md` for more details.
  *
  * TODO:
  * Fault isolation should be considered in this API design.

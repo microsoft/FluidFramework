@@ -118,7 +118,7 @@ export type {
 export {
 	basicKey,
 	registryLookup,
-	// Due to this currently referencing several existing public types we do not want to stablish as reexports from here,
+	// Due to this currently referencing several existing public types we do not want to stabilize as reexports from here,
 	// do not reexport getContainerAudience for now.
 	// getContainerAudience,
 } from "@fluidframework/driver-definitions/internal";

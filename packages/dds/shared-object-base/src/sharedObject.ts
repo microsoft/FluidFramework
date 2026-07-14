@@ -988,7 +988,7 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 }
 
 /**
- * A {@link @fluidframework/runtime-definitions#RegistryKey} for a {@link SharedObjectKind}.
+ * A {@link @fluidframework/driver-definitions#RegistryKey} for a {@link SharedObjectKind}.
  * @remarks
  * This is implemented by {@link SharedObjectKind}, but alternative implementations can be used if needed.
  *
@@ -1032,7 +1032,7 @@ export function createSharedObjectKind<TSharedObject>(
  * Utility for creating ISharedObjectKind instances.
  * @remarks
  * This takes in a class which implements IChannelFactory,
- * and uses it to return a a single value which is intended to be used as the API entry point for the corresponding shared object type.
+ * and uses it to return a single value which is intended to be used as the API entry point for the corresponding shared object type.
  * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
  * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
  * @internal
