@@ -736,7 +736,43 @@ export const optionalChangeHandler: FieldChangeHandler<
 
 	createEmpty: () => ({ moves: [], childChanges: [] }),
 	getCrossFieldKeys: (_change) => [],
+	removeTransientEffects,
 };
+
+function removeTransientEffects(
+	change: OptionalChangeset,
+	isTransientBuildCell: (id: ChangeAtomId) => boolean,
+): OptionalChangeset {
+	const isTransientRegister = (id: RegisterId): boolean =>
+		id !== "self" && isTransientBuildCell(id);
+
+	// Drop moves whose source is a transient built cell: the moved content never surfaces.
+	const moves: Move[] = change.moves.filter(([src]) => !isTransientRegister(src));
+
+	// Drop child changes rooted at a transient built cell: that node does not survive.
+	const childChanges: ChildChange[] = change.childChanges.filter(
+		([register]) => !isTransientRegister(register),
+	);
+
+	let valueReplace: Mutable<Replace> | undefined =
+		change.valueReplace === undefined ? undefined : { ...change.valueReplace };
+	if (valueReplace !== undefined) {
+		// If the content being attached is transient, it should not be attached at all.
+		if (valueReplace.src !== undefined && isTransientRegister(valueReplace.src)) {
+			valueReplace.src = undefined;
+		}
+		// A replace that attaches nothing into an already-empty field is a no-op.
+		if (valueReplace.isEmpty && valueReplace.src === undefined) {
+			valueReplace = undefined;
+		}
+	}
+
+	const result: Mutable<OptionalChangeset> = { moves, childChanges };
+	if (valueReplace !== undefined) {
+		result.valueReplace = valueReplace;
+	}
+	return result;
+}
 
 function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
 	// True iff the content of the field changes in some way

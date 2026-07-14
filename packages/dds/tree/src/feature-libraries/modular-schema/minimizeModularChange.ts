@@ -6,6 +6,7 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type {
+	ChangeAtomId,
 	DeltaDetachedNodeId,
 	DeltaFieldMap,
 	FieldKindIdentifier,
@@ -16,11 +17,25 @@ import { brand } from "../../util/index.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
 
-import { newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+} from "../changeAtomIdBTree.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
-import { intoDelta } from "./modularChangeFamily.js";
-import type { ModularChangeset } from "./modularChangeTypes.js";
+import { getChangeHandler, intoDelta } from "./modularChangeFamily.js";
+import type {
+	CrossFieldKeyTable,
+	FieldChangeMap,
+	FieldChangeset,
+	FieldId,
+	ModularChangeset,
+	NodeChangeset,
+	NodeId,
+} from "./modularChangeTypes.js";
+import { newCrossFieldKeyTable } from "./modularChangeTypes.js";
 
 /**
  * A set of detached node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
@@ -160,15 +175,20 @@ function splitChunkIntoNodes(chunk: TreeChunk): TreeChunk[] {
  *
  * Every node created during the change contributes a `build`. Once the change is squashed, a build is only meaningful
  * for nodes that remain attached in the resulting document. This function inspects the change's
- * {@link intoDelta | delta} to determine which built nodes end up attached, then:
+ * {@link intoDelta | delta} to determine which built nodes end up attached ("transient" nodes are those that do not),
+ * then:
  *
- * - drops any build whose nodes are entirely unused (created and then removed within the change), and
- * - splits any partially-used build so that only the runs of used nodes are retained.
+ * - removes the field-level effects (e.g. sequence-field marks) that create, move, and remove each transient node,
+ * delegating to {@link FieldChangeHandler.removeTransientEffects},
+ * - drops the nested node changes and derived indexes (`nodeToParent`, `crossFieldKeys`) that become unreferenced,
+ * - drops any build whose nodes are entirely unused, and splits any partially-used build so that only the runs of used
+ * nodes are retained, and
+ * - prunes destroys for the removed builds, since destroying a node that was never built has no effect.
  *
- * Destroys for the removed builds are pruned as well, since destroying a node that was never built has no effect.
+ * The result applies to produce the same document as the input change.
  *
  * @param change - The change to minimize. Not mutated by this function.
- * @param fieldKinds - The field kinds to delegate to when computing the change's delta.
+ * @param fieldKinds - The field kinds to delegate to when computing the change's delta and pruning transient effects.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
@@ -182,6 +202,83 @@ export function minimizeModularChangeset(
 	assert(change.destroys === undefined, "No destroys expected in change to be minimized");
 
 	const attached = collectAttachedDetachedNodeIds(change, fieldKinds);
+
+	// The set of all cells built by this change.
+	const builtCells: DetachedNodeIdSet = new Map();
+	for (const [[revision, localId], chunk] of builds.entries()) {
+		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
+			addToDetachedNodeIdSet(builtCells, revision, localId + offset);
+		}
+	}
+
+	// A cell is "transient" if it was built by this change but its content does not survive (it is not attached in the
+	// resulting document).
+	const isTransientBuildCell = (id: ChangeAtomId): boolean =>
+		detachedNodeIdSetHas(builtCells, id.revision, id.localId) &&
+		!detachedNodeIdSetHas(attached, id.revision, id.localId);
+
+	// Rebuild the field/node changes and their derived indexes, omitting the effects of transient nodes and any node
+	// changes that become unreferenced as a result.
+	const newNodeChanges = newChangeAtomIdBTree<NodeChangeset>();
+	const newNodeToParent = newChangeAtomIdBTree<FieldId>();
+	const newCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	const processedNodes = new Set<string>();
+
+	function rewriteFieldMap(
+		fieldMap: FieldChangeMap,
+		parentNodeId: NodeId | undefined,
+	): FieldChangeMap {
+		const result: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of fieldMap) {
+			const handler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
+			const prunedChange: FieldChangeset =
+				handler.removeTransientEffects === undefined
+					? fieldChange.change
+					: brand(handler.removeTransientEffects(fieldChange.change, isTransientBuildCell));
+
+			const fieldId: FieldId = { nodeId: parentNodeId, field };
+			for (const { key, count } of handler.getCrossFieldKeys(prunedChange)) {
+				newCrossFieldKeys.set(key, count, fieldId);
+			}
+			for (const [nodeId] of handler.getNestedChanges(prunedChange)) {
+				rewriteNode(nodeId, fieldId);
+			}
+
+			if (!handler.isEmpty(prunedChange)) {
+				result.set(field, { ...fieldChange, change: prunedChange });
+			}
+		}
+		return result;
+	}
+
+	function rewriteNode(nodeId: NodeId, parentFieldId: FieldId): void {
+		const canonical = normalizeNodeId(nodeId, change.nodeAliases);
+		const key = `${canonical.revision === undefined ? "" : String(canonical.revision)}:${canonical.localId}`;
+		if (processedNodes.has(key)) {
+			return;
+		}
+		processedNodes.add(key);
+		setInChangeAtomIdMap(newNodeToParent, canonical, parentFieldId);
+
+		const nodeChangeset = getFromChangeAtomIdMap(change.nodeChanges, canonical);
+		assert(nodeChangeset !== undefined, "Unknown node ID referenced by field change");
+
+		const newFields =
+			nodeChangeset.fieldChanges === undefined
+				? undefined
+				: rewriteFieldMap(nodeChangeset.fieldChanges, canonical);
+
+		const newNode: NodeChangeset = { ...nodeChangeset };
+		if (newFields !== undefined && newFields.size > 0) {
+			newNode.fieldChanges = newFields;
+		} else {
+			delete newNode.fieldChanges;
+		}
+		setInChangeAtomIdMap(newNodeChanges, canonical, newNode);
+	}
+
+	const newFieldChanges = rewriteFieldMap(change.fieldChanges, undefined);
+
 	const newBuilds = newChangeAtomIdBTree<TreeChunk>();
 	const droppedBuildIds: DetachedNodeIdSet = new Map();
 
@@ -226,6 +323,24 @@ export function minimizeModularChangeset(
 
 	return {
 		...change,
+		fieldChanges: newFieldChanges,
+		nodeChanges: newNodeChanges,
+		nodeToParent: newNodeToParent,
+		crossFieldKeys: newCrossFieldKeys,
 		builds: newBuilds.size > 0 ? newBuilds : undefined,
 	};
+}
+
+/**
+ * Resolves a node ID through the change's alias table to its canonical form.
+ */
+function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
+	let currentId = nodeId;
+	for (;;) {
+		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
+		if (dealiased === undefined) {
+			return currentId;
+		}
+		currentId = dealiased;
+	}
 }

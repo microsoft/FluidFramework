@@ -6,6 +6,7 @@
 import type { FieldChangeHandler } from "../modular-schema/index.js";
 
 import { relevantRemovedRoots } from "./relevantRemovedRoots.js";
+import { removeTransientEffects } from "./removeTransientEffects.js";
 import { sequenceFieldChangeRebaser } from "./sequenceFieldChangeRebaser.js";
 import { sequenceFieldChangeCodecFactory } from "./sequenceFieldCodecs.js";
 import { type SequenceFieldEditor, sequenceFieldEditor } from "./sequenceFieldEditor.js";
@@ -25,4 +26,5 @@ export const sequenceFieldChangeHandler: SequenceFieldChangeHandler = {
 	getNestedChanges,
 	createEmpty,
 	getCrossFieldKeys,
+	removeTransientEffects,
 };

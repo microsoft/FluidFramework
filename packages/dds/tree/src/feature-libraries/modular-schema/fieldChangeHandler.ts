@@ -6,6 +6,7 @@
 import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeAtomId,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
 	DeltaDetachedNodeRename,
@@ -112,6 +113,26 @@ export interface FieldChangeHandler<
 	 * This should not include cross-field keys in descendant fields.
 	 */
 	getCrossFieldKeys(change: TChangeset): CrossFieldKeyRange[];
+
+	/**
+	 * Removes the effects of "transient" nodes from the change: nodes that were built by the enclosing
+	 * {@link ModularChangeset} but are not present in the resulting document (they are created and then
+	 * removed, possibly after being moved, within the same change).
+	 *
+	 * @param change - The field change to prune.
+	 * @param isTransientBuildCell - Predicate returning `true` for a built cell (identified by the
+	 * {@link ChangeAtomId} that allocated it) whose content does not survive the enclosing change.
+	 * @returns `change` with every effect belonging to a transient node removed. Any child `NodeId`
+	 * referenced only by a removed effect will no longer be referenced by the result.
+	 *
+	 * @remarks
+	 * Optional: field kinds whose changes cannot carry built content need not implement this. When
+	 * absent, the field is treated as having no transient effects to remove.
+	 */
+	removeTransientEffects?(
+		change: TChangeset,
+		isTransientBuildCell: (id: ChangeAtomId) => boolean,
+	): TChangeset;
 
 	createEmpty(): TChangeset;
 }
