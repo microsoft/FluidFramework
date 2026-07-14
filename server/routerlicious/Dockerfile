@@ -27,6 +27,21 @@ ENV RELEASE_GROUP=$RELEASE_GROUP
 ARG BUILD_ROOT=/usr/FluidFramework
 ARG ROUTERLICIOUS_ROOT=$BUILD_ROOT/server/routerlicious
 
+# TEMPORARY network diagnostics for the 1ES Hosted Pools egress investigation (build 410125):
+# under network isolation, deb.debian.org/security.debian.org resolve to the TEST-NET sinkhole
+# 192.0.2.57, causing apt-get to time out. This captures the container's DNS/proxy view from the
+# exact path where apt fails. Non-fatal (|| true) so it never blocks the build. Remove once the
+# egress policy is fixed. See tools/pipelines/README.md.
+RUN echo "=== resolv.conf ===" && cat /etc/resolv.conf || true; \
+    echo "=== getent deb.debian.org ===" && getent hosts deb.debian.org || true; \
+    echo "=== getent security.debian.org ===" && getent hosts security.debian.org || true; \
+    echo "=== proxy/DNS env ===" && env | egrep -i 'http_proxy|https_proxy|no_proxy|proxy|DNS|RESOLV' || true
+
+# Add Tini
+ENV TINI_VERSION=v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
+
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -39,10 +54,6 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     ca-certificates
 
-# Add Tini
-ENV TINI_VERSION=v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
 
 FROM runnerbase AS base
 
