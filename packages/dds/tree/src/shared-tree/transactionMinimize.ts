@@ -61,10 +61,6 @@ function minimizeSharedTreeChange(change: SharedTreeChange): SharedTreeChange {
  * the implementation will throw a usage error:
  * "At most one edit group can be minimized..."
  *
- * @deprecated Note: minimization is not yet fully implemented. For now this
- * alters some builds of the squashed change. A complete implementation will
- * be provided in a future change.
- *
  * @alpha
  */
 export const minimize: TransactionPostProcessor = createTransactionPostProcessor({
