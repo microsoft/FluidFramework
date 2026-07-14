@@ -1585,8 +1585,8 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// The root node is present in the final document, so one build should remain.
-			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+			// The node with new content is not present in the final document, so no builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
 
 		it("carries no build when a nested object with a value is added and then the root object is removed", () => {
@@ -1673,8 +1673,10 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// Only the final Box value "D❤️" survives the transaction, so exactly one build should remain.
-			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+			// Only the final Box value "D❤️" survives the transaction but the
+			// Box insert was separate action, so two builds should remain
+			// with the first one having been altered.
+			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
 	});
 });
