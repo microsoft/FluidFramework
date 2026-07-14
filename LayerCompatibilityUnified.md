@@ -11,6 +11,29 @@ This document covers how you can address some of the legacy use-cases for the la
 This new approach is intentionally less flexible, but should still be flexible enough for most if not all use-cases, and possible to extend to cover more use-cases later if required.
 The main problematic use-case which might need future extensions is the incremental adoption of these APIs in existing applications using the legacy layer system which want to adopt these new APIs for new code, but only port parts of existing code.
 
+## Policy: single copy of Fluid Framework client packages
+
+**The rule.**
+All code that interacts through the Unified API within a single running client must use exactly one copy — a single instance at a single version — of each Fluid Framework client package.
+Mixing two copies of a package is not supported, whether they are different versions or two instances of the same version (for example, the same package duplicated in the dependency tree, or loaded from two separately built bundles).
+
+**Why this is intentional.**
+Supporting mixed or duplicated packages would require defining, and handling (even if only as errors), the combinatorial set of ways versions and instances can interact.
+Requiring a single copy deliberately avoids that complexity, and matches the constraint already imposed by the `@public` "declarative model" APIs.
+
+**How it is enforced (best-effort).**
+
+-   Compile time: the Unified API's public types are `@sealed` nominal erased types (`ErasedType` / `ErasedBaseType`). A value produced by one copy of a package is not assignable where another copy's nominally-branded type is expected, so many mixing mistakes surface as TypeScript errors.
+-   Run time: the framework factories validate identity when a registered kind is resolved. `DataStoreKind` and `SharedObjectKind` `adapt` throw a `UsageError` when a value whose `type` string matches is not the exact expected instance — the typical signature of a duplicated package.
+
+**Limits of enforcement.**
+These checks are best-effort, not exhaustive: some mixing can still slip through and fail in less obvious ways.
+Comprehensive checking is intentionally out of scope while the API is `@alpha`.
+Before stabilizing past `@beta`, whether to relax this requirement — and how to enforce whatever rule replaces it at both compile time and run time — must be revisited.
+
+**What a violation looks like.**
+A TypeScript assignability error between look-alike Unified API types, or a runtime `UsageError` referencing "Conflicting ... with same type" or "Mismatched ... type".
+
 ## Overview
 
 This system addresses two key scenarios:

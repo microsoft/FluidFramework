@@ -8,12 +8,15 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
 /*
  * This file defines the public API for the ServiceClient and related types.
  *
- * TODO:
- * Currently this API surface expect all code using it together to be using a single copy of the Fluid Framework client packages.
+ * Package policy (intentional, @alpha):
+ * All code interacting through this API within a single client must use one copy — a single instance at a single version — of each Fluid Framework client package.
+ * Mixing multiple copies or versions of a package is not supported. This mirrors the @public "declarative model" APIs and is a deliberate simplification.
+ * It is enforced best-effort only: @sealed nominal erased types catch many mismatches at compile time, and factory identity checks throw a UsageError ("Conflicting ... with same type") at run time, but the checking is not exhaustive.
+ * See `LayerCompatibilityUnified.md` for the full policy, rationale, and failure signatures.
  *
- * Before stabilizing any of this past beta, it should be evaluated if this requirement needs to be relaxed, and if so how to do that.
- * Regardless of if its relaxed or not, what ever rules are put in place should be runtime and compile time enforced as much as possible.
- * See `LayerCompatibilityUnified.md` for more details.
+ * TODO:
+ * Before stabilizing any of this past beta, evaluate whether this single-copy requirement must be relaxed, and if so how.
+ * Whatever rule is chosen (relaxed or not) should be enforced at both compile time and run time as much as possible.
  *
  * TODO:
  * Fault isolation should be considered in this API design.
