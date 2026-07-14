@@ -99,10 +99,9 @@ parameters:
     type: string
     default: 'fluidmirror-a5dqhgefbwhmbtag.azurecr.io/mirror/docker'
 
-  # Debian package mirror passed to ${APT_MIRROR} in the server-* Dockerfiles' apt-get step. The
-  # default points at Microsoft's approved Debian mirror, reachable from the 1ES build pools where
-  # network isolation (CFSClean3) blocks egress to deb.debian.org. Local builds default APT_MIRROR
-  # to deb.debian.org in the Dockerfile, so they are unaffected.
+  # Debian package mirror passed to ${APT_MIRROR} in the server-* Dockerfiles' apt-get step. CI uses
+  # our own Debian mirror to reduce reliance on third-party package feeds. Local builds default
+  # APT_MIRROR to deb.debian.org in the Dockerfile, so they are unaffected.
   - name: aptMirror
     type: string
     default: 'debian-archive.trafficmanager.net'

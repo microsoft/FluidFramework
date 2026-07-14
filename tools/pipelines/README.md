@@ -65,10 +65,9 @@ through to the build automatically.
 ## Mirroring Debian (apt) packages for the server pipelines
 
 The `server-*` Dockerfiles install OS build dependencies (for native node-gyp modules such as
-`zookeeper`) via `apt-get`. The 1ES build pool enforces network isolation policy **CFSClean3**,
-which blocks egress to the public Debian feed `deb.debian.org` (it resolves to a TEST-NET sinkhole
-and `apt-get` times out). To comply, each server Dockerfile makes its apt host overridable via
-`ARG APT_MIRROR` and rewrites `/etc/apt` sources to it before running `apt-get`:
+`zookeeper`) via `apt-get`. To reduce reliance on third-party package feeds, CI installs these from
+our own Debian mirror rather than the public Debian CDN. Each server Dockerfile makes its apt host
+overridable via `ARG APT_MIRROR` and rewrites `/etc/apt` sources to it before running `apt-get`:
 
 ```dockerfile
 ARG APT_MIRROR=deb.debian.org
@@ -78,11 +77,8 @@ RUN if [ "$APT_MIRROR" != "deb.debian.org" ]; then \
     fi
 ```
 
-`build-docker-service.yml` injects the build-arg automatically via its `aptMirror` parameter, which
-defaults to Microsoft's approved Debian mirror `debian-archive.trafficmanager.net` (a drop-in that
-serves the main, updates, and security suites). The default `ARG APT_MIRROR=deb.debian.org` means
-local and external-contributor builds are unaffected and continue to use the public Debian CDN.
-
-The mirror was provided by the 1ES Network Isolation team (`netiso@microsoft.com`) as the approved
-alternative under CFSClean3. If the mirror host changes, update the `aptMirror` parameter default;
-no Dockerfile changes are needed.
+`build-docker-service.yml` injects the build-arg automatically via its `aptMirror` parameter (a
+drop-in mirror that serves the main, updates, and security suites). The default
+`ARG APT_MIRROR=deb.debian.org` means local and external-contributor builds are unaffected and
+continue to use the public Debian CDN. If the mirror host changes, update the `aptMirror` parameter
+default; no Dockerfile changes are needed.
