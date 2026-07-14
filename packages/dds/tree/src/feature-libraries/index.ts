@@ -150,6 +150,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorContext,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,

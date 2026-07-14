@@ -178,6 +178,7 @@ export {
 	ChangeMetadata, 
 	CodecName, 
 	CodecWriteOptions, 
+	Component, 
 	CreateIndependentTreeAlphaOptions, 
 	DirtyTreeMap, 
 	DirtyTreeStatus, 
