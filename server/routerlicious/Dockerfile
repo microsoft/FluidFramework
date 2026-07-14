@@ -27,11 +27,6 @@ ENV RELEASE_GROUP=$RELEASE_GROUP
 ARG BUILD_ROOT=/usr/FluidFramework
 ARG ROUTERLICIOUS_ROOT=$BUILD_ROOT/server/routerlicious
 
-# Add Tini
-ENV TINI_VERSION=v0.18.0
-ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
-RUN chmod +x /tini
-
 # Debian package mirror. Defaults to the public Debian CDN so local and external-contributor builds
 # work unchanged. CI overrides APT_MIRROR to Microsoft's approved mirror
 # (debian-archive.trafficmanager.net) because 1ES network isolation (CFSClean3) blocks egress to
@@ -55,6 +50,10 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     ca-certificates
 
+# Add Tini
+ENV TINI_VERSION=v0.18.0
+ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
+RUN chmod +x /tini
 
 FROM runnerbase AS base
 
