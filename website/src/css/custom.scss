@@ -60,6 +60,18 @@ html[data-theme="dark"] {
 	--pf-modal-backdrop: rgba(0, 0, 0, 0.7);
 }
 
+.pf-search-trigger {
+	display: flex;
+	align-items: center;
+	height: 100%;
+}
+
+.pf-search-trigger pagefind-modal-trigger {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .pf-result-version {
 	display: inline-block;
 	margin-left: 0.5rem;

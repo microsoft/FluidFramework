@@ -23,6 +23,22 @@ test.describe("Nav", () => {
 		await expect(supportLink).toHaveAttribute("href", "/support/");
 	});
 
+	test("Navbar buttons are vertically centered", async ({ page }) => {
+		const searchButton = page.getByRole("button", { name: "Search" });
+		const colorModeButton = page.getByRole("button", {
+			name: /Switch between dark and light mode/,
+		});
+
+		const getVerticalCenter = (element: Element): number => {
+			const bounds = element.getBoundingClientRect();
+			return bounds.top + bounds.height / 2;
+		};
+
+		const searchButtonCenter = await searchButton.evaluate(getVerticalCenter);
+		const colorModeButtonCenter = await colorModeButton.evaluate(getVerticalCenter);
+		expect(Math.abs(searchButtonCenter - colorModeButtonCenter)).toBeLessThanOrEqual(1);
+	});
+
 	test("Search returns written documentation", async ({ page }) => {
 		await page.getByRole("button", { name: "Search" }).click();
 

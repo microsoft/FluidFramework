@@ -81,5 +81,5 @@ export default function SearchBar(): ReactElement {
 		document.head.append(script);
 	}, []);
 
-	return <span ref={triggerContainer} />;
+	return <span className="pf-search-trigger" ref={triggerContainer} />;
 }
