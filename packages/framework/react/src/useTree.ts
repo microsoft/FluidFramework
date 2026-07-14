@@ -6,15 +6,9 @@
 import type { TreeLeafValue, TreeNode } from "@fluidframework/tree";
 import { Tree } from "@fluidframework/tree";
 import { TreeAlpha } from "@fluidframework/tree/internal";
-import {
-	type FC,
-	memo,
-	type MemoExoticComponent,
-	type ReactNode,
-	useEffect,
-	useState,
-} from "react";
+import { memo, useEffect, useState } from "react";
 
+import type { FC, MemoExoticComponent, PropsAreEqual, ReactElement } from "./reactTypes.js";
 import {
 	unwrapPropTreeNode,
 	unwrapPropTreeRecord,
@@ -67,7 +61,7 @@ export function withTreeObservations<TIn>(
 	component: FC<TIn>,
 	options?: ObservationOptions,
 ): FC<TIn> & FC<WrapNodes<TIn>> & FC<TIn | WrapNodes<TIn>> {
-	return (props: TIn | WrapNodes<TIn>): ReactNode =>
+	return (props: TIn | WrapNodes<TIn>): ReactElement =>
 		useTreeObservations(() => component(props as TIn), options);
 }
 
@@ -80,10 +74,18 @@ export function withTreeObservations<TIn>(
 export function withMemoizedTreeObservations<TIn>(
 	component: FC<TIn>,
 	options?: ObservationOptions & {
-		readonly propsAreEqual?: Parameters<typeof memo>[1];
+		readonly propsAreEqual?: PropsAreEqual<
+			Parameters<ReturnType<typeof withTreeObservations<TIn>>>[0]
+		>;
 	},
 ): MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>> {
-	return memo(withTreeObservations(component, options), options?.propsAreEqual);
+	// `memo` returns React's `MemoExoticComponent`, whose props are `ref`-wrapped. The minimal
+	// `MemoExoticComponent` exposed by this package intentionally omits that detail (see reactTypes.ts),
+	// so cast at the boundary; the runtime value is a valid memoized component regardless.
+	return memo(
+		withTreeObservations(component, options),
+		options?.propsAreEqual,
+	) as MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
 }
 
 /**
