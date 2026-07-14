@@ -84,6 +84,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
