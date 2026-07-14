@@ -19,7 +19,8 @@ import type {
 	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
-import type {
+import {
+	EditFilterStatus,
 	FieldChangeDelta,
 	NestedChangesIndices,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -37,7 +38,12 @@ import type {
 	OptionalChangeset,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldChangeTypes.js";
-import { brand, fakeIdAllocator, idAllocatorFromMaxId } from "../../../util/index.js";
+import {
+	brand,
+	fakeIdAllocator,
+	idAllocatorFromMaxId,
+	type RangeQueryResult,
+} from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -998,6 +1004,111 @@ describe("optionalField", () => {
 				[nodeId2, undefined, undefined],
 			];
 			assert.deepEqual(actual, expected);
+		});
+	});
+
+	describe("Filter edits", () => {
+		function preserveAll(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Preserve };
+		}
+
+		function removeAll(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<EditFilterStatus> {
+			return { length: count, value: EditFilterStatus.Remove };
+		}
+
+		it("can preserve all", () => {
+			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
+			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
+			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
+			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
+			const change = Change.atOnce(
+				Change.childAt(id0, nodeId1),
+				Change.move(id0, id1),
+				Change.clear("self", id2),
+				Change.move(id3, "self"),
+			);
+
+			const filtered = optionalChangeRebaser.filterEdits(
+				change,
+				preserveAll,
+				preserveAll,
+				true,
+			);
+
+			assertEqual(filtered, change);
+		});
+
+		it("can remove moves", () => {
+			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
+			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
+			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
+			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
+
+			const changeWithoutMove = Change.atOnce(
+				Change.childAt(id0, nodeId1),
+				Change.clear("self", id2),
+				Change.move(id3, "self"),
+			);
+
+			const change = Change.atOnce(changeWithoutMove, Change.move(id0, id1));
+
+			const filtered = optionalChangeRebaser.filterEdits(
+				change,
+				preserveAll,
+				preserveAll,
+				false,
+			);
+
+			assertEqual(filtered, changeWithoutMove);
+		});
+
+		it("can remove attach", () => {
+			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
+			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
+			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
+			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
+
+			const changeWithoutSet = Change.atOnce(
+				Change.childAt(id0, nodeId1),
+				Change.move(id0, id1),
+				Change.clear("self", id2),
+			);
+
+			const change = Change.atOnce(changeWithoutSet, Change.move(id3, "self"));
+
+			const filtered = optionalChangeRebaser.filterEdits(change, preserveAll, removeAll, true);
+
+			assertEqual(filtered, changeWithoutSet);
+		});
+
+		it("can remove edits", () => {
+			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
+			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
+			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
+			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
+
+			const changeWithoutReplace = Change.atOnce(
+				Change.childAt(id0, nodeId1),
+				Change.move(id0, id1),
+			);
+
+			const change = Change.atOnce(
+				changeWithoutReplace,
+				Change.clear("self", id2),
+				Change.move(id3, "self"),
+			);
+
+			const filtered = optionalChangeRebaser.filterEdits(change, removeAll, removeAll, true);
+
+			assertEqual(filtered, changeWithoutReplace);
 		});
 	});
 });

@@ -81,8 +81,11 @@ function filterMark(
 						cellId: newCellId,
 						revision: mark.revision,
 						id: mark.id,
-						changes: mark.changes,
 					};
+
+					if (mark.changes !== undefined) {
+						filtered.changes = mark.changes;
+					}
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -115,8 +118,12 @@ function filterMark(
 						count: mark.count,
 						revision: outputCellId.revision,
 						id: outputCellId.localId,
-						changes: mark.changes,
 					};
+
+					if (mark.changes !== undefined) {
+						filtered.changes = mark.changes;
+					}
+
 					break;
 				}
 				case EditFilterStatus.Remove: {
