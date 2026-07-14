@@ -75,10 +75,7 @@ export function sharedObjectRegistryFromIterable(
 			if ("kind" in entry) {
 				map.set(entry.type, await entry.kind());
 			} else {
-				map.set(
-					(entry as unknown as ISharedObjectKind<IFluidLoadable>).getFactory().type,
-					entry,
-				);
+				map.set(asSharedObjectKind(entry).getFactory().type, entry);
 			}
 		}
 		return (type: string) => {
@@ -156,13 +153,33 @@ export function dataStoreKind<T, TRoot extends IFluidLoadable>(
 	});
 }
 
+/**
+ * Casts a {@link SharedObjectKindAlpha} to its encapsulated {@link ISharedObjectKind} view.
+ *
+ * @remarks
+ * {@link SharedObjectKindAlpha} is a sealed type,
+ * so we can assume it implements {@link ISharedObjectKind} and down cast to it.
+ */
+function asSharedObjectKind<T extends IFluidLoadable>(
+	kind: SharedObjectKindAlpha<T>,
+): ISharedObjectKind<T> {
+	const candidate = kind as unknown as Partial<ISharedObjectKind<T>>;
+	// Sanity check to help catch misuse since SharedObjectKindAlpha is typed structurally and seems implementable.
+	if (typeof candidate.getFactory !== "function" || typeof candidate.create !== "function") {
+		throw new UsageError(
+			"Invalid SharedObjectKindAlpha: this type is sealed and may not have custom implementations.",
+		);
+	}
+	return candidate as ISharedObjectKind<T>;
+}
+
 function convertRegistry(
 	lookup: Registry<SharedObjectKindAlpha<IFluidLoadable>>,
 ): ISharedObjectRegistry {
 	return {
 		get: (type: string) => {
 			const entry = lookup(type);
-			return (entry as unknown as ISharedObjectKind<IFluidLoadable>)?.getFactory();
+			return asSharedObjectKind(entry).getFactory();
 		},
 	};
 }
@@ -184,8 +201,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
 					const kind = registryLookup(sharedObjectRegistry, key);
 					// Create detached channel.
-					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
-					return sharedObject.create(rt);
+					return asSharedObjectKind(kind).create(rt);
 				},
 			};
 
@@ -199,11 +215,12 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 						throw new UsageError("Root shared object already created");
 					}
 					const kind = registryLookup(sharedObjectRegistry, key);
-					const sharedObject = kind as unknown as ISharedObjectKind<T2>;
-					const result = sharedObject.create(rt, rootSharedObjectId);
+					const result = asSharedObjectKind(kind).create(rt, rootSharedObjectId);
 
-					const result2 = result as unknown as ISharedObject;
-					result2.bindToContext();
+					// Every shared object is also an ISharedObject;
+					const rootSharedObject = result as IFluidLoadable as ISharedObject;
+					// bind the newly created root so it becomes part of this data store.
+					rootSharedObject.bindToContext();
 
 					createdRoot = result;
 					return result;
@@ -212,7 +229,8 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 
 			let root: TRoot | undefined;
 			if (existing) {
-				root = (await rt.getChannel(rootSharedObjectId)) as unknown as TRoot;
+				// getChannel returns the type-erased IChannel; the registered root kind guarantees it is a TRoot.
+				root = (await rt.getChannel(rootSharedObjectId)) as IFluidLoadable as TRoot;
 			} else {
 				root = await options.instantiateFirstTime(rootCreator, innerContext);
 				if (root !== createdRoot) {
@@ -222,6 +240,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 				}
 			}
 
+			// view returns the data store's output type; the runtime only needs it as an opaque FluidObject entry point.
 			return (await options.view(root, innerContext)) as unknown as FluidObject;
 		},
 	);

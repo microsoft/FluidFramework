@@ -179,12 +179,23 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	}
 
 	public getRuntime(): IContainerRuntimeBase {
+		// The runtime is not part of the public IContainer surface, so it is reached via a structural cast.
+		// This relies on an implementation detail of the containers produced by the loader
+		// (createDetachedContainer / loadExistingContainer): they carry a `runtime` property.
+		// The undefined guard below turns an incompatible container implementation into a clear error
+		// instead of a confusing failure later when the missing runtime is used.
+		// This is extra risky since IContainer is not marked sealed.
+		// TODO: Replace this with a supported, type-safe accessor once the loader exposes one.
 		interface IContainerWithRuntime extends IContainer {
-			readonly runtime: IContainerRuntimeBase;
+			readonly runtime?: IContainerRuntimeBase;
 		}
 
-		// TODO: Do something more type safe here.
 		const container = this.container as IContainerWithRuntime;
+		if (container.runtime === undefined) {
+			throw new Error(
+				"Container does not expose a runtime: incompatible container implementation.",
+			);
+		}
 		return container.runtime;
 	}
 
@@ -202,6 +213,8 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 		const channel = await kind.instantiateDataStore(context, false);
 		const dataStore = await context.attachRuntime(kind, channel);
 		const entryPoint = await dataStore.entryPoint.get();
+		// The data store's entry point type is erased at the registry boundary;
+		// the DataStoreKind<T> used to create it guarantees the entry point is a T.
 		return entryPoint as T;
 	}
 }
