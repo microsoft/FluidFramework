@@ -31,7 +31,8 @@ import {
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
 import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
-import { getView } from "../../utils.js";
+import { getView, StringArray } from "../../utils.js";
+import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -425,6 +426,43 @@ describe("simple-tree tree", () => {
 			});
 			assert.equal(viewA.root, 5);
 		});
+	});
+
+	describe("computeNetChangeIfRebasedOnto", () => {
+		const scenarios = [
+			{ editSource: false, editTarget: false },
+			{ editSource: true, editTarget: false },
+			{ editSource: false, editTarget: true },
+			{ editSource: true, editTarget: true },
+		];
+		for (const { editSource, editTarget } of scenarios) {
+			it(`when source branch is ${editSource ? "edited" : "not edited"} and target branch is ${
+				editTarget ? "edited" : "not edited"
+			}`, () => {
+				const config = new TreeViewConfiguration({ schema: StringArray });
+				const targetView = getView(config);
+				targetView.initialize([]);
+				const sourceView = targetView.fork();
+
+				if (editSource) {
+					sourceView.root.insertAtEnd("source edit");
+				}
+				if (editTarget) {
+					targetView.root.insertAtEnd("target edit");
+				}
+				const rebasedView = getViewForForkedBranch(sourceView).forkView;
+				const appliedView = getViewForForkedBranch(sourceView).forkView;
+
+				rebasedView.rebaseOnto(targetView);
+
+				const change = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (change !== undefined) {
+					appliedView.applyChange(change);
+				}
+
+				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
+			});
+		}
 	});
 
 	describe("isMissingEditsFrom", () => {

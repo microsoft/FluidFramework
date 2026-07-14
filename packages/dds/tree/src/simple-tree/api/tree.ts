@@ -376,6 +376,16 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * @throws UsageError if the branches are unrelated.
 	 */
 	isMissingEditsFrom(branch: TreeBranch): boolean;
+
+	/**
+	 * Computes the net change that would result if this branch were {@link TreeBranch.rebaseOnto | rebased onto} the given branch.
+	 * Note that this method does not actually perform the rebase and therefore has no effect on this branch.
+	 *
+	 * @param branch - The branch that would be rebased onto.
+	 * @returns The net change that would result if this branch were rebased onto the given branch,
+	 * or `undefined` if rebasing would have no impact.
+	 */
+	computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
 }
 
 /**

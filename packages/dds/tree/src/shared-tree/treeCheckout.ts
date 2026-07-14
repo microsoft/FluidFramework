@@ -58,6 +58,7 @@ import {
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
+	rebaseBranch,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -1306,6 +1307,38 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("Branches do not share a common ancestor.");
 		}
 		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
+		const branchCheckout = getCheckout(branch);
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+		);
+
+		const context: ChangeEncodingContext = {
+			idCompressor: this.idCompressor,
+			originatorId: this.idCompressor.localSessionId,
+			revision: undefined,
+			isSummary: false,
+		};
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const encodedChange = this.changeFamily.codecs
+			.resolve(4)
+			.encode(rebased.sourceChange, context);
+		const revision = this.mintRevisionTag();
+		return {
+			version: 1,
+			revision,
+			originatorId: this.idCompressor.localSessionId,
+			change: encodedChange,
+		} satisfies SerializedChange;
 	}
 
 	public merge(branch: TreeBranch): void;
