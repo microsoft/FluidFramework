@@ -329,6 +329,71 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(redirectTable, undefined);
 				});
 
+				it("Emits payloadUploaded before payloadShared for pending payload handles", async function () {
+					if (!createBlobPayloadPending) {
+						// The upload and share milestones are only separately observable for pending payload
+						// handles. Without pending payloads, createBlob doesn't resolve until the blob is shared.
+						this.skip();
+					}
+					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
+						createBlobPayloadPending,
+					});
+					// Pause storage and ordering so the upload and attach milestones can be driven independently.
+					mockBlobStorage.pause();
+					mockOrderingService.pause();
+
+					const handle = await blobManager.createBlob(textToBlob("hello"));
+					assert.strict(isLocalFluidHandle(handle));
+
+					let sharedRaised = false;
+					const uploadedP = new Promise<void>((resolve) => {
+						handle.events.on("payloadUploaded", () => {
+							assert.strictEqual(
+								sharedRaised,
+								false,
+								"payloadUploaded must fire before payloadShared",
+							);
+							resolve();
+						});
+					});
+					handle.events.on("payloadShared", () => {
+						sharedRaised = true;
+					});
+
+					// Attaching the handle kicks off the upload + attach flow.
+					attachHandle(handle);
+
+					// Complete the upload only. The BlobAttach op is still waiting to be sequenced.
+					await mockBlobStorage.waitCreateOne();
+					await uploadedP;
+
+					assert.strictEqual(
+						sharedRaised,
+						false,
+						"payloadShared should not fire before the attach op is sequenced",
+					);
+					assert.strictEqual(
+						handle.payloadState,
+						"pending",
+						"Payload should still be pending after upload but before attach",
+					);
+
+					// Complete the attach.
+					await mockOrderingService.waitSequenceOne();
+					await waitHandlePayloadShared(handle);
+
+					assert.strictEqual(
+						sharedRaised,
+						true,
+						"payloadShared should fire after the attach op is sequenced",
+					);
+					assert.strictEqual(
+						handle.payloadState,
+						"shared",
+						"Payload should be shared after attach",
+					);
+				});
+
 				it("Reuploads blobs if they are expired", async () => {
 					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,

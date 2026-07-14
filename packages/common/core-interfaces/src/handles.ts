@@ -108,29 +108,83 @@ export interface IFluidHandleInternalPayloadPending<
 }
 
 /**
- * The state of the handle's payload.
- * - "pending" - The payload is not shared to all collaborators
- * - "shared" - The payload is available to both the local client and remote collaborators
+ * The sharing state of a handle's payload.
+ *
+ * - "pending" - The payload may not yet be available to all collaborators. The handle already exists, and
+ *   a client that already holds the payload locally (such as its creator) can resolve it immediately. A
+ *   client that does not (such as a remote collaborator, or one that received the serialized handle) will
+ *   instead wait when resolving it until the payload becomes "shared", rather than failing - and that wait
+ *   can be indefinite if the payload never becomes shared (for example, if the client that created it
+ *   failed to upload it and then left the session).
+ * - "shared" - The payload is available to both the local client and remote collaborators, so the
+ *   handle can be resolved by anyone.
  *
  * @remarks
- * Clients will see a transition of "pending" to "shared" when the payload has been shared to all collaborators.
+ * A handle only ever starts in the "pending" state if it was created with a _pending payload_ - that
+ * is, if the creating API intentionally hands back the handle _before_ its payload has been uploaded
+ * and shared. Blob handles created via `uploadBlob` when the container runtime's `createBlobPayloadPending`
+ * option is enabled are the primary example.
+ *
+ * When a payload is _not_ created as pending (the default), the creating API does not return the
+ * handle until the payload has already been uploaded and shared. Such a handle is "shared" from the moment
+ * its creator receives it and never transitions. Consequently, a "pending" to "shared" transition (and the
+ * corresponding {@link IFluidHandleEvents.payloadShared} event) is only ever observed for pending-payload
+ * handles.
  * @legacy @beta
  */
 export type PayloadState = "pending" | "shared";
 
 /**
- * Events which fire from an IFluidHandle.
+ * Events which fire from an {@link (IFluidHandle:interface)} as its payload sharing state transitions.
+ *
+ * @remarks
+ * These events are only relevant for handles created with a pending payload (see {@link PayloadState} for
+ * what makes a handle pending-payload, and {@link IFluidHandlePayloadPending} for how to detect one). A
+ * handle whose payload was not created as pending is already "shared" when returned to its creator, so it
+ * never transitions and never emits these events.
  * @legacy @beta
  */
 export interface IFluidHandleEvents {
 	/**
-	 * Emitted when the payload becomes available to remote collaborators.
+	 * Emitted when the handle's payload transitions from "pending" to "shared" - i.e. when the payload
+	 * becomes available to remote collaborators (and thus resolvable by any client).
+	 *
+	 * @remarks
+	 * This event only ever fires for handles created with a pending payload (see {@link PayloadState}). A
+	 * handle whose payload was not created as pending is already "shared" when its creator receives it, so
+	 * it never transitions and this event never fires for it.
+	 *
+	 * This lives on the base handle events (rather than {@link ILocalFluidHandleEvents}) because "shared"
+	 * describes the payload's availability to _everyone_, not a purely local concern: it is meaningful
+	 * both to the local client that created the pending payload and to a remote client that received the
+	 * still-pending handle and is waiting for its payload to become resolvable.
+	 *
+	 * Resolving (calling `get()` on) a handle before it is "shared" does not fail merely because the payload
+	 * is still pending, and what it does depends on who is resolving it:
+	 *
+	 * - The client that created the pending payload already holds it locally, so its `get()` resolves
+	 *   immediately regardless of the payload state - it does not need to wait for this event.
+	 * - A client that does not hold the payload locally (such as a remote collaborator, or one that received
+	 *   the serialized handle) instead waits inside `get()` until the payload becomes "shared". That wait can
+	 *   be indefinite if the payload never becomes shared - for example, if the client that created it failed
+	 *   to upload it and then left the session.
+	 *
+	 * This event is the signal such a waiting client is (implicitly) blocked on, so it can be used to
+	 * observe availability without holding an open `get()` call.
 	 */
 	payloadShared: () => void;
 }
 
 /**
- * Observable state on the handle regarding its payload sharing state.
+ * Observable state on a handle regarding its payload sharing state.
+ *
+ * @remarks
+ * A handle only surfaces this state when it may exist before its payload is retrievable - i.e. when it was
+ * created with a pending payload (for example, blobs uploaded via `uploadBlob` with the container runtime's
+ * `createBlobPayloadPending` option enabled). Use
+ * {@link @fluidframework/runtime-utils#isFluidHandlePayloadPending} to detect such handles. Handles created
+ * without a pending payload are already "shared" when returned and expose no meaningful transition; see
+ * {@link PayloadState}.
  *
  * @privateRemarks
  * Contents to be merged to IFluidHandle, and then this separate interface should be removed.
@@ -148,23 +202,69 @@ export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
 }
 
 /**
- * Additional events which fire as a local handle's payload state transitions.
+ * Additional events which fire as a _locally-created_ handle's payload sharing state transitions.
+ *
+ * @remarks
+ * These events describe the payload-sharing _process_ as performed by the client that created the
+ * payload - uploading it to storage, then sharing it to remote collaborators. They are therefore only
+ * relevant for handles that _this_ client created with a pending payload, for example blobs uploaded
+ * via `uploadBlob` when the container runtime's `createBlobPayloadPending` option is enabled. Use
+ * {@link @fluidframework/runtime-utils#isLocalFluidHandle} to detect such handles.
+ *
+ * These events never fire in two cases:
+ *
+ * - A handle created _without_ a pending payload finishes uploading and sharing before it is returned
+ *   to its creator, so neither these events nor the base {@link IFluidHandleEvents.payloadShared} ever fire.
+ * - A remote client that merely received a pending-payload handle does not run the sharing process, so it
+ *   only observes the base {@link IFluidHandleEvents.payloadShared} milestone, not these local-only events.
  * @legacy @beta
  */
 export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
 	/**
-	 * Emitted for locally created handles when the payload fails sharing to remote collaborators.
+	 * Emitted for locally created handles when the payload has been uploaded to storage, but before it
+	 * is shared to remote collaborators.
+	 *
+	 * @remarks
+	 * This is a local-only milestone that precedes {@link IFluidHandleEvents.payloadShared}. For instance,
+	 * the BlobManager uploads a blob to storage and only afterwards sends the BlobAttach op (which requires
+	 * a connection) that shares it to remote collaborators. This event lets the local client observe upload
+	 * completion without waiting for the payload to be shared - for example, to wait for all pending blob
+	 * uploads to finish before connecting. Like the rest of {@link ILocalFluidHandleEvents}, it only fires
+	 * for handles created with a pending payload.
+	 *
+	 * Note that this event is not guaranteed to fire before {@link IFluidHandleEvents.payloadShared}. A
+	 * handle may transition directly to shared (skipping an observable upload) - for instance when loading
+	 * from pending state and observing the BlobAttach op from the client that generated that state.
+	 *
+	 * When this event fires while the container is disconnected (that is, the upload both started and
+	 * completed before reconnecting), the payload's attach op is guaranteed to be ordered ahead of any ops
+	 * produced during that same disconnected period - including the DDS changes that stored this handle -
+	 * because pending attach ops are flushed before other pending ops on reconnect. As a result, remote
+	 * clients process those DDS changes only after the payload is already available to them, and so never
+	 * observe this handle in its pre-"shared" (not-yet-resolvable) state through those changes. This does
+	 * not hold for changes made while connected, which may be sequenced before the payload's attach op.
+	 */
+	payloadUploaded: () => void;
+	/**
+	 * Emitted for locally created handles when sharing the payload to remote collaborators fails - for
+	 * example, when the blob upload or its subsequent attach op could not be completed.
+	 *
+	 * @remarks
+	 * Like the rest of {@link ILocalFluidHandleEvents}, this only fires for handles created with a pending
+	 * payload. The associated error is also available via {@link ILocalFluidHandle.payloadShareError}.
 	 */
 	payloadShareFailed: (error: unknown) => void;
 }
 
 /**
- * Additional observable state on a local handle regarding its payload sharing state.
+ * Additional observable state on a _locally-created_ handle regarding its payload sharing state. Like
+ * {@link ILocalFluidHandleEvents}, this is only meaningful for handles created with a pending payload.
  * @legacy @beta
  */
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
 	/**
-	 * The error encountered by the handle while sharing the payload, if one has occurred.  Undefined if no error has occurred.
+	 * The error encountered by the handle while sharing the payload, if one has occurred; otherwise
+	 * undefined. Only ever set for pending-payload handles (see {@link ILocalFluidHandleEvents}).
 	 */
 	readonly payloadShareError: unknown;
 	/**

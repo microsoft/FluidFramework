@@ -330,6 +330,7 @@ declare type current_as_old_for_Interface_ILocalFluidHandle = requireAssignableT
  * typeValidation.broken:
  * "Interface_ILocalFluidHandleEvents": {"forwardCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type old_as_current_for_Interface_ILocalFluidHandleEvents = requireAssignableTo<TypeOnly<old.ILocalFluidHandleEvents>, TypeOnly<current.ILocalFluidHandleEvents>>
 
 /*
