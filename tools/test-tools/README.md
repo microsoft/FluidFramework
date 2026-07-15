@@ -31,14 +31,18 @@ For example, the following runs a real-service test against a Tinylicious server
 without hardcoding it, letting packages run their service tests concurrently without colliding on a shared port:
 
 ```
-with-test-port start-server-and-test start:tinylicious:test {PORT} test:realsvc:tinylicious:run
+with-test-port --fallback 7070 start-server-and-test start:tinylicious:test {PORT} test:realsvc:tinylicious:run
 ```
 
-As with `getTestPort`, if `assign-test-ports` has not been called, a default port is used.
+If `assign-test-ports` has not been called, no port is assigned; the optional leading `--fallback <number>`
+option controls the port used in that case (defaulting to `getTestPort`'s default). Set it to match the default
+port the launched server uses so the server and any test client resolve the same port — in the example above,
+`7070` is Tinylicious's default port.
 
 ## getTestPort.ts
 
 Packages can import this package and call this function (which is a named export) to get a unique port they can use
 to run their jest/puppeteer tests.
 If `assign-test-ports` has been called, the function will return the port assigned to the package.
-Otherwise it will return a default port.
+Otherwise it will return a fallback port, which can be provided as an optional second argument
+(`getTestPort(packageName, fallbackPort)`) and defaults to `8081`.

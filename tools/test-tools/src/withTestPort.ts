@@ -23,11 +23,30 @@ import { getTestPort } from "./getTestPort.js";
  * across packages without colliding on a shared port, mirroring what jest/puppeteer tests already do via
  * `getTestPort`.
  *
- * @param argv - The command to run followed by its arguments. `{PORT}` tokens are replaced with the resolved port.
+ * @param argv - The command to run followed by its arguments. An optional leading `--fallback <number>`
+ * option sets the port used when `assign-test-ports` has not been run (see {@link getTestPort}); it should
+ * match the default port the launched server uses so the server and any test client stay in agreement.
+ * `{PORT}` tokens in the remaining arguments are replaced with the resolved port.
  * @returns The exit code of the spawned command.
  */
 export function withTestPort(argv: readonly string[]): number {
-	if (argv.length === 0) {
+	// An optional leading "--fallback <number>" option controls the port used when no assigned port is
+	// found (no mapping file, or no entry for the package). It should match the default port the launched
+	// server uses so the server and any test client resolve the same port.
+	let fallbackPort: number | undefined;
+	let commandArgv: readonly string[] = argv;
+	if (commandArgv[0] === "--fallback") {
+		const value = commandArgv[1];
+		const parsed = value === undefined ? Number.NaN : Number.parseInt(value, 10);
+		if (Number.isNaN(parsed)) {
+			console.error("with-test-port: --fallback requires a numeric value.");
+			return 1;
+		}
+		fallbackPort = parsed;
+		commandArgv = commandArgv.slice(2);
+	}
+
+	if (commandArgv.length === 0) {
 		console.error("with-test-port: no command was provided to run.");
 		return 1;
 	}
@@ -50,10 +69,10 @@ export function withTestPort(argv: readonly string[]): number {
 	}
 
 	// getTestPort returns a number; the environment variable and command substitution both need a string.
-	const port = String(getTestPort(packageName));
+	const port = String(getTestPort(packageName, fallbackPort));
 
 	// Tokens have no embedded whitespace (script names / port numbers), so joining is safe.
-	const command = argv.map((arg) => arg.split("{PORT}").join(port)).join(" ");
+	const command = commandArgv.map((arg) => arg.split("{PORT}").join(port)).join(" ");
 
 	const result = spawnSync(command, {
 		stdio: "inherit",
