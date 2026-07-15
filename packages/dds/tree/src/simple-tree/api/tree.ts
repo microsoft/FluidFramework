@@ -578,7 +578,7 @@ export interface TreeViewAlpha<
  * See SharedTree's README for more information about choosing a compatibility policy.
  *
  * @privateRemarks
- * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
+ * See {@link checkSchemaCompatibility} for the implementation of this compatibility checking.
  *
  * @sealed @public
  */

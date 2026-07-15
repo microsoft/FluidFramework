@@ -118,7 +118,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/is not allowed in this field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -131,7 +134,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/is not allowed in this field/),
 			);
 		});
 	});

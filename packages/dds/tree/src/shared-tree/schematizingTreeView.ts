@@ -32,7 +32,7 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
@@ -57,6 +57,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -98,7 +99,7 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	private readonly viewSchema: TreeSchema;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -143,7 +144,7 @@ export class SchematizingSimpleTreeView<
 
 		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -258,7 +259,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		const newSchema = toUpgradeSchema(this.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
@@ -347,7 +348,10 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 
 		this.currentCompatibility = {
 			...compatibility,
