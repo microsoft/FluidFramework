@@ -23,8 +23,8 @@ These APIs are also re-exported from `fluid-framework` and do not reference any 
 Example:
 
 ```typescript
-import { createEphemeralServiceClient } from "@fluidframework/local-driver/internal";
-import { treeDataStoreKind } from "@fluidframework/tree/alpha";
+import { createEphemeralServiceClient } from "@fluidframework/local-driver/alpha";
+import { treeDataStoreKind } from "fluid-framework/alpha";
 
 const client = createEphemeralServiceClient();
 const root = treeDataStoreKind({ type: "my-app-root", config, initializer });
