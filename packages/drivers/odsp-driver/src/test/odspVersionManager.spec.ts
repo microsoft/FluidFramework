@@ -5,18 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
+/* eslint-disable import-x/no-internal-modules */
 import {
 	OdspVersionManager,
 	type OdspFileVersionRef,
 	type IOdspFileVersionFetcher,
-} from "../odspVersionManager/index.js";
+} from "../odspVersionManager/odspVersionManager.js";
+/* eslint-enable import-x/no-internal-modules */
 
 /**
  * Build an {@link OdspFileVersionRef} with the given label. Timestamp/size are irrelevant to the
  * manager's selection logic, so they are fixed.
  */
 function ref(versionId: string): OdspFileVersionRef {
-	return { versionId, lastModifiedDateTime: "2026-01-01T00:00:00.000Z", sizeBytes: 1000 };
+	return { versionId, lastModifiedDateTime: "2026-01-01T00:00:00.000Z" };
 }
 
 interface FakeFetcher extends IOdspFileVersionFetcher {
@@ -164,15 +166,51 @@ describe("OdspVersionManager", () => {
 			);
 		});
 
-		it("re-enumerates after refresh()", async () => {
+		it("re-enumerates and re-resolves after refresh()", async () => {
 			// @q M-CACHE-02
 			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
 			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
-			await manager.findBaseForSeq(430);
+			await manager.findBaseForSeq(430); // resolves 42.0 then 40.0
 			manager.refresh();
-			await manager.findBaseForSeq(430);
+			await manager.findBaseForSeq(430); // must re-fetch the list AND re-resolve seqs
 			assert.equal(fetcher.listCalls(), 2, "refresh should force a re-enumeration");
+			assert.deepEqual(
+				fetcher.resolvedIds(),
+				["42.0", "40.0", "42.0", "40.0"],
+				"refresh should also clear the resolved sequence-number cache",
+			);
+		});
+
+		it("does not let a fetch in flight during refresh() repopulate the cache", async () => {
+			// @q M-CACHE-03
+			let listCalls = 0;
+			const gates: ((versions: OdspFileVersionRef[]) => void)[] = [];
+			const fetcher: IOdspFileVersionFetcher = {
+				listFileVersions: async () => {
+					listCalls++;
+					return new Promise<OdspFileVersionRef[]>((resolve) => gates.push(resolve));
+				},
+				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
+			};
+			const manager = new OdspVersionManager(fetcher);
+
+			// Start a query so the version-list fetch is in flight, then refresh before it settles.
+			const first = manager.listVersions();
+			manager.refresh();
+			gates[0]?.([ref("2"), ref("1")]); // the in-flight fetch settles AFTER the refresh
+			await first;
+
+			// The refresh must not have been overwritten by the late fetch: the next query re-fetches.
+			const second = manager.listVersions();
+			gates[1]?.([ref("2"), ref("1")]);
+			await second;
+
+			assert.equal(
+				listCalls,
+				2,
+				"a refresh() during an in-flight fetch must force a re-fetch",
+			);
 		});
 	});
 

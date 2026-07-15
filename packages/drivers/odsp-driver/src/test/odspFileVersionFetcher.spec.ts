@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -13,13 +14,15 @@ import type {
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
 
+import { convertToCompactSnapshot } from "../compactSnapshotWriter.js";
 import type { IOdspSnapshot } from "../contracts.js";
 import { EpochTracker } from "../epochTracker.js";
 import { LocalPersistentCache } from "../odspCache.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
-import { createOdspFileVersionFetcher } from "../odspVersionManager/index.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { createOdspFileVersionFetcher } from "../odspVersionManager/odspFileVersionFetcher.js";
 
-import { createResponse, type MockResponse } from "./mockFetch.js";
+import { createResponse, type MockResponse, notFound } from "./mockFetch.js";
 
 /**
  * Integration tests for `createOdspFileVersionFetcher`. These exercise the real code path — URL
@@ -102,6 +105,22 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		blobs: [],
 	} as unknown as IOdspSnapshot;
 
+	const msFluidHeaders = { "content-type": "application/ms-fluid" };
+
+	/** Serialize a minimal snapshot carrying `sequenceNumber` into the compact (ms-fluid) binary form. */
+	function compactSnapshotBytesWithSeq(sequenceNumber: number): Uint8Array {
+		const snapshotTree: ISnapshotTree = { id: "id", blobs: {}, trees: {} };
+		const snapshot: ISnapshot = {
+			snapshotTree,
+			blobContents: new Map(),
+			ops: [],
+			sequenceNumber,
+			latestSequenceNumber: sequenceNumber,
+			snapshotFormatV: 1,
+		};
+		return convertToCompactSnapshot(snapshot);
+	}
+
 	it("listFileVersions parses the /versions response and calls the versions URL", async () => {
 		// @q F-LIST-01
 		const { result, urls } = await withFetch(
@@ -110,8 +129,8 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 					jsonHeaders,
 					{
 						value: [
-							{ id: "42.0", lastModifiedDateTime: "2026-01-02T00:00:00Z", size: 111 },
-							{ id: "40.0", lastModifiedDateTime: "2026-01-01T00:00:00Z", size: 222 },
+							{ id: "42.0", lastModifiedDateTime: "2026-01-02T00:00:00Z" },
+							{ id: "40.0", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
 						],
 					},
 					200,
@@ -121,16 +140,56 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 
 		assert.deepEqual(
-			result.map((v) => [v.versionId, v.sizeBytes]),
+			result.map((v) => [v.versionId, v.lastModifiedDateTime]),
 			[
-				["42.0", 111],
-				["40.0", 222],
+				["42.0", "2026-01-02T00:00:00Z"],
+				["40.0", "2026-01-01T00:00:00Z"],
 			],
 		);
 		assert.ok(
 			urls[0]?.includes(`/_api/v2.1/drives/${driveId}/items/${itemId}/versions`),
 			`expected the versions URL, got ${urls[0]}`,
 		);
+	});
+
+	it("follows @odata.nextLink to include versions past the first page", async () => {
+		// @q F-LIST-02
+		const nextLink = "https://microsoft.sharepoint.com/_api/v2.1/versions?page=2";
+		const { result, urls } = await withFetch(
+			[
+				await createResponse(
+					jsonHeaders,
+					{
+						value: [{ id: "42.0", lastModifiedDateTime: "2026-01-03T00:00:00Z" }],
+						"@odata.nextLink": nextLink,
+					},
+					200,
+				),
+				await createResponse(
+					jsonHeaders,
+					{ value: [{ id: "41.0", lastModifiedDateTime: "2026-01-02T00:00:00Z" }] },
+					200,
+				),
+			],
+			async () => fetcher.listFileVersions(),
+		);
+
+		assert.deepEqual(
+			result.map((v) => v.versionId),
+			["42.0", "41.0"],
+			"versions from both pages should be included, newest-first",
+		);
+		assert.equal(urls.length, 2, "should follow the nextLink for a second page");
+		assert.equal(urls[1], nextLink, "the second request should target the nextLink URL");
+	});
+
+	it("returns an empty list when the response has no value field", async () => {
+		// @q F-LIST-03
+		const { result } = await withFetch(
+			[await createResponse(jsonHeaders, {}, 200)],
+			async () => fetcher.listFileVersions(),
+		);
+		assert.deepEqual(result, [], "a missing value field is treated as an empty version list");
 	});
 
 	it("resolveSequenceNumber reads trees[0].sequenceNumber and calls the versioned snapshot URL", async () => {
@@ -155,6 +214,92 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 					fetcher.resolveSequenceNumber("42.0"),
 				),
 			/42\.0/,
+		);
+	});
+
+	it("resolveSequenceNumber parses an application/ms-fluid (binary) snapshot", async () => {
+		// @q F-RESOLVE-03
+		const { result } = await withFetch(
+			[await createResponse(msFluidHeaders, compactSnapshotBytesWithSeq(448), 200)],
+			async () => fetcher.resolveSequenceNumber("42.0"),
+		);
+		assert.equal(result, 448);
+	});
+
+	it("listFileVersions surfaces a non-success response as an error", async () => {
+		// @q F-ERROR-01
+		await assert.rejects(async () =>
+			withFetch([await notFound()], async () => fetcher.listFileVersions()),
+		);
+	});
+
+	it("resolveSequenceNumber refreshes the token and retries after an auth failure", async () => {
+		// @q F-ERROR-02
+		const refreshFlags: boolean[] = [];
+		const trackingAuth: InstrumentedStorageTokenFetcher = async (options) => {
+			refreshFlags.push(options.refresh);
+			return "******";
+		};
+		const authRetryFetcher = createOdspFileVersionFetcher({
+			urlParts,
+			getAuthHeader: trackingAuth,
+			epochTracker,
+			logger,
+		});
+		const { result } = await withFetch(
+			[
+				await createResponse(jsonHeaders, undefined, 401), // auth failure -> triggers a token refresh
+				await createResponse(jsonHeaders, snapshotWithSeq(448), 200), // retry succeeds
+			],
+			async () => authRetryFetcher.resolveSequenceNumber("42.0"),
+		);
+		assert.equal(result, 448);
+		assert.deepEqual(
+			refreshFlags,
+			[false, true],
+			"the first attempt uses a cached token; the retry forces a refresh",
+		);
+	});
+
+	it("resolveSequenceNumber surfaces a non-success response as an error", async () => {
+		// @q F-ERROR-03
+		await assert.rejects(async () =>
+			withFetch([await notFound()], async () => fetcher.resolveSequenceNumber("42.0")),
+		);
+	});
+
+	it("listFileVersions refreshes the token and retries after an auth failure", async () => {
+		// @q F-ERROR-04
+		const refreshFlags: boolean[] = [];
+		const trackingAuth: InstrumentedStorageTokenFetcher = async (options) => {
+			refreshFlags.push(options.refresh);
+			return "******";
+		};
+		const authRetryFetcher = createOdspFileVersionFetcher({
+			urlParts,
+			getAuthHeader: trackingAuth,
+			epochTracker,
+			logger,
+		});
+		const { result } = await withFetch(
+			[
+				await createResponse(jsonHeaders, undefined, 401), // auth failure -> triggers a token refresh
+				await createResponse(
+					jsonHeaders,
+					{ value: [{ id: "42.0", lastModifiedDateTime: "2026-01-02T00:00:00Z" }] },
+					200,
+				), // retry succeeds
+			],
+			async () => authRetryFetcher.listFileVersions(),
+		);
+		assert.deepEqual(
+			result.map((v) => v.versionId),
+			["42.0"],
+		);
+		assert.deepEqual(
+			refreshFlags,
+			[false, true],
+			"the first attempt uses a cached token; the retry forces a refresh",
 		);
 	});
 });

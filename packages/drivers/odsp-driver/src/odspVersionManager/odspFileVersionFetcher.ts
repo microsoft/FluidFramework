@@ -16,7 +16,7 @@ import type {
 } from "@fluidframework/odsp-driver-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
-import { parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
+import { currentReadVersion, parseCompactSnapshotResponse } from "../compactSnapshotParser.js";
 import type { IOdspSnapshot } from "../contracts.js";
 import type { EpochTracker } from "../epochTracker.js";
 import { getHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
@@ -34,7 +34,13 @@ interface IDriveItemVersion {
 	/** The version's label, e.g. "42.0". */
 	readonly id: string;
 	readonly lastModifiedDateTime: string;
-	readonly size: number;
+}
+
+/** A single page of the driveItem `/versions` response. */
+interface IDriveItemVersionsPage {
+	readonly value?: IDriveItemVersion[];
+	/** Absolute URL of the next page, present only while more versions remain. */
+	readonly "@odata.nextLink"?: string;
 }
 
 /**
@@ -58,34 +64,41 @@ export function createOdspFileVersionFetcher(
 
 	const listFileVersions = async (): Promise<OdspFileVersionRef[]> =>
 		getWithRetryForTokenRefresh(async (options) => {
+			const method = "GET";
+			const versions: OdspFileVersionRef[] = [];
 			// The file's version history (distinct from the driver's snapshot list), from the same API
 			// root as the snapshot call so consumer (ODC) and enterprise (SPO) hosts are handled alike.
-			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions`;
-			const method = "GET";
-			const token = await getAuthHeader(
-				{ ...options, request: { url, method } },
-				"FileVersions",
-			);
-			const headers = getHeadersWithAuth(token);
-			const response = await epochTracker.fetchAndParseAsJSON<{ value?: IDriveItemVersion[] }>(
-				url,
-				{ method, headers },
-				"versions",
-			);
-			// The API returns versions newest-first.
-			return (response.content.value ?? []).map((version) => ({
-				versionId: version.id,
-				lastModifiedDateTime: version.lastModifiedDateTime,
-				sizeBytes: version.size,
-			}));
+			// A long history is paged, so follow `@odata.nextLink` until it is absent; otherwise a base
+			// version beyond the first page would be missed and wrongly reported as "no base version".
+			let url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions`;
+			do {
+				const token = await getAuthHeader(
+					{ ...options, request: { url, method } },
+					"FileVersions",
+				);
+				const headers = getHeadersWithAuth(token);
+				const response = await epochTracker.fetchAndParseAsJSON<{
+					value?: IDriveItemVersion[];
+				}>(url, { method, headers }, "versions");
+				const page = response.content as IDriveItemVersionsPage;
+				// The API returns versions newest-first.
+				for (const version of page.value ?? []) {
+					versions.push({
+						versionId: version.id,
+						lastModifiedDateTime: version.lastModifiedDateTime,
+					});
+				}
+				url = page["@odata.nextLink"] ?? "";
+			} while (url);
+			return versions;
 		});
 
 	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
 		getWithRetryForTokenRefresh(async (options) => {
-			// Fetch the version's snapshot from the version-scoped snapshot endpoint, which returns the
-			// driver's native json / ms-fluid framing. `blobs=2` inlines blob contents (including the
-			// `.protocol/attributes` blob that holds the sequence number). `deltas=1` is intentionally
-			// omitted; it would bundle the op stream and its op-level sequence numbers.
+			// A file version's sequence number lives inside that version's snapshot, so fetch the snapshot
+			// from the version-scoped endpoint. `blobs=2` inlines blob contents so the `.protocol/attributes`
+			// blob (which carries the sequence number) is included; `deltas=1` is intentionally omitted, as
+			// it would bundle the op stream and its op-level sequence numbers.
 			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions/${encodeURIComponent(
 				versionId,
 			)}/opStream/snapshots/trees/latest?blobs=2`;
@@ -95,33 +108,31 @@ export function createOdspFileVersionFetcher(
 				"FileVersionSnapshot",
 			);
 			const headers = getHeadersWithAuth(token);
+			// The server can return the snapshot in one of two equivalent framings: verbose JSON, or
+			// "ms-fluid" — ODSP's compact binary encoding of the same snapshot. Advertise both, and pin the
+			// binary format version (as the driver's own snapshot fetch does) so the server cannot hand back
+			// a binary version this code's parser does not understand.
+			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
 			const contentType = response.headers.get("content-type") ?? "";
+			let sequenceNumber: number | undefined;
 			if (contentType.includes("application/json")) {
+				// JSON framing: read it with the driver's JSON snapshot parser.
 				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
-				return requireSequenceNumber(
-					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber,
-					versionId,
-				);
+				sequenceNumber =
+					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
+			} else {
+				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
+				const bytes = new Uint8Array(await response.content.arrayBuffer());
+				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
 			}
-			// application/ms-fluid (compact binary)
-			const bytes = new Uint8Array(await response.content.arrayBuffer());
-			return requireSequenceNumber(
-				parseCompactSnapshotResponse(bytes, logger).sequenceNumber,
-				versionId,
-			);
+			// A version's snapshot must carry a sequence number; a missing one is surfaced as an error
+			// naming the version, rather than returning a wrong value.
+			if (sequenceNumber === undefined) {
+				throw new Error(`ODSP file version ${versionId} snapshot is missing a sequenceNumber`);
+			}
+			return sequenceNumber;
 		});
 
 	return { listFileVersions, resolveSequenceNumber };
-}
-
-/**
- * A version's snapshot must carry a sequence number; a missing one is surfaced as an error rather
- * than returning a wrong value.
- */
-function requireSequenceNumber(sequenceNumber: number | undefined, versionId: string): number {
-	if (sequenceNumber === undefined) {
-		throw new Error(`ODSP file version ${versionId} snapshot is missing a sequenceNumber`);
-	}
-	return sequenceNumber;
 }

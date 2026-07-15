@@ -4,14 +4,9 @@
  */
 
 export {
-	OdspVersionManager,
+	createOdspVersionManager,
 	type BaseForSeq,
 	type IOdspVersionManager,
 	type OdspFileVersionRef,
-	type IOdspFileVersionFetcher,
 	type ResolvedVersion,
 } from "./odspVersionManager.js";
-export {
-	createOdspFileVersionFetcher,
-	type OdspFileVersionFetcherProps,
-} from "./odspFileVersionFetcher.js";

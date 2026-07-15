@@ -11,6 +11,11 @@
  * how versions are enumerated and resolved (real ODSP, a test double, or an alternative backend).
  */
 
+import {
+	createOdspFileVersionFetcher,
+	type OdspFileVersionFetcherProps,
+} from "./odspFileVersionFetcher.js";
+
 /**
  * A single ODSP file version, as listed by the file's version history.
  */
@@ -23,10 +28,6 @@ export interface OdspFileVersionRef {
 	 * Last-modified timestamp of this version, ISO-8601.
 	 */
 	readonly lastModifiedDateTime: string;
-	/**
-	 * Size in bytes of this version's content.
-	 */
-	readonly sizeBytes: number;
 }
 
 /**
@@ -37,10 +38,6 @@ export interface ResolvedVersion extends OdspFileVersionRef {
 	 * The Fluid sequence number the version's snapshot represents.
 	 */
 	readonly sequenceNumber: number;
-	/**
-	 * The collaboration-window floor at this version, if read. Not used for selection.
-	 */
-	readonly minimumSequenceNumber?: number;
 }
 
 /**
@@ -66,7 +63,7 @@ export type BaseForSeq =
 
 /**
  * Provides a file's versions and resolves each version's Fluid sequence number. Injected into
- * {@link OdspVersionManager} so the selection logic does not depend on how versions are fetched.
+ * the version manager so the selection logic does not depend on how versions are fetched.
  */
 export interface IOdspFileVersionFetcher {
 	/**
@@ -89,14 +86,6 @@ export interface IOdspVersionManager {
 	 * `noBaseVersion` if the target predates the oldest retained version.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
-	/**
-	 * Return every version with its resolved sequence number, newest-first.
-	 */
-	listVersions(): Promise<ResolvedVersion[]>;
-	/**
-	 * Drop cached version enumeration and resolved sequence numbers so the next query re-fetches.
-	 */
-	refresh(): void;
 }
 
 /**
@@ -105,8 +94,8 @@ export interface IOdspVersionManager {
  * {@link findBaseForSeq} and can change without affecting callers.
  */
 export class OdspVersionManager implements IOdspVersionManager {
-	private versionsCache: OdspFileVersionRef[] | undefined;
-	private readonly seqByVersion = new Map<string, number>();
+	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
+	private readonly seqByVersion = new Map<string, Promise<number>>();
 
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
@@ -120,14 +109,19 @@ export class OdspVersionManager implements IOdspVersionManager {
 		const versions = await this.getVersions();
 		const candidates = versions.slice(1);
 
-		// The list is newest-first (descending sequence number), so the first candidate whose seq is
-		// at or before the target is the greatest seq <= target — that is the closest base. Scanning
-		// this way also yields the newest of any versions that share a sequence number (dedup), and
-		// avoids resolving older versions than necessary.
+		// Versions are listed newest-first, and version order is expected to track sequence number, so
+		// the first candidate whose seq is at or before the target is taken as the closest base. Because
+		// any base at or before the target replays forward to the same state, this early stop is an
+		// optimization, not a correctness requirement: if version order and sequence order ever diverge,
+		// a base that is valid but not strictly the closest may be chosen.
+		// Scanning newest-first also yields the newest of versions sharing a sequence number (dedup).
 		let oldestResolvedSeq: number | undefined;
 		for (const version of candidates) {
 			const sequenceNumber = await this.resolveSeq(version.versionId);
-			oldestResolvedSeq = sequenceNumber;
+			oldestResolvedSeq =
+				oldestResolvedSeq === undefined
+					? sequenceNumber
+					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
 				return { kind: "found", base: { ...version, sequenceNumber } };
 			}
@@ -137,25 +131,40 @@ export class OdspVersionManager implements IOdspVersionManager {
 
 	public async listVersions(): Promise<ResolvedVersion[]> {
 		const versions = await this.getVersions();
-		const resolved: ResolvedVersion[] = [];
-		for (const version of versions) {
-			resolved.push({ ...version, sequenceNumber: await this.resolveSeq(version.versionId) });
-		}
-		return resolved;
+		// Resolution order does not matter here, so resolve concurrently; the newest-first array order is
+		// preserved by Promise.all regardless of completion order.
+		return Promise.all(
+			versions.map(async (version) => ({
+				...version,
+				sequenceNumber: await this.resolveSeq(version.versionId),
+			})),
+		);
 	}
 
 	private async getVersions(): Promise<OdspFileVersionRef[]> {
-		this.versionsCache ??= await this.fetcher.listFileVersions();
+		// Cache the pending promise, not the awaited value, so concurrent callers share one fetch and a
+		// refresh() that runs while the fetch is in flight is not overwritten when the fetch settles.
+		this.versionsCache ??= this.fetcher.listFileVersions();
 		return this.versionsCache;
 	}
 
 	private async resolveSeq(versionId: string): Promise<number> {
-		const cached = this.seqByVersion.get(versionId);
-		if (cached !== undefined) {
-			return cached;
+		// Cache the pending promise (a version's sequence number never changes) so concurrent callers
+		// coalesce and a refresh() is not clobbered by a fetch that was already in flight.
+		let pending = this.seqByVersion.get(versionId);
+		if (pending === undefined) {
+			pending = this.fetcher.resolveSequenceNumber(versionId);
+			this.seqByVersion.set(versionId, pending);
 		}
-		const sequenceNumber = await this.fetcher.resolveSequenceNumber(versionId);
-		this.seqByVersion.set(versionId, sequenceNumber);
-		return sequenceNumber;
+		return pending;
 	}
+}
+
+/**
+ * Create an {@link IOdspVersionManager} for a specific ODSP file, wired to the real ODSP REST APIs.
+ */
+export function createOdspVersionManager(
+	props: OdspFileVersionFetcherProps,
+): IOdspVersionManager {
+	return new OdspVersionManager(createOdspFileVersionFetcher(props));
 }
