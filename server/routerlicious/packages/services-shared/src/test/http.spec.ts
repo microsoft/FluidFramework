@@ -89,6 +89,26 @@ describe("HTTP Utils", () => {
 			const testPath = "/path";
 			assert.strictEqual(containsPathTraversal(testPath), true);
 		});
+		it("catches a bare upward traversal", () => {
+			// Regression: `parse("..").dir` is "", so the previous check let ".." through.
+			assert.strictEqual(containsPathTraversal(".."), true);
+		});
+		it("catches a bare current-directory reference", () => {
+			assert.strictEqual(containsPathTraversal("."), true);
+		});
+		it("catches downward-then-upward traversal", () => {
+			// Regression: `parse("foo/..").dir` is "foo", so the previous check let this through.
+			assert.strictEqual(containsPathTraversal("foo/.."), true);
+		});
+		it("catches trailing upward traversal", () => {
+			assert.strictEqual(containsPathTraversal("path/other/.."), true);
+		});
+		it("catches windows-style upward traversal", () => {
+			assert.strictEqual(containsPathTraversal("..\\path"), true);
+		});
+		it("catches windows-style absolute traversal", () => {
+			assert.strictEqual(containsPathTraversal("\\path"), true);
+		});
 		it("does not flag downward traversal", () => {
 			const testPath = "path/other";
 			assert.strictEqual(containsPathTraversal(testPath), false);
@@ -96,6 +116,9 @@ describe("HTTP Utils", () => {
 		it("does not flag no traversal", () => {
 			const testPath = "path";
 			assert.strictEqual(containsPathTraversal(testPath), false);
+		});
+		it("does not flag an empty string", () => {
+			assert.strictEqual(containsPathTraversal(""), false);
 		});
 	});
 	describe("validateRequestParams()", () => {
