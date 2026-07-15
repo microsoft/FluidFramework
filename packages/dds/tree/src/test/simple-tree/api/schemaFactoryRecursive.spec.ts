@@ -1253,39 +1253,29 @@ describe("SchemaFactory Recursive methods", () => {
 				allowUnused<requireAssignableTo<number, Insertable>>();
 			}
 
-			//  more than one type
+			//  more than one type, end to end
 			{
 				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
 				class Recursive extends factory.arrayRecursive("Recursive", types) {}
 
-				type _check = ValidateRecursiveSchema<typeof Recursive>;
+				allowUnused<ValidateRecursiveSchema<typeof Recursive>>();
 
 				const node = new Recursive([]);
 				const node2 = new Recursive([2, "2"]);
 				const popped = node2[0];
 				// Current compiler settings for tests don't include undefined here, but adding it if required by compiler is valid.
-				type _check2 = requireTrue<areSafelyAssignable<typeof popped, string | number>>;
+				allowUnused<requireTrue<areSafelyAssignable<typeof popped, string | number>>>();
 			}
 
-			//  more than one type
+			//  more than one type, minimal
 			{
 				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
 				const schema = factory.arrayRecursive("Recursive", types);
 				type Builder = ConstructorParameters<typeof schema>[0];
 				allowUnused<requireAssignableTo<number[], Builder>>();
-			}
 
-			//  more than one type
-			{
-				const factoryStable = new SchemaFactory("");
-				const types = SchemaFactoryBeta.typesRecursive([
-					factoryStable.string,
-					factoryStable.number,
-				]);
-				const schema = factoryStable.arrayRecursive("Recursive", types);
-				type Builder = ConstructorParameters<typeof schema>[0];
-				allowUnused<requireAssignableTo<number[], Builder>>();
-
+				// The bug which these various more than one type tests detected turned out to be in System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe
+				// See its unit tests for more details.
 				type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
 					typeof types
 				>;
