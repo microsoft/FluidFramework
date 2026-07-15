@@ -203,7 +203,7 @@ export interface DataStoreCreator {
  *
  * The underlying IContainer has a lifecycle which includes both a closed and disposed state.
  * This should be avoidable: the closed but not disposed state exists so its possible to read out some state at that time.
- * We have made the close remove all the timers, so the the dispose step is be unnecessary and we can just have a single closed state.
+ * We have made the close remove all the timers, so the the dispose step should be unnecessary and we can just have a single closed state.
  *
  * @sealed
  * @alpha
