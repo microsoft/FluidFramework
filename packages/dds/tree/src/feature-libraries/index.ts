@@ -93,6 +93,7 @@ export {
 	isNeverTree,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
