@@ -112,49 +112,89 @@ function updateContainers(): void {
 
 /**
  * Synchronizes all local clients.
+ *
+ * @param timeoutMilliseconds - The maximum time to wait for local containers to quiesce, in milliseconds. Defaults to 30_000.
+ *
+ * @remarks
+ * Best-effort: this drives all in-process ephemeral containers toward convergence, but does not
+ * perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
+ * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
  * @alpha
  */
-export async function synchronizeLocalService(): Promise<void> {
-	// based on LoaderContainerTracker.ensureSynchronized, but stripped down a lot. Might miss some edge cases.
+export async function synchronizeLocalService(timeoutMilliseconds = 30_000): Promise<void> {
+	// Timeout to allow for better errors in the case of hangs.
+	let timedOut = false;
+	let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+	const deadline = new Promise<true>((resolve) => {
+		deadlineTimer = setTimeout(() => {
+			timedOut = true;
+			resolve(true);
+		}, timeoutMilliseconds);
+	});
 
-	let clean = 0;
+	try {
+		// Require two consecutive quiescent passes (no dirty containers and no pending server work),
+		// each separated by a macrotask turn, to give late side effects a chance to surface.
+		let clean = 0;
+		while (clean < 2) {
+			if (timedOut) {
+				throw new Error(
+					`synchronizeLocalService timed out after ${timeoutMilliseconds}ms waiting for local containers to quiesce.`,
+				);
+			}
 
-	while (clean < 2) {
-		// TODO: does this accomplish anything?
-		while (await localServer.hasPendingWork()) {
-			clean = 0;
+			// Yield a macrotask turn *first*, so the local server's scheduled broadcast send and each
+			// container's inbound op processing can run before we sample their state below. Sampling
+			// hasPendingWork() in a tight `while (await ...)` loop instead would starve that scheduled
+			// send (it is a macrotask, while the await resolves on the microtask queue) and could hang.
+			await new Promise<void>((resolve) => {
+				setTimeout(resolve, 0);
+			});
+
+			updateContainers();
+			const containersToApply = containers.map((c) => c.container);
+
+			// Ignore readonly/disconnected dirty containers: they can't send ops, so nothing can be done about them being dirty here.
+			// Neither state is reachable through createEphemeralServiceClient today, but the checks are cheap and keep this robust to future changes.
+			const dirtyContainers = containersToApply.filter((c) => {
+				const { deltaManager, isDirty, connectionState } = c;
+				return (
+					connectionState !== ConnectionState.Disconnected &&
+					deltaManager.readOnlyInfo.readonly !== true &&
+					isDirty
+				);
+			});
+			if (dirtyContainers.length > 0) {
+				// Bound this wait by the shared deadline: a container that never saves (and never
+				// closes) must not block past the overall timeout, since the top-of-loop check can't
+				// run while we are awaiting here.
+				await Promise.race([
+					Promise.all(
+						dirtyContainers.map(async (c) =>
+							Promise.race([
+								new Promise((resolve) => c.once("saved", resolve)),
+								new Promise((resolve) => c.once("closed", resolve)),
+							]),
+						),
+					),
+					deadline,
+				]);
+
+				clean = 0;
+				continue;
+			}
+
+			// Sample pending server work once per pass (the macrotask yield above gave the broadcaster's
+			// scheduled send a chance to run first).
+			if (await Promise.race([localServer.hasPendingWork(), deadline])) {
+				clean = 0;
+				continue;
+			}
+
+			clean++;
 		}
-
-		updateContainers();
-		const containersToApply = containers.map((c) => c.container);
-
-		// Ignore readonly dirty containers, because it can't send ops and nothing can be done about it being dirty
-		const dirtyContainers = containersToApply.filter((c) => {
-			const { deltaManager, isDirty, connectionState } = c;
-			return (
-				connectionState !== ConnectionState.Disconnected &&
-				deltaManager.readOnlyInfo.readonly !== true &&
-				isDirty
-			);
-		});
-		if (dirtyContainers.length > 0) {
-			await Promise.all(
-				dirtyContainers.map(async (c) =>
-					Promise.race([
-						new Promise((resolve) => c.once("saved", resolve)),
-						new Promise((resolve) => c.once("closed", resolve)),
-					]),
-				),
-			);
-			clean = 0;
-		}
-
-		// yield a turn to allow side effect of resuming or the ops we just processed execute before we check
-		await new Promise<void>((resolve) => {
-			setTimeout(resolve, 0);
-		});
-
-		clean++;
+	} finally {
+		clearTimeout(deadlineTimer);
 	}
 }
 
