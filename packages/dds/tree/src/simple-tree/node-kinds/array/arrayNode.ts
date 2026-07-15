@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { Lazy, oob, fail, assert } from "@fluidframework/core-utils/internal";
+import {
+	Lazy,
+	oob,
+	fail,
+	assert,
+	unreachableCase,
+	clamp,
+} from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
@@ -19,7 +26,12 @@ import {
 	validateIndexRange,
 	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
-import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
+import {
+	type ArrayNodeDeltaOp,
+	deltaMarksToArrayOps,
+	type NodeSchemaOptionsAlpha,
+	type System_Unsafe,
+} from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
@@ -1485,11 +1497,28 @@ export interface ArrayPlaceAnchor {
 	 * The current index within the array that this anchor refers to.
 	 * @remarks
 	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
-	 * This index may take on a value from 0 to the length of the array (inclusive).
+	 * While the anchor is being tracked (before {@link ArrayPlaceAnchor.dispose} is called), this index is a value
+	 * from 0 to the current length of the array (inclusive).
 	 * If used as the index to insert content into the array, this means it can point to any location in the array,
 	 * including just after the last child.
+	 *
+	 * After {@link ArrayPlaceAnchor.dispose} has been called the anchor stops updating and this returns the last
+	 * tracked value, which may no longer be within the array's bounds if the array has since shrunk. Do not use the
+	 * index of a disposed anchor as an insertion index without first re-validating it against the current length.
 	 */
 	get index(): number;
+
+	/**
+	 * Stop tracking this anchor and release any resources (such as event subscriptions) it holds.
+	 * @remarks
+	 * An anchor subscribes to changes on the array node in order to keep its {@link ArrayPlaceAnchor.index}
+	 * up to date. Call this when the anchor is no longer needed (for example when a tracked cursor position
+	 * is discarded) to avoid leaking that subscription for the lifetime of the array node.
+	 *
+	 * Calling `dispose` more than once has no effect. See {@link ArrayPlaceAnchor.index} for how the index
+	 * behaves after disposal.
+	 */
+	dispose(): void;
 }
 
 /**
@@ -1507,9 +1536,28 @@ export interface ArrayPlaceAnchor {
  * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
  * make it behave better for such uses.
  *
- * The current implementation is known to behave particularly poorly if the child which was at the original anchor point's index is removed
- * (jumps to the end of the array): this behavior is subject to change.
+ * The returned anchor holds a subscription to the array node so it can update its index as the array is edited.
+ * Call {@link ArrayPlaceAnchor.dispose} when the anchor is no longer needed to release that subscription.
+ *
+ * In rare cases the tracked index cannot be updated precisely and the anchor falls back to best-effort behavior:
+ * it keeps reporting a valid in-bounds index, but that index may no longer correspond to the same logical position
+ * as before the change (this can happen when an incremental delta is unavailable for a change, such as during a
+ * schema change). Consumers that require an accurate position across such changes should re-derive it from their
+ * own state rather than relying solely on this anchor.
  * @privateRemarks
+ * The index is maintained incrementally from the shallow (insert/remove) delta delivered by the array node's
+ * `childrenChangedAfterBatch` event rather than by re-reading a tracked child's position: inserts and removes
+ * before the anchor point shift it, while edits after it (or a removal of the span it sits between) leave it in
+ * place. This keeps the anchor pinned to the gap between children even when the child originally at its index is
+ * removed, which the previous child-tracking implementation could not do (it jumped to the end of the array).
+ *
+ * The best-effort behavior noted in the public remarks is the no-delta path: when the composed delta is unavailable
+ * (see {@link NodeChangedDataDelta.delta}), the exact shift is unknown so the index is only clamped back into range.
+ * This is intentionally weak rather than reintroducing a per-edit O(n) snapshot of the array to diff old-vs-new
+ * (which would defeat the point of delta-based tracking) for a case that is rare and, for this alpha API, acceptable
+ * to degrade. A stronger fallback could instead let a consumer that already maintains the array contents re-seed the
+ * anchor's position on this path, so it lives with the consumer that has the data instead of being duplicated here.
+ *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
  * How this would work, especially for unhydrated nodes is not yet clear.
@@ -1519,17 +1567,89 @@ export function createArrayInsertionAnchor(
 	node: TreeArrayNode,
 	currentIndex: number,
 ): ArrayPlaceAnchor {
-	const field = getInnerNode(node).getBoxed(EmptyKey);
-	const child = field.boxedAt(currentIndex);
+	// Clamp the starting index into the valid inclusive range so the anchor always reports a location
+	// which is valid to insert content at, even if a caller provides an out of range index.
+	let trackedIndex = clamp(currentIndex, 0, getInnerNode(node).getBoxed(EmptyKey).length);
+
+	const kernel = getKernel(node);
+	let off: (() => void) | undefined = kernel.events.on(
+		"childrenChangedAfterBatch",
+		({ fieldMarks }) => {
+			const marks = fieldMarks.get(EmptyKey);
+			// This event fires after the change is applied, so the field reflects the post-edit length.
+			const length = getInnerNode(node).getBoxed(EmptyKey).length;
+			if (marks === undefined) {
+				// No-delta path: the composed delta is unavailable, so the exact shift is unknown. Keep the
+				// index valid by clamping it to the current length (best-effort). See this function's
+				// @privateRemarks for when this happens and why the fallback is intentionally weak.
+				trackedIndex = clamp(trackedIndex, 0, length);
+				return;
+			}
+			// Clamp defensively so a malformed or partial delta can never push the tracked index outside the
+			// valid insertion range while the anchor is live (adjustIndexForArrayDelta has no final clamp).
+			trackedIndex = clamp(
+				adjustIndexForArrayDelta(trackedIndex, deltaMarksToArrayOps(marks)),
+				0,
+				length,
+			);
+		},
+	);
+
 	return {
 		get index() {
-			if (child === undefined) {
-				return field.length;
-			}
-			if (child.parentField.parent !== field) {
-				return field.length;
-			}
-			return child.parentField.index;
+			return trackedIndex;
+		},
+		dispose() {
+			off?.();
+			off = undefined;
 		},
 	};
+}
+
+/**
+ * Compute the new index of an {@link ArrayPlaceAnchor} after applying a shallow array delta.
+ * @remarks
+ * The delta is a sequence of ops covering the array's sequence field in order (see {@link deltaMarksToArrayOps}).
+ * `readPosition` walks the pre-edit array as the ops are consumed while `index` stays fixed at the anchor's pre-edit
+ * location; comparing the two (both in pre-edit coordinates) shifts `newIndex` to keep the anchor in the same gap
+ * between children as content is inserted or removed around it. The per-op behavior is commented inline below.
+ *
+ * This mirrors the cursor-tracking accounting used for text selections.
+ */
+function adjustIndexForArrayDelta(index: number, ops: readonly ArrayNodeDeltaOp[]): number {
+	let readPosition = 0;
+	let newIndex = index;
+	for (const op of ops) {
+		switch (op.type) {
+			case "retain": {
+				readPosition += op.count;
+				break;
+			}
+			case "insert": {
+				// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor
+				// leaves the anchor after the new content (insertion-point behavior).
+				if (readPosition <= index) {
+					newIndex += op.count;
+				}
+				// Inserted content is new, so it does not advance the pre-edit read position.
+				break;
+			}
+			case "remove": {
+				const removeEnd = readPosition + op.count;
+				if (removeEnd <= index) {
+					// The whole removed span is before the anchor.
+					newIndex -= op.count;
+				} else if (readPosition < index) {
+					// The removed span straddles the anchor: collapse to the start of the removal.
+					newIndex -= index - readPosition;
+				}
+				readPosition += op.count;
+				break;
+			}
+			default: {
+				unreachableCase(op);
+			}
+		}
+	}
+	return newIndex;
 }
