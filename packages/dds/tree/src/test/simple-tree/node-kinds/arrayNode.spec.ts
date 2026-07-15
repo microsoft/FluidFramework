@@ -161,6 +161,13 @@ describe("ArrayNode", () => {
 		schemaType: typeof PojoEmulationNumberArray | typeof CustomizableNumberArray,
 	): void {
 		describeHydration(title, (init) => {
+			function buildAlphaArray(
+				initial: readonly number[],
+			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
+				const list = init(schemaType, initial);
+				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+			}
+
 			it("fails at runtime if attempting to set content via index assignment", () => {
 				const array = init(schemaType, [0]);
 				const mutableArray = array as Mutable<typeof array>;
@@ -183,6 +190,67 @@ describe("ArrayNode", () => {
 				const jsArray = [0, 1, 2];
 				const array = init(schemaType, jsArray);
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+
+			describe("at", () => {
+				it("returns the item at the given index", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(0), 0);
+					assert.equal(array.at(1), 1);
+					assert.equal(array.at(2), 2);
+				});
+
+				it("supports negative indices, counting back from the end", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(-1), 2);
+					assert.equal(array.at(-3), 0);
+				});
+
+				it("returns undefined for out of bounds indices", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(3), undefined);
+					assert.equal(array.at(-4), undefined);
+				});
+			});
+
+			describe("pop", () => {
+				it("removes and returns the last item", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(array.pop(), 3);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
+				it("removes the only item, leaving the array empty", () => {
+					const array = buildAlphaArray([1]);
+					assert.equal(array.pop(), 1);
+					assert.deepEqual([...array], []);
+				});
+
+				it("returns undefined on an empty array without modifying it", () => {
+					const array = buildAlphaArray([]);
+					assert.equal(array.pop(), undefined);
+					assert.deepEqual([...array], []);
+				});
+			});
+
+			describe("shift", () => {
+				it("removes and returns the first item", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(array.shift(), 1);
+					assert.deepEqual([...array], [2, 3]);
+				});
+
+				it("removes the only item, leaving the array empty", () => {
+					const array = buildAlphaArray([1]);
+					assert.equal(array.shift(), 1);
+					assert.deepEqual([...array], []);
+				});
+
+				it("returns undefined on an empty array without modifying it", () => {
+					const array = buildAlphaArray([]);
+					assert.equal(array.shift(), undefined);
+					assert.deepEqual([...array], []);
+				});
 			});
 
 			describe("removeAt", () => {
@@ -245,6 +313,14 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array], [1, 2, 3]);
 				array.push(4);
 				assert.deepEqual([...array], [1, 2, 3, 4]);
+			});
+
+			it("unshift inserts at the start, preserving argument order", () => {
+				const array = buildAlphaArray([3]);
+				array.unshift(2);
+				assert.deepEqual([...array], [2, 3]);
+				array.unshift(0, 1);
+				assert.deepEqual([...array], [0, 1, 2, 3]);
 			});
 
 			describe("removeRange", () => {
@@ -344,12 +420,6 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
-				function buildAlphaArray(
-					initial: number[],
-				): TreeArrayNodeAlpha<typeof schemaFactory.number> {
-					const list = init(schemaType, initial);
-					return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
-				}
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
