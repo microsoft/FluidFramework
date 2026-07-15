@@ -1,5 +1,7 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
+
 "__section": tree
 ---
 Independent tree views now accept an optional telemetry logger
