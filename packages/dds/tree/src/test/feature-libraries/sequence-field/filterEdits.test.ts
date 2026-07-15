@@ -28,6 +28,22 @@ const id5: ChangeAtomId = { revision: tag3, localId: brand(0) };
 const id6: ChangeAtomId = { revision: tag3, localId: brand(1) };
 const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 
+function preserveAll(
+	id: ChangeAtomId,
+	count: number,
+	endpoint?: ChangeAtomId,
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Preserve };
+}
+
+function removeAll(
+	id: ChangeAtomId,
+	count: number,
+	endpoint?: ChangeAtomId,
+): RangeQueryResult<EditFilterStatus> {
+	return { length: count, value: EditFilterStatus.Remove };
+}
+
 export function testFilterEdits(): void {
 	describe("Filter edits", () => {
 		it("Can preserve all", () => {
@@ -160,20 +176,4 @@ export function testFilterEdits(): void {
 			assertChangesetsEqual(filtered, expected);
 		});
 	});
-}
-
-function preserveAll(
-	id: ChangeAtomId,
-	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { length: count, value: EditFilterStatus.Preserve };
-}
-
-function removeAll(
-	id: ChangeAtomId,
-	count: number,
-	endpoint?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { length: count, value: EditFilterStatus.Remove };
 }
