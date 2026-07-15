@@ -23,7 +23,6 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeQueryResult,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -50,6 +49,7 @@ import {
 	type NestedChangesIndices,
 	type FieldChangeDelta,
 	FlexFieldKind,
+	type EditFilterFunc,
 } from "../modular-schema/index.js";
 
 import type {
@@ -817,16 +817,8 @@ export const optional: Optional = new FlexFieldKind(
 
 function filterEdits(
 	change: OptionalChangeset,
-	filterDetach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	filterAttach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
+	filterDetach: EditFilterFunc,
+	filterAttach: EditFilterFunc,
 	preserveOtherEdits: boolean,
 ): OptionalChangeset {
 	const filtered: Mutable<OptionalChangeset> = { ...change };

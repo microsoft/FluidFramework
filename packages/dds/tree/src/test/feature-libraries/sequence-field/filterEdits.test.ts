@@ -8,7 +8,6 @@ import { filterEdits } from "../../../feature-libraries/sequence-field/filterEdi
 // eslint-disable-next-line import-x/no-internal-modules
 import { EditFilterStatus } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	areEqualChangeAtomIdOpts,
 	areEqualChangeAtomIds,
 	offsetChangeAtomId,
 	type ChangeAtomId,
@@ -27,7 +26,7 @@ const id3: ChangeAtomId = { revision: tag2, localId: brand(0) };
 const id4: ChangeAtomId = { revision: tag2, localId: brand(1) };
 const id5: ChangeAtomId = { revision: tag3, localId: brand(0) };
 const id6: ChangeAtomId = { revision: tag3, localId: brand(1) };
-const id7: ChangeAtomId = { revision: tag3, localId: brand(1) };
+const id7: ChangeAtomId = { revision: tag3, localId: brand(2) };
 
 export function testFilterEdits(): void {
 	describe("Filter edits", () => {
@@ -119,7 +118,7 @@ export function testFilterEdits(): void {
 			]);
 		});
 
-		it("Can remove convert move-out to remove", () => {
+		it("Can convert move-out to remove", () => {
 			const filtered = filterEdits(
 				[
 					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),
@@ -142,7 +141,7 @@ export function testFilterEdits(): void {
 			assertChangesetsEqual(filtered, expected);
 		});
 
-		it("Can remove convert move-in to insert", () => {
+		it("Can convert move-in to insert", () => {
 			const filtered = filterEdits(
 				[
 					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),

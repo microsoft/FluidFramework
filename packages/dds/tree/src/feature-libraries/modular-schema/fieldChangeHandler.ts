@@ -181,19 +181,17 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	filterEdits(
 		change: TChangeset,
-		filterDetach: (
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		) => RangeQueryResult<EditFilterStatus>,
-		filterAttach: (
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		) => RangeQueryResult<EditFilterStatus>,
+		filterDetach: EditFilterFunc,
+		filterAttach: EditFilterFunc,
 		preserveOtherEdits: boolean,
 	): TChangeset;
 }
+
+export type EditFilterFunc = (
+	id: ChangeAtomId,
+	count: number,
+	endpoint?: ChangeAtomId,
+) => RangeQueryResult<EditFilterStatus>;
 
 export enum EditFilterStatus {
 	Remove,
