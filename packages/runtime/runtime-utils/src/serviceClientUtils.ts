@@ -114,6 +114,9 @@ export type ContainerRuntimeLoader = (
  * when `parameters.existing` is `false` and `parameters.newContainerRootType` is set, creating and
  * aliasing the root data store.
  *
+ * This loader never does any code loading, and always assumes it is compatible.
+ * TODO: We should reevaluate this before promoting ServiceClient APIs to beta.
+ *
  * @internal
  */
 export function makeCodeLoader<T>(

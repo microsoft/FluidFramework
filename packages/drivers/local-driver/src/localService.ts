@@ -204,7 +204,7 @@ export class EphemeralServiceContainer<TData>
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: new LocalDocumentServiceFactory(localServer),
+			documentServiceFactory,
 			codeLoader: makeCodeLoader(
 				registry,
 				options.minVersionForCollaboration,
