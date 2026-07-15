@@ -103,8 +103,25 @@ function decodeSerializedChangeV1(
  * @remarks Such changes are not expected to be durable beyond the scope of a single session.
  */
 export const SerializedChange = {
+	/** Utilities for version 1 of the serialized change format. */
 	V1: {
+		/**
+		 * Encodes a SharedTree change into the version 1 serialized change format.
+		 * @param idCompressor - The ID compressor to use for encoding.
+		 * @param changeFamily - The change family to use for encoding.
+		 * @param change - The change to encode.
+		 * @param changeRevision - The revision tag for the change.
+		 * @param contextRevision - The optional context revision tag.
+		 * @returns The encoded change in the version 1 serialized change format.
+		 */
 		encode: encodeSerializedChangeV1,
+		/**
+		 * Decodes a version 1 serialized change into a SharedTree change.
+		 * @param idCompressor - The ID compressor to use for decoding.
+		 * @param changeFamily - The change family to use for decoding.
+		 * @param serializedChange - The serialized change to decode.
+		 * @returns The decoded SharedTree change.
+		 */
 		decode: decodeSerializedChangeV1,
 	},
 } as const;
