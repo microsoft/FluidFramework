@@ -12,22 +12,25 @@ import path from "node:path";
  * (e.g. an individual test is being run and the file was never generated), which should presumably
  * not lead to collisions.
  */
-export function getTestPort(pkgName: string): string {
-	let mappedPort: string;
+export function getTestPort(pkgName: string): number {
+	let mappedPort: number | undefined;
 
 	try {
 		const portMapPath: string = fs
 			.readFileSync(path.join(os.tmpdir(), "testportmap.json"))
 			.toString();
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const testPortsJson = JSON.parse(portMapPath);
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+		const testPortsJson = JSON.parse(portMapPath) as Record<string, number | undefined>;
 		mappedPort = testPortsJson[pkgName];
 	} catch {
+		// Fall through to the default below.
+	}
+
+	if (mappedPort === undefined) {
 		console.warn(
 			"Port mapping not available, using default port of 8081. If you encounter port collisions, be sure to run assign-test-ports.",
 		);
-		mappedPort = "8081";
+		mappedPort = 8081;
 	}
+
 	return mappedPort;
 }
