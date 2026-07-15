@@ -97,6 +97,11 @@ function decodeSerializedChangeV1(
 	return tagChange(treeChange, revision);
 }
 
+/**
+ * Provides utilities for serializing and deserializing SharedTree changes.
+ *
+ * @remarks Such changes are not expected to be durable beyond the scope of a single session.
+ */
 export const SerializedChange = {
 	V1: {
 		encode: encodeSerializedChangeV1,
