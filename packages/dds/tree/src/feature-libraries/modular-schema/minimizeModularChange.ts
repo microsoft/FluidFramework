@@ -172,6 +172,8 @@ function mapTreeFromNodeChunk(chunk: TreeChunk): ExclusiveMapTree {
 /**
  * Trims transient content from a built node's in-memory tree, in place.
  *
+ * @returns The number of children removed from the node's fields.
+ *
  * @remarks
  * `deltaFields` is the {@link DeltaFieldMap} describing the modifications made to the built node (as
  * produced in the change's delta `global` section, keyed by the node's build ID). It is walked in
@@ -184,7 +186,8 @@ function trimMapTree(
 	node: ExclusiveMapTree,
 	deltaFields: DeltaFieldMap,
 	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
-): void {
+): number {
+	let changes = 0;
 	for (const [fieldKey, fieldChanges] of deltaFields) {
 		if (fieldChanges.marks.length === 0) {
 			continue;
@@ -194,6 +197,7 @@ function trimMapTree(
 			continue;
 		}
 		const newChildren: ExclusiveMapTree[] = [];
+		let fieldChangeCount = 0;
 		let childIndex = 0;
 		for (const mark of fieldChanges.marks) {
 			if (mark.detach !== undefined) {
@@ -202,13 +206,15 @@ function trimMapTree(
 					if (isLive(mark.detach.major, mark.detach.minor + offset)) {
 						// Detached to a cell that survives elsewhere: retain the content.
 						newChildren.push(children[childIndex] ?? oob());
+					} else {
+						fieldChangeCount += 1;
 					}
 					childIndex += 1;
 				}
 			} else if (mark.fields !== undefined) {
 				// A surviving child that has its own nested modifications.
 				const child = children[childIndex] ?? oob();
-				trimMapTree(child, mark.fields, isLive);
+				fieldChangeCount += trimMapTree(child, mark.fields, isLive);
 				newChildren.push(child);
 				childIndex += 1;
 			} else if (mark.attach === undefined) {
@@ -221,6 +227,10 @@ function trimMapTree(
 			// Otherwise the mark only attaches new content from a separate build,
 			// which is not inlined in this node, so there is nothing to copy over.
 		}
+		if (fieldChangeCount === 0) {
+			// No changes to this field's content, so no need to update the field.
+			continue;
+		}
 		// Any children beyond the marks are unchanged trailing content.
 		while (childIndex < children.length) {
 			newChildren.push(children[childIndex] ?? oob());
@@ -231,7 +241,9 @@ function trimMapTree(
 		} else {
 			node.fields.set(fieldKey, newChildren);
 		}
+		changes += fieldChangeCount;
 	}
+	return changes;
 }
 
 /**
@@ -277,9 +289,11 @@ function computeMinimizedBuilds(
 				const globalFields = globalById.get(revision)?.get(localId);
 				if (globalFields !== undefined) {
 					const mapTree = mapTreeFromNodeChunk(nodeChunk);
-					trimMapTree(mapTree, globalFields, isLive);
-					nodeChunk.referenceRemoved();
-					nodeChunk = chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor);
+					if (trimMapTree(mapTree, globalFields, isLive) > 0) {
+						// The node's build tree was modified, so re-chunk it to reflect the trimmed content.
+						nodeChunk.referenceRemoved();
+						nodeChunk = chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor);
+					}
 				}
 
 				runStart ??= localId;
