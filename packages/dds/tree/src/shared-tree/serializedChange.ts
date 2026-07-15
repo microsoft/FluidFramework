@@ -97,14 +97,9 @@ function decodeSerializedChangeV1(
 	return tagChange(treeChange, revision);
 }
 
-export const SerializedChange: {
-	readonly V1: {
-		readonly encode: typeof encodeSerializedChangeV1;
-		readonly decode: typeof decodeSerializedChangeV1;
-	};
-} = {
+export const SerializedChange = {
 	V1: {
 		encode: encodeSerializedChangeV1,
 		decode: decodeSerializedChangeV1,
 	},
-};
+} as const;
