@@ -28,6 +28,8 @@ describe("treeDataStore", () => {
 		await closeEphemeralContainers();
 	});
 
+	// See also examples/utils/import-testing/src/test/apiExamples.spec.ts for examples which are more public facing and have imports not allowed in this package.
+
 	it("detached example", async () => {
 		const myFactory = treeDataStoreKind({
 			type: "my-tree",
