@@ -121,10 +121,16 @@ export function createOdspFileVersionFetcher(
 				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
 				sequenceNumber =
 					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
-			} else {
+			} else if (contentType.includes("application/ms-fluid")) {
 				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
 				const bytes = new Uint8Array(await response.content.arrayBuffer());
 				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
+			} else {
+				// Neither framing was returned (e.g. an HTML error page or a missing content-type); surface
+				// a clear error rather than mis-parsing the body as a compact snapshot.
+				throw new Error(
+					`ODSP file version ${versionId} snapshot returned an unexpected content-type "${contentType}"`,
+				);
 			}
 			// A version's snapshot must carry a sequence number; a missing one is surfaced as an error
 			// naming the version, rather than returning a wrong value.

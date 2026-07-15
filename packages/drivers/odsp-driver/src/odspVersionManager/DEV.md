@@ -91,24 +91,22 @@ these behaviors are tested with an in-memory fake.
 
 ### Which version does `findBaseForSeq` pick for a target sequence number?
 
-The list is newest-first, and the tip (index 0, the live document) is not a base candidate. Among the
-remaining versions, the answer is the closest one at or before the target — the greatest sequence number
-at or before the target when version order tracks sequence order, which an early-stop newest-first scan
-finds.
+The list is newest-first; every version in it is a recoverable base candidate. The answer is the closest
+one at or before the target — the greatest sequence number at or before the target when version order
+tracks sequence order, which an early-stop newest-first scan finds.
 
 - **Target between two versions?** The closer, older one. `M-SELECT-01`
 - **Target equal to a version?** That version, an exact match (zero ops to replay). `M-SELECT-02`
-- **Target newer than every version?** The newest recoverable version. `M-SELECT-03`
+- **Target newer than every version?** The newest version. `M-SELECT-03`
 - **Target older than every version?** `noBaseVersion`, reporting the oldest sequence number seen.
   `M-SELECT-04`
+- **A single-version file, target at or after its sequence number?** That one version — it is a normal
+  base, not excluded. `M-SELECT-05`
 
-### How does it handle duplicate versions and the tip?
+### How does it handle duplicate versions and empty history?
 
 - **Two versions share a sequence number?** Return the newest label (a metadata-only re-save leaves the
   sequence number unchanged; the newest is closest to the head). `M-DEDUP-01`
-- **The tip (index 0)?** Never treated as a base; its sequence number is never even resolved.
-  `M-TIP-01`
-- **Only the tip exists?** `noBaseVersion`. `M-TIP-02`
 - **No versions at all?** `noBaseVersion`. `M-EMPTY-01`
 
 ### What work does it avoid?
@@ -125,7 +123,8 @@ finds.
 
 ### What happens when a version cannot be resolved?
 
-The failure propagates; it is never swallowed into a wrong base. `M-ERR-01`
+The failure propagates; it is never swallowed into a wrong base. `M-ERR-01` A failed resolution is not
+cached, so a later call re-attempts it rather than replaying the cached rejection. `M-ERR-02`
 
 ### What does `listVersions` return?
 
@@ -153,6 +152,10 @@ field yields an empty list rather than an error. `F-LIST-03`
   value. `F-RESOLVE-02`
 - **A binary (`application/ms-fluid`) snapshot?** It reads it with the driver's compact-snapshot parser
   and returns the same sequence number the JSON path would. `F-RESOLVE-03`
+- **An unexpected content-type (e.g. an HTML error page)?** It throws rather than mis-parsing the body as
+  a compact snapshot. `F-RESOLVE-04`
+- **A version label with characters that need escaping?** The label is percent-encoded into the snapshot
+  URL. `F-RESOLVE-05`
 
 ### How does it handle request failures?
 

@@ -96,27 +96,28 @@ export interface IOdspVersionManager {
 export class OdspVersionManager implements IOdspVersionManager {
 	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
 	private readonly seqByVersion = new Map<string, Promise<number>>();
+	// Bumped by refresh(); lets a rejecting in-flight fetch tell whether it still owns its cache entry.
+	private generation = 0;
 
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
 	public refresh(): void {
 		this.versionsCache = undefined;
 		this.seqByVersion.clear();
+		this.generation++;
 	}
 
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
-		// Recoverable base candidates = every version except the tip (index 0 ≈ the live document).
 		const versions = await this.getVersions();
-		const candidates = versions.slice(1);
 
 		// Versions are listed newest-first, and version order is expected to track sequence number, so
-		// the first candidate whose seq is at or before the target is taken as the closest base. Because
+		// the first version whose seq is at or before the target is taken as the closest base. Because
 		// any base at or before the target replays forward to the same state, this early stop is an
 		// optimization, not a correctness requirement: if version order and sequence order ever diverge,
 		// a base that is valid but not strictly the closest may be chosen.
 		// Scanning newest-first also yields the newest of versions sharing a sequence number (dedup).
 		let oldestResolvedSeq: number | undefined;
-		for (const version of candidates) {
+		for (const version of versions) {
 			const sequenceNumber = await this.resolveSeq(version.versionId);
 			oldestResolvedSeq =
 				oldestResolvedSeq === undefined
@@ -142,18 +143,43 @@ export class OdspVersionManager implements IOdspVersionManager {
 	}
 
 	private async getVersions(): Promise<OdspFileVersionRef[]> {
-		// Cache the pending promise, not the awaited value, so concurrent callers share one fetch and a
-		// refresh() that runs while the fetch is in flight is not overwritten when the fetch settles.
-		this.versionsCache ??= this.fetcher.listFileVersions();
+		if (this.versionsCache === undefined) {
+			// Cache the pending promise, not the awaited value, so concurrent callers share one fetch and a
+			// refresh() that runs while the fetch is in flight is not overwritten when it settles. A rejected
+			// fetch is evicted so the next call retries, unless a refresh() has since advanced the generation
+			// (a newer fetch owns the cache now).
+			const generation = this.generation;
+			this.versionsCache = (async (): Promise<OdspFileVersionRef[]> => {
+				try {
+					return await this.fetcher.listFileVersions();
+				} catch (error) {
+					if (this.generation === generation) {
+						this.versionsCache = undefined;
+					}
+					throw error;
+				}
+			})();
+		}
 		return this.versionsCache;
 	}
 
 	private async resolveSeq(versionId: string): Promise<number> {
-		// Cache the pending promise (a version's sequence number never changes) so concurrent callers
-		// coalesce and a refresh() is not clobbered by a fetch that was already in flight.
 		let pending = this.seqByVersion.get(versionId);
 		if (pending === undefined) {
-			pending = this.fetcher.resolveSequenceNumber(versionId);
+			// Cache the pending promise (a version's sequence number never changes) so concurrent callers
+			// coalesce and a refresh() is not clobbered by a fetch already in flight. A rejected resolution
+			// is evicted so a later call retries, unless a refresh() has since advanced the generation.
+			const generation = this.generation;
+			pending = (async (): Promise<number> => {
+				try {
+					return await this.fetcher.resolveSequenceNumber(versionId);
+				} catch (error) {
+					if (this.generation === generation) {
+						this.seqByVersion.delete(versionId);
+					}
+					throw error;
+				}
+			})();
 			this.seqByVersion.set(versionId, pending);
 		}
 		return pending;
