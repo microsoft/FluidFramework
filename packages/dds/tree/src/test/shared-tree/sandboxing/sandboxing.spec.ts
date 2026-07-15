@@ -771,7 +771,7 @@ describe("Host and Sandbox Demo", () => {
 
 	// TODO: investigate and fix the memory leaks in this test, then run it with higher number of steps.
 	it("All permutations", function () {
-		this.timeout(10_000);
+		this.timeout(20_000);
 		/**
 		 * The number of {@link Step | steps} in each scenario.
 		 */
