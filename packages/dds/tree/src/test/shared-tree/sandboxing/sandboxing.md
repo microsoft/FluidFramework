@@ -4,7 +4,7 @@ The test file in this folder includes an example architecture that could be used
 
 This example provides the following:
 * A protocol for messages sent between the host and the sandbox
-* An sample implementation of the host and sandbox that support the protocol
+* A sample implementation of the host and sandbox that support the protocol
 * Tests that demonstrate usage patterns and validate the implementation
 
 The key value of such an architecture is to expose the familiar (and feature-rich) SharedTree view on a sandbox,
@@ -12,7 +12,7 @@ thus alleviating the need for custom protocols and custom conflict resolution.
 
 ## Key Assumptions
 
-1. All messages between the host to the sandbox are expected to eventually arrive.
+1. All messages between the host and the sandbox are expected to eventually arrive.
 2. All messages flowing in a given direction (either from the host to the sandbox or the reverse)
 are expected to arrive in the order they were sent.
 There is no assumption about the relative order of arrival of messages going in different directions.
