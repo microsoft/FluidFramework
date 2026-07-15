@@ -97,6 +97,7 @@ steps:
       set -eu -o pipefail
       echo "Using node $(node --version)"
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
+      echo "##vso[task.setvariable variable=PNPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
       echo "Primary registry: ${NPM_REGISTRY}"
       echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
       if [ "${NPM_REGISTRY}" == "https://registry.npmjs.org/" ]; then
