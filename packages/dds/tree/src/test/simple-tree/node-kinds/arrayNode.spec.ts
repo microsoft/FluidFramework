@@ -162,7 +162,7 @@ describe("ArrayNode", () => {
 	): void {
 		describeHydration(title, (init) => {
 			function buildAlphaArray(
-				initial: number[],
+				initial: readonly number[],
 			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
 				const list = init(schemaType, initial);
 				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
