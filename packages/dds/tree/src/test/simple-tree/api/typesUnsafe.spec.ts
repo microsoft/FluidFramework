@@ -56,27 +56,36 @@ type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, nu
 		allowUnused<requireTrue<areSafelyAssignable<number | string, Insertable>>>();
 	}
 
-	// One annotated
+	// AllowedTypesFullFromMixedUnsafe:
+	// SchemaFactoryBeta.typesRecursive uses AllowedTypesFullFromMixedUnsafe which produces an intersection of
+	// UnannotateAllowedTypesListUnsafe<...> & AnnotatedAllowedTypes<...>
+	// This intersection can cause issues, and has caused issues in the past.
+	// These tests are regression tests for one such issue, where the intersection caused
+	// InsertableTreeNodeFromImplicitAllowedTypesUnsafe to produce `never` instead of the desired type union
+	// when multiple types were provided.
 	{
-		const types = SchemaFactoryBeta.typesRecursive([SchemaFactoryBeta.number]);
-		type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-			typeof types
-		>;
-		allowUnused<requireTrue<areSafelyAssignable<number, Insertable>>>();
-	}
+		// One type
+		{
+			const types = SchemaFactoryBeta.typesRecursive([SchemaFactoryBeta.number]);
+			type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+				typeof types
+			>;
+			allowUnused<requireTrue<areSafelyAssignable<number, Insertable>>>();
+		}
 
-	// Multiple annotated
-	{
-		const types = SchemaFactoryBeta.typesRecursive([
-			SchemaFactoryBeta.string,
-			SchemaFactoryBeta.number,
-		]);
+		// Multiple types
+		{
+			const types = SchemaFactoryBeta.typesRecursive([
+				SchemaFactoryBeta.string,
+				SchemaFactoryBeta.number,
+			]);
 
-		type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
-			typeof types
-		>;
-		allowUnused<requireAssignableTo<number, Insertable>>();
-		allowUnused<requireAssignableTo<string, Insertable>>();
-		allowUnused<requireTrue<areSafelyAssignable<number | string, Insertable>>>();
+			type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+				typeof types
+			>;
+			allowUnused<requireAssignableTo<number, Insertable>>();
+			allowUnused<requireAssignableTo<string, Insertable>>();
+			allowUnused<requireTrue<areSafelyAssignable<number | string, Insertable>>>();
+		}
 	}
 }
