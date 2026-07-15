@@ -51,7 +51,7 @@ function encodeSerializedChangeV1(
 	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 	change: SharedTreeChange,
 	changeRevision: RevisionTag,
-	contextRevision: RevisionTag | undefined = changeRevision,
+	contextRevision?: RevisionTag,
 ): JsonCompatibleReadOnly {
 	const context: ChangeEncodingContext = {
 		idCompressor,
