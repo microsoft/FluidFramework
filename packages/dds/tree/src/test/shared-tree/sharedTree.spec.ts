@@ -954,6 +954,19 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
+	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
+	// if we'll ever expose some memory stats in which the trunk length would be included.
+	// If we do then this test should be updated to use that code path.
+	interface EditManagerKludge {
+		kernel?: {
+			editManager?: EditManager<
+				ChangeFamilyEditor,
+				unknown,
+				ChangeFamily<ChangeFamilyEditor, unknown>
+			>;
+		};
+	}
+
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -984,18 +997,6 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-		// if we'll ever expose some memory stats in which the trunk length would be included.
-		// If we do then this test should be updated to use that code path.
-		interface EditManagerKludge {
-			kernel?: {
-				editManager?: EditManager<
-					ChangeFamilyEditor,
-					unknown,
-					ChangeFamily<ChangeFamilyEditor, unknown>
-				>;
-			};
-		}
 		const t1 = provider.trees[0] as unknown as EditManagerKludge;
 		const t2 = provider.trees[1] as unknown as EditManagerKludge;
 		assert(
@@ -1004,6 +1005,60 @@ describe("SharedTree", () => {
 		);
 		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
 		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+	});
+
+	it("does not evict trunk commits when retainHistory is enabled", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: true,
+			}).getFactory(),
+		);
+		const viewInit = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		viewInit.initialize([]);
+		viewInit.dispose();
+		provider.synchronizeMessages();
+
+		const t1 = provider.trees[0] as unknown as EditManagerKludge;
+		const t2 = provider.trees[1] as unknown as EditManagerKludge;
+		assert(
+			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
+			"EditManager has moved. This test must be updated.",
+		);
+
+		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+
+		const [view1, view2] = provider.trees.map((t) =>
+			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+		);
+
+		const sequencedEditCount = 10;
+		for (let i = 0; i < sequencedEditCount; ++i) {
+			view1.root.insertAtStart("");
+		}
+
+		provider.synchronizeMessages();
+
+		// These two edits will have ref numbers that correspond to the last of the above edits
+		view1.root.insertAtStart("");
+		view2.root.insertAtStart("");
+
+		// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
+		// and would normally cause the earlier commits to be evicted from the trunk.
+		provider.synchronizeMessages();
+
+		// All of the edits (plus the two additional ones) should still be present on the trunk since
+		// retainHistory prevents trunk commits from ever being trimmed.
+		const expectedCount = priorEditCount + sequencedEditCount + 2;
+		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
 	});
 
 	it("can process changes while detached", async () => {
