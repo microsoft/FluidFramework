@@ -9,7 +9,7 @@ import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
 	closeEphemeralContainers,
 	createEphemeralServiceClient,
-	synchronizeLocalService,
+	synchronizeEphemeralClients,
 } from "@fluidframework/local-driver/internal";
 import { dataStoreKind } from "@fluidframework/shared-object-base/internal";
 
@@ -82,7 +82,7 @@ describe("treeDataStore", () => {
 
 		container2.data.root = 2;
 
-		await synchronizeLocalService();
+		await synchronizeEphemeralClients();
 
 		assert.equal(container1.data.root, 2);
 		assert.equal(container2.data.root, 2);
@@ -208,7 +208,7 @@ describe("treeDataStore", () => {
 			mainView.root = secondTree.handle;
 		}
 
-		await synchronizeLocalService();
+		await synchronizeEphemeralClients();
 
 		// Load the container, traverse the handle, and confirm the second tree is as expected.
 		{

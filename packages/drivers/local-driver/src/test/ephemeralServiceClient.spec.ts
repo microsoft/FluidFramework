@@ -10,7 +10,7 @@ import { makeStubDataStoreKind } from "@fluidframework/shared-object-base/intern
 import {
 	closeEphemeralContainers,
 	createEphemeralServiceClient,
-	synchronizeLocalService,
+	synchronizeEphemeralClients,
 } from "../localService.js";
 
 describe("EphemeralServiceClient", () => {
@@ -68,7 +68,7 @@ describe("EphemeralServiceClient", () => {
 		const detached = await service.createContainer(stubFactory);
 		const container1 = await detached.attach();
 		const container2 = await service.loadContainer(container1.id, stubFactory);
-		await synchronizeLocalService();
+		await synchronizeEphemeralClients();
 
 		// Both containers are connected to the same server, so both should report the same document id.
 		assert.strictEqual(container2.id, container1.id);

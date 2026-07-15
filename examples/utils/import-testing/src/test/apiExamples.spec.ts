@@ -5,7 +5,7 @@
 
 import {
 	createEphemeralServiceClient,
-	synchronizeLocalService,
+	synchronizeEphemeralClients,
 	closeEphemeralContainers,
 } from "@fluidframework/local-driver/alpha";
 import {
@@ -24,7 +24,7 @@ describe("examples", () => {
 	});
 
 	it("self contained example", async () => {
-		// import { createEphemeralServiceClient, synchronizeLocalService } from "@fluidframework/local-driver/alpha";
+		// import { createEphemeralServiceClient, synchronizeEphemeralClients } from "@fluidframework/local-driver/alpha";
 		// import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 		// import { strict as assert } from "node:assert";
 
@@ -55,8 +55,8 @@ describe("examples", () => {
 
 		// Both clients can modify the data, and the changes will be synced over the service.
 		container2.data.root = 2;
-		// Since we are using an ephemeral service, we can await the synchronization using synchronizeLocalService.
-		await synchronizeLocalService();
+		// Since we are using an ephemeral service, we can await the synchronization using synchronizeEphemeralClients.
+		await synchronizeEphemeralClients();
 
 		// And now the changes are visible for all clients.
 		assert.equal(container1.data.root, 2);

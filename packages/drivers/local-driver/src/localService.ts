@@ -111,17 +111,27 @@ function updateContainers(): void {
 }
 
 /**
- * Synchronizes all local clients.
+ * Synchronizes all ephemeral clients.
  *
  * @param timeoutMilliseconds - The maximum time to wait for local containers to quiesce, in milliseconds. Defaults to 30_000.
  *
  * @remarks
- * Best-effort: this drives all in-process ephemeral containers toward convergence, but does not
- * perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
+ * See {@link createEphemeralServiceClient} for details on the ephemeral service.
+ *
+ * This drives all in-process ephemeral containers toward convergence,
+ * processing all pending operations and waiting for all dirty containers to save.
+ *
+ * @privateRemarks
+ * This is a Best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
+ * Currently it does not perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
  * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
+ * For the currently exposed API surface, this should be sufficient,
+ * but users down casting to internal types might run into some limitations.
  * @alpha
  */
-export async function synchronizeLocalService(timeoutMilliseconds = 30_000): Promise<void> {
+export async function synchronizeEphemeralClients(
+	timeoutMilliseconds = 30_000,
+): Promise<void> {
 	// Timeout to allow for better errors in the case of hangs.
 	let timedOut = false;
 	let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
@@ -139,7 +149,7 @@ export async function synchronizeLocalService(timeoutMilliseconds = 30_000): Pro
 		while (clean < 2) {
 			if (timedOut) {
 				throw new Error(
-					`synchronizeLocalService timed out after ${timeoutMilliseconds}ms waiting for local containers to quiesce.`,
+					`synchronizeEphemeralClients timed out after ${timeoutMilliseconds}ms waiting for local containers to quiesce.`,
 				);
 			}
 

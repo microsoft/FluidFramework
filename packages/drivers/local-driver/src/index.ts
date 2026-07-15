@@ -14,5 +14,5 @@ export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
 export {
 	closeEphemeralContainers,
 	createEphemeralServiceClient,
-	synchronizeLocalService,
+	synchronizeEphemeralClients,
 } from "./localService.js";

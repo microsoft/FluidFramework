@@ -16,14 +16,14 @@ The new surface is made up of:
 - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `registryLookup`, `basicKey`).
 - `dataStoreKind` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
 - `treeDataStoreKind` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
-- `createEphemeralServiceClient` (`@fluidframework/local-driver`): an in-memory `ServiceClient` implementation for tests, plus the helpers `closeEphemeralContainers` and `synchronizeLocalService`.
+- `createEphemeralServiceClient` (`@fluidframework/local-driver`): an in-memory `ServiceClient` implementation for tests, plus the helpers `closeEphemeralContainers` and `synchronizeEphemeralClients`.
 
 Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
 
 Example:
 
 ```typescript
-import { createEphemeralServiceClient, synchronizeLocalService } from "@fluidframework/local-driver/alpha";
+import { createEphemeralServiceClient, synchronizeEphemeralClients } from "@fluidframework/local-driver/alpha";
 import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 import { strict as assert } from "node:assert";
 
@@ -54,8 +54,8 @@ assert.equal(container2.data.root, 1);
 
 // Both clients can modify the data, and the changes will be synced over the service.
 container2.data.root = 2;
-// Since we are using an ephemeral service, we can await the synchronization using synchronizeLocalService.
-await synchronizeLocalService();
+// Since we are using an ephemeral service, we can await the synchronization using synchronizeEphemeralClients.
+await synchronizeEphemeralClients();
 
 // And now the changes are visible for all clients.
 assert.equal(container1.data.root, 2);

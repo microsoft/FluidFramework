@@ -11,7 +11,7 @@ export function closeEphemeralContainers(): Promise<void>;
 export function createEphemeralServiceClient(options?: ServiceOptions): ServiceClient;
 
 // @alpha
-export function synchronizeLocalService(timeoutMilliseconds?: number): Promise<void>;
+export function synchronizeEphemeralClients(timeoutMilliseconds?: number): Promise<void>;
 
 // (No @packageDocumentation comment for this package)
 
