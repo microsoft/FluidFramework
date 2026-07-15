@@ -18,7 +18,7 @@ The new surface is made up of:
 - `treeDataStoreKind` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
 - `createEphemeralServiceClient` (`@fluidframework/local-driver`): an in-memory `ServiceClient` implementation for tests, plus the helpers `closeEphemeralContainers` and `synchronizeLocalService`.
 
-These APIs are also re-exported from `fluid-framework` and do not reference any `@legacy` types.
+Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
 
 Example:
 
