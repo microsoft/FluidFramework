@@ -109,6 +109,14 @@ export interface TreeArrayNode<
 > extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
+	 *
+	 * @remarks
+	 * All items inserted by a single call to this method are inserted consecutively.
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
@@ -117,12 +125,18 @@ export interface TreeArrayNode<
 
 	/**
 	 * Inserts new item(s) at the start of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
@@ -133,10 +147,8 @@ export interface TreeArrayNode<
 	 * @remarks
 	 * Unlike `Array.prototype.push`, this method does not return the new length of the array.
 	 *
-	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
-	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
-	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
-	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 *
 	 * @param value - The content to insert.
 	 */
@@ -489,11 +501,8 @@ export interface TreeArrayNodeAlpha<
 	 * @remarks
 	 * Unlike `Array.prototype.unshift`, this method does not return the new length of the array.
 	 *
-	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
-	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
-	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
-	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
-	 *
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 */
 	unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
