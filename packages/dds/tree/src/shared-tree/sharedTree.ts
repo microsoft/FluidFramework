@@ -648,7 +648,7 @@ export interface SharedTreeOptions
 	 *
 	 * @remarks
 	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
-	 * are outside the collaboration window) and they are not otherwise retained (e.g. by revertibles or
+	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
 	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
 	 * lifetime of the client, which increases memory usage over time and should be used with care.
 	 */

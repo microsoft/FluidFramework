@@ -80,7 +80,7 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 
 	/**
-	 * See {@link SharedTreeOptions.retainHistory}.
+	 * {@inheritDoc SharedTreeOptions.retainHistory}.
 	 */
 	readonly retainHistory?: boolean;
 }
