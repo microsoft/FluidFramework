@@ -78,12 +78,14 @@ export {
 	type TreeIdentifierUtils,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {

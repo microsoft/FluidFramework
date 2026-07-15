@@ -119,7 +119,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/is not allowed in this field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -132,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/is not allowed in this field/),
 			);
 		});
 	});
@@ -455,9 +458,11 @@ describe("simple-tree tree", () => {
 
 				rebasedView.rebaseOnto(targetView);
 
-				const change = appliedView.computeNetChangeIfRebasedOnto(targetView);
-				if (change !== undefined) {
-					appliedView.applyChange(change);
+				// Validating the output of `computeNetChangeIfRebasedOnto` directly would make the test brittle since the internals of the format are implementation details.
+				// Instead, we apply the net change to the applied view and then compare the resulting state to the rebased view to ensure they are equivalent.
+				const netChange = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (netChange !== undefined) {
+					appliedView.applyChange(netChange);
 				}
 
 				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
