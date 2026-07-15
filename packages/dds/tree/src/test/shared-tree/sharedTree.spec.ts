@@ -35,8 +35,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
-	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
 } from "../../core/index.js";
@@ -68,7 +66,6 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	TreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules

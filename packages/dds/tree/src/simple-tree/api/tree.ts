@@ -274,6 +274,23 @@ export interface TreeContextAlpha {
 }
 
 /**
+ * Metadata describing a single commit in a {@link TreeBranchAlpha}'s history.
+ * @sealed @alpha
+ */
+export interface TreeBranchCommitMetadata {
+	/**
+	 * The revision UUID that uniquely identifies this commit within the branch's history.
+	 */
+	readonly revision: string;
+
+	/**
+	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
+	 * (i.e. it is the oldest commit in the branch's history).
+	 */
+	readonly parent: TreeBranchCommitMetadata | undefined;
+}
+
+/**
  * Provides APIs for querying information about the history of a {@link TreeBranchAlpha}.
  * @remarks
  * The history of a branch is the sequence of commits leading up to its current state.
@@ -290,6 +307,12 @@ export interface TreeBranchHistory {
 	 * This number shrinks when past commits are trimmed from the history.
 	 */
 	readonly commitCount: number;
+
+	/**
+	 * Returns metadata for the current head commit of this branch.
+	 * @returns The metadata for the head commit, or `undefined` if the branch has no commits.
+	 */
+	getHeadCommit(): TreeBranchCommitMetadata | undefined;
 }
 
 /**

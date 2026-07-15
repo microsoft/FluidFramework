@@ -5,7 +5,7 @@
 
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
@@ -88,7 +88,6 @@ import {
 	type ViewableTree,
 	type TreeBranch,
 	type TreeBranchAlpha,
-	type TreeBranchHistory,
 	type VerboseTree,
 	type VoidTransactionCallbackStatusAlpha,
 	type TransactionCallbackStatusAlpha,
@@ -115,6 +114,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { TreeBranchHistoryImpl } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -513,10 +513,10 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
-	public readonly history: TreeBranchHistory;
+	private branchHistory?: TreeBranchHistoryImpl;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		private branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
 		public readonly isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
@@ -537,21 +537,11 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
 
-		const getHead = (): GraphCommit<SharedTreeChange> => this.mainBranch.getHead();
-		this.history = {
-			get commitCount(): number {
-				let size = 0;
-				for (
-					let commit: GraphCommit<SharedTreeChange> | undefined = getHead();
-					commit !== undefined;
-					commit = commit.parent
-				) {
-					size++;
-				}
-				return size;
-			},
-		};
+	public get history(): TreeBranchHistoryImpl {
+		this.branchHistory ??= new TreeBranchHistoryImpl(this.branch, this.idCompressor);
+		return this.branchHistory;
 	}
 
 	/**
@@ -1273,6 +1263,9 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		this.branch = branch;
+		this.branchHistory?.dispose();
+		this.branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 

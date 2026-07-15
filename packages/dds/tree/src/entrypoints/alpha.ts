@@ -274,6 +274,7 @@ export {
 	TreeAlpha, 
 	TreeArrayNodeAlpha, 
 	TreeBranchAlpha, 
+	TreeBranchCommitMetadata, 
 	TreeBranchEvents, 
 	TreeBranchHistory, 
 	TreeChangeEventsAlpha, 

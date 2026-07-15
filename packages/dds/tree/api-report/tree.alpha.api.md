@@ -1789,13 +1789,20 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 }
 
 // @alpha @sealed
+export interface TreeBranchCommitMetadata {
+    readonly parent: TreeBranchCommitMetadata | undefined;
+    readonly revision: string;
+}
+
+// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 // @alpha @sealed
 export interface TreeBranchHistory {
-    readonly size: number;
+    readonly commitCount: number;
+    getHeadCommit(): TreeBranchCommitMetadata | undefined;
 }
 
 // @public @sealed

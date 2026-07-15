@@ -22,6 +22,7 @@ export type {
 	TreeBranch,
 	TreeBranchAlpha,
 	TreeBranchEvents,
+	TreeBranchCommitMetadata,
 	TreeBranchHistory,
 	TreeContextAlpha,
 	ITreeAlpha,

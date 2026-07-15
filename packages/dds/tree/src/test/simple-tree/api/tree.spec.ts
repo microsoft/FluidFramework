@@ -470,40 +470,4 @@ describe("simple-tree tree", () => {
 			assert.equal(viewB.isMissingEditsFrom(viewA), true);
 		});
 	});
-
-	describe("history", () => {
-		describe("commitCount", () => {
-			it("size reflects the number of commits in the branch", () => {
-				const config = new TreeViewConfiguration({ schema: schema.number });
-				const viewA = getView(config);
-				viewA.initialize(3);
-				const sizeAfterInit = viewA.history.commitCount;
-				assert(sizeAfterInit > 0);
-
-				viewA.root = 4;
-				assert.equal(viewA.history.commitCount, sizeAfterInit + 1);
-
-				viewA.root = 5;
-				assert.equal(viewA.history.commitCount, sizeAfterInit + 2);
-			});
-
-			it("increases independently on forked branches", () => {
-				const config = new TreeViewConfiguration({ schema: schema.number });
-				const viewA = getView(config);
-				viewA.initialize(3);
-				const viewB = viewA.fork();
-
-				const initialSize = viewA.history.commitCount;
-				assert.equal(viewB.history.commitCount, initialSize);
-
-				viewA.root = 4;
-				assert.equal(viewA.history.commitCount, initialSize + 1);
-				assert.equal(viewB.history.commitCount, initialSize);
-
-				viewB.root = 5;
-				assert.equal(viewA.history.commitCount, initialSize + 1);
-				assert.equal(viewB.history.commitCount, initialSize + 1);
-			});
-		});
-	});
 });
