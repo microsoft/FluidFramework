@@ -83,3 +83,4 @@ export type {
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
+export { minimizeModularChangeset } from "./minimizeModularChange.js";
