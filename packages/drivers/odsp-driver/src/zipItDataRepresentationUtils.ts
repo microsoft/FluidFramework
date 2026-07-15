@@ -128,11 +128,12 @@ export function iteratePairs<T>(it: IterableIterator<T>): IterableIterator<[T, T
 		next: () => {
 			const a = it.next();
 			if (a.done) {
+				// Note: there is no assertion here that b is also done.
 				return { value: undefined, done: true };
 			}
 			const b = it.next();
 			assert(b.done !== true, 0x22b /* "Should be a pair" */);
-			return { value: [a.value, b.value], done: b.done };
+			return { value: [a.value, b.value], done: false };
 		},
 		[Symbol.iterator]: () => {
 			return res;
@@ -413,9 +414,7 @@ export class NodeCore {
 		durationStructure: number;
 		durationStrings: number;
 	} {
-		const [stringsToResolve, durationStructure] = measure(() =>
-			this.loadStructure(buffer, logger),
-		);
+		const [stringsToResolve, durationStructure] = measure(() => this.loadStructure(buffer));
 		const [, durationStrings] = measure(() =>
 			this.loadStrings(buffer, stringsToResolve, logger),
 		);
@@ -426,10 +425,7 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected loadStructure(
-		buffer: ReadBuffer,
-		logger: TelemetryLoggerExt,
-	): IStringElementInternal[] {
+	protected loadStructure(buffer: ReadBuffer): IStringElementInternal[] {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
 		const dictionary: IStringElement[] = [];

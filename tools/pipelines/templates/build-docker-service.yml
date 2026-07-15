@@ -65,17 +65,15 @@ parameters:
     type: string
     default: repo
 
-  # The package manager (if any) used by this pipeline.
-  - name: packageManager
-    type: string
-    default: pnpm
-    values:
-      - pnpm
-      - none
+  # If true, perform package-manager setup/install (set false for packages without package.json, e.g. gitssh).
+  - name: installPackages
+    type: boolean
+    default: true
 
-  - name: packageManagerInstallCommand
-    type: string
-    default: 'pnpm i --frozen-lockfile'
+  # If true, install only root dependencies for version-setting scenarios in packages with native deps.
+  - name: installWorkspaceRootOnly
+    type: boolean
+    default: false
 
   # The semver range constraint to use for interdependencies; that is, dependencies on other packages within the release
   # group
@@ -239,8 +237,8 @@ extends:
                 containerBaseDir=${{ parameters.containerBaseDir }}
                 interdependencyRange='${{ parameters.interdependencyRange }}'
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
-                packageManager=${{ parameters.packageManager }}
-                packageManagerInstallCommand=${{ parameters.packageManagerInstallCommand }}
+                installPackages=${{ parameters.installPackages }}
+                installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -283,7 +281,7 @@ extends:
               fi
 
               if [[ "$(release)" == "prerelease" ]]; then
-                if [[ "${{ parameters.buildNumberInPatch }}" == "true" ]]; then
+                if [[ "${{ parameters.buildNumberInPatch }}" == "True" ]]; then
                   echo "##vso[task.logissue type=error] Prerelease not allow for builds that put build number as the patch version"
                   exit -1;
                 fi
@@ -301,8 +299,8 @@ extends:
                 fi
               fi
 
-              if [[ "${{ parameters.packageManager }}" == "none" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
-                echo "##vso[task.logissue type=error]packageManager: 'none' is incompatible with setVersion: true (version-setting transitively requires a package manager)."
+              if [[ "${{ parameters.installPackages }}" != "True" ]] && [[ "${{ parameters.setVersion }}" == "True" ]]; then
+                echo "##vso[task.logissue type=error]installPackages: false is incompatible with setVersion: true (version-setting requires dependencies to be installed)."
                 exit -1;
               fi
 
@@ -316,22 +314,27 @@ extends:
               buildDirectory: ${{ parameters.buildDirectory }}
               requireNotice: ${{ parameters.shouldReleaseDockerImage }}
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           - template: /tools/pipelines/templates/include-install-pnpm.yml@self
             parameters:
               buildDirectory: ${{ parameters.buildDirectory }}
 
         # Set version
-        - ${{ if eq(parameters.setVersion, true) }}:
+        - ${{ if and(eq(parameters.setVersion, true), eq(parameters.installPackages, true)) }}:
           - task: Bash@3
             displayName: Install dependencies
             retryCountOnTaskFailure: 4
             inputs:
               targetType: 'inline'
               workingDirectory: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
-              script: |
-                set -eu -o pipefail
-                ${{ parameters.packageManagerInstallCommand }}
+              ${{ if eq(parameters.installWorkspaceRootOnly, true) }}:
+                script: |
+                  set -eu -o pipefail
+                  pnpm i --frozen-lockfile --workspace-root
+              ${{ else }}:
+                script: |
+                  set -eu -o pipefail
+                  pnpm i --frozen-lockfile
 
           - template: /tools/pipelines/templates/include-set-package-version.yml@self
             parameters:
@@ -402,8 +405,11 @@ extends:
               # as a BuildKit secret so the Dockerfile's npm/pnpm steps can install from our
               # ADO npm mirror. Only emit --secret for pnpm release groups; non-pnpm
               # Dockerfiles don't consume it. (gitssh is already excluded one level up.)
-              ${{ if eq(parameters.packageManager, 'pnpm') }}:
-                buildArguments: --target base $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+              # Also forward the host's pnpm supply-chain overrides (set by include-install-pnpm.yml,
+              # which runs precisely when installPackages is true) so the Dockerfile's `pnpm install`
+              # skips the checks our npm mirror can't satisfy.
+              ${{ if eq(parameters.installPackages, true) }}:
+                buildArguments: --target base $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
               ${{ else }}:
                 buildArguments: --target base $(DockerBuildArgs.output)
               useBuildKit: true
@@ -546,10 +552,10 @@ extends:
             dockerfile: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/Dockerfile
             context: $(Pipeline.Workspace)/${{ parameters.buildDirectory }}
             image: $(containerTag)
-            # See the base-image build above for the rationale. Passed here too because
-            # a cache miss could re-execute the base stage layers during this build.
-            ${{ if eq(parameters.packageManager, 'pnpm') }}:
-              buildArguments: $(DockerBuildArgs.output) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
+            # See the base-image build above for the rationale (including the pnpm supply-chain
+            # overrides). Passed here too because a cache miss could re-execute the base stage layers.
+            ${{ if eq(parameters.installPackages, true) }}:
+              buildArguments: $(DockerBuildArgs.output) --build-arg PNPM_CONFIG_TRUST_POLICY=$(PNPM_CONFIG_TRUST_POLICY) --build-arg PNPM_CONFIG_MINIMUM_RELEASE_AGE=$(PNPM_CONFIG_MINIMUM_RELEASE_AGE) --secret id=npmrc,src=$(NPM_CONFIG_USERCONFIG)
             ${{ else }}:
               buildArguments: $(DockerBuildArgs.output)
             useBuildKit: true
@@ -588,7 +594,7 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
-        - ${{ if eq(parameters.packageManager, 'pnpm') }}:
+        - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.
           - task: Bash@3
             displayName: Prune pnpm store

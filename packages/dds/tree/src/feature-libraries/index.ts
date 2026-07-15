@@ -93,6 +93,7 @@ export {
 	isNeverTree,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -109,11 +110,14 @@ export {
 	FieldBatchFormatVersion,
 	makeTreeChunker,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
 } from "./chunked-forest/index.js";
 
 export {
@@ -146,6 +150,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorContext,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,

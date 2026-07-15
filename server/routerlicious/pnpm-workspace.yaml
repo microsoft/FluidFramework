@@ -11,17 +11,6 @@
 packages:
   - "packages/*"
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
-onlyBuiltDependencies:
-  - classic-level
-  - core-js
-  - node-rdkafka
-  - snappy
-  - unrs-resolver
-  - zookeeper
-
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 resolutionMode: highest
@@ -55,3 +44,139 @@ trustPolicyExclude:
   # repo); provenance attestation was lost on a subsequent 6.x release.
   - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+linkWorkspacePackages: true
+strictPeerDependencies: true
+updateNotifier: false
+
+# pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every `pnpm run <script>`.
+# That breaks CI flows that modifies versions via `flub bump` then runs script like `pnpm run format`.
+# We may want to enable this in the future, but doing so requires changes to the pipelines, so we restore the pnpm 10 defaults for now.
+verifyDepsBeforeRun: false
+
+# Use the number of cores on the machine by default.
+workspaceConcurrency: 0
+
+peerDependencyRules:
+  # @types/node is only needed for compilation and not needed at runtime.
+  # oclif includes some AWS-related features, but we don't use them.
+  ignoreMissing:
+    - "@types/node"
+    - "@aws-sdk/*"
+
+overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  ip-address@>=9 <10: ^10.1.1
+  keyv@>=4 <5: ^5.5.3
+  on-headers@>=1 <2: ^1.1.0
+  ts-deepmerge@>=7 <8: ^8.0.0
+  uuid@>=7 <12: ^11.1.1
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
+  # Resolve a known security vulnerability.
+  ws@>=7 <8: ^7.5.11
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve a known security vulnerability (no patched 0.0.x/0.1.x release; move to the 0.2.x line).
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
+
+  # Pin @typescript-eslint/* to 8.52.0 to avoid 8.53.0, which may not be available in the ADO package feed.
+  "@typescript-eslint/tsconfig-utils": 8.52.0
+  "@typescript-eslint/project-service": 8.52.0
+
+  # Pin @babel/* to 7.27.x to avoid 7.28.x versions, which may not be available in the ADO package feed.
+  "@babel/core": 7.27.7
+  "@babel/parser": 7.27.7
+  "@babel/code-frame": 7.27.1
+  "@babel/generator": 7.27.5
+  "@babel/helper-compilation-targets": 7.27.2
+  "@babel/helper-module-imports": 7.27.1
+  "@babel/helper-module-transforms": 7.27.3
+  "@babel/helper-string-parser": 7.27.1
+  "@babel/helper-validator-identifier": 7.27.1
+  "@babel/helpers": 7.27.6
+  "@babel/template": 7.27.2
+  "@babel/traverse": 7.27.7
+  "@babel/types": 7.27.7
+  "@babel/runtime": 7.27.6
+
+  # Resolve known ReDoS vulnerabilities in diff.
+  diff@>=4 <5: ^4.0.4
+  diff@>=5 <6: ^5.2.2
+  diff@>=8 <9: ^8.0.3
+
+  # Force ESLint 9.x to ensure a consistent version across the workspace.
+  eslint: ^9.39.2
+
+  jws: ^3.2.3
+
+  # mongodb>@aws-sdk/credential-providers is not needed and brings in a large transitive
+  # dependency tree (including fast-xml-parser); drop it.
+  mongodb>@aws-sdk/credential-providers: "-"
+
+  # oclif includes AWS features we do not use; drop to reduce lockfile churn.
+  oclif>@aws-sdk/client-cloudfront: "-"
+  oclif>@aws-sdk/client-s3: "-"
+
+  # Resolve known js-yaml vulnerability (prototype pollution via merge keys).
+  js-yaml@<4: ^3.14.2
+  js-yaml@>=4: ^4.1.1
+
+  # Resolve known vulnerabilities in older versions.
+  qs: ^6.15.2
+
+  # Resolve a known security vulnerability.
+  simple-git: ^3.36.0
+
+  # Resolve command injection vulnerabilities.
+  systeminformation: ^5.31.6
+
+  # Resolve multiple tar vulnerabilities; 6.x line is EOL with no backports.
+  tar: ^7.5.11
+
+  socket.io-parser: ^4.2.6
+
+  # Pin zookeeper to 7.x; earlier versions fail to compile and may be brought in transitively.
+  zookeeper: ^7.2.0
+
+  # Resolve known security vulnerabilities across all major version ranges.
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+
+  # Resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists.
+  serialize-javascript@>=6 <7: ^7.0.4
+
+  # Resolve a known vulnerability in express 4.21.2.
+  express@>=4 <5: ^4.22.1
+
+  # Resolve known vulnerabilities in picomatch.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+
+patchedDependencies:
+  "@microsoft/api-extractor@7.58.1": patches/@microsoft__api-extractor@7.58.1.patch
+
+allowBuilds:
+  classic-level: true
+  core-js: true
+  node-rdkafka: true
+  snappy: true
+  unrs-resolver: true
+  zookeeper: true

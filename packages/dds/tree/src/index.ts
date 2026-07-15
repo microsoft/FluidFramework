@@ -84,6 +84,7 @@ export {
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
@@ -273,17 +274,21 @@ export {
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	rollback,
 	generateSchemaFromSimpleSchema,
 	evaluateLazySchema,
@@ -406,7 +411,9 @@ export { asAlpha, asBeta } from "./api.js";
 export {
 	TextAsTree,
 	FormattedTextAsTree,
+	FormattedTextAsTreeDefault,
 	codePointCount,
 	utf16LengthForCodePoints,
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { Component } from "./componentApi.js";

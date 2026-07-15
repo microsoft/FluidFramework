@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.110.0",
+	"version": "2.112.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -57,6 +57,7 @@
 	},
 	"dependencies": {
 		"@fluid-experimental/tree": "workspace:~",
+		"@fluid-internal/claims": "workspace:~",
 		"@fluid-internal/client-utils": "workspace:~",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-private/stochastic-test-utils": "workspace:~",
@@ -121,7 +122,8 @@
 				"@fluidframework/legacy-dds#build:test:esm",
 				"@fluidframework/ordered-collection#build:test:esm",
 				"@fluidframework/counter#build:test:esm",
-				"@fluidframework/register-collection#build:test:esm"
+				"@fluidframework/register-collection#build:test:esm",
+				"@fluid-internal/claims#build:test:esm"
 			]
 		}
 	},

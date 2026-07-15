@@ -1,5 +1,13 @@
 # @fluid-example/bundle-size-tests
 
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+Dependency updates only.
+
 ## 2.103.0
 
 Dependency updates only.

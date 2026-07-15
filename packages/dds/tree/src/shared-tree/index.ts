@@ -30,6 +30,7 @@ export {
 	TreeCheckout,
 	type ITreeCheckout,
 	type CheckoutEvents,
+	type TreeTransactor,
 } from "./treeCheckout.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -41,6 +42,8 @@ export type {
 	ISchemaEditor,
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
+
+export { minimize } from "./transactionMinimize.js";
 
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";

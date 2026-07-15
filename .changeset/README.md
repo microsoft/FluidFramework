@@ -111,6 +111,10 @@ Use `pnpm flub changeset add --empty` to create an empty changeset, then fill in
 
 Each package listed in a changeset will get a changelog entry with the changeset's contents. Only include packages where the change is **meaningful to consumers**. You don't need to list every package that was modified. For example, if you deprecate a class in packageA and update packageB to stop using it, only packageA needs the changeset.
 
+If the change modifies a customer-facing (`@public`/`@beta`/`@alpha`) API that another package re-exports, list that package in the frontmatter too — otherwise the change won't appear in that package's changelog or release notes.
+This mostly applies to `fluid-framework` which re-exports most of the customer-facing surface of `@fluidframework/tree` (and several other client packages).
+So **most changesets for `@fluidframework/tree` should list both `"@fluidframework/tree"` and `"fluid-framework"`**.
+
 ## Formatting
 
 - Each changeset needs at least two parts: a summary line (the heading) and a body paragraph.

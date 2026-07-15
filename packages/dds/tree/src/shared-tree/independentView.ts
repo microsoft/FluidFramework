@@ -19,13 +19,11 @@ import {
 import {
 	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
+	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
 	schemaCodecBuilder,
+	combineChunks,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -233,14 +231,12 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
 		const newSchema = schemaCodec.decode(options.content.schema);
 
-		const context: FieldBatchEncodingContext = {
-			encodeType: TreeCompressionStrategy.Compressed,
+		// TreeAlpha.exportCompressed encodes this payload in originatorless-safe form
+		// (finalized compressed ids or strings), so summary-style decode is correct.
+		const context = FieldBatchDecodingContext.forSummary({
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-			schema: { schema: newSchema, policy: defaultSchemaPolicy },
-			// Not a summary blob — this is a synthetic decode of inline content.
-			isSummary: false,
-		};
+			healing: undefined,
+		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,
 			context,

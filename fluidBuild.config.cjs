@@ -80,7 +80,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: [
+				"check:inexactOptionalPropertyTypes",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -145,11 +152,12 @@ module.exports = {
 		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
-		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
+		// With most packages in client building ESM first, there is ideally just "build:esnext" and "api-extractor:esnext" dependencies.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor.
-		"build:docs": ["tsc", "build:esnext"],
-		"ci:build:docs": ["tsc", "build:esnext"],
+		// therefore we need to require both before running api-extractor until other packages are
+		// updated to use ESM entrypoints or customize their build configs.
+		"build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
+		"ci:build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
 			script: true,
@@ -165,6 +173,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		"check:inexactOptionalPropertyTypes": ["^build:esnext", "^api-extractor:esnext"],
 		"check:format": {
 			dependencies: [],
 			script: true,

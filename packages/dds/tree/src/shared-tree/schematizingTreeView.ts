@@ -32,7 +32,7 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
@@ -41,11 +41,11 @@ import {
 	type ReadSchema,
 	type UnsafeUnknownSchema,
 	type TreeBranchEvents,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -57,6 +57,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -98,7 +99,7 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	private readonly viewSchema: TreeSchema;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -143,7 +144,7 @@ export class SchematizingSimpleTreeView<
 
 		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -258,7 +259,7 @@ export class SchematizingSimpleTreeView<
 			);
 		}
 
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
+		const newSchema = toUpgradeSchema(this.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
@@ -272,40 +273,40 @@ export class SchematizingSimpleTreeView<
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.ensureUndisposed();
 		return this.checkout.runTransaction(transaction, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.ensureUndisposed();
 		if (this.checkout.transaction.size > 0) {
 			// breaker.break() sets brokenBy synchronously before throwing.
@@ -347,7 +348,10 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+		);
 
 		this.currentCompatibility = {
 			...compatibility,
@@ -527,6 +531,10 @@ export class SchematizingSimpleTreeView<
 
 	public rebaseOnto(context: TreeBranchAlpha): void {
 		this.checkout.rebaseOnto(context);
+	}
+
+	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
 	}
 
 	// #endregion Branching

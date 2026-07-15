@@ -1,5 +1,30 @@
 # @fluidframework/container-loader
 
+## 2.111.0
+
+### Minor Changes
+
+- Fix container crash when read-only mode is forced from a connected event handler ([#27637](https://github.com/microsoft/FluidFramework/pull/27637)) [32bbb06cf7f](https://github.com/microsoft/FluidFramework/commit/32bbb06cf7f7a59075624cc48c89c81b7687d890)
+
+  Forcing a container into read-only mode synchronously from within a "connected" event handler could leave an internal catch-up monitor in an inconsistent state, causing a later reconnection to fail with an assert ("catchUpMonitor should be gone", `0x3eb`).
+
+  This occurred when a client established an already-caught-up read connection and application code reacted to the resulting connection transition by disconnecting (for example, by forcing read-only mode). The catch-up monitor is now stored before it can synchronously notify listeners, so a re-entrant disconnect during the connection transition is handled correctly and subsequent reconnections proceed normally.
+
+## 2.110.0
+
+### Minor Changes
+
+- Remove deprecated ILoaderOptions.enableOfflineLoad ([#27574](https://github.com/microsoft/FluidFramework/pull/27574)) [daf022b3f36](https://github.com/microsoft/FluidFramework/commit/daf022b3f36560cf52ce9586f95c5843dea99900)
+
+  The `enableOfflineLoad` property has been removed from `ILoaderOptions` in `@fluidframework/container-definitions`.
+  This property was previously marked `@deprecated Do not use.`
+
+  The legacy `Fluid.Container.enableOfflineLoad` config-provider feature gate has also been removed from `@fluidframework/container-loader`.
+  Offline load is now unconditionally enabled for interactive clients; it can still be controlled via the `Fluid.Container.enableOfflineFull` config.
+
+  **Migration:** Remove any usage of `enableOfflineLoad` from `ILoaderOptions` objects.
+  No replacement is needed — offline load is on by default.
+
 ## 2.103.0
 
 ### Minor Changes

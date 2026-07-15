@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.110.0",
+	"version": "2.112.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -66,7 +66,7 @@
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
 		"eslint": "catalog:eslint",
