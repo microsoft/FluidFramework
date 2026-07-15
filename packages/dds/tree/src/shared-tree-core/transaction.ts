@@ -464,6 +464,17 @@ export class SquashingTransactionStack<
 								const change =
 									postProcessor === undefined ? squash : postProcessor.processChange(squash);
 
+								if (change !== squash) {
+									// The post-processor produced a change that differs from the
+									// one that was applied to the view as the transaction's edits
+									// were made. Roll back the transaction's changes on the transaction
+									// branch (which rolls back the view) and apply the post-processed
+									// change in their place so that the view fully reflects the modified
+									// `change`.
+									transactionBranch.removeAfter(startHead);
+									transactionBranch.apply(tagChange(change, transactionRevision));
+								}
+
 								if (targetPath.length === 0) {
 									// No changes were made on the original branch since the transaction began
 									// The transaction commit can be applied directly
@@ -548,8 +559,14 @@ export class SquashingTransactionStack<
 											);
 											const squash = rebaser.compose(nestedSteps);
 											const processedSquash = nestedPostProcessor.processChange(squash);
-											transactionBranch.removeAfter(nestedStartHead);
-											transactionBranch.apply(tagChange(processedSquash, transactionRevision));
+											// Roll back the transaction branch to the nested start head and apply the
+											// processed change if it differs from the original change.
+											if (processedSquash !== squash) {
+												transactionBranch.removeAfter(nestedStartHead);
+												transactionBranch.apply(
+													tagChange(processedSquash, transactionRevision),
+												);
+											}
 										}
 									}
 									break;
