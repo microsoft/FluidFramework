@@ -113,6 +113,8 @@ stages:
           path: ${{ variables.FluidFrameworkDirectory }}
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
 
         - template: /tools/pipelines/templates/include-install-build-tools.yml@self
           parameters:
@@ -257,6 +259,8 @@ stages:
         - checkout: self
           submodules: false
           clean: true
+          fetchDepth: 1
+          fetchTags: false
         - task: TriggerBuild@4
           condition: eq(variables['shouldDeploy'], 'true')
           inputs:

@@ -236,6 +236,8 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                fetchDepth: 1
+                fetchTags: false
 
               - script: |
                   echo "commit sha: $(Build.SourceVersion)"
@@ -606,6 +608,8 @@ extends:
                 clean: true
                 lfs: '${{ parameters.checkoutSubmodules }}'
                 submodules: '${{ parameters.checkoutSubmodules }}'
+                fetchDepth: 1
+                fetchTags: false
 
               - script: |
                   echo "commit: $(COMMIT_SHA)"
@@ -778,6 +782,8 @@ extends:
                   clean: true
                   lfs: '${{ parameters.checkoutSubmodules }}'
                   submodules: '${{ parameters.checkoutSubmodules }}'
+                  fetchDepth: 1
+                  fetchTags: false
 
                 - script: |
                     echo "commit: $(COMMIT_SHA)"
