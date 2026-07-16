@@ -14,10 +14,8 @@ import { getTestPort } from "./getTestPort.js";
  *
  * @remarks
  * The port is resolved via {@link getTestPort} using the `name` field of the `package.json` in the current
- * working directory (matching the mapping written by the `assign-test-ports` bin). The resolved port is:
- *
- * - exported to the command's environment as `PORT`, and
- * - substituted into the command wherever a `{PORT}` token appears.
+ * working directory (matching the mapping written by the `assign-test-ports` bin), and substituted into the
+ * command wherever a `{PORT}` token appears.
  *
  * This lets service tests that launch their own server (e.g. via `start-server-and-test`) run concurrently
  * across packages without colliding on a shared port, mirroring what jest/puppeteer tests already do via
@@ -68,7 +66,7 @@ export function withTestPort(argv: readonly string[]): number {
 		return 1;
 	}
 
-	// getTestPort returns a number; the environment variable and command substitution both need a string.
+	// getTestPort returns a number; command substitution needs a string.
 	const port = String(getTestPort(packageName, fallbackPort));
 
 	// Tokens have no embedded whitespace (script names / port numbers), so joining is safe.
@@ -78,7 +76,6 @@ export function withTestPort(argv: readonly string[]): number {
 		stdio: "inherit",
 		// shell is required so bins on the PATH (e.g. start-server-and-test) resolve cross-platform.
 		shell: true,
-		env: { ...process.env, PORT: port },
 	});
 
 	if (result.error !== undefined) {

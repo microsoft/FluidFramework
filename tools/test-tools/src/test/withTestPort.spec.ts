@@ -11,15 +11,14 @@ import path from "node:path";
 import { withTestPort } from "../withTestPort";
 
 /**
- * A small Node script that records the `PORT` environment variable and its CLI arguments to the JSON
- * file passed as its first argument. Used to observe what `withTestPort` passes to the spawned command.
+ * A small Node script that records its CLI arguments to the JSON file passed as its first argument.
+ * Used to observe the arguments `withTestPort` passes to the spawned command after `{PORT}` substitution.
  */
 const probeScript = `const fs = require("node:fs");
-fs.writeFileSync(process.argv[2], JSON.stringify({ port: process.env.PORT, args: process.argv.slice(3) }));
+fs.writeFileSync(process.argv[2], JSON.stringify({ args: process.argv.slice(3) }));
 `;
 
 interface ProbeOutput {
-	port?: string;
 	args: string[];
 }
 
@@ -64,12 +63,6 @@ describe("withTestPort", () => {
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
-	it("exports the resolved port to the command as the PORT environment variable", () => {
-		const code = withTestPort(["node", probePath, outPath]);
-		assert.equal(code, 0);
-		assert.equal(readProbeOutput().port, defaultPort);
-	});
-
 	it("substitutes {PORT} tokens in the command arguments", () => {
 		const code = withTestPort(["node", probePath, outPath, "{PORT}", "prefix-{PORT}"]);
 		assert.equal(code, 0);
@@ -79,9 +72,7 @@ describe("withTestPort", () => {
 	it("uses the --fallback value when no port is assigned", () => {
 		const code = withTestPort(["--fallback", "7070", "node", probePath, outPath, "{PORT}"]);
 		assert.equal(code, 0);
-		const output = readProbeOutput();
-		assert.equal(output.port, "7070");
-		assert.deepEqual(output.args, ["7070"]);
+		assert.deepEqual(readProbeOutput().args, ["7070"]);
 	});
 
 	it("returns a non-zero exit code for a non-numeric --fallback value", () => {
@@ -96,9 +87,7 @@ describe("withTestPort", () => {
 			fs.writeFileSync(mapPath, JSON.stringify({ [packageName]: 12345 }));
 			const code = withTestPort(["node", probePath, outPath, "{PORT}"]);
 			assert.equal(code, 0);
-			const output = readProbeOutput();
-			assert.equal(output.port, "12345");
-			assert.deepEqual(output.args, ["12345"]);
+			assert.deepEqual(readProbeOutput().args, ["12345"]);
 		} finally {
 			if (backup === undefined) {
 				fs.rmSync(mapPath, { force: true });
