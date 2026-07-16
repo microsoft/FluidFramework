@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { isLocalFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
 import {
@@ -63,6 +65,32 @@ for (const createBlobPayloadPending of [false, true]) {
 				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
+			});
+
+			it("getPendingBlobs while imperatively sharing an unattached handle", async function () {
+				if (!createBlobPayloadPending) {
+					this.skip();
+				}
+
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockBlobStorage.pause();
+
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+				assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+				handle.sharePayload();
+
+				await mockBlobStorage.waitBlobAvailable();
+
+				const { localId } = unpackHandle(handle);
+				assert.deepStrictEqual(blobManager.getPendingBlobs(), {
+					[localId]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+				});
 			});
 
 			it("getPendingBlobs while attaching", async () => {

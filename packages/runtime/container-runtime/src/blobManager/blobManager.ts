@@ -66,6 +66,7 @@ export class BlobHandle
 		IFluidHandleInternalPayloadPending<ArrayBufferLike>
 {
 	private attached: boolean = false;
+	private payloadSharingStarted: boolean = false;
 
 	public get isAttached(): boolean {
 		return this.routeContext.isAttached && this.attached;
@@ -100,7 +101,7 @@ export class BlobHandle
 		// TODO: just take the blob rather than a get function?
 		public get: () => Promise<ArrayBufferLike>,
 		public readonly payloadPending: boolean,
-		private readonly onAttachGraph?: () => void,
+		private readonly sharePayloadCallback?: () => void,
 	) {
 		super();
 		this._payloadState = payloadPending ? "pending" : "shared";
@@ -117,10 +118,18 @@ export class BlobHandle
 		this._events?.emit("payloadShareFailed", error);
 	};
 
+	public sharePayload(): void {
+		if (this.payloadSharingStarted) {
+			return;
+		}
+		this.payloadSharingStarted = true;
+		this.sharePayloadCallback?.();
+	}
+
 	public attachGraph(): void {
 		if (!this.attached) {
 			this.attached = true;
-			this.onAttachGraph?.();
+			this.sharePayload();
 		}
 	}
 }
@@ -253,10 +262,11 @@ export class BlobManager {
 	 */
 	private readonly localBlobCache: Map<string, LocalBlobRecord> = new Map();
 	/**
-	 * Blobs with an attached handle that have not finished blob-attaching are the set we need to provide from
-	 * getPendingState().  This stores their local IDs, and then we can look them up against the localBlobCache.
+	 * Blobs whose payload sharing has started but that have not finished blob-attaching are the set we need to
+	 * provide from getPendingState(). This stores their local IDs, and then we can look them up against the
+	 * localBlobCache.
 	 */
-	private readonly pendingBlobsWithAttachedHandles: Set<string> = new Set();
+	private readonly pendingBlobsWithSharingStarted: Set<string> = new Set();
 	/**
 	 * Local IDs for any pending blobs we loaded with and have not yet started the upload/attach flow for.
 	 */
@@ -342,10 +352,10 @@ export class BlobManager {
 					blob: stringToBuffer(serializableBlobRecord.blob, "base64"),
 				};
 				this.localBlobCache.set(localId, localBlobRecord);
-				// Since we received these blobs from pending state, we'll assume they were only added to the
-				// pending state at generation time because their handles were attached. We add them back here
-				// in case we need to round-trip them back out again due to another getPendingBlobs() call.
-				this.pendingBlobsWithAttachedHandles.add(localId);
+				// Since we received these blobs from pending state, their sharing flow had already started.
+				// Add them back here in case we need to round-trip them again due to another
+				// getPendingBlobs() call.
+				this.pendingBlobsWithSharingStarted.add(localId);
 				this.pendingOnlyLocalIds.add(localId);
 			}
 		}
@@ -515,7 +525,7 @@ export class BlobManager {
 			async () => blob,
 			true, // payloadPending
 			() => {
-				this.pendingBlobsWithAttachedHandles.add(localId);
+				this.pendingBlobsWithSharingStarted.add(localId);
 				const uploadAndAttachP = this.uploadAndAttach(localId, signal);
 				uploadAndAttachP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
@@ -541,7 +551,7 @@ export class BlobManager {
 	): Promise<void> => {
 		if (signal?.aborted === true) {
 			this.localBlobCache.delete(localId);
-			this.pendingBlobsWithAttachedHandles.delete(localId);
+			this.pendingBlobsWithSharingStarted.delete(localId);
 			throw createAbortError();
 		}
 		const localBlobRecordInitial = this.localBlobCache.get(localId);
@@ -584,7 +594,7 @@ export class BlobManager {
 					removeListeners();
 					uploadHasBecomeIrrelevant = true;
 					this.localBlobCache.delete(localId);
-					this.pendingBlobsWithAttachedHandles.delete(localId);
+					this.pendingBlobsWithSharingStarted.delete(localId);
 					reject(createAbortError());
 				};
 				const onProcessedBlobAttach = (_localId: string, _storageId: string): void => {
@@ -621,7 +631,7 @@ export class BlobManager {
 							removeListeners();
 							// If the storage call errors, we can't recover. Reject to throw back to the caller.
 							this.localBlobCache.delete(localId);
-							this.pendingBlobsWithAttachedHandles.delete(localId);
+							this.pendingBlobsWithSharingStarted.delete(localId);
 							// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 							reject(error);
 						}
@@ -690,7 +700,7 @@ export class BlobManager {
 					const onSignalAbort = (): void => {
 						removeListeners();
 						this.localBlobCache.delete(localId);
-						this.pendingBlobsWithAttachedHandles.delete(localId);
+						this.pendingBlobsWithSharingStarted.delete(localId);
 						reject(createAbortError());
 					};
 					const removeListeners = (): void => {
@@ -730,10 +740,9 @@ export class BlobManager {
 		const { localId, blobId: storageId } = metadata;
 		// Any blob that we're actively trying to advance to attached state must be in attaching state.
 		// Decline to resubmit for anything else.
-		// For example, we might be asked to resubmit stashed messages for blobs that never had their handle
-		// attached - these won't have a localBlobCache entry because we filter them out when generating
-		// pending state. We shouldn't try to attach them since they won't be accessible to the customer
-		// and would just be considered garbage immediately.
+		// For example, we might be asked to resubmit stashed messages for blobs whose sharing flow was not
+		// captured in pending state. These won't have a localBlobCache entry, so we shouldn't try to attach
+		// them since they won't be accessible to the customer and would just be considered garbage immediately.
 		// TODO: Is it possible that we'd be asked to resubmit for a pending blob before we call sharePendingBlobs?
 		const localBlobRecord = this.localBlobCache.get(localId);
 		if (localBlobRecord?.state === "attaching") {
@@ -763,10 +772,10 @@ export class BlobManager {
 			// callsites that update localBlobCache entries must take proper caution to handle the case
 			// that a blob attach message is processed concurrently.
 			this.localBlobCache.set(localId, attachedBlobRecord);
-			// Note there may or may not be an entry in pendingBlobsWithAttachedHandles for this localId,
+			// Note there may or may not be an entry in pendingBlobsWithSharingStarted for this localId,
 			// in particular for the non-payloadPending case since we should be reaching this point
 			// before even returning a handle to the caller.
-			this.pendingBlobsWithAttachedHandles.delete(localId);
+			this.pendingBlobsWithSharingStarted.delete(localId);
 			this.pendingOnlyLocalIds.delete(localId);
 		}
 		this.redirectTable.set(localId, storageId);
@@ -936,7 +945,7 @@ export class BlobManager {
 	 */
 	public getPendingBlobs(): IPendingBlobs | undefined {
 		const pendingBlobs: IPendingBlobs = {};
-		for (const localId of this.pendingBlobsWithAttachedHandles) {
+		for (const localId of this.pendingBlobsWithSharingStarted) {
 			const localBlobRecord = this.localBlobCache.get(localId);
 			assert(localBlobRecord !== undefined, 0xc83 /* Pending blob must be in local cache */);
 			assert(
