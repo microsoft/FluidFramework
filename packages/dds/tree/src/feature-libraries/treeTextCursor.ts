@@ -3,11 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
 	type DetachedField,
+	type FieldKey,
 	type IForestSubscription,
 	type ITreeCursor,
 	type ITreeCursorSynchronous,
@@ -131,4 +132,121 @@ export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTre
 	const jsonable = jsonableTreeFromFieldCursor(readCursor);
 	readCursor.free();
 	return jsonable;
+}
+
+/**
+ * Extracts the full contents of a forest (every detached field, keyed by field key) as {@link JsonableTree}s.
+ */
+function detachedFieldsContent(forest: IForestSubscription): Map<FieldKey, JsonableTree[]> {
+	const cursor = forest.getCursorAboveDetachedFields();
+	const content = new Map<FieldKey, JsonableTree[]>();
+	for (let hasField = cursor.firstField(); hasField; hasField = cursor.nextField()) {
+		content.set(cursor.getFieldKey(), mapCursorField(cursor, jsonableTreeFromCursor));
+	}
+	return content;
+}
+
+/**
+ * Structural equality for the {@link JsonableTree} content of two forests, keyed by detached field.
+ *
+ * @remarks
+ * Fields are compared as an unordered set of keys, so this is independent of the order in which different
+ * forest implementations enumerate fields. The nodes within each field are compared in order.
+ *
+ * Implemented iteratively (using an explicit work stack rather than recursion) so that comparing deeply
+ * nested trees does not risk exhausting the call stack.
+ */
+function forestContentEquals(
+	a: ReadonlyMap<FieldKey, JsonableTree[]>,
+	b: ReadonlyMap<FieldKey, JsonableTree[]>,
+): boolean {
+	// Aligned pairs of nodes still to be compared.
+	const stack: [JsonableTree, JsonableTree][] = [];
+
+	// Queue each aligned pair of nodes from the two fields for comparison.
+	// Returns false if the fields have differing numbers of nodes.
+	const queueFieldNodes = (aNodes: JsonableTree[], bNodes: JsonableTree[]): boolean => {
+		if (aNodes.length !== bNodes.length) {
+			return false;
+		}
+		for (let index = 0; index < aNodes.length; index += 1) {
+			// The two fields have equal length (checked above), so both nodes are defined.
+			stack.push([aNodes[index] ?? oob(), bNodes[index] ?? oob()]);
+		}
+		return true;
+	};
+
+	if (a.size !== b.size) {
+		return false;
+	}
+	for (const [key, aNodes] of a) {
+		const bNodes = b.get(key);
+		if (bNodes === undefined || !queueFieldNodes(aNodes, bNodes)) {
+			return false;
+		}
+	}
+
+	for (let pair = stack.pop(); pair !== undefined; pair = stack.pop()) {
+		const [aNode, bNode] = pair;
+		if (aNode.type !== bNode.type || !Object.is(aNode.value, bNode.value)) {
+			return false;
+		}
+		// JsonableTree never stores empty fields, so equal key counts plus a matching (non-empty) field
+		// for every key in `aNode` implies `bNode` has no extra fields.
+		const aKeys = genericTreeKeys(aNode);
+		if (aKeys.length !== genericTreeKeys(bNode).length) {
+			return false;
+		}
+		for (const key of aKeys) {
+			if (
+				!queueFieldNodes(
+					getGenericTreeField(aNode, key, false),
+					getGenericTreeField(bNode, key, false),
+				)
+			) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Best-effort human readable serialization of forest content for error messages.
+ * Falls back to a placeholder if the content is too deeply nested to serialize.
+ */
+function describeContent(content: ReadonlyMap<FieldKey, JsonableTree[]>): string {
+	try {
+		return JSON.stringify(Object.fromEntries(content));
+	} catch {
+		return "<content too large to serialize>";
+	}
+}
+
+/**
+ * Returns true if `a` and `b` have identical contents, including all detached/removed fields.
+ * @remarks
+ * Only the content is compared: schema, anchors and other forest state are ignored.
+ * This is intended for debugging and testing, and is not optimized.
+ */
+export function forestsEqual(a: IForestSubscription, b: IForestSubscription): boolean {
+	return forestContentEquals(detachedFieldsContent(a), detachedFieldsContent(b));
+}
+
+/**
+ * Asserts that `a` and `b` have identical contents, including all detached/removed fields.
+ * @throws an Error describing the divergence if the forests differ.
+ * @remarks
+ * Only the content is compared: schema, anchors and other forest state are ignored.
+ * This is intended for debugging and testing, and is not optimized.
+ */
+export function assertForestsEqual(a: IForestSubscription, b: IForestSubscription): void {
+	const aContent = detachedFieldsContent(a);
+	const bContent = detachedFieldsContent(b);
+	if (!forestContentEquals(aContent, bContent)) {
+		fail(
+			"Forests are not equal",
+			() => `A: ${describeContent(aContent)}\nB: ${describeContent(bContent)}`,
+		);
+	}
 }

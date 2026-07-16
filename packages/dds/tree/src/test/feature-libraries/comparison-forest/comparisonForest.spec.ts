@@ -83,7 +83,7 @@ describe("ComparisonForest", () => {
 
 			assert.throws(
 				() => assertForestsEqual(main, reference),
-				validateAssertionError(/main forest diverged from reference forest/),
+				validateAssertionError(/Forests are not equal/),
 			);
 		});
 	});

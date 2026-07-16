@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { ComparisonForest, assertForestsEqual } from "./comparisonForest.js";
+export { ComparisonForest } from "./comparisonForest.js";

@@ -4,7 +4,6 @@
  */
 
 import type { Listenable } from "@fluidframework/core-interfaces";
-import { fail } from "@fluidframework/core-utils/internal";
 
 import {
 	type Anchor,
@@ -12,26 +11,20 @@ import {
 	type AnnouncedVisitor,
 	type DeltaVisitor,
 	type FieldAnchor,
-	type FieldKey,
 	type ForestEvents,
 	type IEditableForest,
-	type IForestSubscription,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type JsonableTree,
 	type TreeChunk,
 	type TreeNavigationResult,
 	type TreeStoredSchemaSubscription,
 	type UpPath,
 	combineVisitors,
 	createAnnouncedVisitor,
-	genericTreeKeys,
-	getGenericTreeField,
-	mapCursorField,
 } from "../../core/index.js";
 import type { Breakable } from "../../util/index.js";
 
-import { jsonableTreeFromCursor } from "../treeTextCursor.js";
+import { assertForestsEqual } from "../treeTextCursor.js";
 
 /**
  * An {@link IEditableForest} which wraps two other forests: a `main` forest and a `reference` forest.
@@ -135,118 +128,5 @@ export class ComparisonForest implements IEditableForest {
 			free: () => assertForestsEqual(main, reference),
 		});
 		return combineVisitors([mainVisitor, referenceVisitor, comparisonVisitor]);
-	}
-}
-
-/**
- * Extracts the full contents of a forest (every detached field, keyed by field key) as {@link JsonableTree}s.
- */
-function detachedFieldsContent(forest: IForestSubscription): Map<FieldKey, JsonableTree[]> {
-	const cursor = forest.getCursorAboveDetachedFields();
-	const content = new Map<FieldKey, JsonableTree[]>();
-	for (let hasField = cursor.firstField(); hasField; hasField = cursor.nextField()) {
-		content.set(cursor.getFieldKey(), mapCursorField(cursor, jsonableTreeFromCursor));
-	}
-	return content;
-}
-
-/**
- * Structural equality for the {@link JsonableTree} content of two forests, keyed by detached field.
- *
- * @remarks
- * Fields are compared as an unordered set of keys, so this is independent of the order in which different
- * forest implementations enumerate fields. The nodes within each field are compared in order.
- *
- * Implemented iteratively (using an explicit work stack rather than recursion) so that comparing deeply
- * nested trees does not risk exhausting the call stack.
- */
-function forestContentEquals(
-	main: ReadonlyMap<FieldKey, JsonableTree[]>,
-	reference: ReadonlyMap<FieldKey, JsonableTree[]>,
-): boolean {
-	// Aligned pairs of nodes still to be compared.
-	const stack: [JsonableTree, JsonableTree][] = [];
-
-	// Queue each aligned pair of nodes from the two fields for comparison.
-	// Returns false if the fields have differing numbers of nodes.
-	const queueFieldNodes = (
-		mainNodes: JsonableTree[],
-		referenceNodes: JsonableTree[],
-	): boolean => {
-		if (mainNodes.length !== referenceNodes.length) {
-			return false;
-		}
-		for (let index = 0; index < mainNodes.length; index += 1) {
-			stack.push([mainNodes[index], referenceNodes[index]]);
-		}
-		return true;
-	};
-
-	if (main.size !== reference.size) {
-		return false;
-	}
-	for (const [key, mainNodes] of main) {
-		const referenceNodes = reference.get(key);
-		if (referenceNodes === undefined || !queueFieldNodes(mainNodes, referenceNodes)) {
-			return false;
-		}
-	}
-
-	for (let pair = stack.pop(); pair !== undefined; pair = stack.pop()) {
-		const [mainNode, referenceNode] = pair;
-		if (
-			mainNode.type !== referenceNode.type ||
-			!Object.is(mainNode.value, referenceNode.value)
-		) {
-			return false;
-		}
-		// JsonableTree never stores empty fields, so equal key counts plus a matching (non-empty) field
-		// for every key in `mainNode` implies `referenceNode` has no extra fields.
-		const mainKeys = genericTreeKeys(mainNode);
-		if (mainKeys.length !== genericTreeKeys(referenceNode).length) {
-			return false;
-		}
-		for (const key of mainKeys) {
-			if (
-				!queueFieldNodes(
-					getGenericTreeField(mainNode, key, false),
-					getGenericTreeField(referenceNode, key, false),
-				)
-			) {
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
-/**
- * Best-effort human readable serialization of forest content for error messages.
- * Falls back to a placeholder if the content is too deeply nested to serialize.
- */
-function describeContent(content: ReadonlyMap<FieldKey, JsonableTree[]>): string {
-	try {
-		return JSON.stringify(Object.fromEntries(content));
-	} catch {
-		return "<content too large to serialize>";
-	}
-}
-
-/**
- * Asserts that two forests have identical contents (including all detached/removed fields).
- * @throws an Error describing the divergence if the forests differ.
- */
-export function assertForestsEqual(
-	main: IForestSubscription,
-	reference: IForestSubscription,
-): void {
-	const mainContent = detachedFieldsContent(main);
-	const referenceContent = detachedFieldsContent(reference);
-	if (!forestContentEquals(mainContent, referenceContent)) {
-		fail(
-			"ComparisonForest: main forest diverged from reference forest after applying a delta",
-			() =>
-				`Main:      ${describeContent(mainContent)}\nReference: ${describeContent(referenceContent)}`,
-		);
 	}
 }
