@@ -236,7 +236,11 @@ strictDepBuilds: true
 strictPeerDependencies: true
 
 # The registry.npmjs mirror does not preserve all the npm package metadata necessary for this pnpm feature to function
-# correctly as of 7/16/2026.
+# correctly as of 7/16/2026. If this is turned back on...
+# See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
+# Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
+# at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
+# surface current violations.
 trustPolicy: off
 # These exclusions are inert with trustPolicy disabled, but were kept in case we are able to restore trustPolicy enforcement
 # at some future point.
