@@ -190,7 +190,16 @@ class RouterliciousRestWrapper extends RestWrapper {
 						response: result,
 						duration: performanceNow() - perfStart,
 					};
-				} catch (error: any) {
+				} catch (caughtError: unknown) {
+					// Narrow once here rather than propagating `any` — every property read below is
+					// on this cast, not on the raw caught value.
+					const error = caughtError as {
+						name?: string;
+						message?: string;
+						code?: unknown;
+						cause?: { code?: unknown; message?: string };
+					};
+
 					// on failure, add the request entry into the retryCounter map to count the subsequent retries, if any
 					this.retryCounter.set(requestKey, requestRetryCount ? requestRetryCount + 1 : 1);
 
