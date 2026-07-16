@@ -72,22 +72,6 @@ stages:
         environment: package-build-feed
         pool: ${{ parameters.pool }}
 
-- stage: publish_npm_public
-  dependsOn: build
-  displayName: Publish to public npmjs.org
-  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
-  variables:
-  - group: ado-feeds
-  jobs:
-  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
-    parameters:
-      feedUrl: https://registry.npmjs.org
-      feedKind: public
-      environment: package-npmjs-feed
-      pool: ${{ parameters.pool }}
-      customEndPoint: npmjs
-      tagName: ${{ parameters.tagName }}
-
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
 # for builds of release groups that currently publish manifests.
 # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
@@ -95,18 +79,15 @@ stages:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
-    - publish_npm_public
     - publish_npm_internal_test
     - publish_npm_internal_build
     # This must be declared as an explicit dependency because upload-dev-manifest uses the version variable it outputs to generate the manifest.
     - build
     condition: |
       and(
-        in(dependencies.publish_npm_public.result, 'Succeeded', 'Skipped'),
         in(dependencies.publish_npm_internal_test.result, 'Succeeded', 'Skipped'),
         in(dependencies.publish_npm_internal_build.result, 'Succeeded', 'Skipped'),
         or(
-          eq(dependencies.publish_npm_public.result, 'Succeeded'),
           eq(dependencies.publish_npm_internal_test.result, 'Succeeded'),
           eq(dependencies.publish_npm_internal_build.result, 'Succeeded')
         )
