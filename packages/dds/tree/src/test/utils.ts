@@ -1500,8 +1500,8 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
-	public rewindToRevision(): void {
-		throw new Error("'rewindToRevision' not implemented.");
+	public rewindTo(): void {
+		throw new Error("'rewindTo' not implemented.");
 	}
 
 	public viewWith<TRoot extends ImplicitFieldSchema>(

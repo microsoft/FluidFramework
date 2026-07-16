@@ -1248,7 +1248,6 @@ export class TreeCheckout implements ITreeCheckout {
 	public switchBranch(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): void {
-		// TODO: Dispose old branch, if necessary
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1263,6 +1262,9 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		if (!this.isSharedBranch) {
+			this.branch.dispose();
+		}
 		this.branch = branch;
 		this.branchHistory?.dispose();
 		this.branchHistory = undefined;
@@ -1274,7 +1276,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#events.emit("afterBatch");
 	}
 
-	public rewindToRevision(revisionString: string): void {
+	public rewindTo(revisionString: string): void {
 		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {

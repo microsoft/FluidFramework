@@ -471,7 +471,7 @@ describe("simple-tree tree", () => {
 		});
 	});
 
-	describe("rewindToRevision", () => {
+	describe("rewindTo", () => {
 		it("it rewinds the view", () => {
 			// Setup
 			const config = new TreeViewConfiguration({ schema: schema.number });
@@ -490,14 +490,14 @@ describe("simple-tree tree", () => {
 			assert.equal(view.history.commitCount, 4);
 
 			// Act
-			view.rewindToRevision(revision2);
+			view.rewindTo(revision2);
 
 			// Verify
 			assert.equal(view.history.commitCount, 2);
 			assert.equal(view.root, 2);
 
 			// Act
-			view.rewindToRevision(revision1);
+			view.rewindTo(revision1);
 
 			// Verify
 			assert.equal(view.history.commitCount, 1);
@@ -514,7 +514,7 @@ describe("simple-tree tree", () => {
 			assert(revision1 !== undefined, "revision should be defined");
 			view.root = 2;
 
-			view.rewindToRevision(revision1);
+			view.rewindTo(revision1);
 			assert.equal(view.history.commitCount, 1);
 
 			// Act
@@ -536,7 +536,7 @@ describe("simple-tree tree", () => {
 
 			const branchBeforeRewind = view.checkout.mainBranch;
 
-			view.rewindToRevision(revision1);
+			view.rewindTo(revision1);
 
 			// Act
 			view.root = 42;
