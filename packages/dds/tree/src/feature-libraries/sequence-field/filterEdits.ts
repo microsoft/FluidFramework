@@ -5,7 +5,7 @@
 
 import type { ChangeAtomId } from "../../core/index.js";
 import type { RangeQueryResult } from "../../util/index.js";
-import { EditFilterStatus } from "../modular-schema/index.js";
+import { EditFilterStatus, type EditFilterFunc } from "../modular-schema/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { NoopMarkType, type Changeset, type Mark } from "./types.js";
 import { getDetachedNodeId, getDetachOutputCellId, omitMarkEffect } from "./utils.js";
@@ -14,22 +14,21 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 
 export function filterEdits(
 	change: Changeset,
-	filterDetach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	filterAttach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	preserveOtherEdits: boolean,
+	options: {
+		filterDetach: EditFilterFunc;
+		filterAttach: EditFilterFunc;
+		preserveOtherEdits: boolean;
+	},
 ): Changeset {
 	const factory = new MarkListFactory();
 	const queue = new MarkQueueBase(change);
 	for (let mark = queue.peek(); mark !== undefined; mark = queue.peek()) {
-		const filtered = filterMark(mark, filterDetach, filterAttach, preserveOtherEdits);
+		const filtered = filterMark(
+			mark,
+			options.filterDetach,
+			options.filterAttach,
+			options.preserveOtherEdits,
+		);
 		factory.push(filtered);
 		queue.dequeueUpTo(filtered.count);
 	}

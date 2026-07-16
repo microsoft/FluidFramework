@@ -80,8 +80,8 @@ export function replaceRebaser<T>(): FieldChangeRebaser<ReplaceOp<T>> {
 		invert: (changes: ReplaceOp<T>) => {
 			return changes === 0 ? 0 : { old: changes.new, new: changes.old };
 		},
-		filterEdits: (change: ReplaceOp<T>, _filterDetach, _filterAttach, preserveOtherEdits) => {
-			return preserveOtherEdits ? change : 0;
+		filterEdits: (change: ReplaceOp<T>, options) => {
+			return options.preserveOtherEdits ? change : 0;
 		},
 	});
 }

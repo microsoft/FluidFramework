@@ -55,7 +55,11 @@ export function testFilterEdits(): void {
 				MarkMaker.moveIn(1, id6, { finalEndpoint: id5 }),
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
-			const filtered = filterEdits(unfiltered, preserveAll, preserveAll, true);
+			const filtered = filterEdits(unfiltered, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: true,
+			});
 
 			assertChangesetsEqual(filtered, unfiltered);
 		});
@@ -70,7 +74,11 @@ export function testFilterEdits(): void {
 				MarkMaker.tomb(tag1, brand(5), 2),
 			];
 
-			const filtered = filterEdits(unfiltered, preserveAll, preserveAll, false);
+			const filtered = filterEdits(unfiltered, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: false,
+			});
 
 			const expected = [
 				MarkMaker.insert(1, id1),
@@ -87,22 +95,21 @@ export function testFilterEdits(): void {
 		it("Can filter part of a mark range", () => {
 			const unfiltered = [MarkMaker.insert(3, id1), MarkMaker.remove(3, id3)];
 
-			const filtered = filterEdits(
-				unfiltered,
-				(id, count) => ({
+			const filtered = filterEdits(unfiltered, {
+				filterDetach: (id, count) => ({
 					length: 1,
 					value: areEqualChangeAtomIds(id, id4)
 						? EditFilterStatus.Remove
 						: EditFilterStatus.Preserve,
 				}),
-				(id, count) => ({
+				filterAttach: (id, count) => ({
 					length: 1,
 					value: areEqualChangeAtomIds(id, id2)
 						? EditFilterStatus.Remove
 						: EditFilterStatus.Preserve,
 				}),
-				false,
-			);
+				preserveOtherEdits: false,
+			});
 
 			const expected = [
 				MarkMaker.insert(1, id1),
@@ -123,9 +130,7 @@ export function testFilterEdits(): void {
 					MarkMaker.tomb(tag1, brand(5), 2),
 					MarkMaker.remove(1, id2),
 				],
-				removeAll,
-				removeAll,
-				false,
+				{ filterDetach: removeAll, filterAttach: removeAll, preserveOtherEdits: false },
 			);
 
 			assertChangesetsEqual(filtered, [
@@ -140,12 +145,14 @@ export function testFilterEdits(): void {
 					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),
 					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
 				],
-				(id, count, endpoint) => ({
-					length: 1,
-					value: EditFilterStatus.PreserveWithoutMove,
-				}),
-				removeAll,
-				false,
+				{
+					filterDetach: (id, count, endpoint) => ({
+						length: 1,
+						value: EditFilterStatus.PreserveWithoutMove,
+					}),
+					filterAttach: removeAll,
+					preserveOtherEdits: false,
+				},
 			);
 
 			const moveInCell = offsetChangeAtomId(id2, 1);
@@ -163,12 +170,14 @@ export function testFilterEdits(): void {
 					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),
 					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
 				],
-				removeAll,
-				(id, count, endpoint) => ({
-					length: 1,
-					value: EditFilterStatus.PreserveWithoutMove,
-				}),
-				false,
+				{
+					filterDetach: removeAll,
+					filterAttach: (id, count, endpoint) => ({
+						length: 1,
+						value: EditFilterStatus.PreserveWithoutMove,
+					}),
+					preserveOtherEdits: false,
+				},
 			);
 
 			const expected = [MarkMaker.skip(1), MarkMaker.insert(1, id2, { cellId: id1 })];

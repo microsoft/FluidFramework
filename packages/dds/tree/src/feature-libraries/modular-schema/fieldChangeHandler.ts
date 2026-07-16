@@ -181,9 +181,11 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	filterEdits(
 		change: TChangeset,
-		filterDetach: EditFilterFunc,
-		filterAttach: EditFilterFunc,
-		preserveOtherEdits: boolean,
+		options: {
+			filterDetach: EditFilterFunc;
+			filterAttach: EditFilterFunc;
+			preserveOtherEdits: boolean;
+		},
 	): TChangeset;
 }
 
@@ -213,8 +215,7 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
-		filterEdits: (change, filterAttach, filterDetach, preserveOtherEdits) =>
-			data.filterEdits(change, filterAttach, filterDetach, preserveOtherEdits),
+		filterEdits: (change, options) => data.filterEdits(change, options),
 	});
 }
 

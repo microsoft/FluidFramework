@@ -1741,12 +1741,11 @@ export class ModularChangeFamily
 		return {
 			fieldKind: change.fieldKind,
 			change: brand(
-				handler.rebaser.filterEdits(
-					change.change,
-					removeAllEditsFilter,
-					removeAllEditsFilter,
-					false,
-				),
+				handler.rebaser.filterEdits(change.change, {
+					filterDetach: removeAllEditsFilter,
+					filterAttach: removeAllEditsFilter,
+					preserveOtherEdits: false,
+				}),
 			),
 		};
 	}

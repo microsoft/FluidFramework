@@ -1037,12 +1037,11 @@ describe("optionalField", () => {
 				Change.move(register3, "self"),
 			);
 
-			const filtered = optionalChangeRebaser.filterEdits(
-				change,
-				preserveAll,
-				preserveAll,
-				true,
-			);
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: true,
+			});
 
 			assertEqual(filtered, change);
 		});
@@ -1056,12 +1055,11 @@ describe("optionalField", () => {
 
 			const change = Change.atOnce(changeWithoutRename, Change.move(register0, register1));
 
-			const filtered = optionalChangeRebaser.filterEdits(
-				change,
-				preserveAll,
-				preserveAll,
-				false,
-			);
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: preserveAll,
+				preserveOtherEdits: false,
+			});
 
 			assertEqual(filtered, changeWithoutRename);
 		});
@@ -1075,7 +1073,11 @@ describe("optionalField", () => {
 
 			const change = Change.atOnce(changeWithoutSet, Change.move(register3, "self"));
 
-			const filtered = optionalChangeRebaser.filterEdits(change, preserveAll, removeAll, true);
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: preserveAll,
+				filterAttach: removeAll,
+				preserveOtherEdits: true,
+			});
 
 			assertEqual(filtered, changeWithoutSet);
 		});
@@ -1092,7 +1094,11 @@ describe("optionalField", () => {
 				Change.move(register3, "self"),
 			);
 
-			const filtered = optionalChangeRebaser.filterEdits(change, removeAll, removeAll, true);
+			const filtered = optionalChangeRebaser.filterEdits(change, {
+				filterDetach: removeAll,
+				filterAttach: removeAll,
+				preserveOtherEdits: true,
+			});
 
 			assertEqual(filtered, changeWithoutReplace);
 		});
