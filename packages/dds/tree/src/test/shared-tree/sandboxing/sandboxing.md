@@ -39,7 +39,7 @@ The following alternative should be considered:
 * Instead of performing merge resolution on behalf of the sandbox,
   the host would just notify the sandbox of new commits on the trunk and main branches.
   The sandbox would then be able to rebase its local branches accordingly.
-* When sending outbound edits from the sandbox to the host,
+* When sending edits from the sandbox to the host,
   include the revisions of the latest commits on main and trunk branches at the time the edits were authored.
   The host can use this information to update its own branches accordingly.
 

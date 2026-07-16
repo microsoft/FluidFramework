@@ -97,7 +97,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	/** The local branch on the host. Always reflects the state of the sandbox (though lags behind it due to async) */
 	public readonly local: TreeViewAlpha<TSchema>;
 	/**
-	 * The promise and resolver for the process of updating the sandbox with inbound changes.
+	 * The promise and resolver for the process of sending changes to the sandbox.
 	 * When defined, the sandbox is behind the host's main branch. The promise resolves when the sandbox has caught up with the host's main branch.
 	 * When undefined, no update is in progress and the sandbox is up-to-date with the host's main branch.
 	 */
@@ -113,10 +113,10 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 
 	public constructor(
 		main: TreeViewAlpha<TSchema>,
-		/** The callback to send updates from the host to the sandbox so that it learns about inbound changes. */
-		private readonly sendUpdateToSandbox: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to acknowledge outbound changes from the sandbox. */
-		private readonly ackOutboundChangeFromSandbox: () => void,
+		/** The callback to send changes from the host to the sandbox. */
+		private readonly sendChangeToSandbox: (change: JsonCompatibleReadOnly) => void,
+		/** The callback to acknowledge changes from the sandbox. */
+		private readonly ackChangeFromSandbox: () => void,
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.main = main;
@@ -127,7 +127,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				// While we may need to update the sandbox after applying changes from the sandbox,
 				// we don't want to do so until we have sent an acknowledgment back to the sandbox.
 			} else {
-				this.syncSandboxToInboundChanges("after main branch changed");
+				this.tryUpdateSandbox("after main branch changed");
 			}
 		});
 	}
@@ -139,11 +139,11 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Must be called when the sandbox sends an outbound change to the host.
+	 * Must be called when the sandbox sends a change to the host.
 	 * The change is guaranteed to be applied to the host's main branch.
 	 */
-	public receiveOutboundChange(change: JsonCompatibleReadOnly): void {
-		this.logger(`Host: received outbound change [${getRevision(change)}] from sandbox`);
+	public receiveChangeFromSandbox(change: JsonCompatibleReadOnly): void {
+		this.logger(`Host: received change [${getRevision(change)}] from sandbox`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
 			this.logger(
 				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
@@ -153,16 +153,16 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		}
 		this.local.applyChange(change);
 		this.logger(
-			`Host:   merging outbound changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
+			`Host:   merging changes from sandbox: ${getMissingCommits(this.main, this.local)}`,
 		);
 		this.isApplyingSandboxChanges = true;
 		this.main.merge(this.local, false);
 		this.isApplyingSandboxChanges = false;
-		this.ackOutboundChangeFromSandbox();
-		this.syncSandboxToInboundChanges("after receiving outbound change");
+		this.ackChangeFromSandbox();
+		this.tryUpdateSandbox("after receiving change from sandbox");
 	}
 
-	private syncSandboxToInboundChanges(prompt: string): void {
+	private tryUpdateSandbox(prompt: string): void {
 		this.logger(`Host: considering sync ${prompt}...`);
 		if (this.local.isMissingEditsFrom(this.main)) {
 			this.logger(
@@ -189,7 +189,7 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 				"Expected update to be defined since local is missing edits from main",
 			);
 			this.logger("Host:   sending update to sandbox");
-			this.sendUpdateToSandbox(update);
+			this.sendChangeToSandbox(update);
 		} else {
 			this.logger("Host:   no changes that need to be reflected in sandbox");
 			// The sandbox is now caught up with the host's main branch
@@ -220,18 +220,18 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.mainHeadFromLastUpdate = undefined;
 		// New changes could have come in since the update was sent,
 		// so we try to sync again to ensure the sandbox is fully up-to-date.
-		this.syncSandboxToInboundChanges("after receiving ack of update");
+		this.tryUpdateSandbox("after receiving ack of update");
 	}
 
 	/**
-	 * Returns a promise that resolves when all inbound changes have been reflected in the sandbox,
-	 * or undefined if all inbound changes have already been reflected on the sandbox.
+	 * Returns a promise that resolves when all changes know to the host have been reflected in the sandbox,
+	 * or undefined if all such changes have already been reflected on the sandbox.
 	 *
 	 * If new changes are received while a promise is already in progress,
-	 * the existing promise will only resolve once all inbound changes (including the new ones) have been reflected in the sandbox.
+	 * the existing promise will only resolve once all sandbox-bound changes (including the new ones) have been reflected in the sandbox.
 	 * This means that there's no need to call this function again after receiving new changes if the previous promise is still pending.
 	 */
-	public get updatePromise(): Promise<void> | undefined {
+	public get updateSandboxPromise(): Promise<void> | undefined {
 		return this.updateInProgress?.promise;
 	}
 }
@@ -243,24 +243,24 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	private inFlight: number = 0;
 	private pushInProgress?: PromiseWithResolver;
 	private readonly offViewChanged: () => void;
-	private isApplyingInboundChanges: boolean = false;
+	private isApplyingChangesFromHost: boolean = false;
 
 	public constructor(
 		config: TreeViewConfiguration<TSchema>,
 		options: ForestOptions & ICodecOptions,
 		content: ViewContent,
-		/** The callback to send outbound changes from the sandbox to the host. */
-		sendOutboundChange: (change: JsonCompatibleReadOnly) => void,
-		/** The callback to send acknowledgements of inbound updates from the sandbox to the host. */
-		private readonly sendAckOfInboundUpdate: () => void,
+		/** The callback to send changes from to the host. */
+		sendChangeToHost: (change: JsonCompatibleReadOnly) => void,
+		/** The callback to send acknowledgements of changes received from the host. */
+		private readonly ackChangeFromHost: () => void,
 		private readonly logger: (message: string) => void = () => {},
 	) {
 		this.view = independentInitializedView(config, options, content);
 		this.offViewChanged = this.view.events.on("changed", (metadata: ChangeMetadata) => {
-			if (metadata.isLocal && !this.isApplyingInboundChanges) {
+			if (metadata.isLocal && !this.isApplyingChangesFromHost) {
 				const newChange = metadata.getChange();
 				this.logger(
-					`Sand: new outbound change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
+					`Sand: new change [${getRevision(newChange)}] (inFlight:${this.inFlight}->${this.inFlight + 1})`,
 				);
 				if (this.pushInProgress === undefined) {
 					this.logger("Sand:   no pre-existing push in progress. Creating new push promise.");
@@ -269,7 +269,7 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 					this.logger("Sand:   Reusing existing push promise.");
 				}
 				this.inFlight += 1;
-				sendOutboundChange(newChange);
+				sendChangeToHost(newChange);
 			}
 		});
 	}
@@ -280,31 +280,31 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Attempts to apply an update to reflect inbound changes.
-	 * The update is ignored if there are local changes that have not yet been reflected on the host.
-	 * The `sendAckOfInboundUpdate` callback will be invoked iff the update is applied.
-	 * @param update - The update to apply.
+	 * Attempts to apply a change from the host.
+	 * The change is ignored if there are local changes that have not yet been reflected on the host.
+	 * The `ackChangeFromHost` callback will be invoked iff the update is applied.
+	 * @param change - The change to apply.
 	 */
-	public receiveInboundUpdate(update: JsonCompatibleReadOnly): void {
+	public receiveChangeFromHost(change: JsonCompatibleReadOnly): void {
 		if (this.inFlight > 0) {
 			// There are local changes that have not yet been reflected on the host,
-			// so this inbound update is not applicable to the current state of the sandbox.
-			// We ignore the update (another will come once the host has caught up to the sandbox).
+			// so this change is not applicable to the current state of the sandbox.
+			// We ignore it (another will come once the host has caught up to the sandbox).
 			this.logger(`Sand: ignoring update from host (inFlight=${this.inFlight})`);
 			return;
 		}
-		this.isApplyingInboundChanges = true;
-		this.view.applyChange(update);
-		this.isApplyingInboundChanges = false;
+		this.isApplyingChangesFromHost = true;
+		this.view.applyChange(change);
+		this.isApplyingChangesFromHost = false;
 		this.logger("Sand: applied update from host");
-		this.sendAckOfInboundUpdate();
+		this.ackChangeFromHost();
 	}
 
 	/**
 	 * Must be called when the host acknowledges a new local change.
 	 */
-	public receiveAckOfOutboundChange(): void {
-		assert(this.inFlight > 0, "Unexpectedly received ack of outbound change");
+	public receiveAckFromHost(): void {
+		assert(this.inFlight > 0, "Unexpectedly received ack from host");
 		this.logger(`Sand: local change acked (inFlight:${this.inFlight}->${this.inFlight - 1})`);
 		this.inFlight -= 1;
 
@@ -316,31 +316,30 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 			);
 			const resolver = this.pushInProgress.resolver;
 			this.pushInProgress = undefined;
-			this.logger(`Sand:   all outbound changes acked. Resolving push promise.`);
+			this.logger(`Sand:   all my changes were acked. Resolving push promise.`);
 			resolver();
 		}
 	}
 
 	/**
-	 * Returns a promise that resolves when all local changes have been reflected on the host, or undefined if there are no local changes in flight.
+	 * Returns a promise that resolves when all changes made on the sandbox have been acknowledged by the host.
+	 * Undefined if there are no such changes in flight.
 	 *
 	 * If new local changes are made while a promise is already in progress,
 	 * the existing promise will only resolve once all local changes (including the new ones) have been reflected on the host.
 	 * This means that there's no need to call this function again after making new local changes if the previous promise is still pending.
 	 */
-	public get pushPromise(): Promise<void> | undefined {
+	public get updateHostPromise(): Promise<void> | undefined {
 		return this.pushInProgress?.promise;
 	}
 }
 
 describe("Host and Sandbox Demo", () => {
 	interface InteropFunctions {
-		readonly sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly) => void;
-		readonly sendOutboundChangeFromSandboxToHostLocalBranch: (
-			change: JsonCompatibleReadOnly,
-		) => void;
-		readonly sendAckOfOutboundChangeFromHostToSandbox: () => void;
-		readonly sendAckOfInboundUpdateFromSandboxToHost: () => void;
+		readonly sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly) => void;
+		readonly sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly) => void;
+		readonly sendAckOfHostBoundChangeFromHostToSandbox: () => void;
+		readonly sendAckOfSandboxBoundChangeFromSandboxToHost: () => void;
 	}
 
 	type InteropFunctionsBuilder<T extends InteropFunctions> = (
@@ -353,18 +352,16 @@ describe("Host and Sandbox Demo", () => {
 		getSandbox: () => Sandbox<typeof StringArray>,
 	): InteropFunctions {
 		return {
-			sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
-				setTimeout(() => getSandbox().receiveInboundUpdate(update));
+			sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
+				setTimeout(() => getSandbox().receiveChangeFromHost(update));
 			},
-			sendOutboundChangeFromSandboxToHostLocalBranch: (
-				change: JsonCompatibleReadOnly,
-			): void => {
-				setTimeout(() => getHost().receiveOutboundChange(change));
+			sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly): void => {
+				setTimeout(() => getHost().receiveChangeFromSandbox(change));
 			},
-			sendAckOfOutboundChangeFromHostToSandbox: (): void => {
-				setTimeout(() => getSandbox().receiveAckOfOutboundChange());
+			sendAckOfHostBoundChangeFromHostToSandbox: (): void => {
+				setTimeout(() => getSandbox().receiveAckFromHost());
 			},
-			sendAckOfInboundUpdateFromSandboxToHost: (): void => {
+			sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
 				setTimeout(() => getHost().receiveAckOfUpdate());
 			},
 		};
@@ -413,8 +410,8 @@ describe("Host and Sandbox Demo", () => {
 
 		host = new Host(
 			main,
-			interop.sendInboundUpdateFromHostToSandbox,
-			interop.sendAckOfOutboundChangeFromHostToSandbox,
+			interop.sendChangeFromHostToSandbox,
+			interop.sendAckOfHostBoundChangeFromHostToSandbox,
 			logger,
 		);
 
@@ -434,8 +431,8 @@ describe("Host and Sandbox Demo", () => {
 				// TODO: shard the compressor here?
 				idCompressor: hostCompressor,
 			},
-			interop.sendOutboundChangeFromSandboxToHostLocalBranch,
-			interop.sendAckOfInboundUpdateFromSandboxToHost,
+			interop.sendChangeFromSandboxToHost,
+			interop.sendAckOfSandboxBoundChangeFromSandboxToHost,
 			logger,
 		);
 
@@ -454,7 +451,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.main.root], ["A"]);
 	});
 
-	it("one outbound edit", async () => {
+	it("one sandbox edit", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit in the sandbox
@@ -466,7 +463,8 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.main.root], []);
 
 		// The sandbox should have started the process of pushing the edit to the host
-		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		const pushPromise =
+			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		// Wait for the edit to be pushed to the host
 		await pushPromise;
 
@@ -482,7 +480,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...peer.root], ["B(s)"]);
 	});
 
-	it("new outbound edits during outbound edit push", async () => {
+	it("new sandbox edits during sandbox edit push", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit in the sandbox
@@ -494,7 +492,8 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.main.root], []);
 
 		// The sandbox should have started the process of pushing the edit to the host
-		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		const pushPromise =
+			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 
 		// Before the push completes, other edits are made in the sandbox
 		sandbox.view.root.push("C(s)");
@@ -520,7 +519,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "D(s)"]);
 	});
 
-	it("one inbound edit", async () => {
+	it("one peer edit", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit on the peer
@@ -539,9 +538,9 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...sandbox.view.root], []);
 
-		// The host should have started the process of updating the sandbox with the inbound change
+		// The host should have started the process of updating the sandbox with the peer change
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 		// Wait for the update to be applied to the sandbox
 		await updatePromise;
 
@@ -550,7 +549,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["B(p)"]);
 	});
 
-	it("new inbound edits during inbound edit update", async () => {
+	it("new peer edits during sandbox update", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Edit on the peer
@@ -561,9 +560,9 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...sandbox.view.root], []);
 
-		// The host should have started the process of updating the sandbox with the inbound change
+		// The host should have started the process of updating the sandbox with the peer change
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 
 		// Before the update is applied to the sandbox, other edits come in from the peer
 		peer.root.push("C(p)");
@@ -581,20 +580,21 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 
-	it("outbound edits win races", async () => {
+	it("sandbox edits win races", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Make edits in the sandbox
 		sandbox.view.root.push("B(s)");
 		sandbox.view.root.push("C(s)");
-		// The outbound edits are synchronously reflected in the sandbox
+		// The sandbox edits are synchronously reflected in the sandbox
 		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
-		// The outbound edits are not reflected in the host yet
+		// The sandbox edits are not reflected in the host yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...host.main.root], []);
 
 		// The sandbox should have started the process of pushing the edit to the host
-		const pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		const pushPromise =
+			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 
 		// Before the host has a chance to process the edits from the sandbox, the peer makes an edit
 		peer.root.push("B(p)");
@@ -605,22 +605,22 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...sandbox.view.root], ["B(s)", "C(s)"]);
 
-		// The host should have started the process of updating the sandbox with the inbound change
+		// The host should have started the process of updating the sandbox with the peer change
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 
-		// Wait for the outbound edits to be pushed to the host
+		// Wait for the sandbox edits to be pushed to the host
 		await pushPromise;
 
-		// The outbound edits are now reflected in the host
+		// The sandbox edits are now reflected in the host
 		strict.deepEqual([...host.local.root], ["B(s)", "C(s)"]);
 		strict.deepEqual([...host.main.root], ["B(s)", "C(s)", "B(p)"]);
-		// The outbound edits are not reflected in the peer yet
+		// The sandbox edits are not reflected in the peer yet
 		strict.deepEqual([...peer.root], ["B(p)"]);
 
 		provider.synchronizeMessages();
 
-		// The outbound edits are now reflected in the peer
+		// The sandbox edits are now reflected in the peer
 		strict.deepEqual([...peer.root], ["B(s)", "C(s)", "B(p)"]);
 
 		// Wait for the update to be applied to the sandbox
@@ -638,14 +638,14 @@ describe("Host and Sandbox Demo", () => {
 		host.main.root.push("H");
 		strict.deepEqual([...host.main.root], ["H"]);
 
-		// The outbound edits are not reflected in the sandbox or peer yet
+		// The sandbox edits are not reflected in the sandbox or peer yet
 		strict.deepEqual([...host.local.root], []);
 		strict.deepEqual([...sandbox.view.root], []);
 		strict.deepEqual([...peer.root], []);
 
-		// The host should have started the process of updating the sandbox with the inbound change
+		// The host should have started the process of updating the sandbox with the peer change
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 
 		// Before the sandbox has a chance to process the edits from the host, the peer makes an edit
 		peer.root.push("P");
@@ -679,9 +679,9 @@ describe("Host and Sandbox Demo", () => {
 		host.main.root.push("H");
 		strict.deepEqual([...host.main.root], ["H"]);
 
-		// The host should have started the process of updating the sandbox with the inbound change
+		// The host should have started the process of updating the sandbox with the peer change
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 
 		provider.synchronizeMessages();
 
@@ -715,7 +715,8 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual(undoStack.length, 3, "Expected undo stack to have 3 entries");
 
 		// The sandbox should have started the process of pushing the edit to the host
-		let pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		let pushPromise =
+			sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
 		strict.deepEqual([...sandbox.view.root], ["Sa", "Sb", "Sc"]);
@@ -728,7 +729,7 @@ describe("Host and Sandbox Demo", () => {
 
 		// Wait for the update to be applied to the sandbox
 		const updatePromise =
-			host.updatePromise ?? strict.fail("Expected update to be in progress");
+			host.updateSandboxPromise ?? strict.fail("Expected update to be in progress");
 		await updatePromise;
 
 		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
@@ -737,7 +738,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual(
 			undoStack.length,
 			4,
-			"Expected inbound update to add an entry to the undo stack",
+			"Expected host change to add an entry to the undo stack",
 		);
 		undoStack.pop()?.dispose();
 
@@ -747,7 +748,7 @@ describe("Host and Sandbox Demo", () => {
 		undoStack.pop()?.revert();
 
 		// The sandbox should have started the process of pushing the edits to the host
-		pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		pushPromise = sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
 		strict.deepEqual([...sandbox.view.root], ["H"]);
@@ -761,7 +762,7 @@ describe("Host and Sandbox Demo", () => {
 		redoStack.pop()?.revert();
 
 		// The sandbox should have started the process of pushing the edits to the host
-		pushPromise = sandbox.pushPromise ?? strict.fail("Expected push to be in progress");
+		pushPromise = sandbox.updateHostPromise ?? strict.fail("Expected push to be in progress");
 		await pushPromise;
 
 		strict.deepEqual([...host.local.root], ["H", "Sa", "Sb", "Sc"]);
@@ -794,9 +795,9 @@ describe("Host and Sandbox Demo", () => {
 			Host2ViewEdit = "H2Ve",
 			/** Notify the host of an update ack sent by the view. */
 			View2HostAck = "V2Ha",
-			/** Notify the host of an outbound edit sent by the view. */
+			/** Notify the host of an view edit sent by the view. */
 			View2HostEdit = "V2He",
-			/** Notify the view of an outbound edit ack sent by the host. */
+			/** Notify the view of an view edit ack sent by the host. */
 			Host2ViewAck = "H2Va",
 		}
 
@@ -825,34 +826,32 @@ describe("Host and Sandbox Demo", () => {
 			const out: QueueInteropFunctions = {
 				host2View: [],
 				view2Host: [],
-				sendInboundUpdateFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
+				sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
 					out.host2View.push(update);
 				},
 				dispatchToView: (): void => {
-					const message = out.host2View.shift() ?? fail("No inbound updates in queue");
+					const message = out.host2View.shift() ?? fail("No view-bound changes in the queue");
 					if (message === Ack) {
-						getSandbox().receiveAckOfOutboundChange();
+						getSandbox().receiveAckFromHost();
 					} else {
-						getSandbox().receiveInboundUpdate(message);
+						getSandbox().receiveChangeFromHost(message);
 					}
 				},
-				sendAckOfInboundUpdateFromSandboxToHost: (): void => {
+				sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
 					out.view2Host.push(Ack);
 				},
-				sendOutboundChangeFromSandboxToHostLocalBranch: (
-					change: JsonCompatibleReadOnly,
-				): void => {
+				sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly): void => {
 					out.view2Host.push(change);
 				},
 				dispatchToHost: (): void => {
-					const message = out.view2Host.shift() ?? fail("No outbound changes in queue");
+					const message = out.view2Host.shift() ?? fail("No host-bound changes in queue");
 					if (message === Ack) {
 						getHost().receiveAckOfUpdate();
 					} else {
-						getHost().receiveOutboundChange(message);
+						getHost().receiveChangeFromSandbox(message);
 					}
 				},
-				sendAckOfOutboundChangeFromHostToSandbox: (): void => {
+				sendAckOfHostBoundChangeFromHostToSandbox: (): void => {
 					out.host2View.push(Ack);
 				},
 			};
@@ -964,7 +963,7 @@ describe("Host and Sandbox Demo", () => {
 					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
 
-				if (host.updatePromise === undefined) {
+				if (host.updateSandboxPromise === undefined) {
 					strict.equal(host.local.isMissingEditsFrom(host.main), false);
 				}
 
