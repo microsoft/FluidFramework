@@ -15,7 +15,7 @@ thus alleviating the need for custom protocols and custom conflict resolution.
 1. All messages between the host and the sandbox are expected to eventually arrive.
 2. All messages flowing in a given direction (either from the host to the sandbox or the reverse)
 are expected to arrive in the order they were sent.
-There is no assumption about the relative order of arrival of messages going in different directions.
+There is no assumption about the relative order of arrival of messages going in opposite directions.
 
 ## Path to Production
 

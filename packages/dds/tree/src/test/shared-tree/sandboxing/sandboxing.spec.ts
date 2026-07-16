@@ -18,9 +18,9 @@ import {
 import { FormatValidatorBasic } from "../../../external-utilities/index.js";
 import {
 	independentInitializedView,
+	SchematizingSimpleTreeView,
 	TreeAlpha,
 	type ForestOptions,
-	type TreeCheckout,
 	type ViewContent,
 } from "../../../shared-tree/index.js";
 import {
@@ -44,9 +44,8 @@ import { TestTreeProviderLite, StringArray, createTestUndoRedoStacks } from "../
 function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<TSchema>,
 ): GraphCommit<unknown> {
-	return (
-		view as unknown as { readonly checkout: TreeCheckout }
-	).checkout.mainBranch.getHead();
+	strict(view instanceof SchematizingSimpleTreeView);
+	return view.checkout.mainBranch.getHead();
 }
 
 /**
@@ -106,9 +105,13 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	 * Clone of main branch from when the last update to the sandbox was initiated.
 	 */
 	private mainHeadFromLastUpdate?: TreeViewAlpha<TSchema>;
-
+	/**
+	 * True when the host is applying changes from the sandbox to the main branch.
+	 */
 	private isApplyingSandboxChanges: boolean = false;
-
+	/**
+	 * The callback to unsubscribe from main branch changes.
+	 */
 	private readonly offMainChanged: () => void;
 
 	public constructor(
@@ -162,6 +165,17 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 		this.tryUpdateSandbox("after receiving change from sandbox");
 	}
 
+	/**
+	 * Attempts to send changes to the sandbox if the sandbox is behind the host's main branch.
+	 * If the sandbox is already up-to-date with the host's main branch,
+	 * or if update is already in progress, then this method has no effect beyond logging.
+	 *
+	 * @remarks
+	 * Updating the sandbox is asynchronous, so the sandbox may still be behind the host's main branch after this method returns.
+	 * See {@link updateSandboxPromise} for a promise that resolves when the sandbox is fully up-to-date with the host's main branch.
+	 *
+	 * @param prompt - A string to include in the log message to indicate why the sandbox update is being considered.
+	 */
 	private tryUpdateSandbox(prompt: string): void {
 		this.logger(`Host: considering sync ${prompt}...`);
 		if (this.local.isMissingEditsFrom(this.main)) {
@@ -241,8 +255,20 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 	public readonly view: TreeViewAlpha<TSchema>;
 	/** The number of local changes that have been made in the sandbox but not yet reflected on the host. */
 	private inFlight: number = 0;
+	/**
+	 * The promise and resolver for the process of sending changes to the host.
+	 * When defined, the host has not yet acknowledged the sandbox changes.
+	 * The promise resolves when the host acknowledges the sandbox changes.
+	 * When undefined, the host is up-to-date with the sandbox.
+	 */
 	private pushInProgress?: PromiseWithResolver;
+	/**
+	 * Callback to unsubscribe from view changes.
+	 */
 	private readonly offViewChanged: () => void;
+	/**
+	 * True when the sandbox is applying changes from the host.
+	 */
 	private isApplyingChangesFromHost: boolean = false;
 
 	public constructor(

@@ -452,8 +452,14 @@ export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	/**
+	 * Map from clientId to container runtime.
+	 */
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
+	/**
+	 * Map from clientId to IIdCompressor.
+	 */
 	private readonly compressorMap: Map<string, IIdCompressor> = new Map();
 
 	/**
