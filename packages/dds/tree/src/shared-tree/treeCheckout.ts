@@ -6,7 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId, StableId } from "@fluidframework/id-compressor";
 import { isStableId } from "@fluidframework/id-compressor/internal";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -1272,6 +1272,23 @@ export class TreeCheckout implements ITreeCheckout {
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+	}
+
+	public rewindToRevision(revisionString: string): void {
+		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		const head = this.#transaction.branch.getHead();
+		let targetCommit = head;
+		while (targetCommit.parent !== undefined && targetCommit.revision !== revision) {
+			targetCommit = targetCommit.parent;
+		}
+		if (targetCommit.revision !== revision) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
 
 	private rebase(branch: TreeBranch): void {

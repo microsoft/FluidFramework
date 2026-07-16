@@ -1500,6 +1500,10 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
+	public rewindToRevision(): void {
+		throw new Error("'rewindToRevision' not implemented.");
+	}
+
 	public viewWith<TRoot extends ImplicitFieldSchema>(
 		config: TreeViewConfiguration<TRoot>,
 	): TreeView<TRoot> {

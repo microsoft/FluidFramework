@@ -190,6 +190,9 @@ describe("schematizeTree", () => {
 			hasRootSchema(): boolean {
 				return false;
 			},
+			rewindToRevision(): void {
+				throw new Error("Function not implemented.");
+			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
 			},

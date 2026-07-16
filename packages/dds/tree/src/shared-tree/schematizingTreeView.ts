@@ -522,6 +522,10 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.fork().viewWith(this.config);
 	}
 
+	public rewindToRevision(revision: string): void {
+		this.checkout.rewindToRevision(revision);
+	}
+
 	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}

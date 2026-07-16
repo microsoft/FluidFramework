@@ -356,6 +356,15 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	fork(): TreeBranchAlpha;
 
 	/**
+	 * Rewinds this branch to the commit with the given revision.
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
+	 * Can be obtained by navigating the commits on the branch {@link TreeBranchAlpha.history | history}.
+	 * @remarks
+	 * Edits made after rewinding will not affect the original history.
+	 */
+	rewindToRevision(revision: string): void;
+
+	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
 	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
 	 * @remarks
