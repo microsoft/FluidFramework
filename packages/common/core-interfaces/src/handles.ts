@@ -173,11 +173,6 @@ export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
 	 *
 	 * This method does not wait for the payload to be uploaded or shared. Progress and failures can be
 	 * observed through {@link ILocalFluidHandle.events}.
-	 *
-	 * This method is optional for compatibility with older implementations of
-	 * {@link ILocalFluidHandle}.
-	 *
-	 * The behavior of this method while the container is in staging mode is not currently defined.
 	 */
 	sharePayload?(): void;
 	/**
