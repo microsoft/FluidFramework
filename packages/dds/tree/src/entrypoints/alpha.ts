@@ -202,6 +202,7 @@ export {
 	ITreeAlpha, 
 	IncrementalEncodingPolicy, 
 	IndependentViewOptions, 
+	IndependentViewTelemetryOptions, 
 	Insertable, 
 	InsertableContent, 
 	InsertableField, 
