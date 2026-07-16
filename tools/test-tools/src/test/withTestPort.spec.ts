@@ -68,13 +68,6 @@ describe("withTestPort", () => {
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
-	it("exports the resolved port to the command as the PORT environment variable", () => {
-		const { code, errors } = withTestPort(["node", "-p", "process.env.PORT", ">", outPath]);
-		assert.equal(code, 0);
-		assert.deepEqual(errors, []);
-		assert.equal(readOutput(), defaultPort);
-	});
-
 	describe("substitutes {PORT} tokens in the command arguments", () => {
 		it("replaces a standalone {PORT} argument", () => {
 			const { code, errors } = withTestPort(["echo", "{PORT}", ">", outPath]);

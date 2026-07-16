@@ -22,10 +22,7 @@ jest/puppeteer configs consume it via `getTestPort`.
 
 `with-test-port <command...>` resolves the port for the current package (using the `name` field of the
 `package.json` in the working directory, the same mapping written by `assign-test-ports`) and then runs the
-given command with:
-
-- the resolved port exported to the command's environment as `PORT`, and
-- every `{PORT}` token in the command replaced with the resolved port.
+given command with every `{PORT}` token in the command replaced with the resolved port.
 
 For example, the following runs a real-service test against a Tinylicious server on the package's assigned port
 without hardcoding it, letting packages run their service tests concurrently without colliding on a shared port:
