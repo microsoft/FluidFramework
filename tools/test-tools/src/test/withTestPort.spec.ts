@@ -10,19 +10,6 @@ import path from "node:path";
 
 import { withTestPort } from "../withTestPort";
 
-/**
- * A small Node script that records the `PORT` environment variable and its CLI arguments to the JSON
- * file passed as its first argument. Used to observe what `withTestPort` passes to the spawned command.
- */
-const probeScript = `const fs = require("node:fs");
-fs.writeFileSync(process.argv[2], JSON.stringify({ port: process.env.PORT, args: process.argv.slice(3) }));
-`;
-
-interface ProbeOutput {
-	port?: string;
-	args: string[];
-}
-
 describe("withTestPort", () => {
 	// Use a unique package name that won't appear in any generated port map, so `getTestPort` returns
 	// its default port deterministically regardless of any testportmap.json left on the machine.
@@ -31,16 +18,13 @@ describe("withTestPort", () => {
 
 	let originalCwd: string;
 	let tempDir: string;
-	let probePath: string;
 	let outPath: string;
 
 	beforeEach(() => {
 		originalCwd = process.cwd();
 		tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "with-test-port-"));
 		fs.writeFileSync(path.join(tempDir, "package.json"), JSON.stringify({ name: packageName }));
-		probePath = path.join(tempDir, "probe.cjs");
-		outPath = path.join(tempDir, "out.json");
-		fs.writeFileSync(probePath, probeScript);
+		outPath = path.join(tempDir, "out.txt");
 		process.chdir(tempDir);
 	});
 
@@ -49,8 +33,9 @@ describe("withTestPort", () => {
 		fs.rmSync(tempDir, { recursive: true, force: true });
 	});
 
-	function readProbeOutput(): ProbeOutput {
-		return JSON.parse(fs.readFileSync(outPath, "utf8")) as ProbeOutput;
+	/** Reads (and trims) the file the spawned command redirected its output to. */
+	function readOutput(): string {
+		return fs.readFileSync(outPath, "utf8").trim();
 	}
 
 	it("returns a non-zero exit code when no command is provided", () => {
@@ -60,32 +45,27 @@ describe("withTestPort", () => {
 	it("returns a non-zero exit code when the package name can't be determined", () => {
 		// Remove the package.json so the name lookup fails before anything is spawned.
 		fs.rmSync(path.join(tempDir, "package.json"));
-		assert.equal(withTestPort(["node", probePath, outPath]), 1);
+		assert.equal(withTestPort(["echo", "hi", ">", outPath]), 1);
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
 	it("exports the resolved port to the command as the PORT environment variable", () => {
-		const code = withTestPort(["node", probePath, outPath]);
-		assert.equal(code, 0);
-		assert.equal(readProbeOutput().port, defaultPort);
+		assert.equal(withTestPort(["node", "-p", "process.env.PORT", ">", outPath]), 0);
+		assert.equal(readOutput(), defaultPort);
 	});
 
 	it("substitutes {PORT} tokens in the command arguments", () => {
-		const code = withTestPort(["node", probePath, outPath, "{PORT}", "prefix-{PORT}"]);
-		assert.equal(code, 0);
-		assert.deepEqual(readProbeOutput().args, [defaultPort, `prefix-${defaultPort}`]);
+		assert.equal(withTestPort(["echo", "{PORT}", "prefix-{PORT}", ">", outPath]), 0);
+		assert.equal(readOutput(), `${defaultPort} prefix-${defaultPort}`);
 	});
 
 	it("uses the --fallback value when no port is assigned", () => {
-		const code = withTestPort(["--fallback", "7070", "node", probePath, outPath, "{PORT}"]);
-		assert.equal(code, 0);
-		const output = readProbeOutput();
-		assert.equal(output.port, "7070");
-		assert.deepEqual(output.args, ["7070"]);
+		assert.equal(withTestPort(["--fallback", "7070", "echo", "{PORT}", ">", outPath]), 0);
+		assert.equal(readOutput(), "7070");
 	});
 
 	it("returns a non-zero exit code for a non-numeric --fallback value", () => {
-		assert.equal(withTestPort(["--fallback", "nope", "node", probePath, outPath]), 1);
+		assert.equal(withTestPort(["--fallback", "nope", "echo", "hi", ">", outPath]), 1);
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
@@ -94,11 +74,8 @@ describe("withTestPort", () => {
 		const backup = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : undefined;
 		try {
 			fs.writeFileSync(mapPath, JSON.stringify({ [packageName]: 12345 }));
-			const code = withTestPort(["node", probePath, outPath, "{PORT}"]);
-			assert.equal(code, 0);
-			const output = readProbeOutput();
-			assert.equal(output.port, "12345");
-			assert.deepEqual(output.args, ["12345"]);
+			assert.equal(withTestPort(["echo", "{PORT}", ">", outPath]), 0);
+			assert.equal(readOutput(), "12345");
 		} finally {
 			if (backup === undefined) {
 				fs.rmSync(mapPath, { force: true });
@@ -109,8 +86,6 @@ describe("withTestPort", () => {
 	});
 
 	it("propagates the exit code of the spawned command", () => {
-		const failPath = path.join(tempDir, "fail.cjs");
-		fs.writeFileSync(failPath, "process.exit(7);\n");
-		assert.equal(withTestPort(["node", failPath]), 7);
+		assert.equal(withTestPort(["exit", "7"]), 7);
 	});
 });
