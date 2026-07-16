@@ -200,6 +200,16 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	}
 
 	public close(): void {
+		// TODO: `container.close()` cancels the container runtime's GC timers, but a couple of
+		// container-level timers are only bounded `setTimeout`s that survive close (they are not
+		// cancelled here, nor even on `dispose`):
+		// - The container-loader `NoopHeuristic` timer (~2s), which has no disposal hook.
+		// - The container-runtime `SummaryManager` "delay before creating summarizer" timer, whose
+		//   pending timeout is not cleared when the SummaryManager is torn down.
+		// These self-expire, so they do not cause indefinite hangs, but until they fire they keep the
+		// Node.js event loop alive, delaying a clean process exit after close. That is a common reason
+		// tests resort to Mocha's `--exit` flag. Ideally close() (via the runtime's close path) would
+		// cancel these too so that closing a single container is sufficient to release all its timers.
 		this.container.close();
 	}
 

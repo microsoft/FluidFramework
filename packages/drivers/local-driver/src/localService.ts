@@ -50,11 +50,34 @@ const defaultServiceOptions: ServiceOptions = {
  *
  * @remarks
  * Since all collaborators are in the same process, minVersionForCollab can be omitted and will default to the current version.
+ *
+ * The service is ephemeral and in-memory: all documents are held by a single shared in-memory service that
+ * exists only while at least one container is open.
+ * As long as any container remains open (even one for a different `id`), every document created in this session is
+ * retained and can be loaded by `id` — including documents that currently have no open container.
+ * Once all containers are closed, the shared service and all of its documents are discarded, so those `id`s can no
+ * longer be loaded (a subsequent {@link @fluidframework/driver-definitions#ServiceClient.loadContainer} would not
+ * find them).
+ * This is shared across all clients from this and any other call to {@link createEphemeralServiceClient}, since they
+ * all use the same single static in-memory service instance.
  * @privateRemarks
  * TODO: We should provide a way to extract (for potential serialization as test data) and load documents into this service.
  * This is needed to use this API surface for testing reference documents.
  * Ideally we would provide a service agnostic way to to the export, but likely only support loading them into the local service.
  * This can be done via a an API on FluidContainer (or a free function taking one) to do the export, then adding a service specific API to load from the export format and return the ID of the loaded document.
+ *
+ * TODO: The document lifetime policy (all documents live only while at least one container is open) is currently
+ * fixed because all clients share a single static in-memory service instance.
+ * This is probably a bad design as it causes surprising coupling between different clients.
+ * As there does not seem to be a clean way to manage document lifetime without a larger API surface,
+ * this is being left for now, but should probably be replaced with something better, likely involving an explicit server object whose lifetime can be managed.
+ * Having that server have a singleton default which is reset by
+ * In the future we could make this configurable, and support the save/load of documents described above, by
+ * exposing an `EphemeralService` type which owns the in-memory service and can create {@link @fluidframework/driver-definitions#ServiceClient}
+ * instances connected to it, along with a factory for creating such an `EphemeralService`.
+ * That would be offered as an alternative to this static {@link createEphemeralServiceClient} (and its static
+ * shared service instance): a caller-owned `EphemeralService` could keep documents alive independent of open
+ * containers, control the lifetime policy explicitly, and be disposed to release its resources.
  *
  * @alpha
  */
@@ -70,15 +93,20 @@ export function createEphemeralServiceClient(
  * @remarks
  * This can be used to cleanup lingering timers from containers created using a client from {@link createEphemeralServiceClient}.
  * Such timers are a common case of hangs on exist (often worked around using Mocha's `--exit` flag).
+ *
+ * This behaves just like calling {@link @fluidframework/driver-definitions#FluidContainer.close} on every open container:
+ * closing the last one also disposes the shared in-memory server (see the note on server timers in the implementation).
  * @alpha
  */
 export async function closeEphemeralContainers(): Promise<void> {
-	const toClose = containers;
-	containers = [];
-	for (const c of toClose) {
-		c.container.close();
+	// Close every open container via the same public close() path a user would use. Closing the last
+	// container disposes the shared server (see updateContainers), so this is equivalent to a user
+	// closing each open container individually.
+	for (const c of [...containers]) {
+		c.close();
 	}
-	updateContainers();
+	// Join the server shutdown (triggered by closing the last container) so callers can await full cleanup.
+	await serverClosePromise;
 }
 
 const containerRuntimeLoader: ContainerRuntimeLoader = async (
@@ -108,6 +136,13 @@ let containers: EphemeralServiceContainer<unknown>[] = [];
 
 function updateContainers(): void {
 	containers = containers.filter((c) => !c.container.closed);
+	if (containers.length === 0) {
+		// No containers remain, so the shared in-memory server is no longer needed. Dispose it so its
+		// timers (e.g. the Deli read-client idle `setInterval`, which belongs to the server rather than
+		// any container and so cannot be cleared by `container.close()`) do not keep the Node.js event
+		// loop alive. A fresh server is created lazily if another container is created later.
+		disposeLocalServer();
+	}
 }
 
 /**
@@ -195,8 +230,12 @@ export async function synchronizeEphemeralClients(
 			}
 
 			// Sample pending server work once per pass (the macrotask yield above gave the broadcaster's
-			// scheduled send a chance to run first).
-			if (await Promise.race([localServer.hasPendingWork(), deadline])) {
+			// scheduled send a chance to run first). If the server has already been disposed (no containers
+			// remain) there is nothing pending, and we must not recreate it here.
+			const pendingServerWork =
+				localServerInstance !== undefined &&
+				(await Promise.race([localServerInstance.hasPendingWork(), deadline]));
+			if (pendingServerWork) {
 				clean = 0;
 				continue;
 			}
@@ -210,13 +249,38 @@ export async function synchronizeEphemeralClients(
 
 // A single localServer should be shared by all instances of a local driver so they can communicate
 // with each other.
-const localServer: ILocalDeltaConnectionServer =
-	LocalDeltaConnectionServer.create(
-		// new LocalSessionStorageDbFactory(),
-	);
+// It is created lazily and disposed once no containers remain (see updateContainers) so its timers
+// can be cleaned up.
+let localServerInstance: ILocalDeltaConnectionServer | undefined;
+let documentServiceFactoryInstance: LocalDocumentServiceFactory | undefined;
+// Tracks the in-flight close of a disposed server so awaiting callers (closeEphemeralContainers) can join it.
+let serverClosePromise: Promise<void> | undefined;
+
+function getLocalServer(): ILocalDeltaConnectionServer {
+	localServerInstance ??=
+		LocalDeltaConnectionServer.create(
+			// new LocalSessionStorageDbFactory(),
+		);
+	return localServerInstance;
+}
+
+function getDocumentServiceFactory(): LocalDocumentServiceFactory {
+	documentServiceFactoryInstance ??= new LocalDocumentServiceFactory(getLocalServer());
+	return documentServiceFactoryInstance;
+}
+
+function disposeLocalServer(): void {
+	if (localServerInstance !== undefined) {
+		const serverToClose = localServerInstance;
+		localServerInstance = undefined;
+		documentServiceFactoryInstance = undefined;
+		// `close` is async, but the public container close() that drives this is synchronous, so start
+		// the shutdown and track its promise for closeEphemeralContainers to await.
+		serverClosePromise = serverToClose.close();
+	}
+}
 
 const urlResolver = new LocalResolver();
-const documentServiceFactory = new LocalDocumentServiceFactory(localServer);
 /**
  * Create a request to open an existing document.
  *
@@ -236,8 +300,8 @@ let documentIdCounter = 0;
  * {@link @fluidframework/driver-definitions#FluidContainerWithService}.
  *
  * @remarks
- * Data is stored in-memory and shared only within the same browser session via the module-level
- * {@link localServer}. All containers created by {@link createEphemeralServiceClient} share the
+ * Data is stored in-memory and shared only within the same browser session via a module-level
+ * shared server. All containers created by {@link createEphemeralServiceClient} share the
  * same server instance, enabling side-by-side collaboration testing without a real server.
  *
  * @internal
@@ -254,7 +318,7 @@ export class EphemeralServiceContainer<TData>
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory,
+			documentServiceFactory: getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
 				options.minVersionForCollaboration,
@@ -280,7 +344,7 @@ export class EphemeralServiceContainer<TData>
 		const containerInner = await loadExistingContainer({
 			request: createLoadExistingRequest(id),
 			urlResolver,
-			documentServiceFactory,
+			documentServiceFactory: getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
 				options.minVersionForCollaboration,
@@ -308,6 +372,12 @@ export class EphemeralServiceContainer<TData>
 	) {
 		super(registry, options, container, data, id);
 		containers.push(this);
+		updateContainers();
+	}
+
+	public override close(): void {
+		super.close();
+		// Prune this now-closed container and, if it was the last one open, dispose the shared server.
 		updateContainers();
 	}
 
