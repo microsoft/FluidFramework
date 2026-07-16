@@ -2842,100 +2842,139 @@ describe("SharedTree", () => {
 		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
-	it("supports multiple shared branches", () => {
-		const provider = new TestTreeProviderLite(
-			2,
-			configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				enableSharedBranches: true,
-			}).getFactory(),
-		);
-		const tree1 = provider.trees[0];
+	describe("Shared Branches", () => {
+		it("supports multiple shared branches", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
 
-		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
-		const mainView1 = tree1.viewWith(config);
-		mainView1.initialize(["A"]);
-		provider.synchronizeMessages();
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
 
-		assert.deepEqual([...mainView1.root], ["A"]);
-		const tree2 = provider.trees[1];
-		provider.synchronizeMessages();
+			assert.deepEqual([...mainView1.root], ["A"]);
+			const tree2 = provider.trees[1];
+			provider.synchronizeMessages();
 
-		const branchId = tree1.createSharedBranch();
-		const branchView1 = tree1.viewSharedBranchWith(branchId, config);
-		assert.deepEqual([...branchView1.root], ["A"]);
+			const branchId = tree1.createSharedBranch();
+			const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView1.root], ["A"]);
 
-		mainView1.root.insertAtEnd("X");
-		branchView1.root.insertAtEnd("B");
-		assert.deepEqual([...branchView1.root], ["A", "B"]);
-		assert.deepEqual([...mainView1.root], ["A", "X"]);
-		provider.synchronizeMessages();
+			mainView1.root.insertAtEnd("X");
+			branchView1.root.insertAtEnd("B");
+			assert.deepEqual([...branchView1.root], ["A", "B"]);
+			assert.deepEqual([...mainView1.root], ["A", "X"]);
+			provider.synchronizeMessages();
 
-		const branchView2 = tree2.viewSharedBranchWith(branchId, config);
-		assert.deepEqual([...branchView2.root], ["A", "B"]);
+			const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView2.root], ["A", "B"]);
 
-		branchView2.root.insertAtEnd("C");
-		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
-		provider.synchronizeMessages();
+			branchView2.root.insertAtEnd("C");
+			assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+			provider.synchronizeMessages();
 
-		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
-		assert.deepEqual([...mainView1.root], ["A", "X"]);
+			assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+			assert.deepEqual([...mainView1.root], ["A", "X"]);
 
-		const mainView2 = tree2.viewWith(config);
-		assert.deepEqual([...mainView2.root], ["A", "X"]);
-	});
+			const mainView2 = tree2.viewWith(config);
+			assert.deepEqual([...mainView2.root], ["A", "X"]);
+		});
 
-	describe("can load a shared branch from summary", () => {
-		for (const subCase of [
-			"based on a commit in the collab window",
-			"based on a commit outside the collab window",
-		] as const) {
-			it(subCase, async () => {
-				const internalOption = resolveOptions({ enableSharedBranches: true });
-				const provider = await TestTreeProvider.create(
-					1,
-					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, internalOption),
-				);
-				const tree1 = provider.trees[0];
-				const config = new TreeViewConfiguration({
-					schema: StringArray,
-					enableSchemaValidation,
-				});
-				const mainView1 = tree1.viewWith(config);
-				mainView1.initialize([]);
-				mainView1.root.insertAtEnd("A");
-				const branchId = tree1.createSharedBranch();
-				mainView1.root.insertAtEnd("B");
-				await provider.ensureSynchronized();
+		it("shared branches can be named on creation", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
 
-				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
-				branchView1.root.insertAtEnd("X");
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize([]);
+			provider.synchronizeMessages();
 
-				await provider.ensureSynchronized();
+			const branch1Id = tree1.createSharedBranch("branch1");
+			const branch2Id = tree1.createSharedBranch("branch2");
+			const branch3Id = tree1.createSharedBranch();
 
-				if (subCase === "based on a commit outside the collab window") {
-					const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
-					while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+			assert.equal(tree1.getSharedBranchName(branch1Id), "branch1");
+			assert.equal(tree1.getSharedBranchName(branch2Id), "branch2");
+			assert.equal(tree1.getSharedBranchName(branch3Id), undefined);
+
+			provider.synchronizeMessages();
+
+			assert.equal(tree2.getSharedBranchName(branch1Id), "branch1");
+			assert.equal(tree2.getSharedBranchName(branch2Id), "branch2");
+			assert.equal(tree2.getSharedBranchName(branch3Id), undefined);
+		});
+
+		describe("can load a shared branch from summary", () => {
+			for (const subCase of [
+				"based on a commit in the collab window",
+				"based on a commit outside the collab window",
+			] as const) {
+				it(subCase, async () => {
+					const internalOption = resolveOptions({ enableSharedBranches: true });
+					const provider = await TestTreeProvider.create(
+						1,
+						SummarizeType.onDemand,
+						new SharedTreeTestFactory(() => {}, undefined, internalOption),
+					);
+					const tree1 = provider.trees[0];
+					const config = new TreeViewConfiguration({
+						schema: StringArray,
+						enableSchemaValidation,
+					});
+					const mainView1 = tree1.viewWith(config);
+					mainView1.initialize([]);
+					mainView1.root.insertAtEnd("A");
+					const branchId = tree1.createSharedBranch();
+					mainView1.root.insertAtEnd("B");
+					await provider.ensureSynchronized();
+
+					const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+					branchView1.root.insertAtEnd("X");
+
+					await provider.ensureSynchronized();
+
+					if (subCase === "based on a commit outside the collab window") {
+						const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
+						while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+							mainView1.root.insertAtEnd("C");
+							await provider.ensureSynchronized();
+						}
 						mainView1.root.insertAtEnd("C");
 						await provider.ensureSynchronized();
 					}
-					mainView1.root.insertAtEnd("C");
+
+					const lengthOnMainBranch = mainView1.root.length;
+
+					// The summary created here should include the shared branch
+					await provider.summarize();
 					await provider.ensureSynchronized();
-				}
-
-				const lengthOnMainBranch = mainView1.root.length;
-
-				// The summary created here should include the shared branch
-				await provider.summarize();
-				await provider.ensureSynchronized();
-				const loadingTree = await provider.createTree();
-				const loadingMainView = loadingTree.viewWith(config);
-				assert.equal(loadingMainView.root.length, lengthOnMainBranch);
-				const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
-				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
-			});
-		}
+					const loadingTree = await provider.createTree();
+					const loadingMainView = loadingTree.viewWith(config);
+					assert.equal(loadingMainView.root.length, lengthOnMainBranch);
+					const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
+					assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+				});
+			}
+		});
 	});
 
 	it("Can process nested transactions from two different trees", () => {

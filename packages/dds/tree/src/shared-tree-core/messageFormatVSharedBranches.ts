@@ -46,5 +46,6 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
+		branchName: Type.Optional(Type.String()),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});
