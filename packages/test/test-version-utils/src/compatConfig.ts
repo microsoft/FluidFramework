@@ -341,6 +341,15 @@ export const genCrossClientCompatConfig = (): CompatConfig[] => {
 	// We will not add any versions below 1.0.0 (only >1.0.0 is supported by our cross-client compat policy).
 	const deltaVersions: Map<string, string> = new Map();
 	const current = getCurrentCheckpoint(pkgVersion);
+
+	// Pair the current build against the lower bound of its own checkpoint, so two
+	// in-window clients that share the current checkpoint are covered. Skipped when the
+	// build already resolves to that lower-bound version (that combo would be a self-test).
+	const currentCheckpointVersion = resolveRangeViaManifest(checkpointResolutionRange(current));
+	if (currentCheckpointVersion !== currentVersion) {
+		deltaVersions.set(currentCheckpointVersion, current.name);
+	}
+
 	for (const c of getInWindowPriorCheckpoints(current)) {
 		const v = resolveRangeViaManifest(checkpointResolutionRange(c));
 		deltaVersions.set(v, c.name);

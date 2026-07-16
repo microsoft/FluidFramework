@@ -78,6 +78,11 @@ export interface SharedTreeCoreOptionsInternal extends CodecWriteOptions {
 	 * See {@link SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode}.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+
+	/**
+	 * {@inheritDoc SharedTreeOptions.retainHistory}
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface EnrichmentConfig<TChange> {
@@ -179,6 +184,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			this.mintRevisionTag,
 			(branchId) => this.registerSharedBranch(branchId),
 			rebaseLogger,
+			options.retainHistory ?? false,
 		);
 
 		this.registerSharedBranch("main");
@@ -197,8 +203,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				this.idCompressor,
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
-				options.healUnresolvableIdentifiersOnDecode,
-				sharedObject.id,
+				options.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id }
+					: undefined,
 			),
 			...summarizables,
 		];

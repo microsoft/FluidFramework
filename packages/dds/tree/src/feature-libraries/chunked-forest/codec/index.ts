@@ -13,6 +13,7 @@ export type { FieldBatch } from "./fieldBatch.js";
 export {
 	type FieldBatchCodec,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	type IncrementalEncoderDecoder,
 	type IncrementalEncoder,

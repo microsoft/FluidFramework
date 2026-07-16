@@ -109,6 +109,14 @@ export interface TreeArrayNode<
 > extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
+	 *
+	 * @remarks
+	 * All items inserted by a single call to this method are inserted consecutively.
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
@@ -117,12 +125,18 @@ export interface TreeArrayNode<
 
 	/**
 	 * Inserts new item(s) at the start of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
@@ -131,10 +145,10 @@ export interface TreeArrayNode<
 	 * Inserts new item(s) at the end of the array.
 	 *
 	 * @remarks
-	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
-	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
-	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
-	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 * Unlike `Array.prototype.push`, this method does not return the new length of the array.
+	 *
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 *
 	 * @param value - The content to insert.
 	 */
@@ -460,6 +474,38 @@ export interface TreeArrayNodeAlpha<
 		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
 		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
 > extends TreeArrayNode<TAllowedTypes, T, TNew> {
+	/**
+	 * Returns the item located at the specified index.
+	 * @param index - The zero-based index of the item to retrieve.
+	 * Negative indices count back from the last item in the array: for `index < 0`, `index + array.length` is used.
+	 * @returns The item at the specified index, or `undefined` if the index is out of bounds.
+	 */
+	at(index: number): T | undefined;
+
+	/**
+	 * Removes the last item from the array and returns it.
+	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 */
+	pop(): T | undefined;
+
+	/**
+	 * Removes the first item from the array and returns it.
+	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 */
+	shift(): T | undefined;
+
+	/**
+	 * Inserts new item(s) at the start of the array.
+	 *
+	 * @param value - The content to insert.
+	 * @remarks
+	 * Unlike `Array.prototype.unshift`, this method does not return the new length of the array.
+	 *
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
+	 */
+	unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+
 	/**
 	 * Removes existing item(s) and/or adds new item(s).
 	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
@@ -1009,6 +1055,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public push(...value: Insertable<T>): void {
 		this.insertAt(this.length, ...value);
+	}
+	public unshift(...value: Insertable<T>): void {
+		this.insertAt(0, ...value);
+	}
+	public pop(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const value = this.at(-1);
+		if (value !== undefined) {
+			this.removeAt(this.length - 1);
+		}
+		return value;
+	}
+	public shift(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const value = this.at(0);
+		if (value !== undefined) {
+			this.removeAt(0);
+		}
+		return value;
 	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);

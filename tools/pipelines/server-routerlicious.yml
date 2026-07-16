@@ -123,7 +123,7 @@ extends:
     dockerBuildBumpsVersion: true
     # Root-only install: r11s has native deps that don't install in CI; the real build runs in Docker.
     # Root deps are still needed for the version-setting step.
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile --workspace-root'
+    installWorkspaceRootOnly: true
     tagName: server
     isReleaseGroup: true
     pool: Large-eastus2
