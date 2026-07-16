@@ -112,6 +112,10 @@ export class BlobHandle
 		this._events?.emit("payloadShared");
 	};
 
+	public readonly notifyUploaded = (): void => {
+		this._events?.emit("payloadUploaded");
+	};
+
 	public readonly notifyFailed = (error: unknown): void => {
 		this._payloadShareError = error;
 		this._events?.emit("payloadShareFailed", error);
@@ -223,6 +227,7 @@ const isTTLTooCloseToExpiry = (blobRecord: UploadedBlob | AttachingBlob): boolea
 
 interface IBlobManagerInternalEvents {
 	blobExpired: (localId: string) => void;
+	blobUploaded: (localId: string) => void;
 	handleAttached: (pending: LocalBlobRecord) => void;
 	processedBlobAttach: (localId: string, storageId: string) => void;
 }
@@ -516,12 +521,22 @@ export class BlobManager {
 			true, // payloadPending
 			() => {
 				this.pendingBlobsWithAttachedHandles.add(localId);
+				const onBlobUploaded = (uploadedLocalId: string): void => {
+					if (uploadedLocalId === localId) {
+						this.internalEvents.off("blobUploaded", onBlobUploaded);
+						blobHandle.notifyUploaded();
+					}
+				};
+				this.internalEvents.on("blobUploaded", onBlobUploaded);
 				const uploadAndAttachP = this.uploadAndAttach(localId, signal);
 				uploadAndAttachP.then(blobHandle.notifyShared).catch((error) => {
 					// TODO: notifyShared won't fail directly, but it emits an event to the customer.
 					// Consider what to do if the customer's code throws. reportError is nice.
 				});
-				uploadAndAttachP.catch(blobHandle.notifyFailed);
+				uploadAndAttachP.catch((error) => {
+					this.internalEvents.off("blobUploaded", onBlobUploaded);
+					blobHandle.notifyFailed(error);
+				});
 			},
 		);
 
@@ -567,6 +582,7 @@ export class BlobManager {
 				// In normal creation flows, the blob will be in localOnly state here. But in the case of loading
 				// with pending state we can call it with an uploaded-but-not-attached blob. Start the upload
 				// flow only if it's localOnly.
+				this.internalEvents.emit("blobUploaded", localId);
 				return;
 			}
 			assert(
@@ -613,6 +629,7 @@ export class BlobManager {
 								uploadTime: Date.now(),
 								minTTLInSeconds: createBlobResponse.minTTLInSeconds,
 							});
+							this.internalEvents.emit("blobUploaded", localId);
 							resolve();
 						}
 					})

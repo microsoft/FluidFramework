@@ -362,6 +362,7 @@ export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
 // @beta @legacy
 export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
     payloadShareFailed: (error: unknown) => void;
+    payloadUploaded: () => void;
 }
 
 // @beta @legacy
