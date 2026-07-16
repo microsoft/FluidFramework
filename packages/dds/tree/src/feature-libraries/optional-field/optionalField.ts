@@ -834,15 +834,24 @@ function filterEdits(
 			const attachResult =
 				attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
 
+			const next: Mutable<Replace> = { ...filtered.valueReplace };
 			if (detachResult === EditFilterStatus.Remove) {
-				assert(
-					attachId === undefined || attachResult === EditFilterStatus.Remove,
-					"Cannot remove detach without also removing attach",
-				);
-
+				// The input content being detached is gone (transient, or trimmed from its build),
+				// so the field is effectively empty at input and detaches nothing. Any child changes
+				// to that (now absent) input content are likewise dropped.
+				next.isEmpty = true;
+				filtered.childChanges = filtered.childChanges.filter(([id]) => id !== "self");
+			}
+			if (attachResult === EditFilterStatus.Remove) {
+				// The content being attached is transient, so nothing is attached.
+				delete next.src;
+			}
+			// Drop the replace entirely once it no longer has any observable effect, so no extraneous
+			// effect (or detached-node reference) remains.
+			if (isReplaceEffectful(next)) {
+				filtered.valueReplace = next;
+			} else {
 				delete filtered.valueReplace;
-			} else if (attachResult === EditFilterStatus.Remove) {
-				delete filtered.valueReplace.src;
 			}
 		} else if (!options.preserveOtherEdits) {
 			delete filtered.valueReplace;

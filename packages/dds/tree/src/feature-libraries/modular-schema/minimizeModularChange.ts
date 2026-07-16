@@ -14,12 +14,16 @@ import type {
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
-import { makeAnonChange } from "../../core/index.js";
+import { makeAnonChange, offsetChangeAtomId } from "../../core/index.js";
 import type { Mutable, RangeQueryResult } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
-import { newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	setInChangeAtomIdMap,
+} from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
@@ -27,11 +31,13 @@ import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { getChangeHandler, intoDelta } from "./modularChangeFamily.js";
 import type {
-	FieldChange,
+	CrossFieldKeyTable,
 	FieldChangeMap,
+	FieldChangeset,
 	FieldId,
 	ModularChangeset,
 	NodeChangeset,
+	NodeId,
 } from "./modularChangeTypes.js";
 import { newCrossFieldKeyTable } from "./modularChangeTypes.js";
 import type { EditFilterFunc } from "./fieldChangeHandler.js";
@@ -323,6 +329,20 @@ function computeTrimmedInputDetaches(
 }
 
 /**
+ * Resolves a node ID through the change's alias table to its canonical form.
+ */
+function normalizeNodeId(nodeId: NodeId, nodeAliases: ChangeAtomIdBTree<NodeId>): NodeId {
+	let currentId = nodeId;
+	for (;;) {
+		const dealiased = getFromChangeAtomIdMap(nodeAliases, currentId);
+		if (dealiased === undefined) {
+			return currentId;
+		}
+		currentId = dealiased;
+	}
+}
+
+/**
  * Rewrites a {@link ModularChangeset}'s field and node changes to remove the effects of "transient" content: content
  * that is built by the change but does not survive it.
  *
@@ -334,18 +354,28 @@ function computeTrimmedInputDetaches(
  * any node change or cross-field key that becomes unreferenced as a result of the removed effects is dropped.
  */
 class ModularChangeEditMinimizer {
-	private readonly nodeToParent = newChangeAtomIdBTree<FieldId>();
+	private readonly newNodeChanges = newChangeAtomIdBTree<NodeChangeset>();
+	private readonly newNodeToParent = newChangeAtomIdBTree<FieldId>();
+	private readonly newCrossFieldKeys: CrossFieldKeyTable = newCrossFieldKeyTable();
+	private readonly processedNodes = new Set<string>();
 	private readonly filterAttaches: EditFilterFunc;
 	private readonly filterDetaches: EditFilterFunc;
 
 	public constructor(
 		private readonly change: ModularChangeset,
 		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-		_isDead: (id: ChangeAtomId) => boolean,
-		_sTrimmedInputDetach: (id: ChangeAtomId) => boolean,
+		private readonly isDead: (id: ChangeAtomId) => boolean,
+		private readonly isTrimmedInputDetach: (id: ChangeAtomId) => boolean,
 	) {
-		this.filterAttaches = dummyRemoveAllEditsFilter;
-		this.filterDetaches = dummyRemoveAllEditsFilter;
+		this.filterAttaches = (id, count, endpoint) =>
+			this.filterRange(id, count, endpoint, (atom) => this.isDead(atom));
+		this.filterDetaches = (id, count, endpoint) =>
+			this.filterRange(
+				id,
+				count,
+				endpoint,
+				(atom) => this.isDead(atom) || this.isTrimmedInputDetach(atom),
+			);
 	}
 
 	/**
@@ -354,53 +384,101 @@ class ModularChangeEditMinimizer {
 	 * as a result.
 	 */
 	public minimizeEdits(): Mutable<ModularChangeset> {
+		const fieldChanges = this.rewriteFieldMap(this.change.fieldChanges, undefined);
 		return {
 			...this.change,
-			crossFieldKeys: newCrossFieldKeyTable(),
-			fieldChanges: this.minimizeFieldChanges(this.change.fieldChanges),
-			nodeChanges: brand(this.change.nodeChanges.mapValues((v) => this.minimizeNodeChange(v))),
-			nodeToParent: this.nodeToParent,
+			fieldChanges,
+			nodeChanges: this.newNodeChanges,
+			nodeToParent: this.newNodeToParent,
+			crossFieldKeys: this.newCrossFieldKeys,
 		};
 	}
 
-	private minimizeNodeChange(change: NodeChangeset): NodeChangeset {
-		if (change.fieldChanges === undefined) {
-			return change;
+	/**
+	 * Reports, for a range of attaches or detaches starting at `id`, whether each is removed (targets dead content) or
+	 * preserved. Returns the length of the leading run of identically-classified cells so the caller can re-query the
+	 * remainder.
+	 *
+	 * @param shouldRemove - Predicate reporting whether a single id targets content whose effect should be removed.
+	 * Both the effect's own id and (for moves) its endpoint id are consulted, since either may identify the content
+	 * being carried.
+	 */
+	private filterRange(
+		id: ChangeAtomId,
+		count: number,
+		endpoint: ChangeAtomId | undefined,
+		shouldRemove: (id: ChangeAtomId) => boolean,
+	): RangeQueryResult<EditFilterStatus> {
+		const isRemoved = (offset: number): boolean =>
+			shouldRemove(offsetChangeAtomId(id, offset)) ||
+			(endpoint !== undefined && shouldRemove(offsetChangeAtomId(endpoint, offset)));
+		const removeFirst = isRemoved(0);
+		let length = 1;
+		while (length < count && isRemoved(length) === removeFirst) {
+			length += 1;
 		}
 		return {
-			...change,
-			fieldChanges: this.minimizeFieldChanges(change.fieldChanges),
+			value: removeFirst ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
+			length,
 		};
 	}
 
-	private minimizeFieldChanges(change: FieldChangeMap): FieldChangeMap {
-		return new Map(
-			Array.from(change.entries(), ([key, value]) => [key, this.minimizeFieldChange(value)]),
-		);
-	}
-
-	private minimizeFieldChange(change: FieldChange): FieldChange {
-		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
-		return {
-			fieldKind: change.fieldKind,
-			change: brand(
-				handler.rebaser.filterEdits(change.change, {
+	private rewriteFieldMap(
+		fieldMap: FieldChangeMap,
+		parentNodeId: NodeId | undefined,
+	): FieldChangeMap {
+		const rewritten: FieldChangeMap = new Map();
+		for (const [field, fieldChange] of fieldMap) {
+			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
+			const prunedChange: FieldChangeset = brand(
+				handler.rebaser.filterEdits(fieldChange.change, {
 					filterAttach: this.filterAttaches,
 					filterDetach: this.filterDetaches,
 					// TODO: Testing says this needs to be false. Explain why in comment here.
 					preserveOtherEdits: false,
 				}),
-			),
-		};
-	}
-}
+			);
 
-function dummyRemoveAllEditsFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
+			const fieldId: FieldId = { nodeId: parentNodeId, field };
+			for (const { key, count } of handler.getCrossFieldKeys(prunedChange)) {
+				this.newCrossFieldKeys.set(key, count, fieldId);
+			}
+			for (const [nodeId] of handler.getNestedChanges(prunedChange)) {
+				this.rewriteNode(nodeId, fieldId);
+			}
+
+			if (!handler.isEmpty(prunedChange)) {
+				rewritten.set(field, { ...fieldChange, change: prunedChange });
+			}
+		}
+		return rewritten;
+	}
+
+	private rewriteNode(nodeId: NodeId, parentFieldId: FieldId): void {
+		const canonical = normalizeNodeId(nodeId, this.change.nodeAliases);
+		const key = `${canonical.revision === undefined ? "" : String(canonical.revision)}:${canonical.localId}`;
+		if (this.processedNodes.has(key)) {
+			return;
+		}
+		this.processedNodes.add(key);
+		setInChangeAtomIdMap(this.newNodeToParent, canonical, parentFieldId);
+
+		const nodeChangeset = getFromChangeAtomIdMap(this.change.nodeChanges, canonical);
+		assert(nodeChangeset !== undefined, "Unknown node ID referenced by field change");
+
+		const newFields =
+			nodeChangeset.fieldChanges === undefined
+				? undefined
+				: this.rewriteFieldMap(nodeChangeset.fieldChanges, canonical);
+
+		const newNode: Mutable<NodeChangeset> = { ...nodeChangeset };
+		if (newFields !== undefined && newFields.size > 0) {
+			newNode.fieldChanges = newFields;
+		} else {
+			delete newNode.fieldChanges;
+		}
+		setInChangeAtomIdMap(this.newNodeChanges, canonical, newNode);
+	}
 }
 
 /** Splits a chunk into one chunk per top-level node, in order. */
@@ -581,15 +659,17 @@ function computeMinimizedBuilds(
  * {@link intoDelta | delta} to determine which built nodes end up attached ("transient" nodes are those that do not),
  * then:
  *
+ * - removes the field-level effects (e.g. sequence-field marks) that attach and detach each transient node, delegating
+ * to each field's {@link FieldChangeRebaser.filterEdits},
+ * - drops the nested node changes and derived indexes (`nodeToParent`, `crossFieldKeys`) that become unreferenced,
  * - drops any build whose nodes are entirely unused, and splits any partially-used build so that only the runs of used
- * nodes are retained,
- * - trims transient content nested within a surviving node's build tree, and
- * - prunes destroys for the removed builds, since destroying a node that was never built has no effect.
+ * nodes are retained, and
+ * - trims transient content nested within a surviving node's build tree.
  *
  * The result applies to produce the same document as the input change.
  *
  * @param change - The change to minimize. Not mutated by this function.
- * @param fieldKinds - The field kinds to delegate to when computing the change's delta.
+ * @param fieldKinds - The field kinds to delegate to when computing the change's delta and filtering transient effects.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
