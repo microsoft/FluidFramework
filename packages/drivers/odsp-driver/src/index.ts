@@ -29,6 +29,10 @@ export {
 	OdspDocumentServiceFactory,
 } from "./odspDocumentServiceFactory.js";
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
+export {
+	createOdspPointInTimeDocumentServiceFactory,
+	OdspPointInTimeDocumentServiceFactory,
+} from "./pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";
