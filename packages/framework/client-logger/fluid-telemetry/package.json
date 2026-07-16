@@ -77,7 +77,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+		"start:tinylicious:test": "with-test-port --fallback 7070 tinylicious --port {PORT} > tinylicious.log 2>&1",
 		"test": "with-test-port --fallback 7070 start-server-and-test start:tinylicious:test {PORT} test:mocha:all",
 		"test:mocha": "npm run test:mocha:esm:unit && echo skipping cjs to avoid overhead - npm run test:mocha:cjs:unit",
 		"test:mocha:all": "npm run test:mocha:esm:all && echo skipping cjs to avoid overhead - npm run test:mocha:cjs:all",

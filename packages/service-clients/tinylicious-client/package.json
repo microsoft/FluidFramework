@@ -75,7 +75,7 @@
 		"format:biome": "biome check . --write",
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
-		"start:tinylicious:test": "tinylicious > tinylicious.log 2>&1",
+		"start:tinylicious:test": "with-test-port --fallback 7070 tinylicious --port {PORT} > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:tinylicious": "with-test-port --fallback 7070 start-server-and-test start:tinylicious:test {PORT} test:realsvc:tinylicious:run",
