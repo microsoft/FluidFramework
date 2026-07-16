@@ -5,6 +5,7 @@
 
 import type { ICodecFamily, JsonCodecPart } from "../../codec/index.js";
 import type {
+	ChangeAtomId,
 	ChangeEncodingContext,
 	DeltaDetachedNodeChanges,
 	DeltaDetachedNodeId,
@@ -16,7 +17,7 @@ import type {
 	RevisionTag,
 	RevisionTagSchema,
 } from "../../core/index.js";
-import type { IdAllocator, Invariant } from "../../util/index.js";
+import type { IdAllocator, Invariant, RangeQueryResult } from "../../util/index.js";
 
 import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
@@ -167,10 +168,37 @@ export interface FieldChangeRebaser<TChangeset> {
 	replaceRevisions(change: TChangeset, replacer: RevisionReplacer): TChangeset;
 
 	/**
-	 * Returns a copy of the given changeset with the same declarations (e.g., new cells) but no actual changes.
-	 * This is a kludge. TODO: remove once AB#46104 is completed.
+	 * Returns a copy of the given changeset with edits removed as specified.
+	 * @param change - The change to filter edits from
+	 * @param filterDetach - This should be called for each range of detaches in the changeset,
+	 * and the detach should be preserved, removed, or converted to a non-move detach as specified.
+	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
+	 * @param filterDetach - This should be called for each range of attaches in the changeset,
+	 * and the attach should be preserved, removed, or converted to a non-move attach as specified.
+	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
+	 * @param preserveOtherEdits - Whether edits other than attaches and detaches (e.g. root renames),
+	 * should be preserved or removed.
 	 */
-	mute(change: TChangeset): TChangeset;
+	filterEdits(
+		change: TChangeset,
+		options: {
+			filterDetach: EditFilterFunc;
+			filterAttach: EditFilterFunc;
+			preserveOtherEdits: boolean;
+		},
+	): TChangeset;
+}
+
+export type EditFilterFunc = (
+	id: ChangeAtomId,
+	count: number,
+	endpoint?: ChangeAtomId,
+) => RangeQueryResult<EditFilterStatus>;
+
+export enum EditFilterStatus {
+	Remove,
+	Preserve,
+	PreserveWithoutMove,
 }
 
 /**
@@ -181,13 +209,13 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 	compose: (change1: TChangeset, change2: TChangeset) => TChangeset;
 	invert: (change: TChangeset) => TChangeset;
 	rebase: (change: TChangeset, over: TChangeset) => TChangeset;
-	mute: (change: TChangeset) => TChangeset;
+	filterEdits: FieldChangeRebaser<TChangeset>["filterEdits"];
 }): FieldChangeRebaser<TChangeset> {
 	return isolatedFieldChangeRebaser({
 		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
-		mute: (change) => data.mute(change),
+		filterEdits: (change, options) => data.filterEdits(change, options),
 	});
 }
 
@@ -195,7 +223,7 @@ export function isolatedFieldChangeRebaser<TChangeset>(data: {
 	compose: FieldChangeRebaser<TChangeset>["compose"];
 	invert: FieldChangeRebaser<TChangeset>["invert"];
 	rebase: FieldChangeRebaser<TChangeset>["rebase"];
-	mute: FieldChangeRebaser<TChangeset>["mute"];
+	filterEdits: FieldChangeRebaser<TChangeset>["filterEdits"];
 }): FieldChangeRebaser<TChangeset> {
 	return {
 		...data,
