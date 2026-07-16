@@ -554,6 +554,38 @@ describe("AnchorSet", () => {
 		assert.equal(listenerFired, true);
 	});
 
+	it("removeChild locates the child by parentIndex in a sparse, non-monotonic field", () => {
+		// This is a regression test for `PathNode.removeChild`'s binary search.
+		// When the child array is sparse (so the array index is not equal to the parentIndex)
+		// and contains children with non-monotonic parentIndex values relative to the array
+		// indices, the binary search must still locate the correct child to remove.
+		// The order in which we forget anchors guarantees that no `removeChild` invocation
+		// hits the trivial case where the child sits at array index 0.
+		const anchors = new AnchorSet();
+		// Sparse parentIndex values: array indices 0, 1, 2, 3 hold parentIndex 3, 7, 42, 100.
+		const anchorAt3 = anchors.track(makePath([fieldFoo, 3]));
+		const anchorAt7 = anchors.track(makePath([fieldFoo, 7]));
+		const anchorAt42 = anchors.track(makePath([fieldFoo, 42]));
+		const anchorAt100 = anchors.track(makePath([fieldFoo, 100]));
+
+		// Remove from the middle of the field, exercising a real binary search.
+		anchors.forget(anchorAt42);
+		assert.equal(anchors.locate(anchorAt3)?.parentIndex, 3);
+		assert.equal(anchors.locate(anchorAt7)?.parentIndex, 7);
+		assert.equal(anchors.locate(anchorAt100)?.parentIndex, 100);
+
+		// Remove from the end of the field. The remaining array now holds parentIndex 3 and 7,
+		// so the search target (100) is past the last child and must terminate correctly.
+		anchors.forget(anchorAt100);
+		assert.equal(anchors.locate(anchorAt3)?.parentIndex, 3);
+		assert.equal(anchors.locate(anchorAt7)?.parentIndex, 7);
+
+		// Remove the trailing remaining child, then the leading one.
+		anchors.forget(anchorAt7);
+		assert.equal(anchors.locate(anchorAt3)?.parentIndex, 3);
+		anchors.forget(anchorAt3);
+	});
+
 	// Simple scenario using just anchorSets to validate if cache implementation of the FlexTree.treeStatus api works.
 	it("AnchorNode cache can be set and retrieved.", () => {
 		const anchors = new AnchorSet();
