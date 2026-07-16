@@ -3,7 +3,12 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import {
+	DoublyLinkedList,
+	type ListNode,
+	assert,
+	unreachableCase,
+} from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
@@ -57,6 +62,18 @@ interface ICellValue {
 	attribution?: AttributionKey;
 }
 
+/**
+ * Internal extension of {@link ICellLocalOpMetadata} that carries a direct reference
+ * to the corresponding node in the pending message list. Holding the node enables
+ * O(1) removal from arbitrary positions in the pending list, which is required for
+ * future squash support. Kept private to this module so the public metadata interface
+ * does not leak `ListNode` (a runtime implementation detail).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+interface ICellPendingLocalOpMetadata<T = any> extends ICellLocalOpMetadata<T> {
+	pendingNode: ListNode<number>;
+}
+
 const snapshotFileName = "header";
 
 /**
@@ -85,7 +102,7 @@ export class SharedCell<T = any>
 	 */
 	private messageIdObserved: number = -1;
 
-	private readonly pendingMessageIds: number[] = [];
+	private readonly pendingMessageIds = new DoublyLinkedList<number>();
 
 	private attribution: AttributionKey | undefined;
 
@@ -264,9 +281,7 @@ export class SharedCell<T = any>
 					0x00c /* "messageId is incorrect from from the local client's ACK" */,
 				);
 				assert(
-					// eslint-disable-next-line @typescript-eslint/prefer-optional-chain -- TODO: ADO#58518 Code owners should verify if this code change is safe and make it if so or update this comment otherwise
-					this.pendingMessageIds !== undefined &&
-						this.pendingMessageIds[0] === cellOpMetadata.pendingMessageId,
+					this.pendingMessageIds.first?.data === cellOpMetadata.pendingMessageId,
 					0x471 /* Unexpected pending message received */,
 				);
 				this.pendingMessageIds.shift();
@@ -304,11 +319,14 @@ export class SharedCell<T = any>
 	private createLocalOpMetadata(
 		op: ICellOperation,
 		previousValue?: Serializable<T>,
-	): ICellLocalOpMetadata {
+	): ICellPendingLocalOpMetadata<T> {
 		const pendingMessageId = ++this.messageId;
-		this.pendingMessageIds.push(pendingMessageId);
-		const localMetadata: ICellLocalOpMetadata = {
+		// Use `last` so this remains correct if a future change appends multiple
+		// pending ids in a single push call (for the single-item case `first === last`).
+		const { last: pendingNode } = this.pendingMessageIds.push(pendingMessageId);
+		const localMetadata: ICellPendingLocalOpMetadata<T> = {
 			pendingMessageId,
+			pendingNode,
 			previousValue,
 		};
 		return localMetadata;
@@ -352,8 +370,8 @@ export class SharedCell<T = any>
 				this.setCore(cellOpMetadata.previousValue as Serializable<T>);
 			}
 
-			const lastPendingMessageId = this.pendingMessageIds.pop();
-			if (lastPendingMessageId !== cellOpMetadata.pendingMessageId) {
+			const lastPendingNode = this.pendingMessageIds.pop();
+			if (lastPendingNode?.data !== cellOpMetadata.pendingMessageId) {
 				throw new Error("Rollback op does not match last pending");
 			}
 		} else {
