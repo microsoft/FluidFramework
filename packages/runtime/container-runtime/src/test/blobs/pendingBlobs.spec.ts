@@ -75,11 +75,13 @@ for (const createBlobPayloadPending of [false, true]) {
 				const { mockBlobStorage, blobManager } = createTestMaterial({
 					createBlobPayloadPending,
 				});
+				// Keep the upload in flight so pending state can be inspected before sharing completes.
 				mockBlobStorage.pause();
 
 				const handle = await blobManager.createBlob(textToBlob("hello"));
 				assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
 				assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+				// Starting payload sharing, rather than graph attachment, should make the blob pending.
 				handle.sharePayload();
 
 				await mockBlobStorage.waitBlobAvailable();

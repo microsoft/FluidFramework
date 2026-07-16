@@ -186,6 +186,8 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
+					// Hold each service at its boundary so the test can inspect upload, BlobAttach
+					// submission, and sequencing independently.
 					mockBlobStorage.pause();
 					mockOrderingService.pause();
 
@@ -197,6 +199,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert.strictEqual(internalHandle.isAttached, false);
 					assert.strictEqual(mockBlobStorage.blobsReceived, 0);
 
+					// Repeated calls before the first upload completes must still start only one flow.
 					handle.sharePayload();
 					handle.sharePayload();
 
@@ -212,6 +215,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Sharing the payload should not attach the handle",
 					);
 
+					// Complete the upload while leaving BlobAttach queued but unsequenced.
 					await mockBlobStorage.waitCreateOne();
 					await mockOrderingService.waitMessageAvailable();
 					assert.strictEqual(
@@ -220,6 +224,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Expected one BlobAttach message",
 					);
 
+					// Graph attachment after sharing starts must not restart the payload-sharing flow.
 					attachHandle(handle);
 					handle.sharePayload();
 					assert.strictEqual(internalHandle.isAttached, true);
@@ -229,6 +234,7 @@ for (const createBlobPayloadPending of [false, true]) {
 						"Attaching the handle after sharing starts should not start another upload",
 					);
 
+					// Processing BlobAttach completes payload sharing.
 					mockOrderingService.sequenceOne();
 					await waitHandlePayloadShared(handle);
 					assert.strictEqual(handle.payloadShareError, undefined);
@@ -243,6 +249,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { mockBlobStorage, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
+					// Hold the upload so the test can complete it with a controlled failure.
 					mockBlobStorage.pause();
 
 					const handle = await blobManager.createBlob(textToBlob("hello"));
@@ -251,6 +258,7 @@ for (const createBlobPayloadPending of [false, true]) {
 					const payloadSharedP = waitHandlePayloadShared(handle);
 
 					handle.sharePayload();
+					// Fail before a BlobAttach message can be submitted.
 					await mockBlobStorage.waitCreateOne({
 						error: new LoggingError("fake driver error"),
 					});
@@ -270,10 +278,13 @@ for (const createBlobPayloadPending of [false, true]) {
 					const { mockBlobStorage, mockOrderingService, blobManager } = createTestMaterial({
 						createBlobPayloadPending,
 					});
+					// Legacy creation waits for upload and BlobAttach processing, so this handle's
+					// payload is already shared when createBlob returns.
 					const handle = await blobManager.createBlob(textToBlob("hello"));
 					assert(isLocalFluidHandle(handle), "Expected a local blob handle");
 					assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
 
+					// Calling sharePayload again must not repeat either side effect.
 					const blobsReceived = mockBlobStorage.blobsReceived;
 					const messagesReceived = mockOrderingService.messagesReceived;
 					handle.sharePayload();
