@@ -3,17 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import {
-	Lazy,
-	oob,
-	fail,
-	assert,
-	unreachableCase,
-	clamp,
-} from "@fluidframework/core-utils/internal";
+import { Lazy, oob, fail, assert, clamp } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { EmptyKey, ObjectNodeStoredSchema } from "../../../core/index.js";
+import { EmptyKey, ObjectNodeStoredSchema, type DeltaMark } from "../../../core/index.js";
 import type {
 	FlexibleFieldContent,
 	FlexTreeNode,
@@ -26,12 +19,7 @@ import {
 	validateIndexRange,
 	type JsonCompatibleReadOnlyObject,
 } from "../../../util/index.js";
-import {
-	type ArrayNodeDeltaOp,
-	deltaMarksToArrayOps,
-	type NodeSchemaOptionsAlpha,
-	type System_Unsafe,
-} from "../../api/index.js";
+import type { NodeSchemaOptionsAlpha, System_Unsafe } from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	type WithType,
@@ -1587,11 +1575,7 @@ export function createArrayInsertionAnchor(
 			}
 			// Clamp defensively so a malformed or partial delta can never push the tracked index outside the
 			// valid insertion range while the anchor is live (adjustIndexForArrayDelta has no final clamp).
-			trackedIndex = clamp(
-				adjustIndexForArrayDelta(trackedIndex, deltaMarksToArrayOps(marks)),
-				0,
-				length,
-			);
+			trackedIndex = clamp(adjustIndexForArrayDelta(trackedIndex, marks), 0, length);
 		},
 	);
 
@@ -1609,46 +1593,40 @@ export function createArrayInsertionAnchor(
 /**
  * Compute the new index of an {@link ArrayPlaceAnchor} after applying a shallow array delta.
  * @remarks
- * The delta is a sequence of ops covering the array's sequence field in order (see {@link deltaMarksToArrayOps}).
- * `readPosition` walks the pre-edit array as the ops are consumed while `index` stays fixed at the anchor's pre-edit
- * location; comparing the two (both in pre-edit coordinates) shifts `newIndex` to keep the anchor in the same gap
- * between children as content is inserted or removed around it. The per-op behavior is commented inline below.
+ * The marks cover the array's sequence field in order. `readPosition` walks the pre-edit array as the marks are
+ * consumed while `index` stays fixed at the anchor's pre-edit location; comparing the two (both in pre-edit
+ * coordinates) shifts `newIndex` to keep the anchor in the same gap between children as content is inserted or
+ * removed around it. Each mark is a removal (`detach`), an insertion (`attach`), or a retain (neither); a mark may
+ * carry both `detach` and `attach`, which is handled as a removal followed by an insertion. The per-mark behavior is
+ * commented inline below.
  *
  * This mirrors the cursor-tracking accounting used for text selections.
  */
-function adjustIndexForArrayDelta(index: number, ops: readonly ArrayNodeDeltaOp[]): number {
+function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): number {
 	let readPosition = 0;
 	let newIndex = index;
-	for (const op of ops) {
-		switch (op.type) {
-			case "retain": {
-				readPosition += op.count;
-				break;
+	for (const mark of marks) {
+		// A removal consumes pre-edit content: if it lies before the anchor it pulls the anchor left, and if it
+		// straddles the anchor the anchor collapses to the start of the removed span (rather than jumping away).
+		if (mark.detach !== undefined) {
+			const removeEnd = readPosition + mark.count;
+			if (removeEnd <= index) {
+				newIndex -= mark.count;
+			} else if (readPosition < index) {
+				newIndex -= index - readPosition;
 			}
-			case "insert": {
-				// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor
-				// leaves the anchor after the new content (insertion-point behavior).
-				if (readPosition <= index) {
-					newIndex += op.count;
-				}
-				// Inserted content is new, so it does not advance the pre-edit read position.
-				break;
+			readPosition += mark.count;
+		}
+		if (mark.attach !== undefined) {
+			// Content inserted at or before the anchor pushes it right; inserting exactly at the anchor leaves the
+			// anchor after the new content (insertion-point behavior). Inserted content is new, so it does not
+			// advance the pre-edit read position.
+			if (readPosition <= index) {
+				newIndex += mark.count;
 			}
-			case "remove": {
-				const removeEnd = readPosition + op.count;
-				if (removeEnd <= index) {
-					// The whole removed span is before the anchor.
-					newIndex -= op.count;
-				} else if (readPosition < index) {
-					// The removed span straddles the anchor: collapse to the start of the removal.
-					newIndex -= index - readPosition;
-				}
-				readPosition += op.count;
-				break;
-			}
-			default: {
-				unreachableCase(op);
-			}
+		} else if (mark.detach === undefined) {
+			// Retain: existing content that was neither inserted nor removed.
+			readPosition += mark.count;
 		}
 	}
 	return newIndex;
