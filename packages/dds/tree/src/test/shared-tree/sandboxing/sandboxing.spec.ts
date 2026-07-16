@@ -842,32 +842,32 @@ describe("Host and Sandbox Demo", () => {
 		enum Step {
 			/** Make an edit on the host */
 			HostEdit = "He",
-			/** Make an edit on the view (AKA sandbox) */
-			ViewEdit = "Ve",
+			/** Make an edit on the sandbox */
+			SandboxEdit = "Ve",
 			/** Make an edit on the peer */
 			PeerEdit = "Pe",
 			/** Make the host receive a sequenced edit from the peer */
 			SequenceEdit = "Se",
 			/** Make the host receive its own sequenced edit */
 			SequenceAck = "Sa",
-			/** Notify the view of an update sent by the host. */
-			HostToViewEdit = "H2Ve",
-			/** Notify the host of an update ack sent by the view. */
-			ViewToHostAck = "V2Ha",
-			/** Notify the host of an view edit sent by the view. */
-			ViewToHostEdit = "V2He",
-			/** Notify the view of an view edit ack sent by the host. */
-			HostToViewAck = "H2Va",
+			/** Notify the sandbox of an update sent by the host. */
+			HostToSandboxEdit = "H2Se",
+			/** Notify the host of a sandbox-bound update ack sent by the sandbox. */
+			SandboxToHostAck = "S2Ha",
+			/** Notify the host of an edit sent by the sandbox. */
+			SandboxToHostEdit = "S2He",
+			/** Notify the sandbox of an host-bound edit ack sent by the host. */
+			HostToSandboxAck = "H2Sa",
 		}
 
 		type Ack = "Ack";
 		const Ack: Ack = "Ack";
 		type Message = JsonCompatibleReadOnly | Ack;
 		interface QueueInteropFunctions extends InteropFunctions {
-			readonly host2View: Message[];
-			readonly view2Host: Message[];
+			readonly hostToSandbox: Message[];
+			readonly sandboxToHost: Message[];
 
-			dispatchToView(): void;
+			dispatchToSandbox(): void;
 			dispatchToHost(): void;
 		}
 
@@ -883,13 +883,14 @@ describe("Host and Sandbox Demo", () => {
 			getSandbox: () => Sandbox<typeof StringArray>,
 		): QueueInteropFunctions {
 			const out: QueueInteropFunctions = {
-				host2View: [],
-				view2Host: [],
+				hostToSandbox: [],
+				sandboxToHost: [],
 				sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly): void => {
-					out.host2View.push(update);
+					out.hostToSandbox.push(update);
 				},
-				dispatchToView: (): void => {
-					const message = out.host2View.shift() ?? fail("No view-bound changes in the queue");
+				dispatchToSandbox: (): void => {
+					const message =
+						out.hostToSandbox.shift() ?? fail("No sandbox-bound changes in the queue");
 					if (message === Ack) {
 						getSandbox().receiveAckFromHost();
 					} else {
@@ -897,13 +898,13 @@ describe("Host and Sandbox Demo", () => {
 					}
 				},
 				sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
-					out.view2Host.push(Ack);
+					out.sandboxToHost.push(Ack);
 				},
 				sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly): void => {
-					out.view2Host.push(change);
+					out.sandboxToHost.push(change);
 				},
 				dispatchToHost: (): void => {
-					const message = out.view2Host.shift() ?? fail("No host-bound changes in queue");
+					const message = out.sandboxToHost.shift() ?? fail("No host-bound changes in queue");
 					if (message === Ack) {
 						getHost().receiveAckFromSandbox();
 					} else {
@@ -911,7 +912,7 @@ describe("Host and Sandbox Demo", () => {
 					}
 				},
 				sendAckOfHostBoundChangeFromHostToSandbox: (): void => {
-					out.host2View.push(Ack);
+					out.hostToSandbox.push(Ack);
 				},
 			};
 			return out;
@@ -926,9 +927,9 @@ describe("Host and Sandbox Demo", () => {
 		 * The outer array represents the steps of the run.
 		 *
 		 * Note: to test a specific scenario, you can initialize `potential` with a specific sequence of steps.
-		 * E.g., `[[Step.ViewEdit], [Step.ViewEdit], [Step.View2HostEdit], [Step.SequenceAck], [Step.View2HostEdit], [Step.SequenceAck]]`.
+		 * E.g., `[[Step.SandboxEdit], [Step.SandboxEdit], [Step.Sandbox2HostEdit], [Step.SequenceAck], [Step.Sandbox2HostEdit], [Step.SequenceAck]]`.
 		 */
-		const potential: Step[][] = [[Step.ViewEdit, Step.HostEdit, Step.PeerEdit]];
+		const potential: Step[][] = [[Step.SandboxEdit, Step.HostEdit, Step.PeerEdit]];
 		while (hasSome(potential)) {
 			scenario += 1;
 			const { teardown, peer, host, sandbox, provider, interop, logger } = setupCustom(
@@ -938,7 +939,7 @@ describe("Host and Sandbox Demo", () => {
 			);
 			let peerEditCounter = 0;
 			let hostEditCounter = 0;
-			let viewEditCounter = 0;
+			let sandboxEditCounter = 0;
 			const serviceQueue: (Step.SequenceEdit | Step.SequenceAck)[] = [];
 			const offPeerChange = peer.events.on("changed", ({ isLocal }) => {
 				if (isLocal) {
@@ -953,18 +954,22 @@ describe("Host and Sandbox Demo", () => {
 			const actual: Step[] = [];
 			while (actual.length < maxSteps) {
 				if (actual.length === potential.length) {
-					const potentialNext: Step[] = [Step.ViewEdit, Step.HostEdit, Step.PeerEdit];
+					const potentialNext: Step[] = [Step.SandboxEdit, Step.HostEdit, Step.PeerEdit];
 					if (hasSome(serviceQueue)) {
 						potentialNext.push(serviceQueue[0]);
 					}
-					if (hasSome(interop.host2View)) {
+					if (hasSome(interop.hostToSandbox)) {
 						potentialNext.push(
-							interop.host2View[0] === Ack ? Step.HostToViewAck : Step.HostToViewEdit,
+							interop.hostToSandbox[0] === Ack
+								? Step.HostToSandboxAck
+								: Step.HostToSandboxEdit,
 						);
 					}
-					if (hasSome(interop.view2Host)) {
+					if (hasSome(interop.sandboxToHost)) {
 						potentialNext.push(
-							interop.view2Host[0] === Ack ? Step.ViewToHostAck : Step.ViewToHostEdit,
+							interop.sandboxToHost[0] === Ack
+								? Step.SandboxToHostAck
+								: Step.SandboxToHostEdit,
 						);
 					}
 					potential.push(potentialNext);
@@ -972,9 +977,9 @@ describe("Host and Sandbox Demo", () => {
 				const step: Step = potential[actual.length][0] ?? fail("No next step available");
 				logger(`--> [${actual.join(", ")}] + ${step}`);
 				switch (step) {
-					case Step.ViewEdit: {
-						viewEditCounter += 1;
-						sandbox.view.root.push(`V${viewEditCounter}`);
+					case Step.SandboxEdit: {
+						sandboxEditCounter += 1;
+						sandbox.view.root.push(`V${sandboxEditCounter}`);
 						break;
 					}
 					case Step.HostEdit: {
@@ -1002,13 +1007,13 @@ describe("Host and Sandbox Demo", () => {
 						provider.synchronizeMessages({ count: 1 });
 						break;
 					}
-					case Step.HostToViewEdit:
-					case Step.HostToViewAck: {
-						interop.dispatchToView();
+					case Step.HostToSandboxEdit:
+					case Step.HostToSandboxAck: {
+						interop.dispatchToSandbox();
 						break;
 					}
-					case Step.ViewToHostEdit:
-					case Step.ViewToHostAck: {
+					case Step.SandboxToHostEdit:
+					case Step.SandboxToHostAck: {
 						interop.dispatchToHost();
 						break;
 					}
@@ -1017,7 +1022,7 @@ describe("Host and Sandbox Demo", () => {
 					}
 				}
 				actual.push(step);
-				if (interop.host2View.length === 0 && interop.view2Host.length === 0) {
+				if (interop.hostToSandbox.length === 0 && interop.sandboxToHost.length === 0) {
 					strict.deepEqual([...host.main.root], [...sandbox.view.root]);
 					strict.deepEqual([...host.local.root], [...sandbox.view.root]);
 				}
