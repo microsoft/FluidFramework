@@ -485,6 +485,8 @@ export interface TreeArrayNodeAlpha<
 	/**
 	 * Returns the last item in the array for which the given predicate returns `true`,
 	 * searching from the last item to the first.
+	 * @remarks
+	 * Results reflect the state of the array when called.
 	 * @param callbackFunction - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
 	 * Receives the item, its index, and the array being searched.
 	 * @returns The last item for which `callbackFunction` returns `true`, or `undefined` if there is no such item.
@@ -496,11 +498,16 @@ export interface TreeArrayNodeAlpha<
 	/**
 	 * Returns the index of the last item in the array for which the given callbackFunction returns `true`,
 	 * searching from the last item to the first.
+	 * @remarks
+	 * Results reflect the state of the array when called.
+	 * If `callbackFunction` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex | Array.prototype.findLastIndex}.
 	 * @param callbackFunction - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
 	 * Receives the item, its index, and the array being searched.
 	 * @returns The index of the last item for which `callbackFunction` returns `true`, or `-1` if there is no such item.
 	 */
-	findLastIndex(callbackFunction: (value: T, index: number, array: readonly T[]) => boolean): number;
+	findLastIndex(
+		callbackFunction: (value: T, index: number, array: readonly T[]) => boolean,
+	): number;
 
 	/**
 	 * Removes the last item from the array and returns it.
@@ -1068,8 +1075,14 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
 		) => boolean,
 	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
-		const index = this.findLastIndex(callbackFunction);
-		return index === -1 ? undefined : this.at(index);
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			if (callbackFunction(value, index, array)) {
+				return value;
+			}
+		}
+		return undefined;
 	}
 	public findLastIndex(
 		callbackFunction: (
@@ -1078,9 +1091,10 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
 		) => boolean,
 	): number {
-		const items = [...this];
-		for (let index = items.length - 1; index >= 0; index--) {
-			if (callbackFunction(items[index] ?? oob(), index, items)) {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			if (callbackFunction(value, index, array)) {
 				return index;
 			}
 		}

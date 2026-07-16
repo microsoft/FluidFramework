@@ -288,6 +288,35 @@ describe("ArrayNode", () => {
 						[5, 0],
 					]);
 				});
+
+				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					const visited: [number, number][] = [];
+					array.findLast((value, index) => {
+						if (index === 3) {
+							array.removeAt(0);
+						}
+						visited.push([value, index]);
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 2 holds 4 and index 0 holds 2.
+					// This matches Array.prototype.findLast run with an equivalent mutating callback.
+					assert.deepEqual(visited, [
+						[4, 3],
+						[4, 2],
+						[3, 1],
+						[2, 0],
+					]);
+				});
+
+				it("returns the matched item even if the callbackFunction moves it", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result = array.findLast((value) => {
+						array.removeAt(0);
+						return value === 3;
+					});
+					assert.equal(result, 3);
+				});
 			});
 
 			describe("findLastIndex", () => {
@@ -310,8 +339,26 @@ describe("ArrayNode", () => {
 						-1,
 					);
 				});
+
+				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const visited: [number, number][] = [];
+					array.findLastIndex((value, index) => {
+						if (index === 2) {
+							array.removeAt(0);
+						}
+						visited.push([value, index]);
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 1 holds 3 and index 0 holds 2.
+					assert.deepEqual(visited, [
+						[3, 2],
+						[3, 1],
+						[2, 0],
+					]);
+				});
 			});
-			
+
 			describe("removeAt", () => {
 				it("valid index", () => {
 					const array = init(schemaType, [0, 1, 2]);
