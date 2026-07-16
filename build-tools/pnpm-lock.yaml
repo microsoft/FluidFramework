@@ -200,9 +200,6 @@ importers:
       github-slugger:
         specifier: ^2.0.0
         version: 2.0.0
-      globby:
-        specifier: ^11.1.0
-        version: 11.1.0
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3
@@ -233,9 +230,6 @@ importers:
       mdast-util-to-string:
         specifier: ^4.0.0
         version: 4.0.0
-      minimatch:
-        specifier: ^10.2.4
-        version: 10.2.4
       npm-check-updates:
         specifier: ^17.1.18
         version: 17.1.18
@@ -245,6 +239,9 @@ importers:
       picocolors:
         specifier: ^1.1.1
         version: 1.1.1
+      picomatch:
+        specifier: ^4.0.4
+        version: 4.0.4
       prettier:
         specifier: ~3.2.5
         version: 3.2.5
@@ -293,6 +290,9 @@ importers:
       table:
         specifier: ^6.9.0
         version: 6.9.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       ts-morph:
         specifier: ^27.0.2
         version: 27.0.2
@@ -348,6 +348,9 @@ importers:
       '@types/node':
         specifier: ~22.19.17
         version: 22.19.17
+      '@types/picomatch':
+        specifier: ^4.0.2
+        version: 4.0.3
       '@types/prettier':
         specifier: ^2.7.3
         version: 2.7.3
@@ -2014,6 +2017,9 @@ packages:
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
+
+  '@types/picomatch@4.0.3':
+    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
 
   '@types/prettier@2.7.3':
     resolution: {integrity: sha512-+68kP9yzs4LMp7VNh8gdzMSPZFL44MLGqiHWvttYJe+6qnuVr4Ek9wSBQoveqY/r+LwjCcU29kNVkidwim+kYA==}
@@ -7086,6 +7092,8 @@ snapshots:
       undici-types: 6.21.0
 
   '@types/normalize-package-data@2.4.4': {}
+
+  '@types/picomatch@4.0.3': {}
 
   '@types/prettier@2.7.3': {}
 
