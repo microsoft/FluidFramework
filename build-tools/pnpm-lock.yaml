@@ -435,6 +435,9 @@ importers:
       fs-extra:
         specifier: ^11.3.2
         version: 11.3.2
+      ignore:
+        specifier: ^7.0.5
+        version: 7.0.5
       globby:
         specifier: ^11.1.0
         version: 11.1.0
@@ -462,6 +465,9 @@ importers:
       sort-package-json:
         specifier: 1.57.0
         version: 1.57.0
+      tinyglobby:
+        specifier: ^0.2.15
+        version: 0.2.15
       type-fest:
         specifier: ^2.19.0
         version: 2.19.0
