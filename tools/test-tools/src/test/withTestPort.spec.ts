@@ -8,7 +8,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import { withTestPort } from "../withTestPort";
+import { withTestPort as withTestPortBase } from "../withTestPort";
 
 describe("withTestPort", () => {
 	// Use a unique package name that won't appear in any generated port map, so `getTestPort` returns
@@ -38,34 +38,61 @@ describe("withTestPort", () => {
 		return fs.readFileSync(outPath, "utf8").trim();
 	}
 
-	it("returns a non-zero exit code when no command is provided", () => {
-		assert.equal(withTestPort([]), 1);
+	/** Runs `withTestPort`, capturing anything it logs to `console.error`. */
+	function withTestPort(argv: string[]): { code: number; errors: string[] } {
+		const errors: string[] = [];
+		const original = console.error;
+		console.error = (...args: unknown[]): void => {
+			errors.push(args.map(String).join(" "));
+		};
+		try {
+			return { code: withTestPortBase(argv), errors };
+		} finally {
+			console.error = original;
+		}
+	}
+
+	it("returns a non-zero exit code and logs an error when no command is provided", () => {
+		const { code, errors } = withTestPort([]);
+		assert.equal(code, 1);
+		assert.deepEqual(errors, ["with-test-port: no command was provided to run."]);
 	});
 
-	it("returns a non-zero exit code when the package name can't be determined", () => {
+	it("returns a non-zero exit code and logs an error when the package name can't be determined", () => {
 		// Remove the package.json so the name lookup fails before anything is spawned.
 		fs.rmSync(path.join(tempDir, "package.json"));
-		assert.equal(withTestPort(["echo", "hi", ">", outPath]), 1);
+		const { code, errors } = withTestPort(["echo", "hi", ">", outPath]);
+		assert.equal(code, 1);
+		assert.equal(errors.length, 1);
+		assert.match(errors[0], /^with-test-port: unable to determine the package name:/);
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
 	it("exports the resolved port to the command as the PORT environment variable", () => {
-		assert.equal(withTestPort(["node", "-p", "process.env.PORT", ">", outPath]), 0);
+		const { code, errors } = withTestPort(["node", "-p", "process.env.PORT", ">", outPath]);
+		assert.equal(code, 0);
+		assert.deepEqual(errors, []);
 		assert.equal(readOutput(), defaultPort);
 	});
 
 	it("substitutes {PORT} tokens in the command arguments", () => {
-		assert.equal(withTestPort(["echo", "{PORT}", "prefix-{PORT}", ">", outPath]), 0);
+		const { code, errors } = withTestPort(["echo", "{PORT}", "prefix-{PORT}", ">", outPath]);
+		assert.equal(code, 0);
+		assert.deepEqual(errors, []);
 		assert.equal(readOutput(), `${defaultPort} prefix-${defaultPort}`);
 	});
 
 	it("uses the --fallback value when no port is assigned", () => {
-		assert.equal(withTestPort(["--fallback", "7070", "echo", "{PORT}", ">", outPath]), 0);
+		const { code, errors } = withTestPort(["--fallback", "7070", "echo", "{PORT}", ">", outPath]);
+		assert.equal(code, 0);
+		assert.deepEqual(errors, []);
 		assert.equal(readOutput(), "7070");
 	});
 
-	it("returns a non-zero exit code for a non-numeric --fallback value", () => {
-		assert.equal(withTestPort(["--fallback", "nope", "echo", "hi", ">", outPath]), 1);
+	it("returns a non-zero exit code and logs an error for a non-numeric --fallback value", () => {
+		const { code, errors } = withTestPort(["--fallback", "nope", "echo", "hi", ">", outPath]);
+		assert.equal(code, 1);
+		assert.deepEqual(errors, ["with-test-port: --fallback requires a numeric value."]);
 		assert.equal(fs.existsSync(outPath), false, "the command should not have run");
 	});
 
@@ -74,7 +101,9 @@ describe("withTestPort", () => {
 		const backup = fs.existsSync(mapPath) ? fs.readFileSync(mapPath) : undefined;
 		try {
 			fs.writeFileSync(mapPath, JSON.stringify({ [packageName]: 12345 }));
-			assert.equal(withTestPort(["echo", "{PORT}", ">", outPath]), 0);
+			const { code, errors } = withTestPort(["echo", "{PORT}", ">", outPath]);
+			assert.equal(code, 0);
+			assert.deepEqual(errors, []);
 			assert.equal(readOutput(), "12345");
 		} finally {
 			if (backup === undefined) {
@@ -86,6 +115,8 @@ describe("withTestPort", () => {
 	});
 
 	it("propagates the exit code of the spawned command", () => {
-		assert.equal(withTestPort(["exit", "7"]), 7);
+		const { code, errors } = withTestPort(["exit", "7"]);
+		assert.equal(code, 7);
+		assert.deepEqual(errors, []);
 	});
 });
