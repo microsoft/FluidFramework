@@ -142,12 +142,19 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Must be called when the sandbox sends a change to the host.
-	 * The change is guaranteed to be applied to the host's main branch.
+	 * Informs the host of a new change made on the sandbox.
+	 * This method synchronously applies the change to the host's local and main branches
+	 * then asynchronously attempts to update the sandbox if need be.
 	 */
 	public receiveChangeFromSandbox(change: JsonCompatibleReadOnly): void {
 		this.logger(`Host: received change [${getRevision(change)}] from sandbox`);
 		if (this.mainHeadFromLastUpdate !== undefined) {
+			// There is an update in progress but the sandbox has authored and sent a new change before applying that update.
+			// This means that by the time the sandbox processes the update, that update will be out-of-date
+			// (because it does not take into account this new change) and will be rejected by the sandbox.
+			// A new update will be sent to the sandbox after the new change is taken into account,
+			// and that update will be based on the updated main head that includes the new change.
+			// We can therefore stop tracking the head of the main branch from when the last update was initiated.
 			this.logger(
 				`Host:   abandoning update in progress for ${getMissingCommits(this.local, this.mainHeadFromLastUpdate)}`,
 			);
@@ -217,9 +224,11 @@ class Host<const TSchema extends ImplicitFieldSchema> {
 	}
 
 	/**
-	 * Must be called when the sandbox acknowledges an update that the host has sent.
+	 * Informs the host that the sandbox has acknowledged a change that the host has sent.
+	 * This allows the host to reflect the acknowledged change on the local branch.
+	 * This may also trigger the host to send new changes to the sandbox if the sandbox is currently behind the host's main branch.
 	 */
-	public receiveAckOfUpdate(): void {
+	public receiveAckFromSandbox(): void {
 		assert(this.updateInProgress !== undefined, "Expected update to be in progress");
 		assert(
 			this.mainHeadFromLastUpdate !== undefined,
@@ -361,6 +370,9 @@ class Sandbox<const TSchema extends ImplicitFieldSchema> {
 }
 
 describe("Host and Sandbox Demo", () => {
+	/**
+	 * The set of functions that are used to emulate communications between the host and sandbox.
+	 */
 	interface InteropFunctions {
 		readonly sendChangeFromHostToSandbox: (update: JsonCompatibleReadOnly) => void;
 		readonly sendChangeFromSandboxToHost: (change: JsonCompatibleReadOnly) => void;
@@ -368,11 +380,20 @@ describe("Host and Sandbox Demo", () => {
 		readonly sendAckOfSandboxBoundChangeFromSandboxToHost: () => void;
 	}
 
+	/**
+	 * A function that builds interop functions given getters for the host and sandbox.
+	 */
 	type InteropFunctionsBuilder<T extends InteropFunctions> = (
 		getHost: () => Host<typeof StringArray>,
 		getSandbox: () => Sandbox<typeof StringArray>,
 	) => T;
 
+	/**
+	 * Builds interop functions that use setTimeout to simulate async communication between the host and sandbox.
+	 * @param getHost - A function that returns the host. Used to avoid circular dependencies when building the interop functions.
+	 * @param getSandbox - A function that returns the sandbox. Used to avoid circular dependencies when building the interop functions.
+	 * @returns An object containing the interop functions.
+	 */
 	function buildTimeoutInterop(
 		getHost: () => Host<typeof StringArray>,
 		getSandbox: () => Sandbox<typeof StringArray>,
@@ -388,15 +409,27 @@ describe("Host and Sandbox Demo", () => {
 				setTimeout(() => getSandbox().receiveAckFromHost());
 			},
 			sendAckOfSandboxBoundChangeFromSandboxToHost: (): void => {
-				setTimeout(() => getHost().receiveAckOfUpdate());
+				setTimeout(() => getHost().receiveAckFromSandbox());
 			},
 		};
 	}
 
+	/**
+	 * Sets up a host, sandbox, and peer with the given initial state and timeout-based interop functions.
+	 * @param initialState - The initial state of the shared tree.
+	 * @returns An object containing the host, sandbox, peer, and interop functions.
+	 */
 	function setup(initialState: string[]) {
 		return setupCustom(initialState, buildTimeoutInterop);
 	}
 
+	/**
+	 * Sets up a host, sandbox, and peer with the given initial state and custom interop functions.
+	 * @param initialState - The initial state of the shared tree.
+	 * @param interopBuilder - A function that builds the interop functions.
+	 * @param logging - Whether to enable logging.
+	 * @returns An object containing the host, sandbox, peer, and interop functions.
+	 */
 	function setupCustom<T extends InteropFunctions>(
 		initialState: string[],
 		interopBuilder: InteropFunctionsBuilder<T>,
@@ -606,7 +639,7 @@ describe("Host and Sandbox Demo", () => {
 		strict.deepEqual([...sandbox.view.root], ["B(p)", "C(p)", "D(p)"]);
 	});
 
-	it("sandbox edits win races", async () => {
+	it("attempts by the host and sandbox to concurrently notify one-another of concurrent edits do not lead to inconsistencies or dropped edits", async () => {
 		const { peer, host, sandbox, provider } = setup([]);
 
 		// Make edits in the sandbox
@@ -728,12 +761,12 @@ describe("Host and Sandbox Demo", () => {
 	});
 
 	it("sandbox edits can be reverted", async () => {
-		const { peer, host, sandbox, provider } = setup([]);
+		const { host, sandbox } = setup([]);
 		const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(
 			sandbox.view.events,
 		);
 
-		// Before the sandbox has a chance to process the edits from the host, the peer makes an edit
+		// Make undoable edits in the sandbox
 		sandbox.view.root.push("Sa");
 		sandbox.view.root.push("Sb");
 		sandbox.view.root.push("Sc");
@@ -818,13 +851,13 @@ describe("Host and Sandbox Demo", () => {
 			/** Make the host receive its own sequenced edit */
 			SequenceAck = "Sa",
 			/** Notify the view of an update sent by the host. */
-			Host2ViewEdit = "H2Ve",
+			HostToViewEdit = "H2Ve",
 			/** Notify the host of an update ack sent by the view. */
-			View2HostAck = "V2Ha",
+			ViewToHostAck = "V2Ha",
 			/** Notify the host of an view edit sent by the view. */
-			View2HostEdit = "V2He",
+			ViewToHostEdit = "V2He",
 			/** Notify the view of an view edit ack sent by the host. */
-			Host2ViewAck = "H2Va",
+			HostToViewAck = "H2Va",
 		}
 
 		type Ack = "Ack";
@@ -872,7 +905,7 @@ describe("Host and Sandbox Demo", () => {
 				dispatchToHost: (): void => {
 					const message = out.view2Host.shift() ?? fail("No host-bound changes in queue");
 					if (message === Ack) {
-						getHost().receiveAckOfUpdate();
+						getHost().receiveAckFromSandbox();
 					} else {
 						getHost().receiveChangeFromSandbox(message);
 					}
@@ -926,12 +959,12 @@ describe("Host and Sandbox Demo", () => {
 					}
 					if (hasSome(interop.host2View)) {
 						potentialNext.push(
-							interop.host2View[0] === Ack ? Step.Host2ViewAck : Step.Host2ViewEdit,
+							interop.host2View[0] === Ack ? Step.HostToViewAck : Step.HostToViewEdit,
 						);
 					}
 					if (hasSome(interop.view2Host)) {
 						potentialNext.push(
-							interop.view2Host[0] === Ack ? Step.View2HostAck : Step.View2HostEdit,
+							interop.view2Host[0] === Ack ? Step.ViewToHostAck : Step.ViewToHostEdit,
 						);
 					}
 					potential.push(potentialNext);
@@ -969,13 +1002,13 @@ describe("Host and Sandbox Demo", () => {
 						provider.synchronizeMessages({ count: 1 });
 						break;
 					}
-					case Step.Host2ViewEdit:
-					case Step.Host2ViewAck: {
+					case Step.HostToViewEdit:
+					case Step.HostToViewAck: {
 						interop.dispatchToView();
 						break;
 					}
-					case Step.View2HostEdit:
-					case Step.View2HostAck: {
+					case Step.ViewToHostEdit:
+					case Step.ViewToHostAck: {
 						interop.dispatchToHost();
 						break;
 					}
