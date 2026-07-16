@@ -6,6 +6,7 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type {
+	ChangeAtomId,
 	DeltaDetachedNodeId,
 	DeltaFieldMap,
 	DeltaRoot,
@@ -14,16 +15,27 @@ import type {
 	RevisionTag,
 } from "../../core/index.js";
 import { makeAnonChange } from "../../core/index.js";
+import type { Mutable, RangeQueryResult } from "../../util/index.js";
 import { brand } from "../../util/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
-
-import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
-import { intoDelta } from "./modularChangeFamily.js";
-import type { ModularChangeset } from "./modularChangeTypes.js";
+import { getChangeHandler, intoDelta } from "./modularChangeFamily.js";
+import type {
+	FieldChange,
+	FieldChangeMap,
+	FieldId,
+	ModularChangeset,
+	NodeChangeset,
+} from "./modularChangeTypes.js";
+import { newCrossFieldKeyTable } from "./modularChangeTypes.js";
+import type { EditFilterFunc } from "./fieldChangeHandler.js";
+import { EditFilterStatus } from "./fieldChangeHandler.js";
 
 /**
  * A set of detached node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
@@ -78,6 +90,67 @@ function indexGlobalById(
 }
 
 /**
+ * An adjacency index over a delta's {@link DeltaRoot.rename | renames}, built once and shared by the passes that
+ * classify detached content.
+ *
+ * @remarks
+ * Each rename links the ID a piece of detached content had before the rename (`oldId`) to the ID it has after
+ * (`newId`). As transient content is moved within a change it acquires a chain of such IDs (build cell → move id →
+ * detach output). `backward` maps each post-rename ID to its pre-rename IDs; `forward` maps each pre-rename ID to its
+ * post-rename IDs. Both are keyed by revision then by the numeric portion of the ID.
+ */
+interface RenameGraph {
+	readonly forward: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>;
+	readonly backward: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>;
+}
+
+/** Looks up the neighbors of a node ID in one direction of a {@link RenameGraph}. */
+function renameNeighbors(
+	direction: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>,
+	major: RevisionTag | undefined,
+	minor: number,
+): readonly DeltaDetachedNodeId[] {
+	return direction.get(major)?.get(minor) ?? [];
+}
+
+/**
+ * Builds a {@link RenameGraph} from a delta's renames in a single pass, so the rename links can be traversed by ID
+ * without repeatedly scanning the rename list.
+ */
+function buildRenameGraph(delta: DeltaRoot): RenameGraph {
+	const forward = new Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>();
+	const backward = new Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>();
+	const addEdge = (
+		direction: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>,
+		from: DeltaDetachedNodeId,
+		to: DeltaDetachedNodeId,
+	): void => {
+		const byMinor = direction.get(from.major) ?? new Map<number, DeltaDetachedNodeId[]>();
+		const neighbors = byMinor.get(from.minor) ?? [];
+		neighbors.push(to);
+		byMinor.set(from.minor, neighbors);
+		direction.set(from.major, byMinor);
+	};
+	if (delta.rename !== undefined) {
+		for (const { oldId, newId, count } of delta.rename) {
+			for (let offset = 0; offset < count; offset += 1) {
+				const oldAtom: DeltaDetachedNodeId = {
+					major: oldId.major,
+					minor: oldId.minor + offset,
+				};
+				const newAtom: DeltaDetachedNodeId = {
+					major: newId.major,
+					minor: newId.minor + offset,
+				};
+				addEdge(forward, oldAtom, newAtom);
+				addEdge(backward, newAtom, oldAtom);
+			}
+		}
+	}
+	return { forward, backward };
+}
+
+/**
  * Collects the set of detached node IDs whose content ends up attached within the live document tree
  * once the given change is applied.
  *
@@ -95,6 +168,7 @@ function indexGlobalById(
 function collectAttachedDetachedNodeIds(
 	delta: DeltaRoot,
 	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
+	renameGraph: RenameGraph,
 ): DetachedNodeIdSet {
 	const attached: DetachedNodeIdSet = new Map();
 	// Worklist of detached node IDs newly discovered to be live, whose own nested content must be visited.
@@ -138,16 +212,195 @@ function collectAttachedDetachedNodeIds(
 		}
 		const { major, minor } = next;
 		visitLiveFields(globalById.get(major)?.get(minor));
-		if (delta.rename !== undefined) {
-			for (const { oldId, newId, count } of delta.rename) {
-				if (newId.major === major && minor >= newId.minor && minor < newId.minor + count) {
-					markLive(oldId.major, oldId.minor + (minor - newId.minor));
-				}
-			}
+		// A node attached under its post-rename ID was built under its pre-rename ID, so its pre-rename
+		// IDs are live too.
+		for (const oldId of renameNeighbors(renameGraph.backward, major, minor)) {
+			markLive(oldId.major, oldId.minor);
 		}
 	}
 
 	return attached;
+}
+
+/**
+ * Computes the set of "dead" node IDs: the IDs that refer to content built by this change but which does not survive it.
+ *
+ * @remarks
+ * A build cell is "dead" when its content is not {@link collectAttachedDetachedNodeIds | attached} in the resulting
+ * document. As transient content is detached and moved within the change, it acquires further IDs (move ids and detach
+ * output cells); these appear as {@link DeltaRoot.rename | renames} in the change's delta, linking each new ID to the
+ * one it replaced. This walks those rename links (in both directions) from every dead build cell to a fixed point, so
+ * that every ID which ever refers to a piece of transient content is included. Field effects (attaches/detaches) that
+ * target a dead ID have no observable effect and are removed during minimization.
+ */
+function computeDeadIds(
+	builds: ChangeAtomIdBTree<TreeChunk>,
+	renameGraph: RenameGraph,
+	attached: DetachedNodeIdSet,
+): DetachedNodeIdSet {
+	const dead: DetachedNodeIdSet = new Map();
+	const worklist: DeltaDetachedNodeId[] = [];
+	const markDead = (major: RevisionTag | undefined, minor: number): void => {
+		if (!detachedNodeIdSetHas(dead, major, minor)) {
+			addToDetachedNodeIdSet(dead, major, minor);
+			worklist.push({ major, minor });
+		}
+	};
+
+	// Seed with every build cell whose content does not survive.
+	for (const [[revision, localId], chunk] of builds.entries()) {
+		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
+			if (!detachedNodeIdSetHas(attached, revision, localId + offset)) {
+				markDead(revision, localId + offset);
+			}
+		}
+	}
+
+	// Propagate deadness across rename links (in both directions) to a fixed point.
+	while (worklist.length > 0) {
+		const next = worklist.pop();
+		if (next === undefined) {
+			break;
+		}
+		for (const neighbor of renameNeighbors(renameGraph.forward, next.major, next.minor)) {
+			markDead(neighbor.major, neighbor.minor);
+		}
+		for (const neighbor of renameNeighbors(renameGraph.backward, next.major, next.minor)) {
+			markDead(neighbor.major, neighbor.minor);
+		}
+	}
+
+	return dead;
+}
+
+/**
+ * Computes the set of detach destinations whose detached content was built inline within a surviving node's build tree
+ * and is being trimmed out of that build during minimization.
+ *
+ * @remarks
+ * When a node survives the change, its build tree is retained but {@link trimMapTree | trimmed} of any transient content
+ * nested within it. A field change that detaches such trimmed content out of the surviving build must treat its input
+ * as already empty, since the content it expected to detach is being removed from the build. This walks the
+ * {@link DeltaFieldMap | field changes} recorded for each surviving build (via `globalById`) and records the
+ * destinations of every detach whose content does not survive.
+ */
+function computeTrimmedInputDetaches(
+	builds: ChangeAtomIdBTree<TreeChunk>,
+	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
+	isLive: (id: ChangeAtomId) => boolean,
+): DetachedNodeIdSet {
+	const trimmed: DetachedNodeIdSet = new Map();
+	const visit = (deltaFields: DeltaFieldMap | undefined): void => {
+		if (deltaFields === undefined) {
+			return;
+		}
+		for (const field of deltaFields.values()) {
+			for (const mark of field.marks) {
+				if (mark.detach !== undefined) {
+					for (let offset = 0; offset < mark.count; offset += 1) {
+						const localId = mark.detach.minor + offset;
+						if (!isLive({ revision: mark.detach.major, localId: brand(localId) })) {
+							addToDetachedNodeIdSet(trimmed, mark.detach.major, localId);
+						}
+					}
+				}
+				if (mark.fields !== undefined) {
+					visit(mark.fields);
+				}
+			}
+		}
+	};
+
+	for (const [[revision, localId], chunk] of builds.entries()) {
+		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
+			if (isLive({ revision, localId: brand(localId + offset) })) {
+				visit(globalById.get(revision)?.get(localId + offset));
+			}
+		}
+	}
+
+	return trimmed;
+}
+
+/**
+ * Rewrites a {@link ModularChangeset}'s field and node changes to remove the effects of "transient" content: content
+ * that is built by the change but does not survive it.
+ *
+ * @remarks
+ * The field-level effects that attach and detach transient content are stripped by delegating to each field's
+ * {@link FieldChangeRebaser.filterEdits}. Attaches of dead content are removed (via `isDead`), as are detaches whose
+ * content is dead or was trimmed out of a surviving node's build tree (via `isDead` / `isTrimmedInputDetach`). While
+ * rewriting, the derived indexes (`nodeChanges`, `nodeToParent`, and `crossFieldKeys`) are rebuilt from scratch so that
+ * any node change or cross-field key that becomes unreferenced as a result of the removed effects is dropped.
+ */
+class ModularChangeEditMinimizer {
+	private readonly nodeToParent = newChangeAtomIdBTree<FieldId>();
+	private readonly filterAttaches: EditFilterFunc;
+	private readonly filterDetaches: EditFilterFunc;
+
+	public constructor(
+		private readonly change: ModularChangeset,
+		private readonly fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+		_isDead: (id: ChangeAtomId) => boolean,
+		_sTrimmedInputDetach: (id: ChangeAtomId) => boolean,
+	) {
+		this.filterAttaches = dummyRemoveAllEditsFilter;
+		this.filterDetaches = dummyRemoveAllEditsFilter;
+	}
+
+	/**
+	 * Rebuild the field/node changes and their derived indexes, omitting the
+	 * effects of transient nodes and any node changes that become unreferenced
+	 * as a result.
+	 */
+	public minimizeEdits(): Mutable<ModularChangeset> {
+		return {
+			...this.change,
+			crossFieldKeys: newCrossFieldKeyTable(),
+			fieldChanges: this.minimizeFieldChanges(this.change.fieldChanges),
+			nodeChanges: brand(this.change.nodeChanges.mapValues((v) => this.minimizeNodeChange(v))),
+			nodeToParent: this.nodeToParent,
+		};
+	}
+
+	private minimizeNodeChange(change: NodeChangeset): NodeChangeset {
+		if (change.fieldChanges === undefined) {
+			return change;
+		}
+		return {
+			...change,
+			fieldChanges: this.minimizeFieldChanges(change.fieldChanges),
+		};
+	}
+
+	private minimizeFieldChanges(change: FieldChangeMap): FieldChangeMap {
+		return new Map(
+			Array.from(change.entries(), ([key, value]) => [key, this.minimizeFieldChange(value)]),
+		);
+	}
+
+	private minimizeFieldChange(change: FieldChange): FieldChange {
+		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
+		return {
+			fieldKind: change.fieldKind,
+			change: brand(
+				handler.rebaser.filterEdits(change.change, {
+					filterAttach: this.filterAttaches,
+					filterDetach: this.filterDetaches,
+					// TODO: Testing says this needs to be false. Explain why in comment here.
+					preserveOtherEdits: false,
+				}),
+			),
+		};
+	}
+}
+
+function dummyRemoveAllEditsFilter(
+	_id: ChangeAtomId,
+	count: number,
+	_endpointId?: ChangeAtomId,
+): RangeQueryResult<EditFilterStatus> {
+	return { value: EditFilterStatus.Remove, length: count };
 }
 
 /** Splits a chunk into one chunk per top-level node, in order. */
@@ -185,7 +438,7 @@ function mapTreeFromNodeChunk(chunk: TreeChunk): ExclusiveMapTree {
 function trimMapTree(
 	node: ExclusiveMapTree,
 	deltaFields: DeltaFieldMap,
-	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
+	isLive: (id: ChangeAtomId) => boolean,
 ): number {
 	let changes = 0;
 	for (const [fieldKey, fieldChanges] of deltaFields) {
@@ -203,7 +456,9 @@ function trimMapTree(
 			if (mark.detach !== undefined) {
 				// The detached children are the field's existing (built) content being removed.
 				for (let offset = 0; offset < mark.count; offset += 1) {
-					if (isLive(mark.detach.major, mark.detach.minor + offset)) {
+					if (
+						isLive({ revision: mark.detach.major, localId: brand(mark.detach.minor + offset) })
+					) {
 						// Detached to a cell that survives elsewhere: retain the content.
 						newChildren.push(children[childIndex] ?? oob());
 					} else {
@@ -256,13 +511,14 @@ function trimMapTree(
  *
  * @param buildsIn - The original builds from the change to be minimized.
  * @param globalById - The `revision -> localId -> fields` lookup for the change's delta.
- * @param isLive - Predicate reporting whether the node with the given ID ends up attached in the resulting document.
+ * @param isLive - Predicate reporting whether the node with the given {@link ChangeAtomId} ends up attached in the
+ * resulting document.
  * @returns The minimized builds.
  */
 function computeMinimizedBuilds(
 	buildsIn: ChangeAtomIdBTree<TreeChunk>,
 	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
-	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
+	isLive: (id: ChangeAtomId) => boolean,
 ): ChangeAtomIdBTree<TreeChunk> {
 	const buildsOut = newChangeAtomIdBTree<TreeChunk>();
 	const droppedBuildIds: DetachedNodeIdSet = new Map();
@@ -284,7 +540,7 @@ function computeMinimizedBuilds(
 		for (let index = 0; index < nodeChunks.length; index += 1) {
 			let nodeChunk = nodeChunks[index] ?? oob();
 			const localId = changeSetLocalId + index;
-			if (isLive(revision, localId)) {
+			if (isLive({ revision, localId: brand(localId) })) {
 				// This top-level node survives. Trim any transient content nested within its built tree.
 				const globalFields = globalById.get(revision)?.get(localId);
 				if (globalFields !== undefined) {
@@ -348,20 +604,41 @@ export function minimizeModularChangeset(
 
 	const delta = intoDelta(makeAnonChange(change), fieldKinds);
 	const globalById = indexGlobalById(delta);
-	const attached = collectAttachedDetachedNodeIds(delta, globalById);
+	const renameGraph = buildRenameGraph(delta);
 
-	const isLive = (revision: RevisionTag | undefined, localId: number): boolean =>
-		detachedNodeIdSetHas(attached, revision, localId);
+	// Compute the set of detached node IDs whose content ends up attached in the resulting document. Content built by
+	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
+	const attached = collectAttachedDetachedNodeIds(delta, globalById, renameGraph);
+	const isLive = (id: ChangeAtomId): boolean =>
+		detachedNodeIdSetHas(attached, id.revision, id.localId);
+
+	// Compute the set of "dead" node IDs: IDs (build cells, move ids, and detach output cells) that refer to content
+	// which is built by this change but does not survive it. Field-level effects targeting these IDs are removed.
+	const dead = computeDeadIds(builds, renameGraph, attached);
+	const isDead = (id: ChangeAtomId): boolean =>
+		detachedNodeIdSetHas(dead, id.revision, id.localId);
+
+	// Compute the destinations of detaches that remove content built inline within a surviving node's build tree.
+	// Such content is trimmed out of the build, so the field change detaching it must treat its input as already empty.
+	const trimmedInputDetaches = computeTrimmedInputDetaches(builds, globalById, isLive);
+	const isTrimmedInputDetach = (id: ChangeAtomId): boolean =>
+		detachedNodeIdSetHas(trimmedInputDetaches, id.revision, id.localId);
+
+	const minimizer = new ModularChangeEditMinimizer(
+		change,
+		fieldKinds,
+		isDead,
+		isTrimmedInputDetach,
+	);
+
+	const minimizedChange: Mutable<ModularChangeset> = minimizer.minimizeEdits();
 
 	const minimizedBuilds = computeMinimizedBuilds(builds, globalById, isLive);
-
-	const minimizedChange = {
-		...change,
-	};
 	if (minimizedBuilds.size > 0) {
 		minimizedChange.builds = minimizedBuilds;
 	} else {
 		delete minimizedChange.builds;
 	}
+
 	return minimizedChange;
 }
