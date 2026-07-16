@@ -66,8 +66,13 @@ import { testReplaceRevisions } from "./replaceRevisions.test.js";
  */
 const arbitraryChildChange: NodeId = { localId: brand(42) };
 
+const tag = mintRevisionTag();
 const nodeId1: NodeId = { localId: brand(1) };
 const nodeId2: NodeId = { localId: brand(2) };
+const register0: ChangeAtomId = { revision: tag, localId: brand(0) };
+const register1: ChangeAtomId = { revision: tag, localId: brand(1) };
+const register2: ChangeAtomId = { revision: tag, localId: brand(2) };
+const register3: ChangeAtomId = { revision: tag, localId: brand(3) };
 
 const nodeChange1 = TestNodeId.create(nodeId1, TestChange.mint([], 1));
 const nodeChange2 = TestNodeId.create(nodeId2, TestChange.mint([], 2));
@@ -81,7 +86,6 @@ const failCrossFieldManager: CrossFieldManager = {
 
 const failingDelegate = (): never => assert.fail("Should not be called");
 
-const tag = mintRevisionTag();
 const change1 = tagChangeInline(
 	Change.atOnce(
 		Change.reserve("self", brand(1)),
@@ -1026,15 +1030,11 @@ describe("optionalField", () => {
 		}
 
 		it("can preserve all", () => {
-			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
-			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
-			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
-			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
 			const change = Change.atOnce(
-				Change.childAt(id0, nodeId1),
-				Change.move(id0, id1),
-				Change.clear("self", id2),
-				Change.move(id3, "self"),
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(
@@ -1047,19 +1047,14 @@ describe("optionalField", () => {
 			assertEqual(filtered, change);
 		});
 
-		it("can remove moves", () => {
-			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
-			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
-			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
-			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
-
-			const changeWithoutMove = Change.atOnce(
-				Change.childAt(id0, nodeId1),
-				Change.clear("self", id2),
-				Change.move(id3, "self"),
+		it("can remove renames", () => {
+			const changeWithoutRename = Change.atOnce(
+				Change.childAt(register0, nodeId1),
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
 			);
 
-			const change = Change.atOnce(changeWithoutMove, Change.move(id0, id1));
+			const change = Change.atOnce(changeWithoutRename, Change.move(register0, register1));
 
 			const filtered = optionalChangeRebaser.filterEdits(
 				change,
@@ -1068,43 +1063,33 @@ describe("optionalField", () => {
 				false,
 			);
 
-			assertEqual(filtered, changeWithoutMove);
+			assertEqual(filtered, changeWithoutRename);
 		});
 
 		it("can remove attach", () => {
-			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
-			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
-			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
-			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
-
 			const changeWithoutSet = Change.atOnce(
-				Change.childAt(id0, nodeId1),
-				Change.move(id0, id1),
-				Change.clear("self", id2),
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
+				Change.clear("self", register2),
 			);
 
-			const change = Change.atOnce(changeWithoutSet, Change.move(id3, "self"));
+			const change = Change.atOnce(changeWithoutSet, Change.move(register3, "self"));
 
 			const filtered = optionalChangeRebaser.filterEdits(change, preserveAll, removeAll, true);
 
 			assertEqual(filtered, changeWithoutSet);
 		});
 
-		it("can remove edits", () => {
-			const id0: ChangeAtomId = { revision: tag, localId: brand(0) };
-			const id1: ChangeAtomId = { revision: tag, localId: brand(1) };
-			const id2: ChangeAtomId = { revision: tag, localId: brand(2) };
-			const id3: ChangeAtomId = { revision: tag, localId: brand(3) };
-
+		it("can remove replace", () => {
 			const changeWithoutReplace = Change.atOnce(
-				Change.childAt(id0, nodeId1),
-				Change.move(id0, id1),
+				Change.childAt(register0, nodeId1),
+				Change.move(register0, register1),
 			);
 
 			const change = Change.atOnce(
 				changeWithoutReplace,
-				Change.clear("self", id2),
-				Change.move(id3, "self"),
+				Change.clear("self", register2),
+				Change.move(register3, "self"),
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(change, removeAll, removeAll, true);
