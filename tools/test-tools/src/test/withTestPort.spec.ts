@@ -75,11 +75,20 @@ describe("withTestPort", () => {
 		assert.equal(readOutput(), defaultPort);
 	});
 
-	it("substitutes {PORT} tokens in the command arguments", () => {
-		const { code, errors } = withTestPort(["echo", "{PORT}", "prefix-{PORT}", ">", outPath]);
-		assert.equal(code, 0);
-		assert.deepEqual(errors, []);
-		assert.equal(readOutput(), `${defaultPort} prefix-${defaultPort}`);
+	describe("substitutes {PORT} tokens in the command arguments", () => {
+		it("replaces a standalone {PORT} argument", () => {
+			const { code, errors } = withTestPort(["echo", "{PORT}", ">", outPath]);
+			assert.equal(code, 0);
+			assert.deepEqual(errors, []);
+			assert.equal(readOutput(), defaultPort);
+		});
+
+		it("replaces a {PORT} token embedded within an argument", () => {
+			const { code, errors } = withTestPort(["echo", "prefix-{PORT}", ">", outPath]);
+			assert.equal(code, 0);
+			assert.deepEqual(errors, []);
+			assert.equal(readOutput(), `prefix-${defaultPort}`);
+		});
 	});
 
 	it("uses the --fallback value when no port is assigned", () => {
