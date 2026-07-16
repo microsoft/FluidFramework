@@ -253,6 +253,65 @@ describe("ArrayNode", () => {
 				});
 			});
 
+			describe("findLast", () => {
+				it("returns the last item matching the callbackFunction", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLast((value) => value % 2 === 0),
+						4,
+					);
+					assert.equal(
+						array.findLast((value) => value < 3),
+						2,
+					);
+				});
+
+				it("returns undefined when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLast((value) => value > 10),
+						undefined,
+					);
+				});
+
+				it("visits items from last to first, passing the index and array to the callbackFunction", () => {
+					const array = buildAlphaArray([5, 6, 7]);
+					const visited: [number, number][] = [];
+					array.findLast((value, index, items) => {
+						assert.deepEqual([...items], [5, 6, 7]);
+						visited.push([value, index]);
+						return false;
+					});
+					assert.deepEqual(visited, [
+						[7, 2],
+						[6, 1],
+						[5, 0],
+					]);
+				});
+			});
+
+			describe("findLastIndex", () => {
+				it("returns the index of the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2 === 0),
+						3,
+					);
+					assert.equal(
+						array.findLastIndex((value) => value < 3),
+						1,
+					);
+				});
+
+				it("returns -1 when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLastIndex((value) => value > 10),
+						-1,
+					);
+				});
+			});
+			
 			describe("removeAt", () => {
 				it("valid index", () => {
 					const array = init(schemaType, [0, 1, 2]);

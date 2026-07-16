@@ -483,6 +483,26 @@ export interface TreeArrayNodeAlpha<
 	at(index: number): T | undefined;
 
 	/**
+	 * Returns the last item in the array for which the given predicate returns `true`,
+	 * searching from the last item to the first.
+	 * @param callbackFunction - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
+	 * Receives the item, its index, and the array being searched.
+	 * @returns The last item for which `callbackFunction` returns `true`, or `undefined` if there is no such item.
+	 */
+	findLast(
+		callbackFunction: (value: T, index: number, array: readonly T[]) => boolean,
+	): T | undefined;
+
+	/**
+	 * Returns the index of the last item in the array for which the given callbackFunction returns `true`,
+	 * searching from the last item to the first.
+	 * @param callbackFunction - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
+	 * Receives the item, its index, and the array being searched.
+	 * @returns The index of the last item for which `callbackFunction` returns `true`, or `-1` if there is no such item.
+	 */
+	findLastIndex(callbackFunction: (value: T, index: number, array: readonly T[]) => boolean): number;
+
+	/**
 	 * Removes the last item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
 	 */
@@ -1040,6 +1060,31 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+	}
+	public findLast(
+		callbackFunction: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => boolean,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const index = this.findLastIndex(callbackFunction);
+		return index === -1 ? undefined : this.at(index);
+	}
+	public findLastIndex(
+		callbackFunction: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => boolean,
+	): number {
+		const items = [...this];
+		for (let index = items.length - 1; index >= 0; index--) {
+			if (callbackFunction(items[index] ?? oob(), index, items)) {
+				return index;
+			}
+		}
+		return -1;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
