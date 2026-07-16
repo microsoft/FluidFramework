@@ -19,15 +19,10 @@ import type {
 	NodeId,
 	RelevantRemovedRootsFromChild,
 } from "../../../feature-libraries/index.js";
-import {
-	EditFilterStatus,
-	FieldChangeDelta,
-	NestedChangesIndices,
-	// eslint-disable-next-line import-x/no-internal-modules
 import type {
 	FieldChangeDelta,
 	NestedChangesIndices,
-// eslint-disable-next-line import-x/no-internal-modules
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { EditFilterStatus } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
