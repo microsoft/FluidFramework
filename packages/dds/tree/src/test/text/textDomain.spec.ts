@@ -5,7 +5,16 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeAlpha } from "../../shared-tree/index.js";
+import type { FieldKey, IForestSubscription, TreeChunk } from "../../core/index.js";
+import {
+	UniformChunk,
+	// eslint-disable-next-line import-x/no-internal-modules
+} from "../../feature-libraries/chunked-forest/uniformChunk.js";
+import {
+	ForestTypeOptimized,
+	TreeAlpha,
+	createIndependentTreeAlpha,
+} from "../../shared-tree/index.js";
 import {
 	allowUnused,
 	TreeViewConfiguration,
@@ -18,6 +27,60 @@ import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+
+/** Minimal structural view of a chunk that may have child fields, for walking the chunk tree. */
+type ChunkWithFields = TreeChunk & { readonly fields?: Map<FieldKey, TreeChunk[]> };
+
+/**
+ * Walks every chunk reachable from a chunked forest's roots and tallies the {@link UniformChunk}s.
+ * @returns the number of `UniformChunk`s and the total number of nodes they hold.
+ */
+function tallyUniformChunks(forest: IForestSubscription): {
+	uniformChunkCount: number;
+	uniformNodeCount: number;
+} {
+	const roots = (forest as unknown as { readonly roots: ChunkWithFields }).roots;
+	let uniformChunkCount = 0;
+	let uniformNodeCount = 0;
+	function walk(chunk: TreeChunk): void {
+		if (chunk instanceof UniformChunk) {
+			uniformChunkCount++;
+			uniformNodeCount += chunk.topLevelLength;
+		}
+		const fields = (chunk as ChunkWithFields).fields;
+		if (fields !== undefined) {
+			for (const chunks of fields.values()) {
+				for (const child of chunks) {
+					walk(child);
+				}
+			}
+		}
+	}
+	walk(roots);
+	return { uniformChunkCount, uniformNodeCount };
+}
+
+/**
+ * Reaches the internal forest backing a view. The view is a `SchematizingSimpleTreeView` whose
+ * `checkout` exposes the `IForestSubscription`. This is an intentional internal coupling — the public
+ * API hides the forest — but this test needs it to inspect chunk storage.
+ */
+function forestFromView(view: object): IForestSubscription {
+	return (view as { readonly checkout: { readonly forest: IForestSubscription } }).checkout
+		.forest;
+}
+
+/** Builds an empty text document backed by the optimized (chunked) forest, exposing its forest. */
+function buildChunkedTextDocument(): {
+	readonly root: TextAsTree.Tree;
+	readonly forest: IForestSubscription;
+} {
+	const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+		new TreeViewConfiguration({ schema: TextAsTree.Tree }),
+	);
+	view.initialize(TextAsTree.Tree.fromString(""));
+	return { root: view.root, forest: forestFromView(view) };
+}
 
 describe("textDomain", () => {
 	it("compatibility", () => {
@@ -230,6 +293,31 @@ describe("textDomain", () => {
 			cleanup();
 			text.insertAt(1, "y");
 			assert.equal(callCount, 1, "callback should not fire after cleanup");
+		});
+	});
+
+	// Regression test for the attach/detach coalescing in the chunked forest. Typing characters one at a
+	// time attaches each as its own chunk; `coalesceUniformChunks` merges the same-shape neighbors back
+	// together so the field stays batched into a small number of multi-node UniformChunks instead of
+	// fragmenting into one chunk per character.
+	describe("chunked forest storage", () => {
+		it("batches typed characters into multi-node chunks", () => {
+			const size = 1000;
+			const { root, forest } = buildChunkedTextDocument();
+
+			for (let i = 0; i < size; i++) {
+				const middle = Math.floor(root.characterCount() / 2);
+				root.insertAt(middle, i % 2 === 0 ? "a" : "b");
+			}
+
+			// All the typed content is present and stored in UniformChunks (nothing shattered away).
+			assert.equal(root.characterCount(), size);
+			const { uniformChunkCount, uniformNodeCount } = tallyUniformChunks(forest);
+			assert.equal(uniformNodeCount, size);
+			assert(
+				uniformChunkCount < uniformNodeCount,
+				`expected coalescing to batch content into multi-node chunks, but found ${uniformChunkCount} UniformChunks for ${uniformNodeCount} nodes (no batching)`,
+			);
 		});
 	});
 
