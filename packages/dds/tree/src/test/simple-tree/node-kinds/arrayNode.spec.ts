@@ -254,7 +254,7 @@ describe("ArrayNode", () => {
 			});
 
 			describe("findLast", () => {
-				it("returns the last item matching the callbackFunction", () => {
+				it("returns the last item matching the predicate", () => {
 					const array = buildAlphaArray([1, 2, 3, 4]);
 					assert.equal(
 						array.findLast((value) => value % 2 === 0),
@@ -274,7 +274,7 @@ describe("ArrayNode", () => {
 					);
 				});
 
-				it("visits items from last to first, passing the index and array to the callbackFunction", () => {
+				it("visits items from last to first, passing the index and array to the predicate", () => {
 					const array = buildAlphaArray([5, 6, 7]);
 					const visited: { value: number; index: number }[] = [];
 					array.findLast((value, index, items) => {
@@ -289,7 +289,7 @@ describe("ArrayNode", () => {
 					]);
 				});
 
-				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLast", () => {
+				it("reads items live when the predicate edits the array, like Array.prototype.findLast", () => {
 					const array = buildAlphaArray([1, 2, 3, 4]);
 					const visited: { value: number; index: number }[] = [];
 					array.findLast((value, index) => {
@@ -309,13 +309,40 @@ describe("ArrayNode", () => {
 					]);
 				});
 
-				it("returns the matched item even if the callbackFunction moves it", () => {
+				it("returns the matched item even if the predicate moves it", () => {
 					const array = buildAlphaArray([1, 2, 3]);
 					const result = array.findLast((value) => {
 						array.removeAt(0);
 						return value === 3;
 					});
 					assert.equal(result, 3);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLast((value) => value % 2),
+						1,
+					);
+				});
+
+				it("narrows the result type when passed a type-guard predicate", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result: 2 | undefined = array.findLast(
+						(value): value is 2 => value === 2,
+					);
+					assert.equal(result, 2);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLast(isTarget, context);
+					assert.equal(result, 2);
 				});
 			});
 
@@ -340,7 +367,7 @@ describe("ArrayNode", () => {
 					);
 				});
 
-				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLastIndex", () => {
+				it("reads items live when the predicate edits the array, like Array.prototype.findLastIndex", () => {
 					const array = buildAlphaArray([1, 2, 3]);
 					const visited: { value: number; index: number }[] = [];
 					array.findLastIndex((value, index) => {
@@ -356,6 +383,25 @@ describe("ArrayNode", () => {
 						{ value: 3, index: 1 },
 						{ value: 2, index: 0 },
 					]);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2),
+						0,
+					);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLastIndex(isTarget, context);
+					assert.equal(result, 1);
 				});
 			});
 
