@@ -5,15 +5,6 @@
 
 // markdownlint-cli2 configuration for the `docs` workspace.
 //
-// This file uses ESM (`.mjs`) because the `markdownlint-rule-relative-links` custom rule is
-// published as an ES module. markdownlint-cli2 and the VS Code markdownlint extension both support
-// `.markdownlint-cli2.mjs` config files.
-//
-// The rule set is intentionally inlined here for now. Once the shared
-// `@fluidframework/build-common` markdownlint config lands in the client release group, this file
-// should be updated to import and re-export that shared base so a single source of truth defines
-// the rule set across the repo.
-//
 // See https://github.com/DavidAnson/markdownlint-cli2#configuration for the schema and
 // https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md for the rules.
 
