@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import type { IFluidHandleContext } from "@fluidframework/core-interfaces/internal";
 import type { ISequencedMessageEnvelope } from "@fluidframework/runtime-definitions/internal";
 import {
 	isFluidHandlePayloadPending,
@@ -13,6 +14,8 @@ import {
 } from "@fluidframework/runtime-utils/internal";
 import { LoggingError } from "@fluidframework/telemetry-utils/internal";
 
+// eslint-disable-next-line import-x/no-internal-modules
+import { BlobHandle } from "../../blobManager/blobManager.js";
 import {
 	getGCNodePathFromLocalId,
 	type IBlobManagerLoadInfo,
@@ -31,6 +34,37 @@ import {
 	waitHandlePayloadShared,
 	type UnprocessedMessage,
 } from "./blobTestUtils.js";
+
+describe("BlobHandle", () => {
+	it("Does not invoke the sharing callback for an already-shared payload", () => {
+		let sharePayloadCallbackCalls = 0;
+		const routeContext: IFluidHandleContext = {
+			get IFluidHandleContext() {
+				return routeContext;
+			},
+			absolutePath: "",
+			isAttached: true,
+			attachGraph: () => undefined,
+			resolveHandle: async () => {
+				throw new Error("Not implemented");
+			},
+		};
+		const handle = new BlobHandle(
+			"/blob",
+			routeContext,
+			async () => textToBlob("hello"),
+			false,
+			() => {
+				sharePayloadCallbackCalls++;
+			},
+		);
+
+		handle.sharePayload();
+
+		assert.strictEqual(handle.payloadState, "shared");
+		assert.strictEqual(sharePayloadCallbackCalls, 0);
+	});
+});
 
 for (const createBlobPayloadPending of [false, true]) {
 	describe(`BlobManager (pending payloads: ${createBlobPayloadPending})`, () => {
@@ -268,6 +302,14 @@ for (const createBlobPayloadPending of [false, true]) {
 					assert(handle.payloadShareError instanceof Error);
 					assert.strictEqual(handle.payloadShareError.message, "fake driver error");
 					assert.strictEqual(toFluidHandleInternal(handle).isAttached, false);
+
+					attachHandle(handle);
+					assert.strictEqual(toFluidHandleInternal(handle).isAttached, true);
+					assert.strictEqual(
+						blobManager.getPendingBlobs(),
+						undefined,
+						"A failed payload should not be added to pending state when later attached",
+					);
 				});
 
 				it("Treats sharing an already-shared payload as a no-op", async function () {
