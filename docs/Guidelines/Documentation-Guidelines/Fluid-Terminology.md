@@ -7,21 +7,21 @@ This document outlines common dos and don'ts regarding our terminology.
 
 ## Terminology
 
--   "Fluid" and "Fluid Framework" are a proper nouns and should be capitalized, but these are not:
-    -   "container"
-    -   "service"
-    -   "object"
-    -   "driver"
-    -   "runtime"
-    -   "host"
+- "Fluid" and "Fluid Framework" are a proper nouns and should be capitalized, but these are not:
+    - "container"
+    - "service"
+    - "object"
+    - "driver"
+    - "runtime"
+    - "host"
 
--   "Fluid service", not "Fluid server"
+- "Fluid service", not "Fluid server"
 
 ## Casing
 
--   "Container code" - not "Container Code"
--   "URL" - not "url" or "Url"
--   "JavaScript" - not "Jypescript" or "javascript"
--   "TypeScript" - not "Typescript" or "typescript"
--   "Node.js" - not "node" or "nodejs", etc.
--   "npm" (always lower-case)
+- "Container code" - not "Container Code"
+- "URL" - not "url" or "Url"
+- "JavaScript" - not "Jypescript" or "javascript"
+- "TypeScript" - not "Typescript" or "typescript"
+- "Node.js" - not "node" or "nodejs", etc.
+- "npm" (always lower-case)

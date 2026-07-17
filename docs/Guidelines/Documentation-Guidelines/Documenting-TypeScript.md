@@ -37,7 +37,7 @@ For more specific guidance and examples of leveraging TSDoc syntax, see [TSDoc G
 
 ## When to use
 
-As a general rule, inline comment syntax should be used when describing what code is *doing*.
+As a general rule, inline comment syntax should be used when describing what code is _doing_.
 
 ### Example
 
@@ -50,11 +50,11 @@ console.log(sum);
 return sum;
 ```
 
-In this example, the comment is intended to describe what the subsequent lines of code are *doing*, rather than attempting to annotate the local variable `sum`, so an inline comment is preferred.
+In this example, the comment is intended to describe what the subsequent lines of code are _doing_, rather than attempting to annotate the local variable `sum`, so an inline comment is preferred.
 
 ## When not to use
 
-Declarations, and particularly *APIs*, should generally prefer TSDoc syntax over inline syntax.
+Declarations, and particularly _APIs_, should generally prefer TSDoc syntax over inline syntax.
 
 # Block syntax
 
@@ -121,4 +121,4 @@ it("foo", () => {
 
 # See Also
 
-* [TSDoc Guidelines](./Documenting-TypeScript/TSDoc-Guidelines.md)
+- [TSDoc Guidelines](./Documenting-TypeScript/TSDoc-Guidelines.md)

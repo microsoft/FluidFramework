@@ -35,12 +35,12 @@ A common pitfall for framework engineers is to assume that their preferences acc
 The optimal balance of perfection vs. rapid release vs. overall engineering cost is different for frameworks and applications.
 Consequently, framework engineers often mis-calibrate when it comes to API tradeoffs such as:
 
--   flexible vs. simple
--   elegant vs. obvious
--   strict vs. agile
--   general vs. familiar
--   explicit vs. concise
--   high-control vs. low-friction
+- flexible vs. simple
+- elegant vs. obvious
+- strict vs. agile
+- general vs. familiar
+- explicit vs. concise
+- high-control vs. low-friction
 
 If the qualities listed on the left resonate most strongly with you, you’re likely a framework engineer.
 One technique for counter-balancing the natural tendency to over-engineer is to recognize that most user requests begin in the form “I just want X so I can Y."
@@ -152,8 +152,8 @@ Here is an example of an appropriate use of a generic parameter:
 ```typescript
 /** Add a label to an object */
 function label<T extends object>(obj: T, label: string): T & { label: string } {
-  Object.defineProperty(obj, label, {value: label})
-  return obj as T & { label: string };
+	Object.defineProperty(obj, label, { value: label });
+	return obj as T & { label: string };
 }
 ```
 
@@ -166,7 +166,7 @@ Here is an example of an unnecessary use of a generic parameter:
 ```typescript
 /** Returns true if and only if the given object has a label */
 function hasLabel<T extends object>(obj: T): boolean {
-  return (obj as { label?: string }).label !== undefined;
+	return (obj as { label?: string }).label !== undefined;
 }
 ```
 
@@ -176,7 +176,7 @@ Therefore, the function can be written equivalently as follows:
 ```typescript
 /** Returns true if and only if the given object has a label */
 function hasLabel(obj: object): boolean {
-  return (obj as { label?: string }).label !== undefined;
+	return (obj as { label?: string }).label !== undefined;
 }
 ```
 
@@ -193,17 +193,17 @@ However, overloading is a powerful tool for reducing IntelliSense clutter and he
 
 This document is not intended to be a style guide, but when questions of style arise, the style used by examples in The TypeScript Handbook is a good representation of the prevailing conventions used by TypeScript developers:
 
--   Use `PascalCase` for type names.
--   Use `PascalCase` for enum values.
--   Use `camelCase` for function, property, and variable names.
+- Use `PascalCase` for type names.
+- Use `PascalCase` for enum values.
+- Use `camelCase` for function, property, and variable names.
 
 #### ✘ DO NOT prefix interfaces with `I`
 
 While a common convention in some codebases, this naming convention has a few notable downsides:
 
--   `interface`s and `type`s are often used interchangeably, and changing an existing entity between the two is common in refactoring.
-    Renaming an item each time its underlying kind changes is needlessly disruptive.
--   `I` prefixing encourages naming an interface for its implementation, rather than deriving implementation names from their semantic contracts (i.e., interfaces).
+- `interface`s and `type`s are often used interchangeably, and changing an existing entity between the two is common in refactoring.
+  Renaming an item each time its underlying kind changes is needlessly disruptive.
+- `I` prefixing encourages naming an interface for its implementation, rather than deriving implementation names from their semantic contracts (i.e., interfaces).
 
 When introducing an interface with a single implementation (e.g., to hide implementation details from an API), prefer prefixing/postfixing the implementation rather than prefixing the interface. E.g.,
 
@@ -232,6 +232,7 @@ E.g., prefer `TFoo` to `T`.
 
 In trivial cases, or when the type parameter is simply passed through to another type, `T` by itself is allowed.
 E.g.
+
 ```typescript
 // It's clear from context that the type here corresponds to the elements of the array.
 // Using `TElement` isn't necessary.
@@ -277,11 +278,12 @@ Try to make the first response in IntelliSense the correct entry point to the co
 #### ✘ AVOID using abbreviations
 
 Abbreviations can create ambiguity and can prove to be an accessibility issue.
-Prefer complete English terms except for *very* common abbreviations.
+Prefer complete English terms except for _very_ common abbreviations.
 
 E.g. prefer "column" over "col", "current" over "cur", "if and only if" over "iff", etc.
 
 Remember to think in terms of accessibility.
+
 - Would a someone who is not a native English speaker understand the abbreviation?
 - Would someone outside of Microsoft understand it?
 
@@ -293,7 +295,7 @@ Favor short and memorable names over longSelfDocumentingNames for important and 
 In the JavaScript community, developers assume the shorter the name the more important the API.
 Long multi-word names are assumed to be rarely used or semi-internal.
 
--   Remember to document any aspects that are not captured by the short name in the API documentation!
+- Remember to document any aspects that are not captured by the short name in the API documentation!
 
 A good example is EventEmitter’s `on()` and `off()` pattern, which has largely become the de-facto standard among frameworks.
 An anti-example is the DOM’s built-in `addEventListener()` and `removeEventListener()`, which frameworks rarely emulate.
@@ -327,9 +329,9 @@ Either-or scenarios where an application will import 1 of n packages.
 
 Examples include:
 
--   Choosing between a production or development version of the framework
--   Choosing between React or Svelt interoperability
--   Choosing between Azure or Syntex as a backend
+- Choosing between a production or development version of the framework
+- Choosing between React or Svelt interoperability
+- Choosing between Azure or Syntex as a backend
 
 Packages that are versioned separately for the end user’s convenience.
 
@@ -351,13 +353,13 @@ When possible, favor consuming and produce trees of JSON-compatible types.
 To interoperate with existing backend and frontend technologies, data contracts should be defined using [JSON-compatible types](https://en.wikipedia.org/wiki/JSON#Data_types).
 These are:
 
--   Plain objects (no prototypes, string keys only, single reference)
--   Dense arrays using keys 0..length-1 (no buffers, views, or typed arrays)
--   Strings (valid Unicode only)
--   Finite Float64 numbers (no Infinity, NaN, -0, or BigInt)
-    \*Booleans
--   Implicit undefined (optional properties elided by JSON serialization)
--   Null (as empty root or placeholder in arrays – see next guideline.)
+- Plain objects (no prototypes, string keys only, single reference)
+- Dense arrays using keys 0..length-1 (no buffers, views, or typed arrays)
+- Strings (valid Unicode only)
+- Finite Float64 numbers (no Infinity, NaN, -0, or BigInt)
+  \*Booleans
+- Implicit undefined (optional properties elided by JSON serialization)
+- Null (as empty root or placeholder in arrays – see next guideline.)
 
 This subset of JavaScript types forms a minimal but complete data model that is well supported across data stores and transport protocols.
 
@@ -373,8 +375,8 @@ There are, however, a few cases where `null` continues to be appropriate.
 The primary use case is JSON serializable data where "implicit undefined" is not an option.
 These are:
 
--   The root of an empty tree ("null”)
--   An empty placeholder in arrays ("[null, 3]")
+- The root of an empty tree ("null”)
+- An empty placeholder in arrays ("[null, 3]")
 
 #### ✔ AVOID distinguishing between implicit and explicit undefined values
 
@@ -425,15 +427,15 @@ server.connect({ url: string, port: number, compression: Compression });
 Use of the "named arguments" style is a balance between legibility/extensibility and developer convenience.
 In general, "named arguments" should be _preferred_ when...
 
--   An API is often invoked with a large number of parameters, especially when many of those parameters share the same type(s) (e.g., `init(3, 300, 4, 7)`).
--   An API accepts multiple optional arguments.
--   An API is likely to benefit from future extensibility (e.g., new options).
+- An API is often invoked with a large number of parameters, especially when many of those parameters share the same type(s) (e.g., `init(3, 300, 4, 7)`).
+- An API accepts multiple optional arguments.
+- An API is likely to benefit from future extensibility (e.g., new options).
 
 In general, "named arguments" should be _avoided_ when...
 
--   An API accepts a small number of parameters that are believed to be fixed.
-    -   An anti-example would be use named arguments for `.slice({ start: 0, end: 10 })`.
-        For frequently used APIs with small numbers of arguments, client developers prefer a well-understood convention.
+- An API accepts a small number of parameters that are believed to be fixed.
+    - An anti-example would be use named arguments for `.slice({ start: 0, end: 10 })`.
+      For frequently used APIs with small numbers of arguments, client developers prefer a well-understood convention.
 
 Note: the use of "named arguments" can have performance implications, as it requires an object allocation for each call.
 Generally, this is not an issue for our exposed API surface, but internal APIs which are performance-critical should carefully consider if the costs of this pattern outweigh the benefits.
@@ -484,12 +486,12 @@ Consider this API, where we want a user to store some data in addition to a buil
 
 ```typescript
 interface SystemData {
-  _id: string;
+	_id: string;
 }
 
 interface DataStorage<T extends SystemData> {
-  getData(): T;
-  setData(data: T): void;
+	getData(): T;
+	setData(data: T): void;
 }
 ```
 
@@ -500,13 +502,13 @@ Instead, simply move the user data one level down to where it is completely self
 
 ```typescript
 interface SystemData<T> {
-  id: string;
-  userData: T; // There's no problem if something in here is named `id`
+	id: string;
+	userData: T; // There's no problem if something in here is named `id`
 }
 
 interface DataStorage<T> {
-  getData(): SystemData<T>;
-  setUserData(data: SystemData<T>): void;
+	getData(): SystemData<T>;
+	setUserData(data: SystemData<T>): void;
 }
 ```
 
@@ -524,7 +526,7 @@ You should assume that developers have common sense and do not exploit quirks or
 An assertion failure indicates a bug in the Fluid Framework itself, not the user's code.
 User errors should by signaled by throwing an instance of `Error`, `TypeError`, `ReferenceError`, `RangeError`, `AggregateError` or an appropriate subclass (other built-in error types are reserved for language parsing errors).
 
--   See the [@fluidframework/core-interfaces](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/src/error.ts) package for some example Error subclasses used frequently across the framework.
+- See the [@fluidframework/core-interfaces](https://github.com/microsoft/FluidFramework/blob/main/packages/common/core-interfaces/src/error.ts) package for some example Error subclasses used frequently across the framework.
 
 ### Events
 
@@ -539,7 +541,7 @@ When this is impractical...
 #### ✔ DO adopt EventEmitter’s on/off pattern for register/deregistering event listeners
 
 The prevailing convention among JavaScript frameworks is to adopt EventEmitter’s on/off pattern for register/deregistering event listeners.
-The “on” method should be strongly typed over the events known to the emitter (e.g., via https://43081j.com/2020/11/typed-events-in-typescript).
+The “on” method should be strongly typed over the events known to the emitter (e.g., via <https://43081j.com/2020/11/typed-events-in-typescript>).
 It should only allow registrations for known event names, and the corresponding listener functions should be required to have compatible parameters.
 
 #### ✘ AVOID exposing the full EventEmitter interface
@@ -547,9 +549,10 @@ It should only allow registrations for known event names, and the corresponding 
 While subclassing the EventEmitter type may be a convenient way to implement on/off, it also publicly exposes methods that are intended for private use by the event producer (not the consumer).
 
 The methods recommended for event consumers are:
--   on
--   off
--   once
+
+- on
+- off
+- once
 
 Other capabilities, such as the ability to emit events, enumerate listeners, detect additional and removal of listeners, etc. should be privately held by the producer.
 
@@ -557,8 +560,8 @@ Other capabilities, such as the ability to emit events, enumerate listeners, det
 
 ```typescript
 class MyClass {
-  private _events: EventEmitter<MyEvents>;
-  public events: Listenable<MyEvents>;
+	private _events: EventEmitter<MyEvents>;
+	public events: Listenable<MyEvents>;
 }
 ```
 
@@ -566,15 +569,15 @@ is preferable to
 
 ```typescript
 class MyClass implements Listenable<MyEvents> {
-  private events: EventEmitter<MyEvents>;
+	private events: EventEmitter<MyEvents>;
 
-  public on<K extends keyof MyEvents>(key: K, listener: (/*...*/) => void) {
-    this.events.on(key, listener);
-  }
+	public on<K extends keyof MyEvents>(key: K, listener: (/*...*/) => void) {
+		this.events.on(key, listener);
+	}
 
-  public off<K extends keyof MyEvents>(key: K, listener: (/*...*/) => void) {
-    this.events.off(key, listener);
-  }
+	public off<K extends keyof MyEvents>(key: K, listener: (/*...*/) => void) {
+		this.events.off(key, listener);
+	}
 }
 ```
 

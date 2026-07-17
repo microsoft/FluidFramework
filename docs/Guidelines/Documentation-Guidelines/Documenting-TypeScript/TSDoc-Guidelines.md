@@ -122,8 +122,8 @@ function move(xOffset: number, yOffset: number) {
 
 Because source-code comments are frequently line-broken based on some maximal line length, TSDoc comments are parsed as follows:
 
--   Adjacent lines (lines separated by exactly 1 newline) are rendered on **the same line**
--   Lines separated by 2 or more newlines are rendered as separate paragraphs (with a break between them)
+- Adjacent lines (lines separated by exactly 1 newline) are rendered on **the same line**
+- Lines separated by 2 or more newlines are rendered as separate paragraphs (with a break between them)
 
 If you wish for line breaks to appear in the generated API documentation, be sure to add an extra line between your content.
 
@@ -158,13 +158,13 @@ Will be rendered as:
 
 ## TSDoc Tags
 
-TSDoc tags are broken down into 3 categories: [Block tags](#Block-Tags), [Modifier tags](#Modifier-Tags), and [Inline tags](#Inline-Tags).
+TSDoc tags are broken down into 3 categories: [Block tags](#block-tags), [Modifier tags](#modifier-tags), and [Inline tags](#inline-tags).
 
-For an overview on the difference between the 3, see [here](https://tsdoc.org/pages/spec/tag_kinds/).
+For an overview on the difference between the 3, see the [TSDoc tag kinds overview](https://tsdoc.org/pages/spec/tag_kinds/).
 
 ### Block Tags
 
-See [here](https://tsdoc.org/pages/spec/tag_kinds/#block-tags) for an overview of block tags.
+See the [TSDoc block tags overview](https://tsdoc.org/pages/spec/tag_kinds/#block-tags).
 
 #### \@param
 
@@ -176,8 +176,8 @@ This should be used for any documentation pertaining to a particular parameter f
 
 Notes:
 
--   \@param tags should be listed in the same order as the corresponding parameters appear in the function / method signature.
--   \@param blocks should always be formatted to include a '-' after the parameter name.
+- \@param tags should be listed in the same order as the corresponding parameters appear in the function / method signature.
+- \@param blocks should always be formatted to include a '-' after the parameter name.
 
 ##### Block Tags: Example
 
@@ -435,7 +435,7 @@ Use this tag to indicate that the associated API has been deprecated.
 
 This tag should always be followed with any information a developer would need to know to migrate their code off of the deprecated API.,
 
--   See [API Deprecation](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation) for a more complete overview of our deprecation process.
+- See [API Deprecation](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation) for a more complete overview of our deprecation process.
 
 ##### \@deprecated: Example
 
@@ -452,7 +452,7 @@ export function foo() {
 
 ##### Deprecation Guidelines
 
-For an overview of our general deprecation guidelines, see [here](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
+For an overview of our general deprecation guidelines, see the [API deprecation guidelines](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
 
 #### \@defaultValue
 
@@ -488,7 +488,7 @@ Internal code handling the property's absence will be required to respect its do
 
 ### Modifier Tags
 
-See [here](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags) for an overview of modifier tags.
+See the [TSDoc modifier tags overview](https://tsdoc.org/pages/spec/tag_kinds/#modifier-tags).
 
 `Modifier tags` stand alone, and are not expected to be accompanied by any documentation content.
 
@@ -577,10 +577,13 @@ Spreading an input into another value of the same type is valid.
 /**
  * @input This type may be implemented, but must not read from.
  */
-export interface Options { enable: boolean, name?: string }
+export interface Options {
+	enable: boolean;
+	name?: string;
+}
 
 function foo(options: Options) {
-    // ...
+	// ...
 }
 
 // Valid Ussage
@@ -694,8 +697,8 @@ I.e. it's value is not changed after being initialized.
 
 This tag **_should not_** be used on any class member which already configured as `readonly` via the TypeScript type system, but can be used in instances where it is not possible to use TypeScript's readonly to enforce invariants.
 
--   Note: whenever possible, TypeScript's native `readonly` should be used in place of this tag.
-    This tag should _only_ be used when that is not possible.
+- Note: whenever possible, TypeScript's native `readonly` should be used in place of this tag.
+  This tag should _only_ be used when that is not possible.
 
 ##### \@readonly: Examples
 
@@ -769,13 +772,13 @@ public get clicked(): Event {
 
 #### Release Tags
 
-For an overview of our supported release tags, see [here](./Release-Tags.md).
+For an overview of our supported release tags, see the [Release Tags guide](./Release-Tags.md).
 
 ### Inline Tags
 
 The following tags are meant to be used _inline_, i.e. within documentation blocks potentially associated with other tags.
 
-See [here](https://tsdoc.org/pages/spec/tag_kinds/#inline-tags) for an overview of inline tags.
+See the [TSDoc inline tags overview](https://tsdoc.org/pages/spec/tag_kinds/#inline-tags).
 
 #### {\@link}
 
@@ -787,8 +790,8 @@ See: <https://api-extractor.com/pages/tsdoc/tag_link/>
 
 If you are having trouble adding a reference tag, take a look at the following articles:
 
--   See [here](https://tsdoc.org/pages/tags/link/) for some examples of `declaration references` and other sample {\@link} usages.
--   See [here](https://github.com/Microsoft/tsdoc/blob/main/spec/code-snippets/DeclarationReferences.ts) for an even deeper dive into declaration reference syntax.
+- See the [`{@link}` tag documentation](https://tsdoc.org/pages/tags/link/) for some examples of `declaration references` and other sample {\@link} usages.
+- See the [declaration reference syntax examples](https://github.com/Microsoft/tsdoc/blob/main/spec/code-snippets/DeclarationReferences.ts) for an even deeper dive into declaration reference syntax.
 
 ##### \@link: Guidance
 
@@ -885,13 +888,13 @@ Because the global function `log` doesn't inherit from `Logger.log`, but we woul
 ###### Inheriting documentation from an imported member from another package
 
 ```typescript
-import { Logger } from 'telemetry';
+import { Logger } from "telemetry";
 
 /**
  * {@inheritDoc telemetry#Logger.log}
  */
 export function log(logger: Logger, data: unknown): void {
-    logger.log(data);
+	logger.log(data);
 }
 ```
 
@@ -899,7 +902,7 @@ export function log(logger: Logger, data: unknown): void {
 
 It is also possible to alias links, including both symbol and URL links. So if you wish to control how the link will appear textually, this is an option.
 
-Note that this syntax works for both [{@link}](#link) and the [{@inheritDoc}](#inheritDoc) tags.
+Note that this syntax works for both the [`{@link}` tag](#link) and the [`{@inheritDoc}` tag](#inheritdoc).
 
 ##### Link Aliasing Example
 

@@ -15,14 +15,14 @@ The following are locations where Fluid Framework documentation can be found.
 They are not presented in any particular order.
 
 - [fluidframework.com](https://fluidframework.com/)
-  - This is our customer-facing website.
-    It is the public face of our product and is home to high-level overviews, samples, etc. to get users up-and-running on the framework.
+    - This is our customer-facing website.
+      It is the public face of our product and is home to high-level overviews, samples, etc. to get users up-and-running on the framework.
 - [repo wiki](https://github.com/microsoft/FluidFramework/tree/main/docs) (here)
-  - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
-  - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
+    - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
+    - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
 - Source-code documentation
-  - In addition to the above, our source-code is also a vital component to our overall documentation story.
-  - A tailored selection of our generated API documentation can be found on `fluidframework.com` [here](https://fluidframework.com/docs/apis/).
+    - In addition to the above, our source-code is also a vital component to our overall documentation story.
+    - A tailored selection of our generated API documentation is published in the [API documentation on `fluidframework.com`](https://fluidframework.com/docs/apis/).
 
 ## Where should I put new documentation?
 
