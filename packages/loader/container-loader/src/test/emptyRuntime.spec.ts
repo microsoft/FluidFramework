@@ -56,7 +56,7 @@ describe("createEmptyRuntimeCodeLoader", () => {
 		const factory = module.fluidExport.IRuntimeFactory;
 		assert(factory !== undefined, "module should export an IRuntimeFactory");
 
-		const runtime = await factory.instantiateRuntime(context, false);
+		const runtime = await factory.instantiateRuntime(context, true /* existing */);
 
 		// Exercise every member; a real runtime might send ops/signals in response to some of these.
 		const dummyMessage = {} as unknown as ISequencedDocumentMessage;
@@ -92,20 +92,17 @@ describe("createEmptyRuntimeCodeLoader", () => {
 		assert.strictEqual(signalsSent, 0, "empty runtime must never send signals");
 	});
 
-	it("does not support summarization (serialize throws)", async () => {
+	it("cannot create a new (detached) container", async () => {
 		const loader = new Loader({
 			codeLoader: createEmptyRuntimeCodeLoader(),
 			documentServiceFactory: documentServiceFactoryFailProxy,
 			urlResolver: failProxy(),
 		});
 
-		const detached = await loader.createDetachedContainer({ package: "none" });
-		assert.notStrictEqual(await detached.getEntryPoint(), undefined);
-
-		assert.throws(
-			() => detached.serialize(),
-			/does not support summarization/,
-			"serializing a container backed by the empty runtime should throw",
+		await assert.rejects(
+			async () => loader.createDetachedContainer({ package: "none" }),
+			/can only be used to load existing/,
+			"creating a detached container backed by the empty runtime should throw",
 		);
 	});
 });

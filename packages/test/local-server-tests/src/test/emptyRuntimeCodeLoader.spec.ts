@@ -150,23 +150,22 @@ describe("createEmptyRuntimeCodeLoader (local server)", () => {
 		await deltaConnectionServer.webSocketServer.close();
 	});
 
-	it("cannot attach a detached container because it has no summary", async () => {
+	it("cannot create a new (detached) container because it has no summary", async () => {
 		const deltaConnectionServer = LocalDeltaConnectionServer.create();
 		const { urlResolver, codeDetails, documentServiceFactory } = createLoader({
 			deltaConnectionServer,
 		});
 
-		const detached = await createDetachedContainer({
-			codeDetails,
-			codeLoader: createEmptyRuntimeCodeLoader(),
-			documentServiceFactory,
-			urlResolver,
-		});
-
 		await assert.rejects(
-			async () => detached.attach(urlResolver.createCreateNewRequest("emptyRuntimeAttach")),
-			/does not support summarization/,
-			"attaching an empty-runtime container should throw because it has no summary",
+			async () =>
+				createDetachedContainer({
+					codeDetails,
+					codeLoader: createEmptyRuntimeCodeLoader(),
+					documentServiceFactory,
+					urlResolver,
+				}),
+			/can only be used to load existing/,
+			"creating an empty-runtime container should throw because it can only load existing containers",
 		);
 
 		await deltaConnectionServer.webSocketServer.close();
