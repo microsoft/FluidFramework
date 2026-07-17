@@ -37,8 +37,6 @@ import {
 	storedEmptyFieldSchema,
 	EmptyKey,
 	ValueSchema,
-	type ChangeFamilyEditor,
-	type ChangeFamily,
 } from "../../core/index.js";
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
@@ -120,7 +118,6 @@ import {
 	getView,
 	createSnapshotCompressor,
 } from "../utils.js";
-import type { EditManager } from "../../shared-tree-core/index.js";
 
 const enableSchemaValidation = true;
 
@@ -954,19 +951,6 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
-	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-	// if we'll ever expose some memory stats in which the trunk length would be included.
-	// If we do then this test should be updated to use that code path.
-	interface EditManagerKludge {
-		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
-		};
-	}
-
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -1022,15 +1006,8 @@ describe("SharedTree", () => {
 		viewInit.dispose();
 		provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-
-		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+		const priorEditCount = provider.trees[0].kernel.checkout.history.commitCount;
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, priorEditCount);
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -1054,8 +1031,8 @@ describe("SharedTree", () => {
 		// All of the edits (plus the two additional ones) should still be present on the trunk since
 		// retainHistory prevents trunk commits from ever being trimmed.
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(provider.trees[0].kernel.checkout.history.commitCount, expectedCount);
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, expectedCount);
 	});
 
 	it("can process changes while detached", async () => {
