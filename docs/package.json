@@ -12,13 +12,13 @@
 	"author": "Microsoft and contributors",
 	"scripts": {
 		"format": "npm run prettier:fix",
+		"preinstall": "node ../scripts/only-pnpm.cjs",
 		"lint": "concurrently npm:prettier npm:markdownlint",
 		"lint:fix": "npm run prettier:fix && npm run markdownlint:fix",
 		"markdownlint": "markdownlint-cli2 \"**/*.md\"",
 		"markdownlint:fix": "markdownlint-cli2 --fix \"**/*.md\"",
 		"prettier": "prettier --check . --cache --ignore-path ../.prettierignore",
-		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore",
-		"preinstall": "node ../scripts/only-pnpm.cjs"
+		"prettier:fix": "prettier --write . --cache --ignore-path ../.prettierignore"
 	},
 	"devDependencies": {
 		"concurrently": "^10.0.3",
