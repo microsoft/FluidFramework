@@ -328,9 +328,7 @@ describe("ArrayNode", () => {
 
 				it("narrows the result type when passed a type-guard predicate", () => {
 					const array = buildAlphaArray([1, 2, 3]);
-					const result: 2 | undefined = array.findLast(
-						(value): value is 2 => value === 2,
-					);
+					const result: 2 | undefined = array.findLast((value): value is 2 => value === 2);
 					assert.equal(result, 2);
 				});
 
