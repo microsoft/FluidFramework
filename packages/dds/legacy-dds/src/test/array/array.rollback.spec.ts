@@ -423,4 +423,103 @@ describe("SharedArray rollback", () => {
 			"Array should have expected entries post-rollback",
 		);
 	});
+
+	// Regression tests for the rollback × pendingOps ledger collision. Before the fix,
+	// rollback() reverted the local mutation but left the stale ledger entry in place,
+	// so the next ack would shift the wrong head and the FIFO ledger assert would fire,
+	// disconnecting the container. Each test below: submits an op of a given family,
+	// rolls it back, submits a second op of the same family, and acks — proving the
+	// ledger stays in sync.
+	describe("ledger stays in sync across rollback (per op family)", () => {
+		it("insertEntry: rollback then submit + ack", () => {
+			const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+			sharedArray.insert(0, 0);
+			containerRuntime.rollback?.();
+			assert.deepStrictEqual(sharedArray.get(), [], "Insert should be rolled back");
+			sharedArray.insert(0, 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual(sharedArray.get(), [1], "Second insert should ack cleanly");
+		});
+
+		it("deleteEntry: rollback then submit + ack", () => {
+			const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+			sharedArray.insert(0, 0);
+			sharedArray.insert(1, 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			sharedArray.delete(0);
+			containerRuntime.rollback?.();
+			assert.deepStrictEqual(sharedArray.get(), [0, 1], "Delete should be rolled back");
+			sharedArray.delete(1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual(sharedArray.get(), [0], "Second delete should ack cleanly");
+		});
+
+		it("moveEntry: rollback then submit + ack", () => {
+			const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+			sharedArray.insert(0, 0);
+			sharedArray.insert(1, 1);
+			sharedArray.insert(2, 2);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			sharedArray.move(0, 2);
+			containerRuntime.rollback?.();
+			assert.deepStrictEqual(sharedArray.get(), [0, 1, 2], "Move should be rolled back");
+			sharedArray.move(0, 3);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual(sharedArray.get(), [1, 2, 0], "Second move should ack cleanly");
+		});
+
+		it("toggle: rollback then submit + ack", () => {
+			const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+			const revertibles: IRevertible[] = [];
+			sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+				revertibles.push(revertibleItem);
+			});
+			sharedArray.insert(0, 0);
+			sharedArray.insert(1, 1);
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			// First toggle (will be rolled back).
+			revertibles[0].revert();
+			containerRuntime.rollback?.();
+			assert.deepStrictEqual(sharedArray.get(), [0, 1], "Toggle should be rolled back");
+			// Second toggle: ack the inverse on the second-inserted entry.
+			revertibles[1].revert();
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual(sharedArray.get(), [0], "Second toggle should ack cleanly");
+		});
+
+		it("toggleMove: rollback then submit + ack", () => {
+			const { sharedArray, containerRuntimeFactory, containerRuntime } = setupRollbackTest();
+			const revertibles: IRevertible[] = [];
+			sharedArray.on("revertible", (revertibleItem: IRevertible) => {
+				revertibles.push(revertibleItem);
+			});
+			sharedArray.insert(0, 0);
+			sharedArray.insert(1, 1);
+			sharedArray.insert(2, 2);
+			sharedArray.move(0, 3); // [1,2,0] — revertibles[3] reverts this move
+			sharedArray.move(0, 3); // [2,0,1] — revertibles[4] reverts this move
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			// First toggleMove (will be rolled back).
+			revertibles[3].revert();
+			containerRuntime.rollback?.();
+			assert.deepStrictEqual(sharedArray.get(), [2, 0, 1], "ToggleMove should be rolled back");
+			// Second toggleMove on a different prior move.
+			revertibles[4].revert();
+			containerRuntime.flush();
+			containerRuntimeFactory.processAllMessages();
+			assert.deepStrictEqual(
+				sharedArray.get(),
+				[1, 2, 0],
+				"Second toggleMove should ack cleanly",
+			);
+		});
+	});
 });
