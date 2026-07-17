@@ -526,6 +526,10 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.fork().viewWith(this.config);
 	}
 
+	public get isSharedBranch(): boolean {
+		return this.checkout.isSharedBranch;
+	}
+
 	public rewindTo(revision: string): void {
 		this.checkout.rewindTo(revision);
 	}

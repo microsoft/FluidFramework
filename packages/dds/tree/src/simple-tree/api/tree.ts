@@ -356,6 +356,12 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	fork(): TreeBranchAlpha;
 
 	/**
+	 * Whether this branch is visible to peers and persisted in the document.
+	 * See {@link ITreeAlpha.createSharedBranch } for creating a shared branch.
+	 */
+	isSharedBranch: boolean;
+
+	/**
 	 * Switches to a new branch with the given commit as the head, updating the tree state accordingly.
 	 *
 	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.

@@ -1259,6 +1259,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public rewindTo(revisionString: string): void {
+		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
 		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
 		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
 		if (revision === undefined) {

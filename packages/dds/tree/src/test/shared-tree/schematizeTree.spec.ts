@@ -175,6 +175,7 @@ describe("schematizeTree", () => {
 		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
 		const checkout: ITreeCheckout = {
 			disposed: false,
+			isSharedBranch: false,
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions

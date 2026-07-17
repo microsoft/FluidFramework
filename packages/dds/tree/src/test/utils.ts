@@ -1519,6 +1519,8 @@ export class MockTreeCheckout implements ITreeCheckout {
 		},
 	) {}
 
+	public readonly isSharedBranch: boolean = false;
+
 	public rewindTo(): void {
 		throw new Error("'rewindTo' not implemented.");
 	}
