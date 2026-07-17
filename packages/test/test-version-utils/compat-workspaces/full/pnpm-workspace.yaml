@@ -3,6 +3,10 @@
 packages:
   - '*'
 
+# Use the internal registry.npmjs.org mirror. This is required by network policies; see the root
+# pnpm-workspace.yaml for more details.
+registry: https://packagefeedproxy.microsoft.io/npm/
+
 # The security settings below are intentional — do not relax them.
 minimumReleaseAge: 1440
 

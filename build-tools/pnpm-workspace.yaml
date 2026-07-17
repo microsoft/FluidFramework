@@ -11,11 +11,19 @@
 packages:
   - "packages/*"
 
+# Use the internal registry.npmjs.org mirror. This is required by network policies; see the root
+# pnpm-workspace.yaml for more details.
+registry: https://packagefeedproxy.microsoft.io/npm/
+
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 resolutionMode: highest
 blockExoticSubdeps: true
-trustPolicy: no-downgrade
+# The registry.npmjs mirror does not preserve all the npm package metadata necessary for this pnpm feature to function
+# correctly as of 7/16/2026. See the root pnpm-workspace.yaml and
+# https://github.com/orgs/pnpm/discussions/11084 for more discussion.
+# The exclusions below are inert while trustPolicy is disabled, but are kept in case we can restore enforcement later.
+trustPolicy: off
 # List of packages known to be safe but for whatever reason were published at a date after another version of the same
 # package (including later major versions) which had better provenance information.
 # ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
