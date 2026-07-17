@@ -2978,7 +2978,7 @@ describe("SharedTree", () => {
 					const mainView1 = tree1.viewWith(config);
 					mainView1.initialize([]);
 					mainView1.root.insertAtEnd("A");
-					const branchId = tree1.createSharedBranch();
+					const branchId = tree1.createSharedBranch("branch");
 					mainView1.root.insertAtEnd("B");
 					await provider.ensureSynchronized();
 
@@ -3007,6 +3007,8 @@ describe("SharedTree", () => {
 					assert.equal(loadingMainView.root.length, lengthOnMainBranch);
 					const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
 					assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+					// Check that the branch name is preserved in the summary
+					assert.equal(loadingTree.getSharedBranchName(branchId), "branch");
 				});
 			}
 		});

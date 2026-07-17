@@ -1105,7 +1105,14 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 		const trunkBase =
 			this.parentBranch === undefined ? undefined : forkPointFromMainTrunk.revision;
-		return { trunk, peerLocalBranches, base: trunkBase, id: this.id, session: this.sessionId };
+		return {
+			trunk,
+			peerLocalBranches,
+			base: trunkBase,
+			id: this.id,
+			name: this.branchName,
+			session: this.sessionId,
+		};
 	}
 
 	public loadSummaryData(
