@@ -4,7 +4,7 @@ As such, it is imperative that it has quality documentation.
 The following documents outline best practices for writing documentation for the Fluid Framework, to ensure our documentation is consistent and of high quality.
 
 - [Where To Put Documentation](./Documentation-Guidelines/Where-To-Put-Documentation.md)
-- [Documentation Dos and Don'ts](./Documentation-Guidelines/Documentation-Dos-and-Donts.md)
+- [Documentation Dos and Don'ts](./Documentation-Guidelines/Documentation-Dos-And-Donts.md)
 - [Fluid Terminology](./Documentation-Guidelines/Fluid-Terminology.md)
 
 ## Source-Code Documentation Guidelines

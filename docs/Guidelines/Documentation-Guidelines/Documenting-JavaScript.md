@@ -1,7 +1,7 @@
 Unless otherwise indicated, our [TypeScript Documentation Guidelines](./Documenting-TypeScript.md) should be followed for JavaScript code.
 This helps encourage consistency across our repo, and also alleviates the need for developers to remember 2 different sets of documentation syntax.
 
-This includes the set of [tags](./Documenting-TypeScript/TSDoc-Guidelines.md/#tsdoc-tags) supported by [TSDoc](https://tsdoc.org/).
+This includes the set of [tags](./Documenting-TypeScript/TSDoc-Guidelines.md#tsdoc-tags) supported by [TSDoc](https://tsdoc.org/).
 Unless there is a real need to do so, tags should be limited to those supported by TSDoc.
 
 ## Exceptions

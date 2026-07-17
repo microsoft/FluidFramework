@@ -48,12 +48,12 @@ Additionally, we leverage [TSDoc](https://tsdoc.org/) alongside [API-Extractor](
 > Do not use `//` comments.
 
 `TSDoc` is fairly powerful, and has a growing feature set.
-Check out our [TSDoc guidelines](TSDoc-Guidelines) for recommendations on how to use it to its fullest.
+Check out our [TSDoc guidelines](./Documenting-TypeScript/TSDoc-Guidelines.md) for recommendations on how to use it to its fullest.
 
 Also refer to our language-specific source-code documentation guidelines.
 
 - [TypeScript documentation guidelines](./Documenting-TypeScript.md)
-- [JavaScript documentation guidelines](./Documenting-JavaScript)
+- [JavaScript documentation guidelines](./Documenting-JavaScript.md)
 
 #### Package Documentation
 
