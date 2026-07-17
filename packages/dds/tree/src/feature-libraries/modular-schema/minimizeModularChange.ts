@@ -6,53 +6,39 @@
 import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type {
-	DeltaDetachedNodeId,
+	ChangeAtomId,
+	ChangeAtomIdMap,
+	ChangesetLocalId,
 	DeltaFieldMap,
 	DeltaRoot,
 	ExclusiveMapTree,
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
-import { makeAnonChange } from "../../core/index.js";
-import { brand } from "../../util/index.js";
-import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
+import { makeAnonChange, offsetChangesetLocalId } from "../../core/index.js";
+import type { NestedSet } from "../../util/index.js";
+import { addToNestedSet, brand, nestedSetContains, setInNestedMap } from "../../util/index.js";
+
+import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
-
-import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 /**
- * A set of detached node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
+ * A set of node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
  */
-type DetachedNodeIdSet = Map<RevisionTag | undefined, Set<number>>;
+type ChangeAtomIdSet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
 /** Chunking policy used to re-chunk a build when it is split into smaller builds. */
 const minimizeChunkCompressor = {
 	policy: defaultChunkPolicy,
 	idCompressor: undefined,
 } as const;
-
-function addToDetachedNodeIdSet(
-	set: DetachedNodeIdSet,
-	revision: RevisionTag | undefined,
-	localId: number,
-): void {
-	const minors = set.get(revision) ?? new Set<number>();
-	minors.add(localId);
-	set.set(revision, minors);
-}
-
-function detachedNodeIdSetHas(
-	set: DetachedNodeIdSet,
-	revision: RevisionTag | undefined,
-	localId: number,
-): boolean {
-	return set.get(revision)?.has(localId) ?? false;
-}
 
 /**
  * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
@@ -63,15 +49,11 @@ function detachedNodeIdSetHas(
  * {@link DeltaFieldMap | field changes} can be resolved quickly (for example, when trimming transient
  * content out of a surviving node's build tree).
  */
-function indexGlobalById(
-	delta: DeltaRoot,
-): Map<RevisionTag | undefined, Map<number, DeltaFieldMap>> {
-	const globalById = new Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>();
+function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
+	const globalById: ChangeAtomIdMap<DeltaFieldMap> = new Map();
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
-			const byMinor = globalById.get(id.major) ?? new Map<number, DeltaFieldMap>();
-			byMinor.set(id.minor, fields);
-			globalById.set(id.major, byMinor);
+			setInNestedMap(globalById, id.major, id.minor, fields);
 		}
 	}
 	return globalById;
@@ -94,15 +76,15 @@ function indexGlobalById(
  */
 function collectAttachedDetachedNodeIds(
 	delta: DeltaRoot,
-	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
-): DetachedNodeIdSet {
-	const attached: DetachedNodeIdSet = new Map();
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
+): ChangeAtomIdSet {
+	const attached: ChangeAtomIdSet = new Map();
 	// Worklist of detached node IDs newly discovered to be live, whose own nested content must be visited.
-	const worklist: DeltaDetachedNodeId[] = [];
-	const markLive = (major: RevisionTag | undefined, minor: number): void => {
-		if (!detachedNodeIdSetHas(attached, major, minor)) {
-			addToDetachedNodeIdSet(attached, major, minor);
-			worklist.push({ major, minor });
+	const worklist: ChangeAtomId[] = [];
+	const markLive = (id: ChangeAtomId): void => {
+		if (!nestedSetContains(attached, id.revision, id.localId)) {
+			addToNestedSet(attached, id.revision, id.localId);
+			worklist.push(id);
 		}
 	};
 
@@ -114,7 +96,10 @@ function collectAttachedDetachedNodeIds(
 			for (const mark of field.marks) {
 				if (mark.attach !== undefined) {
 					for (let offset = 0; offset < mark.count; offset += 1) {
-						markLive(mark.attach.major, mark.attach.minor + offset);
+						markLive({
+							revision: mark.attach.major,
+							localId: brand(mark.attach.minor + offset),
+						});
 					}
 				}
 				// `mark.fields` edits the cell's pre-existing content. Only descend when that content
@@ -136,12 +121,15 @@ function collectAttachedDetachedNodeIds(
 		if (next === undefined) {
 			break;
 		}
-		const { major, minor } = next;
+		const { revision: major, localId: minor } = next;
 		visitLiveFields(globalById.get(major)?.get(minor));
 		if (delta.rename !== undefined) {
 			for (const { oldId, newId, count } of delta.rename) {
 				if (newId.major === major && minor >= newId.minor && minor < newId.minor + count) {
-					markLive(oldId.major, oldId.minor + (minor - newId.minor));
+					markLive({
+						revision: oldId.major,
+						localId: brand(oldId.minor + (minor - newId.minor)),
+					});
 				}
 			}
 		}
@@ -185,7 +173,7 @@ function mapTreeFromNodeChunk(chunk: TreeChunk): ExclusiveMapTree {
 function trimMapTree(
 	node: ExclusiveMapTree,
 	deltaFields: DeltaFieldMap,
-	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
+	isLive: (id: ChangeAtomId) => boolean,
 ): number {
 	let changes = 0;
 	for (const [fieldKey, fieldChanges] of deltaFields) {
@@ -203,7 +191,9 @@ function trimMapTree(
 			if (mark.detach !== undefined) {
 				// The detached children are the field's existing (built) content being removed.
 				for (let offset = 0; offset < mark.count; offset += 1) {
-					if (isLive(mark.detach.major, mark.detach.minor + offset)) {
+					if (
+						isLive({ revision: mark.detach.major, localId: brand(mark.detach.minor + offset) })
+					) {
 						// Detached to a cell that survives elsewhere: retain the content.
 						newChildren.push(children[childIndex] ?? oob());
 					} else {
@@ -261,11 +251,11 @@ function trimMapTree(
  */
 function computeMinimizedBuilds(
 	buildsIn: ChangeAtomIdBTree<TreeChunk>,
-	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
-	isLive: (revision: RevisionTag | undefined, localId: number) => boolean,
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
+	isLive: (id: ChangeAtomId) => boolean,
 ): ChangeAtomIdBTree<TreeChunk> {
 	const buildsOut = newChangeAtomIdBTree<TreeChunk>();
-	const droppedBuildIds: DetachedNodeIdSet = new Map();
+	const droppedBuildIds: ChangeAtomIdSet = new Map();
 
 	for (const [[revision, changeSetLocalId], chunk] of buildsIn.entries()) {
 		const nodeChunks = splitChunkIntoNodes(chunk);
@@ -283,8 +273,8 @@ function computeMinimizedBuilds(
 
 		for (let index = 0; index < nodeChunks.length; index += 1) {
 			let nodeChunk = nodeChunks[index] ?? oob();
-			const localId = changeSetLocalId + index;
-			if (isLive(revision, localId)) {
+			const localId: ChangesetLocalId = offsetChangesetLocalId(changeSetLocalId, index);
+			if (isLive({ revision, localId })) {
 				// This top-level node survives. Trim any transient content nested within its built tree.
 				const globalFields = globalById.get(revision)?.get(localId);
 				if (globalFields !== undefined) {
@@ -299,7 +289,7 @@ function computeMinimizedBuilds(
 				runStart ??= localId;
 				runChunks.push(nodeChunk);
 			} else {
-				addToDetachedNodeIdSet(droppedBuildIds, revision, localId);
+				addToNestedSet(droppedBuildIds, revision, localId);
 				nodeChunk.referenceRemoved();
 				flushRun();
 			}
@@ -348,10 +338,12 @@ export function minimizeModularChangeset(
 
 	const delta = intoDelta(makeAnonChange(change), fieldKinds);
 	const globalById = indexGlobalById(delta);
-	const attached = collectAttachedDetachedNodeIds(delta, globalById);
 
-	const isLive = (revision: RevisionTag | undefined, localId: number): boolean =>
-		detachedNodeIdSetHas(attached, revision, localId);
+	// Compute the set of detached node IDs whose content ends up attached in the resulting document. Content built by
+	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
+	const attached = collectAttachedDetachedNodeIds(delta, globalById);
+	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
+		nestedSetContains(attached, revision, localId);
 
 	const minimizedBuilds = computeMinimizedBuilds(builds, globalById, isLive);
 
