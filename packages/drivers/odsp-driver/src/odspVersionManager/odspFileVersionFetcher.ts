@@ -97,8 +97,8 @@ export function createOdspFileVersionFetcher(
 		getWithRetryForTokenRefresh(async (options) => {
 			// A file version's sequence number lives inside that version's snapshot, so fetch the snapshot
 			// from the version-scoped endpoint. `blobs=2` inlines blob contents so the `.protocol/attributes`
-			// blob (which carries the sequence number) is included; `deltas=1` is intentionally omitted, as
-			// it would bundle the op stream and its op-level sequence numbers.
+			// blob (which carries the sequence number) is included. Only blobs are requested, since the
+			// sequence number comes from the snapshot tree, not the bundled op stream that `deltas=1` adds.
 			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions/${encodeURIComponent(
 				versionId,
 			)}/opStream/snapshots/trees/latest?blobs=2`;
