@@ -7,6 +7,7 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type {
 	ChangeAtomId,
+	ChangeAtomIdRangeMap,
 	DeltaDetachedNodeId,
 	DeltaFieldMap,
 	DeltaRoot,
@@ -14,7 +15,12 @@ import type {
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
-import { makeAnonChange, offsetChangeAtomId } from "../../core/index.js";
+import {
+	makeAnonChange,
+	makeChangeAtomId,
+	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
+} from "../../core/index.js";
 import type { Mutable, RangeQueryResult } from "../../util/index.js";
 import { brand } from "../../util/index.js";
 
@@ -29,7 +35,11 @@ import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
-import { getChangeHandler, intoDelta } from "./modularChangeFamily.js";
+import {
+	getChangeHandler,
+	intoDelta,
+	type ModularChangeFamily,
+} from "./modularChangeFamily.js";
 import type {
 	CrossFieldKeyTable,
 	FieldChangeMap,
@@ -40,8 +50,12 @@ import type {
 	NodeId,
 } from "./modularChangeTypes.js";
 import { newCrossFieldKeyTable } from "./modularChangeTypes.js";
-import type { EditFilterFunc } from "./fieldChangeHandler.js";
-import { EditFilterStatus } from "./fieldChangeHandler.js";
+import {
+	type EditFilterFunc,
+	EditFilterStatus,
+	NodeAttachState,
+} from "./fieldChangeHandler.js";
+import { nodeChangeFromId } from "./modularChangeUtils.js";
 
 /**
  * A set of detached node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
@@ -721,4 +735,122 @@ export function minimizeModularChangeset(
 	}
 
 	return minimizedChange;
+}
+
+function getBuiltNodeIds(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): ChangeAtomIdBTree<boolean> {
+	const builtNodeIds = newChangeAtomIdBTree<boolean>();
+
+	const buildIds = newChangeAtomIdRangeMap<boolean>();
+	if (change.builds !== undefined) {
+		for (const [rootId, chunk] of change.builds.entries()) {
+			buildIds.set(makeChangeAtomId(rootId[1], rootId[0]), chunk.topLevelLength, true);
+		}
+	}
+
+	addBuiltNodeIdsForFields(
+		false,
+		change.fieldChanges,
+		change.nodeChanges,
+		buildIds,
+		fieldKinds,
+		builtNodeIds,
+	);
+	return builtNodeIds;
+}
+
+function addBuiltNodeIdsForFields(
+	parentIsBuilt: boolean,
+	fields: FieldChangeMap,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	buildIds: ChangeAtomIdRangeMap<boolean>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	builtNodeIds: ChangeAtomIdBTree<boolean>,
+): void {
+	for (const fieldChange of fields.values()) {
+		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
+			fieldChange.change,
+		);
+
+		for (const [nodeId, inputId, _outputId] of children) {
+			const isPartOfBuild =
+				parentIsBuilt ||
+				(inputId !== undefined && buildIds.getFirst(inputId, 1).value === true);
+
+			if (isPartOfBuild) {
+				builtNodeIds.set([nodeId.revision, nodeId.localId], true);
+			}
+
+			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
+			if (nodeChangeset.fieldChanges !== undefined) {
+				addBuiltNodeIdsForFields(
+					isPartOfBuild,
+					nodeChangeset.fieldChanges,
+					nodes,
+					buildIds,
+					fieldKinds,
+					builtNodeIds,
+				);
+			}
+		}
+	}
+}
+
+function getOutputNodeAttachStates(
+	family: ModularChangeFamily,
+	change: ModularChangeset,
+): ChangeAtomIdBTree<NodeAttachState> {
+	const inverse = family.invert(makeAnonChange(change), true, "root");
+	return getInputNodeAttachStates(inverse, family.fieldKinds);
+}
+
+function getInputNodeAttachStates(
+	change: ModularChangeset,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+): ChangeAtomIdBTree<NodeAttachState> {
+	const nodeAttachStates = newChangeAtomIdBTree<NodeAttachState>();
+	addInputNodeAttachStatesForFields(
+		NodeAttachState.Attached,
+		change.fieldChanges,
+		change.nodeChanges,
+		fieldKinds,
+		nodeAttachStates,
+	);
+	return nodeAttachStates;
+}
+
+function addInputNodeAttachStatesForFields(
+	parentState: NodeAttachState,
+	fields: FieldChangeMap,
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	nodeAttachStates: ChangeAtomIdBTree<NodeAttachState>,
+): void {
+	for (const fieldChange of fields.values()) {
+		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
+			fieldChange.change,
+		);
+
+		for (const [nodeId, inputId, _outputId] of children) {
+			const attachState =
+				parentState === NodeAttachState.Attached && inputId === undefined
+					? NodeAttachState.Attached
+					: NodeAttachState.Detached;
+
+			nodeAttachStates.set([nodeId.revision, nodeId.localId], attachState);
+
+			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
+			if (nodeChangeset.fieldChanges !== undefined) {
+				addInputNodeAttachStatesForFields(
+					attachState,
+					nodeChangeset.fieldChanges,
+					nodes,
+					fieldKinds,
+					nodeAttachStates,
+				);
+			}
+		}
+	}
 }
