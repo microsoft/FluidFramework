@@ -30,20 +30,20 @@ export default {
 		"no-inline-html": false,
 		// Allow up to two consecutive blank lines.
 		"no-multiple-blanks": { maximum: 2 },
-		// MD007 (ul-indent): List indentation is owned by Prettier, which aligns nested list
+		// ul-indent (MD007): List indentation is owned by Prettier, which aligns nested list
 		// content with the parent marker. Leaving this enabled conflicts with Prettier's output.
-		"MD007": false,
-		// MD010: Hard tabs — the repo uses tabs for indentation.
-		"MD010": false,
-		// MD024 (no-duplicate-heading): Allow identical heading text under different parents
+		"ul-indent": false,
+		// no-hard-tabs (MD010): Hard tabs — the repo uses tabs for indentation.
+		"no-hard-tabs": false,
+		// no-duplicate-heading (MD024): Allow identical heading text under different parents
 		// (e.g. repeated "Example" / "Guidance" sections). Only flag duplicate sibling headings.
-		"MD024": { siblings_only: true },
-		// MD025: Multiple top-level headings — allowed.
-		"MD025": false,
-		// MD026: Trailing punctuation in heading — allowed.
-		"MD026": false,
-		// MD028: Blank line inside blockquote — allowed.
-		"MD028": false,
+		"no-duplicate-heading": { siblings_only: true },
+		// single-title (MD025): Multiple top-level headings — allowed.
+		"single-title": false,
+		// no-trailing-punctuation (MD026): Trailing punctuation in heading — allowed.
+		"no-trailing-punctuation": false,
+		// no-blanks-blockquote (MD028): Blank line inside blockquote — allowed.
+		"no-blanks-blockquote": false,
 		// relative-links (custom rule): flag relative file/image links that do not resolve on
 		// disk, including invalid heading fragments in cross-file links. External URLs and
 		// absolute paths are ignored.
