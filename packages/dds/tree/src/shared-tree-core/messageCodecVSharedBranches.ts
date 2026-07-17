@@ -103,7 +103,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					type: "branch",
 					sessionId: originatorId,
 					branchId,
-					branchName: encodedBranchName as string | undefined,
+					branchName: encodedBranchName,
 				};
 			}
 
