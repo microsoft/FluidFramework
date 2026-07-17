@@ -1083,10 +1083,11 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 
 // @alpha @sealed
 export interface ITreeAlpha extends ITree {
-    createSharedBranch(): string;
+    createSharedBranch(name?: string): string;
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
+    getSharedBranchName(branchId: string): string | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
