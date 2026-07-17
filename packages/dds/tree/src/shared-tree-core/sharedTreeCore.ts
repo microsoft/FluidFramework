@@ -593,7 +593,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.submitBranchCreation(message.branchId, message.branchName);
+				this.submitBranchCreation(message.branchId);
 				break;
 			}
 			default: {
