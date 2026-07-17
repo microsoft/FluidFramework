@@ -9,6 +9,7 @@ import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { SessionId } from "@fluidframework/id-compressor";
 import {
 	TelemetryEventBatcher,
+	UsageError,
 	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { BTree } from "@tylerbu/sorted-btree-es6";
@@ -151,15 +152,23 @@ export class EditManager<
 			this.telemetryEventBatcher,
 		);
 
-		this.createAndAddSharedBranch("main", undefined, undefined, mainTrunk);
+		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
 	}
 
 	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
 		return this.getSharedBranch(branchId).localBranch;
 	}
 
+	public getSharedBranchName(branchId: BranchId): string | undefined {
+		return this.getSharedBranch(branchId).branchName;
+	}
+
 	private getSharedBranch(branchId: BranchId): SharedBranch<TEditor, TChangeset> {
-		return this.sharedBranches.get(branchId) ?? fail(0xc56 /* Branch does not exist */);
+		const branch = this.sharedBranches.get(branchId);
+		if (branch === undefined) {
+			throw new UsageError("No shared branch with such ID");
+		}
+		return branch;
 	}
 
 	/**
@@ -404,6 +413,7 @@ export class EditManager<
 			for (const [branchId, branchData] of data.branches) {
 				const branch = this.createSharedBranch(
 					branchId,
+					branchData.name,
 					branchData.session,
 					mainBranch,
 					mainBranch.trunk.fork(),
@@ -451,6 +461,7 @@ export class EditManager<
 		sessionId: SessionId,
 		referenceSequenceNumber: SeqNumber,
 		branchId: BranchId,
+		branchName?: string,
 	): void {
 		if (sessionId === this.localSessionId) {
 			assert(this.sharedBranches.has(branchId), 0xc59 /* Expected branch to already exist */);
@@ -459,13 +470,14 @@ export class EditManager<
 
 		const mainBranch = this.getSharedBranch("main");
 		const branchTrunk = mainBranch.rebasePeer(sessionId, referenceSequenceNumber).fork();
-		this.createAndAddSharedBranch(branchId, sessionId, mainBranch, branchTrunk);
+		this.createAndAddSharedBranch(branchId, branchName, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addNewBranch(branchId: BranchId): void {
+	public addNewBranch(branchId: BranchId, branchName?: string): void {
 		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
 		this.createAndAddSharedBranch(
 			branchId,
+			branchName,
 			this.localSessionId,
 			main,
 			this.getLocalBranch("main").fork(),
@@ -484,11 +496,18 @@ export class EditManager<
 
 	private createAndAddSharedBranch(
 		branchId: BranchId,
+		branchName: string | undefined,
 		sessionId: SessionId | undefined,
 		parent: SharedBranch<TEditor, TChangeset> | undefined,
 		branch: SharedTreeBranch<TEditor, TChangeset>,
 	): SharedBranch<TEditor, TChangeset> {
-		const sharedBranch = this.createSharedBranch(branchId, sessionId, parent, branch);
+		const sharedBranch = this.createSharedBranch(
+			branchId,
+			branchName,
+			sessionId,
+			parent,
+			branch,
+		);
 		this.addSharedBranch(branchId, sharedBranch);
 		return sharedBranch;
 	}
@@ -516,6 +535,7 @@ export class EditManager<
 
 	private createSharedBranch(
 		branchId: BranchId,
+		branchName: string | undefined,
 		sessionId: SessionId | undefined,
 		parent: SharedBranch<TEditor, TChangeset> | undefined,
 		branch: SharedTreeBranch<TEditor, TChangeset>,
@@ -524,6 +544,7 @@ export class EditManager<
 			parent,
 			branch,
 			branchId,
+			branchName,
 			sessionId,
 			minimumPossibleSequenceId,
 			this.changeFamily,
@@ -696,6 +717,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		public readonly parentBranch: SharedBranch<TEditor, TChangeset> | undefined,
 		public readonly trunk: SharedTreeBranch<TEditor, TChangeset>,
 		private readonly id: BranchId,
+		public readonly branchName: string | undefined,
 		private readonly sessionId: SessionId | undefined,
 		baseCommitSequenceId: SequenceId,
 		private readonly changeFamily: ChangeFamily<TEditor, TChangeset>,
@@ -1083,7 +1105,14 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 
 		const trunkBase =
 			this.parentBranch === undefined ? undefined : forkPointFromMainTrunk.revision;
-		return { trunk, peerLocalBranches, base: trunkBase, id: this.id, session: this.sessionId };
+		return {
+			trunk,
+			peerLocalBranches,
+			base: trunkBase,
+			id: this.id,
+			name: this.branchName,
+			session: this.sessionId,
+		};
 	}
 
 	public loadSummaryData(
