@@ -7,16 +7,27 @@ import { assert, oob } from "@fluidframework/core-utils/internal";
 
 import type {
 	ChangeAtomId,
-	DeltaDetachedNodeId,
+	ChangeAtomIdMap,
+	ChangesetLocalId,
 	DeltaFieldMap,
 	DeltaRoot,
 	ExclusiveMapTree,
 	FieldKindIdentifier,
 	RevisionTag,
 } from "../../core/index.js";
-import { makeAnonChange, offsetChangeAtomId } from "../../core/index.js";
-import type { Mutable, RangeQueryResult } from "../../util/index.js";
-import { brand } from "../../util/index.js";
+import {
+	makeAnonChange,
+	offsetChangeAtomId,
+	offsetChangesetLocalId,
+} from "../../core/index.js";
+import type { Mutable, NestedSet, RangeQueryResult } from "../../util/index.js";
+import {
+	addToNestedSet,
+	brand,
+	getOrAddInNestedMap,
+	nestedSetContains,
+	setInNestedMap,
+} from "../../util/index.js";
 
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import {
@@ -44,33 +55,15 @@ import type { EditFilterFunc } from "./fieldChangeHandler.js";
 import { EditFilterStatus } from "./fieldChangeHandler.js";
 
 /**
- * A set of detached node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
+ * A set of node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
  */
-type DetachedNodeIdSet = Map<RevisionTag | undefined, Set<number>>;
+type ChangeAtomIdSet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
 /** Chunking policy used to re-chunk a build when it is split into smaller builds. */
 const minimizeChunkCompressor = {
 	policy: defaultChunkPolicy,
 	idCompressor: undefined,
 } as const;
-
-function addToDetachedNodeIdSet(
-	set: DetachedNodeIdSet,
-	revision: RevisionTag | undefined,
-	localId: number,
-): void {
-	const minors = set.get(revision) ?? new Set<number>();
-	minors.add(localId);
-	set.set(revision, minors);
-}
-
-function detachedNodeIdSetHas(
-	set: DetachedNodeIdSet,
-	revision: RevisionTag | undefined,
-	localId: number,
-): boolean {
-	return set.get(revision)?.has(localId) ?? false;
-}
 
 /**
  * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
@@ -81,15 +74,11 @@ function detachedNodeIdSetHas(
  * {@link DeltaFieldMap | field changes} can be resolved quickly (for example, when trimming transient
  * content out of a surviving node's build tree).
  */
-function indexGlobalById(
-	delta: DeltaRoot,
-): Map<RevisionTag | undefined, Map<number, DeltaFieldMap>> {
-	const globalById = new Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>();
+function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
+	const globalById: ChangeAtomIdMap<DeltaFieldMap> = new Map();
 	if (delta.global !== undefined) {
 		for (const { id, fields } of delta.global) {
-			const byMinor = globalById.get(id.major) ?? new Map<number, DeltaFieldMap>();
-			byMinor.set(id.minor, fields);
-			globalById.set(id.major, byMinor);
+			setInNestedMap(globalById, id.major, id.minor, fields);
 		}
 	}
 	return globalById;
@@ -106,17 +95,16 @@ function indexGlobalById(
  * post-rename IDs. Both are keyed by revision then by the numeric portion of the ID.
  */
 interface RenameGraph {
-	readonly forward: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>;
-	readonly backward: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>;
+	readonly forward: ChangeAtomIdMap<ChangeAtomId[]>;
+	readonly backward: ChangeAtomIdMap<ChangeAtomId[]>;
 }
 
 /** Looks up the neighbors of a node ID in one direction of a {@link RenameGraph}. */
 function renameNeighbors(
-	direction: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>,
-	major: RevisionTag | undefined,
-	minor: number,
-): readonly DeltaDetachedNodeId[] {
-	return direction.get(major)?.get(minor) ?? [];
+	direction: ChangeAtomIdMap<ChangeAtomId[]>,
+	nodeId: ChangeAtomId,
+): readonly ChangeAtomId[] {
+	return direction.get(nodeId.revision)?.get(nodeId.localId) ?? [];
 }
 
 /**
@@ -124,29 +112,25 @@ function renameNeighbors(
  * without repeatedly scanning the rename list.
  */
 function buildRenameGraph(delta: DeltaRoot): RenameGraph {
-	const forward = new Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>();
-	const backward = new Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>();
+	const forward: ChangeAtomIdMap<ChangeAtomId[]> = new Map();
+	const backward: ChangeAtomIdMap<ChangeAtomId[]> = new Map();
 	const addEdge = (
-		direction: Map<RevisionTag | undefined, Map<number, DeltaDetachedNodeId[]>>,
-		from: DeltaDetachedNodeId,
-		to: DeltaDetachedNodeId,
+		direction: ChangeAtomIdMap<ChangeAtomId[]>,
+		from: ChangeAtomId,
+		to: ChangeAtomId,
 	): void => {
-		const byMinor = direction.get(from.major) ?? new Map<number, DeltaDetachedNodeId[]>();
-		const neighbors = byMinor.get(from.minor) ?? [];
-		neighbors.push(to);
-		byMinor.set(from.minor, neighbors);
-		direction.set(from.major, byMinor);
+		getOrAddInNestedMap(direction, from.revision, from.localId, []).push(to);
 	};
 	if (delta.rename !== undefined) {
 		for (const { oldId, newId, count } of delta.rename) {
 			for (let offset = 0; offset < count; offset += 1) {
-				const oldAtom: DeltaDetachedNodeId = {
-					major: oldId.major,
-					minor: oldId.minor + offset,
+				const oldAtom: ChangeAtomId = {
+					revision: oldId.major,
+					localId: brand(oldId.minor + offset),
 				};
-				const newAtom: DeltaDetachedNodeId = {
-					major: newId.major,
-					minor: newId.minor + offset,
+				const newAtom: ChangeAtomId = {
+					revision: newId.major,
+					localId: brand(newId.minor + offset),
 				};
 				addEdge(forward, oldAtom, newAtom);
 				addEdge(backward, newAtom, oldAtom);
@@ -173,16 +157,16 @@ function buildRenameGraph(delta: DeltaRoot): RenameGraph {
  */
 function collectAttachedDetachedNodeIds(
 	delta: DeltaRoot,
-	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
 	renameGraph: RenameGraph,
-): DetachedNodeIdSet {
-	const attached: DetachedNodeIdSet = new Map();
+): ChangeAtomIdSet {
+	const attached: ChangeAtomIdSet = new Map();
 	// Worklist of detached node IDs newly discovered to be live, whose own nested content must be visited.
-	const worklist: DeltaDetachedNodeId[] = [];
-	const markLive = (major: RevisionTag | undefined, minor: number): void => {
-		if (!detachedNodeIdSetHas(attached, major, minor)) {
-			addToDetachedNodeIdSet(attached, major, minor);
-			worklist.push({ major, minor });
+	const worklist: ChangeAtomId[] = [];
+	const markLive = (id: ChangeAtomId): void => {
+		if (!nestedSetContains(attached, id.revision, id.localId)) {
+			addToNestedSet(attached, id.revision, id.localId);
+			worklist.push(id);
 		}
 	};
 
@@ -194,7 +178,10 @@ function collectAttachedDetachedNodeIds(
 			for (const mark of field.marks) {
 				if (mark.attach !== undefined) {
 					for (let offset = 0; offset < mark.count; offset += 1) {
-						markLive(mark.attach.major, mark.attach.minor + offset);
+						markLive({
+							revision: mark.attach.major,
+							localId: brand(mark.attach.minor + offset),
+						});
 					}
 				}
 				// `mark.fields` edits the cell's pre-existing content. Only descend when that content
@@ -216,12 +203,12 @@ function collectAttachedDetachedNodeIds(
 		if (next === undefined) {
 			break;
 		}
-		const { major, minor } = next;
-		visitLiveFields(globalById.get(major)?.get(minor));
+		const { revision, localId } = next;
+		visitLiveFields(globalById.get(revision)?.get(localId));
 		// A node attached under its post-rename ID was built under its pre-rename ID, so its pre-rename
 		// IDs are live too.
-		for (const oldId of renameNeighbors(renameGraph.backward, major, minor)) {
-			markLive(oldId.major, oldId.minor);
+		for (const oldId of renameNeighbors(renameGraph.backward, next)) {
+			markLive(oldId);
 		}
 	}
 
@@ -242,22 +229,23 @@ function collectAttachedDetachedNodeIds(
 function computeDeadIds(
 	builds: ChangeAtomIdBTree<TreeChunk>,
 	renameGraph: RenameGraph,
-	attached: DetachedNodeIdSet,
-): DetachedNodeIdSet {
-	const dead: DetachedNodeIdSet = new Map();
-	const worklist: DeltaDetachedNodeId[] = [];
-	const markDead = (major: RevisionTag | undefined, minor: number): void => {
-		if (!detachedNodeIdSetHas(dead, major, minor)) {
-			addToDetachedNodeIdSet(dead, major, minor);
-			worklist.push({ major, minor });
+	attached: ChangeAtomIdSet,
+): ChangeAtomIdSet {
+	const dead: ChangeAtomIdSet = new Map();
+	const worklist: ChangeAtomId[] = [];
+	const markDead = (id: ChangeAtomId): void => {
+		if (!nestedSetContains(dead, id.revision, id.localId)) {
+			addToNestedSet(dead, id.revision, id.localId);
+			worklist.push(id);
 		}
 	};
 
 	// Seed with every build cell whose content does not survive.
 	for (const [[revision, localId], chunk] of builds.entries()) {
 		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
-			if (!detachedNodeIdSetHas(attached, revision, localId + offset)) {
-				markDead(revision, localId + offset);
+			const offsetLocalId = offsetChangesetLocalId(localId, offset);
+			if (!nestedSetContains(attached, revision, offsetLocalId)) {
+				markDead({ revision, localId: offsetLocalId });
 			}
 		}
 	}
@@ -268,11 +256,11 @@ function computeDeadIds(
 		if (next === undefined) {
 			break;
 		}
-		for (const neighbor of renameNeighbors(renameGraph.forward, next.major, next.minor)) {
-			markDead(neighbor.major, neighbor.minor);
+		for (const neighbor of renameNeighbors(renameGraph.forward, next)) {
+			markDead(neighbor);
 		}
-		for (const neighbor of renameNeighbors(renameGraph.backward, next.major, next.minor)) {
-			markDead(neighbor.major, neighbor.minor);
+		for (const neighbor of renameNeighbors(renameGraph.backward, next)) {
+			markDead(neighbor);
 		}
 	}
 
@@ -292,10 +280,10 @@ function computeDeadIds(
  */
 function computeTrimmedInputDetaches(
 	builds: ChangeAtomIdBTree<TreeChunk>,
-	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
 	isLive: (id: ChangeAtomId) => boolean,
-): DetachedNodeIdSet {
-	const trimmed: DetachedNodeIdSet = new Map();
+): ChangeAtomIdSet {
+	const trimmed: ChangeAtomIdSet = new Map();
 	const visit = (deltaFields: DeltaFieldMap | undefined): void => {
 		if (deltaFields === undefined) {
 			return;
@@ -304,9 +292,9 @@ function computeTrimmedInputDetaches(
 			for (const mark of field.marks) {
 				if (mark.detach !== undefined) {
 					for (let offset = 0; offset < mark.count; offset += 1) {
-						const localId = mark.detach.minor + offset;
-						if (!isLive({ revision: mark.detach.major, localId: brand(localId) })) {
-							addToDetachedNodeIdSet(trimmed, mark.detach.major, localId);
+						const localId: ChangesetLocalId = brand(mark.detach.minor + offset);
+						if (!isLive({ revision: mark.detach.major, localId })) {
+							addToNestedSet(trimmed, mark.detach.major, localId);
 						}
 					}
 				}
@@ -319,8 +307,9 @@ function computeTrimmedInputDetaches(
 
 	for (const [[revision, localId], chunk] of builds.entries()) {
 		for (let offset = 0; offset < chunk.topLevelLength; offset += 1) {
-			if (isLive({ revision, localId: brand(localId + offset) })) {
-				visit(globalById.get(revision)?.get(localId + offset));
+			const offsetLocalId = offsetChangesetLocalId(localId, offset);
+			if (isLive({ revision, localId: offsetLocalId })) {
+				visit(globalById.get(revision)?.get(offsetLocalId));
 			}
 		}
 	}
@@ -595,11 +584,11 @@ function trimMapTree(
  */
 function computeMinimizedBuilds(
 	buildsIn: ChangeAtomIdBTree<TreeChunk>,
-	globalById: Map<RevisionTag | undefined, Map<number, DeltaFieldMap>>,
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
 	isLive: (id: ChangeAtomId) => boolean,
 ): ChangeAtomIdBTree<TreeChunk> {
 	const buildsOut = newChangeAtomIdBTree<TreeChunk>();
-	const droppedBuildIds: DetachedNodeIdSet = new Map();
+	const droppedBuildIds: ChangeAtomIdSet = new Map();
 
 	for (const [[revision, changeSetLocalId], chunk] of buildsIn.entries()) {
 		const nodeChunks = splitChunkIntoNodes(chunk);
@@ -617,8 +606,8 @@ function computeMinimizedBuilds(
 
 		for (let index = 0; index < nodeChunks.length; index += 1) {
 			let nodeChunk = nodeChunks[index] ?? oob();
-			const localId = changeSetLocalId + index;
-			if (isLive({ revision, localId: brand(localId) })) {
+			const localId: ChangesetLocalId = offsetChangesetLocalId(changeSetLocalId, index);
+			if (isLive({ revision, localId })) {
 				// This top-level node survives. Trim any transient content nested within its built tree.
 				const globalFields = globalById.get(revision)?.get(localId);
 				if (globalFields !== undefined) {
@@ -633,7 +622,7 @@ function computeMinimizedBuilds(
 				runStart ??= localId;
 				runChunks.push(nodeChunk);
 			} else {
-				addToDetachedNodeIdSet(droppedBuildIds, revision, localId);
+				addToNestedSet(droppedBuildIds, revision, localId);
 				nodeChunk.referenceRemoved();
 				flushRun();
 			}
@@ -690,19 +679,19 @@ export function minimizeModularChangeset(
 	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
 	const attached = collectAttachedDetachedNodeIds(delta, globalById, renameGraph);
 	const isLive = (id: ChangeAtomId): boolean =>
-		detachedNodeIdSetHas(attached, id.revision, id.localId);
+		nestedSetContains(attached, id.revision, id.localId);
 
 	// Compute the set of "dead" node IDs: IDs (build cells, move ids, and detach output cells) that refer to content
 	// which is built by this change but does not survive it. Field-level effects targeting these IDs are removed.
 	const dead = computeDeadIds(builds, renameGraph, attached);
 	const isDead = (id: ChangeAtomId): boolean =>
-		detachedNodeIdSetHas(dead, id.revision, id.localId);
+		nestedSetContains(dead, id.revision, id.localId);
 
 	// Compute the destinations of detaches that remove content built inline within a surviving node's build tree.
 	// Such content is trimmed out of the build, so the field change detaching it must treat its input as already empty.
 	const trimmedInputDetaches = computeTrimmedInputDetaches(builds, globalById, isLive);
 	const isTrimmedInputDetach = (id: ChangeAtomId): boolean =>
-		detachedNodeIdSetHas(trimmedInputDetaches, id.revision, id.localId);
+		nestedSetContains(trimmedInputDetaches, id.revision, id.localId);
 
 	const minimizer = new ModularChangeEditMinimizer(
 		change,

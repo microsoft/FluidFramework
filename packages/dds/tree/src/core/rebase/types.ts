@@ -126,8 +126,15 @@ export function taggedOptAtomId(
 	return taggedAtomId(id, revision);
 }
 
+export function offsetChangesetLocalId(
+	base: ChangesetLocalId,
+	offset: number,
+): ChangesetLocalId {
+	return brand(base + offset);
+}
+
 export function offsetChangeAtomId<T extends ChangeAtomId>(id: T, offset: number): T {
-	return { ...id, localId: brand(id.localId + offset) };
+	return { ...id, localId: offsetChangesetLocalId(id.localId, offset) };
 }
 
 // #region These comparison functions are used instead of e.g. `compareNumbers` as a performance optimization
