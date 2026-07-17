@@ -132,6 +132,9 @@ function collectAttachedDetachedNodeIds(
  * and no edits without net observed effect on the document tree.
  *
  * @remarks
+ * IMPORTANT: While this function has some implementation, it does not yet actually
+ * make any changes to a given change.
+ *
  * "Extraneous information" includes, for example, data for nodes that were both created and removed within the same
  * transaction, or changes whose effects cancel out to nothing. Minimizing reduces the size of an edit without altering
  * its observable effect.
@@ -169,7 +172,9 @@ export function minimizeModularChangeset(
 	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
 	const attached = collectAttachedDetachedNodeIds(delta, globalById);
 	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
-		nestedSetContains(attached, revision, localId);
+		// `|| true` effectively disables the minimization, which is not viable without paired
+		// edit minimization that is not yet implemented.
+		nestedSetContains(attached, revision, localId) || true;
 
 	const minimizedChange = {
 		...change,
