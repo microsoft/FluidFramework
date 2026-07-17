@@ -487,6 +487,7 @@ export interface TreeArrayNodeAlpha<
 	 * searching from the last item to the first.
 	 * @remarks
 	 * Results reflect the state of the array when called.
+	 * * If `callbackFunction` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
 	 * @param callbackFunction - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
 	 * Receives the item, its index, and the array being searched.
 	 * @returns The last item for which `callbackFunction` returns `true`, or `undefined` if there is no such item.

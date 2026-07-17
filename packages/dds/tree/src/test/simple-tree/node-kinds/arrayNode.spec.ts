@@ -276,36 +276,36 @@ describe("ArrayNode", () => {
 
 				it("visits items from last to first, passing the index and array to the callbackFunction", () => {
 					const array = buildAlphaArray([5, 6, 7]);
-					const visited: [number, number][] = [];
+					const visited: { value: number; index: number }[] = [];
 					array.findLast((value, index, items) => {
 						assert.deepEqual([...items], [5, 6, 7]);
-						visited.push([value, index]);
+						visited.push({ value, index });
 						return false;
 					});
 					assert.deepEqual(visited, [
-						[7, 2],
-						[6, 1],
-						[5, 0],
+						{ value: 7, index: 2 },
+						{ value: 6, index: 1 },
+						{ value: 5, index: 0 },
 					]);
 				});
 
 				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLast", () => {
 					const array = buildAlphaArray([1, 2, 3, 4]);
-					const visited: [number, number][] = [];
+					const visited: { value: number; index: number }[] = [];
 					array.findLast((value, index) => {
 						if (index === 3) {
 							array.removeAt(0);
 						}
-						visited.push([value, index]);
+						visited.push({ value, index });
 						return false;
 					});
 					// After the removal, remaining reads see the shifted array: index 2 holds 4 and index 0 holds 2.
 					// This matches Array.prototype.findLast run with an equivalent mutating callback.
 					assert.deepEqual(visited, [
-						[4, 3],
-						[4, 2],
-						[3, 1],
-						[2, 0],
+						{ value: 4, index: 3 },
+						{ value: 4, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
 					]);
 				});
 
@@ -342,19 +342,19 @@ describe("ArrayNode", () => {
 
 				it("reads items live when the callbackFunction edits the array, like Array.prototype.findLastIndex", () => {
 					const array = buildAlphaArray([1, 2, 3]);
-					const visited: [number, number][] = [];
+					const visited: { value: number; index: number }[] = [];
 					array.findLastIndex((value, index) => {
 						if (index === 2) {
 							array.removeAt(0);
 						}
-						visited.push([value, index]);
+						visited.push({ value, index });
 						return false;
 					});
 					// After the removal, remaining reads see the shifted array: index 1 holds 3 and index 0 holds 2.
 					assert.deepEqual(visited, [
-						[3, 2],
-						[3, 1],
-						[2, 0],
+						{ value: 3, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
 					]);
 				});
 			});
