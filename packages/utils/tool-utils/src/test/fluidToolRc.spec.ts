@@ -26,6 +26,7 @@ describe("fluidToolRc saveRC", () => {
 	let originalHome: string | undefined;
 	let originalUserProfile: string | undefined;
 
+	// Isolate each test from the user's real home directory and .fluidtoolrc file.
 	beforeEach(() => {
 		tempHome = fs.mkdtempSync(path.join(os.tmpdir(), "fluidtoolrc-test-"));
 		originalHome = process.env.HOME;
@@ -35,6 +36,7 @@ describe("fluidToolRc saveRC", () => {
 		process.env.USERPROFILE = tempHome;
 	});
 
+	// Restore the process environment and remove the isolated home directory after each test.
 	afterEach(() => {
 		if (originalHome === undefined) {
 			delete process.env.HOME;
