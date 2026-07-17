@@ -2929,6 +2929,35 @@ describe("SharedTree", () => {
 			assert.equal(tree2.getSharedBranchName(branch3Id), name3);
 		});
 
+		it("shared branches names cannot exceed a length of 1024", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize([]);
+			provider.synchronizeMessages();
+
+			const validName = "v".repeat(1024);
+			const branch1Id = tree1.createSharedBranch(validName);
+			assert.equal(tree1.getSharedBranchName(branch1Id), validName);
+			provider.synchronizeMessages();
+			assert.equal(tree2.getSharedBranchName(branch1Id), validName);
+
+			const invalidName = "i".repeat(1025);
+			assert.throws(() => tree1.createSharedBranch(invalidName), /Branch name is too long/);
+		});
+
 		describe("can load a shared branch from summary", () => {
 			for (const subCase of [
 				"based on a commit in the collab window",

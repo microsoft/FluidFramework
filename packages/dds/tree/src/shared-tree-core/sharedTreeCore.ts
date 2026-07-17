@@ -528,6 +528,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			.map((id) => this.idCompressor.decompress(id));
 	}
 	public createSharedBranch(branchName?: string): string {
+		if (branchName !== undefined && branchName.length > 1024) {
+			throw new UsageError(`Branch name is too long: ${branchName.length} > 1024`);
+		}
 		const branchId = this.idCompressor.generateCompressedId();
 		this.addBranch(branchId, branchName);
 		this.submitBranchCreation(branchId, branchName);
