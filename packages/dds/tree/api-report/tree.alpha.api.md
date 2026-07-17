@@ -871,7 +871,7 @@ export const MapNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is MapNodeSchema;
 };
 
-// @alpha
+// @alpha @deprecated
 export const minimize: TransactionPostProcessor;
 
 // @alpha
