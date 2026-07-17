@@ -2908,18 +2908,22 @@ describe("SharedTree", () => {
 			mainView1.initialize([]);
 			provider.synchronizeMessages();
 
-			const branch1Id = tree1.createSharedBranch("branch1");
-			const branch2Id = tree1.createSharedBranch("branch2");
+			/** A basic name */
+			const name1 = "branch1";
+			/** A name with special characters that need escaping */
+			const name2 = '" \\ \b \f \n \r \t \u00E9';
+			const branch1Id = tree1.createSharedBranch(name1);
+			const branch2Id = tree1.createSharedBranch(name2);
 			const branch3Id = tree1.createSharedBranch();
 
-			assert.equal(tree1.getSharedBranchName(branch1Id), "branch1");
-			assert.equal(tree1.getSharedBranchName(branch2Id), "branch2");
+			assert.equal(tree1.getSharedBranchName(branch1Id), name1);
+			assert.equal(tree1.getSharedBranchName(branch2Id), name2);
 			assert.equal(tree1.getSharedBranchName(branch3Id), undefined);
 
 			provider.synchronizeMessages();
 
-			assert.equal(tree2.getSharedBranchName(branch1Id), "branch1");
-			assert.equal(tree2.getSharedBranchName(branch2Id), "branch2");
+			assert.equal(tree2.getSharedBranchName(branch1Id), name1);
+			assert.equal(tree2.getSharedBranchName(branch2Id), name2);
 			assert.equal(tree2.getSharedBranchName(branch3Id), undefined);
 		});
 
