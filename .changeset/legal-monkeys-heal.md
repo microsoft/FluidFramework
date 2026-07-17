@@ -5,7 +5,7 @@
 ---
 Shared branch names
 
-The existing `createSharedBranch` alpha API now takes an optional `name` string parameter that is associated with the shared branch.
+The existing [`createSharedBranch`](https://fluidframework.com/docs/api/tree/itreealpha-interface#createsharedbranch-methodsignature) alpha API now takes an optional `name` string parameter that is associated with the shared branch.
 This name can be retrieved by passing the shared branch ID to `getSharedBranchName`.
 
 Note that, unlike the shared branch IDs, shared branch names are not guaranteed to be unique.

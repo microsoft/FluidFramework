@@ -30,7 +30,16 @@ export interface Message {
 	 */
 	readonly changeset?: JsonCompatibleReadOnly;
 
+	/**
+	 * Unique ID associated with the branch.
+	 */
 	readonly branchId?: EncodedBranchId;
+
+	/**
+	 * Application-defined name of the branch, if any.
+	 * Not guaranteed to be unique.
+	 */
+	readonly branchName?: string;
 
 	/**
 	 * The version of the message format.

@@ -130,6 +130,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 	private readonly schemaAndPolicy: ClonableSchemaAndPolicy;
 
+	private static readonly maxBranchNameLength = 1024;
+
+
 	/**
 	 * @param summarizables - Summarizers for all indexes used by this tree
 	 * @param changeFamily - The change family
@@ -528,8 +531,8 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			.map((id) => this.idCompressor.decompress(id));
 	}
 	public createSharedBranch(branchName?: string): string {
-		if (branchName !== undefined && branchName.length > 1024) {
-			throw new UsageError(`Branch name is too long: ${branchName.length} > 1024`);
+		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
+			throw new UsageError(`Branch name is too long: ${branchName.length} > maxBranchNameLength`);
 		}
 		const branchId = this.idCompressor.generateCompressedId();
 		this.addBranch(branchId, branchName);

@@ -2929,7 +2929,7 @@ describe("SharedTree", () => {
 			assert.equal(tree2.getSharedBranchName(branch3Id), name3);
 		});
 
-		it("shared branches names cannot exceed a length of 1024", () => {
+		it("shared branch names cannot exceed a length of 1024", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
