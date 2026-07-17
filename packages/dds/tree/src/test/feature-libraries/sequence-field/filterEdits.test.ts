@@ -140,9 +140,11 @@ export function testFilterEdits(): void {
 		});
 
 		it("Can convert move-out to remove", () => {
+			const nodeId: ChangeAtomId = { revision: tag1, localId: brand(5) };
+
 			const filtered = filterEdits(
 				[
-					MarkMaker.moveOut(1, id1, { finalEndpoint: id2 }),
+					MarkMaker.moveOut(1, id1, { finalEndpoint: id2, changes: nodeId }),
 					MarkMaker.moveIn(1, id2, { finalEndpoint: id1 }),
 				],
 				{
@@ -157,7 +159,7 @@ export function testFilterEdits(): void {
 
 			const moveInCell = offsetChangeAtomId(id2, 1);
 			const expected = [
-				MarkMaker.remove(1, id1),
+				MarkMaker.remove(1, id1, { changes: nodeId }),
 				MarkMaker.tomb(moveInCell.revision, moveInCell.localId),
 			];
 

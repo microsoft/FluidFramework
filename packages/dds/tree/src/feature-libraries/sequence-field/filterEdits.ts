@@ -72,19 +72,15 @@ function filterMark(
 					// using the detach ID of the move (the endpoint ID).
 					// Insert marks use the cell ID as the attach ID, so we must change the cell ID here.
 					// This could be a problem if there were references to the old cell ID outside this changeset,
-					// but PreserveWithoutMove is only used for transaction squashing, where that is not a problem.
+					// but PreserveWithoutMove is only used for transaction minimization, where that is not a problem.
 					const newCellId = endpoint ?? { revision: mark.revision, localId: mark.id };
 					filtered = {
 						type: "Insert",
-						count: mark.count,
+						count: result.length,
 						cellId: newCellId,
 						revision: mark.revision,
 						id: mark.id,
 					};
-
-					if (mark.changes !== undefined) {
-						filtered.changes = mark.changes;
-					}
 					break;
 				}
 				case EditFilterStatus.Remove: {

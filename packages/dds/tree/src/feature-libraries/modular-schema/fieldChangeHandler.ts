@@ -195,9 +195,25 @@ export type EditFilterFunc = (
 	endpoint?: ChangeAtomId,
 ) => RangeQueryResult<EditFilterStatus>;
 
+/**
+ * Used to describe what should be done with a particular attach or detach during `filterEdits`.
+ */
 export enum EditFilterStatus {
+	/**
+	 * The edit should be removed from the filtered changeset.
+	 */
 	Remove,
+
+	/**
+	 * The edit should be preserved in the filtered changeset.
+	 */
 	Preserve,
+
+	/**
+	 * This should only be used for an attach or detach which is part of a move.
+	 * The edit should be preserved, but should be adjusted, if necessary,
+	 * to reflect that the other endpoint of the move has been filtered out.
+	 */
 	PreserveWithoutMove,
 }
 
