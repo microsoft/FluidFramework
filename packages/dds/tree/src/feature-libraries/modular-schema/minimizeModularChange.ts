@@ -171,15 +171,16 @@ export function minimizeModularChangeset(
 	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
 		nestedSetContains(attached, revision, localId);
 
-	const minimizedBuilds = computeMinimizedBuilds(builds, globalById, isLive);
-
 	const minimizedChange = {
 		...change,
 	};
+
+	const minimizedBuilds = computeMinimizedBuilds(builds, globalById, isLive);
 	if (minimizedBuilds.size > 0) {
 		minimizedChange.builds = minimizedBuilds;
 	} else {
 		delete minimizedChange.builds;
 	}
+
 	return minimizedChange;
 }
