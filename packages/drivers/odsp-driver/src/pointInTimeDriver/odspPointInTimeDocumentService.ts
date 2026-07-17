@@ -20,7 +20,7 @@ import {
  * a historical snapshot with a bounded replay of live ops.
  *
  * @remarks
- * Storage (the snapshot) is served from a recoverable file version at or before the target sequence
+ * Storage (the snapshot) is served from the closest file version at or before the target sequence
  * number. The ops needed to advance from that snapshot to the target are read from the live
  * document's delta storage, bounded so that no op past the target is ever fetched.
  *

@@ -280,8 +280,9 @@ export class OdspDocumentServiceFactoryCore
 	}
 
 	/**
-	 * Creates a document service that reads its snapshot from a recoverable file version and its
-	 * deltas from the live document, materializing a requested sequence number through replay.
+	 * Creates a document service that reads its snapshot from the closest file version at or before
+	 * the target and its deltas from the live document, materializing a requested sequence number
+	 * through replay.
 	 *
 	 * @internal
 	 */
