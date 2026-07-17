@@ -35,8 +35,10 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. Not built yet.
-- **Component C — the loader hookup**: expose Component B through the container loader. Not built yet.
+  target. Built: `createPointInTimeDocumentService` on `OdspDocumentServiceFactoryCore` produces an
+  `OdspPointInTimeDocumentService`.
+- **Component C — the loader hookup**: expose Component B through the container loader. Built:
+  `loadContainerToSequenceNumber` in `@fluidframework/container-loader`.
 
 ## Part I — Foundations
 
@@ -227,11 +229,20 @@ driver — and it consumes the version manager directly. A generic wrapping driv
 over an inner document service (the pattern `@fluidframework/replay-driver` uses) cannot reach the
 version-scoped base fetch, so the recomposition belongs beside `OdspDocumentService` /
 `OdspDocumentServiceFactory` rather than in a separate package. Because it consumes the version manager
-in-package, the version manager itself needs no exported surface; only the recomposed factory is exposed
-(defaulting to an internal entry point) for the loader hookup to construct.
+in-package, the version manager itself needs no exported surface; the recomposition is reached through
+the `createPointInTimeDocumentService` capability on the existing factory, which the loader hookup calls.
 
 A base is only needed when the live document's own snapshot no longer covers the target; when it does,
 loading paused at the target from the live snapshot suffices, and no historical version is loaded.
+
+**How the recomposed driver is built.** `OdspPointInTimeDocumentService` combines two document
+services: it serves storage (the snapshot) from the historical base version, and delta storage from
+the live document — bounded so no op past the target is ever fetched. It advertises the
+`storageOnly` policy, which reuses the loader's read-only **frozen** load mechanism: the connection
+manager synthesizes a frozen delta stream (no live socket) and forces the container read-only, while
+the delta manager still catches up from the base's sequence number through the bounded delta storage.
+That catch-up *is* the replay, so no bespoke replay loop and no live delta-stream connection are
+needed.
 
 ### How would Component B reach a target between snapshots, and handle trimmed ops?
 
@@ -254,6 +265,12 @@ the gap. In that case the exact state at `T` cannot be reconstructed, and Compon
 consumer may still choose to fall back to the nearest reachable state at or before `T`. This is rare in
 practice because snapshots are written frequently relative to the op-retention window.
 
+> **Status: not yet implemented (follow-up).** The current implementation does *not* detect trimmed
+> ops. If a target's ops have aged out of the retention window, the loader refetches the missing range
+> indefinitely and the load hangs instead of failing fast. Surfacing the gap as a fatal,
+> non-retriable error is tracked as incremental follow-up work.
+
+
 Note that `minimumSequenceNumber` is not the signal for any of this: it is the collaboration-window floor
 baked into a snapshot, used when a snapshot is loaded, not an indicator of which ops the op stream still
 retains. Op availability is determined by asking the op stream for the range, not by a version's minimum
@@ -261,9 +278,14 @@ sequence number.
 
 ### Should this be exposed through the container loader? (Component C)
 
-Once Component B exists, a thin combining layer would construct the recomposed factory together with a
-standard loader, letting callers request "load at sequence number N" directly. It depends only on
-Component B's exposed factory, never on the version manager.
+The loader owns the hookup. `loadContainerToSequenceNumber` (in `@fluidframework/container-loader`)
+takes the caller's *plain* ODSP document service factory plus the target sequence number. It detects
+that the factory supports point-in-time loading (a `createPointInTimeDocumentService` capability) and
+internally routes the container's `createDocumentService` call to it via a small adapter, so the
+caller never wraps or decorates their factory and never passes the target twice. Because the loader
+does the wrapping, the driver exposes no dedicated point-in-time factory — only the
+`createPointInTimeDocumentService` capability on its existing factory. It depends only on that
+capability, never on the version manager.
 
 ### Should there be an end-to-end test against a real ODSP file?
 

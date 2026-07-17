@@ -29,7 +29,11 @@ import {
 	type TokenFetchOptions,
 	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	PerformanceEvent,
+	UsageError,
+	createChildLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
@@ -294,7 +298,11 @@ export class OdspDocumentServiceFactoryCore
 		);
 		const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
 		if (baseResult.kind === "noBaseVersion") {
-			throw new Error(
+			const oldestResolvedSequenceDetail =
+				baseResult.oldestResolvedSeq === undefined
+					? ""
+					: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
+			throw new UsageError(
 				`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
 			);
 		}
@@ -317,6 +325,7 @@ export class OdspDocumentServiceFactoryCore
 			historicalResolvedUrl,
 			historicalDocumentService,
 			liveDocumentService,
+			targetSequenceNumber,
 		);
 	}
 
@@ -425,9 +434,11 @@ export class OdspDocumentServiceFactoryCore
 		const query = new URLSearchParams({
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
-			path: odspResolvedUrl.dataStorePath,
 			fileVersion,
 		});
+		if (odspResolvedUrl.dataStorePath !== undefined) {
+			query.set("path", odspResolvedUrl.dataStorePath);
+		}
 		if (odspResolvedUrl.codeHint?.containerPackageName !== undefined) {
 			query.set("containerPackageName", odspResolvedUrl.codeHint.containerPackageName);
 		}
