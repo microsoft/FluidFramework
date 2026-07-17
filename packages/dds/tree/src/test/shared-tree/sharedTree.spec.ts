@@ -2912,19 +2912,21 @@ describe("SharedTree", () => {
 			const name1 = "branch1";
 			/** A name with special characters that need escaping */
 			const name2 = '" \\ \b \f \n \r \t \u00E9';
+			/** A name with special characters that do not need escaping */
+			const name3 = "こんにちは 👋 café © ™ € £ ¥ < > & ' `";
 			const branch1Id = tree1.createSharedBranch(name1);
 			const branch2Id = tree1.createSharedBranch(name2);
-			const branch3Id = tree1.createSharedBranch();
+			const branch3Id = tree1.createSharedBranch(name3);
 
 			assert.equal(tree1.getSharedBranchName(branch1Id), name1);
 			assert.equal(tree1.getSharedBranchName(branch2Id), name2);
-			assert.equal(tree1.getSharedBranchName(branch3Id), undefined);
+			assert.equal(tree1.getSharedBranchName(branch3Id), name3);
 
 			provider.synchronizeMessages();
 
 			assert.equal(tree2.getSharedBranchName(branch1Id), name1);
 			assert.equal(tree2.getSharedBranchName(branch2Id), name2);
-			assert.equal(tree2.getSharedBranchName(branch3Id), undefined);
+			assert.equal(tree2.getSharedBranchName(branch3Id), name3);
 		});
 
 		describe("can load a shared branch from summary", () => {
