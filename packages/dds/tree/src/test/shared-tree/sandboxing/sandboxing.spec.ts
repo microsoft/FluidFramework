@@ -44,7 +44,12 @@ import { TestTreeProviderLite, StringArray, createTestUndoRedoStacks } from "../
 function headFromView<TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema>(
 	view: TreeViewAlpha<TSchema>,
 ): GraphCommit<unknown> {
-	strict(view instanceof SchematizingSimpleTreeView);
+	// Commit information is not exposed via the public APIs,
+	// so we rely on implementation details to access it.
+	assert(
+		view instanceof SchematizingSimpleTreeView,
+		"Expected view to be a SchematizingSimpleTreeView",
+	);
 	return view.checkout.mainBranch.getHead();
 }
 
