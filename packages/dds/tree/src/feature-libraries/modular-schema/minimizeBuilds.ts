@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* eslint-disable @typescript-eslint/no-non-null-assertion -- all look ups using in-range indices of dense arrays */
+import { oob } from "@fluidframework/core-utils/internal";
 
 import type {
 	ChangeAtomId,
@@ -91,7 +91,7 @@ function trimMapTree(
 						isLive({ revision: mark.detach.major, localId: brand(mark.detach.minor + offset) })
 					) {
 						// Detached to a cell that survives elsewhere: retain the content.
-						newChildren.push(children[childIndex]!);
+						newChildren.push(children[childIndex] ?? oob());
 					} else {
 						fieldChangeCount += 1;
 					}
@@ -99,14 +99,14 @@ function trimMapTree(
 				}
 			} else if (mark.fields !== undefined) {
 				// A surviving child that has its own nested modifications.
-				const child = children[childIndex]!;
+				const child = children[childIndex] ?? oob();
 				fieldChangeCount += trimMapTree(child, mark.fields, isLive);
 				newChildren.push(child);
 				childIndex += 1;
 			} else if (mark.attach === undefined) {
 				// Unchanged run of existing children.
 				for (let offset = 0; offset < mark.count; offset += 1) {
-					newChildren.push(children[childIndex]!);
+					newChildren.push(children[childIndex] ?? oob());
 					childIndex += 1;
 				}
 			}
@@ -119,7 +119,7 @@ function trimMapTree(
 		}
 		// Any children beyond the marks are unchanged trailing content.
 		while (childIndex < children.length) {
-			newChildren.push(children[childIndex]!);
+			newChildren.push(children[childIndex] ?? oob());
 			childIndex += 1;
 		}
 		if (newChildren.length === 0) {
@@ -168,7 +168,7 @@ export function computeMinimizedBuilds(
 		};
 
 		for (let index = 0; index < nodeChunks.length; index += 1) {
-			let nodeChunk = nodeChunks[index]!;
+			let nodeChunk = nodeChunks[index] ?? oob();
 			const localId: ChangesetLocalId = offsetChangesetLocalId(changeSetLocalId, index);
 			if (isLive({ revision, localId })) {
 				// This top-level node survives. Trim any transient content nested within its built tree.
