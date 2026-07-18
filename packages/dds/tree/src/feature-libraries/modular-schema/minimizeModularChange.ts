@@ -32,10 +32,10 @@ type ChangeAtomIdSet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
  * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
  *
  * @remarks
- * `DeltaRoot.global` describes modifications to nodes that are built and/or removed by the change,
- * keyed by node ID. This builds a `revision -> localId -> fields` lookup so those per-node
- * {@link DeltaFieldMap | field changes} can be resolved quickly (for example, when trimming transient
- * content out of a surviving node's build tree).
+ * `DeltaRoot.global` describes modifications to nodes that are built or preexist the change as
+ * detached roots, keyed by node ID. This builds a `revision -> localId -> fields` lookup so
+ * those per-node {@link DeltaFieldMap | field changes} can be resolved quickly (for example,
+ * when trimming transient content out of a surviving node's build tree).
  */
 function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 	const globalById: ChangeAtomIdMap<DeltaFieldMap> = new Map();
@@ -48,21 +48,14 @@ function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 }
 
 /**
- * Collects the set of detached node IDs whose content ends up attached within the live document tree
+ * Collects the set of node IDs whose content ends up attached within the live document tree
  * once the given change is applied.
  *
  * @remarks
- * These are the "used" detached nodes: any build whose nodes are not in this set has no observable
+ * These are the "used" nodes: any build whose nodes are not in this set has no observable
  * effect on the resulting document and can be dropped.
- *
- * The delta's marks describe changes to a field: an `attach` brings a detached node into the live
- * tree, while `mark.fields` describes edits to the *pre-existing* content of the cell (which is being
- * detached/removed when `mark.detach` is set). Nested content of freshly built/attached nodes is not
- * carried on the attach mark itself; it is expressed via `DeltaRoot.global` keyed by the node's ID.
- * Consequently this walk only descends into a node's nested content when that node itself remains in
- * the live tree, so that content attached beneath a removed node is correctly treated as unused.
  */
-function collectAttachedDetachedNodeIds(
+function collectAttachedNodeIds(
 	delta: DeltaRoot,
 	globalById: ChangeAtomIdMap<DeltaFieldMap>,
 ): ChangeAtomIdSet {
@@ -146,8 +139,7 @@ function collectAttachedDetachedNodeIds(
  *
  * - drops any build whose nodes are entirely unused, and splits any partially-used build so that only the runs of used
  * nodes are retained,
- * - trims transient content nested within a surviving node's build tree, and
- * - prunes destroys for the removed builds, since destroying a node that was never built has no effect.
+ * - trims transient content nested within a surviving node's build tree
  *
  * The result applies to produce the same document as the input change.
  *
@@ -170,7 +162,7 @@ export function minimizeModularChangeset(
 
 	// Compute the set of detached node IDs whose content ends up attached in the resulting document. Content built by
 	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
-	const attached = collectAttachedDetachedNodeIds(delta, globalById);
+	const attached = collectAttachedNodeIds(delta, globalById);
 	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
 		// `|| true` effectively disables the minimization, which is not viable without paired
 		// edit minimization that is not yet implemented.

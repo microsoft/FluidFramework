@@ -56,15 +56,7 @@ function mapTreeFromNodeChunk(chunk: TreeChunk): ExclusiveMapTree {
 /**
  * Trims transient content from a built node's in-memory tree, in place.
  *
- * @returns The number of children removed from the node's fields.
- *
- * @remarks
- * `deltaFields` is the {@link DeltaFieldMap} describing the modifications made to the built node (as
- * produced in the change's delta `global` section, keyed by the node's build ID). It is walked in
- * lockstep with `node`'s fields: a `detach` mark whose target cell is not live removes the corresponding
- * (transient) child from the tree, and a `fields` mark descends into a surviving child to trim its own
- * transient descendants. Content brought in by `attach`-only marks lives in a separate build and is not
- * inlined here, so those marks consume no existing child.
+ * @returns The number of subtrees removed from the tree's fields.
  */
 function trimMapTree(
 	node: ExclusiveMapTree,
@@ -110,8 +102,10 @@ function trimMapTree(
 					childIndex += 1;
 				}
 			}
-			// Otherwise the mark only attaches new content from a separate build,
-			// which is not inlined in this node, so there is nothing to copy over.
+			// Otherwise the mark attaches new content from a separate build,
+			// which is not inlined in this node, OR from a preexisting detatched
+			// root or node that gets detached as part of this change. In all
+			// cases, there is nothing to copy over.
 		}
 		if (fieldChangeCount === 0) {
 			// No changes to this field's content, so no need to update the field.
@@ -151,7 +145,6 @@ export function computeMinimizedBuilds(
 	isLive: (id: ChangeAtomId) => boolean,
 ): ChangeAtomIdBTree<TreeChunk> {
 	const buildsOut = newChangeAtomIdBTree<TreeChunk>();
-	const droppedBuildIds: ChangeAtomIdSet = new Map();
 
 	for (const [[revision, changeSetLocalId], chunk] of buildsIn.entries()) {
 		const nodeChunks = splitChunkIntoNodes(chunk);
@@ -185,7 +178,6 @@ export function computeMinimizedBuilds(
 				runStart ??= localId;
 				runChunks.push(nodeChunk);
 			} else {
-				addToNestedSet(droppedBuildIds, revision, localId);
 				nodeChunk.referenceRemoved();
 				flushRun();
 			}
