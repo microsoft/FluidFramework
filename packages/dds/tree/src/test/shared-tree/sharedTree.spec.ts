@@ -2892,6 +2892,7 @@ describe("SharedTree", () => {
 
 			provider.synchronizeMessages();
 
+			assert.equal(tree2.getSharedBranchName(branchId), "my fork");
 			const branchView2 = tree2.viewSharedBranchWith(branchId, config);
 			assert.deepEqual([...branchView2.root], ["A", "B"]);
 
