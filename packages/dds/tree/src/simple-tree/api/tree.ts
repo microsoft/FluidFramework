@@ -119,6 +119,8 @@ export interface ITreeAlpha extends ITree {
 	 */
 	createSharedBranch(name?: string): string;
 
+	shareLocalBranch(branch: TreeBranch, name?: string): string;
+
 	/**
 	 * Retrieves the name, if any, of the shared branch with the given ID.
 	 * @param branchId - The ID of the shared branch to retrieve the name of.
@@ -370,6 +372,7 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Whether this branch is visible to peers and persisted in the document.
 	 * See {@link ITreeAlpha.createSharedBranch } for creating a shared branch.
+	 * See {@link ITreeAlpha.shareLocalBranch } for sharing a local branch.
 	 */
 	isSharedBranch: boolean;
 
@@ -380,8 +383,8 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * Can be obtained by navigating the commits on the branch {@link TreeBranchAlpha.history | history}.
 	 *
 	 * @remarks
-	 * The original branch will be disposed unless it is a {@link ITreeAlpha.createSharedBranch | shared branch}.
-	 * In order to retain the branch, consider {@link TreeBranchAlpha.fork | forking} before rewinding.
+	 * The original branch will be disposed unless it is a {@link TreeBranchAlpha.isSharedBranch | shared branch}.
+	 * In order to retain the local branch, consider {@link TreeBranchAlpha.fork | forking} before rewinding.
 	 */
 	rewindTo(revision: string): void;
 

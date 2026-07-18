@@ -683,6 +683,8 @@ export interface ITreeAlpha extends ITree {
     exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
+    // (undocumented)
+    shareLocalBranch(branch: TreeBranch, name?: string): string;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 

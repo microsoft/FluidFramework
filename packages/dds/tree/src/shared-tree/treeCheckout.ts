@@ -518,7 +518,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public constructor(
 		private branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
-		public readonly isSharedBranch: boolean,
+		private _isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -538,6 +538,10 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public get isSharedBranch(): boolean {
+		return this._isSharedBranch;
 	}
 
 	public get history(): TreeBranchHistoryImpl {
@@ -1244,7 +1248,7 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
-		if (!this.isSharedBranch) {
+		if (!this._isSharedBranch) {
 			this.branch.dispose();
 		}
 		this.branch = branch;
@@ -1276,6 +1280,10 @@ export class TreeCheckout implements ITreeCheckout {
 		this.switchBranch(this.#transaction.branch.fork(targetCommit));
 	}
 
+	public onBranchShared(): void {
+		this._isSharedBranch = true;
+	}
+
 	private rebase(branch: TreeBranch): void {
 		const checkout = getCheckout(branch);
 		this.checkNotDisposed(
@@ -1296,7 +1304,7 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		assert(
-			!checkout.isSharedBranch,
+			!checkout._isSharedBranch,
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
@@ -1366,7 +1374,7 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
-		if (disposeMerged && !checkout.isSharedBranch) {
+		if (disposeMerged && !checkout._isSharedBranch) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
 		}
@@ -1549,7 +1557,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
 			// Remote changes are only ever applied to shared branches
-			this.isSharedBranch &&
+			this._isSharedBranch &&
 			// Remote changes are applied to the branch by rebasing it onto the trunk.
 			// No other rebases are allowed on shared branches, so we can use this to detect remote changes.
 			event.type === "rebase"

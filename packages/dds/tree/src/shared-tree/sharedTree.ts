@@ -92,6 +92,7 @@ import {
 	type SimpleObjectFieldSchema,
 	type SimpleAllowedTypeAttributes,
 	type SchemaType,
+	type TreeBranch,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -100,7 +101,7 @@ import {
 	throwIfBroken,
 } from "../util/index.js";
 
-import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -108,7 +109,7 @@ import {
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
+import { TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -336,6 +337,7 @@ export class SharedTreeKernel
 			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
+			shareLocalBranch: this.shareLocalBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
 			kernel: this,
@@ -402,6 +404,16 @@ export class SharedTreeKernel
 		return this.getCheckout(compressedId).viewWith(
 			config,
 		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
+	}
+
+	public shareLocalBranch(branch: TreeBranch, branchName?: string): string {
+		const checkout = checkoutFromBranch(branch);
+		if (checkout.isSharedBranch) {
+			throw new UsageError("Cannot share a branch that is already shared");
+		}
+		const branchId = this.addSharedBranch(branchName, checkout.mainBranch);
+		checkout.onBranchShared();
+		return branchId;
 	}
 
 	private getCheckout(branchId: BranchId): TreeCheckout {
@@ -896,4 +908,14 @@ function exportSimpleNodeSchemaStored(
 		};
 	}
 	fail(0xacb /* invalid schema kind */);
+}
+
+function checkoutFromBranch(branch: TreeBranch): TreeCheckout {
+	if (branch instanceof TreeCheckout) {
+		return branch;
+	}
+	if (branch instanceof SchematizingSimpleTreeView) {
+		return branch.checkout;
+	}
+	throw new UsageError("Unsupported branch type");
 }

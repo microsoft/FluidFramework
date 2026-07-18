@@ -2863,6 +2863,45 @@ describe("SharedTree", () => {
 			assert.deepEqual([...mainView2.root], ["A", "X"]);
 		});
 
+		it("supports sharing an existing branch", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = asAlpha(tree1.viewWith(config));
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...mainView1.root], ["A"]);
+			const tree2 = provider.trees[1];
+			provider.synchronizeMessages();
+
+			const fork = mainView1.fork();
+			fork.root.insertAtEnd("B");
+
+			const branchId = tree1.shareLocalBranch(fork, "my fork");
+
+			provider.synchronizeMessages();
+
+			const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+			branchView2.root.insertAtEnd("C");
+			assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...fork.root], ["A", "B", "C"]);
+		});
+
 		it("shared branches can be named on creation", () => {
 			const provider = new TestTreeProviderLite(
 				2,

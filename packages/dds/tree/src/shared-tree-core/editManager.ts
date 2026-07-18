@@ -473,14 +473,18 @@ export class EditManager<
 		this.createAndAddSharedBranch(branchId, branchName, sessionId, mainBranch, branchTrunk);
 	}
 
-	public addNewBranch(branchId: BranchId, branchName?: string): void {
+	public shareBranch(
+		branchId: BranchId,
+		localBranch: SharedTreeBranch<TEditor, TChangeset>,
+		branchName?: string,
+	): void {
 		const main = this.getSharedBranch("main") ?? fail(0xc5a /* Main branch must exist */);
 		this.createAndAddSharedBranch(
 			branchId,
 			branchName,
 			this.localSessionId,
 			main,
-			this.getLocalBranch("main").fork(),
+			localBranch,
 		);
 	}
 

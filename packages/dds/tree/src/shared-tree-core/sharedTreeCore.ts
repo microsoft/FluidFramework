@@ -530,19 +530,25 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 			.map((id) => this.idCompressor.decompress(id));
 	}
 	public createSharedBranch(branchName?: string): string {
+		return this.addSharedBranch(branchName);
+	}
+	protected addSharedBranch(
+		branchName?: string,
+		existingLocal?: SharedTreeBranch<TEditor, TChange>,
+	): string {
 		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
 			throw new UsageError(
 				`Branch name is too long: ${branchName.length} > maxBranchNameLength`,
 			);
 		}
 		const branchId = this.idCompressor.generateCompressedId();
-		this.addBranch(branchId, branchName);
 		this.submitBranchCreation(branchId, branchName);
+		this.editManager.shareBranch(
+			branchId,
+			existingLocal ?? this.getLocalBranch().fork(),
+			branchName,
+		);
 		return this.idCompressor.decompress(branchId);
-	}
-
-	protected addBranch(branchId: BranchId, branchName?: string): void {
-		this.editManager.addNewBranch(branchId, branchName);
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
@@ -654,7 +660,11 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.editManager.addNewBranch(message.branchId, message.branchName);
+				this.editManager.shareBranch(
+					message.branchId,
+					this.getLocalBranch().fork(),
+					message.branchName,
+				);
 				break;
 			}
 			default: {
