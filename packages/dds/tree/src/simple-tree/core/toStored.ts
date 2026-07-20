@@ -6,7 +6,7 @@
 import type { SchemaUpgrade } from "./allowedTypes.js";
 
 /**
- * Policy controlling which staged schema upgrades are included when generating {@link TreeStoredSchema} from a view schema.
+ * Policy controlling which staged schema upgrades are included when generating stored schema from a view schema.
  * @input
  * @alpha
  */
