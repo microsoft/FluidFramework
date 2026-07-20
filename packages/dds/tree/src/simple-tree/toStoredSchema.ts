@@ -124,7 +124,8 @@ export function toInitialSchema(
  *
  * TODO: this should get additional options to enable support for unknown optional fields.
  */
-export const toUnhydratedSchema: StagedSchemaUpgradePolicy = StagedSchemaUpgradePolicy.permissive;
+export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
+	StagedSchemaUpgradePolicy.permissive;
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
