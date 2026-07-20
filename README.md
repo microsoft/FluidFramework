@@ -122,6 +122,16 @@ corepack enable
 >
 > If you previously ran `corepack enable`, run `corepack disable pnpm` so the npm-installed pnpm is
 > used. This is the same script CI uses to install pnpm.
+>
+> To keep Corepack enabled instead (handy when you switch between repos that pin different package
+> managers), add `--seed-corepack`. This installs the pinned pnpm and pre-populates Corepack's cache
+> for that version, so Corepack reuses it offline instead of trying to download it:
+>
+> ```shell
+> node ./scripts/bootstrap-pnpm.cjs --registry <registry-url> --seed-corepack
+> ```
+>
+> Only the seeded version is cached; re-run the script for other pinned versions you need.
 
 Run the following to build the client packages:
 
