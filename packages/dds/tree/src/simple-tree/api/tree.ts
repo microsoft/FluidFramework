@@ -422,7 +422,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status of the document's stored schema changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
 	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
@@ -443,6 +443,38 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
 	 * with a view that does not include equivalent staged members in its construction-time policy will cause
 	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 *
+	 * @example Enabling a staged allowed type for documents, selected by a feature flag:
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta("my-app");
+	 *
+	 * class TaskItem extends sf.object("TaskItem", { title: sf.string }) {}
+	 * class ChecklistItem extends sf.object("ChecklistItem", { text: sf.string }) {}
+	 *
+	 * // `staged` wraps ChecklistItem so it can be enabled at runtime.
+	 * const stagedChecklist = SchemaFactoryBeta.staged(ChecklistItem);
+	 * const checklistUpgrade = stagedChecklist.metadata.stagedSchemaUpgrade;
+	 *
+	 * class AppSchema extends sf.object("AppSchema", {
+	 *   items: sf.array([TaskItem, stagedChecklist]),
+	 * }) {}
+	 *
+	 * // Feature flag controls whether the upgrade is enabled for this session.
+	 * const policy = featureFlags.enableChecklist
+	 *   ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(checklistUpgrade)
+	 *   : undefined;
+	 *
+	 * const view = tree.viewWith(
+	 *   new TreeViewConfigurationAlpha({ schema: AppSchema, stagedUpgradePolicy: policy }),
+	 * );
+	 *
+	 * if (view.compatibility.canUpgrade) {
+	 *   // Writes the staged type into the document's stored schema.
+	 *   view.upgradeSchema();
+	 * }
+	 * ```
+	 *
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -460,6 +492,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
 	 *
+	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
 	 *
 	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
