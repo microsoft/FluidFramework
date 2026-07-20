@@ -187,7 +187,8 @@ export interface DataStoreCreator {
 	 * Create a new detached datastore `T` which can be attached to the {@link FluidContainer}.
 	 * by adding a handle to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
 	 * @remarks
-	 * `kind` must be included in the registry used to create or load this {@link DataStoreCreator}.
+	 * `kind` will be looked up in the {@link Registry} used to create or load this {@link DataStoreCreator}.
+	 * It is up to that registry to decide how it handles unknown types, for example by throwing an exception or returning a placeholder.
 	 */
 	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
 }
@@ -344,7 +345,7 @@ export interface ServiceClient {
 	 * @param id - The unique identifier of the container to load.
 	 * @param root - The {@link DataStoreKind} for the root, or a registry which will be used to look up the root based on its type.
 	 *
-	 * @throws a UsageError if the DataStoreKind's type (either the root directly or looked up from the registry) does not match the type of the root data store in the container.
+	 * @throws a {@link @fluidframework/telemetry-utils#UsageError} if the DataStoreKind's type (either the root directly or looked up from the registry) does not match the type of the root data store in the container.
 	 *
 	 * @privateRemarks
 	 * The ability to provide a registry here means that it's possible to:
