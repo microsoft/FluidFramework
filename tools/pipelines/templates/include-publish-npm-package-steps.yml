@@ -77,7 +77,6 @@ steps:
       tarballsDir=$(Pipeline.Workspace)/pack/${{ parameters.artifactPath }}
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
-
       # execute the publish command
       flub publish tarballs \
       --dir $tarballsDir \
