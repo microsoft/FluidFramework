@@ -68,26 +68,6 @@ const viewToStoredCache = new WeakMap<
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
-/**
- * Restrictive policy for generating stored schema from view schema.
- * @remarks
- * Excludes all staged schema members.
- * Prefer using `StagedSchemaUpgradePolicy.restrictive`.
- * @alpha
- */
-export const restrictiveStagedUpgradePolicy: StagedSchemaUpgradePolicy =
-	StagedSchemaUpgradePolicy.restrictive;
-
-/**
- * Permissive policy for generating stored schema from view schema.
- * @remarks
- * Includes all staged schema upgrades.
- * Prefer using `StagedSchemaUpgradePolicy.permissive`.
- * @alpha
- */
-export const permissiveStagedUpgradePolicy: StagedSchemaUpgradePolicy =
-	StagedSchemaUpgradePolicy.permissive;
-
 function isStagedSchemaUpgradePolicy(
 	stagedSchemaUpgrades: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
 ): stagedSchemaUpgrades is StagedSchemaUpgradePolicy {

@@ -23,6 +23,7 @@ import {
 import { exportSimpleSchema } from "../../shared-tree/index.js";
 import {
 	ExpectStored,
+	StagedSchemaUpgradePolicy,
 	Unchanged,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../simple-tree/core/index.js";
@@ -34,8 +35,6 @@ import {
 } from "../../simple-tree/index.js";
 import {
 	getStoredSchema,
-	permissiveStagedUpgradePolicy,
-	restrictiveStagedUpgradePolicy,
 	toInitialSchema,
 	simpleStoredSchemaToStoredSchema,
 	toStoredSchema,
@@ -74,7 +73,7 @@ describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const schema = new SchemaFactory("com.example");
 			class A extends schema.object("A", {}) {}
-			const stored = toStoredSchema(A, restrictiveStagedUpgradePolicy);
+			const stored = toStoredSchema(A, StagedSchemaUpgradePolicy.restrictive);
 			assert.equal(stored.rootFieldSchema.kind, FieldKinds.required.identifier);
 			assert.deepEqual(stored.rootFieldSchema.types, new Set([A.identifier]));
 			const storedNodeSchema = stored.nodeSchema.get(brand(A.identifier));
@@ -89,7 +88,7 @@ describe("toStoredSchema", () => {
 			class B extends schema.object("A", {}) {}
 
 			assert.throws(
-				() => toStoredSchema([A, B], restrictiveStagedUpgradePolicy),
+				() => toStoredSchema([A, B], StagedSchemaUpgradePolicy.restrictive),
 				/identifier "com.example.A"/,
 			);
 		});
@@ -108,12 +107,12 @@ describe("toStoredSchema", () => {
 					) {
 						// If the document is relying on forwards compatibility options (staged schema or unknown optional fields),
 						// then we do not expect to be able to get the same stored schema as in the document by deriving a stored schema from the view schema.
-						// For cases just using staged schema, this validates that the staged schema is being discarded due to restrictiveStagedUpgradePolicy,
+						// For cases just using staged schema, this validates that the staged schema is being discarded due to StagedSchemaUpgradePolicy.restrictive,
 						// but the main reason for this conditional is to avoid these cases breaking the "Matches document" case below.
 						it("Does not match document", () => {
 							const restrictive = toStoredSchema(
 								testCase.schema,
-								restrictiveStagedUpgradePolicy,
+								StagedSchemaUpgradePolicy.restrictive,
 							);
 							assert.notDeepEqual(restrictive, testCase.schemaData);
 						});
@@ -123,7 +122,7 @@ describe("toStoredSchema", () => {
 						it("Matches document", () => {
 							const restrictive = toStoredSchema(
 								testCase.schema,
-								restrictiveStagedUpgradePolicy,
+								StagedSchemaUpgradePolicy.restrictive,
 							);
 							assert.deepEqual(restrictive, testCase.schemaData);
 						});
@@ -132,9 +131,12 @@ describe("toStoredSchema", () => {
 					it("Restrictive and Permissive", () => {
 						const restrictive = toStoredSchema(
 							testCase.schema,
-							restrictiveStagedUpgradePolicy,
+							StagedSchemaUpgradePolicy.restrictive,
 						);
-						const permissive = toStoredSchema(testCase.schema, permissiveStagedUpgradePolicy);
+						const permissive = toStoredSchema(
+							testCase.schema,
+							StagedSchemaUpgradePolicy.permissive,
+						);
 
 						// The restrictive case, used for initial schemas and upgrades, does not include any staged schema features.
 						// The permissive case, used for unhydrated trees, includes all staged schema features.
@@ -329,7 +331,7 @@ describe("toStoredSchema", () => {
 		it("minimal", () => {
 			const stored = filterAllowedTypes(
 				SchemaFactoryAlpha.required(SchemaFactory.number).simpleAllowedTypes,
-				restrictiveStagedUpgradePolicy,
+				StagedSchemaUpgradePolicy.restrictive,
 			);
 			assert.deepEqual(
 				stored,
@@ -342,12 +344,12 @@ describe("toStoredSchema", () => {
 				SchemaFactoryAlpha.required(
 					SchemaFactoryAlpha.types([SchemaFactoryAlpha.staged(SchemaFactory.number)]),
 				).simpleAllowedTypes,
-				restrictiveStagedUpgradePolicy,
+				StagedSchemaUpgradePolicy.restrictive,
 			);
 			const staged = SchemaFactoryAlpha.staged(SchemaFactory.number);
 			const storedPermissive = filterAllowedTypes(
 				SchemaFactoryAlpha.required(SchemaFactoryAlpha.types([staged])).simpleAllowedTypes,
-				permissiveStagedUpgradePolicy,
+				StagedSchemaUpgradePolicy.permissive,
 			);
 			const view = filterAllowedTypes(
 				SchemaFactoryAlpha.required(
@@ -390,31 +392,40 @@ describe("toStoredSchema", () => {
 	describe("getStoredSchema", () => {
 		it("options", () => {
 			const v1 = getStoredSchema(
-				transformSimpleNodeSchema(HasStagedAllowedTypes, restrictiveStagedUpgradePolicy),
+				transformSimpleNodeSchema(
+					HasStagedAllowedTypes,
+					StagedSchemaUpgradePolicy.restrictive,
+				),
 			);
 			const v2 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedAllowedTypesAfterUpdate,
-					restrictiveStagedUpgradePolicy,
+					StagedSchemaUpgradePolicy.restrictive,
 				),
 			);
 			const v1Permissive = getStoredSchema(
-				transformSimpleNodeSchema(HasStagedAllowedTypes, permissiveStagedUpgradePolicy),
+				transformSimpleNodeSchema(HasStagedAllowedTypes, StagedSchemaUpgradePolicy.permissive),
 			);
 			assert.notDeepEqual(v1.encodeV1(), v1Permissive.encodeV1());
 			assert.deepEqual(v1Permissive.encodeV1(), v2.encodeV1());
 
 			const stagedOptionalV1 = getStoredSchema(
-				transformSimpleNodeSchema(HasStagedOptionalField, restrictiveStagedUpgradePolicy),
+				transformSimpleNodeSchema(
+					HasStagedOptionalField,
+					StagedSchemaUpgradePolicy.restrictive,
+				),
 			);
 			const stagedOptionalV2 = getStoredSchema(
 				transformSimpleNodeSchema(
 					HasStagedOptionalFieldAfterUpdate,
-					restrictiveStagedUpgradePolicy,
+					StagedSchemaUpgradePolicy.restrictive,
 				),
 			);
 			const stagedOptionalV1Permissive = getStoredSchema(
-				transformSimpleNodeSchema(HasStagedOptionalField, permissiveStagedUpgradePolicy),
+				transformSimpleNodeSchema(
+					HasStagedOptionalField,
+					StagedSchemaUpgradePolicy.permissive,
+				),
 			);
 			assert.notDeepEqual(stagedOptionalV1.encodeV1(), stagedOptionalV1Permissive.encodeV1());
 			assert.deepEqual(stagedOptionalV1Permissive.encodeV1(), stagedOptionalV2.encodeV1());

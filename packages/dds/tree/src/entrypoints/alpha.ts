@@ -321,12 +321,10 @@ export {
 	independentInitializedView, 
 	independentView, 
 	normalizeAllowedTypes, 
-	permissiveStagedUpgradePolicy, 
 	persistedToSimpleSchema, 
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	restrictiveStagedUpgradePolicy, 
 	trackDirtyNodes
 	// #endregion
 } from "../index.js";

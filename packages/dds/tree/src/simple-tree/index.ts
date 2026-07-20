@@ -320,8 +320,6 @@ export {
 	toUpgradeSchema,
 	toInitialSchema,
 	toUnhydratedSchema,
-	restrictiveStagedUpgradePolicy,
-	permissiveStagedUpgradePolicy,
 } from "./toStoredSchema.js";
 export {
 	numberSchema,

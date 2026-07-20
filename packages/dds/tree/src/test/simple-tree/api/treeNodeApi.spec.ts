@@ -54,7 +54,7 @@ import {
 	isTreeNode,
 	KeyEncodingOptions,
 	type NodeFromSchema,
-	permissiveStagedUpgradePolicy,
+	StagedSchemaUpgradePolicy,
 	SchemaFactory,
 	SchemaFactoryAlpha,
 	toInitialSchema,
@@ -3440,7 +3440,7 @@ describe("treeNodeApi", () => {
 				const view = testDocumentIndependentView({
 					ambiguous: false,
 					schema: StagedSchema,
-					schemaData: toStoredSchema(StagedSchema, permissiveStagedUpgradePolicy),
+					schemaData: toStoredSchema(StagedSchema, StagedSchemaUpgradePolicy.permissive),
 					treeFactory: () =>
 						jsonableTreeFromFieldCursor(fieldCursorFromInsertable(StagedSchema, { foo: 5 })),
 				});
