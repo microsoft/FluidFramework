@@ -1075,6 +1075,52 @@ describe("transaction minimize post-processor", () => {
 			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
 			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
 		});
+
+		// If any of these tests start to fail, the system has new capabilities
+		// and additional scenarios should be added to verify minimize handles
+		// them correctly.
+		describe("existing content re-inserted raises exception", () => {
+			it("nesting original box under new parent in array", () => {
+				assert.throws(() => {
+					const { view, stringifiedChange } = runScenario({
+						schema: BoxArray,
+						initialContent: [new Box({ value: "A☠️" })],
+						apply: (root) => {
+							const originalBox = root[0];
+							// detach the original box
+							root.removeAt(0);
+							const parent = new Box({ value: "B❤️", nested: originalBox }); // currently throws here
+							root.insertAtEnd(parent);
+						},
+					} as const satisfies BoxArrayScenario);
+					assert.equal(view.root.length, 1);
+					assert.equal(view.root[0].value, "B❤️");
+					assert.equal(view.root[0].nested?.value, "A☠️");
+					assert.match(stringifiedChange, someSurvivingMarkerRegex);
+					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
+			});
+
+			it("nesting original box under new root parent", () => {
+				assert.throws(() => {
+					const { view: viewResult, stringifiedChange } = runScenario({
+						schema: OptionalBox,
+						initialContent: new Box({ value: "A☠️" }),
+						apply: (_root, _tree, view_) => {
+							const originalBox = view_.root;
+							// detach the original box
+							view_.root = undefined;
+							const parent = new Box({ value: "B❤️", nested: originalBox }); // currently throws here
+							view_.root = parent;
+						},
+					} as const satisfies BoxScenario);
+					assert.equal(viewResult.root?.value, "B❤️");
+					assert.equal(viewResult.root?.nested?.value, "A☠️");
+					assert.match(stringifiedChange, someSurvivingMarkerRegex);
+					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
+			});
+		});
 	});
 
 	// These tests only assert the observable end state of the document. Minimization must never change the
