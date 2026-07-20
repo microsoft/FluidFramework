@@ -215,7 +215,10 @@ export interface FluidContainer<TData = unknown>
 	extends DataStoreCreator,
 		ErasedBaseType<readonly ["FluidContainer", TData]> {
 	/**
-	 * The unique identifier for this container, if it has been attached to a service.
+	 * The unique identifier for this container within its service.
+	 * @remarks
+	 * `undefined` if the container has not yet been attached to a service.
+	 * This can be used to load another instance of this container from the service using {@link ServiceClient.loadContainer}.
 	 */
 	readonly id?: string | undefined;
 
@@ -234,6 +237,9 @@ export interface FluidContainer<TData = unknown>
 	 * @privateRemarks
 	 * TODO: we should document the what the expected behavior is if one tries to modify the data after close, or tries to call close multiple times.
 	 * TODO: we also likely want to have a way to detect if closed and events for on close.
+	 * TODO: ensure this truly closes all timers: it seems like we might still leak some related to the summarizer.
+	 * TODO: we should clarify how this interacts with unsaved content including inprogress summaries,
+	 * and likely also provide an async API with some options for how to handle that.
 	 */
 	close(): void;
 }
@@ -243,13 +249,13 @@ export interface FluidContainer<TData = unknown>
  * @sealed
  * @alpha
  */
-export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
+export interface FluidContainerWithService<TData = unknown> extends FluidContainer<TData> {
 	/**
 	 * Attaches this container to the associated service client.
 	 *
 	 * The returned promise resolves once the container is attached: the container from the promise is the same one passed in as the argument.
 	 */
-	attach(): Promise<FluidContainerAttached<T>>;
+	attach(): Promise<FluidContainerAttached<TData>>;
 
 	// This could expose access to the ServiceClient if needed.
 }
@@ -259,7 +265,7 @@ export interface FluidContainerWithService<T = unknown> extends FluidContainer<T
  * @sealed
  * @alpha
  */
-export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
+export interface FluidContainerAttached<TData = unknown> extends FluidContainer<TData> {
 	/**
 	 * {@inheritdoc FluidContainer.id}
 	 */
