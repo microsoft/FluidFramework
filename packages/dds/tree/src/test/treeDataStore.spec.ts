@@ -10,7 +10,7 @@ import {
 	cleanupEphemeralService,
 	startEphemeralService,
 } from "@fluidframework/local-driver/internal";
-import { dataStoreKind } from "@fluidframework/shared-object-base/internal";
+import { createDataStoreKind } from "@fluidframework/shared-object-base/internal";
 
 import { SchematizingSimpleTreeView, Tree } from "../shared-tree/index.js";
 import {
@@ -125,7 +125,7 @@ describe("treeDataStore", () => {
 	it("lazy loading example", async () => {
 		// A minimal datastore which lazy loads SharedTree when needed.
 		// Due to limitations on registries, this has to load SharedTree when the dataStore is loaded, not when shared tree is needed in the datastore.
-		const myFactory = dataStoreKind({
+		const myFactory = createDataStoreKind({
 			type: "my-tree",
 			registry: async () => {
 				const module = await import("../treeFactory.js");
@@ -178,7 +178,7 @@ describe("treeDataStore", () => {
 		});
 
 		// A DataStore which is an initialized ITree with the above config.
-		const MyTree = dataStoreKind<ITree, ITree>({
+		const MyTree = createDataStoreKind<ITree, ITree>({
 			type: "my-tree",
 			registry: async () => () => SharedTreeAlpha,
 			async instantiateFirstTime(rootCreator, creator): Promise<ITree> {

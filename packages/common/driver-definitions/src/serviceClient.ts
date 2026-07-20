@@ -298,7 +298,7 @@ export interface FluidContainerAttached<TData = unknown> extends FluidContainer<
  *
  * A `DataStoreKind` is not constructed directly.
  * Instead, obtain one from a framework-provided factory:
- * use {@link @fluidframework/shared-object-base#dataStoreKind} to build a data store from a root shared object,
+ * use {@link @fluidframework/shared-object-base#createDataStoreKind} to build a data store from a root shared object,
  * or use a more specific wrapper around it, such as {@link @fluidframework/tree#treeDataStoreKind} for a {@link @fluidframework/tree#TreeView}-backed data store.
  *
  * Since it implements {@link DataStoreKey}, a `DataStoreKind` can also be used directly as the key to look

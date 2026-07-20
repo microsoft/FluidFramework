@@ -305,6 +305,9 @@ export const contentSchemaSymbol: unique symbol;
 // @alpha
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
+// @alpha
+export function createDataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -349,9 +352,6 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<
 // @alpha @sealed
 export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
 }
-
-// @alpha
-export function dataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
 
 // @alpha @input
 export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
@@ -564,13 +564,13 @@ export interface FluidContainer<TData = unknown> extends DataStoreCreator, Erase
 }
 
 // @alpha @sealed
-export interface FluidContainerAttached<T = unknown> extends FluidContainer<T> {
+export interface FluidContainerAttached<TData = unknown> extends FluidContainer<TData> {
     readonly id: string;
 }
 
 // @alpha @sealed
-export interface FluidContainerWithService<T = unknown> extends FluidContainer<T> {
-    attach(): Promise<FluidContainerAttached<T>>;
+export interface FluidContainerWithService<TData = unknown> extends FluidContainer<TData> {
+    attach(): Promise<FluidContainerAttached<TData>>;
 }
 
 // @beta @sealed

@@ -37,15 +37,15 @@ import type { ISharedObject } from "./types.js";
  * This can be done by unifying the DataStoreKind and SharedObjectKindAlpha types.
  * For now, this would mean having DataStoreKind extend SharedObjectKindAlpha, since we can allow a DataStore in all places SharedObjects are allowed,
  * but do not allow SharedObjects at the root.
- * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper DataStore) could simplifying things, allowing DataStores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
+ * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper DataStore) could simplify things, allowing DataStores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
  *
  * Part of this unification could be to relax the output from the factories / registries. Allowing the output to be an arbitrary type, which might be a promise, and might not be one could help.
- * Removal of the IFluidLoadable requirement, and allowing the returned type to expose handles to itself how ever it wants (or not at all) might be viable and simplify typing And allow for strongly typed handles at creation time at least).
+ * Removal of the IFluidLoadable requirement, and allowing the returned type to expose handles to itself however it wants (or not at all) might be viable and simplify typing and allow for strongly typed handles at creation time at least).
  * Maybe when Registry(type) gives a promise, it could instead give a factory which outputs a promise wrapped type? The check that the provided creation key is valid for that factory can be deferred until the promise resolves.
  *
  * Idea: creation key can have an interface that subsets the factory / SharedObjectKindAlpha / DataStoreKind so they can be used, or some branded key (string, and/or object with stronger identity what knows the type string) can be used.
  * Have Key interface contain validation function to check that the factory used (or maybe the value produced from it) is valid for that key.
- * During load, get with validation that simply checks the factory's type string matches the key's type string.
+ * During load, validation would simply check the factory's type string matches the key's type string.
  * When using SharedObjectKindAlpha or DataStoreKind, validation can check factory object identity against key.
  *
  * Goal: Mostly unify container, datastore and shared object abstractions.
@@ -91,7 +91,7 @@ export function sharedObjectRegistryFromIterable(
 /**
  * Options which define how to construct a particular {@link @fluidframework/driver-definitions#DataStoreKind}.
  * @remarks
- * Use {@link dataStoreKind} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
+ * Use {@link createDataStoreKind} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
  * @input
  * @alpha
  */
@@ -118,7 +118,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	 * TODO:
 	 * This requires the caller to produce a single root shared object (which is keyed by {@link rootSharedObjectId}).
 	 * This should be fine for new code, but code migrated from legacy APIs might need more flexibility.
-	 * Such use-cases could be accommodated providing a legacy alternative to `dataStoreKind` where `instantiateFirstTime` and `view` directly expose access to named root shared objects.
+	 * Such use-cases could be accommodated providing a legacy alternative to `createDataStoreKind` where `instantiateFirstTime` and `view` directly expose access to named root shared objects.
 	 * This should be easy to implement, but is currently not included.
 	 */
 	instantiateFirstTime(
@@ -139,7 +139,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
  * Creates a {@link @fluidframework/driver-definitions#DataStoreKind} from {@link DataStoreOptions}.
  * @alpha
  */
-export function dataStoreKind<T, TRoot extends IFluidLoadable>(
+export function createDataStoreKind<T, TRoot extends IFluidLoadable>(
 	options: DataStoreOptions<TRoot, T>,
 ): DataStoreKind<T> {
 	return new DataStoreKindImplementation<T>({
@@ -184,6 +184,14 @@ function convertRegistry(
 	};
 }
 
+/**
+ * DataStores keep their shared objects inside channels which get names.
+ * This is the name of the channel which we conventionally use for the root shared object of a DataStore in most cases.
+ * @remarks
+ * There can be other named channels, or the root could use a different name, but we are trying to migrate away from such patterns.
+ * Currently the DataStoreKind pattern used in this file follows and requires this convention,
+ * but we may relax that in the future for interop with legacy data if necessary.
+ */
 const rootSharedObjectId = "root";
 
 async function createDataStore<T, TRoot extends IFluidLoadable>(
@@ -196,12 +204,12 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 		context,
 		convertRegistry(sharedObjectRegistry),
 		existing,
-		async (rt: IFluidDataStoreRuntime) => {
+		async (runtimeInner: IFluidDataStoreRuntime) => {
 			const innerContext: DataStoreContext = {
 				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
 					const kind = registryLookup(sharedObjectRegistry, key);
 					// Create detached channel.
-					return asSharedObjectKind(kind).create(rt);
+					return asSharedObjectKind(kind).create(runtimeInner);
 				},
 			};
 
@@ -215,7 +223,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 						throw new UsageError("Root shared object already created");
 					}
 					const kind = registryLookup(sharedObjectRegistry, key);
-					const result = asSharedObjectKind(kind).create(rt, rootSharedObjectId);
+					const result = asSharedObjectKind(kind).create(runtimeInner, rootSharedObjectId);
 
 					// Every shared object is also an ISharedObject;
 					const rootSharedObject = result as IFluidLoadable as ISharedObject;
@@ -230,7 +238,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 			let root: TRoot | undefined;
 			if (existing) {
 				// getChannel returns the type-erased IChannel; the registered root kind guarantees it is a TRoot.
-				root = (await rt.getChannel(rootSharedObjectId)) as IFluidLoadable as TRoot;
+				root = (await runtimeInner.getChannel(rootSharedObjectId)) as IFluidLoadable as TRoot;
 			} else {
 				root = await options.instantiateFirstTime(rootCreator, innerContext);
 				if (root !== createdRoot) {
