@@ -15,9 +15,9 @@ export type {
 	EphemeralService,
 	EphemeralServiceClient,
 	EphemeralServiceOptions,
-} from "./localService.js";
+} from "./ephemeralService.js";
 export {
 	startEphemeralService,
 	cleanupEphemeralService,
 	getDefaultEphemeralService,
-} from "./localService.js";
+} from "./ephemeralService.js";
