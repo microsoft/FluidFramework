@@ -64,7 +64,7 @@ Most in-codebase uses of deprecation should be removed before or with the deprec
 
 #### Updating examples and documentation
 
-When alternate pattern is available, update examples at <https://github.com/microsoft/FluidExamples> and <https://github.com/microsoft/FluidHelloWorld> and documentation under <https://github.com/microsoft/FluidFramework/tree/main/website/docs>. Otherwise, plan to update examples and documentation when changes are released.
+When alternate pattern is available, update examples at <https://github.com/microsoft/FluidExamples> and <https://github.com/microsoft/FluidHelloWorld> and documentation under the [`website/docs`](../../../website/docs) directory. Otherwise, plan to update examples and documentation when changes are released.
 
 ## Cleaning up a deprecated API
 
