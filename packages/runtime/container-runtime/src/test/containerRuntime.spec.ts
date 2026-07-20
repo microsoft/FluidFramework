@@ -4242,44 +4242,67 @@ describe("Runtime", () => {
 				});
 			}
 
-			it("minVersionForCollab = 1.0.0", async () => {
-				const minVersionForCollab = "1.0.0";
-				const logger = new MockLogger();
-				await ContainerRuntime.loadRuntime2({
-					context: getMockContext({ logger }) as IContainerContext,
-					registry: new FluidDataStoreRegistry([]),
-					existing: false,
-					runtimeOptions: {},
-					provideEntryPoint: mockProvideEntryPoint,
-					minVersionForCollab,
+			for (const [name, minVersionParam] of [
+				["minDocumentRuntimeVersion", { minDocumentRuntimeVersion: "1.0.0" }],
+				["minVersionForCollab", { minVersionForCollab: "1.0.0" }],
+			] as const) {
+				it(`${name} = 1.0.0`, async () => {
+					const logger = new MockLogger();
+					await ContainerRuntime.loadRuntime2({
+						context: getMockContext({ logger }) as IContainerContext,
+						registry: new FluidDataStoreRegistry([]),
+						existing: false,
+						runtimeOptions: {},
+						provideEntryPoint: mockProvideEntryPoint,
+						...minVersionParam,
+					});
+
+					const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
+						summaryOptions: {},
+						gcOptions: {},
+						loadSequenceNumberVerification: "close",
+						flushMode: FlushMode.Immediate,
+						compressionOptions: {
+							minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
+							compressionAlgorithm: CompressionAlgorithms.lz4,
+						},
+						maxBatchSizeInBytes: 716800,
+						chunkSizeInBytes: 204800,
+						enableRuntimeIdCompressor: undefined,
+						enableGroupedBatching: false,
+						explicitSchemaControl: false,
+						stagingModeAutoFlushThreshold: 1000,
+						disableSchemaUpgrade: false,
+					};
+
+					logger.assertMatchAny([
+						{
+							eventName: "ContainerRuntime:ContainerLoadStats",
+							category: "generic",
+							options: JSON.stringify(expectedRuntimeOptions),
+							minVersionForCollab: "1.0.0",
+						},
+					]);
 				});
+			}
 
-				const expectedRuntimeOptions: IContainerRuntimeOptionsInternal = {
-					summaryOptions: {},
-					gcOptions: {},
-					loadSequenceNumberVerification: "close",
-					flushMode: FlushMode.Immediate,
-					compressionOptions: {
-						minimumBatchSizeInBytes: Number.POSITIVE_INFINITY,
-						compressionAlgorithm: CompressionAlgorithms.lz4,
-					},
-					maxBatchSizeInBytes: 716800,
-					chunkSizeInBytes: 204800,
-					enableRuntimeIdCompressor: undefined,
-					enableGroupedBatching: false,
-					explicitSchemaControl: false,
-					stagingModeAutoFlushThreshold: 1000,
-					disableSchemaUpgrade: false,
-				};
-
-				logger.assertMatchAny([
-					{
-						eventName: "ContainerRuntime:ContainerLoadStats",
-						category: "generic",
-						options: JSON.stringify(expectedRuntimeOptions),
-						minVersionForCollab,
-					},
-				]);
+			it("throws when both compatibility parameter names are provided", async () => {
+				await assert.rejects(
+					async () =>
+						ContainerRuntime.loadRuntime2({
+							context: getMockContext() as IContainerContext,
+							registry: new FluidDataStoreRegistry([]),
+							existing: false,
+							runtimeOptions: {},
+							provideEntryPoint: mockProvideEntryPoint,
+							minDocumentRuntimeVersion: "2.0.0",
+							minVersionForCollab: "2.0.0",
+						}),
+					(error: IErrorBase) =>
+						error.errorType === ContainerErrorTypes.usageError &&
+						error.message ===
+							"Only specify one of minDocumentRuntimeVersion or minVersionForCollab.",
+				);
 			});
 
 			it('minVersionForCollab = 2.0.0-defaults ("default")', async () => {

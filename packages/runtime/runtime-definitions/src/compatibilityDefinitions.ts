@@ -41,3 +41,13 @@
 export type MinimumVersionForCollab =
 	| `${1 | 2}.${bigint}.${bigint}`
 	| `${1 | 2}.${bigint}.${bigint}-${string}`;
+
+/**
+ * Preferred type name for the oldest Fluid Framework runtime version that must be able to open or process documents created or loaded by a container runtime.
+ * @remarks
+ * This type has the same validation requirements and behavior as {@link MinimumVersionForCollab}.
+ *
+ * @input
+ * @public
+ */
+export type MinDocumentRuntimeVersion = MinimumVersionForCollab;

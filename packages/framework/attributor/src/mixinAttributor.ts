@@ -55,9 +55,6 @@ export const mixinAttributor = (
 				context,
 				registryEntries,
 				existing,
-				provideEntryPoint,
-				runtimeOptions,
-				containerScope,
 				containerRuntimeCtor = ContainerRuntimeWithAttributor as unknown as typeof ContainerRuntime,
 			} = params;
 
@@ -75,12 +72,8 @@ export const mixinAttributor = (
 			}
 
 			const runtime = await Base.loadRuntime({
-				context,
+				...params,
 				registryEntries: registryEntriesCopy,
-				provideEntryPoint,
-				runtimeOptions,
-				containerScope,
-				existing,
 				containerRuntimeCtor,
 			});
 
