@@ -29,6 +29,7 @@ export interface StagedSchemaUpgradePolicy {
 
 /**
  * Provides factory methods for creating {@link (StagedSchemaUpgradePolicy:interface)} instances.
+ * @sealed
  * @alpha
  */
 export interface StagedSchemaUpgradePolicyFactory {
