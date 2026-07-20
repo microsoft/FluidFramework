@@ -24,10 +24,15 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
+	type ImplicitFieldSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { getView } from "../../utils.js";
+import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
+import { getView, StringArray } from "../../utils.js";
+import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -36,6 +41,21 @@ class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = SharedTree.getFactory();
+
+// Type tests
+{
+	// TreeViewBeta should be assignable to TreeView
+	type _checkBetaAssignableToPublic = requireAssignableTo<
+		TreeViewBeta<ImplicitFieldSchema>,
+		TreeView<ImplicitFieldSchema>
+	>;
+
+	// TreeViewAlpha should be assignable to TreeViewBeta
+	type _checkAlphaAssignableToBeta = requireAssignableTo<
+		TreeViewAlpha<ImplicitFieldSchema>,
+		TreeViewBeta<ImplicitFieldSchema>
+	>;
+}
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
@@ -99,7 +119,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/is not allowed in this field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -112,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/is not allowed in this field/),
 			);
 		});
 	});
@@ -406,6 +429,45 @@ describe("simple-tree tree", () => {
 			});
 			assert.equal(viewA.root, 5);
 		});
+	});
+
+	describe("computeNetChangeIfRebasedOnto", () => {
+		const scenarios = [
+			{ editSource: false, editTarget: false },
+			{ editSource: true, editTarget: false },
+			{ editSource: false, editTarget: true },
+			{ editSource: true, editTarget: true },
+		];
+		for (const { editSource, editTarget } of scenarios) {
+			it(`when source branch is ${editSource ? "edited" : "not edited"} and target branch is ${
+				editTarget ? "edited" : "not edited"
+			}`, () => {
+				const config = new TreeViewConfiguration({ schema: StringArray });
+				const targetView = getView(config);
+				targetView.initialize([]);
+				const sourceView = targetView.fork();
+
+				if (editSource) {
+					sourceView.root.insertAtEnd("source edit");
+				}
+				if (editTarget) {
+					targetView.root.insertAtEnd("target edit");
+				}
+				const rebasedView = getViewForForkedBranch(sourceView).forkView;
+				const appliedView = getViewForForkedBranch(sourceView).forkView;
+
+				rebasedView.rebaseOnto(targetView);
+
+				// Validating the output of `computeNetChangeIfRebasedOnto` directly would make the test brittle since the internals of the format are implementation details.
+				// Instead, we apply the net change to the applied view and then compare the resulting state to the rebased view to ensure they are equivalent.
+				const netChange = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (netChange !== undefined) {
+					appliedView.applyChange(netChange);
+				}
+
+				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
+			});
+		}
 	});
 
 	describe("isMissingEditsFrom", () => {

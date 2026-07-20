@@ -188,11 +188,7 @@ function serializeDictionaryString(
 	buffer.write(id, idLength);
 }
 
-function serializeString(
-	buffer: WriteBuffer,
-	content: string,
-	codeMap = binaryBytesToCodeMap,
-): void {
+function serializeString(buffer: WriteBuffer, content: string): void {
 	serializeBlob(buffer, IsoBuffer.from(content, "utf8"), utf8StringBytesToCodeMap);
 }
 

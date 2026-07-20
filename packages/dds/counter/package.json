@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/counter",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "Counter DDS",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -144,7 +144,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
-		"@fluidframework/counter-previous": "npm:@fluidframework/counter@2.110.0",
+		"@fluidframework/counter-previous": "npm:@fluidframework/counter@2.111.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",

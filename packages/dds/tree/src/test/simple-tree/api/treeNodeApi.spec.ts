@@ -59,7 +59,7 @@ import {
 	SchemaFactoryAlpha,
 	toInitialSchema,
 	toStoredSchema,
-	type TransactionResult,
+	type TransactionVoidResult,
 	treeNodeApi as Tree,
 	TreeBeta,
 	type TreeChangeEvents,
@@ -4305,7 +4305,9 @@ describe("treeNodeApi", () => {
 			const unhydratedObj = new Obj({ n: 3 });
 			for (const obj of [hydratedObj, unhydratedObj]) {
 				const context = TreeAlpha.context(obj);
-				context.runTransaction(() => (obj.n = 4)); // Transaction with no return value
+				context.runTransaction(() => {
+					obj.n = 4;
+				}); // Transaction with no return value
 				const value = context.runTransaction(() => ({ value: obj.n })); // Transaction with return value
 				assert.ok(value.success);
 				assert.equal(obj.n, value.value);
@@ -4329,9 +4331,14 @@ describe("treeNodeApi", () => {
 		it("can successfully run transactions with constraints", () => {
 			const node = hydrate(Obj, { n: 3 });
 			const context = TreeAlpha.context(node);
-			context.runTransaction(() => (node.n = 4), {
-				preconditions: [{ type: "nodeInDocument", node }],
-			});
+			context.runTransaction(
+				() => {
+					node.n = 4;
+				},
+				{
+					preconditions: [{ type: "nodeInDocument", node }],
+				},
+			);
 			assert.equal(node.n, 4);
 		});
 
@@ -4352,7 +4359,7 @@ describe("treeNodeApi", () => {
 			const node = new Obj({ n: 3 });
 			const context = TreeAlpha.context(node);
 
-			let transactionPromise: Promise<TransactionResult> | undefined;
+			let transactionPromise: Promise<TransactionVoidResult> | undefined;
 			const expectedError = validateUsageError(
 				/An asynchronous transaction cannot be started while another transaction is already in progress/,
 			);

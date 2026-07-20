@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/azure-client",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "A tool to enable creation and loading of Fluid containers using the Azure Fluid Relay service",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -82,11 +82,12 @@
 		"lint": "fluid-build . --task lint",
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"pack:tests": "tar -cf ./azure-client.test-files.tar ./dist/test ./lib/test",
-		"start:tinylicious:test": "npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
+		"start:tinylicious:test": "cross-env PORT=7073 npx @fluidframework/azure-local-service > tinylicious.log 2>&1",
 		"test": "npm run test:realsvc",
 		"test:realsvc": "npm run test:realsvc:tinylicious",
 		"test:realsvc:local:run": "mocha --recursive lib/test --timeout 10000",
-		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7070 test:realsvc:local:run",
+		"test:realsvc:tinylicious": "start-server-and-test start:tinylicious:test 7073 test:realsvc:local:run",
+		"test:realsvc:tinylicious:report": "npm run test:realsvc:tinylicious",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
@@ -105,7 +106,7 @@
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
 		"@fluid-tools/build-cli": "catalog:buildTools",
-		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.110.0",
+		"@fluidframework/azure-client-previous": "npm:@fluidframework/azure-client@2.111.0",
 		"@fluidframework/azure-local-service": "workspace:~",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
