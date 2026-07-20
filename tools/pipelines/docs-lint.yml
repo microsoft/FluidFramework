@@ -9,24 +9,29 @@ trigger:
   branches:
     include:
     - main
-    - next
-    - lts
-    - release/*
   paths:
     include:
     - docs
+    # The pipeline should also re-run when the pipeline definition or any template it uses changes.
+    - tools/pipelines/docs-lint.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    # The "docs" workspace depends on this file via file path, so we need to run the docs-lint pipeline if it changes.
+    - common/build/build-common/prettier.config.cjs
 
 pr:
   branches:
     include:
     - main
-    - next
-    - lts
-    - release/*
   paths:
     include:
     - docs
-    - common/build/build-common/prettier.config.cjs # The "docs" workspace depends on this file via file path, so we need to run the docs-lint pipeline if it changes.
+    # The pipeline should also re-run when the pipeline definition or any template it uses changes.
+    - tools/pipelines/docs-lint.yml
+    - tools/pipelines/templates/include-use-node-version.yml
+    - tools/pipelines/templates/include-install-pnpm.yml
+    # The "docs" workspace depends on this file via file path, so we need to run the docs-lint pipeline if it changes.
+    - common/build/build-common/prettier.config.cjs
 
 variables:
 - name: pnpmStorePath
@@ -126,11 +131,3 @@ extends:
             command: 'custom'
             workingDir: $(Pipeline.Workspace)/${{ variables.docsDirectory }}
             customCommand: 'run lint'
-
-        - task: Bash@3
-          displayName: Prune pnpm store
-          inputs:
-            targetType: 'inline'
-            script: |
-              set -eu -o pipefail
-              pnpm store prune
