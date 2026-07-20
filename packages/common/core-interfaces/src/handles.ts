@@ -221,14 +221,16 @@ export interface IFluidHandlePayloadPending<T> extends IFluidHandle<T> {
  */
 export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
 	/**
-	 * Emitted for locally created handles when the payload has been uploaded to storage, but before it
-	 * is shared to remote collaborators.
+	 * Emitted for locally created handles once the payload has been uploaded to storage and its BlobAttach
+	 * op has been enqueued to be sent, but before that op has been sequenced and the payload shared to
+	 * remote collaborators.
 	 *
 	 * @remarks
-	 * This is a local-only milestone that precedes {@link IFluidHandleEvents.payloadShared}. For instance,
-	 * the BlobManager uploads a blob to storage and only afterwards sends the BlobAttach op (which requires
-	 * a connection) that shares it to remote collaborators. This event lets the local client observe upload
-	 * completion without waiting for the payload to be shared - for example, to wait for all pending blob
+	 * This is a local-only milestone that precedes {@link IFluidHandleEvents.payloadShared}. The BlobManager
+	 * uploads a blob to storage and then enqueues a BlobAttach op; enqueuing that op does not require a
+	 * connection, but it only makes the payload available to remote collaborators once it has been sequenced,
+	 * which does. This event lets the local client observe that the upload has completed (and its attach op
+	 * enqueued) without waiting for the payload to be shared - for example, to wait for all pending blob
 	 * uploads to finish before connecting. Like the rest of {@link ILocalFluidHandleEvents}, it only fires
 	 * for handles created with a pending payload.
 	 *
@@ -236,13 +238,18 @@ export interface ILocalFluidHandleEvents extends IFluidHandleEvents {
 	 * handle may transition directly to shared (skipping an observable upload) - for instance when loading
 	 * from pending state and observing the BlobAttach op from the client that generated that state.
 	 *
-	 * When this event fires while the container is disconnected (that is, the upload both started and
-	 * completed before reconnecting), the payload's attach op is guaranteed to be ordered ahead of any ops
-	 * produced during that same disconnected period - including the DDS changes that stored this handle -
-	 * because pending attach ops are flushed before other pending ops on reconnect. As a result, remote
-	 * clients process those DDS changes only after the payload is already available to them, and so never
-	 * observe this handle in its pre-"shared" (not-yet-resolvable) state through those changes. This does
-	 * not hold for changes made while connected, which may be sequenced before the payload's attach op.
+	 * This event fires only after the payload's BlobAttach op has been enqueued into the outbox. Any op you
+	 * submit in response to it (for example, storing this handle into a DDS) is therefore enqueued after the
+	 * BlobAttach op, and because BlobAttach ops are flushed ahead of the main batch, remote collaborators
+	 * sequence the attach op first. As a result they never observe this handle - through such a responding
+	 * op - before its payload is available to them.
+	 *
+	 * This ordering guarantee applies only to ops submitted in response to this event. It does _not_ apply
+	 * to the DDS change that originally stored this handle: for a pending-payload blob, uploading (and hence
+	 * this event) does not begin until the handle has already been referenced by an attached DDS. That
+	 * storing change therefore necessarily precedes the BlobAttach op and may be sequenced ahead of it,
+	 * leaving remote collaborators to observe the handle before its payload is shared - which is exactly the
+	 * still-pending state that pending-payload handles are designed to represent.
 	 */
 	payloadUploaded: () => void;
 	/**

@@ -582,7 +582,6 @@ export class BlobManager {
 				// In normal creation flows, the blob will be in localOnly state here. But in the case of loading
 				// with pending state we can call it with an uploaded-but-not-attached blob. Start the upload
 				// flow only if it's localOnly.
-				this.internalEvents.emit("blobUploaded", localId);
 				return;
 			}
 			assert(
@@ -629,7 +628,6 @@ export class BlobManager {
 								uploadTime: Date.now(),
 								minTTLInSeconds: createBlobResponse.minTTLInSeconds,
 							});
-							this.internalEvents.emit("blobUploaded", localId);
 							resolve();
 						}
 					})
@@ -720,6 +718,12 @@ export class BlobManager {
 					this.internalEvents.on("blobExpired", onBlobExpired);
 					signal?.addEventListener("abort", onSignalAbort);
 					this.sendBlobAttachMessage(localId, localBlobRecord.storageId);
+					// The blob is now uploaded and its BlobAttach op has been enqueued into the outbox.
+					// We raise the "uploaded" milestone here (rather than when the upload to storage completed)
+					// so that if a listener responds by submitting an op (e.g. storing this handle in a DDS),
+					// that op is enqueued after the BlobAttach op. Note the BlobAttach op is additionally
+					// guaranteed to be flushed ahead of any main-batch op regardless of enqueue order.
+					this.internalEvents.emit("blobUploaded", localId);
 				});
 			}
 		};

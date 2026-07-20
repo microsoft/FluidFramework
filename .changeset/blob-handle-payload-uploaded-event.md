@@ -13,7 +13,7 @@ This is a local-only milestone that precedes the existing `payloadShared` event.
 
 ```typescript
 handle.events.on("payloadUploaded", () => {
-	// The blob has been uploaded to storage, but its BlobAttach op has not yet been sent/acked.
+	// The blob has been uploaded to storage and its BlobAttach op enqueued, but that op has not yet been sequenced/acked.
 });
 ```
 
