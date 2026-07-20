@@ -1,7 +1,7 @@
 # Coding Guidelines
 
 Coding guidelines for the Fluid Framework take a couple of forms.
-Where possible, we enforce these rules in an automated fashion via tooling like our shared [build configurations](../../common/build/build-common/README.md) and shared [ESLint configuration](../../common/build/eslint-config-fluid).
+Where possible, we enforce these rules in an automated fashion via tooling like our shared [build configurations](../../../common/build/build-common/README.md) and shared [ESLint configuration](../../../common/build/eslint-config-fluid).
 
 Where guidelines cannot be enforced by tooling, please refer to the following guidelines.
 And when in doubt, or when explicit guidance is not offered here, refer to [TypeScript's own guidelines](https://github.com/Microsoft/TypeScript/wiki/Coding-guidelines).

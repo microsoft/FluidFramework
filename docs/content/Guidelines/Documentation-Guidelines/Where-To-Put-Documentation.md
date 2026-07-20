@@ -77,7 +77,7 @@ Many of our customers are likely to discover us through our public website, `flu
 These customers are not going to dive directly into our repository or our API documentation.
 Instead, they will want high-level introductions, overviews, and examples to begin using the product.
 
-Such documentation should be added to the website via the [/website](../../../website) directory in the repository.
+Such documentation should be added to the website via the [/website](../../../../website) directory in the repository.
 
 > Remember: these documents are public.
 > They **_must not_** include internal / confidential information.
