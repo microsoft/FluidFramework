@@ -139,6 +139,9 @@ export type MinimumVersionForCollaboration = `2.${bigint}.0`;
 export function featureVersion<major extends `${bigint}`, minor extends `${bigint}`>(
 	version: `${major}.${minor}.${bigint}-${string}` | `${major}.${minor}.${bigint}`,
 ): `${major}.${minor}.0` {
+	// The SemVer package could be used to parse this version, but it wouldn't gain us anything, and would just make it harder to determine that the down casting below is valid.
+	// Since we have a strongly typed string input, we know exactly which formats are allowed, so we don't need its more general parsing and validation either.
+	// If we wanted to preserve the patch or prerelease version, that would require more complex parsing and would justify using the SemVer package, but we don't need that here.
 	const parsed = version.split(".");
 	return `${parsed[0] as major}.${parsed[1] as minor}.0`;
 }
