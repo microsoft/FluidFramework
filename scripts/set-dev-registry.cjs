@@ -43,10 +43,7 @@ const SKIP_DIR_NAMES = new Set(["node_modules", ".git"]);
 
 // Path fragments that identify workspaces which are test fixtures or managed separately with their
 // own lockfiles, and therefore should not receive the override.
-const EXCLUDED_FRAGMENTS = [
-	path.join("build-infrastructure", "src", "test", "data"),
-	"compat-workspaces",
-];
+const EXCLUDED_FRAGMENTS = [path.join("build-infrastructure", "src", "test", "data")];
 
 /**
  * Recursively find every directory under `dir` that contains a `pnpm-workspace.yaml`, excluding
