@@ -29,6 +29,29 @@ export interface StagedSchemaUpgradePolicy {
 
 /**
  * Provides factory methods for creating {@link (StagedSchemaUpgradePolicy:interface)} instances.
+ *
+ * @remarks
+ * Use the properties and methods on this object to obtain staged-schema generation options
+ * for different scenarios:
+ *
+ * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
+ *
+ * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
+ *
+ * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
+ *
+ * @example
+ * ```typescript
+ * // Enable specific upgrades:
+ * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
+ *
+ * // Use restrictive (default, no staged upgrades):
+ * const options = StagedSchemaUpgradePolicy.restrictive;
+ *
+ * // Use permissive (all staged upgrades, useful for testing):
+ * const options = StagedSchemaUpgradePolicy.permissive;
+ * ```
+ *
  * @sealed
  * @alpha
  */
@@ -65,30 +88,7 @@ export interface StagedSchemaUpgradePolicyFactory {
 }
 
 /**
- * Utilities for creating staged schema upgrade policies.
- *
- * @remarks
- * Use the properties and methods on this object to obtain staged-schema generation options
- * for different scenarios:
- *
- * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
- *
- * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
- *
- * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
- *
- * @example
- * ```typescript
- * // Enable specific upgrades:
- * const options = StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade);
- *
- * // Use restrictive (default, no staged upgrades):
- * const options = StagedSchemaUpgradePolicy.restrictive;
- *
- * // Use permissive (all staged upgrades, useful for testing):
- * const options = StagedSchemaUpgradePolicy.permissive;
- * ```
- *
+ * {@inheritDoc (StagedSchemaUpgradePolicyFactory:interface)}
  * @alpha
  */
 export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory = {

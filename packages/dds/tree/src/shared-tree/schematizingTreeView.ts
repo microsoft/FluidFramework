@@ -269,7 +269,7 @@ export class SchematizingSimpleTreeView<
 		const storedSchema = this.checkout.storedSchema.clone();
 		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
 			throw new UsageError(
-				"Existing stored schema cannot be upgraded to the requested schema.",
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
 			);
 		}
 		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
