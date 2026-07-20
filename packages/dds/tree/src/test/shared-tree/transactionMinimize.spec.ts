@@ -1425,6 +1425,66 @@ describe("transaction minimize post-processor", () => {
 		);
 	});
 
+	// These tests probably don't need to exist here. When covered elsewhere, they can be removed.
+	describe("multi-used content raises exception", () => {
+		// This does current throw but as an assert (0xa2b) and not a proper usage error.
+		it("with double insertion in array", () => {
+			assert.throws(() => {
+				runScenario({
+					schema: BoxArray,
+					initialContent: [],
+					apply: (root) => {
+						const box = new Box({});
+						root.insertAtEnd(box, box);
+					},
+				} as const satisfies BoxArrayScenario);
+			}, /correct error to be filled in/);
+		});
+
+		it("with assignement to second parent", () => {
+			assert.throws(() => {
+				runScenario({
+					schema: BoxArray,
+					initialContent: [],
+					apply: (root) => {
+						const box = new Box({});
+						const parentA = new Box({ nested: box });
+						const parentB = new Box({ nested: box }); // <- expected to throw here
+						// root.insertAtEnd(parentA, parentB);
+					},
+				} as const satisfies BoxArrayScenario);
+			}, /A node may not be in more than one place in the tree/);
+		});
+
+		it("with insert after referencing parent", () => {
+			assert.throws(() => {
+				runScenario({
+					schema: BoxArray,
+					initialContent: [],
+					apply: (root) => {
+						const box = new Box({});
+						const parent = new Box({ nested: box });
+						root.insertAtEnd(parent, box);
+					},
+				} as const satisfies BoxArrayScenario);
+			}, /Attempted to insert a node which is already under a parent/);
+		});
+
+		it("with insert before referencing parent", () => {
+			assert.throws(() => {
+				runScenario({
+					schema: BoxArray,
+					initialContent: [],
+					apply: (root) => {
+						const box = new Box({});
+						const parent = new Box({ nested: box });
+						root.insertAtEnd(box, parent);
+					},
+				} as const satisfies BoxArrayScenario);
+			}, /Attempted to insert a node which is already under a parent/);
+		});
+	});
+
 	// These tests assert that the squashed change carries no extraneous information about nodes that are not
 	// present in the final document. They are NOT EXPECTED TO PASS (though some may by accident) until the
 	// minimization algorithm is implemented. (`minimize` is currently a no-op.)
