@@ -13,6 +13,10 @@ import {
 } from "@fluidframework/container-loader/internal";
 import { ContainerRuntime } from "@fluidframework/container-runtime/internal";
 import type { IRequest } from "@fluidframework/core-interfaces";
+import {
+	ErasedTypeImplementation,
+	type ErasedBaseType,
+} from "@fluidframework/core-interfaces/internal";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	DataStoreKind,
@@ -28,85 +32,378 @@ import {
 	type ContainerRuntimeLoader,
 	type ContainerRuntimeLoaderParams,
 	makeCodeLoader,
-	makeServiceClientImpl,
 	rootDataStoreId,
+	ServiceClientImplementation,
 	ServiceContainerBase,
 } from "@fluidframework/runtime-utils/internal";
 import {
 	LocalDeltaConnectionServer,
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
+import { UsageError } from "@fluidframework/driver-utils/internal";
 
 import { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
 import { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 import { pkgVersion } from "./packageVersion.js";
 
-const defaultServiceOptions: ServiceOptions = {
-	minVersionForCollaboration: featureVersion(pkgVersion),
-};
-
 /**
- * Creates and returns a document service for local use.
- *
+ * Starts and returns a new {@link EphemeralService}.
+ * @param isDefault - Whether this service should saved as the default service for {@link cleanupEphemeralService} to cleanup.
+ * Defaults to true.
  * @remarks
- * Since all collaborators are in the same process, minVersionForCollab can be omitted and will default to the current version.
+ * The returned service owns an in-memory server and holds the documents created through clients connected to it.
+ * {@link cleanupEphemeralService} can be used to ensure the service is properly cleaned up (a no-op if stopped/closed already).
  *
- * The service is ephemeral and in-memory: all documents are held by a single shared in-memory service that
- * exists only while at least one container is open.
- * As long as any container remains open (even one for a different `id`), every document created in this session is
- * retained and can be loaded by `id` — including documents that currently have no open container.
- * Once all containers are closed, the shared service and all of its documents are discarded, so those `id`s can no
- * longer be loaded (a subsequent {@link @fluidframework/driver-definitions#ServiceClient.loadContainer} would not
- * find them).
- * This is shared across all clients from this and any other call to {@link createEphemeralServiceClient}, since they
- * all use the same single static in-memory service instance.
- * @privateRemarks
- * TODO: We should provide a way to extract (for potential serialization as test data) and load documents into this service.
- * This is needed to use this API surface for testing reference documents.
- * Ideally we would provide a service agnostic way to to the export, but likely only support loading them into the local service.
- * This can be done via a an API on FluidContainer (or a free function taking one) to do the export, then adding a service specific API to load from the export format and return the ID of the loaded document.
- *
- * TODO: The document lifetime policy (all documents live only while at least one container is open) is currently
- * fixed because all clients share a single static in-memory service instance.
- * This is probably a bad design as it causes surprising coupling between different clients.
- * As there does not seem to be a clean way to manage document lifetime without a larger API surface,
- * this is being left for now, but should probably be replaced with something better, likely involving an explicit server object whose lifetime can be managed.
- * Having that server have a singleton default which is reset by
- * In the future we could make this configurable, and support the save/load of documents described above, by
- * exposing an `EphemeralService` type which owns the in-memory service and can create {@link @fluidframework/driver-definitions#ServiceClient}
- * instances connected to it, along with a factory for creating such an `EphemeralService`.
- * That would be offered as an alternative to this static {@link createEphemeralServiceClient} (and its static
- * shared service instance): a caller-owned `EphemeralService` could keep documents alive independent of open
- * containers, control the lifetime policy explicitly, and be disposed to release its resources.
- *
+ * As a service, it may start timers which may require an explicit `close` to fully free.
  * @alpha
  */
-export function createEphemeralServiceClient(
-	options: ServiceOptions = defaultServiceOptions,
-): ServiceClient {
-	return makeServiceClientImpl(options, EphemeralServiceContainer);
+export function startEphemeralService(isDefault = true): EphemeralService {
+	if (isDefault && defaultEphemeralService) {
+		throw new UsageError("A default EphemeralService is already running");
+	}
+
+	const service = new EphemeralServiceImplementation();
+	if (isDefault) {
+		defaultEphemeralService = service;
+	}
+	return service;
 }
 
 /**
- * Closes any open ephemeral service containers.
- *
+ * Cleans up the service passed in {@link startEphemeralService}, or the {@link getDefaultEphemeralService|default} if none is passed.
  * @remarks
- * This can be used to cleanup lingering timers from containers created using a client from {@link createEphemeralServiceClient}.
- * Such timers are a common case of hangs on exist (often worked around using Mocha's `--exit` flag).
- *
- * This behaves just like calling {@link @fluidframework/driver-definitions#FluidContainer.close} on every open container:
- * closing the last one also disposes the shared in-memory server (see the note on server timers in the implementation).
+ * This closes the service, and all its containers.
+ * This is a good way to ensure the service and its containers leave no lingering timers
+ * which could leak memory, trigger asynchronous work or prevent a clean process exit.
  * @alpha
  */
-export async function closeEphemeralContainers(): Promise<void> {
-	// Close every open container via the same public close() path a user would use. Closing the last
-	// container disposes the shared server (see updateContainers), so this is equivalent to a user
-	// closing each open container individually.
-	for (const c of [...containers]) {
-		c.close();
+export async function cleanupEphemeralService(service?: EphemeralService): Promise<void> {
+	const toCleanup = service ?? defaultEphemeralService;
+	if (toCleanup) {
+		// TODO: we may want to make closing of containers a separate operation which is done here.
+		await toCleanup.close();
 	}
-	// Join the server shutdown (triggered by closing the last container) so callers can await full cleanup.
-	await serverClosePromise;
+	if (toCleanup === defaultEphemeralService) {
+		defaultEphemeralService = undefined;
+	}
+}
+
+/**
+ * Get the default {@link EphemeralService} if one has been {@link startEphemeralService|started}.
+ * @throws If no default service is running.
+ * @alpha
+ */
+export function getDefaultEphemeralService(): EphemeralService {
+	if (defaultEphemeralService) {
+		return defaultEphemeralService;
+	}
+	throw new UsageError("No default EphemeralService is running");
+}
+
+/**
+ * Internal Options for creating an {@link EphemeralServiceClient}, extending {@link @fluidframework/driver-definitions#ServiceOptions}
+ * with the {@link EphemeralService} the client should connect to.
+ * @input
+ * @internal
+ */
+export interface EphemeralServiceOptions extends ServiceOptions {
+	/**
+	 * The service instance to connect to.
+	 */
+	readonly service: EphemeralService;
+}
+
+/**
+ * An in-memory Fluid service that can produce connected {@link EphemeralServiceClient}s.
+ * @remarks
+ * All documents created through clients connected to a given `EphemeralService` are held in-memory by that service.
+ * Closing the service (via {@link EphemeralService.close} or {@link cleanupEphemeralService}) closes the connections
+ * to any remaining open containers, and cleans up the service's timers.
+ *
+ * Create one with {@link startEphemeralService}.
+ *
+ * Most {@link @fluidframework/driver-definitions#ServiceClient} implementations would take in a URL and credentials to connect to a service,
+ * but that is not needed for the ephemeral in-memory service.
+ * Instead this object representing the actual service instance is provided.
+ * @privateRemarks
+ * This is separated out from the actual {@link @fluidframework/driver-definitions#ServiceClient} object so that it's possible to create multiple service clients
+ * connected to the same service.
+ * Doing so is rarely necessary, but would be needed to test multiple clients collaborating on the same
+ * document with different minVersionForCollaboration values.
+ * This also exposes a place to put APIs for preloading and exporting document contents in the future.
+ *
+ * This is an erased type: its only implementation is the module-private {@link EphemeralServiceImplementation}, which holds
+ * the mutable server and container state so it does not appear on this public type.
+ *
+ * TODO: formalize this lifecycle with an interface which documents these stages.
+ * Lifecycle:
+ * The intended lifecycle of an {@link EphemeralService} follows roughly the same pattern as containers:
+ *
+ * 1. Open: accepts connections from {@link EphemeralServiceClient}s, which can create and load containers.
+ * Might have timers and event registrations which can trigger asynchronous work, and retain the object in memory.
+ *
+ * 2. Closing: asynchronous transition from open to closed. New use should behave as it closed, but may be cleaning up or saving resources asynchronously.
+ * Timers and event registrations may still be active, but should be cleaned up by the time the transition to closed completes.
+ *
+ * 3. Closed: no longer accepts connections from {@link EphemeralServiceClient}s, and all containers connected to it are closed.
+ * Should have no subscriptions to events or timers which could retain it in memory or trigger asynchronous work.
+ * The object can still be used in a limited capacity (typically just to inspect its status (e.g. `isClosed`), and to view (but not edit) the final state of any containers which were connected to it before it closed.)
+ *
+ * Events or errors can cause an open to closing transition. Any nonfunctional state, including error states, should be considered as closed (or closing which will transition to closed),
+ * and meet the requirements of closed with regards to timers and events.
+ *
+ * @alpha @sealed
+ */
+export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralService"]> {
+	/**
+	 * Close this service, which closes all containers connected to it and releases its resources.
+	 * @remarks
+	 * All documents held by this service are discarded, and any timers it (or its containers) were keeping alive
+	 * are cleaned up.
+	 * The returned promise resolves once all asynchronous cleanup (including shutting down the in-memory server)
+	 * has completed.
+	 * Closing is idempotent: calling it again after the service is closed resolves without doing anything.
+	 */
+	close(): Promise<void>;
+
+	/**
+	 * Drives all containers connected to this service toward convergence, processing pending operations and
+	 * waiting for all dirty containers to save.
+	 *
+	 * @param timeoutMilliseconds - The maximum time to wait for containers to quiesce, in milliseconds. Defaults to 30_000.
+	 *
+	 * @privateRemarks
+	 * This is a best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
+	 * Currently it does not perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
+	 * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
+	 * For the currently exposed API surface, this should be sufficient,
+	 * but users down casting to internal types might run into some limitations.
+	 */
+	synchronize(timeoutMilliseconds?: number): Promise<void>;
+
+	/**
+	 * Creates and returns a {@link EphemeralServiceClient} for an in-memory, ephemeral Fluid service.
+	 *
+	 * @param options - Options for the client. `minVersionForCollaboration` may be omitted (since all collaborators
+	 * are in the same process, it defaults to the current version). `service` may be omitted to allocate a new
+	 * {@link EphemeralService} dedicated to this client, or provided to connect the client to an existing service instance.
+	 *
+	 * @remarks
+	 * The service is ephemeral and in-memory: all documents are held by the {@link EphemeralService} the client is
+	 * connected to, and live for as long as that service is open — independent of whether any container for them is open.
+	 * A document created and attached (obtaining an `id`) can be loaded by `id` for as long as its service remains open,
+	 * even after every container for it has been closed.
+	 * Closing the service (via {@link EphemeralService.close} or {@link cleanupEphemeralService}) discards all of its
+	 * documents and releases its resources; afterwards those `id`s can no longer be loaded.
+	 *
+	 * When no `service` is provided, a new one is allocated for this client (accessible via {@link EphemeralServiceClient.service}).
+	 * Provide the same {@link EphemeralService} to multiple clients (via `options.service`) to have them collaborate on the
+	 * same documents, and control that service's lifetime explicitly.
+	 *
+	 * Since a service holds timers while open, tests should close the services they use (e.g. via
+	 * {@link cleanupEphemeralService} in an `afterEach`) to avoid lingering timers that can hang test runners.
+	 *
+	 * @privateRemarks
+	 * TODO: We should provide a way to extract (for potential serialization as test data) and load documents into a service.
+	 * This is needed to use this API surface for testing reference documents.
+	 * Ideally we would provide a service agnostic way to do the export, but likely only support loading them into the local service.
+	 * This can be done via an API on FluidContainer (or a free function taking one) to do the export, then adding a
+	 * service specific API (on {@link EphemeralService}) to load from the export format and return the ID of the loaded document.
+	 */
+	newClient(options: ServiceOptions): EphemeralServiceClient;
+
+	/**
+	 * A client connected to this service using the default options.
+	 */
+	readonly defaultClient: EphemeralServiceClient;
+}
+
+/**
+ * The {@link defaultEphemeralService} if one has been {@link startEphemeralService|started}.
+ */
+let defaultEphemeralService: EphemeralServiceImplementation | undefined;
+
+/**
+ * The concrete implementation of {@link EphemeralService}.
+ * @remarks
+ * Kept module-private so its mutable state and internal helpers are not part of the public API.
+ * Narrow an {@link EphemeralService} to it with `EphemeralServiceImplementation.narrow`.
+ */
+class EphemeralServiceImplementation
+	extends ErasedTypeImplementation<EphemeralService>
+	implements EphemeralService
+{
+	// A single server is shared by all containers connected to this service so they can communicate with each other.
+	private readonly server: ILocalDeltaConnectionServer =
+		LocalDeltaConnectionServer.create(
+			// new LocalSessionStorageDbFactory(),
+		);
+	private readonly documentServiceFactory = new LocalDocumentServiceFactory(this.server);
+	private readonly containers = new Set<EphemeralServiceContainer<unknown>>();
+	private closed = false;
+
+	public constructor() {
+		super();
+		this.defaultClient = this.newClient();
+	}
+	public newClient(options?: Partial<ServiceOptions>): EphemeralServiceClient {
+		const finalOptions: EphemeralServiceOptions = {
+			minVersionForCollaboration:
+				options?.minVersionForCollaboration ?? featureVersion(pkgVersion),
+			service: this,
+		};
+		return new EphemeralServiceClientImplementation(finalOptions);
+	}
+	public readonly defaultClient: EphemeralServiceClient;
+
+	public async close(): Promise<void> {
+		if (this.closed) {
+			return;
+		}
+		this.closed = true;
+
+		// Close every open container via the same public close() path a user would use.
+		// We might want to remove this.
+		const toClose = [...this.containers];
+		this.containers.clear();
+		for (const c of toClose) {
+			c.close();
+		}
+
+		// Shut down the in-memory server. Its timers (e.g. the Deli read-client idle `setInterval`) belong to the
+		// server rather than any container, so closing containers alone would leave them running.
+		await this.server.close();
+	}
+
+	public async synchronize(timeoutMilliseconds = 30_000): Promise<void> {
+		// Timeout to allow for better errors in the case of hangs.
+		let timedOut = false;
+		let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+		const deadline = new Promise<true>((resolve) => {
+			deadlineTimer = setTimeout(() => {
+				timedOut = true;
+				resolve(true);
+			}, timeoutMilliseconds);
+		});
+
+		try {
+			// Require two consecutive quiescent passes (no dirty containers and no pending server work),
+			// each separated by a macrotask turn, to give late side effects a chance to surface.
+			let clean = 0;
+			while (clean < 2) {
+				if (timedOut) {
+					throw new UsageError(
+						`EphemeralService.synchronize timed out after ${timeoutMilliseconds}ms waiting for local containers to quiesce.`,
+					);
+				}
+
+				// Yield a macrotask turn *first*, so the local server's scheduled broadcast send and each
+				// container's inbound op processing can run before we sample their state below. Sampling
+				// hasPendingWork() in a tight `while (await ...)` loop instead would starve that scheduled
+				// send (it is a macrotask, while the await resolves on the microtask queue) and could hang.
+				await new Promise<void>((resolve) => {
+					setTimeout(resolve, 0);
+				});
+
+				// Prune any containers that have closed since the last pass.
+				for (const container of [...this.containers]) {
+					if (container.container.closed) {
+						this.containers.delete(container);
+					}
+				}
+				const containersToApply = [...this.containers].map((container) => container.container);
+
+				// Ignore readonly/disconnected dirty containers: they can't send ops, so nothing can be done about them being dirty here.
+				// Neither state is reachable through the ephemeral service API today, but the checks are cheap and keep this robust to future changes.
+				const dirtyContainers = containersToApply.filter((c) => {
+					const { deltaManager, isDirty, connectionState } = c;
+					return (
+						connectionState !== ConnectionState.Disconnected &&
+						deltaManager.readOnlyInfo.readonly !== true &&
+						isDirty
+					);
+				});
+				if (dirtyContainers.length > 0) {
+					// Bound this wait by the shared deadline: a container that never saves (and never
+					// closes) must not block past the overall timeout, since the top-of-loop check can't
+					// run while we are awaiting here.
+					await Promise.race([
+						Promise.all(
+							dirtyContainers.map(async (c) =>
+								Promise.race([
+									new Promise((resolve) => c.once("saved", resolve)),
+									new Promise((resolve) => c.once("closed", resolve)),
+								]),
+							),
+						),
+						deadline,
+					]);
+
+					clean = 0;
+					continue;
+				}
+
+				// Sample pending server work once per pass (the macrotask yield above gave the broadcaster's
+				// scheduled send a chance to run first).
+				if (await Promise.race([this.server.hasPendingWork(), deadline])) {
+					clean = 0;
+					continue;
+				}
+
+				clean++;
+			}
+		} finally {
+			clearTimeout(deadlineTimer);
+		}
+	}
+
+	/**
+	 * The document service factory for this service.
+	 * @remarks Internal helper for {@link EphemeralServiceContainer}; not part of the public {@link EphemeralService} API.
+	 */
+	public getDocumentServiceFactory(): LocalDocumentServiceFactory {
+		assert(!this.closed, "Cannot create or load containers on a closed EphemeralService");
+		return this.documentServiceFactory;
+	}
+
+	/**
+	 * Registers a newly created container as connected to this service.
+	 * @remarks Internal helper for {@link EphemeralServiceContainer}; not part of the public {@link EphemeralService} API.
+	 */
+	public addContainer(container: EphemeralServiceContainer<unknown>): void {
+		this.containers.add(container);
+	}
+
+	/**
+	 * Removes a now-closed container from this service.
+	 * @remarks Internal helper for {@link EphemeralServiceContainer}; not part of the public {@link EphemeralService} API.
+	 */
+	public removeContainer(container: EphemeralServiceContainer<unknown>): void {
+		this.containers.delete(container);
+	}
+}
+
+/**
+ * A {@link @fluidframework/driver-definitions#ServiceClient} connected to a specific {@link EphemeralService}.
+ * @alpha @sealed
+ */
+export interface EphemeralServiceClient extends ServiceClient {
+	/**
+	 * The service instance this client is connected to.
+	 */
+	readonly service: EphemeralService;
+}
+
+class EphemeralServiceClientImplementation
+	extends ServiceClientImplementation<EphemeralServiceOptions>
+	implements EphemeralServiceClient
+{
+	public readonly service: EphemeralService;
+
+	public constructor(options: EphemeralServiceOptions) {
+		super(options, EphemeralServiceContainer);
+		this.service = options.service;
+	}
 }
 
 const containerRuntimeLoader: ContainerRuntimeLoader = async (
@@ -132,154 +429,6 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	return runtime;
 };
 
-let containers: EphemeralServiceContainer<unknown>[] = [];
-
-function updateContainers(): void {
-	containers = containers.filter((c) => !c.container.closed);
-	if (containers.length === 0) {
-		// No containers remain, so the shared in-memory server is no longer needed. Dispose it so its
-		// timers (e.g. the Deli read-client idle `setInterval`, which belongs to the server rather than
-		// any container and so cannot be cleared by `container.close()`) do not keep the Node.js event
-		// loop alive. A fresh server is created lazily if another container is created later.
-		disposeLocalServer();
-	}
-}
-
-/**
- * Synchronizes all ephemeral clients.
- *
- * @param timeoutMilliseconds - The maximum time to wait for local containers to quiesce, in milliseconds. Defaults to 30_000.
- *
- * @remarks
- * See {@link createEphemeralServiceClient} for details on the ephemeral service.
- *
- * This drives all in-process ephemeral containers toward convergence,
- * processing all pending operations and waiting for all dirty containers to save.
- *
- * @privateRemarks
- * This is a Best-effort implementation simplified from `LoaderContainerTracker.ensureSynchronized`.
- * Currently it does not perform receiver-side sequence-number quiescence or wait for join/leave (audience) ops.
- * See `LoaderContainerTracker.ensureSynchronized` for the fuller version this is based on.
- * For the currently exposed API surface, this should be sufficient,
- * but users down casting to internal types might run into some limitations.
- * @alpha
- */
-export async function synchronizeEphemeralClients(
-	timeoutMilliseconds = 30_000,
-): Promise<void> {
-	// Timeout to allow for better errors in the case of hangs.
-	let timedOut = false;
-	let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
-	const deadline = new Promise<true>((resolve) => {
-		deadlineTimer = setTimeout(() => {
-			timedOut = true;
-			resolve(true);
-		}, timeoutMilliseconds);
-	});
-
-	try {
-		// Require two consecutive quiescent passes (no dirty containers and no pending server work),
-		// each separated by a macrotask turn, to give late side effects a chance to surface.
-		let clean = 0;
-		while (clean < 2) {
-			if (timedOut) {
-				throw new Error(
-					`synchronizeEphemeralClients timed out after ${timeoutMilliseconds}ms waiting for local containers to quiesce.`,
-				);
-			}
-
-			// Yield a macrotask turn *first*, so the local server's scheduled broadcast send and each
-			// container's inbound op processing can run before we sample their state below. Sampling
-			// hasPendingWork() in a tight `while (await ...)` loop instead would starve that scheduled
-			// send (it is a macrotask, while the await resolves on the microtask queue) and could hang.
-			await new Promise<void>((resolve) => {
-				setTimeout(resolve, 0);
-			});
-
-			updateContainers();
-			const containersToApply = containers.map((c) => c.container);
-
-			// Ignore readonly/disconnected dirty containers: they can't send ops, so nothing can be done about them being dirty here.
-			// Neither state is reachable through createEphemeralServiceClient today, but the checks are cheap and keep this robust to future changes.
-			const dirtyContainers = containersToApply.filter((c) => {
-				const { deltaManager, isDirty, connectionState } = c;
-				return (
-					connectionState !== ConnectionState.Disconnected &&
-					deltaManager.readOnlyInfo.readonly !== true &&
-					isDirty
-				);
-			});
-			if (dirtyContainers.length > 0) {
-				// Bound this wait by the shared deadline: a container that never saves (and never
-				// closes) must not block past the overall timeout, since the top-of-loop check can't
-				// run while we are awaiting here.
-				await Promise.race([
-					Promise.all(
-						dirtyContainers.map(async (c) =>
-							Promise.race([
-								new Promise((resolve) => c.once("saved", resolve)),
-								new Promise((resolve) => c.once("closed", resolve)),
-							]),
-						),
-					),
-					deadline,
-				]);
-
-				clean = 0;
-				continue;
-			}
-
-			// Sample pending server work once per pass (the macrotask yield above gave the broadcaster's
-			// scheduled send a chance to run first). If the server has already been disposed (no containers
-			// remain) there is nothing pending, and we must not recreate it here.
-			const pendingServerWork =
-				localServerInstance !== undefined &&
-				(await Promise.race([localServerInstance.hasPendingWork(), deadline]));
-			if (pendingServerWork) {
-				clean = 0;
-				continue;
-			}
-
-			clean++;
-		}
-	} finally {
-		clearTimeout(deadlineTimer);
-	}
-}
-
-// A single localServer should be shared by all instances of a local driver so they can communicate
-// with each other.
-// It is created lazily and disposed once no containers remain (see updateContainers) so its timers
-// can be cleaned up.
-let localServerInstance: ILocalDeltaConnectionServer | undefined;
-let documentServiceFactoryInstance: LocalDocumentServiceFactory | undefined;
-// Tracks the in-flight close of a disposed server so awaiting callers (closeEphemeralContainers) can join it.
-let serverClosePromise: Promise<void> | undefined;
-
-function getLocalServer(): ILocalDeltaConnectionServer {
-	localServerInstance ??=
-		LocalDeltaConnectionServer.create(
-			// new LocalSessionStorageDbFactory(),
-		);
-	return localServerInstance;
-}
-
-function getDocumentServiceFactory(): LocalDocumentServiceFactory {
-	documentServiceFactoryInstance ??= new LocalDocumentServiceFactory(getLocalServer());
-	return documentServiceFactoryInstance;
-}
-
-function disposeLocalServer(): void {
-	if (localServerInstance !== undefined) {
-		const serverToClose = localServerInstance;
-		localServerInstance = undefined;
-		documentServiceFactoryInstance = undefined;
-		// `close` is async, but the public container close() that drives this is synchronous, so start
-		// the shutdown and track its promise for closeEphemeralContainers to await.
-		serverClosePromise = serverToClose.close();
-	}
-}
-
 const urlResolver = new LocalResolver();
 /**
  * Create a request to open an existing document.
@@ -300,25 +449,27 @@ let documentIdCounter = 0;
  * {@link @fluidframework/driver-definitions#FluidContainerWithService}.
  *
  * @remarks
- * Data is stored in-memory and shared only within the same browser session via a module-level
- * shared server. All containers created by {@link createEphemeralServiceClient} share the
- * same server instance, enabling side-by-side collaboration testing without a real server.
+ * Data is stored in-memory by the {@link EphemeralService} the container's client is connected to (see
+ * {@link EphemeralServiceContainer.service}), enabling side-by-side collaboration testing without a real server.
  *
  * @internal
  */
 export class EphemeralServiceContainer<TData>
-	extends ServiceContainerBase<TData, ServiceOptions>
+	extends ServiceContainerBase<TData, EphemeralServiceOptions>
 	implements FluidContainerWithService<TData>
 {
+	public readonly service: EphemeralService;
+
 	public static async createDetached<T>(
 		registry: DataStoreRegistry<T>,
-		options: ServiceOptions,
+		options: EphemeralServiceOptions,
 		root: DataStoreKind<T>,
 	): Promise<EphemeralServiceContainer<T>> {
+		EphemeralServiceImplementation.narrow(options.service);
 		const container: IContainer = await createDetachedContainer({
 			codeDetails: { package: "1.0" },
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(),
+			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
 				options.minVersionForCollaboration,
@@ -338,13 +489,14 @@ export class EphemeralServiceContainer<TData>
 
 	public static async load<T>(
 		registry: DataStoreRegistry<T>,
-		options: ServiceOptions,
+		options: EphemeralServiceOptions,
 		id: string,
 	): Promise<EphemeralServiceContainer<T> & FluidContainerAttached<T>> {
+		EphemeralServiceImplementation.narrow(options.service);
 		const containerInner = await loadExistingContainer({
 			request: createLoadExistingRequest(id),
 			urlResolver,
-			documentServiceFactory: getDocumentServiceFactory(),
+			documentServiceFactory: options.service.getDocumentServiceFactory(),
 			codeLoader: makeCodeLoader(
 				registry,
 				options.minVersionForCollaboration,
@@ -365,20 +517,22 @@ export class EphemeralServiceContainer<TData>
 
 	private constructor(
 		registry: Registry<Promise<DataStoreKind<TData>>>,
-		options: ServiceOptions,
+		options: EphemeralServiceOptions,
 		container: IContainer,
 		data: TData,
 		id: string | undefined,
 	) {
 		super(registry, options, container, data, id);
-		containers.push(this);
-		updateContainers();
+		this.service = options.service;
+		EphemeralServiceImplementation.narrow(this.service);
+		this.service.addContainer(this);
 	}
 
 	public override close(): void {
 		super.close();
-		// Prune this now-closed container and, if it was the last one open, dispose the shared server.
-		updateContainers();
+		// Remove this now-closed container from its service's set of open containers.
+		EphemeralServiceImplementation.narrow(this.service);
+		this.service.removeContainer(this);
 	}
 
 	protected createAttachRequest(): IRequest {

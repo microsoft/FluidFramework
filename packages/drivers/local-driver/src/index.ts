@@ -11,8 +11,13 @@ export { LocalDocumentStorageService } from "./localDocumentStorageService.js";
 export { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
 export { localDriverCompatDetailsForLoader } from "./localLayerCompatState.js";
 export { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
+export type {
+	EphemeralService,
+	EphemeralServiceClient,
+	EphemeralServiceOptions,
+} from "./localService.js";
 export {
-	closeEphemeralContainers,
-	createEphemeralServiceClient,
-	synchronizeEphemeralClients,
+	startEphemeralService,
+	cleanupEphemeralService,
+	getDefaultEphemeralService,
 } from "./localService.js";

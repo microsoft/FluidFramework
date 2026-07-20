@@ -53,7 +53,7 @@ For example the common service-client interfaces and the portion of their implem
 ## Layer Boundaries and Validation
 
 Structural types should be used when multiple implementations, either written by third parties, or from other versions of packages are allowed.
-`@sealed` Nominal types (like `ErasedTypeBase` and `ErasedType`) should be used when multiple versions are not supported, and instead a single specific implementation from a specific expected version must be used (and thus could be down cast to expose functionality not part of the type).
+`@sealed` Nominal types (like `ErasedBaseType` and `ErasedType`) should be used when multiple versions are not supported, and instead a single specific implementation from a specific expected version must be used (and thus could be down cast to expose functionality not part of the type).
 This ensures that TypeScript type checking validates that any version mixing and package duplication being done is actually a supported configuration, at compile time.
 
 If needed, it is possible to explicitly design types so they can support specific ranges of versions of other packages.

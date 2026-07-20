@@ -91,9 +91,9 @@ export {
 export {
 	convertRegistry,
 	makeCodeLoader,
-	makeServiceClientImpl,
 	normalizeRegistry,
 	rootDataStoreId,
+	ServiceClientImplementation,
 } from "./serviceClientUtils.js";
 export type {
 	ContainerRuntimeLoader,

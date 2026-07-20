@@ -7,9 +7,8 @@ import { strict as assert } from "node:assert";
 
 import type { IFluidLoadable } from "@fluidframework/core-interfaces";
 import {
-	closeEphemeralContainers,
-	createEphemeralServiceClient,
-	synchronizeEphemeralClients,
+	cleanupEphemeralService,
+	startEphemeralService,
 } from "@fluidframework/local-driver/internal";
 import { dataStoreKind } from "@fluidframework/shared-object-base/internal";
 
@@ -25,7 +24,7 @@ import { SharedTree, SharedTreeAlpha } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
 	afterEach(async () => {
-		await closeEphemeralContainers();
+		await cleanupEphemeralService();
 	});
 
 	// See also examples/utils/import-testing/src/test/apiExamples.spec.ts for examples which are more public facing and have imports not allowed in this package.
@@ -37,8 +36,8 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient();
-		const detached = await service.createContainer(myFactory);
+		const client = startEphemeralService().defaultClient;
+		const detached = await client.createContainer(myFactory);
 
 		assert.equal(detached.data.root, 1);
 		detached.data.root = 2;
@@ -52,8 +51,8 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient();
-		const detached = await service.createContainer(myFactory);
+		const client = startEphemeralService().defaultClient;
+		const detached = await client.createContainer(myFactory);
 		const attached = await detached.attach();
 
 		assert.equal(attached.data.root, 1);
@@ -66,23 +65,23 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient({ minVersionForCollaboration: "2.20.0" });
+		const client = startEphemeralService().newClient({ minVersionForCollaboration: "2.20.0" });
 
 		// Someday it would be nice to support this pattern, but that is longer term.
 		// const container1 = await service.attachContainer(createContainer(myFactory));
 
-		const detachedContainer1 = await service.createContainer(myFactory);
+		const detachedContainer1 = await client.createContainer(myFactory);
 		const container1 = await detachedContainer1.attach();
 
 		assert.equal(container1.data.root, 1);
 
-		const container2 = await service.loadContainer(container1.id, myFactory);
+		const container2 = await client.loadContainer(container1.id, myFactory);
 
 		assert.equal(container2.data.root, 1);
 
 		container2.data.root = 2;
 
-		await synchronizeEphemeralClients();
+		await client.service.synchronize();
 
 		assert.equal(container1.data.root, 2);
 		assert.equal(container2.data.root, 2);
@@ -91,7 +90,7 @@ describe("treeDataStore", () => {
 	it("schema evolution example", async () => {
 		// Create, save then reopen a document.
 
-		const service = createEphemeralServiceClient();
+		const client = startEphemeralService().defaultClient;
 
 		let id: string;
 
@@ -102,7 +101,7 @@ describe("treeDataStore", () => {
 				initializer: () => 1,
 			});
 
-			const detachedContainer = await service.createContainer(myFactory);
+			const detachedContainer = await client.createContainer(myFactory);
 			const container = await detachedContainer.attach();
 			id = container.id;
 		}
@@ -116,7 +115,7 @@ describe("treeDataStore", () => {
 				initializer: () => 2,
 			});
 
-			const container = await service.loadContainer(id, myFactory);
+			const container = await client.loadContainer(id, myFactory);
 			assert.equal(container.data.compatibility.canView, false);
 			container.data.upgradeSchema();
 			assert.equal(container.data.root, 1);
@@ -139,15 +138,15 @@ describe("treeDataStore", () => {
 			view: async (tree) => tree,
 		});
 
-		const service = createEphemeralServiceClient();
-		const container = await service.createContainer(myFactory);
+		const client = startEphemeralService().defaultClient;
+		const container = await client.createContainer(myFactory);
 
 		assert(SharedTree.is(container.data));
 
 		const attached = await container.attach();
 
 		// Example using a registry which could (though in this case does not), lazy load the actual DataStoreKind as well.
-		const lazyContainer = await service.loadContainer(attached.id, async () => myFactory);
+		const lazyContainer = await client.loadContainer(attached.id, async () => myFactory);
 
 		assert(SharedTree.is(lazyContainer.data));
 	});
@@ -161,8 +160,8 @@ describe("treeDataStore", () => {
 			initializer: () => 1,
 		});
 
-		const service = createEphemeralServiceClient();
-		const container = await service.createContainer(myFactory);
+		const client = startEphemeralService().defaultClient;
+		const container = await client.createContainer(myFactory);
 
 		const secondTree = await container.createDataStore(myFactory);
 
@@ -191,10 +190,10 @@ describe("treeDataStore", () => {
 			view: async (tree) => tree,
 		});
 
-		const service = createEphemeralServiceClient();
+		const client = startEphemeralService().defaultClient;
 
 		// Create a container with a MyTree as the data
-		const detachedContainer = await service.createContainer(MyTree);
+		const detachedContainer = await client.createContainer(MyTree);
 		const container1 = await detachedContainer.attach();
 
 		// Create a second MyTree in the container, and put a handle to it in the root data.
@@ -208,11 +207,11 @@ describe("treeDataStore", () => {
 			mainView.root = secondTree.handle;
 		}
 
-		await synchronizeEphemeralClients();
+		await client.service.synchronize();
 
 		// Load the container, traverse the handle, and confirm the second tree is as expected.
 		{
-			const container2 = await service.loadContainer(container1.id, MyTree);
+			const container2 = await client.loadContainer(container1.id, MyTree);
 			const mainView = container2.data.viewWith(config);
 			assert(Tree.is(mainView.root, SchemaFactoryAlpha.handle));
 

@@ -179,7 +179,7 @@ export function makeCodeLoader<T>(
 }
 
 /**
- * Minimal interface for the static container factory methods used by {@link makeServiceClientImpl}.
+ * Minimal interface for the static container factory methods used by {@link ServiceClientImplementation}.
  * @internal
  */
 export interface ServiceContainerStatics<TOptions> {
@@ -196,7 +196,12 @@ export interface ServiceContainerStatics<TOptions> {
 	): Promise<FluidContainerAttached<T>>;
 }
 
-class ServiceClientImpl<TOptions> implements ServiceClient {
+/**
+ * Creates a {@link @fluidframework/driver-definitions#ServiceClient} that delegates container
+ * creation and loading to the supplied container class statics.
+ * @internal
+ */
+export class ServiceClientImplementation<TOptions> implements ServiceClient {
 	public constructor(
 		private readonly options: TOptions,
 		private readonly statics: ServiceContainerStatics<TOptions>,
@@ -228,16 +233,4 @@ class ServiceClientImpl<TOptions> implements ServiceClient {
 	): Promise<FluidContainerAttached<T>> {
 		return this.statics.load(normalizeRegistry(root), this.options, id);
 	}
-}
-
-/**
- * Creates a {@link @fluidframework/driver-definitions#ServiceClient} that delegates container
- * creation and loading to the supplied container class statics.
- * @internal
- */
-export function makeServiceClientImpl<TOptions>(
-	options: TOptions,
-	statics: ServiceContainerStatics<TOptions>,
-): ServiceClient {
-	return new ServiceClientImpl(options, statics);
 }

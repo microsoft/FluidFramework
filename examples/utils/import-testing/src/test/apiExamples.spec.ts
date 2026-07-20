@@ -4,9 +4,8 @@
  */
 
 import {
-	createEphemeralServiceClient,
-	synchronizeEphemeralClients,
-	closeEphemeralContainers,
+	startEphemeralService,
+	cleanupEphemeralService,
 } from "@fluidframework/local-driver/alpha";
 import {
 	ServiceClient,
@@ -20,16 +19,18 @@ import { strict as assert } from "node:assert";
 
 describe("examples", () => {
 	afterEach(async () => {
-		await closeEphemeralContainers();
+		await cleanupEphemeralService();
 	});
 
 	it("self contained example", async () => {
-		// import { createEphemeralServiceClient, synchronizeEphemeralClients } from "@fluidframework/local-driver/alpha";
+		// import { startEphemeralService, cleanupEphemeralService } from "@fluidframework/local-driver/alpha";
 		// import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 		// import { strict as assert } from "node:assert";
 
-		// Create a ServiceClient: in this case using an ephemeral in memory service, but could be any Fluid service.
-		const service: ServiceClient = createEphemeralServiceClient();
+		// Create an ephemeral in-memory service, and a ServiceClient connected to it.
+		// The service owns the in-memory documents and their lifetime; close it to release its resources.
+		const service = startEphemeralService();
+		const client: ServiceClient = service.defaultClient;
 		// Define a DataStoreKind which uses a SharedTree.
 		// In this case the schema is for a single number with an initializer that starts the it at 1.
 		// This schema is captures in the type allowing for strongly typed access to the data in the tree,
@@ -43,20 +44,20 @@ describe("examples", () => {
 		// Create a container in the service with the above DataStoreKind.
 		// Ideally this creation would use a service independent API, and only the attach call would be service dependent,
 		// but that is not supported yet.
-		const detachedContainer1 = await service.createContainer(numberStore);
+		const detachedContainer1 = await client.createContainer(numberStore);
 		const container1 = await detachedContainer1.attach();
 
 		// We now have easy and type safe access to the data in the tree, which will be synced over the service.
 		assert.equal(container1.data.root, 1);
 
 		// A second client can load the same container from the service, and will see the same data.
-		const container2 = await service.loadContainer(container1.id, numberStore);
+		const container2 = await client.loadContainer(container1.id, numberStore);
 		assert.equal(container2.data.root, 1);
 
 		// Both clients can modify the data, and the changes will be synced over the service.
 		container2.data.root = 2;
-		// Since we are using an ephemeral service, we can await the synchronization using synchronizeEphemeralClients.
-		await synchronizeEphemeralClients();
+		// Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+		await service.synchronize();
 
 		// And now the changes are visible for all clients.
 		assert.equal(container1.data.root, 2);

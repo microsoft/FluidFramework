@@ -16,19 +16,20 @@ The new surface is made up of:
 - `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `registryLookup`, `basicKey`).
 - `dataStoreKind` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
 - `treeDataStoreKind` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
-- `createEphemeralServiceClient` (`@fluidframework/local-driver`): an in-memory `ServiceClient` implementation for tests, plus the helpers `closeEphemeralContainers` and `synchronizeEphemeralClients`.
+- `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
 
 Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
 
 Example:
 
 ```typescript
-import { createEphemeralServiceClient, synchronizeEphemeralClients } from "@fluidframework/local-driver/alpha";
+import { startEphemeralService } from "@fluidframework/local-driver/alpha";
 import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 import { strict as assert } from "node:assert";
 
-// Create a ServiceClient: in this case using an ephemeral in memory service, but could be any Fluid service.
-const service: ServiceClient = createEphemeralServiceClient();
+// Start an ephemeral in-memory service and get a ServiceClient connected to it.
+const service = startEphemeralService();
+const client: ServiceClient = service.defaultClient;
 // Define a DataStoreKind which uses a SharedTree.
 // In this case the schema is for a single number with an initializer that starts the it at 1.
 // This schema is captures in the type allowing for strongly typed access to the data in the tree,
@@ -42,20 +43,20 @@ const numberStore = treeDataStoreKind({
 // Create a container in the service with the above DataStoreKind.
 // Ideally this creation would use a service independent API, and only the attach call would be service dependent,
 // but that is not supported yet.
-const detachedContainer1 = await service.createContainer(numberStore);
+const detachedContainer1 = await client.createContainer(numberStore);
 const container1 = await detachedContainer1.attach();
 
 // We now have easy and type safe access to the data in the tree, which will be synced over the service.
 assert.equal(container1.data.root, 1);
 
 // A second client can load the same container from the service, and will see the same data.
-const container2 = await service.loadContainer(container1.id, numberStore);
+const container2 = await client.loadContainer(container1.id, numberStore);
 assert.equal(container2.data.root, 1);
 
 // Both clients can modify the data, and the changes will be synced over the service.
 container2.data.root = 2;
-// Since we are using an ephemeral service, we can await the synchronization using synchronizeEphemeralClients.
-await synchronizeEphemeralClients();
+// Since we are using an ephemeral service, we can await the synchronization using service.synchronize.
+await service.synchronize();
 
 // And now the changes are visible for all clients.
 assert.equal(container1.data.root, 2);

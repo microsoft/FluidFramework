@@ -5,13 +5,26 @@
 ```ts
 
 // @alpha
-export function closeEphemeralContainers(): Promise<void>;
+export function cleanupEphemeralService(service?: EphemeralService): Promise<void>;
+
+// @alpha @sealed
+export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralService"]> {
+    close(): Promise<void>;
+    readonly defaultClient: EphemeralServiceClient;
+    newClient(options: ServiceOptions): EphemeralServiceClient;
+    synchronize(timeoutMilliseconds?: number): Promise<void>;
+}
+
+// @alpha @sealed
+export interface EphemeralServiceClient extends ServiceClient {
+    readonly service: EphemeralService;
+}
 
 // @alpha
-export function createEphemeralServiceClient(options?: ServiceOptions): ServiceClient;
+export function getDefaultEphemeralService(): EphemeralService;
 
 // @alpha
-export function synchronizeEphemeralClients(timeoutMilliseconds?: number): Promise<void>;
+export function startEphemeralService(isDefault?: boolean): EphemeralService;
 
 // (No @packageDocumentation comment for this package)
 
