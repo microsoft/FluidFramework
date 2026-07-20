@@ -6,6 +6,8 @@
 		"rootDir": "./",
 		"outDir": "../../dist/test",
 		"types": ["node", "mocha"],
+		// property-common src/error_objects/operationError.ts does not support exactOptionalPropertyTypes
+		"exactOptionalPropertyTypes": false,
 	},
 	"include": ["./**/*"],
 	"references": [

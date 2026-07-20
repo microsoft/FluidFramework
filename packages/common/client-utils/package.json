@@ -86,6 +86,7 @@
 		"check:exports:esm:node:current": "api-extractor run --config api-extractor/api-extractor-lint-node.current.esm.json",
 		"check:exports:esm:node:legacy": "api-extractor run --config api-extractor/api-extractor-lint-node.legacy.esm.json",
 		"check:format": "npm run check:biome",
+		"check:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.json --noEmit --exactOptionalPropertyTypes false --skipLibCheck --emitDeclarationOnly false --tsBuildInfoFile ./tsconfig.inexactOptionalPropertyTypes.tsbuildinfo",
 		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
 		"ci:build:api-reports:browser:current": "api-extractor run --config api-extractor/api-extractor-report-browser.current.json",
 		"ci:build:api-reports:browser:legacy": "api-extractor run --config api-extractor/api-extractor-report-browser.legacy.json",
