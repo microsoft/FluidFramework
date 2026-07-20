@@ -740,10 +740,11 @@ export function minimizeModularChangeset(
 function getBuiltNodeIds(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): ChangeAtomIdBTree<boolean> {
-	const builtNodeIds = newChangeAtomIdBTree<boolean>();
+): // consider using ReadonlyMap<RevisionTag | undefined, ReadonlySet<ChangesetLocalId>> for efficiency
+ChangeAtomIdBTree<true> {
+	const builtNodeIds = newChangeAtomIdBTree<true>();
 
-	const buildIds = newChangeAtomIdRangeMap<boolean>();
+	const buildIds = newChangeAtomIdRangeMap<true>();
 	if (change.builds !== undefined) {
 		for (const [rootId, chunk] of change.builds.entries()) {
 			buildIds.set(makeChangeAtomId(rootId[1], rootId[0]), chunk.topLevelLength, true);
@@ -765,9 +766,9 @@ function addBuiltNodeIdsForFields(
 	parentIsBuilt: boolean,
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	buildIds: ChangeAtomIdRangeMap<boolean>,
+	buildIds: ChangeAtomIdRangeMap<true>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-	builtNodeIds: ChangeAtomIdBTree<boolean>,
+	/* in out */ builtNodeIds: ChangeAtomIdBTree<true>,
 ): void {
 	for (const fieldChange of fields.values()) {
 		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
@@ -826,7 +827,7 @@ function addInputNodeAttachStatesForFields(
 	fields: FieldChangeMap,
 	nodes: ChangeAtomIdBTree<NodeChangeset>,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-	nodeAttachStates: ChangeAtomIdBTree<NodeAttachState>,
+	/* in out */ nodeAttachStates: ChangeAtomIdBTree<NodeAttachState>,
 ): void {
 	for (const fieldChange of fields.values()) {
 		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
