@@ -1,0 +1,3 @@
+/*! For license information please see sharedTreeAttributes.js.LICENSE.txt */
+var bundle;(()=>{"use strict";var e={d:(t,o)=>{for(var r in o)e.o(o,r)&&!e.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:o[r]})},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t),r:e=>{"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})}},t={};e.r(t),e.d(t,{apisToBundle:()=>r});const o={type:"https://graph.microsoft.com/types/tree",snapshotFormatVersion:"0.0.0",packageVersion:"2.100.0"};function r(){return o}bundle=t})();
+//# sourceMappingURL=sharedTreeAttributes.js.map
