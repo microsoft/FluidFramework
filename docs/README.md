@@ -7,3 +7,5 @@ It also contains high-level architectural documentation whose scope exceeds a gi
 Note: this area is under active development.
 We are in the process of migrating documentation here from our existing GitHub wiki and other sources.
 Please expect some churn here in terms of organization and tooling.
+
+The root page for the documentation can be found under [content/Home.md](./content/Home.md).

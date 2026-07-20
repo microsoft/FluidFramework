@@ -6,6 +6,7 @@ The following documents outline best practices for writing documentation for the
 - [Where To Put Documentation](./Documentation-Guidelines/Where-To-Put-Documentation.md)
 - [Documentation Dos and Don'ts](./Documentation-Guidelines/Documentation-Dos-And-Donts.md)
 - [Fluid Terminology](./Documentation-Guidelines/Fluid-Terminology.md)
+- [Markdown Best Practices](./Documentation-Guidelines/Markdown-Best-Practices.md)
 
 ## Source-Code Documentation Guidelines
 
