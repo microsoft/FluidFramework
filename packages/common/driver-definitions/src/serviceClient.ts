@@ -38,6 +38,7 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
  *
  * This flexibility lets the implementer decide how to handle requests for unknown types.
  * They can produce placeholders, assert, fall back to a generic implementation etc.
+ * @typeParam T - The type of entry produced for any given `type` string.
  * @input
  * @alpha
  */
@@ -47,7 +48,9 @@ export type Registry<T> = (type: string) => T;
  * A strongly typed key for a {@link Registry}.
  * Use with {@link registryLookup}.
  * @remarks
- * Used to look up a `T` in a `Registry<T>`, and produce a `TOut` from it.
+ * Used to look up a `TIn` in a `Registry<TIn>`, and produce a `TOut` from it.
+ * @typeParam TOut - The type produced by {@link RegistryKey.adapt} from a looked-up entry.
+ * @typeParam TIn - The type of the entries in the {@link Registry} this key is used with.
  * @privateRemarks
  * This is currently input and sealed, meaning effectively type erased since the design might change.
  * @input
@@ -76,6 +79,8 @@ export interface RegistryKey<TOut, TIn = unknown> {
 
 /**
  * Lookup an entry in a {@link Registry} using a {@link RegistryKey}.
+ * @typeParam TOut - The type produced from the looked-up entry.
+ * @typeParam TIn - The type of the entries in `registry`.
  * @alpha
  */
 export function registryLookup<TOut, TIn>(
@@ -87,6 +92,7 @@ export function registryLookup<TOut, TIn>(
 
 /**
  * Creates a simple {@link RegistryKey} which does no type conversion.
+ * @typeParam T - The type of the registry entry, which is returned unchanged by the key.
  * @alpha
  */
 export function basicKey<T>(type: string): RegistryKey<T, T> {
@@ -131,6 +137,8 @@ export type MinimumVersionForCollaboration = `2.${bigint}.0`;
  * @remarks
  * This formats a version in the same style used by {@link MinimumVersionForCollaboration}, specifying only the major and minor versions,
  * which are the portions used for feature selection.
+ * @typeParam major - The major version number of `version` as a string, preserved in the result type.
+ * @typeParam minor - The minor version number of `version` as a string, preserved in the result type.
  * @privateRemarks
  * This fills a similar role as cleanedPackageVersion in `@fluidframework/runtime-utils`.
  * It can be used to workaround our generated pkgVersion values being invalid `MinimumVersionForCollaboration` on CI (due to prerelease) or patched release branches.
@@ -166,6 +174,8 @@ export interface ServiceOptions {
  * This is implemented by {@link DataStoreKind}, but alternative implementations can be used if needed.
  *
  * If you want lazy loading and need a key that does not eagerly load the {@link DataStoreKind}, an alternative {@link DataStoreKey} can be implemented.
+ * @typeParam T - The type to expose from the {@link DataStoreKind} this key resolves to.
+ * @typeParam TAll - The type covering all {@link DataStoreKind}s in the {@link Registry} this key is used with.
  * @privateRemarks
  * TODO: A built in common pattern for the lazy key case should be provided.
  * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
@@ -189,6 +199,7 @@ export interface DataStoreCreator {
 	 * @remarks
 	 * `kind` will be looked up in the {@link Registry} used to create or load this {@link DataStoreCreator}.
 	 * It is up to that registry to decide how it handles unknown types, for example by throwing an exception or returning a placeholder.
+	 * @typeParam T - type implemented by the data store to expose in the result, as defined by `kind`.
 	 */
 	createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
 }
@@ -198,6 +209,7 @@ export interface DataStoreCreator {
  * @remarks
  * A document which can be stored to or loaded from a Fluid service using a {@link ServiceClient}.
  *
+ * @typeParam TData - The type of the container's root data store, exposed via {@link FluidContainer.data}.
  * @privateRemarks
  * This will likely end up needing many of IFluidContainer's APIs, like disconnect, connectionState, events etc.
  * Before adding them though, care should be taken to consider if they can be improved or simplified.
@@ -246,6 +258,7 @@ export interface FluidContainer<TData = unknown>
 
 /**
  * A Fluid container with an associated {@link ServiceClient} it can attach to.
+ * @typeParam TData - The type of the container's root data store.
  * @sealed
  * @alpha
  */
@@ -262,6 +275,7 @@ export interface FluidContainerWithService<TData = unknown> extends FluidContain
 
 /**
  * A Fluid container that has been attached to a service.
+ * @typeParam TData - The type of the container's root data store.
  * @sealed
  * @alpha
  */
@@ -289,6 +303,7 @@ export interface FluidContainerAttached<TData = unknown> extends FluidContainer<
  *
  * Since it implements {@link DataStoreKey}, a `DataStoreKind` can also be used directly as the key to look
  * itself up in a {@link Registry}.
+ * @typeParam T - The API surface that instances of this data store kind expose.
  * @privateRemarks
  * TODO:
  * SharedObjects should be usable as these (though putting shared objects directly in the container might need special logic).
@@ -305,6 +320,7 @@ export interface DataStoreKind<out T = unknown>
  * @remarks
  * TODO: unify this with SharedObjectRegistry.
  *
+ * @typeParam T - The type covering all {@link DataStoreKind}s in the registry.
  * @input
  * @alpha
  */
@@ -318,6 +334,13 @@ export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<
 export interface ServiceClient {
 	/**
 	 * Creates a detached container associated with this service client.
+	 * @typeParam T - The type of the container's root data store, as defined by `root`.
+	 * @param root - A {@link DataStoreKind} to use for the root.
+	 * @remarks
+	 * This overload is a shorthand for a simple case of {@link ServiceClient.(createContainer:2)}
+	 * where a single item registry is produced which contains only the root.
+	 * This is usable only when the root {@link DataStoreKind} is available eagerly (e.g. not lazy loaded),
+	 * and when the container does not need a registry for creating additional data stores beyond the root.
 	 * @privateRemarks
 	 * TODO: As this is a detached container, it should be able to be created synchronously.
 	 *
@@ -335,6 +358,7 @@ export interface ServiceClient {
 
 	/**
 	 * Creates a detached container associated with this service client.
+	 * @typeParam T - The type of the container's root data store, as defined by `root`.
 	 * @param root - A {@link DataStoreKey} used to look up the root's {@link DataStoreKind} from `registry`.
 	 * @param registry - The {@link DataStoreRegistry} supplying the {@link DataStoreKind} for the root and any other data stores the container may need to create.
 	 * @remarks
@@ -348,6 +372,7 @@ export interface ServiceClient {
 
 	/**
 	 * Loads an existing container from the service.
+	 * @typeParam T - The type of the container's root data store.
 	 * @param id - The unique identifier of the container to load.
 	 * @param root - The {@link DataStoreKind} for the root, or a registry which will be used to look up the root based on its type.
 	 *
