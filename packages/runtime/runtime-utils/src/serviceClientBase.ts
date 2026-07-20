@@ -26,7 +26,6 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 /*
  * This file provides common implementation logic for ServiceClient implementations.
- *
  */
 
 /**
@@ -139,7 +138,7 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	protected abstract createAttachRequest(): IRequest;
 
 	/**
-	 * Extracts the container id from {@link ServiceContainerBase.container}'s resolved URL after attachment.
+	 * Extracts the container ID from {@link ServiceContainerBase.container}'s resolved URL after attachment.
 	 * @remarks
 	 * Override when the service's resolved URL stores the id in a non-standard field.
 	 */
