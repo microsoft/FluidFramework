@@ -149,6 +149,7 @@ function collectAttachedNodeIds(
 export function minimizeModularChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	testOnlyArg_DisableBuildMinification: boolean = true,
 ): ModularChangeset {
 	const builds = change.builds;
 	if (builds === undefined || builds.size === 0) {
@@ -164,9 +165,9 @@ export function minimizeModularChangeset(
 	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
 	const attached = collectAttachedNodeIds(delta, globalById);
 	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
-		// `|| true` effectively disables the minimization, which is not viable without paired
-		// edit minimization that is not yet implemented.
-		nestedSetContains(attached, revision, localId) || true;
+		// `|| true` (non-test default) effectively disables the minimization, which is
+		// not viable without paired edit minimization that is not yet implemented.
+		nestedSetContains(attached, revision, localId) || testOnlyArg_DisableBuildMinification;
 
 	const minimizedChange = {
 		...change,
