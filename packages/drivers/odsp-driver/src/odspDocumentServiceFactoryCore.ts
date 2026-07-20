@@ -29,11 +29,7 @@ import {
 	type TokenFetchOptions,
 	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import {
-	PerformanceEvent,
-	UsageError,
-	createChildLogger,
-} from "@fluidframework/telemetry-utils/internal";
+import { PerformanceEvent, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { v4 as uuid } from "uuid";
 
 import { useCreateNewModule } from "./createFile/index.js";
@@ -46,8 +42,6 @@ import {
 } from "./odspCache.js";
 import { OdspDocumentService } from "./odspDocumentService.js";
 import { odspDriverCompatDetailsForLoader } from "./odspLayerCompatState.js";
-import { OdspDriverUrlResolver } from "./odspDriverUrlResolver.js";
-import { OdspPointInTimeDocumentService } from "./pointInTimeDriver/odspPointInTimeDocumentService.js";
 import {
 	type IExistingFileInfo,
 	type INewFileInfo,
@@ -58,10 +52,6 @@ import {
 	toInstrumentedOdspStorageTokenFetcher,
 	toInstrumentedOdspTokenFetcher,
 } from "./odspUtils.js";
-import {
-	createOdspVersionManager,
-	type IOdspVersionManager,
-} from "./odspVersionManager/odspVersionManager.js";
 
 /**
  * Factory for creating the sharepoint document service. Use this if you want to
@@ -279,57 +269,6 @@ export class OdspDocumentServiceFactoryCore
 		);
 	}
 
-	/**
-	 * Creates a document service that reads its snapshot from the closest file version at or before
-	 * the target and its deltas from the live document, materializing a requested sequence number
-	 * through replay.
-	 *
-	 * @internal
-	 */
-	public async createPointInTimeDocumentService(
-		resolvedUrl: IResolvedUrl,
-		targetSequenceNumber: number,
-		logger?: ITelemetryBaseLogger,
-		clientIsSummarizer?: boolean,
-	): Promise<IDocumentService> {
-		const versionManager = await this.createVersionManager(
-			resolvedUrl,
-			logger,
-			clientIsSummarizer,
-		);
-		const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
-		if (baseResult.kind === "noBaseVersion") {
-			const oldestResolvedSequenceDetail =
-				baseResult.oldestResolvedSeq === undefined
-					? ""
-					: ` The oldest resolved file version is at sequence number ${baseResult.oldestResolvedSeq}.`;
-			throw new UsageError(
-				`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
-			);
-		}
-
-		const historicalResolvedUrl = await this.resolveFileVersion(
-			resolvedUrl,
-			baseResult.base.versionId,
-		);
-		const historicalDocumentService = await this.createDocumentService(
-			historicalResolvedUrl,
-			logger,
-			clientIsSummarizer,
-		);
-		const liveDocumentService = await this.createDocumentService(
-			resolvedUrl,
-			logger,
-			clientIsSummarizer,
-		);
-		return new OdspPointInTimeDocumentService(
-			historicalResolvedUrl,
-			historicalDocumentService,
-			liveDocumentService,
-			targetSequenceNumber,
-		);
-	}
-
 	protected async createDocumentServiceCore(
 		resolvedUrl: IResolvedUrl,
 		odspLogger: ITelemetryBaseLogger,
@@ -388,64 +327,6 @@ export class OdspDocumentServiceFactoryCore
 			this.socketReferenceKeyPrefix,
 			clientIsSummarizer,
 		);
-	}
-
-	protected async createVersionManager(
-		resolvedUrl: IResolvedUrl,
-		logger?: ITelemetryBaseLogger,
-		clientIsSummarizer?: boolean,
-	): Promise<IOdspVersionManager> {
-		const odspLogger = createOdspLogger(logger);
-		const extLogger = createChildLogger({ logger: odspLogger });
-		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-		const urlParts: IOdspUrlParts = {
-			siteUrl: odspResolvedUrl.siteUrl,
-			driveId: odspResolvedUrl.driveId,
-			itemId: odspResolvedUrl.itemId,
-		};
-		const cacheAndTracker = createOdspCacheAndTracker(
-			this.persistedCache,
-			this.nonPersistentCache,
-			{
-				resolvedUrl: odspResolvedUrl,
-				docId: odspResolvedUrl.hashedDocumentId,
-				fileVersion: odspResolvedUrl.fileVersion,
-			},
-			extLogger,
-			clientIsSummarizer,
-		);
-		const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
-			extLogger,
-			urlParts,
-			this.getStorageToken,
-		);
-		return createOdspVersionManager({
-			urlParts,
-			getAuthHeader,
-			epochTracker: cacheAndTracker.epochTracker,
-			logger: extLogger,
-		});
-	}
-
-	protected async resolveFileVersion(
-		resolvedUrl: IResolvedUrl,
-		fileVersion: string,
-	): Promise<IResolvedUrl> {
-		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
-		const query = new URLSearchParams({
-			driveId: odspResolvedUrl.driveId,
-			itemId: odspResolvedUrl.itemId,
-			fileVersion,
-		});
-		if (odspResolvedUrl.dataStorePath !== undefined) {
-			query.set("path", odspResolvedUrl.dataStorePath);
-		}
-		if (odspResolvedUrl.codeHint?.containerPackageName !== undefined) {
-			query.set("containerPackageName", odspResolvedUrl.codeHint.containerPackageName);
-		}
-		return new OdspDriverUrlResolver().resolve({
-			url: `${odspResolvedUrl.siteUrl}?${query.toString()}`,
-		});
 	}
 }
 

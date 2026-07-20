@@ -4,15 +4,15 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import {
-	type IClient,
-	type IDocumentDeltaConnection,
-	type IDocumentDeltaStorageService,
-	type IDocumentService,
-	type IDocumentServiceEvents,
-	type IDocumentServicePolicies,
-	type IDocumentStorageService,
-	type IResolvedUrl,
+import type {
+	IClient,
+	IDocumentDeltaConnection,
+	IDocumentDeltaStorageService,
+	IDocumentService,
+	IDocumentServiceEvents,
+	IDocumentServicePolicies,
+	IDocumentStorageService,
+	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
 
 /**
@@ -65,14 +65,15 @@ export class OdspPointInTimeDocumentService
 		// The exclusive upper bound needed to include the target op itself.
 		const boundedTo = this.targetSequenceNumber + 1;
 		return {
-			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) =>
-				liveDeltaStorage.fetchMessages(
+			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) => {
+				return liveDeltaStorage.fetchMessages(
 					from,
 					to === undefined ? boundedTo : Math.min(to, boundedTo),
 					abortSignal,
 					cachedOnly,
 					fetchReason,
-				),
+				);
+			},
 		};
 	}
 

@@ -40,9 +40,7 @@ interface IPointInTimeCapableDocumentServiceFactory {
  */
 export function asPointInTimeCapableFactory(
 	factory: IDocumentServiceFactory,
-):
-	| (IDocumentServiceFactory & IPointInTimeCapableDocumentServiceFactory)
-	| undefined {
+): (IDocumentServiceFactory & IPointInTimeCapableDocumentServiceFactory) | undefined {
 	return typeof (factory as Partial<IPointInTimeCapableDocumentServiceFactory>)
 		.createPointInTimeDocumentService === "function"
 		? (factory as IDocumentServiceFactory & IPointInTimeCapableDocumentServiceFactory)

@@ -24,8 +24,8 @@ import {
  * This is distinct from normal container loading. The supplied
  * {@link IContainerDriverServices.documentServiceFactory} must be able to materialize the document
  * at {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} - i.e. it must implement the
- * point-in-time capability the loader detects. For ODSP, pass an `OdspDocumentServiceFactory`
- * directly; no wrapping or decoration is required.
+ * point-in-time capability the loader detects. For ODSP, pass an
+ * `OdspPointInTimeDocumentServiceFactory` directly.
  *
  * @internal
  */
@@ -58,7 +58,7 @@ export interface ILoadContainerToSequenceNumberProps
  * The supplied {@link IContainerDriverServices.documentServiceFactory} must support point-in-time
  * loading: it must be able to serve a snapshot at or before
  * {@link ILoadContainerToSequenceNumberProps.loadToSequenceNumber} and replay the document forward
- * through that sequence number. For ODSP, pass an `OdspDocumentServiceFactory` (from
+ * through that sequence number. For ODSP, pass an `OdspPointInTimeDocumentServiceFactory` (from
  * `@fluidframework/odsp-driver`) directly - the loader materializes the point-in-time view itself,
  * so no wrapping or decoration is required.
  *
@@ -77,7 +77,7 @@ export async function loadContainerToSequenceNumber(
 	const capableFactory = asPointInTimeCapableFactory(documentServiceFactory);
 	if (capableFactory === undefined) {
 		throw new UsageError(
-			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, pass an OdspDocumentServiceFactory.",
+			"The provided documentServiceFactory does not support point-in-time loading. For ODSP, pass an OdspPointInTimeDocumentServiceFactory.",
 		);
 	}
 
