@@ -606,3 +606,10 @@ pipelines:
           lastModifiedDate: 2026-03-29
         roslyn:
           lastModifiedDate: 2026-03-29
+  218:
+    retail:
+      source:
+        eslint:
+          lastModifiedDate: 2026-07-20
+        armory:
+          lastModifiedDate: 2026-07-20
