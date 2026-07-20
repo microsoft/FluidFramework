@@ -347,7 +347,8 @@ export interface LoadContainerRuntimeParams {
     context: IContainerContext;
     existing: boolean;
     minDocumentRuntimeVersion?: MinDocumentRuntimeVersion;
-    minVersionForCollab?: MinimumVersionForCollab;
+    // @deprecated
+    minVersionForCollab?: MinDocumentRuntimeVersion;
     provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>;
     registryEntries: NamedFluidDataStoreRegistryEntries;
     // @deprecated

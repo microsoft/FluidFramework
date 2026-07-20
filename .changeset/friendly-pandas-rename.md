@@ -7,7 +7,7 @@
 
 Add document runtime version naming for compatibility configuration
 
-`LoadContainerRuntimeParams` now supports `minDocumentRuntimeVersion` as the preferred name for configuring the minimum Fluid runtime version required to open or process documents created or loaded by the container runtime. The existing `minVersionForCollab` property remains supported as a compatibility alias.
+`LoadContainerRuntimeParams` now supports `minDocumentRuntimeVersion` as the preferred name for configuring the minimum Fluid runtime version required to open or process documents created or loaded by the container runtime. The existing `minVersionForCollab` property remains supported as a deprecated compatibility alias until its planned removal in 3.10.0.
 
 ```ts
 const runtime = await loadContainerRuntime({

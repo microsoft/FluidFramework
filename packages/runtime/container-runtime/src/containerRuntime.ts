@@ -131,7 +131,6 @@ import type {
 	StageControlsInternal,
 	IContainerRuntimeBaseInternal,
 	MinDocumentRuntimeVersion,
-	MinimumVersionForCollab,
 	ContainerExtensionExpectations,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -837,8 +836,11 @@ export interface LoadContainerRuntimeParams {
 	 * understand the new op type. If a customer were to set minVersionForCollab to 2.0.0, then `bar` would be set to
 	 * enable `foo` by default. If a customer were to set minVersionForCollab to 1.0.0, then `bar` would be set to
 	 * disable `foo` by default.
+	 *
+	 * @deprecated 2.114.0. Removed in 3.10.0. Use {@link LoadContainerRuntimeParams.minDocumentRuntimeVersion} instead.
+	 * See {@link https://github.com/microsoft/FluidFramework/issues/27180} for context.
 	 */
-	minVersionForCollab?: MinimumVersionForCollab;
+	minVersionForCollab?: MinDocumentRuntimeVersion;
 }
 /**
  * This is meant to be used by a {@link @fluidframework/container-definitions#IRuntimeFactory} to instantiate a container runtime.
@@ -854,7 +856,7 @@ export async function loadContainerRuntime(
 
 function getMinVersionForCollabFromParams(
 	minDocumentRuntimeVersion: MinDocumentRuntimeVersion | undefined,
-	minVersionForCollab: MinimumVersionForCollab | undefined,
+	minVersionForCollab: MinDocumentRuntimeVersion | undefined,
 ): MinDocumentRuntimeVersion {
 	if (minDocumentRuntimeVersion !== undefined && minVersionForCollab !== undefined) {
 		throw new UsageError(
@@ -1681,7 +1683,7 @@ export class ContainerRuntime
 		private readonly documentsSchemaController: DocumentsSchemaController,
 		featureGatesForTelemetry: Record<string, boolean | number | undefined>,
 		provideEntryPoint: (containerRuntime: IContainerRuntime) => Promise<FluidObject>,
-		public readonly minVersionForCollab: MinimumVersionForCollab,
+		public readonly minVersionForCollab: MinDocumentRuntimeVersion,
 		private readonly requestHandler?: (
 			request: IRequest,
 			runtime: IContainerRuntime,

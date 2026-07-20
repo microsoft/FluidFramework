@@ -76,7 +76,7 @@ compatibility window for a client toward the end of a Range can be up to ~24 mon
 
 ### minDocumentRuntimeVersion
 
-`minDocumentRuntimeVersion` is the primary mechanism for configuring cross-client compatibility. It is a container runtime load parameter (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)) that specifies the minimum Fluid version that is allowed to collaborate on a document. The former parameter name, `minVersionForCollab`, remains available as a compatibility alias. The parameter serves two purposes:
+`minDocumentRuntimeVersion` is the primary mechanism for configuring cross-client compatibility. It is a container runtime load parameter (defined in [containerRuntime.ts](./packages/runtime/container-runtime/src/containerRuntime.ts)) that specifies the minimum Fluid version that is allowed to collaborate on a document. The former parameter name, `minVersionForCollab`, remains available as a deprecated compatibility alias until its planned removal in 3.10.0. The parameter serves two purposes:
 
 1. **Cross-client compatibility enforcement**: Clients running a Fluid version older than what the document requires will be blocked from joining the collaboration session, preventing data corruption or runtime errors. See [Errors and Warnings to Monitor](#errors-and-warnings-to-monitor) for the specific error signals.
 2. **Feature gating**: It automatically enables or disables features based on the specified version to ensure all collaborating clients can understand the resulting data format. For example, if `minDocumentRuntimeVersion` is set to `"2.0.0"`, features like grouped batching are safely enabled because all clients at version 2.0.0 or later can interpret that format.
