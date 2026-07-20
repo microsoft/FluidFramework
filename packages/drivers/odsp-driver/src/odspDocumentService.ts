@@ -207,12 +207,22 @@ export class OdspDocumentService
 	 */
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
 		const snapshotOps = this.storageManager?.ops ?? [];
-		const service = new OdspDeltaStorageService(
+		const liveTipService = new OdspDeltaStorageService(
 			this.odspResolvedUrl.endpoints.deltaStorageUrl,
 			this.getAuthHeader,
 			this.epochTracker,
 			this.mc.logger,
 		);
+		const historicalDeltaStorageUrl = this.storageManager?.getHistoricalDeltaStorageUrl();
+		const historicalVersionService =
+			historicalDeltaStorageUrl === undefined
+				? undefined
+				: new OdspDeltaStorageService(
+						historicalDeltaStorageUrl,
+						this.getAuthHeader,
+						this.epochTracker,
+						this.mc.logger,
+					);
 
 		// batch size, please see issue #5211 for data around batch sizing
 		const batchSize = this.hostPolicy.opsBatchSize ?? 5000;
@@ -223,8 +233,28 @@ export class OdspDocumentService
 			batchSize,
 			concurrency,
 			// Get Ops from storage callback.
-			async (from, to, telemetryProps, fetchReason) =>
-				service.get(from, to, telemetryProps, fetchReason),
+			async (from, to, telemetryProps, fetchReason) => {
+				if (historicalVersionService === undefined) {
+					return liveTipService.get(from, to, telemetryProps, fetchReason);
+				}
+
+				const versionResult = await historicalVersionService.get(
+					from,
+					to,
+					telemetryProps,
+					fetchReason,
+				);
+				const next = from + versionResult.messages.length;
+				if (next >= to) {
+					return versionResult;
+				}
+
+				const tipResult = await liveTipService.get(next, to, telemetryProps, fetchReason);
+				return {
+					messages: [...versionResult.messages, ...tipResult.messages],
+					partialResult: versionResult.partialResult || tipResult.partialResult,
+				};
+			},
 			// Get cachedOps Callback.
 			async (from, to) => {
 				const res = await this.opsCache?.get(from, to);

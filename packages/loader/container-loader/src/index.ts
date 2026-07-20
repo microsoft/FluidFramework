@@ -4,11 +4,17 @@
  */
 
 export { ConnectionState } from "./connectionState.js";
-export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
+export {
+	type ContainerAlpha,
+	waitContainerToCatchUp,
+	asLegacyAlpha,
+	canMaterializePointInTime,
+} from "./container.js";
 export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
 	captureFullContainerState,
 	createDetachedContainer,
+	loadContainerToSequenceNumber,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
@@ -19,6 +25,7 @@ export {
 	type IContainerLoadDriverProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
+	type ILoadContainerToSequenceNumberProps,
 	type ILoadExistingContainerProps,
 	type ILoadSummarizerContainerProps,
 	type IRehydrateDetachedContainerProps,

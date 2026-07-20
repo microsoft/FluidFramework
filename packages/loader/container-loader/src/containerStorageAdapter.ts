@@ -16,12 +16,15 @@ import type {
 	IDocumentService,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPointInTimeMaterializationStorageService,
+	IPointInTimeMaterializationTarget,
 	ISnapshot,
 	ISnapshotFetchOptions,
 	ISummaryContext,
 	ICreateBlobResponse,
 	ISnapshotTree,
 	IVersion,
+	PointInTimeMaterializationAvailability,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -236,6 +239,19 @@ export class ContainerStorageAdapter
 			}
 		}
 		return snapshot;
+	}
+
+	public async canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability> {
+		const pointInTimeStorageService = this
+			._storageService as Partial<IPointInTimeMaterializationStorageService>;
+		return (
+			pointInTimeStorageService.canMaterializePointInTime?.(target) ?? {
+				status: "notAvailable",
+				message: "Storage driver does not support point-in-time materialization checks.",
+			}
+		);
 	}
 
 	public async readBlob(id: string): Promise<ArrayBufferLike> {

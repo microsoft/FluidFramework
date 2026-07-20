@@ -11,6 +11,7 @@ import { stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	DriverErrorTypes,
 	type ISnapshot,
+	type ISnapshotFetchOptionsAlpha,
 	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
 import {
@@ -38,6 +39,11 @@ import { LocalPersistentCache, NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentStorageService } from "../odspDocumentStorageManager.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
 import { getHashedDocumentId } from "../odspPublicUtils.js";
+import type {
+	HistoricalSnapshotCandidate,
+	OdspVersionManager,
+} from "../odspVersionManager.js";
+import { getOdspFileVersionsUrl } from "../odspVersionManager.js";
 import {
 	type INewFileInfo,
 	type IOdspResponse,
@@ -47,12 +53,41 @@ import {
 import {
 	createResponse,
 	mockFetchMultiple,
+	mockFetchOk,
 	notFound,
 	okResponse,
 	type MockResponse,
 } from "./mockFetch.js";
 
 const createUtLocalCache = (): LocalPersistentCache => new LocalPersistentCache();
+
+describe("ODSP file version history URL", () => {
+	it("uses the ODC v2.1 API root without _api", () => {
+		const resolvedUrl: Pick<IOdspResolvedUrl, "driveId" | "itemId" | "siteUrl"> = {
+			driveId: "driveId",
+			itemId: "itemId",
+			siteUrl: "https://foo.onedrive.com/siteUrl",
+		};
+
+		assert.strictEqual(
+			getOdspFileVersionsUrl(resolvedUrl),
+			"https://foo.onedrive.com/v2.1/drives/driveId/items/itemId/versions",
+		);
+	});
+
+	it("uses the SharePoint _api v2.1 API root", () => {
+		const resolvedUrl: Pick<IOdspResolvedUrl, "driveId" | "itemId" | "siteUrl"> = {
+			driveId: "driveId",
+			itemId: "itemId",
+			siteUrl: "https://microsoft.sharepoint-df.com/siteUrl",
+		};
+
+		assert.strictEqual(
+			getOdspFileVersionsUrl(resolvedUrl),
+			"https://microsoft.sharepoint-df.com/_api/v2.1/drives/driveId/items/itemId/versions",
+		);
+	});
+});
 
 describe("Tests1 for snapshot fetch", () => {
 	const siteUrl = "https://microsoft.sharepoint-df.com/siteUrl";
@@ -338,6 +373,165 @@ describe("Tests1 for snapshot fetch", () => {
 		assert(cachedValue.snapshotTree.id === "SnapshotId", "snapshot should have been cached");
 		assert(service["blobCache"].value.size > 0, "blobs should be cached locally");
 		assert(service["commitCache"].size > 0, "no trees should be cached");
+	});
+
+	it("GetSnapshot() with historical target selects the closest snapshot at or before the target", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
+				loadToSequenceNumber: 25,
+			};
+			const snapshot = await mockFetchOk(
+				async () => service.getSnapshot(snapshotFetchOptions),
+				createDeltaStorageResponse(21, 25),
+			);
+
+			assert.strictEqual(snapshot.sequenceNumber, 20);
+			assert.strictEqual(snapshot.snapshotTree.id, "version-20");
+			assert(
+				mockLogger.matchAnyEvent([
+					{
+						eventName: "HistoricalSnapshotSelection",
+						targetSequenceNumber: 25,
+						baseSnapshotSequenceNumber: 20,
+						replayDistance: 5,
+						versionsScanned: 4,
+						candidateSnapshotReads: 4,
+						foundCandidate: true,
+						baseSnapshotSource: "odspVersion",
+					},
+				]),
+				"Historical snapshot selection telemetry should include scan and replay metrics",
+			);
+		} finally {
+			restore();
+		}
+	});
+
+	it("GetSnapshot() with historical target fails when ODSP has no usable base snapshot", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
+				loadToSequenceNumber: 5,
+			};
+			await assert.rejects(
+				async () => service.getSnapshot(snapshotFetchOptions),
+				(error: Partial<Error & { errorType: string }>) => {
+					assert.strictEqual(error.errorType, OdspErrorTypes.genericError);
+					assert.match(
+						error.message ?? "",
+						/ODSP snapshot at or before the requested historical load target/,
+					);
+					return true;
+				},
+			);
+			assert(
+				mockLogger.matchAnyEvent([
+					{
+						eventName: "HistoricalSnapshotSelection",
+						targetSequenceNumber: 5,
+						versionsScanned: 4,
+						candidateSnapshotReads: 4,
+						foundCandidate: false,
+					},
+				]),
+				"Historical snapshot selection telemetry should include failed scan metrics",
+			);
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() returns materializable when ODSP has a usable base snapshot", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await mockFetchOk(
+				async () => service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				createDeltaStorageResponse(21, 25),
+			);
+
+			assert.deepStrictEqual(availability, {
+				status: "materializable",
+				baseSnapshotSequenceNumber: 20,
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports missing ops when replay range is incomplete", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await mockFetchMultiple(
+				async () => service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				[
+					async () => okResponse({}, createDeltaStorageResponse(21, 24)),
+					async () => okResponse({}, createDeltaStorageResponse(11, 14)),
+				],
+			);
+
+			assert.deepStrictEqual(availability, {
+				status: "missingOps",
+				baseSnapshotSequenceNumber: 20,
+				message: "A base snapshot exists, but required replay ops are unavailable.",
+			});
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports missing base version when ODSP has no candidate", async () => {
+		const { restore } = mockHistoricalSnapshots(service, [40, 30, 20, 10]);
+		try {
+			const availability = await service.canMaterializePointInTime({
+				sequenceNumber: 5,
+			});
+
+			assert.strictEqual(availability.status, "missingBaseVersion");
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() reports access failure when ODSP cannot list file versions", async () => {
+		const accessError = new Error("access denied") as Error & { errorType: string };
+		accessError.errorType = OdspErrorTypes.authorizationError;
+		const versionManager: Partial<OdspVersionManager> = {
+			findSnapshotsAtOrBefore: async () => {
+				throw accessError;
+			},
+		};
+		const { restore } = mockOdspVersionManager(service, versionManager);
+		try {
+			const availability = await service.canMaterializePointInTime({ sequenceNumber: 25 });
+
+			assert.strictEqual(availability.status, "permissionOrAccessDenied");
+		} finally {
+			restore();
+		}
+	});
+
+	it("canMaterializePointInTime() lets retryable errors escape storage probe normalization", async () => {
+		const retryableError = new Error("retryable probe failure") as Error & {
+			canRetry: boolean;
+			errorType: string;
+		};
+		retryableError.canRetry = true;
+		retryableError.errorType = OdspErrorTypes.genericNetworkError;
+		const versionManager: Partial<OdspVersionManager> = {
+			findSnapshotsAtOrBefore: async () => {
+				throw retryableError;
+			},
+		};
+		const { restore } = mockOdspVersionManager(service, versionManager);
+		try {
+			await assert.rejects(
+				service.canMaterializePointInTime({ sequenceNumber: 25 }),
+				(error: unknown) => error === retryableError,
+			);
+		} finally {
+			restore();
+		}
 	});
 
 	it("GetSnapshot() should work but snapshot should not be cached locally if asked for custom groupId", async () => {
@@ -836,3 +1030,108 @@ const blobContents = new Map<string, ArrayBuffer>([
 		stringToBuffer(JSON.stringify({ summaryFormatVersion: 1, gcFeature: 0 }), "utf8"),
 	],
 ]);
+
+function createHistoricalSnapshotTree(sequenceNumber: number): ISnapshotTree {
+	return {
+		id: `version-${sequenceNumber}`,
+		blobs: {},
+		trees: {
+			".protocol": {
+				blobs: { attributes: `attributes-${sequenceNumber}` },
+				trees: {},
+			},
+			".app": {
+				blobs: {},
+				trees: {},
+			},
+		},
+	};
+}
+
+function createDeltaStorageResponse(from: number, to: number): { value: object[] } {
+	return {
+		value: Array.from({ length: to - from + 1 }, (_, index) => ({
+			sequenceNumber: from + index,
+		})),
+	};
+}
+
+function mockHistoricalSnapshots(
+	service: OdspDocumentStorageService,
+	sequenceNumbers: number[],
+): { restore: () => void } {
+	const originalFetchSnapshot = service["fetchSnapshot"];
+	service["fetchSnapshot"] = async () => ({
+		id: undefined,
+		snapshot: {
+			blobContents: new Map(),
+			latestSequenceNumber: undefined,
+			ops: [],
+			sequenceNumber: undefined,
+			snapshotFormatV: 1,
+			snapshotTree: { blobs: {}, id: "latest", trees: {} },
+		},
+	});
+	const fetchSnapshotFromVersion = async (
+		fileVersionId: string,
+		fetchFullSnapshot: boolean,
+	): Promise<ISnapshot> => {
+		const sequenceNumber = Number(fileVersionId.replace("version-", ""));
+		const historicalBlobContents = new Map<string, ArrayBuffer>();
+		if (fetchFullSnapshot) {
+			historicalBlobContents.set(
+				`attributes-${sequenceNumber}`,
+				stringToBuffer(JSON.stringify({ minimumSequenceNumber: 0, sequenceNumber }), "utf8"),
+			);
+		}
+		return {
+			blobContents: historicalBlobContents,
+			latestSequenceNumber: sequenceNumber,
+			ops: [],
+			sequenceNumber,
+			snapshotFormatV: 1,
+			snapshotTree: createHistoricalSnapshotTree(sequenceNumber),
+		};
+	};
+	const versionManager: Partial<OdspVersionManager> = {
+		findSnapshotsAtOrBefore: async (targetSequenceNumber: number) => {
+			let versionsScanned = 0;
+			let candidateSnapshotReads = 0;
+			const candidates: HistoricalSnapshotCandidate[] = [];
+			for (const sequenceNumber of sequenceNumbers) {
+				versionsScanned++;
+				candidateSnapshotReads++;
+				if (sequenceNumber <= targetSequenceNumber) {
+					candidates.push({
+						fileVersionId: `version-${sequenceNumber}`,
+						sequenceNumber,
+						snapshotTree: createHistoricalSnapshotTree(sequenceNumber),
+					});
+				}
+			}
+			return { candidates, versionsScanned, candidateSnapshotReads };
+		},
+		fetchSnapshotFromVersion,
+	};
+	const { restore } = mockOdspVersionManager(service, versionManager);
+	return {
+		restore: () => {
+			service["fetchSnapshot"] = originalFetchSnapshot;
+			restore();
+		},
+	};
+}
+
+function mockOdspVersionManager(
+	service: OdspDocumentStorageService,
+	versionManager: Partial<OdspVersionManager>,
+): { restore: () => void } {
+	const originalVersionManager = service["odspVersionManager"];
+	service["odspVersionManager"] = versionManager as OdspVersionManager;
+
+	return {
+		restore: () => {
+			service["odspVersionManager"] = originalVersionManager;
+		},
+	};
+}

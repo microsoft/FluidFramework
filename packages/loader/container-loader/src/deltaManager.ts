@@ -38,6 +38,7 @@ import {
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	extractSafePropertiesFromMessage,
+	GenericError,
 	isFluidError,
 	type ITelemetryErrorEventExt,
 	type ITelemetryGenericEventExt,
@@ -575,8 +576,9 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 		minSequenceNumber: number,
 		snapshotSequenceNumber: number,
 		handler: IDeltaHandlerStrategy,
-		prefetchType: "cached" | "all" | "none" = "none",
+		prefetchType: "sequenceNumber" | "cached" | "all" | "none" = "none",
 		lastProcessedSequenceNumber: number = snapshotSequenceNumber,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<void> {
 		this.initSequenceNumber = snapshotSequenceNumber;
 		this.lastProcessedSequenceNumber = lastProcessedSequenceNumber;
@@ -612,7 +614,26 @@ export class DeltaManager<TConnectionManager extends IConnectionManager>
 
 		if (prefetchType !== "none") {
 			const cacheOnly = prefetchType === "cached";
-			await this.fetchMissingDeltasCore(`DocumentOpen_${prefetchType}`, cacheOnly);
+			const fetchToSequenceNumber =
+				prefetchType === "sequenceNumber" ? loadToSequenceNumber : undefined;
+			assert(
+				prefetchType !== "sequenceNumber" || fetchToSequenceNumber !== undefined,
+				"loadToSequenceNumber should be defined",
+			);
+			await this.fetchMissingDeltasCore(
+				`DocumentOpen_${prefetchType}`,
+				cacheOnly,
+				fetchToSequenceNumber === undefined ? undefined : fetchToSequenceNumber + 1,
+			);
+			if (
+				prefetchType === "sequenceNumber" &&
+				fetchToSequenceNumber !== undefined &&
+				this.lastQueuedSequenceNumber < fetchToSequenceNumber
+			) {
+				throw new GenericError(
+					"Cannot satisfy request to load the container at the specified sequence number. Requested sequence number is not available.",
+				);
+			}
 
 			// Keep going with fetching ops from storage once we have all cached ops in.
 			// But do not block load and make this request async / not blocking this api.

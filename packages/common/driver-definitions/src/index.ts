@@ -34,11 +34,15 @@ export type {
 	IDocumentServicePolicies,
 	IDocumentStorageService,
 	IDocumentStorageServicePolicies,
+	IPointInTimeMaterializationStorageService,
+	IPointInTimeMaterializationTarget,
 	ISnapshot,
+	ISnapshotFetchOptionsAlpha,
 	ISnapshotFetchOptions,
 	IStream,
 	IStreamResult,
 	ISummaryContext,
+	PointInTimeMaterializationAvailability,
 } from "./storage.js";
 export { FetchSource, LoaderCachingPolicy } from "./storage.js";
 export type {
