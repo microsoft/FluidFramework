@@ -1,7 +1,7 @@
 # Release Tags
 
 Release tags are [TSDoc Modifier tags](./TSDoc-Guidelines.md#modifier-tags) that can be used to explicitly denote the stability guarantees associated with an API and who should be using it.
-Each release tag has its own associated stability guarantees that dictate when and how [breaking changes](https://github.com/microsoft/FluidFramework/wiki/Breaking-vs-Non-breaking-Changes) are permitted.
+Each release tag has its own associated stability guarantees that dictate when and how [breaking changes](../../../Contributing/Breaking-vs-Non-Breaking-Changes.md) are permitted.
 
 Each exported API has exactly one release tag, optionally paired with the [@legacy](#legacy) tag.
 
@@ -22,7 +22,7 @@ APIs should be marked as `@public` when we believe they are stable and ready for
 Modifications to _public_ APIs are subject to [SemVer](https://semver.org/) compliance, meaning that breaking changes are only permitted in `major` releases.
 
 > [!NOTE]
-> See [Breaking vs Non-breaking Changes](https://github.com/microsoft/FluidFramework/wiki/Breaking-vs-Non-breaking-Changes) for more details about these stability guarantees.
+> See [Breaking vs Non-breaking Changes](../../../Contributing/Breaking-vs-Non-Breaking-Changes.md) for more details about these stability guarantees.
 
 Pull requests (PRs) adding or modifying existing _public_ APIs, as well as PRs promoting APIs from another release tag to `@public` are subject to extra review scrutiny.
 
@@ -44,7 +44,7 @@ An API should generally only be marked as `@beta` as a part of an agreed-upon pr
 Modifications to _beta_ APIs are subject to a custom support guarantee we have made that breaking changes are only permitted in `minor` releases that are an increment of 10.
 
 > [!NOTE]
-> See [Breaking vs Non-breaking Changes](https://github.com/microsoft/FluidFramework/wiki/Breaking-vs-Non-breaking-Changes) for more details about these stability guarantees.
+> See [Breaking vs Non-breaking Changes](../../../Contributing/Breaking-vs-Non-Breaking-Changes.md) for more details about these stability guarantees.
 
 ## Stability Guarantees
 

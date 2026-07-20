@@ -435,7 +435,7 @@ Use this tag to indicate that the associated API has been deprecated.
 
 This tag should always be followed with any information a developer would need to know to migrate their code off of the deprecated API.,
 
-- See [API Deprecation](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation) for a more complete overview of our deprecation process.
+- See [API Deprecation](../../../Contributing/API-Deprecation.md) for a more complete overview of our deprecation process.
 
 ##### \@deprecated: Example
 
@@ -452,7 +452,7 @@ export function foo() {
 
 ##### Deprecation Guidelines
 
-For an overview of our general deprecation guidelines, see the [API deprecation guidelines](https://github.com/microsoft/FluidFramework/wiki/API-Deprecation).
+For an overview of our general deprecation guidelines, see the [API deprecation guidelines](../../../Contributing/API-Deprecation.md).
 
 #### \@defaultValue
 
