@@ -1,6 +1,8 @@
 # Beta \| Legacy Breaks for FF Client
 
-Beta and Legacy+Beta APIs are both used in production by partners and not settled/finalized. They are supported under an agreement that allows them to be carefully changed ahead of major version bumps. **New deprecations** should follow [API Deprecation](../API-Deprecation.md) leveraging the table below to schedule removal.
+Beta and Legacy+Beta APIs are both used in production by partners and not settled/finalized.
+They are supported under an agreement that allows them to be carefully changed ahead of major version bumps.
+**New deprecations** should follow [API Deprecation](../API-Deprecation.md) leveraging the table below to schedule removal.
 
 ## To Create Issue for an **Existing** Deprecation
 

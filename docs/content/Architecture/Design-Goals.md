@@ -1,6 +1,10 @@
 ## Introduction
 
-This page describes the general design goals of the Fluid Framework. Its purpose is to provide some background on certain design decisions and describe the general thinking for the codebase. It is by no means definitive or exhaustive. Each part of the Fluid Framework, client components, distributed data structures (DDSs), hosts & loaders, back-end servers, etc. each deserve their own design-goals document. These are, however, good general guidelines to have in mind and consider while introducing any changes.
+This page describes the general design goals of the Fluid Framework.
+Its purpose is to provide some background on certain design decisions and describe the general thinking for the codebase.
+It is by no means definitive or exhaustive.
+Each part of the Fluid Framework, client components, distributed data structures (DDSs), hosts & loaders, back-end servers, etc. each deserve their own design-goals document.
+These are, however, good general guidelines to have in mind and consider while introducing any changes.
 
 ## Goals
 

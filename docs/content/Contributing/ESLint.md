@@ -4,7 +4,8 @@ We use ESLint across all our projects to enforce and encourage higher-quality co
 
 ## Testing the rule and pre-applying fixes
 
-Before you can enable the rule, you should test it on the current repo to determine how much code churn the rule will cause. You should also pre-apply fixes for the rule so that the final integration of the updated config is easier.
+Before you can enable the rule, you should test it on the current repo to determine how much code churn the rule will cause.
+You should also pre-apply fixes for the rule so that the final integration of the updated config is easier.
 
 ### Configure a dev/test environment
 

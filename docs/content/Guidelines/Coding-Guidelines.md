@@ -106,8 +106,7 @@ Any default behavior(s) should be clearly documented in the API's source-code do
 
 With each release, the TypeScript type system becomes more expressive, and we should leverage the capabilities of the type system to enhance developer productivity with accurate IntelliSense and helpful compiler errors.
 
-However, it is important to remember that the purpose of TypeScript type checking in public APIs is to be helpful to the end developer.
-“Being helpful” is slightly different than “enforcing correctness”.
+However, it is important to remember that the purpose of TypeScript type checking in public APIs is to be helpful to the end developer. “Being helpful” is slightly different than “enforcing correctness”.
 Typing that creates friction, clutters imports, or degrades readability in IntelliSense or compiler errors is not perceived by developers as helpful, even if it is strictly “more correct”.
 
 This is simple:
@@ -205,7 +204,8 @@ While a common convention in some codebases, this naming convention has a few no
   Renaming an item each time its underlying kind changes is needlessly disruptive.
 - `I` prefixing encourages naming an interface for its implementation, rather than deriving implementation names from their semantic contracts (i.e., interfaces).
 
-When introducing an interface with a single implementation (e.g., to hide implementation details from an API), prefer prefixing/postfixing the implementation rather than prefixing the interface. E.g.,
+When introducing an interface with a single implementation (e.g., to hide implementation details from an API), prefer prefixing/postfixing the implementation rather than prefixing the interface.
+E.g.,
 
 Prefer...
 
@@ -227,8 +227,7 @@ This allows the public thing (the interface) to have the nice semantic name, and
 
 #### ✔ DO name type parameters when non-trivial
 
-In general, give type parameters full names, rather than just typing T.
-E.g., prefer `TFoo` to `T`.
+In general, give type parameters full names, rather than just typing T. E.g., prefer `TFoo` to `T`.
 
 In trivial cases, or when the type parameter is simply passed through to another type, `T` by itself is allowed.
 E.g.
@@ -319,8 +318,7 @@ Examples:
 
 #### ✔ DO minimize the number of required packages
 
-There are many boundaries along which a framework engineer might partition packages: layering, ownership, release group, etc.
-All of these are generally for the convenience of the framework engineer, not the end user.
+There are many boundaries along which a framework engineer might partition packages: layering, ownership, release group, etc. All of these are generally for the convenience of the framework engineer, not the end user.
 When publishing for the end user, the ideal number of packages is usually one.
 
 There are a couple of exceptions:
@@ -414,7 +412,8 @@ This may be the difference between checking in a bug or not - perhaps there is s
 function createHandle(id: string, onDispose: () => void): Handle;
 ```
 
-Whether or not to make a parameter optional is always a judgment call, and there are many times when it is warranted for internal code (for example, a helper that is called many times over in a test suite). However, for many functions that are only called a handful of times or fewer, it can payoff to choose awareness over simple convenience.
+Whether or not to make a parameter optional is always a judgment call, and there are many times when it is warranted for internal code (for example, a helper that is called many times over in a test suite).
+However, for many functions that are only called a handful of times or fewer, it can payoff to choose awareness over simple convenience.
 
 #### ✔ PREFER ‘named arguments’ for extensible initialization/configuration APIs
 
@@ -626,8 +625,7 @@ For example:
 public getAtIndex(index: number): Foo;
 ```
 
-At the type-system level, the input `index` can potentially be negative, infinite, etc.
-What our method does in these cases is unclear.
+At the type-system level, the input `index` can potentially be negative, infinite, etc. What our method does in these cases is unclear.
 Does it throw?
 Does it return some default value?
 

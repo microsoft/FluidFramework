@@ -4,7 +4,8 @@ This is a collection of some patterns that can be used to manage changes that wi
 
 ## Moving API to internal
 
-Deprecating an API in order to change it to be `@internal` may be handled without the internal usages appearing deprecated (requiring `no-deprecated` lint disables). Since standard API separation is generated from a single file, a split is required with a re-tagged API to make this work.
+Deprecating an API in order to change it to be `@internal` may be handled without the internal usages appearing deprecated (requiring `no-deprecated` lint disables).
+Since standard API separation is generated from a single file, a split is required with a re-tagged API to make this work.
 
 1. Apply the `@deprecated` tag to the original API. It is important to keep the original tags in place to make it clear that API is externally exposed.
 1. Create a new `internal.ts` source next to `index.ts` that re-exports everything: `export * from "./index.js";`.
@@ -16,7 +17,8 @@ Example: [PR 23332: Making ContainerRuntime externally deprecated](https://githu
 
 ## Manipulating a Class or Enum
 
-Classes and enums are both values and types and the type of (`typeof`) the value is not the same as the type. To clone a class or enum fully, both a type and value should be cloned.
+Classes and enums are both values and types and the type of (`typeof`) the value is not the same as the type.
+To clone a class or enum fully, both a type and value should be cloned.
 
 ### Example
 
@@ -30,13 +32,17 @@ export const ContainerRuntime = ContainerRuntimeClass;
 
 ## Manipulating a Namespace
 
-There is no known simple way to clone a namespace. To clone a namespace it needs redeclared member by member. So it may be advantageous to only resurface the minimal members when needed. (`api-extractor` may insist in a large "internal" namespace be exposed, but for `/internal` uses only tiny number of set actually needs surfaced.)
+There is no known simple way to clone a namespace.
+To clone a namespace it needs redeclared member by member.
+So it may be advantageous to only resurface the minimal members when needed.
+(`api-extractor` may insist in a large "internal" namespace be exposed, but for `/internal` uses only tiny number of set actually needs surfaced.)
 
 Example: TODO - use jason-ha's pending core-interfaces reorg for Presence infrastructure
 
 ## Converting a Class to an Interface-Constructor Pair
 
-Classes exposed outside of a package often lead to undesired maintenance burdens complicating change and evolution. When a class does not have _protected_ members including transitive ones from `extends` specification, then an essentially type equivalent interface and new function may be substituted.
+Classes exposed outside of a package often lead to undesired maintenance burdens complicating change and evolution.
+When a class does not have _protected_ members including transitive ones from `extends` specification, then an essentially type equivalent interface and new function may be substituted.
 
 > **Warning** The replacement `interface` will not provide exact type checking protections that the original `class` afforded. If the class was not already `@sealed`, then understand if any customer may have had reason to inherit the class.
 

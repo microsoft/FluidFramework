@@ -1,4 +1,5 @@
-This page is intended to introduce you to the testing framework that the FluidFrameworks codebase uses. These tests run as part of the CI processes, and all tests need to pass with a 100%, non-flaky success rate for the PR to be eligible to merge.
+This page is intended to introduce you to the testing framework that the FluidFrameworks codebase uses.
+These tests run as part of the CI processes, and all tests need to pass with a 100%, non-flaky success rate for the PR to be eligible to merge.
 
 Anytime code is updated, any affected tests should be updated, and any new code should include with it tests for the new logic.
 
@@ -13,7 +14,8 @@ The following steps assume that you have already set up your build system and in
 
 Some of the collateral test data is located in the [FluidFrameworkTestData](https://github.com/microsoft/FluidFrameworkTestData) sub-module.
 
-You'll need to fetch that collateral data into your local machine to successfully run all the tests. To do so, run the following from the repo root:
+You'll need to fetch that collateral data into your local machine to successfully run all the tests.
+To do so, run the following from the repo root:
 
 ```bash
 git submodule init
@@ -42,7 +44,8 @@ npm run test:coverage
 
 ### Running Tests for a Specific Package
 
-To run only the tests for one package, simply navigate to that package's directory and run the test command there. For example, to run `Clicker`'s tests
+To run only the tests for one package, simply navigate to that package's directory and run the test command there.
+For example, to run `Clicker`'s tests
 
 ```bash
 cd examples\data-objects\clicker
@@ -51,7 +54,8 @@ npm run test
 
 ### Running Singular Mocha Unit Tests using VS Code
 
-Alternatively, you can also use the VS code UI to run Mocha tests. These steps will not work for snapshot testing.
+Alternatively, you can also use the VS code UI to run Mocha tests.
+These steps will not work for snapshot testing.
 
 1. Make sure you have installed all of your packages and fully built the codebase using the [Client](./Client.md) setup steps
 

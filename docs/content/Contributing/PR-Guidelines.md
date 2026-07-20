@@ -1,14 +1,21 @@
-Before working on a **code submission**, check out the [issues list](https://github.com/microsoft/FluidFramework/issues). Issues labeled `help wanted` are good issues to submit a PR for. If you are contributing significant changes, please discuss with the code owner of that area first before starting to work on the issue.
+Before working on a **code submission**, check out the [issues list](https://github.com/microsoft/FluidFramework/issues).
+Issues labeled `help wanted` are good issues to submit a PR for.
+If you are contributing significant changes, please discuss with the code owner of that area first before starting to work on the issue.
 
 ### Legal
 
-You will need to complete a [Contributor License Agreement (CLA)](./CLA.md) to submit changes. This agreement testifies that you are granting us permission to use the submitted change according to the terms of the project's license, and that the work being submitted is under appropriate copyright. Upon submitting a pull request, you will automatically be given instructions on how to sign the CLA.
+You will need to complete a [Contributor License Agreement (CLA)](./CLA.md) to submit changes.
+This agreement testifies that you are granting us permission to use the submitted change according to the terms of the project's license, and that the work being submitted is under appropriate copyright.
+Upon submitting a pull request, you will automatically be given instructions on how to sign the CLA.
 
 ### Guidelines
 
 The following are some general practices to follow when submitting PRs (Pull Requests) to the Fluid Framework repo to contribute changes.
 
-The most important thing is to clearly and concisely communicate with potential collaborators on the PR (typically people who might choose to review it) to avoid wasting effort and causing confusion. Below are some patterns for achieving this in common cases (one author/owner with a self-contained PR). Feel free to deviate from this (ex: seek early design review, pair-programming as review, etc.) as long as your workflow adjustments are clear to the people involved. Use mechanisms such as a clear status in the PR description/title and setting PRs to "draft" until they are ready for final review so new reviewers who don't know your adjusted workflow don't assume you're using the regular review process.
+The most important thing is to clearly and concisely communicate with potential collaborators on the PR (typically people who might choose to review it) to avoid wasting effort and causing confusion.
+Below are some patterns for achieving this in common cases (one author/owner with a self-contained PR).
+Feel free to deviate from this (ex: seek early design review, pair-programming as review, etc.) as long as your workflow adjustments are clear to the people involved.
+Use mechanisms such as a clear status in the PR description/title and setting PRs to "draft" until they are ready for final review so new reviewers who don't know your adjusted workflow don't assume you're using the regular review process.
 
 When submitting your change, consider making it a draft PR initially.
 This can allow you to work through the below requirements at your own pace (including fixing CI failures) before attracting reviewers.
@@ -44,13 +51,15 @@ From there the process proceeds as follows:
 
 ### Submitting Pull Requests
 
-This assumes that you have already created a branch on your own fork with the changes you wish to submit. Please follow the [Editing the Repo steps](./Repo-Basics.md#editing-the-repo) if you have not done this yet.
+This assumes that you have already created a branch on your own fork with the changes you wish to submit.
+Please follow the [Editing the Repo steps](./Repo-Basics.md#editing-the-repo) if you have not done this yet.
 
 1. Navigate to the [Pull Requests](https://github.com/microsoft/FluidFramework/pulls) tab in the official GitHub repo. Here, click "New Pull Request" and you will see this.
 
 ![Pre-PR](../_assets/contributing/pre-PR.PNG)
 
-Here, you will need to click on "compare across forks" to start seeing the branches on your fork. Select your fork in "Head repository" and your branch in "compare" for the source:
+Here, you will need to click on "compare across forks" to start seeing the branches on your fork.
+Select your fork in "Head repository" and your branch in "compare" for the source:
 
 ![Setup-PR](../_assets/contributing/setup-PR.PNG)
 

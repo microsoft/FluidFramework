@@ -48,8 +48,7 @@ Modifications to _beta_ APIs are subject to a custom support guarantee we have m
 
 ## Stability Guarantees
 
-We guarantee that we will not introduce _beta_ API breaking changes except in `major` version increments, and `minor` version increments that are an increment of 10.
-For this reason, users of these APIs should either pin associate package dependencies (e.g. `"fluid-framework": "2.0.0"`) or bind them to a range that ensures they will not accidentally pick up breaking changes (e.g., `"fluid-framework": ">=2.0.0 <2.1.0"`).
+We guarantee that we will not introduce _beta_ API breaking changes except in `major` version increments, and `minor` version increments that are an increment of 10. For this reason, users of these APIs should either pin associate package dependencies (e.g. `"fluid-framework": "2.0.0"`) or bind them to a range that ensures they will not accidentally pick up breaking changes (e.g., `"fluid-framework": ">=2.0.0 <2.1.0"`).
 
 # [@alpha](https://api-extractor.com/pages/tsdoc/tag_alpha/)
 

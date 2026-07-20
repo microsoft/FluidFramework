@@ -1,10 +1,13 @@
 # Dotfiles and Developer Environment Personalization
 
-This page provides a brief overview of **dotfiles**, why they are useful to sync across machines, and how they can be used to personalize cloud-based development environments such as **GitHub Codespaces**. It also highlights **chezmoi** as a commonly used tool for managing dotfiles at scale.
+This page provides a brief overview of **dotfiles**, why they are useful to sync across machines, and how they can be used to personalize cloud-based development environments such as **GitHub Codespaces**.
+It also highlights **chezmoi** as a commonly used tool for managing dotfiles at scale.
 
 ## What are dotfiles?
 
-**Dotfiles** are configuration files and directories that customize the behavior of your development environment. They are typically named with a leading `.` (dot), which makes them hidden by default on Unix-like systems. Since our codespace images run Linux, dotfiles offer a way to personalize and customize your codespace environment.
+**Dotfiles** are configuration files and directories that customize the behavior of your development environment.
+They are typically named with a leading `.` (dot), which makes them hidden by default on Unix-like systems.
+Since our codespace images run Linux, dotfiles offer a way to personalize and customize your codespace environment.
 
 Common examples include:
 
@@ -12,11 +15,13 @@ Common examples include:
 - Git configuration: `.gitconfig`
 - Editor and tool configuration: `.vimrc`, `.config/*`
 
-Dotfiles define many aspects of how tools behave, including aliases, environment variables, keybindings, defaults, and theming. While they are often invisible during day-to-day work, they have a significant impact on productivity and developer experience.
+Dotfiles define many aspects of how tools behave, including aliases, environment variables, keybindings, defaults, and theming.
+While they are often invisible during day-to-day work, they have a significant impact on productivity and developer experience.
 
 ## Why sync dotfiles between machines?
 
-Developers often work across multiple environments: work laptops, personal machines, CI agents, remote VMs, or cloud-hosted dev environments. Syncing dotfiles across these environments provides several benefits:
+Developers often work across multiple environments: work laptops, personal machines, CI agents, remote VMs, or cloud-hosted dev environments.
+Syncing dotfiles across these environments provides several benefits:
 
 - **Consistency**  
   Your shell, editor, and tooling behave the same everywhere, reducing friction when switching contexts.
@@ -46,7 +51,8 @@ Using dotfiles with Codespaces allows developers to **separate personal preferen
 
 ## Managing dotfiles at scale
 
-At small scale, dotfiles can be managed with plain Git and manual symlinks. As configurations grow, however, additional concerns often emerge:
+At small scale, dotfiles can be managed with plain Git and manual symlinks.
+As configurations grow, however, additional concerns often emerge:
 
 - Differences between operating systems or machines
 - Conditional configuration (for work vs. personal setups)
@@ -58,7 +64,8 @@ To address these needs, many developers adopt a dedicated dotfiles management to
 
 ## What not to put in dotfiles
 
-While dotfiles are a powerful way to personalize environments, not everything belongs in them. In general, dotfiles should focus on **developer preferences**, not **project state or secrets**.
+While dotfiles are a powerful way to personalize environments, not everything belongs in them.
+In general, dotfiles should focus on **developer preferences**, not **project state or secrets**.
 
 Avoid putting the following in dotfiles:
 
@@ -96,7 +103,7 @@ Some characteristics that make it a common choice include:
 
 chezmoi is one option among many, but it is often recommended as a strong default when dotfiles management needs move beyond simple symlinks.
 
-A detailed comparison with other popular dotfiles tools is available here:  
+A detailed comparison with other popular dotfiles tools is available here:
 [chezmoi comparison table](https://www.chezmoi.io/comparison-table/)
 
 ## Summary

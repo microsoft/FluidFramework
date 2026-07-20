@@ -2,9 +2,11 @@ The Fluid Framework project tracks issues and feature requests using the [Github
 
 ## Before Submitting an Issue
 
-First, please do a search in [open issues](https://github.com/microsoft/FluidFramework/issues) to see if the issue or feature request has already been filed. Use this [query](https://github.com/Microsoft/fluidframework/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) to search for the most popular feature requests.
+First, please do a search in [open issues](https://github.com/microsoft/FluidFramework/issues) to see if the issue or feature request has already been filed.
+Use this [query](https://github.com/Microsoft/fluidframework/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) to search for the most popular feature requests.
 
-If you find your issue already exists, make relevant comments and add your reaction. Use a reaction in place of a "+1" comment.
+If you find your issue already exists, make relevant comments and add your reaction.
+Use a reaction in place of a "+1" comment.
 
 👍 - upvote
 
@@ -16,9 +18,15 @@ If you cannot find an existing issue that describes your bug or feature, submit 
 
 ## Writing Good Bug Reports and Feature Requests
 
-Code is not the only way to contribute to the repo! We would love to hear your ideas and feedback as well. Logging detailed issues is a great way to introduce ideas to the Fluid Framework community. Issues can be a great place for discussion among the community; there may be other Fluid Framework users looking for a similar solution.
+Code is not the only way to contribute to the repo!
+We would love to hear your ideas and feedback as well.
+Logging detailed issues is a great way to introduce ideas to the Fluid Framework community.
+Issues can be a great place for discussion among the community; there may be other Fluid Framework users looking for a similar solution.
 
-Issues are also a place to log bugs, both for code and for the documentation itself. The Fluid Framework is young and we expect that developers will find rough edges or outright bugs. Logging detailed repro steps with screenshots and descriptions ensure that it is easy for developers to recreate the issue and address it. The Fluid Framework team will be monitoring the GitHub issues list to address issues as they come up.
+Issues are also a place to log bugs, both for code and for the documentation itself.
+The Fluid Framework is young and we expect that developers will find rough edges or outright bugs.
+Logging detailed repro steps with screenshots and descriptions ensure that it is easy for developers to recreate the issue and address it.
+The Fluid Framework team will be monitoring the GitHub issues list to address issues as they come up.
 
 File a single issue per problem and feature request.
 
@@ -39,7 +47,8 @@ If applicable, please include the following with each issue:
 
 ## How to Log Issues
 
-Before logging an issue of any type, please search the GitHub issues list to see if it already exists or not. If the issue exists, please add new information in the form of a comment to the existing issue instead of creating a new issue.
+Before logging an issue of any type, please search the GitHub issues list to see if it already exists or not.
+If the issue exists, please add new information in the form of a comment to the existing issue instead of creating a new issue.
 
 To create a new issue,
 
@@ -77,11 +86,13 @@ To create a new issue,
 
 ## Using Labels
 
-All new issues will automatically be assigned the label of "triage". This means that the issue has not yet been reviewed, and is still waiting to be validated and assigned to a developer or milestone.
+All new issues will automatically be assigned the label of "triage".
+This means that the issue has not yet been reviewed, and is still waiting to be validated and assigned to a developer or milestone.
 
 ### Status Labels
 
-Issues are often blocked from moving forward because they need some action performed upon them. These needs are signified by the following labels
+Issues are often blocked from moving forward because they need some action performed upon them.
+These needs are signified by the following labels
 
 1. `needs: more information` - These issues are not actionable without addition information from the issue author. If author does not respond in 5 days, these issues will be closed
 
@@ -95,7 +106,8 @@ In the case that the issue is determined to be not valid or unactionable, one of
 4. `resolution: won't fix` - This issue is not something we plan to address or is outside the scope of this repo
 5. `resolution: can't repro` - We are not able to reproduce this issue
 
-After one of these labels is added, the issue will automatically close after 3 days (1 day for `not an issue`). If you feel that this resolution is incorrect (such as the issue is not actually a duplicate), simply comment on the issue to reset the timer and alert the issue owner.
+After one of these labels is added, the issue will automatically close after 3 days (1 day for `not an issue`).
+If you feel that this resolution is incorrect (such as the issue is not actually a duplicate), simply comment on the issue to reset the timer and alert the issue owner.
 
 ## Contributing Fixes
 

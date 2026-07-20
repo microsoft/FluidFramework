@@ -230,7 +230,8 @@ This tag should be used to document generic type parameters when the semantics o
 For example, when constraining to a complex union type.
 
 Whenever possible, it is recommended to extract as much semantic information out of function/method-level documentation and into type-level documentation.
-This enables easier documentation reuse. The `@typeParam` block should be reserved for additional information not already represented by any type constraints.
+This enables easier documentation reuse.
+The `@typeParam` block should be reserved for additional information not already represented by any type constraints.
 
 ##### \@typeParam: Rationale
 
@@ -242,7 +243,8 @@ Especially for complex generic types, this can be incredibly helpful for providi
 
 In this example, we are constraining type parameter `T` to `Foo`, a type we have imported from elsewhere that is already documented.
 
-In this case, we only need the `@typeParam` tag if there is any additional type-level context a user of the API would need to know that is not already encapsulated by `Foo`'s type documentation. If no additional context is needed, the `@typeParam` block can be omitted!
+In this case, we only need the `@typeParam` tag if there is any additional type-level context a user of the API would need to know that is not already encapsulated by `Foo`'s type documentation.
+If no additional context is needed, the `@typeParam` block can be omitted!
 
 ```typescript
 /**
@@ -597,11 +599,14 @@ const enabled: boolean = extendedOptions.enable;
 
 #### \@system
 
-Indicates that type is not to be directly imported from outside of Fluid Framework. It supersedes release tags' expressions of stability as it may be changed at any time.
+Indicates that type is not to be directly imported from outside of Fluid Framework.
+It supersedes release tags' expressions of stability as it may be changed at any time.
 
 ##### \@system: Guidance
 
-Use this to document an interface or type that is not intended to be referenced by external users. It may play a part in connecting two Fluid Framework APIs or be a support utility type in cases that users do not need to inspect the type. These are often collateral from api-extractor rule ["ae-forgotten-export"](https://api-extractor.com/pages/messages/ae-forgotten-export/).
+Use this to document an interface or type that is not intended to be referenced by external users.
+It may play a part in connecting two Fluid Framework APIs or be a support utility type in cases that users do not need to inspect the type.
+These are often collateral from api-extractor rule ["ae-forgotten-export"](https://api-extractor.com/pages/messages/ae-forgotten-export/).
 
 These are best placed within an `Internal*` namespace that itself is tagged as `@system`.
 
@@ -900,7 +905,8 @@ export function log(logger: Logger, data: unknown): void {
 
 #### Link Aliasing
 
-It is also possible to alias links, including both symbol and URL links. So if you wish to control how the link will appear textually, this is an option.
+It is also possible to alias links, including both symbol and URL links.
+So if you wish to control how the link will appear textually, this is an option.
 
 Note that this syntax works for both the [`{@link}` tag](#link) and the [`{@inheritDoc}` tag](#inheritdoc).
 

@@ -4,17 +4,29 @@ _**Update June 21 2023**_: BREAKING.md and the processes described below are bei
 
 BREAKING.md and the processes described below are being replaced by [Changesets](./Changesets.md).
 
-~~In order to inform our users of breaking changes in FluidFramework, we utilize the `BREAKING.md` file located in the root of the repository. For each breaking change, there should a corresponding note explaining the change. These notes fall into two categories: **Breaking Changes** and **Upcoming Changes**.~~
+~~In order to inform our users of breaking changes in FluidFramework, we utilize the `BREAKING.md` file located in the root of the repository.
+For each breaking change, there should a corresponding note explaining the change.
+These notes fall into two categories: **Breaking Changes** and **Upcoming Changes**.~~
 
 ## Breaking Changes vs Upcoming Changes
 
-Breaking changes are changes included in the release version it is listed under. For example, a breaking change note under the "2.0.0 Breaking Changes" section will be present in major release 2.0.0. An important note to remember is that breaking changes will only be present in **major** releases.
+Breaking changes are changes included in the release version it is listed under.
+For example, a breaking change note under the "2.0.0 Breaking Changes" section will be present in major release 2.0.0. An important note to remember is that breaking changes will only be present in **major** releases.
 
-Upcoming changes include anything expected to become a breaking change in the future. The purpose of upcoming change notes is to provide an **actionable item** in the current release to prepare for a breaking change in a future release (not necessarily the next release). For example, you should write an upcoming change note when deprecating an API. The upcoming change note will signal that the API will be removed in a future release, while also providing a replacement API to migrate usage to in the current release. This will help our users prepare for the breaking change (in this case removing the API) in a future release. An important note to remember is that we may announce upcoming changes during a **minor or major** release. Although there will never be a breaking change in a minor release, we may introduce actionable items via upcoming changes and allow users to decide when to act upon them.
+Upcoming changes include anything expected to become a breaking change in the future.
+The purpose of upcoming change notes is to provide an **actionable item** in the current release to prepare for a breaking change in a future release (not necessarily the next release).
+For example, you should write an upcoming change note when deprecating an API.
+The upcoming change note will signal that the API will be removed in a future release, while also providing a replacement API to migrate usage to in the current release.
+This will help our users prepare for the breaking change (in this case removing the API) in a future release.
+An important note to remember is that we may announce upcoming changes during a **minor or major** release.
+Although there will never be a breaking change in a minor release, we may introduce actionable items via upcoming changes and allow users to decide when to act upon them.
 
 ## Communicating the reasoning for a breaking change
 
-It's important to communicate to our users why a breaking change took place and how it will ultimately benefit them. We do this because it will give users more motivation to bump their version of FluidFramework despite the extra work it may take to integrate the breaking changes included. We often will need to provide a more in-depth explanation, which is too long for a breaking change note in BREAKING.md. Instead, we should write it in the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
+It's important to communicate to our users why a breaking change took place and how it will ultimately benefit them.
+We do this because it will give users more motivation to bump their version of FluidFramework despite the extra work it may take to integrate the breaking changes included.
+We often will need to provide a more in-depth explanation, which is too long for a breaking change note in BREAKING.md.
+Instead, we should write it in the [What's New](https://fluidframework.com/docs/updates/v1.0.0/) section on FluidFramework.com.
 
 ## Writing a change note
 

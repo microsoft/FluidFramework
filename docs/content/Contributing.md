@@ -1,8 +1,12 @@
 # Contributing to the Fluid Framework
 
-If you'd like to contribute to the Fluid Framework open source codebase, first of all, thank you! We'd love to see your ideas and appreciate your contributions, whether they be in the form of [bug reports, idea suggestions](./Contributing/Submitting-Bugs-and-Feature-Requests.md), [code submissions](./Contributing/PR-Guidelines.md), or just [trying out our platform](./Contributing/Repo-Basics.md).
+If you'd like to contribute to the Fluid Framework open source codebase, first of all, thank you!
+We'd love to see your ideas and appreciate your contributions, whether they be in the form of [bug reports, idea suggestions](./Contributing/Submitting-Bugs-and-Feature-Requests.md), [code submissions](./Contributing/PR-Guidelines.md), or just [trying out our platform](./Contributing/Repo-Basics.md).
 
-Before working on a **code submission**, check out the [issues list](https://github.com/microsoft/FluidFramework/issues). Issues labeled `help wanted` are good issues to submit a PR for. If you are contributing significant changes, please discuss with the code owner of that area first before starting to work on the issue. Then, check out our [PR guidelines](./Contributing/PR-Guidelines.md).
+Before working on a **code submission**, check out the [issues list](https://github.com/microsoft/FluidFramework/issues).
+Issues labeled `help wanted` are good issues to submit a PR for.
+If you are contributing significant changes, please discuss with the code owner of that area first before starting to work on the issue.
+Then, check out our [PR guidelines](./Contributing/PR-Guidelines.md).
 
 We have tried to make it as easy as possible to set up your local clone of the Fluid Framework so that you can hit the ground running.
 Let's get started!

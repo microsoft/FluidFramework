@@ -68,8 +68,7 @@ For this reason, it is also important to include package-level semantic overview
 
 - These comments should be `TSDoc`-formatted and annotated with the [@packageDocumentation](./Documenting-TypeScript/TSDoc-Guidelines.md#packagedocumentation) tag.
 
-In the future, we plan on adding tooling to allow such package-level semantic overviews to be shared between the source-code docs and READMEs, etc.
-But for now, we ask that you ensure you are including the relevant information in both places, such that our customers are able to easily find this information.
+In the future, we plan on adding tooling to allow such package-level semantic overviews to be shared between the source-code docs and READMEs, etc. But for now, we ask that you ensure you are including the relevant information in both places, such that our customers are able to easily find this information.
 
 ### Public usage documentation
 

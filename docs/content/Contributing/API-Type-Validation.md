@@ -4,7 +4,8 @@ To protect against API-level breaking changes, client packages leverage a _type 
 This tool provides compile-time verification against unintended breaking changes to package APIs.
 For packages it's integrated to, it runs as part of the build process, thus providing local and CI validation.
 
-It works by generating a type validation file on a per-package basis. For each type exported from a package, that file contains statements which check the assignability of the current definition of that type against the previous definition of that type.
+It works by generating a type validation file on a per-package basis.
+For each type exported from a package, that file contains statements which check the assignability of the current definition of that type against the previous definition of that type.
 If a breaking change is _expected_, it also validates this with a `// ts-expect-error` statement.
 The set of types that are expected to not be assignable is tracked in `package.json` under the "typeValidation" key.
 
@@ -61,12 +62,9 @@ src/test/types/validateSequencePrevious.ts:158:5 - error TS2345: Argument of typ
 ```
 
 This error message is easier to understand in terms of "current" and "old" versions of the code.
-Import paths not passing through node_modules reference the current code (including the breaking change we're making),
-and those including node_modules reference previous versions.
-So this error message just tells us that the current definition of `IntervalCollection` cannot be assigned to the old definition of `IntervalCollection`,
-because it's missing the `addInternal` method that we removed.
-This is expected with the nature of the change,
-so we can fix this compile-time issue by updating the package.json's `typeValidation` metadata using the following workflow.
+Import paths not passing through node_modules reference the current code (including the breaking change we're making), and those including node_modules reference previous versions.
+So this error message just tells us that the current definition of `IntervalCollection` cannot be assigned to the old definition of `IntervalCollection`, because it's missing the `addInternal` method that we removed.
+This is expected with the nature of the change, so we can fix this compile-time issue by updating the package.json's `typeValidation` metadata using the following workflow.
 
 Navigating to the error location (`src/test/types/validateSequencePrevious` on line 158), the source looks like this:
 

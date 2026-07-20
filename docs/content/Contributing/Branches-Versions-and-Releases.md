@@ -6,7 +6,10 @@ FluidFramework maintains one active development branch, `main`, and an inactive,
 
 ### `main`
 
-`main` branch in used to support our active (development) major release and its subsequent minor versions. Developers may only merge non-breaking changes into the `main` branch excluding select break windows. This is enforced by way of automation where open PRs are checked for breaking changes (see also [Breaking vs Non-breaking Changes](./Breaking-vs-Non-Breaking-Changes.md)). Release branches are created from `main` for each major and minor release.
+`main` branch in used to support our active (development) major release and its subsequent minor versions.
+Developers may only merge non-breaking changes into the `main` branch excluding select break windows.
+This is enforced by way of automation where open PRs are checked for breaking changes (see also [Breaking vs Non-breaking Changes](./Breaking-vs-Non-Breaking-Changes.md)).
+Release branches are created from `main` for each major and minor release.
 
 ### `lts`
 
@@ -14,7 +17,9 @@ FluidFramework maintains one active development branch, `main`, and an inactive,
 
 ## Versions
 
-FluidFramework packages conform to semantic versioning (semver) for versions `1.0.0` and later. Major versions are expected to be breaking, minor versions are expected to contain non-breaking incremental changes, and patch versions are expected to contain only bug fixes, security fixes, and other implementation-only changes. Versions prior to `1.0.0` follow a modified semver using virtual patch versioning.
+FluidFramework packages conform to semantic versioning (semver) for versions `1.0.0` and later.
+Major versions are expected to be breaking, minor versions are expected to contain non-breaking incremental changes, and patch versions are expected to contain only bug fixes, security fixes, and other implementation-only changes.
+Versions prior to `1.0.0` follow a modified semver using virtual patch versioning.
 
 ### Minor Production Releases
 
@@ -30,4 +35,5 @@ See [Client 3.0 Breaking Changes](https://github.com/microsoft/FluidFramework/is
 
 ## Support Levels
 
-While each of the client releases versioned [major.minor.patch] are production releases, not all accessible code is meant for production. See [Maintaining API support levels](./Maintaining-API-Support-Levels.md) and customer [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).
+While each of the client releases versioned [major.minor.patch] are production releases, not all accessible code is meant for production.
+See [Maintaining API support levels](./Maintaining-API-Support-Levels.md) and customer [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels).

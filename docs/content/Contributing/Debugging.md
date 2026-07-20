@@ -2,7 +2,9 @@ The goal of this page is to get you started with debugging your Fluid Framework 
 
 ## Debugging using DevTools
 
-This section is for debugging client Fluid object code packages. We will be using Chromium Edge in these steps, but the steps are the same for Chrome. To do so,
+This section is for debugging client Fluid object code packages.
+We will be using Chromium Edge in these steps, but the steps are the same for Chrome.
+To do so,
 
 1. Run the Fluid object you are looking to test using these [steps](./Client.md). If you are looking to test a dependency package, e.g., `@fluidframeworks/aqueduct`, you can also view its code when running a Fluid object package that depends on it, e.g., `@fluidframeworks/clicker`. To debug and test a dependency package in isolation, see this [section](./Testing.md) on testing.
 
@@ -21,7 +23,8 @@ This section is for debugging client Fluid object code packages. We will be usin
 6. Now, simply refresh your page and you will see that the breakpoints will start being hit.
    ![Debug File](../_assets/contributing/breakpoint-debug.PNG)
 
-You can also similarly search for any dependency packages that `Clicker` requires and be able to set up breakpoints there as well. From here, just step through your code using the debug tools and investigate the variable states to search for issues.
+You can also similarly search for any dependency packages that `Clicker` requires and be able to set up breakpoints there as well.
+From here, just step through your code using the debug tools and investigate the variable states to search for issues.
 
 For more information on using the debug console, please see the [Chrome DevTools JavaScript documentation](https://developers.google.com/web/tools/chrome-devtools/javascript/).
 
@@ -59,7 +62,8 @@ For instance, if I only wanted to run the `mapEndToEndTests.spec.ts` in the end 
 
 ### Running an individual test
 
-Furthermore, if I wanted to run an individual test inside the `mapEndToEndTests.spec.ts` file, I can add an `--fgrep` argument to the mocha command. For instance, I can change the command in the package.json from
+Furthermore, if I wanted to run an individual test inside the `mapEndToEndTests.spec.ts` file, I can add an `--fgrep` argument to the mocha command.
+For instance, I can change the command in the package.json from
 
 ```diff
 - "test:realsvc:run": "mocha dist/test/mapEndToEndTests.spec.js --config src/test/.mocharc.js"
@@ -76,7 +80,8 @@ _Note that if you're stepping through a compat test (denoted by a DescribeFullCo
 
 You can also manually open a debug terminal by hitting the dropdown by the "plus" icon in the top right corner of your integrated terminal.
 There should be an option to create a `JavaScript Debug Terminal`.
-From there, you'll be presented with a normal shell that you can run commands in. Any JavaScript process that spawns will be automatically attached to and should stop at any breakpoints that are hit.
+From there, you'll be presented with a normal shell that you can run commands in.
+Any JavaScript process that spawns will be automatically attached to and should stop at any breakpoints that are hit.
 Using the example above, you could kick off the tests like so:
 
 ```bash
@@ -101,11 +106,14 @@ To further filter and only run a specified test, you can open the `.vscode/launc
             ],
 ```
 
-_Note the `--no-timeouts` flag. If you do something that will cause a test to hang forever (like changing the driver to tinylicious without actually running the tinylicious server) it'll seem like the debugger isn't working_
+_Note the `--no-timeouts` flag.
+If you do something that will cause a test to hang forever (like changing the driver to tinylicious without actually running the tinylicious server) it'll seem like the debugger isn't working_
 
 ### Break on failing assertions
 
-When debugging your tests, you may want to break on all the failing asserts so you can inspect what is going wrong. To do this in VS Code, you can turn on "Caught Exceptions" and "Uncaught Exceptions" breakpoints and swap out the default nodejs assertion library with the [Chai assertion library](https://www.npmjs.com/package/chai). This can be done simply by installing Chai in the desired package using `pnpm install chai` and then replacing the nodejs assertion library with the Chai assertion library in the test file you want to debug:
+When debugging your tests, you may want to break on all the failing asserts so you can inspect what is going wrong.
+To do this in VS Code, you can turn on "Caught Exceptions" and "Uncaught Exceptions" breakpoints and swap out the default nodejs assertion library with the [Chai assertion library](https://www.npmjs.com/package/chai).
+This can be done simply by installing Chai in the desired package using `pnpm install chai` and then replacing the nodejs assertion library with the Chai assertion library in the test file you want to debug:
 
 ```typescript
 // import { strict as assert } from "assert"

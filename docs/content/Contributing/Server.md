@@ -34,8 +34,7 @@ npm i -g
 tinylicious
 ```
 
-You should see the following output that says that the server is running on port 3000
-![Tinylicious](../_assets/contributing/tinylicious.PNG)
+You should see the following output that says that the server is running on port 3000 ![Tinylicious](../_assets/contributing/tinylicious.PNG)
 
 1. Now, we can run Fluid objects against this server. We will use `Clicker` as an example. Navigate to the `Clicker` directory and start the Fluid object using the `start:tinylicious` command
 
@@ -52,7 +51,10 @@ webpack-dev-server --config webpack.config.js --package package.json --env.mode 
 
 1. Now navigate to <http://localhost:8080> to see `Clicker` running on `tinylicious`
 
-NOTE: `tinylicious` stores persisted data on your filesystem at `/var/lib/tinylicious`. On Windows, this will be `C:/var/lib/tinylicious`. If you want to clear everything and start fresh, then shut down `tinylicious` and delete that folder. The next time you start `tinylicious` everything should be as new.
+NOTE: `tinylicious` stores persisted data on your filesystem at `/var/lib/tinylicious`.
+On Windows, this will be `C:/var/lib/tinylicious`.
+If you want to clear everything and start fresh, then shut down `tinylicious` and delete that folder.
+The next time you start `tinylicious` everything should be as new.
 
 ## Building & Running a Local Tinylicious Server
 
@@ -84,7 +86,10 @@ webpack-dev-server --config webpack.config.js --package package.json --env.mode 
 
 1. Now navigate to <http://localhost:8080> to see `Clicker` running on `tinylicious`
 
-NOTE: `tinylicious` stores persisted data on your filesystem at `/var/lib/tinylicious`. On Windows, this will be `C:/var/lib/tinylicious`. If you want to clear everything and start fresh, then shut down `tinylicious` and delete that folder. The next time you start `tinylicious` everything should be as new.
+NOTE: `tinylicious` stores persisted data on your filesystem at `/var/lib/tinylicious`.
+On Windows, this will be `C:/var/lib/tinylicious`.
+If you want to clear everything and start fresh, then shut down `tinylicious` and delete that folder.
+The next time you start `tinylicious` everything should be as new.
 
 ## Running a Routerlicious Server
 

@@ -29,7 +29,8 @@ Packages using standard build tooling require two manual configurations:
 
 # Automation
 
-Configuring `api-extactor` grows linearly with number of API levels supported. [`flub check policy --fix`](../../../build-tools/packages/build-cli/docs/check.md#flub-check-policy) may be used to make sure there is proper linting (including generation of new files and package.json script entries). The policy only ensures that entrypoints are checked but does not enforce any settings within the api-extractor configuration files.
+Configuring `api-extactor` grows linearly with number of API levels supported. [`flub check policy --fix`](../../../build-tools/packages/build-cli/docs/check.md#flub-check-policy) may be used to make sure there is proper linting (including generation of new files and package.json script entries).
+The policy only ensures that entrypoints are checked but does not enforce any settings within the api-extractor configuration files.
 
 ## Limitations
 
@@ -41,4 +42,6 @@ Check policy does not handle:
 
 # Example
 
-PR [#22208: build(client): add @beta support to core-interfaces](https://github.com/microsoft/FluidFramework/pull/22208/files) shows how "./beta" support is added to `@fluidframework/core-interfaces` that has legacy support. "./beta" was added to "package.json" and "mainEntryPointFilePath" was updated in "api-extractor/api-extractor.current.json" manually. Other API support changes made to "README.md", "package.json", and "api-extractor/api-extractor-lint-beta*" files were made by policy check and `build:readme` (both part of full build).
+PR [#22208: build(client): add @beta support to core-interfaces](https://github.com/microsoft/FluidFramework/pull/22208/files) shows how "./beta" support is added to `@fluidframework/core-interfaces` that has legacy support.
+"./beta" was added to "package.json" and "mainEntryPointFilePath" was updated in "api-extractor/api-extractor.current.json" manually.
+Other API support changes made to "README.md", "package.json", and "api-extractor/api-extractor-lint-beta*" files were made by policy check and `build:readme` (both part of full build).
