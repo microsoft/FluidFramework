@@ -35,3 +35,28 @@ Every page must be reachable by following links starting from [content/Home.md](
 In other words, there should be no "orphaned" pages: each page is linked (directly or transitively) from its parent directory's index page, which is in turn linked from its own parent, all the way up to the root.
 
 When adding a new page, link to it from the appropriate index page so that it remains discoverable.
+
+## Tooling
+
+The `docs` directory is a standalone [pnpm](https://pnpm.io/) workspace with its own tooling for formatting and linting the Markdown content.
+
+### Formatting
+
+We use [Prettier](https://prettier.io/) to enforce consistent formatting.
+The configuration lives in [prettier.config.cjs](./prettier.config.cjs), which extends the repository's shared `build-common` Prettier configuration.
+
+### Linting
+
+We use [markdownlint](https://github.com/DavidAnson/markdownlint) (via [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2)) to lint the Markdown content.
+The configuration lives in [.markdownlint-cli2.mjs](./.markdownlint-cli2.mjs).
+In addition to the standard rules, we use the [markdownlint-rule-relative-links](https://github.com/theoludwig/markdownlint-rule-relative-links) custom rule to verify that relative links resolve to files that exist.
+
+### Commands
+
+Run the following from the `docs` directory:
+
+- `npm run format` — format the Markdown content with Prettier.
+- `npm run lint` — check formatting (Prettier) and linting (markdownlint).
+- `npm run lint:fix` — apply Prettier and markdownlint auto-fixes.
+
+These checks also run in CI for any change under `docs` (see the `docs-lint` pipeline under [tools/pipelines](../tools/pipelines)).
