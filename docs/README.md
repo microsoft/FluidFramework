@@ -8,6 +8,12 @@ Note: this area is under active development.
 We are in the process of migrating documentation here from our existing GitHub wiki and other sources.
 Please expect some churn here in terms of organization and tooling.
 
+## Guidance
+
+The documentation content in this directory should itself follow our [Documentation Guidelines](./content/Guidelines/Documentation-Guidelines.md).
+
+In particular, our [Markdown best practices](./content/Guidelines/Documentation-Guidelines/Markdown-Best-Practices.md).
+
 ## Structure
 
 All documentation content lives under the [content](./content) directory.
