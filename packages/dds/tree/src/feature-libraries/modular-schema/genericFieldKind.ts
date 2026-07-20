@@ -85,7 +85,11 @@ function compose(
 }
 
 function getNestedChanges(change: GenericChangeset): NestedChangesInfo {
-	return change.toArray().map(([_index, nodeChange]) => [nodeChange, undefined, undefined]);
+	return change.toArray().map(([_index, nodeId]) => ({
+		nodeId,
+		inputDetachedId: undefined,
+		outputDetachedId: undefined,
+	}));
 }
 
 function rebaseGenericChange(

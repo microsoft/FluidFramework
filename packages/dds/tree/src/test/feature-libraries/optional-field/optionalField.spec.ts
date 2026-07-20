@@ -976,7 +976,9 @@ describe("optionalField", () => {
 		it("includes changes to the node in the field", () => {
 			const change: OptionalChangeset = Change.child(nodeId1);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, undefined, undefined]];
+			const expected: NestedChangesInfo = [
+				{ nodeId: nodeId1, inputDetachedId: undefined, outputDetachedId: undefined },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being removed from the field", () => {
@@ -986,7 +988,9 @@ describe("optionalField", () => {
 				Change.clear("self", rootId),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, undefined, rootId]];
+			const expected: NestedChangesInfo = [
+				{ nodeId: nodeId1, inputDetachedId: undefined, outputDetachedId: rootId },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to a node being moved into from the field", () => {
@@ -997,7 +1001,9 @@ describe("optionalField", () => {
 				Change.move(rootId, "self"),
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
-			const expected: NestedChangesInfo = [[nodeId1, rootId, undefined]];
+			const expected: NestedChangesInfo = [
+				{ nodeId: nodeId1, inputDetachedId: rootId, outputDetachedId: undefined },
+			];
 			assert.deepEqual(actual, expected);
 		});
 		it("includes changes to removed nodes", () => {
@@ -1010,8 +1016,8 @@ describe("optionalField", () => {
 			);
 			const actual = optionalChangeHandler.getNestedChanges(change);
 			const expected: NestedChangesInfo = [
-				[nodeId1, rootId1, rootId1],
-				[nodeId2, rootId2, rootId2],
+				{ nodeId: nodeId1, inputDetachedId: rootId1, outputDetachedId: rootId1 },
+				{ nodeId: nodeId2, inputDetachedId: rootId2, outputDetachedId: rootId2 },
 			];
 			assert.deepEqual(actual, expected);
 		});

@@ -67,7 +67,11 @@ export function getNestedChanges(change: Changeset): NestedChangesInfo {
 
 	for (const mark of change) {
 		if (mark.changes !== undefined) {
-			output.push([mark.changes, mark.cellId, getOutputRootId(mark)]);
+			output.push({
+				nodeId: mark.changes,
+				inputDetachedId: mark.cellId,
+				outputDetachedId: getOutputRootId(mark),
+			});
 		}
 	}
 	return output;

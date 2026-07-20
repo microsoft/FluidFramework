@@ -457,7 +457,7 @@ class ModularChangeEditMinimizer {
 			for (const { key, count } of handler.getCrossFieldKeys(prunedChange)) {
 				this.newCrossFieldKeys.set(key, count, fieldId);
 			}
-			for (const [nodeId] of handler.getNestedChanges(prunedChange)) {
+			for (const { nodeId } of handler.getNestedChanges(prunedChange)) {
 				this.rewriteNode(nodeId, fieldId);
 			}
 
@@ -774,7 +774,7 @@ function addBuiltNodeIdsForFields(
 			fieldChange.change,
 		);
 
-		for (const [nodeId, inputId, _outputId] of children) {
+		for (const { nodeId, inputDetachedId: inputId } of children) {
 			const isPartOfBuild =
 				parentIsBuilt ||
 				(inputId !== undefined && buildIds.getFirst(inputId, 1).value === true);
@@ -833,9 +833,9 @@ function addInputNodeAttachStatesForFields(
 			fieldChange.change,
 		);
 
-		for (const [nodeId, inputId, _outputId] of children) {
+		for (const { nodeId, inputDetachedId } of children) {
 			const attachState =
-				parentState === NodeAttachState.Attached && inputId === undefined
+				parentState === NodeAttachState.Attached && inputDetachedId === undefined
 					? NodeAttachState.Attached
 					: NodeAttachState.Detached;
 

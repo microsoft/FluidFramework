@@ -1418,10 +1418,8 @@ export class ModularChangeFamily
 	): void {
 		for (const field of fields.values()) {
 			const handler = getChangeHandler(this.fieldKinds, field.fieldKind);
-			for (const [nodeId, inputDetachId, _outputDetachId] of handler.getNestedChanges(
-				field.change,
-			)) {
-				const isInputDetached = inputDetachId !== undefined;
+			for (const { nodeId, inputDetachedId } of handler.getNestedChanges(field.change)) {
+				const isInputDetached = inputDetachedId !== undefined;
 				const inputAttachState =
 					parentInputAttachState === NodeAttachState.Detached || isInputDetached
 						? NodeAttachState.Detached
@@ -1678,9 +1676,7 @@ export class ModularChangeFamily
 		for (const [field, fieldChange] of fieldChanges.entries()) {
 			const fieldId = { nodeId: nodeParent, field };
 			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-			for (const [child, _inputId, _outputId] of handler.getNestedChanges(
-				fieldChange.change,
-			)) {
+			for (const { nodeId: child } of handler.getNestedChanges(fieldChange.change)) {
 				const parentFieldId = getParentFieldId(change, child);
 				assert(
 					areEqualFieldIds(parentFieldId, fieldId),

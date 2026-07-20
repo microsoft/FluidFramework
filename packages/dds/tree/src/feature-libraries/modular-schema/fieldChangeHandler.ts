@@ -23,11 +23,13 @@ import type { CrossFieldManager } from "./crossFieldQueries.js";
 import type { EncodedNodeChangeset } from "./modularChangeFormatV1.js";
 import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
-export type NestedChangesInfo = [
-	NodeId,
-	inputDetachId: ChangeAtomId | undefined,
-	outputDetachId: ChangeAtomId | undefined,
-][];
+interface NestedChangeInfo {
+	nodeId: NodeId;
+	inputDetachedId: ChangeAtomId | undefined;
+	outputDetachedId: ChangeAtomId | undefined;
+}
+
+export type NestedChangesInfo = NestedChangeInfo[];
 
 /**
  * The return value of calling {@link FieldChangeHandler.intoDelta}.

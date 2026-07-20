@@ -28,16 +28,16 @@ export function testGetNestedChanges(): void {
 			assert.deepEqual(actual, []);
 		});
 		it("includes changes to nodes in the field", () => {
-			const detachId: ChangeAtomId = { revision: tag1, localId: brand(42) };
+			const detachedId: ChangeAtomId = { revision: tag1, localId: brand(42) };
 			const change = [
-				Mark.remove(1, detachId, { changes: nodeId1 }),
+				Mark.remove(1, detachedId, { changes: nodeId1 }),
 				{ count: 42 },
 				Mark.modify(nodeId2),
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
 			const expected: NestedChangesInfo = [
-				[nodeId1, undefined, detachId],
-				[nodeId2, undefined, undefined],
+				{ nodeId: nodeId1, inputDetachedId: undefined, outputDetachedId: detachedId },
+				{ nodeId: nodeId2, inputDetachedId: undefined, outputDetachedId: undefined },
 			];
 			assert.deepEqual(actual, expected);
 		});
@@ -50,8 +50,8 @@ export function testGetNestedChanges(): void {
 			];
 			const actual = sequenceFieldChangeHandler.getNestedChanges(change);
 			const expected: NestedChangesInfo = [
-				[nodeId1, cellId1, undefined],
-				[nodeId2, cellId2, cellId2],
+				{ nodeId: nodeId1, inputDetachedId: cellId1, outputDetachedId: undefined },
+				{ nodeId: nodeId2, inputDetachedId: cellId2, outputDetachedId: cellId2 },
 			];
 			assert.deepEqual(actual, expected);
 		});

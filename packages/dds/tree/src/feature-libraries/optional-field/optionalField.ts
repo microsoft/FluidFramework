@@ -747,13 +747,13 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 
 	const inputToOutputDetachId = getBidirectionalMaps(change.moves).srcToDst;
 
-	const getOutputDetachId = (
-		inputDetachId: ChangeAtomId | undefined,
+	const getOutputDetachedId = (
+		inputDetachedId: ChangeAtomId | undefined,
 	): ChangeAtomId | undefined => {
-		if (inputDetachId === undefined) {
+		if (inputDetachedId === undefined) {
 			return detachId;
 		}
-		if (areEqualRegisterIdsOpt(inputDetachId, nodeMovedIntoField)) {
+		if (areEqualRegisterIdsOpt(inputDetachedId, nodeMovedIntoField)) {
 			// This node is reattached by this change.
 			return undefined;
 		}
@@ -761,16 +761,20 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 		return (
 			tryGetFromNestedMap(
 				inputToOutputDetachId,
-				inputDetachId.revision,
-				inputDetachId.localId,
-			) ?? inputDetachId
+				inputDetachedId.revision,
+				inputDetachedId.localId,
+			) ?? inputDetachedId
 		);
 	};
 
 	return change.childChanges.map(([register, nodeId]) => {
 		// The node is attached in the input context iif register is self.
-		const inputDetachId = register === "self" ? undefined : register;
-		return [nodeId, inputDetachId, getOutputDetachId(inputDetachId)];
+		const inputDetachedId = register === "self" ? undefined : register;
+		return {
+			nodeId,
+			inputDetachedId,
+			outputDetachedId: getOutputDetachedId(inputDetachedId),
+		};
 	});
 }
 
