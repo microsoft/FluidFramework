@@ -45,7 +45,7 @@ There are a few tools we use to help manage dependencies in the repo:
 
 - [pnpm](https://pnpm.io/)
 - [npm-check-updates](https://github.com/raineorshine/npm-check-updates) (ncu).
-- Our own [`flub modify lockfile` command](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/modify.md#flub-modify-lockfile)
+- Our own [`flub modify lockfile` command](../../../build-tools/packages/build-cli/docs/modify.md#flub-modify-lockfile-package_or_release_group)
 
 `pnpm` can do most things, but `ncu` offers finer-grain control over the updates. Some packages also don't use pnpm, which means ncu is the better option for those packages. `flub modify lockfile` is pretty surgical, since it expects a specific dependency name and version; it's particularly useful to address CVEs that require us to update a specific dependency that is not a direct dependency of our packages, as described further down in [Upgrading transitive dependencies](#upgrading-transitive-dependencies).
 
@@ -100,7 +100,7 @@ TODO
 Sometimes we need to update a particular transitive dependency to a version that is already supported by the semver range dependency declared by its direct dependent package, and we want to make it a super-targeted changed that does not update anything else, to minimize risk.
 A common example of this is when we need to address a CVE by updating a transitive dependency to its lastest patch.
 
-We wrote the [`flub modify lockfile` command](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/modify.md#flub-modify-lockfile) to help in this scenario.
+We wrote the [`flub modify lockfile` command](../../../build-tools/packages/build-cli/docs/modify.md#flub-modify-lockfile-package_or_release_group) to help in this scenario.
 You can run `flub modify lockfile --help` (if you have installed `flub` globally; otherwise prepend `npx` to that command) to see its documentation and how to use it.
 `flub modify lockfile` uses [pnpm overrides](https://pnpm.io/settings#overrides) under the hood.
 
@@ -109,7 +109,7 @@ If that's not the case, we might need to look for alternatives, like a more perm
 
 ## Upgrading Fluid dependencies
 
-While you can technically use any tool to upgrade Fluid dependencies, we recommend you use [flub bump deps](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bumpDetails.md), which is designed for this scenario.
+While you can technically use any tool to upgrade Fluid dependencies, we recommend you use [flub bump deps](../../../build-tools/packages/build-cli/docs/bumpDetails.md), which is designed for this scenario.
 
 ## Using different versions of dependencies
 

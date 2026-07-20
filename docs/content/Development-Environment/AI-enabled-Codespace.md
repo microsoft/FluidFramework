@@ -37,4 +37,4 @@ This enables running AI agents from your local terminal while the Codespace prov
 
 ## Getting Started
 
-Once your Codespace is running, see [GETTING_STARTED.md](https://github.com/microsoft/FluidFramework/blob/main/.devcontainer/ai-agent/GETTING_STARTED.md) for setup instructions, available aliases, custom MCP server usage, and more.
+Once your Codespace is running, see [GETTING_STARTED.md](../../../.devcontainer/ai-agent/GETTING_STARTED.md) for setup instructions, available aliases, custom MCP server usage, and more.

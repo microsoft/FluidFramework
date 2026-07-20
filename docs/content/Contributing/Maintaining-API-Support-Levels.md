@@ -1,4 +1,4 @@
-In support of customer contract for [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels), exported APIs are [TSDoc tagged with support level](../Guidelines/Documentation-Guidelines/Documenting-TypeScript/Release-Tags.md), [package.json "exports"](https://nodejs.org/api/packages.html#exports) are set, and [build tooling](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/README.md) verifies API consistency with [api-extractor](https://api-extractor.com/) and makes sure the APIs are available thru appropriate import paths ([`flub generate entrypoints`](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/generate.md#flub-generate-entrypoints)).
+In support of customer contract for [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels), exported APIs are [TSDoc tagged with support level](../Guidelines/Documentation-Guidelines/Documenting-TypeScript/Release-Tags.md), [package.json "exports"](https://nodejs.org/api/packages.html#exports) are set, and [build tooling](../../../build-tools/packages/build-cli/README.md) verifies API consistency with [api-extractor](https://api-extractor.com/) and makes sure the APIs are available thru appropriate import paths ([`flub generate entrypoints`](../../../build-tools/packages/build-cli/docs/generate.md#flub-generate-entrypoints)).
 
 # Configuration
 
@@ -29,7 +29,7 @@ Packages using standard build tooling require two manual configurations:
 
 # Automation
 
-Configuring `api-extactor` grows linearly with number of API levels supported. [`flub check policy --fix`](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/check.md#flub-check-policy) may be used to make sure there is proper linting (including generation of new files and package.json script entries). The policy only ensures that entrypoints are checked but does not enforce any settings within the api-extractor configuration files.
+Configuring `api-extactor` grows linearly with number of API levels supported. [`flub check policy --fix`](../../../build-tools/packages/build-cli/docs/check.md#flub-check-policy) may be used to make sure there is proper linting (including generation of new files and package.json script entries). The policy only ensures that entrypoints are checked but does not enforce any settings within the api-extractor configuration files.
 
 ## Limitations
 

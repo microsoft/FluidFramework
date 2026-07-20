@@ -12,7 +12,7 @@ One easy way to get started is to create a Codespace, but you can also use any e
 
 1. Clone the repo.
 1. Run `npm i -g @fluidframework/build-tools@latest` to install the Fluid build tools.
-1. Run `fluid-build --reinstall --symlink:full` to install all deps across all projects, and most importantly, symlink your local copy of the shared ESLint config (in [common/build/eslint-config-fluid](https://github.com/microsoft/FluidFramework/tree/main/common/build/eslint-config-fluid)) to all the projects.
+1. Run `fluid-build --reinstall --symlink:full` to install all deps across all projects, and most importantly, symlink your local copy of the shared ESLint config (in [common/build/eslint-config-fluid](../../../common/build/eslint-config-fluid)) to all the projects.
     - It is recommended to double check that the local copy of `@fluidframework/eslint-config-fluid` was actually symlinked as desired.
       If not, it might indicate that local dependencies are out of date.
       If this is the case, a workaround is to update the `version` property in `@fluidframework/eslint-config-fluid`'s package.json to the version used by the other packages in the repository, and re-run the linking step.

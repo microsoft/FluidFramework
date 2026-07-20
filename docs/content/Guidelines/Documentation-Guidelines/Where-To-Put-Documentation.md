@@ -17,7 +17,7 @@ They are not presented in any particular order.
 - [fluidframework.com](https://fluidframework.com/)
     - This is our customer-facing website.
       It is the public face of our product and is home to high-level overviews, samples, etc. to get users up-and-running on the framework.
-- [repo wiki](https://github.com/microsoft/FluidFramework/tree/main/docs) (here)
+- [repo wiki](../../Home.md) (here)
     - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
     - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
 - Source-code documentation
