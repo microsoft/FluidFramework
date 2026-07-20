@@ -29,7 +29,6 @@ export {
 export { buildForest } from "./object-forest/index.js";
 export {
 	SchemaSummarizer,
-	makeSchemaCodec,
 	schemaCodecBuilder,
 } from "./schema-index/index.js";
 export {
@@ -47,6 +46,10 @@ export {
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
 } from "./treeTextCursor.js";
+export {
+	buildNodeComparator,
+	type NodeComparator,
+} from "./cursorComparator.js";
 
 import * as SequenceField from "./sequence-field/index.js";
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor) or named exports (changes public API)
@@ -90,6 +93,7 @@ export {
 	isNeverTree,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -106,11 +110,14 @@ export {
 	FieldBatchFormatVersion,
 	makeTreeChunker,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	emptyChunk,
 	combineChunks,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
 } from "./chunked-forest/index.js";
 
 export {
@@ -143,6 +150,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorContext,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,
@@ -191,9 +199,8 @@ export { DetachedFieldIndexSummarizer } from "./detachedFieldIndexSummarizer.js"
 
 export {
 	type SchemaChange,
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
 	EncodedSchemaChange,
-	getCodecTreeForSchemaChangeFormat,
 } from "./schema-edits/index.js";
 
 export { makeMitigatedChangeFamily } from "./mitigatedChangeFamily.js";

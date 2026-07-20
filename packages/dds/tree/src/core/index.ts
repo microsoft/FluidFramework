@@ -106,6 +106,10 @@ export {
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
+	forEachNodeSubsequence,
 } from "./tree/index.js";
 
 export {
@@ -178,6 +182,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -218,12 +224,6 @@ export {
 	diffHistories,
 	type RevisionReplacer,
 } from "./rebase/index.js";
-
-export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 
 export {
 	type Revertible,

@@ -5,23 +5,30 @@
 
 import { strict as assert } from "node:assert";
 
+import { UsageError } from "@fluidframework/telemetry-utils/internal";
+
 import { TreeAlpha } from "../../shared-tree/index.js";
 import { TreeViewConfiguration } from "../../simple-tree/index.js";
 // Allow importing file being tested
+// eslint-disable-next-line import-x/no-internal-modules
+import type { TextAsTree } from "../../text/textDomain.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { FormattedTextAsTree } from "../../text/textDomainFormatted.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+import { FormattedTextAsTreeDefault } from "../../text/index.js";
 
 describe("textDomainFormatted", () => {
 	it("compatibility", () => {
-		const currentViewSchema = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "formattedText");
+		const currentViewSchema = new TreeViewConfiguration({
+			schema: FormattedTextAsTreeDefault.Tree,
+		});
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.111.0", "formattedText");
 	});
 
 	it("basic unformatted use", () => {
-		const text = FormattedTextAsTree.Tree.fromString("hello");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
 		text.insertAt(5, " world");
@@ -31,7 +38,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("formatting", () => {
-		const text = FormattedTextAsTree.Tree.fromString("hello");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 		text.formatRange(1, 4, { bold: true });
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual(
@@ -50,7 +57,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("insertWithFormattingAt", () => {
-		const text = FormattedTextAsTree.Tree.fromString("ab");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
 			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
 		]);
@@ -69,7 +76,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("defaultFormat", () => {
-		const text = FormattedTextAsTree.Tree.fromString("ab");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.defaultFormat.underline = true;
 		text.insertAt(2, "cd");
 		assert.deepEqual(
@@ -86,13 +93,253 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
+	it("getUniformRun", () => {
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		assert.equal(text.getUniformRun(0, 5), 3);
+		assert.equal(text.getUniformRun(0), 3);
+		assert.equal(text.getUniformRun(3, 5), 2);
+		assert.equal(text.getUniformRun(4, 5), 1);
+		assert.equal(text.getUniformRun(5, 6), 1);
+		assert.throws(() => text.getUniformRun(6), UsageError);
+	});
+
+	it("getString with getUniformRun", () => {
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+		text.defaultFormat.underline = true;
+		text.insertAt(3, "de");
+		text.defaultFormat.italic = true;
+		text.insertAt(5, "f");
+		let index = 0;
+		let currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "abc");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "de");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "f");
+		assert.equal(text.getUniformRun(0), 3);
+	});
+	it("getString with getUniformRun on line atoms", () => {
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
+
+		text.insertWithFormattingAt(3, [
+			{
+				content: new FormattedTextAsTreeDefault.StringLineAtom({
+					tag: FormattedTextAsTreeDefault.LineTag("h5"),
+					indent: 0,
+				}),
+				format: new FormattedTextAsTreeDefault.CharacterFormat({
+					bold: false,
+					italic: false,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				}),
+			},
+		]);
+		let index = 0;
+		let currentRun = text.getUniformRun(0, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "abc");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(currentRun, 1);
+		assert.equal(text.getString(index, index + currentRun), "\n");
+		index += currentRun;
+		currentRun = text.getUniformRun(index, text.characterCount());
+		assert.equal(text.getString(index, index + currentRun), "de");
+	});
+
+	describeHydration("onContentChanged", (_init, hydrated) => {
+		it("fires with insert ops when characters are added", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(1, "xy");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "insert", text: "xy" },
+			]);
+		});
+
+		it("fires for insert at start", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(0, "X");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+		});
+
+		it("fires for insert at end", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.insertAt(3, "X");
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 3, formattingChanged: false },
+				{ type: "insert", text: "X" },
+			]);
+		});
+
+		it("fires with remove ops when characters are deleted", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(1, 3);
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "remove", count: 2 },
+			]);
+		});
+
+		it("fires for remove all", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(0, 3);
+			assert.equal(received.length, 1);
+			assert.deepEqual(received[0], [{ type: "remove", count: 3 }]);
+		});
+
+		it("fires with insert and remove ops for a replace", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.removeRange(1, 3);
+			text.insertAt(1, "XY");
+			// Two separate edits → two callbacks.
+			assert.equal(received.length, 2);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "remove", count: 2 },
+			]);
+			assert.deepEqual(received[1], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "insert", text: "XY" },
+			]);
+		});
+
+		it("fires with formattingChanged on retain when formatting changes", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			const received: (readonly TextAsTree.TextOp[])[] = [];
+			text.onContentChanged((ops) => {
+				assert(ops !== undefined, "expected delta ops, got undefined");
+				received.push(ops);
+			});
+			text.formatRange(1, 3, { bold: true });
+
+			// Both hydrated and unhydrated paths fire one event per formatted atom because
+			// formatRange writes each character's format node individually.
+			// formatRange(1, 3) covers indices 1 and 2, so two events fire.
+			assert.equal(received.length, 2);
+			assert.deepEqual(received[0], [
+				{ type: "retain", count: 1, formattingChanged: false },
+				{ type: "retain", count: 1, formattingChanged: true },
+			]);
+			assert.deepEqual(received[1], [
+				{ type: "retain", count: 2, formattingChanged: false },
+				{ type: "retain", count: 1, formattingChanged: true },
+			]);
+		});
+
+		// Empty inserts/removes are no-ops semantically. In hydrated trees they produce no change
+		// notification at all; unhydrated trees fire the callback once with no real ops (a quirk of
+		// the unhydrated event path), so we only assert the hydrated behavior here.
+		it("does not fire for an empty insert (hydrated)", () => {
+			if (!hydrated) return;
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			hydrateNode(text);
+			let callCount = 0;
+			text.onContentChanged(() => {
+				callCount++;
+			});
+			text.insertAt(1, "");
+			assert.equal(callCount, 0, "empty insert should not produce a change notification");
+		});
+
+		it("does not fire for an empty remove (hydrated)", () => {
+			if (!hydrated) return;
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			hydrateNode(text);
+			let callCount = 0;
+			text.onContentChanged(() => {
+				callCount++;
+			});
+			text.removeRange(1, 1);
+			assert.equal(callCount, 0, "empty remove should not produce a change notification");
+		});
+
+		it("cleanup function unsubscribes the callback", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
+			if (hydrated) {
+				hydrateNode(text);
+			}
+			let callCount = 0;
+			const cleanup = text.onContentChanged(() => {
+				callCount++;
+			});
+			text.insertAt(1, "x");
+			assert.equal(callCount, 1);
+			cleanup();
+			text.insertAt(1, "y");
+			assert.equal(callCount, 1, "callback should not fire after cleanup");
+		});
+	});
+
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
 	// Specifically unhydrated tree cursors do observation tracking while hydrated ones do not.
 	describeHydration("observation tracking", (init, hydrated) => {
 		// Text has debug asserts which can add observations, so ensure tracking works with and without production build emulation.
 		suitesWithAndWithoutProduction((emulateProduction) => {
-			function setupObservations(): [FormattedTextAsTree.Tree, string[]] {
-				const text = FormattedTextAsTree.Tree.fromString("hello");
+			function setupObservations(): [FormattedTextAsTreeDefault.Tree, string[]] {
+				const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 				if (hydrated) {
 					hydrateNode(text);
 				}

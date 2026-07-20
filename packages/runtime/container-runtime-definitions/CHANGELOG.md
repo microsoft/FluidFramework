@@ -1,5 +1,67 @@
 # @fluidframework/container-runtime-definitions
 
+## 2.112.0
+
+### Minor Changes
+
+- Expose whether a container runtime has staged changes ([#27648](https://github.com/microsoft/FluidFramework/pull/27648)) [c12943d4ef](https://github.com/microsoft/FluidFramework/commit/c12943d4ef6cd943241773cd98542ef3003415ac)
+
+  `IContainerRuntimeBase` now exposes `hasStagedChanges`, a flag indicating whether there are any changes submitted while in Staging Mode (via `enterStagingMode`) that have not yet been discarded or committed. A new `hasStagedChangesChanged` event is emitted whenever this value changes.
+
+  This is distinct from `isDirty`: a container runtime can be dirty due to ordinary unacknowledged local changes without having any staged changes.
+
+  ```typescript
+  containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) => {
+    // update UI to reflect whether there are staged changes awaiting commit/discard
+  });
+
+  const hasStagedChanges = containerRuntime.hasStagedChanges;
+  ```
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+Dependency updates only.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
 ## 2.83.0
 
 Dependency updates only.

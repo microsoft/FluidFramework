@@ -3,14 +3,11 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
 import { ISession } from "@fluidframework/server-services-client";
-import {
-	MockLogger,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { MockLogger, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { SinonFakeTimers, useFakeTimers } from "sinon";
 
 import { RouterliciousOrdererRestWrapper } from "../restWrapper.js";
@@ -70,7 +67,7 @@ describe("SessionInfoManager", () => {
 		documentId: string;
 		tenantId: string;
 		ordererRestWrapper: RouterliciousOrdererRestWrapper;
-		logger: ITelemetryLoggerExt;
+		logger: TelemetryLoggerExt;
 		session: ISession | undefined;
 	} {
 		return {
@@ -109,7 +106,7 @@ describe("SessionInfoManager", () => {
 
 	describe("initializeSessionInfo", () => {
 		describe("session provided", () => {
-			[true, false].forEach((enableDiscovery) => {
+			for (const enableDiscovery of [true, false]) {
 				describe(`discovery ${enableDiscovery ? "enabled" : "disabled"}`, () => {
 					it("uses provided session", async () => {
 						const manager = new SessionInfoManager(enableDiscovery);
@@ -156,7 +153,7 @@ describe("SessionInfoManager", () => {
 						);
 					});
 				});
-			});
+			}
 		});
 
 		it("discovery enabled", async () => {

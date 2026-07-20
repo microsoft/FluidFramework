@@ -7,9 +7,9 @@ import { IsoBuffer } from "@fluid-internal/client-utils";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	DataProcessingError,
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	DataProcessingError,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 import { compress } from "lz4js";
 
@@ -25,7 +25,7 @@ import { estimateSocketSize } from "./outbox.js";
  * Use opGroupingManager to group a batch into a singleton batch suitable for compression.
  */
 export class OpCompressor {
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(logger: ITelemetryBaseLogger) {
 		this.logger = createChildLogger({ logger, namespace: "OpCompressor" });

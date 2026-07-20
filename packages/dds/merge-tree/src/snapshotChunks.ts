@@ -7,7 +7,7 @@
 
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { IFluidSerializer } from "@fluidframework/shared-object-base/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { SerializedAttributionCollection } from "./attributionCollection.js";
 import type { IJSONSegment } from "./ops.js";
@@ -85,7 +85,7 @@ export function hasMergeInfo(
 export function serializeAsMinSupportedVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -141,7 +141,7 @@ export function serializeAsMinSupportedVersion(
 export function serializeAsMaxSupportedVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	options: PropertySet | undefined,
 	serializer: IFluidSerializer,
 	bind: IFluidHandle,
@@ -153,7 +153,7 @@ export function serializeAsMaxSupportedVersion(
 export function toLatestVersion(
 	path: string,
 	chunk: VersionedMergeTreeChunk,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	options: PropertySet | undefined,
 ): MergeTreeChunkV1 {
 	switch (chunk.version) {

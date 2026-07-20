@@ -4,7 +4,7 @@
 
 ```ts
 
-// @public
+// @public @deprecated
 export type CompatibilityMode = "1" | "2";
 
 // @public
@@ -19,11 +19,21 @@ export interface ContainerSchema {
 // @beta @legacy
 export function createTreeContainerRuntimeFactory(props: {
     readonly schema: TreeContainerSchema;
+    readonly minVersionForCollaboration: MinimumVersionForCollab;
+    readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
+    readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
+}): IRuntimeFactory;
+
+// @beta @deprecated @legacy
+export function createTreeContainerRuntimeFactory(props: {
+    readonly schema: TreeContainerSchema;
     readonly compatibilityMode: CompatibilityMode;
     readonly rootDataStoreRegistry?: IFluidDataStoreRegistry;
     readonly runtimeOptionOverrides?: Partial<IContainerRuntimeOptions>;
-    readonly minVersionForCollabOverride?: MinimumVersionForCollab;
 }): IRuntimeFactory;
+
+// @public
+export const getPresence: (fluidContainer: IFluidContainer) => Presence;
 
 // @public
 export interface IConnection {

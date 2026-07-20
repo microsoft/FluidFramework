@@ -34,7 +34,6 @@ const loaderOptionsMatrix: OptionsMatrix<ILoaderOptionsExperimental> = {
 	client: [undefined],
 	provideScopeLoader: booleanCases,
 	maxClientLeaveWaitTime: numberCases,
-	enableOfflineLoad: booleanCases,
 	enableOfflineSnapshotRefresh: booleanCases,
 	snapshotRefreshTimeoutMs: [undefined, 60 * 5 * 1000 /* 5min */],
 };
@@ -118,6 +117,8 @@ export function generateRuntimeOptions(
 		enableGroupedBatching: [true, false],
 		createBlobPayloadPending: [true, undefined],
 		explicitSchemaControl: [true, false],
+		disableSchemaUpgrade: [false],
+		stagingModeAutoFlushThreshold: [undefined],
 	};
 
 	const pairwiseOptions = generatePairwiseOptions<IContainerRuntimeOptionsInternal>(

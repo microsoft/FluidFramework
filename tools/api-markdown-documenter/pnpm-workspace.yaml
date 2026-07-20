@@ -7,16 +7,81 @@
 packages:
   - "."
 
-# These entries must be duplicated from package.json due to a pnpm bug where onlyBuiltDependencies
-# in package.json is not respected when the workspace has its own lockfile.
-# See: https://github.com/pnpm/pnpm/issues/9082
-onlyBuiltDependencies:
-  - '@biomejs/biome'
-  - unrs-resolver
-
 # Supply chain security settings - see /DEV.md for documentation
 minimumReleaseAge: 1440
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
+# List of packages known to be safe but for whatever reason were published at a date after another version of the same
+# package (including later major versions) which had better provenance information.
+# ALWAYS REVIEW CAREFULLY BEFORE ADDING SOMETHING TO THIS LIST.
+trustPolicyExclude:
+  # chokidar@4.0.3 (published 2024-12-18, by paulmillr) — pipeline regression.
+  # Prior trusted: chokidar@4.0.1 (provenance, 2024-09-22, by paulmillr).
+  # Same publisher (sole maintainer); provenance attestation was dropped after 4.0.1.
+  # Pulled in transitively via mocha@11 (chokidar ^4.0.1) and sass@1 (chokidar ^4.0.0).
+  # chokidar@5.0.0 has restored provenance but no upstream consumer pins ^5 yet.
+  - "chokidar@4.0.3"
+  # semver@5.7.2 (published 2023-07-10, by lukekarrys) — legacy maintenance line.
+  # Prior trusted: semver@7.5.4 (provenance, 2023-07-07, by npm-cli-ops).
+  # Different publisher account because the 5.x and 6.x maintenance lines are
+  # hand-published by lukekarrys (a long-time npm/node-semver maintainer), while the
+  # current 7.x line publishes through the npm-cli OIDC/Actions pipeline. The 5.x/6.x
+  # lines will not be retroactively re-published with provenance. Pulled in by widely-
+  # used legacy tooling that pins ^5 / ^6.
+  # Note: multiple versions of the same package must be combined with "||" — pnpm's
+  # trust-policy evaluator returns on the first name match and does not aggregate
+  # subsequent entries for the same package.
+  - "semver@5.7.2||6.3.1"
+  # undici-types@6.21.0 (published 2024-11-13, by matteo.collina) — pipeline regression.
+  # Prior trusted: undici-types@6.19.2 (provenance, 2024-06-18, by matteo.collina).
+  # Same publisher (undici project lead). Type-only package (.d.ts shipped from undici
+  # repo); provenance attestation was lost on a subsequent 6.x release.
+  - "undici-types@6.21.0"
 strictDepBuilds: true
+
+engineStrict: true
+frozenLockfile: true
+strictPeerDependencies: true
+updateNotifier: false
+
+overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  keyv@>=4 <5: ^5.5.3
+  ts-deepmerge@>=7 <8: ^8.0.0
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve known ReDoS vulnerabilities in diff. diff@7.x has no fix so it is bumped to 8.0.3.
+  diff@>=5 <6: ^5.2.2
+  diff@>=7 <8: ^8.0.3
+
+  # Resolve known js-yaml vulnerability (CVE-2025-64718: prototype pollution via merge keys).
+  js-yaml: ^4.1.1
+
+  # Resolve known vulnerabilities in older versions.
+  qs: ^6.15.2
+
+  # Resolve known security vulnerabilities across all major version ranges.
+  minimatch@>=3 <4: ^3.1.5
+  minimatch@>=5 <6: ^5.1.9
+  minimatch@>=6 <7: ^6.2.3
+  minimatch@>=7 <8: ^7.4.9
+  minimatch@>=8 <9: ^8.0.7
+  minimatch@>=9 <10: ^9.0.9
+  minimatch@>=10 <11: ^10.2.4
+
+  # Resolve GHSA-5c6j-r48x-rmvq. No 6.x fix exists.
+  serialize-javascript@>=6 <7: ^7.0.4
+
+  # Resolve known vulnerabilities in picomatch.
+  picomatch@>=2 <3: ^2.3.2
+  picomatch@>=4 <5: ^4.0.4
+
+allowBuilds:
+  '@biomejs/biome': true
+  unrs-resolver: true

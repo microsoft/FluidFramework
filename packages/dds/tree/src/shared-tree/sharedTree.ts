@@ -13,10 +13,7 @@ import type {
 	IFluidSerializer,
 	SharedKernel,
 } from "@fluidframework/shared-object-base/internal";
-import {
-	UsageError,
-	type ITelemetryLoggerExt,
-} from "@fluidframework/telemetry-utils/internal";
+import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
 	type CodecTree,
@@ -48,6 +45,7 @@ import {
 } from "../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
+	FieldBatchDecodingContext,
 	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
@@ -60,33 +58,30 @@ import {
 	forestCodecBuilder,
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
-	makeSchemaCodec,
 	makeTreeChunker,
+	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { schemaCodecBuilder, type FormatV1 } from "../feature-libraries/schema-index/index.js";
+import { schemaCodecBuilder } from "../feature-libraries/index.js";
 import {
 	type BranchId,
-	clientVersionToEditManagerFormatVersion,
-	clientVersionToMessageFormatVersion,
 	type ClonableSchemaAndPolicy,
 	getCodecTreeForEditManagerFormatWithChange,
 	getCodecTreeForMessageFormatWithChange,
+	makeMessageCodecBuilder,
 	type SharedTreeCoreOptionsInternal,
 	MessageFormatVersion,
 	SharedTreeCore,
 	EditManagerFormatVersion,
+	makeEditManagerCodecBuilder,
 } from "../shared-tree-core/index.js";
 import {
-	type ITree,
 	type ImplicitFieldSchema,
 	NodeKind,
 	type ReadSchema,
 	type SimpleFieldSchema,
 	type SimpleTreeSchema,
 	type TreeView,
-	type TreeViewAlpha,
 	type TreeViewConfiguration,
 	type UnsafeUnknownSchema,
 	type VerboseTree,
@@ -105,7 +100,7 @@ import {
 	throwIfBroken,
 } from "../util/index.js";
 
-import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import type { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
@@ -113,7 +108,7 @@ import {
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
-import { type TreeCheckout, type BranchableTree, createTreeCheckout } from "./treeCheckout.js";
+import { type TreeCheckout, createTreeCheckout } from "./treeCheckout.js";
 
 /**
  * Copy of data from an {@link ITreePrivate} at some point in time.
@@ -205,7 +200,7 @@ export class SharedTreeKernel
 		submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		lastSequenceNumber: () => number | undefined,
 		initialSequenceNumber: number,
-		private readonly logger: ITelemetryLoggerExt | undefined,
+		private readonly logger: TelemetryLoggerExt | undefined,
 		idCompressor: IIdCompressor,
 		optionsParam: SharedTreeOptionsInternal,
 	) {
@@ -231,7 +226,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options,
 		);
-		const schemaCodec = makeSchemaCodec(options);
+		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
 			{
@@ -242,20 +237,29 @@ export class SharedTreeKernel
 		);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
-		const encoderContext = {
+		const encoderContext: FieldBatchEncodingContext = {
 			schema: {
 				schema,
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: idCompressor.localSessionId,
 			idCompressor,
+			// ForestSummarizer is the only consumer of this context, and it
+			// only invokes the codec in summary encode / load paths.
+			isSummary: true,
 		};
+		const decoderContext = FieldBatchDecodingContext.forSummary({
+			idCompressor,
+			healing:
+				options.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id }
+					: undefined,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
 			revisionTagCodec,
-			fieldBatchCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			idCompressor,
 			initialSequenceNumber,
@@ -320,7 +324,6 @@ export class SharedTreeKernel
 			chunkCompressionStrategy: options.treeEncodeType,
 			logger,
 			breaker: this.breaker,
-			disposeForksAfterTransaction: options.disposeForksAfterTransaction,
 		});
 
 		this.registerSharedBranchForEditing("main", this.checkout);
@@ -333,6 +336,7 @@ export class SharedTreeKernel
 			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
+			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
 			kernel: this,
 		};
@@ -405,7 +409,7 @@ export class SharedTreeKernel
 	}
 
 	private checkoutBranch(branchId: BranchId): TreeCheckout {
-		const checkout = this.checkout.branch();
+		const checkout = this.checkout.fork();
 		checkout.switchBranch(this.getSharedBranch(branchId));
 		this.registerSharedBranchForEditing(branchId, checkout);
 		this.registerCheckout(branchId, checkout);
@@ -499,47 +503,9 @@ export function persistedToSimpleSchema(
 	persisted: JsonCompatible,
 	options: ICodecOptions,
 ): SimpleTreeSchema {
-	// Any version can be passed down to makeSchemaCodec here.
-	// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not the version passed to `makeSchemaCodec`.
-	const schemaCodec = makeSchemaCodec({
-		...options,
-		minVersionForCollab: FluidClientVersion.v2_0,
-	});
-	const stored = schemaCodec.decode(persisted as FormatV1);
+	const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+	const stored = schemaCodec.decode(persisted);
 	return exportSimpleSchema(stored);
-}
-
-/**
- * Get a {@link BranchableTree} from a {@link ITree}.
- * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
- * @privateRemarks This function will be removed if/when the branching API becomes public,
- * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
- * @alpha
- * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
- */
-export function getBranch(tree: ITree): BranchableTree;
-/**
- * Get a {@link BranchableTree} from a {@link TreeView}.
- * @remarks The branch can be used for "version control"-style coordination of edits on the tree.
- * Branches are currently an unstable "alpha" API and are subject to change in the future.
- * @privateRemarks This function will be removed if/when the branching API becomes public,
- * but it (or something like it) is necessary in the meantime to prevent the alpha types from being exposed as public.
- * @alpha
- * @deprecated This API is superseded by {@link TreeBranch}, which should be used instead.
- */
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	view: TreeViewAlpha<T>,
-): BranchableTree;
-export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
-	treeOrView: ITree | TreeViewAlpha<T>,
-): BranchableTree {
-	if (treeOrView instanceof SchematizingSimpleTreeView) {
-		return treeOrView.checkout as unknown as BranchableTree;
-	}
-	const kernel = (treeOrView as ITree as ITreePrivate).kernel;
-	assert(kernel instanceof SharedTreeKernel, 0xb56 /* Invalid ITree */);
-	// This cast is safe so long as TreeCheckout supports all the operations on the branch interface.
-	return kernel.checkout as unknown as BranchableTree;
 }
 
 /**
@@ -548,7 +514,6 @@ export function getBranch<T extends ImplicitFieldSchema | UnsafeUnknownSchema>(
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for SharedTree changes are not explicitly versioned.
  */
-// eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison -- intentional comparison
 export const changeFormatVersionForEditManager = DependentFormatVersion.fromPairs<
 	EditManagerFormatVersion,
 	SharedTreeChangeFormatVersion
@@ -576,17 +541,19 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 ]);
 
 function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForEditManager.lookup(
-		clientVersionToEditManagerFormatVersion(clientVersion),
-	);
+	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
+	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
 function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
-	const change = changeFormatVersionForMessage.lookup(
-		clientVersionToMessageFormatVersion(clientVersion),
+	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
+	assert(
+		messageVersion !== undefined,
+		0xce3 /* Deprecated 'undefined' version shouldn't be selected */,
 	);
+	const change = changeFormatVersionForMessage.lookup(messageVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForMessageFormatWithChange(clientVersion, changeCodecTree);
 }
@@ -612,7 +579,46 @@ export function getCodecTreeForSharedTreeFormat(
  * Configuration options for SharedTree.
  * @beta @input
  */
-export type SharedTreeOptionsBeta = ForestOptions & Partial<CodecWriteOptionsBeta>;
+export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWriteOptionsBeta> {
+	/**
+	 * When `true`, when an improperly encoded identifier is encountered in a summary,
+	 * a new identifier will be generated instead of throwing an error.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * The intended use is recovering documents whose attach summary was persisted
+	 * with unresolvable node identifiers (a SharedTree-attaches-to-already-attached-container
+	 * scenario). Without this flag enabled, a client opening such a document will throw at summary load time.
+	 * With this flag enabled, unresolvable identifiers are replaced at decode time with stable UUIDs
+	 * derived deterministically from the data store id and the unresolvable op-space integer,
+	 * so every reader of the same blob (other than the originator) agrees on the resulting in-memory id.
+	 * Healed identifiers are written back out at the next summary in their stable UUID form,
+	 * so the inconsistency does not need to be re-healed on every load.
+	 *
+	 * Off by default because enabling it for documents that are not actually corrupt
+	 * would mask genuine bugs that otherwise surface as decode failures.
+	 *
+	 * This mitigation is also not perfect as the client that originated the non-finalized
+	 * will not apply the same "healing" and will continue to use the original identifier.
+	 * The difference in identifiers between the originating client and subsequent clients that load
+	 * the document is not ideal but generally benign to Fluid. However, it may have application-level
+	 * consequences (e.g. if the application stores the identifiers elsewhere, either in other parts of
+	 * Fluid data or externally). Applications should consider whether this risk is acceptable before
+	 * enabling this option.
+	 *
+	 * @privateRemarks
+	 * "Unresolvable" in the public-facing remarks corresponds to non-finalized short IDs persisted without
+	 * any corresponding context for their originating session. See id-compressor internal documentation
+	 * for more details.
+	 *
+	 * Internally this boolean is translated into {@link IdentifierHealingConfig} once the shared-object
+	 * id is known (in `SharedTreeCore`'s constructor) and threaded through the codec contexts as a
+	 * single `healing?` field from there on. The presence/absence of that config is the heal-on/heal-off
+	 * discriminator inside the codec layer.
+	 */
+	readonly healUnresolvableIdentifiersOnDecode?: boolean;
+}
 
 /**
  * Configuration options for SharedTree with alpha features.
@@ -634,13 +640,25 @@ export interface SharedTreeOptions
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+
+	/**
+	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
+	 * the collaboration window.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
+	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
+	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
+	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
 	extends SharedTreeOptions,
-		Partial<SharedTreeCoreOptionsInternal> {
-	disposeForksAfterTransaction?: boolean;
-}
+		Partial<SharedTreeCoreOptionsInternal> {}
 
 /**
  * Configuration options for SharedTree's internal tree storage.
@@ -763,13 +781,12 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	minVersionForCollab: FluidClientVersion.v2_0,
 	forest: ForestTypeReference,
 	treeEncodeType: TreeCompressionStrategy.Compressed,
-	disposeForksAfterTransaction: true,
 	shouldEncodeIncrementally: defaultIncrementalEncodingPolicy,
-	editManagerFormatSelector: clientVersionToEditManagerFormatVersion,
-	messageFormatSelector: clientVersionToMessageFormatVersion,
 	enableSharedBranches: false,
+	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
+	retainHistory: false,
 };
 
 /**

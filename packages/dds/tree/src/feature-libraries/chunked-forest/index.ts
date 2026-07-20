@@ -16,15 +16,19 @@ export {
 } from "./chunkTree.js";
 export { buildChunkedForest } from "./chunkedForest.js";
 export {
-	type EncodedFieldBatch,
 	FieldBatchFormatVersion,
 	type FieldBatch,
 	type FieldBatchCodec,
 	fieldBatchCodecBuilder,
+	FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
+	type IncrementalDecoder,
+	type IncrementalEncoder,
 	type IncrementalEncoderDecoder,
 	type ChunkReferenceId,
 	type IncrementalEncodingPolicy,
 	defaultIncrementalEncodingPolicy,
+	type EncodedFieldBatchV1OrV2,
+	type EncodedFieldBatchV2,
 } from "./codec/index.js";
 export { emptyChunk } from "./emptyChunk.js";

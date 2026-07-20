@@ -8,10 +8,10 @@ import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import {
-	DataCorruptionError,
 	createChildLogger,
+	DataCorruptionError,
 	extractSafePropertiesFromMessage,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -45,7 +45,7 @@ function isChunkedContents(contents: unknown): contents is IChunkedContents {
 export class OpSplitter {
 	// Local copy of incomplete received chunks.
 	private readonly chunkMap: Map<string, string[]>;
-	private readonly logger: ITelemetryLoggerExt;
+	private readonly logger: TelemetryLoggerExt;
 
 	constructor(
 		chunks: [string, string[]][],
@@ -171,12 +171,22 @@ export class OpSplitter {
 			);
 		}
 
-		// The last chunk will be part of the new batch and needs to
-		// preserve the batch metadata of the original batch
+		// The last chunk will be part of the new batch and needs to preserve the
+		// batch metadata of the original batch. groupedOpCount is surfaced here
+		// (and only here, not on intermediate chunks) because intermediate chunks
+		// don't carry ops — they carry parts of a payload that only become ops
+		// once the last chunk is processed and the payload is reassembled.
+		// Stamping every chunk would let an observer double-count messages.
+		// batchId is deliberately not forwarded — it's a runtime dedup field
+		// consumed only after processChunk restores originalMetadata, not by
+		// wire observers.
 		const lastChunk = chunkToBatchMessage(
 			chunks[chunks.length - 1],
 			batch.referenceSequenceNumber,
-			{ batch: firstMessage.metadata?.batch },
+			{
+				batch: firstMessage.metadata?.batch,
+				groupedOpCount: firstMessage.metadata?.groupedOpCount,
+			},
 		);
 
 		this.logger.sendPerformanceEvent({

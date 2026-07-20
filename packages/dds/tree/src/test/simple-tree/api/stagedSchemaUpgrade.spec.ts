@@ -19,18 +19,20 @@ import {
 } from "../../../shared-tree/index.js";
 import {
 	extractPersistedSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	SchemaFactoryAlpha,
 	schemaStatics,
 	toUpgradeSchema,
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
+	type ValidateRecursiveSchema,
+	type TreeSchema,
 } from "../../../simple-tree/index.js";
 import { TestSchemaRepository, TestTreeProviderLite } from "../../utils.js";
 
 // Some documentation links to this file on GitHub: renaming it may break those links.
 
-describe("staged schema upgrade", () => {
+describe("staged allowed type upgrade", () => {
 	// Schema A: only number allowed
 	const schemaA = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
 
@@ -223,26 +225,24 @@ describe("staged schema upgrade", () => {
 		const stored = new TestSchemaRepository(defaultSchemaPolicy);
 		assert(stored.tryUpdateRootFieldSchema(storedEmptyFieldSchema));
 
-		let view = new SchemaCompatibilityTester(
-			new TreeViewConfigurationAlpha({ schema: schemaA }),
-		);
+		let viewConfig: TreeSchema = new TreeViewConfigurationAlpha({ schema: schemaA });
 
 		// open document, and check its compatibility with our application
-		const compat = view.checkCompatibility(stored);
+		const compat = checkSchemaCompatibility(viewConfig, stored);
 		assert.deepEqual(compat, { canView: false, canUpgrade: true, isEquivalent: false });
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaA).rootFieldSchema));
 		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
 
 		// view schema is A
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// view schema is B (includes staged string)
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaB }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
@@ -252,15 +252,15 @@ describe("staged schema upgrade", () => {
 		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
 
 		// nothing has changed, so compatibility is the same
-		assert.deepEqual(view.checkCompatibility(stored), {
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// view schema now wants full support for string (not just staged)
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: false,
 			canUpgrade: true,
 			isEquivalent: false,
@@ -271,13 +271,192 @@ describe("staged schema upgrade", () => {
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
 		// validate C is now fully supported
-		view = new SchemaCompatibilityTester(new TreeViewConfigurationAlpha({ schema: schemaC }));
-		assert.deepEqual(view.checkCompatibility(stored), {
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
 			canView: true,
 			canUpgrade: true,
 			isEquivalent: true,
 		});
 
 		// TODO: TestSchemaRepository is not great for this. Also this does not test view against the future schema versions.
+	});
+});
+
+describe("staged optional upgrade", () => {
+	// Schema A: required number (the "before" state of the migration)
+	const schemaA = SchemaFactoryAlpha.required(SchemaFactoryAlpha.number);
+
+	// Schema B: staged optional number (deployed during the rollout period)
+	const schemaB = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+
+	// Schema C: fully optional number (the "after" state once all clients are updated)
+	const schemaC = SchemaFactoryAlpha.optional([SchemaFactoryAlpha.number]);
+
+	it("using user apis", () => {
+		const provider = new TestTreeProviderLite(4);
+		const [treeA, treeB1, treeB2, treeC] = provider.trees;
+		const synchronizeTrees = () => {
+			provider.synchronizeMessages();
+		};
+
+		// Initialize with schema A (required number)
+		const configA = new TreeViewConfiguration({ schema: schemaA });
+		const viewA = treeA.viewWith(configA);
+		viewA.initialize(5);
+		synchronizeTrees();
+
+		assert.deepEqual(viewA.root, 5);
+
+		// View with schema B (staged optional) — can read the document
+		const configB = new TreeViewConfiguration({ schema: schemaB });
+		const viewB1 = treeB1.viewWith(configB);
+		assert.deepEqual(viewB1.root, 5);
+
+		// Upgrade with B is a no-op — stored schema stays as required(number)
+		viewB1.upgradeSchema();
+		synchronizeTrees();
+
+		// Old clients (schema A) can still view
+		assert.deepEqual(viewA.root, 5);
+
+		// Schema B cannot write undefined to the root — stored schema is still required
+		assert.throws(() => {
+			viewB1.root = undefined;
+		});
+
+		// View with schema C, upgrade to optional, and clear the root
+		const configC = new TreeViewConfiguration({ schema: schemaC });
+		const viewC = treeC.viewWith(configC);
+		viewC.upgradeSchema();
+		viewC.root = undefined;
+		synchronizeTrees();
+
+		// Schema A clients are now incompatible (required vs optional stored)
+		assert.equal(viewA.compatibility.canView, false);
+
+		// Schema B clients can still view the document (optional stored matches staged optional view)
+		const viewB2 = treeB2.viewWith(configB);
+		assert.deepEqual(viewB2.root, undefined);
+	});
+
+	it("using the schema compatibility tester", () => {
+		// Start with stored schema A (required number)
+		const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(schemaA));
+
+		// View A: can view, can upgrade (no-op), is equivalent
+		let viewConfig: TreeSchema = new TreeViewConfigurationAlpha({ schema: schemaA });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// View B (staged optional): can view required stored, upgrade is a no-op
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// Upgrading with B is a no-op — stored stays required
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaB).rootFieldSchema));
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// View C (fully optional) cannot yet view a required stored field
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaC });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: false,
+			canUpgrade: true,
+			isEquivalent: false,
+		});
+
+		// Upgrade stored to optional (schema C)
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaC).rootFieldSchema));
+
+		// View C is now compatible and equivalent
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: true,
+			canUpgrade: true,
+			isEquivalent: true,
+		});
+
+		// View B after full upgrade: can view (optional kinds match), but upgrade target
+		// is required which is no longer a valid upgrade from optional stored
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaB });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: true,
+			canUpgrade: false,
+			isEquivalent: false,
+		});
+
+		// View A (required) is no longer compatible with optional stored
+		viewConfig = new TreeViewConfigurationAlpha({ schema: schemaA });
+		assert.deepEqual(checkSchemaCompatibility(viewConfig, stored), {
+			canView: false,
+			canUpgrade: false,
+			isEquivalent: false,
+		});
+	});
+
+	it("allows constructing unhydrated nodes with an empty staged optional field", () => {
+		const sf = new SchemaFactoryAlpha("stagedOptionalConstructionTest");
+		class Foo extends sf.objectAlpha("Foo", { value: sf.number }) {}
+		class Obj extends sf.objectAlpha("Obj", { foo: sf.stagedOptional(Foo) }) {}
+
+		// Analogous to new SomeObj({ staged_field: new StagedType() }) for staged allowed types:
+		// constructing an unhydrated node with the staged value provided is allowed.
+		const nodeWithValue = new Obj({ foo: new Foo({ value: 42 }) });
+		assert(nodeWithValue instanceof Obj);
+
+		// Analogous to constructing with the staged type omitted or explicitly undefined:
+		// the field is Optional in the view schema, so construction succeeds.
+		// (Insertion into a Required stored field would fail, just as inserting a staged type fails.)
+		const nodeOmitted = new Obj({});
+		assert(nodeOmitted instanceof Obj);
+
+		const nodeUndefined = new Obj({ foo: undefined });
+		assert(nodeUndefined instanceof Obj);
+	});
+
+	it("works with stagedOptionalRecursive in a recursive schema", () => {
+		const sf = new SchemaFactoryAlpha("stagedOptionalRecursiveTest");
+
+		// A recursive node whose `child` field goes through the staged optional migration.
+		// Schema A: child is required (the "before" state).
+		class NodeA extends sf.objectRecursiveAlpha("TreeNode", {
+			value: sf.number,
+			child: sf.optionalRecursive([() => NodeA]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof NodeA>;
+		}
+
+		// Schema B: child is stagedOptionalRecursive (during the rollout period).
+		class NodeB extends sf.objectRecursiveAlpha("TreeNode", {
+			value: sf.number,
+			child: sf.stagedOptionalRecursive([() => NodeB]),
+		}) {}
+		{
+			type _check = ValidateRecursiveSchema<typeof NodeB>;
+		}
+
+		// Verify unhydrated construction works for both present and absent child.
+		const withChild = new NodeB({
+			value: 1,
+			child: new NodeB({ value: 2, child: undefined }),
+		});
+		assert(withChild instanceof NodeB);
+		assert.equal(withChild.value, 1);
+
+		const withoutChild = new NodeB({ value: 3, child: undefined });
+		assert(withoutChild instanceof NodeB);
+
+		const omittedChild = new NodeB({ value: 4 });
+		assert(omittedChild instanceof NodeB);
 	});
 });

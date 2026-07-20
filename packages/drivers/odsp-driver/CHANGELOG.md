@@ -1,5 +1,63 @@
 # @fluidframework/odsp-driver
 
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- OdspFluidDataStoreLocator optional properties may also be explicitly undefined ([#27551](https://github.com/microsoft/FluidFramework/pull/27551)) [6a323dbb4e6](https://github.com/microsoft/FluidFramework/commit/6a323dbb4e6ed4d985d03d37eb1f0347184d1764)
+
+  Typing for `OdspFluidDataStoreLocator` optional properties are updated to reflect that in some implementations those are present but evaluate to `undefined`.
+  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/drivers/odsp-driver/README.md#supported-tools), there is no apparent type change.
+  If a type error is experienced, make sure to check for `undefined` when reading.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Patch Changes
+
+- Remove fully-rolled-out `setSensitivityLabelHeaderPostFix` config gate ([#27261](https://github.com/microsoft/FluidFramework/pull/27261)) [69228c498d8](https://github.com/microsoft/FluidFramework/commit/69228c498d8ef491c565e64a1888e4c4ac71abd2)
+
+  The `Fluid.Driver.Odsp.setSensitivityLabelHeaderPostFix` config gate is fully rolled out, so it has been removed along with the now-dead conditional code path. The `Prefer: Return-Sensitivity-Labels` header is now always sent on join-session requests, matching the post-rollout production behavior. The `setSensitivityLabelHeader` property emitted on the `JoinSession` telemetry event has also been removed because it would always be `true`.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
 ## 2.83.0
 
 Dependency updates only.

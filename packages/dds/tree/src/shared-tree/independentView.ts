@@ -3,36 +3,31 @@
  * Licensed under the MIT License.
  */
 
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	type IIdCompressor,
 	createIdCompressor,
 } from "@fluidframework/id-compressor/internal";
-
 import {
-	FluidClientVersion,
-	type CodecWriteOptions,
-	type ICodecOptions,
-} from "../codec/index.js";
+	createChildLogger,
+	extractTelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
+
+import type { CodecWriteOptions, ICodecOptions } from "../codec/index.js";
 import {
 	type RevisionTag,
 	RevisionTagCodec,
-	SchemaFormatVersion,
 	TreeStoredSchemaRepository,
 } from "../core/index.js";
 import {
 	createNodeIdentifierManager,
 	fieldBatchCodecBuilder,
-	makeSchemaCodec,
-	type FieldBatchEncodingContext,
-	defaultSchemaPolicy,
-	TreeCompressionStrategy,
+	FieldBatchDecodingContext,
 	defaultIncrementalEncodingPolicy,
+	schemaCodecBuilder,
+	combineChunks,
 } from "../feature-libraries/index.js";
-import { combineChunks } from "../feature-libraries/index.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import type { Format } from "../feature-libraries/schema-index/formatV1.js";
 import type {
 	TreeViewConfiguration,
 	ImplicitFieldSchema,
@@ -62,10 +57,27 @@ import {
 import { createTreeCheckout } from "./treeCheckout.js";
 
 /**
+ * Options for supplying a telemetry logger to an independent tree view.
+ * @remarks
+ * Events emitted by the independent tree are tagged with the `independentView` namespace.
+ * If no logger is provided, telemetry events are dropped.
+ * @alpha @input
+ */
+export interface IndependentViewTelemetryOptions {
+	/**
+	 * Optional logger for telemetry.
+	 */
+	readonly logger?: ITelemetryBaseLogger | undefined;
+}
+
+/**
  * {@link independentView} options.
  * @alpha @input
  */
-export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+export interface IndependentViewOptions
+	extends ForestOptions,
+		Partial<CodecWriteOptions>,
+		IndependentViewTelemetryOptions {
 	/**
 	 * Optional ID compressor for generating and compressing identifiers.
 	 * If not provided, a new one will be created.
@@ -78,6 +90,7 @@ export interface IndependentViewOptions extends ForestOptions, Partial<CodecWrit
  * @alpha
  */
 export type CreateIndependentTreeAlphaOptions = ForestOptions &
+	IndependentViewTelemetryOptions &
 	(
 		| (IndependentViewOptions & {
 				/**
@@ -129,7 +142,7 @@ export function independentView<const TSchema extends ImplicitFieldSchema>(
  */
 export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(
 	config: TreeViewConfiguration<TSchema>,
-	options: ForestOptions & ICodecOptions,
+	options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions,
 	content: ViewContent,
 ): TreeViewAlpha<TSchema> {
 	return createIndependentTreeAlpha({ ...options, content }).viewWith(
@@ -211,7 +224,13 @@ export function createIndependentTreeBeta<const TSchema extends ImplicitFieldSch
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(
 	options?: CreateIndependentTreeAlphaOptions,
 ): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema"> {
-	const breaker = new Breakable("independentView");
+	const logger = extractTelemetryLoggerExt(
+		createChildLogger({
+			logger: options?.logger,
+			namespace: "independentView",
+		}),
+	);
+	const breaker = new Breakable("independentView", logger);
 	const idCompressor: IIdCompressor =
 		options?.idCompressor ?? options?.content?.idCompressor ?? createIdCompressor();
 	const mintRevisionTag = (): RevisionTag => idCompressor.generateCompressedId();
@@ -232,26 +251,21 @@ export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSc
 		forest,
 		schema: schemaRepository,
 		breaker,
+		logger,
 		codecOptions: options,
 	});
 
 	if (options?.content !== undefined) {
-		// Any version can be passed down to `makeSchemaCodec` and `fieldBatchCodecBuilder.build` here.
-		// We only use the decode part, which always dispatches to the correct codec based on the version in the data, not `minVersionForCollab`.
-		const writeOptions: CodecWriteOptions = {
-			...options,
-			minVersionForCollab: FluidClientVersion.v2_0,
-		};
-		const schemaCodec = makeSchemaCodec(writeOptions, SchemaFormatVersion.v1);
-		const fieldBatchCodec = fieldBatchCodecBuilder.build(writeOptions);
-		const newSchema = schemaCodec.decode(options.content.schema as Format);
+		const schemaCodec = schemaCodecBuilder.buildDecoder(options);
+		const fieldBatchCodec = fieldBatchCodecBuilder.buildDecoder(options);
+		const newSchema = schemaCodec.decode(options.content.schema);
 
-		const context: FieldBatchEncodingContext = {
-			encodeType: TreeCompressionStrategy.Compressed,
+		// TreeAlpha.exportCompressed encodes this payload in originatorless-safe form
+		// (finalized compressed ids or strings), so summary-style decode is correct.
+		const context = FieldBatchDecodingContext.forSummary({
 			idCompressor,
-			originatorId: idCompressor.localSessionId, // Is this right? If so, why is is needed?
-			schema: { schema: newSchema, policy: defaultSchemaPolicy },
-		};
+			healing: undefined,
+		});
 		const fieldCursors = fieldBatchCodec.decode(
 			options.content.tree as JsonCompatibleReadOnly,
 			context,

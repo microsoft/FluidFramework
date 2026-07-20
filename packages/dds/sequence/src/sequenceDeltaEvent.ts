@@ -4,7 +4,7 @@
  */
 
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
-import {
+import type {
 	Client,
 	IMergeTreeDeltaCallbackArgs,
 	IMergeTreeDeltaOpArgs,
@@ -12,9 +12,11 @@ import {
 	ISegment,
 	MergeTreeDeltaOperationType,
 	MergeTreeDeltaOperationTypes,
+	PropertySet,
+} from "@fluidframework/merge-tree/internal";
+import {
 	MergeTreeDeltaType,
 	MergeTreeMaintenanceType,
-	PropertySet,
 	SortedSegmentSet,
 } from "@fluidframework/merge-tree/internal";
 
@@ -88,7 +90,7 @@ export abstract class SequenceEventClass<
 
 		this.sortedRanges = new Lazy<SortedSegmentSet<ISequenceDeltaRange<TOperation>>>(() => {
 			const set = new SortedSegmentSet<ISequenceDeltaRange<TOperation>>();
-			this.deltaArgs.deltaSegments.forEach((delta) => {
+			for (const delta of this.deltaArgs.deltaSegments) {
 				const newRange: ISequenceDeltaRange<TOperation> = {
 					operation: this.deltaArgs.operation,
 					position: this.mergeTreeClient.getPosition(delta.segment),
@@ -96,7 +98,7 @@ export abstract class SequenceEventClass<
 					segment: delta.segment,
 				};
 				set.addOrUpdate(newRange);
-			});
+			}
 			return set;
 		});
 

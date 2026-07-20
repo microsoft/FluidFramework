@@ -4,6 +4,8 @@
  */
 
 export {
+	collectContiguousRanges,
+	type IndexRange,
 	validateIndex,
 	validateIndexRange,
 	validatePositiveIndex,
@@ -66,7 +68,6 @@ export { StackyIterator } from "./stackyIterator.js";
 export {
 	asMutable,
 	balancedReduce,
-	clone,
 	compareSets,
 	getOrAddEmptyToMap,
 	getOrCreate,
@@ -105,7 +106,6 @@ export {
 	hasSingle,
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
-	getOrAddInMap,
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
@@ -164,3 +164,21 @@ export {
 export { cloneWithReplacements } from "./cloneWithReplacements.js";
 
 export { readAndParseSnapshotBlob } from "./readSnapshotBlob.js";
+
+export {
+	type OriginatorlessEncodedId,
+	type OriginatorDependentEncodedId,
+	type IdentifierHealingConfig,
+	EncodedIdType,
+	encodePossiblyCompressedId,
+	type IdEncodingContext,
+	type EncodedId,
+	decodeOriginatorlessEncodedId,
+	decodeEncodedIdWithOriginator,
+	tryDecodeEncodedIdWithoutSession,
+	forceDecodeEncodedIdWithoutSession,
+	decompressIdentifierIfNeeded,
+	IdDecodingContext,
+	type IdDecoderOptionsOriginatorless,
+	type IdDecoderOptionsWithOriginator,
+} from "./compressedIds.js";

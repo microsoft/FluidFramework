@@ -23,11 +23,16 @@ import {
 } from "../../../../feature-libraries/index.js";
 import { ajvValidator } from "../../../codec/index.js";
 import { testTrees } from "../../../cursorTestSuite.js";
-import { testIdCompressor } from "../../../utils.js";
+import { snapshotCodecFormats, useSnapshotDirectory } from "../../../snapshots/index.js";
+import { makeTestFieldBatchContexts, testIdCompressor } from "../../../utils.js";
 
 describe("fieldBatchCodecBuilder", () => {
 	// Use the first simple test tree from the test suite
 	const [, simpleTestData] = testTrees[0];
+	useSnapshotDirectory("codecFormats");
+	it("snapshot of supported codec formats", () => {
+		snapshotCodecFormats(fieldBatchCodecBuilder, {});
+	});
 
 	describe("version mapping", () => {
 		it("uses v1 format for FluidClientVersion.v2_0", () => {
@@ -40,6 +45,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -58,6 +64,7 @@ describe("fieldBatchCodecBuilder", () => {
 			const context = {
 				encodeType: TreeCompressionStrategy.Uncompressed,
 				originatorId: testIdCompressor.localSessionId,
+				isSummary: false,
 				idCompressor: testIdCompressor,
 			};
 
@@ -76,19 +83,17 @@ describe("fieldBatchCodecBuilder", () => {
 				minVersionForCollab: FluidClientVersion.v2_74,
 			});
 
-			const context = {
+			const { encode, decode } = makeTestFieldBatchContexts({
 				encodeType: TreeCompressionStrategy.Uncompressed,
-				originatorId: testIdCompressor.localSessionId,
-				idCompressor: testIdCompressor,
-			};
+			});
 
-			const encoded1 = codec1.encode([], context);
-			const encoded2 = codec2.encode([], context);
+			const encoded1 = codec1.encode([], encode);
+			const encoded2 = codec2.encode([], encode);
 
-			assert.deepEqual(codec1.decode(encoded1, context), []);
-			assert.deepEqual(codec1.decode(encoded2, context), []);
-			assert.deepEqual(codec2.decode(encoded1, context), []);
-			assert.deepEqual(codec2.decode(encoded2, context), []);
+			assert.deepEqual(codec1.decode(encoded1, decode), []);
+			assert.deepEqual(codec1.decode(encoded2, decode), []);
+			assert.deepEqual(codec2.decode(encoded1, decode), []);
+			assert.deepEqual(codec2.decode(encoded2, decode), []);
 		});
 	});
 
@@ -100,13 +105,11 @@ describe("fieldBatchCodecBuilder", () => {
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
-			const context = {
+			const { encode: encode0 } = makeTestFieldBatchContexts({
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
-				originatorId: testIdCompressor.localSessionId,
-				idCompressor: testIdCompressor,
-			};
+			});
 
-			assert.doesNotThrow(() => codec.encode([input], context));
+			assert.doesNotThrow(() => codec.encode([input], encode0));
 		});
 
 		it("fails for unsupported minVersionForCollab", () => {
@@ -116,14 +119,12 @@ describe("fieldBatchCodecBuilder", () => {
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
-			const context = {
+			const { encode } = makeTestFieldBatchContexts({
 				encodeType: TreeCompressionStrategy.CompressedIncremental,
-				originatorId: testIdCompressor.localSessionId,
-				idCompressor: testIdCompressor,
-			};
+			});
 
 			assert.throws(
-				() => codec.encode([input], context),
+				() => codec.encode([input], encode),
 				validateAssertionError(/Unsupported FieldBatchFormatVersion/),
 			);
 		});
@@ -137,14 +138,12 @@ describe("fieldBatchCodecBuilder", () => {
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
-			const context = {
+			const { encode, decode } = makeTestFieldBatchContexts({
 				encodeType: TreeCompressionStrategy.Uncompressed,
-				originatorId: testIdCompressor.localSessionId,
-				idCompressor: testIdCompressor,
-			};
+			});
 
-			const encoded = codec.encode([input], context);
-			const decoded = codec.decode(encoded, context);
+			const encoded = codec.encode([input], encode);
+			const decoded = codec.decode(encoded, decode);
 			const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 			assert.deepEqual([[simpleTestData]], decodedJson);
 		});
@@ -156,14 +155,12 @@ describe("fieldBatchCodecBuilder", () => {
 			});
 
 			const input = cursorForJsonableTreeField([simpleTestData]);
-			const context = {
+			const { encode, decode } = makeTestFieldBatchContexts({
 				encodeType: TreeCompressionStrategy.Uncompressed,
-				originatorId: testIdCompressor.localSessionId,
-				idCompressor: testIdCompressor,
-			};
+			});
 
-			const encoded = codec.encode([input], context);
-			const decoded = codec.decode(encoded, context);
+			const encoded = codec.encode([input], encode);
+			const decoded = codec.decode(encoded, decode);
 			const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 			assert.deepEqual([[simpleTestData]], decodedJson);
 		});

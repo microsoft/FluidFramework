@@ -1,0 +1,15 @@
+{
+	"name": "group2-root",
+	"version": "2.0.0",
+	"private": true,
+	"description": "Root of the group2 release group",
+	"homepage": "https://fluidframework.com",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/microsoft/FluidFramework.git",
+		"directory": "build-tools/packages/build-infrastructure/src/test/data/testRepoCatalog/group2"
+	},
+	"license": "MIT",
+	"author": "Microsoft and contributors",
+	"packageManager": "pnpm@11.12.0+sha512.820a6fbd0d9f04c226638002aead1e45340a9139dd5dc077c1d83ef44aa2481c8eb6637b4c9aa696a3c7e35ba818e49cf27213e5f2b91138d09b7a3e26e898ba"
+}

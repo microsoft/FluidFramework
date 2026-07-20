@@ -3,7 +3,6 @@
  * Licensed under the MIT License.
  */
 
-// eslint-disable-next-line import-x/no-internal-modules
 import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
@@ -117,30 +116,21 @@ export function createTableTree({ tableSize, initialCellValue }: TableTreeOption
 	const table = treeView.root;
 
 	const columns = Array.from({ length: tableSize }, () => new Column({}));
-	table.insertColumns({ index: 0, columns });
+	table.insertColumns(columns, 0);
 
-	const rows = Array.from(
-		{ length: tableSize },
-		() =>
-			new Row({
-				cells: {},
-			}),
-	);
-	table.insertRows({ index: 0, rows });
-
-	if (initialCellValue !== undefined) {
-		for (const row of table.rows) {
-			for (const column of table.columns) {
-				table.setCell({
-					key: {
-						column,
-						row,
-					},
-					cell: initialCellValue,
-				});
+	// Pre populate each row's cells at construction time so the entire dense table is initialized
+	// by a single `insertRows` op.
+	const columnIds = table.columns.map((column) => column.id);
+	const rows = Array.from({ length: tableSize }, () => {
+		const cells: Record<string, string> = {};
+		if (initialCellValue !== undefined) {
+			for (const columnId of columnIds) {
+				cells[columnId] = initialCellValue;
 			}
 		}
-	}
+		return new Row({ cells });
+	});
+	table.insertRows(rows, 0);
 
 	// Configure event listeners
 	const cleanUpEventHandler = Tree.on(table, "treeChanged", () => {});

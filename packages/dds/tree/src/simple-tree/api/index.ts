@@ -38,10 +38,19 @@ export {
 	type SchemaFactory_base,
 } from "./schemaFactory.js";
 export { SchemaFactoryBeta, type SchemaStaticsBeta } from "./schemaFactoryBeta.js";
-export { SchemaFactoryAlpha } from "./schemaFactoryAlpha.js";
+export {
+	SchemaFactoryAlpha,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+} from "./schemaFactoryAlpha.js";
 export {
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
+} from "./eraseSchemaDetails.js";
+export type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
 } from "./eraseSchemaDetails.js";
 export type {
 	ValidateRecursiveSchema,
@@ -57,6 +66,7 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
+	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,
@@ -90,7 +100,7 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+export { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
@@ -105,6 +115,8 @@ export type {
 	AllowedTypesFullFromMixedUnsafe,
 	UnannotateAllowedTypesListUnsafe,
 	AnnotateAllowedTypesListUnsafe,
+	FieldHasDefaultAlphaUnsafe,
+	InsertableObjectFromSchemaRecordAlphaUnsafe,
 } from "./typesUnsafe.js";
 
 export {
@@ -142,6 +154,19 @@ export {
 	TreeBeta,
 	type TreeChangeEventsBeta,
 } from "./treeBeta.js";
+export {
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
+	type TreeChangeEventsAlpha,
+} from "./treeAlpha.js";
 export { createTreeIndex, type TreeIndexKey } from "./simpleTreeIndex.js";
 export {
 	createIdentifierIndex,
@@ -154,19 +179,23 @@ export {
 } from "./storedSchema.js";
 
 export {
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	rollback,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	type WithValue,
-	rollback,
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";

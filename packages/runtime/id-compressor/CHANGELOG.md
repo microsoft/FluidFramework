@@ -1,5 +1,106 @@
 # @fluidframework/id-compressor
 
+## 2.112.0
+
+Dependency updates only.
+
+## 2.111.0
+
+### Minor Changes
+
+- Add originatorless normalization for op-space IDs in id-compressor ([#27367](https://github.com/microsoft/FluidFramework/pull/27367)) [4af409440ad](https://github.com/microsoft/FluidFramework/commit/4af409440adc8667c786b8989dbd8d8b8618bc02)
+
+  `IIdCompressor` now includes `tryNormalizeToSessionSpaceWithoutSession(id)`.
+  This API supports recovery scenarios where an [op-space identifier](https://fluidframework.com/docs/api/id-compressor/opspacecompressedid-typealias) must be decoded
+  without the originating session id.
+
+  For finalized IDs, the method returns the correct session-space form.
+  For non-final IDs, it returns `undefined` to indicate that originator context is
+  required and callers should use `normalizeToSessionSpace(id, originSessionId)` when
+  that context is available.
+
+  ```typescript
+  const maybeSessionId =
+    idCompressor.tryNormalizeToSessionSpaceWithoutSession(opId);
+  if (maybeSessionId === undefined) {
+    const sessionId = idCompressor.normalizeToSessionSpace(opId, originatorId);
+    // use sessionId
+  } else {
+    // use maybeSessionId
+  }
+  ```
+
+  `IIdCompressor` is now marked `@sealed`.
+  Fluid already assumed any `IIdCompressor` was its own implementation and casted them internally.
+  Any custom implementations will no longer build due to the above change,
+  but would not have worked at runtime anyway.
+  The updated tagging now correctly documents this requirement.
+
+## 2.110.0
+
+Dependency updates only.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+Dependency updates only.
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+- Remove IIdCompressorCore from legacy API surface ([#27146](https://github.com/microsoft/FluidFramework/pull/27146)) [a0d3a13888a](https://github.com/microsoft/FluidFramework/commit/a0d3a13888ae9020e1a4231f4c3ff810b6aaac19)
+
+  The `IIdCompressorCore` interface has been removed from the `@legacy` API surface and is now `@internal`.
+  This was previously deprecated in 2.92.0.
+
+  The return types of `createIdCompressor` and `deserializeIdCompressor` have been narrowed from `IIdCompressor & IIdCompressorCore` to `IIdCompressor`.
+
+  #### Migration
+  - **`serialize()`**:
+    Use the `serializeIdCompressor(compressor, withSession)` free function instead of calling `compressor.serialize(withSession)` directly.
+  - **`takeNextCreationRange()`, `takeUnfinalizedCreationRange()`, `finalizeCreationRange()`, `beginGhostSession()`**:
+    These are internal runtime operations that should not be called by external consumers.
+    If you depend on these APIs, please file an issue on the FluidFramework repository describing your use case.
+  - **Return types of `createIdCompressor` / `deserializeIdCompressor`**:
+    Type your variables as `IIdCompressor` rather than `IIdCompressor & IIdCompressorCore`.
+
+## 2.93.0
+
+Dependency updates only.
+
+## 2.92.0
+
+### Minor Changes
+
+- Deprecate IIdCompressorCore interface ([#26865](https://github.com/microsoft/FluidFramework/pull/26865)) [2e890f6416](https://github.com/microsoft/FluidFramework/commit/2e890f64160736b4e5efda0791f91bea96c5a011)
+
+  The `IIdCompressorCore` interface is deprecated and will be removed from the public API surface in 2.100.0. This also affects the return types of `createIdCompressor` and `deserializeIdCompressor`, which currently return `IIdCompressor & IIdCompressorCore` but will be narrowed to `IIdCompressor`.
+
+  #### Migration
+  - **`serialize()`**: Use the new `serializeIdCompressor(compressor, withSession)` free function instead of calling `compressor.serialize(withSession)` directly.
+  - **`takeNextCreationRange()`, `takeUnfinalizedCreationRange()`, `finalizeCreationRange()`, `beginGhostSession()`**: These are internal runtime operations that should not be called by external consumers. If you depend on these APIs, please file an issue on the FluidFramework repository describing your use case.
+  - **Return types of `createIdCompressor` / `deserializeIdCompressor`**: Stop relying on the `IIdCompressorCore` portion of the intersection type. Type your variables as `IIdCompressor` instead of `IIdCompressor & IIdCompressorCore`.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
 ## 2.83.0
 
 Dependency updates only.

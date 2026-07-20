@@ -4,7 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type ObjectOptions, type Static, type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { ObjectOptions, Static, TSchema } from "@sinclair/typebox";
 
 import {
 	type EncodedRevisionTag,
@@ -166,7 +167,7 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
-	vSharedBranches: "shared-branches|v0.1",
+	vSharedBranches: "shared-branches|v0.2",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =

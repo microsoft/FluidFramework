@@ -4,7 +4,7 @@
  */
 
 import type { Linter } from "eslint";
-import { strict } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -13,6 +13,9 @@ const config: Linter.Config[] = [
 			"@typescript-eslint/unbound-method": "off",
 			"unicorn/consistent-function-scoping": "off",
 			"unicorn/no-nested-ternary": "off",
+			// TODO: AB#75619: Exclude React code from this rule in the base eslint config.
+			// In React components it is convention to use null to represent the absence of render output.
+			"unicorn/no-null": "off",
 			"unicorn/no-useless-undefined": "off",
 			"no-restricted-imports": ["error", "@fluentui/react"],
 			"import-x/no-unassigned-import": [

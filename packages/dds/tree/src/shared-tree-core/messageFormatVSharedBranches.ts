@@ -4,7 +4,8 @@
  */
 
 import type { SessionId } from "@fluidframework/id-compressor";
-import { type TSchema, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { TSchema } from "@sinclair/typebox";
 
 import { type EncodedRevisionTag, RevisionTagSchema, SessionIdSchema } from "../core/index.js";
 import type { JsonCompatibleReadOnly } from "../util/index.js";
@@ -29,7 +30,16 @@ export interface Message {
 	 */
 	readonly changeset?: JsonCompatibleReadOnly;
 
+	/**
+	 * Unique ID associated with the branch.
+	 */
 	readonly branchId?: EncodedBranchId;
+
+	/**
+	 * Application-defined name of the branch, if any.
+	 * Not guaranteed to be unique.
+	 */
+	readonly branchName?: string;
 
 	/**
 	 * The version of the message format.
@@ -45,5 +55,6 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
+		branchName: Type.Optional(Type.String()),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

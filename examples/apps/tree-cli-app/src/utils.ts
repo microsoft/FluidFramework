@@ -14,6 +14,7 @@ import type { SerializedIdCompressorWithOngoingSession } from "@fluidframework/i
 import {
 	createIdCompressor,
 	deserializeIdCompressor,
+	serializeIdCompressor,
 } from "@fluidframework/id-compressor/legacy";
 import { isFluidHandle } from "@fluidframework/runtime-utils";
 import { TreeArrayNode, type InsertableTypedNode } from "@fluidframework/tree";
@@ -34,7 +35,8 @@ import {
 	type ConciseTree,
 	type JsonCompatible,
 } from "@fluidframework/tree/beta";
-import { type Static, Type } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { Static } from "@sinclair/typebox";
 
 import type { Item } from "./schema.js";
 import { config, List } from "./schema.js";
@@ -174,7 +176,7 @@ export function exportContent(destination: string, tree: List): JsonCompatible {
 				}),
 
 				schema: extractPersistedSchema(config.schema, compatVersion, () => true),
-				idCompressor: idCompressor.serialize(true),
+				idCompressor: serializeIdCompressor(idCompressor, true),
 			};
 			return file as JsonCompatible;
 		}

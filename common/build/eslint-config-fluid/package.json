@@ -1,7 +1,6 @@
 {
 	"name": "@fluidframework/eslint-config-fluid",
-	"version": "2.90.0",
-	"private": true,
+	"version": "14.0.0",
 	"description": "Shareable ESLint config for the Fluid Framework",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -11,20 +10,26 @@
 	},
 	"license": "MIT",
 	"author": "Microsoft and contributors",
-	"main": "index.js",
+	"exports": {
+		".": "./index.mts",
+		"./flat.mts": "./flat.mts",
+		"./server.mts": "./server.mts"
+	},
+	"main": "./index.mts",
 	"scripts": {
 		"build": "npm run print-configs && npm run prettier",
 		"build:readme:disabled": "markdown-magic --files \"**/*.md\"",
-		"clean": "rimraf --glob dist \"**/*.build.log\"",
+		"clean": "rimraf --glob dist \"**/*.build.log\" nyc",
 		"format": "npm run prettier:fix",
 		"prettier": "prettier --check . --cache --ignore-path ../../../.prettierignore",
 		"prettier:fix": "prettier --write . --cache --ignore-path ../../../.prettierignore",
-		"print-configs": "tsx scripts/print-configs.ts printed-configs",
-		"test": "echo TODO: add tests"
+		"print-configs": "jiti scripts/print-configs.ts printed-configs",
+		"test": "npm run test:mocha",
+		"test:mocha": "mocha \"src/test/**/*.test.mts\""
 	},
 	"dependencies": {
 		"@eslint-community/eslint-plugin-eslint-comments": "~4.5.0",
-		"@eslint/eslintrc": "~3.3.3",
+		"@eslint-react/eslint-plugin": "~2.13.0",
 		"@eslint/js": "~9.39.2",
 		"@fluid-internal/eslint-plugin-fluid": "^0.4.1",
 		"@rushstack/eslint-plugin": "~0.22.1",
@@ -36,8 +41,8 @@
 		"eslint-plugin-depend": "~1.4.0",
 		"eslint-plugin-import-x": "~4.16.1",
 		"eslint-plugin-jsdoc": "~61.4.1",
+		"eslint-plugin-no-only-tests": "~3.3.0",
 		"eslint-plugin-promise": "~7.2.1",
-		"eslint-plugin-react": "~7.37.5",
 		"eslint-plugin-react-hooks": "~7.0.1",
 		"eslint-plugin-tsdoc": "~0.5.0",
 		"eslint-plugin-unicorn": "~54.0.0",
@@ -47,19 +52,24 @@
 	},
 	"devDependencies": {
 		"@fluidframework/build-common": "^2.0.3",
-		"@types/node": "~20.19.30",
+		"@types/mocha": "~10.0.10",
+		"@types/node": "~22.19.17",
 		"@types/sort-json": "^2.0.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"eslint": "~9.39.1",
 		"jiti": "^2.6.1",
+		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"prettier": "~3.6.2",
 		"rimraf": "^6.1.3",
 		"sort-json": "^2.0.1",
-		"tsx": "^4.21.0",
+		"tsx": "^4.19.4",
 		"typescript": "~5.4.5"
 	},
-	"packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d",
+	"packageManager": "pnpm@11.12.0+sha512.820a6fbd0d9f04c226638002aead1e45340a9139dd5dc077c1d83ef44aa2481c8eb6637b4c9aa696a3c7e35ba818e49cf27213e5f2b91138d09b7a3e26e898ba",
+	"engines": {
+		"node": ">=22.22.2"
+	},
 	"fluidBuild": {
 		"tasks": {
 			"prettier": {
@@ -75,20 +85,5 @@
 				"script": false
 			}
 		}
-	},
-	"pnpm": {
-		"commentsOverrides": [
-			"serialize-javascript - CVE-2024-11831 impacts version 6.0.0 which is pinned by mocha 10.4.0, which in turn comes from mocha-multi-reporters 1.5.1 (which has no updated version at this time)"
-		],
-		"overrides": {
-			"mocha>serialize-javascript@6.0.0": "^6.0.2"
-		},
-		"onlyBuiltDependencies": [
-			"esbuild",
-			"unrs-resolver"
-		]
-	},
-	"typeValidation": {
-		"disabled": true
 	}
 }

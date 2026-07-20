@@ -4,8 +4,8 @@
  */
 
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import { isValidElement } from "react";
+import { createRoot, type Root } from "react-dom/client";
 
 import type { IFluidMountableView } from "./interface.js";
 
@@ -30,7 +30,7 @@ export class MountableView implements IFluidMountableView {
 	 * @param view - the view to test if it can be mounted.
 	 */
 	public static canMount(view: FluidObject): boolean {
-		return React.isValidElement(view);
+		return isValidElement(view);
 	}
 
 	/**
@@ -38,6 +38,11 @@ export class MountableView implements IFluidMountableView {
 	 * This also doubles as a way for us to know if we are mounted or not.
 	 */
 	private containerElement: HTMLElement | undefined;
+
+	/**
+	 * The React root used to mount and unmount the current view.
+	 */
+	private reactRoot: Root | undefined;
 
 	/**
 	 * If the viewProvider is a React component we will retain a reference to the React component across
@@ -68,14 +73,13 @@ export class MountableView implements IFluidMountableView {
 		this.containerElement = container;
 
 		// Try to get a React view if we don't have one already.
-		if (this.reactView === undefined && React.isValidElement(this.view)) {
+		if (this.reactView === undefined && isValidElement(this.view)) {
 			this.reactView = this.view;
 		}
 		// Render with React if possible.
 		if (this.reactView !== undefined) {
-			// TODO: Remove rule disable once we move to the React 18 APIs.
-			// eslint-disable-next-line import-x/no-deprecated -- AB#18875
-			ReactDOM.render(this.reactView, this.containerElement);
+			this.reactRoot = createRoot(this.containerElement);
+			this.reactRoot.render(this.reactView);
 			return;
 		}
 
@@ -94,9 +98,8 @@ export class MountableView implements IFluidMountableView {
 
 		// Call appropriate cleanup methods on the view and then remove it from the DOM.
 		if (this.reactView !== undefined) {
-			// TODO: Remove rule disable once we move to the React 18 APIs.
-			// eslint-disable-next-line import-x/no-deprecated -- AB#18875
-			ReactDOM.unmountComponentAtNode(this.containerElement);
+			this.reactRoot?.unmount();
+			this.reactRoot = undefined;
 		}
 
 		this.containerElement = undefined;

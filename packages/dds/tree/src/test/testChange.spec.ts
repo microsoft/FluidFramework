@@ -88,6 +88,7 @@ describe("TestChange", () => {
 		const empty = TestChange.emptyChange;
 		const context: ChangeEncodingContext = {
 			originatorId: "session1" as SessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};

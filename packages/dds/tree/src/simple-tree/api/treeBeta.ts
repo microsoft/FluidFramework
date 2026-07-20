@@ -37,6 +37,8 @@ import type { InsertableField, UnsafeUnknownSchema } from "../unsafeUnknownSchem
 import { conciseFromCursor, type ConciseTree } from "./conciseTree.js";
 import { createFromCursor } from "./create.js";
 import type { TreeEncodingOptions } from "./customTree.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used by docs
+import type { ObjectSchemaOptions } from "./schemaFactory.js";
 import type { TreeChangeEvents } from "./treeChangeEvents.js";
 import { treeNodeApi } from "./treeNodeApi.js";
 import { cursorFromVerbose } from "./verboseTree.js";
@@ -54,7 +56,7 @@ export interface NodeChangedData<TNode extends TreeNode = TreeNode> {
 	 * @remarks
 	 * This only includes changes to the node itself (which would trigger {@link TreeChangeEvents.nodeChanged}).
 	 *
-	 * Set to `undefined` when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
+	 * Not present when the {@link NodeKind} does not support this feature (currently just ArrayNodes).
 	 *
 	 * When defined, the set should never be empty, since `nodeChanged` will only be triggered when there is a change, and for the supported node types, the only things that can change are properties.
 	 */

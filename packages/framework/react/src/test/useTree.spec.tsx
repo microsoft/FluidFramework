@@ -8,7 +8,6 @@ import { strict as assert } from "node:assert";
 import { SchemaFactory } from "@fluidframework/tree";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
-import * as React from "react";
 
 import { toPropTreeNode, type PropTreeNode } from "../propNode.js";
 import { objectIdNumber } from "../simpleIdentifier.js";

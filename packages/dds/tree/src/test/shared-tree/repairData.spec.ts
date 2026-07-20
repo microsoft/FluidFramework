@@ -267,7 +267,7 @@ describe("Repair Data", () => {
 			);
 
 			// create a fork before the creation of the repair data
-			const _ = view2.checkout.branch();
+			const _ = view2.checkout.fork();
 
 			// get an anchor on the peer to the node we're removing
 			const anchorAOnTree2 = TestAnchor.fromValue(view2.checkout.forest, "A");

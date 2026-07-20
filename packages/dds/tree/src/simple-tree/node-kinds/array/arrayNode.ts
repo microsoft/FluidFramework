@@ -109,6 +109,14 @@ export interface TreeArrayNode<
 > extends ReadonlyArrayNode<T> {
 	/**
 	 * Inserts new item(s) at a specified location.
+	 *
+	 * @remarks
+	 * All items inserted by a single call to this method are inserted consecutively.
+	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
+	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
+	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
+	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 *
 	 * @param index - The index at which to insert `value`.
 	 * @param value - The content to insert.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
@@ -117,12 +125,18 @@ export interface TreeArrayNode<
 
 	/**
 	 * Inserts new item(s) at the start of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtStart(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
 	/**
 	 * Inserts new item(s) at the end of the array.
+	 * @remarks
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 * @param value - The content to insert.
 	 */
 	insertAtEnd(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
@@ -131,10 +145,10 @@ export interface TreeArrayNode<
 	 * Inserts new item(s) at the end of the array.
 	 *
 	 * @remarks
-	 * The order of the inserted items relative to other concurrently inserted items at the same location is only partially specified:
-	 * Concurrently inserting `[A, B]` and `[X, Y]` at the same location may yield
-	 * either `[A, B, X, Y]` or `[X, Y, A, B]`, regardless of the order in which those edits are sequenced.
-	 * No other interleavings are possible. (e.g. `[A, X, B, Y]` is not possible.)
+	 * Unlike `Array.prototype.push`, this method does not return the new length of the array.
+	 *
+	 * Equivalent to `insertAt(array.length, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
 	 *
 	 * @param value - The content to insert.
 	 */
@@ -445,6 +459,116 @@ export interface TreeArrayNode<
 	 * Returns a custom IterableIterator which throws usage errors if concurrent editing and iteration occurs.
 	 */
 	values(): IterableIterator<T>;
+}
+
+/**
+ * {@link (TreeArrayNode:interface)} with additional alpha APIs.
+ * @alpha @sealed
+ */
+export interface TreeArrayNodeAlpha<
+	TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes,
+	out T = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? TreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+	in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes]
+		? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes>
+		: InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>,
+> extends TreeArrayNode<TAllowedTypes, T, TNew> {
+	/**
+	 * Returns the item located at the specified index.
+	 * @param index - The zero-based index of the item to retrieve.
+	 * Negative indices count back from the last item in the array: for `index < 0`, `index + array.length` is used.
+	 * @returns The item at the specified index, or `undefined` if the index is out of bounds.
+	 */
+	at(index: number): T | undefined;
+
+	/**
+	 * Returns the last item in the array for which the given type guard returns `true`,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @typeParam S - The subtype of `T` asserted by the `predicate` type guard.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns `true` (narrowed to the guarded type), or `undefined` if there is no such item.
+	 */
+	findLast<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+
+	/**
+	 * Returns the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns a truthy value, or `undefined` if there is no such item.
+	 */
+	findLast(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): T | undefined;
+
+	/**
+	 * Returns the index of the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex | Array.prototype.findLastIndex}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The index of the last item for which `predicate` returns a truthy value, or `-1` if there is no such item.
+	 */
+	findLastIndex(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): number;
+
+	/**
+	 * Removes the last item from the array and returns it.
+	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 */
+	pop(): T | undefined;
+
+	/**
+	 * Removes the first item from the array and returns it.
+	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 */
+	shift(): T | undefined;
+
+	/**
+	 * Inserts new item(s) at the start of the array.
+	 *
+	 * @param value - The content to insert.
+	 * @remarks
+	 * Unlike `Array.prototype.unshift`, this method does not return the new length of the array.
+	 *
+	 * Equivalent to `insertAt(0, ...value)`:
+	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
+	 */
+	unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
+
+	/**
+	 * Removes existing item(s) and/or adds new item(s).
+	 * @param start - The index at which to start changing the array. If negative, it is treated as `array.length + start`.
+	 * Must be a positive in bounds index or a negative index such that `array.length + start` is a positive in bounds index.
+	 * @param deleteCount - The number of item(s) to remove. If not provided, it defaults to the end of the array.
+	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
+	 * @param items - The item(s) to insert at `start`.
+	 * @returns An array containing the item(s) that were removed.
+	 */
+	splice(
+		start: number,
+		deleteCount?: number,
+		...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]
+	): T[];
 }
 
 /**
@@ -966,6 +1090,58 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
 	}
+	public findLast<S extends TreeNodeFromImplicitAllowedTypes<T>>(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return value;
+			}
+		}
+		return undefined;
+	}
+	public findLastIndex(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): number {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return index;
+			}
+		}
+		return -1;
+	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);
 		validateIndex(index, field, "TreeArrayNode.insertAt", true);
@@ -980,6 +1156,23 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 	}
 	public push(...value: Insertable<T>): void {
 		this.insertAt(this.length, ...value);
+	}
+	public unshift(...value: Insertable<T>): void {
+		this.insertAt(0, ...value);
+	}
+	public pop(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const value = this.at(-1);
+		if (value !== undefined) {
+			this.removeAt(this.length - 1);
+		}
+		return value;
+	}
+	public shift(): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const value = this.at(0);
+		if (value !== undefined) {
+			this.removeAt(0);
+		}
+		return value;
 	}
 	public removeAt(index: number): void {
 		const field = getSequenceField(this);
@@ -997,6 +1190,41 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 
 		editor.remove(removeStart, removeEnd - removeStart);
 	}
+	public splice(
+		start: number,
+		deleteCount?: number,
+		...items: Insertable<T>
+	): TreeNodeFromImplicitAllowedTypes<T>[] {
+		const length = this.length;
+		const actualStart = start < 0 ? Math.max(length + start, 0) : Math.min(start, length);
+		const actualDeleteCount =
+			deleteCount === undefined
+				? length - actualStart
+				: Math.min(Math.max(deleteCount, 0), length - actualStart);
+		validateIndexRange(
+			actualStart,
+			actualStart + actualDeleteCount,
+			getSequenceField(this),
+			"TreeArrayNode.splice",
+		);
+		const removed: TreeNodeFromImplicitAllowedTypes<T>[] = [];
+		for (let index = actualStart; index < actualStart + actualDeleteCount; index++) {
+			removed.push(this.at(index) ?? oob());
+		}
+
+		const innerNode = getInnerNode(this);
+		const transaction = innerNode.isHydrated()
+			? innerNode.context.checkout.transaction
+			: undefined;
+		transaction?.start();
+		this.removeRange(actualStart, actualStart + actualDeleteCount);
+		if (items.length > 0) {
+			this.insertAt(actualStart, ...items);
+		}
+		transaction?.commit();
+		return removed;
+	}
+
 	public moveToStart(sourceIndex: number, source?: ReadonlyArrayNode): void {
 		const sourceArray = source ?? this;
 		const sourceField = getSequenceField(sourceArray);

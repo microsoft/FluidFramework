@@ -5,6 +5,8 @@ Generate commands are used to create/update code, docs, readmes, etc.
 
 * [`flub generate assertTags`](#flub-generate-asserttags)
 * [`flub generate buildVersion`](#flub-generate-buildversion)
+* [`flub generate bundleAnalysisRepo`](#flub-generate-bundleanalysisrepo)
+* [`flub generate bundleAnalysisReposWithComparison`](#flub-generate-bundleanalysisreposwithcomparison)
 * [`flub generate bundleStats`](#flub-generate-bundlestats)
 * [`flub generate changelog`](#flub-generate-changelog)
 * [`flub generate changeset`](#flub-generate-changeset)
@@ -117,6 +119,112 @@ EXAMPLES
 ```
 
 _See code: [src/commands/generate/buildVersion.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/buildVersion.ts)_
+
+## `flub generate bundleAnalysisRepo`
+
+Build and collect a bundle, either from the outer enlistment (local mode) or from a separate inner enlistment checked out to a specific revision (revision mode). The outer repo's working tree, branch, and stash are never modified.
+
+```
+USAGE
+  $ flub generate bundleAnalysisRepo [-v | --quiet] [--revision <value> | --merge-base <value>] [--package-dir <value>]
+    [--webpack-dir <value>]
+
+FLAGS
+  --merge-base=<value>   Collect a bundle for the merge-base of HEAD and this committish (the fork point). Selects
+                         revision mode and is mutually exclusive with --revision. Also used as the label (the
+                         subdirectory name the bundle's stats are saved under).
+  --package-dir=<value>  [default: .] Package root whose 'build:compile' is run to compile the package and its
+                         dependencies.
+  --revision=<value>     Collect a bundle for this committish (branch, tag, commit SHA, or any committish like HEAD~2),
+                         resolved as-is via 'git rev-parse'. Selects revision mode and is mutually exclusive with
+                         --merge-base; omit both to collect the local working tree. Also used as the label (the
+                         subdirectory name the bundle's stats are saved under).
+  --webpack-dir=<value>  Directory whose 'webpack' build is run and whose analyzer.json is collected. Defaults to
+                         --package-dir. Set this when the webpack config lives in a different directory than the package
+                         being compiled (e.g. a scenario subdirectory that reuses its parent package's compiled output).
+                         The collected stats are saved under this directory's compareBundlesOutput.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Build and collect a bundle, either from the outer enlistment (local mode) or from a separate inner enlistment checked
+  out to a specific revision (revision mode). The outer repo's working tree, branch, and stash are never modified.
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub generate bundleAnalysisRepo
+
+  $ flub generate bundleAnalysisRepo --revision main
+
+  $ flub generate bundleAnalysisRepo --merge-base main
+
+  $ flub generate bundleAnalysisRepo --revision client_v2.100.0
+```
+
+_See code: [src/commands/generate/bundleAnalysisRepo.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleAnalysisRepo.ts)_
+
+## `flub generate bundleAnalysisReposWithComparison`
+
+Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree, branch, and stash are never modified.
+
+```
+USAGE
+  $ flub generate bundleAnalysisReposWithComparison [-v | --quiet] [--base-revision <value>] [--exact-base] [--package-dir <value>]
+    [--webpack-dir <value>] [--keep-base-repo]
+
+FLAGS
+  --base-revision=<value>
+      Revision to use as the comparison baseline (branch, tag, or commit SHA). The actual base used is the merge-base of
+      HEAD and this revision (the fork point), so worktree-based setups where 'main' is in an unusual location still
+      produce the expected comparison. When omitted, the baseline is auto-detected as the freshest 'main' of a remote
+      pointing at microsoft/FluidFramework — the local 'main' is not used, since it may be stale. An explicit value
+      (including 'main') is always honored as given. Pass --exact-base to use the revision as-is instead.
+
+  --exact-base
+      Use --base-revision exactly as given (resolved via 'git rev-parse') instead of taking the merge-base with HEAD.
+      Useful for comparing the working tree against a specific commit, e.g. the current commit's parent.
+
+  --keep-base-repo
+      For debugging only: keep the inner base-repo clone after collecting the base bundle. By default the inner repo is
+      deleted once stats are saved, since it can be re-created cheaply via shallow clone on the next run. Pass this flag
+      to inspect the inner repo's working tree or build output (e.g. when a build is failing inside the inner repo).
+
+  --package-dir=<value>
+      [default: .] Package root whose 'build:compile' is run to compile the package and its dependencies.
+
+  --webpack-dir=<value>
+      Directory whose 'webpack' build is run and compared. Defaults to --package-dir. Set this when the webpack config
+      lives in a different directory than the package being compiled (e.g. a scenario subdirectory). The comparison
+      reports are written under this directory's compareBundlesOutput.
+
+LOGGING FLAGS
+  -v, --verbose  Enable verbose logging.
+      --quiet    Disable all logging.
+
+DESCRIPTION
+  Collect the local bundle and the base-revision (merge-base) bundle, then compare them. The outer repo's working tree,
+  branch, and stash are never modified.
+
+  To learn more see the detailed documentation at
+  https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/docs/bundleAnalysisRepoDetails.md
+
+EXAMPLES
+  $ flub generate bundleAnalysisReposWithComparison
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision main
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision client_v2.100.0
+
+  $ flub generate bundleAnalysisReposWithComparison --base-revision 18062854f25 --exact-base
+
+  $ flub generate bundleAnalysisReposWithComparison --keep-base-repo
+```
+
+_See code: [src/commands/generate/bundleAnalysisReposWithComparison.ts](https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-cli/src/commands/generate/bundleAnalysisReposWithComparison.ts)_
 
 ## `flub generate bundleStats`
 
@@ -288,31 +396,36 @@ Generates type declaration entrypoints for Fluid Framework API levels (/alpha, /
 
 ```
 USAGE
-  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--outDir <value>] [--outFilePrefix <value>]
-    [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>] [--outFileLegacyAlpha <value>]
-    [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix <value>] [--node10TypeCompat]
+  $ flub generate entrypoints [-v | --quiet] [--mainEntrypoint <value>] [--resolutionConditions <value>...] [--outDir
+    <value>] [--outFilePrefix <value>] [--outFileAlpha <value>] [--outFileBeta <value>] [--outFilePublic <value>]
+    [--outFileLegacyAlpha <value>] [--outFileLegacyBeta <value>] [--outFileLegacyPublic <value>] [--outFileSuffix
+    <value>] [--node10TypeCompat]
 
 FLAGS
-  --mainEntrypoint=<value>       [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
-  --node10TypeCompat             Optional generation of Node10 resolution compatible type entrypoints matching others.
-  --outDir=<value>               [default: ./lib] Directory to emit entrypoint declaration files.
-  --outFileAlpha=<value>         [default: alpha] Base file name for alpha entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileBeta=<value>          [default: beta] Base file name for beta entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileLegacyAlpha=<value>   Base file name for legacyAlpha entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFileLegacyBeta=<value>    Base file name for legacyBeta entrypoint declaration files. To opt into generating this
-                                 entrypoint, set to a value other than `none`.
-  --outFileLegacyPublic=<value>  Base file name for legacyPublic entrypoint declaration files. To opt into generating
-                                 this entrypoint, set to a value other than `none`.
-  --outFilePrefix=<value>        File name prefix for emitting entrypoint declaration files. Pattern of
-                                 '{@unscopedPackageName}' within value will be replaced with the unscoped name of this
-                                 package.
-  --outFilePublic=<value>        [default: public] Base file name for public entrypoint declaration files. To opt out of
-                                 generating this entrypoint, set to `none`.
-  --outFileSuffix=<value>        [default: .d.ts] File name suffix including extension for emitting entrypoint
-                                 declaration files.
+  --mainEntrypoint=<value>           [default: ./src/index.ts] Main entrypoint file containing all untrimmed exports.
+  --node10TypeCompat                 Optional generation of Node10 resolution compatible type entrypoints matching
+                                     others.
+  --outDir=<value>                   [default: ./lib] Directory to emit entrypoint declaration files.
+  --outFileAlpha=<value>             [default: alpha] Base file name for alpha entrypoint declaration files. To opt out
+                                     of generating this entrypoint, set to `none`.
+  --outFileBeta=<value>              [default: beta] Base file name for beta entrypoint declaration files. To opt out of
+                                     generating this entrypoint, set to `none`.
+  --outFileLegacyAlpha=<value>       Base file name for legacyAlpha entrypoint declaration files. To opt into generating
+                                     this entrypoint, set to a value other than `none`.
+  --outFileLegacyBeta=<value>        Base file name for legacyBeta entrypoint declaration files. To opt into generating
+                                     this entrypoint, set to a value other than `none`.
+  --outFileLegacyPublic=<value>      Base file name for legacyPublic entrypoint declaration files. To opt into
+                                     generating this entrypoint, set to a value other than `none`.
+  --outFilePrefix=<value>            File name prefix for emitting entrypoint declaration files. Pattern of
+                                     '{@unscopedPackageName}' within value will be replaced with the unscoped name of
+                                     this package.
+  --outFilePublic=<value>            [default: public] Base file name for public entrypoint declaration files. To opt
+                                     out of generating this entrypoint, set to `none`.
+  --outFileSuffix=<value>            [default: .d.ts] File name suffix including extension for emitting entrypoint
+                                     declaration files.
+  --resolutionConditions=<value>...  [default: ] Import resolution conditions used while resolving imports. If neither
+                                     "import" nor "require" are specified, one of those will be inferred based on
+                                     mainEntrypoint file extension and package.json "type" field.
 
 LOGGING FLAGS
   -v, --verbose  Enable verbose logging.

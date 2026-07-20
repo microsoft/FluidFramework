@@ -55,7 +55,6 @@ describe("Tests for Epoch Tracker", () => {
 			{
 				docId: hashedDocumentId,
 				resolvedUrl,
-				fileVersion: undefined,
 			},
 			createChildLogger(),
 		);
@@ -82,7 +81,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
+			file: { docId: hashedDocumentId, resolvedUrl },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
@@ -118,7 +117,7 @@ describe("Tests for Epoch Tracker", () => {
 		const cacheEntry1: ICacheEntry = {
 			key: "key1",
 			type: "snapshot",
-			file: { docId: hashedDocumentId, resolvedUrl, fileVersion: undefined },
+			file: { docId: hashedDocumentId, resolvedUrl },
 		};
 		const cacheEntry2: ICacheEntry = { ...cacheEntry1, key: "key2" };
 		const cacheValue1 = { val: "val1", cacheEntryTime: Date.now() };
@@ -371,9 +370,21 @@ describe("Tests for Epoch Tracker", () => {
 		);
 	});
 
-	it("Check for resolved url on LocationRedirection error", async () => {
-		let success: boolean = true;
+	it("LocationRedirection error should have correct resolved url and clear cache", async () => {
+		const cacheEntry: IEntry = {
+			key: "key1",
+			type: "snapshot",
+		};
+		epochTracker.setEpoch("epoch1", true, "test");
+		await epochTracker.put(cacheEntry, { val: "val1" });
+
+		assert(
+			(await epochTracker.get(cacheEntry)) !== undefined,
+			"Entry should exist in cache before redirect",
+		);
+
 		const newSiteUrl = "https://microsoft.sharepoint.com/siteUrl";
+		let success: boolean = true;
 		try {
 			await mockFetchSingle(
 				async () => epochTracker.fetchAndParseAsJSON("fetchUrl", {}, "test"),
@@ -402,5 +413,9 @@ describe("Tests for Epoch Tracker", () => {
 			assert.strictEqual(newResolvedUrl.driveId, driveId, "driveId should remain same");
 		}
 		assert.strictEqual(success, false, "Fetching should not succeed!!");
+		assert(
+			(await epochTracker.get(cacheEntry)) === undefined,
+			"Cache entry should be cleared after site/geo move redirect",
+		);
 	});
 });

@@ -1,5 +1,109 @@
 # @fluidframework/core-interfaces
 
+## 2.112.0
+
+### Minor Changes
+
+- Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
+
+  Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
+  sharing their payload without attaching the handle to the Fluid object graph. Blob handles
+  implement this method, allowing applications to begin uploading a blob before serializing its
+  handle into a DDS.
+
+  ```typescript
+  const handle = await runtime.uploadBlob(bytes);
+
+  if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
+    handle.sharePayload();
+  }
+  ```
+
+## 2.111.0
+
+Dependency updates only.
+
+## 2.110.0
+
+### Minor Changes
+
+- ITelemetryBaseLogger.minLogLevel may be undefined ([#27546](https://github.com/microsoft/FluidFramework/pull/27546)) [6afb933be51](https://github.com/microsoft/FluidFramework/commit/6afb933be5119722134d3e9c4ca61dfaf8024d8a)
+
+  Typing for `ITelemetryBaseLogger.minLogLevel` is updated to reflect that in some implementations `minLogLevel` is present but evaluates to `undefined`.
+  When building with `excactOptionalPropertyTypes:false` as suggested in [compatibility requirements](https://github.com/microsoft/FluidFramework/blob/68732d93a6cc8be2df966b9bb40f58bdd9fad69b/packages/common/core-interfaces/README.md#supported-tools), there is no apparent type change.
+  If a type error is experienced, make sure to check for `undefined` or use `?? LogLevel.info` when reading.
+
+## 2.103.0
+
+Dependency updates only.
+
+## 2.102.0
+
+Dependency updates only.
+
+## 2.101.0
+
+### Minor Changes
+
+- Deprecate LogLevel.default and LogLevel.error ([#27207](https://github.com/microsoft/FluidFramework/pull/27207)) [77ef3355fdf](https://github.com/microsoft/FluidFramework/commit/77ef3355fdf9611524cad86f00b1ce8ba3263861)
+
+  `LogLevel.default` and `LogLevel.error` in `@fluidframework/core-interfaces` are deprecated in favor of the semantically clearer `LogLevel.info` and `LogLevel.essential`.
+
+  #### Migration
+
+  The recommended replacement for `LogLevel.default` depends on how the value is used:
+  - For an **event's default `logLevel`** (e.g. the `logLevel` argument to `ITelemetryBaseLogger.send`), the recommendation is `LogLevel.essential`.
+  - For a logger's **default `minLogLevel`** (the threshold that filters events), `LogLevel.info` is the recommendation.
+
+  The replacement for `LogLevel.error` should always be `LogLevel.essential`.
+
+  See [issue #26969](https://github.com/microsoft/FluidFramework/issues/26969) for full guidance and removal tracking (planned for v3.0).
+
+## 2.100.0
+
+### Minor Changes
+
+- Node 22 is now the minimum supported Node.js version ([#27116](https://github.com/microsoft/FluidFramework/pull/27116)) [e8214d29663](https://github.com/microsoft/FluidFramework/commit/e8214d29663f5ee98d737daed82506a25d8de8d0)
+
+  All Fluid Framework client packages now require Node.js 22 or later. This aligns with the standing Node upgrade policy as Node 20 reaches end-of-life on April 30, 2026.
+
+## 2.93.0
+
+### Minor Changes
+
+- Add Fluid-controlled map and iterator interfaces ([#26951](https://github.com/microsoft/FluidFramework/pull/26951)) [4735742f15](https://github.com/microsoft/FluidFramework/commit/4735742f15718419e974ead1d5e2e809863d3723)
+
+  `TreeIndex` now extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap`, and `TreeMapNodeAlpha` which extends `FluidReadonlyMap` instead of the built-in `ReadonlyMap` has been added.
+  This works to uncouple Fluid's public API surface to the TypeScript standard library's map types, preventing future breakage when those types change.
+
+- Promote tree index APIs from alpha to beta ([#26993](https://github.com/microsoft/FluidFramework/pull/26993)) [37f2f17c118](https://github.com/microsoft/FluidFramework/commit/37f2f17c118baea142b0e842f5b262255d8bb12c)
+
+  The following APIs have been promoted from `@alpha` to `@beta`:
+  - `TreeIndex`
+  - `TreeIndexKey`
+  - `TreeIndexNodes`
+  - `createTreeIndex`
+  - `IdentifierIndex`
+  - `createIdentifierIndex`
+
+  Additionally, the following `@fluidframework/core-interfaces` types have been promoted from `@alpha` to `@beta`:
+  - `FluidReadonlyMap`
+  - `FluidIterable`
+  - `FluidIterableIterator`
+  - `FluidMap`
+
+## 2.92.0
+
+Dependency updates only.
+
+## 2.91.0
+
+Dependency updates only.
+
+## 2.90.0
+
+Dependency updates only.
+
 ## 2.83.0
 
 Dependency updates only.

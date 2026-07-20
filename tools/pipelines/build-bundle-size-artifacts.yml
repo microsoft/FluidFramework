@@ -25,11 +25,9 @@ extends:
     taskTest: [] # No need to run tests in this pipeline
     taskPack: false
     taskBundleAnalysis: true
-    taskPublishBundleSizeArtifacts: true
+    isBundleSizeArtifactsPipeline: true
     taskBuildDocs: false
     testCoverage: false
-    packageManagerInstallCommand: 'pnpm i --frozen-lockfile'
-    packageManager: pnpm
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}
     tagName: bundle-and-code-coverage-artifacts
     # This pipeline doesn't generate production artifacts but the build-npm-package template is too intertwined with

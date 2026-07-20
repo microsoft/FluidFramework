@@ -75,6 +75,7 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
     createDetachedDataStore(pkg: readonly string[], loadingGroupId?: string): IFluidDataStoreContextDetached;
     // (undocumented)
     readonly disposed: boolean;
+    enterStagingMode(): StageControls;
     generateDocumentUniqueId(): number | string;
     getAbsoluteUrl(relativeUrl: string): Promise<string | undefined>;
     getAliasedDataStoreEntryPoint(alias: string): Promise<IFluidHandle<FluidObject> | undefined>;
@@ -84,6 +85,8 @@ export interface IContainerRuntimeBase extends IEventProvider<IContainerRuntimeB
         snapshotTree: ISnapshotTree;
         sequenceNumber: number;
     }>;
+    readonly hasStagedChanges: boolean;
+    readonly inStagingMode: boolean;
     orderSequentially(callback: () => void): void;
     submitSignal: (type: string, content: unknown, targetClientId?: string) => void;
     // (undocumented)
@@ -99,6 +102,8 @@ export interface IContainerRuntimeBaseEvents extends IEvent {
     (event: "signal", listener: (message: IInboundSignalMessage, local: boolean) => void): any;
     // (undocumented)
     (event: "dispose", listener: () => void): any;
+    (event: "stagingModeChanged", listener: (stagingModeInfo: StagingModeChangedEvent) => void): any;
+    (event: "hasStagedChangesChanged", listener: (hasStagedChanges: boolean) => void): any;
 }
 
 // @beta @legacy
@@ -224,7 +229,7 @@ export interface IFluidParentContext extends IProvideFluidHandleContext, Partial
     readonly isReadOnly?: () => boolean;
     readonly loadingGroupId?: string;
     makeLocallyVisible(): void;
-    readonly minVersionForCollab?: MinimumVersionForCollab;
+    readonly minVersionForCollab: MinimumVersionForCollab;
     // (undocumented)
     readonly options: Record<string | number, any>;
     readonly scope: FluidObject;
@@ -388,7 +393,7 @@ export interface LocalAttributionKey {
     type: "local";
 }
 
-// @beta @input
+// @public @input
 export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
 
 // @beta @legacy
@@ -411,6 +416,20 @@ export interface OpAttributionKey {
 
 // @beta @legacy
 export type PackagePath = readonly string[];
+
+// @beta @sealed @legacy
+export interface StageControls {
+    readonly commitChanges: () => void;
+    readonly discardChanges: () => void;
+}
+
+// @beta @legacy
+export type StagingModeChangedEvent = {
+    readonly inStagingMode: true;
+} | {
+    readonly inStagingMode: false;
+    readonly commit: boolean;
+};
 
 // @beta @legacy (undocumented)
 export type SummarizeInternalFn = (fullTree: boolean, trackState: boolean, telemetryContext?: ITelemetryContext, incrementalSummaryContext?: IExperimentalIncrementalSummaryContext) => Promise<ISummarizeInternalResult>;

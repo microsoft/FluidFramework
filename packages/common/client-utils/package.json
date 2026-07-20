@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.90.0",
+	"version": "2.113.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -107,8 +107,7 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
 		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
-		"typetests:gen": "flub generate typetests --dir . -v",
-		"typetests:prepare": "flub typetests --dir . --reset --previous --normalize"
+		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
 		"all": true,
@@ -143,28 +142,28 @@
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
-		"@biomejs/biome": "~1.9.3",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.83.0",
+		"@biomejs/biome": "~2.4.5",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.111.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
-		"@fluid-tools/build-cli": "^0.63.0",
+		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
-		"@fluidframework/build-tools": "^0.63.0",
-		"@fluidframework/eslint-config-fluid": "workspace:~",
-		"@microsoft/api-extractor": "7.52.11",
+		"@fluidframework/build-tools": "catalog:buildTools",
+		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@microsoft/api-extractor": "7.58.1",
 		"@types/base64-js": "^1.3.2",
 		"@types/jest": "29.5.3",
 		"@types/jest-environment-puppeteer": "workspace:~",
 		"@types/mocha": "^10.0.10",
-		"@types/node": "~20.19.30",
+		"@types/node": "catalog:types",
 		"@types/rewire": "^2.5.30",
 		"@types/sha.js": "^2.4.4",
 		"@types/sinon": "^17.0.3",
 		"c8": "^10.1.3",
-		"concurrently": "^9.2.1",
+		"concurrently": "^10.0.3",
 		"copyfiles": "^2.4.1",
 		"cross-env": "^10.1.0",
-		"eslint": "~9.39.1",
-		"eslint-config-prettier": "~10.1.8",
+		"eslint": "catalog:eslint",
+		"eslint-config-prettier": "catalog:eslint",
 		"jest": "^29.6.2",
 		"jest-environment-puppeteer": "^10.1.3",
 		"jest-junit": "^16.0.0",
@@ -182,13 +181,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"eslint": [
-				"tsc",
-				"build:esnext",
-				"build:test:mocha:esm",
-				"build:test:jest",
-				"build:test:types"
-			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -205,6 +197,18 @@
 				"build:esnext"
 			],
 			"build:exports:node": [
+				"build:esnext"
+			],
+			"build:test:jest": [
+				"tsc"
+			],
+			"build:test:mocha:cjs": [
+				"tsc"
+			],
+			"build:test:mocha:esm": [
+				"build:esnext"
+			],
+			"build:test:types": [
 				"build:esnext"
 			],
 			"check:exports:bundle-release-tags": [
@@ -234,18 +238,6 @@
 			"check:exports:esm:node:legacy": [
 				"build:exports:node"
 			],
-			"build:test:jest": [
-				"tsc"
-			],
-			"build:test:mocha:cjs": [
-				"tsc"
-			],
-			"build:test:mocha:esm": [
-				"build:esnext"
-			],
-			"build:test:types": [
-				"build:esnext"
-			],
 			"ci:build:api-reports:browser:current": [
 				"build:exports:browser"
 			],
@@ -257,13 +249,19 @@
 			],
 			"ci:build:api-reports:node:legacy": [
 				"build:exports:node"
+			],
+			"test:mocha:cjs": [
+				"build:test:mocha:cjs"
+			],
+			"test:mocha:esm": [
+				"build:test:mocha:esm"
 			]
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 4,
-		"releaseDate": "2026-01-20",
-		"releasePkgVersion": "2.81.0"
+		"generation": 8,
+		"releaseDate": "2026-07-06",
+		"releasePkgVersion": "2.111.0"
 	},
 	"typeValidation": {
 		"broken": {},

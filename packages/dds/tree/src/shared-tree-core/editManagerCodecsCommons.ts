@@ -13,7 +13,12 @@ import type {
 	RevisionTag,
 	SchemaAndPolicy,
 } from "../core/index.js";
-import { mapIterable, type JsonCompatibleReadOnly, type Mutable } from "../util/index.js";
+import {
+	mapIterable,
+	type IdentifierHealingConfig,
+	type JsonCompatibleReadOnly,
+	type Mutable,
+} from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
 import type { SharedBranchSummaryData } from "./editManager.js";
@@ -28,6 +33,14 @@ import type {
 export interface EditManagerEncodingContext {
 	idCompressor: IIdCompressor;
 	readonly schema?: SchemaAndPolicy;
+	/**
+	 * See {@link ChangeEncodingContext.isSummary}. EditManager codec callers
+	 * always set this to `true` (the codec is only invoked for summaries),
+	 * but it is carried explicitly so downstream codecs can read it.
+	 */
+	readonly isSummary: boolean;
+	/** See {@link IdentifierHealingConfig}. */
+	readonly healing?: IdentifierHealingConfig;
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -53,6 +66,7 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 			originatorId: commit.sessionId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
+			isSummary: context.isSummary,
 		}),
 		change: changeCodec.encode(commit.change, { ...context, revision: commit.revision }),
 	};
@@ -79,6 +93,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		originatorId: commit.sessionId,
 		idCompressor: context.idCompressor,
 		revision: undefined,
+		isSummary: context.isSummary,
 	});
 
 	return {
@@ -112,6 +127,7 @@ export function encodeSharedBranch<TChangeset>(
 				idCompressor: context.idCompressor,
 				schema: context.schema,
 				revision: undefined,
+				isSummary: context.isSummary,
 			}),
 		),
 		peers: Array.from(data.peerLocalBranches.entries(), ([sessionId, branch]) => [
@@ -121,6 +137,7 @@ export function encodeSharedBranch<TChangeset>(
 					originatorId: sessionId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
+					isSummary: context.isSummary,
 				}),
 				commits: branch.commits.map((commit) =>
 					encodeCommit(changeCodec, revisionTagCodec, commit, {
@@ -128,6 +145,7 @@ export function encodeSharedBranch<TChangeset>(
 						idCompressor: context.idCompressor,
 						schema: context.schema,
 						revision: undefined,
+						isSummary: context.isSummary,
 					}),
 				),
 			},
@@ -154,6 +172,7 @@ export function encodeSharedBranch<TChangeset>(
 			originatorId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
+			isSummary: context.isSummary,
 		});
 	}
 	return json;
@@ -182,11 +201,12 @@ export function decodeSharedBranch<TChangeset>(
 		trunk: trunk.map(
 			(commit): SequencedCommit<TChangeset> =>
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-return
 				decodeCommit(changeCodec, revisionTagCodec, commit, {
 					originatorId: commit.sessionId,
 					idCompressor: context.idCompressor,
 					revision: undefined,
+					isSummary: context.isSummary,
+					healing: context.healing,
 				}),
 		),
 		peerLocalBranches: new Map(
@@ -197,6 +217,7 @@ export function decodeSharedBranch<TChangeset>(
 						originatorId: sessionId,
 						idCompressor: context.idCompressor,
 						revision: undefined,
+						isSummary: context.isSummary,
 					}),
 					commits: branch.commits.map((commit) =>
 						// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
@@ -208,6 +229,8 @@ export function decodeSharedBranch<TChangeset>(
 								originatorId: commit.sessionId,
 								idCompressor: context.idCompressor,
 								revision: undefined,
+								isSummary: context.isSummary,
+								healing: context.healing,
 							},
 						),
 					),
@@ -240,6 +263,7 @@ export function decodeSharedBranch<TChangeset>(
 			originatorId,
 			idCompressor: context.idCompressor,
 			revision: undefined,
+			isSummary: context.isSummary,
 		});
 	}
 	return data;

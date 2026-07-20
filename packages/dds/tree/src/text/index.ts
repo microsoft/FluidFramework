@@ -5,3 +5,5 @@
 
 export { TextAsTree } from "./textDomain.js";
 export { FormattedTextAsTree } from "./textDomainFormatted.js";
+export { FormattedTextAsTreeDefault } from "./textDomainFormattedDefault.js";
+export { codePointCount, utf16LengthForCodePoints } from "./codePointUtils.js";

@@ -3,8 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
-import { isNullOrUndefined } from "util";
+import { strict as assert } from "node:assert";
 
 import {
 	IMergeTreeDeltaCallbackArgs,
@@ -255,7 +254,9 @@ describe("non-collab", () => {
 				for (const key of Object.keys(event.ranges[i].segment.properties ?? {})) {
 					assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
 				}
-				if (expected[i].propDeltas !== undefined) {
+				if (expected[i].propDeltas === undefined) {
+					assert(event.ranges[i].propertyDeltas === undefined);
+				} else {
 					assert.equal(
 						Object.keys(event.ranges[i].propertyDeltas).length,
 						Object.keys(expected[i].propDeltas ?? {}).length,
@@ -263,8 +264,6 @@ describe("non-collab", () => {
 					for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
 						assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
 					}
-				} else {
-					assert(event.ranges[i].propertyDeltas === undefined);
 				}
 			}
 		}
@@ -1994,7 +1993,9 @@ describe("collab", () => {
 				for (const key of Object.keys(event.ranges[i].segment.properties ?? {})) {
 					assert.equal(event.ranges[i].segment.properties?.[key], expected[i].props[key]);
 				}
-				if (expected[i].propDeltas !== undefined) {
+				if (expected[i].propDeltas === undefined) {
+					assert(Object.keys(event.ranges[i].propertyDeltas).length === 0);
+				} else {
 					assert.equal(
 						Object.keys(event.ranges[i].propertyDeltas).length,
 						Object.keys(expected[i].propDeltas ?? {}).length,
@@ -2002,11 +2003,6 @@ describe("collab", () => {
 					for (const key of Object.keys(event.ranges[i].propertyDeltas)) {
 						assert.equal(event.ranges[i].propertyDeltas[key], expected[i].propDeltas?.[key]);
 					}
-				} else {
-					assert(
-						isNullOrUndefined(event.ranges[i].propertyDeltas) ||
-							Object.keys(event.ranges[i].propertyDeltas).length === 0,
-					);
 				}
 				if (expected[i].text !== undefined) {
 					const segment = event.ranges[i].segment as TextSegment;

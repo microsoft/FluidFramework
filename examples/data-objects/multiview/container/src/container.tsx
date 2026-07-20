@@ -14,7 +14,6 @@ import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import * as React from "react";
 
 import { DefaultView } from "./defaultView.js";
 

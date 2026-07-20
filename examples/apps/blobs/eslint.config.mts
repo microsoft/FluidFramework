@@ -4,9 +4,19 @@
  */
 
 import type { Linter } from "eslint";
-import { recommended } from "../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 import sharedConfig from "../../eslint.config.data.mts";
 
-const config: Linter.Config[] = [...recommended, ...sharedConfig];
+const config: Linter.Config[] = [
+	...recommended,
+	...sharedConfig,
+	{
+		rules: {
+			// TODO: AB#75619: Exclude React code from this rule in the base eslint config.
+			// In React components it is convention to use null to represent the absence of render output.
+			"unicorn/no-null": "off",
+		},
+	},
+];
 
 export default config;

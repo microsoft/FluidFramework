@@ -43,22 +43,22 @@ import {
 } from "./odspUtils.js";
 
 /**
- * Function to prefetch the snapshot and cached it in the persistant cache, so that when the container is loaded
+ * Function to prefetch the snapshot and cached it in the persistent cache, so that when the container is loaded
  * the cached latest snapshot could be used and removes the network call from the critical path.
  *
  * @param resolvedUrl - Resolved url to fetch the snapshot.
  * @param getStorageToken - function that can provide the storage token for a given site. This is
  * is also referred to as the "VROOM" token in SPO.
  * @param persistedCache - Cache to store the fetched snapshot.
- * @param forceAccessTokenViaAuthorizationHeader - @deprecated Not used, true value always used instead. Whether to force passing given token via authorization header.
+ * @param _forceAccessTokenViaAuthorizationHeader - Deprecated and not used.
  * @param logger - Logger to have telemetry events.
  * @param hostSnapshotFetchOptions - Options to fetch the snapshot if any. Otherwise default will be used.
  * @param enableRedeemFallback - True to have the sharing link redeem fallback in case the Trees Latest/Redeem
  * 1RT call fails with redeem error. During fallback it will first redeem the sharing link and then make
  * the Trees latest call.
  * Note: this can be considered deprecated - it will be replaced with `snapshotFormatFetchType`.
- * @param fetchBinarySnapshotFormat - Control if we want to fetch binary format snapshot.
- * @param snapshotFormatFetchType - Snapshot format to fetch.
+ * @param _fetchBinarySnapshotFormat - Deprecated and not used.
+ * @param _snapshotFormatFetchType - Deprecated and not used.
  * @param odspDocumentServiceFactory - factory to access the non persistent cache and store the prefetch promise.
  *
  * @returns `true` if the snapshot is cached, `false` otherwise.
@@ -69,12 +69,12 @@ export async function prefetchLatestSnapshot(
 	resolvedUrl: IResolvedUrl,
 	getStorageToken: TokenFetcher<OdspResourceTokenFetchOptions>,
 	persistedCache: IPersistedCache,
-	forceAccessTokenViaAuthorizationHeader: boolean,
+	_forceAccessTokenViaAuthorizationHeader: boolean,
 	logger: ITelemetryBaseLogger,
 	hostSnapshotFetchOptions: ISnapshotOptions | undefined,
 	enableRedeemFallback: boolean = true,
-	fetchBinarySnapshotFormat?: boolean,
-	snapshotFormatFetchType?: SnapshotFormatSupportType,
+	_fetchBinarySnapshotFormat?: boolean,
+	_snapshotFormatFetchType?: SnapshotFormatSupportType,
 	odspDocumentServiceFactory?: OdspDocumentServiceFactory,
 ): Promise<boolean> {
 	const mc = createChildMonitoringContext({ logger, namespace: "PrefetchSnapshot" });
@@ -110,6 +110,7 @@ export async function prefetchLatestSnapshot(
 			tokenFetchOptions,
 			loadingGroupId,
 			snapshotOptions,
+			odspLogger,
 			undefined,
 			controller,
 		);
@@ -143,7 +144,6 @@ export async function prefetchLatestSnapshot(
 				odspResolvedUrl,
 				getAuthHeader,
 				hostSnapshotFetchOptions,
-				forceAccessTokenViaAuthorizationHeader,
 				odspLogger,
 				snapshotDownloader,
 				putInCache,
@@ -174,7 +174,7 @@ export async function prefetchLatestSnapshot(
 					}, 5000);
 				})
 				.catch((error) => {
-					// Remove it from the non persistent cache if an error occured.
+					// Remove it from the non persistent cache if an error occurred.
 					snapshotNonPersistentCache?.remove(nonPersistentCacheKey);
 					snapshotContentsWithEpochP.reject(error);
 					throw error;

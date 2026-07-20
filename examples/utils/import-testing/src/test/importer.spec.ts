@@ -27,6 +27,7 @@ import {
 	RecursiveMap,
 	RecursiveRecord,
 	Square,
+	SquareSubclassable,
 } from "../testExports.js";
 
 describe("import tests", () => {
@@ -205,5 +206,12 @@ describe("import tests", () => {
 		const node = new Container({
 			x: Square.create(42),
 		});
+
+		class SquareSubclass extends SquareSubclassable {
+			public selected: boolean = false;
+		}
+
+		const square: SquareSubclass = SquareSubclass.create(10);
+		assert.equal(square.selected, false);
 	});
 });

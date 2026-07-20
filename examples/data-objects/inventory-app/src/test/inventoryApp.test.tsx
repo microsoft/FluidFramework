@@ -11,7 +11,6 @@ import { toPropTreeNode } from "@fluidframework/react/alpha";
 import { render } from "@testing-library/react";
 import { snapshotSchemaCompatibility } from "fluid-framework/alpha";
 import globalJsdom from "global-jsdom";
-import * as React from "react";
 
 import { Inventory, Part, treeConfiguration } from "../schema.js";
 import {

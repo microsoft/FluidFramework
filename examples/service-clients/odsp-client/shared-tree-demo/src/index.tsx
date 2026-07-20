@@ -4,8 +4,8 @@
  */
 
 import type { IFluidContainer } from "fluid-framework";
-import React from "react";
-import ReactDOM from "react-dom";
+// eslint-disable-next-line import-x/no-internal-modules -- This is the pattern prescribed by React
+import { createRoot } from "react-dom/client";
 
 import { containerSchema, createFluidData, loadFluidData } from "./fluid.js";
 // eslint-disable-next-line import-x/no-unassigned-import
@@ -46,10 +46,8 @@ async function start(): Promise<void> {
 	// Render the app - note we attach new containers after render so
 	// the app renders instantly on create new flow. The app will be
 	// interactive immediately.
-	ReactDOM.render(
-		<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
-		app,
-	);
+	const root = createRoot(app);
+	root.render(<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />);
 
 	// If this is a new container, fill it with data
 	if (createNew) {
@@ -78,10 +76,7 @@ async function start(): Promise<void> {
 		});
 
 		// Update the application state or components without forcing a full page reload
-		ReactDOM.render(
-			<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />,
-			app,
-		);
+		root.render(<ReactApp data={appData} canvasSize={canvasSize} cellSize={cellSize} />);
 
 		// If the app is in a `createNew` state - no itemId, and the container is detached, we attach the container.
 		// This uploads the container to the service and connects to the collaboration session.

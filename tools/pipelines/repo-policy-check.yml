@@ -89,6 +89,8 @@ extends:
               "
         - checkout: self
           path: ${{ variables.FluidFrameworkDirectory }}
+          fetchDepth: 1
+          fetchTags: false
         - template: /tools/pipelines/templates/include-use-node-version.yml@self
         - template: /tools/pipelines/templates/include-install-pnpm.yml@self
           parameters:
@@ -115,6 +117,12 @@ extends:
           inputs:
             command: 'custom'
             customCommand: 'run layer-check'
+
+        - task: Npm@1
+          displayName: Format Check (repo)
+          inputs:
+            command: 'custom'
+            customCommand: 'run check:format:repo'
 
         - task: Bash@3
           displayName: Prune pnpm store

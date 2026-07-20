@@ -32,7 +32,9 @@ USAGE
 <!-- commands -->
 # Command Topics
 
+* [`flub ai`](docs/ai.md) - AI-powered assistant for launching the right AI agent.
 * [`flub autocomplete`](docs/autocomplete.md) - Display autocomplete installation instructions.
+* [`flub build-perf`](docs/build-perf.md) - Build performance observability commands for collecting, processing, and analyzing build metrics.
 * [`flub bump`](docs/bump.md) - Bump the version of packages, release groups, and their dependencies.
 * [`flub check`](docs/check.md) - Check commands are used to verify repo state, apply policy, etc.
 * [`flub commands`](docs/commands.md) - List all flub commands.
@@ -80,8 +82,7 @@ For client that is:
 ```
 			"@fluid-tools/build-cli": "file:./build-tools/packages/build-cli",
 			"@fluidframework/build-tools": "file:./build-tools/packages/build-tools",
-			"@fluid-tools/version-tools": "file:./build-tools/packages/version-tools",
-			"@fluidframework/bundle-size-tools": "file:./build-tools/packages/bundle-size-tools"
+			"@fluid-tools/version-tools": "file:./build-tools/packages/version-tools"
 ```
 
 This approach can be used with `flub generate typetests` to ensure that the `--entrypoint` configuration, if any, from the scripts is included, and can be done from a JavaScript Debug console to debug, though breakpoints will need to be set in the `.js` files in `node_modules` (for example in `node_modules/.pnpm/file+build-tools+packages+build-cli_@types+node@18.19.1/node_modules/@fluid-tools/build-cli/lib/commands/generate/typetests.js`).
@@ -91,8 +92,7 @@ Alternatively, `link:` overrides give similar results and are known to support s
 ```
 			"@fluid-tools/build-cli": "link:./build-tools/packages/build-cli",
 			"@fluidframework/build-tools": "link:./build-tools/packages/build-tools",
-			"@fluid-tools/version-tools": "link:./build-tools/packages/version-tools",
-			"@fluidframework/bundle-size-tools": "link:./build-tools/packages/bundle-size-tools"
+			"@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
 ```
 
 Either pattern requires `pnpm i --no-frozen-lockfile` after setting `overrides`. If any build-tools package `dependencies` are updated when using `file:`, be sure to rerun for both workspaces.

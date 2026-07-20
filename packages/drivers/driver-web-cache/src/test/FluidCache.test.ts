@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import type { ICacheEntry } from "@fluidframework/driver-definitions/internal";
 import { getKeyForCacheEntry } from "@fluidframework/driver-utils/internal";
 import { openDB } from "idb";
@@ -13,9 +15,6 @@ import {
 	FluidDriverObjectStoreName,
 	getFluidCacheIndexedDbInstance,
 } from "../FluidCacheIndexedDb.js";
-
-// eslint-disable-next-line import-x/no-unassigned-import, @typescript-eslint/no-require-imports, import-x/no-internal-modules
-require("fake-indexeddb/auto");
 
 const mockPartitionKey = "FAKEPARTITIONKEY";
 
@@ -36,7 +35,7 @@ class DateMock {
 function setupDateMock(startMockTime: number): () => void {
 	const realDate = window.Date;
 	DateMock.mockTimeMs = startMockTime;
-	(window.Date as any) = DateMock;
+	(window.Date as unknown) = DateMock;
 
 	return () => (window.Date = realDate);
 }
@@ -59,7 +58,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 	};
 }
 
-[true, false].forEach((immediateClose) => {
+for (const immediateClose of [true, false]) {
 	function getFluidCache(config?: {
 		maxCacheItemAge?: number;
 
@@ -72,22 +71,36 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 		});
 	}
 	describe(`Fluid Cache tests: immediateClose: ${immediateClose}`, () => {
+		let fluidCache: FluidCache;
+		const extraCaches: FluidCache[] = [];
+
 		beforeEach(() => {
 			// Reset the indexed db before each test so that it starts off in an empty state
 			// eslint-disable-next-line import-x/no-internal-modules, @typescript-eslint/no-require-imports
 			const FDBFactory = require("fake-indexeddb/lib/FDBFactory");
-			(window.indexedDB as any) = new FDBFactory();
+			(window.indexedDB as unknown) = new FDBFactory();
+		});
+
+		afterEach(() => {
+			for (const cache of [fluidCache, ...extraCaches.splice(0)]) {
+				if (cache !== undefined) {
+					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
+					clearTimeout(cache["dbCloseTimer"]);
+					// eslint-disable-next-line @typescript-eslint/dot-notation -- Access to private property for testing purposes
+					cache["db"]?.close();
+				}
+			}
 		});
 
 		it("returns undefined when there is nothing in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const result = await fluidCache.get(getMockCacheEntry("shouldNotExist"));
-			expect(result).toBeUndefined();
+			assert.strictEqual(result, undefined);
 		});
 
 		it("returns an item put in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("shouldExist");
 			const cachedItem = { foo: "bar" };
@@ -95,11 +108,11 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(cachedItem);
+			assert.deepEqual(result, cachedItem);
 		});
 
 		it("returns an item put in the cache when max ops has not passed", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("stillGood");
 			const cachedItem = { foo: "bar" };
@@ -107,57 +120,58 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(cachedItem);
+			assert.deepEqual(result, cachedItem);
 		});
 
 		it("does not return an item from the cache that is older than maxCacheItemAge", async () => {
 			const clearTimeMock = setupDateMock(100);
 
-			const fluidCache = getFluidCache({ maxCacheItemAge: 5000 });
+			fluidCache = getFluidCache({ maxCacheItemAge: 5000 });
 
 			const cacheEntry = getMockCacheEntry("tooOld");
 			const cachedItem = { foo: "bar" };
 
 			await fluidCache.put(cacheEntry, cachedItem);
 
-			expect(await fluidCache.get(cacheEntry)).toEqual(cachedItem);
+			assert.deepEqual(await fluidCache.get(cacheEntry), cachedItem);
 
 			DateMock.mockTimeMs += 5050;
 
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toBeUndefined();
+			assert.strictEqual(result, undefined);
 
 			clearTimeMock();
 		});
 
 		it("does not return items from the cache when the partition keys do not match", async () => {
-			const fluidCache = getFluidCache({ partitionKey: "partitionKey1" });
+			fluidCache = getFluidCache({ partitionKey: "partitionKey1" });
 
 			const cacheEntry = getMockCacheEntry("partitionKey1Data");
 			const cachedItem = { foo: "bar" };
 			await fluidCache.put(cacheEntry, cachedItem);
 
-			expect(await fluidCache.get(cacheEntry)).toEqual(cachedItem);
+			assert.deepEqual(await fluidCache.get(cacheEntry), cachedItem);
 
 			// We should not return the data from partition 1 when in partition 2
 			const partition2FluidCache = getFluidCache({
 				partitionKey: "partitionKey2",
 			});
-			expect(await partition2FluidCache.get(cacheEntry)).toEqual(undefined);
+			extraCaches.push(partition2FluidCache);
+			assert.strictEqual(await partition2FluidCache.get(cacheEntry), undefined);
 		});
 
 		it("returns values from cache when partition key is null", async () => {
-			const fluidCache = getFluidCache({ partitionKey: null });
+			fluidCache = getFluidCache({ partitionKey: null });
 
 			const cacheEntry = getMockCacheEntry("partitionKey1Data");
 			const cachedItem = { foo: "bar" };
 			await fluidCache.put(cacheEntry, cachedItem);
 
-			expect(await fluidCache.get(cacheEntry)).toEqual(cachedItem);
+			assert.deepEqual(await fluidCache.get(cacheEntry), cachedItem);
 		});
 
 		it("implements the removeAllEntriesForDocId API", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
 				docId: "docId1",
@@ -173,19 +187,19 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			await fluidCache.put(docId2Entry1, {});
 			await fluidCache.put(docId1Entry2, {});
 
-			expect(await fluidCache.get(docId1Entry1)).not.toBeUndefined();
-			expect(await fluidCache.get(docId2Entry1)).not.toBeUndefined();
-			expect(await fluidCache.get(docId1Entry2)).not.toBeUndefined();
+			assert.notStrictEqual(await fluidCache.get(docId1Entry1), undefined);
+			assert.notStrictEqual(await fluidCache.get(docId2Entry1), undefined);
+			assert.notStrictEqual(await fluidCache.get(docId1Entry2), undefined);
 
 			await fluidCache.removeEntries(docId1Entry1.file);
 
-			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
-			expect(await fluidCache.get(docId2Entry1)).not.toBeUndefined();
-			expect(await fluidCache.get(docId1Entry2)).toBeUndefined();
+			assert.strictEqual(await fluidCache.get(docId1Entry1), undefined);
+			assert.notStrictEqual(await fluidCache.get(docId2Entry1), undefined);
+			assert.strictEqual(await fluidCache.get(docId1Entry2), undefined);
 		});
 
 		it("removes a specific entry without affecting other entries for the same document", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const docId1Entry1 = getMockCacheEntry("docId1Entry1", {
 				docId: "docId1",
@@ -202,17 +216,17 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			await fluidCache.put(docId2Entry1, { data: "entry3" });
 
 			// Verify all entries exist
-			expect(await fluidCache.get(docId1Entry1)).toEqual({ data: "entry1" });
-			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" });
-			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" });
+			assert.deepEqual(await fluidCache.get(docId1Entry1), { data: "entry1" });
+			assert.deepEqual(await fluidCache.get(docId1Entry2), { data: "entry2" });
+			assert.deepEqual(await fluidCache.get(docId2Entry1), { data: "entry3" });
 
 			// Remove only one specific entry from docId1
 			await fluidCache.removeEntry(docId1Entry1);
 
 			// Verify only the specified entry was removed
-			expect(await fluidCache.get(docId1Entry1)).toBeUndefined();
-			expect(await fluidCache.get(docId1Entry2)).toEqual({ data: "entry2" }); // Still exists
-			expect(await fluidCache.get(docId2Entry1)).toEqual({ data: "entry3" }); // Still exists
+			assert.strictEqual(await fluidCache.get(docId1Entry1), undefined);
+			assert.deepEqual(await fluidCache.get(docId1Entry2), { data: "entry2" }); // Still exists
+			assert.deepEqual(await fluidCache.get(docId2Entry1), { data: "entry3" }); // Still exists
 		});
 
 		// The tests above test the public API of Fluid Cache.
@@ -222,7 +236,7 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			// We need to mock out the Date API to make this test work
 			const clearDateMock = setupDateMock(100);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("shouldBeInLocalStorage");
 			const cachedItem = { dateToStore: "foo" };
@@ -230,70 +244,404 @@ function getMockCacheEntry(itemKey: string, options?: { docId: string }): ICache
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const db = await getFluidCacheIndexedDbInstance();
-			expect(
+			assert.deepEqual(
 				await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry)),
-			).toEqual({
-				cacheItemId: "shouldBeInLocalStorage",
-				cachedObject: {
-					dateToStore: "foo",
+				{
+					cacheItemId: "shouldBeInLocalStorage",
+					cachedObject: {
+						dateToStore: "foo",
+					},
+					createdTimeMs: 100,
+					fileId: "myDocument",
+					lastAccessTimeMs: 100,
+					type: "snapshot",
+					partitionKey: "FAKEPARTITIONKEY",
 				},
-				createdTimeMs: 100,
-				fileId: "myDocument",
-				lastAccessTimeMs: 100,
-				type: "snapshot",
-				partitionKey: "FAKEPARTITIONKEY",
-			});
+			);
+			db.close();
 
 			clearDateMock();
 		});
 
 		it("does not throw when APIs are called and the database has been upgraded by another client", async () => {
 			// Create a DB with a much newer version number to simulate an old client
-			await openDB(FluidDriverCacheDBName, 1000000);
+			const newerDb = await openDB(FluidDriverCacheDBName, 1000000);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(undefined);
+			newerDb.close();
+			assert.strictEqual(result, undefined);
 		});
 
 		it("does not hang when an older client is blocking the database from opening", async () => {
-			await openDB(FluidDriverCacheDBName, 1);
+			const olderDb = await openDB(FluidDriverCacheDBName, 1);
 
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
-			const cacheEntry = getMockCacheEntry("someKey");
-			const cachedItem = { dateToStore: "foo" };
-			await fluidCache.put(cacheEntry, cachedItem);
-
-			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(undefined);
+			// put() should return gracefully even when the DB is blocked by an older client.
+			// We intentionally do not call get() after put() here — a second blocked open
+			// request creates a second leaked fake-indexeddb connection that never closes,
+			// deadlocking the waitForOthersClosed loop in fake-indexeddb v3.
+			await fluidCache.put(getMockCacheEntry("someKey"), { dateToStore: "foo" });
+			olderDb.close();
 		});
 
 		it("does not hang when client is getting data after putting in the cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };
 			await fluidCache.put(cacheEntry, cachedItem);
 
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(cachedItem);
+			assert.deepEqual(result, cachedItem);
 		});
 
 		it("does not hang when client is getting data after removing the entry from cache", async () => {
-			const fluidCache = getFluidCache();
+			fluidCache = getFluidCache();
 
 			const cacheEntry = getMockCacheEntry("someKey");
 			const cachedItem = { dateToStore: "foo" };
 			await fluidCache.put(cacheEntry, cachedItem);
 			await fluidCache.removeEntries(cacheEntry.file);
 			const result = await fluidCache.get(cacheEntry);
-			expect(result).toEqual(undefined);
+			assert.strictEqual(result, undefined);
+		});
+
+		describe("update", () => {
+			it("writes when the updater calls set with the entry absent", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateNew");
+				const proposed = { rev: 1 };
+
+				const seen: unknown[] = [];
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					seen.push(existing);
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(seen, [undefined]);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("passes the existing cached value to the updater", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateExisting");
+				const initial = { rev: 1 };
+				const proposed = { rev: 2 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				let observedExisting: unknown;
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					observedExisting = existing;
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(observedExisting, initial);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("supports read-modify-write derived from the existing value", async () => {
+				// The motivating case for the callback shape: deriving the new value
+				// from the existing one inside the atomic transaction.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateRmw");
+				await fluidCache.put(cacheEntry, { count: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					const prev = (existing as { count: number } | undefined)?.count ?? 0;
+					set({ count: prev + 1 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { count: 2 });
+			});
+
+			it("does not overwrite when the updater returns without calling set", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateNoSet");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					// updater inspects existing but chooses not to write
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("treats cross-partition existing entries as absent", async () => {
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("updateCrossPartition");
+				const otherPartitionValue = { rev: 99, from: "B" };
+				const proposed = { rev: 1, from: "A" };
+
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, otherPartitionValue);
+
+				let observedExisting: unknown = "sentinel";
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					observedExisting = existing;
+					set(proposed);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(observedExisting, undefined);
+				assert.deepEqual(await fluidCache.get(cacheEntry), proposed);
+			});
+
+			it("set(undefined) removes the existing entry atomically", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefined");
+				await fluidCache.put(cacheEntry, { rev: 1 });
+
+				const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+					// Updater sees the existing value, decides to delete.
+					assert.deepEqual(existing, { rev: 1 });
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+
+				// The row should be gone from IDB, not just stored as undefined —
+				// verify by reading the raw IDB record.
+				const db = await getFluidCacheIndexedDbInstance();
+				const raw = await db.get(FluidDriverObjectStoreName, getKeyForCacheEntry(cacheEntry));
+				db.close();
+				assert.strictEqual(raw, undefined);
+			});
+
+			it("set(undefined) on an absent key is a no-op write that still returns true", async () => {
+				// `set` was called, so the contract says return `true` even though
+				// nothing actually changed at the key.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedAbsent");
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("set(undefined) deletes cross-partition rows under the partition's update", async () => {
+				// `update` already documents that `set` atomically replaces whatever
+				// sits at the key, including cross-partition rows. Same applies to
+				// the delete form.
+				fluidCache = getFluidCache({ partitionKey: "partitionA" });
+
+				const cacheEntry = getMockCacheEntry("updateSetUndefinedCrossPartition");
+				const partitionBCache = getFluidCache({ partitionKey: "partitionB" });
+				extraCaches.push(partitionBCache);
+				await partitionBCache.put(cacheEntry, { from: "B" });
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set(undefined);
+				});
+
+				assert.strictEqual(wrote, true);
+				// Both partitions now see the row as absent.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+				assert.strictEqual(await partitionBCache.get(cacheEntry), undefined);
+			});
+
+			it("returns false and does not write when the updater throws", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, () => {
+					throw new Error("updater failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("rejects an async updater that calls set then awaits and throws", async () => {
+				// An async updater is structurally allowed by the typed signature
+				// (`() => void` accepts `async () => Promise<void>`), but would
+				// otherwise let the synchronous `set` commit a write before the
+				// eventual rejection surfaced. Guard against this misuse: detect a
+				// thenable return after the updater returns, abort the transaction,
+				// and return false. The eventual async rejection is orphaned by
+				// design — the updater contract requires sync.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncSetThenThrow");
+				const initial = { rev: 1 };
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 99 });
+						await Promise.resolve();
+						throw new Error("async after-set failure");
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("rejects an async updater that returns a promise without throwing", async () => {
+				// Even a non-throwing async updater is misuse — the contract is sync.
+				// `set` may have been called before the awaited microtask; we still
+				// must not commit, because the updater is structurally telling us
+				// it intended to do more work after returning.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateAsyncNoThrow");
+
+				const wrote = await fluidCache.update(
+					cacheEntry,
+					// eslint-disable-next-line @typescript-eslint/no-misused-promises
+					(async (_existing, set) => {
+						set({ rev: 1 });
+					}) as unknown as (existing: unknown, set: (value: unknown) => void) => void,
+				);
+
+				assert.strictEqual(wrote, false);
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("does not write when the updater calls set then throws", async () => {
+				// Throw-after-set should still abort: the updater's intent is ambiguous
+				// and preserving the existing row is the safer default.
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateSetThenThrow");
+				const initial = { rev: 1 };
+
+				await fluidCache.put(cacheEntry, initial);
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 99 });
+					throw new Error("after-set failure");
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.deepEqual(await fluidCache.get(cacheEntry), initial);
+			});
+
+			it("multi-set: last value wins", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateMultiSet");
+
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					set({ rev: 1 });
+					set({ rev: 2 });
+					set({ rev: 3 });
+				});
+
+				assert.strictEqual(wrote, true);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 3 });
+			});
+
+			it("set called after the updater returned throws UsageError", async () => {
+				fluidCache = getFluidCache();
+
+				const cacheEntry = getMockCacheEntry("updateLateSet");
+
+				let capturedSet: ((value: unknown) => void) | undefined;
+				const wrote = await fluidCache.update(cacheEntry, (_existing, set) => {
+					capturedSet = set;
+				});
+
+				assert.strictEqual(wrote, false);
+				assert.ok(capturedSet !== undefined);
+				assert.throws(() => capturedSet?.({ rev: 1 }), /set called after updater returned/);
+				// And the cache is still untouched.
+				assert.strictEqual(await fluidCache.get(cacheEntry), undefined);
+			});
+
+			it("resolves concurrent update races deterministically via the updater", async () => {
+				// Two FluidCache instances racing to write to the same key, where each
+				// only writes if it has a higher revision than what is currently cached.
+				// The higher-revision writer must win regardless of scheduling order.
+				fluidCache = getFluidCache();
+				const otherCache = getFluidCache();
+				extraCaches.push(otherCache);
+
+				const cacheEntry = getMockCacheEntry("updateRace");
+
+				const writeIfNewer = async (cache: FluidCache, rev: number): Promise<boolean> =>
+					cache.update(cacheEntry, (existing, set) => {
+						const existingRev = (existing as { rev?: number } | undefined)?.rev ?? -1;
+						if (rev > existingRev) {
+							set({ rev });
+						}
+					});
+
+				const [wroteHigh, wroteLow] = await Promise.all([
+					writeIfNewer(fluidCache, 2),
+					writeIfNewer(otherCache, 1),
+				]);
+
+				// At least one of the two writes must succeed (the very first one),
+				// and the final state must reflect the higher revision regardless of order.
+				assert.ok(wroteHigh || wroteLow);
+				assert.deepEqual(await fluidCache.get(cacheEntry), { rev: 2 });
+			});
+
+			it("treats existing entries older than maxCacheItemAge as absent", async () => {
+				const resetDateMock = setupDateMock(0);
+				try {
+					const maxAge = 5 * 60 * 1000;
+					fluidCache = new FluidCache({
+						partitionKey: mockPartitionKey,
+						maxCacheItemAge: maxAge,
+						closeDbAfterMs: immediateClose ? 0 : 100,
+					});
+
+					const cacheEntry = getMockCacheEntry("updateStale");
+					await fluidCache.put(cacheEntry, { rev: 1 });
+
+					// Advance well past maxCacheItemAge so the existing row is "stale"
+					// under the same rules `get` applies.
+					DateMock.mockTimeMs += maxAge * 2;
+
+					let observedExisting: unknown = "sentinel";
+					const wrote = await fluidCache.update(cacheEntry, (existing, set) => {
+						observedExisting = existing;
+						set({ rev: 2 });
+					});
+
+					assert.strictEqual(wrote, true);
+					assert.strictEqual(
+						observedExisting,
+						undefined,
+						"stale existing entries should be reported to the updater as undefined",
+					);
+				} finally {
+					resetDateMock();
+				}
+			});
 		});
 	});
-});
+}

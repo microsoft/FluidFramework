@@ -3,23 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import type { IJsonCodec } from "../codec/index.js";
+import type { JsonCodecPart } from "../codec/index.js";
 import type {
 	ChangeAtomId,
 	ChangeEncodingContext,
-	EncodedChangeAtomId,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../core/index.js";
 
+import { EncodedChangeAtomId } from "./modular-schema/index.js";
+
 export function makeChangeAtomIdCodec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
-): IJsonCodec<ChangeAtomId, EncodedChangeAtomId, EncodedChangeAtomId, ChangeEncodingContext> {
+): JsonCodecPart<ChangeAtomId, typeof EncodedChangeAtomId, ChangeEncodingContext> {
 	return {
 		encode(changeAtomId: ChangeAtomId, context: ChangeEncodingContext): EncodedChangeAtomId {
 			return changeAtomId.revision === undefined || changeAtomId.revision === context.revision
@@ -34,5 +34,6 @@ export function makeChangeAtomIdCodec(
 					}
 				: { localId: changeAtomId, revision: context.revision };
 		},
+		encodedSchema: EncodedChangeAtomId,
 	};
 }
