@@ -78,7 +78,6 @@ steps:
       orderFile=$(Pipeline.Workspace)/pack/packagePublishOrder-${{ parameters.feedKind }}.txt
 
 
-      # THIS IS THE IMPORTANT PART: The publish command is executed here
       # execute the publish command
       flub publish tarballs \
       --dir $tarballsDir \

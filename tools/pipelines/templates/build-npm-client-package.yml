@@ -1022,8 +1022,13 @@ extends:
                     mergeTestResults: false
                   condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
 
-      # Publishing is handled by the downstream pipeline using the publish eligibility recorded in
-      # pack/publish-metadata.json. Public runs already compute parameters.publish as false in include-vars.yml.
+      # Publish stage
+      - ${{ if eq(parameters.publish, true) }}:
+        - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
+          parameters:
+            tagName: ${{ parameters.tagName }}
+            isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            buildDirectory: ${{ parameters.buildDirectory }}
 
       # Capture pipeline stage results
       - ${{ if eq(parameters.telemetry, true) }}:
@@ -1031,6 +1036,18 @@ extends:
           parameters:
             dependsOn:
               - build
+              # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
+              - publish_npm_internal_test
+              - publish_npm_internal_build
+              - publish_npm_public
+              # NOTE: This is brittle; since the publish_npm_internal_dev stage is added to the pipeline conditionally,
+              # we create a dependency on it based on the same condition.
+              # So this needs to be kept in sync with the logic that include-publish-npm-package.yml uses to create the stage.
+              # At some point it might be preferable to always create the stage, control its execution solely with
+              # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
+              - ${{ if eq(parameters.isReleaseGroup, true) }}:
+                - publish_npm_internal_dev
+              - upload_manifests
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
