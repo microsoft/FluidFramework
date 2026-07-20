@@ -10,7 +10,7 @@ This name can be retrieved by passing the shared branch ID to `getSharedBranchNa
 
 Note that, unlike the shared branch IDs, shared branch names are not guaranteed to be unique.
 
-## Compatibility Implications
+#### Compatibility Implications
 
 This change breaks compatibility in the following ways:
 - A document written by a client running an earlier FF version cannot be opened by a client running this version.
