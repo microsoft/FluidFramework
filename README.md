@@ -112,6 +112,16 @@ corepack enable
 > This writes a gitignored `.npmrc` into each workspace; run `node ./scripts/set-dev-registry.cjs --clear`
 > to revert. Refer to internal documentation for the registry URL to use. External/OSS
 > contributors can skip this step: the committed default already uses the public registry.
+>
+> Corepack also cannot install pnpm through the internal feeds (it uses a registry endpoint they
+> do not implement), so instead of `corepack enable`, bootstrap the pinned pnpm version with:
+>
+> ```shell
+> node ./scripts/bootstrap-pnpm.cjs --registry <registry-url>
+> ```
+>
+> If you previously ran `corepack enable`, run `corepack disable pnpm` so the npm-installed pnpm is
+> used. This is the same script CI uses to install pnpm.
 
 Run the following to build the client packages:
 

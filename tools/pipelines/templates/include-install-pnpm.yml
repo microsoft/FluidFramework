@@ -35,6 +35,12 @@ parameters:
   type: string
   default: $(ado-feeds-primary-registry)
 
+# The repo root of the FluidFramework checkout. Used to locate scripts/bootstrap-pnpm.cjs, which is
+# shared with local developers so the pnpm bootstrap logic lives in exactly one place.
+- name: repoRoot
+  type: string
+  default: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)
+
 # An optional extra segment appended to the pnpm store cache key (separated by |).
 # Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
 #
@@ -125,12 +131,11 @@ steps:
     workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     script: |
       set -eu -o pipefail
-      # Parse the pnpm version pinned in package.json's "packageManager" field
-      # (e.g. "pnpm@10.33.0+sha512..." -> "pnpm@10.33.0").
-      # This discards the integrity hash suffix, which npm does not provide a practical way to use,
-      # and trusts the package repository to serve the correct version.
-      PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
-      npm install -g "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
+      # Install the pnpm version pinned in package.json's "packageManager" field. This uses
+      # scripts/bootstrap-pnpm.cjs (shared with local developers) instead of Corepack, because
+      # Corepack fetches package managers from a registry endpoint the mirrored/isolated feeds do
+      # not implement. See that script for details.
+      node "${{ parameters.repoRoot }}/scripts/bootstrap-pnpm.cjs" --userconfig "${{ parameters.userNpmrcPath }}"
       echo "Using pnpm $(pnpm -v)"
       echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}

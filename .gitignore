@@ -72,5 +72,6 @@ CLAUDE.local.md
 # Output from benchmarks
 **/benchmark*Output.json
 
-# npm configuration: Currently only used by CI to redirect to an alternative registry.
+# npm configuration: used by CI to redirect to an alternative registry, and by internal
+# developers via `scripts/set-dev-registry.cjs` to point workspaces at a mirror/team feed.
 .npmrc
