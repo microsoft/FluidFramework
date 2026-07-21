@@ -1,4 +1,4 @@
-## Introduction
+# Compatibility and Versioning
 
 This article is intended to guide you on best practices for making changes that are as backwards compatible as possible, and contains guidelines for how to introduce any necessary breaking changes safely.
 

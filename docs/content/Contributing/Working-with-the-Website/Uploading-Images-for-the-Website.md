@@ -1,3 +1,5 @@
+# Uploading Images for the Website
+
 > Note: as of June 2026, website images are served from the **fluidframeworkcdn** storage account in the **FluidFramework** (Torus) subscription. The old `fluidframework` account is no longer the CDN origin, do not upload there. Accessing `fluidframeworkcdn` requires a SAW with JIT elevation and the **Storage Blob Data Contributor** role (the account has shared-key auth disabled, so use "Microsoft Entra user account").
 
 1. From a SAW, go to <https://portal.azure.com>.

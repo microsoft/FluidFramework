@@ -1,3 +1,5 @@
+# Updating Code Using Legacy Fluid APIs
+
 ## Background
 
 Beginning with version 2.0.0-rc.3.0.0, Fluid Framework packages have narrowed the public API that is exposed via the default package entry point.

@@ -1,4 +1,4 @@
-## Introduction
+# Design Goals
 
 This page describes the general design goals of the Fluid Framework.
 Its purpose is to provide some background on certain design decisions and describe the general thinking for the codebase.

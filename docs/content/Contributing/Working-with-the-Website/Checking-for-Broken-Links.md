@@ -1,3 +1,5 @@
+# Checking for Broken Links
+
 To check for broken links in the documentation, do the following steps:
 
 1. Switch to the docs folder: `cd docs`

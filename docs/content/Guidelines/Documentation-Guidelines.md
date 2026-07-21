@@ -1,3 +1,5 @@
+# Documentation Guidelines
+
 The Fluid Framework is an open-source project that has production customers.
 As such, it is imperative that it has quality documentation.
 

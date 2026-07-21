@@ -1,4 +1,4 @@
-## Introduction
+# API Deprecation
 
 This article is intended to guide you on the best practices regarding API deprecation.
 This includes both the **process of deprecating an API** as well as **cleaning up already deprecated APIs.**

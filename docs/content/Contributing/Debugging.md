@@ -1,3 +1,5 @@
+# Debugging
+
 The goal of this page is to get you started with debugging your Fluid Framework code.
 
 ## Debugging using DevTools

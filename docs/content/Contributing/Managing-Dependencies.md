@@ -1,3 +1,5 @@
+# Managing Dependencies
+
 ## Adding new dependencies...
 
 ### ...to a package

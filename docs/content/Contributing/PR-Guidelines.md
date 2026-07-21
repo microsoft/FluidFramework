@@ -1,14 +1,16 @@
+# PR Guidelines
+
 Before working on a **code submission**, check out the [issues list](https://github.com/microsoft/FluidFramework/issues).
 Issues labeled `help wanted` are good issues to submit a PR for.
 If you are contributing significant changes, please discuss with the code owner of that area first before starting to work on the issue.
 
-### Legal
+## Legal
 
 You will need to complete a [Contributor License Agreement (CLA)](./CLA.md) to submit changes.
 This agreement testifies that you are granting us permission to use the submitted change according to the terms of the project's license, and that the work being submitted is under appropriate copyright.
 Upon submitting a pull request, you will automatically be given instructions on how to sign the CLA.
 
-### Guidelines
+## Guidelines
 
 The following are some general practices to follow when submitting PRs (Pull Requests) to the Fluid Framework repo to contribute changes.
 
@@ -49,7 +51,7 @@ From there the process proceeds as follows:
     - Do one last quick self review of the change to make sure it is in the state that you want to merge (e.g. no extra files or changes that were accidentally included)
 6. Always squash and merge. Also update the squash commit description to be a one-liner summary; usually the PR title is sufficient. The squash and merge prevents unnecessary commits from polluting the merge history and keeps it easy to read and track changes.
 
-### Submitting Pull Requests
+## Submitting Pull Requests
 
 This assumes that you have already created a branch on your own fork with the changes you wish to submit.
 Please follow the [Editing the Repo steps](./Repo-Basics.md#editing-the-repo) if you have not done this yet.
@@ -65,7 +67,7 @@ Select your fork in "Head repository" and your branch in "compare" for the sourc
 
 1. Now you can simply click "Create Pull Request" to start the review process. Alternatively, you can also create a "Draft Pull Request" if the branch is still a work-in-progress.
 
-### Reviewing Pull Requests
+## Reviewing Pull Requests
 
 Reviewing pull requests is another great way to contribute.
 The following filter is a useful tool for actively seeking out pull requests which have passed verification and need review:
@@ -76,7 +78,7 @@ is:pr is:open  -is:draft review:required status:success
 
 ![PR-Filter](../_assets/contributing/PR-filter.PNG)
 
-### Pull Request Reviewer Guidelines
+## Pull Request Reviewer Guidelines
 
 ### General Review Guidelines
 

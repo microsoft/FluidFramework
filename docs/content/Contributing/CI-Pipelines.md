@@ -1,3 +1,5 @@
+# CI Pipelines
+
 ## CI Pipeline for PR Validation
 
 With every commit pushed to an open PR branch, the following CI checks are queued:

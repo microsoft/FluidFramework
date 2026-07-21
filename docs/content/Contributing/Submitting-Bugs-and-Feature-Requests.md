@@ -1,3 +1,5 @@
+# Submitting Bugs and Feature Requests
+
 The Fluid Framework project tracks issues and feature requests using the [Github issue tracker](https://github.com/microsoft/FluidFramework/issues) for the `Fluid Framework` repository.
 
 ## Before Submitting an Issue

@@ -1,3 +1,5 @@
+# Commit Message Style
+
 _Note: this is currently only enforced for the build-tools release group.
 But you can follow this style elsewhere!_
 
