@@ -6,6 +6,7 @@
 import { strict as assert } from "assert";
 
 import {
+	asLegacyAlpha,
 	createDetachedContainer,
 	createEmptyRuntimeCodeLoader,
 	loadExistingContainer,
@@ -19,6 +20,7 @@ import type {
 import { MessageType } from "@fluidframework/driver-definitions/internal";
 import { LocalDeltaConnectionServer } from "@fluidframework/server-local-server";
 import {
+	type ITestFluidObject,
 	timeoutPromise,
 	waitForContainerConnection,
 } from "@fluidframework/test-utils/internal";
@@ -172,6 +174,82 @@ describe("createEmptyRuntimeCodeLoader (local server)", () => {
 			"creating an empty-runtime container should throw because it can only load existing containers",
 		);
 
+		await deltaConnectionServer.webSocketServer.close();
+	});
+
+	it("round-trips a container's pending runtime state opaquely", async () => {
+		const deltaConnectionServer = LocalDeltaConnectionServer.create();
+		const { urlResolver, codeDetails, codeLoader, loaderProps, documentServiceFactory } =
+			createLoader({ deltaConnectionServer });
+
+		// 1. Create + attach a real container, write data, go offline, and write more so
+		//    the captured pending state carries a non-empty pendingRuntimeState.
+		const realContainer = asLegacyAlpha(
+			await createDetachedContainer({ codeDetails, ...loaderProps }),
+		);
+		const realObject = (await realContainer.getEntryPoint()) as ITestFluidObject;
+		await realContainer.attach(urlResolver.createCreateNewRequest("emptyRuntimePending"));
+		await waitForContainerConnection(realContainer);
+		realObject.root.set("attached", "value-attached");
+		const url = await realContainer.getAbsoluteUrl("");
+		assert(url !== undefined, "attached container should provide an absolute url");
+
+		realContainer.disconnect();
+		realObject.root.set("offline", "value-offline");
+		const pendingFromReal = await realContainer.getPendingLocalState();
+		realContainer.close();
+
+		const parsedReal = JSON.parse(pendingFromReal) as { pendingRuntimeState?: unknown };
+		assert(
+			parsedReal.pendingRuntimeState !== undefined,
+			"the real container should produce a pendingRuntimeState",
+		);
+
+		// 2. Load the same document with the empty runtime, handing it the pending state.
+		//    The empty runtime holds the pendingRuntimeState opaquely (it does not resubmit it).
+		const emptyContainer = asLegacyAlpha(
+			await loadExistingContainer({
+				codeLoader: createEmptyRuntimeCodeLoader(),
+				documentServiceFactory,
+				urlResolver,
+				request: { url },
+				pendingLocalState: pendingFromReal,
+			}),
+		);
+
+		// 3. Serializing the empty container echoes the pendingRuntimeState back out unchanged.
+		const pendingFromEmpty = await emptyContainer.getPendingLocalState();
+		emptyContainer.close();
+		const parsedEmpty = JSON.parse(pendingFromEmpty) as { pendingRuntimeState?: unknown };
+		assert.deepStrictEqual(
+			parsedEmpty.pendingRuntimeState,
+			parsedReal.pendingRuntimeState,
+			"the empty runtime should echo the pendingRuntimeState opaquely",
+		);
+
+		// 4. A real runtime can resume from the empty runtime's output: the offline edit that
+		//    only ever lived in the pending state survives the round-trip through the empty runtime.
+		const resumedContainer = await loadExistingContainer({
+			codeLoader,
+			documentServiceFactory,
+			urlResolver,
+			request: { url },
+			pendingLocalState: pendingFromEmpty,
+		});
+		const resumedObject = (await resumedContainer.getEntryPoint()) as ITestFluidObject;
+		await waitForContainerConnection(resumedContainer);
+		assert.strictEqual(
+			resumedObject.root.get("attached"),
+			"value-attached",
+			"attached data should survive the round-trip",
+		);
+		assert.strictEqual(
+			resumedObject.root.get("offline"),
+			"value-offline",
+			"offline pending edit should survive the round-trip through the empty runtime",
+		);
+
+		resumedContainer.close();
 		await deltaConnectionServer.webSocketServer.close();
 	});
 });
