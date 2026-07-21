@@ -1,5 +1,3 @@
-(This document is a work in progress)
-
 # fluidframework.com
 
 Our public website can be found at <https://fluidframework.com/>.
