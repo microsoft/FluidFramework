@@ -13,8 +13,8 @@ import {
 import { asAlpha } from "../../../api.js";
 import {
 	SchemaFactory,
+	TreeArrayNode,
 	TreeViewConfiguration,
-	type TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -91,6 +91,63 @@ describe("ArrayNode", () => {
 		it("passes Array.isArray", () => {
 			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
 			assert.equal(Array.isArray(array), true);
+		});
+	});
+
+	// Insertion tests in addition to the ones inside of testArrayFromSchemaType below
+	describeHydration("inserting nodes", (init, hydrated) => {
+		// This validation is done in a place that is non array specific, but can only be hit by arrays,
+		// and impacts the public API surface of arrays so testing it here makes sense.
+		it("inserting the same node more than once in a single insert throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const array = init(ItemArray, []);
+			const item = new Item({});
+			const message = `A "ArrayNodeTest.Item" node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`;
+			assert.throws(() => array.insertAtEnd(item, item), validateUsageError(message));
+			assert.throws(
+				() => array.insertAtEnd(TreeArrayNode.spread([item, item])),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAt(0, TreeArrayNode.spread([item]), item),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAtEnd(new Item({}), item, item),
+				validateUsageError(message),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("inserting already inserted node throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			const array = init(ItemArray, [item]);
+			assert.throws(
+				() => array.insertAtEnd(item),
+				validateUsageError(
+					hydrated
+						? // The case of hydrating a node has extra context and stricter validation using that context.
+							// One sideeffect of that is we give nicer errors.
+							`A node with schema "ArrayNodeTest.Item" (name: "Item") was inserted into the tree more than once. This is not supported.`
+						: "A node may not be in more than one place in the tree",
+				),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("constructing an array with the same child twice throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			assert.throws(
+				() => init(ItemArray, [item, item]),
+				validateUsageError("A node may not be in more than one place in the tree"),
+			);
 		});
 	});
 
