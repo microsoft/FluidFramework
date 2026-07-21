@@ -177,7 +177,6 @@ See [API deprecation](./API-Deprecation.md) and [@beta break process](./Breaking
 ## In this section
 
 - [Change Recipes](./Breaking-vs-Non-Breaking-Changes/Change-Recipes.md)
-- [Communicating Breaking Changes](./Breaking-vs-Non-Breaking-Changes/Communicating-Breaking-Changes.md)
 - [Changesets](./Breaking-vs-Non-Breaking-Changes/Changesets.md)
 - [Changesets FAQ](./Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md)
 - [Cross-Client Compatibility](./Breaking-vs-Non-Breaking-Changes/Cross-Client-Compatibility.md)
