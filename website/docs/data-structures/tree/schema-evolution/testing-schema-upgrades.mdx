@@ -1,0 +1,180 @@
+---
+title: Testing Schema Upgrades
+sidebar\_position: 5
+---
+
+# Testing Schema Upgrades
+
+When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) or [`stagedOptional()`](../../../api/tree/schemafactoryalpha-class#stagedoptional-property)), you need to verify that your current code works correctly with documents that a *future* version will produce.
+
+Runtime schema upgrades let you create test documents whose stored schema matches a future state.
+
+:::note
+The testing APIs described here are currently **alpha**.
+Import them from `@fluidframework/tree/alpha`.
+:::
+
+## The Problem
+
+Consider a staged rollout where you're [adding a new allowed type](./allowed-types-rollout.mdx) — say, adding an `RgbColor` type to a sticky note's `color` field.
+During the rollout, there are three schema states:
+
+1. **Before**: The original schema (`color` only accepts strings).
+2. **Staged**: `RgbColor` is in the view schema but excluded from stored schema.
+3. **Upgraded**: `RgbColor` is fully included in the stored schema.
+
+Your Phase 1 code (the "staged" state) needs to handle documents created in the "upgraded" state.
+But how do you create such a document in a test?
+
+Normally, staged types are excluded from stored schema, so `initialize()` and `upgradeSchema()` won't include them.
+**Runtime schema upgrades** solve this by letting you explicitly enable staged upgrades at view construction time.
+
+## Creating Test Documents with Future Schema
+
+Use `TreeViewConfigurationAlpha` with `stagedUpgradePolicy` to construct a view that includes staged changes in the stored schema:
+
+```typescript
+import {
+    SchemaFactoryAlpha,
+    StagedSchemaUpgradePolicy,
+    TreeViewConfigurationAlpha,
+} from "@fluidframework/tree/alpha";
+import { independentView } from "@fluidframework/tree/alpha";
+
+const sf = new SchemaFactoryAlpha("WhiteboardApp");
+
+class RgbColor extends sf.object("RgbColor", {
+    r: sf.number,
+    g: sf.number,
+    b: sf.number,
+}) {}
+
+// staged() marks RgbColor as a staged allowed type
+const stagedRgbColor = sf.staged(RgbColor);
+const rgbUpgrade = stagedRgbColor.metadata.stagedSchemaUpgrade;
+
+class Note extends sf.objectAlpha("Note", {
+    text: sf.string,
+    color: sf.required([sf.string, stagedRgbColor]),
+}) {}
+```
+
+### Test: Verifying Your Code Reads Future Documents
+
+```typescript
+it("can read documents with RgbColor enabled", () => {
+    // Create a view with the RGB upgrade enabled — simulates a future client
+    const futureView = independentView(
+        new TreeViewConfigurationAlpha({
+            schema: Note,
+            stagedUpgradePolicy:
+                StagedSchemaUpgradePolicy.enabledStagedUpgrades(rgbUpgrade),
+        }),
+    );
+
+    // Initialize a document as a future client would
+    futureView.initialize(new Note({
+        text: "Hello",
+        color: new RgbColor({ r: 255, g: 0, b: 0 }),
+    }));
+
+    // Verify your code can read the data
+    assert.equal(futureView.root.text, "Hello");
+    assert(futureView.root.color instanceof RgbColor);
+});
+```
+
+### Test: Verifying Writes Are Rejected Without the Upgrade
+
+```typescript
+it("rejects staged content when upgrades are not enabled", () => {
+    const view = independentView(
+        new TreeViewConfigurationAlpha({
+            schema: Note,
+            // No stagedUpgradePolicy — staged types stay excluded
+        }),
+    );
+
+    view.initialize(new Note({ text: "Hello", color: "red" }));
+
+    // Writing an RgbColor should fail because it's staged
+    assert.throws(() => {
+        view.root.color = new RgbColor({ r: 255, g: 0, b: 0 });
+    });
+});
+```
+
+## Testing Staged Optional Fields
+
+The same pattern works for `stagedOptional()` fields.
+For example, if you're migrating a required field to optional:
+
+```typescript
+const sf = new SchemaFactoryAlpha("MyApp");
+
+// During the rollout: field is staged optional
+const description = sf.stagedOptional(sf.string);
+const optionalUpgrade = description.isStagedOptional;
+
+class Item extends sf.objectAlpha("Item", {
+    name: sf.string,
+    description,
+}) {}
+```
+
+```typescript
+it("can read documents where the field was cleared", () => {
+    const futureView = independentView(
+        new TreeViewConfigurationAlpha({
+            schema: Item,
+            stagedUpgradePolicy:
+                StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
+        }),
+    );
+
+    futureView.initialize(new Item({ name: "Test" }));
+    // The field is absent — verify your code handles this
+    assert.equal(futureView.root.description, undefined);
+});
+```
+
+## Checking Schema Compatibility in Tests
+
+Use `view.compatibility` to verify compatibility after constructing a view against a document:
+
+```typescript
+it("staged schema is compatible with the original stored schema", () => {
+    const view = tree.viewWith(
+        new TreeViewConfigurationAlpha({ schema: StagedSchema }),
+    );
+
+    assert.equal(view.compatibility.canView, true);
+    assert.equal(view.compatibility.isEquivalent, true);
+});
+```
+
+For comparing against serialized schemas without a live document, use `comparePersistedSchema`:
+
+```typescript
+import { comparePersistedSchema } from "@fluidframework/tree/alpha";
+
+const result = comparePersistedSchema(persistedSchemaJson, StagedSchema, { jsonValidator: ... });
+assert.equal(result.canView, true);
+```
+
+This is useful for verifying that each phase of your rollout maintains the expected compatibility relationships.
+
+## Tips
+
+- **Use `independentView`** for isolated tests that don't require a Fluid service connection.
+- **Use `StagedSchemaUpgradePolicy.permissive`** to enable *all* staged upgrades at once — useful for broad integration tests that exercise the fully-upgraded schema without listing individual tokens.
+- **Test all schema states**: original → staged → upgraded → cleanup (staged wrappers removed). Each transition should maintain compatibility.
+- **Combine with** [**`snapshotSchemaCompatibility`**](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to catch regressions when your schema changes across releases.
+- **Test edge cases**: What happens when a staged field is absent? When a staged type appears in a sequence? Ensure your application logic handles these gracefully.
+
+## See Also
+
+- [Schema Evolution](./index.mdx) — Overview of schema changes and compatibility
+- [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) — Staged allowed type rollout process
+- [Enabling Schema Upgrades with Feature Flags](./feature-flag-schema-upgrades.mdx) — Using runtime upgrades in production
+- [Test suite](https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/src/test/simple-tree/api/stagedSchemaUpgrade.spec.ts) — Full code examples
