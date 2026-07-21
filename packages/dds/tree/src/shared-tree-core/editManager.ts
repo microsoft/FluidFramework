@@ -1093,14 +1093,14 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			0xc5e /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		const oldestCommitInCollabWindow = this.getClosestTrunkCommit(minSeqNumberToSummarize)[1];
-		// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
-		const parentHead = oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+		// const oldestCommitInCollabWindow = this.getClosestTrunkCommit(minSeqNumberToSummarize)[1];
+		// // Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+		// const parentHead = oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
 
 		const childBranchTrunkCommits: GraphCommit<TChangeset>[] = [];
-		const forkPointFromMainTrunk = findCommonAncestor(
+		const forkPointFromMainTrunk = findAncestor(
 			[this.trunk.getHead(), childBranchTrunkCommits],
-			parentHead,
+			(c) => c === this.trunkBase,
 		);
 		assert(
 			forkPointFromMainTrunk !== undefined,
@@ -1152,7 +1152,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return {
 			trunk,
 			peerLocalBranches,
-			base: undefined,
+			base: this.trunkBase.revision,
 			id: this.id,
 			name: this.branchName,
 			session: this.sessionId,
