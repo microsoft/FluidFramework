@@ -5,7 +5,7 @@
 
 import { type NestedMap, getOrDefaultInNestedMap, setInNestedMap } from "./nestedMap.js";
 
-export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, boolean>;
+export type NestedSet<Key1, Key2> = NestedMap<Key1, Key2, true>;
 
 export function addToNestedSet<Key1, Key2>(
 	set: NestedSet<Key1, Key2>,

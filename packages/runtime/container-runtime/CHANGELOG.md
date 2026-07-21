@@ -1,5 +1,32 @@
 # @fluidframework/container-runtime
 
+## 2.112.0
+
+### Minor Changes
+
+- Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
+
+  Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
+  sharing their payload without attaching the handle to the Fluid object graph. Blob handles
+  implement this method, allowing applications to begin uploading a blob before serializing its
+  handle into a DDS.
+
+  ```typescript
+  const handle = await runtime.uploadBlob(bytes);
+
+  if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
+    handle.sharePayload();
+  }
+  ```
+
+### Patch Changes
+
+- Throw DataCorruptionError for meaningful duplicate batch detections ([#27668](https://github.com/microsoft/FluidFramework/pull/27668)) [46a69e3d8e](https://github.com/microsoft/FluidFramework/commit/46a69e3d8e68a344bbfc277bd5c9e70699c29542)
+
+  Previously, all detected duplicate batches were only logged via the `DuplicateBatch` telemetry event, and the corresponding `DataCorruptionError` was never thrown. This was a temporary mitigation for a service-side bug that could redeliver batches.
+
+  Now, the error is thrown when either the incoming batch or the previously-seen batch has an explicit `batchId` (i.e. the batch was resubmitted, as opposed to a fresh batch whose `batchId` is derived from `clientId` and `batchStartCsn`). This distinguishes genuine duplicate-batch scenarios (e.g. container forking) from the known service-outage artifact, which only ever produces duplicates without explicit batch ids. Duplicates without an explicit `batchId` on either side continue to be log-only.
+
 ## 2.111.0
 
 Dependency updates only.

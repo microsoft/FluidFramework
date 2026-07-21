@@ -7,12 +7,12 @@ import { type ReactElement, useEffect, useRef } from "react";
 
 const pagefindComponentScript = "/pagefind/pagefind-component-ui.js";
 const pagefindResultTemplate = `
-<li class="pf-result">
+<li class="pf-result"{{#if meta.api_item_name}} data-api-item-name="{{ meta.api_item_name }}"{{/if}}>
   <div class="pf-result-card">
     <div class="pf-result-content">
       <p class="pf-result-title">
         <a class="pf-result-link" href="{{ meta.url | default(url) | safeUrl }}">{{ meta.title }}</a>
-        {{#if meta.version}}<span class="pf-result-version">{{ meta.version }}</span>{{/if}}
+        {{#if meta.version}}<span class="api-result-version">{{ meta.version }}</span>{{/if}}
       </p>
       {{#if excerpt}}<p class="pf-result-excerpt">{{+ excerpt +}}</p>{{/if}}
     </div>
@@ -30,6 +30,34 @@ const pagefindResultTemplate = `
 </li>`;
 let pagefindModalTrigger: HTMLElement | undefined;
 let pagefindModal: HTMLElement | undefined;
+
+function normalizeApiItemName(value: string): string {
+	return value.replace(/[^\p{L}\p{N}_$]/gu, "").toLowerCase();
+}
+
+function updateExactApiMatches(modal: HTMLElement): void {
+	const query = normalizeApiItemName(
+		modal.querySelector<HTMLInputElement>('input[type="search"]')?.value ?? "",
+	);
+
+	for (const result of modal.querySelectorAll<HTMLElement>("[data-api-item-name]")) {
+		const existingLabel = result.querySelector(".api-exact-match-label");
+		const apiItemName = result.dataset.apiItemName;
+		const isExactMatch =
+			query !== "" &&
+			apiItemName !== undefined &&
+			normalizeApiItemName(apiItemName) === query;
+
+		if (isExactMatch && existingLabel === null) {
+			const label = document.createElement("span");
+			label.className = "api-exact-match-label";
+			label.textContent = "Exact API match";
+			result.querySelector(".pf-result-title")?.prepend(label);
+		} else if (!isExactMatch) {
+			existingLabel?.remove();
+		}
+	}
+}
 
 function createPagefindModal(): HTMLElement {
 	const modal = document.createElement("pagefind-modal");
@@ -52,6 +80,11 @@ function createPagefindModal(): HTMLElement {
 	footer.append(document.createElement("pagefind-keyboard-hints"));
 
 	modal.append(header, body, footer);
+	modal.addEventListener("input", () => updateExactApiMatches(modal));
+	new MutationObserver(() => updateExactApiMatches(modal)).observe(results, {
+		childList: true,
+		subtree: true,
+	});
 	return modal;
 }
 
