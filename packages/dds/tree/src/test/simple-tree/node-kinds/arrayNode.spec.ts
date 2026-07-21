@@ -1158,14 +1158,13 @@ describe("ArrayNode", () => {
 			anchor.dispose();
 		});
 
-		it("stops updating after dispose", () => {
+		it("throws when reading index after dispose", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			assert.equal(anchor.index, 1);
 			anchor.dispose();
-			array.insertAtStart(4);
-			// After disposal the anchor no longer tracks edits and reports its last value.
-			assert.equal(anchor.index, 1);
+			// Reading the index of a disposed anchor is a usage error.
+			assert.throws(() => anchor.index, validateUsageError(/disposed/));
 			// Disposing again is a no-op.
 			anchor.dispose();
 		});
@@ -1197,16 +1196,18 @@ describe("ArrayNode", () => {
 			anchor.dispose();
 		});
 
-		it("index may fall out of bounds after dispose", () => {
+		it("throws on an out-of-range initial index", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			const anchor = createArrayInsertionAnchor(array, 3); // at the end
+			// One past the end is valid (an insertion point after the last child)...
+			const anchor = createArrayInsertionAnchor(array, 3);
 			assert.equal(anchor.index, 3);
 			anchor.dispose();
-			array.removeRange(0, 3); // empty the array; the disposed anchor no longer tracks
-			// Documented contract: a disposed anchor returns its last tracked value, which can now
-			// exceed the array's length. Reading it must not throw.
-			assert.equal(array.length, 0);
-			assert.equal(anchor.index, 3);
+			// ...but beyond that, or negative, is a usage error rather than being silently corrected.
+			assert.throws(() => createArrayInsertionAnchor(array, 4), validateUsageError(/out of bounds/));
+			assert.throws(
+				() => createArrayInsertionAnchor(array, -1),
+				validateUsageError(/non-negative/),
+			);
 		});
 	});
 });

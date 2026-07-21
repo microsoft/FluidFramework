@@ -1485,26 +1485,18 @@ export interface ArrayPlaceAnchor {
 	 * The current index within the array that this anchor refers to.
 	 * @remarks
 	 * This value is updated as the array is edited in a way that depends on the specific anchor implementation.
-	 * While the anchor is being tracked (before {@link ArrayPlaceAnchor.dispose} is called), this index is a value
-	 * from 0 to the current length of the array (inclusive).
+	 * This index is a value from 0 to the current length of the array (inclusive).
 	 * If used as the index to insert content into the array, this means it can point to any location in the array,
 	 * including just after the last child.
-	 *
-	 * After {@link ArrayPlaceAnchor.dispose} has been called the anchor stops updating and this returns the last
-	 * tracked value, which may no longer be within the array's bounds if the array has since shrunk. Do not use the
-	 * index of a disposed anchor as an insertion index without first re-validating it against the current length.
+	 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if the anchor has been {@link ArrayPlaceAnchor.dispose | disposed}.
 	 */
 	get index(): number;
 
 	/**
-	 * Stop tracking this anchor and release any resources (such as event subscriptions) it holds.
+	 * Stop tracking this anchor and release any resources it holds.
 	 * @remarks
-	 * An anchor subscribes to changes on the array node in order to keep its {@link ArrayPlaceAnchor.index}
-	 * up to date. Call this when the anchor is no longer needed (for example when a tracked cursor position
-	 * is discarded) to avoid leaking that subscription for the lifetime of the array node.
-	 *
-	 * Calling `dispose` more than once has no effect. See {@link ArrayPlaceAnchor.index} for how the index
-	 * behaves after disposal.
+	 * Call this when the anchor is no longer needed (for example when a tracked cursor position is discarded).
+	 * Reading {@link ArrayPlaceAnchor.index} after disposal throws. Calling `dispose` more than once has no effect.
 	 */
 	dispose(): void;
 }
@@ -1524,9 +1516,6 @@ export interface ArrayPlaceAnchor {
  * This is intended to track a location that might be used for an insertion point (for example in a text editor): future changes to its details should
  * make it behave better for such uses.
  *
- * The returned anchor holds a subscription to the array node so it can update its index as the array is edited.
- * Call {@link ArrayPlaceAnchor.dispose} when the anchor is no longer needed to release that subscription.
- *
  * In rare cases the tracked index cannot be updated precisely and the anchor falls back to best-effort behavior:
  * it keeps reporting a valid in-bounds index, but that index may no longer correspond to the same logical position
  * as before the change (this can happen when an incremental delta is unavailable for a change, such as during a
@@ -1534,10 +1523,9 @@ export interface ArrayPlaceAnchor {
  * own state rather than relying solely on this anchor.
  * @privateRemarks
  * The index is maintained incrementally from the shallow (insert/remove) delta delivered by the array node's
- * `childrenChangedAfterBatch` event rather than by re-reading a tracked child's position: inserts and removes
- * before the anchor point shift it, while edits after it (or a removal of the span it sits between) leave it in
- * place. This keeps the anchor pinned to the gap between children even when the child originally at its index is
- * removed, which the previous child-tracking implementation could not do (it jumped to the end of the array).
+ * `childrenChangedAfterBatch` event: inserts and removes before the anchor point shift it, while edits after it
+ * (or a removal of the span it sits between) leave it in place. This keeps the anchor pinned to the gap between
+ * children even when the child originally at its index is removed.
  *
  * The best-effort behavior noted in the public remarks is the no-delta path: when the composed delta is unavailable
  * (see {@link NodeChangedDataDelta.delta}), the exact shift is unknown so the index is only clamped back into range.
@@ -1545,6 +1533,11 @@ export interface ArrayPlaceAnchor {
  * (which would defeat the point of delta-based tracking) for a case that is rare and, for this alpha API, acceptable
  * to degrade. A stronger fallback could instead let a consumer that already maintains the array contents re-seed the
  * anchor's position on this path, so it lives with the consumer that has the data instead of being duplicated here.
+ *
+ * TODO: The no-delta case above is one of several places whose behavior is limited by changes for which a composed
+ * delta cannot be produced (see {@link NodeChangedDataDelta.delta}). The underlying eventing limitation should be
+ * fixed so a delta is always available; when adding new code constrained by it, note it here (or track it centrally)
+ * so the full set of affected call sites is known and can be prioritized.
  *
  * When stabilized, this should probably become a method on {@link (TreeArrayNode:interface)}.
  * Future versions of this should use rebaser / changeset logic to do a better job of tracking a location across removals or reinsertion.
@@ -1555,9 +1548,11 @@ export function createArrayInsertionAnchor(
 	node: TreeArrayNode,
 	currentIndex: number,
 ): ArrayPlaceAnchor {
-	// Clamp the starting index into the valid inclusive range so the anchor always reports a location
-	// which is valid to insert content at, even if a caller provides an out of range index.
-	let trackedIndex = clamp(currentIndex, 0, getInnerNode(node).getBoxed(EmptyKey).length);
+	// Validate the caller-provided index rather than silently correcting it: an out-of-range or non-integer
+	// index is a usage error. An index equal to the array length is valid (it points just past the last child).
+	const field = getInnerNode(node).getBoxed(EmptyKey);
+	validateIndex(currentIndex, field, "createArrayInsertionAnchor", /* allowOnePastEnd */ true);
+	let trackedIndex = currentIndex;
 
 	const kernel = getKernel(node);
 	let off: (() => void) | undefined = kernel.events.on(
@@ -1581,6 +1576,9 @@ export function createArrayInsertionAnchor(
 
 	return {
 		get index() {
+			if (off === undefined) {
+				throw new UsageError("Cannot read the index of a disposed ArrayPlaceAnchor.");
+			}
 			return trackedIndex;
 		},
 		dispose() {
