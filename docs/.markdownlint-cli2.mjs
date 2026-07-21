@@ -16,9 +16,10 @@ export default {
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
 		"default": true,
 
-		// The first line of a document does not need to be a top-level heading.
+		// first-line-heading (MD041): Every document must begin with a top-level heading (its title).
+		// Combined with single-title (MD025) below, this enforces exactly one H1 per document.
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/md041.md
-		"first-line-heading": false,
+		"first-line-heading": true,
 
 		// Prose is not hard-wrapped; line length is enforced by Prettier where applicable.
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/md013.md
@@ -46,9 +47,9 @@ export default {
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/md024.md
 		"no-duplicate-heading": { siblings_only: true },
 
-		// single-title (MD025): Multiple top-level headings — allowed.
+		// single-title (MD025): Enforce a single top-level heading (title) per document.
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/md025.md
-		"single-title": false,
+		"single-title": true,
 
 		// no-trailing-punctuation (MD026): Trailing punctuation in heading — allowed.
 		// https://github.com/DavidAnson/markdownlint/blob/main/doc/md026.md

@@ -1,3 +1,5 @@
+# Documenting JavaScript
+
 Unless otherwise indicated, our [TypeScript Documentation Guidelines](./Documenting-TypeScript.md) should be followed for JavaScript code.
 This helps encourage consistency across our repo, and also alleviates the need for developers to remember 2 different sets of documentation syntax.
 

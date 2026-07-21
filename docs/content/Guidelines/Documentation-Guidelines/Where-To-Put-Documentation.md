@@ -17,7 +17,7 @@ They are not presented in any particular order.
 - [fluidframework.com](https://fluidframework.com/)
     - This is our customer-facing website.
       It is the public face of our product and is home to high-level overviews, samples, etc. to get users up-and-running on the framework.
-- [repo wiki](https://github.com/microsoft/FluidFramework/tree/main/docs) (here)
+- [repo itself](../../Home.md) (here)
     - This is the contributor-facing wiki for the [fluid-framework](https://github.com/microsoft/FluidFramework) repository.
     - It primarily contains documentation relevant to the open-source community, including contribution guidelines.
 - Source-code documentation
@@ -68,8 +68,7 @@ For this reason, it is also important to include package-level semantic overview
 
 - These comments should be `TSDoc`-formatted and annotated with the [@packageDocumentation](./Documenting-TypeScript/TSDoc-Guidelines.md#packagedocumentation) tag.
 
-In the future, we plan on adding tooling to allow such package-level semantic overviews to be shared between the source-code docs and READMEs, etc.
-But for now, we ask that you ensure you are including the relevant information in both places, such that our customers are able to easily find this information.
+In the future, we plan on adding tooling to allow such package-level semantic overviews to be shared between the source-code docs and READMEs, etc. But for now, we ask that you ensure you are including the relevant information in both places, such that our customers are able to easily find this information.
 
 ### Public usage documentation
 
