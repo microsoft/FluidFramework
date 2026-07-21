@@ -30,6 +30,9 @@ export function createDetachedContainer(createDetachedContainerProps: ICreateDet
 export function createEmptyRuntimeCodeLoader(): ICodeDetailsLoader_2;
 
 // @alpha @legacy
+export function createEmptyRuntimeFactory(): IRuntimeFactory;
+
+// @alpha @legacy
 export function createFrozenDocumentServiceFactory(factory?: IDocumentServiceFactory | Promise<IDocumentServiceFactory>, readOnly?: boolean): IDocumentServiceFactory;
 
 // @beta @legacy (undocumented)

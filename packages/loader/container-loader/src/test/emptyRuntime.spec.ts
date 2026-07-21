@@ -16,7 +16,7 @@ import type {
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
 
-import { createEmptyRuntimeCodeLoader } from "../emptyRuntime.js";
+import { createEmptyRuntimeCodeLoader, createEmptyRuntimeFactory } from "../emptyRuntime.js";
 import { Loader } from "../loader.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
@@ -104,5 +104,26 @@ describe("createEmptyRuntimeCodeLoader", () => {
 			/can only be used to load existing/,
 			"creating a detached container backed by the empty runtime should throw",
 		);
+	});
+
+	it("createEmptyRuntimeFactory produces the same empty runtime", async () => {
+		const factory = createEmptyRuntimeFactory();
+		assert.strictEqual(
+			factory.IRuntimeFactory,
+			factory,
+			"IRuntimeFactory should be the factory itself",
+		);
+
+		await assert.rejects(
+			async () => factory.instantiateRuntime(failSometimeProxy<IContainerContext>({}), false),
+			/can only be used to load existing/,
+			"instantiating for a new container should throw",
+		);
+
+		const runtime = await factory.instantiateRuntime(
+			failSometimeProxy<IContainerContext>({ pendingLocalState: undefined }),
+			true /* existing */,
+		);
+		assert.strictEqual(runtime.disposed, false, "runtime should start not disposed");
 	});
 });

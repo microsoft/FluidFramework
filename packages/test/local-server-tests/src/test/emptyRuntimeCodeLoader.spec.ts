@@ -60,6 +60,10 @@ function spyOnOutbound(inner: IDocumentServiceFactory): {
 				}
 				if (prop === "submitSignal") {
 					return (content: string, targetClientId?: string): void => {
+						// Unlike ops (where the container/delta-manager sends system ops such as noops
+						// directly over the connection), the loader layer has no signal path of its own:
+						// Container.submitSignal is wired exclusively to the runtime's context.submitSignalFn.
+						// So every signal seen here is attributable to the runtime, and no filtering is needed.
 						counts.signals++;
 						target.submitSignal(content, targetClientId);
 					};

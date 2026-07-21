@@ -22,7 +22,7 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
-import { loaderCoreCompatDetails } from "./loaderLayerCompatState.js";
+import { loaderCompatDetailsForRuntime } from "./loaderLayerCompatState.js";
 
 /**
  * A minimal, no-op {@link @fluidframework/container-definitions#IRuntime} implementation.
@@ -35,18 +35,16 @@ import { loaderCoreCompatDetails } from "./loaderLayerCompatState.js";
  * Nearly every member is a no-op, and it crucially never invokes any of the `submit*` callbacks on the
  * {@link @fluidframework/container-definitions#IContainerContext} it is given, so it can never send an op or a signal.
  * It has no content, so it can only load existing containers (its factory throws when asked to instantiate for a
- * newly created container) and {@link EmptyRuntime.createSummary} throws; {@link EmptyRuntime.getPendingLocalState}
- * simply echoes back whatever pending state was provided on the context.
+ * newly created container) and `createSummary` throws; `getPendingLocalState` simply echoes back whatever pending
+ * state was provided on the context.
  */
 class EmptyRuntime implements IRuntime {
 	/**
-	 * Advertise compatibility with the Loader layer so the runtime/loader compatibility check passes cleanly.
-	 * The generation is borrowed from the Loader itself, which trivially satisfies the Loader's requirements.
+	 * Advertise the Loader's own compatibility details across the Loader/Runtime boundary so the runtime/loader
+	 * compatibility check passes cleanly. Reusing the canonical constant (rather than re-deriving it) keeps the empty
+	 * runtime in lockstep with what a real runtime would need to satisfy.
 	 */
-	public readonly ILayerCompatDetails: ILayerCompatDetails = {
-		...loaderCoreCompatDetails,
-		supportedFeatures: new Set<string>(),
-	};
+	public readonly ILayerCompatDetails: ILayerCompatDetails = loaderCompatDetailsForRuntime;
 
 	private _disposed = false;
 
@@ -109,6 +107,21 @@ class EmptyRuntimeFactory implements IRuntimeFactory {
 }
 
 /**
+ * Creates an {@link @fluidframework/container-definitions#IRuntimeFactory} that produces an empty, no-op container
+ * runtime.
+ *
+ * @remarks
+ * See {@link createEmptyRuntimeCodeLoader} for the higher-level entry point and a description of the behavior of the
+ * runtime this factory produces. Use this function directly when you already have a code loader and just need the
+ * empty runtime factory to compose into it.
+ *
+ * @legacy @alpha
+ */
+export function createEmptyRuntimeFactory(): IRuntimeFactory {
+	return new EmptyRuntimeFactory();
+}
+
+/**
  * Creates an {@link @fluidframework/container-definitions#ICodeDetailsLoader} whose loaded module produces an empty,
  * no-op container runtime.
  *
@@ -124,7 +137,7 @@ class EmptyRuntimeFactory implements IRuntimeFactory {
  * @legacy @alpha
  */
 export function createEmptyRuntimeCodeLoader(): ICodeDetailsLoader {
-	const factory = new EmptyRuntimeFactory();
+	const factory = createEmptyRuntimeFactory();
 	return {
 		load: async (source: IFluidCodeDetails): Promise<IFluidModuleWithDetails> => {
 			return {
