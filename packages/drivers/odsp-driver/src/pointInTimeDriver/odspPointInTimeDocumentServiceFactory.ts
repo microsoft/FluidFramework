@@ -112,13 +112,13 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	}
 
 	/**
-	 * Builds an {@link IOdspVersionManager} for the given file, which enumerates the file's stored
+	 * Builds an IOdspVersionManager for the given file, which enumerates the file's stored
 	 * versions and resolves the closest version at or before a target sequence number.
 	 *
 	 * @remarks
 	 * This wires up the plumbing the version manager needs to talk to ODSP: it resolves the URL to
 	 * its ODSP parts (site/drive/item), creates a scoped child logger, an epoch tracker (from a fresh
-	 * {@link NonPersistentCache}, since only the tracker is needed for consistency checks), and an
+	 * NonPersistentCache, since only the tracker is needed for consistency checks), and an
 	 * instrumented storage-token/auth-header fetcher. The resulting manager is used by
 	 * {@link OdspPointInTimeDocumentServiceFactory.createPointInTimeDocumentService} to pick the base
 	 * snapshot for point-in-time loading.
