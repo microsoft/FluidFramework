@@ -1,6 +1,8 @@
+# Maintaining API Support Levels
+
 In support of customer contract for [API support levels](https://fluidframework.com/docs/build/releases-and-apitags/#api-support-levels), exported APIs are [TSDoc tagged with support level](../Guidelines/Documentation-Guidelines/Documenting-TypeScript/Release-Tags.md), [package.json "exports"](https://nodejs.org/api/packages.html#exports) are set, and [build tooling](../../../build-tools/packages/build-cli/README.md) verifies API consistency with [api-extractor](https://api-extractor.com/) and makes sure the APIs are available thru appropriate import paths ([`flub generate entrypoints`](../../../build-tools/packages/build-cli/docs/generate.md#flub-generate-entrypoints)).
 
-# Configuration
+## Configuration
 
 Packages using standard build tooling require two manual configurations:
 
@@ -27,12 +29,12 @@ Packages using standard build tooling require two manual configurations:
 
 2. For packages with "./legacy" APIs, "api-extractor/api-extractor.current.json"'s "mainEntryPointFilePath" value should be set to the least stable .d.ts types path in use. E.g. this preference order: `"<projectFolder>/lib/alpha.d.ts"`, `"<projectFolder>/lib/beta.d.ts"`, and finally `"<projectFolder>/lib/public.d.ts"`. Eventually, this configuration could be automated via policy checker. (Packages without "./legacy" will reference `"<projectFolder>/lib/index.d.ts"` in "api-extractor.json".)
 
-# Automation
+## Automation
 
 Configuring `api-extactor` grows linearly with number of API levels supported. [`flub check policy --fix`](../../../build-tools/packages/build-cli/docs/check.md#flub-check-policy) may be used to make sure there is proper linting (including generation of new files and package.json script entries).
 The policy only ensures that entrypoints are checked but does not enforce any settings within the api-extractor configuration files.
 
-## Limitations
+### Limitations
 
 Check policy does not handle:
 
@@ -40,7 +42,7 @@ Check policy does not handle:
 
 1. Removal of checks and configuration files for no longer used API levels must be done manually.
 
-# Example
+## Example
 
 PR [#22208: build(client): add @beta support to core-interfaces](https://github.com/microsoft/FluidFramework/pull/22208/files) shows how "./beta" support is added to `@fluidframework/core-interfaces` that has legacy support.
 "./beta" was added to "package.json" and "mainEntryPointFilePath" was updated in "api-extractor/api-extractor.current.json" manually.
