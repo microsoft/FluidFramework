@@ -15,6 +15,8 @@ export {
 	getSimpleNodeSchemaFromInnerNode,
 	SimpleContextSlot,
 	withBufferedTreeEvents,
+	type KernelStatusEvents,
+	type StatusChangedEventData,
 } from "./treeNodeKernel.js";
 export {
 	type WithType,

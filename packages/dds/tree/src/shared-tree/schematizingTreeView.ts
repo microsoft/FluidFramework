@@ -27,7 +27,6 @@ import {
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
-	type TreeView,
 	type TreeViewEvents,
 	tryGetTreeNodeForField,
 	setField,
@@ -56,6 +55,7 @@ import {
 	TreeViewConfigurationAlpha,
 	toInitialSchema,
 	toUpgradeSchema,
+	type TreeBranch,
 	type TreeBranchAlpha,
 	type TreeSchema,
 } from "../simple-tree/index.js";
@@ -71,10 +71,24 @@ import { canInitialize, initialize, initializerFromChunk } from "./schematizeTre
 import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
- * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
- * exists and error if creating a second.
+ * Stores the {@link TreeBranch} associated with a checkout's anchor set.
+ *
+ * @remarks
+ * This is used for two purposes:
+ *
+ * 1. To detect (and prevent) creating multiple tree views from the same checkout: if this slot is already
+ * populated when a view is created, a second view is being created and we error.
+ *
+ * 2. To retrieve the branch for a document-root node in {@link (TreeAlpha:interface).parent2}
+ * (via `DocumentRootParent`).
+ *
+ * The stored type is {@link TreeBranch} rather than `TreeView<ImplicitFieldSchema>`. Detecting a prior view
+ * (purpose 1) only needed presence, but retrieving a usable branch (purpose 2) needs a handle that works for
+ * any branch. `TreeView` is invariant over its schema, so a `TreeView<ImplicitFieldSchema>` cannot actually be
+ * used as a view for a branch with a more specific schema, and would not cover non-main branches at all.
+ * {@link TreeBranch} is the correct general type for "any branch" here.
  */
-export const ViewSlot = anchorSlot<TreeView<ImplicitFieldSchema>>();
+export const ViewSlot = anchorSlot<TreeBranch>();
 
 /**
  * Implementation of TreeView wrapping a FlexTreeView.
