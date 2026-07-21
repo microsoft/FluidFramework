@@ -336,7 +336,7 @@ export class SharedTreeKernel
 			exportVerbose: () => this.exportVerbose(),
 			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
-			createSharedBranch: this.createSharedBranch.bind(this),
+			createSharedBranch: this.forkSharedBranchFromMain.bind(this),
 			shareLocalBranch: this.shareLocalBranch.bind(this),
 			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
@@ -406,14 +406,21 @@ export class SharedTreeKernel
 		) as SchematizingSimpleTreeView<TRoot> & TreeView<ReadSchema<TRoot>>;
 	}
 
+	public forkSharedBranchFromMain(branchName?: string): string {
+		return this.shareLocalBranch(this.checkout.fork(), branchName);
+	}
+
 	public shareLocalBranch(branch: TreeBranch, branchName?: string): string {
 		const checkout = checkoutFromBranch(branch);
 		if (checkout.isSharedBranch) {
 			throw new UsageError("Cannot share a branch that is already shared");
 		}
-		const branchId = this.addSharedBranch(branchName, checkout.mainBranch);
+		const branchId = this.addSharedBranch(branchName, checkout.mainBranch, (id) => {
+			this.registerSharedBranchForEditing(id, checkout);
+			this.registerCheckout(id, checkout);
+		});
 		checkout.onBranchShared();
-		return branchId;
+		return this.decompressBranchId(branchId);
 	}
 
 	private getCheckout(branchId: BranchId): TreeCheckout {
@@ -465,21 +472,22 @@ export class SharedTreeKernel
 		commit: GraphCommit<SharedTreeChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit: boolean,
+		isValidated: boolean,
 	): void {
 		const checkout = this.getCheckout(branchId);
 		assert(
 			checkout.transaction.size === 0,
 			0xaa6 /* Cannot submit a commit while a transaction is in progress */,
 		);
-		if (isResubmit) {
-			return super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit);
+		if (isResubmit || isValidated) {
+			return super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit, true);
 		}
 
 		// Refrain from submitting new commits until they are validated by the checkout.
 		// This is not a strict requirement for correctness in our system, but in the event that there is a bug when applying commits to the checkout
 		// that causes a crash (e.g. in the forest), this will at least prevent this client from sending the problematic commit to any other clients.
 		checkout.onCommitValid(commit, () =>
-			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit),
+			super.submitCommit(branchId, commit, schemaAndPolicy, isResubmit, true),
 		);
 	}
 

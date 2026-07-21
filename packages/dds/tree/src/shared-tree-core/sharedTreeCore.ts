@@ -7,12 +7,7 @@ import type { IFluidLoadable, ITelemetryBaseLogger } from "@fluidframework/core-
 import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
-import type {
-	IIdCompressor,
-	SessionId,
-	SessionSpaceCompressedId,
-	StableId,
-} from "@fluidframework/id-compressor";
+import type { IIdCompressor, SessionId, StableId } from "@fluidframework/id-compressor";
 import type {
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
@@ -332,7 +327,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				}
 
 				for (const commit of change.newCommits) {
-					this.submitCommit(branchId, commit, this.schemaAndPolicy, false);
+					this.submitCommit(branchId, commit, this.schemaAndPolicy, false, false);
 				}
 			}
 		});
@@ -360,7 +355,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		commit: GraphCommit<TChange>,
 		schemaAndPolicy: ClonableSchemaAndPolicy,
 		isResubmit: boolean,
+		isValidated: boolean,
 	): void {
+		assert(isValidated, "Commit must be validated before submission");
 		assert(
 			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
@@ -400,9 +397,19 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.getResubmitMachine(branchId).onCommitSubmitted(enrichedCommit);
 	}
 
-	protected submitBranchCreation(branchId: BranchId, branchName?: string): void {
+	protected submitBranchCreation(
+		branchId: BranchId,
+		trunkBase: RevisionTag,
+		branchName?: string,
+	): void {
 		this.submitMessage(
-			{ type: "branch", sessionId: this.editManager.localSessionId, branchId, branchName },
+			{
+				type: "branch",
+				sessionId: this.editManager.localSessionId,
+				branchId,
+				trunkBase,
+				branchName,
+			},
 			this.schemaAndPolicy,
 		);
 	}
@@ -480,6 +487,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 						messagesSessionId,
 						brand(envelope.referenceSequenceNumber),
 						message.branchId,
+						message.trunkBase,
 						message.branchName,
 					);
 					break;
@@ -523,32 +531,47 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		return this.editManager.getLocalBranch("main");
 	}
 
+	public decompressBranchId(branchId: BranchId): string {
+		if (branchId === "main") {
+			return branchId;
+		}
+		return this.idCompressor.decompress(branchId);
+	}
+
 	public getSharedBranchIds(): string[] {
-		return this.editManager
-			.getSharedBranchIds()
-			.filter((id): id is SessionSpaceCompressedId => id !== "main")
-			.map((id) => this.idCompressor.decompress(id));
+		return this.editManager.getSharedBranchIds().map((id) => this.decompressBranchId(id));
 	}
-	public createSharedBranch(branchName?: string): string {
-		return this.addSharedBranch(branchName);
-	}
+
 	protected addSharedBranch(
 		branchName?: string,
 		existingLocal?: SharedTreeBranch<TEditor, TChange>,
-	): string {
+		beforeSubmit?: (branchId: BranchId, localCommits: readonly GraphCommit<TChange>[]) => void,
+	): BranchId {
 		if (branchName !== undefined && branchName.length > SharedTreeCore.maxBranchNameLength) {
 			throw new UsageError(
 				`Branch name is too long: ${branchName.length} > maxBranchNameLength`,
 			);
 		}
+
+		const localBranch = existingLocal ?? this.getLocalBranch().fork();
 		const branchId = this.idCompressor.generateCompressedId();
-		this.submitBranchCreation(branchId, branchName);
-		this.editManager.shareBranch(
+
+		this.editManager.shareLocalBranch(
 			branchId,
-			existingLocal ?? this.getLocalBranch().fork(),
 			branchName,
+			this.editManager.localSessionId,
+			localBranch,
 		);
-		return this.idCompressor.decompress(branchId);
+
+		const sharedBranch = this.editManager.getSharedBranch(branchId);
+		this.submitBranchCreation(branchId, sharedBranch.trunkBase.revision, branchName);
+		const localCommits = sharedBranch.getLocalCommits();
+		beforeSubmit?.(branchId, localCommits);
+		this.getCommitEnricher(branchId).prepareChanges(localCommits);
+		for (const commit of localCommits) {
+			this.submitCommit(branchId, commit, this.schemaAndPolicy, false, true);
+		}
+		return branchId;
 	}
 
 	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
@@ -597,13 +620,13 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 
 				const enrichedCommit = resubmitMachine.getEnrichedCommit(revision, getLocalCommits);
 				if (enrichedCommit !== undefined) {
-					this.submitCommit(branchId, enrichedCommit, localOpMetadata, true);
+					this.submitCommit(branchId, enrichedCommit, localOpMetadata, true, true);
 				}
 
 				break;
 			}
 			case "branch": {
-				this.submitBranchCreation(message.branchId, message.branchName);
+				this.submitBranchCreation(message.branchId, message.trunkBase, message.branchName);
 				break;
 			}
 			default: {
@@ -660,9 +683,10 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				break;
 			}
 			case "branch": {
-				this.editManager.shareBranch(
+				this.editManager.forkNewSharedBranch(
 					message.branchId,
-					this.getLocalBranch().fork(),
+					message.trunkBase,
+					this.editManager.localSessionId,
 					message.branchName,
 				);
 				break;

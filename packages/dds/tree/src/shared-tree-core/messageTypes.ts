@@ -5,7 +5,7 @@
 
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { GraphCommit } from "../core/index.js";
+import type { GraphCommit, RevisionTag } from "../core/index.js";
 
 import type { BranchId } from "./branch.js";
 
@@ -24,5 +24,10 @@ export interface CommitMessage<TChange> extends MessageBase {
 export interface BranchMessage extends MessageBase {
 	type: "branch";
 	branchId: BranchId;
+	/**
+	 * The base commit of the branch in the trunk.
+	 * Undefined when the branch is created from a trunk whose head is the root commit (i.e., the branch is created from an empty trunk).
+	 */
+	trunkBase: RevisionTag;
 	branchName?: string;
 }

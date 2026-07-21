@@ -36,6 +36,11 @@ export interface Message {
 	readonly branchId?: EncodedBranchId;
 
 	/**
+	 * The trunk commit that is the base of the branch.
+	 */
+	readonly trunkBase?: EncodedRevisionTag;
+
+	/**
 	 * Application-defined name of the branch, if any.
 	 * Not guaranteed to be unique.
 	 */
@@ -55,6 +60,7 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
+		trunkBase: Type.Optional(RevisionTagSchema),
 		branchName: Type.Optional(Type.String()),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});
