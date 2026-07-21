@@ -135,9 +135,7 @@ function main() {
 	for (const root of roots) {
 		const npmrcPath = path.join(root, ".npmrc");
 		const rel = path.relative(repoRoot, root) || ".";
-		const existing = fs.existsSync(npmrcPath)
-			? fs.readFileSync(npmrcPath, "utf8")
-			: undefined;
+		const existing = fs.existsSync(npmrcPath) ? fs.readFileSync(npmrcPath, "utf8") : undefined;
 		const managed = existing !== undefined && existing.startsWith(MARKER);
 
 		if (clear) {
