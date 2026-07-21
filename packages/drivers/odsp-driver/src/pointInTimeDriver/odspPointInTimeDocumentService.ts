@@ -17,7 +17,7 @@ import type {
 
 /**
  * A read-only document service that materializes a document at a target sequence number by combining
- * a historical snapshot with a bounded replay of live ops.
+ * a recoverable snapshot with a bounded replay of live ops.
  *
  * @remarks
  * Storage (the snapshot) is served from the closest file version at or before the target sequence
@@ -38,7 +38,9 @@ export class OdspPointInTimeDocumentService
 {
 	public constructor(
 		public readonly resolvedUrl: IResolvedUrl,
-		private readonly historicalDocumentService: IDocumentService,
+		// Serves the snapshot: a read-only document service bound to the closest file version at or
+		// before the target sequence number. Its storage is the base we replay ops on top of.
+		private readonly recoverableDocumentService: IDocumentService,
 		private readonly liveDocumentService: IDocumentService,
 		private readonly targetSequenceNumber: number,
 	) {
@@ -52,12 +54,12 @@ export class OdspPointInTimeDocumentService
 
 	public dispose(): void {
 		this.liveDocumentService.off("metadataUpdate", this.metadataUpdateHandler);
-		this.historicalDocumentService.dispose();
+		this.recoverableDocumentService.dispose();
 		this.liveDocumentService.dispose();
 	}
 
 	public async connectToStorage(): Promise<IDocumentStorageService> {
-		return this.historicalDocumentService.connectToStorage();
+		return this.recoverableDocumentService.connectToStorage();
 	}
 
 	public async connectToDeltaStorage(): Promise<IDocumentDeltaStorageService> {
