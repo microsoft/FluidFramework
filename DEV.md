@@ -168,6 +168,7 @@ Unfortunately, artifact feeds do not preserve package publish time when ingestin
 Rather, they record when the package was first added to the downstream artifact feed.
 Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
 
+This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
 ### Why `resolutionMode: highest` instead of `time-based`
 
 We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
