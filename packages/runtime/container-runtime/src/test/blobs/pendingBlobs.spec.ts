@@ -5,6 +5,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { isLocalFluidHandle } from "@fluidframework/runtime-utils/internal";
+
 import type { IPendingBlobs, SerializableLocalBlobRecord } from "../../blobManager/index.js";
 
 import {
@@ -63,6 +65,70 @@ for (const createBlobPayloadPending of [false, true]) {
 				const { ids, redirectTable } = getSummaryContentsWithFormatValidation(blobManager);
 				assert.strictEqual(ids, undefined);
 				assert.strictEqual(redirectTable, undefined);
+			});
+
+			it("tracks an imperatively sharing blob only after its handle is attached", async function () {
+				if (!createBlobPayloadPending) {
+					this.skip();
+				}
+
+				const { mockBlobStorage, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				// Keep the upload in flight so pending state can be inspected before sharing completes.
+				mockBlobStorage.pause();
+
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+				assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+				handle.sharePayload();
+
+				await mockBlobStorage.waitBlobAvailable();
+
+				const { localId } = unpackHandle(handle);
+				assert.strictEqual(
+					blobManager.getPendingBlobs(),
+					undefined,
+					"An unattached handle should not make its blob part of pending state",
+				);
+
+				attachHandle(handle);
+				assert.deepStrictEqual(blobManager.getPendingBlobs(), {
+					[localId]: {
+						state: "localOnly",
+						blob: getSerializedBlobForString("hello"),
+					},
+				});
+			});
+
+			it("does not track a blob attached after BlobAttach processing", async function () {
+				if (!createBlobPayloadPending) {
+					this.skip();
+				}
+
+				const { mockOrderingService, blobManager } = createTestMaterial({
+					createBlobPayloadPending,
+				});
+				mockOrderingService.pause();
+
+				const handle = await blobManager.createBlob(textToBlob("hello"));
+				assert(isLocalFluidHandle(handle), "Expected a local pending-payload handle");
+				assert(handle.sharePayload !== undefined, "Expected sharePayload to be available");
+				handle.sharePayload();
+
+				await mockOrderingService.waitMessageAvailable();
+				// Process BlobAttach synchronously, then attach the handle before notifyShared runs in a
+				// subsequent promise continuation.
+				mockOrderingService.sequenceOne();
+				assert.strictEqual(
+					handle.payloadState,
+					"pending",
+					"Expected the payload notification to still be pending",
+				);
+				attachHandle(handle);
+
+				assert.strictEqual(blobManager.getPendingBlobs(), undefined);
+				await ensureBlobsShared([handle]);
 			});
 
 			it("getPendingBlobs while attaching", async () => {

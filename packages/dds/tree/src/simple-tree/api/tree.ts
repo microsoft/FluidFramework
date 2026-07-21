@@ -112,8 +112,20 @@ export interface ITreeAlpha extends ITree {
 	/**
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
+	 * @param name - Optional name for the new branch.
+	 * This name is not guaranteed to be unique.
+	 * (Maximum {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length | length}: 1024)
+	 * @returns The ID of the new branch, which can be used to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
 	 */
-	createSharedBranch(): string;
+	createSharedBranch(name?: string): string;
+
+	/**
+	 * Retrieves the name, if any, of the shared branch with the given ID.
+	 * @param branchId - The ID of the shared branch to retrieve the name of.
+	 * @returns The name of the shared branch, or `undefined` if the branch has no assigned name.
+	 * @throws if the branch with the given ID does not exist.
+	 */
+	getSharedBranchName(branchId: string): string | undefined;
 
 	/**
 	 * Returns a list of all shared branches that currently exist on this tree.
