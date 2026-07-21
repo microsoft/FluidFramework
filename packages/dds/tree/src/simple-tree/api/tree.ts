@@ -444,7 +444,7 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 * with a view that does not include equivalent staged members in its construction-time policy will cause
 	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
 	 *
-	 * @example Enabling a staged allowed type for documents, selected by a feature flag:
+	 * @example Enabling a staged allowed type for documents, selected by a feature flag
 	 *
 	 * ```typescript
 	 * const sf = new SchemaFactoryBeta("my-app");

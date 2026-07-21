@@ -11,7 +11,7 @@ import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
-	type StagedSchemaUpgradePolicy,
+	StagedSchemaUpgradePolicy,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
@@ -27,7 +27,6 @@ import {
 } from "../node-kinds/index.js";
 import type { SchemaType, SimpleNodeSchema } from "../simpleSchema.js";
 import {
-	resolveStoredSchemaGenerationOptions,
 	toInitialSchema,
 	toUnhydratedSchema,
 	transformSimpleSchema,
@@ -168,13 +167,12 @@ export interface ITreeViewConfigurationAlpha<
 	 * Policy for generating stored schema from the view schema.
 	 *
 	 * @remarks
-	 * This policy is fixed at view construction time and cannot be changed afterwards.
-	 *
-	 * If provided, this policy is used directly for compatibility checks and for
-	 * `initialize` / `upgradeSchema` schema generation.
-	 *
 	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicyFactory.restrictive}
 	 * which does not enable any staged schema upgrades.
+	 *
+	 * If provided, this policy is used when generating stored schema to include in documents via
+	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
+	 * the compatibility of such documents.
 	 *
 	 * @example Enabling specific staged upgrades
 	 * ```typescript
@@ -285,7 +283,7 @@ export class TreeViewConfigurationAlpha<
 	>;
 
 	/**
-	 * Stored-schema generation policy for this view, fixed at construction time.
+	 * {@inheritDoc ITreeViewConfigurationAlpha.stagedUpgradePolicy}
 	 */
 	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
@@ -296,7 +294,7 @@ export class TreeViewConfigurationAlpha<
 		this.definitions = treeSchema.definitions;
 
 		this.stagedUpgradePolicy =
-			props.stagedUpgradePolicy ?? resolveStoredSchemaGenerationOptions(undefined);
+			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
 
 		// Eagerly perform these conversions to surface errors sooner.
 		toInitialSchema(this.root, this.stagedUpgradePolicy);

@@ -19,6 +19,8 @@ Use `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` with `SchemaUpgrade` 
 [`SchemaFactoryBeta.staged`](https://fluidframework.com/docs/api/tree/schemastaticsbeta-interface#staged-propertysignature)
 or [`SchemaFactoryAlpha.stagedOptional`](https://fluidframework.com/docs/api/tree/schemafactoryalpha-class#stagedoptional-property):
 
+The following example defines a staged type, extracts its `SchemaUpgrade` token, and passes it to the view configuration so the staged type is enabled when the schema is upgraded:
+
 ```typescript
 const sf = new SchemaFactoryBeta("my-app");
 

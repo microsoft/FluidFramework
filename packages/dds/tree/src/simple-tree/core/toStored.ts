@@ -34,11 +34,11 @@ export interface StagedSchemaUpgradePolicy {
  * Use the properties and methods on this object to obtain staged-schema generation options
  * for different scenarios:
  *
- * - `StagedSchemaUpgradePolicy.restrictive` — no staged upgrades (default)
+ * - {@link StagedSchemaUpgradePolicyFactory.restrictive} — no staged upgrades (default)
  *
- * - `StagedSchemaUpgradePolicy.permissive` — all staged upgrades enabled
+ * - {@link StagedSchemaUpgradePolicyFactory.permissive} — all staged upgrades enabled
  *
- * - `StagedSchemaUpgradePolicy.enabledStagedUpgrades(...)` — only specific upgrades enabled
+ * - {@link StagedSchemaUpgradePolicyFactory.enabledStagedUpgrades} — only specific upgrades enabled
  *
  * @example
  * ```typescript
