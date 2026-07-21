@@ -32,13 +32,23 @@ import {
 const defaultTinyliciousPort = 7070;
 
 export class TinyliciousResourcesFactory implements IResourcesFactory<TinyliciousResources> {
+
+	public constructor(
+        /**
+         * Optional port for Tinylicious to listen on.
+         * @remarks Takes precedence over the `PORT` environment variable and the default port.
+         */
+        private readonly port?: number
+    ) {}
+
 	public async create(
 		config: Provider,
 		customizations?: Record<string, any>,
 	): Promise<TinyliciousResources> {
 		const globalDbEnabled = false;
-		// Pull in the default port off the config
-		const port = utils.normalizePort(process.env.PORT ?? defaultTinyliciousPort);
+		// Resolve the port to listen on, preferring (in order): a port passed to this factory (e.g. from the
+		// `--port` command line argument), the `PORT` environment variable, then the default port.
+		const port = utils.normalizePort(this.port ?? process.env.PORT ?? defaultTinyliciousPort);
 		const collectionNames = config.get("mongo:collectionNames");
 
 		const tenantManager = new TenantManager(`http://localhost:${port}`);
