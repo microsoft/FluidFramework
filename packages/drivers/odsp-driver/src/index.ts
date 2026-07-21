@@ -31,6 +31,12 @@ export {
 export { OdspDocumentServiceFactoryCore } from "./odspDocumentServiceFactoryCore.js";
 // eslint-disable-next-line import-x/no-internal-modules
 export { OdspPointInTimeDocumentServiceFactory } from "./pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
+export {
+	type BaseForSeq,
+	type IOdspVersionManager,
+	type OdspFileVersionRef,
+	type ResolvedVersion,
+} from "./odspVersionManager/index.js";
 
 // File creation
 export { createOdspCreateContainerRequest } from "./createOdspCreateContainerRequest.js";

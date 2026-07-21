@@ -18,6 +18,7 @@ import {
 
 /**
  * A single ODSP file version, as listed by the file's version history.
+ * @internal
  */
 export interface OdspFileVersionRef {
 	/**
@@ -32,6 +33,7 @@ export interface OdspFileVersionRef {
 
 /**
  * An ODSP file version together with its resolved Fluid sequence number.
+ * @internal
  */
 export interface ResolvedVersion extends OdspFileVersionRef {
 	/**
@@ -47,6 +49,7 @@ export interface ResolvedVersion extends OdspFileVersionRef {
  * There is intentionally no `targetIsLive` case: when the target is at/after the newest recoverable
  * version, the greatest version with `seq <= target` IS that newest version, so it is a normal
  * `found`. A consumer may separately choose to load the live file when the target is near the head.
+ * @internal
  */
 export type BaseForSeq =
 	| {
@@ -79,6 +82,7 @@ export interface IOdspFileVersionFetcher {
 
 /**
  * Selects the file version to use as the base for loading or replaying to a target sequence number.
+ * @internal
  */
 export interface IOdspVersionManager {
 	/**
@@ -86,6 +90,10 @@ export interface IOdspVersionManager {
 	 * `noBaseVersion` if the target predates the oldest retained version.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
+	/**
+	 * Enumerate every file version together with its resolved Fluid sequence number, newest-first.
+	 */
+	listVersions(): Promise<ResolvedVersion[]>;
 }
 
 /**

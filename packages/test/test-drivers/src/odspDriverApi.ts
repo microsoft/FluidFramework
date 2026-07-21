@@ -12,6 +12,7 @@ import {
 import {
 	OdspDocumentServiceFactory,
 	OdspDriverUrlResolver,
+	OdspPointInTimeDocumentServiceFactory,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
 } from "@fluidframework/odsp-driver/internal";
@@ -30,6 +31,7 @@ import { pkgVersion } from "./packageVersion.js";
 export const OdspDriverApi = {
 	version: pkgVersion,
 	OdspDocumentServiceFactory,
+	OdspPointInTimeDocumentServiceFactory,
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl, // REVIEW: does this need to be back compat?

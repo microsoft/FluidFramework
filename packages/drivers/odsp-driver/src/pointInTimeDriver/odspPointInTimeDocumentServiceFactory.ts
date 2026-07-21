@@ -63,9 +63,16 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	}
 
 	/**
-	 * Creates a document service that reads its snapshot from the closest file version at or before
-	 * the target and its deltas from the live document, materializing a requested sequence number
-	 * through replay.
+	 * Creates a point-in-time document service: a read-only IDocumentService that
+	 * materializes the document as it was at `targetSequenceNumber`.
+	 *
+	 * @remarks
+	 * "Point-in-time" is the overall result. It is assembled from two underlying document services,
+	 * which is why the terms differ:
+	 * - the *closest-version* service - opened against the closest ODSP file version at or before the
+	 * target - provides the base snapshot, and
+	 * - the *live* service - opened against the current document - provides the deltas that are
+	 * replayed on top of that snapshot up to the target.
 	 */
 	public async createPointInTimeDocumentService(
 		resolvedUrl: IResolvedUrl,
@@ -73,6 +80,8 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
+		// The version manager knows the file's ODSP versions (checkpoints); ask it for the closest
+		// one at or before the target to use as the base snapshot.
 		const versionManager = await this.createVersionManager(
 			resolvedUrl,
 			logger,
@@ -89,29 +98,46 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			);
 		}
 
-		const historicalResolvedUrl = await this.resolveFileVersion(
+		// The service for the closest version: a document service pinned to the file version selected
+		// above. It supplies the base snapshot (storage) at or before the target - the starting point
+		// for replay.
+		const closestVersionResolvedUrl = await this.resolveFileVersion(
 			resolvedUrl,
 			baseResult.base.versionId,
 		);
-		const historicalDocumentService = await this.createDocumentService(
-			historicalResolvedUrl,
+		const closestVersionDocumentService = await this.createDocumentService(
+			closestVersionResolvedUrl,
 			logger,
 			clientIsSummarizer,
 		);
+		// Live: a document service against the current document. Only its delta storage is used, to
+		// replay ops from the closest version's snapshot sequence number up to the target.
 		const liveDocumentService = await this.createDocumentService(
 			resolvedUrl,
 			logger,
 			clientIsSummarizer,
 		);
 		return new OdspPointInTimeDocumentService(
-			historicalResolvedUrl,
-			historicalDocumentService,
+			closestVersionResolvedUrl,
+			closestVersionDocumentService,
 			liveDocumentService,
 			targetSequenceNumber,
 		);
 	}
 
-	private async createVersionManager(
+	/**
+	 * Builds an {@link IOdspVersionManager} for the file identified by `resolvedUrl`.
+	 *
+	 * @remarks
+	 * The version manager enumerates the file's ODSP versions (checkpoints) and, given a target
+	 * sequence number, selects the closest version at or before it - i.e. the base snapshot the
+	 * point-in-time service replays ops on top of (see createPointInTimeDocumentService). It is
+	 * exposed so callers (and tests) can drive the same technique the service uses internally:
+	 * enumerate versions with `listVersions()` and pick a base with `findBaseForSeq(target)`.
+	 * This method just wires up the dependencies it needs: a child logger, the site/drive/item URL
+	 * parts, an epoch tracker and an instrumented storage-token auth-header fetcher.
+	 */
+	public async createVersionManager(
 		resolvedUrl: IResolvedUrl,
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,

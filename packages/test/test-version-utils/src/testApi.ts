@@ -357,6 +357,7 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 			{ LocalDocumentServiceFactory, LocalResolver, createLocalResolverCreateNewRequest },
 			{
 				OdspDocumentServiceFactory,
+				OdspPointInTimeDocumentServiceFactory,
 				OdspDriverUrlResolver,
 				createOdspCreateContainerRequest,
 				createOdspUrl,
@@ -396,6 +397,7 @@ async function loadDriver(baseVersion: string, requested?: number | string): Pro
 		const OdspDriverApi: typeof DriverApi.OdspDriverApi = {
 			version,
 			OdspDocumentServiceFactory,
+			OdspPointInTimeDocumentServiceFactory,
 			OdspDriverUrlResolver,
 			createOdspCreateContainerRequest,
 			createOdspUrl,

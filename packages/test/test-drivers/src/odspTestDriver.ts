@@ -417,6 +417,28 @@ export class OdspTestDriver implements ITestDriver {
 		return documentServiceFactory;
 	}
 
+	/**
+	 * Creates an ODSP document service factory that additionally supports point-in-time
+	 * (sequence-number-based) loading via `createPointInTimeDocumentService`, so tests can exercise
+	 * {@link @fluidframework/container-loader#loadContainerToSequenceNumber} against the real service.
+	 *
+	 * @remarks
+	 * Mirrors {@link OdspTestDriver.createDocumentServiceFactory} - same tokens, cache, and host
+	 * options - but constructs an `OdspPointInTimeDocumentServiceFactory` (the capability the loader
+	 * detects) instead of the plain factory.
+	 */
+	createPointInTimeDocumentServiceFactory(): IDocumentServiceFactory {
+		const documentServiceFactory = new this.api.OdspPointInTimeDocumentServiceFactory(
+			this.getStorageToken.bind(this),
+			this.getPushToken.bind(this),
+			this.cache,
+			this.config.options,
+		);
+		// Automatically reset the cache after creating the factory
+		delete this.cache;
+		return documentServiceFactory;
+	}
+
 	createUrlResolver(): IUrlResolver {
 		return new this.api.OdspDriverUrlResolver();
 	}
