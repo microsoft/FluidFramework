@@ -224,7 +224,9 @@ describe("staged allowed type upgrade", () => {
 		viewStaged.root = "test";
 		provider.synchronizeMessages();
 
-		const viewMigrated = treeMigrated.viewWith(new TreeViewConfiguration({ schema: fullyMigratedSchema }));
+		const viewMigrated = treeMigrated.viewWith(
+			new TreeViewConfiguration({ schema: fullyMigratedSchema }),
+		);
 		assert.equal(viewMigrated.compatibility.isEquivalent, true);
 		viewMigrated.upgradeSchema();
 		assert.equal(viewMigrated.root, "test");
@@ -334,7 +336,9 @@ describe("staged allowed type upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
-		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStagedType).rootFieldSchema));
+		assert(
+			stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStagedType).rootFieldSchema),
+		);
 		expectCompatibility(schemaWithStagedType, {
 			canView: true,
 			canUpgrade: true,
@@ -349,7 +353,9 @@ describe("staged allowed type upgrade", () => {
 			isEquivalent: false,
 		});
 
-		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(fullyMigratedSchema).rootFieldSchema));
+		assert(
+			stored.tryUpdateRootFieldSchema(toUpgradeSchema(fullyMigratedSchema).rootFieldSchema),
+		);
 		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
 
 		expectCompatibility(fullyMigratedSchema, {
@@ -426,7 +432,9 @@ describe("staged optional upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
-		const viewRequired = treeRequired.viewWith(new TreeViewConfiguration({ schema: requiredSchema }));
+		const viewRequired = treeRequired.viewWith(
+			new TreeViewConfiguration({ schema: requiredSchema }),
+		);
 		viewRequired.initialize(5);
 		provider.synchronizeMessages();
 
@@ -440,7 +448,9 @@ describe("staged optional upgrade", () => {
 		viewStaged.root = undefined;
 		provider.synchronizeMessages();
 
-		const viewOptional = treeOptional.viewWith(new TreeViewConfiguration({ schema: optionalSchema }));
+		const viewOptional = treeOptional.viewWith(
+			new TreeViewConfiguration({ schema: optionalSchema }),
+		);
 		assert.equal(viewOptional.compatibility.isEquivalent, true);
 		viewOptional.upgradeSchema();
 		assert.equal(viewOptional.root, undefined);
@@ -450,7 +460,9 @@ describe("staged optional upgrade", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
-		const viewRequired = treeRequired.viewWith(new TreeViewConfiguration({ schema: requiredSchema }));
+		const viewRequired = treeRequired.viewWith(
+			new TreeViewConfiguration({ schema: requiredSchema }),
+		);
 		viewRequired.initialize(5);
 		provider.synchronizeMessages();
 
@@ -467,7 +479,9 @@ describe("staged optional upgrade", () => {
 
 		// A new view without the upgrade token cannot upgrade further — the stored schema already has the upgrade
 		// and the new target (without the token) would narrow it.
-		const viewStagedNarrow = treeOptional.viewWith(new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }));
+		const viewStagedNarrow = treeOptional.viewWith(
+			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
+		);
 		assert.throws(
 			() => viewStagedNarrow.upgradeSchema(),
 			/cannot be upgraded to the requested schema/,
@@ -478,7 +492,10 @@ describe("staged optional upgrade", () => {
 		// checkSchemaCompatibility only checks compatibility against a supplied stored schema.
 		// It does not run the TreeView.upgradeSchema path, so this test simulates each stored
 		// schema state directly.
-		const stored = new TestSchemaRepository(defaultSchemaPolicy, toUpgradeSchema(requiredSchema));
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(requiredSchema),
+		);
 
 		const expectCompatibility = (
 			schema: typeof requiredSchema | typeof stagedOptionalSchema | typeof optionalSchema,
@@ -504,7 +521,9 @@ describe("staged optional upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
-		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedOptionalSchema).rootFieldSchema));
+		assert(
+			stored.tryUpdateRootFieldSchema(toUpgradeSchema(stagedOptionalSchema).rootFieldSchema),
+		);
 		expectCompatibility(stagedOptionalSchema, {
 			canView: true,
 			canUpgrade: true,
