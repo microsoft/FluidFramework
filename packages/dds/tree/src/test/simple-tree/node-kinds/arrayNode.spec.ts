@@ -1203,7 +1203,10 @@ describe("ArrayNode", () => {
 			assert.equal(anchor.index, 3);
 			anchor.dispose();
 			// ...but beyond that, or negative, is a usage error rather than being silently corrected.
-			assert.throws(() => createArrayInsertionAnchor(array, 4), validateUsageError(/out of bounds/));
+			assert.throws(
+				() => createArrayInsertionAnchor(array, 4),
+				validateUsageError(/out of bounds/),
+			);
 			assert.throws(
 				() => createArrayInsertionAnchor(array, -1),
 				validateUsageError(/non-negative/),
