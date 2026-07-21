@@ -71,6 +71,16 @@ export function generateAswaHtml(templatePath: string): string {
 function renderTemplate(templatePath: string, vars: Record<string, unknown>): string {
 	const templateDir = path.dirname(templatePath);
 	const cssContent = readFileSync(path.join(templateDir, "dashboard.css"), "utf8");
+	const chartJsEntryPoint = fileURLToPath(import.meta.resolve("chart.js"));
+	const chartJsContent = readFileSync(
+		path.join(path.dirname(chartJsEntryPoint), "chart.umd.js"),
+		"utf8",
+	);
+	const dateAdapterEntryPoint = fileURLToPath(import.meta.resolve("chartjs-adapter-date-fns"));
+	const dateAdapterContent = readFileSync(
+		path.join(path.dirname(dateAdapterEntryPoint), "chartjs-adapter-date-fns.bundle.min.js"),
+		"utf8",
+	);
 	// Read the tsc-compiled JS and strip module artifacts — this is inlined
 	// in a <script> tag, not loaded as an ES module.
 	const jsContent = readFileSync(path.join(templateDir, "dashboard.js"), "utf8")
@@ -88,6 +98,8 @@ function renderTemplate(templatePath: string, vars: Record<string, unknown>): st
 	return ejs.render(ejsTemplate, {
 		...vars,
 		cssContent,
+		chartJsContent,
+		dateAdapterContent,
 		jsContent,
 	});
 }

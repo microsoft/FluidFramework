@@ -106,8 +106,8 @@ describe("generateStandaloneHtml", () => {
 			expect(html).to.include("</body>");
 			expect(html).to.include("</html>");
 
-			// Should contain Chart.js CDN references
-			expect(html).to.include("chart.js@4.4.1");
+			// Chart.js should be bundled into the HTML.
+			expect(html).to.include("Chart.js v4.4.1");
 		});
 	}
 });

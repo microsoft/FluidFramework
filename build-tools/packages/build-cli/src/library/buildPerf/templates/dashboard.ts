@@ -49,7 +49,7 @@ interface ColorScheme {
 	tasks: string[];
 }
 
-// Minimal Chart.js callback types (Chart.js is loaded from CDN without type declarations)
+// Minimal Chart.js callback types for the browser bundle inlined into the generated HTML.
 interface ChartPointContext {
 	raw?: { isOutlier?: boolean };
 }
@@ -84,7 +84,7 @@ interface ChartLegendItem {
 	datasetIndex: number;
 }
 
-// Ambient declarations for globals injected by the EJS template or loaded from CDN
+// Ambient declarations for globals injected by the EJS template or bundled dependencies.
 declare const dashboardData: Record<string, DashboardData | null>;
 declare const chartInstances: Record<string, Record<string, { destroy(): void }>>;
 declare const tableState: Record<
@@ -95,7 +95,7 @@ declare const itemsPerPage: number;
 // Conditionally injected by EJS in standalone mode
 declare const STANDALONE_MODE: string | undefined;
 declare const INLINED_DATA: DashboardData | undefined;
-// Chart.js loaded from CDN in the HTML <head>
+// Chart.js is inlined before this script by the EJS template.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const Chart: any;
 
