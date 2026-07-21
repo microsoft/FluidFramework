@@ -56,7 +56,7 @@ export const MessageFormatVersion = strictEnum("MessageFormatVersion", {
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
-	vSharedBranches: "shared-branches|v0.1",
+	vSharedBranches: "shared-branches|v0.2",
 });
 export type MessageFormatVersion = Values<typeof MessageFormatVersion>;
 export const supportedMessageFormatVersions: ReadonlySet<MessageFormatVersion> = new Set([
