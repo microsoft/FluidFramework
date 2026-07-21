@@ -41,13 +41,9 @@ const repoRoot = path.resolve(__dirname, "..");
 // Directory names that should never be traversed while discovering workspaces.
 const SKIP_DIR_NAMES = new Set(["node_modules", ".git"]);
 
-// Path fragments that identify workspaces which are test fixtures or managed separately with their
-// own lockfiles, and therefore should not receive the override.
-const EXCLUDED_FRAGMENTS = [path.join("build-infrastructure", "src", "test", "data")];
-
 /**
  * Recursively find every directory under `dir` that contains a `pnpm-workspace.yaml`, excluding
- * skipped directories and the excluded fragments above.
+ * skipped directories above.
  * @param {string} dir Absolute directory to search.
  * @param {string[]} found Accumulator of absolute workspace-root paths.
  * @returns {string[]} `found`.
@@ -68,11 +64,7 @@ function findWorkspaceRoots(dir, found) {
 		if (!entry.isDirectory() || SKIP_DIR_NAMES.has(entry.name)) {
 			continue;
 		}
-		const child = path.join(dir, entry.name);
-		if (EXCLUDED_FRAGMENTS.some((fragment) => child.includes(fragment))) {
-			continue;
-		}
-		findWorkspaceRoots(child, found);
+		findWorkspaceRoots(path.join(dir, entry.name), found);
 	}
 
 	return found;
@@ -143,13 +135,16 @@ function main() {
 	for (const root of roots) {
 		const npmrcPath = path.join(root, ".npmrc");
 		const rel = path.relative(repoRoot, root) || ".";
+		const existing = fs.existsSync(npmrcPath)
+			? fs.readFileSync(npmrcPath, "utf8")
+			: undefined;
+		const managed = existing !== undefined && existing.startsWith(MARKER);
 
 		if (clear) {
-			if (!fs.existsSync(npmrcPath)) {
+			if (existing === undefined) {
 				continue;
 			}
-			const existing = fs.readFileSync(npmrcPath, "utf8");
-			if (!existing.startsWith(MARKER)) {
+			if (!managed) {
 				console.warn(`Skipping ${rel}/.npmrc (not managed by this script).`);
 				continue;
 			}
@@ -157,10 +152,7 @@ function main() {
 			console.log(`Removed ${rel}/.npmrc`);
 			changed++;
 		} else {
-			const existing = fs.existsSync(npmrcPath)
-				? fs.readFileSync(npmrcPath, "utf8")
-				: undefined;
-			if (existing !== undefined && !existing.startsWith(MARKER)) {
+			if (existing !== undefined && !managed) {
 				console.warn(
 					`Skipping ${rel}/.npmrc (already exists and is not managed by this script).`,
 				);
