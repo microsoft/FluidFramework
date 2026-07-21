@@ -11,22 +11,15 @@ import type {
 	ChangesetLocalId,
 	DeltaFieldMap,
 	ExclusiveMapTree,
-	RevisionTag,
 } from "../../core/index.js";
 import { offsetChangesetLocalId } from "../../core/index.js";
-import type { NestedSet } from "../../util/index.js";
-import { addToNestedSet, brand } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 
 import type { ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import { newChangeAtomIdBTree } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 import { chunkTree, combineChunks, defaultChunkPolicy } from "../chunked-forest/index.js";
 import { cursorForMapTreeNode, mapTreeFromCursor } from "../mapTreeCursor.js";
-
-/**
- * A set of node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
- */
-type ChangeAtomIdSet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
 
 /** Chunking policy used to re-chunk a build when it is split into smaller builds. */
 const minimizeChunkCompressor = {
