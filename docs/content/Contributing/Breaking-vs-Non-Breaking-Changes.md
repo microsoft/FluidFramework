@@ -181,4 +181,3 @@ See [API deprecation](./API-Deprecation.md) and [@beta break process](./Breaking
 - [Changesets FAQ](./Breaking-vs-Non-Breaking-Changes/Changesets-FAQ.md)
 - [Cross-Client Compatibility](./Breaking-vs-Non-Breaking-Changes/Cross-Client-Compatibility.md)
 - [Beta Break Process](./Breaking-vs-Non-Breaking-Changes/Beta-Break-Process.md)
-- [Legacy/Alpha Break Process](./Breaking-vs-Non-Breaking-Changes/Legacy-Alpha-Break-Process.md)
