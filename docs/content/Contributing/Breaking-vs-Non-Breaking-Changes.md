@@ -14,7 +14,7 @@ Breaking changes imply that the consumer of the library is required to make some
 Since the degree of correctness will depend on the users relying on our API, we list out tenets guiding our “breaking” policy:
 
 1. Given that breaking policy generally can vary, we should be explicit what is considered a breaking change, whenever possible.
-1. Regardless of its relationship to monorepos and release groups, each fluid framework package should stay true to semantic versioning (major.minor.patch) when it comes to any changes it adopts.
+1. Regardless of its relationship to monorepos and release groups, each Fluid Framework package should stay true to semantic versioning (major.minor.patch) when it comes to any changes it adopts.
 1. Breaking policy should aim for optimal trade-off between Stability and New Functionality. Our development efforts are compat-first, leaning towards New Functionality. However, when in doubt if given change is a breaking change, we should lean towards Stability first.
 
 ## Types of breaking changes
