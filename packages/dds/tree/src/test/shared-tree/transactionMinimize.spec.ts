@@ -1382,9 +1382,9 @@ describe("transaction minimize post-processor", () => {
 			const { view } = runScenario(
 				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
 			);
-			assert.notEqual(view.root, undefined);
-			assert.equal(view.root?.nested, undefined);
-			assert.equal(view.root?.value, undefined);
+			assert.ok(view.root);
+			assert.equal(view.root.nested, undefined);
+			assert.equal(view.root.value, undefined);
 		});
 
 		it("reflects an empty root when a nested object with a value is added and then the root object is removed", () => {
