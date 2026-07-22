@@ -357,7 +357,6 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		isResubmit: boolean,
 		isValidated: boolean,
 	): void {
-		assert(isValidated, "Commit must be validated before submission");
 		assert(
 			this.sharedObject.isAttached() === (this.detachedRevision === undefined),
 			0x95a /* Detached revision should only be set when not attached */,
