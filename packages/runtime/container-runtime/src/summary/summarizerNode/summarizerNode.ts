@@ -574,11 +574,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 				// successful summary. So, for `createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber`
 				// to be true, the attach message would have to have been sequenced before the last summary and somehow
 				// not be part of that summary, which is not possible.
-				// This check used to exist because of a legacy "failure summaries" feature where a data store that
-				// failed to summarize would include its previous summary + pending ops in the current summary. In the
-				// next summary, those pending ops (which could include a DDS attach op) would be processed and the above
-				// condition could be true. That feature was deleted years ago, so this is now converted to an assert to
-				// validate the invariant - if it ever does happen, we would see the assert.
 				assert(
 					parentLastSummaryReferenceSequenceNumber === undefined ||
 						createParam.sequenceNumber > parentLastSummaryReferenceSequenceNumber,
