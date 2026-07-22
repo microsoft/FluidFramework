@@ -75,6 +75,24 @@ jobs:
           - template: /tools/pipelines/templates/include-use-node-version.yml@self
 
           - task: Bash@3
+            displayName: Configure npm registry for build tools
+            inputs:
+              targetType: 'inline'
+              workingDirectory: .
+              script: |
+                set -eu -o pipefail
+                echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
+            env:
+              NPM_REGISTRY: $(ado-feeds-primary-registry)
+              NPM_CONFIG_USERCONFIG: $(Agent.TempDirectory)/install-build-tools.npmrc
+
+          - task: npmAuthenticate@0
+            displayName: Authenticate npm registry for build tools
+            retryCountOnTaskFailure: 1
+            inputs:
+              workingFile: $(Agent.TempDirectory)/install-build-tools.npmrc
+
+          - task: Bash@3
             name: InstallBuildTools
             displayName: Install Fluid Build Tools (from npm)
             inputs:
@@ -84,7 +102,8 @@ jobs:
                 set -eu -o pipefail
                 echo "installing version @${{ parameters.buildToolsVersionToInstall }}"
 
-                npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}"
+                npm install --global "@fluid-tools/build-cli@${{ parameters.buildToolsVersionToInstall }}" \
+                  --userconfig "$(Agent.TempDirectory)/install-build-tools.npmrc"
 
                 # fflate 0.8.3 changed the streaming Gunzip callback semantics in a way that breaks
                 # `flub publish tarballs`. Force-downgrade the fflate nested inside the globally-installed
@@ -92,13 +111,15 @@ jobs:
                 # flub's nested copy that `require()` actually loads, rather than hoisting fflate to the
                 # top of the global node_modules. `--omit=dev` avoids reifying flub's devDependencies.
                 FLUB_DIR="$(npm root -g)/@fluid-tools/build-cli"
-                npm install --prefix "$FLUB_DIR" --no-save --no-package-lock --omit=dev fflate@0.8.2
+                npm install --prefix "$FLUB_DIR" --no-save --no-package-lock --omit=dev fflate@0.8.2 \
+                  --userconfig "$(Agent.TempDirectory)/install-build-tools.npmrc"
 
                 ACTUAL_FFLATE=$(node -p "require('$FLUB_DIR/node_modules/fflate/package.json').version")
                 [ "$ACTUAL_FFLATE" = "0.8.2" ] || { echo "##[error]flub's nested fflate is $ACTUAL_FFLATE, expected 0.8.2"; exit 1; }
 
                 # This can be removed once all builds tools are moved to the build-cli library
-                npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}"
+                npm install --global "@fluidframework/build-tools@${{ parameters.buildToolsVersionToInstall }}" \
+                  --userconfig "$(Agent.TempDirectory)/install-build-tools.npmrc"
 
           - template: /tools/pipelines/templates/include-publish-npm-package-steps.yml@self
             parameters:
@@ -121,4 +142,3 @@ jobs:
   - template: /tools/pipelines/templates/include-git-tag-steps.yml@self
     parameters:
       tagName: ${{ parameters.tagName }}
-
