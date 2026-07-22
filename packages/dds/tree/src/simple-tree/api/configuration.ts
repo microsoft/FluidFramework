@@ -11,6 +11,7 @@ import type { MakeNominal } from "../../util/index.js";
 import {
 	type AllowedTypesFullEvaluated,
 	NodeKind,
+	StagedSchemaUpgradePolicy,
 	type TreeNodeSchema,
 } from "../core/index.js";
 import { type FieldSchemaAlpha, type ImplicitFieldSchema, FieldKind } from "../fieldSchema.js";
@@ -156,6 +157,35 @@ export interface ITreeViewConfiguration<
 }
 
 /**
+ * Property-bag configuration for {@link TreeViewConfigurationAlpha} construction.
+ * @alpha
+ */
+export interface ITreeViewConfigurationAlpha<
+	TSchema extends ImplicitFieldSchema = ImplicitFieldSchema,
+> extends ITreeViewConfiguration<TSchema> {
+	/**
+	 * Policy for generating stored schema from the view schema.
+	 *
+	 * @remarks
+	 * If omitted or `undefined`, defaults to {@link StagedSchemaUpgradePolicyFactory.restrictive}
+	 * which does not enable any staged schema upgrades.
+	 *
+	 * If provided, this policy is used when generating stored schema to include in documents via
+	 * `initialize` / `upgradeSchema` as well as in {@link snapshotSchemaCompatibility} to validate
+	 * the compatibility of such documents.
+	 *
+	 * @example Enabling specific staged upgrades
+	 * ```typescript
+	 * const config = new TreeViewConfigurationAlpha({
+	 *   schema: MySchema,
+	 *   stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgrade),
+	 * });
+	 * ```
+	 */
+	readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+}
+
+/**
  * Configuration for {@link ViewableTree.viewWith}.
  * @sealed @public
  */
@@ -252,14 +282,22 @@ export class TreeViewConfigurationAlpha<
 		SimpleNodeSchema<SchemaType.View> & TreeNodeSchema
 	>;
 
-	public constructor(props: ITreeViewConfiguration<TSchema>) {
+	/**
+	 * {@inheritDoc ITreeViewConfigurationAlpha.stagedUpgradePolicy}
+	 */
+	public readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
+
+	public constructor(props: ITreeViewConfigurationAlpha<TSchema>) {
 		super(props);
 		const treeSchema = createTreeSchema(this.schema);
 		this.root = treeSchema.root;
 		this.definitions = treeSchema.definitions;
 
+		this.stagedUpgradePolicy =
+			props.stagedUpgradePolicy ?? StagedSchemaUpgradePolicy.restrictive;
+
 		// Eagerly perform these conversions to surface errors sooner.
-		toInitialSchema(this.root);
+		toInitialSchema(this.root, this.stagedUpgradePolicy);
 		transformSimpleSchema(treeSchema, toUnhydratedSchema);
 	}
 }

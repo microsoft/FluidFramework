@@ -110,7 +110,8 @@ class TextItem
 
 describe("Open Polymorphism design pattern examples and tests for them", () => {
 	// A simple pattern for doing open polymorphism with a mutable static registry.
-	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work.
+	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work,
+	// but it serves as a simplified example of what the other patterns here are implementing.
 	describe("mutable static registry", () => {
 		// See note on describe block for why this is skipped.
 		it.skip("without customizeSchemaTyping", () => {
@@ -195,9 +196,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -246,9 +247,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -295,9 +296,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -383,9 +384,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 					...itemFields,
 					container: Container,
 				}) {
-					public static readonly description = "Text";
-					public static default(): TextItem {
-						return new TextItem({ text: "", location: { x: 0, y: 0 } });
+					public static readonly description = "Container";
+					public static default(): ContainerItem {
+						return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 					}
 
 					public foo(): void {}
@@ -437,7 +438,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			 */
 			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
 				// Compose all components
-				const composed = Component.composeComponents(
+				const composed = Component.compose(
 					allComponents,
 					(lazyConfig): MyAppConfigPartial => ({
 						allowedItemTypes: () => lazyConfig.getComposed("allowedItemTypes"),
@@ -462,11 +463,70 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			);
 		});
 
+		// Same as the above, but using the default composition.
+		// Also adds an example of using `getComponent` to retrieve the final version of a component from the composed configuration.
+		it("Example2", () => {
+			/** Example application component interface. */
+			interface MyAppComponent {
+				/** {@link AllowedTypes} provider containing all ItemSchema contributed by components. */
+				readonly items: Component.LazyArray<ItemSchema>;
+			}
+
+			/** Helper for containerComponent to create the schema as a function of the composed configuration. */
+			function createContainer(config: Component.Composed<MyAppComponent>) {
+				class ContainerArray extends sf.array("Container", config.getComposed("items")) {}
+				class ContainerItem extends sf.object("ContainerItem", {
+					...itemFields,
+					container: ContainerArray,
+				}) {
+					public static readonly description = "Container";
+					public static default(): ContainerItem {
+						return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
+					}
+
+					public foo(): void {}
+				}
+
+				return ContainerItem;
+			}
+
+			// An example component which recursively depends on all components.
+			const containerComponent = ((lazyConfig) => {
+				const containerSchema = Component.memoize(() => createContainer(lazyConfig()));
+				return {
+					items: () => [containerSchema],
+					containerSchema,
+				};
+				// Note the typing using `satisfies` so we get type checking while still allowing `Component.Composed.getComponent` to access the more specific type with the `containerSchema` member.
+			}) satisfies Component.Factory<MyAppComponent>;
+
+			// An example component which contributes a text item type.
+			const textComponent = (() => ({
+				items: () => [() => TextItem],
+			})) satisfies Component.Factory<MyAppComponent>;
+
+			const appConfig = Component.compose([containerComponent, textComponent]);
+
+			// Export the tree config appropriate for this schema.
+			// This is passed into the SharedTree when it is initialized.
+			// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
+			const treeConfig = new TreeViewConfiguration(
+				// Schema for the root
+				{ schema: appConfig.getComposed("items") },
+			);
+
+			// The final version of any component (with component specific strong typing) can be obtained from the composed configuration, and used as needed.
+			const Container = appConfig.getComponent(containerComponent).containerSchema();
+			const containerNode = new Container({
+				location: { x: 0, y: 0 },
+				container: [TextItem.default()],
+			});
+		});
+
 		// An open polymorphic collection of schema with implementations provided by components.
+		// Unlike the above examples, this one doesn't require the schema to implement any specific interfaces, making it simpler and more self contained, but less realistic.
 		it("minimal open polymorphism", () => {
-			/**
-			 * Example application component content type.
-			 */
+			/** Example application component content type. */
 			interface MyAppComponentContent {
 				/**
 				 * Item types contributed by this component.
@@ -476,11 +536,10 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				readonly items: Component.LazyArray<TreeNodeSchema>;
 			}
 
-			// To keep this example simple, we are just using the provided `ComposedComponents`
-			// type for the configuration passed into the component factories.
+			// To keep this example simple, we let the configuration passed into the component factories
+			// default to the composition itself (`Composed`).
 			// There are a lot of customization options for this, but this example is simply avoiding all of them.
-			type Composed = Component.ComposedComponents<Composed, MyAppComponentContent>;
-			type MyAppComponent = Component.Factory<Composed, MyAppComponentContent>;
+			type MyAppComponent = Component.Factory<MyAppComponentContent>;
 
 			// A simple component, which does not depend on any other context.
 			const textComponent: MyAppComponent = () => ({
@@ -494,11 +553,8 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				],
 			});
 
-			const appConfig = Component.composeComponents(
-				[containerComponent, textComponent],
-				// As noted above, we are not customizing the config, so just pass it through unchanged.
-				(config) => config,
-			);
+			// As noted above, we are not customizing the config, so the builder is omitted.
+			const appConfig = Component.compose([containerComponent, textComponent]);
 
 			// The config's items can now be used to create a TreeViewConfiguration, root schema, or whatever else is needed.
 			class Root extends sf.object("Root", {
@@ -524,7 +580,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				readonly items: Component.LazyArray<TreeNodeSchema>;
 			}
 
-			type Composed = Component.ComposedComponents<Composed, MyAppComponentContent>;
+			type Composed = Component.Composed<MyAppComponentContent>;
 
 			// A component with a more specific type, exposing its `container` property so it can be queried for after composition.
 			const containerComponent = (config: () => Composed) => {
@@ -537,7 +593,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				} satisfies MyAppComponentContent & { container: unknown };
 			};
 
-			const appConfig = Component.composeComponents([containerComponent], (config) => config);
+			const appConfig = Component.compose([containerComponent], (config) => config);
 
 			const Container = appConfig.getComponent(containerComponent).container();
 			const node = new Container();
@@ -557,8 +613,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				default(): Unhydrated<TreeNode>;
 			}
 
-			type Composed = Component.ComposedComponents<Composed, MyAppComponentContent>;
-			type MyAppComponent = Component.Factory<Composed, MyAppComponentContent>;
+			type MyAppComponent = Component.Factory<MyAppComponentContent>;
 
 			// A simple item type, with the required statics.
 			class MyItem extends sf.object("MyItem", {}) {
@@ -576,10 +631,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				items: () => [() => TextItem],
 			});
 
-			const appConfig = Component.composeComponents(
-				[myComponent, textComponent],
-				(config) => config,
-			);
+			const appConfig = Component.compose([myComponent, textComponent]);
 
 			// We could use this config to build a menu showing the description of each and let a user select one of the available item types to insert.
 			const menu = appConfig.getComposed("items").map((lazy) => lazy());
@@ -606,7 +658,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				backgrounds?: Component.LazyArray<BackgroundSchema>;
 			}
 
-			type MyAppComponent = Component.Factory<MyAppConfigPartial, MyAppComponentContent>;
+			type MyAppComponent = Component.Factory<MyAppComponentContent, MyAppConfigPartial>;
 
 			interface BackgroundExtensions {
 				html(): string;
@@ -627,9 +679,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 						...itemFields,
 						container: Container,
 					}) {
-						public static readonly description = "Text";
-						public static default(): TextItem {
-							return new TextItem({ text: "", location: { x: 0, y: 0 } });
+						public static readonly description = "Container";
+						public static default(): ContainerItem {
+							return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 						}
 
 						public foo(): void {}
@@ -719,10 +771,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				 */
 				readonly items: ReadonlySet<ItemSchema>;
 				readonly backgrounds: ReadonlySet<BackgroundSchema>;
-				readonly composed: Component.ComposedComponents<
-					MyAppConfigPartial,
-					MyAppComponentContent
-				>;
+				readonly composed: Component.Composed<MyAppComponentContent, MyAppConfigPartial>;
 			}
 
 			/**
@@ -731,7 +780,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			 * Information from the components can be aggregated into the configuration.
 			 */
 			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
-				const composed = Component.composeComponents(allComponents, (c) => {
+				const composed = Component.compose(allComponents, (c) => {
 					const config: MyAppConfigPartial = {
 						allowedItemTypes: c.getComposed("items"),
 						allowedBackgroundTypes: c.getComposed("backgrounds"),
