@@ -120,12 +120,11 @@ export interface ITreeAlpha extends ITree {
 	createSharedBranch(name?: string): string;
 
 	/**
-	 * Shares a local branch with other clients.
+	 * Shares an existing branch with other clients.
+	 * The given `branch` will be shared with and editable by all clients and persisted in the document.
 	 * @param branch - The local branch to share.
 	 * @param name - Optional name for the shared branch.
-	 * @returns The ID of the new branch, which can be used by peers to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
-	 *
-	 * After sharing, the given `branch` will be visible to other clients and persisted in the document.
+	 * @returns The ID of the shared branch, which can be used by peers to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
 	 */
 	shareLocalBranch(branch: TreeBranch, name?: string): string;
 
