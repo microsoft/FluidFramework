@@ -1181,111 +1181,91 @@ describe("transaction minimize post-processor", () => {
 	// actually implemented.
 	describe("preserves the observable result and new content appears in change", () => {
 		it("keeps inserted nodes", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_then_B_inserted);
+			const { view } = runScenario(arrayScenarios.A_then_B_inserted);
 			assert.deepEqual([...view.root], ["A❤️", "B❤️"]);
 		});
 
 		it("nets a create-then-remove to no change", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
+			const { view } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.deepEqual([...view.root], []);
 		});
 
 		it("keeps only the persisted node when a transient node is also created", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_kept_and_B_transient);
+			const { view } = runScenario(arrayScenarios.A_kept_and_B_transient);
 			assert.deepEqual([...view.root], ["A❤️"]);
 		});
 
 		it("reflects only the final value of a node replaced within the transaction", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_replaced_by_B);
+			const { view } = runScenario(arrayScenarios.A_replaced_by_B);
 			assert.deepEqual([...view.root], ["B❤️"]);
 		});
 
 		it("reflects only the surviving node when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.B_inserted_before_A_then_A_removed,
-			);
+			const { view } = runScenario(arrayScenarios.B_inserted_before_A_then_A_removed);
 			assert.deepEqual([...view.root], ["B❤️"]);
 		});
 
 		it("keeps the surrounding nodes when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.ABC_inserted_then_B_removed,
-			);
+			const { view } = runScenario(arrayScenarios.ABC_inserted_then_B_removed);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
 		});
 
 		it("keeps the surrounding nodes when an inserted node is moved then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.ABC_inserted_then_B_moved_then_removed,
-			);
+			const { view } = runScenario(arrayScenarios.ABC_inserted_then_B_moved_then_removed);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
 		});
 
 		it("keeps only the trailing node when a moved node and its successor from leading node are removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				arrayScenarios.ABC_inserted_then_B_moved_then_B_and_A_removed,
 			);
 			assert.deepEqual([...view.root], ["C❤️"]);
 		});
 
 		it("keeps only the leading node when a moved node and its insertion companion are removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				arrayScenarios.ABC_inserted_then_B_moved_then_C_and_B_removed,
 			);
 			assert.deepEqual([...view.root], ["A❤️"]);
 		});
 
 		it("leaves pre-existing content unchanged when a transient node is inserted then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.preexisting_content_and_transient_insert,
-			);
+			const { view } = runScenario(arrayScenarios.preexisting_content_and_transient_insert);
 			assert.deepEqual([...view.root], ["X🕰️", "Y🕰️"]);
 		});
 
 		it("keeps pre-existing content and the surviving inserted node", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.preexisting_content_and_surviving_insert,
-			);
+			const { view } = runScenario(arrayScenarios.preexisting_content_and_surviving_insert);
 			assert.deepEqual([...view.root], ["X🕰️", "B❤️"]);
 		});
 
 		it("reflects only the final value of a root object field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.root_Box_value_set_twice,
-			);
+			const { view } = runScenario(objectScenarios.root_Box_value_set_twice);
 			assert.equal(view.root?.value, "y❤️");
 		});
 
 		it("reflects only the final undefined root when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.root_Box_value_set_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.root_Box_value_set_then_root_Box_removed);
 			assert.equal(view.root, undefined);
 		});
 
 		it("reflects only the final value of a field of newly inserted root object when it is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_root_Box_then_replace_value,
-			);
+			const { view } = runScenario(objectScenarios.add_root_Box_then_replace_value);
 			assert.equal(view.root?.value, "y❤️");
 		});
 
 		it("reflects only the final value of a nested field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nested_Box_value_set_twice,
-			);
+			const { view } = runScenario(objectScenarios.nested_Box_value_set_twice);
 			assert.equal(view.root?.nested?.value, "y❤️");
 		});
 
 		it("reflects an undefined root when a nested field is set and then the root object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nested_Box_value_set_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.nested_Box_value_set_then_root_Box_removed);
 			assert.equal(view.root, undefined);
 		});
 
 		it("reflects an empty root object when a nested field is set and then the nested field is removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
 			);
 			assert.notEqual(view.root, undefined);
@@ -1294,35 +1274,29 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("reflects an empty root when a nested object with a value is added and then the root object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nest_Box_with_value_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.nest_Box_with_value_then_root_Box_removed);
 			assert.equal(view.root, undefined);
 		});
 
 		it("reflects only the final value of a field of a newly inserted nested object when nested field value is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_nested_Box_then_replace_value,
-			);
+			const { view } = runScenario(objectScenarios.add_nested_Box_then_replace_value);
 			assert.equal(view.root?.nested?.value, "y❤️");
 		});
 
 		it("reflects only the final value of a newly inserted nested object when nested object is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_nested_Box_then_replace_nested_Box,
-			);
+			const { view } = runScenario(objectScenarios.add_nested_Box_then_replace_nested_Box);
 			assert.equal(view.root?.nested?.value, "y❤️");
 		});
 
 		it("reflects only the final value of a newly inserted nested object whose value was set before it was replaced", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.add_nested_Box_set_value_then_replace_nested_Box,
 			);
 			assert.equal(view.root?.nested?.value, "y❤️");
 		});
 
 		it("reflects the surviving object when a newly inserted object's nested object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.add_Box_with_nested_Box_then_remove_nested_Box,
 			);
 			assert.equal(view.root?.value, "x❤️");
@@ -1330,16 +1304,12 @@ describe("transaction minimize post-processor", () => {
 		});
 
 		it("reflects edits made before a schema change", () => {
-			const { view, stringifiedChange } = runScenario(
-				schemaUpgradeScenarios.edit_before_schema_change,
-			);
+			const { view } = runScenario(schemaUpgradeScenarios.edit_before_schema_change);
 			assert.deepEqual([...view.root], ["B❤️"]);
 		});
 
 		it("reflects edits made after a schema change", () => {
-			const { view, stringifiedChange } = runScenario(
-				schemaUpgradeScenarios.edit_after_schema_change,
-			);
+			const { view } = runScenario(schemaUpgradeScenarios.edit_after_schema_change);
 			assert.equal(view.root.length, 2);
 			assert.equal(view.root[0], "A🕰️");
 			const box = view.root[1];
