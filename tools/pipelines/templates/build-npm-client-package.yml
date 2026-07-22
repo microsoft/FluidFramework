@@ -423,10 +423,6 @@ extends:
                       TEST_BUILD: $(testBuild)
                       VERSION: $(SetVersion.version)
                       IS_LATEST: $(SetVersion.isLatest)
-                      SOURCE_BRANCH: $(Build.SourceBranch)
-                      TAG_NAME: '${{ parameters.tagName }}'
-                      IS_RELEASE_GROUP: '${{ parameters.isReleaseGroup }}'
-                      TEAM_PROJECT: $(System.TeamProject)
                     inputs:
                       targetType: 'inline'
                       workingDirectory: $(Build.ArtifactStagingDirectory)/pack
@@ -465,44 +461,12 @@ extends:
 
                         publish=$(normalize_bool "$PUBLISH" "publish")
                         testBuild=$(normalize_bool "$TEST_BUILD" "testBuild")
-                        # flub only emits SetVersion.isLatest when it is true. Azure leaves an unresolved macro
-                        # unchanged, so normalize both an empty value and the literal macro to false.
+
+                        # flub only emits SetVersion.isLatest when it is true.
                         case "${IS_LATEST:-}" in
                           ""|'$(SetVersion.isLatest)') isLatest=false ;;
                           *) isLatest=$(normalize_bool "$IS_LATEST" "isLatest") ;;
                         esac
-                        isReleaseGroup=$(normalize_bool "$IS_RELEASE_GROUP" "isReleaseGroup")
-
-                        # Derived publish eligibility. Must stay in sync with the equivalent conditions in
-                        # include-publish-npm-package.yml / include-publish-npm-package-deployment.yml /
-                        # include-git-tag-steps.yml / include-publish-npm-package.yml (manifest stage condition).
-                        publishToTest=false
-                        [ "$publish" = "true" ] && [ "$testBuild" = "true" ] && publishToTest=true
-
-                        publishToBuild=false
-                        [ "$publish" = "true" ] && [ "$testBuild" = "false" ] && publishToBuild=true
-
-                        publishToDev=false
-                        [ "$publishToBuild" = "true" ] && [ "$isReleaseGroup" = "true" ] && publishToDev=true
-
-                        publishToPublic=false
-                        if [ "$publish" = "true" ] && { [ "$release" = "release" ] || [ "$release" = "prerelease" ]; }; then
-                          publishToPublic=true
-                        fi
-
-                        shouldTag=false
-                        [ "$publishToPublic" = "true" ] && [ "$release" = "release" ] && shouldTag=true
-
-                        # Matches the upload_manifests stage condition in include-publish-npm-package.yml: internal
-                        # project only, client release group only, and only for main/release/*/test/* branches.
-                        shouldUploadManifest=false
-                        if [ "$publish" = "true" ] && [ "$TEAM_PROJECT" = "internal" ] && [ "$TAG_NAME" = "client" ]; then
-                          case "$SOURCE_BRANCH" in
-                            refs/heads/main|refs/heads/release/*|refs/heads/test/*)
-                              shouldUploadManifest=true
-                              ;;
-                          esac
-                        fi
 
                         jq -n \
                           --argjson schemaVersion 1 \
@@ -511,29 +475,13 @@ extends:
                           --argjson isLatest "$isLatest" \
                           --arg release "$release" \
                           --argjson testBuild "$testBuild" \
-                          --arg tagName "$TAG_NAME" \
-                          --argjson isReleaseGroup "$isReleaseGroup" \
-                          --argjson publishToTest "$publishToTest" \
-                          --argjson publishToBuild "$publishToBuild" \
-                          --argjson publishToDev "$publishToDev" \
-                          --argjson publishToPublic "$publishToPublic" \
-                          --argjson shouldTag "$shouldTag" \
-                          --argjson shouldUploadManifest "$shouldUploadManifest" \
                           '{
                             schemaVersion: $schemaVersion,
                             publish: $publish,
                             version: $version,
                             isLatest: $isLatest,
                             release: $release,
-                            testBuild: $testBuild,
-                            tagName: $tagName,
-                            isReleaseGroup: $isReleaseGroup,
-                            publishToTest: $publishToTest,
-                            publishToBuild: $publishToBuild,
-                            publishToDev: $publishToDev,
-                            publishToPublic: $publishToPublic,
-                            shouldTag: $shouldTag,
-                            shouldUploadManifest: $shouldUploadManifest
+                            testBuild: $testBuild
                           }' > publish-metadata.json
 
                         echo "Generated publish-metadata.json:"
