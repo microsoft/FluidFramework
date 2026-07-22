@@ -183,9 +183,6 @@ export enum AttachState {
     Detached = "Detached"
 }
 
-// @alpha
-export function basicKey<T>(type: string): RegistryKey<T, T>;
-
 // @alpha @sealed
 export type ChangeMetadata = LocalChangeMetadata | RemoteChangeMetadata;
 
@@ -306,7 +303,7 @@ export const contentSchemaSymbol: unique symbol;
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
 // @alpha
-export function createDataStoreKind<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
 
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
@@ -370,6 +367,12 @@ export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleR
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
+
+// @alpha
+export function defineDataStore<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
+// @alpha
+export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
 // @alpha
 export interface DirtyTreeMap {
@@ -1321,6 +1324,9 @@ export interface LogLevelConst {
     readonly verbose: 10;
 }
 
+// @alpha
+export function lookupInRegistry<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1534,9 +1540,6 @@ export interface RegistryKey<TOut, TIn = unknown> {
     adapt(value: TIn): TOut;
     readonly type: string;
 }
-
-// @alpha
-export function registryLookup<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
 
 // @alpha @sealed
 export interface RemoteChangeMetadata extends CommitMetadata {
@@ -2437,9 +2440,6 @@ export interface TreeContextAlpha {
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
 }
-
-// @alpha
-export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
 // @alpha @input
 export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {

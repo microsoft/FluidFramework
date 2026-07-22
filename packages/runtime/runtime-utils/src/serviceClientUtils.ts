@@ -15,14 +15,14 @@ import type {
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
-	basicKey,
+	createBasicRegistryKey,
 	type DataStoreKey,
 	type DataStoreKind,
 	type DataStoreRegistry,
 	type FluidContainerAttached,
 	type FluidContainerWithService,
 	type Registry,
-	registryLookup,
+	lookupInRegistry,
 	type ServiceClient,
 } from "@fluidframework/driver-definitions/internal";
 import type {
@@ -51,7 +51,7 @@ export const rootDataStoreId = "root";
 export function convertRegistry<T>(registry: DataStoreRegistry<T>): IFluidDataStoreRegistry {
 	return {
 		async get(name: string): Promise<FluidDataStoreRegistryEntry | undefined> {
-			const dataStoreKind = await registryLookup(registry, basicKey(name));
+			const dataStoreKind = await lookupInRegistry(registry, createBasicRegistryKey(name));
 			DataStoreKindImplementation.narrowGeneric(dataStoreKind);
 			return dataStoreKind;
 		},
@@ -222,7 +222,7 @@ export class ServiceClientImplementation<TOptions> implements ServiceClient {
 			DataStoreKindImplementation.narrowGeneric(root);
 			return this.statics.createDetached(normalizeRegistry(root), this.options, root);
 		} else {
-			const result = await registryLookup(registry, root);
+			const result = await lookupInRegistry(registry, root);
 			return this.statics.createDetached(registry, this.options, result);
 		}
 	}

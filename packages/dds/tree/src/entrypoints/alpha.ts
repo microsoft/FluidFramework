@@ -328,6 +328,6 @@ export {
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
 	trackDirtyNodes, 
-	treeDataStoreKind
+	defineTreeDataStore
 	// #endregion
 } from "../index.js";

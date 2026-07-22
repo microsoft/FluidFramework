@@ -14,7 +14,7 @@ import {
 	type FluidContainerAttached,
 	type FluidContainerWithService,
 	type Registry,
-	registryLookup,
+	lookupInRegistry,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	IContainerRuntimeBase,
@@ -213,7 +213,7 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 	}
 
 	public async createDataStore<T>(key: DataStoreKey<T>): Promise<T> {
-		const kind = await registryLookup(this.registry, key);
+		const kind = await lookupInRegistry(this.registry, key);
 		DataStoreKindImplementation.narrowGeneric(kind);
 		const containerRuntime = this.getRuntime();
 

@@ -420,5 +420,5 @@ export {
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
 export { Component } from "./componentApi.js";
 
-export { treeDataStoreKind, instantiateTreeFirstTime } from "./treeDataStore.js";
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
 export type { TreeDataStoreOptions } from "./treeDataStore.js";

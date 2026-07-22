@@ -12,7 +12,7 @@ import type { IFluidDataStoreRuntime } from "@fluidframework/datastore-definitio
 import {
 	type Registry,
 	type DataStoreKind,
-	registryLookup,
+	lookupInRegistry,
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	IFluidDataStoreContext,
@@ -27,6 +27,14 @@ import type {
 	SharedObjectKindAlpha,
 } from "./sharedObject.js";
 import type { ISharedObject } from "./types.js";
+
+/**
+ * This file provides the implementation of {@link @fluidframework/driver-definitions#DataStoreKind}
+ * and is therefore a key part of the implementation of the {@link @fluidframework/driver-definitions#ServiceClient} API surface.
+ *
+ * Note that much of the API surface beyond {@link defineDataStore} could be removed/deduplicated
+ * if the unification noted in the TODOs in {@link SharedObjectRegistry} is implemented.
+ */
 
 /**
  * A {@link @fluidframework/driver-definitions#Registry} of shared object kinds that can be created or loaded within a data store.
@@ -91,7 +99,7 @@ export function sharedObjectRegistryFromIterable(
 /**
  * Options which define how to construct a particular {@link @fluidframework/driver-definitions#DataStoreKind}.
  * @remarks
- * Use {@link createDataStoreKind} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
+ * Use {@link defineDataStore} to create a {@link @fluidframework/driver-definitions#DataStoreKind} from these options.
  * @input
  * @alpha
  */
@@ -118,7 +126,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	 * TODO:
 	 * This requires the caller to produce a single root shared object (which is keyed by {@link rootSharedObjectId}).
 	 * This should be fine for new code, but code migrated from legacy APIs might need more flexibility.
-	 * Such use-cases could be accommodated providing a legacy alternative to `createDataStoreKind` where `instantiateFirstTime` and `view` directly expose access to named root shared objects.
+	 * Such use-cases could be accommodated providing a legacy alternative to `defineDataStore` where `instantiateFirstTime` and `view` directly expose access to named root shared objects.
 	 * This should be easy to implement, but is currently not included.
 	 */
 	instantiateFirstTime(
@@ -139,7 +147,7 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
  * Creates a {@link @fluidframework/driver-definitions#DataStoreKind} from {@link DataStoreOptions}.
  * @alpha
  */
-export function createDataStoreKind<T, TRoot extends IFluidLoadable>(
+export function defineDataStore<T, TRoot extends IFluidLoadable>(
 	options: DataStoreOptions<TRoot, T>,
 ): DataStoreKind<T> {
 	return new DataStoreKindImplementation<T>({
@@ -194,6 +202,17 @@ function convertRegistry(
  */
 const rootSharedObjectId = "root";
 
+/**
+ * Creates a data store channel.
+ * @param context - The data store context.
+ * @param existing - Whether the data store already exists. When true, this loads it, when false a new one is created.
+ * @param options - The data store options.
+ * @returns A promise that resolves to the created data store channel.
+ * @remarks
+ * Currently this is limited to data stores which have a single named channel,
+ * which must have the {@link rootSharedObjectId} and is attached at creation time.
+ * This limitation may be relaxed in the future.
+ */
 async function createDataStore<T, TRoot extends IFluidLoadable>(
 	context: IFluidDataStoreContext,
 	existing: boolean,
@@ -207,7 +226,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 		async (runtimeInner: IFluidDataStoreRuntime) => {
 			const innerContext: DataStoreContext = {
 				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
-					const kind = registryLookup(sharedObjectRegistry, key);
+					const kind = lookupInRegistry(sharedObjectRegistry, key);
 					// Create detached channel.
 					return asSharedObjectKind(kind).create(runtimeInner);
 				},
@@ -222,7 +241,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 					if (createdRoot !== undefined) {
 						throw new UsageError("Root shared object already created");
 					}
-					const kind = registryLookup(sharedObjectRegistry, key);
+					const kind = lookupInRegistry(sharedObjectRegistry, key);
 					const result = asSharedObjectKind(kind).create(runtimeInner, rootSharedObjectId);
 
 					// Every shared object is also an ISharedObject;

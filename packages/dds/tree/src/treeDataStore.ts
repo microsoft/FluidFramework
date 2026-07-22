@@ -14,7 +14,7 @@ import type {
 } from "@fluidframework/shared-object-base/internal";
 import {
 	sharedObjectRegistryFromIterable,
-	createDataStoreKind,
+	defineDataStore,
 } from "@fluidframework/shared-object-base/internal";
 
 import type {
@@ -27,7 +27,7 @@ import type {
 import { SharedTreeAlpha } from "./treeFactory.js";
 
 /**
- * Options for {@link treeDataStoreKind}.
+ * Options for {@link defineTreeDataStore}.
  * @input
  * @alpha
  */
@@ -56,14 +56,15 @@ export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema>
 }
 
 /**
- * Simple tree specific wrapper around {@link @fluidframework/shared-object-base#createDataStoreKind}.
+ * Defines a {@link @fluidframework/driver-definitions#DataStoreKind} for a simple tree data store.
  * @remarks
- * Use {@link @fluidframework/shared-object-base#createDataStoreKind} directly if more control is needed, even if still just using tree.
+ * This is a simple tree specific wrapper around {@link @fluidframework/shared-object-base#defineDataStore}.
+ * Use {@link @fluidframework/shared-object-base#defineDataStore} directly if more control is needed, even if still just using tree.
  *
  * This uses {@link instantiateTreeFirstTime} to create the tree, and optionally initialize it.
  * @alpha
  */
-export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
+export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(
 	options: TreeDataStoreOptions<TSchema>,
 ): DataStoreKind<TreeView<TSchema>> {
 	const registry: SharedObjectRegistry =
@@ -71,7 +72,7 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 			? options.registry
 			: sharedObjectRegistryFromIterable([...(options.registry ?? [SharedTreeAlpha])]);
 
-	const result = createDataStoreKind<TreeView<TSchema>, ITree>({
+	const result = defineDataStore<TreeView<TSchema>, ITree>({
 		type: options.type,
 		registry,
 		async instantiateFirstTime(
@@ -96,7 +97,8 @@ export function treeDataStoreKind<const TSchema extends ImplicitFieldSchema>(
 /**
  * Simple tree instantiation helper.
  * @remarks
- * This is used by {@link treeDataStoreKind}, but can also be used in custom DataStores with {@link @fluidframework/shared-object-base#createDataStoreKind}.
+ * This is used by {@link defineTreeDataStore}, but can also be used in custom DataStores with {@link @fluidframework/shared-object-base#defineDataStore}.
+ * Typically used to implement {@link @fluidframework/shared-object-base#DataStoreOptions.instantiateFirstTime} to create the tree and optionally initialize it.
  * @alpha
  */
 export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(

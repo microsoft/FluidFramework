@@ -94,7 +94,7 @@ export * from "@fluidframework/tree/alpha";
 
 // These are alpha APIs, but this package doesn't have an alpha entry point so they are imported from "internal".
 export {
-	createDataStoreKind,
+	defineDataStore,
 	sharedObjectRegistryFromIterable,
 } from "@fluidframework/shared-object-base/internal";
 export type {
@@ -120,8 +120,8 @@ export type {
 	ServiceOptions,
 } from "@fluidframework/driver-definitions/internal";
 export {
-	basicKey,
-	registryLookup,
+	createBasicRegistryKey,
+	lookupInRegistry,
 	// Due to this currently referencing several existing public types we do not want to stabilize as reexports from here,
 	// do not reexport getContainerAudience for now.
 	// getContainerAudience,

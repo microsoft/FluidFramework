@@ -13,9 +13,9 @@ This introduces an experimental (`@alpha`), service-agnostic API for working wit
 
 The new surface is made up of:
 
-- `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `registryLookup`, `basicKey`).
-- `createDataStoreKind` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
-- `treeDataStoreKind` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
+- `ServiceClient` (`@fluidframework/driver-definitions`): the entry point for creating and loading containers. Along with it come the supporting container types (`FluidContainer`, `FluidContainerWithService`, `FluidContainerAttached`), the data store model (`DataStoreKind`, `DataStoreKey`, `DataStoreRegistry`, `DataStoreCreator`), and the generic registry primitives (`Registry`, `RegistryKey`, `lookupInRegistry`, `createBasicRegistryKey`).
+- `defineDataStore` and `sharedObjectRegistryFromIterable` (`@fluidframework/shared-object-base`): build a `DataStoreKind` from a root shared object and a registry of shared object kinds.
+- `defineTreeDataStore` and `instantiateTreeFirstTime` (`@fluidframework/tree`): a SharedTree-specific convenience wrapper that produces a `DataStoreKind` backed by a `TreeView`.
 - `startEphemeralService` (`@fluidframework/local-driver`): starts an in-memory `EphemeralService` for tests. The service owns the lifetime of the in-memory documents and resources, and produces `ServiceClient`s connected to it (via `EphemeralService.newClient` or `EphemeralService.defaultClient`). The helpers `cleanupEphemeralService` and `getDefaultEphemeralService` manage an optional default service instance.
 
 Apart from the `@fluidframework/local-driver` helpers (which come from `@fluidframework/local-driver/alpha`), these APIs are also re-exported from `fluid-framework`. None reference any `@legacy` types.
@@ -24,7 +24,7 @@ Example:
 
 ```typescript
 import { startEphemeralService } from "@fluidframework/local-driver/alpha";
-import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
+import { ServiceClient, defineTreeDataStore, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 import { strict as assert } from "node:assert";
 
 // Start an ephemeral in-memory service and get a ServiceClient connected to it.
@@ -34,7 +34,7 @@ const client: ServiceClient = service.defaultClient;
 // In this case the schema is for a single number with an initializer that starts the it at 1.
 // This schema is captures in the type allowing for strongly typed access to the data in the tree,
 // where the type matches the schema based runtime enforcement of the schema.
-const numberStore = treeDataStoreKind({
+const numberStore = defineTreeDataStore({
 	type: "my-app-root",
 	config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
 	initializer: () => 1,

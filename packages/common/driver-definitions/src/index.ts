@@ -145,4 +145,4 @@ export type {
 	ServiceClient,
 	ServiceOptions,
 } from "./serviceClient.js";
-export { basicKey, registryLookup, featureVersion } from "./serviceClient.js";
+export { createBasicRegistryKey, lookupInRegistry, featureVersion } from "./serviceClient.js";

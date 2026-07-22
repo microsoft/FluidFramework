@@ -10,7 +10,7 @@ import {
 	cleanupEphemeralService,
 	startEphemeralService,
 } from "@fluidframework/local-driver/internal";
-import { createDataStoreKind } from "@fluidframework/shared-object-base/internal";
+import { defineDataStore } from "@fluidframework/shared-object-base/internal";
 
 import { SchematizingSimpleTreeView, Tree } from "../shared-tree/index.js";
 import {
@@ -19,7 +19,7 @@ import {
 	TreeViewConfiguration,
 	type ITree,
 } from "../simple-tree/index.js";
-import { instantiateTreeFirstTime, treeDataStoreKind } from "../treeDataStore.js";
+import { instantiateTreeFirstTime, defineTreeDataStore } from "../treeDataStore.js";
 import { SharedTree, SharedTreeAlpha } from "../treeFactory.js";
 
 describe("treeDataStore", () => {
@@ -30,7 +30,7 @@ describe("treeDataStore", () => {
 	// See also examples/utils/import-testing/src/test/apiExamples.spec.ts for examples which are more public facing and have imports not allowed in this package.
 
 	it("detached example", async () => {
-		const myFactory = treeDataStoreKind({
+		const myFactory = defineTreeDataStore({
 			type: "my-tree",
 			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
 			initializer: () => 1,
@@ -45,7 +45,7 @@ describe("treeDataStore", () => {
 	});
 
 	it("attach example", async () => {
-		const myFactory = treeDataStoreKind({
+		const myFactory = defineTreeDataStore({
 			type: "my-tree",
 			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
 			initializer: () => 1,
@@ -59,7 +59,7 @@ describe("treeDataStore", () => {
 	});
 
 	it("collaboration example", async () => {
-		const myFactory = treeDataStoreKind({
+		const myFactory = defineTreeDataStore({
 			type: "my-tree",
 			config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
 			initializer: () => 1,
@@ -95,7 +95,7 @@ describe("treeDataStore", () => {
 		let id: string;
 
 		{
-			const myFactory = treeDataStoreKind({
+			const myFactory = defineTreeDataStore({
 				type: "my-tree",
 				config: new TreeViewConfiguration({ schema: SchemaFactoryAlpha.number }),
 				initializer: () => 1,
@@ -107,7 +107,7 @@ describe("treeDataStore", () => {
 		}
 
 		{
-			const myFactory = treeDataStoreKind({
+			const myFactory = defineTreeDataStore({
 				type: "my-tree",
 				config: new TreeViewConfiguration({
 					schema: [SchemaFactoryAlpha.number, SchemaFactory.string],
@@ -125,7 +125,7 @@ describe("treeDataStore", () => {
 	it("lazy loading example", async () => {
 		// A minimal datastore which lazy loads SharedTree when needed.
 		// Due to limitations on registries, this has to load SharedTree when the dataStore is loaded, not when shared tree is needed in the datastore.
-		const myFactory = createDataStoreKind({
+		const myFactory = defineDataStore({
 			type: "my-tree",
 			registry: async () => {
 				const module = await import("../treeFactory.js");
@@ -152,7 +152,7 @@ describe("treeDataStore", () => {
 	});
 
 	it("createDataStore", async () => {
-		const myFactory = treeDataStoreKind({
+		const myFactory = defineTreeDataStore({
 			type: "my-tree",
 			config: new TreeViewConfiguration({
 				schema: [SchemaFactoryAlpha.number, SchemaFactory.handle],
@@ -178,7 +178,7 @@ describe("treeDataStore", () => {
 		});
 
 		// A DataStore which is an initialized ITree with the above config.
-		const MyTree = createDataStoreKind<ITree, ITree>({
+		const MyTree = defineDataStore<ITree, ITree>({
 			type: "my-tree",
 			registry: async () => () => SharedTreeAlpha,
 			async instantiateFirstTime(rootCreator, creator): Promise<ITree> {

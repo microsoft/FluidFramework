@@ -9,7 +9,7 @@ import {
 } from "@fluidframework/local-driver/alpha";
 import {
 	ServiceClient,
-	treeDataStoreKind,
+	defineTreeDataStore,
 	TreeViewConfiguration,
 	SchemaFactory,
 } from "fluid-framework/alpha";
@@ -24,7 +24,7 @@ describe("examples", () => {
 
 	it("self contained example", async () => {
 		// import { startEphemeralService, cleanupEphemeralService } from "@fluidframework/local-driver/alpha";
-		// import { ServiceClient, treeDataStoreKind, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
+		// import { ServiceClient, defineTreeDataStore, TreeViewConfiguration, SchemaFactory } from "fluid-framework/alpha";
 		// import { strict as assert } from "node:assert";
 
 		// Create an ephemeral in-memory service, and a ServiceClient connected to it.
@@ -35,7 +35,7 @@ describe("examples", () => {
 		// In this case the schema is for a single number with an initializer that starts the it at 1.
 		// This schema is captures in the type allowing for strongly typed access to the data in the tree,
 		// where the type matches the schema based runtime enforcement of the schema.
-		const numberStore = treeDataStoreKind({
+		const numberStore = defineTreeDataStore({
 			type: "my-app-root",
 			config: new TreeViewConfiguration({ schema: SchemaFactory.number }),
 			initializer: () => 1,

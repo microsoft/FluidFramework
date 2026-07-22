@@ -35,7 +35,7 @@ export {
 	type SharedObjectOptions,
 	mergeAPIs,
 } from "./sharedObjectKernel.js";
-export { createDataStoreKind, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
+export { defineDataStore, sharedObjectRegistryFromIterable } from "./dataStoreKind.js";
 export { makeStubDataStoreKind } from "./stubSharedObject.js";
 export type {
 	DataStoreOptions,

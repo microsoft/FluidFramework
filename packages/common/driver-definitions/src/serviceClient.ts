@@ -8,6 +8,16 @@ import type { ErasedBaseType } from "@fluidframework/core-interfaces/internal";
 /**
  * This file defines the external facing API for the {@link ServiceClient} and related types.
  *
+ * It provides an API surface at a similar abstraction level to aqueduct and fluid-static, but is intended to be a replacement for those which solves several problems with them.
+ * Mainly it strives to have the encapsulation of implementation details (including all legacy APIs from aqueduct and lower level internals) like fluid-static
+ * while being both more flexible and simpler.
+ *
+ * This aims to be the cleanest practical way to build applications on the Fluid Framework Client.
+ * There are however several known cases where the API quality was sacrificed to ease initial implementation,
+ * since some of the unification desired in this API's design are not yet implemented in the underlying Fluid Framework Client code or require additional work to implement.
+ * These cases are called out with TODOs in this file.
+ * These should be considered and addressed before stabilizing this API past alpha.
+ *
  * All code interacting through this API surface within a single client must avoid using multiple copies of any Fluid Framework client package (at the same or different versions).
  * This mirrors the `@public` "declarative model" APIs and is a deliberate simplification of what is allowed in the legacy API surface.
  * It is enforced best-effort only: `@sealed` nominal erased types catch many mismatches at compile time, and factory identity checks throw a UsageError ("Conflicting ... with same type") at run time, but the checking is not exhaustive.
@@ -46,7 +56,7 @@ export type Registry<T> = (type: string) => T;
 
 /**
  * A strongly typed key for a {@link Registry}.
- * Use with {@link registryLookup}.
+ * Use with {@link lookupInRegistry}.
  * @remarks
  * Used to look up a `TIn` in a `Registry<TIn>`, and produce a `TOut` from it.
  * @typeParam TOut - The type produced by {@link RegistryKey.adapt} from a looked-up entry.
@@ -83,7 +93,7 @@ export interface RegistryKey<TOut, TIn = unknown> {
  * @typeParam TIn - The type of the entries in `registry`.
  * @alpha
  */
-export function registryLookup<TOut, TIn>(
+export function lookupInRegistry<TOut, TIn>(
 	registry: Registry<TIn>,
 	key: RegistryKey<TOut, TIn>,
 ): TOut {
@@ -95,7 +105,7 @@ export function registryLookup<TOut, TIn>(
  * @typeParam T - The type of the registry entry, which is returned unchanged by the key.
  * @alpha
  */
-export function basicKey<T>(type: string): RegistryKey<T, T> {
+export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
 	return {
 		type,
 		adapt: (value) => value,
@@ -287,7 +297,7 @@ export interface FluidContainerAttached<TData = unknown> extends FluidContainer<
 }
 
 /**
- * Describes a kind of data store, and allows creating and loading instances of it.
+ * Defines a {@link https://en.wikipedia.org/wiki/Kind_(type_theory) | kind} of data store, allowing creating and loading instances of it.
  * @remarks
  * A `DataStoreKind` acts as the factory and type descriptor for a category of data store:
  * it defines the `type` used to identify the data store in a {@link DataStoreRegistry},
@@ -298,8 +308,9 @@ export interface FluidContainerAttached<TData = unknown> extends FluidContainer<
  *
  * A `DataStoreKind` is not constructed directly.
  * Instead, obtain one from a framework-provided factory:
- * use {@link @fluidframework/shared-object-base#createDataStoreKind} to build a data store from a root shared object,
- * or use a more specific wrapper around it, such as {@link @fluidframework/tree#treeDataStoreKind} for a {@link @fluidframework/tree#TreeView}-backed data store.
+ * use {@link @fluidframework/shared-object-base#defineDataStore} to define a data store which wraps a root shared object,
+ * or use a more specific wrapper around that,
+ * such as {@link @fluidframework/tree#defineTreeDataStore} for a {@link @fluidframework/tree#TreeView}-backed data store.
  *
  * Since it implements {@link DataStoreKey}, a `DataStoreKind` can also be used directly as the key to look
  * itself up in a {@link Registry}.
@@ -317,7 +328,7 @@ export interface DataStoreKind<out T = unknown>
 
 /**
  * A registry of {@link DataStoreKind}s.
- * @remarks
+ * @privateRemarks
  * TODO: unify this with SharedObjectRegistry.
  *
  * @typeParam T - The type covering all {@link DataStoreKind}s in the registry.
