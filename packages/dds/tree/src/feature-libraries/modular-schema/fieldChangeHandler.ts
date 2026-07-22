@@ -173,7 +173,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * @param filterDetach - This should be called for each range of detaches in the changeset,
 	 * and the detach should be preserved, removed, or converted to a non-move detach as specified.
 	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
-	 * @param filterDetach - This should be called for each range of attaches in the changeset,
+	 * @param filterAttach - This should be called for each range of attaches in the changeset,
 	 * and the attach should be preserved, removed, or converted to a non-move attach as specified.
 	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
 	 * @param preserveOtherEdits - Whether edits other than attaches and detaches (e.g. root renames),
