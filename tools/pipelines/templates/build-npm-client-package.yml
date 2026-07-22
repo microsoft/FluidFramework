@@ -453,8 +453,9 @@ extends:
                           exit 1
                         fi
 
-                        case "$RELEASE" in
-                          none|prerelease|release) ;;
+                        case "${RELEASE:-}" in
+                          "") release=none ;;
+                          none|prerelease|release) release="$RELEASE" ;;
                           *)
                             echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'. Expected one of: none, prerelease, release"
                             exit 1
@@ -476,7 +477,7 @@ extends:
                           --argjson publish "$publish" \
                           --arg version "$VERSION" \
                           --argjson isLatest "$isLatest" \
-                          --arg release "$RELEASE" \
+                          --arg release "$release" \
                           --argjson testBuild "$testBuild" \
                           --arg tagName "$TAG_NAME" \
                           --argjson isReleaseGroup "$isReleaseGroup" \
