@@ -1031,10 +1031,10 @@ const objectScenarios = {
 	 *
 	 * 0. initial                                      -\> `Box: <empty>`
 	 * 1. insert nested Box with tags ["x☠️", "y☠️"]  -\> `Box: { nested: Box: { tags: ["x☠️", "y☠️"] } }`
-	 * 2. remove tag at 0                              -\> `Box: { nested: Box: { tags: ["y☠️"] } }`
-	 * 3. remove root box                              -\> `undefined`  |: `Box: { nested: Box: { tags: ["y☠️"] } }`
+	 * 2. remove tag at 0                              -\> `Box: { nested: Box: { tags: ["y☠️"] } }`         |: "x☠️"
+	 * 3. remove root box                              -\> `undefined`                                       |: "x☠️", `Box: { nested: Box: { tags: ["y☠️"] } }`
 	 *
-	 * Classification: x☠️ and y☠️ come in as new nested content and leave as nested under [detached] prior node (same parent)
+	 * Classification: x☠️ and y☠️ come in as new nested content and leave as detached root and nested under [detached] prior node (same parent), respectively
 	 */
 	nest_Box_with_tags_then_root_Box_removed: {
 		schema: OptionalBox,
