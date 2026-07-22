@@ -64,6 +64,7 @@ import {
 	mintRevisionTag,
 	testIdCompressor,
 	testRevisionTagCodec,
+	validateViewConsistency,
 	viewCheckout,
 } from "../utils.js";
 
@@ -847,6 +848,29 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, ["A", "B"]);
 		});
 
+		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
+			const provider = new TestTreeProviderLite(1);
+			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
+			const view = provider.trees[0].kernel.viewWith(config);
+			view.initialize([]);
+
+			const forks: (typeof view)[] = [];
+			view.events.on("changed", () => {
+				forks.push(view.fork());
+			});
+
+			view.runTransaction(() => {
+				view.root.insertAtEnd("A");
+			});
+
+			assert.equal(forks.length, 1);
+
+			assert.deepEqual(forks[0].disposed, false);
+			assert.deepEqual(forks[0].root, ["A"]);
+
+			assert.deepEqual(view.root, ["A"]);
+		});
+
 		/**
 		 * Wraps `checkout.transaction` to record the {@link SquashingTransactionOptions.postProcessor | post-processor} injected
 		 * into each `start` call and to count how many times the transaction is committed.
@@ -995,27 +1019,108 @@ describe("sharedTreeView", () => {
 			assert.deepEqual(view.root, []);
 		});
 
-		it('forks can be created during the "changed" event resulting from a committed transaction', () => {
-			const provider = new TestTreeProviderLite(1);
-			const config = new TreeViewConfiguration({ schema: rootArray, enableSchemaValidation });
-			const view = provider.trees[0].kernel.viewWith(config);
-			view.initialize([]);
-
-			const forks: (typeof view)[] = [];
-			view.events.on("changed", () => {
-				forks.push(view.fork());
+		describe("view with transaction is consistent with a synchronized peer view", () => {
+			// A eat-everything post-processor: it erases all changes, demonstrating
+			// a processor that modifies the change set.
+			const eraseChangesPostProcessor = createTransactionPostProcessor({
+				applicability: ChangeProcessorApplicability.Always,
+				processChange: () => ({ changes: [] }),
 			});
 
-			view.runTransaction(() => {
-				view.root.insertAtEnd("A");
+			it("using inner change processor that makes changes (erases changes) and outer edits", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const config = new TreeViewConfiguration({
+					schema: rootArray,
+					enableSchemaValidation,
+				});
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize([]);
+
+				// Act
+				view.runTransaction(() => {
+					view.root.insertAtEnd("A", "B", "C"); //      -> view: [     A B C ]  detached: n/a
+					view.runTransaction(
+						() => {
+							// Shifts A B C while inserting new content
+							view.root.insertAtStart("D", "E"); // -> view: [ D E A B C ]  detached: n/a
+							// Remove new (D) and prior (A+B) content and shifts C
+							view.root.removeRange(1, 4); //       -> view: [ D       C ]  detached: D A B
+							assert.deepEqual(view.root, ["D", "C"]);
+						},
+						{ postProcessor: eraseChangesPostProcessor },
+					); //                                         -> view: [     A B C ]  detached: n/a
+					// Attempts to remove second element, which should remove "B"
+					// since only the original elements remain as the processor
+					// erased the other changes.
+					view.root.removeRange(1, 2); //               -> view: [     A   C ]  detached: B
+				});
+
+				// Verify
+				assert.deepEqual(view.root, ["A", "C"]);
+				provider.synchronizeMessages();
+				const otherView = provider.trees[1].kernel.viewWith(config);
+				assert.deepEqual(otherView.root, ["A", "C"]);
+				validateViewConsistency(view.checkout, otherView.checkout);
 			});
 
-			assert.equal(forks.length, 1);
+			it("using inner change processor that makes changes (erases changes) and no outer edits", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const config = new TreeViewConfiguration({
+					schema: rootArray,
+					enableSchemaValidation,
+				});
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize(["A", "B"]);
 
-			assert.deepEqual(forks[0].disposed, false);
-			assert.deepEqual(forks[0].root, ["A"]);
+				// Act
+				view.runTransaction(() => {
+					view.runTransaction(
+						() => {
+							view.root.insertAtStart("C", "D");
+							view.root.removeRange(1, 3);
+							assert.deepEqual(view.root, ["C", "B"]);
+						},
+						{ postProcessor: eraseChangesPostProcessor },
+					);
+				});
 
-			assert.deepEqual(view.root, ["A"]);
+				// Verify
+				assert.deepEqual(view.root, ["A", "B"]);
+				provider.synchronizeMessages();
+				const otherView = provider.trees[1].kernel.viewWith(config);
+				assert.deepEqual(otherView.root, ["A", "B"]);
+				validateViewConsistency(view.checkout, otherView.checkout);
+			});
+
+			it("using outer change processor that makes changes (erases changes)", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const config = new TreeViewConfiguration({
+					schema: rootArray,
+					enableSchemaValidation,
+				});
+				const view = provider.trees[0].kernel.viewWith(config);
+				view.initialize(["A", "B"]);
+
+				// Act
+				view.runTransaction(
+					() => {
+						view.root.insertAtStart("C", "D");
+						view.root.removeRange(1, 3);
+						assert.deepEqual(view.root, ["C", "B"]);
+					},
+					{ postProcessor: eraseChangesPostProcessor },
+				);
+
+				// Verify
+				assert.deepEqual(view.root, ["A", "B"]);
+				provider.synchronizeMessages();
+				const otherView = provider.trees[1].kernel.viewWith(config);
+				assert.deepEqual(otherView.root, ["A", "B"]);
+				validateViewConsistency(view.checkout, otherView.checkout);
+			});
 		});
 	});
 

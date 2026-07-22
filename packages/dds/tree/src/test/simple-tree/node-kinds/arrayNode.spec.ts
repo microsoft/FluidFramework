@@ -161,6 +161,13 @@ describe("ArrayNode", () => {
 		schemaType: typeof PojoEmulationNumberArray | typeof CustomizableNumberArray,
 	): void {
 		describeHydration(title, (init) => {
+			function buildAlphaArray(
+				initial: readonly number[],
+			): TreeArrayNodeAlpha<typeof schemaFactory.number> {
+				const list = init(schemaType, initial);
+				return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
+			}
+
 			it("fails at runtime if attempting to set content via index assignment", () => {
 				const array = init(schemaType, [0]);
 				const mutableArray = array as Mutable<typeof array>;
@@ -183,6 +190,217 @@ describe("ArrayNode", () => {
 				const jsArray = [0, 1, 2];
 				const array = init(schemaType, jsArray);
 				assert.equal(JSON.stringify(array), JSON.stringify(jsArray));
+			});
+
+			describe("at", () => {
+				it("returns the item at the given index", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(0), 0);
+					assert.equal(array.at(1), 1);
+					assert.equal(array.at(2), 2);
+				});
+
+				it("supports negative indices, counting back from the end", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(-1), 2);
+					assert.equal(array.at(-3), 0);
+				});
+
+				it("returns undefined for out of bounds indices", () => {
+					const array = buildAlphaArray([0, 1, 2]);
+					assert.equal(array.at(3), undefined);
+					assert.equal(array.at(-4), undefined);
+				});
+			});
+
+			describe("pop", () => {
+				it("removes and returns the last item", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(array.pop(), 3);
+					assert.deepEqual([...array], [1, 2]);
+				});
+
+				it("removes the only item, leaving the array empty", () => {
+					const array = buildAlphaArray([1]);
+					assert.equal(array.pop(), 1);
+					assert.deepEqual([...array], []);
+				});
+
+				it("returns undefined on an empty array without modifying it", () => {
+					const array = buildAlphaArray([]);
+					assert.equal(array.pop(), undefined);
+					assert.deepEqual([...array], []);
+				});
+			});
+
+			describe("shift", () => {
+				it("removes and returns the first item", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(array.shift(), 1);
+					assert.deepEqual([...array], [2, 3]);
+				});
+
+				it("removes the only item, leaving the array empty", () => {
+					const array = buildAlphaArray([1]);
+					assert.equal(array.shift(), 1);
+					assert.deepEqual([...array], []);
+				});
+
+				it("returns undefined on an empty array without modifying it", () => {
+					const array = buildAlphaArray([]);
+					assert.equal(array.shift(), undefined);
+					assert.deepEqual([...array], []);
+				});
+			});
+
+			describe("findLast", () => {
+				it("returns the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLast((value) => value % 2 === 0),
+						4,
+					);
+					assert.equal(
+						array.findLast((value) => value < 3),
+						2,
+					);
+				});
+
+				it("returns undefined when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLast((value) => value > 10),
+						undefined,
+					);
+				});
+
+				it("visits items from last to first, passing the index and array to the predicate", () => {
+					const array = buildAlphaArray([5, 6, 7]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index, items) => {
+						assert.deepEqual([...items], [5, 6, 7]);
+						visited.push({ value, index });
+						return false;
+					});
+					assert.deepEqual(visited, [
+						{ value: 7, index: 2 },
+						{ value: 6, index: 1 },
+						{ value: 5, index: 0 },
+					]);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index) => {
+						if (index === 3) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 2 holds 4 and index 0 holds 2.
+					// This matches Array.prototype.findLast run with an equivalent mutating callback.
+					assert.deepEqual(visited, [
+						{ value: 4, index: 3 },
+						{ value: 4, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("returns the matched item even if the predicate moves it", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result = array.findLast((value) => {
+						array.removeAt(0);
+						return value === 3;
+					});
+					assert.equal(result, 3);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLast((value) => value % 2),
+						1,
+					);
+				});
+
+				it("narrows the result type when passed a type-guard predicate", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result: 2 | undefined = array.findLast((value): value is 2 => value === 2);
+					assert.equal(result, 2);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLast(isTarget, context);
+					assert.equal(result, 2);
+				});
+			});
+
+			describe("findLastIndex", () => {
+				it("returns the index of the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2 === 0),
+						3,
+					);
+					assert.equal(
+						array.findLastIndex((value) => value < 3),
+						1,
+					);
+				});
+
+				it("returns -1 when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLastIndex((value) => value > 10),
+						-1,
+					);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLastIndex((value, index) => {
+						if (index === 2) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 1 holds 3 and index 0 holds 2.
+					assert.deepEqual(visited, [
+						{ value: 3, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2),
+						0,
+					);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLastIndex(isTarget, context);
+					assert.equal(result, 1);
+				});
 			});
 
 			describe("removeAt", () => {
@@ -245,6 +463,14 @@ describe("ArrayNode", () => {
 				assert.deepEqual([...array], [1, 2, 3]);
 				array.push(4);
 				assert.deepEqual([...array], [1, 2, 3, 4]);
+			});
+
+			it("unshift inserts at the start, preserving argument order", () => {
+				const array = buildAlphaArray([3]);
+				array.unshift(2);
+				assert.deepEqual([...array], [2, 3]);
+				array.unshift(0, 1);
+				assert.deepEqual([...array], [0, 1, 2, 3]);
 			});
 
 			describe("removeRange", () => {
@@ -344,12 +570,6 @@ describe("ArrayNode", () => {
 			});
 
 			describe("splice", () => {
-				function buildAlphaArray(
-					initial: number[],
-				): TreeArrayNodeAlpha<typeof schemaFactory.number> {
-					const list = init(schemaType, initial);
-					return asAlpha(list as TreeArrayNode<typeof schemaFactory.number>);
-				}
 				it("splice first item", () => {
 					const initial = [0, 1, 2, 3];
 					const list = buildAlphaArray(initial);
