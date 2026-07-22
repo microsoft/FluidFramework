@@ -570,13 +570,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
-				if (
-					parentLastSummaryReferenceSequenceNumber !== undefined &&
-					createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber
-				) {
-					// Prioritize latest summary if it was after this node was attached.
-					childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
-				}
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
