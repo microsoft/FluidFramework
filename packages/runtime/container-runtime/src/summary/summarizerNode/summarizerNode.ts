@@ -570,6 +570,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
+				// A FromAttach node is created synchronously while processing the attach op, and ops are processed
+				// in order. So the parent's last summary reference sequence number must be less than the attach op's
+				// sequence number - the summary ack that would raise it to >= the attach sequence number is itself a
+				// later op in the stream. This assert tracks in telemetry if that invariant is ever violated.
+				assert(
+					parentLastSummaryReferenceSequenceNumber === undefined ||
+						createParam.sequenceNumber > parentLastSummaryReferenceSequenceNumber,
+					"Attach sequence number should be greater than the parent's last summary reference sequence number",
+				);
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
