@@ -111,7 +111,7 @@ export interface ITreeAlpha extends ITree {
 
 	/**
 	 * Creates a fork of the current state of the main branch.
-	 * This new branch will be shared with and editable by all clients.
+	 * This new branch will be shared with and editable by all clients and persisted in the document.
 	 * @param name - Optional name for the new branch.
 	 * This name is not guaranteed to be unique.
 	 * (Maximum {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length | length}: 1024)
@@ -119,6 +119,14 @@ export interface ITreeAlpha extends ITree {
 	 */
 	createSharedBranch(name?: string): string;
 
+	/**
+	 * Shares a local branch with other clients.
+	 * @param branch - The local branch to share.
+	 * @param name - Optional name for the shared branch.
+	 * @returns The ID of the new branch, which can be used by peers to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
+	 *
+	 * After sharing, the given `branch` will be visible to other clients and persisted in the document.
+	 */
 	shareLocalBranch(branch: TreeBranch, name?: string): string;
 
 	/**
