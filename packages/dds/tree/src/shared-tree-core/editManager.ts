@@ -1165,7 +1165,8 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return {
 			trunk,
 			peerLocalBranches,
-			base: this.trunkBase.revision,
+			base:
+				this.trunkBase.revision === trunkBaseRevision ? rootRevision : this.trunkBase.revision,
 			id: this.id,
 			name: this.branchName,
 			session: this.sessionId,
