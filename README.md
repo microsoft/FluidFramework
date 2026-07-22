@@ -100,6 +100,19 @@ Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.m
 corepack enable
 ```
 
+> [!NOTE]
+> **Microsoft developers:** due to internal policy changes, the public npm registry
+> (`registry.npmjs.org`) is blocked on managed devices. Before running `pnpm install`, point the
+> workspaces at a non-blocked registry (an internal mirror or team-managed feed) by running:
+>
+> ```shell
+> node ./scripts/set-dev-registry.cjs <registry-url>
+> ```
+>
+> This writes a gitignored `.npmrc` into each workspace; run `node ./scripts/set-dev-registry.cjs --clear`
+> to revert. Refer to internal documentation for the registry URL to use. External/OSS
+> contributors can skip this step: the committed default already uses the public registry.
+
 Run the following to build the client packages:
 
 ```shell
