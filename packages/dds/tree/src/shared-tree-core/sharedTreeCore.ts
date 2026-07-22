@@ -564,7 +564,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		);
 
 		const sharedBranch = this.editManager.getSharedBranch(branchId);
-		this.submitBranchCreation(branchId, sharedBranch.trunkBase.revision, branchName);
+		this.submitBranchCreation(branchId, sharedBranch.trunkBaseRevision, branchName);
 		const localCommits = sharedBranch.getLocalCommits();
 		beforeSubmit?.(branchId, localCommits);
 		this.getCommitEnricher(branchId).prepareChanges(localCommits);

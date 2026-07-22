@@ -766,7 +766,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	public constructor(
 		localBranch: SharedTreeBranch<TEditor, TChangeset>,
 		private readonly id: BranchId,
-		public readonly trunkBase: GraphCommit<TChangeset>,
+		private trunkBase: GraphCommit<TChangeset>,
 		public readonly branchName: string | undefined,
 		private readonly sessionId: SessionId | undefined,
 		baseCommitSequenceId: SequenceId,
@@ -800,6 +800,10 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 				);
 			}
 		});
+	}
+
+	public get trunkBaseRevision(): RevisionTag {
+		return this.trunkBase.revision;
 	}
 
 	public addSequencedChanges(
@@ -956,6 +960,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			this.commitMetadata.size === trunkSize,
 			0x745 /* The size of the trunkMetadata must be the same as the trunk */,
 		);
+		this.trunkBase = newBase;
 	}
 
 	private rebasePeers(commit: GraphCommit<TChangeset>): void {
@@ -1093,15 +1098,23 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 			0xc5e /* Clients with local changes cannot be used to generate summaries */,
 		);
 
-		// const oldestCommitInCollabWindow = this.getClosestTrunkCommit(minSeqNumberToSummarize)[1];
-		// // Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
-		// const parentHead = oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
-
+		let forkPointFromMainTrunk: GraphCommit<TChangeset> | undefined;
 		const childBranchTrunkCommits: GraphCommit<TChangeset>[] = [];
-		const forkPointFromMainTrunk = findAncestor(
-			[this.trunk.getHead(), childBranchTrunkCommits],
-			(c) => c === this.trunkBase,
-		);
+		if (this.id === "main") {
+			const oldestCommitInCollabWindow =
+				this.getClosestTrunkCommit(minSeqNumberToSummarize)[1];
+			// Path construction is exclusive, so we need to use the parent of the oldest commit in the window if it exists
+			const parentHead = oldestCommitInCollabWindow.parent ?? oldestCommitInCollabWindow;
+			forkPointFromMainTrunk = findCommonAncestor(
+				[this.trunk.getHead(), childBranchTrunkCommits],
+				parentHead,
+			);
+		} else {
+			forkPointFromMainTrunk = findAncestor(
+				[this.trunk.getHead(), childBranchTrunkCommits],
+				(c) => c === this.trunkBase,
+			);
+		}
 		assert(
 			forkPointFromMainTrunk !== undefined,
 			0xc5f /* Expected child branch to be based on main branch */,
