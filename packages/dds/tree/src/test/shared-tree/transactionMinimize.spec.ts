@@ -141,6 +141,8 @@ interface TransactionScenario<
 
 	/** Expected build statistics for the scenario executed without minimization. */
 	readonly unminimizedBuildExpectations?: BuildStatistics;
+	/** Set to true when ❤️ is expected to survive the transaction as content. */
+	readonly expectSurvivingMarker: boolean;
 }
 
 type StringArrayScenario = TransactionScenario<typeof RootStringArray>;
@@ -190,6 +192,10 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>({
 	treeAndView.view.initialize(data);
 	return treeAndView;
 }
+
+const initialContentMarkerRegex = /🕰️/;
+const someSurvivingMarkerRegex = /❤️/;
+const transientMarkerRegex = /☠️/;
 
 /**
  * Runs a {@link TransactionScenario} in a single minimized transaction.
@@ -263,6 +269,31 @@ function runScenario<
 	}
 
 	const stringifiedChange = JsonStringify<Readonly<unknown> | null>(changeJson);
+
+	// Presence of surviving marker should be consistent regardless of minimize use.
+	// So assert within runScenario helper to test minimize expectations and also
+	// to catch any test configuration errors where the expectation is not set.
+	const survivingAssertionPreface = doNotMinimize
+		? "This is a test configuration error: "
+		: "";
+	if (scenario.expectSurvivingMarker === true) {
+		assert.match(
+			stringifiedChange,
+			someSurvivingMarkerRegex,
+			`${survivingAssertionPreface}expected content matching ${someSurvivingMarkerRegex}.`,
+		);
+	} else {
+		assert.doesNotMatch(
+			stringifiedChange,
+			someSurvivingMarkerRegex,
+			`${survivingAssertionPreface}expected no content matching ${someSurvivingMarkerRegex}.`,
+		);
+	}
+
+	// Initial content marker expectation is also invariant regardless of minimize
+	// use. It is never new content and thus should never appear in a change.
+	assert.doesNotMatch(stringifiedChange, initialContentMarkerRegex);
+
 	return {
 		tree,
 		view: viewOut,
@@ -338,6 +369,7 @@ const arrayScenarios = {
 			root.insertAtEnd("A❤️");
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -356,6 +388,7 @@ const arrayScenarios = {
 			root.insertAtEnd("B❤️");
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -374,6 +407,7 @@ const arrayScenarios = {
 			root.removeAt(0);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
@@ -394,6 +428,7 @@ const arrayScenarios = {
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -414,6 +449,7 @@ const arrayScenarios = {
 			root.removeAt(0);
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -438,6 +474,7 @@ const arrayScenarios = {
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -458,6 +495,7 @@ const arrayScenarios = {
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -480,6 +518,7 @@ const arrayScenarios = {
 			root.moveToStart(2);
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -503,6 +542,7 @@ const arrayScenarios = {
 			root.removeAt(0);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -526,6 +566,7 @@ const arrayScenarios = {
 			root.removeRange(0, 2);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -551,92 +592,97 @@ const arrayScenarios = {
 			root.removeAt(0);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X", "Y"]` and inserts a transient "A☠️" that is removed before the
+	 * Starts from pre-existing content `["X🕰️", "Y🕰️"]` and inserts a transient "A☠️" that is removed before the
 	 * transaction closes, leaving the document unchanged.
 	 * @remarks
-	 * The pre-existing nodes "X" and "Y" are not created by this transaction, so they contribute no builds to its
+	 * The pre-existing nodes "X🕰️" and "Y🕰️" are not created by this transaction, so they contribute no builds to its
 	 * change. "A☠️" is built and removed within the transaction, so its build is extraneous and should be dropped,
 	 * leaving zero builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial      -\> `["X", "Y"]`
-	 * 1. insert "A☠️" -\> `["X", "A☠️", "Y"]`
-	 * 2. remove at 1  -\> `["X", "Y"]`
+	 * 0. initial      -\> `["X🕰️", "Y🕰️"]`
+	 * 1. insert "A☠️" -\> `["X🕰️", "A☠️", "Y🕰️"]`
+	 * 2. remove at 1  -\> `["X🕰️", "Y🕰️"]`
 	 */
 	preexisting_content_and_transient_insert: {
 		schema: RootStringArray,
-		initialContent: ["X", "Y"],
+		initialContent: ["X🕰️", "Y🕰️"],
 		apply: (root) => {
 			root.insertAt(1, "A☠️");
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
+	 * Starts from pre-existing content `["X🕰️"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
 	 * before the transaction closes.
 	 * @remarks
-	 * "X" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
+	 * "X🕰️" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
 	 * "B❤️" survives, so exactly one build should remain.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial              -\> `["X"]`
-	 * 1. insert "A☠️", "B❤️" -\> `["X", "A☠️", "B❤️"]`
-	 * 2. remove at 1          -\> `["X", "B❤️"]`
+	 * 0. initial              -\> `["X🕰️"]`
+	 * 1. insert "A☠️", "B❤️" -\> `["X🕰️", "A☠️", "B❤️"]`
+	 * 2. remove at 1          -\> `["X🕰️", "B❤️"]`
 	 */
 	preexisting_content_and_surviving_insert: {
 		schema: RootStringArray,
-		initialContent: ["X"],
+		initialContent: ["X🕰️"],
 		apply: (root) => {
 			root.insertAtEnd("A☠️", "B❤️");
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X", "Y", "Z"]` and rearranges it by moving "Z" to the start, without
+	 * Starts from pre-existing content `["X🕰️", "Y🕰️", "Z🕰️"]` and rearranges it by moving "Z🕰️" to the start, without
 	 * creating or removing any nodes.
 	 * @remarks
 	 * No nodes are created by this transaction (only existing nodes are moved), so the change should carry no builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial           -\> `["X", "Y", "Z"]`
-	 * 1. move "Z" to start -\> `["Z", "X", "Y"]`
+	 * 0. initial             -\> `["X🕰️", "Y🕰️", "Z🕰️"]`
+	 * 1. move "Z🕰️" to start -\> `["Z🕰️", "X🕰️", "Y🕰️"]`
 	 */
 	preexisting_content_rearranged: {
 		schema: RootStringArray,
-		initialContent: ["X", "Y", "Z"],
+		initialContent: ["X🕰️", "Y🕰️", "Z🕰️"],
 		apply: (root) => {
 			root.moveToStart(2);
 		},
 		unminimizedBuildExpectations: { builds: 0, tops: 0 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X", "Y", "Z"]` and removes "Y".
+	 * Starts from pre-existing content `["X🕰️", "Y🕰️", "Z🕰️"]` and removes "Y🕰️".
 	 * @remarks
 	 * No nodes are created by this transaction (only an existing node is removed), so the change should carry no builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial    -\> `["X", "Y", "Z"]`
-	 * 1. remove "Y" -\> `["X", "Z"]`
+	 * 0. initial      -\> `["X🕰️", "Y🕰️", "Z🕰️"]`
+	 * 1. remove "Y🕰️" -\> `["X🕰️", "Z🕰️"]`
 	 */
 	preexisting_content_removed: {
 		schema: RootStringArray,
-		initialContent: ["X", "Y", "Z"],
+		initialContent: ["X🕰️", "Y🕰️", "Z🕰️"],
 		apply: (root) => {
 			root.removeAt(1);
 		},
 		unminimizedBuildExpectations: { builds: 0, tops: 0 },
+		expectSurvivingMarker: false,
 	} as const,
 } as const satisfies Record<string, StringArrayScenario>;
 // #endregion
@@ -664,6 +710,7 @@ const objectScenarios = {
 			root.value = "y❤️";
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -687,6 +734,7 @@ const objectScenarios = {
 			root.nested.value = "y❤️";
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -711,6 +759,7 @@ const objectScenarios = {
 			view.root = undefined;
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
@@ -734,6 +783,7 @@ const objectScenarios = {
 			view.root = undefined;
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
@@ -757,6 +807,7 @@ const objectScenarios = {
 			delete view.root.nested;
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
@@ -780,6 +831,7 @@ const objectScenarios = {
 			view.root = undefined;
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
 	} as const,
 
 	/**
@@ -802,6 +854,7 @@ const objectScenarios = {
 			root.value = "y❤️";
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -826,6 +879,7 @@ const objectScenarios = {
 			nested.value = "y❤️";
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -851,6 +905,7 @@ const objectScenarios = {
 			root.nested = new Box({ value: "y❤️" });
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -879,6 +934,7 @@ const objectScenarios = {
 			root.nested = new Box({ value: "y❤️" });
 		},
 		unminimizedBuildExpectations: { builds: 3, tops: 3 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -904,6 +960,7 @@ const objectScenarios = {
 			root.nested = undefined;
 		},
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: true,
 	} as const,
 } as const satisfies Record<string, BoxScenario>;
 // #endregion
@@ -939,6 +996,7 @@ const schemaUpgradeScenarios = {
 			return view2;
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -946,14 +1004,14 @@ const schemaUpgradeScenarios = {
 	 * @remarks
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial                 -\> `["A❤️"]`
-	 * 1. upgrade schema          -\> `["A❤️"]`
-	 * 2. insert Box "C☠️"       -\> `["A❤️", Box: "C☠️"]`
-	 * 3. set Box value to "D❤️" -\> `["A❤️", Box: "D❤️"]`
+	 * 0. initial                 -\> `["A🕰️"]`
+	 * 1. upgrade schema          -\> `["A🕰️"]`
+	 * 2. insert Box "C☠️"       -\> `["A🕰️", Box: "C☠️"]`
+	 * 3. set Box value to "D❤️" -\> `["A🕰️", Box: "D❤️"]`
 	 */
 	edit_after_schema_change: {
 		schema: RootStringArray,
-		initialContent: ["A❤️"],
+		initialContent: ["A🕰️"],
 		apply: (_root, tree, view) => {
 			// Force dispose view to permit upgrade
 			view.dispose();
@@ -970,6 +1028,7 @@ const schemaUpgradeScenarios = {
 			return view2;
 		},
 		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	/**
@@ -1007,14 +1066,12 @@ const schemaUpgradeScenarios = {
 			return view2;
 		},
 		unminimizedBuildExpectations: { builds: 4, tops: 4 },
+		expectSurvivingMarker: true,
 	} as const,
 
 	// #endregion
 } as const satisfies Record<string, StringArrayScenario>;
 // #endregion
-
-const someSurvivingMarkerRegex = /❤️/;
-const transientMarkerRegex = /☠️/;
 
 describe("transaction minimize post-processor", () => {
 	it("can be supplied as a transaction post-processor without error", () => {
@@ -1033,7 +1090,6 @@ describe("transaction minimize post-processor", () => {
 			assert.match(stringifiedChange, /[AB]❤️.*[AB]❤️/);
 
 			// Common assertions
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 		});
 
@@ -1041,10 +1097,9 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				arrayScenarios.preexisting_content_rearranged,
 			);
-			assert.deepEqual([...view.root], ["Z", "X", "Y"]);
+			assert.deepEqual([...view.root], ["Z🕰️", "X🕰️", "Y🕰️"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// No nodes are created by the transaction (only moved), so the change should carry no builds.
 			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
@@ -1054,10 +1109,9 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				arrayScenarios.preexisting_content_removed,
 			);
-			assert.deepEqual([...view.root], ["X", "Z"]);
+			assert.deepEqual([...view.root], ["X🕰️", "Z🕰️"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// No nodes are created by the transaction (only removed), so the change should carry no builds.
 			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
@@ -1070,10 +1124,55 @@ describe("transaction minimize post-processor", () => {
 			assert.deepEqual([...view.root], ["C❤️", "A❤️", "B❤️"]);
 			// None were inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 			const change = getHeadChange(view);
 			// "A❤️", "B❤️", and "C❤️" all survive (only reordered), so both builds (A and B-C) should remain.
 			assert.deepEqual(countBuilds(change), { builds: 2, tops: 3 });
+		});
+
+		// If any of these tests start to fail, the system has new capabilities
+		// and additional scenarios should be added to verify minimize handles
+		// them correctly.
+		describe("existing content re-inserted raises exception", () => {
+			it("nesting original box under new parent in array", () => {
+				assert.throws(() => {
+					const { view, stringifiedChange } = runScenario({
+						schema: BoxArray,
+						initialContent: [new Box({ value: "A🕰️" })],
+						apply: (root) => {
+							const originalBox = root[0];
+							// detach the original box
+							root.removeAt(0);
+							const parent = new Box({ value: "B❤️", nested: originalBox }); // currently throws here
+							root.insertAtEnd(parent);
+						},
+						expectSurvivingMarker: true,
+					} as const satisfies BoxArrayScenario);
+					assert.equal(view.root.length, 1);
+					assert.equal(view.root[0].value, "B❤️");
+					assert.equal(view.root[0].nested?.value, "A🕰️");
+					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
+			});
+
+			it("nesting original box under new root parent", () => {
+				assert.throws(() => {
+					const { view: viewResult, stringifiedChange } = runScenario({
+						schema: OptionalBox,
+						initialContent: new Box({ value: "A🕰️" }),
+						apply: (_root, _tree, view_) => {
+							const originalBox = view_.root;
+							// detach the original box
+							view_.root = undefined;
+							const parent = new Box({ value: "B❤️", nested: originalBox }); // currently throws here
+							view_.root = parent;
+						},
+						expectSurvivingMarker: true,
+					} as const satisfies BoxScenario);
+					assert.equal(viewResult.root?.value, "B❤️");
+					assert.equal(viewResult.root?.nested?.value, "A🕰️");
+					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
+			});
 		});
 	});
 
@@ -1082,194 +1181,140 @@ describe("transaction minimize post-processor", () => {
 	// actually implemented.
 	describe("preserves the observable result and new content appears in change", () => {
 		it("keeps inserted nodes", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_then_B_inserted);
+			const { view } = runScenario(arrayScenarios.A_then_B_inserted);
 			assert.deepEqual([...view.root], ["A❤️", "B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("nets a create-then-remove to no change", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_added_then_removed);
+			const { view } = runScenario(arrayScenarios.A_added_then_removed);
 			assert.deepEqual([...view.root], []);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps only the persisted node when a transient node is also created", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_kept_and_B_transient);
+			const { view } = runScenario(arrayScenarios.A_kept_and_B_transient);
 			assert.deepEqual([...view.root], ["A❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a node replaced within the transaction", () => {
-			const { view, stringifiedChange } = runScenario(arrayScenarios.A_replaced_by_B);
+			const { view } = runScenario(arrayScenarios.A_replaced_by_B);
 			assert.deepEqual([...view.root], ["B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the surviving node when inserted content is relocated then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.B_inserted_before_A_then_A_removed,
-			);
+			const { view } = runScenario(arrayScenarios.B_inserted_before_A_then_A_removed);
 			assert.deepEqual([...view.root], ["B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when a node in the middle of an inserted run is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.ABC_inserted_then_B_removed,
-			);
+			const { view } = runScenario(arrayScenarios.ABC_inserted_then_B_removed);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps the surrounding nodes when an inserted node is moved then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.ABC_inserted_then_B_moved_then_removed,
-			);
+			const { view } = runScenario(arrayScenarios.ABC_inserted_then_B_moved_then_removed);
 			assert.deepEqual([...view.root], ["A❤️", "C❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps only the trailing node when a moved node and its successor from leading node are removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				arrayScenarios.ABC_inserted_then_B_moved_then_B_and_A_removed,
 			);
 			assert.deepEqual([...view.root], ["C❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("keeps only the leading node when a moved node and its insertion companion are removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				arrayScenarios.ABC_inserted_then_B_moved_then_C_and_B_removed,
 			);
 			assert.deepEqual([...view.root], ["A❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("leaves pre-existing content unchanged when a transient node is inserted then removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.preexisting_content_and_transient_insert,
-			);
-			assert.deepEqual([...view.root], ["X", "Y"]);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
+			const { view } = runScenario(arrayScenarios.preexisting_content_and_transient_insert);
+			assert.deepEqual([...view.root], ["X🕰️", "Y🕰️"]);
 		});
 
 		it("keeps pre-existing content and the surviving inserted node", () => {
-			const { view, stringifiedChange } = runScenario(
-				arrayScenarios.preexisting_content_and_surviving_insert,
-			);
-			assert.deepEqual([...view.root], ["X", "B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
+			const { view } = runScenario(arrayScenarios.preexisting_content_and_surviving_insert);
+			assert.deepEqual([...view.root], ["X🕰️", "B❤️"]);
 		});
 
 		it("reflects only the final value of a root object field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.root_Box_value_set_twice,
-			);
+			const { view } = runScenario(objectScenarios.root_Box_value_set_twice);
 			assert.equal(view.root?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final undefined root when only item's value of a field is set and then the item is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.root_Box_value_set_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.root_Box_value_set_then_root_Box_removed);
 			assert.equal(view.root, undefined);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a field of newly inserted root object when it is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_root_Box_then_replace_value,
-			);
+			const { view } = runScenario(objectScenarios.add_root_Box_then_replace_value);
 			assert.equal(view.root?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a nested field set multiple times", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nested_Box_value_set_twice,
-			);
+			const { view } = runScenario(objectScenarios.nested_Box_value_set_twice);
 			assert.equal(view.root?.nested?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects an undefined root when a nested field is set and then the root object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nested_Box_value_set_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.nested_Box_value_set_then_root_Box_removed);
 			assert.equal(view.root, undefined);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects an empty root object when a nested field is set and then the nested field is removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
 			);
 			assert.notEqual(view.root, undefined);
 			assert.equal(view.root?.nested, undefined);
 			assert.equal(view.root?.value, undefined);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects an empty root when a nested object with a value is added and then the root object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.nest_Box_with_value_then_root_Box_removed,
-			);
+			const { view } = runScenario(objectScenarios.nest_Box_with_value_then_root_Box_removed);
 			assert.equal(view.root, undefined);
-			assert.doesNotMatch(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a field of a newly inserted nested object when nested field value is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_nested_Box_then_replace_value,
-			);
+			const { view } = runScenario(objectScenarios.add_nested_Box_then_replace_value);
 			assert.equal(view.root?.nested?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a newly inserted nested object when nested object is replaced", () => {
-			const { view, stringifiedChange } = runScenario(
-				objectScenarios.add_nested_Box_then_replace_nested_Box,
-			);
+			const { view } = runScenario(objectScenarios.add_nested_Box_then_replace_nested_Box);
 			assert.equal(view.root?.nested?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects only the final value of a newly inserted nested object whose value was set before it was replaced", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.add_nested_Box_set_value_then_replace_nested_Box,
 			);
 			assert.equal(view.root?.nested?.value, "y❤️");
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects the surviving object when a newly inserted object's nested object is removed", () => {
-			const { view, stringifiedChange } = runScenario(
+			const { view } = runScenario(
 				objectScenarios.add_Box_with_nested_Box_then_remove_nested_Box,
 			);
 			assert.equal(view.root?.value, "x❤️");
 			assert.equal(view.root?.nested, undefined);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made before a schema change", () => {
-			const { view, stringifiedChange } = runScenario(
-				schemaUpgradeScenarios.edit_before_schema_change,
-			);
+			const { view } = runScenario(schemaUpgradeScenarios.edit_before_schema_change);
 			assert.deepEqual([...view.root], ["B❤️"]);
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 
 		it("reflects edits made after a schema change", () => {
-			const { view, stringifiedChange } = runScenario(
-				schemaUpgradeScenarios.edit_after_schema_change,
-			);
+			const { view } = runScenario(schemaUpgradeScenarios.edit_after_schema_change);
 			assert.equal(view.root.length, 2);
-			assert.equal(view.root[0], "A❤️");
+			assert.equal(view.root[0], "A🕰️");
 			const box = view.root[1];
 			assert(box instanceof Box);
 			assert.deepEqual({ ...box }, { value: "D❤️" });
-			assert.match(stringifiedChange, someSurvivingMarkerRegex);
 		});
 	});
 
@@ -1289,6 +1334,7 @@ describe("transaction minimize post-processor", () => {
 		const { view, stringifiedChange } = await runScenarioAsync(arrayScenarios.A_replaced_by_B);
 		assert.deepEqual([...view.root], ["B❤️"]);
 		assert.match(stringifiedChange, someSurvivingMarkerRegex);
+		assert.doesNotMatch(stringifiedChange, initialContentMarkerRegex);
 	});
 
 	function beautifyScenarioName(scenarioName: string): string {
@@ -1313,11 +1359,11 @@ describe("transaction minimize post-processor", () => {
 	describe("produces a consistent view and the same observable result as not minimized", () => {
 		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario, {
-					validateConsistency: true,
-				});
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
+				});
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
 				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
@@ -1330,11 +1376,11 @@ describe("transaction minimize post-processor", () => {
 		}
 		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario, {
-					validateConsistency: true,
-				});
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
+				});
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
 				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
@@ -1349,11 +1395,11 @@ describe("transaction minimize post-processor", () => {
 			([name]) => name !== "edit_before_and_after_schema_change", // This scenario is expected to throw, so skip it for this test.
 		)) {
 			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
-				const { tree: minimizedTree } = runScenario(scenario, {
-					validateConsistency: true,
-				});
 				const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
 					doNotMinimize: true,
+				});
+				const { tree: minimizedTree } = runScenario(scenario, {
+					validateConsistency: true,
 				});
 				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
 				// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
@@ -1371,10 +1417,10 @@ describe("transaction minimize post-processor", () => {
 	 * @remarks
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial                 -\> `[Box: { value: "A❤️" }]`
-	 * 1. upgrade schema          -\> `[Box: { value: "A❤️" }]`
-	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A❤️", secret: "B☠️" }]`
-	 * 3. downgrade schema        -\> stored: `[Box: { value: "A❤️", secret: "B☠️" }]  visible: { value: "A❤️" }`
+	 * 0. initial                 -\> `[Box: { value: "A🕰️" }]`
+	 * 1. upgrade schema          -\> `[Box: { value: "A🕰️" }]`
+	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A🕰️", secret: "B☠️" }]`
+	 * 3. downgrade schema        -\> stored: `[Box: { value: "A🕰️", secret: "B☠️" }]  visible: { value: "A🕰️" }`
 	 *
 	 * This invariant is independent of minimization, but is critical behavior for
 	 * minimization criteria as minimize only operates on data edits.
@@ -1383,9 +1429,9 @@ describe("transaction minimize post-processor", () => {
 		let scenarioStuffHiddenSecretInBoxReachedSchemaRollback = false;
 
 		assert.throws(() => {
-			const { view, stringifiedChange } = runScenario({
+			const { view } = runScenario({
 				schema: BoxArray,
-				initialContent: [new Box({ value: "A❤️" })],
+				initialContent: [new Box({ value: "A🕰️" })],
 				apply: (_root, tree, view1) => {
 					// Force dispose view to permit upgrade
 					view1.dispose();
@@ -1410,13 +1456,13 @@ describe("transaction minimize post-processor", () => {
 
 					return view3;
 				},
+				expectSurvivingMarker: false,
 			} as const satisfies BoxArrayScenario);
 			assert.equal(
 				// @ts-expect-error -- Property 'secret' does not exist on type 'Box'.
 				view.root[0].secret,
 				"B☠️",
 			);
-			assert.match(stringifiedChange, transientMarkerRegex);
 		}, /Existing stored schema cannot be upgraded/);
 
 		assert(
@@ -1593,7 +1639,7 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				objectScenarios.nest_Box_with_value_then_root_Box_removed,
 			);
-			// assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
 			// No created node is present in the final document, so no builds should remain.
 			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
