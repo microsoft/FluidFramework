@@ -2863,7 +2863,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...mainView2.root], ["A", "X"]);
 		});
 
-		it("supports sharing an existing branch", () => {
+		it("supports sharing an existing local branch", () => {
 			const provider = new TestTreeProviderLite(
 				2,
 				configuredSharedTree({
@@ -2901,6 +2901,58 @@ describe("SharedTree", () => {
 			provider.synchronizeMessages();
 
 			assert.deepEqual([...fork.root], ["A", "B", "C"]);
+		});
+
+		it("supports forking a shared branch into another shared branch", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = asAlpha(tree1.viewWith(config));
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
+
+			const branch1 = mainView1.fork();
+			branch1.root.insertAtEnd("B");
+			const branch1Id = tree1.shareLocalBranch(branch1, "branch1");
+
+			const branch2 = branch1.fork() as typeof branch1;
+			branch2.root.insertAtEnd("C");
+			const branch2Id = tree1.shareLocalBranch(branch2, "branch2");
+
+			provider.synchronizeMessages();
+
+			assert.equal(tree2.getSharedBranchName(branch1Id), "branch1");
+			assert.equal(tree2.getSharedBranchName(branch2Id), "branch2");
+
+			const mainView2 = asAlpha(tree2.viewWith(config));
+			assert.deepEqual([...mainView2.root], ["A"]);
+
+			const branch1View2 = tree2.viewSharedBranchWith(branch1Id, config);
+			assert.deepEqual([...branch1View2.root], ["A", "B"]);
+			branch1View2.root.insertAtEnd("B2");
+
+			const branch2View2 = tree2.viewSharedBranchWith(branch2Id, config);
+			assert.deepEqual([...branch2View2.root], ["A", "B", "C"]);
+			branch2View2.root.insertAtEnd("C2");
+
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...branch1View2.root], ["A", "B", "B2"]);
+			assert.deepEqual([...branch1.root], ["A", "B", "B2"]);
+
+			assert.deepEqual([...branch2View2.root], ["A", "B", "C", "C2"]);
+			assert.deepEqual([...branch2.root], ["A", "B", "C", "C2"]);
 		});
 
 		it("shared branches can be named on creation", () => {
