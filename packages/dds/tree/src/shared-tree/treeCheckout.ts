@@ -6,7 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -113,6 +113,7 @@ import {
 } from "../util/index.js";
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
+import { TreeBranchHistoryImpl } from "./history.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
@@ -512,11 +513,12 @@ export class TreeCheckout implements ITreeCheckout {
 
 	readonly #events = createEmitter<CheckoutEvents>();
 	public events: Listenable<CheckoutEvents> = this.#events;
+	private branchHistory?: TreeBranchHistoryImpl;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		private branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
-		public readonly isSharedBranch: boolean,
+		private _isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -536,6 +538,15 @@ export class TreeCheckout implements ITreeCheckout {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
+	}
+
+	public get isSharedBranch(): boolean {
+		return this._isSharedBranch;
+	}
+
+	public get history(): TreeBranchHistoryImpl {
+		this.branchHistory ??= new TreeBranchHistoryImpl(this.branch, this.idCompressor);
+		return this.branchHistory;
 	}
 
 	/**
@@ -1223,7 +1234,6 @@ export class TreeCheckout implements ITreeCheckout {
 	public switchBranch(
 		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
 	): void {
-		// TODO: Dispose old branch, if necessary
 		assert(
 			this.#transaction.size === 0,
 			0xc55 /* Cannot switch branches during a transaction */,
@@ -1238,12 +1248,40 @@ export class TreeCheckout implements ITreeCheckout {
 		this.unregisterFromBranchEvents();
 
 		this.#transaction = this.createTransactionStack(branch);
+		if (!this._isSharedBranch) {
+			this.branch.dispose();
+		}
+		this.branch = branch;
+		this.branchHistory?.dispose();
+		this.branchHistory = undefined;
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
 		this.registerForBranchEvents();
 
 		// TODO: Rework eventing
 		this.applyInternalChange(diff);
 		this.#events.emit("afterBatch");
+	}
+
+	public rewindTo(revisionString: string): void {
+		this.checkNotDisposed("The branch has already been disposed and cannot be rewound.");
+		assert(this.#transaction.size === 0, "Cannot rewind during a transaction");
+		const revision = this.idCompressor.tryRecompress(revisionString as StableId);
+		if (revision === undefined) {
+			throw new UsageError(`Unrecognized revision id: ${revisionString}`);
+		}
+		const head = this.#transaction.branch.getHead();
+		let targetCommit = head;
+		while (targetCommit.parent !== undefined && targetCommit.revision !== revision) {
+			targetCommit = targetCommit.parent;
+		}
+		if (targetCommit.revision !== revision) {
+			throw new UsageError(`No commit found with revision: ${revisionString}`);
+		}
+		this.switchBranch(this.#transaction.branch.fork(targetCommit));
+	}
+
+	public onBranchShared(): void {
+		this._isSharedBranch = true;
 	}
 
 	private rebase(branch: TreeBranch): void {
@@ -1266,7 +1304,7 @@ export class TreeCheckout implements ITreeCheckout {
 		}
 
 		assert(
-			!checkout.isSharedBranch,
+			!checkout._isSharedBranch,
 			0xa5d /* Shared branches cannot be rebased onto another branch. */,
 		);
 
@@ -1336,7 +1374,7 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.#transaction.activeBranch.merge(checkout.#transaction.activeBranch);
-		if (disposeMerged && !checkout.isSharedBranch) {
+		if (disposeMerged && !checkout._isSharedBranch) {
 			// Dispose the merged checkout unless it is a shared branch.
 			checkout[disposeSymbol]();
 		}
@@ -1519,7 +1557,7 @@ export class TreeCheckout implements ITreeCheckout {
 	private isRemoteChangeEvent(event: SharedTreeBranchChange<SharedTreeChange>): boolean {
 		return (
 			// Remote changes are only ever applied to shared branches
-			this.isSharedBranch &&
+			this._isSharedBranch &&
 			// Remote changes are applied to the branch by rebasing it onto the trunk.
 			// No other rebases are allowed on shared branches, so we can use this to detect remote changes.
 			event.type === "rebase"

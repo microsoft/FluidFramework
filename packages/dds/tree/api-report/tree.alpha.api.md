@@ -683,6 +683,8 @@ export interface ITreeAlpha extends ITree {
     exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
     getSharedBranchName(branchId: string): string | undefined;
+    // (undocumented)
+    shareLocalBranch(branch: TreeBranch, name?: string): string;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1844,7 +1846,10 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     // (undocumented)
     fork(): TreeBranchAlpha;
     hasRootSchema<TSchema extends ImplicitFieldSchema>(schema: TSchema): this is TreeViewAlpha<TSchema>;
+    readonly history: TreeBranchHistory;
     isMissingEditsFrom(branch: TreeBranch): boolean;
+    isSharedBranch: boolean;
+    rewindTo(revision: string): void;
     runTransaction<TSuccessValue, TFailureValue>(transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>, params?: RunTransactionParamsAlpha): TransactionValueResult<TSuccessValue, TFailureValue>;
     runTransaction(transaction: () => VoidTransactionCallbackStatusAlpha | void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TSuccessValue, TFailureValue>(transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
@@ -1852,8 +1857,20 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 }
 
 // @alpha @sealed
+export interface TreeBranchCommitMetadata {
+    readonly parent: TreeBranchCommitMetadata | undefined;
+    readonly revision: string;
+}
+
+// @alpha @sealed
 export interface TreeBranchEvents {
     changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
+}
+
+// @alpha @sealed
+export interface TreeBranchHistory {
+    readonly commitCount: number;
+    getHeadCommit(): TreeBranchCommitMetadata | undefined;
 }
 
 // @public @sealed

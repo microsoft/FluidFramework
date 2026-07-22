@@ -59,6 +59,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeBranchHistory,
 	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
@@ -547,6 +548,14 @@ export class SchematizingSimpleTreeView<
 		return this.checkout.fork().viewWith(this.config);
 	}
 
+	public get isSharedBranch(): boolean {
+		return this.checkout.isSharedBranch;
+	}
+
+	public rewindTo(revision: string): void {
+		this.checkout.rewindTo(revision);
+	}
+
 	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
 		this.checkout.merge(context, disposeMerged);
 	}
@@ -566,4 +575,8 @@ export class SchematizingSimpleTreeView<
 	}
 
 	// #endregion Branching
+
+	public get history(): TreeBranchHistory {
+		return this.checkout.history;
+	}
 }

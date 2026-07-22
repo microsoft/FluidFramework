@@ -119,6 +119,8 @@ export interface ITreeAlpha extends ITree {
 	 */
 	createSharedBranch(name?: string): string;
 
+	shareLocalBranch(branch: TreeBranch, name?: string): string;
+
 	/**
 	 * Retrieves the name, if any, of the shared branch with the given ID.
 	 * @param branchId - The ID of the shared branch to retrieve the name of.
@@ -286,6 +288,48 @@ export interface TreeContextAlpha {
 }
 
 /**
+ * Metadata describing a single commit in a {@link TreeBranchAlpha}'s history.
+ * @sealed @alpha
+ */
+export interface TreeBranchCommitMetadata {
+	/**
+	 * The revision UUID that uniquely identifies this commit within the branch's history.
+	 */
+	readonly revision: string;
+
+	/**
+	 * The metadata for the commit that this commit was based on, or `undefined` if this commit has no parent
+	 * (i.e. it is the oldest commit in the branch's history).
+	 */
+	readonly parent: TreeBranchCommitMetadata | undefined;
+}
+
+/**
+ * Provides APIs for querying information about the history of a {@link TreeBranchAlpha}.
+ * @remarks
+ * The history of a branch is the sequence of commits leading up to its current state.
+ * @sealed @alpha
+ */
+export interface TreeBranchHistory {
+	/**
+	 * The number of commits in this branch's history.
+	 * @remarks
+	 * This number grows when any of the following occurs:
+	 * - A new edit is made on this branch (either through editing or by reverting an existing commit on this branch).
+	 * - A branch that contains commits not already on this branch is merged into this branch.
+	 * - The branch is rebased onto another branch that contains commits not already on this branch.
+	 * This number shrinks when past commits are trimmed from the history.
+	 */
+	readonly commitCount: number;
+
+	/**
+	 * Returns metadata for the current head commit of this branch.
+	 * @returns The metadata for the head commit, or `undefined` if the branch has no commits.
+	 */
+	getHeadCommit(): TreeBranchCommitMetadata | undefined;
+}
+
+/**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
@@ -298,6 +342,11 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	 * Events for the branch
 	 */
 	readonly events: Listenable<TreeBranchEvents>;
+
+	/**
+	 * APIs for querying the history of this branch.
+	 */
+	readonly history: TreeBranchHistory;
 
 	/**
 	 * Returns true if this branch has the given schema as its root schema.
@@ -319,6 +368,25 @@ export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 
 	// Override the base fork method to return the alpha variant.
 	fork(): TreeBranchAlpha;
+
+	/**
+	 * Whether this branch is visible to peers and persisted in the document.
+	 * See {@link ITreeAlpha.createSharedBranch } for creating a shared branch.
+	 * See {@link ITreeAlpha.shareLocalBranch } for sharing a local branch.
+	 */
+	isSharedBranch: boolean;
+
+	/**
+	 * Switches to a new branch with the given commit as the head, updating the tree state accordingly.
+	 *
+	 * @param revision - The {@link TreeBranchCommitMetadata.revision | revision} to rewind to.
+	 * Can be obtained by navigating the commits on the branch {@link TreeBranchAlpha.history | history}.
+	 *
+	 * @remarks
+	 * The original branch will be disposed unless it is a {@link TreeBranchAlpha.isSharedBranch | shared branch}.
+	 * In order to retain the local branch, consider {@link TreeBranchAlpha.fork | forking} before rewinding.
+	 */
+	rewindTo(revision: string): void;
 
 	/**
 	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.

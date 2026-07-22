@@ -35,8 +35,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
-	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
 } from "../../core/index.js";
@@ -68,7 +66,6 @@ import {
 	SchematizingSimpleTreeView,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../shared-tree/schematizingTreeView.js";
-import type { EditManager } from "../../shared-tree-core/index.js";
 import {
 	TreeBeta,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -954,19 +951,6 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
-	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-	// if we'll ever expose some memory stats in which the trunk length would be included.
-	// If we do then this test should be updated to use that code path.
-	interface EditManagerKludge {
-		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
-		};
-	}
-
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -990,6 +974,9 @@ describe("SharedTree", () => {
 
 		provider.synchronizeMessages();
 
+		assert(provider.trees[0].kernel.checkout.history.commitCount > 10);
+		assert(provider.trees[1].kernel.checkout.history.commitCount > 10);
+
 		// These two edit will have ref numbers that correspond to the last of the above edits
 		view1.root.insertAtStart("");
 		view2.root.insertAtStart("");
@@ -997,14 +984,8 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
-		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+		assert(provider.trees[0].kernel.checkout.history.commitCount < 10);
+		assert(provider.trees[1].kernel.checkout.history.commitCount < 10);
 	});
 
 	it("does not evict trunk commits when retainHistory is enabled", () => {
@@ -1025,15 +1006,8 @@ describe("SharedTree", () => {
 		viewInit.dispose();
 		provider.synchronizeMessages();
 
-		const t1 = provider.trees[0] as unknown as EditManagerKludge;
-		const t2 = provider.trees[1] as unknown as EditManagerKludge;
-		assert(
-			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
-			"EditManager has moved. This test must be updated.",
-		);
-
-		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+		const priorEditCount = provider.trees[0].kernel.checkout.history.commitCount;
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, priorEditCount);
 
 		const [view1, view2] = provider.trees.map((t) =>
 			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
@@ -1057,8 +1031,8 @@ describe("SharedTree", () => {
 		// All of the edits (plus the two additional ones) should still be present on the trunk since
 		// retainHistory prevents trunk commits from ever being trimmed.
 		const expectedCount = priorEditCount + sequencedEditCount + 2;
-		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
-		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(provider.trees[0].kernel.checkout.history.commitCount, expectedCount);
+		assert.equal(provider.trees[1].kernel.checkout.history.commitCount, expectedCount);
 	});
 
 	it("can process changes while detached", async () => {
@@ -2887,6 +2861,98 @@ describe("SharedTree", () => {
 
 			const mainView2 = tree2.viewWith(config);
 			assert.deepEqual([...mainView2.root], ["A", "X"]);
+		});
+
+		it("supports sharing an existing local branch", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = asAlpha(tree1.viewWith(config));
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...mainView1.root], ["A"]);
+			const tree2 = provider.trees[1];
+			provider.synchronizeMessages();
+
+			const fork = mainView1.fork();
+			fork.root.insertAtEnd("B");
+
+			const branchId = tree1.shareLocalBranch(fork, "my fork");
+
+			provider.synchronizeMessages();
+
+			assert.equal(tree2.getSharedBranchName(branchId), "my fork");
+			const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView2.root], ["A", "B"]);
+
+			branchView2.root.insertAtEnd("C");
+			assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...fork.root], ["A", "B", "C"]);
+		});
+
+		it("supports forking a shared branch into another shared branch", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = asAlpha(tree1.viewWith(config));
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
+
+			const branch1 = mainView1.fork();
+			branch1.root.insertAtEnd("B");
+			const branch1Id = tree1.shareLocalBranch(branch1, "branch1");
+
+			const branch2 = branch1.fork() as typeof branch1;
+			branch2.root.insertAtEnd("C");
+			const branch2Id = tree1.shareLocalBranch(branch2, "branch2");
+
+			provider.synchronizeMessages();
+
+			assert.equal(tree2.getSharedBranchName(branch1Id), "branch1");
+			assert.equal(tree2.getSharedBranchName(branch2Id), "branch2");
+
+			const mainView2 = asAlpha(tree2.viewWith(config));
+			assert.deepEqual([...mainView2.root], ["A"]);
+
+			const branch1View2 = tree2.viewSharedBranchWith(branch1Id, config);
+			assert.deepEqual([...branch1View2.root], ["A", "B"]);
+			branch1View2.root.insertAtEnd("B2");
+
+			const branch2View2 = tree2.viewSharedBranchWith(branch2Id, config);
+			assert.deepEqual([...branch2View2.root], ["A", "B", "C"]);
+			branch2View2.root.insertAtEnd("C2");
+
+			provider.synchronizeMessages();
+
+			assert.deepEqual([...branch1View2.root], ["A", "B", "B2"]);
+			assert.deepEqual([...branch1.root], ["A", "B", "B2"]);
+
+			assert.deepEqual([...branch2View2.root], ["A", "B", "C", "C2"]);
+			assert.deepEqual([...branch2.root], ["A", "B", "C", "C2"]);
 		});
 
 		it("shared branches can be named on creation", () => {

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 import * as Type from "@sinclair/typebox";
 import type { TAnySchema } from "@sinclair/typebox";
 
@@ -68,6 +68,12 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					return {
 						originatorId: message.sessionId,
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
+						trunkBase: revisionTagCodec.encode(message.trunkBase, {
+							originatorId: message.sessionId,
+							idCompressor: context.idCompressor,
+							revision: undefined,
+							isSummary: false,
+						}),
 						branchName: message.branchName,
 						version,
 					};
@@ -103,6 +109,10 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					type: "branch",
 					sessionId: originatorId,
 					branchId,
+					trunkBase: revisionTagCodec.decode(
+						encoded.trunkBase ?? fail("No trunk base provided"),
+						changeContext,
+					),
 					branchName: encodedBranchName,
 				};
 			}

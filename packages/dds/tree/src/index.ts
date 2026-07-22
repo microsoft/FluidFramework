@@ -270,6 +270,8 @@ export {
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type TreeBranchEvents,
+	type TreeBranchCommitMetadata,
+	type TreeBranchHistory,
 	asTreeViewAlpha,
 	type NodeSchemaOptions,
 	type NodeSchemaOptionsAlpha,

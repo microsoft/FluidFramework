@@ -56,6 +56,10 @@ export type SharedTreeBranchChange<TChange> =
 	| {
 			type: "rebase";
 			change: TaggedChange<TChange> | undefined;
+			/** The commits removed from the head of the branch by this operation */
+			removedCommits: readonly GraphCommit<TChange>[];
+			/** The commits appended to the head of the branch by this operation */
+			newCommits: readonly GraphCommit<TChange>[];
 	  };
 
 /**

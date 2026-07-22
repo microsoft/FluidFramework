@@ -40,6 +40,7 @@ import {
 	type ImplicitFieldSchema,
 	type TreeView,
 	type TreeViewConfiguration,
+	type TreeBranchHistory,
 } from "../../simple-tree/index.js";
 import { toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable } from "../../util/index.js";
@@ -174,6 +175,7 @@ describe("schematizeTree", () => {
 		const storedSchema = new TreeStoredSchemaRepository(toInitialSchema(InputSchema));
 		const checkout: ITreeCheckout = {
 			disposed: false,
+			isSharedBranch: false,
 			breaker: new Breakable("mockCheckout"),
 			storedSchema,
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -188,6 +190,9 @@ describe("schematizeTree", () => {
 			},
 			hasRootSchema(): boolean {
 				return false;
+			},
+			rewindTo(): void {
+				throw new Error("Function not implemented.");
 			},
 			runTransaction(): never {
 				throw new Error("Function not implemented.");
@@ -210,6 +215,7 @@ describe("schematizeTree", () => {
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},
+			history: undefined as unknown as TreeBranchHistory,
 			dispose(): void {
 				throw new Error("Function not implemented.");
 			},
