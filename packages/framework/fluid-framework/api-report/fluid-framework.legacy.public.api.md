@@ -135,6 +135,29 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public @system
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
+// @public @sealed
+export interface FluidIterable<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+}
+
+// @public @sealed
+export interface FluidIterableIterator<T> extends FluidIterable<T> {
+    next(): {
+        value: T;
+        done?: false;
+    } | {
+        value: any;
+        done: true;
+    };
+}
+
+// @public @sealed
+export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
+    delete(key: K): void;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    set(key: K, value: V): void;
+}
+
 // @public
 export type FluidObject<T = unknown> = {
     [P in FluidObjectProviderKeys<T>]?: T[P];
@@ -142,6 +165,19 @@ export type FluidObject<T = unknown> = {
 
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
+
+// @public @sealed
+export interface FluidReadonlyMap<K, V> {
+    [Symbol.iterator](): FluidIterableIterator<[K, V]>;
+    readonly [Symbol.toStringTag]: string;
+    entries(): FluidIterableIterator<[K, V]>;
+    forEach(callbackfn: (value: V, key: K, map: FluidReadonlyMap<K, V>) => void, thisArg?: any): void;
+    get(key: K): V | undefined;
+    has(key: K): boolean;
+    keys(): FluidIterableIterator<K>;
+    readonly size: number;
+    values(): FluidIterableIterator<V>;
+}
 
 // @public
 export const getPresence: (fluidContainer: IFluidContainer) => Presence;
@@ -470,6 +506,8 @@ TSchema
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
+export { InteriorSequencePlace }
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -784,6 +822,8 @@ export interface SchemaStatics {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+export { SequencePlace }
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
@@ -791,6 +831,8 @@ export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedTyp
 
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+export { Side }
 
 // @public @sealed @system
 export interface SimpleNodeSchemaBase<out TNodeKind extends NodeKind, out TCustomMetadata = unknown> {
