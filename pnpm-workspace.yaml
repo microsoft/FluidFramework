@@ -227,7 +227,14 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
-registry: https://packagefeedproxy.microsoft.io/npm/
+# No `registry` is set here on purpose. pnpm resolves the built-in default (registry.npmjs.org),
+# which keeps external/OSS contributions working out of the box, and also keeps lockfile updates
+# pointed at the public registry.
+# NOTE: a `registry` value in pnpm-workspace.yaml takes precedence over a project-level `.npmrc`,
+# so setting it here (even to registry.npmjs.org) would silently defeat the per-developer override
+# below. Leave it unset instead.
+# Developers who must use an npmjs mirror or team-managed feed can make use of
+# `node ./scripts/set-dev-registry.cjs <registry-url>`.
 
 resolutionMode: highest
 
@@ -235,7 +242,8 @@ strictDepBuilds: true
 
 strictPeerDependencies: true
 
-# The registry.npmjs mirror does not preserve all the npm package metadata necessary for this pnpm feature to function
+# The artifact feeds used by CI and by internal developers (see the registry note above)
+# do not preserve all the npm package metadata necessary for this pnpm feature to function
 # correctly as of 7/16/2026. If this is turned back on...
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated

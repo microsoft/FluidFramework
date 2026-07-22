@@ -94,11 +94,60 @@ git clone https://github.com/microsoft/FluidFramework.git
 cd FluidFramework
 ```
 
-Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.md):
+### Set up pnpm
+
+This repo uses [pnpm](https://pnpm.io/), pinned to a specific version via the `packageManager` field in
+`package.json`. How you install it depends on whether you can reach the public npm registry. Follow the
+one section below that matches you, then continue to [Build](#build).
+
+#### External / open-source contributors
+
+Enable NodeJs's [Corepack](https://github.com/nodejs/corepack/blob/main/README.md). It reads the pinned
+version and installs pnpm from the public npm registry automatically:
 
 ```shell
 corepack enable
 ```
+
+#### Microsoft developers
+
+The public npm registry (`registry.npmjs.org`) is blocked on managed devices, so first point the
+workspaces at a non-blocked registry (an internal mirror or team-managed feed). Refer to internal
+documentation for the URL to use:
+
+```shell
+node ./scripts/set-dev-registry.cjs <registry-url>
+```
+
+This writes a gitignored `.npmrc` into each workspace; run `node ./scripts/set-dev-registry.cjs --clear`
+to revert. Corepack cannot install pnpm through the internal feeds (it uses a registry endpoint they do
+not implement), so use one of the two options below instead of a plain `corepack enable`.
+
+##### If you want to keep using Corepack
+
+Useful if you switch between repos that pin different package managers. Enable Corepack, then bootstrap
+the pinned pnpm and pre-seed Corepack's cache so it reuses that copy offline:
+
+```shell
+corepack enable
+node ./scripts/bootstrap-pnpm.cjs --registry <registry-url> --seed-corepack
+```
+
+Only the seeded version is cached, so re-run the second command for any other pinned version you need
+(e.g. after it changes, or when working in a repo that pins a different version).
+
+##### If you don't use Corepack
+
+Install the pinned pnpm globally via npm (this is the same script CI uses):
+
+```shell
+node ./scripts/bootstrap-pnpm.cjs --registry <registry-url>
+```
+
+If you previously ran `corepack enable`, also run `corepack disable pnpm` so this npm-installed pnpm is
+the one that runs.
+
+### Build
 
 Run the following to build the client packages:
 
