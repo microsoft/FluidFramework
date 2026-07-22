@@ -204,8 +204,8 @@ export type DataStoreKey<T, TAll = unknown> = RegistryKey<
  */
 export interface DataStoreCreator {
 	/**
-	 * Create a new detached datastore `T` which can be attached to the {@link FluidContainer}.
-	 * by adding a handle to a DataStore or SharedObject which is already attached to the {@link FluidContainer}.
+	 * Create a new detached data store `T` which can be attached to the {@link FluidContainer}.
+	 * by adding a handle to a data store or shared object which is already attached to the {@link FluidContainer}.
 	 * @remarks
 	 * `kind` will be looked up in the {@link Registry} used to create or load this {@link DataStoreCreator}.
 	 * It is up to that registry to decide how it handles unknown types, for example by throwing an exception or returning a placeholder.

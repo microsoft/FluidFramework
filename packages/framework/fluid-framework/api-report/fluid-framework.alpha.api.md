@@ -1803,7 +1803,7 @@ export interface ServiceOptions {
 
 // @alpha @sealed
 export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
-    create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+    createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
 }
 
 // @alpha @input

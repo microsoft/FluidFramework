@@ -57,7 +57,7 @@ export function makeStubDataStoreKind(type: string): DataStoreKind {
 		type,
 		registry: sharedObjectRegistryFromIterable([statelessSharedObjectKind]),
 		async instantiateFirstTime(rootCreator) {
-			return rootCreator.create(statelessSharedObjectKind);
+			return rootCreator.createSharedObject(statelessSharedObjectKind);
 		},
 		async view() {
 			return {};

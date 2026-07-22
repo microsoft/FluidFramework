@@ -133,7 +133,7 @@ describe("treeDataStore", () => {
 			},
 			instantiateFirstTime: async (creator) => {
 				const { SharedTreeAlpha: SharedTreeFactory } = await import("../treeFactory.js");
-				return creator.create(SharedTreeFactory);
+				return creator.createSharedObject(SharedTreeFactory);
 			},
 			view: async (tree) => tree,
 		});

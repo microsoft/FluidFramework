@@ -41,11 +41,11 @@ import type { ISharedObject } from "./types.js";
  * @remarks
  * Supports lazy code loading in a limited way (a single lazy load per registry).
  * @privateRemarks
- * TODO: The framework provided SharedObjects should be exposed in a way indistinguishable from custom Sub-DataStores.
+ * TODO: The framework provided SharedObjects should be exposed in a way indistinguishable from custom sub-data stores.
  * This can be done by unifying the DataStoreKind and SharedObjectKindAlpha types.
- * For now, this would mean having DataStoreKind extend SharedObjectKindAlpha, since we can allow a DataStore in all places SharedObjects are allowed,
+ * For now, this would mean having DataStoreKind extend SharedObjectKindAlpha, since we can allow a data store in all places SharedObjects are allowed,
  * but do not allow SharedObjects at the root.
- * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper DataStore) could simplify things, allowing DataStores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
+ * Fixing this, and allowing shared objects at the root (maybe use a trivial wrapper data store) could simplify things, allowing data stores and Containers to share some types (like how they create detached contents, have registries, have a root etc).
  *
  * Part of this unification could be to relax the output from the factories / registries. Allowing the output to be an arbitrary type, which might be a promise, and might not be one could help.
  * Removal of the IFluidLoadable requirement, and allowing the returned type to expose handles to itself however it wants (or not at all) might be viable and simplify typing and allow for strongly typed handles at creation time at least).
@@ -56,9 +56,9 @@ import type { ISharedObject } from "./types.js";
  * During load, validation would simply check the factory's type string matches the key's type string.
  * When using SharedObjectKindAlpha or DataStoreKind, validation can check factory object identity against key.
  *
- * Goal: Mostly unify container, datastore and shared object abstractions.
+ * Goal: Mostly unify container, data store and shared object abstractions.
  * Maybe unify a bit with service client since it also has a way to create detached things with an initialized root then attach them.
- * SharedObjects are just built in leaf DataStores.
+ * SharedObjects are just built in leaf data stores.
  *
  * @input
  * @alpha
@@ -114,14 +114,14 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	readonly type: string;
 
 	/**
-	 * The registry of shared object kinds (including other DataStores) that can be loaded or created within this DataStore.
+	 * The registry of shared object kinds (including other data stores) that can be loaded or created within this data store.
 	 *
-	 * TODO: actually allow this to contain datastores.
+	 * TODO: actually allow this to contain data stores.
 	 */
 	readonly registry: SharedObjectRegistry;
 
 	/**
-	 * Create the initial content of the datastore, and return the root shared object.
+	 * Create the initial content of the data store, and return the root shared object.
 	 * @privateRemarks
 	 * TODO:
 	 * This requires the caller to produce a single root shared object (which is keyed by {@link rootSharedObjectId}).
@@ -135,9 +135,9 @@ export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutp
 	): Promise<TRoot>;
 
 	/**
-	 * Construct a view of the datastore's root shared object.
+	 * Construct a view of the data store's root shared object.
 	 *
-	 * @param root - The root shared object of the datastore, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
+	 * @param root - The root shared object of the data store, created by `instantiateFirstTime` (though possibly created by another client and loaded by this one).
 	 * @param context - A {@link DataStoreContext} that can be used to create additional shared objects.
 	 */
 	view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
@@ -193,8 +193,8 @@ function convertRegistry(
 }
 
 /**
- * DataStores keep their shared objects inside channels which get names.
- * This is the name of the channel which we conventionally use for the root shared object of a DataStore in most cases.
+ * Data stores keep their shared objects inside channels which get names.
+ * This is the name of the channel which we conventionally use for the root shared object of a data store in most cases.
  * @remarks
  * There can be other named channels, or the root could use a different name, but we are trying to migrate away from such patterns.
  * Currently the DataStoreKind pattern used in this file follows and requires this convention,
@@ -225,7 +225,9 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 		existing,
 		async (runtimeInner: IFluidDataStoreRuntime) => {
 			const innerContext: DataStoreContext = {
-				async create<T2 extends IFluidLoadable>(key: SharedObjectKey<T2>): Promise<T2> {
+				async createSharedObject<T2 extends IFluidLoadable>(
+					key: SharedObjectKey<T2>,
+				): Promise<T2> {
 					const kind = lookupInRegistry(sharedObjectRegistry, key);
 					// Create detached channel.
 					return asSharedObjectKind(kind).create(runtimeInner);
@@ -235,7 +237,7 @@ async function createDataStore<T, TRoot extends IFluidLoadable>(
 			let createdRoot: TRoot | undefined;
 
 			const rootCreator: SharedObjectCreator<TRoot> = {
-				async create<T2 extends TRoot>(key: SharedObjectKey<T2>): Promise<T2> {
+				async createSharedObject<T2 extends TRoot>(key: SharedObjectKey<T2>): Promise<T2> {
 					// Create named channel under the root id.
 					// Error if called twice.
 					if (createdRoot !== undefined) {
@@ -286,11 +288,11 @@ export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
 	/**
 	 * Create an instance of `kind`, which must be registered in the registry of the surrounding data store.
 	 */
-	create<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+	createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
 }
 
 /**
- * Contextual information about a DataStore which is provided when instantiating or loading it.
+ * Contextual information about a data store which is provided when instantiating or loading it.
  * @privateRemarks
  * TODO: this can expose more contextual information about the data store as needed.
  * @sealed

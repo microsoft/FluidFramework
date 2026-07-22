@@ -97,7 +97,7 @@ export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(
 /**
  * Simple tree instantiation helper.
  * @remarks
- * This is used by {@link defineTreeDataStore}, but can also be used in custom DataStores with {@link @fluidframework/shared-object-base#defineDataStore}.
+ * This is used by {@link defineTreeDataStore}, but can also be used in custom data stores with {@link @fluidframework/shared-object-base#defineDataStore}.
  * Typically used to implement {@link @fluidframework/shared-object-base#DataStoreOptions.instantiateFirstTime} to create the tree and optionally initialize it.
  * @alpha
  */
@@ -107,7 +107,7 @@ export async function instantiateTreeFirstTime<TSchema extends ImplicitFieldSche
 	treeKind: SharedObjectKey<ITree>,
 	options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">,
 ): Promise<ITree> {
-	const tree = await rootCreator.create(treeKind);
+	const tree = await rootCreator.createSharedObject(treeKind);
 	initializeTreeFirstTime(tree, options, creator);
 	return tree;
 }
