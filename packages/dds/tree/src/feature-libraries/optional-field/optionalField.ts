@@ -23,7 +23,6 @@ import {
 import {
 	type IdAllocator,
 	type Mutable,
-	type RangeQueryResult,
 	SizedNestedMap,
 	deleteFromNestedMap,
 	setInNestedMap,
@@ -47,7 +46,7 @@ import {
 	type NodeId,
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
-	type NestedChangesIndices,
+	type NestedChangesInfo,
 	type FieldChangeDelta,
 	FlexFieldKind,
 	type EditFilterFunc,
@@ -739,7 +738,7 @@ export const optionalChangeHandler: FieldChangeHandler<
 	getCrossFieldKeys: (_change) => [],
 };
 
-function getNestedChanges(change: OptionalChangeset): NestedChangesIndices {
+function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 	// True iff the content of the field changes in some way
 	const detachId = change.valueReplace?.dst;
 
