@@ -1,4 +1,3 @@
-
 # Copyright (c) Microsoft Corporation and contributors. All rights reserved.
 # Licensed under the MIT License.
 
@@ -8,81 +7,139 @@
 
 parameters:
 # The path containing the project(s) to build.
+# A package.json is expected under this folder and will be used to determine
+# the version of pnpm to install.
 - name: buildDirectory
   type: string
 
 # If set to false, the pnpm store will not be cached or restored from cache.
 - name: enableCache
   type: boolean
-  default: false
+  default: true
 
-# The path to the pnpm store.
+# The path to the pnpm store. The contents here will be cached and restored when using pnpm in a pipeline.
+# If a job uses this template multiple times with enableCache=true, then each pnpmStorePath should be
+# unique AND all use of pnpm to install should be done before another use of this template.
 - name: pnpmStorePath
   type: string
   default: $(Pipeline.Workspace)/.pnpm-store
 
-# Where to place the user-level .npmrc file.
+# Where to place the user-level .npmrc file. Pnpm will be configured to reference this file for the duration of the job.
+# Rather than rely on the default $HOME/.npmrc, we specify a known-reasonable location here.
+# Users of the template probably don't need to change this.
 - name: userNpmrcPath
   type: string
   default: $(Agent.TempDirectory)/.npmrc
+
+- name: primaryRegistry
+  type: string
+  default: $(ado-feeds-primary-registry)
+
+# An optional extra segment appended to the pnpm store cache key (separated by |).
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# additionalOptionalCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Use this parameter if the set of dependencies to be installed may be be better distinguished using files other than the root pnpm-lock.
+# And specify quoted files paths of any files to requiredCacheKey.
+- name: additionalOptionalCacheKey
+  type: string
+  default: ''
+
+# An optional extra segment appended to the pnpm store cache key (separated by |) and restore key.
+# Note that Azure pipelines interpret unquoted cache keys as files rather than literal strings. E.g. the following specification:
+#
+# requiredCacheKey: 'foo | "bar"'
+#
+# will use the hashed contents of the file "foo" (hashing nothing if that file does not exist) as well as the string "bar".
+# Unquoted files are *not recommended* as requiredCacheKey as it limits restore possibilities. However the quoted file path
+# of any files specified in additionalOptionalCacheKey is recommended to avoid cross-pollination from caches of other jobs.
+# There is a "default" default value to avoid unintended restore contamination. That can be overridden by setting empty string.
+- name: requiredCacheKey
+  type: string
+  default: '"default"'
 
 steps:
 - ${{ if eq(parameters.enableCache, true) }}:
   - task: Cache@2
     displayName: Cache pnpm store
-    timeoutInMinutes: 3
+    # The timeout applies to both the pre-job restore and post-job save operations.
+    # 3 minutes was insufficient for the post-job cache upload of the pnpm store, causing
+    # intermittent "The task has timed out" errors that mark builds as Partially Succeeded.
+    # In 2026-06, 5 minutes has been insufficient for pre-job as the pnpm store has grown
+    # with additional past versions of FF client packages for compatibility testing. But
+    # it may also just be polluted. This will either remain at 5 or be adjusted after
+    # caches are reset.
+    timeoutInMinutes: 5
     continueOnError: true
     inputs:
-      key: 'pnpm-store | "$(Agent.OS)" | ${{ parameters.buildDirectory }}/pnpm-lock.yaml'
       path: ${{ parameters.pnpmStorePath }}
+      # Caches are already scoped to individual pipelines, so no need to include the release group name or tag
+      # in the cache key.
+      # The pnpm lockfile path is kept as an explicit key to avoid job cross-pollination
+      # when using multiple workspaces in a pipeline.
+      key: '"pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }} | $(Pipeline.Workspace)/${{ parameters.buildDirectory }}/pnpm-lock.yaml | ${{ parameters.additionalOptionalCacheKey }}'
       restoreKeys: |
-        pnpm-store | "$(Agent.OS)"
+        "pnpm-store" | "$(Agent.OS)" | "${{ parameters.buildDirectory }}/pnpm-lock.yaml" | ${{ parameters.requiredCacheKey }}
 
-# Configure the registry before installing pnpm.
+# Seed the userconfig .npmrc with the primary registry. This propagates to subsequent tasks so
+# that npmAuthenticate (below) and any later pnpm/npm invocation in the job reuse the same file.
 - task: Bash@3
   displayName: Configure npm registry
+  # The previous task (cache restoration) can timeout, which is classified as canceled, but since it's just cache
+  # restoration, we want to continue even if it timed out.
   condition: or(succeeded(), canceled())
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     script: |
       set -eu -o pipefail
       echo "Using node $(node --version)"
       echo "##vso[task.setvariable variable=NPM_CONFIG_USERCONFIG]$NPM_CONFIG_USERCONFIG"
       echo "Primary registry: ${NPM_REGISTRY}"
       echo "registry=${NPM_REGISTRY}" > "$NPM_CONFIG_USERCONFIG"
-
       if [ "${NPM_REGISTRY}" == "https://registry.npmjs.org/" ]; then
         echo "##vso[task.setvariable variable=registryType]public"
       else
         echo "##vso[task.setvariable variable=registryType]private"
       fi
   env:
-    NPM_REGISTRY: $(ado-feeds-primary-registry)
+    NPM_REGISTRY: ${{ parameters.primaryRegistry }}
     NPM_CONFIG_USERCONFIG: ${{ parameters.userNpmrcPath }}
 
-# Authenticate before downloading pnpm.
+# Authenticate to the npm feed if required. Runs before pnpm install so that,
+# `npm install -g pnpm@<version>` can fetch pnpm itself from the authenticated feed.
 - task: npmAuthenticate@0
-  displayName: Npm authenticate
+  displayName: 'Npm authenticate'
   condition: and(succeeded(), eq(variables['registryType'], 'private'))
   retryCountOnTaskFailure: 1
   inputs:
     workingFile: ${{ parameters.userNpmrcPath }}
 
-# Install the repository-pinned pnpm version through the authenticated registry.
+# Install and configure pnpm
 - task: Bash@3
-  displayName: Install and configure pnpm
+  displayName: Install pnpm
   inputs:
     targetType: 'inline'
-    workingDirectory: ${{ parameters.buildDirectory }}
+    workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
     script: |
       set -eu -o pipefail
-
-      PNPM_VERSION=$(node -e "const p=require('./package.json'); console.log(p.packageManager.split('+')[0])")
-      npm install --global "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
-
-      echo "Using pnpm $(pnpm --version)"
+      # Parse the pnpm version pinned in package.json's "packageManager" field
+      # (e.g. "pnpm@10.33.0+sha512..." -> "pnpm@10.33.0").
+      # This discards the integrity hash suffix, which npm does not provide a practical way to use,
+      # and trusts the package repository to serve the correct version.
+      PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])")
+      npm install -g "$PNPM_VERSION" --userconfig "${{ parameters.userNpmrcPath }}"
+      echo "Using pnpm $(pnpm -v)"
       echo "Pnpm user config location: $(pnpm config get userconfig)"
       pnpm config set store-dir ${{ parameters.pnpmStorePath }}
-      pnpm config set -g workspace-concurrency 0
       echo "Pnpm store: ${{ parameters.pnpmStorePath }}"
+      # CI uses mirrored registries that may not preserve trust metadata consistently.
+      # Disable pnpm trust downgrade checks in CI as a workaround.
+      echo "Disabling pnpm trust policy as workaround for npm mirror limitations"
+      echo "##vso[task.setvariable variable=PNPM_CONFIG_TRUST_POLICY]off"
+      # Our mirrored registries also have unreliable publish timestamps.
+      # Disable minimum release age checks in CI to avoid false positives.
+      echo "Disabling pnpm minimumReleaseAge check as workaround for npm mirror publish time issues"
+      echo "##vso[task.setvariable variable=PNPM_CONFIG_MINIMUM_RELEASE_AGE]0"
