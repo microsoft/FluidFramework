@@ -6,7 +6,9 @@
 import {
 	stringToBuffer,
 	type ILayerCompatDetails,
+	type ILayerCompatSupportRequirements,
 	type IProvideLayerCompatDetails,
+	type IProvideLayerCompatSupportRequirements,
 } from "@fluid-internal/client-utils";
 import type {
 	ICodeDetailsLoader,
@@ -27,8 +29,13 @@ import { AbsentProperty, failSometimeProxy } from "./failProxy.js";
 export function createTestDocumentServiceFactoryProxy(
 	resolvedUrl: IResolvedUrl,
 	compatibilityDetails?: ILayerCompatDetails,
+	compatibilityRequirements?: ILayerCompatSupportRequirements,
 ): IDocumentServiceFactory {
-	return failSometimeProxy<IDocumentServiceFactory & IProvideLayerCompatDetails>({
+	return failSometimeProxy<
+		IDocumentServiceFactory &
+			IProvideLayerCompatDetails &
+			IProvideLayerCompatSupportRequirements
+	>({
 		createContainer: async () =>
 			failSometimeProxy<IDocumentService>({
 				policies: {},
@@ -39,6 +46,7 @@ export function createTestDocumentServiceFactoryProxy(
 					}),
 			}),
 		ILayerCompatDetails: compatibilityDetails ?? AbsentProperty,
+		ILayerCompatSupportRequirements: compatibilityRequirements ?? AbsentProperty,
 	});
 }
 
