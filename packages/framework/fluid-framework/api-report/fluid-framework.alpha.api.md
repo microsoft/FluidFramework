@@ -1102,6 +1102,11 @@ export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = Im
     readonly schema: TSchema;
 }
 
+// @alpha
+export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
+}
+
 // @alpha @sealed
 export interface JsonArrayNodeSchema extends JsonNodeSchemaBase<NodeKind.Array, "array"> {
     readonly items: JsonFieldSchema;
@@ -1850,6 +1855,22 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly versionComparer?: (a: string, b: string) => number;
 }
 
+// @alpha @input
+export interface StagedSchemaUpgradePolicy {
+    includeStaged(upgrade: SchemaUpgrade): boolean;
+    includeStagedOptional(upgrade: SchemaUpgrade): boolean;
+}
+
+// @alpha
+export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory;
+
+// @alpha @sealed
+export interface StagedSchemaUpgradePolicyFactory {
+    enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy;
+    readonly permissive: StagedSchemaUpgradePolicy;
+    readonly restrictive: StagedSchemaUpgradePolicy;
+}
+
 // @beta @system
 export namespace System_TableSchema {
     // @sealed @system
@@ -2489,7 +2510,6 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
-    // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
     get root(): ReadableField<TSchema>;
@@ -2516,11 +2536,12 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 
 // @alpha @sealed
 export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends TreeViewConfiguration<TSchema> implements TreeSchema {
-    constructor(props: ITreeViewConfiguration<TSchema>);
+    constructor(props: ITreeViewConfigurationAlpha<TSchema>);
     // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
 // @public @sealed
