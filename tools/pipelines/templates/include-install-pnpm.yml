@@ -16,7 +16,7 @@ parameters:
 # If set to false, the pnpm store will not be cached or restored from cache.
 - name: enableCache
   type: boolean
-  default: false
+  default: true
 
 # The path to the pnpm store.
 - name: pnpmStorePath
