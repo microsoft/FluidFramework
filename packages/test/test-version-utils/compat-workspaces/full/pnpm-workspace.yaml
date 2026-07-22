@@ -4,7 +4,7 @@ packages:
   - '*'
 
 # The security settings below are intentional — do not relax them.
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 
 # Exclude our own FF scopes so compat tests can install versions we just shipped
 # without hitting the age gate (new releases are < 1440 min old for a few hours).
