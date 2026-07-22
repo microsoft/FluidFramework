@@ -711,6 +711,20 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
 // @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    minLogLevel?: LogLevel | undefined;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
+
+// @public
 export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
@@ -767,6 +781,23 @@ export interface Listenable<TListeners extends object> {
 export type Listeners<T extends object> = {
     [P in (string | symbol) & keyof T as IsListener<T[P]> extends true ? P : never]: T[P];
 };
+
+// @public
+export const LogLevel: LogLevelConst;
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    // @deprecated
+    readonly default: 20;
+    // @deprecated
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
+}
 
 // @public @sealed
 export interface MakeNominal {
@@ -1151,7 +1182,7 @@ export namespace System_Unsafe {
     // @system
     export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = IsUnion<TList> extends true ? never : {
         readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchemaUnsafe> ? InsertableTypedNodeUnsafe<TSchema> : never;
-    }[number];
+    }[NumberKeys<TList>];
     // @system
     export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [TreeNodeSchemaUnsafe] ? InsertableTypedNodeUnsafe<TSchema> : [TSchema] extends [AllowedTypesUnsafe] ? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema> : never;
     // @system

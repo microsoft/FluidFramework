@@ -4,6 +4,7 @@
  */
 
 import { testCompose } from "./compose.test.js";
+import { testFilterEdits } from "./filterEdits.test.js";
 import { testInvert } from "./invert.test.js";
 import { testMarkListFactory } from "./markListFactory.test.js";
 import { testRebase } from "./rebase.test.js";
@@ -43,4 +44,5 @@ describe("SequenceField", () => {
 	testSnapshots();
 	testReplaceRevisions();
 	testGetNestedChanges();
+	testFilterEdits();
 });

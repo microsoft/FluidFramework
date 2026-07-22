@@ -21,6 +21,8 @@ import {
 	type ITelemetryConsumer,
 } from "../index.js";
 
+import { tinyliciousPort } from "./TestConstants.js";
+
 // This test suite creates an actual IFluidContainer and confirms events are fired with the expected names during the expected events
 
 describe("container telemetry E2E", () => {
@@ -37,7 +39,7 @@ describe("container telemetry E2E", () => {
 	}
 
 	before(() => {
-		tinyliciousClient = new TinyliciousClient({ connection: { port: 7070 } });
+		tinyliciousClient = new TinyliciousClient({ connection: { port: tinyliciousPort } });
 		schema = {
 			initialObjects: {
 				sharedTree1: SharedTree,

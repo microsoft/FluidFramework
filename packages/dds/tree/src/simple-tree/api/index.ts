@@ -6,6 +6,7 @@
 export type {
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,
@@ -100,7 +101,7 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+export { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,

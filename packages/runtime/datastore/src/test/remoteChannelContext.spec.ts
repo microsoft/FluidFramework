@@ -5,13 +5,20 @@
 
 import { strict as assert } from "node:assert";
 
+import { stringToBuffer } from "@fluid-internal/client-utils";
 import { ContainerErrorTypes } from "@fluidframework/container-definitions/internal";
 import type { IErrorBase } from "@fluidframework/core-interfaces";
+import type {
+	IChannel,
+	IChannelAttributes,
+	IChannelFactory,
+} from "@fluidframework/datastore-definitions/internal";
 import type { ISnapshotTree } from "@fluidframework/driver-definitions/internal";
 import type {
 	CreateChildSummarizerNodeFn,
 	IContainerRuntimeBase,
 	IFluidDataStoreContext,
+	IRuntimeStorageService,
 	ISummarizerNodeWithGC,
 } from "@fluidframework/runtime-definitions/internal";
 import {
@@ -138,6 +145,90 @@ describe("RemoteChannelContext Tests", () => {
 				},
 			],
 			"Expected one RealizeError event with tagged data-store and channel props",
+		);
+	});
+
+	it("logs channelType on RealizeError when the channel factory load fails after attributes are read", async () => {
+		const channelId = "ddsId";
+		const channelType = "https://graph.microsoft.com/types/TestTree";
+		const mockLogger = new MockLogger();
+		const contextWithMockLogger = new MockFluidDataStoreContext(
+			"testDataStoreId",
+			false,
+			mockLogger.toTelemetryLogger(),
+		);
+		contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+
+		const dataStoreRuntime = loadRuntime(contextWithMockLogger, sharedObjectRegistry);
+
+		const attributes: IChannelAttributes = {
+			type: channelType,
+			snapshotFormatVersion: "1.0",
+			packageVersion: "1.0",
+		};
+
+		// The factory and attributes resolve successfully (so `channelType` is captured at
+		// remoteChannelContext.ts line 114), but `factory.load()` rejects — mirroring the production
+		// "Supplied final ID was not finalized by this compressor." decompress failure that occurs
+		// inside the channel's load.
+		const failingFactory: IChannelFactory = {
+			type: channelType,
+			attributes,
+			create: () => {
+				throw new Error("not implemented");
+			},
+			load: async (): Promise<IChannel> => {
+				throw new Error("Supplied final ID was not finalized by this compressor.");
+			},
+		};
+		const registry: ISharedObjectRegistry = {
+			get: (type: string) => (type === channelType ? failingFactory : undefined),
+		};
+
+		// ChannelStorageService returns the blob id as its own content (see channelStorageService.spec.ts),
+		// so the `.attributes` blob "id" is the serialized attributes JSON itself.
+		const snapshot = {
+			blobs: { ".attributes": JSON.stringify(attributes) },
+			trees: {},
+		} as unknown as ISnapshotTree;
+		const storage: Pick<IRuntimeStorageService, "readBlob"> = {
+			readBlob: async (id: string) => stringToBuffer(id, "utf8"),
+		};
+
+		const createSummarizerNode: CreateChildSummarizerNodeFn = () =>
+			({
+				invalidate: () => {},
+				summarize: async () => ({ summary: {}, stats: {} }),
+				getGCData: async () => ({ gcNodes: {} }),
+				updateUsedRoutes: () => {},
+			}) as unknown as ISummarizerNodeWithGC;
+
+		const remoteChannelContext = new RemoteChannelContext(
+			dataStoreRuntime,
+			contextWithMockLogger,
+			storage as IRuntimeStorageService,
+			() => {},
+			() => {},
+			channelId,
+			snapshot,
+			registry,
+			undefined /* extraBlobs */,
+			createSummarizerNode,
+			"SomeAttachMessageType",
+		);
+
+		await assert.rejects(async () => remoteChannelContext.getChannel());
+
+		mockLogger.assertMatchAny(
+			[
+				{
+					eventName: "FluidDataStoreRuntime:RemoteChannelContext:RealizeError",
+					channelId: { value: channelId, tag: TelemetryDataTag.CodeArtifact },
+					channelType: { value: channelType, tag: TelemetryDataTag.CodeArtifact },
+				},
+			],
+			"RealizeError should carry channelType once the factory/attributes have been resolved",
 		);
 	});
 });

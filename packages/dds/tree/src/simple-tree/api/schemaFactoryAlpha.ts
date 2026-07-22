@@ -80,6 +80,8 @@ import type {
  * Values should be preferred over generator functions when possible, as they are simpler and more efficient.
  * Generator functions should be used when the default value needs to be dynamic or when it is not possible to provide a value directly.
  *
+ * See {@link SchemaStaticsAlpha.withDefault} for the primary API that uses this type.
+ *
  * @example
  * ```typescript
  * // Provide a value directly
@@ -102,27 +104,63 @@ export type NodeProvider<T> = T | (() => T);
  */
 export interface SchemaStaticsAlpha {
 	/**
-	 * Creates a field schema with a default value. Fields with defaults (whether required or optional) are recognized by the type system as optional in constructors,
-	 * allowing them to be omitted when creating new nodes.
+	 * Creates a field schema with a default value.
+	 *
+	 * @remarks
+	 * Fields with defaults are optional in constructors, allowing them to be omitted when creating new nodes.
+	 * This works with both {@link SchemaStatics.required | required} and {@link SchemaStatics.optional | optional} fields:
+	 *
+	 * - **Required fields with defaults**: The field is always present in the tree, but can be omitted from the constructor.
+	 * The default value is used when the field is not provided.
+	 *
+	 * - **Optional fields with defaults**: Optional fields already default to `undefined`, but `withDefault` lets you
+	 * specify a different default value.
+	 *
+	 * The default value can be provided in two ways (see {@link NodeProvider}):
+	 *
+	 * 1. **A value**: The value is deep-copied for each use, ensuring independence between instances.
+	 * Prefer this when the default is a fixed value.
+	 *
+	 * 2. **A generator function**: A function called each time a default is needed. Use this for dynamic defaults
+	 * (e.g., timestamps, UUIDs) or when explicit control over value creation is required.
+	 *
+	 * Defaults are evaluated eagerly during node construction.
+	 *
+	 * For recursive schemas, use {@link SchemaStaticsAlpha.withDefaultRecursive} instead.
+	 *
+	 * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-definition/default-field-values | Default Field Values documentation}
+	 * for a comprehensive guide with additional examples.
 	 *
 	 * @param fieldSchema - The field schema to add a default to (e.g., `factory.required(factory.string)` or `factory.optional(factory.number)`)
 	 * @param defaultValue - A {@link NodeProvider} specifying the default value.
 	 *
 	 * @example
+	 * A schema with a mix of required, defaulted, and dynamic fields:
 	 * ```typescript
-	 * const MySchema = factory.objectAlpha("MyObject", {
-	 *     // Provide values directly
-	 *     name: factory.withDefault(factory.required(factory.string), "untitled"),
-	 *     count: factory.withDefault(factory.required(factory.number), 0),
-	 *     metadata: factory.withDefault(factory.optional(Metadata), new Metadata({ version: 1 })),
+	 * const factory = new SchemaFactoryAlpha("example");
 	 *
-	 *     // Use generator functions for dynamic values
-	 *     timestamp: factory.withDefault(factory.required(factory.number), () => Date.now()),
-	 *     id: factory.withDefault(factory.required(factory.string), () => crypto.randomUUID()),
-	 * });
+	 * class Task extends factory.objectAlpha("Task", {
+	 *     // No default — must always be provided in the constructor
+	 *     title: factory.required(factory.string),
 	 *
-	 * const obj1 = new MySchema({}); // All defaults applied
-	 * const obj2 = new MySchema({ name: "custom" }); // name="custom", other defaults applied
+	 *     // Required field with a static default
+	 *     status: factory.withDefault(factory.required(factory.string), "todo"),
+	 *
+	 *     // Optional field with a custom default (instead of `undefined`)
+	 *     priority: factory.withDefault(factory.optional(factory.number), 0),
+	 *
+	 *     // Dynamic default using a generator function
+	 *     createdAt: factory.withDefault(factory.required(factory.number), () => Date.now()),
+	 * }) {}
+	 *
+	 * // Only `title` is required in the constructor; the rest use their defaults
+	 * const task = new Task({ title: "Write docs" });
+	 * // task.status === "todo"
+	 * // task.priority === 0
+	 * // task.createdAt is set to the current timestamp
+	 *
+	 * // Defaults can be overridden by providing explicit values
+	 * const urgentTask = new Task({ title: "Fix bug", status: "in-progress", priority: 1 });
 	 * ```
 	 *
 	 * @privateRemarks
@@ -208,6 +246,9 @@ export interface SchemaStaticsAlpha {
 	 * @remarks
 	 * This version of {@link SchemaStaticsAlpha.withDefault} has fewer type constraints to work around TypeScript limitations, see {@link Unenforced}.
 	 * See {@link ValidateRecursiveSchema} for additional information about using recursive schema.
+	 *
+	 * See the {@link https://fluidframework.com/docs/data-structures/tree/schema-definition/default-field-values#recursive-types | Default Field Values — Recursive Types documentation}
+	 * for usage examples and guidance on avoiding infinite recursion with recursive defaults.
 	 */
 	withDefaultRecursive: <
 		Kind extends FieldKind,

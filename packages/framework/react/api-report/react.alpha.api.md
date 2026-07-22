@@ -43,6 +43,21 @@ export interface SchemaIncompatibleProps {
     readonly upgradeSchema: () => void;
 }
 
+// @alpha @sealed
+export interface SynchronizedString {
+    readonly selection: TextSelection | undefined;
+    readonly text: string;
+}
+
+// @alpha
+export function syncTextToTree(root: TextAsTree.Tree, newText: string): void;
+
+// @alpha @input
+export interface TextSelection {
+    readonly end: number;
+    readonly start: number;
+}
+
 // @alpha
 export function toPropTreeNode<T extends TreeNode | TreeLeafValue>(node: T): PropTreeValue<T>;
 
@@ -90,6 +105,9 @@ export function useTree(subtreeRoot: TreeNode): number;
 
 // @alpha
 export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
+
+// @alpha
+export function useTreeSynchronizedString(tree: TextAsTree.Tree, initialSelection?: TextSelection): SynchronizedString;
 
 // @alpha
 export function withMemoizedTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions & {

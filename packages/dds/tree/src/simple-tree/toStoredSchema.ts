@@ -37,9 +37,9 @@ import {
 	ExpectStored,
 	NodeKind,
 	SchemaUpgrade,
+	StagedSchemaUpgradePolicy,
 	Unchanged,
 	type SimpleSchemaTransformationOptions,
-	type StoredFromViewSchemaGenerationOptions,
 	type StoredSchemaGenerationOptions,
 } from "./core/index.js";
 import { FieldKind, normalizeFieldSchema, type ImplicitFieldSchema } from "./fieldSchema.js";
@@ -64,63 +64,68 @@ import { createTreeSchema } from "./treeSchema.js";
 // The simple-schema related logic from this file and src/simple-tree/core/toStored.ts can be unified and `toStoredSchema` and its other ImplicitFieldSchema consuming variants should probably be removed in favor of acting on TreeSchema and SimpleTreeSchema directly.
 
 const viewToStoredCache = new WeakMap<
-	StoredFromViewSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	WeakMap<ImplicitFieldSchema, TreeStoredSchema>
 >();
 
-/**
- * Maximally restrictive transformation of a view to stored schema.
- * @remarks
- * This should only be used when the intent is to produce a stored schema is as restrictive as possible while still being compatible with the input view schema.
- * This is typically used for cases where backwards compatibility with past versions of an application is required, like {@link toUpgradeSchema} or {@link toInitialSchema}.
- */
-export const restrictiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions =
-	{
-		includeStaged: () => false,
-		includeStagedOptional: () => false,
-	};
+function isStagedSchemaUpgradePolicy(
+	stagedSchemaUpgrades: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): stagedSchemaUpgrades is StagedSchemaUpgradePolicy {
+	return (
+		typeof stagedSchemaUpgrades === "object" &&
+		"includeStaged" in stagedSchemaUpgrades &&
+		"includeStagedOptional" in stagedSchemaUpgrades
+	);
+}
 
 /**
- * Maximally permissive transformation of a view to stored schema.
+ * Resolves a collection of staged schema upgrades into stored-schema generation options.
  * @remarks
- * This should only be used when the intent is to produce a stored schema which allows as much as possible while still being compatible with the input view schema.
- * This is typically used for cases where forwards compatibility with future versions of an application is required, like {@link toUnhydratedSchema}.
- *
- * This is unable to include unknown optional fields in the output, which makes it not truly maximally permissive.
- *
- * TODO: {@link StoredFromViewSchemaGenerationOptions} could be updated to allow a way to inject extra optional fields.
- * If done, then this could take in an existing stored schema, and attempt to generate a valid superset.
- * This could be useful to use as the schema for unhydrated content cloned from hydrated content.
+ * If `stagedSchemaUpgrades` is omitted, returns restrictive options.
  */
-export const permissiveStoredSchemaGenerationOptions: StoredFromViewSchemaGenerationOptions = {
-	includeStaged: () => true,
-	includeStagedOptional: () => true,
-};
+export function resolveStoredSchemaGenerationOptions(
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): StagedSchemaUpgradePolicy {
+	if (stagedSchemaUpgrades === undefined) {
+		return StagedSchemaUpgradePolicy.restrictive;
+	}
+
+	if (isStagedSchemaUpgradePolicy(stagedSchemaUpgrades)) {
+		return stagedSchemaUpgrades;
+	}
+
+	return StagedSchemaUpgradePolicy.enabledStagedUpgrades(...stagedSchemaUpgrades);
+}
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use in schema upgrades.
- *
- * TODO: once upgrades are more flexible, this should take in more options, including the old schema and specific upgrades to enable.
  */
-export function toUpgradeSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+export function toUpgradeSchema(
+	root: ImplicitFieldSchema,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
 }
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} for use as initial document schema.
  */
-export function toInitialSchema(root: ImplicitFieldSchema): TreeStoredSchema {
-	return toStoredSchema(root, restrictiveStoredSchemaGenerationOptions);
+export function toInitialSchema(
+	root: ImplicitFieldSchema,
+	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
+): TreeStoredSchema {
+	return toStoredSchema(root, resolveStoredSchemaGenerationOptions(stagedSchemaUpgrades));
 }
 
 /**
- * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema} to used for unhydrated nodes.
+ * Permissive staged schema upgrade policy used for unhydrated node schema generation.
  * @remarks
  * This allows as much as possible, relying on further validation when inserting the content.
  *
  * TODO: this should get additional options to enable support for unknown optional fields.
  */
-export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
+export const toUnhydratedSchema: StagedSchemaUpgradePolicy =
+	StagedSchemaUpgradePolicy.permissive;
 
 /**
  * Converts a {@link ImplicitFieldSchema} into a {@link TreeStoredSchema}.
@@ -137,7 +142,7 @@ export const toUnhydratedSchema = permissiveStoredSchemaGenerationOptions;
  */
 export function toStoredSchema(
 	root: ImplicitFieldSchema,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): TreeStoredSchema {
 	const cache = getOrCreate(viewToStoredCache, options, () => new WeakMap());
 	return getOrCreate(cache, root, () => {
@@ -152,7 +157,7 @@ export function toStoredSchema(
  */
 export function transformSimpleSchema(
 	schema: SimpleTreeSchema<SchemaType.View>,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): SimpleTreeSchema<SchemaType.Stored>;
 
 /**
@@ -324,7 +329,7 @@ export function getStoredSchema(
  */
 export function transformSimpleNodeSchema(
 	schema: SimpleNodeSchema<SchemaType.View>,
-	options: StoredFromViewSchemaGenerationOptions,
+	options: StagedSchemaUpgradePolicy,
 ): SimpleNodeSchema<SchemaType.Stored>;
 
 /**
@@ -483,7 +488,7 @@ function allowedTypeFilter(
 	if (options === ExpectStored) {
 		if (data.isStaged !== undefined) {
 			throw new UsageError(
-				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StoredFromViewSchemaGenerationOptions` to process.",
+				"Failed to covert view schema to stored schema. The simple schema provided was indicated to be a stored schema by the use of `ExpectStored`, but view schema specific content was encountered which requires a `StagedSchemaUpgradePolicy` to process.",
 			);
 		}
 		return true;
@@ -505,7 +510,7 @@ function allowedTypeFilter(
 
 function isStoredFromView(
 	options: SimpleSchemaTransformationOptions,
-): options is StoredFromViewSchemaGenerationOptions {
+): options is StagedSchemaUpgradePolicy {
 	return typeof options === "object" && "includeStaged" in options;
 }
 

@@ -24,4 +24,5 @@ export interface CommitMessage<TChange> extends MessageBase {
 export interface BranchMessage extends MessageBase {
 	type: "branch";
 	branchId: BranchId;
+	branchName?: string;
 }

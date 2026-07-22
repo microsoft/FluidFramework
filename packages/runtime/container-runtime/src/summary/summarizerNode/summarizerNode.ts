@@ -570,13 +570,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
-				if (
-					parentLastSummaryReferenceSequenceNumber !== undefined &&
-					createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber
-				) {
-					// Prioritize latest summary if it was after this node was attached.
-					childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
-				}
+				// `parentLastSummaryReferenceSequenceNumber` is the latest sequence number processed in the last
+				// successful summary. So, for `createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber`
+				// to be true, the attach message would have to have been sequenced before the last summary and somehow
+				// not be part of that summary, which is not possible.
+				assert(
+					parentLastSummaryReferenceSequenceNumber === undefined ||
+						createParam.sequenceNumber > parentLastSummaryReferenceSequenceNumber,
+					"Attach sequence number should be greater than the parent's last summary reference sequence number",
+				);
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}

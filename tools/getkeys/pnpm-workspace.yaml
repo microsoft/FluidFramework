@@ -28,6 +28,11 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  uuid@>=7 <12: ^11.1.1
+
   # Resolve known js-yaml vulnerability (CVE-2025-64718: prototype pollution via merge keys).
   js-yaml: ^4.1.1
 

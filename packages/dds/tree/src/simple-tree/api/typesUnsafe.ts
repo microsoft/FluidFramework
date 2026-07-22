@@ -21,6 +21,7 @@ import type {
 	TreeLeafValue,
 	FlexListToUnion,
 	LazyItem,
+	NumberKeys,
 	AnnotatedAllowedType,
 	AnnotatedAllowedTypes,
 } from "../core/index.js";
@@ -260,7 +261,7 @@ export namespace System_Unsafe {
 					>
 						? InsertableTypedNodeUnsafe<TSchema>
 						: never;
-				}[number];
+				}[NumberKeys<TList>];
 
 	/**
 	 * {@link Unenforced} version of {@link InsertableTypedNode}.

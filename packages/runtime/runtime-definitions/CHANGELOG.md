@@ -1,5 +1,23 @@
 # @fluidframework/runtime-definitions
 
+## 2.112.0
+
+### Minor Changes
+
+- Expose whether a container runtime has staged changes ([#27648](https://github.com/microsoft/FluidFramework/pull/27648)) [c12943d4ef](https://github.com/microsoft/FluidFramework/commit/c12943d4ef6cd943241773cd98542ef3003415ac)
+
+  `IContainerRuntimeBase` now exposes `hasStagedChanges`, a flag indicating whether there are any changes submitted while in Staging Mode (via `enterStagingMode`) that have not yet been discarded or committed. A new `hasStagedChangesChanged` event is emitted whenever this value changes.
+
+  This is distinct from `isDirty`: a container runtime can be dirty due to ordinary unacknowledged local changes without having any staged changes.
+
+  ```typescript
+  containerRuntime.on("hasStagedChangesChanged", (hasStagedChanges) => {
+    // update UI to reflect whether there are staged changes awaiting commit/discard
+  });
+
+  const hasStagedChanges = containerRuntime.hasStagedChanges;
+  ```
+
 ## 2.111.0
 
 Dependency updates only.

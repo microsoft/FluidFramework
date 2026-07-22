@@ -70,6 +70,26 @@ peerDependencyRules:
     - '@aws-sdk/*'
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  keyv@>=4 <5: ^5.5.3
+  ts-deepmerge@>=7 <8: ^8.0.0
+  yaml@>=2 <3: ^2.8.3
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve a known security vulnerability (no patched 0.0.x/0.1.x release; move to the 0.2.x line).
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability.
+  '@github/copilot': ^1.0.43
+
   # commitizen@4.3.1 (latest/final) pins lodash to exactly 4.17.21.
   # Override to allow resolution to a newer patched version.
   lodash: ^4.18.1
@@ -110,10 +130,10 @@ overrides:
   oclif>@aws-sdk/client-s3: '-'
 
   # Resolve known vulnerabilities in older versions.
-  qs: ^6.15.0
+  qs: ^6.15.2
 
-  # Resolve a Component Governance alert.
-  simple-git: ^3.32.3
+  # Resolve a known security vulnerability.
+  simple-git: ^3.36.0
 
   sharp: ^0.34.5
 

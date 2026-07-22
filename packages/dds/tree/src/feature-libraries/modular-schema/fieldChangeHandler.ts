@@ -171,7 +171,7 @@ export interface FieldChangeRebaser<TChangeset> {
 	 * Returns a copy of the given changeset with edits removed as specified.
 	 * @param change - The change to filter edits from
 	 * @param filterDetach - This should be called for each range of detaches in the changeset,
-	 * and the attach should be preserved, removed, or converted to a non-move detach as specified.
+	 * and the detach should be preserved, removed, or converted to a non-move detach as specified.
 	 * If the returned result does not cover the entire detach range, the remainder should be queried again.
 	 * @param filterDetach - This should be called for each range of attaches in the changeset,
 	 * and the attach should be preserved, removed, or converted to a non-move attach as specified.
@@ -181,23 +181,39 @@ export interface FieldChangeRebaser<TChangeset> {
 	 */
 	filterEdits(
 		change: TChangeset,
-		filterDetach: (
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		) => RangeQueryResult<EditFilterStatus>,
-		filterAttach: (
-			id: ChangeAtomId,
-			count: number,
-			endpoint?: ChangeAtomId,
-		) => RangeQueryResult<EditFilterStatus>,
-		preserveOtherEdits: boolean,
+		options: {
+			filterDetach: EditFilterFunc;
+			filterAttach: EditFilterFunc;
+			preserveOtherEdits: boolean;
+		},
 	): TChangeset;
 }
 
+export type EditFilterFunc = (
+	id: ChangeAtomId,
+	count: number,
+	endpoint?: ChangeAtomId,
+) => RangeQueryResult<EditFilterStatus>;
+
+/**
+ * Used to describe what should be done with a particular attach or detach during `filterEdits`.
+ */
 export enum EditFilterStatus {
+	/**
+	 * The edit should be removed from the filtered changeset.
+	 */
 	Remove,
+
+	/**
+	 * The edit should be preserved in the filtered changeset.
+	 */
 	Preserve,
+
+	/**
+	 * This should only be used for an attach or detach which is part of a move.
+	 * The edit should be preserved, but should be adjusted, if necessary,
+	 * to reflect that the other endpoint of the move has been filtered out.
+	 */
 	PreserveWithoutMove,
 }
 
@@ -215,8 +231,7 @@ export function referenceFreeFieldChangeRebaser<TChangeset>(data: {
 		compose: (change1, change2, _composeChild, _genId) => data.compose(change1, change2),
 		invert: (change, _invertChild, _genId) => data.invert(change),
 		rebase: (change, over, _rebaseChild, _genId) => data.rebase(change, over),
-		filterEdits: (change, filterAttach, filterDetach, preserveOtherEdits) =>
-			data.filterEdits(change, filterAttach, filterDetach, preserveOtherEdits),
+		filterEdits: (change, options) => data.filterEdits(change, options),
 	});
 }
 

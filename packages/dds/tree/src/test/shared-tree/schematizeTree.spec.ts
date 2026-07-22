@@ -204,6 +204,9 @@ describe("schematizeTree", () => {
 			rebaseOnto(): void {
 				throw new Error("Function not implemented.");
 			},
+			computeNetChangeIfRebasedOnto(branch: unknown): never {
+				throw new Error("Function not implemented.");
+			},
 			isMissingEditsFrom(branch: unknown): never {
 				throw new Error("Function not implemented.");
 			},

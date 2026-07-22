@@ -13,7 +13,7 @@ import {
 	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
-import { handleResponse } from "@fluidframework/server-services-shared";
+import { containsPathTraversal, handleResponse } from "@fluidframework/server-services-shared";
 import {
 	Lumberjack,
 	getGlobalTelemetryContext,
@@ -36,7 +36,7 @@ import {
 	type ISimplifiedCustomDataRetriever,
 	type ICreateGitServiceArgs,
 } from "../services";
-import { Constants, containsPathTraversal, parseToken } from "../utils";
+import { Constants, parseToken } from "../utils";
 
 const MAX_TOKEN_LENGTH = 1000; // Maximum allowed token length in characters
 

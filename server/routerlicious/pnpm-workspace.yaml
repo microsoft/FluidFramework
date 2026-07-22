@@ -67,6 +67,31 @@ peerDependencyRules:
     - "@aws-sdk/*"
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  ip-address@>=9 <10: ^10.1.1
+  keyv@>=4 <5: ^5.5.3
+  on-headers@>=1 <2: ^1.1.0
+  ts-deepmerge@>=7 <8: ^8.0.0
+  uuid@>=7 <12: ^11.1.1
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
+  # Resolve a known security vulnerability.
+  ws@>=7 <8: ^7.5.11
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve a known security vulnerability (no patched 0.0.x/0.1.x release; move to the 0.2.x line).
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
+
   # Pin @typescript-eslint/* to 8.52.0 to avoid 8.53.0, which may not be available in the ADO package feed.
   "@typescript-eslint/tsconfig-utils": 8.52.0
   "@typescript-eslint/project-service": 8.52.0
@@ -110,13 +135,13 @@ overrides:
   js-yaml@>=4: ^4.1.1
 
   # Resolve known vulnerabilities in older versions.
-  qs: ^6.15.0
+  qs: ^6.15.2
 
-  # Resolve a Component Governance alert.
-  simple-git: ^3.32.3
+  # Resolve a known security vulnerability.
+  simple-git: ^3.36.0
 
   # Resolve command injection vulnerabilities.
-  systeminformation: ^5.31.0
+  systeminformation: ^5.31.6
 
   # Resolve multiple tar vulnerabilities; 6.x line is EOL with no backports.
   tar: ^7.5.11

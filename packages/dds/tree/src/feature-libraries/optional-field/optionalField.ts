@@ -50,6 +50,7 @@ import {
 	type NestedChangesIndices,
 	type FieldChangeDelta,
 	FlexFieldKind,
+	type EditFilterFunc,
 } from "../modular-schema/index.js";
 
 import type {
@@ -828,28 +829,22 @@ export const optional: Optional = new FlexFieldKind(
 
 function filterEdits(
 	change: OptionalChangeset,
-	filterDetach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	filterAttach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	preserveOtherEdits: boolean,
+	options: {
+		filterDetach: EditFilterFunc;
+		filterAttach: EditFilterFunc;
+		preserveOtherEdits: boolean;
+	},
 ): OptionalChangeset {
 	const filtered: Mutable<OptionalChangeset> = { ...change };
 	if (filtered.valueReplace !== undefined) {
 		if (isReplaceEffectful(filtered.valueReplace)) {
 			const detachId = getEffectfulDst(filtered.valueReplace);
 			const detachResult =
-				detachId === undefined ? undefined : filterDetach(detachId, 1).value;
+				detachId === undefined ? undefined : options.filterDetach(detachId, 1).value;
 
 			const attachId = filtered.valueReplace.src;
 			const attachResult =
-				attachId === undefined ? undefined : filterAttach(attachId, 1).value;
+				attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
 
 			if (detachResult === EditFilterStatus.Remove) {
 				assert(
@@ -861,12 +856,12 @@ function filterEdits(
 			} else if (attachResult === EditFilterStatus.Remove) {
 				delete filtered.valueReplace.src;
 			}
-		} else if (!preserveOtherEdits) {
+		} else if (!options.preserveOtherEdits) {
 			delete filtered.valueReplace;
 		}
 	}
 
-	if (!preserveOtherEdits) {
+	if (!options.preserveOtherEdits) {
 		filtered.moves = [];
 	}
 	return filtered;

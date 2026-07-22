@@ -49,6 +49,9 @@ export {
 	syncTextToTree,
 	PlainTextMainView,
 	type PlainTextMainViewProps,
+	type SynchronizedString,
 	type TextEditorProps,
+	type TextSelection,
+	useTreeSynchronizedString,
 } from "./text/index.js";
 export { createUndoRedo, type UndoRedo } from "./undoRedo.js";

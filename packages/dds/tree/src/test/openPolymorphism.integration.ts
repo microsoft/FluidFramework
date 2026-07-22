@@ -5,7 +5,6 @@
 
 import { strict as assert } from "node:assert";
 
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { Tree } from "../shared-tree/index.js";
@@ -21,7 +20,8 @@ import {
 	type TreeNodeSchema,
 	type Unhydrated,
 } from "../simple-tree/index.js";
-import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
+import type { requireAssignableTo } from "../util/index.js";
+import { Component } from "../componentApi.js";
 
 /**
  * Examples and tests for open polymorphism design patterns for schema.
@@ -37,6 +37,7 @@ import { getOrAddInMap, type requireAssignableTo } from "../util/index.js";
  * View schema however can emulate it by carefully controlling evaluation order:
  * the source code can be structured in an open polymorphism style which at runtime evaluate into closed polymorphism by having each implementation register itself into a central {@link AllowedTypes}.
  * There are a few ways to do this, some of which are demonstrated below.
+ * Of particular note is the {@link Component} design pattern, which leverages utilities in the {@link Component} namespace.
  */
 
 /**
@@ -108,9 +109,12 @@ class TextItem
 }
 
 describe("Open Polymorphism design pattern examples and tests for them", () => {
-	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work.
-	describe.skip("mutable static registry", () => {
-		it("without customizeSchemaTyping", () => {
+	// A simple pattern for doing open polymorphism with a mutable static registry.
+	// Currently, allowed type arrays are processed eagerly, making this pattern no longer work,
+	// but it serves as a simplified example of what the other patterns here are implementing.
+	describe("mutable static registry", () => {
+		// See note on describe block for why this is skipped.
+		it.skip("without customizeSchemaTyping", () => {
 			// -------------
 			// Registry for items. If using this pattern, this would typically be defined alongside the Item interface.
 
@@ -182,7 +186,8 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 			assert.throws(() => ItemTypes.push(TextItem));
 		});
 
-		it("recursive case", () => {
+		// See note on describe block for why this is skipped.
+		it.skip("recursive case", () => {
 			const ItemTypes: ItemSchema[] = [];
 
 			// Example recursive item implementation
@@ -191,9 +196,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -210,6 +215,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 	});
 
 	// Example component design pattern which avoids the mutable static registry and instead composes declarative components.
+	// This doesn't rely on any "components" framework, and rather just implements the minimal subset it needs inline.
 	it("components", () => {
 		/**
 		 * Example application component interface.
@@ -241,9 +247,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -273,7 +279,7 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		});
 	});
 
-	// Example using a components library (`Component` namespace below).
+	// Example using the simplified/minimal `ComponentMinimal` library below.
 	// Same as the above, but with some reusable logic factored out.
 	it("ComponentMinimal library", () => {
 		/**
@@ -290,9 +296,9 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				...itemFields,
 				container: Container,
 			}) {
-				public static readonly description = "Text";
-				public static default(): TextItem {
-					return new TextItem({ text: "", location: { x: 0, y: 0 } });
+				public static readonly description = "Container";
+				public static default(): ContainerItem {
+					return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 				}
 
 				public foo(): void {}
@@ -360,49 +366,27 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 		);
 	});
 
-	// A more complex example showing some challenging edge cases.
-	// Includes:
-	// - A component with a schema in multiple open polymorphic collections.
-	// - Access to exports from components which depend on the injected set of components.
-	it("Component library", () => {
-		/**
-		 * Example application component interface.
-		 */
-		interface MyAppComponentContent {
+	// Examples using the package exported `Component` library.
+	describe("Component library", () => {
+		// Same as the above, but using the `Component` library
+		// This has minimal changes from the above example to keep it well aligned with the others,
+		// and thus isn't necessarily the cleanest example of use of the `Component` library.
+		// There are more dedicated examples of the `Component` library below, as well as in its own test suite.
+		it("Example", () => {
 			/**
-			 * Item types contributed by this component.
+			 * Example application component interface.
 			 */
-			items?: Component.LazyArray<ItemSchema>;
-			/**
-			 * Background types contributed by this component.
-			 */
-			backgrounds?: Component.LazyArray<BackgroundSchema>;
-		}
+			type MyAppComponent = Component.Factory<MyAppConfigPartial, MyAppConfigPartial>;
 
-		type MyAppComponent = Component.Factory<MyAppConfigPartial, MyAppComponentContent>;
-
-		interface BackgroundExtensions {
-			html(): string;
-		}
-		type Background = TreeNode & BackgroundExtensions;
-		interface BackgroundStatic {
-			readonly description: string;
-			default(): Unhydrated<Background>;
-		}
-		type BackgroundSchema = TreeNodeSchema<string, NodeKind.Object, Background> &
-			BackgroundStatic;
-
-		// An example component which recursively depends on all components.
-		const containerComponent: MyAppComponent = (lazyConfig) => {
 			function createContainer(config: MyAppConfigPartial): ItemSchema {
-				class Container extends sf.array("Container", config.allowedItemTypes) {}
+				class Container extends sf.array("Container", config.allowedItemTypes()) {}
 				class ContainerItem extends sf.object("ContainerItem", {
 					...itemFields,
 					container: Container,
 				}) {
-					public static readonly description = "Text";
-					public static default(): TextItem {
-						return new TextItem({ text: "", location: { x: 0, y: 0 } });
+					public static readonly description = "Container";
+					public static default(): ContainerItem {
+						return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
 					}
 
 					public foo(): void {}
@@ -411,134 +395,430 @@ describe("Open Polymorphism design pattern examples and tests for them", () => {
 				return ContainerItem;
 			}
 
-			return {
-				items: () => [() => createContainer(lazyConfig())],
-			};
-		};
-
-		const textComponent: MyAppComponent = () => ({
-			items: () => [() => TextItem],
-		});
-
-		class Color
-			extends sf.object("Color", { r: sf.number, g: sf.number, b: sf.number })
-			implements Background
-		{
-			public html(): string {
-				return `rgb(${this.r}, ${this.g}, ${this.b})`;
-			}
-			public static readonly description = "Color Background";
-			public static default(): Color {
-				return new Color({ r: 0, g: 0, b: 0 });
-			}
-		}
-		const colorsComponent: MyAppComponent = () => ({
-			backgrounds: () => [() => Color],
-		});
-
-		// Example component showing how a single schema can be shared between multiple open polymorphic collections.
-		// Also shows how a component can export a lazy schema reference.
-		const comboComponent = ((lazyConfig: () => MyAppConfigPartial) => {
-			const blank = () => {
-				// This could use config if needed.
-				const config = lazyConfig();
-
-				class Blank extends sf.object("Blank", { ...itemFields }) implements Background, Item {
-					public html(): string {
-						return "transparent";
-					}
-					public static readonly description = "Blank";
-					public static default(): Blank {
-						return new Blank({ location: { x: 0, y: 0 } });
-					}
-					public foo(): void {}
-				}
-				return Blank;
-			};
-			return {
-				items: () => [blank],
-				backgrounds: () => [blank],
-				// This is not required, but shows that components can also export evaluated content if needed.
-				blank,
-			};
-		}) satisfies MyAppComponent;
-
-		/**
-		 * Subset of `MyAppConfig` which is available while composing components.
-		 */
-		interface MyAppConfigPartial {
-			/**
-			 * {@link AllowedTypes} containing all ItemSchema contributed by components.
-			 */
-			readonly allowedItemTypes: readonly (() => ItemSchema)[];
-			readonly allowedBackgroundTypes: readonly (() => BackgroundSchema)[];
-		}
-
-		/**
-		 * Example configuration type for an application.
-		 *
-		 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
-		 */
-		interface MyAppConfig extends MyAppConfigPartial {
-			/**
-			 * Set of all ItemSchema contributed by components.
-			 * @remarks
-			 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
-			 *
-			 * This is included to demonstrate how and where to use evaluated schema.
-			 */
-			readonly items: ReadonlySet<ItemSchema>;
-			readonly backgrounds: ReadonlySet<BackgroundSchema>;
-			readonly composed: Component.ComposedComponents<
-				MyAppConfigPartial,
-				MyAppComponentContent
-			>;
-		}
-
-		/**
-		 * The application specific compose logic.
-		 *
-		 * Information from the components can be aggregated into the configuration.
-		 */
-		function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
-			const composed = Component.composeComponents(allComponents, (c) => {
-				const config: MyAppConfigPartial = {
-					allowedItemTypes: c.getComposed("items"),
-					allowedBackgroundTypes: c.getComposed("backgrounds"),
-				};
-				return config;
+			// An example component which recursively depends on all components.
+			const containerComponent: MyAppComponent = (lazyConfig) => ({
+				allowedItemTypes: () => [() => createContainer(lazyConfig())],
 			});
 
-			// At this point it is now legal to evaluate lazy schema:
-			const items = new Set(composed.config.allowedItemTypes.map(evaluateLazySchema));
-			const backgrounds = new Set(
-				composed.config.allowedBackgroundTypes.map(evaluateLazySchema),
+			const textComponent: MyAppComponent = () => ({
+				allowedItemTypes: () => [() => TextItem],
+			});
+
+			/**
+			 * Subset of `MyAppConfig` which is available while composing components.
+			 * Also used as content type for the component factories in this example.
+			 */
+			interface MyAppConfigPartial {
+				/**
+				 * {@link AllowedTypes} containing all ItemSchema contributed by components.
+				 */
+				readonly allowedItemTypes: Component.LazyArray<ItemSchema>;
+			}
+
+			/**
+			 * Example configuration type for an application.
+			 *
+			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 */
+			interface MyAppConfig extends MyAppConfigPartial {
+				/**
+				 * Set of all ItemSchema contributed by components.
+				 * @remarks
+				 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
+				 *
+				 * This is included to demonstrate how and where to use evaluated schema.
+				 */
+				readonly items: ReadonlySet<ItemSchema>;
+			}
+
+			/**
+			 * The application specific compose logic.
+			 *
+			 * Information from the components can be aggregated into the configuration.
+			 */
+			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+				// Compose all components
+				const composed = Component.compose(
+					allComponents,
+					(lazyConfig): MyAppConfigPartial => ({
+						allowedItemTypes: () => lazyConfig.getComposed("allowedItemTypes"),
+					}),
+				);
+				const config: MyAppConfigPartial = composed.config;
+				const ItemTypes = composed.config.allowedItemTypes();
+				// At this point it is now legal to evaluate lazy schema:
+				// This is equivalent to normalizeAllowedTypes(ItemTypes).evaluateSet(), but preserves more type information.
+				const items = new Set(ItemTypes.map(evaluateLazySchema));
+				return { ...config, items };
+			}
+
+			const appConfig = composeComponents([containerComponent, textComponent]);
+
+			// Export the tree config appropriate for this schema.
+			// This is passed into the SharedTree when it is initialized.
+			// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
+			const treeConfig = new TreeViewConfiguration(
+				// Schema for the root
+				{ schema: appConfig.allowedItemTypes() },
 			);
-			return { composed, ...composed.config, items, backgrounds };
-		}
+		});
 
-		const appConfig = composeComponents([
-			containerComponent,
-			textComponent,
-			colorsComponent,
-			comboComponent,
-		]);
+		// Same as the above, but using the default composition.
+		// Also adds an example of using `getComponent` to retrieve the final version of a component from the composed configuration.
+		it("Example2", () => {
+			/** Example application component interface. */
+			interface MyAppComponent {
+				/** {@link AllowedTypes} provider containing all ItemSchema contributed by components. */
+				readonly items: Component.LazyArray<ItemSchema>;
+			}
 
-		class Root extends sf.object("Root", {
-			content: appConfig.allowedItemTypes,
-			backgrounds: appConfig.allowedBackgroundTypes,
-		}) {}
+			/** Helper for containerComponent to create the schema as a function of the composed configuration. */
+			function createContainer(config: Component.Composed<MyAppComponent>) {
+				class ContainerArray extends sf.array("Container", config.getComposed("items")) {}
+				class ContainerItem extends sf.object("ContainerItem", {
+					...itemFields,
+					container: ContainerArray,
+				}) {
+					public static readonly description = "Container";
+					public static default(): ContainerItem {
+						return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
+					}
 
-		// Export the tree config appropriate for this schema.
-		// This is passed into the SharedTree when it is initialized.
-		// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
-		const treeConfig = new TreeViewConfiguration({ schema: Root });
+					public foo(): void {}
+				}
 
-		const blankNode = TreeBeta.create(
-			// Example for how to access content from a components which might depend on the full set of composed components.
-			[appConfig.composed.getComponent(comboComponent).blank],
-			{ location: { x: 0, y: 0 } },
-		);
+				return ContainerItem;
+			}
+
+			// An example component which recursively depends on all components.
+			const containerComponent = ((lazyConfig) => {
+				const containerSchema = Component.memoize(() => createContainer(lazyConfig()));
+				return {
+					items: () => [containerSchema],
+					containerSchema,
+				};
+				// Note the typing using `satisfies` so we get type checking while still allowing `Component.Composed.getComponent` to access the more specific type with the `containerSchema` member.
+			}) satisfies Component.Factory<MyAppComponent>;
+
+			// An example component which contributes a text item type.
+			const textComponent = (() => ({
+				items: () => [() => TextItem],
+			})) satisfies Component.Factory<MyAppComponent>;
+
+			const appConfig = Component.compose([containerComponent, textComponent]);
+
+			// Export the tree config appropriate for this schema.
+			// This is passed into the SharedTree when it is initialized.
+			// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
+			const treeConfig = new TreeViewConfiguration(
+				// Schema for the root
+				{ schema: appConfig.getComposed("items") },
+			);
+
+			// The final version of any component (with component specific strong typing) can be obtained from the composed configuration, and used as needed.
+			const Container = appConfig.getComponent(containerComponent).containerSchema();
+			const containerNode = new Container({
+				location: { x: 0, y: 0 },
+				container: [TextItem.default()],
+			});
+		});
+
+		// An open polymorphic collection of schema with implementations provided by components.
+		// Unlike the above examples, this one doesn't require the schema to implement any specific interfaces, making it simpler and more self contained, but less realistic.
+		it("minimal open polymorphism", () => {
+			/** Example application component content type. */
+			interface MyAppComponentContent {
+				/**
+				 * Item types contributed by this component.
+				 * We are just typing them as TreeNodeSchema here to keep things simple.
+				 * Real use would often provide some static factory to be able to create instances, as well as some APIs all item nodes should implement.
+				 */
+				readonly items: Component.LazyArray<TreeNodeSchema>;
+			}
+
+			// To keep this example simple, we let the configuration passed into the component factories
+			// default to the composition itself (`Composed`).
+			// There are a lot of customization options for this, but this example is simply avoiding all of them.
+			type MyAppComponent = Component.Factory<MyAppComponentContent>;
+
+			// A simple component, which does not depend on any other context.
+			const textComponent: MyAppComponent = () => ({
+				items: () => [() => TextItem],
+			});
+
+			// A component which creates an item type which recursively depends on all item types.
+			const containerComponent: MyAppComponent = (config) => ({
+				items: () => [
+					() => class extends sf.array("Container", config().getComposed("items")) {},
+				],
+			});
+
+			// As noted above, we are not customizing the config, so the builder is omitted.
+			const appConfig = Component.compose([containerComponent, textComponent]);
+
+			// The config's items can now be used to create a TreeViewConfiguration, root schema, or whatever else is needed.
+			class Root extends sf.object("Root", {
+				content: appConfig.getComposed("items"),
+			}) {}
+
+			// The schema can be used like any other, but it lacks full compile time knowledge of the allowed types,
+			// so some casts are required to create or insert values in some cases.
+			const root = new Root({
+				// We have no compile time information about what node types are legal here,
+				// so the strict typing for insertable content is `never`.
+				// Runtime checks are robust so we can cast here and rely on them.
+				content: new TextItem({ text: "x", location: { x: 0, y: 0 } }) as never,
+			});
+			// Reading content is type safe, but type is not very specific in this example.
+			const child = root.content;
+			assert(Tree.is(child, TextItem));
+			assert.equal(child.text, "x");
+		});
+
+		it("minimal open polymorphism with `getComponent`", () => {
+			interface MyAppComponentContent {
+				readonly items: Component.LazyArray<TreeNodeSchema>;
+			}
+
+			type Composed = Component.Composed<MyAppComponentContent>;
+
+			// A component with a more specific type, exposing its `container` property so it can be queried for after composition.
+			const containerComponent = (config: () => Composed) => {
+				const container = Component.memoize(
+					() => class extends sf.array("Container", config().getComposed("items")) {},
+				);
+				return {
+					container,
+					items: () => [container],
+				} satisfies MyAppComponentContent & { container: unknown };
+			};
+
+			const appConfig = Component.compose([containerComponent], (config) => config);
+
+			const Container = appConfig.getComponent(containerComponent).container();
+			const node = new Container();
+			// We have no compile time information about what node types are legal here (so the cast is needed), but it is runtime checked.
+			node.insertAtStart(new Container() as never);
+		});
+
+		it("minimal open polymorphism with static factory", () => {
+			interface MyAppComponentContent {
+				// Here we add in some requirements for the items to provide static descriptions and a default value factory.
+				// This could be used to generate a menu of item types to insert.
+				readonly items: Component.LazyArray<TreeNodeSchema & MyStatics>;
+			}
+			interface MyStatics {
+				readonly description: string;
+				// Real use would often want to further constrain this return type.
+				default(): Unhydrated<TreeNode>;
+			}
+
+			type MyAppComponent = Component.Factory<MyAppComponentContent>;
+
+			// A simple item type, with the required statics.
+			class MyItem extends sf.object("MyItem", {}) {
+				public static readonly description = "A stateless placeholder item";
+				public static default(): MyItem {
+					return new MyItem({});
+				}
+			}
+			const myComponent: MyAppComponent = () => ({
+				items: () => [() => MyItem],
+			});
+
+			// Another component
+			const textComponent: MyAppComponent = () => ({
+				items: () => [() => TextItem],
+			});
+
+			const appConfig = Component.compose([myComponent, textComponent]);
+
+			// We could use this config to build a menu showing the description of each and let a user select one of the available item types to insert.
+			const menu = appConfig.getComposed("items").map((lazy) => lazy());
+			// Suppose they select the first item, we can create an instance like this:
+			const item = menu[0].default();
+		});
+
+		// A more complex example showing some challenging edge cases.
+		// Includes:
+		// - A component with a schema in multiple open polymorphic collections.
+		// - Access to exports from components which depend on the injected set of components.
+		it("Component library edge cases", () => {
+			/**
+			 * Example application component interface.
+			 */
+			interface MyAppComponentContent {
+				/**
+				 * Item types contributed by this component.
+				 */
+				items?: Component.LazyArray<ItemSchema>;
+				/**
+				 * Background types contributed by this component.
+				 */
+				backgrounds?: Component.LazyArray<BackgroundSchema>;
+			}
+
+			type MyAppComponent = Component.Factory<MyAppComponentContent, MyAppConfigPartial>;
+
+			interface BackgroundExtensions {
+				html(): string;
+			}
+			type Background = TreeNode & BackgroundExtensions;
+			interface BackgroundStatic {
+				readonly description: string;
+				default(): Unhydrated<Background>;
+			}
+			type BackgroundSchema = TreeNodeSchema<string, NodeKind.Object, Background> &
+				BackgroundStatic;
+
+			// An example component which recursively depends on all components.
+			const containerComponent: MyAppComponent = (lazyConfig) => {
+				function createContainer(config: MyAppConfigPartial): ItemSchema {
+					class Container extends sf.array("Container", config.allowedItemTypes) {}
+					class ContainerItem extends sf.object("ContainerItem", {
+						...itemFields,
+						container: Container,
+					}) {
+						public static readonly description = "Container";
+						public static default(): ContainerItem {
+							return new ContainerItem({ container: [], location: { x: 0, y: 0 } });
+						}
+
+						public foo(): void {}
+					}
+
+					return ContainerItem;
+				}
+
+				return {
+					items: () => [() => createContainer(lazyConfig())],
+				};
+			};
+
+			const textComponent: MyAppComponent = () => ({
+				items: () => [() => TextItem],
+			});
+
+			class Color
+				extends sf.object("Color", { r: sf.number, g: sf.number, b: sf.number })
+				implements Background
+			{
+				public html(): string {
+					return `rgb(${this.r}, ${this.g}, ${this.b})`;
+				}
+				public static readonly description = "Color Background";
+				public static default(): Color {
+					return new Color({ r: 0, g: 0, b: 0 });
+				}
+			}
+			const colorsComponent: MyAppComponent = () => ({
+				backgrounds: () => [() => Color],
+			});
+
+			// Example component showing how a single schema can be shared between multiple open polymorphic collections.
+			// Also shows how a component can export a lazy schema reference.
+			const comboComponent = ((lazyConfig: () => MyAppConfigPartial) => {
+				const blank = () => {
+					// This could use config if needed.
+					const config = lazyConfig();
+
+					class Blank
+						extends sf.object("Blank", { ...itemFields })
+						implements Background, Item
+					{
+						public html(): string {
+							return "transparent";
+						}
+						public static readonly description = "Blank";
+						public static default(): Blank {
+							return new Blank({ location: { x: 0, y: 0 } });
+						}
+						public foo(): void {}
+					}
+					return Blank;
+				};
+				return {
+					items: () => [blank],
+					backgrounds: () => [blank],
+					// This is not required, but shows that components can also export evaluated content if needed.
+					blank,
+				};
+			}) satisfies MyAppComponent;
+
+			/**
+			 * Subset of `MyAppConfig` which is available while composing components.
+			 */
+			interface MyAppConfigPartial {
+				/**
+				 * {@link AllowedTypes} containing all ItemSchema contributed by components.
+				 */
+				readonly allowedItemTypes: readonly (() => ItemSchema)[];
+				readonly allowedBackgroundTypes: readonly (() => BackgroundSchema)[];
+			}
+
+			/**
+			 * Example configuration type for an application.
+			 *
+			 * Contains a collection of schema to demonstrate how ComponentSchemaCollection works for schema dependency inversions.
+			 */
+			interface MyAppConfig extends MyAppConfigPartial {
+				/**
+				 * Set of all ItemSchema contributed by components.
+				 * @remarks
+				 * Same content as {@link MyAppConfig.allowedItemTypes}, but normalized into a Set.
+				 *
+				 * This is included to demonstrate how and where to use evaluated schema.
+				 */
+				readonly items: ReadonlySet<ItemSchema>;
+				readonly backgrounds: ReadonlySet<BackgroundSchema>;
+				readonly composed: Component.Composed<MyAppComponentContent, MyAppConfigPartial>;
+			}
+
+			/**
+			 * The application specific compose logic.
+			 *
+			 * Information from the components can be aggregated into the configuration.
+			 */
+			function composeComponents(allComponents: readonly MyAppComponent[]): MyAppConfig {
+				const composed = Component.compose(allComponents, (c) => {
+					const config: MyAppConfigPartial = {
+						allowedItemTypes: c.getComposed("items"),
+						allowedBackgroundTypes: c.getComposed("backgrounds"),
+					};
+					return config;
+				});
+
+				// At this point it is now legal to evaluate lazy schema:
+				const items = new Set(composed.config.allowedItemTypes.map(evaluateLazySchema));
+				const backgrounds = new Set(
+					composed.config.allowedBackgroundTypes.map(evaluateLazySchema),
+				);
+				return { composed, ...composed.config, items, backgrounds };
+			}
+
+			const appConfig = composeComponents([
+				containerComponent,
+				textComponent,
+				colorsComponent,
+				comboComponent,
+			]);
+
+			class Root extends sf.object("Root", {
+				content: appConfig.allowedItemTypes,
+				backgrounds: appConfig.allowedBackgroundTypes,
+			}) {}
+
+			// Export the tree config appropriate for this schema.
+			// This is passed into the SharedTree when it is initialized.
+			// This eagerly evaluates the schema, so anything that used by these schema must be defined before this point.
+			const treeConfig = new TreeViewConfiguration({ schema: Root });
+
+			const blankNode = TreeBeta.create(
+				// Example for how to access content from a components which might depend on the full set of composed components.
+				[appConfig.composed.getComponent(comboComponent).blank],
+				{ location: { x: 0, y: 0 } },
+			);
+		});
 	});
 });
 
@@ -571,171 +851,5 @@ export namespace ComponentMinimal {
 			(component): LazyArray<TItem> => component(lazyConfiguration),
 		);
 		return itemTypes;
-	}
-}
-
-/**
- * Utilities for helping implement various application component design patterns.
- */
-export namespace Component {
-	/**
-	 * Function which takes in a lazy configuration and returns a collection of schema types.
-	 * @remarks
-	 * This allows the schema to reference items from the configuration, which could include themselves recursively.
-	 *
-	 * The execution of this function may not evaluate `lazyConfiguration` (doing so will error):
-	 * instead the returned `TComponent` can capture the `lazyConfiguration` and evaluate it at a later time (after all components have been composed).
-	 */
-	export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
-
-	/**
-	 * A function which returns an array of lazy values (like {@link AllowedTypes} where all of the values are lazy) which evaluate to `T`.
-	 */
-	export type LazyArray<T> = () => readonly (() => T)[];
-
-	class Config<TConfig, TComponent> implements ComposedComponents<TConfig, TComponent> {
-		public readonly componentsMap: ReadonlyMap<Factory<TConfig, TComponent>, TComponent>;
-
-		public readonly evaluatedMap: Map<Configurable<TConfig, unknown, TComponent>, unknown> =
-			new Map();
-
-		public readonly components: readonly TComponent[];
-
-		/**
-		 * Portion of the config computed first.
-		 */
-		public readonly config: TConfig;
-
-		public constructor(
-			allComponents: readonly Factory<TConfig, TComponent>[],
-			lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig,
-		) {
-			// eslint-disable-next-line no-undef-init
-			let config: TConfig | undefined = undefined;
-			const lazyConfigInner = () => {
-				if (config === undefined) {
-					throw new Error("Configuration not yet available");
-				}
-				return config;
-			};
-			this.componentsMap = new Map(allComponents.map((c) => [c, c(lazyConfigInner)]));
-			this.components = [...this.componentsMap.values()];
-			config = lazyConfiguration(this);
-			this.config = config;
-		}
-
-		public getComponent<TFactory extends Factory<TConfig, TComponent>>(
-			factory: TFactory,
-		): ReturnType<TFactory> {
-			const found = this.componentsMap.get(factory);
-			if (found === undefined) {
-				throw new UsageError("Requested component not included in this configuration");
-			}
-			return found as ReturnType<TFactory>;
-		}
-
-		public getConfigured<TEvaluatable extends Configurable<TConfig, unknown, TComponent>>(
-			factory: TEvaluatable,
-		): ReturnType<TEvaluatable["configure"]> {
-			const found: unknown = getOrAddInMap(
-				this.evaluatedMap,
-				factory,
-				factory.configure(this.config, this),
-			);
-			if (found === undefined) {
-				throw new UsageError("Requested component not included in this configuration");
-			}
-			return found as ReturnType<TEvaluatable["configure"]>;
-		}
-
-		public getComposed<
-			TKey extends keyof {
-				[Property in keyof TComponent as TComponent[Property] extends LazyArray<unknown>
-					? Property
-					: never]: boolean;
-			},
-		>(
-			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[] {
-			const result = this.components.flatMap((c) => {
-				const prop = c[property] as LazyArray<unknown>;
-				if (prop === undefined) {
-					return [];
-				}
-				return prop();
-			});
-			return result as (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
-		}
-	}
-
-	export interface Configurable<TConfigPartial, out TResult, TComponentInner> {
-		configure(
-			config: TConfigPartial,
-			components: ComposedComponents<TConfigPartial, TComponentInner>,
-		): TResult;
-	}
-
-	/**
-	 * Combine multiple {@link ComponentMinimal.ComponentSchemaCollection}s into a single {@link AllowedTypes} array.
-	 */
-	export function composeComponents<TConfig, TComponentInner>(
-		allComponents: readonly Factory<TConfig, TComponentInner>[],
-		lazyConfiguration: (composed: ComposedComponents<TConfig, TComponentInner>) => TConfig,
-	): ComposedComponents<TConfig, TComponentInner> {
-		const config = new Config<TConfig, TComponentInner>(allComponents, lazyConfiguration);
-		return config;
-	}
-
-	/**
-	 * The result of composing multiple components.
-	 * @remarks
-	 * Create using {@link Component.composeComponents}.
-	 * @sealed
-	 */
-	export interface ComposedComponents<TConfig, TComponent> {
-		/**
-		 * The components which were composed.
-		 */
-		readonly components: readonly TComponent[];
-		/**
-		 * The configuration which was provided when composing.
-		 */
-		readonly config: TConfig;
-
-		/**
-		 * Get a component by its factory.
-		 *
-		 * @param factory - The factory to indicate which component to lookup. Must have been provided when composing.
-		 * @returns The component created by the provided factory.
-		 * This result is cached during composition and not reevaluated.
-		 */
-		getComponent<TFactory extends Factory<TConfig, TComponent>>(
-			factory: TFactory,
-		): ReturnType<TFactory>;
-
-		/**
-		 * Configure a {@link Configurable}.
-		 * @remarks
-		 * The result is cached when first evaluated.
-		 */
-		getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(
-			configurable: TConfigurable,
-		): ReturnType<TConfigurable["configure"]>;
-
-		/**
-		 * Compose the contents of a lazy array property from all components.
-		 * @param property - The property of the components to compose.
-		 */
-		getComposed<
-			TKey extends keyof {
-				[Property in keyof TComponent as TComponent[Property] extends
-					| LazyArray<unknown>
-					| undefined
-					? Property
-					: never]: boolean;
-			},
-		>(
-			property: TKey,
-		): readonly (TComponent[TKey] extends LazyArray<infer U> ? () => U : never)[];
 	}
 }

@@ -23,12 +23,12 @@ describe("simple-tree storedSchema", () => {
 		for (const test of testDocuments) {
 			it(`${test.name} - schema v1`, () => {
 				const config = new TreeViewConfigurationAlpha({ schema: test.schema });
-				const upgrades: SchemaUpgrade[] = [];
+				const enabledUpgrades: SchemaUpgrade[] = [];
 				const persisted = extractPersistedSchema(
 					config.schema,
 					FluidClientVersion.v2_0,
 					(upgrade) => {
-						upgrades.push(upgrade);
+						enabledUpgrades.push(upgrade);
 						return true;
 					},
 				);
@@ -44,7 +44,7 @@ describe("simple-tree storedSchema", () => {
 					assert.notDeepEqual(withoutStaged, persisted);
 					takeJsonSnapshot(withoutStaged, " - without staged");
 				} else {
-					assert.deepEqual(upgrades, []);
+					assert.deepEqual(enabledUpgrades, []);
 					assert.deepEqual(withoutStaged, persisted);
 				}
 			});

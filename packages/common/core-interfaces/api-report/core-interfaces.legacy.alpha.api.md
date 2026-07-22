@@ -375,6 +375,7 @@ export interface ILayerIncompatibilityError extends IErrorBase {
 export interface ILocalFluidHandle<T> extends IFluidHandlePayloadPending<T> {
     readonly events: Listenable<IFluidHandleEvents & ILocalFluidHandleEvents>;
     readonly payloadShareError: unknown;
+    sharePayload?(): void;
 }
 
 // @beta @legacy

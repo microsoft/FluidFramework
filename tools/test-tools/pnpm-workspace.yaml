@@ -46,6 +46,17 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  diff@>=7 <8: ^8.0.3
+  keyv@>=4 <5: ^5.5.3
+  ts-deepmerge@>=7 <8: ^8.0.0
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
   # Resolve a known ReDoS vulnerability in diff.
   diff@>=5 <6: ^5.2.2
 

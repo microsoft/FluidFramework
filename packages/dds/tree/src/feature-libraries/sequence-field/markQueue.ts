@@ -38,9 +38,9 @@ export class MarkQueueBase {
 			const [part1, part2] = splitMark(mark, splitLength);
 			this.stack.push(part2);
 			return part1;
-		} else {
-			return mark;
 		}
+
+		return mark;
 	}
 
 	/**

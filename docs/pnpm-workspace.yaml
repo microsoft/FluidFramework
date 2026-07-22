@@ -1,0 +1,29 @@
+# This file is a workaround. pnpm does not support nesting packages under a workspace that is not managed by the
+# workspace. That is, if there's a `pnpm-workspace.yaml` file anywhere in the parent hierarchy, pnpm doesn't install the
+# package individually like one might expect.
+#
+# Because we have the client release group at the root of the repo, there's a `pnpm-workspace.yaml` file in the hierarchy
+# for our independent packages as well. This file makes pnpm treat the project as a one-package workspace.
+
+packages:
+  - .
+
+# Supply chain security settings. These are aligned with the root `pnpm-workspace.yaml`.
+# See /DEV.md for documentation.
+blockExoticSubdeps: true
+engineStrict: true
+frozenLockfile: true
+# Minimum age, in minutes, of dependencies before they can be installed.
+# See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
+minimumReleaseAge: 1440
+resolutionMode: highest
+strictDepBuilds: true
+strictPeerDependencies: true
+# The registry.npmjs mirror does not preserve all the npm package metadata necessary for the
+# no-downgrade trust policy to function correctly, so it is disabled (matching the root workspace).
+trustPolicy: off
+# Disable pnpm update notifications since we use corepack to install package managers.
+updateNotifier: false
+# pnpm 11 enabled this check by default, which runs a frozen-lockfile install before every
+# `pnpm run <script>`. Restore the pnpm 10 default (matching the root workspace).
+verifyDepsBeforeRun: false

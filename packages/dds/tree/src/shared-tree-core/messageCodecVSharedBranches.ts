@@ -68,6 +68,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					return {
 						originatorId: message.sessionId,
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
+						branchName: message.branchName,
 						version,
 					};
 				}
@@ -85,6 +86,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 				originatorId,
 				changeset,
 				branchId: encodedBranchId,
+				branchName: encodedBranchName,
 			} = encoded;
 
 			const changeContext: ChangeEncodingContext = {
@@ -97,7 +99,12 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 			const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
 
 			if (changeset === undefined) {
-				return { type: "branch", sessionId: originatorId, branchId };
+				return {
+					type: "branch",
+					sessionId: originatorId,
+					branchId,
+					branchName: encodedBranchName,
+				};
 			}
 
 			assert(encodedRevision !== undefined, 0xc6a /* Commit messages must have a revision */);

@@ -22,4 +22,4 @@ export const sequenceFieldChangeRebaser = {
 	prune,
 	replaceRevisions,
 	filterEdits,
-};
+} as const;

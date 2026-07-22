@@ -1,5 +1,24 @@
 # @fluidframework/core-interfaces
 
+## 2.112.0
+
+### Minor Changes
+
+- Start sharing local handle payloads before attachment ([#27704](https://github.com/microsoft/FluidFramework/pull/27704)) [2c4d5aaf8a](https://github.com/microsoft/FluidFramework/commit/2c4d5aaf8a31dfe9bccd19096d3717cd041489fc)
+
+  Locally created Fluid handles can now expose an optional `sharePayload()` method that starts
+  sharing their payload without attaching the handle to the Fluid object graph. Blob handles
+  implement this method, allowing applications to begin uploading a blob before serializing its
+  handle into a DDS.
+
+  ```typescript
+  const handle = await runtime.uploadBlob(bytes);
+
+  if (isLocalFluidHandle(handle) && handle.sharePayload !== undefined) {
+    handle.sharePayload();
+  }
+  ```
+
 ## 2.111.0
 
 Dependency updates only.
