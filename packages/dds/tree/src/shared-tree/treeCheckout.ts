@@ -6,8 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -52,12 +51,12 @@ import {
 	type ChangeMetadata,
 	type LabelTree,
 	type TransactionLabels,
-	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
+	rebaseBranch,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -119,6 +118,7 @@ import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamil
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
+import { SerializedChange } from "./serializedChange.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -317,7 +317,7 @@ export function createTreeCheckout(
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -530,7 +530,8 @@ export class TreeCheckout implements ITreeCheckout {
 		),
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
+		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -763,24 +764,16 @@ export class TreeCheckout implements ITreeCheckout {
 					kind,
 					isLocal: true,
 					getChange: () => {
-						const context: ChangeEncodingContext = {
-							idCompressor: this.idCompressor,
-							originatorId: this.idCompressor.localSessionId,
-							revision,
-							isSummary: false,
-						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return {
-							version: 1,
+						return SerializedChange.V1.encode(
+							this.idCompressor,
+							this.changeFamily,
+							change,
 							revision,
-							originatorId: this.idCompressor.localSessionId,
-							change: encodedChange,
-						} satisfies SerializedChange;
+						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.label,
@@ -859,24 +852,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		if (!isSerializedChange(serializedChange)) {
-			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
-		}
-		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
-		const context: ChangeEncodingContext = {
-			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
-			revision,
-			isSummary: false,
-		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
+		const change = SerializedChange.V1.decode(
+			this.idCompressor,
+			this.changeFamily,
+			serializedChange,
+		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		this.#transaction.branch.apply(change);
 	}
 
 	// #region TreeBranchAlpha
@@ -1219,7 +1201,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout");
+		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
@@ -1306,6 +1288,30 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("Branches do not share a common ancestor.");
 		}
 		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
+		const branchCheckout = getCheckout(branch);
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+		);
+
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const revision = this.mintRevisionTag();
+		return SerializedChange.V1.encode(
+			this.idCompressor,
+			this.changeFamily,
+			rebased.sourceChange,
+			revision,
+			undefined,
+		);
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1768,27 +1774,6 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
-}
-
-interface SerializedChange {
-	version: 1;
-	revision: RevisionTag;
-	change: JsonCompatibleReadOnly;
-	originatorId: SessionId;
-}
-
-function isSerializedChange(value: unknown): value is SerializedChange {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-	const change = value as Partial<SerializedChange>;
-	return (
-		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
-		typeof change.originatorId === "string" &&
-		isStableId(change.originatorId) &&
-		change.change !== undefined
-	);
 }
 
 /**

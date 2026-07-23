@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/datastore-definitions",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "Fluid data store definitions",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -100,7 +100,7 @@
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
-		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.110.0",
+		"@fluidframework/datastore-definitions-previous": "npm:@fluidframework/datastore-definitions@2.111.0",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
 		"@microsoft/api-extractor": "7.58.1",
 		"concurrently": "^10.0.3",

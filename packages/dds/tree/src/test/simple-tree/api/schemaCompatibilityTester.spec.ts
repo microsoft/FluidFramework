@@ -12,7 +12,7 @@ import {
 } from "../../../core/index.js";
 import { allowsRepoSuperset, defaultSchemaPolicy } from "../../../feature-libraries/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import { SchemaCompatibilityTester } from "../../../simple-tree/api/schemaCompatibilityTester.js";
+import { checkSchemaCompatibility } from "../../../simple-tree/api/schemaCompatibilityTester.js";
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
@@ -30,12 +30,10 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: ReturnType<SchemaCompatibilityTester["checkCompatibility"]>,
+	expected: ReturnType<typeof checkSchemaCompatibility>,
 ) {
-	const viewSchema = new SchemaCompatibilityTester(
-		new TreeViewConfigurationAlpha({ schema: view }),
-	);
-	const compatibility = viewSchema.checkCompatibility(stored);
+	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
+	const compatibility = checkSchemaCompatibility(viewSchema, stored);
 	assert.deepEqual(compatibility, expected);
 
 	// This does not include staged allowed types.
@@ -51,8 +49,8 @@ function expectCompatibility(
 	}
 }
 
-describe("SchemaCompatibilityTester", () => {
-	describe(".checkCompatibility", () => {
+describe("checkSchemaCompatibility", () => {
+	describe("function", () => {
 		it("works with never trees", () => {
 			class NeverObject extends factory.objectRecursive("NeverObject", {
 				foo: factory.requiredRecursive([() => NeverObject]),

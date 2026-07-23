@@ -56,9 +56,27 @@ minimumReleaseAgeExclude: [
 ]
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  "@babel/core@>=7 <8": ^7.29.6
+  brace-expansion@>=5 <6: ^5.0.6
+  http-proxy-middleware@>=2 <3: ^2.0.10
+  ip-address@>=9 <10: ^10.1.1
+  keyv@>=4 <5: ^5.5.3
+  launch-editor@>=2 <3: ^2.14.1
+  on-headers@>=1 <2: ^1.1.0
+  postcss@>=8 <9: ^8.5.10
+  ts-deepmerge@>=7 <8: ^8.0.0
+  uuid@>=7 <12: ^11.1.1
+
   # @fluentui/react-positioning's dependency on @floating-ui/dom causes a peer dependency violation,
   # so overriding it forces a version that meets peer dependency requirements to be installed.
   "@fluentui/react-positioning>@floating-ui/dom": ~1.5.4
+
+  # Resolve a known security vulnerability.
+  "@github/copilot": ^1.0.43
+
+  # Resolve a known security vulnerability.
+  "@nevware21/ts-utils": ^0.14.0
 
   # Uncomment all or some below and run `pnpm install --no-frozen-lockfile` to apply
   # these overrides to use locally built build-tools packages.
@@ -70,12 +88,12 @@ overrides:
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 
-  # axios pre-1.0 needs an override to stay current on a version with no reported CVEs.
+  # axios pre-1.0 is forced to a patched release to resolve known vulnerabilities.
   # Caret dependencies aren't enough on a pre-1.0 package.
-  axios@<0.30.0: ^0.30.0
+  axios@<1: ^0.32.0
 
-  # Force vulnerable axios ^1.15.0 requests to the patched 1.15.1.
-  axios@^1.15.0: 1.15.1
+  # Force vulnerable axios ^1.15.0 requests to the patched 1.16.0.
+  axios@^1.15.0: 1.16.0
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.
@@ -87,9 +105,15 @@ overrides:
   # express is overridden to ^4.22.1 to resolve a known vulnerability in express 4.21.2.
   express@>=4 <5: ^4.22.1
 
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
   # Resolve multiple CVEs in 4.5.3 (entity encoding bypass, DoS via entity expansion, stack overflow).
   # Stays within @langchain/anthropic's declared ^4.4.1 range.
   fast-xml-parser: ^4.5.4
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
 
   # nodegit is replaced with an empty package here because it's currently only used by good-fences for
   # features we do not need, and has issues building when changing node versions.
@@ -99,7 +123,7 @@ overrides:
 
   # Resolve a known security vulnerability.
   # The consumer declares ^0.3.x so the override is needed to cross the minor version boundary.
-  langsmith: ^0.5.15
+  langsmith: ^0.6.0
 
   # Resolve a known security vulnerability.
   minimatch@>=3 <4: ^3.1.5
@@ -123,14 +147,14 @@ overrides:
   picomatch@>=4 <5: ^4.0.4
 
   # Resolve a known vulnerability in older versions.
-  qs: ^6.15.0
+  qs: ^6.15.2
 
   # Resolve GHSA-5c6j-r48x-rmvq.
   # No 6.x fix exists; 7.x is API-compatible (only drops Node <20 support).
   serialize-javascript@>=6 <7: ^7.0.4
 
-  # Resolve a CG alert.
-  simple-git: ^3.32.3
+  # Resolve a known security vulnerability.
+  simple-git: ^3.36.0
 
   # codemirror and marked overrides are because simplemde uses * versions, and the fully up-to-date
   # versions of its deps do not work. packageExtensions was tried to fix this, but did not work.
@@ -138,11 +162,20 @@ overrides:
   simplemde>marked: ^4.3.0
 
   # Resolve command injection vulnerabilities.
-  systeminformation: ^5.31.0
+  systeminformation: ^5.31.6
 
   # Security overrides to address path traversal CVEs (GHSA-8qq5-rm4j-mr97, GHSA-r6q2-hw4h-h46w,
   # GHSA-34x7-hfp2-rc4v).
   tar: ^7.5.11
+
+  # Resolve a known security vulnerability. No patched release exists in the 0.0.x/0.1.x lines,
+  # so affected consumers are moved forward to the patched 0.2.x line.
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability. The 8.x and 7.x lines are both forced
+  # forward to their nearest patched releases.
+  ws@>=8 <9: ^8.21.0
+  ws@>=7 <8: ^7.5.11
 
 packages:
   - "azure/packages/**"
@@ -194,17 +227,23 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
+registry: https://packagefeedproxy.microsoft.io/npm/
+
 resolutionMode: highest
 
 strictDepBuilds: true
 
 strictPeerDependencies: true
 
+# The registry.npmjs mirror does not preserve all the npm package metadata necessary for this pnpm feature to function
+# correctly as of 7/16/2026. If this is turned back on...
 # See: https://github.com/orgs/pnpm/discussions/11084 for some discussion.
 # Enabling no-downgrade requires every transitive trust-policy violation to either be remediated
 # at the source or excluded below with a documented rationale. Run `flub check trustPolicy` to
 # surface current violations.
-trustPolicy: no-downgrade
+trustPolicy: off
+# These exclusions are inert with trustPolicy disabled, but were kept in case we are able to restore trustPolicy enforcement
+# at some future point.
 trustPolicyExclude:
   # @octokit/endpoint@9.0.6 (published 2025-02-14, by octokitbot) — pipeline regression.
   # Prior trusted: @octokit/endpoint@10.1.3 (provenance, 2025-02-13, by octokitbot), with

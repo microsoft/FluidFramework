@@ -26,6 +26,7 @@ import { InsecureTinyliciousTokenProvider } from "@fluidframework/tinylicious-dr
 
 import { TinyliciousClient } from "../index.js";
 
+import { tinyliciousPort } from "./TestConstants.js";
 import { TestDataObject } from "./TestDataObject.js";
 
 const corruptedAliasOp = (runtime: IContainerRuntime, alias: string): void => {
@@ -59,7 +60,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 			},
 		} satisfies ContainerSchema;
 		beforeEach(function () {
-			tinyliciousClient = new TinyliciousClient();
+			tinyliciousClient = new TinyliciousClient({ connection: { port: tinyliciousPort } });
 		});
 
 		/**
@@ -70,7 +71,8 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("can create instance without specifying port number", async function () {
-			const containerAndServicesP = tinyliciousClient.createContainer(
+			const clientWithoutPort = new TinyliciousClient();
+			const containerAndServicesP = clientWithoutPort.createContainer(
 				schema,
 				compatibilityMode,
 			);
@@ -89,7 +91,7 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 * be returned.
 		 */
 		it("can create a container successfully with port number specification", async function () {
-			const clientProps = { connection: { port: 7070 } };
+			const clientProps = { connection: { port: tinyliciousPort } };
 			const clientWithPort = new TinyliciousClient(clientProps);
 
 			const containerAndServicesP = clientWithPort.createContainer(schema, compatibilityMode);
@@ -371,7 +373,9 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 		 */
 		it("can create a container with only read permission in read mode", async function () {
 			const tokenProvider = new InsecureTinyliciousTokenProvider([ScopeType.DocRead]);
-			const client = new TinyliciousClient({ connection: { tokenProvider } });
+			const client = new TinyliciousClient({
+				connection: { tokenProvider, port: tinyliciousPort },
+			});
 
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();
@@ -410,7 +414,9 @@ for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 				ScopeType.DocRead,
 				ScopeType.DocWrite,
 			]);
-			const client = new TinyliciousClient({ connection: { tokenProvider } });
+			const client = new TinyliciousClient({
+				connection: { tokenProvider, port: tinyliciousPort },
+			});
 
 			const { container } = await client.createContainer(schema, compatibilityMode);
 			const containerId = await container.attach();

@@ -245,7 +245,13 @@ export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
 
-function mapDataChanges(
+/**
+ * Applies a mapping function to all data changes within a {@link SharedTreeChange}.
+ * @param change - The change to map over.
+ * @param map - The mapping function to apply to each data change.
+ * @returns A new {@link SharedTreeChange} with the mapped data changes.
+ */
+export function mapDataChanges(
 	change: SharedTreeChange,
 	map: (change: ModularChangeset) => ModularChangeset,
 ): SharedTreeChange {

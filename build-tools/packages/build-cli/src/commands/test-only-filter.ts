@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 import type { Package } from "@fluidframework/build-tools";
-import { PackageCommand } from "../BasePackageCommand.js";
+import { PackageCommand, type PackageProcessingError } from "../BasePackageCommand.js";
 import type { PackageWithKind } from "../filter.js";
 import type { PackageSelectionDefault } from "../flags.js";
 
@@ -47,7 +47,9 @@ export default class FilterCommand extends PackageCommand<typeof FilterCommand> 
 		// do nothing
 	}
 
-	protected async processPackages(_packages: PackageWithKind[]): Promise<string[]> {
+	protected async processPackages(
+		_packages: PackageWithKind[],
+	): Promise<PackageProcessingError[]> {
 		// do nothing
 		return [];
 	}

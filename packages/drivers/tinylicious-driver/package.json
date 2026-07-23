@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tinylicious-driver",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "Driver for tinylicious",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -98,7 +98,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.110.0",
+		"@fluidframework/tinylicious-driver-previous": "npm:@fluidframework/tinylicious-driver@2.111.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/jsrsasign": "^10.5.12",
 		"@types/mocha": "^10.0.10",

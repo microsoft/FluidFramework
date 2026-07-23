@@ -77,7 +77,7 @@ function treeKernelFactory(
 		};
 
 		return new SharedTreeKernel(
-			new Breakable("SharedTree"),
+			new Breakable("SharedTree", args.logger),
 			args.sharedObject,
 			args.serializer,
 			args.submitLocalMessage,

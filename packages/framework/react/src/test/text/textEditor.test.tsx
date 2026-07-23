@@ -6,12 +6,19 @@
 import { strict as assert } from "node:assert";
 
 import { TextAsTree } from "@fluidframework/tree/internal";
-import { render } from "@testing-library/react";
+import { act, render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
 
 import { toPropTreeNode } from "../../propNode.js";
 import { PlainTextMainView } from "../../text/index.js";
 import type { UndoRedo } from "../../undoRedo.js";
+
+/** Read the current value of the editor's `<textarea>`. */
+function getTextareaValue(container: HTMLElement): string {
+	const textarea = container.querySelector("textarea");
+	assert.ok(textarea, "Textarea should be present");
+	return textarea.value;
+}
 
 describe("Plain TextArea view", () => {
 	let cleanup: () => void;
@@ -45,7 +52,7 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					assert.match(rendered.baseElement.textContent ?? "", /Hello World/);
+					assert.equal(getTextareaValue(rendered.container), "Hello World");
 				});
 
 				it("invalidates view when tree is mutated", () => {
@@ -53,12 +60,10 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					// Mutate the tree by inserting text
-					text.insertAt(5, " World");
+					// Mutate the tree; the controlled textarea updates from the hook's synced text.
+					act(() => text.insertAt(5, " World"));
 
-					// Rerender and verify the view updates
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /Hello World/);
+					assert.equal(getTextareaValue(rendered.container), "Hello World");
 				});
 
 				it("invalidates view when text is removed", () => {
@@ -67,13 +72,9 @@ describe("Plain TextArea view", () => {
 					const rendered = render(content, { reactStrictMode });
 
 					// Mutate the tree by removing " World" (indices 5 to 11)
-					text.removeRange(5, 11);
+					act(() => text.removeRange(5, 11));
 
-					// Rerender and verify the view updates
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /Hello/);
-					assert(rendered.baseElement.textContent !== null);
-					assert.doesNotMatch(rendered.baseElement.textContent, /World/);
+					assert.equal(getTextareaValue(rendered.container), "Hello");
 				});
 
 				it("invalidates view when text is cleared and replaced", () => {
@@ -81,18 +82,13 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					// Clear all text
-					const length = [...text.characters()].length;
-					text.removeRange(0, length);
+					act(() => {
+						const length = [...text.characters()].length;
+						text.removeRange(0, length);
+						text.insertAt(0, "Replaced");
+					});
 
-					// Insert new text
-					text.insertAt(0, "Replaced");
-
-					// Rerender and verify the view updates
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /Replaced/);
-					assert(rendered.baseElement.textContent !== null);
-					assert.doesNotMatch(rendered.baseElement.textContent, /Original/);
+					assert.equal(getTextareaValue(rendered.container), "Replaced");
 				});
 
 				// Tests for surrogate pair characters (emojis use 2 UTF-16 code units)
@@ -104,7 +100,7 @@ describe("Plain TextArea view", () => {
 					const content = <ViewComponent root={toPropTreeNode(text)} />;
 					const rendered = render(content, { reactStrictMode });
 
-					assert.match(rendered.baseElement.textContent ?? "", /Hello 😀 World/);
+					assert.equal(getTextareaValue(rendered.container), "Hello 😀 World");
 				});
 
 				it("inserts text after surrogate pair characters", () => {
@@ -113,10 +109,9 @@ describe("Plain TextArea view", () => {
 					const rendered = render(content, { reactStrictMode });
 
 					// Insert after the emoji (index 2 in character count: A, 😀, B)
-					text.insertAt(2, "X");
+					act(() => text.insertAt(2, "X"));
 
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /A😀XB/);
+					assert.equal(getTextareaValue(rendered.container), "A😀XB");
 				});
 
 				it("removes surrogate pair characters", () => {
@@ -125,12 +120,9 @@ describe("Plain TextArea view", () => {
 					const rendered = render(content, { reactStrictMode });
 
 					// Remove the emoji (index 1, length 1 in character count)
-					text.removeRange(1, 2);
+					act(() => text.removeRange(1, 2));
 
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /AB/);
-					assert(rendered.baseElement.textContent !== null);
-					assert.doesNotMatch(rendered.baseElement.textContent, /😀/);
+					assert.equal(getTextareaValue(rendered.container), "AB");
 				});
 
 				it("handles multiple surrogate pair characters", () => {
@@ -139,10 +131,9 @@ describe("Plain TextArea view", () => {
 					const rendered = render(content, { reactStrictMode });
 
 					// Insert between emojis
-					text.insertAt(2, "!");
+					act(() => text.insertAt(2, "!"));
 
-					rendered.rerender(content);
-					assert.match(rendered.baseElement.textContent ?? "", /👋🌍!🎉/);
+					assert.equal(getTextareaValue(rendered.container), "👋🌍!🎉");
 				});
 			});
 		}

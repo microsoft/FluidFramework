@@ -57,6 +57,25 @@ updateNotifier: false
 # - Apply vulnerability remediations (qs, js-yaml, simple-git, diff, tar,
 #   serialize-javascript, picomatch, and minimatch ranges).
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  diff@>=7 <8: ^8.0.3
+  ip-address@>=9 <10: ^10.1.1
+  keyv@>=4 <5: ^5.5.3
+  ts-deepmerge@>=7 <8: ^8.0.0
+  uuid@>=7 <12: ^11.1.1
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
+
   diff@>=4 <5: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=8 <9: ^8.0.3
@@ -65,8 +84,8 @@ overrides:
   jws: ^3.2.3
   oclif>@aws-sdk/client-cloudfront: '-'
   oclif>@aws-sdk/client-s3: '-'
-  qs: ^6.15.0
-  simple-git: ^3.32.3
+  qs: ^6.15.2
+  simple-git: ^3.36.0
   sharp: ^0.33.2
   tar: ^7.5.11
   minimatch@>=3 <4: ^3.1.5

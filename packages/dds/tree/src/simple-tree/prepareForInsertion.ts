@@ -155,6 +155,18 @@ function validateAndPrepare(
 	mapTrees: readonly UnhydratedFlexTreeNode[],
 	scheduleHydrationOverride?: HydrationScheduler,
 ): void {
+	// Detecting duplicates here is the lowest level spot which is the same for hydrated and un-hydrated parents,
+	// and is also responsible for other validation, so it seem like the best layer to do this check.
+	const seenRoots = new Set<UnhydratedFlexTreeNode>();
+	for (const node of mapTrees) {
+		if (seenRoots.has(node)) {
+			throw new UsageError(
+				`A ${JSON.stringify(node.type)} node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`,
+			);
+		}
+		seenRoots.add(node);
+	}
+
 	if (hydratedData !== undefined) {
 		// Run `prepareContentForHydration` before walking the tree in `isFieldInSchema`.
 		// This ensures that when `isFieldInSchema` requests identifiers (or any other contextual defaults),

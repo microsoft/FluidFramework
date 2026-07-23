@@ -46,6 +46,16 @@ strictPeerDependencies: true
 updateNotifier: false
 
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  brace-expansion@>=5 <6: ^5.0.6
+  keyv@>=4 <5: ^5.5.3
+  ts-deepmerge@>=7 <8: ^8.0.0
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
   # Resolve known ReDoS vulnerabilities in diff. diff@7.x has no fix so it is bumped to 8.0.3.
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
@@ -54,7 +64,7 @@ overrides:
   js-yaml: ^4.1.1
 
   # Resolve known vulnerabilities in older versions.
-  qs: ^6.15.0
+  qs: ^6.15.2
 
   # Resolve known security vulnerabilities across all major version ranges.
   minimatch@>=3 <4: ^3.1.5

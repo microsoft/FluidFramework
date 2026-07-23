@@ -15,6 +15,10 @@ API report files are **generated artifacts** — never hand-edit them. If they n
 The ADO project for work items and pipelines is **`internal`** (not `FluidFramework`).
 Use `internal` when calling ADO tools that require a project name.
 
+### Referencing GitHub issues/PRs in ADO text
+
+When writing ADO work-item fields (Description, comments, etc.), never reference a GitHub issue or PR with a bare `#<number>` (or `AB#<number>`) — ADO auto-links those to a work item in the `internal` org, not to GitHub. Always use the full URL `https://github.com/microsoft/FluidFramework/pull/<n>` (or `/issues/<n>`), ideally as a markdown link like `[PR #<n>](url)`. Reserve bare `#<n>` / `AB#<n>` for actual ADO work items.
+
 ### Internal Wiki
 
 - **Name:** FF Internal Wiki

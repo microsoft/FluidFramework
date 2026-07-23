@@ -29,10 +29,14 @@ export {
 export { EncodedModularChangesetV2 } from "./modularChangeFormatV2.js";
 export { FlexFieldKind, type FullSchemaPolicy } from "./fieldKind.js";
 export {
+	type EditFilterFunc,
+	EditFilterStatus,
 	type FieldChangeHandler,
 	type FieldChangeDelta,
+	type FieldChangeEncodingContext,
 	type FieldChangeRebaser,
 	type FieldEditor,
+	type NestedChangesIndices,
 	type NodeChangeComposer,
 	type NodeChangeInverter,
 	type NodeChangeRebaser,
@@ -42,8 +46,6 @@ export {
 	type RelevantRemovedRootsFromChild,
 	type ToDelta,
 	NodeAttachState,
-	type FieldChangeEncodingContext,
-	type NestedChangesIndices,
 } from "./fieldChangeHandler.js";
 export type {
 	CrossFieldKey,
@@ -83,3 +85,4 @@ export type {
 	FieldKindConfigurationEntry,
 } from "./fieldKindConfiguration.js";
 export { DefaultRevisionReplacer } from "./defaultRevisionReplacer.js";
+export { minimizeModularChangeset } from "./minimizeModularChange.js";

@@ -558,7 +558,7 @@ export class EncoderContext
 		// as they can't be attach summaries which are the only ones which should ever have non-final ids.
 		assert(
 			isSummary || incrementalEncoder === undefined,
-			"incrementalEncoder cannot be used when encoding originator-dependent identifiers",
+			0xd0d /* incrementalEncoder cannot be used when encoding originator-dependent identifiers */,
 		);
 	}
 

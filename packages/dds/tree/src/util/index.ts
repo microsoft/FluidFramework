@@ -106,7 +106,6 @@ export {
 	hasSingle,
 	defineLazyCachedProperty,
 	copyPropertyIfDefined as copyProperty,
-	getOrAddInMap,
 	iterableHasSome,
 } from "./utils.js";
 export { ReferenceCountedBase, type ReferenceCounted } from "./referenceCounting.js";
@@ -179,4 +178,7 @@ export {
 	tryDecodeEncodedIdWithoutSession,
 	forceDecodeEncodedIdWithoutSession,
 	decompressIdentifierIfNeeded,
+	IdDecodingContext,
+	type IdDecoderOptionsOriginatorless,
+	type IdDecoderOptionsWithOriginator,
 } from "./compressedIds.js";

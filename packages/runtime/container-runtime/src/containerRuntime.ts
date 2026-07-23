@@ -1523,6 +1523,7 @@ export class ContainerRuntime
 
 	private lastEmittedDirty: boolean;
 	private emitDirtyDocumentEvent = true;
+	private lastEmittedHasStagedChanges: boolean;
 	private readonly useDeltaManagerOpsProxy: boolean;
 	private readonly closeSummarizerDelayMs: number;
 
@@ -2195,6 +2196,9 @@ export class ContainerRuntime
 		// We haven't emitted dirty/saved yet, but this is the baseline so we know to emit when it changes
 		this.lastEmittedDirty = this.computeCurrentDirtyState();
 		context.updateDirtyContainerState(this.lastEmittedDirty);
+
+		// We haven't emitted hasStagedChangesChanged yet, but this is the baseline so we know to emit when it changes
+		this.lastEmittedHasStagedChanges = this.computeCurrentHasStagedChanges();
 
 		// Reference Sequence Number may have just changed, and it must be consistent across a batch,
 		// so we should flush now to clear the way for the next ops.
@@ -3244,13 +3248,14 @@ export class ContainerRuntime
 						"Duplicate batch - The same batch was sequenced twice",
 						{ batchId: batchStart.batchId },
 					);
-
+					const batchIdExplicit = batchStart.batchId !== undefined;
+					const otherBatchIdExplicit = result.otherBatchInfo?.batchIdExplicit ?? false;
 					this.mc.logger.sendTelemetryEvent(
 						{
 							eventName: "DuplicateBatch",
 							details: {
 								batchId: batchStart.batchId,
-								batchIdExplicit: batchStart.batchId !== undefined,
+								batchIdExplicit,
 								clientId: batchStart.clientId,
 								batchStartCsn: batchStart.batchStartCsn,
 								size: inboundResult.length,
@@ -3261,7 +3266,7 @@ export class ContainerRuntime
 								// loaded from a summary snapshot rather than seen at runtime.
 								otherClientId: result.otherBatchInfo?.clientId,
 								otherBatchStartCsn: result.otherBatchInfo?.batchStartCsn,
-								otherBatchIdExplicit: result.otherBatchInfo?.batchIdExplicit,
+								otherBatchIdExplicit,
 								otherFromSnapshot: result.otherBatchInfo === undefined,
 								...extractSafePropertiesFromMessage(batchStart.keyMessage),
 								// For grouped batches, `keyMessage` is one of the sub-messages produced by
@@ -3274,10 +3279,12 @@ export class ContainerRuntime
 						},
 						error,
 					);
-					// Due to a live incident where we had a bug in the service that caused duplicate batches to be sent to clients, we want to log when we detect a duplicate batch, but we don't want to throw an error
-					// as it could hit the same service bug. We need to monitor below event to catch legitimate container forking scenarios and reenable throwing the data corruption error once the service bug is fixed and we stop seeing duplicate batches in the wild
-					// or once we are able to identify batch duplication reason (forking vs service bug).
-					// throw error;
+					// Only throw the error if either the current batch or the other batch has an explicit batchId since that indicates a meaningful duplication scenario
+					// coming from our batch readings rather than a server outage scenario.
+					const shouldThrowOnDuplicate = batchIdExplicit || otherBatchIdExplicit;
+					if (shouldThrowOnDuplicate) {
+						throw error;
+					}
 				}
 			}
 
@@ -3717,6 +3724,12 @@ export class ContainerRuntime
 			this.closeFn(error2);
 			throw error2;
 		}
+
+		// Flushing moves any staged batch from the Outbox into the PendingStateManager. Since
+		// computeCurrentHasStagedChanges() now also considers a non-empty Outbox in Staging Mode, the
+		// externally-visible value shouldn't change here, but re-checking is cheap and keeps this
+		// method robust to future changes in how the two are tracked.
+		this.updateHasStagedChangesState();
 	}
 
 	/**
@@ -3899,6 +3912,7 @@ export class ContainerRuntime
 						},
 					);
 					this.updateDocumentDirtyState();
+					this.updateHasStagedChangesState();
 					return batchInfos;
 				}, "discard"),
 			commitChanges: (options) => {
@@ -3906,10 +3920,12 @@ export class ContainerRuntime
 				exitStagingMode(() => {
 					// Replay all staged batches in typical FIFO order.
 					// We'll be out of staging mode so they'll be sent to the service finally.
-					return this.pendingStateManager.replayPendingStates({
+					const batchInfos = this.pendingStateManager.replayPendingStates({
 						committingStagedBatches: true,
 						squash,
 					});
+					this.updateHasStagedChangesState();
+					return batchInfos;
 				}, "commit");
 			},
 		};
@@ -4033,6 +4049,38 @@ export class ContainerRuntime
 			this.attachState !== AttachState.Attached ||
 			this.pendingStateManager.hasPendingUserChanges() ||
 			this.outbox.containsUserChanges()
+		);
+	}
+
+	/**
+	 * Returns true if there are any staged changes, i.e. changes submitted while in Staging Mode
+	 * (see {@link @fluidframework/runtime-definitions#IContainerRuntimeBaseInternal.enterStagingMode})
+	 * that have not yet been discarded or committed.
+	 *
+	 * @remarks This is distinct from {@link ContainerRuntime.isDirty}: a container may be dirty due to
+	 * ordinary unacknowledged local changes without having any staged changes.
+	 */
+	public get hasStagedChanges(): boolean {
+		// Rather than recomputing this in the moment, just regurgitate the last emitted state.
+		return this.lastEmittedHasStagedChanges;
+	}
+
+	/**
+	 * Returns true if there are currently any staged (not yet discarded or committed) changes pending.
+	 *
+	 * @remarks While in Staging Mode, newly submitted ops sit in the Outbox until the next flush before
+	 * they're moved to the PendingStateManager (where `pendingStateManager.hasStagedChanges()` looks).
+	 * So we also check the Outbox here, otherwise there would be a window between submit and flush where
+	 * staged changes exist but this would incorrectly report false.
+	 *
+	 * @remarks We don't care about the type of ops in the Outbox here (unlike dirty state), just whether
+	 * there's anything queued at all, for consistency with how `pendingStateManager.hasStagedChanges()`
+	 * doesn't discriminate by op type either.
+	 */
+	private computeCurrentHasStagedChanges(): boolean {
+		return (
+			this.pendingStateManager.hasStagedChanges() ||
+			(this.inStagingMode && !this.outbox.isEmpty)
 		);
 	}
 
@@ -4871,13 +4919,31 @@ export class ContainerRuntime
 	private updateDocumentDirtyState(): void {
 		const dirty: boolean = this.computeCurrentDirtyState();
 
-		if (this.lastEmittedDirty === dirty) {
+		if (this.lastEmittedDirty !== dirty) {
+			this.lastEmittedDirty = dirty;
+			if (this.emitDirtyDocumentEvent) {
+				this.emit(dirty ? "dirty" : "saved");
+			}
+		}
+	}
+
+	/**
+	 * Emit "hasStagedChangesChanged" if the current staged-changes state differs from what was last emitted.
+	 * This must be called explicitly at each place staged changes can be added or removed (submit, flush,
+	 * discardChanges, commitChanges) -- unlike {@link ContainerRuntime.updateDocumentDirtyState}, it is not
+	 * safe to call this unconditionally alongside dirty tracking, since most dirty-state transitions (e.g.
+	 * acking ops, reconnecting) can't affect staged changes.
+	 */
+	private updateHasStagedChangesState(): void {
+		const hasStagedChanges: boolean = this.computeCurrentHasStagedChanges();
+
+		if (this.lastEmittedHasStagedChanges === hasStagedChanges) {
 			return;
 		}
 
-		this.lastEmittedDirty = dirty;
+		this.lastEmittedHasStagedChanges = hasStagedChanges;
 		if (this.emitDirtyDocumentEvent) {
-			this.emit(dirty ? "dirty" : "saved");
+			this.emit("hasStagedChangesChanged", hasStagedChanges);
 		}
 	}
 
@@ -5056,6 +5122,7 @@ export class ContainerRuntime
 		}
 
 		this.updateDocumentDirtyState();
+		this.updateHasStagedChangesState();
 	}
 
 	private scheduleFlush(): void {

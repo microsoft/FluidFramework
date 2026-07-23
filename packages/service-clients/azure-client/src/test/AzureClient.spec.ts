@@ -25,6 +25,8 @@ import { v4 as uuid } from "uuid";
 import { AzureClient } from "../AzureClient.js";
 import type { AzureLocalConnectionConfig } from "../interfaces.js";
 
+import { tinyliciousPort } from "./TestConstants.js";
+
 function createAzureClient(
 	props: { scopes?: ScopeType[]; configProvider?: IConfigProviderBase } = {},
 ): AzureClient {
@@ -37,7 +39,7 @@ function createAzureClient(
 			},
 			props.scopes,
 		),
-		endpoint: "http://localhost:7070",
+		endpoint: `http://localhost:${tinyliciousPort}`,
 		type: "local",
 	};
 	return new AzureClient({

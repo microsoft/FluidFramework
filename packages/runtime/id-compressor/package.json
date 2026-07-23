@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/id-compressor",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "ID compressor",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -146,7 +146,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.110.0",
+		"@fluidframework/id-compressor-previous": "npm:@fluidframework/id-compressor@2.111.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
@@ -162,11 +162,7 @@
 		"typescript": "~5.4.5"
 	},
 	"typeValidation": {
-		"broken": {
-			"Interface_IIdCompressor": {
-				"forwardCompat": false
-			}
-		},
+		"broken": {},
 		"entrypoint": "legacy"
 	}
 }

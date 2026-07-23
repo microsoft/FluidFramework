@@ -4,7 +4,7 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 /**
  * An object which can enter a "broken" state where trying to use it is a UsageError.
@@ -22,6 +22,13 @@ export class Breakable {
 		 * This is useful for documenting the semantics of a given Breakable and when inspecting things in the debugger, but is currently otherwise unused.
 		 */
 		private readonly name: string,
+		/**
+		 * Optional logger for telemetry.
+		 * @remarks
+		 * When provided, subsystems that have access to a Breakable can use this logger to emit telemetry
+		 * without requiring additional plumbing.
+		 */
+		public readonly logger?: TelemetryLoggerExt,
 	) {}
 
 	/**

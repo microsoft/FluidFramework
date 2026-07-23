@@ -49,8 +49,16 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 			default: false,
 		}),
 		"package-dir": Flags.string({
-			description: "Package root whose webpack bundles are built and compared.",
+			description:
+				"Package root whose 'build:compile' is run to compile the package and its dependencies.",
 			default: ".",
+		}),
+		"webpack-dir": Flags.string({
+			description:
+				"Directory whose 'webpack' build is run and compared. Defaults to --package-dir. Set " +
+				"this when the webpack config lives in a different directory than the package being " +
+				"compiled (e.g. a scenario subdirectory). The comparison reports are written under this " +
+				"directory's compareBundlesOutput.",
 		}),
 		"keep-base-repo": Flags.boolean({
 			description:
@@ -68,7 +76,8 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 		const { flags } = this;
 
 		const packageDir = resolve(flags["package-dir"]);
-		const outputDir = resolve(packageDir, "compareBundlesOutput");
+		const webpackDir = resolve(flags["webpack-dir"] ?? flags["package-dir"]);
+		const outputDir = resolve(webpackDir, "compareBundlesOutput");
 		const analysisDir = resolve(outputDir, "analysis");
 
 		await collectAndCompareBundles({
@@ -77,6 +86,7 @@ export default class GenerateBundleAnalysisReposWithComparison extends BaseComma
 			forceCleanBuild: false,
 			keepBaseRepo: flags["keep-base-repo"],
 			packageDir,
+			webpackDir,
 			analysisDir,
 			outputDir,
 		});

@@ -96,6 +96,7 @@ export {
 	isNeverTree,
 	DefaultRevisionReplacer,
 	ModularChangeFormatVersion,
+	minimizeModularChangeset,
 } from "./modular-schema/index.js";
 
 export { mapRootChanges } from "./deltaUtils.js";
@@ -152,6 +153,7 @@ export {
 
 export {
 	SchemaValidationError,
+	type SchemaValidationErrorContext,
 	isNodeInSchema,
 	isFieldInSchema,
 	throwOutOfSchema,

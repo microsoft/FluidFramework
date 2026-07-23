@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/client-utils",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "Not intended for use outside the Fluid Framework.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -143,7 +143,7 @@
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",
 		"@biomejs/biome": "~2.4.5",
-		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.110.0",
+		"@fluid-internal/client-utils-previous": "npm:@fluid-internal/client-utils@2.111.0",
 		"@fluid-internal/mocha-test-setup": "workspace:~",
 		"@fluid-tools/build-cli": "catalog:buildTools",
 		"@fluidframework/build-common": "^2.0.3",
@@ -259,9 +259,9 @@
 		}
 	},
 	"fluidCompatMetadata": {
-		"generation": 7,
-		"releaseDate": "2026-05-27",
-		"releasePkgVersion": "2.102.0"
+		"generation": 8,
+		"releaseDate": "2026-07-06",
+		"releasePkgVersion": "2.111.0"
 	},
 	"typeValidation": {
 		"broken": {},

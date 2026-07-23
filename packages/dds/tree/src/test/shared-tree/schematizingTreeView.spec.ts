@@ -236,7 +236,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 
 		// Put into broken state by trying incompatible upgrade
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 		assert.throws(
 			() => view.initialize(5),

@@ -4,12 +4,7 @@
  */
 
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import type {
-	IIdCompressor,
-	OpSpaceCompressedId,
-	SessionId,
-	SessionSpaceCompressedId,
-} from "@fluidframework/id-compressor";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { lowestMinVersionForCollab } from "@fluidframework/runtime-utils/internal";
 import type { TSchema } from "@sinclair/typebox";
 
@@ -29,13 +24,14 @@ import {
 } from "../../../core/index.js";
 import {
 	brandedNumberType,
-	forceDecodeEncodedIdWithoutSession,
+	IdDecodingContext,
 	type Brand,
-	type IdentifierHealingConfig,
+	type IdDecoderOptionsOriginatorless,
+	type IdDecoderOptionsWithOriginator,
 } from "../../../util/index.js";
 import { TreeCompressionStrategy } from "../../treeCompressionUtils.js";
 
-import { decode, type IdDecodingContext } from "./chunkDecoding.js";
+import { decode } from "./chunkDecoding.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	EncodedFieldBatchV1,
@@ -148,26 +144,18 @@ export interface FieldBatchEncodingContext {
  * op-style and summary-style decoding is load-bearing (different invariants
  * apply, and bugs in this area are typically the result of conflating them).
  */
-export class FieldBatchDecodingContext implements IdDecodingContext {
+export class FieldBatchDecodingContext extends IdDecodingContext {
 	private constructor(
-		/**
-		 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
-		 */
-		private readonly hasOriginatorSessionId: boolean,
-
-		public readonly idCompressor: Pick<IIdCompressor, "decompress">,
-
-		public readonly resolveEncodedId: (
-			id: OpSpaceCompressedId,
-		) => SessionSpaceCompressedId | string,
-
+		private readonly options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
 		/**
 		 * Decoder for incremental fields. Defined when the encoded batch contains
 		 * incremental chunks. Only populated on summary-style contexts; op-style
 		 * contexts always have this undefined.
 		 */
 		public readonly incrementalDecoder?: IncrementalDecoder,
-	) {}
+	) {
+		super(options);
+	}
 
 	/**
 	 * Construct a decode context for an op.
@@ -178,14 +166,8 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 	 * not a recoverable state, so the resolver throws rather than synthesizing
 	 * a UUID. Incremental decoding is not used for ops.
 	 */
-	public static forOp(opts: {
-		readonly idCompressor: IIdCompressor;
-		readonly originatorId: SessionId;
-	}): FieldBatchDecodingContext {
-		const { idCompressor, originatorId } = opts;
-		return new FieldBatchDecodingContext(true, idCompressor, (id) =>
-			idCompressor.normalizeToSessionSpace(id, originatorId),
-		);
+	public static forOp(options: IdDecoderOptionsWithOriginator): FieldBatchDecodingContext {
+		return new FieldBatchDecodingContext(options);
 	}
 
 	/**
@@ -204,14 +186,10 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 	 * `withIncrementalDecoder` has logic to guard against cases which expect session-relative identifiers in incremental chunks,
 	 * as does the encoding-side assert in the {@link EncoderContext}.
 	 */
-	public static forSummary(opts: {
-		readonly idCompressor: IIdCompressor;
-		readonly healing?: IdentifierHealingConfig;
-	}): FieldBatchDecodingContext {
-		const { idCompressor, healing } = opts;
-		return new FieldBatchDecodingContext(false, idCompressor, (id) =>
-			forceDecodeEncodedIdWithoutSession(id, idCompressor, healing),
-		);
+	public static forSummary(
+		options: IdDecoderOptionsOriginatorless | IdDecoderOptionsWithOriginator,
+	): FieldBatchDecodingContext {
+		return new FieldBatchDecodingContext(options);
 	}
 
 	/**
@@ -229,14 +207,9 @@ export class FieldBatchDecodingContext implements IdDecodingContext {
 		// See also private remarks on forSummary.
 		assert(
 			!this.hasOriginatorSessionId,
-			"withIncrementalDecoder can only be called on contexts without an originator session ID",
+			0xd0c /* withIncrementalDecoder can only be called on contexts without an originator session ID */,
 		);
-		return new FieldBatchDecodingContext(
-			false,
-			this.idCompressor,
-			this.resolveEncodedId,
-			incrementalDecoder,
-		);
+		return new FieldBatchDecodingContext(this.options, incrementalDecoder);
 	}
 }
 

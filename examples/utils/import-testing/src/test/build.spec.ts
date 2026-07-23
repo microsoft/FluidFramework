@@ -48,16 +48,21 @@ async function compileTest(
 	args: string[],
 	project: string = "./tsconfig.test.json",
 ): Promise<void> {
-	const result = execFileAsync(
-		path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc"),
-		["--project", project, "--noEmit", ...args],
-		{},
-	);
+	const compilerPath = path.join(typescriptHostDir, "node_modules", tscName, "bin", "tsc");
+	const result = execFileAsync(compilerPath, ["--project", project, "--noEmit", ...args], {});
 
 	try {
 		await result;
 	} catch (error) {
-		throw new Error((error as Record<string, string>).stdout);
+		const compilerError = error as {
+			stdout?: string;
+			stderr?: string;
+			message?: string;
+		};
+		const details = [compilerError.stdout, compilerError.stderr, compilerError.message]
+			.filter((x): x is string => x !== undefined && x.length > 0)
+			.join("\n");
+		throw new Error(`Failed to compile with ${tscName}:\n${details}`);
 	}
 }
 

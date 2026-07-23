@@ -19,7 +19,6 @@ This is useful because it breaks change tracking into two steps:
 "@myproject/cli": minor
 "@myproject/core": minor
 ---
-
 Change all the things
 
 More exposition about the change.
@@ -39,7 +38,6 @@ We support additional custom metadata via special properties prefixed with doubl
 "__includeInReleaseNotes": false
 "__highlight": true
 ---
-
 Change all the things
 ```
 
@@ -84,7 +82,6 @@ Sometimes information needs to be in the release notes but doesn't apply to any 
 ---
 "__section": other
 ---
-
 This changeset will be included in the release notes but not per-package changelogs.
 ```
 
@@ -154,7 +151,6 @@ So **most changesets for `@fluidframework/tree` should list both `"@fluidframewo
 "@fluidframework/container-runtime": minor
 "__section": fix
 ---
-
 Incorrect error message when disposing a container has been fixed
 
 The error message when attempting to dispose a container that is already disposed now correctly identifies the operation that failed.
@@ -169,7 +165,6 @@ The error message when attempting to dispose a container that is already dispose
 "__section": feature
 "__highlight": true
 ---
-
 Add support for schema evolution in SharedTree
 
 SharedTree now supports evolving document schemas over time.
@@ -197,7 +192,6 @@ const view = tree.viewWith(new TreeViewConfiguration({ schema: MyUpdatedSchema }
 "@fluidframework/container-definitions": minor
 "__section": breaking
 ---
-
 Deprecated summarizer options have been removed from container runtime
 
 The deprecated `ISummaryOptions` interface has been removed.

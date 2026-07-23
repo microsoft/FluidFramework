@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -105,6 +105,8 @@
 		"isomorphic-fetch": "^3.0.0",
 		"nconf": "^0.12.0",
 		"sillyname": "^0.1.0",
+		"source-map-loader": "^5.0.0",
+		"ts-loader": "^9.5.1",
 		"uuid": "^11.1.0",
 		"webpack-dev-server": "~4.15.2"
 	},
@@ -129,8 +131,6 @@
 		"mocha": "^11.7.5",
 		"mocha-multi-reporters": "^1.5.1",
 		"rimraf": "^6.1.3",
-		"source-map-loader": "^5.0.0",
-		"ts-loader": "^9.5.1",
 		"typescript": "~5.4.5",
 		"webpack": "^5.94.0",
 		"webpack-cli": "^5.1.4"

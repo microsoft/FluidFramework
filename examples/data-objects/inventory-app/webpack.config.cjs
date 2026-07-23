@@ -4,48 +4,7 @@
  */
 
 const fluidRoute = require("@fluid-example/webpack-fluid-loader");
-const path = require("path");
-const { merge } = require("webpack-merge");
 
 module.exports = (env) => {
-	const { production, view = "quill" } = env;
-
-	return merge(
-		{
-			entry: {
-				main: "./src/index.ts",
-			},
-			resolve: {
-				extensionAlias: {
-					".js": [".ts", ".tsx", ".js"],
-					".cjs": [".cts", ".cjs"],
-					".mjs": [".mts", ".mjs"],
-				},
-			},
-			module: {
-				rules: [
-					{
-						test: /\.tsx?$/,
-						loader: "ts-loader",
-					},
-					{
-						test: /\.[cm]?js$/,
-						use: [require.resolve("source-map-loader")],
-						enforce: "pre",
-					},
-				],
-			},
-			output: {
-				filename: "[name].bundle.js",
-				path: path.resolve(__dirname, "dist"),
-				library: { name: "[name]", type: "umd" },
-			},
-			watchOptions: {
-				ignored: "**/node_modules/**",
-			},
-			mode: production ? "production" : "development",
-			devtool: production ? "source-map" : "inline-source-map",
-		},
-		fluidRoute.devServerConfig(__dirname, env),
-	);
+	return fluidRoute.commonExampleConfig(__dirname, env);
 };
