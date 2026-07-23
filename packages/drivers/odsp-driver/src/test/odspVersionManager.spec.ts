@@ -5,6 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 /* eslint-disable import-x/no-internal-modules */
 import {
 	OdspVersionManager,
@@ -26,20 +29,38 @@ interface FakeFetcher extends IOdspFileVersionFetcher {
 	readonly listCalls: () => number;
 	/** Version ids passed to resolveSequenceNumber, in call order. */
 	readonly resolvedIds: () => string[];
+	/** (from, to) pairs passed to fetchOps, in call order. */
+	readonly opsCalls: () => [number, number][];
+}
+
+/**
+ * Optional epoch/ops behavior for {@link makeManager}, used by the `validateBaseForReplay` tests.
+ * `liveEpoch`/`versionEpochs` back the epoch getters; `retainedOps` is the ascending set of sequence
+ * numbers the fake server still retains, which `fetchOps` filters by the requested [from, to) range.
+ */
+interface ReplayConfig {
+	readonly liveEpoch?: string;
+	readonly versionEpochs?: Record<string, string | undefined>;
+	readonly retainedOps?: number[];
 }
 
 /*
  * Create a manager backed by in-memory fakes so the selection logic can be tested without ODSP.
  * `versions` is the newest-first list the fake `listFileVersions` returns; `seqByVersion` maps a
  * versionId to the sequence number the fake `resolveSequenceNumber` returns (a missing id makes it
- * throw, modelling a parse failure).
+ * throw, modelling a parse failure). `replay` configures the epoch getters and retained ops used by
+ * the `validateBaseForReplay` path.
  */
 function makeManager(
 	versions: OdspFileVersionRef[],
 	seqByVersion: Record<string, number>,
-): { manager: OdspVersionManager; fetcher: FakeFetcher } {
+	replay: ReplayConfig = {},
+): { manager: OdspVersionManager; fetcher: FakeFetcher; logger: MockLogger } {
 	let listCallCount = 0;
 	const resolved: string[] = [];
+	const opsCalls: [number, number][] = [];
+	const retainedOps = replay.retainedOps ?? [];
+	const logger = new MockLogger();
 	const fetcher: FakeFetcher = {
 		listFileVersions: async () => {
 			listCallCount++;
@@ -53,10 +74,22 @@ function makeManager(
 			}
 			return seq;
 		},
+		getLiveDocumentEpoch: async () => replay.liveEpoch,
+		getRecoverableVersionEpoch: async (versionId: string) =>
+			replay.versionEpochs ? replay.versionEpochs[versionId] : replay.liveEpoch,
+		fetchOps: async (from: number, to: number) => {
+			opsCalls.push([from, to]);
+			return retainedOps.filter((seq) => seq >= from && seq < to);
+		},
 		listCalls: () => listCallCount,
 		resolvedIds: () => [...resolved],
+		opsCalls: () => [...opsCalls],
 	};
-	return { manager: new OdspVersionManager(fetcher), fetcher };
+	return {
+		manager: new OdspVersionManager(fetcher, createChildLogger({ logger })),
+		fetcher,
+		logger,
+	};
 }
 
 describe("OdspVersionManager", () => {
@@ -192,6 +225,9 @@ describe("OdspVersionManager", () => {
 					return new Promise<OdspFileVersionRef[]>((resolve) => gates.push(resolve));
 				},
 				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
+				getLiveDocumentEpoch: async () => "epoch",
+				getRecoverableVersionEpoch: async () => "epoch",
+				fetchOps: async () => [],
 			};
 			const manager = new OdspVersionManager(fetcher);
 
@@ -240,6 +276,167 @@ describe("OdspVersionManager", () => {
 					["40.0", 418],
 				],
 			);
+		});
+	});
+
+	describe("validateBaseForReplay", () => {
+		const base = {
+			versionId: "40.0",
+			sequenceNumber: 418,
+			lastModifiedDateTime: "2026-01-01T00:00:00Z",
+		};
+
+		it("resolves when the base shares the live epoch and all ops through the target exist", async () => {
+			// @q M-VALIDATE-01
+			const { manager, fetcher, logger } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps: [419, 420, 421, 422], // covers (418, 421]
+				},
+			);
+			await manager.validateBaseForReplay(base, 421);
+			// Only ops up to and including the target are requested: [419, 422).
+			assert.deepEqual(fetcher.opsCalls(), [[419, 422]]);
+			// The observed epochs are logged for real-traffic verification.
+			logger.assertMatch([
+				{
+					eventName: "PointInTimeBaseLineageEpoch",
+					baseVersionId: "40.0",
+					baseEpoch: "epoch-A",
+					liveEpoch: "epoch-A",
+					epochsMatch: true,
+				},
+			]);
+		});
+
+		it("throws when the base version is on a different epoch than the live document", async () => {
+			// @q M-VALIDATE-02
+			const { manager, fetcher } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-live",
+					versionEpochs: { "40.0": "epoch-old" },
+					retainedOps: [419, 420, 421],
+				},
+			);
+			await assert.rejects(
+				async () => manager.validateBaseForReplay(base, 421),
+				(error: Error) => {
+					assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.fileOverwrittenInStorage,
+						"a lineage mismatch reuses the driver's fileOverwrittenInStorage error",
+					);
+					return true;
+				},
+			);
+			// The op check must not run once the lineage check fails.
+			assert.deepEqual(fetcher.opsCalls(), []);
+		});
+
+		it("throws (fails closed) when an epoch is unknown", async () => {
+			// @q M-VALIDATE-03
+			// No epoch configured -> both getLiveDocumentEpoch and getRecoverableVersionEpoch resolve undefined.
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					retainedOps: [419, 420, 421],
+				},
+			);
+			await assert.rejects(
+				async () => manager.validateBaseForReplay(base, 421),
+				/Cannot verify.*lineage/,
+			);
+		});
+
+		it("throws when the ops needed to reach the target were trimmed at the low end", async () => {
+			// @q M-VALIDATE-04
+			// base+1 = 419 is gone; earliest retained op is 425 -> a gap right after the base.
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps: [425, 426, 427],
+				},
+			);
+			await assert.rejects(
+				async () => manager.validateBaseForReplay(base, 427),
+				/expected sequence number 419 but the next available op is 425/,
+			);
+		});
+
+		it("throws when there is a gap in the middle of the op range", async () => {
+			// @q M-VALIDATE-05
+			// 421 is missing between 420 and 422.
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps: [419, 420, 422, 423],
+				},
+			);
+			await assert.rejects(
+				async () => manager.validateBaseForReplay(base, 423),
+				/expected sequence number 421 but the next available op is 422/,
+			);
+		});
+
+		it("throws when the server returns no ops at all", async () => {
+			// @q M-VALIDATE-06
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps: [],
+				},
+			);
+			await assert.rejects(
+				async () => manager.validateBaseForReplay(base, 421),
+				/no ops at or after sequence number 419/,
+			);
+		});
+
+		it("skips the op check when the target is at or before the base sequence number", async () => {
+			// @q M-VALIDATE-07
+			const { manager, fetcher } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps: [],
+				},
+			);
+			await manager.validateBaseForReplay(base, 418); // target === base seq: nothing to replay
+			assert.deepEqual(
+				fetcher.opsCalls(),
+				[],
+				"no ops should be fetched when there is nothing to replay",
+			);
+		});
+
+		it("pages: keeps requesting from where the previous batch ended", async () => {
+			// @q M-VALIDATE-08
+			// The fake returns the whole retained range at once, but the loop must still advance `from`
+			// correctly and stop exactly at the target (no request past target).
+			const retainedOps = Array.from({ length: 10 }, (_, index) => 419 + index); // 419..428
+			const { manager, fetcher } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-A",
+					retainedOps,
+				},
+			);
+			await manager.validateBaseForReplay(base, 428);
+			assert.deepEqual(fetcher.opsCalls(), [[419, 429]]);
 		});
 	});
 });

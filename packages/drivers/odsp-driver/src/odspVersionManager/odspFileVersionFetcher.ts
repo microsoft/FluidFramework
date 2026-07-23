@@ -20,9 +20,10 @@ import { currentReadVersion, parseCompactSnapshotResponse } from "../compactSnap
 import type { IOdspSnapshot } from "../contracts.js";
 import type { EpochTracker } from "../epochTracker.js";
 import { getHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
+import { OdspDeltaStorageService } from "../odspDeltaStorageService.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 import { getApiRoot } from "../odspUrlHelper.js";
-import { getWithRetryForTokenRefresh } from "../odspUtils.js";
+import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
 
 import type { OdspFileVersionRef, IOdspFileVersionFetcher } from "./odspVersionManager.js";
 
@@ -134,5 +135,59 @@ export function createOdspFileVersionFetcher(
 			return sequenceNumber;
 		});
 
-	return { listFileVersions, resolveSequenceNumber };
+	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
+
+	// Reads the `x-fluid-epoch` header from `url`. Deliberately uses the raw fetch helper instead of
+	// `epochTracker.fetch`: the whole point is to COMPARE the base version's epoch against the live
+	// document's epoch, but the shared EpochTracker pins to the first epoch it sees and throws on the
+	// second (divergent) read - so it could never yield two epochs to compare. `fetchArray` also lets
+	// the body (JSON or ms-fluid binary) be consumed and discarded; only the header is needed.
+	const readEpoch = async (url: string, scenarioName: string): Promise<string | undefined> =>
+		getWithRetryForTokenRefresh(async (options) => {
+			const method = "GET";
+			const token = await getAuthHeader(
+				{ ...options, request: { url, method } },
+				scenarioName,
+			);
+			const headers = getHeadersWithAuth(token);
+			const response = await fetchArray(url, { method, headers });
+			return response.headers.get("x-fluid-epoch") ?? undefined;
+		});
+
+	const getLiveDocumentEpoch = async (): Promise<string | undefined> =>
+		// The (unversioned) live snapshot endpoint is a current-file read, so its epoch is the live
+		// document's epoch. `blobs=0` keeps the response to the tree metadata.
+		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch");
+
+	const getRecoverableVersionEpoch = async (versionId: string): Promise<string | undefined> =>
+		readEpoch(
+			`${itemRoot}/versions/${encodeURIComponent(versionId)}/opStream/snapshots/trees/latest?blobs=0`,
+			"FileVersionEpoch",
+		);
+
+	// Ops are read from the LIVE document's delta feed (versions do not have their own op streams).
+	// Reuses OdspDeltaStorageService for its tested transport, retry, and epoch validation.
+	const deltaStorage = new OdspDeltaStorageService(
+		`${itemRoot}/opStream`,
+		getAuthHeader,
+		epochTracker,
+		logger,
+	);
+	const fetchOps = async (from: number, to: number): Promise<number[]> => {
+		const result = await deltaStorage.get(
+			from,
+			to,
+			{ reason: "PointInTimeOpsValidation" },
+			"PointInTimeOpsValidation",
+		);
+		return result.messages.map((message) => message.sequenceNumber);
+	};
+
+	return {
+		listFileVersions,
+		resolveSequenceNumber,
+		getLiveDocumentEpoch,
+		getRecoverableVersionEpoch,
+		fetchOps,
+	};
 }
