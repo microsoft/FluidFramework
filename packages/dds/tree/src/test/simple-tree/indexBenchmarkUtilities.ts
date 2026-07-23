@@ -116,7 +116,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 ): void {
 	const { indexName, sizes, createScenario } = config;
 
-	describe(`Index creation`, () => {
+	describe(`index creation`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -134,7 +134,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Key lookup (hit)`, () => {
+	describe(`key lookup (hit)`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -159,7 +159,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Key lookup (miss)`, () => {
+	describe(`key lookup (miss)`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -184,7 +184,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Iteration`, () => {
+	describe(`iteration`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -209,7 +209,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Size`, () => {
+	describe(`size`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -231,7 +231,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Node insertion (index update)`, () => {
+	describe(`node insertion (index update)`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
@@ -259,7 +259,7 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 		}
 	});
 
-	describe(`Node removal (index update)`, () => {
+	describe(`node removal (index update)`, () => {
 		for (const [nodeCount, benchmarkType] of sizes) {
 			const scenario = createScenario(nodeCount);
 			benchmarkIt({
