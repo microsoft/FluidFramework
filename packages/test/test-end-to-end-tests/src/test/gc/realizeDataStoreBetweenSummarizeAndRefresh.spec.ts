@@ -50,7 +50,7 @@ describeCompat(
 	"GC reference updates from attach message with root DDS in snapshot",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		const { SharedDirectory } = apis.dds;
+		const { SharedTree } = apis.dds;
 		const { DataObject, DataObjectFactory } = apis.dataRuntime;
 		const { mixinSummaryHandler } = apis.dataRuntime.packages.datastore;
 		const { ContainerRuntimeFactoryWithDefaultDataStore } = apis.containerRuntime;
@@ -65,8 +65,8 @@ describeCompat(
 				return this.context;
 			}
 			protected async initializingFirstTime(): Promise<void> {
-				const directory = SharedDirectory.create(this.runtime);
-				this.root.set("directory", directory.handle);
+				const tree = SharedTree.create(this.runtime);
+				this.root.set("tree", tree.handle);
 			}
 		}
 
@@ -107,6 +107,7 @@ describeCompat(
 		const cellFactory = new DataObjectFactory({
 			type: "CellDataObject",
 			ctor: CellDataObject,
+			sharedObjects: [SharedTree.getFactory()],
 		});
 		const tableFactory = new DataObjectFactory({
 			type: "TableDataObject",
@@ -127,6 +128,7 @@ describeCompat(
 				defaultFactory: tableFactory,
 				registryEntries: registry,
 				runtimeOptions: {
+					enableRuntimeIdCompressor: "on",
 					summaryOptions: { summaryConfigOverrides: { state: "disabled" } },
 				},
 			},
@@ -188,6 +190,7 @@ describeCompat(
 			): Promise<string> => {
 				const response = await originalUpload(summary, context);
 				tableDataObject._root.set("newCell", cellDataObject.handle);
+				// `processOutgoing` ensures that the attach op is sequenced by the server before the summarize op.
 				await provider.opProcessingController.processOutgoing(mainContainer);
 				return response;
 			};
