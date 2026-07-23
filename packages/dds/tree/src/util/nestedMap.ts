@@ -5,7 +5,7 @@
 
 import { oob } from "@fluidframework/core-utils/internal";
 
-import { getOrAddInMap, getOrCreate } from "./utils.js";
+import { getOrCreate } from "./utils.js";
 
 /**
  * A dictionary whose values are keyed off of two objects (key1, key2).
@@ -73,6 +73,23 @@ export function populateNestedMap<Key1, Key2, Value>(
 }
 
 /**
+ * Sets the value at `key` in map to new Map if not already present.
+ * Returns the value at `key` after setting it.
+ */
+function getOrAddInMap<Key1, Key2, Value>(
+	map: NestedMap<Key1, Key2, Value>,
+	key1: Key1,
+): Map<Key2, Value> {
+	const currentValue = map.get(key1);
+	if (currentValue !== undefined) {
+		return currentValue;
+	}
+	const value = new Map<Key2, Value>();
+	map.set(key1, value);
+	return value;
+}
+
+/**
  * Sets the value at (key1, key2) in map to value.
  * If there already is a value for (key1, key2), it is replaced with the provided one.
  */
@@ -82,7 +99,7 @@ export function setInNestedMap<Key1, Key2, Value>(
 	key2: Key2,
 	value: Value,
 ): void {
-	const innerMap = getOrAddInMap(map, key1, new Map<Key2, Value>());
+	const innerMap = getOrAddInMap(map, key1);
 	innerMap.set(key2, value);
 }
 
@@ -95,7 +112,7 @@ export function getOrCreateInNestedMap<Key1, Key2, Value>(
 	key2: Key2,
 	defaultValue: (key1: Key1, key2: Key2) => Value,
 ): Value {
-	const innerMap = getOrAddInMap(map, key1, new Map<Key2, Value>());
+	const innerMap = getOrAddInMap(map, key1);
 	return getOrCreate(innerMap, key2, (): Value => defaultValue(key1, key2));
 }
 
@@ -193,7 +210,7 @@ export function nestedMapFromFlatList<Key1, Key2, Value>(
 ): NestedMap<Key1, Key2, Value> {
 	const map = new Map<Key1, Map<Key2, Value>>();
 	for (const [key1, key2, val] of list) {
-		getOrAddInMap(map, key1, new Map<Key2, Value>()).set(key2, val);
+		getOrAddInMap(map, key1).set(key2, val);
 	}
 	return map;
 }

@@ -6,6 +6,7 @@
 export type {
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,

@@ -483,6 +483,55 @@ export interface TreeArrayNodeAlpha<
 	at(index: number): T | undefined;
 
 	/**
+	 * Returns the last item in the array for which the given type guard returns `true`,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @typeParam S - The subtype of `T` asserted by the `predicate` type guard.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns `true`.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns `true` (narrowed to the guarded type), or `undefined` if there is no such item.
+	 */
+	findLast<S extends T>(
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+
+	/**
+	 * Returns the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLast | Array.prototype.findLast}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The last item for which `predicate` returns a truthy value, or `undefined` if there is no such item.
+	 */
+	findLast(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): T | undefined;
+
+	/**
+	 * Returns the index of the last item in the array for which the given predicate returns a truthy value,
+	 * searching from the last item to the first.
+	 * @remarks
+	 * The array's length is captured when the search begins; items are read live as the search progresses.
+	 * If `predicate` edits the array, behavior matches {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/findLastIndex | Array.prototype.findLastIndex}.
+	 * @param predicate - Evaluated once per item, starting from the last item and moving towards the first, until it returns a truthy value.
+	 * Receives the item, its index, and the array being searched.
+	 * @param thisArg - If provided, used as `this` when invoking `predicate`.
+	 * @returns The index of the last item for which `predicate` returns a truthy value, or `-1` if there is no such item.
+	 */
+	findLastIndex(
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
+		thisArg?: unknown,
+	): number;
+
+	/**
 	 * Removes the last item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
 	 */
@@ -1040,6 +1089,58 @@ abstract class CustomArrayNodeBase<const T extends ImplicitAllowedTypes>
 		}
 
 		return getOrCreateNodeFromInnerNode(val) as TreeNodeFromImplicitAllowedTypes<T>;
+	}
+	public findLast<S extends TreeNodeFromImplicitAllowedTypes<T>>(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => value is S,
+		thisArg?: unknown,
+	): S | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined;
+	public findLast(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): TreeNodeFromImplicitAllowedTypes<T> | undefined {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return value;
+			}
+		}
+		return undefined;
+	}
+	public findLastIndex(
+		predicate: (
+			value: TreeNodeFromImplicitAllowedTypes<T>,
+			index: number,
+			array: readonly TreeNodeFromImplicitAllowedTypes<T>[],
+		) => unknown,
+		thisArg?: unknown,
+	): number {
+		const array = this as readonly TreeNodeFromImplicitAllowedTypes<T>[];
+		for (let index = this.length - 1; index >= 0; index--) {
+			const value = this.at(index) as TreeNodeFromImplicitAllowedTypes<T>;
+			const matched = Boolean(predicate.call(thisArg, value, index, array));
+			if (matched) {
+				return index;
+			}
+		}
+		return -1;
 	}
 	public insertAt(index: number, ...value: Insertable<T>): void {
 		const field = getSequenceField(this);

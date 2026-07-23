@@ -167,7 +167,7 @@ export const EditManagerFormatVersion = strictEnum("editManager.FormatVersion", 
 	 * Not yet released.
 	 * Only used for testing shared branches.
 	 */
-	vSharedBranches: "shared-branches|v0.1",
+	vSharedBranches: "shared-branches|v0.2",
 });
 export type EditManagerFormatVersion = Values<typeof EditManagerFormatVersion>;
 export const supportedEditManagerFormatVersions: ReadonlySet<EditManagerFormatVersion> =

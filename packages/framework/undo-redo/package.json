@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/undo-redo",
-	"version": "2.112.0",
+	"version": "2.113.0",
 	"description": "Undo Redo",
 	"homepage": "https://fluidframework.com",
 	"repository": {

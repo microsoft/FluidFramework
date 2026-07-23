@@ -56,13 +56,47 @@ test.describe("Nav", () => {
 		await page.getByRole("button", { name: "Search" }).click();
 
 		const searchInput = page.getByRole("searchbox");
-		await searchInput.fill("SharedTreeOptions Interface");
+		await searchInput.fill("FixRecursiveArraySchema");
 
 		const apiDocsResult = page
 			.getByRole("dialog")
-			.locator('a[href="/docs/api/fluid-framework/sharedtreeoptions-interface/"]');
-		await expect(apiDocsResult).toHaveAccessibleName("SharedTreeOptions Interface");
+			.locator('a[href="/docs/api/tree/fixrecursivearrayschema-typealias/"]');
+		await expect(apiDocsResult).toHaveAccessibleName("FixRecursiveArraySchema TypeAlias");
 		await expect(apiDocsResult).toBeVisible();
+	});
+
+	test("Search identifies an exact API item match", async ({ page }) => {
+		await page.getByRole("button", { name: "Search" }).click();
+
+		const searchInput = page.getByRole("searchbox");
+		const exactApiQueries = [
+			{ query: "SchemaFactory/", name: "SchemaFactory", title: "SchemaFactory Class" },
+			{
+				query: "FixRecursiveArraySchema",
+				name: "FixRecursiveArraySchema",
+				title: "FixRecursiveArraySchema TypeAlias",
+			},
+			{
+				query: "sharedtreeoptions",
+				name: "SharedTreeOptions",
+				title: "SharedTreeOptions Interface",
+			},
+			{ query: "JsonAsTree", name: "JsonAsTree", title: "JsonAsTree Namespace" },
+			{ query: "TreeStatus", name: "TreeStatus", title: "TreeStatus Enum" },
+		];
+
+		for (const { query, name, title } of exactApiQueries) {
+			await searchInput.fill(query);
+
+			const exactMatch = page
+				.getByRole("dialog")
+				.locator(`[data-api-item-name="${name}"]`)
+				.first();
+			await expect(exactMatch.locator(".api-exact-match-label")).toHaveText(
+				"Exact API match",
+			);
+			await expect(exactMatch.getByRole("link", { name: title })).toBeVisible();
+		}
 	});
 
 	test("Search labels documentation versions and prioritizes v2", async ({ page }) => {
@@ -72,9 +106,9 @@ test.describe("Nav", () => {
 		await searchInput.fill("Fluid Framework Documentation");
 
 		const results = page.getByRole("dialog").locator(".pf-result");
-		await expect(results.first().locator(".pf-result-version")).toHaveText("v2");
+		await expect(results.first().locator(".api-result-version")).toHaveText("v2");
 		await expect(
-			results.locator(".pf-result-version", { hasText: "v1" }).first(),
+			results.locator(".api-result-version", { hasText: "v1" }).first(),
 		).toBeVisible();
 	});
 

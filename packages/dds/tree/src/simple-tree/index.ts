@@ -59,6 +59,8 @@ export {
 	type AllowedTypesFullFromMixed,
 	AnnotatedAllowedTypesInternal,
 	type NumberKeys,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	ExpectStored,
 	createSchemaUpgrade,
 } from "./core/index.js";
@@ -72,6 +74,7 @@ export {
 	TreeViewConfiguration,
 	TreeViewConfigurationAlpha,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type SchemaCompatibilityStatus,
 	type ITreeConfigurationOptions,
 	SchemaFactory,
@@ -317,8 +320,6 @@ export {
 	toUpgradeSchema,
 	toInitialSchema,
 	toUnhydratedSchema,
-	restrictiveStoredSchemaGenerationOptions,
-	permissiveStoredSchemaGenerationOptions,
 } from "./toStoredSchema.js";
 export {
 	numberSchema,

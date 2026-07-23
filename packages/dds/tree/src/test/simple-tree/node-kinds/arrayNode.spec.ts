@@ -13,8 +13,8 @@ import {
 import { asAlpha } from "../../../api.js";
 import {
 	SchemaFactory,
+	TreeArrayNode,
 	TreeViewConfiguration,
-	type TreeArrayNode,
 	type TreeArrayNodeAlpha,
 	type FixRecursiveArraySchema,
 	type InsertableTreeFieldFromImplicitField,
@@ -91,6 +91,63 @@ describe("ArrayNode", () => {
 		it("passes Array.isArray", () => {
 			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
 			assert.equal(Array.isArray(array), true);
+		});
+	});
+
+	// Insertion tests in addition to the ones inside of testArrayFromSchemaType below
+	describeHydration("inserting nodes", (init, hydrated) => {
+		// This validation is done in a place that is non array specific, but can only be hit by arrays,
+		// and impacts the public API surface of arrays so testing it here makes sense.
+		it("inserting the same node more than once in a single insert throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const array = init(ItemArray, []);
+			const item = new Item({});
+			const message = `A "ArrayNodeTest.Item" node was provided more than once in a single insertion. A node may not be in more than one place in the tree.`;
+			assert.throws(() => array.insertAtEnd(item, item), validateUsageError(message));
+			assert.throws(
+				() => array.insertAtEnd(TreeArrayNode.spread([item, item])),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAt(0, TreeArrayNode.spread([item]), item),
+				validateUsageError(message),
+			);
+			assert.throws(
+				() => array.insertAtEnd(new Item({}), item, item),
+				validateUsageError(message),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("inserting already inserted node throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			const array = init(ItemArray, [item]);
+			assert.throws(
+				() => array.insertAtEnd(item),
+				validateUsageError(
+					hydrated
+						? // The case of hydrating a node has extra context and stricter validation using that context.
+							// One sideeffect of that is we give nicer errors.
+							`A node with schema "ArrayNodeTest.Item" (name: "Item") was inserted into the tree more than once. This is not supported.`
+						: "A node may not be in more than one place in the tree",
+				),
+			);
+		});
+
+		// This check is implemented in an array specific way, but is included here as an integration test ensuring
+		// the public facing array API surface has a good error.
+		it("constructing an array with the same child twice throws a usage error", () => {
+			class Item extends schemaFactory.object("Item", {}) {}
+			class ItemArray extends schemaFactory.array("ItemArray", Item) {}
+			const item = new Item({});
+			assert.throws(
+				() => init(ItemArray, [item, item]),
+				validateUsageError("A node may not be in more than one place in the tree"),
+			);
 		});
 	});
 
@@ -250,6 +307,156 @@ describe("ArrayNode", () => {
 					const array = buildAlphaArray([]);
 					assert.equal(array.shift(), undefined);
 					assert.deepEqual([...array], []);
+				});
+			});
+
+			describe("findLast", () => {
+				it("returns the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLast((value) => value % 2 === 0),
+						4,
+					);
+					assert.equal(
+						array.findLast((value) => value < 3),
+						2,
+					);
+				});
+
+				it("returns undefined when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLast((value) => value > 10),
+						undefined,
+					);
+				});
+
+				it("visits items from last to first, passing the index and array to the predicate", () => {
+					const array = buildAlphaArray([5, 6, 7]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index, items) => {
+						assert.deepEqual([...items], [5, 6, 7]);
+						visited.push({ value, index });
+						return false;
+					});
+					assert.deepEqual(visited, [
+						{ value: 7, index: 2 },
+						{ value: 6, index: 1 },
+						{ value: 5, index: 0 },
+					]);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLast((value, index) => {
+						if (index === 3) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 2 holds 4 and index 0 holds 2.
+					// This matches Array.prototype.findLast run with an equivalent mutating callback.
+					assert.deepEqual(visited, [
+						{ value: 4, index: 3 },
+						{ value: 4, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("returns the matched item even if the predicate moves it", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result = array.findLast((value) => {
+						array.removeAt(0);
+						return value === 3;
+					});
+					assert.equal(result, 3);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLast", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLast((value) => value % 2),
+						1,
+					);
+				});
+
+				it("narrows the result type when passed a type-guard predicate", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const result: 2 | undefined = array.findLast((value): value is 2 => value === 2);
+					assert.equal(result, 2);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLast(isTarget, context);
+					assert.equal(result, 2);
+				});
+			});
+
+			describe("findLastIndex", () => {
+				it("returns the index of the last item matching the predicate", () => {
+					const array = buildAlphaArray([1, 2, 3, 4]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2 === 0),
+						3,
+					);
+					assert.equal(
+						array.findLastIndex((value) => value < 3),
+						1,
+					);
+				});
+
+				it("returns -1 when no item matches", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					assert.equal(
+						array.findLastIndex((value) => value > 10),
+						-1,
+					);
+				});
+
+				it("reads items live when the predicate edits the array, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const visited: { value: number; index: number }[] = [];
+					array.findLastIndex((value, index) => {
+						if (index === 2) {
+							array.removeAt(0);
+						}
+						visited.push({ value, index });
+						return false;
+					});
+					// After the removal, remaining reads see the shifted array: index 1 holds 3 and index 0 holds 2.
+					assert.deepEqual(visited, [
+						{ value: 3, index: 2 },
+						{ value: 3, index: 1 },
+						{ value: 2, index: 0 },
+					]);
+				});
+
+				it("treats truthy predicate results as matches, like Array.prototype.findLastIndex", () => {
+					const array = buildAlphaArray([1, 2, 0]);
+					assert.equal(
+						array.findLastIndex((value) => value % 2),
+						0,
+					);
+				});
+
+				it("invokes the predicate with thisArg as its this value", () => {
+					const array = buildAlphaArray([1, 2, 3]);
+					const context = { target: 2 };
+					function isTarget(this: { target: number }, value: number): boolean {
+						return value === this.target;
+					}
+					// eslint-disable-next-line unicorn/no-array-method-this-argument -- exercising the thisArg parameter is the point of this test
+					const result = array.findLastIndex(isTarget, context);
+					assert.equal(result, 1);
 				});
 			});
 
