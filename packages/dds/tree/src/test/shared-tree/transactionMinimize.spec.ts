@@ -2494,6 +2494,18 @@ describe("transaction minimize post-processor", () => {
 				runScenarioForCheckingBuildMinimize(scenario);
 			});
 		}
+		for (const [scenarioName, scenario] of Object.entries(parallelObjectScenarios)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				runScenarioForCheckingBuildMinimize(scenario);
+			});
+		}
+		for (const [scenariosName, scenarios] of Object.entries(doubleMoveScenarios)) {
+			for (const [scenarioName, scenario] of Object.entries(scenarios)) {
+				it(`${beautifyScenarioName(scenariosName)} when moved ${beautifyScenarioName(scenarioName)}`, () => {
+					runScenarioForCheckingBuildMinimize(scenario);
+				});
+			}
+		}
 		for (const [scenarioName, scenario] of Object.entries(schemaUpgradeScenarios).filter(
 			([name]) => name !== "edit_before_and_after_schema_change", // This scenario is expected to throw under normal flow, so skip it for this test.
 		)) {
