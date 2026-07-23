@@ -131,3 +131,18 @@ export type {
 	IGitTree,
 	IGitTreeEntry,
 } from "./git/index.js";
+export type {
+	DataStoreCreator,
+	DataStoreKey,
+	DataStoreKind,
+	DataStoreRegistry,
+	FluidContainer,
+	FluidContainerAttached,
+	FluidContainerWithService,
+	MinimumVersionForCollaboration,
+	Registry,
+	RegistryKey,
+	ServiceClient,
+	ServiceOptions,
+} from "./serviceClient.js";
+export { createBasicRegistryKey, lookupInRegistry, featureVersion } from "./serviceClient.js";

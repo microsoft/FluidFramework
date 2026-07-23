@@ -79,4 +79,7 @@ export {
 } from "@fluid-internal/presence-runtime/states";
 
 // Local exports
-export { getPresenceFromDataStoreContext } from "./getPresence.js";
+export {
+	getPresenceFromContainer,
+	getPresenceFromDataStoreContext,
+} from "./getPresence.js";
