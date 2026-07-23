@@ -172,6 +172,9 @@ overrides:
   # so affected consumers are moved forward to the patched 0.2.x line.
   tmp: ^0.2.6
 
+  # Resolve a known security vulnerability (CVE-2026-54466).
+  websocket-driver: ^0.7.5
+
   # Resolve a known security vulnerability. The 8.x and 7.x lines are both forced
   # forward to their nearest patched releases.
   ws@>=8 <9: ^8.21.0
