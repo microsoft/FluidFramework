@@ -236,7 +236,7 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
-# registry: https://packagefeedproxy.microsoft.io/npm/
+registry: https://packagefeedproxy.microsoft.io/npm/
 
 resolutionMode: highest
 
