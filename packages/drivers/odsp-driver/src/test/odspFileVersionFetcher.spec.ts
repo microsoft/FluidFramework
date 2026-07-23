@@ -346,7 +346,11 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 				),
 				// The live snapshot is consulted for embedded snapshotOps; here they overlap the feed
 				// (and 422 is out of the requested [419, 422) range), so the merged result is unchanged.
-				await createResponse(epochHeaders("epoch-live"), snapshotWithOps(0, [420, 421, 422]), 200),
+				await createResponse(
+					epochHeaders("epoch-live"),
+					snapshotWithOps(0, [420, 421, 422]),
+					200,
+				),
 			],
 			async () => fetcher.fetchOps(419, 422),
 		);
@@ -378,7 +382,9 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 				// The delta feed has a gap: 421 is missing.
 				await createResponse(
 					epochHeaders("epoch-live"),
-					{ value: [{ sequenceNumber: 419 }, { sequenceNumber: 420 }, { sequenceNumber: 422 }] },
+					{
+						value: [{ sequenceNumber: 419 }, { sequenceNumber: 420 }, { sequenceNumber: 422 }],
+					},
 					200,
 				),
 				// The live snapshot still carries the missing op (and 423, which is out of range).

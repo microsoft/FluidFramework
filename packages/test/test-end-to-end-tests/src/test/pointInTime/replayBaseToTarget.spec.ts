@@ -75,38 +75,47 @@ describeCompat(
 				await tracker.ensureSynchronized(container);
 			};
 
-			// Advance to a known state and snap a version to capture it. This snapped version's
-			// sequence number is what we will treat as the point-in-time target below.
+			// Snap a new file version by PATCHing the item description. Doing this repeatedly (between
+			// batches of ops) builds up multiple recoverable base candidates spread across the op
+			// stream, so the driver can resolve a base with the bridging ops still retained.
+			let snapCount = 0;
+			const snapVersion = async (): Promise<void> => {
+				assert.strictEqual(
+					await triggerVersionViaMetadata(versionApi, {
+						description: `snap-${snapCount++} ${Date.now()}`,
+					}),
+					true,
+					"metadata PATCH should snap a new version",
+				);
+			};
+
+			// Interleave op batches with version snaps so history accumulates several recoverable
+			// versions and there are plenty of retained ops to replay forward. There is no version
+			// restore or reupload anywhere here, so the whole op stream stays on one epoch/lineage.
+			await incrementAndSync(2);
+			await snapVersion();
+			await incrementAndSync(2);
+			await snapVersion();
+
+			// Advance to a known state and snap it; this version's sequence number is our target.
 			await incrementAndSync(3);
 			const targetSequenceNumber = container.deltaManager.lastSequenceNumber;
 			const targetValue = dataObject.value;
-			assert.strictEqual(
-				await triggerVersionViaMetadata(versionApi, {
-					description: `target-snap ${Date.now()}`,
-				}),
-				true,
-				"metadata PATCH should snap the target version",
-			);
+			await snapVersion();
 
-			// Advance past the target and snap again so the target version is a recoverable base in the
-			// history rather than the live tip (which the version manager skips). Crucially there is no
-			// version restore or reupload here, so the whole op stream stays on one epoch/lineage.
-			await incrementAndSync(3);
-			assert.strictEqual(
-				await triggerVersionViaMetadata(versionApi, {
-					description: `later-snap ${Date.now()}`,
-				}),
-				true,
-				"metadata PATCH should snap a later version",
-			);
+			// Keep snapping newer versions past the target so the target version is a recoverable base
+			// in the middle of the history rather than the live tip (which the version manager skips).
+			await incrementAndSync(2);
+			await snapVersion();
+			await incrementAndSync(2);
+			await snapVersion();
 
-			// Look at the version history: there must be recoverable versions the driver can resolve a
-			// base from for our target. (We keep the assertion loose because the service may coalesce or
-			// add versions of its own; we only need at least the two we snapped.)
+			// Look at the version history: the driver resolves the base for our target from these
+			// recoverable versions. (Loose lower bound because the service may coalesce or add its own.)
 			const versions = await listFileVersions(versionApi);
 			assert(
-				versions.length >= 2,
-				`expected at least the two snapped versions in history, saw ${versions.length}`,
+				versions.length >= snapCount,
+				`expected at least the ${snapCount} snapped versions in history, saw ${versions.length}`,
 			);
 
 			// Load to the target sequence number. Internally the point-in-time factory resolves a base

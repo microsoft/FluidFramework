@@ -61,15 +61,15 @@ describeCompat(
 		// outcome, so declare it via itExpects; otherwise describeCompat's afterEach hook would
 		// flag it as an unexpected error in the logs and fail the suite.
 		itExpects(
-				"fails a point-in-time load after restoring a previous version bumps the epoch",
-				[
-					{
-						eventName: "fluid:telemetry:Container:ContainerClose",
-						errorType: "fileOverwrittenInStorage",
-					},
-				],
-				async () => {
-					const documentId = createDocumentId();
+			"fails a point-in-time load after restoring a previous version bumps the epoch",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "fileOverwrittenInStorage",
+				},
+			],
+			async () => {
+				const documentId = createDocumentId();
 				const container = await createAttachedPointInTimeContainer(
 					provider,
 					runtimeFactory,
@@ -81,14 +81,14 @@ describeCompat(
 					provider,
 					container,
 				);
-	
+
 				const incrementAndSync = async (count: number): Promise<void> => {
 					for (let i = 0; i < count; i++) {
 						dataObject.increment();
 					}
 					await tracker.ensureSynchronized(container);
 				};
-	
+
 				// Arrange two snapped versions so there is an older, non-tip version to restore to. The
 				// target seq is captured before the restore so the load is bound to the pre-restore lineage.
 				await incrementAndSync(2);
@@ -102,16 +102,16 @@ describeCompat(
 					await triggerVersionViaMetadata(versionApi, { description: `snap-b ${Date.now()}` }),
 					true,
 				);
-	
+
 				const versions = await listFileVersions(versionApi);
 				assert(versions.length >= 2, "expected at least two versions to restore between");
 				const older = versions[versions.length - 1];
-	
+
 				// Restoring rewrites the file's head, which bumps the ODSP storage epoch. A point-in-time
 				// load bound to the pre-restore epoch is therefore expected to fail with an epoch mismatch.
 				const restored = await restoreFileVersion(versionApi, older.id);
 				assert.strictEqual(restored, true, "restore should succeed (HTTP 204)");
-	
+
 				await assert.rejects(
 					loadPointInTimeContainer(provider, runtimeFactory, documentId, targetSequenceNumber),
 					(error: Error) => /epoch/i.test(error.message),
