@@ -162,8 +162,10 @@ version-scoped read returns a per-lineage epoch.
 
 - **Base and live share an epoch, and all ops through the target exist?** Resolves; only ops up to and
   including the target are ever requested. `M-VALIDATE-01`
-- **Base on a different epoch than the live document?** Throws, naming both epochs; the op check never
-  runs. `M-VALIDATE-02`
+- **Base on a different epoch than the live document?** Throws, naming both epochs, and reuses the
+  driver's canonical `fileOverwrittenInStorage` epoch-mismatch error (the same `errorType` the shared
+  `EpochTracker` raises) rather than a generic `UsageError`, so the loader sees one machine-readable,
+  non-retryable error for a cross-lineage base; the op check never runs. `M-VALIDATE-02`
 - **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
   `M-VALIDATE-03`
 
@@ -337,10 +339,13 @@ unwrapping `/content` could be a fallback path.
 
 Component A (this folder) only selects the base. Components B and C — which materialize the document at
 the target and expose it through the loader — are now built, in other files. They carry no catechism
-code IDs here (those index Component A's suite); Component B's lineage guard has its own tests in
-`../test/odspPointInTimeDocumentServiceFactory.spec.ts`, and the rest are conceptual answers in the
-spirit of [Part I](#part-i--foundations). The one still-directional gap is bridging a *trimmed* op range
-via an intermediate snapshot (see [Part IV](#part-iv--directional)); everything below is what ships today.
+code IDs here (those index Component A's suite); Component B's lineage guard is covered by
+`../test/odspPointInTimeDocumentServiceFactory.spec.ts` — both the structural shared-`EpochTracker`
+wiring and the up-front recoverable-vs-live epoch comparison (a mismatch fails the load before any
+service is built; a matching epoch proceeds to create both services) — and the rest are conceptual
+answers in the spirit of [Part I](#part-i--foundations). The one still-directional gap is bridging a
+*trimmed* op range via an intermediate snapshot (see [Part IV](#part-iv--directional)); everything below
+is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
@@ -377,9 +382,15 @@ silently corrupt the materialized state (see [Part I / can a base replay across 
 
 The guard has **two layers**. **Up front**, `createPointInTimeDocumentService` calls
 `versionManager.validateBaseForReplay(base, target)` before building any service: it reads the base
-version's epoch and the live document's epoch and rejects the load with a `UsageError` if they differ
-(and also verifies the bridging ops are still retained — see
-[Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)). **Structurally**, it then
+version's epoch and the live document's epoch and, if they differ, rejects the load with the driver's
+canonical `fileOverwrittenInStorage` epoch-mismatch error — the *same* `errorType` the shared
+`EpochTracker` raises structurally — so both layers surface one consistent, non-retryable error for a
+cross-lineage base (it also verifies the bridging ops are still retained — see
+[Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)). This up-front comparison is
+exercised end-to-end at the factory: `test/odspPointInTimeDocumentServiceFactory.spec.ts` drives a real
+version manager whose recoverable-version epoch differs from the live document's and asserts the load is
+rejected *before* any service is created (with a matching-epoch companion that proceeds to build both).
+**Structurally**, it then
 threads one `EpochTracker` through every read — the version-history reads that pick the base, the
 recoverable base snapshot, and the live op stream — by passing a single shared `ICacheAndTracker` to
 `createDocumentServiceCore` for both services. An `EpochTracker` pins itself to the first epoch it sees
@@ -387,8 +398,8 @@ and throws `fileOverwrittenInStorage` ("Epoch mismatch") on any later divergence
 (`epochTracker.ts:130-132, 496-511`), so even a lineage change that slips past the up-front check is
 caught as reads happen and the load fails loudly instead of returning a wrong document. A fresh
 `NonPersistentCache` backs that shared tracker so this read-only historical load stays isolated from the
-factory's cache — a base version's snapshot can never leak into a normal live load. (Verified by
-`test/odspPointInTimeDocumentServiceFactory.spec.ts`.)
+factory's cache — a base version's snapshot can never leak into a normal live load. (The structural
+guard — shared-tracker threading and divergent-epoch rejection — is verified by the same spec.)
 
 ### Component B — which `IDocumentService` method drives the replay?
 

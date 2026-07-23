@@ -11,7 +11,11 @@
  * how versions are enumerated and resolved (real ODSP, a test double, or an alternative backend).
  */
 
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+
+import { pkgVersion as driverVersion } from "../packageVersion.js";
 
 import {
 	createOdspFileVersionFetcher,
@@ -193,11 +197,23 @@ export class OdspVersionManager implements IOdspVersionManager {
 			);
 		}
 		if (liveEpoch !== baseEpoch) {
-			throw new UsageError(
+			// Reuse the driver's canonical epoch-mismatch error (the same errorType the shared
+			// EpochTracker raises when a cross-lineage read is detected - see epochTracker.ts
+			// checkForEpochErrorCore), so the loader sees one consistent, machine-readable errorType
+			// for "the base is on a different lineage than the live document" rather than a generic
+			// UsageError. It is correctly non-retryable: a lineage mismatch never resolves on retry.
+			// clientEpoch is the epoch we hold (the chosen base); serverEpoch is the live document's.
+			throw new NonRetryableError(
 				`ODSP file version ${base.versionId} is on epoch "${baseEpoch}" but the live document is ` +
 					`on epoch "${liveEpoch}". A binary file change (e.g. a version restore or ` +
 					`download-and-reupload) renumbered the op stream, so ops cannot be replayed from this ` +
 					`base onto the live document.`,
+				OdspErrorTypes.fileOverwrittenInStorage,
+				{
+					driverVersion,
+					serverEpoch: liveEpoch,
+					clientEpoch: baseEpoch,
+				},
 			);
 		}
 	}

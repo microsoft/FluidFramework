@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
 
 /* eslint-disable import-x/no-internal-modules */
@@ -323,7 +324,15 @@ describe("OdspVersionManager", () => {
 			);
 			await assert.rejects(
 				async () => manager.validateBaseForReplay(base, 421),
-				/epoch "epoch-old".*epoch "epoch-live"/,
+				(error: Error) => {
+					assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.fileOverwrittenInStorage,
+						"a lineage mismatch reuses the driver's fileOverwrittenInStorage error",
+					);
+					return true;
+				},
 			);
 			// The op check must not run once the lineage check fails.
 			assert.deepEqual(fetcher.opsCalls(), []);

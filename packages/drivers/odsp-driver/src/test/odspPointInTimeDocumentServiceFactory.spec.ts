@@ -9,10 +9,11 @@ import type {
 	IDocumentService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import type {
-	IOdspResolvedUrl,
-	OdspResourceTokenFetchOptions,
-	TokenFetcher,
+import {
+	OdspErrorTypes,
+	type IOdspResolvedUrl,
+	type OdspResourceTokenFetchOptions,
+	type TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
 import { stub } from "sinon";
@@ -25,6 +26,11 @@ import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointIn
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- test drives a real OdspVersionManager through the factory
+import {
+	OdspVersionManager,
+	type IOdspFileVersionFetcher,
+} from "../odspVersionManager/odspVersionManager.js";
 
 /**
  * Tests for the point-in-time factory's **lineage guard**: it materializes a document by replaying
@@ -71,6 +77,49 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			dispose() {},
 		};
 		return service as unknown as IDocumentService;
+	}
+
+	/**
+	 * A fake {@link IOdspFileVersionFetcher} for driving a *real* {@link OdspVersionManager} through the
+	 * factory, so the factory's up-front `validateBaseForReplay` - the recoverable-version-epoch vs
+	 * live-document-epoch comparison - runs for real instead of being stubbed out. The timeline is
+	 * tip=seq 10, recoverable version "42.0"=seq 5, so a target of 8 selects "42.0" as the base.
+	 */
+	function fakeFetcher(config: {
+		liveEpoch?: string;
+		versionEpoch?: string;
+		retainedOps?: number[];
+	}): IOdspFileVersionFetcher {
+		const retainedOps = config.retainedOps ?? [];
+		return {
+			listFileVersions: async () => [
+				{ versionId: "tip", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
+				{ versionId: "42.0", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
+			],
+			resolveSequenceNumber: async (versionId: string) => (versionId === "tip" ? 10 : 5),
+			getLiveDocumentEpoch: async () => config.liveEpoch,
+			getRecoverableVersionEpoch: async () => config.versionEpoch,
+			fetchOps: async (from: number, to: number) =>
+				retainedOps.filter((seq) => seq >= from && seq < to),
+		};
+	}
+
+	/** The private seams the factory composes, reached past the class's non-public surface. */
+	interface FactoryInternals {
+		createVersionManager: (
+			odspResolvedUrl: IOdspResolvedUrl,
+			logger: unknown,
+			epochTracker: EpochTracker,
+		) => IOdspVersionManager;
+		resolveFileVersion: (
+			resolvedUrl: IResolvedUrl,
+			fileVersion: string,
+		) => Promise<IResolvedUrl>;
+		createDocumentServiceCore: (
+			resolvedUrl: IResolvedUrl,
+			logger: unknown,
+			cacheAndTracker?: ICacheAndTracker,
+		) => Promise<IDocumentService>;
 	}
 
 	it("shares one epoch tracker across the version manager and both document services", async () => {
@@ -173,5 +222,74 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		await tracker.validateEpoch("epoch-A", "ops");
 
 		await tracker.removeEntries().catch(() => {});
+	});
+
+	it("fails the load (before creating any service) when the recoverable version's epoch differs from the live document's", async () => {
+		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const resolvedUrl = await makeResolvedUrl();
+		const internals = factory as unknown as FactoryInternals;
+
+		// A REAL version manager backed by a fake fetcher whose recoverable-version epoch ("epoch-old")
+		// differs from the live document's ("epoch-live"). This is what makes the factory run the actual
+		// recoverable-vs-live comparison in validateBaseForReplay, rather than a stubbed no-op.
+		const realManager = new OdspVersionManager(
+			fakeFetcher({ liveEpoch: "epoch-live", versionEpoch: "epoch-old" }),
+		);
+		stub(internals, "createVersionManager").returns(realManager);
+		const resolveFileVersion = stub(internals, "resolveFileVersion");
+		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore");
+
+		await assert.rejects(
+			async () => factory.createPointInTimeDocumentService(resolvedUrl, 8),
+			(error: Error) => {
+				assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
+				assert.equal(
+					(error as Partial<{ errorType: string }>).errorType,
+					OdspErrorTypes.fileOverwrittenInStorage,
+					"a cross-lineage base surfaces the driver's fileOverwrittenInStorage error",
+				);
+				return true;
+			},
+			"a cross-lineage base must fail the load with the epoch-mismatch error",
+		);
+		// The lineage check runs BEFORE any base resolution or service creation, so a mismatch must
+		// short-circuit the whole load.
+		assert.ok(
+			resolveFileVersion.notCalled,
+			"the base version must not be resolved once the lineage check fails",
+		);
+		assert.ok(
+			createDocumentServiceCore.notCalled,
+			"no document service should be created once the lineage check fails",
+		);
+	});
+
+	it("materializes the document (creating both services) when the recoverable version shares the live document's epoch", async () => {
+		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const resolvedUrl = await makeResolvedUrl();
+		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
+		const internals = factory as unknown as FactoryInternals;
+
+		// Same epoch on both sides, and every op in (5, 8] retained, so the real validateBaseForReplay
+		// passes and the factory proceeds to build the two services.
+		const realManager = new OdspVersionManager(
+			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A", retainedOps: [6, 7, 8] }),
+		);
+		stub(internals, "createVersionManager").returns(realManager);
+		stub(internals, "resolveFileVersion").resolves(recoverableResolvedUrl);
+		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore").callsFake(
+			async () => fakeDocumentService(),
+		);
+
+		const result = await factory.createPointInTimeDocumentService(resolvedUrl, 8);
+		assert.ok(
+			result instanceof OdspPointInTimeDocumentService,
+			"a point-in-time document service is returned once the lineage check passes",
+		);
+		assert.equal(
+			createDocumentServiceCore.callCount,
+			2,
+			"a recoverable and a live document service are created once validation passes",
+		);
 	});
 });
