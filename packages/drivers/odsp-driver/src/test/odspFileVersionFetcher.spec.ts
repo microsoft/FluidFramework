@@ -5,7 +5,11 @@
 
 import { strict as assert } from "node:assert";
 
-import type { ISnapshot, ISnapshotTree } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISequencedDocumentMessage,
+	ISnapshot,
+	ISnapshotTree,
+} from "@fluidframework/driver-definitions/internal";
 import type {
 	IOdspResolvedUrl,
 	IOdspUrlParts,
@@ -95,6 +99,23 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			id: "id",
 			trees: [{ entries: [{ path: "path", type: "tree" }], id: "id", sequenceNumber }],
 			blobs: [],
+		};
+	}
+
+	/**
+	 * An ODSP JSON snapshot carrying a tree sequence number plus embedded op stream (its
+	 * `snapshotOps`), modeling the ops a live snapshot bundles when fetched with `deltas=1`.
+	 */
+	function snapshotWithOps(
+		treeSequenceNumber: number,
+		opSequenceNumbers: number[],
+	): IOdspSnapshot {
+		return {
+			...snapshotWithSeq(treeSequenceNumber),
+			ops: opSequenceNumbers.map((sequenceNumber) => ({
+				sequenceNumber,
+				op: { sequenceNumber } as unknown as ISequencedDocumentMessage,
+			})),
 		};
 	}
 
@@ -323,6 +344,9 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 					},
 					200,
 				),
+				// The live snapshot is consulted for embedded snapshotOps; here they overlap the feed
+				// (and 422 is out of the requested [419, 422) range), so the merged result is unchanged.
+				await createResponse(epochHeaders("epoch-live"), snapshotWithOps(0, [420, 421, 422]), 200),
 			],
 			async () => fetcher.fetchOps(419, 422),
 		);
@@ -336,6 +360,33 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 				urls[0]?.includes("sequenceNumber%20le%20421"),
 			`expected the [419, 421] filter, got ${urls[0]}`,
 		);
+		assert.ok(
+			urls[1]?.includes(
+				`/drives/${driveId}/items/${itemId}/opStream/snapshots/trees/latest?deltas=1&blobs=2`,
+			),
+			`expected the live snapshot (deltas=1) URL, got ${urls[1]}`,
+		);
+	});
+
+	it("fetchOps merges live snapshot ops the delta feed no longer serves", async () => {
+		// @q F-OPS-02
+		// A freshly created document's early ops live only in the creation snapshot and are absent
+		// from the queryable delta feed. fetchOps must surface them so op-availability validation does
+		// not falsely reject a base whose ops a load can still replay from the snapshot.
+		const { result } = await withFetch(
+			[
+				// The delta feed has a gap: 421 is missing.
+				await createResponse(
+					epochHeaders("epoch-live"),
+					{ value: [{ sequenceNumber: 419 }, { sequenceNumber: 420 }, { sequenceNumber: 422 }] },
+					200,
+				),
+				// The live snapshot still carries the missing op (and 423, which is out of range).
+				await createResponse(epochHeaders("epoch-live"), snapshotWithOps(0, [421, 423]), 200),
+			],
+			async () => fetcher.fetchOps(419, 423),
+		);
+		assert.deepEqual(result, [419, 420, 421, 422]);
 	});
 
 	it("listFileVersions refreshes the token and retries after an auth failure", async () => {
