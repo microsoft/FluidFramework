@@ -414,9 +414,10 @@ extends:
                   - task: Bash@3
                     displayName: Generate publish metadata
                     condition: and(succeeded(), eq(variables['System.TeamProject'], 'internal'))
-                    # The value below is a runtime variable and cannot be read through template parameters.
                     env:
                       VERSION: $(SetVersion.version)
+                      IS_LATEST: $(SetVersion.isLatest)
+                      TAG_NAME: '${{ parameters.tagName }}'
                     inputs:
                       targetType: 'inline'
                       workingDirectory: $(Build.ArtifactStagingDirectory)/pack
@@ -428,12 +429,34 @@ extends:
                           exit 1
                         fi
 
+                        # SetVersion.isLatest is only emitted when true. An unset output
+                        # remains as the literal Azure Pipelines macro.
+                        case "${IS_LATEST:-}" in
+                          ""|'$(SetVersion.isLatest)')
+                            isLatest=false
+                            ;;
+                          true|True)
+                            isLatest=true
+                            ;;
+                          false|False)
+                            isLatest=false
+                            ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid isLatest value '$IS_LATEST'"
+                            exit 1
+                            ;;
+                        esac
+
                         jq -n \
                           --argjson schemaVersion 1 \
                           --arg version "$VERSION" \
+                          --argjson isLatest "$isLatest" \
+                          --arg tagName "$TAG_NAME" \
                           '{
                             schemaVersion: $schemaVersion,
-                            version: $version
+                            version: $version,
+                            isLatest: $isLatest,
+                            tagName: $tagName
                           }' > publish-metadata.json
 
                         echo "Generated publish-metadata.json:"
