@@ -2374,8 +2374,7 @@ describe("SharedTree", () => {
 				new TreeViewConfiguration({ schema: JsonAsTree.Array, enableSchemaValidation }),
 			);
 			view1Json.upgradeSchema();
-			// TODO:#8915: This should be able to insert the _number_ 44, not the string, but currently cannot - see bug #8915
-			view1Json.root.insertAtEnd("44");
+			view1Json.root.insertAtEnd(44);
 
 			tree1.containerRuntime.connected = true;
 
@@ -2522,10 +2521,14 @@ describe("SharedTree", () => {
 			const view = tree.viewWith(
 				new TreeViewConfiguration({ schema, enableSchemaValidation }),
 			);
+			view.initialize({ foo: [] });
 			Tree.runTransaction(view, () => {
-				view.initialize({ foo: [] });
 				view.root.foo.insertAtStart("a");
 				view.root.foo.insertAtStart("b");
+				// This dispose does not seem to be enough to prevent
+				//   Error: Cannot create a second tree view from the same checkout
+				// when creating view2 below.
+				view.dispose();
 
 				// Update schema which now allows all primitives under field "foo".
 				const view2 = tree.viewWith(
