@@ -268,6 +268,76 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		);
 	});
 
+	const epochHeaders = (epoch: string): { [key: string]: string } => ({
+		...jsonHeaders,
+		"x-fluid-epoch": epoch,
+	});
+
+	it("getLiveDocumentEpoch reads x-fluid-epoch from the live snapshot endpoint", async () => {
+		// @q F-EPOCH-01
+		const { result, urls } = await withFetch(
+			[await createResponse(epochHeaders("epoch-live"), new Uint8Array(0), 200)],
+			async () => fetcher.getLiveDocumentEpoch(),
+		);
+		assert.equal(result, "epoch-live");
+		assert.ok(
+			urls[0]?.includes(`/drives/${driveId}/items/${itemId}/opStream/snapshots/trees/latest`),
+			`expected the live snapshot URL, got ${urls[0]}`,
+		);
+		assert.ok(
+			!urls[0]?.includes("/versions/"),
+			"the live epoch must not be read from a versioned URL",
+		);
+	});
+
+	it("getRecoverableVersionEpoch reads x-fluid-epoch from the versioned snapshot endpoint", async () => {
+		// @q F-EPOCH-02
+		const { result, urls } = await withFetch(
+			[await createResponse(epochHeaders("epoch-old"), new Uint8Array(0), 200)],
+			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+		);
+		assert.equal(result, "epoch-old");
+		assert.ok(
+			urls[0]?.includes(`/versions/40.0/opStream/snapshots/trees/latest`),
+			`expected the versioned snapshot URL, got ${urls[0]}`,
+		);
+	});
+
+	it("getRecoverableVersionEpoch returns undefined when the server sends no epoch header", async () => {
+		// @q F-EPOCH-03
+		const { result } = await withFetch(
+			[await createResponse(jsonHeaders, new Uint8Array(0), 200)],
+			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+		);
+		assert.equal(result, undefined);
+	});
+
+	it("fetchOps returns the sequence numbers the server retains in the requested range", async () => {
+		// @q F-OPS-01
+		const { result, urls } = await withFetch(
+			[
+				await createResponse(
+					epochHeaders("epoch-live"),
+					{
+						value: [{ sequenceNumber: 419 }, { sequenceNumber: 420 }, { sequenceNumber: 421 }],
+					},
+					200,
+				),
+			],
+			async () => fetcher.fetchOps(419, 422),
+		);
+		assert.deepEqual(result, [419, 420, 421]);
+		assert.ok(
+			urls[0]?.includes(`/drives/${driveId}/items/${itemId}/opStream`),
+			`expected the live delta feed URL, got ${urls[0]}`,
+		);
+		assert.ok(
+			urls[0]?.includes("sequenceNumber%20ge%20419") &&
+				urls[0]?.includes("sequenceNumber%20le%20421"),
+			`expected the [419, 421] filter, got ${urls[0]}`,
+		);
+	});
+
 	it("listFileVersions refreshes the token and retries after an auth failure", async () => {
 		// @q F-ERROR-04
 		const refreshFlags: boolean[] = [];
