@@ -8,7 +8,7 @@ import type { DDSFuzzModel, DDSFuzzTestState } from "@fluid-private/test-dds-uti
 import type { IChannelFactory } from "@fluidframework/datastore-definitions/internal";
 
 import { pkgVersion } from "../../../packageVersion.js";
-import { ForestTypeOptimized, ForestTypeReference } from "../../../shared-tree/index.js";
+import { ForestTypeExpensiveDebug, ForestTypeReference } from "../../../shared-tree/index.js";
 import type { ISharedTree } from "../../../treeFactory.js";
 import { validateFuzzTreeConsistency } from "../../utils.js";
 
@@ -56,15 +56,21 @@ export const baseTreeModel: DDSFuzzModel<
 	validateConsistency: validateFuzzTreeConsistency,
 };
 
-export const optimizedForestTreeModel: DDSFuzzModel<
+/**
+ * Fuzz model that uses {@link ForestTypeExpensiveDebug}, which is backed by a `ComparisonForest`.
+ * @remarks
+ * This exercises the optimized `ChunkedForest` while asserting, after every delta, that its contents match a
+ * reference `ObjectForest`. It provides cross-implementation validation of the optimized forest against randomized edits.
+ */
+export const comparisonForestTreeModel: DDSFuzzModel<
 	SharedTreeFuzzTestFactory,
 	Operation,
 	DDSFuzzTestState<SharedTreeFuzzTestFactory>
 > = {
-	workloadName: "SharedTree (Optimized Forest)",
+	workloadName: "SharedTree (Comparison Forest)",
 	factory: new SharedTreeFuzzTestFactory(createOnCreate(undefined), undefined, {
 		minVersionForCollab: pkgVersion,
-		forest: ForestTypeOptimized,
+		forest: ForestTypeExpensiveDebug,
 	}),
 	generatorFactory,
 	reducer: fuzzReducer,

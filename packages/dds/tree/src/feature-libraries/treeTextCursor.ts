@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert } from "@fluidframework/core-utils/internal";
+import { assert, fail } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -131,4 +131,69 @@ export function jsonableTreeFromForest(forest: IForestSubscription): JsonableTre
 	const jsonable = jsonableTreeFromFieldCursor(readCursor);
 	readCursor.free();
 	return jsonable;
+}
+
+/**
+ * The full content of `forest` (every detached/removed field) as a single {@link JsonableTree}.
+ * @remarks
+ * The returned node is the forest's above-root placeholder: its fields are the forest's detached fields.
+ * Only content is captured: schema, anchors and other forest state are not.
+ */
+function forestContent(forest: IForestSubscription): JsonableTree {
+	return jsonableTreeFromCursor(forest.getCursorAboveDetachedFields());
+}
+
+/**
+ * Structural equality of two {@link JsonableTree}s, comparing type, value and fields recursively.
+ * @remarks
+ * Fields are compared as an unordered set of keys, so this is independent of the order in which different
+ * forest implementations enumerate fields. The nodes within each field are compared in order.
+ */
+function treesEqual(a: JsonableTree, b: JsonableTree): boolean {
+	if (a.type !== b.type || !Object.is(a.value, b.value)) {
+		return false;
+	}
+	// JsonableTree never stores empty fields, so equal key counts plus a matching field for every key in
+	// `a` implies `b` has no extra fields.
+	const aKeys = genericTreeKeys(a);
+	if (aKeys.length !== genericTreeKeys(b).length) {
+		return false;
+	}
+	for (const key of aKeys) {
+		const aField = getGenericTreeField(a, key, false);
+		const bField = getGenericTreeField(b, key, false);
+		if (aField.length !== bField.length) {
+			return false;
+		}
+		for (const [index, aChild] of aField.entries()) {
+			const bChild = bField[index];
+			if (bChild === undefined || !treesEqual(aChild, bChild)) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+/**
+ * Returns true if `a` and `b` have identical content, including all detached/removed fields.
+ * @remarks
+ * Only content is compared: schema, anchors and other forest state are ignored.
+ * This is intended for debugging and testing, and is not optimized.
+ */
+export function forestsEqual(a: IForestSubscription, b: IForestSubscription): boolean {
+	return treesEqual(forestContent(a), forestContent(b));
+}
+
+/**
+ * Asserts that `a` and `b` have identical content, including all detached/removed fields.
+ * @remarks
+ * Only content is compared: schema, anchors and other forest state are ignored.
+ * This is intended for debugging and testing, and is not optimized.
+ * @throws an Error if the forests differ.
+ */
+export function assertForestsEqual(a: IForestSubscription, b: IForestSubscription): void {
+	if (!forestsEqual(a, b)) {
+		fail("Forests are not equal");
+	}
 }
