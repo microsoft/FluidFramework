@@ -15,6 +15,8 @@
 
 import { strict as assert } from "node:assert";
 
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+
 import type { ResolvedVersion } from "../odspVersionManager/odspVersionManager.js"; // eslint-disable-line import-x/no-internal-modules
 
 import { makeManager, ref } from "./odspVersionManagerTestFakes.js";
@@ -92,7 +94,18 @@ describe("OdspVersionManager.validateBaseForReplay: op-availability (base -> tar
 			);
 			await assert.rejects(
 				async () => manager.validateBaseForReplay(base, 423),
-				/expected sequence number 421 but the next available op is 422/,
+				(error: Error) => {
+					assert.match(
+						error.message,
+						/expected sequence number 421 but the next available op is 422/,
+					);
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.cannotCatchUp,
+						"a gap (trimmed op) surfaces as a cannotCatchUp driver error",
+					);
+					return true;
+				},
 			);
 		});
 
@@ -105,7 +118,20 @@ describe("OdspVersionManager.validateBaseForReplay: op-availability (base -> tar
 			);
 			await assert.rejects(
 				async () => manager.validateBaseForReplay(base, 421),
-				/no ops at or after sequence number 419/,
+				(error: Error) => {
+					assert.match(error.message, /no ops at or after sequence number 419/);
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.cannotCatchUp,
+						"trimmed-by-retention ops surface as a cannotCatchUp driver error",
+					);
+					assert.equal(
+						(error as Partial<{ canRetry: boolean }>).canRetry,
+						false,
+						"trimmed ops never come back on retry",
+					);
+					return true;
+				},
 			);
 		});
 	});

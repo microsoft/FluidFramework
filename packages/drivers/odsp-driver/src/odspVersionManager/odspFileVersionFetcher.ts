@@ -220,13 +220,30 @@ export function createOdspFileVersionFetcher(
 			"PointInTimeOpsValidation",
 		);
 		const sequenceNumbers = new Set(result.messages.map((message) => message.sequenceNumber));
+		const feedOpCount = sequenceNumbers.size;
 		const snapshotOps = await getLiveSnapshotOps();
+		// Count ops in the requested range that ONLY the live snapshot's snapshotOps supplied (absent
+		// from the queryable delta feed). This is emitted so real-service telemetry can confirm whether
+		// the snapshot-ops merge - not the feed - is what makes a base replayable (most importantly a
+		// fresh document's early ops, which live only in the creation snapshot). See the note above.
+		let addedFromSnapshot = 0;
 		for (const sequenceNumber of snapshotOps) {
 			// deltaStorage.get is half-open [from, to); mirror that bound so callers see one range.
 			if (sequenceNumber >= from && sequenceNumber < to) {
+				if (!sequenceNumbers.has(sequenceNumber)) {
+					addedFromSnapshot++;
+				}
 				sequenceNumbers.add(sequenceNumber);
 			}
 		}
+		logger.sendTelemetryEvent({
+			eventName: "PointInTimeOpsSource",
+			from,
+			to,
+			feedOpCount,
+			addedFromSnapshot,
+			totalOpCount: sequenceNumbers.size,
+		});
 		return [...sequenceNumbers].sort((a, b) => a - b);
 	};
 

@@ -94,23 +94,39 @@ describeCompat(
 			// restore or reupload anywhere here, so the whole op stream stays on one epoch/lineage.
 			await incrementAndSync(2);
 			await snapVersion();
+
+			// Record an EARLY target, then snap so it becomes a recoverable point in history.
 			await incrementAndSync(2);
+			const earlyTargetSequenceNumber = container.deltaManager.lastSequenceNumber;
+			const earlyTargetValue = dataObject.value;
 			await snapVersion();
 
-			// Advance to a known state and snap it; this version's sequence number is our target.
+			// Advance further and record a LATER target with a distinct value/sequence number.
 			await incrementAndSync(3);
-			const targetSequenceNumber = container.deltaManager.lastSequenceNumber;
-			const targetValue = dataObject.value;
+			const lateTargetSequenceNumber = container.deltaManager.lastSequenceNumber;
+			const lateTargetValue = dataObject.value;
 			await snapVersion();
 
-			// Keep snapping newer versions past the target so the target version is a recoverable base
-			// in the middle of the history rather than the live tip (which the version manager skips).
+			// Keep snapping newer versions past both targets so each target is a recoverable base in the
+			// middle of the history rather than the live tip (which the version manager skips).
 			await incrementAndSync(2);
 			await snapVersion();
 			await incrementAndSync(2);
 			await snapVersion();
 
-			// Look at the version history: the driver resolves the base for our target from these
+			// Sanity: the two targets must be genuinely different points, otherwise loading to each
+			// could not distinguish "replayed to the requested target" from "loaded a fixed point".
+			assert(
+				lateTargetSequenceNumber > earlyTargetSequenceNumber,
+				"late target must be after the early target",
+			);
+			assert.notStrictEqual(
+				lateTargetValue,
+				earlyTargetValue,
+				"the two targets must hold different state so a replay-to-target can be observed",
+			);
+
+			// Look at the version history: the driver resolves the base for a target from these
 			// recoverable versions. (Loose lower bound because the service may coalesce or add its own.)
 			const versions = await listFileVersions(versionApi);
 			assert(
@@ -118,27 +134,38 @@ describeCompat(
 				`expected at least the ${snapCount} snapped versions in history, saw ${versions.length}`,
 			);
 
-			// Load to the target sequence number. Internally the point-in-time factory resolves a base
+			// Load to a target sequence number. Internally the point-in-time factory resolves a base
 			// at/before the target, validates the base is on the live document's epoch (no mismatch),
 			// validates the bridging ops are still retained, and replays them up to the target.
-			const loaded = await loadPointInTimeContainer(
-				provider,
-				runtimeFactory,
-				documentId,
-				targetSequenceNumber,
-			);
-			const loadedObject = (await loaded.getEntryPoint()) as IPointInTimeTestObject;
+			const loadToTarget = async (
+				targetSequenceNumber: number,
+				expectedValue: number,
+				label: string,
+			): Promise<void> => {
+				const loaded = await loadPointInTimeContainer(
+					provider,
+					runtimeFactory,
+					documentId,
+					targetSequenceNumber,
+				);
+				const loadedObject = (await loaded.getEntryPoint()) as IPointInTimeTestObject;
+				assert.strictEqual(
+					loaded.deltaManager.lastSequenceNumber,
+					targetSequenceNumber,
+					`${label}: loaded container should be materialized exactly at the target sequence number`,
+				);
+				assert.strictEqual(
+					loadedObject.value,
+					expectedValue,
+					`${label}: replayed state must match the document's state at the target sequence number`,
+				);
+			};
 
-			assert.strictEqual(
-				loaded.deltaManager.lastSequenceNumber,
-				targetSequenceNumber,
-				"loaded container should be materialized exactly at the target sequence number",
-			);
-			assert.strictEqual(
-				loadedObject.value,
-				targetValue,
-				"replayed state must match the document's state at the target sequence number",
-			);
+			// Loading to two different targets and getting each target's distinct state proves the
+			// loader actually replayed the ops up to the requested target (a bug that loaded the live
+			// tip, or the base snapshot unchanged, would return the same value for both).
+			await loadToTarget(earlyTargetSequenceNumber, earlyTargetValue, "early target");
+			await loadToTarget(lateTargetSequenceNumber, lateTargetValue, "late target");
 		});
 	},
 );
