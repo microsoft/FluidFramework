@@ -72,6 +72,22 @@ stages:
         environment: package-build-feed
         pool: ${{ parameters.pool }}
 
+- stage: publish_npm_public
+  dependsOn: build
+  displayName: Publish to public npmjs.org
+  condition: false # Disabled until we onboard to the new Public Publishing process. See #26466
+  variables:
+  - group: ado-feeds
+  jobs:
+  - template: /tools/pipelines/templates/include-publish-npm-package-deployment.yml@self
+    parameters:
+      feedUrl: https://registry.npmjs.org
+      feedKind: public
+      environment: package-npmjs-feed
+      pool: ${{ parameters.pool }}
+      customEndPoint: npmjs
+      tagName: ${{ parameters.tagName }}
+
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
 # for builds of release groups that currently publish manifests.
 # Enabling this template for every PR run risks overwriting existing manifest files uploaded to Azure blobs. Therefore, it's crucial to restrict this template to commits merged into the main and release branches.
