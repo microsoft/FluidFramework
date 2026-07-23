@@ -183,5 +183,11 @@ export function createOdspFileVersionFetcher(
 		return result.messages.map((message) => message.sequenceNumber);
 	};
 
-	return { listFileVersions, resolveSequenceNumber, getLiveDocumentEpoch, getRecoverableVersionEpoch, fetchOps };
+	return {
+		listFileVersions,
+		resolveSequenceNumber,
+		getLiveDocumentEpoch,
+		getRecoverableVersionEpoch,
+		fetchOps,
+	};
 }

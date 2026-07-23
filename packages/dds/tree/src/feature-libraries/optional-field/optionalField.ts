@@ -35,6 +35,7 @@ import {
 	requiredIdentifier,
 } from "../fieldKindIdentifiers.js";
 import {
+	EditFilterStatus,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	type FieldEditor,
@@ -48,6 +49,7 @@ import {
 	type NestedChangesIndices,
 	type FieldChangeDelta,
 	FlexFieldKind,
+	type EditFilterFunc,
 } from "../modular-schema/index.js";
 
 import type {
@@ -466,9 +468,7 @@ export const optionalChangeRebaser: FieldChangeRebaser<OptionalChangeset> = {
 		return updated;
 	},
 
-	mute: (change: OptionalChangeset): OptionalChangeset => {
-		return { childChanges: change.childChanges, moves: [] };
-	},
+	filterEdits,
 };
 
 function replaceReplaceRevisions(
@@ -814,3 +814,43 @@ export const optional: Optional = new FlexFieldKind(
 		]),
 	},
 );
+
+function filterEdits(
+	change: OptionalChangeset,
+	options: {
+		filterDetach: EditFilterFunc;
+		filterAttach: EditFilterFunc;
+		preserveOtherEdits: boolean;
+	},
+): OptionalChangeset {
+	const filtered: Mutable<OptionalChangeset> = { ...change };
+	if (filtered.valueReplace !== undefined) {
+		if (isReplaceEffectful(filtered.valueReplace)) {
+			const detachId = getEffectfulDst(filtered.valueReplace);
+			const detachResult =
+				detachId === undefined ? undefined : options.filterDetach(detachId, 1).value;
+
+			const attachId = filtered.valueReplace.src;
+			const attachResult =
+				attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
+
+			if (detachResult === EditFilterStatus.Remove) {
+				assert(
+					attachId === undefined || attachResult === EditFilterStatus.Remove,
+					"Cannot remove detach without also removing attach",
+				);
+
+				delete filtered.valueReplace;
+			} else if (attachResult === EditFilterStatus.Remove) {
+				delete filtered.valueReplace.src;
+			}
+		} else if (!options.preserveOtherEdits) {
+			delete filtered.valueReplace;
+		}
+	}
+
+	if (!options.preserveOtherEdits) {
+		filtered.moves = [];
+	}
+	return filtered;
+}
