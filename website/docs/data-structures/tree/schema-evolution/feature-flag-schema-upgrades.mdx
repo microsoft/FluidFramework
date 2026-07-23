@@ -5,10 +5,6 @@ sidebar\_position: 6
 
 # How to Enable Staged Schema Upgrades with Feature Flags
 
-:::warning[Important]
-Only use schema configurations in production that are covered by your [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests.
-:::
-
 The standard [staged rollout](./index.mdx#staged-rollouts) strategy requires two separate code deployments: one to add reading support, and another to enable writing.
 **Runtime schema upgrades** let you ship both in a single deployment and control when the upgrade takes effect using a feature flag or other runtime control.
 
@@ -175,7 +171,7 @@ This means:
 
 - **Clients running the staged code** (Step 1 and above) can still open and read upgraded documents — their view schema is compatible.
 - **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
-- There is currently no API to query whether a particular document has already been upgraded (this capability is in progress). This means there is no built-in mechanism to selectively target only un-upgraded documents when disabling the flag.
+- There is currently no API to query whether a particular document has already been upgraded (this capability is in progress). This means there is no built-in mechanism to selectively target only non-upgraded documents when disabling the flag.
 
 Plan your rollout with this in mind: ensure that all active clients have the staged code before turning on the flag.
 
@@ -191,7 +187,10 @@ Plan your rollout with this in mind: ensure that all active clients have the sta
   Use [testing schema upgrades](./testing-schema-upgrades.mdx) to verify your code handles the upgraded schema correctly before turning on the flag in production.
 
 - **Use `snapshotSchemaCompatibility` tests.**
-  Write [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to verify compatibility across all schema states in your rollout.
+  Write [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
+
+- **Avoid diverging upgrade paths.**
+  `snapshotSchemaCompatibility` assumes a linear version history and cannot model branching upgrade paths. If different documents enable different combinations of staged upgrades (e.g., one enables A+C while another enables B+C), the resulting schema states diverge and cannot be validated in a single snapshot test. Keep your rollout linear — enable staged upgrades in the same order for all documents — so that every schema state you encounter in production is covered by your compatibility tests.
 
 ## See Also
 
