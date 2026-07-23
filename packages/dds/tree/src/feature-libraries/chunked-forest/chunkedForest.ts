@@ -50,6 +50,7 @@ import {
 	basicChunkTree,
 	chunkField,
 	chunkTree,
+	coalesceUniformChunks,
 	splitFieldAtIndex,
 } from "./chunkTree.js";
 
@@ -185,6 +186,17 @@ export class ChunkedForest implements IEditableForest {
 				});
 				// TODO: this will fail for very large moves due to argument limits.
 				destinationField.splice(destinationChunkIndex, 0, ...sourceField);
+				// Coalesce the seams the splice may have created: one chunk to the left of the
+				// insertion, the inserted chunks themselves, and one chunk to the right.
+				const coalesceStart = Math.max(0, destinationChunkIndex - 1);
+				const coalesceEnd = Math.min(
+					destinationField.length,
+					destinationChunkIndex + sourceField.length + 1,
+				);
+				coalesceUniformChunks(destinationField, this.forest.chunker, {
+					start: coalesceStart,
+					end: coalesceEnd,
+				});
 			},
 			/**
 			 * Detaches the range from the current field and transfers it to the given destination if any.
@@ -216,6 +228,14 @@ export class ChunkedForest implements IEditableForest {
 				const startChunkIndex = splitFieldAtIndex(sourceField, source.start, policy);
 				const endChunkIndex = splitFieldAtIndex(sourceField, source.end, policy);
 				const newField = sourceField.splice(startChunkIndex, endChunkIndex - startChunkIndex);
+				// After the detach, the only newly-adjacent seam is between the chunks on either
+				// side of the removed range.
+				const coalesceStart = Math.max(0, startChunkIndex - 1);
+				const coalesceEnd = Math.min(sourceField.length, startChunkIndex + 1);
+				coalesceUniformChunks(sourceField, this.forest.chunker, {
+					start: coalesceStart,
+					end: coalesceEnd,
+				});
 
 				if (destination === undefined) {
 					for (const child of newField) {
