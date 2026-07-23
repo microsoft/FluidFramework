@@ -7,6 +7,7 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	createIdentifierIndex,
+	type TreeNode,
 } from "../../simple-tree/index.js";
 import { getView, configureBenchmarkHooks } from "../utils.js";
 
@@ -40,13 +41,10 @@ function makeId(index: number): string {
  */
 function createIdentifierIndexScenario(
 	nodeCount: number,
-): IndexBenchmarkScenario<string, import("../../simple-tree/index.js").TreeNode> {
+): IndexBenchmarkScenario<string, TreeNode> {
 	return {
 		title: `IdentifierIndex with ${nodeCount} nodes`,
-		setup(): IndexBenchmarkSetup<
-			string,
-			import("../../simple-tree/index.js").TreeNode
-		> {
+		setup(): IndexBenchmarkSetup<string, TreeNode> {
 			const children = Array.from({ length: nodeCount }, (_, i) => {
 				return new IndexedChild({ id: makeId(i) });
 			});
