@@ -106,6 +106,8 @@ extends:
 
         - task: Bash@3
           displayName: Install root dependencies
+          env:
+            PUPPETEER_SKIP_DOWNLOAD: "true"
           inputs:
             targetType: 'inline'
             workingDirectory: $(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}
