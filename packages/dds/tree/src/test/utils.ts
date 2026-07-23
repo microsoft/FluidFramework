@@ -18,13 +18,14 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { emulateProductionBuild } from "@fluidframework/core-utils/internal";
+import { emulateProductionBuild, fail } from "@fluidframework/core-utils/internal";
 import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 	IChannelServices,
 	IChannelFactory,
 } from "@fluidframework/datastore-definitions/internal";
+import type { ISequencedDocumentMessage } from "@fluidframework/driver-definitions/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import {
 	assertIsStableId,
@@ -193,7 +194,7 @@ import {
 	unhydratedFlexTreeFromInsertable,
 	type SimpleNodeSchema,
 	type TreeNodeSchema,
-	restrictiveStoredSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	toInitialSchema,
 	toStoredSchema,
 	type SnapshotFileSystem,
@@ -451,8 +452,15 @@ export class TestTreeProviderLite {
 	private readonly runtimeFactory: MockContainerRuntimeFactoryWithOpBunching;
 	public readonly trees: readonly SharedTreeWithContainerRuntime[];
 	public readonly logger: IMockLoggerExt = createMockLoggerExt();
+	/**
+	 * Map from clientId to container runtime.
+	 */
 	private readonly containerRuntimeMap: Map<string, MockContainerRuntimeWithOpBunching> =
 		new Map();
+	/**
+	 * Map from clientId to IIdCompressor.
+	 */
+	private readonly compressorMap: Map<string, IIdCompressor> = new Map();
 
 	/**
 	 * Create a new {@link TestTreeProviderLite} with a number of trees pre-initialized.
@@ -484,10 +492,13 @@ export class TestTreeProviderLite {
 		const random = useDeterministicSessionIds ? makeRandom(0xdeadbeef) : makeRandom();
 		for (let i = 0; i < trees; i++) {
 			const sessionId = random.uuid4() as SessionId;
+			const idCompressor = createIdCompressor(sessionId);
+			this.compressorMap.set(`tree-${i}`, idCompressor);
+			const clientId = `test-client-${i}`;
 			const runtime = new MockFluidDataStoreRuntime({
-				clientId: `test-client-${i}`,
+				clientId,
 				id: "test",
-				idCompressor: createIdCompressor(sessionId),
+				idCompressor,
 				logger: this.logger,
 			});
 			const tree = this.factory.create(runtime, `tree-${i}`);
@@ -501,6 +512,10 @@ export class TestTreeProviderLite {
 			t.push(tree as SharedTreeWithContainerRuntime);
 		}
 		this.trees = t;
+	}
+
+	public getCompressor(tree: ISharedTree): IIdCompressor {
+		return this.compressorMap.get(tree.id) ?? fail("Tree not found");
 	}
 
 	/**
@@ -534,6 +549,10 @@ export class TestTreeProviderLite {
 		} else {
 			this.runtimeFactory.processSomeMessages(count);
 		}
+	}
+
+	public peekNextMessage(): ISequencedDocumentMessage | undefined {
+		return this.runtimeFactory.peekNextMessage();
 	}
 
 	public get minimumSequenceNumber(): number {
@@ -1726,7 +1745,7 @@ export class TestSchemaRepository extends TreeStoredSchemaRepository {
 	public tryUpdateTreeSchema(schema: SimpleNodeSchema & TreeNodeSchema): boolean {
 		const name: TreeNodeSchemaIdentifier = brand(schema.identifier);
 		const storedSchema =
-			toStoredSchema(schema, restrictiveStoredSchemaGenerationOptions).nodeSchema.get(name) ??
+			toStoredSchema(schema, StagedSchemaUpgradePolicy.restrictive).nodeSchema.get(name) ??
 			assert.fail();
 		const original = this.nodeSchema.get(name);
 		if (allowsTreeSuperset(this.policy, this, original, storedSchema)) {

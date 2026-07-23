@@ -1786,7 +1786,6 @@ export const shortCodeMap = {
 	"0xc53": "Couldn't find a matching storage ID",
 	"0xc54": "Unexpected leaf value",
 	"0xc55": "Cannot switch branches during a transaction",
-	"0xc56": "Branch does not exist",
 	"0xc57": "Branch summary must have a base",
 	"0xc58": "Main branch must exist",
 	"0xc59": "Expected branch to already exist",
