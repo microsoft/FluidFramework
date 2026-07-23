@@ -613,3 +613,14 @@ pipelines:
           lastModifiedDate: 2026-07-20
         armory:
           lastModifiedDate: 2026-07-20
+  220:
+    retail:
+      source:
+        eslint:
+          lastModifiedDate: 2026-07-23
+        bandit:
+          lastModifiedDate: 2026-07-23
+        psscriptanalyzer:
+          lastModifiedDate: 2026-07-23
+        armory:
+          lastModifiedDate: 2026-07-23
