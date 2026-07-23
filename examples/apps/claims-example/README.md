@@ -1,6 +1,8 @@
 # @fluid-example/claims-example
 
-This example demonstrates the **Claims DDS** with a simple "claim a key" UI. Type any string key and claim it. Under the hood each key is paired with the **`IFluidHandle`** of a freshly created `SharedDirectory` (a real DDS) that records its owner, and the key is bound to that handle using first-writer-wins semantics — so the first client to claim a key wins, competing claims from other clients are rejected, and every client resolves the winning handle to the same shared object.
+This example demonstrates the **Claims DDS** with a small "claim a key" UI. A fixed set of keys (`ClaimKey1`, `ClaimKey2`) is known up front, and each client can claim any key that is still unclaimed. Under the hood each key is paired with the **`IFluidHandle`** of a freshly created `SharedDirectory` (a real DDS) that records its owner, and the key is bound to that handle using first-writer-wins semantics — so the first client to claim a key wins, competing claims from other clients are rejected, and every client resolves the winning handle to the same shared object.
+
+> **Why a fixed set of keys?** This mirrors how a partner like Pages would use Claims: to claim a small, known set of things per data object. Because the keys are known up front, nothing needs to be enumerated — the view checks the owner of each known key directly, so the example never has to discover keys or mirror them into a side structure.
 
 > **Why this shape?** The Claims DDS is currently an internal building block. The intent is for it to eventually live inside every `PureDataObject`, reachable through an API on the data object itself. That API does not exist yet, so this example wires the Claims DDS up by hand inside a root data object (built on `@fluidframework/aqueduct`) that abstracts the Claims API behind a single `trySetClaim(key)` method. It therefore depends on the internal-only `@fluid-internal/claims` package and consumes the container/runtime plumbing through its `/legacy` entry points.
 
@@ -8,10 +10,10 @@ This example follows the external-views pattern: the container code establishes 
 
 ## What it shows
 
-- **A data object that abstracts the DDS** — `ClaimsDataObject` (an aqueduct `DataObject`) owns a single Claims DDS and exposes just `claimant`, `claimedKeys`, `getOwner`, and `trySetClaim(key)`. The view never touches the Claims DDS directly.
+- **A data object that abstracts the DDS** — `ClaimsDataObject` (an aqueduct `DataObject`) owns a single Claims DDS and exposes just `claimant`, `getOwner`, and `trySetClaim(key)`. The known keys (`claimKey1`, `claimKey2`) are exported alongside it. The view never touches the Claims DDS directly.
 - **Handle-based claiming** — the claim value is the `IFluidHandle` of a backing `SharedDirectory` (a real DDS), not a primitive. Claiming a key creates that `SharedDirectory`, records the owner on it, and claims the key with its handle.
 - **First-writer-wins** — `trySetClaim` only succeeds if the key is currently unclaimed. Open the app in two browser tabs and race to claim the same key; only the first claim wins.
-- **Switching to the winner on a lost race** — when a claim loses, `ClaimResult`'s `currentValue` (the winner's handle) lets the loser switch to the winning `SharedDirectory` and report the actual owner.
+- **Switching to the winner on a lost race** — when a claim loses, the data object resolves the winning key's handle (via the Claims DDS) to read the owner recorded on the winner's `SharedDirectory` and report the actual owner.
 - **Cross-client handle resolution** — every client resolves the winning handle to the *same* `SharedDirectory`, so all clients agree on the owner of each claimed key.
 
 ## ClaimResult overview
@@ -24,7 +26,7 @@ This example follows the external-views pattern: the container code establishes 
 | `"AlreadyClaimed"` | Another client already claimed this key | `currentValue: T \| undefined` |
 | `"Pending"` | Op is in-flight awaiting server confirmation | `promise: Promise<ClaimConfirmation<T>>` |
 
-In a connected container, `trySetClaim` returns `"Pending"`; awaiting the promise yields a `ClaimConfirmation<T>` whose status is `"Accepted"`, `"AlreadyClaimed"`, or `"Aborted"`. `ClaimsDataObject.trySetClaim(key)` collapses that lifecycle into a simple `boolean` (whether this client won) for the view to consume. On `"AlreadyClaimed"` it uses the reported `currentValue` (the winner's handle) to switch the loser to the winner's directory.
+In a connected container, `trySetClaim` returns `"Pending"`; awaiting the promise yields a `ClaimConfirmation<T>` whose status is `"Accepted"`, `"AlreadyClaimed"`, or `"Aborted"`. `ClaimsDataObject.trySetClaim(key)` collapses that lifecycle into a simple `boolean` (whether this client won) for the view to consume. On `"AlreadyClaimed"` the data object resolves the winning key's handle (via the Claims DDS) to read and report the winner's owner.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 

@@ -36,7 +36,8 @@ describe("claims-example", () => {
 	});
 
 	it("propagates a claim and resolves the handle in other connected containers", async () => {
-		const key = "shared-key";
+		// The first Claim button in the table claims the first known key.
+		const key = "ClaimKey1";
 		const ownerP = page.evaluate(async (claimKey: string) => {
 			// Load an additional container, and use it to watch for the expected claim
 			const container = await globalThis.loadAdditionalContainer();
@@ -45,18 +46,58 @@ describe("claims-example", () => {
 				claimsDataObject.on("claimsChanged", () => {
 					// The other client resolves the claimed handle to the same backing
 					// directory and reads the owner recorded on it.
-					if (claimsDataObject.claimedKeys.includes(claimKey)) {
-						resolve(claimsDataObject.getOwner(claimKey));
+					const resolvedOwner = claimsDataObject.getOwner(claimKey);
+					if (resolvedOwner !== undefined) {
+						resolve(resolvedOwner);
 					}
 				});
 			});
 		}, key);
 
-		// Type a key and claim it from the main container.
-		await expect(page).toFill("input", key);
+		// Claim the first known key from the main container.
 		await expect(page).toClick("button", { text: "Claim" });
 		const owner = await ownerP;
 		expect(typeof owner).toBe("string");
+	});
+
+	it("reports the winner's owner to a client that loses the race", async () => {
+		// The first Claim button in the table claims the first known key.
+		const key = "ClaimKey1";
+		const resultP = page.evaluate(async (claimKey: string) => {
+			// Load an additional container that will lose the race for the same key.
+			const container = await globalThis.loadAdditionalContainer();
+			const loser = (await container.getEntryPoint()) as IClaimsDataObject;
+
+			// Wait until this client observes the key as claimed (by the main container).
+			const winnerOwner = await new Promise<string>((resolve) => {
+				const check = (): void => {
+					const observed = loser.getOwner(claimKey);
+					if (observed !== undefined) {
+						resolve(observed);
+					}
+				};
+				loser.on("claimsChanged", check);
+				check();
+			});
+
+			// Now attempt to claim the already-claimed key: the attempt must lose, and the
+			// loser must still report the winner's owner (not its own identity).
+			const accepted = await loser.trySetClaim(claimKey);
+			return {
+				accepted,
+				winnerOwner,
+				ownerAfterLosing: loser.getOwner(claimKey),
+				loserClaimant: loser.claimant,
+			};
+		}, key);
+
+		// Claim the first known key from the main container so the additional container loses.
+		await expect(page).toClick("button", { text: "Claim" });
+		const result = await resultP;
+
+		expect(result.accepted).toBe(false);
+		expect(result.ownerAfterLosing).toBe(result.winnerOwner);
+		expect(result.winnerOwner).not.toBe(result.loserClaimant);
 	});
 
 	afterEach(async () => {

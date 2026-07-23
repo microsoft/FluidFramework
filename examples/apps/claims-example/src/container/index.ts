@@ -4,4 +4,5 @@
  */
 
 export type { IClaimsDataObject, IClaimsDataObjectEvents } from "./claimsDataObject/index.js";
+export { claimKey1, claimKey2 } from "./claimsDataObject/index.js";
 export { ClaimsExampleContainerRuntimeFactory } from "./runtimeFactory.js";

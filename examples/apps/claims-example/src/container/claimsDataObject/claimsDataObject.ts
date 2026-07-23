@@ -6,11 +6,7 @@
 import { ClaimsKind, type IClaims } from "@fluid-internal/claims";
 import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
-import {
-	type IDirectory,
-	type ISharedDirectory,
-	SharedDirectory,
-} from "@fluidframework/map/legacy";
+import { type ISharedDirectory, SharedDirectory } from "@fluidframework/map/legacy";
 
 import type { IClaimsDataObject, IClaimsDataObjectEvents } from "./interface.js";
 
@@ -20,14 +16,16 @@ import type { IClaimsDataObject, IClaimsDataObjectEvents } from "./interface.js"
 const claimsHandleKey = "claims";
 
 /**
- * Name of the root subdirectory used to mirror the set of claimed keys.
+ * The keys clients compete to claim.
  *
  * @remarks
- * The Claims DDS does not expose a way to enumerate its keys, so we mirror them into a
- * subdirectory of the data object's root. This lets a client that loads an existing document
- * (or joins late) discover which keys have already been claimed and resolve their winners.
+ * The Claims DDS is used the way a partner like Pages would use it: to claim a small, known
+ * set of things per data object. Because the keys are known up front, nothing needs to be
+ * enumerated — the view checks the owner of each known key directly, so there is no need to
+ * discover keys or mirror them into a side structure.
  */
-const claimedKeysDirName = "claimedKeys";
+export const claimKey1 = "ClaimKey1";
+export const claimKey2 = "ClaimKey2";
 
 /**
  * Entry recorded on each resource's backing SharedDirectory.
@@ -62,57 +60,42 @@ export class ClaimsDataObject
 	/**
 	 * The Claims DDS this data object abstracts. Set during initialization.
 	 */
-	private claims: IClaims<DirectoryHandle> | undefined;
+	private internalClaims: IClaims<DirectoryHandle> | undefined;
 
 	/**
-	 * Subdirectory mirroring the claimed keys (see {@link claimedKeysDirName}). Set during
-	 * initialization.
+	 * Resolved owner of each winning claim, keyed by claim key.
+	 *
+	 * @remarks
+	 * Claim values are handles, which resolve asynchronously, but the view reads owners
+	 * synchronously while rendering. A winning directory's owner is written once and never
+	 * changes, so this map memoizes the resolved owner string — letting {@link getOwner} stay
+	 * synchronous without holding onto (or subscribing to) the backing directory.
 	 */
-	private claimedKeysDir: IDirectory | undefined;
+	private readonly resolvedOwners = new Map<string, string>();
 
-	/**
-	 * Backing SharedDirectories for resolved winning claims, keyed by claim key.
-	 */
-	private readonly resolvedDirectories = new Map<string, ISharedDirectory>();
-
-	private get claimsOrThrow(): IClaims<DirectoryHandle> {
-		if (this.claims === undefined) {
+	private get claims(): IClaims<DirectoryHandle> {
+		if (this.internalClaims === undefined) {
 			throw new Error("ClaimsDataObject not initialized");
 		}
-		return this.claims;
-	}
-
-	private get claimedKeysDirOrThrow(): IDirectory {
-		if (this.claimedKeysDir === undefined) {
-			throw new Error("ClaimsDataObject not initialized");
-		}
-		return this.claimedKeysDir;
-	}
-
-	public get claimedKeys(): readonly string[] {
-		// Only keys whose winning directory has resolved are listed, so getOwner is always
-		// defined for a listed key. The mirror subdirectory ({@link claimedKeysDirName}) is
-		// used solely to rediscover and resolve keys when loading an existing document.
-		return [...this.resolvedDirectories.keys()];
+		return this.internalClaims;
 	}
 
 	public getOwner(key: string): string | undefined {
-		return this.resolvedDirectories.get(key)?.get(ownerKey);
+		return this.resolvedOwners.get(key);
 	}
 
 	/**
-	 * Called once when the document is first created. Creates the Claims DDS and the mirror
-	 * subdirectory and stores them on the root.
+	 * Called once when the document is first created. Creates the Claims DDS and stores its
+	 * handle on the root.
 	 */
 	protected override async initializingFirstTime(): Promise<void> {
 		const claims = ClaimsKind.create(this.runtime) as IClaims<DirectoryHandle>;
 		this.root.set(claimsHandleKey, claims.handle);
-		this.root.createSubDirectory(claimedKeysDirName);
 	}
 
 	/**
-	 * Called every time the data object is initialized. Resolves the Claims DDS and mirror
-	 * subdirectory and wires up listeners so the local view stays in sync as claims are made.
+	 * Called every time the data object is initialized. Resolves the Claims DDS and wires up
+	 * listeners so the local view stays in sync as claims are made.
 	 */
 	protected override async hasInitialized(): Promise<void> {
 		const claimsHandle =
@@ -120,27 +103,33 @@ export class ClaimsDataObject
 		if (claimsHandle === undefined) {
 			throw new Error("Claims DDS handle missing from root");
 		}
-		this.claims = await claimsHandle.get();
-		this.claimedKeysDir = this.root.getSubDirectory(claimedKeysDirName);
+		this.internalClaims = await claimsHandle.get();
 
-		// Switch to (resolve) a key's winning directory whenever it is claimed, locally or
-		// remotely. This is also how a losing client ends up pointing at the winner.
-		this.claimsOrThrow.events.on("claimed", (key) => this.onClaimed(key));
+		// Resolve a key's winning owner whenever it is claimed, locally or remotely. This is also
+		// how a losing client ends up reflecting the winner.
+		this.claims.events.on("claimed", (key) => this.onClaimed(key));
 
-		// A late-joining client (or a reload of an existing document) discovers
-		// already-claimed keys from the mirror and resolves each of their winners.
-		for (const key of this.claimedKeysDirOrThrow.keys()) {
-			this.resolve(key);
-		}
+		// Resolve the current winner (if any) for each known key so late joiners and reloads
+		// render owners immediately. The key set is fixed, so no enumeration is needed.
+		this.resolve(claimKey1);
+		this.resolve(claimKey2);
 	}
 
 	public readonly trySetClaim = async (key: string): Promise<boolean> => {
+		// Early-exit if we already know the key is claimed: resolve the winner without creating a
+		// throwaway backing directory. This reflects only locally known state, so it is an
+		// optimization — the authoritative race is still resolved by claims.trySetClaim below.
+		if (this.claims.has(key)) {
+			this.resolve(key);
+			return false;
+		}
+
 		// Each attempt creates a fresh backing directory recording this client as the owner.
 		// If the claim wins, this directory becomes the shared winner for the key.
 		const directory = SharedDirectory.create(this.runtime);
 		directory.set(ownerKey, this.claimant);
 
-		const result = this.claimsOrThrow.trySetClaim(key, directory.handle as DirectoryHandle);
+		const result = this.claims.trySetClaim(key, directory.handle as DirectoryHandle);
 
 		// Connected claims come back "Pending"; await the op roundtrip for the real outcome.
 		const outcome = result.status === "Pending" ? await result.promise : result;
@@ -148,17 +137,13 @@ export class ClaimsDataObject
 		if (outcome.status === "Accepted") {
 			// The "claimed" event resolves the winner, but resolve eagerly so the caller sees an
 			// accurate result even in detached mode (where no op — and so no event — is produced).
-			this.recordClaimedKey(key);
 			this.resolve(key);
 			return true;
 		}
 
 		if (outcome.status === "AlreadyClaimed") {
-			// We lost the race: switch to the winner's directory instead of the one we created.
-			const winner = await outcome.currentValue?.get();
-			if (winner !== undefined) {
-				this.adoptDirectory(key, winner);
-			}
+			// We lost the race: resolve the winner's owner instead of the directory we created.
+			this.resolve(key);
 		}
 
 		// Lost the race or aborted (e.g. disposed during the op).
@@ -167,48 +152,32 @@ export class ClaimsDataObject
 
 	/**
 	 * Handles the Claims DDS "claimed" event (fired on every client when a claim is accepted)
-	 * by switching to the winning directory for the key.
+	 * by resolving the winning owner for the key.
 	 */
 	private onClaimed(key: string): void {
 		this.resolve(key);
 	}
 
 	/**
-	 * Records a claimed key in the mirror subdirectory so it is discoverable on reload. Only
-	 * the winning client calls this. Idempotent — a no-op if the key is already recorded.
-	 */
-	private recordClaimedKey(key: string): void {
-		const dir = this.claimedKeysDirOrThrow;
-		if (!dir.has(key)) {
-			dir.set(key, true);
-		}
-	}
-
-	/**
-	 * Resolves a key's winning handle to its backing directory and adopts it.
+	 * Resolves a key's winning handle to its backing directory, memoizes the owner (once), and
+	 * notifies the view. The owner is written once at creation and never changes, so there is no
+	 * need to retain or subscribe to the directory itself.
 	 */
 	private resolve(key: string): void {
-		const handle = this.claimsOrThrow.get(key);
+		const handle = this.claims.get(key);
 		if (handle === undefined) {
 			return;
 		}
 		handle
 			.get()
-			.then((directory) => this.adoptDirectory(key, directory))
+			.then((directory) => {
+				const owner = directory.get<string>(ownerKey);
+				if (owner !== undefined && this.resolvedOwners.get(key) !== owner) {
+					this.resolvedOwners.set(key, owner);
+					this.emit("claimsChanged");
+				}
+			})
 			.catch((error: unknown) => console.error(`Failed to resolve claim "${key}"`, error));
-	}
-
-	/**
-	 * Adopts a resolved directory as the local winner for a key (once) and watches it for
-	 * changes so the view reflects owner updates.
-	 */
-	private adoptDirectory(key: string, directory: ISharedDirectory): void {
-		if (this.resolvedDirectories.get(key) === directory) {
-			return; // Already adopted this exact directory.
-		}
-		this.resolvedDirectories.set(key, directory);
-		directory.on("valueChanged", () => this.emit("claimsChanged"));
-		this.emit("claimsChanged");
 	}
 }
 

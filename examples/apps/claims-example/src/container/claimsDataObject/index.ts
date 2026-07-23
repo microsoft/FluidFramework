@@ -3,5 +3,10 @@
  * Licensed under the MIT License.
  */
 
-export { ClaimsDataObject, ClaimsDataObjectFactory } from "./claimsDataObject.js";
+export {
+	ClaimsDataObject,
+	ClaimsDataObjectFactory,
+	claimKey1,
+	claimKey2,
+} from "./claimsDataObject.js";
 export type { IClaimsDataObject, IClaimsDataObjectEvents } from "./interface.js";

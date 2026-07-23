@@ -24,7 +24,7 @@ export interface IClaimsDataObjectEvents extends IEvent {
  * Each claimed key is paired with the `IFluidHandle` of a freshly created `SharedDirectory`
  * (a real DDS) that records its owner. Because the claim value is a handle, every client
  * resolves the *winning* directory to the same shared object — so even the client that loses
- * a race ends up pointing at the winner's directory.
+ * a race resolves the winner's directory to read the owner it recorded.
  */
 export interface IClaimsDataObject extends IEventProvider<IClaimsDataObjectEvents> {
 	/**
@@ -32,11 +32,6 @@ export interface IClaimsDataObject extends IEventProvider<IClaimsDataObjectEvent
 	 * own identity so first-writer-wins races between clients are easy to observe.
 	 */
 	readonly claimant: string;
-
-	/**
-	 * The keys that currently have an accepted claim, in claim order.
-	 */
-	readonly claimedKeys: readonly string[];
 
 	/**
 	 * The identity of the client that owns a claimed key, or `undefined` if the key is
@@ -48,8 +43,8 @@ export interface IClaimsDataObject extends IEventProvider<IClaimsDataObjectEvent
 	 * Attempts to claim a key using first-writer-wins semantics.
 	 *
 	 * @returns `true` if this client won the claim. If another client already owns the key the
-	 * claim is rejected and `false` is returned; either way the data object switches to using
-	 * the winning client's directory handle for the key.
+	 * claim is rejected and `false` is returned; either way the data object resolves the winning
+	 * key's owner (from the winner's directory) so {@link IClaimsDataObject.getOwner} reflects it.
 	 */
 	trySetClaim(key: string): Promise<boolean>;
 }
