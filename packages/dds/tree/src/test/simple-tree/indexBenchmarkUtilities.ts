@@ -92,7 +92,8 @@ export const defaultIndexBenchmarkSizes: [number, BenchmarkType][] = [
 	...(currentBenchmarkMode === BenchmarkMode.Performance
 		? [
 				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
-				[1000, BenchmarkType.Measurement] as [number, BenchmarkType],
+				[1000, BenchmarkType.Perspective] as [number, BenchmarkType],
+				[10_000, BenchmarkType.Measurement] as [number, BenchmarkType],
 			]
 		: []),
 ];
