@@ -1423,13 +1423,71 @@ describe("ArrayNode", () => {
 			assert.equal(anchor.index, 2);
 		});
 
-		// This case sticks to the end of the array, which is not ideal, and will need to be fixed with a more sophisticated anchor implementation.
+		// With delta-based tracking the anchor stays in the gap the removed item occupied rather than
+		// jumping to the end of the array.
 		it("removed item", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			array.removeAt(1);
-			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
-			assert.equal(anchor.index, 2);
+			// The item originally at the anchor point is gone; the anchor rests between the surviving
+			// neighbors (now [1, 3]) instead of jumping to the end.
+			assert.equal(anchor.index, 1);
+			anchor.dispose();
+		});
+
+		it("throws when reading index after dispose", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			const anchor = createArrayInsertionAnchor(array, 1);
+			assert.equal(anchor.index, 1);
+			anchor.dispose();
+			// Reading the index of a disposed anchor is a usage error.
+			assert.throws(() => anchor.index, validateUsageError(/disposed/));
+			// Disposing again is a no-op.
+			anchor.dispose();
+		});
+
+		it("shifts left when a multi-element range before the anchor is removed", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 4); // gap between 40 and 50
+			array.removeRange(0, 2); // remove 10, 20 -> [30, 40, 50]
+			assert.equal(anchor.index, 2); // still in the gap between 40 and 50
+			anchor.dispose();
+		});
+
+		it("collapses to the start when a removed range straddles the anchor", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
+			array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
+			// The anchor's gap was inside the removed span, so it collapses to the start of the removal.
+			assert.equal(anchor.index, 1); // between 10 and 50
+			anchor.dispose();
+		});
+
+		it("tracks across a move within the array", () => {
+			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
+			const anchor = createArrayInsertionAnchor(array, 2); // gap between 20 and 30
+			array.moveToIndex(0, 4); // move 50 to the front -> [50, 10, 20, 30, 40]
+			// The moved node is inserted before the anchor (shifting it right by one); its removal is
+			// after the anchor and so does not move it.
+			assert.equal(anchor.index, 3); // still in the gap between 20 and 30
+			anchor.dispose();
+		});
+
+		it("throws on an out-of-range initial index", () => {
+			const array = init(CustomizableNumberArray, [1, 2, 3]);
+			// One past the end is valid (an insertion point after the last child)...
+			const anchor = createArrayInsertionAnchor(array, 3);
+			assert.equal(anchor.index, 3);
+			anchor.dispose();
+			// ...but beyond that, or negative, is a usage error rather than being silently corrected.
+			assert.throws(
+				() => createArrayInsertionAnchor(array, 4),
+				validateUsageError(/out of bounds/),
+			);
+			assert.throws(
+				() => createArrayInsertionAnchor(array, -1),
+				validateUsageError(/non-negative/),
+			);
 		});
 	});
 });
