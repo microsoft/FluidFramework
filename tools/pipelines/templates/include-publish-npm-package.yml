@@ -101,9 +101,11 @@ stages:
     - build
     condition: |
       and(
+        in(dependencies.publish_npm_public.result, 'Succeeded', 'Skipped'),
         in(dependencies.publish_npm_internal_test.result, 'Succeeded', 'Skipped'),
         in(dependencies.publish_npm_internal_build.result, 'Succeeded', 'Skipped'),
         or(
+          eq(dependencies.publish_npm_public.result, 'Succeeded'),
           eq(dependencies.publish_npm_internal_test.result, 'Succeeded'),
           eq(dependencies.publish_npm_internal_build.result, 'Succeeded')
         )
