@@ -162,6 +162,17 @@ view.root.color = "#FF0000";
 
 For detailed information about which types of changes are safe versus breaking, see [Types of Schema Changes](./types-of-changes.mdx).
 
+### Staged Schema Upgrades
+
+A **staged schema upgrade** is a schema change that is declared in the view schema but excluded from stored schema until explicitly enabled.
+This allows your application code to understand and handle the new schema shape (reading documents that contain it) before the upgrade is activated for writes.
+
+SharedTree provides two mechanisms for defining staged schema upgrades:
+- [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) -- marks a new allowed type as staged
+- [`stagedOptional()`](../../../api/tree/schemafactoryalpha-class#stagedoptional-property) -- marks a field as optionally present during migration from required to optional
+
+Staged schema upgrades are the building blocks of [staged rollouts](#staged-rollouts) and [feature-flag-driven upgrades](./feature-flag-schema-upgrades.mdx).
+
 ### Staged Rollouts
 
 When deploying schema changes in production, use staged rollouts to ensure compatibility between clients running different application versions.
@@ -182,6 +193,8 @@ If a client upgrades a document to a new schema that older clients cannot read, 
 - Deploy code that automatically upgrades documents to the new schema.
 - Monitor for any compatibility issues.
 
+Alternatively, you can use [feature flags](./feature-flag-schema-upgrades.mdx) to combine both phases into a single deployment and control when upgrades are enabled at runtime.
+
 Changes that are both [backwards compatible](./index.mdx#backwards-compatibility) and [forwards compatible](./index.mdx#forwards-compatibility) are capable of cross-version collaboration without requiring a staged rollout.
 In that case, new clients can read and write to the same document as old clients without either one being fundamentally incompatible.
 However, staged rollouts are not easily avoidable.
@@ -190,11 +203,13 @@ Even seemingly simple schema changes (for example, adding a new type of node to 
 **Best Practices:**
 - Allow appropriate amount of time between release cycles to ensure client version adoption
 - Monitor client version distribution before enabling upgrades
-- Test compatibility scenarios with mixed client versions
+- [Test compatibility scenarios](./testing-schema-upgrades.mdx) with mixed client versions
 
 ## See Also
 
 - [Types of Schema Changes](./types-of-changes.mdx) - Detailed guide on safe vs breaking changes
 - [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) - Guide on using staged to safely add new allowed types
+- [Enabling Schema Upgrades with Feature Flags](./feature-flag-schema-upgrades.mdx) - Use feature flags to control when staged upgrades take effect in production
+- [Testing Schema Upgrades](./testing-schema-upgrades.mdx) - Create test documents that simulate future schema states
 - [Schema Definition](../schema-definition/index.mdx) - How to define schemas
 - [Node Types](../node-types.mdx) - Understanding different node types
