@@ -95,6 +95,7 @@ stages:
   - stage: upload_manifests
     displayName: Upload release manifests
     dependsOn:
+    - publish_npm_public
     - publish_npm_internal_test
     - publish_npm_internal_build
     # This must be declared as an explicit dependency because upload-dev-manifest uses the version variable it outputs to generate the manifest.
