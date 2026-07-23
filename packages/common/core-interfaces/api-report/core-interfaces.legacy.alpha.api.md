@@ -98,6 +98,48 @@ export type FluidObjectKeys<T> = keyof FluidObject<T>;
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
 // @beta @sealed
+export interface FluidReadonlyArray<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+    readonly [Symbol.unscopables]: {
+        [K in keyof FluidReadonlyArray<T>]?: boolean;
+    };
+    readonly [n: number]: T;
+    at(index: number): T | undefined;
+    concat(...items: ConcatArray<T>[]): T[];
+    concat(...items: (T | ConcatArray<T>)[]): T[];
+    entries(): FluidIterableIterator<[number, T]>;
+    every<S extends T>(predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => value is S, thisArg?: any): this is FluidReadonlyArray<S>;
+    every(predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown, thisArg?: any): boolean;
+    filter<S extends T>(predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => value is S, thisArg?: any): S[];
+    filter(predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown, thisArg?: any): T[];
+    find<S extends T>(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => value is S, thisArg?: any): S | undefined;
+    find(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown, thisArg?: any): T | undefined;
+    findIndex(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown, thisArg?: any): number;
+    findLast<S extends T>(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => value is S, thisArg?: any): S | undefined;
+    findLast(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown, thisArg?: any): T | undefined;
+    findLastIndex(predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown, thisArg?: any): number;
+    flat<A, D extends number = 1>(this: A, depth?: D): FlatArray<A, D>[];
+    flatMap<U>(callback: (value: T, index: number, array: FluidReadonlyArray<T>) => U | readonly U[], thisArg?: any): U[];
+    forEach(callbackfn: (value: T, index: number, array: FluidReadonlyArray<T>) => void, thisArg?: any): void;
+    includes(searchElement: T, fromIndex?: number): boolean;
+    indexOf(searchElement: T, fromIndex?: number): number;
+    join(separator?: string): string;
+    keys(): FluidIterableIterator<number>;
+    lastIndexOf(searchElement: T, fromIndex?: number): number;
+    readonly length: number;
+    map<U>(callbackfn: (value: T, index: number, array: FluidReadonlyArray<T>) => U, thisArg?: any): U[];
+    reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: FluidReadonlyArray<T>) => T): T;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: FluidReadonlyArray<T>) => U, initialValue: U): U;
+    reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: FluidReadonlyArray<T>) => T): T;
+    reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: FluidReadonlyArray<T>) => U, initialValue: U): U;
+    slice(start?: number, end?: number): T[];
+    some(predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown, thisArg?: any): boolean;
+    toLocaleString(): string;
+    toString(): string;
+    values(): FluidIterableIterator<T>;
+}
+
+// @beta @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;

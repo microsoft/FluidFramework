@@ -9,11 +9,7 @@ import type {
 	FluidMap,
 	FluidReadonlyMap,
 } from "../../index.js";
-
-// Compile-time type utilities (same pattern as the generated type tests in this package).
-type requireTrue<_X extends true> = true;
-type requireFalse<_X extends false> = true;
-type isAssignableTo<Source, Destination> = [Source] extends [Destination] ? true : false;
+import type { isAssignableTo, requireFalse, requireTrue } from "./typeTestUtils.js";
 
 // Native ReadonlyMap is NOT assignable to FluidReadonlyMap because
 // FluidReadonlyMap requires [Symbol.toStringTag], which ReadonlyMap lacks.
