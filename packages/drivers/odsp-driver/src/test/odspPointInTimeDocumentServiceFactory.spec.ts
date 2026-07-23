@@ -26,11 +26,13 @@ import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointIn
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- test drives a real OdspVersionManager through the factory
+/* eslint-disable import-x/no-internal-modules --
+   test drives a real OdspVersionManager through the factory */
 import {
 	OdspVersionManager,
 	type IOdspFileVersionFetcher,
 } from "../odspVersionManager/odspVersionManager.js";
+/* eslint-enable import-x/no-internal-modules */
 
 /**
  * Tests for the point-in-time factory's **lineage guard**: it materializes a document by replaying
@@ -261,6 +263,60 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		assert.ok(
 			createDocumentServiceCore.notCalled,
 			"no document service should be created once the lineage check fails",
+		);
+	});
+
+	it("fails the load (before creating any service) when the ops needed to reach the target are missing", async () => {
+		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const resolvedUrl = await makeResolvedUrl();
+		const internals = factory as unknown as FactoryInternals;
+
+		// Same lineage on both sides so the epoch check passes, but the op stream that bridges the base
+		// (seq 5) to the target (seq 8) has a hole: 6 and 8 are retained, 7 was trimmed. The load must
+		// fail on the op-availability check rather than materialize a document with a missing op.
+		const realManager = new OdspVersionManager(
+			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A", retainedOps: [6, 8] }),
+		);
+		stub(internals, "createVersionManager").returns(realManager);
+		const resolveFileVersion = stub(internals, "resolveFileVersion");
+		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore");
+
+		await assert.rejects(
+			async () => factory.createPointInTimeDocumentService(resolvedUrl, 8),
+			/expected sequence number 7 but the next available op is 8/,
+			"a gap in (base, target] must fail the load",
+		);
+		// The op check runs before base resolution and service creation, so a gap short-circuits the load.
+		assert.ok(
+			resolveFileVersion.notCalled,
+			"the base version must not be resolved once the op check fails",
+		);
+		assert.ok(
+			createDocumentServiceCore.notCalled,
+			"no document service should be created once the op check fails",
+		);
+	});
+
+	it("fails the load when op retention has trimmed everything after the base (no ops available)", async () => {
+		const factory = new OdspPointInTimeDocumentServiceFactory(getStorageToken, undefined);
+		const resolvedUrl = await makeResolvedUrl();
+		const internals = factory as unknown as FactoryInternals;
+
+		// Same lineage, but the base (seq 5) is older than the retention window: no op in (5, 8] survives.
+		const realManager = new OdspVersionManager(
+			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A", retainedOps: [] }),
+		);
+		stub(internals, "createVersionManager").returns(realManager);
+		const createDocumentServiceCore = stub(internals, "createDocumentServiceCore");
+
+		await assert.rejects(
+			async () => factory.createPointInTimeDocumentService(resolvedUrl, 8),
+			/no ops at or after sequence number 6/,
+			"a fully trimmed op range must fail the load",
+		);
+		assert.ok(
+			createDocumentServiceCore.notCalled,
+			"no document service should be created once the op check fails",
 		);
 	});
 

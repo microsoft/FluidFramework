@@ -18,7 +18,8 @@ export {
 export { checkUrl } from "./checkUrl.js";
 export { createOdspUrl } from "./createOdspUrl.js";
 export { getHashedDocumentId, type ISnapshotContents } from "./odspPublicUtils.js";
-export { getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getApiRoot, getOdspUrlParts, isOdcUrl, isSpoUrl } from "./odspUrlHelper.js";
+export { getHeadersWithAuth } from "./getUrlAndHeadersWithAuth.js";
 
 // prefetch latest snapshot before container load
 export { prefetchLatestSnapshot } from "./prefetchLatestSnapshot.js";
