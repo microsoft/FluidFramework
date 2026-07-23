@@ -61,11 +61,13 @@ function makeManager(
 
 describe("OdspVersionManager", () => {
 	describe("findBaseForSeq: which version does it pick for a target sequence number?", () => {
-		// Timeline (newest-first): tip=460, then recoverable versions 448 and 418.
-		const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-		const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+		// Timeline (newest-first): 44.0 is the tip (excluded); sealed: 43.0=460, 42.0=448, 40.0=418.
+		// The tip's sequence number is intentionally left unconfigured, so any attempt to resolve it
+		// would throw — proving the tip is never resolved.
+		const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+		const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 
-		it("returns the closest version at or before the target (target between two versions)", async () => {
+		it("returns the closest sealed version at or before the target (target between two versions)", async () => {
 			// @q M-SELECT-01
 			const { manager } = makeManager(versions, seqs);
 			const result = await manager.findBaseForSeq(430);
@@ -83,13 +85,15 @@ describe("OdspVersionManager", () => {
 			assert.equal(result.kind === "found" && result.base.sequenceNumber, 448);
 		});
 
-		it("returns the newest recoverable version when the target is newer than all versions", async () => {
+		it("returns the newest SEALED version when the target is newer than all sealed versions (not the tip)", async () => {
 			// @q M-SELECT-03
-			const { manager } = makeManager(versions, seqs);
+			const { manager, fetcher } = makeManager(versions, seqs);
 			const result = await manager.findBaseForSeq(500);
 			assert.equal(result.kind, "found");
-			assert.equal(result.kind === "found" && result.base.versionId, "42.0");
-			assert.equal(result.kind === "found" && result.base.sequenceNumber, 448);
+			// 43.0, not the tip 44.0 — the tip is excluded from base selection.
+			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
+			assert.equal(result.kind === "found" && result.base.sequenceNumber, 460);
+			assert.ok(!fetcher.resolvedIds().includes("44.0"), "the tip must never be resolved");
 		});
 
 		it("returns noBaseVersion (with the oldest resolved seq) when the target predates all versions", async () => {
@@ -101,35 +105,42 @@ describe("OdspVersionManager", () => {
 		});
 	});
 
-	describe("findBaseForSeq: dedup and the tip", () => {
-		it("returns the newest of versions sharing a sequence number (dedup)", async () => {
+	describe("findBaseForSeq: the tip, dedup, and empty history", () => {
+		it("never treats the tip as a base — the tip's sequence number is never resolved", async () => {
+			// @q M-TIP-01
+			// The tip 44.0 has no configured sequence number, so resolving it would throw. A successful
+			// result therefore proves the tip was skipped.
+			const { manager, fetcher } = makeManager([ref("44.0"), ref("43.0"), ref("42.0")], {
+				"43.0": 460,
+				"42.0": 448,
+			});
+			const result = await manager.findBaseForSeq(500);
+			assert.equal(result.kind, "found");
+			assert.equal(result.kind === "found" && result.base.versionId, "43.0");
+			assert.deepEqual(
+				fetcher.resolvedIds(),
+				["43.0"],
+				"only the newest sealed version is resolved; the tip is not",
+			);
+		});
+
+		it("returns noBaseVersion when the only version is the tip", async () => {
+			// @q M-TIP-02
+			const { manager, fetcher } = makeManager([ref("44.0")], {});
+			const result = await manager.findBaseForSeq(500);
+			assert.equal(result.kind, "noBaseVersion");
+			assert.deepEqual(fetcher.resolvedIds(), [], "the tip must never be resolved");
+		});
+
+		it("returns the newest of sealed versions sharing a sequence number (dedup)", async () => {
 			// @q M-DEDUP-01
-			// Two recoverable versions share seq 448 (a metadata-only re-snap); newest is 42.0.
-			const versions = [ref("tip"), ref("42.0"), ref("41.5"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "41.5": 448, "40.0": 418 };
+			// Two sealed versions share seq 448 (a metadata-only re-snap); newest is 42.0.
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("41.5"), ref("40.0")];
+			const seqs = { "43.0": 460, "42.0": 448, "41.5": 448, "40.0": 418 };
 			const { manager } = makeManager(versions, seqs);
 			const result = await manager.findBaseForSeq(448);
 			assert.equal(result.kind, "found");
 			assert.equal(result.kind === "found" && result.base.versionId, "42.0");
-		});
-
-		it("never treats the tip (index 0) as a recoverable base", async () => {
-			// @q M-TIP-01
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
-			const { manager, fetcher } = makeManager(versions, seqs);
-			await manager.findBaseForSeq(500);
-			assert.ok(
-				!fetcher.resolvedIds().includes("tip"),
-				"the tip's sequence number should never be resolved",
-			);
-		});
-
-		it("returns noBaseVersion when only the tip exists", async () => {
-			// @q M-TIP-02
-			const { manager } = makeManager([ref("tip")], { tip: 460 });
-			const result = await manager.findBaseForSeq(100);
-			assert.equal(result.kind, "noBaseVersion");
 		});
 
 		it("returns noBaseVersion when the version list is empty", async () => {
@@ -141,75 +152,73 @@ describe("OdspVersionManager", () => {
 	});
 
 	describe("efficiency: does it avoid unnecessary work?", () => {
-		it("stops resolving once it finds the closest base (does not resolve older versions)", async () => {
+		it("stops resolving once it finds the closest base (does not resolve older versions or the tip)", async () => {
 			// @q M-STOP-01
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
-			// target 448 matches 42.0, so 40.0 should never be resolved.
+			// target 448: skips the tip, resolves 43.0 (too new) then 42.0 (match), so 40.0 is never resolved.
 			await manager.findBaseForSeq(448);
-			assert.deepEqual(fetcher.resolvedIds(), ["42.0"]);
+			assert.deepEqual(fetcher.resolvedIds(), ["43.0", "42.0"]);
 		});
 
-		it("caches the version list and resolved sequence numbers across calls", async () => {
+		it("caches resolved sequence numbers across calls but re-enumerates the list each call", async () => {
 			// @q M-CACHE-01
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager, fetcher } = makeManager(versions, seqs);
-			await manager.findBaseForSeq(430); // resolves 42.0 then 40.0
-			await manager.findBaseForSeq(430); // should hit caches only
-			assert.equal(fetcher.listCalls(), 1, "version list should be fetched once");
+			await manager.findBaseForSeq(0); // scans all sealed (no match), resolving 43.0, 42.0, 40.0
+			await manager.findBaseForSeq(0); // list re-fetched; seqs served from cache
+			assert.equal(fetcher.listCalls(), 2, "the version list is re-enumerated on every call");
 			assert.deepEqual(
 				fetcher.resolvedIds(),
-				["42.0", "40.0"],
-				"each version should be resolved at most once",
+				["43.0", "42.0", "40.0"],
+				"each sealed version's sequence number is resolved at most once (cached)",
 			);
 		});
 
-		it("re-enumerates and re-resolves after refresh()", async () => {
-			// @q M-CACHE-02
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
-			const { manager, fetcher } = makeManager(versions, seqs);
-			await manager.findBaseForSeq(430); // resolves 42.0 then 40.0
-			manager.refresh();
-			await manager.findBaseForSeq(430); // must re-fetch the list AND re-resolve seqs
-			assert.equal(fetcher.listCalls(), 2, "refresh should force a re-enumeration");
-			assert.deepEqual(
-				fetcher.resolvedIds(),
-				["42.0", "40.0", "42.0", "40.0"],
-				"refresh should also clear the resolved sequence-number cache",
-			);
-		});
-
-		it("does not let a fetch in flight during refresh() repopulate the cache", async () => {
+		it("prunes the resolved sequence number of a version that leaves the list, re-resolving it if it returns", async () => {
 			// @q M-CACHE-03
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+			const seqs = { "43.0": 460, "42.0": 448, "40.0": 418 };
+			const { manager, fetcher } = makeManager(versions, seqs);
+			await manager.findBaseForSeq(0); // resolves 43.0, 42.0, 40.0
+
+			versions.pop(); // 40.0 leaves the list
+			await manager.findBaseForSeq(0); // re-enumerates; 43.0/42.0 kept, 40.0 pruned (and now absent)
+
+			versions.push(ref("40.0")); // 40.0 returns
+			await manager.findBaseForSeq(0); // 40.0 must be resolved again, not served stale
+
+			assert.equal(fetcher.listCalls(), 3, "the list is re-enumerated on every call");
+			assert.deepEqual(
+				fetcher.resolvedIds(),
+				["43.0", "42.0", "40.0", "40.0"],
+				"survivors stay cached; a departed-then-returned version is re-resolved",
+			);
+		});
+
+		it("does not memoize a failed version-list fetch — a later call retries", async () => {
+			// @q M-CACHE-04
 			let listCalls = 0;
-			const gates: ((versions: OdspFileVersionRef[]) => void)[] = [];
 			const fetcher: IOdspFileVersionFetcher = {
 				listFileVersions: async () => {
 					listCalls++;
-					return new Promise<OdspFileVersionRef[]>((resolve) => gates.push(resolve));
+					if (listCalls === 1) {
+						throw new Error("transient list failure");
+					}
+					return [ref("44.0"), ref("43.0")];
 				},
 				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
 			};
 			const manager = new OdspVersionManager(fetcher);
-
-			// Start a query so the version-list fetch is in flight, then refresh before it settles.
-			const first = manager.listVersions();
-			manager.refresh();
-			gates[0]?.([ref("2"), ref("1")]); // the in-flight fetch settles AFTER the refresh
-			await first;
-
-			// The refresh must not have been overwritten by the late fetch: the next query re-fetches.
-			const second = manager.listVersions();
-			gates[1]?.([ref("2"), ref("1")]);
-			await second;
-
+			await assert.rejects(async () => manager.findBaseForSeq(0), /transient list failure/);
+			const result = await manager.findBaseForSeq(0); // retries the list, succeeds
+			assert.equal(result.kind, "noBaseVersion");
 			assert.equal(
 				listCalls,
 				2,
-				"a refresh() during an in-flight fetch must force a re-fetch",
+				"the failed list fetch should be retried, not replayed from cache",
 			);
 		});
 	});
@@ -218,28 +227,75 @@ describe("OdspVersionManager", () => {
 		it("propagates (does not swallow) a failure to resolve a version's sequence number", async () => {
 			// @q M-ERR-01
 			// 42.0 has no configured seq -> resolveSequenceNumber throws.
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "40.0": 418 };
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+			const seqs = { "43.0": 460, "40.0": 418 };
 			const { manager } = makeManager(versions, seqs);
 			await assert.rejects(async () => manager.findBaseForSeq(430), /42\.0/);
+		});
+
+		it("does not cache a failed resolution — a later call retries", async () => {
+			// @q M-ERR-02
+			let attempts = 0;
+			const fetcher: IOdspFileVersionFetcher = {
+				listFileVersions: async () => [ref("44.0"), ref("43.0")],
+				resolveSequenceNumber: async () => {
+					attempts++;
+					if (attempts === 1) {
+						throw new Error("transient");
+					}
+					return 448;
+				},
+			};
+			const manager = new OdspVersionManager(fetcher);
+			await assert.rejects(async () => manager.findBaseForSeq(500), /transient/);
+			// The rejected resolution must not be cached: the next call retries and succeeds.
+			const result = await manager.findBaseForSeq(500);
+			assert.equal(result.kind === "found" && result.base.sequenceNumber, 448);
+			assert.equal(
+				attempts,
+				2,
+				"the failed resolution should be retried, not replayed from cache",
+			);
 		});
 	});
 
 	describe("listVersions", () => {
 		it("returns every version with its resolved sequence number, newest-first", async () => {
 			// @q M-LIST-01
-			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
-			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0"), ref("40.0")];
+			const seqs = { "44.0": 480, "43.0": 460, "42.0": 448, "40.0": 418 };
 			const { manager } = makeManager(versions, seqs);
 			const resolved = await manager.listVersions();
 			assert.deepEqual(
 				resolved.map((v) => [v.versionId, v.sequenceNumber]),
 				[
-					["tip", 460],
+					["44.0", 480],
+					["43.0", 460],
 					["42.0", 448],
 					["40.0", 418],
 				],
 			);
+		});
+
+		it("resolves the tip fresh on each call (never cached) while sealed versions come from cache", async () => {
+			// @q M-LIST-02
+			const versions = [ref("44.0"), ref("43.0"), ref("42.0")];
+			const seqs = { "44.0": 480, "43.0": 460, "42.0": 448 };
+			const { manager, fetcher } = makeManager(versions, seqs);
+			await manager.listVersions();
+			await manager.listVersions();
+			const resolved = fetcher.resolvedIds();
+			assert.equal(
+				resolved.filter((id) => id === "44.0").length,
+				2,
+				"the tip is resolved fresh on every call",
+			);
+			assert.equal(
+				resolved.filter((id) => id === "43.0").length,
+				1,
+				"a sealed version is resolved once and cached",
+			);
+			assert.equal(resolved.filter((id) => id === "42.0").length, 1);
 		});
 	});
 });

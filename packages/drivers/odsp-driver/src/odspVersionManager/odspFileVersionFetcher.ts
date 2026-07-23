@@ -97,8 +97,8 @@ export function createOdspFileVersionFetcher(
 		getWithRetryForTokenRefresh(async (options) => {
 			// A file version's sequence number lives inside that version's snapshot, so fetch the snapshot
 			// from the version-scoped endpoint. `blobs=2` inlines blob contents so the `.protocol/attributes`
-			// blob (which carries the sequence number) is included; `deltas=1` is intentionally omitted, as
-			// it would bundle the op stream and its op-level sequence numbers.
+			// blob (which carries the sequence number) is included. Only blobs are requested, since the
+			// sequence number comes from the snapshot tree, not the bundled op stream that `deltas=1` adds.
 			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions/${encodeURIComponent(
 				versionId,
 			)}/opStream/snapshots/trees/latest?blobs=2`;
@@ -121,10 +121,16 @@ export function createOdspFileVersionFetcher(
 				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
 				sequenceNumber =
 					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
-			} else {
+			} else if (contentType.includes("application/ms-fluid")) {
 				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
 				const bytes = new Uint8Array(await response.content.arrayBuffer());
 				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
+			} else {
+				// Neither framing was returned (e.g. an HTML error page or a missing content-type); surface
+				// a clear error rather than mis-parsing the body as a compact snapshot.
+				throw new Error(
+					`ODSP file version ${versionId} snapshot returned an unexpected content-type "${contentType}"`,
+				);
 			}
 			// A version's snapshot must carry a sequence number; a missing one is surfaced as an error
 			// naming the version, rather than returning a wrong value.

@@ -226,6 +226,30 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		assert.equal(result, 448);
 	});
 
+	it("resolveSequenceNumber rejects on an unexpected content-type instead of mis-parsing", async () => {
+		// @q F-RESOLVE-04
+		await assert.rejects(
+			async () =>
+				withFetch(
+					[await createResponse({ "content-type": "text/html" }, "<html></html>", 200)],
+					async () => fetcher.resolveSequenceNumber("42.0"),
+				),
+			/unexpected content-type/,
+		);
+	});
+
+	it("resolveSequenceNumber percent-encodes the version label in the snapshot URL", async () => {
+		// @q F-RESOLVE-05
+		const { urls } = await withFetch(
+			[await createResponse(jsonHeaders, snapshotWithSeq(448), 200)],
+			async () => fetcher.resolveSequenceNumber("42 0#draft"),
+		);
+		assert.ok(
+			urls[0]?.includes("/versions/42%200%23draft/opStream/"),
+			`expected the label to be percent-encoded, got ${urls[0]}`,
+		);
+	});
+
 	it("listFileVersions surfaces a non-success response as an error", async () => {
 		// @q F-ERROR-01
 		await assert.rejects(async () =>
