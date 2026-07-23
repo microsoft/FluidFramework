@@ -271,12 +271,12 @@ type FlexList<Item = unknown> = readonly LazyItem<Item>[];
 // @public @system
 type FlexListToUnion<TList extends FlexList> = ExtractItemType<TList[number]>;
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -287,7 +287,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -302,7 +302,7 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @beta @sealed
+// @public @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
@@ -324,7 +324,7 @@ export namespace FluidSerializableAsTree {
     export type Data = JsonCompatible<IFluidHandle>;
     const // @system
     _APIExtractorWorkaroundObjectBase: TreeNodeSchemaClass<"com.fluidframework.serializable.object", NodeKind.Record, TreeRecordNodeUnsafe<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema<"string", string>, LeafSchema<"number", number>, LeafSchema<"boolean", boolean>, LeafSchema<"null", null>, LeafSchema<"handle", IFluidHandle<unknown>>]> & WithType<"com.fluidframework.serializable.object", NodeKind.Record, unknown>, {
-    readonly [x: string]: string | number | IFluidHandle<unknown> | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | FluidSerializableObject | Array | null;
+    readonly [x: string]: string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema<"string", string>, LeafSchema<"number", number>, LeafSchema<"boolean", boolean>, LeafSchema<"null", null>, LeafSchema<"handle", IFluidHandle<unknown>>], undefined, unknown>;
     // @sealed
     export class FluidSerializableObject extends _APIExtractorWorkaroundObjectBase {
@@ -333,7 +333,7 @@ export namespace FluidSerializableAsTree {
     export type _RecursiveArrayWorkaroundJsonArray = FixRecursiveArraySchema<typeof Array>;
     const // @system
     _APIExtractorWorkaroundArrayBase: TreeNodeSchemaClass<"com.fluidframework.serializable.array", NodeKind.Array, System_Unsafe.TreeArrayNodeUnsafe<readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema<"string", string>, LeafSchema<"number", number>, LeafSchema<"boolean", boolean>, LeafSchema<"null", null>, LeafSchema<"handle", IFluidHandle<unknown>>]> & WithType<"com.fluidframework.serializable.array", NodeKind.Array, unknown>, {
-    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | FluidSerializableObject | Array | null, any, undefined>;
+    [Symbol.iterator](): Iterator<string | number | IFluidHandle<unknown> | FluidSerializableObject | Array | System_Unsafe.InsertableTypedNodeUnsafe<LeafSchema<"boolean", boolean>, LeafSchema<"boolean", boolean>> | null, any, undefined>;
     }, false, readonly [() => typeof FluidSerializableObject, () => typeof Array, LeafSchema<"string", string>, LeafSchema<"number", number>, LeafSchema<"boolean", boolean>, LeafSchema<"null", null>, LeafSchema<"handle", IFluidHandle<unknown>>], undefined>;
     // (undocumented)
     export type Tree = TreeNodeFromImplicitAllowedTypes<typeof Tree>;
