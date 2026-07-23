@@ -79,6 +79,7 @@ const RootStringArray = sf.array("RootArray", sf.string);
 class Box extends sf.objectRecursive("Box", {
 	value: sf.optional(sf.string),
 	nested: sf.optionalRecursive([() => Box]),
+	tags: sf.optional(sf.array("tags", sf.string)),
 }) {}
 {
 	type _check = ValidateRecursiveSchema<typeof Box>;
@@ -98,6 +99,7 @@ const StringOrBoxArraySchemaConfig = {
 class BoxWithASecret extends sf2.objectRecursive("Box", {
 	value: sf2.optional(sf2.string),
 	nested: sf2.optionalRecursive([() => BoxWithASecret]),
+	tags: sf2.optional(sf2.array("tags", sf2.string)),
 	secret: sf2.optional(sf2.string),
 }) {}
 {
@@ -962,6 +964,122 @@ const objectScenarios = {
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
 		expectSurvivingMarker: true,
 	} as const,
+
+	/**
+	 * Starts from a nested {@link Box} with one tag, inserts two tags, moves one, then removes the root box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                  -\> `Box: { nested: Box: { tags: ["a🕰️"] } } }`
+	 * 1. insert tags "x☠️" "y☠️" -\> `Box: { nested: Box: { tags: ["x☠️", "y☠️","a🕰️"] } }`
+	 * 2. move tag 0 to end        -\> `Box: { nested: Box: { tags: ["y☠️", "a🕰️", "x☠️"] } }`
+	 * 3. remove root box          -\> `undefined`  |: `Box: { nested: Box: { tags: ["y☠️", "a🕰️", "x☠️"] } }`
+	 *
+	 * Classification: x☠️ and y☠️ come in as new roots and leave as nested under [detached] prior node
+	 */
+	nested_Box_tags_inserted_then_one_tag_moved_and_root_Box_removed: {
+		schema: OptionalBox,
+		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({ nested: new Box({ tags: ["a🕰️"] }) }),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root?.nested?.tags);
+			const tags = view.root.nested.tags;
+			tags.insertAtStart("x☠️", "y☠️");
+			tags.moveRangeToEnd(0, 1);
+			view.root = undefined;
+		},
+		unminimizedBuildExpectations: { builds: 1, tops: 2 },
+		expectSurvivingMarker: false,
+	} as const,
+
+	/**
+	 * Starts from a nested {@link Box} with two tags, inserts two tags, rearranges tags, removes a tag, then removes the tags field.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial           -\> `Box: { nested: Box: { tags: ["a🕰️", "b🕰️"] } } }`
+	 * 1. insert tags "x☠️" "y☠️"  -\> `Box: { nested: Box: { tags: ["a🕰️", "x☠️", "y☠️", "b🕰️"] } }`
+	 * 2. rearrange                 -\> `Box: { nested: Box: { tags: ["a🕰️", "y☠️", "b🕰️", "x☠️"] } }`
+	 * 2. remove tag[0]             -\> `Box: { nested: Box: { tags: ["y☠️", "b🕰️", "x☠️"] } }`         |: "a🕰️"
+	 * 3. delete nested.tags        -\> `Box: { nested: Box: <empty> } }`                                |: "a🕰️", `tags: ["y☠️", "b🕰️", "x☠️"]`
+	 * 4. set nested value          -\> `Box: { nested: Box: { value: "z❤️" } } }`                       |: "a🕰️", `tags: ["y☠️", "b🕰️", "x☠️"]`
+	 *
+	 * Classification: x☠️ and y☠️ come in as new root and leave as nested under [detached] prior node
+	 */
+	nested_Box_tags_inserted_then_tags_rearranged_and_removed: {
+		schema: OptionalBox,
+		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({ nested: new Box({ tags: ["a🕰️", "b🕰️"] }) }),
+		apply: (_root, _tree, view) => {
+			const nested = view.root?.nested;
+			assert.ok(nested?.tags);
+			nested.tags.insertAt(1, "x☠️", "y☠️");
+			nested.tags.moveRangeToIndex(1, 2, 4);
+			nested.tags.removeAt(0);
+			delete nested.tags;
+			// Set a surving value to be able to verify some change survives
+			nested.value = "z❤️";
+		},
+		unminimizedBuildExpectations: { builds: 2, tops: 3 },
+		expectSurvivingMarker: true,
+	} as const,
+
+	/**
+	 * Starts from an empty {@link Box}, adds a nested {@link Box} with `tags` field, changes `tags`, then removes the box.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                                      -\> `Box: <empty>`
+	 * 1. insert nested Box with tags ["x☠️", "y☠️"]  -\> `Box: { nested: Box: { tags: ["x☠️", "y☠️"] } }`
+	 * 2. remove tag at 0                              -\> `Box: { nested: Box: { tags: ["y☠️"] } }`         |: "x☠️"
+	 * 3. remove root box                              -\> `undefined`                                       |: "x☠️", `Box: { nested: Box: { tags: ["y☠️"] } }`
+	 *
+	 * Classification: x☠️ and y☠️ come in as new nested content and leave as detached root and nested under [detached] prior node (same parent), respectively
+	 */
+	nest_Box_with_tags_then_root_Box_removed: {
+		schema: OptionalBox,
+		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
+		initialContent: () => new Box({}),
+		apply: (_root, _tree, view) => {
+			assert.ok(view.root);
+			const nested = new Box({ tags: ["x☠️", "y☠️"] });
+			view.root.nested = nested;
+			nested.tags?.removeAt(0);
+			view.root = undefined;
+		},
+		unminimizedBuildExpectations: { builds: 1, tops: 1 },
+		expectSurvivingMarker: false,
+	} as const,
+
+	/**
+	 * Starts from an empty root, inserts a {@link Box} with tags ["x❤️", "y☠️"], then transforms tags to ["z❤️", "x❤️"].
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                    -\> `undefined`
+	 * 1. insert Box with tags ["x❤️", "y☠️"]  -\> `Box: { tags: ["x❤️", "y☠️"] }`
+	 * 2. insert tag "z❤️" at 0      -\> `Box: { tags: ["z❤️", "x❤️", "y☠️"] }`
+	 * 3. move tag 2 to 1            -\> `Box: { tags: ["z❤️", "y☠️", "x❤️"] }`
+	 * 4. move tag 1 to 0            -\> `Box: { tags: ["y☠️", "z❤️", "x❤️"] }`
+	 * 5. remove tag at 0            -\> `Box: { tags: ["z❤️", "x❤️"] }`          |: "y☠️"
+	 *
+	 * Classification: y☠️ comes in as new nested content and leaves as detached root
+	 */
+	add_root_Box_then_edit_tags: {
+		schema: OptionalBox,
+		initialContent: undefined,
+		apply: (_root, _tree, view) => {
+			const root = new Box({ tags: ["x❤️", "y☠️"] });
+			view.root = root;
+			assert.ok(root.tags);
+			root.tags.insertAt(0, "z❤️");
+			root.tags.moveRangeToIndex(1, 2, 3);
+			root.tags.moveRangeToStart(1, 2);
+			root.tags.removeAt(0);
+		},
+		unminimizedBuildExpectations: { builds: 2, tops: 2 },
+		expectSurvivingMarker: true,
+	} as const,
 } as const satisfies Record<string, BoxScenario>;
 // #endregion
 
@@ -1268,9 +1386,9 @@ describe("transaction minimize post-processor", () => {
 			const { view } = runScenario(
 				objectScenarios.nested_Box_value_set_then_nested_Box_removed,
 			);
-			assert.notEqual(view.root, undefined);
-			assert.equal(view.root?.nested, undefined);
-			assert.equal(view.root?.value, undefined);
+			assert.ok(view.root);
+			assert.equal(view.root.nested, undefined);
+			assert.equal(view.root.value, undefined);
 		});
 
 		it("reflects an empty root when a nested object with a value is added and then the root object is removed", () => {
@@ -1301,6 +1419,32 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.equal(view.root?.value, "x❤️");
 			assert.equal(view.root?.nested, undefined);
+		});
+
+		it("reflects an undefined root when nested tags are inserted and one moved, then the root is removed", () => {
+			const { view } = runScenario(
+				objectScenarios.nested_Box_tags_inserted_then_one_tag_moved_and_root_Box_removed,
+			);
+			assert.equal(view.root, undefined);
+		});
+
+		it("reflects an empty nested tags field when tags are inserted, rearranged, and then removed", () => {
+			const { view } = runScenario(
+				objectScenarios.nested_Box_tags_inserted_then_tags_rearranged_and_removed,
+			);
+			assert.ok(view.root?.nested);
+			assert.equal(view.root.nested.tags, undefined);
+			assert.equal(view.root.nested.value, "z❤️");
+		});
+
+		it("reflects an undefined root when a nested object with tags is added and then the root object is removed", () => {
+			const { view } = runScenario(objectScenarios.nest_Box_with_tags_then_root_Box_removed);
+			assert.equal(view.root, undefined);
+		});
+
+		it("reflects surviving tags of a newly inserted root object when tags are inserted, moved, and removed", () => {
+			const { view } = runScenario(objectScenarios.add_root_Box_then_edit_tags);
+			assert.deepEqual([...(view.root?.tags ?? [])], ["z❤️", "x❤️"]);
 		});
 
 		it("reflects edits made before a schema change", () => {
@@ -1701,6 +1845,47 @@ describe("transaction minimize post-processor", () => {
 			const change = getHeadChange(view);
 			// Only the surviving root object "x❤️" (without the removed nested "y☠️") remains, so exactly one build should remain.
 			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+
+		it("carries no build when nested tags are inserted and one moved, then the root is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_tags_inserted_then_one_tag_moved_and_root_Box_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The root is removed, so none of the inserted tags are present in the final document and no builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
+		});
+
+		it("carries no build when nested tags are inserted, rearranged, and then removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nested_Box_tags_inserted_then_tags_rearranged_and_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// All inserted tags are removed, so only the nested value is present in the final document and only that build should remain.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+
+		it("carries no build when a nested object with tags is added and then the root object is removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.nest_Box_with_tags_then_root_Box_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// No created node is present in the final document, so no builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
+		});
+
+		it("keeps the surviving tags' builds when tags are inserted, moved, and removed under a newly inserted object", () => {
+			const { view, stringifiedChange } = runScenario(
+				objectScenarios.add_root_Box_then_edit_tags,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// Both the inserted root Box (originally carrying "x☠️") and the separately inserted "y❤️" survive
+			// in the final document, so both builds should remain.
+			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
 
 		it("keeps only edits' surviving builds made before a schema change", () => {
