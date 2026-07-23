@@ -115,6 +115,11 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates if publishing to the public npmjs.org registry is allowed.
+- name: allowPublishingToNpmjs
+  type: boolean
+  default: false
+
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
   type: boolean
@@ -898,6 +903,7 @@ extends:
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
             buildDirectory: ${{ parameters.buildDirectory }}
 
       # Capture pipeline stage results

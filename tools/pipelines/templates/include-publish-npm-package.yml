@@ -15,6 +15,10 @@ parameters:
   type: boolean
   default: false
 
+- name: allowPublishingToNpmjs
+  type: boolean
+  default: false
+
 - name: buildDirectory
   type: string
 
@@ -75,7 +79,7 @@ stages:
 - stage: publish_npm_public
   dependsOn: build
   displayName: Publish to public npmjs.org
-  condition: and(succeeded(), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
+  condition: and(succeeded(), eq(${{ parameters.allowPublishingToNpmjs }}, true), or(eq(variables['release'], 'release'), eq(variables['release'], 'prerelease')))
   variables:
   - group: ado-feeds
   jobs:
