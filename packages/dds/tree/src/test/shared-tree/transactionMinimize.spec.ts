@@ -1107,7 +1107,7 @@ const parallelObjectScenarios = {
 	 * 2. move pallet0.boxes[0..2) ("1🕰️", "5☠️") into pallet1.boxes -\> `[ { boxes: [{ "6❤️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5☠️" }, { "4🕰️" }] } ]`
 	 * 3. remove root[1] (pallet1)                                    -\> `[ { boxes: [{ "6❤️" }, { "2🕰️" }] } ]`      |: `{ boxes: [{ "3🕰️" }, { "1🕰️" }, { "5☠️" }, { "4🕰️" }] }`
 	 *
-	 * Classification: 5☠️ comes in as new content under pallet0 and leaves under the detached sibling pallet1
+	 * Classification: Box "5☠️" comes in as new content via pallet0 and leaves under the detached sibling pallet1
 	 */
 	boxes_inserted_then_some_moved_to_sibling_Pallet_that_is_then_removed: {
 		schema: PalletArray,
@@ -1137,7 +1137,7 @@ const parallelObjectScenarios = {
 	 * 2. move pallet0.boxes[0..2) ("1🕰️", "5❤️") into pallet1.boxes -\> `[ { boxes: [{ "6☠️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5❤️" }, { "4🕰️" }] } ]`
 	 * 3. remove root[0] (pallet0)                                    -\> `[ { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5❤️" }, { "4🕰️" }] } ]`   |: `{ boxes: [{ "6☠️" }, { "2🕰️" }] }`
 	 *
-	 * Classification: 6☠️ comes in as new content under pallet0 and leaves under the detached pallet0
+	 * Classification: Box "6☠️" comes in as new content via pallet0 and leaves under the detached pallet0
 	 */
 	boxes_inserted_then_some_moved_to_sibling_Pallet_and_original_parent_Pallet_is_then_removed:
 		{
@@ -1158,6 +1158,39 @@ const parallelObjectScenarios = {
 		} as const,
 
 	/**
+	 * Starts from a root array of one {@link Pallet} node with two boxes. Inserts new Pallet with two boxes,
+	 * moves one of the new Pallet's boxes into the first Pallet, then removes the new Pallet.
+	 * @remarks
+	 * Steps:
+	 *
+	 * 0. initial                                                    -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             } ]`
+	 * 1. insert pallet1 with Box "3❤️", Box "4☠️"                  -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             }, { boxes: [{ "3❤️" }, { "4☠️" }] } ]`
+	 * 2. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] }, { boxes: [{ "4☠️" }]             } ]`
+	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
+	 *
+	 * Classification: Box "4☠️" comes in as new content under new Pallet and leaves under the detached new Pallet
+	 */
+	inserted_new_Pallet_with_two_boxes_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed:
+		{
+			schema: PalletArray,
+			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
+			initialContent: () => [
+				new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
+			],
+			apply: (root) => {
+				const [pallet0] = root;
+				const pallet1 = new Pallet({
+					boxes: [new Box({ value: "3❤️" }), new Box({ value: "4☠️" })],
+				});
+				root.insertAtEnd(pallet1);
+				pallet0.boxes.moveRangeToIndex(1, 0, 1, pallet1.boxes);
+				root.removeAt(1);
+			},
+			unminimizedBuildExpectations: { builds: 1, tops: 1 },
+			expectSurvivingMarker: true,
+		} as const,
+
+	/**
 	 * Starts from a root array of one {@link Pallet} node with two boxes. Inserts two boxes into a new Pallet,
 	 * moves one of the new Pallet's boxes into the first Pallet, then removes the new Pallet.
 	 * @remarks
@@ -1169,7 +1202,7 @@ const parallelObjectScenarios = {
 	 * 3. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] }, { boxes: [{ "4☠️" }]             } ]`
 	 * 4. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
 	 *
-	 * Classification: 4☠️ comes in as new content under new Pallet and leaves under the detached new Pallet
+	 * Classification: Box "4☠️" comes in as new content via new Pallet and leaves under the detached new Pallet
 	 */
 	boxes_inserted_in_new_Pallet_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed:
 		{
@@ -1197,11 +1230,11 @@ const parallelObjectScenarios = {
 	 * Steps:
 	 *
 	 * 0. initial                                                    -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }] } ]`
-	 * 1. insert pallet1 with box "3☠️"                              -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }] }, { boxes: [{ "3☠️" }] } ]`
+	 * 1. insert pallet1 with Box "3☠️"                              -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }] }, { boxes: [{ "3☠️" }] } ]`
 	 * 2. move pallet0.boxes[0..1) ("1🕰️") into pallet1.boxes        -\> `[ { boxes: [{ "2🕰️" }] }, { boxes: [{ "3☠️" }, { "1🕰️" }] } ]`
 	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "2🕰️" }] } ]`   |: `{ boxes: [{ "3☠️" }, { "1🕰️" }] }`
 	 *
-	 * Classification: transient 3☠️ comes in as new content under new pallet1 and leaves under the detached pallet1;
+	 * Classification: Box "3☠️" comes in as new content under new pallet1 and leaves under the detached pallet1;
 	 * pre-existing 1🕰️ is moved into new pallet1 and also leaves under the detached pallet1. Nothing survives as new content.
 	 */
 	boxes_moved_into_new_Pallet_then_new_Pallet_is_then_removed: {
@@ -1607,7 +1640,17 @@ describe("transaction minimize post-processor", () => {
 			);
 		});
 
-		it("reflects surviving boxes of boxes inserted in a new pallet and one moved to sibling when the new pallet is then removed", () => {
+		it("reflects surviving boxes of a new pallet with boxes is inserted, one box moved to sibling, and then the new pallet is then removed", () => {
+			const { view } = runScenario(
+				parallelObjectScenarios.inserted_new_Pallet_with_two_boxes_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed,
+			);
+			assert.deepEqual(
+				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
+				[["1🕰️", "3❤️", "2🕰️"]],
+			);
+		});
+
+		it("reflects surviving boxes of boxes inserted in a new pallet and one moved to sibling and then the new pallet is then removed", () => {
 			const { view } = runScenario(
 				parallelObjectScenarios.boxes_inserted_in_new_Pallet_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed,
 			);
@@ -2107,7 +2150,18 @@ describe("transaction minimize post-processor", () => {
 			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
 		});
 
-		it("keeps the surviving box's build when boxes are inserted in a new pallet and one moved to sibling when the new pallet is then removed", () => {
+		it("keeps the surviving box's build when a new pallet with boxes is inserted, one box moved to sibling, and then the new pallet is then removed", () => {
+			const { view, stringifiedChange } = runScenario(
+				parallelObjectScenarios.inserted_new_Pallet_with_two_boxes_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed,
+			);
+			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
+			const change = getHeadChange(view);
+			// The surviving "3❤️" was moved into pallet0 before the newly inserted pallet1 (carrying transient
+			// "4☠️") was removed, so only the surviving build for "3❤️" should remain.
+			assert.deepEqual(countBuilds(change), { builds: 1, tops: 1 });
+		});
+
+		it("keeps the surviving box's build when boxes are inserted in a new pallet and one moved to sibling and then the new pallet is then removed", () => {
 			const { view, stringifiedChange } = runScenario(
 				parallelObjectScenarios.boxes_inserted_in_new_Pallet_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed,
 			);
