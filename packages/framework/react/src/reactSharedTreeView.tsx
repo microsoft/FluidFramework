@@ -20,8 +20,9 @@ import type {
 	InsertableTreeFieldFromImplicitField,
 } from "@fluidframework/tree";
 import { configuredSharedTree, FormatValidatorBasic } from "@fluidframework/tree/internal";
-import { type FC, type JSX, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import type { FC, ReactElement } from "./reactTypes.js";
 import { toPropTreeNode, type PropTreeValue } from "./propNode.js";
 
 /**
@@ -138,7 +139,7 @@ export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
 	 * and thus making it a member avoids the user of this from having to explicitly provide the type parameter.
 	 * This is an arrow function not a method so it gets the correct this when not called as a member.
 	 */
-	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => JSX.Element;
+	readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => ReactElement;
 }
 
 /**
@@ -251,7 +252,7 @@ export function TreeViewComponent<TSchema extends ImplicitFieldSchema>({
 	errorComponent,
 }: TreeViewProps<TSchema> & {
 	tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
-}): JSX.Element {
+}): ReactElement {
 	const view = tree.treeView;
 
 	const compatibility = useViewCompatibility(view);
@@ -300,7 +301,7 @@ function TreeErrorComponent({
 }: {
 	compatibility: SchemaCompatibilityStatus;
 	upgradeSchema: () => void;
-}): JSX.Element {
+}): ReactElement {
 	// eslint-disable-next-line unicorn/prefer-ternary
 	if (compatibility.canUpgrade) {
 		return (

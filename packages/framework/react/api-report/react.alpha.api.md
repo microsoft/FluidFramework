@@ -4,17 +4,23 @@
 
 ```ts
 
+// @alpha
+export type FC<in P = object> = (props: P) => ReactElement;
+
 // @alpha @sealed
 export interface IReactTreeDataObject<TSchema extends ImplicitFieldSchema> {
     readonly config: TreeViewConfiguration<TSchema>;
     readonly treeView: TreeView<TSchema>;
-    readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => JSX_2.Element;
+    readonly TreeViewComponent: (props: TreeViewProps<TSchema>) => ReactElement;
 }
 
 // @alpha @system
 export type IsMappableObjectType<T, True = true, False = false, Mapped = {
     [P in keyof T]: T[P];
 }> = [Mapped] extends [T] ? ([T] extends [Mapped] ? True : False) : False;
+
+// @alpha @sealed
+export type MemoExoticComponent<T extends FC<never>> = FC<Parameters<T>[0]>;
 
 // @alpha
 export type NodeRecord = Record<string, TreeNode | TreeLeafValue>;
@@ -27,6 +33,9 @@ export interface ObservationOptions {
     onInvalidation?: () => void;
 }
 
+// @alpha @sealed
+export type PropsAreEqual<P> = (previous: Readonly<P>, next: Readonly<P>) => boolean;
+
 // @alpha
 export interface PropTreeNode<T extends TreeNode> extends ErasedType<[T, "PropTreeNode"]> {
 }
@@ -36,6 +45,16 @@ export type PropTreeNodeRecord = Record<string, TreeLeafValue | PropTreeNode<Tre
 
 // @alpha
 export type PropTreeValue<T extends TreeNode | TreeLeafValue | undefined> = T extends TreeNode ? PropTreeNode<T> : T;
+
+// @alpha @sealed
+export interface ReactElement {
+    // (undocumented)
+    readonly key: string | null;
+    // (undocumented)
+    readonly props: any;
+    // (undocumented)
+    readonly type: any;
+}
 
 // @alpha
 export interface SchemaIncompatibleProps {
@@ -70,7 +89,7 @@ export function treeDataObject<TSchema extends ImplicitFieldSchema>(treeConfigur
 // @alpha
 export function TreeViewComponent<TSchema extends ImplicitFieldSchema>(input: TreeViewProps<TSchema> & {
     tree: Pick<IReactTreeDataObject<TSchema>, "treeView">;
-}): JSX_2.Element;
+}): ReactElement;
 
 // @alpha @input
 export interface TreeViewProps<TSchema extends ImplicitFieldSchema> {
@@ -111,7 +130,7 @@ export function useTreeSynchronizedString(tree: TextAsTree.Tree, initialSelectio
 
 // @alpha
 export function withMemoizedTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions & {
-    readonly propsAreEqual?: Parameters<typeof memo>[1];
+    readonly propsAreEqual?: PropsAreEqual<Parameters<ReturnType<typeof withTreeObservations<TIn>>>[0]>;
 }): MemoExoticComponent<ReturnType<typeof withTreeObservations<TIn>>>;
 
 // @alpha

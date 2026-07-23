@@ -205,6 +205,18 @@ versionGroups:
       - "**"
     isIgnored: true
 
+  # @fluidframework/react supports both React 18 and React 19, so its `react` dependency intentionally
+  # uses a union range (`^18.3.1 || ^19.0.0`) that differs from the single-version range used elsewhere
+  # in the repo. Scope the exception to this package so all other `react` usages stay consistent.
+  # This also needs an aliased react 19 and @types/react-19 for testing.
+  - label: "Allow @fluidframework/react to support both React 18 and React 19"
+    dependencies:
+      - "@types/react-19"
+      - "react"
+    packages:
+      - "@fluidframework/react"
+    isIgnored: true
+
   # Workaround for this private internal package. Can be removed once our types wrapper around
   # the package is no longer needed - see https://github.com/argos-ci/jest-puppeteer/issues/568.
   - label: "Ignore private workaround package @types/jest-environment-puppeteer"

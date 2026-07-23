@@ -8,6 +8,15 @@ This package currently has some experimental APIs focused on integrating SharedT
 
 This package is currently ESM only and does not support CommonJS.
 
+This package attempts to support React 18 and React 19.
+Part of this effort involves avoiding exporting types from React and instead using our own more specific versions, see `src/reactTypes.ts`.
+This package's implementation is type checked against both React 18 (the default `build`) and React 19 (`npm run check:type-react19`).
+The test suite is likewise run against both React 18 (the default `npm test`) and React 19 (`npm run test:react19`).
+Both React versions are installed via npm aliases (see the `react-18` / `react-19` / `react-dom-18` / `react-dom-19` devDependencies),
+and an ESM/CommonJS module resolution hook (`src/test/reactAlias`) pins each test run to a single, consistent React version.
+Since this package limits its use of React APIs to stable hook APIs, supporting both versions should be robust.
+As all APIs in this package are currently alpha, any remaining version-specific gaps are considered acceptable.
+
 These are a mix of issues that were encountered when authoring this package, as well as limitations of this package.
 
 Some of this logic would be useful for non-react applications: to avoid creating even more septate packages, that logic is not split into its own package.

@@ -1,0 +1,24 @@
+{
+	// Type-checks the package's implementation against React 19's type definitions.
+	//
+	// The default build (tsconfig.json) type-checks against React 18 (@types/react ~18).
+	// React 19's types are installed under the `@types/react-19` / `@types/react-dom-19` npm aliases,
+	// and the `paths` below redirect React type resolution to them. `types` is restricted so the
+	// React 18 types are not auto-included globally (which would conflict with the React 19 types).
+	//
+	// This config is type-check only (noEmit); run it via `npm run check:type-react19`.
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"noEmit": true,
+		"types": ["node"],
+		"baseUrl": ".",
+		// Point at the specific .d.ts files rather than the package folder: under Node16 module
+		// resolution, substituting a bare folder (which @types/react does not expose via an `exports`
+		// map) fails and silently falls back to the React 18 types.
+		"paths": {
+			"react": ["./node_modules/@types/react-19/index.d.ts"],
+			"react/jsx-runtime": ["./node_modules/@types/react-19/jsx-runtime.d.ts"],
+			"react/jsx-dev-runtime": ["./node_modules/@types/react-19/jsx-dev-runtime.d.ts"],
+		},
+	},
+}
