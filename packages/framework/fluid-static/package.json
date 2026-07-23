@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-static",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "A tool to enable consumption of Fluid Data Objects without requiring custom container code.",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -153,7 +153,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.110.0",
+		"@fluidframework/fluid-static-previous": "npm:@fluidframework/fluid-static@2.111.0",
 		"@fluidframework/map": "workspace:~",
 		"@fluidframework/sequence": "workspace:~",
 		"@microsoft/api-extractor": "7.58.1",

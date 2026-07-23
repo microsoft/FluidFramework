@@ -27,6 +27,16 @@ ENV RELEASE_GROUP=$RELEASE_GROUP
 ARG BUILD_ROOT=/usr/FluidFramework
 ARG HISTORIAN_ROOT=$BUILD_ROOT/server/historian
 
+# Debian package mirror. Defaults to the public Debian CDN so local and external-contributor builds
+# work unchanged. CI overrides APT_MIRROR to point at our own Debian mirror to reduce reliance on
+# third-party package feeds. The mirror is a drop-in that serves the main, updates, and security
+# suites. See tools/pipelines/README.md.
+ARG APT_MIRROR=deb.debian.org
+RUN if [ "$APT_MIRROR" != "deb.debian.org" ]; then \
+        find /etc/apt -type f \( -name '*.list' -o -name '*.sources' \) \
+            -exec sed -i "s/deb.debian.org/$APT_MIRROR/g; s/security.debian.org/$APT_MIRROR/g" {} +; \
+    fi
+
 # node-gyp dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
@@ -47,7 +57,6 @@ WORKDIR $HISTORIAN_ROOT
 
 COPY package*.json ./
 COPY pnpm*.yaml ./
-COPY .npmrc ./
 COPY --from=root /scripts/only-pnpm.cjs $BUILD_ROOT/scripts/only-pnpm.cjs
 
 COPY packages/historian/package.json packages/historian/
@@ -69,6 +78,11 @@ ENV PATH="$PNPM_HOME:$HISTORIAN_ROOT/node_modules/.bin:$PATH"
 RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=false \
     PNPM_VERSION=$(node -e "const p=require('./package.json');console.log(p.packageManager.split('+')[0])") \
     && npm install -g "$PNPM_VERSION"
+
+# Forward any pnpm trust policy overrides from the host environment.
+# This is needed because tools/pipelines/templates/include-install-pnpm.yml uses these options to work around CI package mirror limitations.
+ARG PNPM_CONFIG_TRUST_POLICY
+ARG PNPM_CONFIG_MINIMUM_RELEASE_AGE
 
 # Using a cache mount for the pnpm store improves the incremental docker build.
 # pnpm's default storeDir is $PNPM_HOME/store when PNPM_HOME is set

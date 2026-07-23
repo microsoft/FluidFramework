@@ -1786,7 +1786,6 @@ export const shortCodeMap = {
 	"0xc53": "Couldn't find a matching storage ID",
 	"0xc54": "Unexpected leaf value",
 	"0xc55": "Cannot switch branches during a transaction",
-	"0xc56": "Branch does not exist",
 	"0xc57": "Branch summary must have a base",
 	"0xc58": "Main branch must exist",
 	"0xc59": "Expected branch to already exist",
@@ -1904,7 +1903,6 @@ export const shortCodeMap = {
 	"0xcdb": "Expected current label node to exist",
 	"0xcdc": "Expected label tree node to have children",
 	"0xcdd": "Expected parent label node to exist",
-	"0xcde": "Unsupported node type in text array",
 	"0xcdf": "Expected retain count to be a number",
 	"0xce0": "batchIdToSeqNum and seqNumToBatchId should be in sync for duplicate",
 	"0xce1": "seqNumToBatchId and batchIdToSeqNum should be in sync",
@@ -1944,5 +1942,12 @@ export const shortCodeMap = {
 	"0xd03": "Claims: unexpected op type in rollback",
 	"0xd04": "Claims: only claim ops should be stashed",
 	"0xd05": "Column ID not found in cache",
-	"0xd06": "No constraints generated for column references."
+	"0xd06": "No constraints generated for column references.",
+	"0xd07": "Expected transaction revision in the presence of transaction steps",
+	"0xd08": "Index out of bounds while formatting text range.",
+	"0xd09": "getCharactersSubarray failed to find index after index range was checked",
+	"0xd0a": "OriginatorlessEncodedId must be a finalized compressed id at runtime",
+	"0xd0b": "Decompressed id must be a string",
+	"0xd0c": "withIncrementalDecoder can only be called on contexts without an originator session ID",
+	"0xd0d": "incrementalEncoder cannot be used when encoding originator-dependent identifiers"
 };

@@ -6,8 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -52,12 +51,12 @@ import {
 	type ChangeMetadata,
 	type LabelTree,
 	type TransactionLabels,
-	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
+	rebaseBranch,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -76,6 +75,7 @@ import {
 	SharedTreeBranch,
 	TransactionResult as InternalTransactionResult,
 	type SharedTreeBranchChange,
+	type SquashingTransactionOptions,
 	type Transactor,
 } from "../shared-tree-core/index.js";
 import {
@@ -88,11 +88,11 @@ import {
 	type TreeBranch,
 	type TreeBranchAlpha,
 	type VerboseTree,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	type TransactionConstraintAlpha,
 	type TreeViewAlpha,
 	getInnerNode,
@@ -117,6 +117,8 @@ import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
+import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
+import { SerializedChange } from "./serializedChange.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -206,6 +208,11 @@ export interface CheckoutEvents {
 }
 
 /**
+ * A collection of functions for managing transactions on a {@link ITreeCheckout}.
+ */
+export type TreeTransactor = Transactor<SquashingTransactionOptions<SharedTreeChange>>;
+
+/**
  * Provides a means for interacting with a SharedTree.
  * This includes reading data from the tree and running transactions to mutate the tree.
  * @remarks This interface should not have any implementations other than those provided by the SharedTree package libraries.
@@ -251,7 +258,7 @@ export interface ITreeCheckout
 	/**
 	 * A collection of functions for managing transactions.
 	 */
-	readonly transaction: Transactor;
+	readonly transaction: TreeTransactor;
 
 	fork(): ITreeCheckout;
 
@@ -310,7 +317,7 @@ export function createTreeCheckout(
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -390,7 +397,7 @@ function getCheckout(context: TreeBranch): TreeCheckout {
  * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
  * @param constraints - The constraints to add to the transaction.
  *
- * @see {@link RunTransactionParams.preconditions}.
+ * @see {@link RunTransactionParamsAlpha.preconditions}.
  */
 export function addConstraintsToTransaction(
 	checkout: ITreeCheckout,
@@ -523,7 +530,8 @@ export class TreeCheckout implements ITreeCheckout {
 		),
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
+		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -756,24 +764,16 @@ export class TreeCheckout implements ITreeCheckout {
 					kind,
 					isLocal: true,
 					getChange: () => {
-						const context: ChangeEncodingContext = {
-							idCompressor: this.idCompressor,
-							originatorId: this.idCompressor.localSessionId,
-							revision,
-							isSummary: false,
-						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return {
-							version: 1,
+						return SerializedChange.V1.encode(
+							this.idCompressor,
+							this.changeFamily,
+							change,
 							revision,
-							originatorId: this.idCompressor.localSessionId,
-							change: encodedChange,
-						} satisfies SerializedChange;
+						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.label,
@@ -852,24 +852,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		if (!isSerializedChange(serializedChange)) {
-			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
-		}
-		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
-		const context: ChangeEncodingContext = {
-			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
-			revision,
-			isSummary: false,
-		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
+		const change = SerializedChange.V1.decode(
+			this.idCompressor,
+			this.changeFamily,
+			serializedChange,
+		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		this.#transaction.branch.apply(change);
 	}
 
 	// #region TreeBranchAlpha
@@ -890,49 +879,52 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	@breakingMethod
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.mountTransaction(params, false);
 		const transactionCallbackStatus = transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	@breakingMethod
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.mountTransaction(params, true);
 		const transactionCallbackStatus = await transaction();
 		return this.unmountTransaction(transactionCallbackStatus, params);
 	}
 
-	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+	private mountTransaction(
+		params: RunTransactionParamsAlpha | undefined,
+		isAsync: boolean,
+	): void {
 		this.checkNotDisposed();
 		// Starting a transaction is an edit, so it is forbidden from within a change-event
 		// callback (where the edit lock is held), the same as direct edits. For the async
@@ -949,22 +941,24 @@ export class TreeCheckout implements ITreeCheckout {
 			);
 		}
 		this.pushLabelFrame(params?.label);
-		this.transaction.start();
+		this.transaction.start({
+			postProcessor: extractTransactionChangeProcessor(params?.postProcessor),
+		});
 
 		addConstraintsToTransaction(this, false, params?.preconditions);
 	}
 
 	private unmountTransaction<TSuccessValue, TFailureValue>(
 		transactionCallbackStatus:
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params: RunTransactionParams | undefined,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
+		params: RunTransactionParamsAlpha | undefined,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
 		this.checkNotDisposed();
 		const rollback = transactionCallbackStatus?.rollback;
 		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
+			transactionCallbackStatus as TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
 		)?.value;
 
 		if (rollback === true) {
@@ -1180,7 +1174,7 @@ export class TreeCheckout implements ITreeCheckout {
 		return this.forest.anchors.locate(anchor);
 	}
 
-	public get transaction(): Transactor {
+	public get transaction(): TreeTransactor {
 		return this.#transaction;
 	}
 	/**
@@ -1207,7 +1201,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout");
+		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
@@ -1294,6 +1288,30 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("Branches do not share a common ancestor.");
 		}
 		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
+		const branchCheckout = getCheckout(branch);
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+		);
+
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const revision = this.mintRevisionTag();
+		return SerializedChange.V1.encode(
+			this.idCompressor,
+			this.changeFamily,
+			rebased.sourceChange,
+			revision,
+			undefined,
+		);
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1756,27 +1774,6 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
-}
-
-interface SerializedChange {
-	version: 1;
-	revision: RevisionTag;
-	change: JsonCompatibleReadOnly;
-	originatorId: SessionId;
-}
-
-function isSerializedChange(value: unknown): value is SerializedChange {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-	const change = value as Partial<SerializedChange>;
-	return (
-		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
-		typeof change.originatorId === "string" &&
-		isStableId(change.originatorId) &&
-		change.change !== undefined
-	);
 }
 
 /**

@@ -17,6 +17,7 @@ import {
 import Axios from "axios";
 import express from "express";
 import nconf from "nconf";
+import type { Configuration as WebpackConfiguration } from "webpack";
 import type Server from "webpack-dev-server";
 import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
@@ -344,6 +345,53 @@ export function devServerConfig(
 				return middlewares;
 			},
 		},
+	};
+}
+
+/**
+ * Creates a webpack config suitable for a typical example using webpack-fluid-loader.
+ * @internal
+ */
+export function commonExampleConfig(
+	baseDir: string,
+	env: RouteOptions & { production?: boolean },
+): WebpackConfiguration {
+	const { production } = env;
+	return {
+		...devServerConfig(baseDir, env),
+		entry: {
+			main: "./src/index.ts",
+		},
+		resolve: {
+			extensionAlias: {
+				".js": [".ts", ".tsx", ".js"],
+				".cjs": [".cts", ".cjs"],
+				".mjs": [".mts", ".mjs"],
+			},
+		},
+		module: {
+			rules: [
+				{
+					test: /\.tsx?$/,
+					loader: require.resolve("ts-loader"),
+				},
+				{
+					test: /\.[cm]?js$/,
+					use: [require.resolve("source-map-loader")],
+					enforce: "pre",
+				},
+			],
+		},
+		output: {
+			filename: "[name].bundle.js",
+			path: path.resolve(baseDir, "dist"),
+			library: { name: "[name]", type: "umd" },
+		},
+		watchOptions: {
+			ignored: "**/node_modules/**",
+		},
+		mode: production ? "production" : "development",
+		devtool: production ? "source-map" : "inline-source-map",
 	};
 }
 

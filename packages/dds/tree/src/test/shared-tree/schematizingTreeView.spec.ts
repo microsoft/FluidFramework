@@ -30,8 +30,8 @@ import {
 	type InsertableField,
 	type InsertableTypedNode,
 	type UnsafeUnknownSchema,
-	type TransactionResult,
-	type TransactionResultExt,
+	type TransactionVoidResult,
+	type TransactionValueResult,
 	getKernel,
 	toInitialSchema,
 	toUpgradeSchema,
@@ -236,7 +236,7 @@ describe("SchematizingSimpleTreeView", () => {
 		);
 
 		// Put into broken state by trying incompatible upgrade
-		assert.throws(() => view.upgradeSchema(), validateUsageError(/compatibility/));
+		assert.throws(() => view.upgradeSchema(), validateUsageError(/cannot be upgraded/));
 
 		assert.throws(
 			() => view.initialize(5),
@@ -783,7 +783,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -798,7 +798,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: false };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -813,7 +813,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -828,7 +828,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { value: view.root.content };
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResultExt<number, undefined> = {
+				const expectedResult: TransactionValueResult<number, undefined> = {
 					success: true,
 					value: 43,
 				};
@@ -847,7 +847,7 @@ describe("SchematizingSimpleTreeView", () => {
 				});
 				// The transaction is rolled back. So, the content is reverted to the original value.
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResultExt<undefined, number> = {
+				const expectedResult: TransactionValueResult<undefined, number> = {
 					success: false,
 					// Note that this is the value that was returned before the transaction was rolled back.
 					value: 43,
@@ -868,7 +868,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not commit");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(
@@ -888,7 +888,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 42, "The transaction did not rollback");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: false,
 				};
 				assert.deepStrictEqual(
@@ -906,7 +906,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 				});
 				assert.equal(view.root.content, 43);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -921,7 +921,7 @@ describe("SchematizingSimpleTreeView", () => {
 					return { rollback: true };
 				});
 				assert.equal(view.root.content, 42);
-				const expectedResult: TransactionResult = { success: false };
+				const expectedResult: TransactionVoidResult = { success: false };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -953,7 +953,7 @@ describe("SchematizingSimpleTreeView", () => {
 					view.root.content = 43;
 					view.root.content = 44;
 				});
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1023,7 +1023,7 @@ describe("SchematizingSimpleTreeView", () => {
 						preconditions: [{ type: "nodeInDocument", node: childB }],
 					},
 				);
-				const expectedResult: TransactionResult = { success: true };
+				const expectedResult: TransactionVoidResult = { success: true };
 				assert.deepStrictEqual(
 					runTransactionResult,
 					expectedResult,
@@ -1094,7 +1094,7 @@ describe("SchematizingSimpleTreeView", () => {
 					};
 				});
 				assert.equal(view.root.content, 43, "The transaction did not succeed");
-				const expectedResult: TransactionResult = {
+				const expectedResult: TransactionVoidResult = {
 					success: true,
 				};
 				assert.deepStrictEqual(

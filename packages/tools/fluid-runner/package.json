@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/fluid-runner",
-	"version": "2.111.0",
+	"version": "2.113.0",
 	"description": "Utility for running various functionality inside a Fluid Framework environment",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -134,7 +134,7 @@
 		"@fluidframework/build-common": "^2.0.3",
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
-		"@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.110.0",
+		"@fluidframework/fluid-runner-previous": "npm:@fluidframework/fluid-runner@2.111.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/mocha": "^10.0.10",
 		"@types/node": "catalog:types",
