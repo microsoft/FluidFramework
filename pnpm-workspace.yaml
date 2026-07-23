@@ -210,6 +210,15 @@ peerDependencyRules:
   allowedVersions:
     react: 18.3.1
     react-dom: 18.3.1
+    # @fluidframework/react tests against both React 18 (default) and React 19. React 19 is installed in
+    # that package under npm aliases (react-19 / react-dom-19), so its dependency closure contains two
+    # react-dom copies. This makes @testing-library/react's react/react-dom peers (and @types/react-dom's
+    # @types/react peer) ambiguous under strictPeerDependencies. Runtime correctness is instead guaranteed
+    # by an ESM loader that remaps the bare `react` / `react-dom` specifiers to a single consistent version
+    # per test run (see packages/framework/react/src/test/reactAlias), so accepting both versions is safe.
+    "@testing-library/react>react": 18 || 19
+    "@testing-library/react>react-dom": 18 || 19
+    "@types/react-dom>@types/react": 18 || 19
   ignoreMissing:
     # @types/node is ignored because it is usually not needed by packages, and if it is, then the
     # package will hit a compilation failure.
@@ -227,7 +236,7 @@ peerDependencyRules:
 publicHoistPattern:
   - '@arethetypeswrong/cli'
 
-registry: https://packagefeedproxy.microsoft.io/npm/
+# registry: https://packagefeedproxy.microsoft.io/npm/
 
 resolutionMode: highest
 
