@@ -210,6 +210,7 @@ export {
 	taggedAtomId,
 	taggedOptAtomId,
 	offsetChangeAtomId,
+	offsetChangesetLocalId,
 	StableIdSchema,
 	subtractChangeAtomIds,
 	replaceChange,

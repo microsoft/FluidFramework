@@ -14,10 +14,24 @@ import type {
 } from "@fluidframework/tree/alpha";
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
-import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
-import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
+
+// Additional imports used for direct ModularChangeset.builds inspection
+// supplementing testing prior to full minimization implementation.
+import type { ModularChangeset } from "../../feature-libraries/index.js";
+import {
+	fieldKinds,
+	mapTreeFromCursor,
+	minimizeModularChangeset,
+} from "../../feature-libraries/index.js";
+import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+// eslint-disable-next-line import-x/no-internal-modules -- internal details to be removed once minimization is fully implemented
+import { mapDataChanges } from "../../shared-tree/sharedTreeChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules -- internal details to be removed once minimization is fully implemented
+import { createTransactionPostProcessor } from "../../shared-tree/transactionPostProcessor.js";
+import { ChangeProcessorApplicability } from "../../shared-tree-core/index.js";
+import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
 
 /**
  * Reads the change associated with the head commit on the main branch.
@@ -1910,4 +1924,126 @@ describe("transaction minimize post-processor", () => {
 			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
 	});
+
+	// #region Supplemental direct ModularChangeset.builds inspection tests
+
+	/**
+	 * Asserts that none of the node content retained by a minimized change's
+	 * builds carries the transient marker (☠️) and does or does not match
+	 * the surviving marker (❤️) according to the expectation.
+	 *
+	 * @remarks
+	 * Walks every top-level built node (and its nested content) across all of
+	 * the change's builds, checking each node's string value against
+	 * {@link transientMarkerRegex} and {@link someSurvivingMarkerRegex}.
+	 * Transiently-created content (created and then removed within the same
+	 * transaction) is extraneous and should have been dropped by minimization,
+	 * so its presence here indicates minimization did not fully remove it.
+	 * Surviving content (created and still present in the final document) is
+	 * expected to be retained, if the scenario has any. Otherwise, it should
+	 * not be present.
+	 */
+	function assertBuildContentExpectations(
+		minimized: ModularChangeset,
+		expectSurvivingMarker: boolean,
+	): void {
+		let foundSurvivingMarker = false;
+		const checkNode = (node: ReturnType<typeof mapTreeFromCursor>): void => {
+			if (typeof node.value === "string") {
+				assert.doesNotMatch(node.value, transientMarkerRegex);
+				// eslint-disable-next-line @typescript-eslint/prefer-includes -- someSurvivingMarkerRegex may be simple character, but regex is used to work with assert support
+				foundSurvivingMarker ||= someSurvivingMarkerRegex.test(node.value);
+			}
+			for (const children of node.fields.values()) {
+				for (const child of children) {
+					checkNode(child);
+				}
+			}
+		};
+		for (const chunk of minimized.builds?.values() ?? []) {
+			const cursor = chunk.cursor();
+			cursor.firstNode();
+			for (let index = 0; index < chunk.topLevelLength; index += 1) {
+				checkNode(mapTreeFromCursor(cursor));
+				cursor.nextNode();
+			}
+		}
+		if (expectSurvivingMarker) {
+			assert(
+				foundSurvivingMarker,
+				`Expected to find a node value matching ${someSurvivingMarkerRegex} in the minimized change, but none was found.`,
+			);
+		} else {
+			assert(
+				!foundSurvivingMarker,
+				`Expected no node value matching ${someSurvivingMarkerRegex} in the minimized change, but at least one was found.`,
+			);
+		}
+	}
+
+	/**
+	 * Runs a {@link TransactionScenario} to verify that build minimization strips transient content
+	 * but retains expected surviving content (when possible; scenario dependent).
+	 *
+	 * @remarks
+	 * Unlike {@link runScenario}, this does not rely on the production {@link minimize} post-processor.
+	 * Instead it installs a post-processor that runs {@link minimizeModularChangeset} with build
+	 * minification enabled (`testOnlyArg_DisableBuildMinification: false`) on each data change, then
+	 * asserts via {@link assertBuildContentExpectations} that none of the resulting builds retain content
+	 * tagged with the transient marker (☠️) and that surviving content (❤️) is present or absent
+	 * according to the scenario's expectation.
+	 *
+	 * The minimized change is inspected only for this assertion; the original (unadulterated) change is
+	 * returned from the post-processor so the transaction still commits a fully valid change and other
+	 * expectations are not disturbed.
+	 */
+	function runScenarioForCheckingBuildMinimize<
+		TSchema extends ImplicitFieldSchema,
+		TApplyReturn extends void | SchematizingSimpleTreeView<ImplicitFieldSchema>,
+	>(scenario: TransactionScenario<TSchema, TApplyReturn>): void {
+		const { tree, view } = createScenarioView(scenario);
+
+		const postProcessor = createTransactionPostProcessor({
+			applicability: ChangeProcessorApplicability.IfOutermost,
+			processChange: (change) =>
+				mapDataChanges(change, (dataChange) => {
+					const minimized = minimizeModularChangeset(
+						dataChange,
+						fieldKinds,
+						/* testOnlyArg_DisableBuildMinification */ false,
+					);
+
+					assertBuildContentExpectations(minimized, scenario.expectSurvivingMarker);
+
+					// Unadulterated change is returned to avoid horking other transaction
+					// expectations of a fully valid change.
+					return dataChange;
+				}),
+		});
+		view.runTransaction(() => ({ value: scenario.apply(view.root, tree, view) }), {
+			postProcessor,
+		});
+	}
+
+	describe("removes extraneous data from the squashed changes' builds", () => {
+		for (const [scenarioName, scenario] of Object.entries(arrayScenarios)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				runScenarioForCheckingBuildMinimize(scenario);
+			});
+		}
+		for (const [scenarioName, scenario] of Object.entries(objectScenarios)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				runScenarioForCheckingBuildMinimize(scenario);
+			});
+		}
+		for (const [scenarioName, scenario] of Object.entries(schemaUpgradeScenarios).filter(
+			([name]) => name !== "edit_before_and_after_schema_change", // This scenario is expected to throw under normal flow, so skip it for this test.
+		)) {
+			it(`for ${beautifyScenarioName(scenarioName)}`, () => {
+				runScenarioForCheckingBuildMinimize(scenario);
+			});
+		}
+	});
+
+	// #endregion Supplemental direct ModularChangeset.builds inspection tests
 });
