@@ -414,53 +414,86 @@ extends:
                   - task: Bash@3
                     displayName: Generate publish metadata
                     condition: and(succeeded(), eq(variables['System.TeamProject'], 'internal'))
+                    # Most values below are runtime variables and cannot be read through template parameters.
+                    # Pass them through the environment instead of interpolating them into the inline shell script
+                    # so values such as branch names cannot accidentally alter the script's syntax.
                     env:
+                      PUBLISH: '${{ parameters.publish }}'
+                      RELEASE: $(release)
+                      TEST_BUILD: $(testBuild)
                       VERSION: $(SetVersion.version)
                       IS_LATEST: $(SetVersion.isLatest)
                       TAG_NAME: '${{ parameters.tagName }}'
+                      IS_RELEASE_GROUP: '${{ parameters.isReleaseGroup }}'
+                      TEAM_PROJECT: $(System.TeamProject)
                     inputs:
                       targetType: 'inline'
                       workingDirectory: $(Build.ArtifactStagingDirectory)/pack
                       script: |
                         set -eu -o pipefail
 
+                        # Azure DevOps renders compile-time boolean parameters as 'True'/'False' and runtime
+                        # variables as 'true'/'false'; normalize everything to lowercase 'true'/'false' and
+                        # hard-fail on anything else so bad input can't silently be treated as falsy.
+                        normalize_bool() {
+                          local name="$2"
+                          local val
+                          val=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
+                          case "$val" in
+                            true|false) echo "$val" ;;
+                            *)
+                              echo "##vso[task.logissue type=error]Invalid boolean value '$1' for $name"
+                              exit 1
+                              ;;
+                          esac
+                        }
+
                         if [ -z "${VERSION:-}" ]; then
                           echo "##vso[task.logissue type=error]Missing version: SetVersion.version output was empty"
                           exit 1
                         fi
 
-                        # SetVersion.isLatest is only emitted when true. An unset output
-                        # remains as the literal Azure Pipelines macro.
-                        case "${IS_LATEST:-}" in
-                          ""|'$(SetVersion.isLatest)')
-                            isLatest=false
-                            ;;
-                          true|True)
-                            isLatest=true
-                            ;;
-                          false|False)
-                            isLatest=false
-                            ;;
+                        case "$RELEASE" in
+                          none|prerelease|release) ;;
                           *)
-                            echo "##vso[task.logissue type=error]Invalid isLatest value '$IS_LATEST'"
+                            echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'. Expected one of: none, prerelease, release"
                             exit 1
                             ;;
                         esac
 
+                        publish=$(normalize_bool "$PUBLISH" "publish")
+                        testBuild=$(normalize_bool "$TEST_BUILD" "testBuild")
+                        # flub only emits SetVersion.isLatest when it is true. Azure leaves an unresolved macro
+                        # unchanged, so normalize both an empty value and the literal macro to false.
+                        case "${IS_LATEST:-}" in
+                          ""|'$(SetVersion.isLatest)') isLatest=false ;;
+                          *) isLatest=$(normalize_bool "$IS_LATEST" "isLatest") ;;
+                        esac
+                        isReleaseGroup=$(normalize_bool "$IS_RELEASE_GROUP" "isReleaseGroup")
+
                         jq -n \
                           --argjson schemaVersion 1 \
+                          --argjson publish "$publish" \
                           --arg version "$VERSION" \
                           --argjson isLatest "$isLatest" \
+                          --arg release "$RELEASE" \
+                          --argjson testBuild "$testBuild" \
                           --arg tagName "$TAG_NAME" \
+                          --argjson isReleaseGroup "$isReleaseGroup" \
                           '{
                             schemaVersion: $schemaVersion,
+                            publish: $publish,
                             version: $version,
                             isLatest: $isLatest,
-                            tagName: $tagName
+                            release: $release,
+                            testBuild: $testBuild,
+                            tagName: $tagName,
+                            isReleaseGroup: $isReleaseGroup,
                           }' > publish-metadata.json
 
                         echo "Generated publish-metadata.json:"
                         cat publish-metadata.json
+
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 
