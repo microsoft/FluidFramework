@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { LogLevel, type ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	IIdCompressor,
@@ -166,6 +167,12 @@ export interface IdentifierHealingConfig {
 	 * same session offsets.
 	 */
 	readonly sharedObjectId: string;
+
+	/**
+	 * Optional logger used by {@link forceDecodeEncodedIdWithoutSession} to record telemetry
+	 * when the heal-on-decode recovery path is taken (a non-final identifier is healed).
+	 */
+	readonly logger?: ITelemetryBaseLogger;
 }
 
 /**
@@ -177,6 +184,16 @@ export interface IdentifierHealingConfig {
  * deterministic v5 UUID string — *not* a `StableId`, since that brand requires
  * v4, but still a valid identifier value; the `string` arm of the return type
  * covers this case.
+ *
+ * The recovery (heal) path only occurs because of a prior bug where non-finalized identifiers were
+ * written into summaries. When {@link IdentifierHealingConfig.logger} is supplied, a telemetry event
+ * is recorded on that path so heals can be observed in the wild. The error/throw path is intentionally
+ * not instrumented here: the thrown exception is expected to surface via the application's own error
+ * telemetry, and should never be silently swallowed.
+ *
+ * @param id - The op-space compressed id to decode.
+ * @param idCompressor - The ID compressor used to normalize the id.
+ * @param healing - Heal-on-decode configuration. Presence enables healing of non-final ids.
  */
 export function forceDecodeEncodedIdWithoutSession(
 	id: OpSpaceCompressedId,
@@ -189,7 +206,15 @@ export function forceDecodeEncodedIdWithoutSession(
 	}
 	// `id` is a non-final op-space compressed id.
 	if (healing !== undefined) {
-		return uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
+		const healed = uuidV5(`${healing.sharedObjectId}|${id}`, healingNamespace);
+		healing.logger?.send(
+			{
+				category: "generic",
+				eventName: "HealUnresolvableIdentifierOnDecode",
+			},
+			LogLevel.info,
+		);
+		return healed;
 	}
 	throw new Error(
 		"Summary could not be loaded due to an incorrectly encoded identifier. See SharedTreeOptionsBeta.healUnresolvableIdentifiersOnDecode for mitigation.",

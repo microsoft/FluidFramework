@@ -207,7 +207,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 				options.minVersionForCollab,
 				this.schemaAndPolicy,
 				options.healUnresolvableIdentifiersOnDecode === true
-					? { sharedObjectId: sharedObject.id }
+					? { sharedObjectId: sharedObject.id, logger }
 					: undefined,
 			),
 			...summarizables,
