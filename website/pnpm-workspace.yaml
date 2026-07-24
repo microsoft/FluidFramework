@@ -61,6 +61,8 @@ updateNotifier: false
 overrides:
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
+  # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
+  axios@>=1 <1.16: 1.16.0
   brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
   http-proxy-middleware@>=2 <3: ^2.0.10
@@ -68,6 +70,9 @@ overrides:
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
   uuid@>=7 <12: ^11.1.1
+
+  # Resolve a known security vulnerability (CVE-2026-54466).
+  websocket-driver: ^0.7.5
 
   # Resolve a known security vulnerability.
   ws@>=8 <9: ^8.21.0
@@ -88,6 +93,9 @@ overrides:
   # (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0
   # is API-compatible within the ^4.3.0 range it declares.
   '@azure/identity': ^4.13.0
+  # @nevware21/ts-utils: overridden to ^0.14.0 to resolve a prototype pollution
+  # vulnerability (CVE-2026-46681); no patched release exists below 0.14.0.
+  '@nevware21/ts-utils': ^0.14.0
   # @types/react: pinned to v18 to prevent pnpm re-resolution from pulling in v19,
   # which is incompatible with the React 18 docs site.
   '@types/react': ^18.3.12

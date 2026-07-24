@@ -57,6 +57,9 @@ updateNotifier: false
 # - Apply vulnerability remediations (qs, js-yaml, simple-git, diff, tar,
 #   serialize-javascript, picomatch, and minimatch ranges).
 overrides:
+  # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
+  axios@>=1 <1.16: 1.16.0
+
   # Resolve known security vulnerabilities in transitive dependencies.
   brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
