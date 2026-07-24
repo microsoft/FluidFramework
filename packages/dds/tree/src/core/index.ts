@@ -164,6 +164,7 @@ export {
 	type ChangeFamily,
 	type ChangeFamilyCodec,
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamilyEditor,
 	EditBuilder,
 } from "./change-family/index.js";

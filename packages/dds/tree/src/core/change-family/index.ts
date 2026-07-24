@@ -7,6 +7,7 @@ export type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	ChangeFamilyCodec,
 } from "./changeFamily.js";
 export { EditBuilder } from "./editBuilder.js";

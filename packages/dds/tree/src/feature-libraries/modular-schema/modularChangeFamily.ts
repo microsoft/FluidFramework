@@ -15,6 +15,7 @@ import {
 } from "../../codec/index.js";
 import {
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type ChangeRebaser,
@@ -120,7 +121,11 @@ export class ModularChangeFamily
 
 	public constructor(
 		fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-		public readonly codecs: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+		public readonly codecs: ICodecFamily<
+			ModularChangeset,
+			ChangeEncodingContext,
+			ChangeDecodingContext
+		>,
 		public readonly codecOptions: CodecWriteOptions,
 	) {
 		this.fieldKinds = fieldKinds;

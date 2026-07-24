@@ -17,7 +17,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 }
 
 export interface ChangeEncodingContext {
@@ -43,11 +43,23 @@ export interface ChangeEncodingContext {
 	readonly healing?: IdentifierHealingConfig;
 }
 
+/**
+ * Context provided to change codecs when decoding.
+ * @remarks
+ * Currently identical to {@link ChangeEncodingContext}; it exists as a distinct name so that the
+ * decode side of change codecs can be given a decode-specific shape independently of the encode
+ * side in a later step (for example, to carry an {@link IdDecodingContext} instead of the raw
+ * session-id fields). Keeping it a separate type now lets that migration happen without re-threading
+ * every codec type declaration.
+ */
+export type ChangeDecodingContext = ChangeEncodingContext;
+
 export type ChangeFamilyCodec<TChange> = IJsonCodec<
 	TChange,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 export interface ChangeFamilyEditor {
