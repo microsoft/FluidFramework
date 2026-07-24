@@ -6,4 +6,4 @@
  */
 
 export const pkgName = "@fluid-internal/test-service-load";
-export const pkgVersion = "2.112.1";
+export const pkgVersion = "2.112.2";
