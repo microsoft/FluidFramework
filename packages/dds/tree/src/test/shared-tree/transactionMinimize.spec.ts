@@ -202,7 +202,7 @@ function createScenarioView<TSchema extends ImplicitFieldSchema>({
 	return treeAndView;
 }
 
-const initialContentMarkerRegex = /🕰️/;
+const initialContentMarkerRegex = /⌚/;
 const someSurvivingMarkerRegex = /❤️/;
 const transientMarkerRegex = /☠️/;
 
@@ -605,22 +605,22 @@ const arrayScenarios = {
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X🕰️", "Y🕰️"]` and inserts a transient "A☠️" that is removed before the
+	 * Starts from pre-existing content `["X⌚", "Y⌚"]` and inserts a transient "A☠️" that is removed before the
 	 * transaction closes, leaving the document unchanged.
 	 * @remarks
-	 * The pre-existing nodes "X🕰️" and "Y🕰️" are not created by this transaction, so they contribute no builds to its
+	 * The pre-existing nodes "X⌚" and "Y⌚" are not created by this transaction, so they contribute no builds to its
 	 * change. "A☠️" is built and removed within the transaction, so its build is extraneous and should be dropped,
 	 * leaving zero builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial      -\> `["X🕰️", "Y🕰️"]`
-	 * 1. insert "A☠️" -\> `["X🕰️", "A☠️", "Y🕰️"]`
-	 * 2. remove at 1  -\> `["X🕰️", "Y🕰️"]`
+	 * 0. initial      -\> `["X⌚", "Y⌚"]`
+	 * 1. insert "A☠️" -\> `["X⌚", "A☠️", "Y⌚"]`
+	 * 2. remove at 1  -\> `["X⌚", "Y⌚"]`
 	 */
 	preexisting_content_and_transient_insert: {
 		schema: RootStringArray,
-		initialContent: ["X🕰️", "Y🕰️"],
+		initialContent: ["X⌚", "Y⌚"],
 		apply: (root) => {
 			root.insertAt(1, "A☠️");
 			root.removeAt(1);
@@ -630,21 +630,21 @@ const arrayScenarios = {
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X🕰️"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
+	 * Starts from pre-existing content `["X⌚"]` and inserts a transient "A☠️" and a surviving "B❤️", removing "A☠️"
 	 * before the transaction closes.
 	 * @remarks
-	 * "X🕰️" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
+	 * "X⌚" is not created by this transaction. "A☠️" is built and removed within the transaction (extraneous), while
 	 * "B❤️" survives, so exactly one build should remain.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial              -\> `["X🕰️"]`
-	 * 1. insert "A☠️", "B❤️" -\> `["X🕰️", "A☠️", "B❤️"]`
-	 * 2. remove at 1          -\> `["X🕰️", "B❤️"]`
+	 * 0. initial              -\> `["X⌚"]`
+	 * 1. insert "A☠️", "B❤️" -\> `["X⌚", "A☠️", "B❤️"]`
+	 * 2. remove at 1          -\> `["X⌚", "B❤️"]`
 	 */
 	preexisting_content_and_surviving_insert: {
 		schema: RootStringArray,
-		initialContent: ["X🕰️"],
+		initialContent: ["X⌚"],
 		apply: (root) => {
 			root.insertAtEnd("A☠️", "B❤️");
 			root.removeAt(1);
@@ -654,19 +654,19 @@ const arrayScenarios = {
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X🕰️", "Y🕰️", "Z🕰️"]` and rearranges it by moving "Z🕰️" to the start, without
+	 * Starts from pre-existing content `["X⌚", "Y⌚", "Z⌚"]` and rearranges it by moving "Z⌚" to the start, without
 	 * creating or removing any nodes.
 	 * @remarks
 	 * No nodes are created by this transaction (only existing nodes are moved), so the change should carry no builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial             -\> `["X🕰️", "Y🕰️", "Z🕰️"]`
-	 * 1. move "Z🕰️" to start -\> `["Z🕰️", "X🕰️", "Y🕰️"]`
+	 * 0. initial             -\> `["X⌚", "Y⌚", "Z⌚"]`
+	 * 1. move "Z⌚" to start -\> `["Z⌚", "X⌚", "Y⌚"]`
 	 */
 	preexisting_content_rearranged: {
 		schema: RootStringArray,
-		initialContent: ["X🕰️", "Y🕰️", "Z🕰️"],
+		initialContent: ["X⌚", "Y⌚", "Z⌚"],
 		apply: (root) => {
 			root.moveToStart(2);
 		},
@@ -675,18 +675,18 @@ const arrayScenarios = {
 	} as const,
 
 	/**
-	 * Starts from pre-existing content `["X🕰️", "Y🕰️", "Z🕰️"]` and removes "Y🕰️".
+	 * Starts from pre-existing content `["X⌚", "Y⌚", "Z⌚"]` and removes "Y⌚".
 	 * @remarks
 	 * No nodes are created by this transaction (only an existing node is removed), so the change should carry no builds.
 	 *
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial      -\> `["X🕰️", "Y🕰️", "Z🕰️"]`
-	 * 1. remove "Y🕰️" -\> `["X🕰️", "Z🕰️"]`
+	 * 0. initial      -\> `["X⌚", "Y⌚", "Z⌚"]`
+	 * 1. remove "Y⌚" -\> `["X⌚", "Z⌚"]`
 	 */
 	preexisting_content_removed: {
 		schema: RootStringArray,
-		initialContent: ["X🕰️", "Y🕰️", "Z🕰️"],
+		initialContent: ["X⌚", "Y⌚", "Z⌚"],
 		apply: (root) => {
 			root.removeAt(1);
 		},
@@ -977,17 +977,17 @@ const objectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                  -\> `Box: { nested: Box: { tags: ["a🕰️"] } } }`
-	 * 1. insert tags "x☠️" "y☠️" -\> `Box: { nested: Box: { tags: ["x☠️", "y☠️","a🕰️"] } }`
-	 * 2. move tag 0 to end        -\> `Box: { nested: Box: { tags: ["y☠️", "a🕰️", "x☠️"] } }`
-	 * 3. remove root box          -\> `undefined`  |: `Box: { nested: Box: { tags: ["y☠️", "a🕰️", "x☠️"] } }`
+	 * 0. initial                  -\> `Box: { nested: Box: { tags: ["a⌚"] } } }`
+	 * 1. insert tags "x☠️" "y☠️" -\> `Box: { nested: Box: { tags: ["x☠️", "y☠️","a⌚"] } }`
+	 * 2. move tag 0 to end        -\> `Box: { nested: Box: { tags: ["y☠️", "a⌚", "x☠️"] } }`
+	 * 3. remove root box          -\> `undefined`  |: `Box: { nested: Box: { tags: ["y☠️", "a⌚", "x☠️"] } }`
 	 *
 	 * Classification: x☠️ and y☠️ come in as new roots and leave as nested under [detached] prior node
 	 */
 	nested_Box_tags_inserted_then_one_tag_moved_and_root_Box_removed: {
 		schema: OptionalBox,
 		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
-		initialContent: () => new Box({ nested: new Box({ tags: ["a🕰️"] }) }),
+		initialContent: () => new Box({ nested: new Box({ tags: ["a⌚"] }) }),
 		apply: (_root, _tree, view) => {
 			assert.ok(view.root?.nested?.tags);
 			const tags = view.root.nested.tags;
@@ -1004,19 +1004,19 @@ const objectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial           -\> `Box: { nested: Box: { tags: ["a🕰️", "b🕰️"] } } }`
-	 * 1. insert tags "x☠️" "y☠️"  -\> `Box: { nested: Box: { tags: ["a🕰️", "x☠️", "y☠️", "b🕰️"] } }`
-	 * 2. rearrange                 -\> `Box: { nested: Box: { tags: ["a🕰️", "y☠️", "b🕰️", "x☠️"] } }`
-	 * 2. remove tag[0]             -\> `Box: { nested: Box: { tags: ["y☠️", "b🕰️", "x☠️"] } }`         |: "a🕰️"
-	 * 3. delete nested.tags        -\> `Box: { nested: Box: <empty> } }`                                |: "a🕰️", `tags: ["y☠️", "b🕰️", "x☠️"]`
-	 * 4. set nested value          -\> `Box: { nested: Box: { value: "z❤️" } } }`                       |: "a🕰️", `tags: ["y☠️", "b🕰️", "x☠️"]`
+	 * 0. initial           -\> `Box: { nested: Box: { tags: ["a⌚", "b⌚"] } } }`
+	 * 1. insert tags "x☠️" "y☠️"  -\> `Box: { nested: Box: { tags: ["a⌚", "x☠️", "y☠️", "b⌚"] } }`
+	 * 2. rearrange                 -\> `Box: { nested: Box: { tags: ["a⌚", "y☠️", "b⌚", "x☠️"] } }`
+	 * 2. remove tag[0]             -\> `Box: { nested: Box: { tags: ["y☠️", "b⌚", "x☠️"] } }`         |: "a⌚"
+	 * 3. delete nested.tags        -\> `Box: { nested: Box: <empty> } }`                                |: "a⌚", `tags: ["y☠️", "b⌚", "x☠️"]`
+	 * 4. set nested value          -\> `Box: { nested: Box: { value: "z❤️" } } }`                       |: "a⌚", `tags: ["y☠️", "b⌚", "x☠️"]`
 	 *
 	 * Classification: x☠️ and y☠️ come in as new root and leave as nested under [detached] prior node
 	 */
 	nested_Box_tags_inserted_then_tags_rearranged_and_removed: {
 		schema: OptionalBox,
 		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
-		initialContent: () => new Box({ nested: new Box({ tags: ["a🕰️", "b🕰️"] }) }),
+		initialContent: () => new Box({ nested: new Box({ tags: ["a⌚", "b⌚"] }) }),
 		apply: (_root, _tree, view) => {
 			const nested = view.root?.nested;
 			assert.ok(nested?.tags);
@@ -1103,10 +1103,10 @@ const parallelObjectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                                                     -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "4🕰️" }] } ]`
-	 * 1. insert Box "5☠️", Box "6❤️" into pallet0.boxes             -\> `[ { boxes: [{ "1🕰️" }, { "5☠️" }, { "6❤️" }, { "2🕰️" }] }, { boxes: [{ "3🕰️" }, { "4🕰️" }] } ]`
-	 * 2. move pallet0.boxes[0..2) ("1🕰️", "5☠️") into pallet1.boxes -\> `[ { boxes: [{ "6❤️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5☠️" }, { "4🕰️" }] } ]`
-	 * 3. remove root[1] (pallet1)                                    -\> `[ { boxes: [{ "6❤️" }, { "2🕰️" }] } ]`      |: `{ boxes: [{ "3🕰️" }, { "1🕰️" }, { "5☠️" }, { "4🕰️" }] }`
+	 * 0. initial                                                     -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]                        }, { boxes: [{ "3⌚" }, { "4⌚" }] } ]`
+	 * 1. insert Box "5☠️", Box "6❤️" into pallet0.boxes             -\> `[ { boxes: [{ "1⌚" }, { "5☠️" }, { "6❤️" }, { "2⌚" }] }, { boxes: [{ "3⌚" }, { "4⌚" }] } ]`
+	 * 2. move pallet0.boxes[0..2) ("1⌚", "5☠️") into pallet1.boxes -\> `[ { boxes: [{ "6❤️" }, { "2⌚" }]                        }, { boxes: [{ "3⌚" }, { "1⌚" }, { "5☠️" }, { "4⌚" }] } ]`
+	 * 3. remove root[1] (pallet1)                                    -\> `[ { boxes: [{ "6❤️" }, { "2⌚" }] } ]`      |: `{ boxes: [{ "3⌚" }, { "1⌚" }, { "5☠️" }, { "4⌚" }] }`
 	 *
 	 * Classification: Box "5☠️" comes in as new content via pallet0 and leaves under the detached sibling pallet1
 	 */
@@ -1114,8 +1114,8 @@ const parallelObjectScenarios = {
 		schema: PalletArray,
 		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
-			new Pallet({ boxes: [new Box({ value: "3🕰️" }), new Box({ value: "4🕰️" })] }),
+			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+			new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0, pallet1] = root;
@@ -1133,10 +1133,10 @@ const parallelObjectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                                                     -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "4🕰️" }] } ]`
-	 * 1. insert Box "5❤️", Box "6☠️" into pallet0.boxes             -\> `[ { boxes: [{ "1🕰️" }, { "5❤️" }, { "6☠️" }, { "2🕰️" }] }, { boxes: [{ "3🕰️" }, { "4🕰️" }] } ]`
-	 * 2. move pallet0.boxes[0..2) ("1🕰️", "5❤️") into pallet1.boxes -\> `[ { boxes: [{ "6☠️" }, { "2🕰️" }]                        }, { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5❤️" }, { "4🕰️" }] } ]`
-	 * 3. remove root[0] (pallet0)                                    -\> `[ { boxes: [{ "3🕰️" }, { "1🕰️" }, { "5❤️" }, { "4🕰️" }] } ]`   |: `{ boxes: [{ "6☠️" }, { "2🕰️" }] }`
+	 * 0. initial                                                     -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]                        }, { boxes: [{ "3⌚" }, { "4⌚" }] } ]`
+	 * 1. insert Box "5❤️", Box "6☠️" into pallet0.boxes             -\> `[ { boxes: [{ "1⌚" }, { "5❤️" }, { "6☠️" }, { "2⌚" }] }, { boxes: [{ "3⌚" }, { "4⌚" }] } ]`
+	 * 2. move pallet0.boxes[0..2) ("1⌚", "5❤️") into pallet1.boxes -\> `[ { boxes: [{ "6☠️" }, { "2⌚" }]                        }, { boxes: [{ "3⌚" }, { "1⌚" }, { "5❤️" }, { "4⌚" }] } ]`
+	 * 3. remove root[0] (pallet0)                                    -\> `[ { boxes: [{ "3⌚" }, { "1⌚" }, { "5❤️" }, { "4⌚" }] } ]`   |: `{ boxes: [{ "6☠️" }, { "2⌚" }] }`
 	 *
 	 * Classification: Box "6☠️" comes in as new content via pallet0 and leaves under the detached pallet0
 	 */
@@ -1145,8 +1145,8 @@ const parallelObjectScenarios = {
 			schema: PalletArray,
 			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
-				new Pallet({ boxes: [new Box({ value: "3🕰️" }), new Box({ value: "4🕰️" })] }),
+				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0, pallet1] = root;
@@ -1164,10 +1164,10 @@ const parallelObjectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                                                    -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             } ]`
-	 * 1. insert pallet1 with Box "3❤️", Box "4☠️"                  -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             }, { boxes: [{ "3❤️" }, { "4☠️" }] } ]`
-	 * 2. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] }, { boxes: [{ "4☠️" }]             } ]`
-	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
+	 * 0. initial                                                    -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]             } ]`
+	 * 1. insert pallet1 with Box "3❤️", Box "4☠️"                  -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]             }, { boxes: [{ "3❤️" }, { "4☠️" }] } ]`
+	 * 2. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1⌚" }, { "3❤️" }, { "2⌚" }] }, { boxes: [{ "4☠️" }]             } ]`
+	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1⌚" }, { "3❤️" }, { "2⌚" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
 	 *
 	 * Classification: Box "4☠️" comes in as new content under new Pallet and leaves under the detached new Pallet
 	 */
@@ -1176,7 +1176,7 @@ const parallelObjectScenarios = {
 			schema: PalletArray,
 			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
+				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
@@ -1197,11 +1197,11 @@ const parallelObjectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                                                    -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             } ]`
-	 * 1. insert pallet1                                             -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             }, { boxes: []                      } ]`
-	 * 2. insert Box "3❤️", Box "4☠️" into pallet1.boxes            -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }]             }, { boxes: [{ "3❤️" }, { "4☠️" }] } ]`
-	 * 3. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] }, { boxes: [{ "4☠️" }]             } ]`
-	 * 4. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1🕰️" }, { "3❤️" }, { "2🕰️" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
+	 * 0. initial                                                    -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]             } ]`
+	 * 1. insert pallet1                                             -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]             }, { boxes: []                      } ]`
+	 * 2. insert Box "3❤️", Box "4☠️" into pallet1.boxes            -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }]             }, { boxes: [{ "3❤️" }, { "4☠️" }] } ]`
+	 * 3. move pallet1.boxes[0..1) ("3❤️") into pallet0.boxes        -\> `[ { boxes: [{ "1⌚" }, { "3❤️" }, { "2⌚" }] }, { boxes: [{ "4☠️" }]             } ]`
+	 * 4. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "1⌚" }, { "3❤️" }, { "2⌚" }] } ]`   |: `{ boxes: [{ "4☠️" }] }`
 	 *
 	 * Classification: Box "4☠️" comes in as new content via new Pallet and leaves under the detached new Pallet
 	 */
@@ -1210,7 +1210,7 @@ const parallelObjectScenarios = {
 			schema: PalletArray,
 			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
+				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
@@ -1230,19 +1230,19 @@ const parallelObjectScenarios = {
 	 * @remarks
 	 * Steps:
 	 *
-	 * 0. initial                                                    -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }] } ]`
-	 * 1. insert pallet1 with Box "3☠️"                              -\> `[ { boxes: [{ "1🕰️" }, { "2🕰️" }] }, { boxes: [{ "3☠️" }] } ]`
-	 * 2. move pallet0.boxes[0..1) ("1🕰️") into pallet1.boxes        -\> `[ { boxes: [{ "2🕰️" }] }, { boxes: [{ "3☠️" }, { "1🕰️" }] } ]`
-	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "2🕰️" }] } ]`   |: `{ boxes: [{ "3☠️" }, { "1🕰️" }] }`
+	 * 0. initial                                                    -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }] } ]`
+	 * 1. insert pallet1 with Box "3☠️"                              -\> `[ { boxes: [{ "1⌚" }, { "2⌚" }] }, { boxes: [{ "3☠️" }] } ]`
+	 * 2. move pallet0.boxes[0..1) ("1⌚") into pallet1.boxes        -\> `[ { boxes: [{ "2⌚" }] }, { boxes: [{ "3☠️" }, { "1⌚" }] } ]`
+	 * 3. remove root[1] (pallet1)                                   -\> `[ { boxes: [{ "2⌚" }] } ]`   |: `{ boxes: [{ "3☠️" }, { "1⌚" }] }`
 	 *
 	 * Classification: Box "3☠️" comes in as new content under new pallet1 and leaves under the detached pallet1;
-	 * pre-existing 1🕰️ is moved into new pallet1 and also leaves under the detached pallet1. Nothing survives as new content.
+	 * pre-existing 1⌚ is moved into new pallet1 and also leaves under the detached pallet1. Nothing survives as new content.
 	 */
 	boxes_moved_into_new_Pallet_then_new_Pallet_is_then_removed: {
 		schema: PalletArray,
 		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1🕰️" }), new Box({ value: "2🕰️" })] }),
+			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0] = root;
@@ -1296,14 +1296,14 @@ const schemaUpgradeScenarios = {
 	 * @remarks
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial                 -\> `["A🕰️"]`
-	 * 1. upgrade schema          -\> `["A🕰️"]`
-	 * 2. insert Box "C☠️"       -\> `["A🕰️", Box: "C☠️"]`
-	 * 3. set Box value to "D❤️" -\> `["A🕰️", Box: "D❤️"]`
+	 * 0. initial                 -\> `["A⌚"]`
+	 * 1. upgrade schema          -\> `["A⌚"]`
+	 * 2. insert Box "C☠️"       -\> `["A⌚", Box: "C☠️"]`
+	 * 3. set Box value to "D❤️" -\> `["A⌚", Box: "D❤️"]`
 	 */
 	edit_after_schema_change: {
 		schema: RootStringArray,
-		initialContent: ["A🕰️"],
+		initialContent: ["A⌚"],
 		apply: (_root, tree, view) => {
 			// Force dispose view to permit upgrade
 			view.dispose();
@@ -1389,7 +1389,7 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				arrayScenarios.preexisting_content_rearranged,
 			);
-			assert.deepEqual([...view.root], ["Z🕰️", "X🕰️", "Y🕰️"]);
+			assert.deepEqual([...view.root], ["Z⌚", "X⌚", "Y⌚"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1401,7 +1401,7 @@ describe("transaction minimize post-processor", () => {
 			const { view, stringifiedChange } = runScenario(
 				arrayScenarios.preexisting_content_removed,
 			);
-			assert.deepEqual([...view.root], ["X🕰️", "Z🕰️"]);
+			assert.deepEqual([...view.root], ["X⌚", "Z⌚"]);
 			// Nothing inserted; should always pass.
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
@@ -1429,7 +1429,7 @@ describe("transaction minimize post-processor", () => {
 				assert.throws(() => {
 					const { view, stringifiedChange } = runScenario({
 						schema: BoxArray,
-						initialContent: [new Box({ value: "A🕰️" })],
+						initialContent: [new Box({ value: "A⌚" })],
 						apply: (root) => {
 							const originalBox = root[0];
 							// detach the original box
@@ -1441,7 +1441,7 @@ describe("transaction minimize post-processor", () => {
 					} as const satisfies BoxArrayScenario);
 					assert.equal(view.root.length, 1);
 					assert.equal(view.root[0].value, "B❤️");
-					assert.equal(view.root[0].nested?.value, "A🕰️");
+					assert.equal(view.root[0].nested?.value, "A⌚");
 					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
 			});
@@ -1450,7 +1450,7 @@ describe("transaction minimize post-processor", () => {
 				assert.throws(() => {
 					const { view: viewResult, stringifiedChange } = runScenario({
 						schema: OptionalBox,
-						initialContent: new Box({ value: "A🕰️" }),
+						initialContent: new Box({ value: "A⌚" }),
 						apply: (_root, _tree, view_) => {
 							const originalBox = view_.root;
 							// detach the original box
@@ -1461,7 +1461,7 @@ describe("transaction minimize post-processor", () => {
 						expectSurvivingMarker: true,
 					} as const satisfies BoxScenario);
 					assert.equal(viewResult.root?.value, "B❤️");
-					assert.equal(viewResult.root?.nested?.value, "A🕰️");
+					assert.equal(viewResult.root?.nested?.value, "A⌚");
 					assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 				}, /A node with schema .+ was inserted into the tree more than once. This is not supported./);
 			});
@@ -1523,12 +1523,12 @@ describe("transaction minimize post-processor", () => {
 
 		it("leaves pre-existing content unchanged when a transient node is inserted then removed", () => {
 			const { view } = runScenario(arrayScenarios.preexisting_content_and_transient_insert);
-			assert.deepEqual([...view.root], ["X🕰️", "Y🕰️"]);
+			assert.deepEqual([...view.root], ["X⌚", "Y⌚"]);
 		});
 
 		it("keeps pre-existing content and the surviving inserted node", () => {
 			const { view } = runScenario(arrayScenarios.preexisting_content_and_surviving_insert);
-			assert.deepEqual([...view.root], ["X🕰️", "B❤️"]);
+			assert.deepEqual([...view.root], ["X⌚", "B❤️"]);
 		});
 
 		it("reflects only the final value of a root object field set multiple times", () => {
@@ -1627,7 +1627,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.deepEqual(
 				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
-				[["6❤️", "2🕰️"]],
+				[["6❤️", "2⌚"]],
 			);
 		});
 
@@ -1637,7 +1637,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.deepEqual(
 				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
-				[["3🕰️", "1🕰️", "5❤️", "4🕰️"]],
+				[["3⌚", "1⌚", "5❤️", "4⌚"]],
 			);
 		});
 
@@ -1647,7 +1647,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.deepEqual(
 				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
-				[["1🕰️", "3❤️", "2🕰️"]],
+				[["1⌚", "3❤️", "2⌚"]],
 			);
 		});
 
@@ -1657,7 +1657,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.deepEqual(
 				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
-				[["1🕰️", "3❤️", "2🕰️"]],
+				[["1⌚", "3❤️", "2⌚"]],
 			);
 		});
 
@@ -1667,7 +1667,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.deepEqual(
 				view.root.map((pallet) => pallet.boxes.map((box) => box.value)),
-				[["2🕰️"]],
+				[["2⌚"]],
 			);
 		});
 
@@ -1679,7 +1679,7 @@ describe("transaction minimize post-processor", () => {
 		it("reflects edits made after a schema change", () => {
 			const { view } = runScenario(schemaUpgradeScenarios.edit_after_schema_change);
 			assert.equal(view.root.length, 2);
-			assert.equal(view.root[0], "A🕰️");
+			assert.equal(view.root[0], "A⌚");
 			const box = view.root[1];
 			assert(box instanceof Box);
 			assert.deepEqual({ ...box }, { value: "D❤️" });
@@ -1828,8 +1828,7 @@ describe("transaction minimize post-processor", () => {
 				return presentAtEnd ? "❤️" : "☠️";
 			}
 			function stateDesc(state: NodeBeginEndState): string {
-				// 🕰️ gets an extra space padded after to avoid console rendering overlap issue impacting readability
-				return `${state.initiallyPresent ? "🕰️ " : "🐣"}${surviveOrPerishMarker(state)}`;
+				return `${state.initiallyPresent ? "⌚" : "🐣"}${surviveOrPerishMarker(state)}`;
 			}
 			for (const detachMovedAsOwnRoot of [false, true]) {
 				const detachDesc = detachMovedAsOwnRoot
@@ -1858,7 +1857,7 @@ describe("transaction minimize post-processor", () => {
 													new Pallet({
 														boxes: [
 															new Box({
-																value: `pal${index}🕰️${surviveOrPerishMarker(palletState)}`,
+																value: `pal${index}⌚${surviveOrPerishMarker(palletState)}`,
 															}),
 														],
 													}),
@@ -1962,10 +1961,10 @@ describe("transaction minimize post-processor", () => {
 	 * @remarks
 	 * Steps (root state shown after each):
 	 *
-	 * 0. initial                 -\> `[Box: { value: "A🕰️" }]`
-	 * 1. upgrade schema          -\> `[Box: { value: "A🕰️" }]`
-	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A🕰️", secret: "B☠️" }]`
-	 * 3. downgrade schema        -\> stored: `[Box: { value: "A🕰️", secret: "B☠️" }]  visible: { value: "A🕰️" }`
+	 * 0. initial                 -\> `[Box: { value: "A⌚" }]`
+	 * 1. upgrade schema          -\> `[Box: { value: "A⌚" }]`
+	 * 2. set Box secret to "B☠️" -\> `[Box: { value: "A⌚", secret: "B☠️" }]`
+	 * 3. downgrade schema        -\> stored: `[Box: { value: "A⌚", secret: "B☠️" }]  visible: { value: "A⌚" }`
 	 *
 	 * This invariant is independent of minimization, but is critical behavior for
 	 * minimization criteria as minimize only operates on data edits.
@@ -1976,7 +1975,7 @@ describe("transaction minimize post-processor", () => {
 		assert.throws(() => {
 			const { view } = runScenario({
 				schema: BoxArray,
-				initialContent: [new Box({ value: "A🕰️" })],
+				initialContent: [new Box({ value: "A⌚" })],
 				apply: (_root, tree, view1) => {
 					// Force dispose view to permit upgrade
 					view1.dispose();
@@ -2339,7 +2338,7 @@ describe("transaction minimize post-processor", () => {
 			);
 			assert.doesNotMatch(stringifiedChange, transientMarkerRegex);
 			const change = getHeadChange(view);
-			// The new pallet1 (carrying transient "3☠️") and the pre-existing "1🕰️" moved into it are both
+			// The new pallet1 (carrying transient "3☠️") and the pre-existing "1⌚" moved into it are both
 			// removed, so no created node survives in the final document and no builds should remain.
 			assert.deepEqual(countBuilds(change), { builds: 0, tops: 0 });
 		});
