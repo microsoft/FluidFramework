@@ -986,7 +986,6 @@ const objectScenarios = {
 	 */
 	nested_Box_tags_inserted_then_one_tag_moved_and_root_Box_removed: {
 		schema: OptionalBox,
-		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => new Box({ nested: new Box({ tags: ["a⌚"] }) }),
 		apply: (_root, _tree, view) => {
 			assert.ok(view.root?.nested?.tags);
@@ -1015,7 +1014,6 @@ const objectScenarios = {
 	 */
 	nested_Box_tags_inserted_then_tags_rearranged_and_removed: {
 		schema: OptionalBox,
-		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => new Box({ nested: new Box({ tags: ["a⌚", "b⌚"] }) }),
 		apply: (_root, _tree, view) => {
 			const nested = view.root?.nested;
@@ -1045,7 +1043,6 @@ const objectScenarios = {
 	 */
 	nest_Box_with_tags_then_root_Box_removed: {
 		schema: OptionalBox,
-		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => new Box({}),
 		apply: (_root, _tree, view) => {
 			assert.ok(view.root);
@@ -1108,11 +1105,10 @@ const parallelObjectScenarios = {
 	 * 2. move pallet0.boxes[0..2) ("1⌚", "5☠️") into pallet1.boxes -\> `[ { boxes: [{ "6❤️" }, { "2⌚" }]                        }, { boxes: [{ "3⌚" }, { "1⌚" }, { "5☠️" }, { "4⌚" }] } ]`
 	 * 3. remove root[1] (pallet1)                                    -\> `[ { boxes: [{ "6❤️" }, { "2⌚" }] } ]`      |: `{ boxes: [{ "3⌚" }, { "1⌚" }, { "5☠️" }, { "4⌚" }] }`
 	 *
-	 * Classification: Box "5☠️" comes in as new content via pallet0 and leaves under the detached sibling pallet1
+	 * Classification: Box "5☠️" is inserted as new content into pallet0 and leaves under the detached sibling pallet1
 	 */
 	boxes_inserted_then_some_moved_to_sibling_Pallet_that_is_then_removed: {
 		schema: PalletArray,
-		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => [
 			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
@@ -1143,7 +1139,6 @@ const parallelObjectScenarios = {
 	boxes_inserted_then_some_moved_to_sibling_Pallet_and_original_parent_Pallet_is_then_removed:
 		{
 			schema: PalletArray,
-			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
 				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 				new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
@@ -1174,7 +1169,6 @@ const parallelObjectScenarios = {
 	inserted_new_Pallet_with_two_boxes_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed:
 		{
 			schema: PalletArray,
-			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
 				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
@@ -1208,7 +1202,6 @@ const parallelObjectScenarios = {
 	boxes_inserted_in_new_Pallet_then_one_moved_to_sibling_Pallet_and_new_Pallet_is_then_removed:
 		{
 			schema: PalletArray,
-			// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 			initialContent: () => [
 				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
@@ -1240,7 +1233,6 @@ const parallelObjectScenarios = {
 	 */
 	boxes_moved_into_new_Pallet_then_new_Pallet_is_then_removed: {
 		schema: PalletArray,
-		// The initial content is generated as it may be used inserted into more than one tree with in one test case.
 		initialContent: () => [
 			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 		],
