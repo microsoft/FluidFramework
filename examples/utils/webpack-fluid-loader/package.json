@@ -25,9 +25,6 @@
 		}
 	},
 	"main": "lib/index.js",
-	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-	},
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
