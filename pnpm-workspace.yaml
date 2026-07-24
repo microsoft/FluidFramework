@@ -50,7 +50,7 @@ linkWorkspacePackages: true
 
 # Minimum age, in minutes, of dependencies before they can be installed.
 # See /DEV.md and https://pnpm.io/settings#minimumreleaseage more information.
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 minimumReleaseAgeExclude: [
   # Temporary exceptions go here as needed.
 ]
