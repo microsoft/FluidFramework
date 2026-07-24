@@ -105,7 +105,7 @@
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"uuid": "^11.1.0",
-		"webpack-dev-server": "^5.2.6"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",

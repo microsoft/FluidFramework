@@ -51,7 +51,7 @@ overrides:
   '@nevware21/ts-utils': ^0.14.0
   '@types/node': ~22.19.17
   axios@<1: ^0.33.0
-  axios@^1.15.0: ^1.18.1
+  axios@^1.15.0: 1.18.1
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
@@ -413,7 +413,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/collaborative-textarea:
@@ -543,7 +543,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/contact-collection:
@@ -670,7 +670,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/data-object-grid:
@@ -854,7 +854,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/diceroller:
@@ -966,7 +966,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/presence-tracker:
@@ -1111,7 +1111,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/staging:
@@ -1268,7 +1268,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/task-selection:
@@ -1392,7 +1392,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/apps/tree-cli-app:
@@ -1610,7 +1610,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/benchmarks/bubblebench/baseline:
@@ -1710,7 +1710,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/benchmarks/bubblebench/common:
@@ -1883,7 +1883,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/benchmarks/bubblebench/ot:
@@ -1992,7 +1992,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/benchmarks/bubblebench/shared-tree:
@@ -2092,7 +2092,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/benchmarks/tablebench:
@@ -2189,7 +2189,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -2331,7 +2331,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/data-objects/canvas:
@@ -2437,7 +2437,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -2543,7 +2543,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -2646,7 +2646,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -2734,7 +2734,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/data-objects/monaco:
@@ -2831,7 +2831,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3053,7 +3053,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3389,7 +3389,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3491,7 +3491,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3730,7 +3730,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3857,7 +3857,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -3984,7 +3984,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -4135,7 +4135,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@8.1.1))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -4340,7 +4340,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/service-clients/azure-client/external-controller:
@@ -4361,7 +4361,7 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: ^1.18.1
+        specifier: 1.18.1
         version: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
@@ -4485,7 +4485,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/service-clients/azure-client/todo-list:
@@ -4512,7 +4512,7 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: ^1.18.1
+        specifier: 1.18.1
         version: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
@@ -4651,7 +4651,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/service-clients/odsp-client/shared-tree-demo:
@@ -4739,7 +4739,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/utils/bundle-size-tests:
@@ -5081,7 +5081,7 @@ importers:
         specifier: ^5.104.1
         version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
     devDependencies:
       '@arethetypeswrong/cli':
@@ -5357,7 +5357,7 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: ^1.18.1
+        specifier: 1.18.1
         version: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
@@ -5384,7 +5384,7 @@ importers:
         specifier: ^11.1.1
         version: 11.1.1
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
     devDependencies:
       '@arethetypeswrong/cli':
@@ -5581,7 +5581,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/version-migration/same-container:
@@ -5750,7 +5750,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/version-migration/separate-container:
@@ -5931,7 +5931,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/version-migration/tree-shim:
@@ -6091,7 +6091,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/view-integration/container-views:
@@ -6218,7 +6218,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/view-integration/external-views:
@@ -6357,7 +6357,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   examples/view-integration/view-framework-sampler:
@@ -6481,7 +6481,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
 
   experimental/PropertyDDS/packages/property-changeset:
@@ -6708,7 +6708,7 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: ^1.18.1
+        specifier: 1.18.1
         version: 1.18.1(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
@@ -16609,7 +16609,7 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
       webpack-dev-server:
-        specifier: ^5.2.6
+        specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3(supports-color@10.2.2))(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
       webpack-merge:
         specifier: ^6.0.1
@@ -34853,7 +34853,7 @@ snapshots:
 
   '@types/serve-index@1.9.4':
     dependencies:
-      '@types/express': 4.17.21
+      '@types/express': 4.17.25
 
   '@types/serve-static@1.15.7':
     dependencies:
