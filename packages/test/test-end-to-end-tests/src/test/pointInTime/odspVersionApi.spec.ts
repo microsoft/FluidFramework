@@ -12,73 +12,32 @@
 import { strict as assert } from "assert";
 
 import { describeCompat } from "@fluid-private/test-version-utils";
-import type {
-	IContainer,
-	IRuntimeFactory,
-} from "@fluidframework/container-definitions/internal";
-import {
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	createDocumentId,
-} from "@fluidframework/test-utils/internal";
 
 import {
 	listFileVersions,
 	restoreFileVersion,
 	triggerVersionViaMetadata,
-	type OdspVersionTestApiProps,
 } from "./odspVersionTestApi.js";
-import { createOdspVersionTestApiProps } from "./odspVersionTestFixture.js";
 import {
-	createAttachedPointInTimeContainer,
-	createPointInTimeRuntimeFactory,
-	type IPointInTimeTestObject,
+	createPointInTimeTestContext,
+	setupPointInTimeSuite,
+	type PointInTimeTestContext,
 } from "./pointInTimeTestUtils.js";
 
 describeCompat(
 	"ODSP version REST api (real service)",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		let provider: ITestObjectProvider;
-		let runtimeFactory: IRuntimeFactory;
-		const tracker = new LoaderContainerTracker();
+		const suite = setupPointInTimeSuite(getTestObjectProvider, apis);
 
-		before(function () {
-			provider = getTestObjectProvider();
-			if (provider.driver.type !== "odsp") {
-				this.skip();
-			}
-			runtimeFactory = createPointInTimeRuntimeFactory(apis);
-		});
-
-		afterEach(() => tracker.reset());
-
-		let documentId: string;
-		let container: IContainer;
-		let dataObject: IPointInTimeTestObject;
-		let versionApi: OdspVersionTestApiProps;
+		let ctx: PointInTimeTestContext;
 
 		beforeEach(async () => {
-			documentId = createDocumentId();
-			container = await createAttachedPointInTimeContainer(
-				provider,
-				runtimeFactory,
-				tracker,
-				documentId,
-			);
-			dataObject = (await container.getEntryPoint()) as IPointInTimeTestObject;
-			versionApi = createOdspVersionTestApiProps(provider, container);
+			ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: false });
 		});
 
-		/** Generate `count` ops and wait for them to be sequenced. */
-		async function incrementAndSync(count: number): Promise<void> {
-			for (let i = 0; i < count; i++) {
-				dataObject.increment();
-			}
-			await tracker.ensureSynchronized(container);
-		}
-
 		it("snaps a new version via metadata and lists it in the version history", async () => {
+			const { versionApi, incrementAndSync } = ctx;
 			await incrementAndSync(3);
 
 			const before = await listFileVersions(versionApi);
@@ -106,6 +65,7 @@ describeCompat(
 		});
 
 		it("restores a previous version (HTTP 204)", async () => {
+			const { versionApi, incrementAndSync } = ctx;
 			// Arrange two snapped versions so there is an older version to restore to that is not the tip.
 			await incrementAndSync(2);
 			assert.strictEqual(

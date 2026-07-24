@@ -17,44 +17,19 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
-import type { IRuntimeFactory } from "@fluidframework/container-definitions/internal";
-import {
-	ITestObjectProvider,
-	LoaderContainerTracker,
-	createDocumentId,
-} from "@fluidframework/test-utils/internal";
 
+import { listFileVersions, restoreFileVersion } from "./odspVersionTestApi.js";
 import {
-	listFileVersions,
-	restoreFileVersion,
-	triggerVersionViaMetadata,
-	type OdspVersionTestApiProps,
-} from "./odspVersionTestApi.js";
-import { createOdspVersionTestApiProps } from "./odspVersionTestFixture.js";
-import {
-	createAttachedPointInTimeContainer,
-	createPointInTimeRuntimeFactory,
+	createPointInTimeTestContext,
 	loadPointInTimeContainer,
-	type IPointInTimeTestObject,
+	setupPointInTimeSuite,
 } from "./pointInTimeTestUtils.js";
 
 describeCompat(
 	"Point-in-time epoch (lineage) mismatch (real service)",
 	"NoCompat",
 	(getTestObjectProvider, apis) => {
-		let provider: ITestObjectProvider;
-		let runtimeFactory: IRuntimeFactory;
-		const tracker = new LoaderContainerTracker();
-
-		before(function () {
-			provider = getTestObjectProvider();
-			if (provider.driver.type !== "odsp") {
-				this.skip();
-			}
-			runtimeFactory = createPointInTimeRuntimeFactory(apis);
-		});
-
-		afterEach(() => tracker.reset());
+		const suite = setupPointInTimeSuite(getTestObjectProvider, apis);
 
 		// The failed point-in-time load closes its container with the driver's non-retryable
 		// fileOverwrittenInStorage (epoch-mismatch) error. That ContainerClose is the expected
@@ -69,39 +44,16 @@ describeCompat(
 				},
 			],
 			async () => {
-				const documentId = createDocumentId();
-				const container = await createAttachedPointInTimeContainer(
-					provider,
-					runtimeFactory,
-					tracker,
-					documentId,
-				);
-				const dataObject = (await container.getEntryPoint()) as IPointInTimeTestObject;
-				const versionApi: OdspVersionTestApiProps = createOdspVersionTestApiProps(
-					provider,
-					container,
-				);
-
-				const incrementAndSync = async (count: number): Promise<void> => {
-					for (let i = 0; i < count; i++) {
-						dataObject.increment();
-					}
-					await tracker.ensureSynchronized(container);
-				};
+				const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: false });
+				const { container, versionApi, documentId, incrementAndSync, snapVersion } = ctx;
 
 				// Arrange two snapped versions so there is an older, non-tip version to restore to. The
 				// target seq is captured before the restore so the load is bound to the pre-restore lineage.
 				await incrementAndSync(2);
 				const targetSequenceNumber = container.deltaManager.lastSequenceNumber;
-				assert.strictEqual(
-					await triggerVersionViaMetadata(versionApi, { description: `snap-a ${Date.now()}` }),
-					true,
-				);
+				await snapVersion("snap-a");
 				await incrementAndSync(2);
-				assert.strictEqual(
-					await triggerVersionViaMetadata(versionApi, { description: `snap-b ${Date.now()}` }),
-					true,
-				);
+				await snapVersion("snap-b");
 
 				const versions = await listFileVersions(versionApi);
 				assert(versions.length >= 2, "expected at least two versions to restore between");
@@ -113,7 +65,12 @@ describeCompat(
 				assert.strictEqual(restored, true, "restore should succeed (HTTP 204)");
 
 				await assert.rejects(
-					loadPointInTimeContainer(provider, runtimeFactory, documentId, targetSequenceNumber),
+					loadPointInTimeContainer(
+						suite.provider(),
+						suite.runtimeFactory(),
+						documentId,
+						targetSequenceNumber,
+					),
 					(error: Error) => /epoch/i.test(error.message),
 					"expected an epoch-mismatch error after restoring a previous version",
 				);

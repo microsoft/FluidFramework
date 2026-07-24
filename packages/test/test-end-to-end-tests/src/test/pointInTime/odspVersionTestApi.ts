@@ -17,14 +17,24 @@
  * so the requests match what the driver itself issues. Unlike the driver's own fetchers they use a
  * plain `fetch` (no `EpochTracker`): these are one-off setup calls, not part of the caching- and
  * consistency-sensitive load path.
+ *
+ * {@link createOdspVersionTestApiProps} is the fixture that adapts a live, attached ODSP container
+ * into the {@link OdspVersionTestApiProps} the operations above take (the file's url parts plus a
+ * token-fetcher bound to the test driver's tenant).
  */
 
+import { strict as assert } from "assert";
+
+import { OdspTestDriver } from "@fluid-private/test-drivers";
+import type { IContainer } from "@fluidframework/container-definitions/internal";
 import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type {
+	IOdspResolvedUrl,
 	IOdspUrlParts,
 	InstrumentedStorageTokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
 import { getApiRoot, getHeadersWithAuth } from "@fluidframework/odsp-driver/internal";
+import type { ITestObjectProvider } from "@fluidframework/test-utils/internal";
 
 /**
  * A single entry from the driveItem `/versions` response.
@@ -129,4 +139,42 @@ export async function triggerVersionViaMetadata(
 		body: JSON.stringify({ description: properties.description }),
 	});
 	return response.ok;
+}
+
+/**
+ * Build the {@link OdspVersionTestApiProps} needed to make raw ODSP version REST calls for the given
+ * attached container: its resolved url parts plus a token-fetcher bound to the test driver's tenant.
+ *
+ * @param provider - the test object provider; its driver must be the ODSP test driver.
+ * @param container - an attached container whose resolved url points at the ODSP file to operate on.
+ */
+export function createOdspVersionTestApiProps(
+	provider: ITestObjectProvider,
+	container: IContainer,
+): OdspVersionTestApiProps {
+	assert(
+		provider.driver.type === "odsp",
+		"Point-in-time version tests require the odsp driver",
+	);
+	const odspDriver = provider.driver as OdspTestDriver;
+
+	const resolvedUrl = container.resolvedUrl as IOdspResolvedUrl | undefined;
+	assert(
+		resolvedUrl !== undefined,
+		"Container must be attached before arranging its version history",
+	);
+	const { siteUrl, driveId, itemId } = resolvedUrl;
+	const urlParts: IOdspUrlParts = { siteUrl, driveId, itemId };
+
+	const getAuthHeader: InstrumentedStorageTokenFetcher = async (options) => {
+		const token = await odspDriver.getStorageTokenForResource({
+			...options,
+			siteUrl,
+			driveId,
+			itemId,
+		});
+		return `Bearer ${token}`;
+	};
+
+	return { urlParts, getAuthHeader, logger: provider.logger };
 }

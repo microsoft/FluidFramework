@@ -28,10 +28,17 @@ import {
 	LoaderContainerTracker,
 	LocalCodeLoader,
 	createAndAttachContainer,
+	createDocumentId,
 	createLoader,
 	createSummarizerFromFactory,
 	summarizeNow,
 } from "@fluidframework/test-utils/internal";
+
+import {
+	createOdspVersionTestApiProps,
+	triggerVersionViaMetadata,
+	type OdspVersionTestApiProps,
+} from "./odspVersionTestApi.js";
 
 /**
  * The test object surfaced by {@link createPointInTimeTestObjectFactory}: a counter whose increments
@@ -182,4 +189,145 @@ export async function createPointInTimeSummarizer(
  */
 export async function summarizePointInTime(summarizer: ISummarizer): Promise<void> {
 	await summarizeNow(summarizer);
+}
+
+/**
+ * Per-suite fixture shared by the ODSP point-in-time suites. Call it once inside the
+ * {@link describeCompat} body: it registers the odsp-only `before` hook (which skips non-odsp
+ * drivers and builds the runtime factory) and the `afterEach` that resets the container tracker, and
+ * exposes the lazily-initialized {@link ITestObjectProvider} and {@link IRuntimeFactory} plus the
+ * tracker itself.
+ */
+export interface PointInTimeSuiteFixture {
+	/** The container tracker whose lifetime spans the suite. */
+	readonly tracker: LoaderContainerTracker;
+	/** The test object provider; only valid after the registered `before` hook has run. */
+	provider(): ITestObjectProvider;
+	/** The point-in-time runtime factory; only valid after the registered `before` hook has run. */
+	runtimeFactory(): IRuntimeFactory;
+}
+
+/**
+ * Register the shared `before`/`afterEach` hooks for an ODSP point-in-time suite and return a
+ * {@link PointInTimeSuiteFixture} for accessing the provider, runtime factory, and container tracker.
+ */
+export function setupPointInTimeSuite(
+	getTestObjectProvider: () => ITestObjectProvider,
+	apis: Pick<CompatApis, "dds" | "dataRuntime" | "containerRuntime">,
+): PointInTimeSuiteFixture {
+	let provider: ITestObjectProvider | undefined;
+	let runtimeFactory: IRuntimeFactory | undefined;
+	const tracker = new LoaderContainerTracker();
+
+	before(function () {
+		provider = getTestObjectProvider();
+		if (provider.driver.type !== "odsp") {
+			this.skip();
+		}
+		runtimeFactory = createPointInTimeRuntimeFactory(apis);
+	});
+
+	afterEach(() => tracker.reset());
+
+	return {
+		tracker,
+		provider() {
+			assert(
+				provider !== undefined,
+				"provider is only available after the before() hook runs",
+			);
+			return provider;
+		},
+		runtimeFactory() {
+			assert(
+				runtimeFactory !== undefined,
+				"runtimeFactory is only available after the before() hook runs",
+			);
+			return runtimeFactory;
+		},
+	};
+}
+
+/**
+ * The per-test harness shared by the point-in-time suites: an attached container hosting a counter
+ * {@link IPointInTimeTestObject}, the raw ODSP version REST api bound to that file, and helpers to
+ * generate/sequence ops and to snap driveItem versions.
+ */
+export interface PointInTimeTestContext {
+	/** The id of the created document. */
+	readonly documentId: string;
+	/** The attached container hosting the counter data object. */
+	readonly container: IContainer;
+	/** The counter data object whose increments are the ops the scenarios sequence and replay. */
+	readonly dataObject: IPointInTimeTestObject;
+	/** The raw ODSP version REST api bound to this container's file. */
+	readonly versionApi: OdspVersionTestApiProps;
+	/** The summarizer, present only when the context was created with `withSummarizer: true`. */
+	readonly summarizer: ISummarizer | undefined;
+	/** How many versions {@link snapVersion} has snapped so far. */
+	snapCount(): number;
+	/** Generate `count` ops (counter increments) and wait for them to be sequenced. */
+	incrementAndSync(count: number): Promise<void>;
+	/**
+	 * Snap a new driveItem version and assert it succeeded. When the context was created with a
+	 * summarizer, a summary is forced first so the version captures advanced (non-zero) persisted
+	 * state; otherwise the current persisted state is snapped. `label` is embedded in a unique
+	 * version description.
+	 */
+	snapVersion(label: string): Promise<void>;
+}
+
+/**
+ * Bootstrap a {@link PointInTimeTestContext} for a single test: create and attach a container, bind
+ * the ODSP version api to it, and (when `withSummarizer` is set) create a summarizer so snapped
+ * versions capture advanced state. Must be called after the {@link setupPointInTimeSuite} `before`
+ * hook has run (i.e. from within a test or `beforeEach`).
+ */
+export async function createPointInTimeTestContext(
+	fixture: PointInTimeSuiteFixture,
+	apis: Pick<CompatApis, "dds" | "dataRuntime" | "containerRuntime">,
+	options: { withSummarizer: boolean },
+): Promise<PointInTimeTestContext> {
+	const provider = fixture.provider();
+	const runtimeFactory = fixture.runtimeFactory();
+	const { tracker } = fixture;
+
+	const documentId = createDocumentId();
+	const container = await createAttachedPointInTimeContainer(
+		provider,
+		runtimeFactory,
+		tracker,
+		documentId,
+	);
+	const dataObject = (await container.getEntryPoint()) as IPointInTimeTestObject;
+	const versionApi = createOdspVersionTestApiProps(provider, container);
+	const summarizer = options.withSummarizer
+		? await createPointInTimeSummarizer(provider, container, apis)
+		: undefined;
+
+	let snapCount = 0;
+
+	return {
+		documentId,
+		container,
+		dataObject,
+		versionApi,
+		summarizer,
+		snapCount: () => snapCount,
+		async incrementAndSync(count: number): Promise<void> {
+			for (let i = 0; i < count; i++) {
+				dataObject.increment();
+			}
+			await tracker.ensureSynchronized(container);
+		},
+		async snapVersion(label: string): Promise<void> {
+			if (summarizer !== undefined) {
+				await summarizePointInTime(summarizer);
+			}
+			const snapped = await triggerVersionViaMetadata(versionApi, {
+				description: `${label}-${snapCount++} ${Date.now()}`,
+			});
+			assert.strictEqual(snapped, true, "metadata PATCH should snap a new version");
+		},
+	};
 }
