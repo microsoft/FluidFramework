@@ -100,6 +100,11 @@ Enable NodeJs's [corepack](https://github.com/nodejs/corepack/blob/main/README.m
 corepack enable
 ```
 
+> [!NOTE]
+> **Microsoft developers:** due to internal policy, the public npm registry (`registry.npmjs.org`) is blocked on managed devices.
+> Refer to our internal team onboarding guidance for details on how to contribute, either by getting an exception or by using
+> the helper script at `scripts/set-dev-registry.cjs` appropriately.
+
 Run the following to build the client packages:
 
 ```shell
