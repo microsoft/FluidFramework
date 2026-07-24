@@ -32094,7 +32094,7 @@ snapshots:
       '@fluidframework/server-services-core': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-services-telemetry': 7.0.1
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
-      '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6(supports-color@10.2.2))(supports-color@10.2.2)
+      '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6(supports-color@8.1.1))(supports-color@10.2.2)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3(supports-color@10.2.2)
       debug: 4.4.3(supports-color@8.1.1)
@@ -32107,7 +32107,7 @@ snapshots:
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
-      socket.io-adapter: 2.5.6(supports-color@10.2.2)
+      socket.io-adapter: 2.5.6(supports-color@8.1.1)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.17.0
@@ -32130,7 +32130,7 @@ snapshots:
       '@fluidframework/server-services-client': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-services-core': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-services-telemetry': 7.0.1
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
       ioredis: 5.6.1(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
@@ -33917,11 +33917,11 @@ snapshots:
 
   '@socket.io/component-emitter@3.1.2': {}
 
-  '@socket.io/redis-adapter@8.3.0(socket.io-adapter@2.5.6(supports-color@10.2.2))(supports-color@10.2.2)':
+  '@socket.io/redis-adapter@8.3.0(socket.io-adapter@2.5.6(supports-color@8.1.1))(supports-color@10.2.2)':
     dependencies:
       debug: 4.3.7(supports-color@10.2.2)
       notepack.io: 3.0.1
-      socket.io-adapter: 2.5.6(supports-color@10.2.2)
+      socket.io-adapter: 2.5.6(supports-color@8.1.1)
       uid2: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -37104,7 +37104,7 @@ snapshots:
 
   engine.io-parser@5.2.3: {}
 
-  engine.io@6.6.6(supports-color@8.1.1):
+  engine.io@6.6.6(supports-color@10.2.2):
     dependencies:
       '@types/cors': 2.8.17
       '@types/node': 22.19.17
@@ -37113,7 +37113,7 @@ snapshots:
       base64id: 2.0.0
       cookie: 0.7.2
       cors: 2.8.5
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       engine.io-parser: 5.2.3
       ws: 8.21.0
     transitivePeerDependencies:
@@ -41954,15 +41954,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  pm2-axon@4.0.1(supports-color@8.1.1):
-    dependencies:
-      amp: 0.3.1
-      amp-message: 0.1.2
-      debug: 4.4.3(supports-color@8.1.1)
-      escape-string-regexp: 4.0.0
-    transitivePeerDependencies:
-      - supports-color
-
   pm2-deploy@1.0.2:
     dependencies:
       run-series: 1.1.9
@@ -42005,7 +41996,7 @@ snapshots:
       mkdirp: 1.0.4
       needle: 2.4.0(supports-color@10.2.2)
       pidusage: 3.0.2
-      pm2-axon: 4.0.1(supports-color@8.1.1)
+      pm2-axon: 4.0.1(supports-color@10.2.2)
       pm2-axon-rpc: 0.7.1(supports-color@10.2.2)
       pm2-deploy: 1.0.2
       pm2-multimeter: 0.1.2
@@ -43362,6 +43353,15 @@ snapshots:
       - supports-color
       - utf-8-validate
 
+  socket.io-adapter@2.5.6(supports-color@8.1.1):
+    dependencies:
+      debug: 4.4.3(supports-color@8.1.1)
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   socket.io-client@4.8.3(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
@@ -43385,8 +43385,8 @@ snapshots:
       accepts: 1.3.8
       base64id: 2.0.0
       cors: 2.8.5
-      debug: 4.4.3(supports-color@8.1.1)
-      engine.io: 6.6.6(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
+      engine.io: 6.6.6(supports-color@10.2.2)
       socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
     transitivePeerDependencies:
