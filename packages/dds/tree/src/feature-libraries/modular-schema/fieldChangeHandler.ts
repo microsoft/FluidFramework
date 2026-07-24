@@ -302,14 +302,14 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
-	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }
 
 /**
  * Context provided to field change codecs when decoding.
  * @remarks
- * Currently identical to {@link FieldChangeEncodingContext}; it exists as a distinct name so the
- * decode side of field codecs can diverge from the encode side in a later step (for example, to
- * carry a {@link ChangeDecodingContext} as its `baseContext`). See {@link ChangeDecodingContext}.
+ * The decode-side counterpart of {@link FieldChangeEncodingContext}.
  */
-export type FieldChangeDecodingContext = FieldChangeEncodingContext;
+export interface FieldChangeDecodingContext {
+	readonly baseContext: ChangeEncodingContext;
+	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
+}

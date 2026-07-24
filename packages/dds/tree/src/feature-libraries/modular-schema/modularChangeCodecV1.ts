@@ -42,7 +42,11 @@ import {
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import type { FieldChangeEncodingContext, FieldChangeHandler } from "./fieldChangeHandler.js";
+import type {
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
+	FieldChangeHandler,
+} from "./fieldChangeHandler.js";
 import type {
 	FieldKindConfiguration,
 	FieldKindConfigurationEntry,
@@ -78,7 +82,8 @@ type FieldCodec = IJsonCodec<
 	FieldChangeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 >;
 
 type FieldChangesetCodecs = Map<
@@ -115,8 +120,6 @@ export function encodeFieldChangesForJson(
 			assert(node !== undefined, 0x92e /* Unknown node ID */);
 			return encodeNodeChangesForJson(node, fieldContext, fieldChangesetCodecs);
 		},
-
-		decodeNode: () => fail(0xb1e /* Should not decode nodes during field encoding */),
 	};
 
 	return encodeFieldChangesForJsonI(change, fieldContext, fieldChangesetCodecs);
@@ -200,10 +203,8 @@ export function decodeFieldChangesFromJson(
 			field: field.fieldKey,
 		};
 
-		const fieldContext: FieldChangeEncodingContext = {
+		const fieldContext: FieldChangeDecodingContext = {
 			baseContext: context,
-
-			encodeNode: () => fail(0xb21 /* Should not encode nodes during field decoding */),
 
 			decodeNode: (encodedNode: EncodedNodeChangeset): NodeId => {
 				const nodeId: NodeId = {

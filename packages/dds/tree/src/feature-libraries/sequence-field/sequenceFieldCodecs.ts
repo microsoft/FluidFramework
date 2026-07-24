@@ -25,7 +25,7 @@ export const sequenceFieldChangeCodecFactory = (
 		ChangeEncodingContext
 	>,
 ): ICodecFamily<MarkList, FieldChangeEncodingContext, FieldChangeDecodingContext> =>
-	makeCodecFamily<Changeset, FieldChangeEncodingContext>([
+	makeCodecFamily<Changeset, FieldChangeEncodingContext, FieldChangeDecodingContext>([
 		[2, makeV2Codec(revisionTagCodec)],
 		[3, makeV3Codec(revisionTagCodec)],
 	]);

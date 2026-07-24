@@ -46,13 +46,18 @@ export interface ChangeEncodingContext {
 /**
  * Context provided to change codecs when decoding.
  * @remarks
- * Currently identical to {@link ChangeEncodingContext}; it exists as a distinct name so that the
- * decode side of change codecs can be given a decode-specific shape independently of the encode
- * side in a later step (for example, to carry an {@link IdDecodingContext} instead of the raw
- * session-id fields). Keeping it a separate type now lets that migration happen without re-threading
- * every codec type declaration.
+ * The same as {@link ChangeEncodingContext} except that it omits `schema`: that field is only
+ * consulted when *encoding* (for schema-aware compression), whereas decoding relies on the
+ * self-describing encoded format and never reads it. Keeping decode-irrelevant fields off this
+ * type documents the decode-side contract and lets the two contexts diverge further in the future.
+ *
+ * @privateRemarks
+ * `healing` is only meaningful on the decode side, but it is retained on {@link ChangeEncodingContext}
+ * (rather than moved here) because the EditManager and Message codecs still use a single
+ * `ChangeEncodingContext` for both encode and decode; moving it would require splitting those codecs
+ * first.
  */
-export type ChangeDecodingContext = ChangeEncodingContext;
+export type ChangeDecodingContext = Omit<ChangeEncodingContext, "schema">;
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<
 	TChange,

@@ -66,6 +66,7 @@ import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -136,7 +137,8 @@ const singleNodeCodec: IJsonCodec<
 	SingleNodeChangeset,
 	EncodedNodeChangeset | "",
 	EncodedNodeChangeset | "",
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > = {
 	encode: (change, context) => {
 		return change === undefined ? emptyEncodedChange : context.encodeNode(change);

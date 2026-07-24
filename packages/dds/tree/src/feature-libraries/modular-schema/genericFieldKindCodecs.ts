@@ -25,7 +25,8 @@ function makeV1Codec(): IJsonCodec<
 	GenericChangeset,
 	EncodedGenericChangeset,
 	EncodedGenericChangeset,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	return {
 		encode: (
@@ -39,7 +40,7 @@ function makeV1Codec(): IJsonCodec<
 		},
 		decode: (
 			encoded: EncodedGenericChangeset,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): GenericChangeset => {
 			return newGenericChangeset(
 				encoded.map(([index, nodeChange]) => [index, context.decodeNode(nodeChange)]),

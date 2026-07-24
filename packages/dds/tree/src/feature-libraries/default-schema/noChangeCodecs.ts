@@ -13,4 +13,6 @@ export const noChangeCodecFamily: ICodecFamily<
 	0,
 	FieldChangeEncodingContext,
 	FieldChangeDecodingContext
-> = makeCodecFamily<0, FieldChangeEncodingContext>([[1, unitCodec]]);
+> = makeCodecFamily<0, FieldChangeEncodingContext, FieldChangeDecodingContext>([
+	[1, unitCodec],
+]);

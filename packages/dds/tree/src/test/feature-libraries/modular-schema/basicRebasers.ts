@@ -16,6 +16,7 @@ import {
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldChangeHandler,
 	type FieldChangeRebaser,
 	FlexFieldKind,
@@ -91,7 +92,10 @@ export type ValueChangeset = ReplaceOp<number>;
 export const valueHandler = {
 	rebaser: replaceRebaser(),
 	codecsFactory: () => {
-		const inner = makeValueCodec<TUnsafe<ValueChangeset>, FieldChangeEncodingContext>(
+		const inner = makeValueCodec<
+			TUnsafe<ValueChangeset>,
+			FieldChangeEncodingContext | FieldChangeDecodingContext
+		>(
 			// As this is just a test rebaser, it is acceptable to not use a proper schema, and thus not detect invalid data here.
 			JsonCompatibleReadOnlySchema as TUnsafe<ValueChangeset>,
 		);
