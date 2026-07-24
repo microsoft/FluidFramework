@@ -76,6 +76,10 @@ overrides:
   on-headers@>=1 <2: ^1.1.0
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
+  # CVE-2026-41907 (v3/v5/v6 buffer bounds). uuid@3.4.0 is only present as a dead
+  # transitive dep of kafka-node (declared but never imported), so overriding to
+  # the patched 11.x line is safe here.
+  uuid@<7: ^11.1.1
 
   # Resolve a known security vulnerability.
   ws@>=8 <9: ^8.21.0

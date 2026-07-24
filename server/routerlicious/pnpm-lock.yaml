@@ -13,6 +13,7 @@ overrides:
   on-headers@>=1 <2: ^1.1.0
   ts-deepmerge@>=7 <8: ^8.0.0
   uuid@>=7 <12: ^11.1.1
+  uuid@<7: ^11.1.1
   ws@>=8 <9: ^8.21.0
   ws@>=7 <8: ^7.5.11
   fast-uri: ^3.1.2
@@ -8178,11 +8179,6 @@ packages:
     resolution: {integrity: sha512-vIYxrBCC/N/K+Js3qSN88go7kIfNPssr/hHCesKCQNAjmgvYS2oqr69kIufEG+O4+PfezOH4EbIeHCfFov8ZgQ==}
     hasBin: true
 
-  uuid@3.4.0:
-    resolution: {integrity: sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==}
-    deprecated: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-    hasBin: true
-
   v8-to-istanbul@9.1.0:
     resolution: {integrity: sha512-6z3GW9x8G1gd+JIIgQQQxXuiJtCXeAjp6RaPEPLv62mH3iPHPxV6W3robxtCzNErRo6ZwTmzWhsbNvjyEBKzKA==}
     engines: {node: '>=10.12.0'}
@@ -14224,7 +14220,7 @@ snapshots:
       minimatch: 3.1.5
       nested-error-stacks: 2.1.1
       retry: 0.10.1
-      uuid: 3.4.0
+      uuid: 11.1.1
     optionalDependencies:
       snappy: 6.3.5
     transitivePeerDependencies:
@@ -16953,8 +16949,6 @@ snapshots:
   utils-merge@1.0.1: {}
 
   uuid@11.1.1: {}
-
-  uuid@3.4.0: {}
 
   v8-to-istanbul@9.1.0:
     dependencies:
