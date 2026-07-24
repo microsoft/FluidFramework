@@ -27,7 +27,9 @@ import { createOdspVersionTestApiProps } from "./odspVersionTestFixture.js";
 import {
 	createAttachedPointInTimeContainer,
 	createPointInTimeRuntimeFactory,
+	createPointInTimeSummarizer,
 	loadPointInTimeContainer,
+	summarizePointInTime,
 	type IPointInTimeTestObject,
 } from "./pointInTimeTestUtils.js";
 
@@ -62,6 +64,7 @@ describeCompat(
 				provider,
 				container,
 			);
+			const summarizer = await createPointInTimeSummarizer(provider, container, apis);
 
 			const incrementAndSync = async (count: number): Promise<void> => {
 				for (let i = 0; i < count; i++) {
@@ -70,8 +73,10 @@ describeCompat(
 				await tracker.ensureSynchronized(container);
 			};
 
-			// Snap an early base version so a recoverable base exists at/before the "pre" point.
+			// Summarize so the persisted snapshot advances past the creation snapshot, then snap an
+			// early base version so a recoverable base exists at/before the "pre" point.
 			await incrementAndSync(2);
+			await summarizePointInTime(summarizer);
 			assert.strictEqual(
 				await triggerVersionViaMetadata(versionApi, {
 					description: `base-snap ${Date.now()}`,
@@ -90,7 +95,9 @@ describeCompat(
 			const postValue = dataObject.value;
 			assert(postSequenceNumber > preSequenceNumber, "post seq should be after pre seq");
 
-			// Snap again so neither the pre nor post target lands on the live tip (which is skipped).
+			// Summarize + snap again so neither the pre nor post target lands on the live tip (which is
+			// skipped).
+			await summarizePointInTime(summarizer);
 			assert.strictEqual(
 				await triggerVersionViaMetadata(versionApi, { description: `tip-snap ${Date.now()}` }),
 				true,

@@ -20,6 +20,7 @@ import type {
 	IRuntimeFactory,
 } from "@fluidframework/container-definitions/internal";
 import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/internal";
+import type { ISummarizer } from "@fluidframework/container-runtime/internal";
 import type { IFluidHandle } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
 import {
@@ -28,6 +29,8 @@ import {
 	LocalCodeLoader,
 	createAndAttachContainer,
 	createLoader,
+	createSummarizerFromFactory,
+	summarizeNow,
 } from "@fluidframework/test-utils/internal";
 
 /**
@@ -144,4 +147,39 @@ export async function loadPointInTimeContainer(
 		logger: provider.logger,
 		signal,
 	});
+}
+
+/**
+ * Create a summarizer client for the point-in-time test container.
+ *
+ * A metadata PATCH (see {@link triggerVersionViaMetadata}) snaps a driveItem version whose snapshot
+ * is only the file's *persisted* Fluid state - which advances solely when the runtime writes a
+ * summary. Without a summary every snapped version resolves to the creation snapshot (sequence
+ * number 0), so the point-in-time factory can never find a base at a meaningful sequence number, and
+ * the bridging ops never get flushed into the queryable op stream. Forcing a summary before each snap
+ * makes the version capture the advanced state so a recoverable base with retained ops exists.
+ */
+export async function createPointInTimeSummarizer(
+	provider: ITestObjectProvider,
+	container: IContainer,
+	apis: Pick<CompatApis, "dds" | "dataRuntime" | "containerRuntime">,
+): Promise<ISummarizer> {
+	const dataObjectFactory = buildFactory(apis);
+	const { summarizer } = await createSummarizerFromFactory(
+		provider,
+		container,
+		dataObjectFactory,
+		undefined /* summaryVersion */,
+		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
+	);
+	return summarizer;
+}
+
+/**
+ * Force a summary so the current container state is persisted to ODSP. Callers snap a driveItem
+ * version immediately after so it captures this advanced (non-zero) snapshot as a recoverable
+ * point-in-time base, and so the bridging ops are flushed into the queryable op stream.
+ */
+export async function summarizePointInTime(summarizer: ISummarizer): Promise<void> {
+	await summarizeNow(summarizer);
 }

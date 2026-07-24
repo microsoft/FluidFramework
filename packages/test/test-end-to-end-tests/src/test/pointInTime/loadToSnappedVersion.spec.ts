@@ -26,7 +26,9 @@ import { createOdspVersionTestApiProps } from "./odspVersionTestFixture.js";
 import {
 	createAttachedPointInTimeContainer,
 	createPointInTimeRuntimeFactory,
+	createPointInTimeSummarizer,
 	loadPointInTimeContainer,
+	summarizePointInTime,
 	type IPointInTimeTestObject,
 } from "./pointInTimeTestUtils.js";
 
@@ -61,6 +63,7 @@ describeCompat(
 				provider,
 				container,
 			);
+			const summarizer = await createPointInTimeSummarizer(provider, container, apis);
 
 			const incrementAndSync = async (count: number): Promise<void> => {
 				for (let i = 0; i < count; i++) {
@@ -69,10 +72,12 @@ describeCompat(
 				await tracker.ensureSynchronized(container);
 			};
 
-			// Advance to a known state, then snap a version to capture it.
+			// Advance to a known state, then summarize so the persisted snapshot advances past the
+			// creation snapshot, and snap a version to capture it.
 			await incrementAndSync(3);
 			const targetSequenceNumber = container.deltaManager.lastSequenceNumber;
 			const expectedValue = dataObject.value;
+			await summarizePointInTime(summarizer);
 			assert.strictEqual(
 				await triggerVersionViaMetadata(versionApi, {
 					description: `target-snap ${Date.now()}`,
@@ -81,9 +86,10 @@ describeCompat(
 				"metadata PATCH should snap the target version",
 			);
 
-			// Advance the live document past the target (and snap again) so the target version is a
-			// recoverable base rather than the live tip, which the version manager skips.
+			// Advance the live document past the target (and summarize + snap again) so the target
+			// version is a recoverable base rather than the live tip, which the version manager skips.
 			await incrementAndSync(3);
+			await summarizePointInTime(summarizer);
 			assert.strictEqual(
 				await triggerVersionViaMetadata(versionApi, {
 					description: `later-snap ${Date.now()}`,

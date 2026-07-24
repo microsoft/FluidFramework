@@ -32,7 +32,9 @@ import { createOdspVersionTestApiProps } from "./odspVersionTestFixture.js";
 import {
 	createAttachedPointInTimeContainer,
 	createPointInTimeRuntimeFactory,
+	createPointInTimeSummarizer,
 	loadPointInTimeContainer,
+	summarizePointInTime,
 	type IPointInTimeTestObject,
 } from "./pointInTimeTestUtils.js";
 
@@ -67,6 +69,7 @@ describeCompat(
 				provider,
 				container,
 			);
+			const summarizer = await createPointInTimeSummarizer(provider, container, apis);
 
 			const incrementAndSync = async (count: number): Promise<void> => {
 				for (let i = 0; i < count; i++) {
@@ -75,11 +78,15 @@ describeCompat(
 				await tracker.ensureSynchronized(container);
 			};
 
-			// Snap a new file version by PATCHing the item description. Doing this repeatedly (between
-			// batches of ops) builds up multiple recoverable base candidates spread across the op
-			// stream, so the driver can resolve a base with the bridging ops still retained.
+			// Snap a new file version by first forcing a summary (so the persisted snapshot advances
+			// past the creation snapshot and the bridging ops are flushed into the queryable op stream),
+			// then PATCHing the item description so the driveItem version captures that advanced state.
+			// Doing this repeatedly (between batches of ops) builds up multiple recoverable base
+			// candidates spread across the op stream, so the driver can resolve a base with the bridging
+			// ops still retained.
 			let snapCount = 0;
 			const snapVersion = async (): Promise<void> => {
+				await summarizePointInTime(summarizer);
 				assert.strictEqual(
 					await triggerVersionViaMetadata(versionApi, {
 						description: `snap-${snapCount++} ${Date.now()}`,
