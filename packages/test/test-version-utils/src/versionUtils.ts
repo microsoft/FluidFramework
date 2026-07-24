@@ -93,6 +93,12 @@ function validateRangeSpec(rangeSpec: string): void {
 /**
  * Resolves a semver dependency spec to the single highest version matching that spec which is published in the npm registry.
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
+ * @remarks
+ * When rangeSpec is an exact version, registry check is skipped.
+ * @privateRemarks
+ * This function can be costly time-wise and results are trivially cached.
+ * Higher-order caching is handled by `getRequestedVersion` but this is kept to
+ * assist `baseVersion.ts` uses.
  */
 export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
 	if (semver.valid(rangeSpec)) {
@@ -129,10 +135,6 @@ export const resolveRangeViaRegistry = cached((rangeSpec: string): string => {
  * @param rangeSpec - A valid (as per [semver](https://www.npmjs.com/package/semver)) range specification
  */
 export function resolveRangeViaManifest(rangeSpec: string): string {
-	if (semver.valid(rangeSpec)) {
-		return rangeSpec;
-	}
-
 	validateRangeSpec(rangeSpec);
 	const manifest = readVersionsManifest();
 	const matching = manifest.versions
@@ -289,12 +291,7 @@ export function calculateRequestedRange(
 		return internalSchemeRange;
 	}
 
-	let version: semver.SemVer;
-	try {
-		version = new semver.SemVer(baseVersion);
-	} catch (err: unknown) {
-		throw new Error(err as string);
-	}
+	const version = new semver.SemVer(baseVersion);
 
 	// If the base version is a public version and `adjustPublicMajor` is false, then we need to ensure that we
 	// calculate N-1 as the previous major release, regardless if it is public or internal.
@@ -354,20 +351,20 @@ export function calculateRequestedRange(
 
 /**
  * Options for {@link getRequestedVersion}.
- *
- * @internal
  */
 export interface GetRequestedVersionOptions {
 	/** The base version to move from (eg. "2.60.0"). */
 	baseVersion: string;
 	/**
-	 * If the value is a negative number, the base version will be adjusted down.
-	 * If the value is a string then it will be returned as-is. Throws on positive number.
+	 * If the value is a string, then it will be returned as-is.
+	 * If the value is a negative number, the base version will be adjusted down and returned.
+	 * If the value is 0 or `undefined`, the base version will be returned as-is.
+	 * Otherwise (the value is a positive number), throw.
 	 */
-	requested?: number | string;
+	requested: number | string | undefined;
 	/**
-	 * If `baseVersion` is a Fluid internal version, this controls whether the public or internal
-	 * version is adjusted by `requested`.
+	 * When true, `requested` delta (it must be a negative number) is applied
+	 * to the major version rather than the minor version.
 	 */
 	adjustPublicMajor?: boolean;
 	/**
@@ -406,8 +403,6 @@ export interface GetRequestedVersionOptions {
  *   useOnlineRegistry: true,
  * });
  * ```
- *
- * @internal
  */
 export function getRequestedVersion({
 	baseVersion,
@@ -415,15 +410,10 @@ export function getRequestedVersion({
 	adjustPublicMajor = false,
 	useOnlineRegistry = false,
 }: GetRequestedVersionOptions): string {
-	// Current-version requests should stay pinned to the caller-provided base version.
+	// Base-version requests should stay pinned to the caller-provided base version.
 	// This avoids requiring the current version to exist in the compat manifest/registry.
 	if (requested === undefined || requested === 0) {
 		return baseVersion;
-	}
-
-	// Explicit version strings are already concrete requests, so return them directly.
-	if (typeof requested === "string") {
-		return requested;
 	}
 
 	const calculatedRange = calculateRequestedRange(baseVersion, requested, adjustPublicMajor);
@@ -453,7 +443,7 @@ export function getRequestedVersion({
 			// Here we cache the result so we don't have to enter the try/catch flow again.
 			// Note: This will cache the resolved version range (i.e. >=2.0.0-rc.4.0.0 <2.0.0-rc.5.0.0). Because of this,
 			// it will not cause any conflicts when trying to fetch the current version —
-			// i.e. `getRequestedVersion({ baseVersion: "2.0.0-rc.5.0.0" })` will still return "2.0.0-rc.5.0.0".
+			// i.e. `getRequestedVersion({ baseVersion: "2.0.0-rc.5.0.0", requested: 0 })` will still return "2.0.0-rc.5.0.0".
 			resolutionCache.set(cacheKey, resolvedVersion);
 			return resolvedVersion;
 		}
