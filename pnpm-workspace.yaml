@@ -85,6 +85,16 @@ overrides:
   # "@fluid-tools/version-tools": "link:./build-tools/packages/version-tools"
   # "@fluidframework/build-tools": "link:./build-tools/packages/build-tools"
 
+  # TEMPORARY (do not commit): link the local test-tools so its unreleased `with-test-port` bin and the
+  # `getTestPort` fallback-port argument are available for verifying the real-service tests. Revert before
+  # merging; the published `@fluidframework/test-tools` must be released with these before packages can rely on them.
+  "@fluidframework/test-tools": "link:./tools/test-tools"
+
+  # TEMPORARY (do not commit): link the local tinylicious so its unreleased `--port` argument support is
+  # available for verifying the real-service tests. Revert before merging; the published `tinylicious` must be
+  # released with `--port` support before these packages can rely on it.
+  "tinylicious": "link:./server/routerlicious/packages/tinylicious"
+
   # node types are forced to a consistent version to avoid conflicts between globals.
   "@types/node": catalog:types
 

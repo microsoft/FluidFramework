@@ -3,16 +3,18 @@
  * Licensed under the MIT License.
  */
 
+import { getTestPort } from "@fluidframework/test-tools";
+
 /**
  * Port for the local Azure Fluid Relay (Tinylicious) server started by this package's "start:tinylicious:test"
  * script (via `@fluidframework/azure-local-service`).
  *
  * @remarks
- * Each package that runs Tinylicious in the concurrent CI test sweep must use a distinct port to avoid collisions, so
- * this must stay in sync with the port used in the package.json test scripts.
- *
- * TODO: We should update the tinylicious test infra to dynamically allocate ports for each package to avoid hardcoding and potential collisions in the future.
- * Our jest/puppeteer tests already do this via the `getTestPort` function in `test-tools`.
- * We should do something similar for these real service tests.
+ * The port is dynamically assigned per-package by the `assign-test-ports` tool (run at the start of the
+ * `ci:test:realsvc:tinylicious` sweep) so packages that launch their own Tinylicious server can run
+ * concurrently without colliding on a shared port. When `assign-test-ports` has not run (e.g. the tests are
+ * run directly, or against a manually started `start:tinylicious:test` server), `getTestPort` returns the
+ * fallback below — Tinylicious's default port of 7070. The `with-test-port` wrapper is configured to use the
+ * same fallback (via `--fallback 7070`), so the launched server and this client stay in agreement.
  */
-export const tinyliciousPort = 7073;
+export const tinyliciousPort = getTestPort("@fluidframework/azure-client", 7070);

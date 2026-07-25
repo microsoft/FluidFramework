@@ -60,8 +60,47 @@ const configPath = path.join(__dirname, "../config.json");
 
 configureLogging(configPath);
 
+/**
+ * The maximum valid TCP port number (2^16 - 1).
+ * Valid ports range from 0 to this value (inclusive).
+ */
+const maxPort = 65535;
+
+/**
+ * Validates a raw `--port` value and returns it as a number.
+ * @throws If the value is not an integer between 0 and {@link maxPort}.
+ */
+function validatePort(rawPort: string | undefined): number {
+	const port = rawPort !== undefined && /^\d+$/u.test(rawPort) ? Number(rawPort) : Number.NaN;
+	if (!Number.isInteger(port) || port < 0 || port > maxPort) {
+		throw new Error(
+			`Invalid --port value "${rawPort ?? ""}"; expected an integer between 0 and ${maxPort}.`,
+		);
+	}
+	return port;
+}
+
+/**
+ * Parses an optional `--port <number>` (or `--port=<number>`) command line argument specifying the port for
+ * Tinylicious to listen on.
+ * @returns The specified port, or `undefined` when the argument is not present.
+ */
+function parsePortArg(args: readonly string[]): number | undefined {
+	const flagIndex = args.indexOf("--port");
+	if (flagIndex !== -1) {
+		return validatePort(args[flagIndex + 1]);
+	}
+
+	const inlineArg = args.find((arg) => arg.startsWith("--port="));
+	if (inlineArg !== undefined) {
+		return validatePort(inlineArg.slice("--port=".length));
+	}
+
+	return undefined;
+}
+
 runService(
-	new TinyliciousResourcesFactory(),
+	new TinyliciousResourcesFactory(parsePortArg(process.argv.slice(2))),
 	new TinyliciousRunnerFactory(),
 	winston,
 	"tinylicious",
