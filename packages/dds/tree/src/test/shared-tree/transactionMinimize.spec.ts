@@ -7,7 +7,6 @@ import { strict as assert } from "node:assert";
 
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
-import { oob } from "@fluidframework/core-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
 import type {
@@ -1830,7 +1829,7 @@ describe("transaction minimize post-processor", () => {
 					for (const insertMovedAsOwnRoot of [true, false]) {
 						const insertDescModifier = insertMovedAsOwnRoot ? "self inserted to " : "";
 						// destPalletStates is outer loop as it has the most influence over minimization of the key test content
-						for (const destPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
+						for (const destinationPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
 							for (const originPalletStates of nodeBeginEndStateMatrixInitiallyPresentPrimary) {
 								if (!insertMovedAsOwnRoot && originPalletStates.initiallyPresent) {
 									continue; // Skip this combination as it is not valid for the test scenario.
@@ -1839,7 +1838,7 @@ describe("transaction minimize post-processor", () => {
 									const palletStates = [
 										originPalletStates,
 										interimPalletStates,
-										destPalletStates,
+										destinationPalletStates,
 									] as const;
 									function initialContentGenerator(): Pallet[] {
 										const content: Pallet[] = [];
@@ -1861,14 +1860,14 @@ describe("transaction minimize post-processor", () => {
 									const builds =
 										palletStates.filter((s) => !s.initiallyPresent).length +
 										(insertMovedAsOwnRoot ? 1 : 0);
-									const scenarioName = `from ${insertDescModifier}origin ${stateDesc(originPalletStates)}  thru interim ${stateDesc(interimPalletStates)}  to dest ${stateDesc(destPalletStates)}`;
+									const scenarioName = `from ${insertDescModifier}origin ${stateDesc(originPalletStates)}  thru interim ${stateDesc(interimPalletStates)}  to dest ${stateDesc(destinationPalletStates)}`;
 									it(scenarioName, () => {
 										const scenario = {
 											schema: PalletArray,
 											initialContent: initialContentGenerator,
 											apply: (root) => {
 												const movingBox = new Box({
-													value: `moving box ${surviveOrPerishMarker({ presentAtEnd: destPalletStates.presentAtEnd && !detachMovedAsOwnRoot })}`,
+													value: `moving box ${surviveOrPerishMarker({ presentAtEnd: destinationPalletStates.presentAtEnd && !detachMovedAsOwnRoot })}`,
 												});
 												// Make sure all pallets are present before the moves.
 												// This walks in-order to leverage insertAt requireing all prior nodes to be present.
@@ -1916,7 +1915,7 @@ describe("transaction minimize post-processor", () => {
 												tops: builds,
 											},
 											expectSurvivingMarker:
-												!detachMovedAsOwnRoot && (palletStates.at(-1)?.presentAtEnd ?? oob()),
+												!detachMovedAsOwnRoot && destinationPalletStates.presentAtEnd,
 										} as const satisfies PalletArrayScenario;
 
 										const { tree: unminimizedTree, view: unminimizedView } = runScenario(
