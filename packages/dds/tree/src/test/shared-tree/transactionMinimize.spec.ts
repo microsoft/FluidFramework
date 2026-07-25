@@ -155,7 +155,9 @@ interface TransactionScenario<
 type StringArrayScenario = TransactionScenario<typeof RootStringArray>;
 type BoxScenario = TransactionScenario<typeof OptionalBox>;
 type BoxArrayScenario = TransactionScenario<typeof BoxArray>;
-type PalletArrayScenario = TransactionScenario<typeof PalletArray>;
+type PalletArrayScenario = TransactionScenario<typeof PalletArray> & {
+	unminimizedBuildExpectations: BuildStatistics;
+};
 
 /**
  * Given the TreeViewConfiguration, returns a tree, an uninitialized view,
@@ -1248,6 +1250,151 @@ const parallelObjectScenarios = {
 } as const satisfies Record<string, PalletArrayScenario>;
 // #endregion
 
+// #region Generated double move scenarios
+interface NodeBeginEndState {
+	readonly initiallyPresent: boolean;
+	readonly presentAtEnd: boolean;
+}
+const nodeBeginEndStateMatrixPresentAtEndPrimary = [
+	{ initiallyPresent: true, presentAtEnd: false },
+	{ initiallyPresent: false, presentAtEnd: false },
+	{ initiallyPresent: false, presentAtEnd: true },
+	{ initiallyPresent: true, presentAtEnd: true },
+] as const satisfies readonly NodeBeginEndState[];
+const nodeBeginEndStateMatrixInitiallyPresentPrimary = [
+	{ initiallyPresent: true, presentAtEnd: true },
+	{ initiallyPresent: true, presentAtEnd: false },
+	{ initiallyPresent: false, presentAtEnd: false },
+	{ initiallyPresent: false, presentAtEnd: true },
+] as const satisfies readonly NodeBeginEndState[];
+function surviveOrPerishMarker({ presentAtEnd }: { presentAtEnd: boolean }): "❤️" | "☠️" {
+	return presentAtEnd ? "❤️" : "☠️";
+}
+function stateDesc(state: NodeBeginEndState): string {
+	return `${state.initiallyPresent ? "⌚" : "🐣"}${surviveOrPerishMarker(state)}`;
+}
+
+/**
+ * Generates the combinatorial set of double cross-field move scenarios, where a Box is moved from one
+ * Pallet to another, then from that Pallet to a third Pallet. The scenarios vary the initial presence and
+ * final presence of each Pallet.
+ *
+ * Additional variance is done for whether:
+ * - the moved Box is inserted into original as a new build or as part of the original parent's build.
+ *
+ * @param detachMovedAsOwnRoot - When `true`, the moved Box is detached from its final destination; when
+ * `false`, it remains under it. This is the top-level division producing the two
+ * {@link doubleMoveScenarios} entries.
+ */
+function generateDoubleMoveScenarios(
+	detachMovedAsOwnRoot: boolean,
+): Record<string, PalletArrayScenario> {
+	const scenarios: Record<string, PalletArrayScenario> = {};
+	for (const insertMovedAsOwnRoot of [true, false]) {
+		const insertDescModifier = insertMovedAsOwnRoot ? "self inserted to " : "";
+		// destPalletStates is outer loop as it has the most influence over minimization of the key test content
+		for (const destinationPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
+			for (const originPalletStates of nodeBeginEndStateMatrixInitiallyPresentPrimary) {
+				if (!insertMovedAsOwnRoot && originPalletStates.initiallyPresent) {
+					continue; // Skip this combination as it is not valid for the test scenario.
+				}
+				for (const interimPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
+					const palletStates = [
+						originPalletStates,
+						interimPalletStates,
+						destinationPalletStates,
+					] as const;
+					function initialContentGenerator(): Pallet[] {
+						const content: Pallet[] = [];
+						for (const [index, palletState] of palletStates.entries()) {
+							if (palletState.initiallyPresent) {
+								content.push(
+									new Pallet({
+										boxes: [
+											new Box({
+												value: `pal${index}⌚${surviveOrPerishMarker(palletState)}`,
+											}),
+										],
+									}),
+								);
+							}
+						}
+						return content;
+					}
+					const builds =
+						palletStates.filter((s) => !s.initiallyPresent).length +
+						(insertMovedAsOwnRoot ? 1 : 0);
+					const scenarioName = `from ${insertDescModifier}origin ${stateDesc(originPalletStates)}  thru interim ${stateDesc(interimPalletStates)}  to dest ${stateDesc(destinationPalletStates)}`;
+					scenarios[scenarioName] = {
+						schema: PalletArray,
+						initialContent: initialContentGenerator,
+						apply: (root) => {
+							const movingBox = new Box({
+								value: `moving box ${surviveOrPerishMarker({ presentAtEnd: destinationPalletStates.presentAtEnd && !detachMovedAsOwnRoot })}`,
+							});
+							// Make sure all pallets are present before the moves.
+							// This walks in-order to leverage insertAt requireing all prior nodes to be present.
+							for (const [index, palletState] of palletStates.entries()) {
+								if (!palletState.initiallyPresent) {
+									const boxes = [
+										new Box({
+											// This does not use surviving marker ❤️ to avoid false positive when looking for surviving marker of moved Box value
+											value: `pal${index}🐣${palletState.presentAtEnd ? "" : "☠️"}`,
+										}),
+									];
+									if (index === 0 && !insertMovedAsOwnRoot) {
+										boxes.unshift(movingBox);
+									}
+									root.insertAt(
+										index,
+										new Pallet({
+											boxes,
+										}),
+									);
+								}
+							}
+
+							const [pallet0, pallet1, pallet2] = root;
+							if (insertMovedAsOwnRoot) {
+								pallet0.boxes.insertAtStart(movingBox);
+							}
+							pallet1.boxes.moveRangeToStart(0, 1, pallet0.boxes);
+							pallet2.boxes.moveRangeToStart(0, 1, pallet1.boxes);
+
+							if (detachMovedAsOwnRoot) {
+								pallet2.boxes.removeAt(0);
+							}
+
+							// Remove pallets that aren't intended to be present at the end of the transaction
+							// starting from the end for convenient by index removal.
+							for (let index = palletStates.length - 1; index >= 0; index--) {
+								if (!palletStates[index].presentAtEnd) {
+									root.removeAt(index);
+								}
+							}
+						},
+						unminimizedBuildExpectations: {
+							builds,
+							tops: builds,
+						},
+						expectSurvivingMarker:
+							!detachMovedAsOwnRoot && destinationPalletStates.presentAtEnd,
+					} as const satisfies PalletArrayScenario;
+				}
+			}
+		}
+	}
+	return scenarios;
+}
+
+const doubleMoveScenarios = {
+	with_self_removed_from_destination: generateDoubleMoveScenarios(
+		/* detachMovedAsOwnRoot */ true,
+	),
+	remaining_under_destination: generateDoubleMoveScenarios(/* detachMovedAsOwnRoot */ false),
+} as const;
+// #endregion
+
 // #region Schema upgrade scenarios
 const schemaUpgradeScenarios = {
 	/**
@@ -1787,160 +1934,25 @@ describe("transaction minimize post-processor", () => {
 			});
 		}
 
-		/**
-		 * Each of the following tests is a combinatorial test of a double cross-field
-		 * move scenario, where a Box is moved from one Pallet to another, then from
-		 * that Pallet to a third Pallet. The tests vary the initial presence and
-		 * final presence of each Pallet.
-		 *
-		 * Additional variance is done for whether:
-		 * - the moved Box is inserted into original as a new build or as part
-		 * of the original parent's build.
-		 * - the moved Box is detached from its final destination or remains under it.
-		 */
 		describe("for double cross-field move", () => {
-			interface NodeBeginEndState {
-				readonly initiallyPresent: boolean;
-				readonly presentAtEnd: boolean;
-			}
-			const nodeBeginEndStateMatrixPresentAtEndPrimary = [
-				{ initiallyPresent: true, presentAtEnd: false },
-				{ initiallyPresent: false, presentAtEnd: false },
-				{ initiallyPresent: false, presentAtEnd: true },
-				{ initiallyPresent: true, presentAtEnd: true },
-			] as const satisfies readonly NodeBeginEndState[];
-			const nodeBeginEndStateMatrixInitiallyPresentPrimary = [
-				{ initiallyPresent: true, presentAtEnd: true },
-				{ initiallyPresent: true, presentAtEnd: false },
-				{ initiallyPresent: false, presentAtEnd: false },
-				{ initiallyPresent: false, presentAtEnd: true },
-			] as const satisfies readonly NodeBeginEndState[];
-			function surviveOrPerishMarker({ presentAtEnd }: { presentAtEnd: boolean }): "❤️" | "☠️" {
-				return presentAtEnd ? "❤️" : "☠️";
-			}
-			function stateDesc(state: NodeBeginEndState): string {
-				return `${state.initiallyPresent ? "⌚" : "🐣"}${surviveOrPerishMarker(state)}`;
-			}
-			for (const detachMovedAsOwnRoot of [false, true]) {
-				const detachDesc = detachMovedAsOwnRoot
-					? "with self removed from destination"
-					: "remaining under destination";
-				describe(detachDesc, () => {
-					for (const insertMovedAsOwnRoot of [true, false]) {
-						const insertDescModifier = insertMovedAsOwnRoot ? "self inserted to " : "";
-						// destPalletStates is outer loop as it has the most influence over minimization of the key test content
-						for (const destinationPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
-							for (const originPalletStates of nodeBeginEndStateMatrixInitiallyPresentPrimary) {
-								if (!insertMovedAsOwnRoot && originPalletStates.initiallyPresent) {
-									continue; // Skip this combination as it is not valid for the test scenario.
-								}
-								for (const interimPalletStates of nodeBeginEndStateMatrixPresentAtEndPrimary) {
-									const palletStates = [
-										originPalletStates,
-										interimPalletStates,
-										destinationPalletStates,
-									] as const;
-									function initialContentGenerator(): Pallet[] {
-										const content: Pallet[] = [];
-										for (const [index, palletState] of palletStates.entries()) {
-											if (palletState.initiallyPresent) {
-												content.push(
-													new Pallet({
-														boxes: [
-															new Box({
-																value: `pal${index}⌚${surviveOrPerishMarker(palletState)}`,
-															}),
-														],
-													}),
-												);
-											}
-										}
-										return content;
-									}
-									const builds =
-										palletStates.filter((s) => !s.initiallyPresent).length +
-										(insertMovedAsOwnRoot ? 1 : 0);
-									const scenarioName = `from ${insertDescModifier}origin ${stateDesc(originPalletStates)}  thru interim ${stateDesc(interimPalletStates)}  to dest ${stateDesc(destinationPalletStates)}`;
-									it(scenarioName, () => {
-										const scenario = {
-											schema: PalletArray,
-											initialContent: initialContentGenerator,
-											apply: (root) => {
-												const movingBox = new Box({
-													value: `moving box ${surviveOrPerishMarker({ presentAtEnd: destinationPalletStates.presentAtEnd && !detachMovedAsOwnRoot })}`,
-												});
-												// Make sure all pallets are present before the moves.
-												// This walks in-order to leverage insertAt requireing all prior nodes to be present.
-												for (const [index, palletState] of palletStates.entries()) {
-													if (!palletState.initiallyPresent) {
-														const boxes = [
-															new Box({
-																// This does not use surviving marker ❤️ to avoid false positive when looking for surviving marker of moved Box value
-																value: `pal${index}🐣${palletState.presentAtEnd ? "" : "☠️"}`,
-															}),
-														];
-														if (index === 0 && !insertMovedAsOwnRoot) {
-															boxes.unshift(movingBox);
-														}
-														root.insertAt(
-															index,
-															new Pallet({
-																boxes,
-															}),
-														);
-													}
-												}
-
-												const [pallet0, pallet1, pallet2] = root;
-												if (insertMovedAsOwnRoot) {
-													pallet0.boxes.insertAtStart(movingBox);
-												}
-												pallet1.boxes.moveRangeToStart(0, 1, pallet0.boxes);
-												pallet2.boxes.moveRangeToStart(0, 1, pallet1.boxes);
-
-												if (detachMovedAsOwnRoot) {
-													pallet2.boxes.removeAt(0);
-												}
-
-												// Remove pallets that aren't intended to be present at the end of the transaction
-												// starting from the end for convenient by index removal.
-												for (let index = palletStates.length - 1; index >= 0; index--) {
-													if (!palletStates[index].presentAtEnd) {
-														root.removeAt(index);
-													}
-												}
-											},
-											unminimizedBuildExpectations: {
-												builds,
-												tops: builds,
-											},
-											expectSurvivingMarker:
-												!detachMovedAsOwnRoot && destinationPalletStates.presentAtEnd,
-										} as const satisfies PalletArrayScenario;
-
-										const { tree: unminimizedTree, view: unminimizedView } = runScenario(
-											scenario,
-											{
-												doNotMinimize: true,
-											},
-										);
-										const { tree: minimizedTree } = runScenario(scenario, {
-											validateConsistency: true,
-										});
-										assert.deepEqual(
-											minimizedTree.exportVerbose(),
-											unminimizedTree.exportVerbose(),
-										);
-										// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
-										assertUnminimizedExpectations(
-											scenario.unminimizedBuildExpectations,
-											unminimizedView,
-											`for double cross-field move: ${detachDesc}: ${scenarioName}`,
-										);
-									});
-								}
-							}
-						}
+			for (const [groupName, scenarios] of Object.entries(doubleMoveScenarios)) {
+				describe(beautifyScenarioName(groupName), () => {
+					for (const [scenarioName, scenario] of Object.entries(scenarios)) {
+						it(scenarioName, () => {
+							const { tree: unminimizedTree, view: unminimizedView } = runScenario(scenario, {
+								doNotMinimize: true,
+							});
+							const { tree: minimizedTree } = runScenario(scenario, {
+								validateConsistency: true,
+							});
+							assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+							// Testing self-check: verify that the unminimized view has the expected build and destroy counts.
+							assertUnminimizedExpectations(
+								scenario.unminimizedBuildExpectations,
+								unminimizedView,
+								`doubleMoveScenarios.${groupName}.${scenarioName}`,
+							);
+						});
 					}
 				});
 			}
