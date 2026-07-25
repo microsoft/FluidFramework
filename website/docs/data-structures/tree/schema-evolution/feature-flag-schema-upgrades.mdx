@@ -1,0 +1,200 @@
+---
+title: How to Enable Staged Schema Upgrades with Feature Flags
+sidebar\_position: 6
+---
+
+# How to Enable Staged Schema Upgrades with Feature Flags
+
+The standard [staged rollout](./index.mdx#staged-rollouts) strategy requires two separate code deployments: one to add reading support, and another to enable writing.
+**Runtime schema upgrades** let you ship both in a single deployment and control when the upgrade takes effect using a feature flag or other runtime control.
+
+This decouples *code deployment* from *feature rollout*, giving you:
+- **Gradual rollout** — enable the upgrade for a subset of users or documents first
+- **Simpler deployment** — one code version handles both the "before" and "after" schema states
+
+:::note
+The APIs described here are currently **alpha**.
+Import them from `@fluidframework/tree/alpha`.
+:::
+
+## How It Works
+
+When you define a [staged schema upgrade](./index.mdx#staged-schema-upgrades) (using [`staged()`](../../../api/fluid-framework/schemafactorybeta-class#staged-property) for allowed types or [`stagedOptional()`](../../../api/tree/schemafactoryalpha-class#stagedoptional-property) for field optionality), the staged parts are excluded from stored schema by default.
+
+With `TreeViewConfigurationAlpha`, you can selectively enable specific staged upgrades at view construction time:
+
+```typescript
+import {
+    SchemaFactoryAlpha,
+    StagedSchemaUpgradePolicy,
+    TreeViewConfigurationAlpha,
+} from "@fluidframework/tree/alpha";
+
+const sf = new SchemaFactoryAlpha("MyApp");
+
+// Create a staged type and extract its upgrade token
+const stagedNewType = sf.staged(MyNewType);
+const myUpgradeToken = stagedNewType.metadata.stagedSchemaUpgrade;
+
+const view = tree.viewWith(
+    new TreeViewConfigurationAlpha({
+        schema: MySchema,
+        stagedUpgradePolicy:
+            StagedSchemaUpgradePolicy.enabledStagedUpgrades(myUpgradeToken),
+    }),
+);
+```
+
+When a view is constructed with enabled staged upgrades:
+- `initialize()` includes the enabled staged changes in the new document's stored schema.
+- `upgradeSchema()` includes them when upgrading an existing document.
+- `compatibility` reflects the enabled upgrades when determining what actions are possible.
+
+The upgrade set is fixed at view construction time and cannot be changed afterwards.
+
+## Walkthrough: Adding RGB Colors to a Whiteboard App
+
+You have a collaborative whiteboard app where users place sticky notes.
+Currently, the `color` field on each note stores a plain string (e.g. `"red"`, `"#ff0000"`).
+You want to add a new `RgbColor` type as an additional allowed type for the `color` field — a change that is [backwards compatible but not forwards compatible](./index.mdx#schema-change-examples).
+
+### Step 1: Define the Staged Schema
+
+Add the new type as a [staged allowed type](./allowed-types-rollout.mdx) and capture its upgrade token:
+
+```typescript
+import { SchemaFactoryAlpha, TreeViewConfigurationAlpha } from "@fluidframework/tree/alpha";
+
+const sf = new SchemaFactoryAlpha("WhiteboardApp");
+
+class RgbColor extends sf.object("RgbColor", {
+    r: sf.number,
+    g: sf.number,
+    b: sf.number,
+}) {}
+
+const stagedRgbColor = sf.staged(RgbColor);
+const rgbUpgrade = stagedRgbColor.metadata.stagedSchemaUpgrade;
+
+class Note extends sf.objectAlpha("Note", {
+    text: sf.string,
+    x: sf.number,
+    y: sf.number,
+    color: sf.required([sf.string, stagedRgbColor]),
+}) {}
+
+class Board extends sf.object("Board", {
+    notes: sf.array(Note),
+}) {}
+```
+
+Your application code must handle `RgbColor` nodes correctly — rendering them, converting to CSS values, etc. — because once the upgrade is enabled, documents will contain them.
+
+### Step 2: Wire Up the Feature Flag
+
+Derive the `stagedUpgradePolicy` from your feature flag system when constructing the view:
+
+```typescript
+import { StagedSchemaUpgradePolicy } from "@fluidframework/tree/alpha";
+
+function openDocument(tree, featureFlags) {
+    const stagedUpgradePolicy = featureFlags.enableRgbColors
+        ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(rgbUpgrade)
+        : undefined; // undefined = restrictive (default, no staged upgrades)
+
+    const view = tree.viewWith(
+        new TreeViewConfigurationAlpha({
+            schema: Board,
+            stagedUpgradePolicy,
+        }),
+    );
+
+    if (view.compatibility.canInitialize) {
+        view.initialize(new Board({ notes: [] }));
+    } else if (view.compatibility.canUpgrade) {
+        view.upgradeSchema();
+    }
+
+    return view;
+}
+```
+
+### Step 3: Deploy and Enable
+
+1. **Deploy** the new code. With the feature flag **off**, the app behaves identically to before — `RgbColor` is excluded from stored schema, and `upgradeSchema()` is a no-op for the staged type.
+
+2. **Turn on the feature flag.** New views are constructed with `rgbUpgrade` enabled:
+    - **New documents** are initialized with stored schema that includes `RgbColor`.
+    - **Existing documents** are upgraded to include `RgbColor` when `upgradeSchema()` is called.
+    - Users can now assign RGB colors to notes.
+
+3. **Clients without the flag** (or clients who haven't picked up the flag yet) can still **read** upgraded documents because their view schema already includes `RgbColor` as a staged type.
+
+### Step 4: Clean Up After Full Rollout
+
+Once the upgrade is complete and all documents have been migrated, remove the staged wrappers:
+
+```typescript
+import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+
+const sf = new SchemaFactory("WhiteboardApp");
+
+class RgbColor extends sf.object("RgbColor", {
+    r: sf.number,
+    g: sf.number,
+    b: sf.number,
+}) {}
+
+class Note extends sf.object("Note", {
+    text: sf.string,
+    x: sf.number,
+    y: sf.number,
+    color: sf.required([sf.string, RgbColor]),
+}) {}
+
+class Board extends sf.object("Board", {
+    notes: sf.array(Note),
+}) {}
+
+// No more alpha config or feature flags needed
+const config = new TreeViewConfiguration({ schema: Board });
+```
+
+## Understanding Irreversibility
+
+:::warning
+Once a document's stored schema has been upgraded, it cannot be downgraded. Do not disable a feature flag that has already been enabled in production — there is currently no API to determine which documents have been upgraded, so you cannot safely roll back without risking incompatibility for clients that encounter already-upgraded documents. An API for querying per-document upgrade status is in progress.
+:::
+
+Disabling the feature flag prevents **new** documents from being upgraded, but documents that have already been upgraded retain the new schema.
+This means:
+
+- **Clients running the staged code** (Step 1 and above) can still open and read upgraded documents — their view schema is compatible.
+- **Clients running older code** (before the staged type was added) **cannot** open upgraded documents. This is why [client saturation](./index.mdx#staged-rollouts) of the staged code is important before enabling the flag.
+- There is currently no API to query whether a particular document has already been upgraded (this capability is in progress). This means there is no built-in mechanism to selectively target only non-upgraded documents when disabling the flag.
+
+Plan your rollout with this in mind: ensure that all active clients have the staged code before turning on the flag.
+
+## Best Practices
+
+- **Wait for client saturation before enabling.**
+  Monitor your client version distribution to ensure all (or tolerably most) users have deployed the code with the staged schema before enabling the flag.
+
+- **One upgrade token per feature.**
+  Each `staged()` or `stagedOptional()` call creates a separate upgrade token. Group related schema changes under the same feature flag by enabling all their tokens together.
+
+- **Test before enabling.**
+  Use [testing schema upgrades](./testing-schema-upgrades.mdx) to verify your code handles the upgraded schema correctly before turning on the flag in production.
+
+- **Use `snapshotSchemaCompatibility` tests.**
+  Write [`snapshotSchemaCompatibility`](../../../api/fluid-framework/#snapshotschemacompatibility-function) tests to verify compatibility across all schema states in your rollout. Only use schema configurations in production that are covered by these tests.
+
+- **Avoid diverging upgrade paths.**
+  `snapshotSchemaCompatibility` assumes a linear version history and cannot model branching upgrade paths. If different documents enable different combinations of staged upgrades (e.g., one enables A+C while another enables B+C), the resulting schema states diverge and cannot be validated in a single snapshot test. Keep your rollout linear — enable staged upgrades in the same order for all documents — so that every schema state you encounter in production is covered by your compatibility tests.
+
+## See Also
+
+- [Schema Evolution](./index.mdx) — Overview of schema changes and compatibility
+- [Rolling Out New Allowed Types](./allowed-types-rollout.mdx) — Staged allowed type rollout process
+- [Testing Schema Upgrades](./testing-schema-upgrades.mdx) — Creating test documents with future schema states
+- [Types of Schema Changes](./types-of-changes.mdx) — Which changes are safe vs breaking
