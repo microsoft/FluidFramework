@@ -8,25 +8,35 @@ import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ChangeAtomId,
 	ChangeAtomIdMap,
-	ChangesetLocalId,
+	ChangeAtomIdRangeMap,
 	DeltaFieldMap,
 	DeltaRoot,
 	FieldKindIdentifier,
-	RevisionTag,
 } from "../../core/index.js";
-import { makeAnonChange } from "../../core/index.js";
-import type { NestedSet } from "../../util/index.js";
-import { addToNestedSet, brand, nestedSetContains, setInNestedMap } from "../../util/index.js";
+import {
+	makeAnonChange,
+	newChangeAtomIdRangeMap,
+	offsetChangeAtomId,
+	offsetChangesetLocalId,
+} from "../../core/index.js";
+import { brand, setInNestedMap } from "../../util/index.js";
 
 import type { FlexFieldKind } from "./fieldKind.js";
 import { computeMinimizedBuilds } from "./minimizeBuilds.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
+/** A contiguous run of node IDs starting at `id` and spanning `count` consecutive IDs. */
+interface ChangeAtomIdRange {
+	readonly id: ChangeAtomId;
+	readonly count: number;
+}
+
 /**
- * A set of node IDs, keyed by revision then by the numeric portion (`localId`/`minor`) of the ID.
+ * A set of node IDs, stored as a {@link ChangeAtomIdRangeMap} so that consecutive runs of IDs are
+ * represented (and marked/queried) as ranges rather than one entry per ID.
  */
-type ChangeAtomIdSet = NestedSet<RevisionTag | undefined, ChangesetLocalId>;
+type ChangeAtomIdRangeSet = ChangeAtomIdRangeMap<true>;
 
 /**
  * Indexes a delta's {@link DeltaRoot.global | global} detached-node changes by their node ID.
@@ -58,14 +68,19 @@ function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 function collectAttachedNodeIds(
 	delta: DeltaRoot,
 	globalById: ChangeAtomIdMap<DeltaFieldMap>,
-): ChangeAtomIdSet {
-	const attached: ChangeAtomIdSet = new Map();
-	// Worklist of detached node IDs newly discovered to be live, whose own nested content must be visited.
-	const worklist: ChangeAtomId[] = [];
-	const markLive = (id: ChangeAtomId): void => {
-		if (!nestedSetContains(attached, id.revision, id.localId)) {
-			addToNestedSet(attached, id.revision, id.localId);
-			worklist.push(id);
+): ChangeAtomIdRangeSet {
+	const attached: ChangeAtomIdRangeSet = newChangeAtomIdRangeMap<true>();
+	// Worklist of detached node ID ranges newly discovered to be live, whose own nested content must be visited.
+	const worklist: ChangeAtomIdRange[] = [];
+	const markLive = (id: ChangeAtomId, count: number): void => {
+		// Only the sub-ranges of `[id, id + count)` that are not already live are newly discovered.
+		// Mark each such run live in a single range operation and enqueue it for processing.
+		for (const fragment of attached.getAll(id, count)) {
+			if (fragment.value === undefined) {
+				const runStart = offsetChangeAtomId(id, fragment.offset);
+				attached.set(runStart, fragment.length, true);
+				worklist.push({ id: runStart, count: fragment.length });
+			}
 		}
 	};
 
@@ -76,12 +91,10 @@ function collectAttachedNodeIds(
 		for (const field of fields.values()) {
 			for (const mark of field.marks) {
 				if (mark.attach !== undefined) {
-					for (let offset = 0; offset < mark.count; offset += 1) {
-						markLive({
-							revision: mark.attach.major,
-							localId: brand(mark.attach.minor + offset),
-						});
-					}
+					markLive(
+						{ revision: mark.attach.major, localId: brand(mark.attach.minor) },
+						mark.count,
+					);
 				}
 				// `mark.fields` edits the cell's pre-existing content. Only descend when that content
 				// stays in the live tree (i.e. it is not being detached out of the tree).
@@ -94,7 +107,7 @@ function collectAttachedNodeIds(
 
 	visitLiveFields(delta.fields);
 
-	// Process nodes discovered to be live: pull in their nested content (from `global`) and propagate
+	// Process node ranges discovered to be live: pull in their nested content (from `global`) and propagate
 	// liveness backwards across renames (a node attached under its post-rename ID was built under its
 	// pre-rename ID). Iterate to a fixed point.
 	while (worklist.length > 0) {
@@ -102,15 +115,30 @@ function collectAttachedNodeIds(
 		if (next === undefined) {
 			break;
 		}
-		const { revision: major, localId: minor } = next;
-		visitLiveFields(globalById.get(major)?.get(minor));
+		const { id, count } = next;
+		// Nested content in `global` is keyed per node, so it must be visited one ID at a time.
+		for (let offset = 0; offset < count; offset += 1) {
+			visitLiveFields(
+				globalById.get(id.revision)?.get(offsetChangesetLocalId(id.localId, offset)),
+			);
+		}
 		if (delta.rename !== undefined) {
-			for (const { oldId, newId, count } of delta.rename) {
-				if (newId.major === major && minor >= newId.minor && minor < newId.minor + count) {
-					markLive({
-						revision: oldId.major,
-						localId: brand(oldId.minor + (minor - newId.minor)),
-					});
+			for (const { oldId, newId, count: renameCount } of delta.rename) {
+				if (newId.major !== id.revision) {
+					continue;
+				}
+				// Overlap of the live range `[id.localId, id.localId + count)` with this rename's
+				// post-rename range `[newId.minor, newId.minor + renameCount)`.
+				const overlapStart = Math.max(id.localId, newId.minor);
+				const overlapEnd = Math.min(id.localId + count, newId.minor + renameCount);
+				if (overlapStart < overlapEnd) {
+					markLive(
+						{
+							revision: oldId.major,
+							localId: brand(oldId.minor + (overlapStart - newId.minor)),
+						},
+						overlapEnd - overlapStart,
+					);
 				}
 			}
 		}
@@ -164,10 +192,10 @@ export function minimizeModularChangeset(
 	// Compute the set of detached node IDs whose content ends up attached in the resulting document. Content built by
 	// this change but absent from this set has no observable effect and is treated as "dead" / trimmable below.
 	const attached = collectAttachedNodeIds(delta, globalById);
-	const isLive = ({ revision, localId }: ChangeAtomId): boolean =>
+	const isLive = (id: ChangeAtomId): boolean =>
 		// `|| true` (non-test default) effectively disables the minimization, which is
 		// not viable without paired edit minimization that is not yet implemented.
-		nestedSetContains(attached, revision, localId) || testOnlyArg_DisableBuildMinification;
+		attached.getFirst(id, 1).value !== undefined || testOnlyArg_DisableBuildMinification;
 
 	const minimizedChange = {
 		...change,
