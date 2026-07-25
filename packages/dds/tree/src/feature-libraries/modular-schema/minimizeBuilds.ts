@@ -3,6 +3,11 @@
  * Licensed under the MIT License.
  */
 
+// The implementation in this file provides a reference implementation of the
+// "minimize builds" feature, which drops unused content and trims transient
+// content from surviving nodes. It is not currently used in production and
+// is retained for reference until replaced.
+
 import { oob } from "@fluidframework/core-utils/internal";
 
 import type {
@@ -134,7 +139,10 @@ function setExtractedBuild(
 	if (buildsOut.has([id.revision, id.localId])) {
 		return;
 	}
-	buildsOut.set([id.revision, id.localId], chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor));
+	buildsOut.set(
+		[id.revision, id.localId],
+		chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor),
+	);
 }
 
 /**
