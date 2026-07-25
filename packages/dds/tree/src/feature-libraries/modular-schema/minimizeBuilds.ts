@@ -120,6 +120,93 @@ function trimMapTree(
 }
 
 /**
+ * Chunks a (possibly trimmed) node's map tree and records it as a build keyed by the given id.
+ *
+ * @remarks
+ * Used when content that was built inline within a now-dropped node's build tree must be re-homed as its own
+ * build. If a build already exists for the id (e.g. the content had its own top-level build), it is left as-is.
+ */
+function setExtractedBuild(
+	buildsOut: ChangeAtomIdBTree<TreeChunk>,
+	id: ChangeAtomId,
+	mapTree: ExclusiveMapTree,
+): void {
+	if (buildsOut.has([id.revision, id.localId])) {
+		return;
+	}
+	buildsOut.set([id.revision, id.localId], chunkTree(cursorForMapTreeNode(mapTree), minimizeChunkCompressor));
+}
+
+/**
+ * Finds content built inline within a dead (unused) node's build tree that is detached to a cell surviving
+ * elsewhere in the resulting document, emitting each such subtree as its own build keyed by the id it is
+ * detached to. Transient content within an emitted subtree is trimmed via {@link trimMapTree}. Dead
+ * descendants are traversed to discover any deeper surviving content.
+ *
+ * @remarks
+ * When a top-level built node does not survive, its build entry is dropped. If some of its inline-built
+ * content was moved out to a live location, that content no longer has any build to source it, so it is
+ * re-homed here under the id it is attached as (its detach/move id), mirroring how {@link computeMinimizedBuilds}
+ * retains a surviving top-level node.
+ *
+ * @param node - The dead node's in-memory build tree.
+ * @param deltaFields - The dead node's per-field delta changes (from `global`).
+ */
+function extractSurvivingSubtrees(
+	node: ExclusiveMapTree,
+	deltaFields: DeltaFieldMap,
+	buildsOut: ChangeAtomIdBTree<TreeChunk>,
+	globalById: ChangeAtomIdMap<DeltaFieldMap>,
+	isLive: (id: ChangeAtomId) => boolean,
+): void {
+	for (const [fieldKey, fieldChanges] of deltaFields) {
+		const children = node.fields.get(fieldKey);
+		if (children === undefined) {
+			continue;
+		}
+		let childIndex = 0;
+		for (const mark of fieldChanges.marks) {
+			if (mark.detach !== undefined) {
+				for (let offset = 0; offset < mark.count; offset += 1) {
+					const child = children[childIndex] ?? oob();
+					const detachId: ChangeAtomId = {
+						revision: mark.detach.major,
+						localId: brand(mark.detach.minor + offset),
+					};
+					const detachedFields = globalById.get(detachId.revision)?.get(detachId.localId);
+					if (isLive(detachId)) {
+						// Moved out to a surviving cell: this content needs its own build now that its
+						// original (dead) parent build is being dropped. Trim any transient content it carries.
+						if (detachedFields !== undefined) {
+							trimMapTree(child, detachedFields, isLive);
+						}
+						setExtractedBuild(buildsOut, detachId, child);
+					} else if (detachedFields !== undefined) {
+						// Detached to another dead cell: descend in case it carries deeper surviving content.
+						extractSurvivingSubtrees(child, detachedFields, buildsOut, globalById, isLive);
+					}
+					childIndex += 1;
+				}
+			} else if (mark.fields !== undefined) {
+				// Child remains under this dead node but has nested modifications that may move content out.
+				extractSurvivingSubtrees(
+					children[childIndex] ?? oob(),
+					mark.fields,
+					buildsOut,
+					globalById,
+					isLive,
+				);
+				childIndex += 1;
+			} else if (mark.attach === undefined) {
+				// Unchanged run of existing (dead) children; nothing survives from here.
+				childIndex += mark.count;
+			}
+			// Otherwise the mark attaches new content sourced from a separate build; nothing inline to inspect.
+		}
+	}
+}
+
+/**
  * Computes the minimized set of builds for a change.
  *
  * @remarks
@@ -171,8 +258,15 @@ export function computeMinimizedBuilds(
 				runStart ??= localId;
 				runChunks.push(nodeChunk);
 			} else {
-				nodeChunk.referenceRemoved();
+				// This top-level node is dead and its build is dropped. Content built inline within it that
+				// is moved out to a surviving cell must be preserved as its own build.
 				flushRun();
+				const globalFields = globalById.get(revision)?.get(localId);
+				if (globalFields !== undefined) {
+					const mapTree = mapTreeFromNodeChunk(nodeChunk);
+					extractSurvivingSubtrees(mapTree, globalFields, buildsOut, globalById, isLive);
+				}
+				nodeChunk.referenceRemoved();
 			}
 		}
 		flushRun();
