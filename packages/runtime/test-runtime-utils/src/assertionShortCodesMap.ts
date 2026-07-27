@@ -1949,5 +1949,7 @@ export const shortCodeMap = {
 	"0xd0a": "OriginatorlessEncodedId must be a finalized compressed id at runtime",
 	"0xd0b": "Decompressed id must be a string",
 	"0xd0c": "withIncrementalDecoder can only be called on contexts without an originator session ID",
-	"0xd0d": "incrementalEncoder cannot be used when encoding originator-dependent identifiers"
+	"0xd0d": "incrementalEncoder cannot be used when encoding originator-dependent identifiers",
+	"0xd0e": "Cannot remove detach without also removing attach",
+	"0xd0f": "Attach sequence number should be greater than the parent's last summary reference sequence number"
 };

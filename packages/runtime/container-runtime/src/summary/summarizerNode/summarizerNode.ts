@@ -577,7 +577,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 				assert(
 					parentLastSummaryReferenceSequenceNumber === undefined ||
 						createParam.sequenceNumber > parentLastSummaryReferenceSequenceNumber,
-					"Attach sequence number should be greater than the parent's last summary reference sequence number",
+					0xd0f /* Attach sequence number should be greater than the parent's last summary reference sequence number */,
 				);
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;

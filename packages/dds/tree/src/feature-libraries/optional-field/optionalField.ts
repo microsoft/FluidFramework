@@ -837,7 +837,7 @@ function filterEdits(
 			if (detachResult === EditFilterStatus.Remove) {
 				assert(
 					attachId === undefined || attachResult === EditFilterStatus.Remove,
-					"Cannot remove detach without also removing attach",
+					0xd0e /* Cannot remove detach without also removing attach */,
 				);
 
 				delete filtered.valueReplace;
