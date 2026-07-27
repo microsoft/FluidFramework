@@ -44,9 +44,6 @@
 		}
 	},
 	"main": "lib/index.js",
-	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-	},
 	"types": "lib/public.d.ts",
 	"scripts": {
 		"api": "fluid-build . --task api",
