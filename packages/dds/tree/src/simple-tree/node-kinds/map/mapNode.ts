@@ -170,7 +170,7 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	/**
 	 * Removes all elements from the map.
 	 * @remarks
-	 * The merge semantics of this operation are loosely specified: either of the following may occur:
+	 * The merge semantics of this operation are loosely specified. Either of the following may occur:
 	 *
 	 * - `clear` may remove/detach all elements present in the map at the time the edit was authored,
 	 * even if such elements are attached somewhere else when the edit is sequenced.
