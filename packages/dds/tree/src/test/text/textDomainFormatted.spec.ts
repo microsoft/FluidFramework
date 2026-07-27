@@ -9,7 +9,11 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeAlpha } from "../../shared-tree/index.js";
-import { SchemaFactory, SchemaFactoryBeta, TreeViewConfiguration } from "../../simple-tree/index.js";
+import {
+	SchemaFactory,
+	SchemaFactoryBeta,
+	TreeViewConfiguration,
+} from "../../simple-tree/index.js";
 // Allow importing file being tested
 // eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 import type { TextAsTree } from "../../text/textDomain.js";
