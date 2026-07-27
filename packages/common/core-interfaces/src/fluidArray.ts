@@ -98,7 +98,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	findLast<S extends T>(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => value is S,
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -110,7 +110,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	findLast(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -122,7 +122,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	findLastIndex(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -134,7 +134,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the predicate function.
 	 */
 	every<S extends T>(
-		predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => value is S,
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -146,7 +146,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the predicate function.
 	 */
 	every(
-		predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -158,7 +158,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the predicate function.
 	 */
 	some(
-		predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -170,7 +170,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the callbackfn function.
 	 */
 	forEach(
-		callbackfn: (value: T, index: number, array: FluidReadonlyArray<T>) => void,
+		callbackfn: (value: T, index: number, array: readonly T[]) => void,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -182,7 +182,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the callbackfn function.
 	 */
 	map<U>(
-		callbackfn: (value: T, index: number, array: FluidReadonlyArray<T>) => U,
+		callbackfn: (value: T, index: number, array: readonly T[]) => U,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -194,7 +194,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the predicate function.
 	 */
 	filter<S extends T>(
-		predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => value is S,
+		predicate: (value: T, index: number, array: readonly T[]) => value is S,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -206,7 +206,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - An object to which the this keyword can refer in the predicate function.
 	 */
 	filter(
-		predicate: (value: T, index: number, array: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, array: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -221,7 +221,7 @@ export interface FluidReadonlyArray<T> {
 			previousValue: T,
 			currentValue: T,
 			currentIndex: number,
-			array: FluidReadonlyArray<T>,
+			array: readonly T[],
 		) => T,
 	): T;
 
@@ -235,7 +235,7 @@ export interface FluidReadonlyArray<T> {
 			previousValue: U,
 			currentValue: T,
 			currentIndex: number,
-			array: FluidReadonlyArray<T>,
+			array: readonly T[],
 		) => U,
 		initialValue: U,
 	): U;
@@ -249,7 +249,7 @@ export interface FluidReadonlyArray<T> {
 			previousValue: T,
 			currentValue: T,
 			currentIndex: number,
-			array: FluidReadonlyArray<T>,
+			array: readonly T[],
 		) => T,
 	): T;
 
@@ -263,7 +263,7 @@ export interface FluidReadonlyArray<T> {
 			previousValue: U,
 			currentValue: T,
 			currentIndex: number,
-			array: FluidReadonlyArray<T>,
+			array: readonly T[],
 		) => U,
 		initialValue: U,
 	): U;
@@ -274,7 +274,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	find<S extends T>(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => value is S,
+		predicate: (value: T, index: number, obj: readonly T[]) => value is S,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -286,7 +286,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	find(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -298,7 +298,7 @@ export interface FluidReadonlyArray<T> {
 	 * @param thisArg - If provided, it will be used as the this value for each invocation of predicate.
 	 */
 	findIndex(
-		predicate: (value: T, index: number, obj: FluidReadonlyArray<T>) => unknown,
+		predicate: (value: T, index: number, obj: readonly T[]) => unknown,
 		// Typing inherited from ReadonlyArray.
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		thisArg?: any,
@@ -331,11 +331,9 @@ export interface FluidReadonlyArray<T> {
 	 * @param callback - A function that accepts up to three arguments.
 	 * @param thisArg - An object to which the this keyword can refer in the callback function.
 	 */
-	flatMap<U>(
-		callback: (value: T, index: number, array: FluidReadonlyArray<T>) => U | readonly U[],
-		// Typing inherited from ReadonlyArray.
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		thisArg?: any,
+	flatMap<U, This = undefined>(
+		callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[],
+		thisArg?: This,
 	): U[];
 
 	/**
@@ -348,6 +346,8 @@ export interface FluidReadonlyArray<T> {
 	 * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/unscopables | Symbol.unscopables}
 	 */
 	readonly [Symbol.unscopables]: {
-		[K in keyof FluidReadonlyArray<T>]?: boolean;
+		// Typing inherited from ReadonlyArray to ensure structural compatibility.
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		[K in keyof (readonly any[])]?: boolean;
 	};
 }
