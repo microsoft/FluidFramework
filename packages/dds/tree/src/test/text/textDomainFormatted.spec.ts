@@ -14,11 +14,11 @@ import {
 	SchemaFactoryBeta,
 	TreeViewConfiguration,
 } from "../../simple-tree/index.js";
-// Allow importing file being tested
+// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+import { setEnableExpensiveDebugAsserts } from "../../text/textDomain.js";
 // eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 import type { TextAsTree } from "../../text/textDomain.js";
 import {
-	setEnableExpensiveDebugAsserts,
 	FormattedTextAsTree,
 	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 } from "../../text/textDomainFormatted.js";

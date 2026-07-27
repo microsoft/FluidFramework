@@ -34,6 +34,20 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
+/**
+ * Enables expensive debug assertions for formatted text.
+ */
+export let enableTextExpensiveDebugAsserts = false;
+
+/**
+ * Enables or disables expensive debug assertions for formatted text.
+ * @remarks
+ * These should remain disabled except when testing implementation details of this code.
+ */
+export function setEnableExpensiveDebugAsserts(value: boolean): void {
+	enableTextExpensiveDebugAsserts = value;
+}
+
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
@@ -122,7 +136,8 @@ class TextNode
 		const result = this.content.charactersCopy();
 		debugAssert(
 			() =>
-				compareArrays(result, this.charactersCopy_reference()) ||
+				(enableTextExpensiveDebugAsserts &&
+					compareArrays(result, this.#charactersCopy_reference())) ||
 				"invalid charactersCopy optimizations",
 		);
 		return result;
@@ -131,7 +146,9 @@ class TextNode
 	public fullString(): string {
 		const result = this.content.fullString();
 		debugAssert(
-			() => result === this.fullString_reference() || "invalid fullString optimizations",
+			() =>
+				(enableTextExpensiveDebugAsserts && result === this.#fullString_reference()) ||
+				"invalid fullString optimizations",
 		);
 		return result;
 	}
@@ -139,14 +156,14 @@ class TextNode
 	/**
 	 * Unoptimized trivially correct implementation of fullString.
 	 */
-	public fullString_reference(): string {
+	#fullString_reference(): string {
 		return this.content.join("");
 	}
 
 	/**
 	 * Unoptimized trivially correct implementation of charactersCopy.
 	 */
-	public charactersCopy_reference(): string[] {
+	#charactersCopy_reference(): string[] {
 		return [...this.content];
 	}
 

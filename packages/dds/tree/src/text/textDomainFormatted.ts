@@ -45,6 +45,7 @@ import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/i
 
 import {
 	charactersFromString,
+	enableTextExpensiveDebugAsserts,
 	processCharactersChangedDelta,
 	type TextAsTree,
 } from "./textDomain.js";
@@ -66,20 +67,6 @@ function createFormattedScopedFactory<TUserScope extends string>(
 const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 
 const formatKey: FieldKey = brand("format");
-
-/**
- * Enables expensive debug assertions for formatted text.
- */
-let enableTextExpensiveDebugAsserts = false;
-
-/**
- * Enables or disables expensive debug assertions for formatted text.
- * @remarks
- * These should remain disabled except when testing implementation details of this code.
- */
-export function setEnableExpensiveDebugAsserts(value: boolean): void {
-	enableTextExpensiveDebugAsserts = value;
-}
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
@@ -526,6 +513,12 @@ export namespace FormattedTextAsTree {
 		 * @remarks
 		 * See {@link FormattedTextAsTree.Members} for the API.
 		 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
+		 * @privateRemarks
+		 * eraseSchemaDetailsSubclassable risks user's defining subclass members which collide with internals.
+		 * Ideally we would generate private members for non-public properties, but TypeScript does not support this.
+		 * It is up to the user of eraseSchemaDetailsSubclassable to manage this risk.
+		 *
+		 * TODO: there is at least one collision prone member to worry about here: `content`.
 		 */
 		const Tree = eraseSchemaDetailsSubclassable<
 			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,

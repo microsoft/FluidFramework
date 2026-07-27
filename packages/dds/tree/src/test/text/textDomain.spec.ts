@@ -11,15 +11,21 @@ import {
 	TreeViewConfiguration,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-// Allow importing file being tested
-// eslint-disable-next-line import-x/no-internal-modules
-import { TextAsTree } from "../../text/textDomain.js";
+// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+import { setEnableExpensiveDebugAsserts, TextAsTree } from "../../text/textDomain.js";
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 
 describe("textDomain", () => {
+	beforeEach(() => {
+		setEnableExpensiveDebugAsserts(true);
+	});
+	afterEach(() => {
+		setEnableExpensiveDebugAsserts(false);
+	});
+
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "text");
