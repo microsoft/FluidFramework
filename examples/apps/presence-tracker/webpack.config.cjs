@@ -15,6 +15,11 @@ module.exports = (env) => {
 			app: "./src/app.ts",
 		},
 		resolve: {
+			alias: {
+				// The emoji data is emitted as a standalone asset (see the rule below) so the
+				// import resolves to the URL it is served from.
+				"emoji-data-url$": require.resolve("emoji-picker-element-data/en/emojibase/data.json"),
+			},
 			extensionAlias: {
 				".js": [".ts", ".tsx", ".js", ".cjs", ".mjs"],
 			},
@@ -29,6 +34,12 @@ module.exports = (env) => {
 				{
 					test: /\.m?js$/,
 					use: ["source-map-loader"],
+				},
+				{
+					// Emit the emoji-picker-element data as a local asset. Without an explicit
+					// dataSource the picker fetches this file from a public CDN at runtime.
+					test: /emoji-picker-element-data[\\/].*\.json$/,
+					type: "asset/resource",
 				},
 			],
 		},
