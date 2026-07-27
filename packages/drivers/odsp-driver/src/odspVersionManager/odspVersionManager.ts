@@ -103,8 +103,7 @@ export interface IOdspVersionManager {
 	 *
 	 * @remarks
 	 * A `found` base is guaranteed to share the live document's ODSP epoch (lineage): before returning
-	 * it, the chosen base's epoch is compared with the live document's, and a mismatch (from a version
-	 * restore or download-then-reupload, which renumbers the op stream) throws a non-retryable error
+	 * it, the chosen base's epoch is compared with the live document's, and a mismatch throws a non-retryable error
 	 * rather than returning a base that cannot be replayed. Op availability is enforced separately and
 	 * lazily as the loader reads the bridging ops.
 	 */
@@ -150,8 +149,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
 				const base = { ...version, sequenceNumber };
-				// Confirm the chosen base shares the live document's lineage before handing it back, so
-				// a cross-lineage base fails loudly here rather than replaying a renumbered op stream.
+				// Confirm the chosen base shares the live document's lineage before handing it back
 				await this.validateLineageEpoch(base);
 				return { kind: "found", base };
 			}
