@@ -231,10 +231,12 @@ export class OdspVersionManager implements IOdspVersionManager {
 			// fetchOps is half-open [from, to); target + 1 makes the target op itself eligible.
 			const sequenceNumbers = await this.fetcher.fetchOps(expected, target + 1);
 			if (sequenceNumbers.length === 0) {
-				throw new UsageError(
+				throw new NonRetryableError(
 					`Ops required to replay the ODSP document from sequence number ${baseSeq} to ${target} ` +
 						`are no longer available: the server returned no ops at or after sequence number ` +
 						`${expected} (they were likely trimmed by op retention).`,
+					OdspErrorTypes.cannotCatchUp,
+					{ driverVersion },
 				);
 			}
 			for (const sequenceNumber of sequenceNumbers) {
@@ -243,11 +245,13 @@ export class OdspVersionManager implements IOdspVersionManager {
 					break;
 				}
 				if (sequenceNumber !== expected) {
-					throw new UsageError(
+					throw new NonRetryableError(
 						`Ops required to replay the ODSP document from sequence number ${baseSeq} to ` +
 							`${target} are not contiguous: expected sequence number ${expected} but the next ` +
 							`available op is ${sequenceNumber} (a gap means ops are missing, e.g. trimmed by ` +
 							`op retention).`,
+						OdspErrorTypes.cannotCatchUp,
+						{ driverVersion },
 					);
 				}
 				expected++;
