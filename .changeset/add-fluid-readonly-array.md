@@ -1,7 +1,7 @@
 ---
 "@fluidframework/core-interfaces": minor
 "fluid-framework": minor
-"__section": Add FluidReadonlyArray type
+"__section": feature
 ---
 
 Add `FluidReadonlyArray<T>` interface to `@fluidframework/core-interfaces` and re-export from `fluid-framework`.
