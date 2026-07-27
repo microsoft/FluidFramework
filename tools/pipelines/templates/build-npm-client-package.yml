@@ -423,121 +423,59 @@ extends:
                     # Pass them through the environment instead of interpolating them into the inline shell script
                     # so values such as branch names cannot accidentally alter the script's syntax.
                     env:
-                      PUBLISH: '${{ parameters.publish }}'
-                      RELEASE: $(release)
-                      TEST_BUILD: $(testBuild)
                       VERSION: $(SetVersion.version)
+                      RELEASE: $(release)
+                      PUBLISH_OVERRIDE: '${{ parameters.publishOverride }}'
                       IS_LATEST: $(SetVersion.isLatest)
-                      SOURCE_BRANCH: $(Build.SourceBranch)
-                      TAG_NAME: '${{ parameters.tagName }}'
-                      IS_RELEASE_GROUP: '${{ parameters.isReleaseGroup }}'
-                      TEAM_PROJECT: $(System.TeamProject)
                     inputs:
                       targetType: 'inline'
                       workingDirectory: $(Build.ArtifactStagingDirectory)/pack
                       script: |
                         set -eu -o pipefail
 
-                        # Azure DevOps renders compile-time boolean parameters as 'True'/'False' and runtime
-                        # variables as 'true'/'false'; normalize everything to lowercase 'true'/'false' and
-                        # hard-fail on anything else so bad input can't silently be treated as falsy.
-                        normalize_bool() {
-                          local name="$2"
-                          local val
-                          val=$(echo "${1:-}" | tr '[:upper:]' '[:lower:]')
-                          case "$val" in
-                            true|false) echo "$val" ;;
-                            *)
-                              echo "##vso[task.logissue type=error]Invalid boolean value '$1' for $name"
-                              exit 1
-                              ;;
-                          esac
-                        }
-
                         if [ -z "${VERSION:-}" ]; then
                           echo "##vso[task.logissue type=error]Missing version: SetVersion.version output was empty"
                           exit 1
                         fi
 
-                        case "$RELEASE" in
-                          none|prerelease|release) ;;
+                        case "${RELEASE:-}" in
+                          "") release=none ;;
+                          none|prerelease|release) release="$RELEASE" ;;
                           *)
-                            echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'. Expected one of: none, prerelease, release"
+                            echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'"
                             exit 1
                             ;;
                         esac
 
-                        publish=$(normalize_bool "$PUBLISH" "publish")
-                        testBuild=$(normalize_bool "$TEST_BUILD" "testBuild")
-                        # flub only emits SetVersion.isLatest when it is true. Azure leaves an unresolved macro
-                        # unchanged, so normalize both an empty value and the literal macro to false.
-                        case "${IS_LATEST:-}" in
-                          ""|'$(SetVersion.isLatest)') isLatest=false ;;
-                          *) isLatest=$(normalize_bool "$IS_LATEST" "isLatest") ;;
+                        case "$PUBLISH_OVERRIDE" in
+                          default|force|skip) ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid publishOverride value '$PUBLISH_OVERRIDE'"
+                            exit 1
+                            ;;
                         esac
-                        isReleaseGroup=$(normalize_bool "$IS_RELEASE_GROUP" "isReleaseGroup")
 
-                        # Derived publish eligibility. Must stay in sync with the equivalent conditions in
-                        # include-publish-npm-package.yml / include-publish-npm-package-deployment.yml /
-                        # include-git-tag-steps.yml / include-publish-npm-package.yml (manifest stage condition).
-                        publishToTest=false
-                        [ "$publish" = "true" ] && [ "$testBuild" = "true" ] && publishToTest=true
-
-                        publishToBuild=false
-                        [ "$publish" = "true" ] && [ "$testBuild" = "false" ] && publishToBuild=true
-
-                        publishToDev=false
-                        [ "$publishToBuild" = "true" ] && [ "$isReleaseGroup" = "true" ] && publishToDev=true
-
-                        publishToPublic=false
-                        if [ "$publish" = "true" ] && { [ "$RELEASE" = "release" ] || [ "$RELEASE" = "prerelease" ]; }; then
-                          publishToPublic=true
-                        fi
-
-                        shouldTag=false
-                        [ "$publishToPublic" = "true" ] && [ "$RELEASE" = "release" ] && shouldTag=true
-
-                        # Matches the upload_manifests stage condition in include-publish-npm-package.yml: internal
-                        # project only, client release group only, and only for main/release/*/test/* branches.
-                        shouldUploadManifest=false
-                        if [ "$publish" = "true" ] && [ "$TEAM_PROJECT" = "internal" ] && [ "$TAG_NAME" = "client" ]; then
-                          case "$SOURCE_BRANCH" in
-                            refs/heads/main|refs/heads/release/*|refs/heads/test/*)
-                              shouldUploadManifest=true
-                              ;;
-                          esac
-                        fi
+                        case "${IS_LATEST:-}" in
+                          ""|'$(SetVersion.isLatest)'|false|False) isLatest=false ;;
+                          true|True) isLatest=true ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid isLatest value '$IS_LATEST'"
+                            exit 1
+                            ;;
+                        esac
 
                         jq -n \
                           --argjson schemaVersion 1 \
-                          --argjson publish "$publish" \
                           --arg version "$VERSION" \
+                          --arg release "$release" \
+                          --arg publishOverride "$PUBLISH_OVERRIDE" \
                           --argjson isLatest "$isLatest" \
-                          --arg release "$RELEASE" \
-                          --argjson testBuild "$testBuild" \
-                          --arg tagName "$TAG_NAME" \
-                          --argjson isReleaseGroup "$isReleaseGroup" \
-                          --argjson publishToTest "$publishToTest" \
-                          --argjson publishToBuild "$publishToBuild" \
-                          --argjson publishToDev "$publishToDev" \
-                          --argjson publishToPublic "$publishToPublic" \
-                          --argjson shouldTag "$shouldTag" \
-                          --argjson shouldUploadManifest "$shouldUploadManifest" \
                           '{
                             schemaVersion: $schemaVersion,
-                            publish: $publish,
                             version: $version,
-                            isLatest: $isLatest,
                             release: $release,
-                            testBuild: $testBuild,
-                            tagName: $tagName,
-                            isReleaseGroup: $isReleaseGroup,
-                            publishToTest: $publishToTest,
-                            publishToBuild: $publishToBuild,
-                            publishToDev: $publishToDev,
-                            publishToPublic: $publishToPublic,
-                            shouldTag: $shouldTag,
-                            shouldUploadManifest: $shouldUploadManifest
+                            publishOverride: $publishOverride,
+                            isLatest: $isLatest
                           }' > publish-metadata.json
 
                         echo "Generated publish-metadata.json:"
