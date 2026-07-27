@@ -17,19 +17,28 @@ declare type _fluidMap_to_fluidReadonlyMap = requireAssignableTo<
 	FluidReadonlyMap<string, number>
 >;
 
-// FluidReadonlyMap is assignable to ReadonlyMap (the extra Symbol.toStringTag is compatible).
+// Ensure FluidReadonlyMap is assignable to ReadonlyMap with our current TypeScript configuration.
+// Technically customers should not rely on this as doing so makes their code likely
+// to break if they change the `lib` in their TypeScript configuration.
+// This is however a good way to ensure we are including everything we should,
+// and that the transition from us declaring we implement `ReadonlyMap` to `FluidReadonlyMap` is unlikely to break code
+// which matches our current `lib` selection.
 declare type _fluidReadonlyMap_to_readonlyMap = requireAssignableTo<
 	FluidReadonlyMap<string, number>,
 	ReadonlyMap<string, number>
 >;
 
-// Native Map is assignable to FluidReadonlyMap
+// Sanity check: native Map is assignable to FluidReadonlyMap.
+// This is not an invariant users can depend on — if we implement standard APIs added to built-in types
+// before updating our TypeScript `lib` to include them, this check could fail.
+// It serves as a useful sanity check that our type is reasonable.
 declare type _map_to_fluidReadonlyMap = requireAssignableTo<
 	Map<string, number>,
 	FluidReadonlyMap<string, number>
 >;
 
-// Native iterables are assignable to FluidIterable
+// Sanity check: native iterables are assignable to FluidIterable.
+// Same caveat as above — not an invariant, just a sanity check.
 declare type _map_to_fluidIterable = requireAssignableTo<
 	Map<string, number>,
 	FluidIterable<[string, number]>
@@ -37,31 +46,10 @@ declare type _map_to_fluidIterable = requireAssignableTo<
 declare type _set_to_fluidIterable = requireAssignableTo<Set<string>, FluidIterable<string>>;
 declare type _array_to_fluidIterable = requireAssignableTo<string[], FluidIterable<string>>;
 
-// Native iterators are assignable to FluidIterableIterator
-declare type _mapKeys_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<Map<string, number>["keys"]>,
-	FluidIterableIterator<string>
->;
-declare type _mapValues_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<Map<string, number>["values"]>,
-	FluidIterableIterator<number>
->;
-declare type _mapEntries_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<Map<string, number>["entries"]>,
-	FluidIterableIterator<[string, number]>
->;
-declare type _setKeys_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<Set<string>["keys"]>,
-	FluidIterableIterator<string>
->;
-declare type _arrayKeys_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<string[]["keys"]>,
-	FluidIterableIterator<number>
->;
-declare type _arrayValues_to_fluidIterableIterator = requireAssignableTo<
-	ReturnType<string[]["values"]>,
-	FluidIterableIterator<string>
->;
+// Native iterator return types are compatible with FluidIterableIterator.
+// This can't be meaningfully tested here since FluidIterableIterator is structural —
+// assignability would pass even if our methods returned the built-in type.
+// Validate in API reports instead.
 
 // Array.from inference tests
 // The done branch of FluidIterableIterator uses `any` (not `undefined`) so that

@@ -4,7 +4,7 @@
  */
 
 import type { requireAssignableTo } from "@fluidframework/build-tools";
-import type { FluidIterableIterator, FluidReadonlyArray } from "../../index.js";
+import type { FluidReadonlyArray } from "../../index.js";
 
 // Ensure FluidReadonlyArray is assignable to readonly T[] with our current TypeScript configuration.
 // Technically customers should not rely on this as doing so makes their code likely
@@ -17,25 +17,9 @@ declare type _fluidReadonlyArray_to_readonlyArray = requireAssignableTo<
 	readonly string[]
 >;
 
-// FluidReadonlyArray iteration methods return FluidIterableIterator
-declare type _keys_returns_fluidIterableIterator = requireAssignableTo<
-	ReturnType<FluidReadonlyArray<string>["keys"]>,
-	FluidIterableIterator<number>
->;
-declare type _values_returns_fluidIterableIterator = requireAssignableTo<
-	ReturnType<FluidReadonlyArray<string>["values"]>,
-	FluidIterableIterator<string>
->;
-declare type _entries_returns_fluidIterableIterator = requireAssignableTo<
-	ReturnType<FluidReadonlyArray<string>["entries"]>,
-	FluidIterableIterator<[number, string]>
->;
-
-// FluidReadonlyArray is iterable with FluidIterableIterator
-declare type _symbolIterator_returns_fluidIterableIterator = requireAssignableTo<
-	ReturnType<FluidReadonlyArray<string>[typeof Symbol.iterator]>,
-	FluidIterableIterator<string>
->;
+// FluidReadonlyArray iteration methods return types compatible with FluidIterableIterator.
+// They should explicitly return `FluidIterableIterator` but that can't be tested here as it's a structural type.
+// That can instead be validated in the api reports.
 
 // Array.from inference: FluidReadonlyArray<string> should produce string[]
 declare const fluidArray: FluidReadonlyArray<string>;
