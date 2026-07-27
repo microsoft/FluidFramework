@@ -54,6 +54,7 @@
 		"@fluidframework/shared-object-base": "workspace:~",
 		"@fluidframework/tinylicious-client": "workspace:~",
 		"emoji-picker-element": "^1.26.1",
+		"emoji-picker-element-data": "^1.8.0",
 		"fluid-framework": "workspace:~",
 		"process": "^0.11.10"
 	},
