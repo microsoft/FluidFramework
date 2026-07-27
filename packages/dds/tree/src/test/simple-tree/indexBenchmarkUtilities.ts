@@ -99,6 +99,19 @@ export const defaultIndexBenchmarkSizes: [number, BenchmarkType][] = [
 ];
 
 /**
+ * Smaller node counts for deep (tall) trees that hit call-stack limits at high depths.
+ */
+export const deepTreeBenchmarkSizes: [number, BenchmarkType][] = [
+	[10, BenchmarkType.Measurement],
+	...(currentBenchmarkMode === BenchmarkMode.Performance
+		? [
+				[100, BenchmarkType.Perspective] as [number, BenchmarkType],
+				[500, BenchmarkType.Measurement] as [number, BenchmarkType],
+			]
+		: []),
+];
+
+/**
  * Generates a complete benchmark suite for a tree index.
  *
  * This produces benchmarks for:

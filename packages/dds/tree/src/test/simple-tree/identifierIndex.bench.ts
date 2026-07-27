@@ -14,6 +14,7 @@ import { getView, configureBenchmarkHooks } from "../utils.js";
 
 import {
 	defaultIndexBenchmarkSizes,
+	deepTreeBenchmarkSizes,
 	generateIndexBenchmarkSuite,
 	type IndexBenchmarkScenario,
 	type IndexBenchmarkSetup,
@@ -257,7 +258,7 @@ describe("IdentifierIndex benchmarks", () => {
 	describe("deep (tall) tree", () => {
 		generateIndexBenchmarkSuite({
 			indexName: "IdentifierIndex (deep)",
-			sizes: defaultIndexBenchmarkSizes,
+			sizes: deepTreeBenchmarkSizes,
 			createScenario: createDeepScenario,
 		});
 	});
