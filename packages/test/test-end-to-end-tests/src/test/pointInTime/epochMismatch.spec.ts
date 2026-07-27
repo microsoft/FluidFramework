@@ -137,7 +137,7 @@ describeCompat(
 					),
 					(error: Error & { errorType?: string }) =>
 						error.errorType === "cannotCatchUp" ||
-						/cannotCatchUp|materialize/i.test(error.message),
+						/cannotcatchup|materialize/i.test(error.message),
 					"expected a cannotCatchUp error when the target is beyond the retained ops",
 				);
 			},
