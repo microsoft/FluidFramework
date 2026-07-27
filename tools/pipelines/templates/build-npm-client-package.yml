@@ -115,6 +115,11 @@ parameters:
 - name: publish
   type: boolean
 
+# Indicates if publishing to the public npmjs.org registry is allowed.
+- name: allowPublishingToNpmjs
+  type: boolean
+  default: false
+
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
   type: boolean
@@ -407,6 +412,74 @@ extends:
                       targetType: filePath
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
+
+                  # Internal builds are artifact-only for publishing purposes. Record their release intent as a
+                  # small, self-contained metadata file alongside the tarballs so the downstream publish pipeline
+                  # doesn't need to recompute it.
+                  - task: Bash@3
+                    displayName: Generate publish metadata
+                    condition: and(succeeded(), eq(variables['System.TeamProject'], 'internal'))
+                    # Most values below are runtime variables and cannot be read through template parameters.
+                    # Pass them through the environment instead of interpolating them into the inline shell script
+                    # so values such as branch names cannot accidentally alter the script's syntax.
+                    env:
+                      VERSION: $(SetVersion.version)
+                      RELEASE: $(release)
+                      PUBLISH_OVERRIDE: '${{ parameters.publishOverride }}'
+                      IS_LATEST: $(SetVersion.isLatest)
+                    inputs:
+                      targetType: 'inline'
+                      workingDirectory: $(Build.ArtifactStagingDirectory)/pack
+                      script: |
+                        set -eu -o pipefail
+
+                        if [ -z "${VERSION:-}" ]; then
+                          echo "##vso[task.logissue type=error]Missing version: SetVersion.version output was empty"
+                          exit 1
+                        fi
+
+                        case "${RELEASE:-}" in
+                          "") release=none ;;
+                          none|prerelease|release) release="$RELEASE" ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid release value '$RELEASE'"
+                            exit 1
+                            ;;
+                        esac
+
+                        case "$PUBLISH_OVERRIDE" in
+                          default|force|skip) ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid publishOverride value '$PUBLISH_OVERRIDE'"
+                            exit 1
+                            ;;
+                        esac
+
+                        case "${IS_LATEST:-}" in
+                          ""|'$(SetVersion.isLatest)'|false|False) isLatest=false ;;
+                          true|True) isLatest=true ;;
+                          *)
+                            echo "##vso[task.logissue type=error]Invalid isLatest value '$IS_LATEST'"
+                            exit 1
+                            ;;
+                        esac
+
+                        jq -n \
+                          --argjson schemaVersion 1 \
+                          --arg version "$VERSION" \
+                          --arg release "$release" \
+                          --arg publishOverride "$PUBLISH_OVERRIDE" \
+                          --argjson isLatest "$isLatest" \
+                          '{
+                            schemaVersion: $schemaVersion,
+                            version: $version,
+                            release: $release,
+                            publishOverride: $publishOverride,
+                            isLatest: $isLatest
+                          }' > publish-metadata.json
+
+                        echo "Generated publish-metadata.json:"
+                        cat publish-metadata.json
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
@@ -898,6 +971,7 @@ extends:
           parameters:
             tagName: ${{ parameters.tagName }}
             isReleaseGroup: ${{ parameters.isReleaseGroup }}
+            allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
             buildDirectory: ${{ parameters.buildDirectory }}
 
       # Capture pipeline stage results
