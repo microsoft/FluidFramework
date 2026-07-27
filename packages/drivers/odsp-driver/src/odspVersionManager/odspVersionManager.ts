@@ -82,23 +82,15 @@ export interface IOdspFileVersionFetcher {
 	 */
 	resolveSequenceNumber(versionId: string): Promise<number>;
 	/**
-	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined` if the server
-	 * does not return one. "Epoch" identifies the file's binary lineage and changes on a version
-	 * restore or download-then-reupload; compared with {@link getRecoverableVersionEpoch} to confirm a base is
-	 * on the live document's lineage before replaying ops across them.
+	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined`. Epoch identifies
+	 * the file's binary lineage and changes on a version restore or download-then-reupload; compared
+	 * with {@link getRecoverableVersionEpoch} to confirm a base is on the live document's lineage.
 	 */
 	getLiveDocumentEpoch(): Promise<string | undefined>;
 	/**
-	 * Read the ODSP epoch associated with a specific file version, or `undefined`. See {@link getLiveDocumentEpoch}.
+	 * Read the ODSP epoch of a specific file version, or `undefined`. See {@link getLiveDocumentEpoch}.
 	 */
 	getRecoverableVersionEpoch(versionId: string): Promise<string | undefined>;
-	/**
-	 * Fetch the sequence numbers the server currently retains in the half-open range `[from, to)`,
-	 * ascending. Retention is finite (e.g. ~7 days), so the server may return fewer ops, or ops
-	 * starting above `from` when the low end has been trimmed; the caller uses the gap to detect
-	 * missing ops.
-	 */
-	fetchOps(from: number, to: number): Promise<number[]>;
 }
 
 /**
@@ -111,14 +103,12 @@ export interface IOdspVersionManager {
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
 	/**
-	 * Verify a base version selected by {@link findBaseForSeq} can actually be replayed forward to
-	 * `target`, throwing a clear error if not. Checks two things: that the base and the live document
-	 * share the same ODSP epoch (a version restore or download-then-reupload bumps the epoch and
-	 * renumbers the op stream, making the base a different lineage), and that every op in
-	 * `(base.sequenceNumber, target]` is still retained and contiguous (retention is finite, e.g.
-	 * ~7 days, so a base older than the window can have the bridging ops already trimmed).
+	 * Verify a base version selected by {@link findBaseForSeq} shares the live document's ODSP epoch
+	 * (a version restore or download-then-reupload bumps the epoch and renumbers the op stream, making
+	 * the base a different lineage), throwing if not. Op availability is enforced lazily as the loader
+	 * reads the bridging ops.
 	 */
-	validateBaseForReplay(base: ResolvedVersion, target: number): Promise<void>;
+	validateBaseForReplay(base: ResolvedVersion): Promise<void>;
 }
 
 /**
@@ -165,11 +155,11 @@ export class OdspVersionManager implements IOdspVersionManager {
 		return { kind: "noBaseVersion", oldestResolvedSeq };
 	}
 
-	public async validateBaseForReplay(base: ResolvedVersion, target: number): Promise<void> {
-		// Check lineage first: if the base is on a different epoch than the live document, the op
-		// availability check below would be meaningless (the ops belong to a renumbered stream).
+	public async validateBaseForReplay(base: ResolvedVersion): Promise<void> {
+		// Verify the base shares the live document's lineage (epoch). Op availability is enforced
+		// lazily while the loader reads the bridging ops (see OdspPointInTimeDocumentService's
+		// connectToDeltaStorage), so it is not re-checked up front here.
 		await this.validateLineageEpoch(base);
-		await this.validateOpsAvailable(base.sequenceNumber, target);
 	}
 
 	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
@@ -215,47 +205,6 @@ export class OdspVersionManager implements IOdspVersionManager {
 					clientEpoch: baseEpoch,
 				},
 			);
-		}
-	}
-
-	private async validateOpsAvailable(baseSeq: number, target: number): Promise<void> {
-		// The base snapshot already represents state at baseSeq, so only ops in (baseSeq, target] are
-		// replayed. Nothing to verify when the target is at or before the base.
-		if (target <= baseSeq) {
-			return;
-		}
-		// Walk the range, requesting everything still needed up to and including the target. The
-		// server returns ops ascending and may cap a response, so loop until `expected` passes target.
-		let expected = baseSeq + 1;
-		while (expected <= target) {
-			// fetchOps is half-open [from, to); target + 1 makes the target op itself eligible.
-			const sequenceNumbers = await this.fetcher.fetchOps(expected, target + 1);
-			if (sequenceNumbers.length === 0) {
-				throw new NonRetryableError(
-					`Ops required to replay the ODSP document from sequence number ${baseSeq} to ${target} ` +
-						`are no longer available: the server returned no ops at or after sequence number ` +
-						`${expected} (they were likely trimmed by op retention).`,
-					OdspErrorTypes.cannotCatchUp,
-					{ driverVersion },
-				);
-			}
-			for (const sequenceNumber of sequenceNumbers) {
-				if (sequenceNumber > target) {
-					// The requested upper bound already excludes ops past the target; ignore defensively.
-					break;
-				}
-				if (sequenceNumber !== expected) {
-					throw new NonRetryableError(
-						`Ops required to replay the ODSP document from sequence number ${baseSeq} to ` +
-							`${target} are not contiguous: expected sequence number ${expected} but the next ` +
-							`available op is ${sequenceNumber} (a gap means ops are missing, e.g. trimmed by ` +
-							`op retention).`,
-						OdspErrorTypes.cannotCatchUp,
-						{ driverVersion },
-					);
-				}
-				expected++;
-			}
 		}
 	}
 

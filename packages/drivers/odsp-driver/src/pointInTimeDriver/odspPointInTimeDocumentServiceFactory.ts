@@ -125,12 +125,9 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			);
 		}
 
-		// Confirm the chosen base can actually be replayed to the target before building any services:
-		// the base must share the live document's epoch (lineage), and every op in
-		// (base.sequenceNumber, target] must still be retained and contiguous. This turns the failure
-		// modes (cross-lineage base, ops trimmed by retention) into clear errors instead of a corrupt
-		// or stalled load.
-		await versionManager.validateBaseForReplay(baseResult.base, targetSequenceNumber);
+		// Confirm the chosen base shares the live document's epoch (lineage) before building any
+		// services
+		await versionManager.validateBaseForReplay(baseResult.base);
 
 		const recoverableResolvedUrl = await this.resolveFileVersion(
 			resolvedUrl,

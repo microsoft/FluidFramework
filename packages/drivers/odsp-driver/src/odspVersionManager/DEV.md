@@ -150,38 +150,32 @@ Every version with its resolved sequence number, newest-first. `M-LIST-01`
 
 ### How does it verify a chosen base can be replayed to the target?
 
-`findBaseForSeq` only *picks* the closest version; `validateBaseForReplay(base, target)` then *proves*
-that base can actually reach the target, so the two failure modes become clear `UsageError`s before any
-document service is built instead of a corrupt or stalled load. It checks lineage first, then op
-availability — if the lineage is wrong the op check would be meaningless (those ops belong to a
-renumbered stream).
+`findBaseForSeq` only *picks* the closest version; `validateBaseForReplay(base)` then *proves* that base
+shares the live document's lineage, so a cross-lineage base fails as a clear non-retryable error before
+any document service is built instead of a corrupt or stalled load. Op availability is _not_ checked
+here — it is enforced lazily as the loader streams the bridging ops (Part V), because the lineage gate
+is the only check that must run before choosing to build the services.
 
 **Lineage (epoch).** It reads the live document's epoch and the base version's epoch and compares them,
 logging the observed pair (`PointInTimeBaseLineageEpoch`) so real traffic can confirm whether the
 version-scoped read returns a per-lineage epoch.
 
-- **Base and live share an epoch, and all ops through the target exist?** Resolves; only ops up to and
-  including the target are ever requested. `M-VALIDATE-01`
+- **Base and live share an epoch?** Resolves. `M-VALIDATE-01`
 - **Base on a different epoch than the live document?** Throws, naming both epochs, and reuses the
   driver's canonical `fileOverwrittenInStorage` epoch-mismatch error (the same `errorType` the shared
   `EpochTracker` raises) rather than a generic `UsageError`, so the loader sees one machine-readable,
-  non-retryable error for a cross-lineage base; the op check never runs. `M-VALIDATE-02`
+  non-retryable error for a cross-lineage base. `M-VALIDATE-02`
 - **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
   `M-VALIDATE-03`
 
-**Op availability.** Only ops in `(base, target]` are replayed, so it walks that range asking the live
-delta feed what is still retained and requires it to be gap-free (retention is finite, e.g. ~7 days).
-
-- **Ops just after the base trimmed at the low end?** Throws, naming the first expected-but-missing
-  sequence number. `M-VALIDATE-04`
-- **A gap in the middle of the range?** Throws, naming the expected number and the next available one.
-  `M-VALIDATE-05`
-- **Server returns no ops at all?** Throws, reporting the sequence number it found nothing at or after.
-  `M-VALIDATE-06`
-- **Target at or before the base sequence number?** Nothing to replay, so the op check is skipped
-  entirely. `M-VALIDATE-07`
-- **A batch that returns many ops at once?** The loop advances `from` past the last op returned and stops
-  exactly at the target, never requesting past it. `M-VALIDATE-08`
+**Op availability.** This is _not_ re-checked up front. Op retention trims a contiguous _prefix_ from
+the oldest end of the stream, and op sequence numbers are contiguous by construction, so instead of a
+separate walk the driver validates availability lazily, riding the ops the loader actually reads. The
+`OdspPointInTimeDocumentService` delta-storage wrapper (Part V) bounds every fetch at the target and,
+on a complete non-cached pass, requires the served ops to start at the first needed op (`from`) and
+reach the target — the low boundary catches a trimmed prefix, the high boundary catches a target
+beyond the live tip. Both raise the non-retryable `cannotCatchUp` error. Because the wrapper rides the
+live document's delta storage, the creation snapshot's ops are already merged in for free.
 
 ## Part III — The File-Version Fetcher
 
@@ -231,12 +225,15 @@ discarded, keeping only the header.
 - **The server sends no epoch header?** Returns `undefined` rather than throwing; the caller fails closed
   on an unknown epoch. `F-EPOCH-03`
 
-### How does it fetch the ops that bridge a base to the target?
+### How does it verify a base shares the live document's lineage?
 
-Versions have no op stream of their own, so ops come from the **live** document's delta feed, read
-through the driver's existing `OdspDeltaStorageService` for its tested transport, retry, and epoch
-validation. `fetchOps(from, to)` requests the half-open `[from, to)` range against the `opStream`
-endpoint and returns the retained sequence numbers ascending. `F-OPS-01`
+Versions carry their own ODSP epoch (`x-fluid-epoch`). `getLiveDocumentEpoch` and
+`getRecoverableVersionEpoch(versionId)` read that header from the live and version-scoped snapshot
+endpoints (`...?blobs=0`, metadata only). The version manager compares the two; a mismatch means a
+restore or download-then-reupload renumbered the op stream, so the base is a different lineage.
+
+Op availability is deliberately _not_ fetched here — it is enforced lazily against the ops the loader
+reads (see Part V), which also gives the creation snapshot's ops for free.
 
 ## Part IV — Directional
 
@@ -293,12 +290,11 @@ comparison. It also allows locating a version by time when no sequence number is
 Component B is built (see [Part V](#part-v--components-b--c-as-built)), but the version it ships makes
 one simplifying assumption: it loads a single base file version and replays the ops in `(base, target]`
 from the **live** document's delta storage. That assumption holds only while those ops are still
-retained — and a base whose bridging ops have been trimmed is now **detected** up front by
-`validateBaseForReplay`, which fails the load with a clear `UsageError`
-(see [Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)) rather than replaying a
-truncated range. What is still not built is **recovering** from that case: bridging a trimmed range by
-starting from a newer intermediate snapshot is the part that is not built yet — the rest of this answer
-is its design.
+retained — and a base whose bridging ops have been trimmed is now **detected** as the loader reads
+them: the delta-storage wrapper fails the load with a non-retryable `cannotCatchUp` error
+(see [Part V](#part-v--components-b--c-as-built)) rather than replaying a truncated range. What is
+still not built is **recovering** from that case: bridging a trimmed range by starting from a newer
+intermediate snapshot is the part that is not built yet — the rest of this answer is its design.
 
 A snapshot already contains the full accumulated state at its sequence number — every op at or below it
 is baked in. So to reach a target `T`, Component B loads the closest base snapshot (`seq ≤ T`) and
@@ -321,8 +317,8 @@ practice because snapshots are written frequently relative to the op-retention w
 
 Note that `minimumSequenceNumber` is not the signal for any of this: it is the collaboration-window floor
 baked into a snapshot, used when a snapshot is loaded, not an indicator of which ops the op stream still
-retains. Op availability is determined by asking the op stream for the range, not by a version's minimum
-sequence number.
+retains. Op availability is determined by what the delta stream actually serves for the range, not by a
+version's minimum sequence number.
 
 ### Should there be an end-to-end test against a real ODSP file?
 
@@ -342,8 +338,10 @@ the target and expose it through the loader — are now built, in other files. T
 code IDs here (those index Component A's suite); Component B's lineage guard is covered by
 `../test/odspPointInTimeDocumentServiceFactory.spec.ts` — both the structural shared-`EpochTracker`
 wiring and the up-front recoverable-vs-live epoch comparison (a mismatch fails the load before any
-service is built; a matching epoch proceeds to create both services) — and the rest are conceptual
-answers in the spirit of [Part I](#part-i--foundations). The one still-directional gap is bridging a
+service is built; a matching epoch proceeds to create both services) — and its lazy op-availability
+validation (low/high boundary, `cachedOnly`/aborted skips) by
+`../test/odspPointInTimeDocumentService.spec.ts`; the rest are conceptual answers in the spirit of
+[Part I](#part-i--foundations). The one still-directional gap is bridging a
 *trimmed* op range via an intermediate snapshot (see [Part IV](#part-iv--directional)); everything below
 is what ships today.
 
@@ -409,7 +407,11 @@ Its three `IDocumentService` methods:
 - `connectToStorage` → the recoverable (base-version) service's storage: the base snapshot.
 - `connectToDeltaStorage` → wraps the **live** service's delta storage and clamps every
   **`fetchMessages(from, to, …)`** call to an exclusive upper bound of `targetSequenceNumber + 1`, so no
-  op past the target is ever fetched. **`fetchMessages` is the method that drives the bounded replay.**
+  op past the target is ever fetched. It also **validates op availability while streaming**: on a
+  complete, non-cached, non-aborted pass it requires the served ops to start at the first needed op
+  (`from`) and reach the target (`to - 1`), throwing the non-retryable `cannotCatchUp` error otherwise —
+  the low boundary catches a retention-trimmed prefix, the high boundary a target beyond the live tip.
+  **`fetchMessages` is the method that drives the bounded replay.**
 - `connectToDeltaStream` → throws: under `storageOnly` the connection manager synthesizes a frozen,
   read-only delta stream instead of opening a live socket, so this is never called under normal flow.
 

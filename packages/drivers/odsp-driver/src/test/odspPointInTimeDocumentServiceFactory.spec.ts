@@ -88,9 +88,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 	function fakeFetcher(config: {
 		liveEpoch?: string;
 		versionEpoch?: string;
-		retainedOps?: number[];
 	}): IOdspFileVersionFetcher {
-		const retainedOps = config.retainedOps ?? [];
 		return {
 			listFileVersions: async () => [
 				{ versionId: "tip", lastModifiedDateTime: "2026-01-01T00:00:00Z" },
@@ -99,8 +97,6 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 			resolveSequenceNumber: async (versionId: string) => (versionId === "tip" ? 10 : 5),
 			getLiveDocumentEpoch: async () => config.liveEpoch,
 			getRecoverableVersionEpoch: async () => config.versionEpoch,
-			fetchOps: async (from: number, to: number) =>
-				retainedOps.filter((seq) => seq >= from && seq < to),
 		};
 	}
 
@@ -270,10 +266,10 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
 		const internals = factory as unknown as FactoryInternals;
 
-		// Same epoch on both sides, and every op in (5, 8] retained, so the real validateBaseForReplay
-		// passes and the factory proceeds to build the two services.
+		// Same epoch on both sides, so the real validateBaseForReplay (lineage check) passes and the
+		// factory proceeds to build the two services.
 		const realManager = new OdspVersionManager(
-			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A", retainedOps: [6, 7, 8] }),
+			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A" }),
 		);
 		stub(internals, "createVersionManager").returns(realManager);
 		stub(internals, "resolveFileVersion").resolves(recoverableResolvedUrl);
