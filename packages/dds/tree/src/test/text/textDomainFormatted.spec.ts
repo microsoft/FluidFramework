@@ -6,20 +6,59 @@
 import { strict as assert } from "node:assert";
 
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
 import { TreeAlpha } from "../../shared-tree/index.js";
-import { TreeViewConfiguration } from "../../simple-tree/index.js";
+import { SchemaFactory, SchemaFactoryBeta, TreeViewConfiguration } from "../../simple-tree/index.js";
 // Allow importing file being tested
-// eslint-disable-next-line import-x/no-internal-modules
+// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 import type { TextAsTree } from "../../text/textDomain.js";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTree } from "../../text/textDomainFormatted.js";
+import {
+	setEnableExpensiveDebugAsserts,
+	FormattedTextAsTree,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+} from "../../text/textDomainFormatted.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextAsTreeDefault } from "../../text/index.js";
 
+// Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
+
+// A format with an optional field, used to test formatting of optional fields.
+const optionalFormatFactory = new SchemaFactoryBeta("test.formatted.optional");
+class OptionalFormat extends optionalFormatFactory.object("OptionalFormat", {
+	bold: SchemaFactory.boolean,
+	color: SchemaFactory.optional(SchemaFactory.string),
+}) {}
+class OptionalFormatText extends FormattedTextAsTree.createSchema(
+	optionalFormatFactory,
+	OptionalFormat,
+	[],
+	{ bold: false },
+) {}
+
+// A format which is a union of an object node and a non-object (leaf) node.
+// Used to test that `formatRange` rejects non-object node formats, including when they only occur partway through a range.
+const unionFormatFactory = new SchemaFactoryBeta("test.formatted.union");
+class UnionFormat extends unionFormatFactory.object("UnionFormat", {
+	bold: SchemaFactory.boolean,
+}) {}
+class UnionFormatText extends FormattedTextAsTree.createSchema(
+	unionFormatFactory,
+	[UnionFormat, SchemaFactory.number],
+	[],
+	new UnionFormat({ bold: false }),
+) {}
+
 describe("textDomainFormatted", () => {
+	beforeEach(() => {
+		setEnableExpensiveDebugAsserts(true);
+	});
+	afterEach(() => {
+		setEnableExpensiveDebugAsserts(false);
+	});
+
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({
 			schema: FormattedTextAsTreeDefault.Tree,
@@ -27,7 +66,7 @@ describe("textDomainFormatted", () => {
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.111.0", "formattedText");
 	});
 
-	it("basic unformatted use", () => {
+	it("@Smoke basic unformatted use", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
@@ -37,23 +76,148 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "world");
 	});
 
-	it("formatting", () => {
-		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
-		text.formatRange(1, 4, { bold: true });
-		assert.equal(text.fullString(), "hello");
-		assert.deepEqual(
-			[...text.charactersWithFormatting()].map((atom) => [
-				atom.content.content,
-				atom.format.bold,
-			]),
-			[
-				["h", false],
-				["e", true],
-				["l", true],
-				["l", true],
-				["o", false],
-			],
-		);
+	describe("formatRange", () => {
+		it("basic use", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
+			text.formatRange(1, 4, { bold: true });
+			assert.equal(text.fullString(), "hello");
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => [
+					atom.content.content,
+					atom.format.bold,
+				]),
+				[
+					["h", false],
+					["e", true],
+					["l", true],
+					["l", true],
+					["o", false],
+				],
+			);
+		});
+
+		it("supports optional format fields", () => {
+			const text = OptionalFormatText.fromString("abc");
+			// Setting an optional field on a sub-range.
+			text.formatRange(0, 2, { color: "red" });
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => atom.format.color),
+				["red", "red", undefined],
+			);
+			// Clearing an optional field by setting it to undefined.
+			text.formatRange(0, 1, { color: undefined });
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => atom.format.color),
+				[undefined, "red", undefined],
+			);
+		});
+
+		it("throws when an atom's format is a non-object node", () => {
+			const text = UnionFormatText.fromString("b");
+			// Prepend an atom whose format is a non-object (number) node.
+			text.insertWithFormattingAt(0, [{ content: { content: "a" }, format: 5 }]);
+			assert.throws(
+				() => text.formatRange(0, 2, { bold: true }),
+				validateUsageError(/formatRange currently only supports object nodes for the format./),
+			);
+		});
+
+		it("throws when a non-object node format occurs in the middle of a range", () => {
+			const text = UnionFormatText.fromString("ac");
+			// Insert an atom with a non-object (number) format between the two object-formatted atoms.
+			text.insertWithFormattingAt(1, [{ content: { content: "b" }, format: 5 }]);
+			// The range spans object formats at either end with a non-object format in the middle.
+			assert.throws(
+				() => text.formatRange(0, 3, { bold: true }),
+				validateUsageError(/formatRange currently only supports object nodes for the format./),
+			);
+		});
+	});
+
+	describe("reformat", () => {
+		it("replaces formatting over a range", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
+			// Apply some formatting to the whole string first.
+			text.formatRange(0, 5, { bold: true });
+			// Reformat a sub-range, replacing all of its formatting.
+			text.reformat(
+				1,
+				4,
+				new FormattedTextAsTreeDefault.CharacterFormat({
+					bold: false,
+					italic: true,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				}),
+			);
+			assert.equal(text.fullString(), "hello");
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => [
+					atom.content.content,
+					atom.format.bold,
+					atom.format.italic,
+				]),
+				[
+					["h", true, false],
+					["e", false, true],
+					["l", false, true],
+					["l", false, true],
+					["o", true, false],
+				],
+			);
+		});
+
+		it("applies to the whole text when the range is omitted", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
+			text.formatRange(0, 3, { bold: true, italic: true });
+			text.reformat(
+				undefined,
+				undefined,
+				new FormattedTextAsTreeDefault.CharacterFormat({
+					bold: false,
+					italic: false,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				}),
+			);
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => [
+					atom.format.bold,
+					atom.format.italic,
+				]),
+				[
+					[false, false],
+					[false, false],
+					[false, false],
+				],
+			);
+		});
+
+		it("uses the default format when no format is provided", () => {
+			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
+			text.formatRange(0, 5, { bold: true, italic: true });
+			// Customize the default format so we can distinguish it from a fresh default.
+			text.defaultFormat.underline = true;
+			// Reformat a sub-range without providing a format: the default format should be used.
+			text.reformat(1, 4);
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => [
+					atom.content.content,
+					atom.format.bold,
+					atom.format.italic,
+					atom.format.underline,
+				]),
+				[
+					["h", true, true, false],
+					["e", false, false, true],
+					["l", false, false, true],
+					["l", false, false, true],
+					["o", true, true, false],
+				],
+			);
+		});
 	});
 
 	it("insertWithFormattingAt", () => {

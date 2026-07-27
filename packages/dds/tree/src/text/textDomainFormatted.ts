@@ -68,6 +68,20 @@ const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 const formatKey: FieldKey = brand("format");
 
 /**
+ * Enables expensive debug assertions for formatted text.
+ */
+let enableTextExpensiveDebugAsserts = false;
+
+/**
+ * Enables or disables expensive debug assertions for formatted text.
+ * @remarks
+ * These should remain disabled except when testing implementation details of this code.
+ */
+export function setEnableExpensiveDebugAsserts(value: boolean): void {
+	enableTextExpensiveDebugAsserts = value;
+}
+
+/**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @remarks
  * This is generic over formatting an embedded object/atom types.
@@ -80,7 +94,24 @@ const formatKey: FieldKey = brand("format");
  */
 export namespace FormattedTextAsTree {
 	/**
-	 * Factory for formatted text schema as a function of the formatting and the embedded object (atom) types.
+	 * Creates a schema for a formatted text node, parameterized by the formatting and the embedded object (atom) types.
+	 *
+	 * @param inputSchemaFactory - The {@link SchemaFactoryBeta} used to scope the generated schema.
+	 * The generated types are scoped under `com.fluidframework.text.formatted<TUserScope>`, where `TUserScope` is the scope of this factory.
+	 * This scope is used to distinguish different usages of `createSchema` from each-other, and must be kept the same between versions for nodes to remain compatible.
+	 * It must be different to distinguish different formatted text schema within the same document.
+	 * @param formatSchema - Schema describing the formatting associated with each atom of text.
+	 * Use an {@link NodeKind.Object|Object node} to support {@link FormattedTextAsTree.Members.formatRange}.
+	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedTextAsTree.StringTextAtom}.
+	 * Use this to embed richer content (for example line breaks or inline objects) alongside plain characters.
+	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
+	 * (for example {@link TextAsTree.Members.insertAt} and {@link FormattedTextAsTree.Statics.fromString} when no explicit format is provided).
+	 * This is the initial value used for {@link FormattedTextAsTree.Members.defaultFormat}, but it can be reassigned on a per instance basis if desired.
+	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedTextAsTree.FormattedTextMembers} and whose statics implement {@link FormattedTextAsTree.Statics}.
+	 * @remarks
+	 * See {@link FormattedTextAsTreeDefault} for a default parameterization of this factory.
+	 * @privateRemarks
+	 * TODO: The choice to always include the built-in `StringTextAtom` is a design decision that should be re-evaluated before stabilizing.
 	 */
 	export function createSchema<
 		const TUserScope extends string,
@@ -125,7 +156,8 @@ export namespace FormattedTextAsTree {
 				const result = this.content.charactersCopy();
 				debugAssert(
 					() =>
-						compareArrays(result, this.charactersCopy_reference()) ||
+						(enableTextExpensiveDebugAsserts &&
+							compareArrays(result, this.#charactersCopy_reference())) ||
 						"invalid charactersCopy optimizations",
 				);
 				return result;
@@ -138,7 +170,9 @@ export namespace FormattedTextAsTree {
 			public fullString(): string {
 				const result = this.content.fullString();
 				debugAssert(
-					() => result === this.fullString_reference() || "invalid fullString optimizations",
+					() =>
+						(enableTextExpensiveDebugAsserts && result === this.#fullString_reference()) ||
+						"invalid fullString optimizations",
 				);
 				return result;
 			}
@@ -146,14 +180,14 @@ export namespace FormattedTextAsTree {
 			/**
 			 * A non-optimized reference implementation of fullString.
 			 */
-			public fullString_reference(): string {
+			#fullString_reference(): string {
 				return [...this.characters()].join("");
 			}
 
 			/**
 			 * Unoptimized trivially correct implementation of charactersCopy.
 			 */
-			public charactersCopy_reference(): string[] {
+			#charactersCopy_reference(): string[] {
 				return [...this.characters()];
 			}
 
@@ -190,21 +224,79 @@ export namespace FormattedTextAsTree {
 				end: number | undefined,
 				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 			): void {
-				const formatStart = start ?? 0;
-				validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
-
-				const formatEnd = Math.min(this.content.length, end ?? this.content.length);
-				validateIndexRange(
-					formatStart,
-					formatEnd,
-					this.content,
-					"FormattedTextAsTree.formatRange",
-				);
-
-				const fieldFormats = Object.entries(format) as [
+				const fieldFormatsRaw = Object.entries(format) as [
 					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 					unknown,
 				][];
+				const fieldFormats = fieldFormatsRaw.map(([key, value]) => {
+					// Object.entries should only return string keyed enumerable own properties.
+					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+					assert(
+						typeof key === "string",
+						0xcc8 /* Object.entries returned a non-string key. */,
+					);
+					return [key, value] as const;
+				});
+				this.#editRange(start, end, "FormattedTextAsTree.formatRange", (atom) => {
+					const formatNode: TreeNode | TreeValue = atom.format;
+					const atomFormatSchema = TreeStatic.schema(formatNode);
+					if (!isObjectNodeSchema(atomFormatSchema)) {
+						throw new UsageError(
+							"formatRange currently only supports object nodes for the format.",
+						);
+					}
+					for (const [key, value] of fieldFormats) {
+						const field = atomFormatSchema.fields.get(key);
+						if (field === undefined) {
+							throw new UsageError(`Unknown format key: ${key}`);
+						}
+
+						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+						// Note that since this used field schema, `undefined` can pass through this if allowed by the schema.
+						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
+							| TreeNode
+							| TreeValue;
+
+						(
+							formatNode as unknown as Record<
+								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+								TreeNode | TreeValue
+							>
+						)[key] = clonedValue;
+					}
+				});
+			}
+
+			public reformat(
+				start: number | undefined,
+				end: number | undefined,
+				format: TreeFieldFromImplicitField<FormatSchema> = this.defaultFormat,
+			): void {
+				const node = TreeBeta.create<FormatSchema>(formatSchema, format as never);
+				this.#editRange(start, end, "FormattedTextAsTree.reformat", (atom) => {
+					const formatNode: TreeFieldFromImplicitField<FormatSchema> = TreeBeta.clone(node);
+					// Generics can't prove TreeFieldFromImplicitField is valid as TreeNodeFromImplicitAllowedTypes, so we have to cast:
+					atom.format = formatNode as TreeNodeFromImplicitAllowedTypes<FormatSchema>;
+				});
+			}
+
+			/**
+			 * Map an edit over a range of atoms, validating the range and running the edits in a transaction.
+			 * @remarks
+			 * This is not exposed in the API since this approach will have to be replaced when formatting is optimized,
+			 * so we don't want users to directly depend on this un-optimizable layer.
+			 */
+			#editRange(
+				start: number | undefined,
+				end: number | undefined,
+				method: string,
+				edit: (atom: StringAtom) => void,
+			): void {
+				const formatStart = start ?? 0;
+				validateIndex(formatStart, this.content, method, true);
+
+				const formatEnd = Math.min(this.content.length, end ?? this.content.length);
+				validateIndexRange(formatStart, formatEnd, this.content, method);
 
 				TreeAlpha.context(this).runTransaction(() => {
 					for (let i = formatStart; i < formatEnd; i++) {
@@ -214,39 +306,7 @@ export namespace FormattedTextAsTree {
 							atom !== undefined,
 							0xd08 /* Index out of bounds while formatting text range. */,
 						);
-						const formatNode: TreeNode | TreeValue = atom.format;
-						const atomFormatSchema = TreeStatic.schema(formatNode);
-						if (!isObjectNodeSchema(atomFormatSchema)) {
-							// TODO: redesign this API to work with all allowed FormatSchema types.
-							throw new UsageError(
-								"formatRange currently only supports object nodes for the format.",
-							);
-						}
-						for (const [key, value] of fieldFormats) {
-							// Object.entries should only return string keyed enumerable own properties.
-							// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-							assert(
-								typeof key === "string",
-								0xcc8 /* Object.entries returned a non-string key. */,
-							);
-
-							const field = atomFormatSchema.fields.get(key);
-							if (field === undefined) {
-								throw new UsageError(`Unknown format key: ${key}`);
-							}
-
-							// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-							const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
-								| TreeNode
-								| TreeValue;
-
-							(
-								formatNode as unknown as Record<
-									keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-									TreeNode | TreeValue
-								>
-							)[key] = clonedValue;
-						}
+						edit(atom);
 					}
 				});
 			}
@@ -548,6 +608,16 @@ export namespace FormattedTextAsTree {
 	 *
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
 	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
+	 *
+	 * Rather than referring to this type, use the the instance type of the subclass of the schema from {@link FormattedTextAsTree.createSchema}.
+	 * When a generic interface is required, use {@link FormattedTextAsTree.FormattedTextMembers}.
+	 * The generic type parameterization of this interface is is not stable, and simply an implementation detail of {@link FormattedTextAsTree.FormattedTextMembers}.
+	 *
+	 * @privateRemarks
+	 * Maybe Merge/combine this with `FormattedTextMembers`.
+	 *
+	 * @system
+	 * @sealed
 	 * @internal
 	 */
 	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFormattedInsert>
@@ -558,6 +628,7 @@ export namespace FormattedTextAsTree {
 		 * This is not persisted in the tree, and observation of it is not tracked by the tree observation tracking.
 		 * @privateRemarks
 		 * Opt this into observation tracking.
+		 * TODO: This being an mutable instance property is not required, and might not be the best API design choice.
 		 */
 		defaultFormat: TFormatTree;
 
@@ -565,6 +636,9 @@ export namespace FormattedTextAsTree {
 		 * Gets an array type view of the characters currently in the text.
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
+		 *
+		 * For more efficient access, use {@link FormattedTextAsTree.Members.getUniformRun} and {@link FormattedTextAsTree.Members.getString} to access ranges of characters
+		 * to avoid having to inspect the formatting on every atom.
 		 * @privateRemarks
 		 * Currently this is implemented by a node and changes with the text over time.
 		 * We might not want to leak a node like this in the API.
@@ -595,13 +669,44 @@ export namespace FormattedTextAsTree {
 		 * @param startIndex - The starting index (inclusive) of the range to format.
 		 * @param endIndex - The ending index (exclusive) of the range to format.
 		 * @param format - The formatting to apply to the specified range.
+		 * For each atom, every property of `format` will be cloned and assigned to the atom's format's corresponding subtree, overwriting any existing values for those properties.
+		 * All enumerable own properties of `format` will be applied, including those with `undefined` values.
 		 * @remarks
 		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
+		 * This edits existing formatting subtrees on each atom, and only works when those atoms are object nodes.
+		 *
+		 * This is typically used to set some formatting property, like `bold` on a range of text without impacting other formatting properties.
+		 * @privateRemarks
+		 * This API is designed such that it can be optimized and improved in the future in a few different ways:
+		 * 1. TODO: It can be optimized to use lower level APIs directly, bypassing the overhead of the public API surface.
+		 * 2. TODO: A lower level editing API could be introduced and used to more efficiently express the edit (for example a bulk edit based on path, or a way to reuse the inserted content in multiple places instead of having to clone it before making the edit).
+		 * 3. TODO: Optimize the encoding of such edits, either with a dedicated format for range edits like this and/or encoding optimizations that can compress such edits over ranges to O(1) space.
+		 * 4. TODO: Preserve the range editing semantics through the whole stack to allow for better merge behavior, and make optimizations easier.
 		 */
 		formatRange(
 			startIndex: number | undefined,
 			endIndex: number | undefined,
 			format: TPartialFormat,
+		): void;
+
+		/**
+		 * Replace formatting of a range of characters based on character index.
+		 * @param startIndex - The starting index (inclusive) of the range to format.
+		 * @param endIndex - The ending index (exclusive) of the range to format.
+		 * @param format - The formatting to replace the formatting of the indicated range with.
+		 * For each atom, `format` will be cloned and assigned to the atom's format, overwriting any existing formatting.
+		 * If not specified the {@link FormattedTextAsTree.Members.defaultFormat} will be used.
+		 * @remarks
+		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
+		 *
+		 * This is typically used to normalize formatting, like resetting formatting or a range to default settings.
+		 * @privateRemarks
+		 * See notes on {@link FormattedTextAsTree.Members.formatRange} for future optimization opportunities.
+		 */
+		reformat(
+			startIndex?: number | undefined,
+			endIndex?: number | undefined,
+			format?: TFormatTree,
 		): void;
 
 		/**
