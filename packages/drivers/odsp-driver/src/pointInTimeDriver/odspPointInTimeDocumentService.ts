@@ -4,7 +4,7 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { NonRetryableError, canRetryOnError } from "@fluidframework/driver-utils/internal";
 import type {
 	IClient,
 	IDocumentDeltaConnection,
@@ -93,7 +93,37 @@ export class OdspPointInTimeDocumentService
 				let maxSeq = from - 1;
 				return {
 					read: async () => {
-						const result = await inner.read();
+						let result: Awaited<ReturnType<typeof inner.read>>;
+						try {
+							result = await inner.read();
+						} catch (error) {
+							// The bridging ops could not be retrieved. The op-fetch layer exhausts its
+							// retries and throws a non-retryable generic network error when the required
+							// ops never materialize - e.g. they were trimmed by op retention, or the target
+							// is beyond the live document's tip so those sequence numbers never existed.
+							// Surface the driver's canonical, non-retryable op-availability error instead of
+							// leaking a raw storage error. Retryable errors are left untouched so the delta
+							// manager can retry, and other non-retryable error types (auth, throttling, etc.)
+							// are preserved rather than masked as an op-availability failure.
+							if (
+								opsNeeded &&
+								cachedOnly !== true &&
+								abortSignal?.aborted !== true &&
+								!canRetryOnError(error) &&
+								(error as { errorType?: unknown })?.errorType ===
+									OdspErrorTypes.genericNetworkError
+							) {
+								throw new NonRetryableError(
+									`Cannot materialize sequence number ${targetSequenceNumber}: the ops needed ` +
+										`to replay the base snapshot could not be retrieved from delta storage ` +
+										`(required [${from}, ${bounded - 1}]; trimmed by op retention or target ` +
+										`beyond the live document's tip).`,
+									OdspErrorTypes.cannotCatchUp,
+									{ driverVersion },
+								);
+							}
+							throw error;
+						}
 						if (!result.done && result.value.length > 0) {
 							firstSeq ??= result.value[0].sequenceNumber;
 							maxSeq = result.value[result.value.length - 1].sequenceNumber;
