@@ -236,7 +236,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	readonly label?: unknown;
 
 	/**
-	 * A set of {@link RunTransactionParams.label | labels} for all transactions (nested or otherwise)
+	 * A set of {@link RunTransactionParamsBeta.label | labels} for all transactions (nested or otherwise)
 	 * that made up this change.
 	 * This can be used to identify, group, or filter changes — for example, to decide whether a change
 	 * should be included in an undo/redo stack.
@@ -278,7 +278,7 @@ export interface LocalChangeMetadata extends CommitMetadata {
  *
  * @remarks
  * Each transaction contributes a node whose {@link LabelTree.label} is its
- * {@link RunTransactionParams.label | label} (or `undefined` if no label was provided).
+ * {@link RunTransactionParamsBeta.label | label} (or `undefined` if no label was provided).
  * When transactions are nested, inner transaction nodes become {@link LabelTree.sublabels | sublabels}
  * of outer ones.
  *

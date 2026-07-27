@@ -82,6 +82,7 @@ import {
 	setInCrossFieldMap,
 } from "./crossFieldQueries.js";
 import {
+	EditFilterStatus,
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
@@ -1739,9 +1740,23 @@ export class ModularChangeFamily
 		const handler = getChangeHandler(this.fieldKinds, change.fieldKind);
 		return {
 			fieldKind: change.fieldKind,
-			change: brand(handler.rebaser.mute(change.change)),
+			change: brand(
+				handler.rebaser.filterEdits(change.change, {
+					filterDetach: removeAllEditsFilter,
+					filterAttach: removeAllEditsFilter,
+					preserveOtherEdits: false,
+				}),
+			),
 		};
 	}
+}
+
+function removeAllEditsFilter(
+	_id: ChangeAtomId,
+	count: number,
+	_endpointId?: ChangeAtomId,
+): RangeQueryResult<EditFilterStatus> {
+	return { value: EditFilterStatus.Remove, length: count };
 }
 
 function replaceCrossFieldKeyTableRevisions(

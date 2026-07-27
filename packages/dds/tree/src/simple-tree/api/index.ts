@@ -6,6 +6,7 @@
 export type {
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,
@@ -100,7 +101,7 @@ export {
 export type { TreeSchemaEncodingOptions } from "./getJsonSchema.js";
 export { getJsonSchema } from "./getJsonSchema.js";
 export { getSimpleSchema } from "./getSimpleSchema.js";
-export { SchemaCompatibilityTester } from "./schemaCompatibilityTester.js";
+export { checkSchemaCompatibility } from "./schemaCompatibilityTester.js";
 export type {
 	Unenforced,
 	FieldSchemaAlphaUnsafe,
@@ -179,19 +180,23 @@ export {
 } from "./storedSchema.js";
 
 export {
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	rollback,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	type WithValue,
-	rollback,
 } from "./transactionTypes.js";
 
 export { generateSchemaFromSimpleSchema } from "./schemaFromSimple.js";

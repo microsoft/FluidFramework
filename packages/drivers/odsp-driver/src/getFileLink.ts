@@ -72,7 +72,7 @@ export const getFileLink = mockify(
 					{
 						// TODO: use a stronger type
 						// eslint-disable-next-line @typescript-eslint/no-explicit-any
-						onRetry(delayInMs: number, error: any) {
+						onRetry(_delayInMs: number, error: any) {
 							retryCount++;
 							if (retryCount === 5) {
 								if (error !== undefined && typeof error === "object") {

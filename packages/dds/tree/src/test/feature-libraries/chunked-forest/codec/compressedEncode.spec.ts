@@ -126,10 +126,7 @@ function makeFieldBatchCodec(
 					fieldBatchContext: FieldBatchDecodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
-					return decode(data, {
-						idCompressor: fieldBatchContext.idCompressor,
-						resolveEncodedId: fieldBatchContext.resolveEncodedId,
-					}).map((chunk) => chunk.cursor());
+					return decode(data, fieldBatchContext).map((chunk) => chunk.cursor());
 				},
 				schema: format,
 			},

@@ -17,15 +17,18 @@ import { FormattedTextAsTree } from "../../text/textDomainFormatted.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+import { FormattedTextAsTreeDefault } from "../../text/index.js";
 
 describe("textDomainFormatted", () => {
 	it("compatibility", () => {
-		const currentViewSchema = new TreeViewConfiguration({ schema: FormattedTextAsTree.Tree });
+		const currentViewSchema = new TreeViewConfiguration({
+			schema: FormattedTextAsTreeDefault.Tree,
+		});
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.111.0", "formattedText");
 	});
 
 	it("basic unformatted use", () => {
-		const text = FormattedTextAsTree.Tree.fromString("hello");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
 		text.insertAt(5, " world");
@@ -35,7 +38,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("formatting", () => {
-		const text = FormattedTextAsTree.Tree.fromString("hello");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 		text.formatRange(1, 4, { bold: true });
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual(
@@ -54,7 +57,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("insertWithFormattingAt", () => {
-		const text = FormattedTextAsTree.Tree.fromString("ab");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
 			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
 		]);
@@ -73,7 +76,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("defaultFormat", () => {
-		const text = FormattedTextAsTree.Tree.fromString("ab");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.defaultFormat.underline = true;
 		text.insertAt(2, "cd");
 		assert.deepEqual(
@@ -91,7 +94,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("getUniformRun", () => {
-		const text = FormattedTextAsTree.Tree.fromString("abc");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 		text.defaultFormat.underline = true;
 		text.insertAt(3, "de");
 		text.defaultFormat.italic = true;
@@ -105,7 +108,7 @@ describe("textDomainFormatted", () => {
 	});
 
 	it("getString with getUniformRun", () => {
-		const text = FormattedTextAsTree.Tree.fromString("abc");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 		text.defaultFormat.underline = true;
 		text.insertAt(3, "de");
 		text.defaultFormat.italic = true;
@@ -122,15 +125,15 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.getUniformRun(0), 3);
 	});
 	it("getString with getUniformRun on line atoms", () => {
-		const text = FormattedTextAsTree.Tree.fromString("abcde");
+		const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
 
 		text.insertWithFormattingAt(3, [
 			{
-				content: new FormattedTextAsTree.StringLineAtom({
-					tag: FormattedTextAsTree.LineTag("h5"),
+				content: new FormattedTextAsTreeDefault.StringLineAtom({
+					tag: FormattedTextAsTreeDefault.LineTag("h5"),
 					indent: 0,
 				}),
-				format: new FormattedTextAsTree.CharacterFormat({
+				format: new FormattedTextAsTreeDefault.CharacterFormat({
 					bold: false,
 					italic: false,
 					underline: false,
@@ -153,7 +156,7 @@ describe("textDomainFormatted", () => {
 
 	describeHydration("onContentChanged", (_init, hydrated) => {
 		it("fires with insert ops when characters are added", () => {
-			const text = FormattedTextAsTree.Tree.fromString("ab");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -171,7 +174,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for insert at start", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abc");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -186,7 +189,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for insert at end", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abc");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -204,7 +207,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with remove ops when characters are deleted", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abcde");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -222,7 +225,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires for remove all", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abc");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -237,7 +240,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with insert and remove ops for a replace", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abcde");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -261,7 +264,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("fires with formattingChanged on retain when formatting changes", () => {
-			const text = FormattedTextAsTree.Tree.fromString("abcde");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -291,7 +294,7 @@ describe("textDomainFormatted", () => {
 		// the unhydrated event path), so we only assert the hydrated behavior here.
 		it("does not fire for an empty insert (hydrated)", () => {
 			if (!hydrated) return;
-			const text = FormattedTextAsTree.Tree.fromString("abc");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onContentChanged(() => {
@@ -303,7 +306,7 @@ describe("textDomainFormatted", () => {
 
 		it("does not fire for an empty remove (hydrated)", () => {
 			if (!hydrated) return;
-			const text = FormattedTextAsTree.Tree.fromString("abc");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onContentChanged(() => {
@@ -314,7 +317,7 @@ describe("textDomainFormatted", () => {
 		});
 
 		it("cleanup function unsubscribes the callback", () => {
-			const text = FormattedTextAsTree.Tree.fromString("ab");
+			const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
@@ -335,8 +338,8 @@ describe("textDomainFormatted", () => {
 	describeHydration("observation tracking", (init, hydrated) => {
 		// Text has debug asserts which can add observations, so ensure tracking works with and without production build emulation.
 		suitesWithAndWithoutProduction((emulateProduction) => {
-			function setupObservations(): [FormattedTextAsTree.Tree, string[]] {
-				const text = FormattedTextAsTree.Tree.fromString("hello");
+			function setupObservations(): [FormattedTextAsTreeDefault.Tree, string[]] {
+				const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 				if (hydrated) {
 					hydrateNode(text);
 				}

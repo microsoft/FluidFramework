@@ -12,6 +12,7 @@ import { validateAssertionError } from "@fluidframework/test-runtime-utils/inter
 import {
 	type OriginatorlessEncodedId,
 	EncodedIdType,
+	IdDecodingContext,
 	encodePossiblyCompressedId,
 	decodeEncodedIdWithOriginator,
 	decodeOriginatorlessEncodedId,
@@ -266,6 +267,78 @@ describe("compressedIds", () => {
 			const result = decompressIdentifierIfNeeded(compressedId, testIdCompressor);
 			assert.equal(result, expected);
 			assert.equal(typeof result, "string");
+		});
+	});
+
+	describe("IdDecodingContext", () => {
+		it("exposes the provided idCompressor", () => {
+			const compressed = testIdCompressor.generateCompressedId();
+			const decompressed = testIdCompressor.decompress(compressed);
+			const context = new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				healing: undefined,
+			});
+			assert.equal(context.idCompressor.decompress(compressed), decompressed);
+		});
+
+		describe("with an originator", () => {
+			it("resolves a non-final op-space id using the originator session", () => {
+				const remoteSession = createSessionId();
+				const remoteCompressor = createIdCompressor(remoteSession);
+				const sessionSpaceId = remoteCompressor.generateCompressedId();
+				const opSpaceId = remoteCompressor.normalizeToOpSpace(sessionSpaceId);
+				const context = new IdDecodingContext({
+					idCompressor: remoteCompressor,
+					originatorId: remoteSession,
+				});
+				assert.equal(context.resolveEncodedId(opSpaceId), sessionSpaceId);
+			});
+
+			it("resolves a finalized op-space id", () => {
+				const compressedId = testIdCompressor.generateCompressedId();
+				const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
+				const context = new IdDecodingContext({
+					idCompressor: testIdCompressor,
+					originatorId: testIdCompressor.localSessionId,
+				});
+				assert.equal(context.resolveEncodedId(opSpaceId), compressedId);
+			});
+		});
+
+		describe("without an originator", () => {
+			it("resolves a finalized op-space id to its session-space id", () => {
+				const compressedId = testIdCompressor.generateCompressedId();
+				const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
+				const context = new IdDecodingContext({
+					idCompressor: testIdCompressor,
+					healing: undefined,
+				});
+				assert.equal(context.resolveEncodedId(opSpaceId), compressedId);
+			});
+
+			it("throws on a non-final op-space id when healing is not configured", () => {
+				const { opSpaceId } = makeUnresolvableOpSpaceId();
+				const context = new IdDecodingContext({
+					idCompressor: testIdCompressor,
+					healing: undefined,
+				});
+				assert.throws(
+					() => context.resolveEncodedId(opSpaceId),
+					/Summary could not be loaded due to an incorrectly encoded identifier/,
+				);
+			});
+
+			it("heals a non-final op-space id when healing is configured", () => {
+				const { opSpaceId } = makeUnresolvableOpSpaceId();
+				const context = new IdDecodingContext({
+					idCompressor: testIdCompressor,
+					healing: { sharedObjectId: "doc-a" },
+				});
+				assert.equal(
+					context.resolveEncodedId(opSpaceId),
+					"d5d534e7-5e2c-53c3-b26c-9fd81e6fbc37",
+				);
+			});
 		});
 	});
 });

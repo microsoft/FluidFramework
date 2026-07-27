@@ -414,9 +414,7 @@ export class NodeCore {
 		durationStructure: number;
 		durationStrings: number;
 	} {
-		const [stringsToResolve, durationStructure] = measure(() =>
-			this.loadStructure(buffer, logger),
-		);
+		const [stringsToResolve, durationStructure] = measure(() => this.loadStructure(buffer));
 		const [, durationStrings] = measure(() =>
 			this.loadStrings(buffer, stringsToResolve, logger),
 		);
@@ -427,10 +425,7 @@ export class NodeCore {
 	 * Load and parse the buffer into a tree.
 	 * @param buffer - buffer to read from.
 	 */
-	protected loadStructure(
-		buffer: ReadBuffer,
-		logger: TelemetryLoggerExt,
-	): IStringElementInternal[] {
+	protected loadStructure(buffer: ReadBuffer): IStringElementInternal[] {
 		const stack: NodeTypes[][] = [];
 		const stringsToResolve: IStringElementInternal[] = [];
 		const dictionary: IStringElement[] = [];

@@ -9,4 +9,4 @@
  * The generation number for Fluid layer compatibility.
  * @internal
  */
-export const generation = 7;
+export const generation = 8;

@@ -20,7 +20,6 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/chunkCodecUtilities.js";
 import {
-	type IdDecodingContext,
 	InlineArrayDecoder,
 	IncrementalChunkDecoder,
 	NestedArrayDecoder,
@@ -38,7 +37,6 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { DecoderContext } from "../../../../feature-libraries/chunked-forest/codec/chunkDecodingGeneric.js";
 import {
-	FieldBatchDecodingContext,
 	fieldBatchCodecBuilder,
 	type ChunkReferenceId,
 	type IncrementalDecoder,
@@ -62,7 +60,11 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { SequenceChunk } from "../../../../feature-libraries/chunked-forest/sequenceChunk.js";
 import type { TreeChunk } from "../../../../feature-libraries/index.js";
-import { type ReferenceCountedBase, brand } from "../../../../util/index.js";
+import {
+	IdDecodingContext,
+	type ReferenceCountedBase,
+	brand,
+} from "../../../../util/index.js";
 import { testIdCompressor } from "../../../utils.js";
 import { assertChunkCursorEquals } from "../fieldCursorTestUtilities.js";
 
@@ -117,24 +119,19 @@ function makeTestIdDecodingContext(opts: {
 	healUnresolvableIdentifiersOnDecode?: boolean;
 	sharedObjectId?: string;
 }): IdDecodingContext {
-	// Borrow the resolver from a FieldBatchDecodingContext; readValue only cares
-	// about idCompressor + resolveEncodedId. The choice of factory mirrors the
-	// production split: summary-style for the heal tests, op-style for the rest.
-	const { idCompressor, resolveEncodedId } =
-		opts.isSummary === true
-			? FieldBatchDecodingContext.forSummary({
-					idCompressor: testIdCompressor,
-					healing:
-						opts.healUnresolvableIdentifiersOnDecode === true &&
-						opts.sharedObjectId !== undefined
-							? { sharedObjectId: opts.sharedObjectId }
-							: undefined,
-				})
-			: FieldBatchDecodingContext.forOp({
-					idCompressor: testIdCompressor,
-					originatorId: opts.originatorId ?? testIdCompressor.localSessionId,
-				});
-	return { idCompressor, resolveEncodedId };
+	return opts.isSummary === true
+		? new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				healing:
+					opts.healUnresolvableIdentifiersOnDecode === true &&
+					opts.sharedObjectId !== undefined
+						? { sharedObjectId: opts.sharedObjectId }
+						: undefined,
+			})
+		: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: opts.originatorId ?? testIdCompressor.localSessionId,
+			});
 }
 
 const idDecodingContext: IdDecodingContext = makeTestIdDecodingContext({});

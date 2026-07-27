@@ -19,7 +19,6 @@ This is useful because it breaks change tracking into two steps:
 "@myproject/cli": minor
 "@myproject/core": minor
 ---
-
 Change all the things
 
 More exposition about the change.
@@ -39,7 +38,6 @@ We support additional custom metadata via special properties prefixed with doubl
 "__includeInReleaseNotes": false
 "__highlight": true
 ---
-
 Change all the things
 ```
 
@@ -84,7 +82,6 @@ Sometimes information needs to be in the release notes but doesn't apply to any 
 ---
 "__section": other
 ---
-
 This changeset will be included in the release notes but not per-package changelogs.
 ```
 
@@ -110,6 +107,10 @@ Use `pnpm flub changeset add --empty` to create an empty changeset, then fill in
 ### How do I know what packages to include?
 
 Each package listed in a changeset will get a changelog entry with the changeset's contents. Only include packages where the change is **meaningful to consumers**. You don't need to list every package that was modified. For example, if you deprecate a class in packageA and update packageB to stop using it, only packageA needs the changeset.
+
+If the change modifies a customer-facing (`@public`/`@beta`/`@alpha`) API that another package re-exports, list that package in the frontmatter too — otherwise the change won't appear in that package's changelog or release notes.
+This mostly applies to `fluid-framework` which re-exports most of the customer-facing surface of `@fluidframework/tree` (and several other client packages).
+So **most changesets for `@fluidframework/tree` should list both `"@fluidframework/tree"` and `"fluid-framework"`**.
 
 ## Formatting
 
@@ -150,7 +151,6 @@ Each package listed in a changeset will get a changelog entry with the changeset
 "@fluidframework/container-runtime": minor
 "__section": fix
 ---
-
 Incorrect error message when disposing a container has been fixed
 
 The error message when attempting to dispose a container that is already disposed now correctly identifies the operation that failed.
@@ -165,7 +165,6 @@ The error message when attempting to dispose a container that is already dispose
 "__section": feature
 "__highlight": true
 ---
-
 Add support for schema evolution in SharedTree
 
 SharedTree now supports evolving document schemas over time.
@@ -193,7 +192,6 @@ const view = tree.viewWith(new TreeViewConfiguration({ schema: MyUpdatedSchema }
 "@fluidframework/container-definitions": minor
 "__section": breaking
 ---
-
 Deprecated summarizer options have been removed from container runtime
 
 The deprecated `ISummaryOptions` interface has been removed.
