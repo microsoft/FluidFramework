@@ -93,22 +93,29 @@ describeCompat(
 			},
 		);
 
-		// The failed point-in-time load closes its container with the driver's non-retryable
-		// cannotCatchUp error. That ContainerClose is the expected outcome, so declare it via
-		// itExpects; otherwise describeCompat's afterEach hook would flag it as an unexpected error.
+		// The failed point-in-time load closes its container non-retryably because the ops needed to
+		// reach the target are unavailable. The beyond-tip fetch deterministically logs three
+		// error-category telemetry events, in this order, which must all be declared via itExpects;
+		// otherwise the suite's unexpected-error check would flag them and fail the test even though
+		// the assertion in the body passed:
+		//   1. OdspDriver:GetDeltas_Error   - the storage layer (parallelRequests) gives up on the
+		//      empty beyond-tip range after ~30s with a non-retryable `genericNetworkError`
+		//      ("Failed to retrieve ops from storage (Too Many Retries)").
+		//   2. DeltaManager:GetDeltas_Exception - the delta manager's catch-up fetch surfaces that
+		//      failure (converted by the bounded delta-storage wrapper to `cannotCatchUp`).
+		//   3. Container:ContainerClose - the delta manager closes the container with that error.
 		//
-		// The target sequence number is set beyond the live document's tip, so the ops needed to
-		// bridge from the recoverable base to the target never existed. The ops-fetch layer retries
-		// the (empty) beyond-tip range for ~30s before giving up, and the bounded delta-storage
-		// wrapper converts that non-retryable fetch failure into the driver's `cannotCatchUp` error.
+		// All three are matched by event name only: the bounded delta-storage wrapper is designed to
+		// convert the underlying `genericNetworkError` into the driver's canonical `cannotCatchUp`,
+		// but against the real service the container can close with either errorType, so the body
+		// asserts the specific op-availability failure rather than pinning an errorType here.
 		// Because of that ~30s retry window plus the summaries in setup, this test raises its timeout.
 		itExpects(
 			"fails a point-in-time load when the ops needed to reach the target are unavailable",
 			[
-				{
-					eventName: "fluid:telemetry:Container:ContainerClose",
-					errorType: "cannotCatchUp",
-				},
+				{ eventName: "fluid:telemetry:OdspDriver:GetDeltas_Error" },
+				{ eventName: "fluid:telemetry:DeltaManager:GetDeltas_Exception" },
+				{ eventName: "fluid:telemetry:Container:ContainerClose" },
 			],
 			async function (this: Mocha.Context) {
 				this.timeout(120_000);
@@ -125,20 +132,42 @@ describeCompat(
 				await snapVersion("tip-snap");
 
 				// Target a sequence number comfortably past the live tip. Those ops never existed, so the
-				// bridging replay cannot reach the target and the load must fail with cannotCatchUp.
+				// bridging replay cannot reach the target and the load must fail non-retryably.
 				const beyondTip = container.deltaManager.lastSequenceNumber + 50;
 
-				await assert.rejects(
-					loadPointInTimeContainer(
+				// Capture the actual error rather than relying on assert.rejects' opaque validator, so
+				// that when the load rejects with an unexpected error the failure message reports the
+				// real errorType and message instead of just "expected a cannotCatchUp error".
+				let caught: (Error & { errorType?: string }) | undefined;
+				try {
+					await loadPointInTimeContainer(
 						suite.provider(),
 						suite.runtimeFactory(),
 						documentId,
 						beyondTip,
-					),
-					(error: Error & { errorType?: string }) =>
-						error.errorType === "cannotCatchUp" ||
-						/cannotcatchup|materialize/i.test(error.message),
-					"expected a cannotCatchUp error when the target is beyond the retained ops",
+					);
+				} catch (error) {
+					caught = error as Error & { errorType?: string };
+				}
+
+				assert(
+					caught !== undefined,
+					"expected the point-in-time load to fail when the target is beyond the retained ops, but it resolved",
+				);
+				// Accept the driver's canonical `cannotCatchUp` (the bounded delta-storage wrapper's
+				// intended conversion) as well as the underlying non-retryable ops-fetch failure it wraps
+				// ("Failed to retrieve ops from storage (Too Many Retries)"), since against the real
+				// service either can surface. Any other error is a genuine failure and is reported with
+				// its real errorType/message so the cause is visible instead of an opaque assertion.
+				const isOpUnavailableFailure =
+					caught.errorType === "cannotCatchUp" ||
+					/cannotcatchup|materialize/i.test(caught.message) ||
+					(caught.errorType === "genericNetworkError" &&
+						/failed to retrieve ops|too many retries/i.test(caught.message));
+				assert(
+					isOpUnavailableFailure,
+					`expected an ops-unavailable failure (cannotCatchUp) when the target is beyond the ` +
+						`retained ops, but got errorType=${caught.errorType} message=${caught.message}`,
 				);
 			},
 		);
