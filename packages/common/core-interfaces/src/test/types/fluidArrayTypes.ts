@@ -6,8 +6,12 @@
 import type { requireAssignableTo } from "@fluidframework/build-tools";
 import type { FluidIterableIterator, FluidReadonlyArray } from "../../index.js";
 
-// FluidReadonlyArray is assignable to readonly T[].
-// This is the key invariant: users who treat our array nodes as readonly arrays must not break.
+// Ensure FluidReadonlyArray is assignable to readonly T[] with our current TypeScript configuration.
+// Technically customers should not rely on this as doing so makes their code likely
+// to break if they change the `lib` in their TypeScript configuration.
+// This is however a good way to ensure we are including everything we should,
+// and that the transition from us declaring we implement `readonly T[]` to `FluidReadonlyArray` is unlikely to break code
+// which matches our current `lib` selection.
 declare type _fluidReadonlyArray_to_readonlyArray = requireAssignableTo<
 	FluidReadonlyArray<string>,
 	readonly string[]

@@ -6,10 +6,10 @@
 import type { FluidIterableIterator } from "./fluidMap.js";
 
 /**
- * Like TypeScript's built-in `ReadonlyArray` type.
+ * Like TypeScript's built-in `ReadonlyArray` type, but independent of TypeScript {@link https://www.typescriptlang.org/tsconfig/#lib | lib}.
  *
  * @privateRemarks
- * This exists so that Fluid has a `ReadonlyArray` type which is unaffected by TypeScript's version and configuration options,
+ * This exists so that Fluid has a `ReadonlyArray` type which is unaffected by the TypeScript `lib` configuration,
  * and safe to implement without being broken by changes to TypeScript's default ReadonlyArray type.
  * All behavior exposed through this interface should be compatible with the corresponding behavior of built-in ReadonlyArrays,
  * but it may lack some of the newer APIs (such as ES2023+ methods like `at()`, `findLast()`, `toReversed()`, etc.),
