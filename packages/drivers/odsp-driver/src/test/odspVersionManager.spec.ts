@@ -5,6 +5,9 @@
 
 import { strict as assert } from "node:assert";
 
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+
 /* eslint-disable import-x/no-internal-modules */
 import {
 	OdspVersionManager,
@@ -13,11 +16,74 @@ import {
 } from "../odspVersionManager/odspVersionManager.js";
 /* eslint-enable import-x/no-internal-modules */
 
-import { makeManager, ref } from "./odspVersionManagerTestFakes.js";
+/**
+ * Build an {@link OdspFileVersionRef} with the given label. Timestamp/size are irrelevant to the
+ * manager's selection logic, so they are fixed.
+ */
+function ref(versionId: string): OdspFileVersionRef {
+	return { versionId, lastModifiedDateTime: "2026-01-01T00:00:00.000Z" };
+}
 
-// The lineage (epoch) and op-availability halves of `validateBaseForReplay` have dedicated suites:
-// see odspVersionManagerLineage.spec.ts and odspVersionManagerOpAvailability.spec.ts. This file
-// covers version selection (`findBaseForSeq`), caching, and `listVersions`.
+interface FakeFetcher extends IOdspFileVersionFetcher {
+	/** Number of times the version list was fetched. */
+	readonly listCalls: () => number;
+	/** Version ids passed to resolveSequenceNumber, in call order. */
+	readonly resolvedIds: () => string[];
+}
+
+/**
+ * Optional epoch behavior for {@link makeManager}, used by the lineage-validation tests.
+ * `liveEpoch`/`versionEpochs` back the epoch getters compared by `findBaseForSeq`'s lineage check.
+ */
+interface ReplayConfig {
+	readonly liveEpoch?: string;
+	readonly versionEpochs?: Record<string, string | undefined>;
+}
+
+/*
+ * Create a manager backed by in-memory fakes so the selection logic can be tested without ODSP.
+ * `versions` is the newest-first list the fake `listFileVersions` returns; `seqByVersion` maps a
+ * versionId to the sequence number the fake `resolveSequenceNumber` returns (a missing id makes it
+ * throw, modelling a parse failure). `replay` configures the epoch getters used by `findBaseForSeq`'s
+ * lineage check; it defaults to a single shared epoch so selection tests pass the check by default.
+ */
+function makeManager(
+	versions: OdspFileVersionRef[],
+	seqByVersion: Record<string, number>,
+	replay?: ReplayConfig,
+): { manager: OdspVersionManager; fetcher: FakeFetcher; logger: MockLogger } {
+	// Default to a single shared epoch so selection tests pass findBaseForSeq's inline lineage check.
+	const replayConfig: ReplayConfig = replay ?? { liveEpoch: "epoch" };
+	let listCallCount = 0;
+	const resolved: string[] = [];
+	const logger = new MockLogger();
+	const fetcher: FakeFetcher = {
+		listFileVersions: async () => {
+			listCallCount++;
+			return versions;
+		},
+		resolveSequenceNumber: async (versionId: string) => {
+			resolved.push(versionId);
+			const seq: number | undefined = seqByVersion[versionId];
+			if (seq === undefined) {
+				throw new Error(`no sequence number configured for version ${versionId}`);
+			}
+			return seq;
+		},
+		getLiveDocumentEpoch: async () => replayConfig.liveEpoch,
+		getRecoverableVersionEpoch: async (versionId: string) =>
+			replayConfig.versionEpochs
+				? replayConfig.versionEpochs[versionId]
+				: replayConfig.liveEpoch,
+		listCalls: () => listCallCount,
+		resolvedIds: () => [...resolved],
+	};
+	return {
+		manager: new OdspVersionManager(fetcher, createChildLogger({ logger })),
+		fetcher,
+		logger,
+	};
+}
 
 describe("OdspVersionManager", () => {
 	describe("findBaseForSeq: which version does it pick for a target sequence number?", () => {
@@ -154,7 +220,6 @@ describe("OdspVersionManager", () => {
 				resolveSequenceNumber: async (versionId: string) => Number.parseInt(versionId, 10),
 				getLiveDocumentEpoch: async () => "epoch",
 				getRecoverableVersionEpoch: async () => "epoch",
-				fetchOps: async () => [],
 			};
 			const manager = new OdspVersionManager(fetcher);
 
@@ -203,6 +268,73 @@ describe("OdspVersionManager", () => {
 					["40.0", 418],
 				],
 			);
+		});
+	});
+
+	describe("findBaseForSeq: lineage validation of the chosen base", () => {
+		it("returns the base when it shares the live document's epoch", async () => {
+			// @q M-VALIDATE-01
+			const { manager, logger } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{ liveEpoch: "epoch-A" },
+			);
+			const result = await manager.findBaseForSeq(430);
+			assert.deepEqual(result, {
+				kind: "found",
+				base: {
+					versionId: "40.0",
+					sequenceNumber: 418,
+					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
+				},
+			});
+			// The observed epochs are logged for real-traffic verification.
+			logger.assertMatch([
+				{
+					eventName: "PointInTimeBaseLineageEpoch",
+					baseVersionId: "40.0",
+					baseEpoch: "epoch-A",
+					liveEpoch: "epoch-A",
+					epochsMatch: true,
+				},
+			]);
+		});
+
+		it("throws when the chosen base is on a different epoch than the live document", async () => {
+			// @q M-VALIDATE-02
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					liveEpoch: "epoch-live",
+					versionEpochs: { "40.0": "epoch-old" },
+				},
+			);
+			await assert.rejects(
+				async () => manager.findBaseForSeq(430),
+				(error: Error) => {
+					assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.fileOverwrittenInStorage,
+						"a lineage mismatch reuses the driver's fileOverwrittenInStorage error",
+					);
+					return true;
+				},
+			);
+		});
+
+		it("throws (fails closed) when an epoch is unknown", async () => {
+			// @q M-VALIDATE-03
+			// Both getLiveDocumentEpoch and getRecoverableVersionEpoch resolve undefined.
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					versionEpochs: {},
+				},
+			);
+			await assert.rejects(async () => manager.findBaseForSeq(430), /Cannot verify.*lineage/);
 		});
 	});
 });

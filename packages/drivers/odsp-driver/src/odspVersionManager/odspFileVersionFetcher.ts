@@ -8,9 +8,8 @@
  * - GET /_api/v2.1/.../versions -- enumerate the file's versions.
  * - GET /_api/v2.1/.../versions/{label}/opStream/snapshots/trees/latest?blobs=2 -- fetch a version's
  *   snapshot and read its sequence number, parsed with the driver's snapshot parser.
- * - GET /_api/v2.1/.../opStream/snapshots/trees/latest?deltas=1&blobs=2 -- fetch the live snapshot
- *   and read the ops it embeds (its snapshotOps), merged with the delta feed for op availability.
- * - GET /_api/v2.1/.../opStream (delta feed) -- read the ops the service still retains in a range.
+ * - GET /_api/v2.1/.../[versions/{label}/]opStream/snapshots/trees/latest?blobs=0 -- read a version's
+ *   or the live document's ODSP epoch (`x-fluid-epoch`) to compare their lineage.
  */
 
 import type {
@@ -23,7 +22,6 @@ import { currentReadVersion, parseCompactSnapshotResponse } from "../compactSnap
 import type { IOdspSnapshot } from "../contracts.js";
 import type { EpochTracker } from "../epochTracker.js";
 import { getHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
-import { OdspDeltaStorageService } from "../odspDeltaStorageService.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 import { getApiRoot } from "../odspUrlHelper.js";
 import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
@@ -168,90 +166,10 @@ export function createOdspFileVersionFetcher(
 			"FileVersionEpoch",
 		);
 
-	// Ops are read from the LIVE document's delta feed (versions do not have their own op streams).
-	// Reuses OdspDeltaStorageService for its tested transport, retry, and epoch validation.
-	const deltaStorage = new OdspDeltaStorageService(
-		`${itemRoot}/opStream`,
-		getAuthHeader,
-		epochTracker,
-		logger,
-	);
-
-	// The live document's latest snapshot embeds the ops trailing its most recent summary (its
-	// `snapshotOps`). The raw delta feed above only serves ops the service has durably written to
-	// the queryable op stream, so those trailing ops can be absent from the feed while still being
-	// replayable on load - most notably a freshly created document's early ops, which live only in
-	// the creation snapshot and were never emitted to the queryable feed. The real delta path serves
-	// these from the snapshot (see OdspDocumentService.connectToDeltaStorage /
-	// OdspDeltaStorageWithCache), so read them once and merge them in; otherwise op-availability
-	// validation would reject a base whose ops a load can actually replay. Memoized because a single
-	// validation walk calls fetchOps repeatedly.
-	let liveSnapshotOpsPromise: Promise<number[]> | undefined;
-	const getLiveSnapshotOps = async (): Promise<number[]> =>
-		(liveSnapshotOpsPromise ??= getWithRetryForTokenRefresh(async (options) => {
-			// `deltas=1` bundles the op stream (the driver's own latest-snapshot fetch does the same);
-			// `blobs=2` inlines blob contents. Read from the live (unversioned) snapshot endpoint.
-			const url = `${itemRoot}/opStream/snapshots/trees/latest?deltas=1&blobs=2`;
-			const method = "GET";
-			const token = await getAuthHeader(
-				{ ...options, request: { url, method } },
-				"LiveSnapshotOps",
-			);
-			const headers = getHeadersWithAuth(token);
-			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
-			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
-			const contentType = response.headers.get("content-type") ?? "";
-			const ops = contentType.includes("application/json")
-				? convertOdspSnapshotToSnapshotTreeAndBlobs(
-						(await response.content.json()) as IOdspSnapshot,
-					).ops
-				: parseCompactSnapshotResponse(
-						new Uint8Array(await response.content.arrayBuffer()),
-						logger,
-					).ops;
-			return ops.map((op) => op.sequenceNumber).sort((a, b) => a - b);
-		}));
-
-	const fetchOps = async (from: number, to: number): Promise<number[]> => {
-		const result = await deltaStorage.get(
-			from,
-			to,
-			{ reason: "PointInTimeOpsValidation" },
-			"PointInTimeOpsValidation",
-		);
-		const sequenceNumbers = new Set(result.messages.map((message) => message.sequenceNumber));
-		const feedOpCount = sequenceNumbers.size;
-		const snapshotOps = await getLiveSnapshotOps();
-		// Count ops in the requested range that ONLY the live snapshot's snapshotOps supplied (absent
-		// from the queryable delta feed). This is emitted so real-service telemetry can confirm whether
-		// the snapshot-ops merge - not the feed - is what makes a base replayable (most importantly a
-		// fresh document's early ops, which live only in the creation snapshot). See the note above.
-		let addedFromSnapshot = 0;
-		for (const sequenceNumber of snapshotOps) {
-			// deltaStorage.get is half-open [from, to); mirror that bound so callers see one range.
-			if (sequenceNumber >= from && sequenceNumber < to) {
-				if (!sequenceNumbers.has(sequenceNumber)) {
-					addedFromSnapshot++;
-				}
-				sequenceNumbers.add(sequenceNumber);
-			}
-		}
-		logger.sendTelemetryEvent({
-			eventName: "PointInTimeOpsSource",
-			from,
-			to,
-			feedOpCount,
-			addedFromSnapshot,
-			totalOpCount: sequenceNumbers.size,
-		});
-		return [...sequenceNumbers].sort((a, b) => a - b);
-	};
-
 	return {
 		listFileVersions,
 		resolveSequenceNumber,
 		getLiveDocumentEpoch,
 		getRecoverableVersionEpoch,
-		fetchOps,
 	};
 }

@@ -88,12 +88,7 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 		//
 		// ODSP stamps each response with the file's epoch; an EpochTracker instance pins itself to the
 		// first epoch it sees and throws on any later divergence (see setEpoch / checkForEpochError in
-		// epochTracker.ts). A version restore (or download-then-reupload) bumps the epoch and renumbers
-		// the op stream, so a base version captured before such a boundary is on a different lineage
-		// than the live document. Because replay applies the live document's ops in (base, target] on
-		// top of the base snapshot, a cross-lineage base would replay unrelated ops and silently
-		// corrupt the materialized state. Sharing one tracker means the mismatched read is rejected
-		// instead - failing loudly rather than returning a wrong document.
+		// epochTracker.ts).
 		//
 		// A fresh NonPersistentCache keeps this read-only historical load isolated from the factory's
 		// shared cache, so a base file version's snapshot can never leak into a normal live load.
@@ -124,13 +119,6 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 				`No ODSP file version is available at or before sequence number ${targetSequenceNumber}.${oldestResolvedSequenceDetail}`,
 			);
 		}
-
-		// Confirm the chosen base can actually be replayed to the target before building any services:
-		// the base must share the live document's epoch (lineage), and every op in
-		// (base.sequenceNumber, target] must still be retained and contiguous. This turns the failure
-		// modes (cross-lineage base, ops trimmed by retention) into clear errors instead of a corrupt
-		// or stalled load.
-		await versionManager.validateBaseForReplay(baseResult.base, targetSequenceNumber);
 
 		const recoverableResolvedUrl = await this.resolveFileVersion(
 			resolvedUrl,
