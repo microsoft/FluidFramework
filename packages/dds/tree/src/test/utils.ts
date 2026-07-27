@@ -1187,12 +1187,8 @@ export function makeEncodingTestSuite<
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() =>
-								jsonCodec.decode(
-									encodedData as JsonCompatible,
-									context as TEncodeContext & TDecodeContext,
-								),
-							);
+							assert(context !== undefined);
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible, context));
 						});
 					}
 				});
