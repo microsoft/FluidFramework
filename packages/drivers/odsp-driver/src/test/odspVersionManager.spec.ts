@@ -50,8 +50,10 @@ interface ReplayConfig {
 function makeManager(
 	versions: OdspFileVersionRef[],
 	seqByVersion: Record<string, number>,
-	replay: ReplayConfig = { liveEpoch: "epoch" },
+	replay?: ReplayConfig,
 ): { manager: OdspVersionManager; fetcher: FakeFetcher; logger: MockLogger } {
+	// Default to a single shared epoch so selection tests pass findBaseForSeq's inline lineage check.
+	const replayConfig: ReplayConfig = replay ?? { liveEpoch: "epoch" };
 	let listCallCount = 0;
 	const resolved: string[] = [];
 	const logger = new MockLogger();
@@ -68,9 +70,11 @@ function makeManager(
 			}
 			return seq;
 		},
-		getLiveDocumentEpoch: async () => replay.liveEpoch,
+		getLiveDocumentEpoch: async () => replayConfig.liveEpoch,
 		getRecoverableVersionEpoch: async (versionId: string) =>
-			replay.versionEpochs ? replay.versionEpochs[versionId] : replay.liveEpoch,
+			replayConfig.versionEpochs
+				? replayConfig.versionEpochs[versionId]
+				: replayConfig.liveEpoch,
 		listCalls: () => listCallCount,
 		resolvedIds: () => [...resolved],
 	};

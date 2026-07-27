@@ -103,8 +103,7 @@ export interface IOdspVersionManager {
 	 *
 	 * @remarks
 	 * A `found` base is guaranteed to share the live document's ODSP epoch (lineage): before returning
-	 * it, the chosen base's epoch is compared with the live document's, and a mismatch (from a version
-	 * restore or download-then-reupload, which renumbers the op stream) throws a non-retryable error
+	 * it, the chosen base's epoch is compared with the live document's, and a mismatch throws a non-retryable error
 	 * rather than returning a base that cannot be replayed. Op availability is enforced separately and
 	 * lazily as the loader reads the bridging ops.
 	 */

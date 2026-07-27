@@ -88,12 +88,7 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 		//
 		// ODSP stamps each response with the file's epoch; an EpochTracker instance pins itself to the
 		// first epoch it sees and throws on any later divergence (see setEpoch / checkForEpochError in
-		// epochTracker.ts). A version restore (or download-then-reupload) bumps the epoch and renumbers
-		// the op stream, so a base version captured before such a boundary is on a different lineage
-		// than the live document. Because replay applies the live document's ops in (base, target] on
-		// top of the base snapshot, a cross-lineage base would replay unrelated ops and silently
-		// corrupt the materialized state. Sharing one tracker means the mismatched read is rejected
-		// instead - failing loudly rather than returning a wrong document.
+		// epochTracker.ts).
 		//
 		// A fresh NonPersistentCache keeps this read-only historical load isolated from the factory's
 		// shared cache, so a base file version's snapshot can never leak into a normal live load.
