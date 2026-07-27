@@ -47,7 +47,52 @@ jobs:
     runs-on: ubuntu-latest
     name: Label base branches and external contributors
     steps:
-      # release notes: https://github.com/srvaroa/labeler/releases/tag/v1.13.0
-      - uses: srvaroa/labeler@bf262763a8a8e191f5847873aecc0f29df84f957 # ratchet:srvaroa/labeler@v1.14.0
-        env:
-          GITHUB_TOKEN: "${{ github.token }}"
+      # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
+      # Replaces the Docker-based srvaroa/labeler action (which required Docker Hub access) with an equivalent
+      # JavaScript implementation. Rules mirror .github/labeler.yml.
+      - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        with:
+          script: |
+            const baseBranch = context.payload.pull_request.base.ref;
+            const prNumber = context.payload.pull_request.number;
+
+            // Label rules mirroring .github/labeler.yml
+            const labelRules = [
+              { label: "base: main", pattern: /^main$/ },
+              { label: "base: next", pattern: /^next$/ },
+              { label: "base: release", pattern: /^release\/.*/ },
+            ];
+
+            const allManagedLabels = labelRules.map((r) => r.label);
+            const labelsToAdd = labelRules.filter((r) => r.pattern.test(baseBranch)).map((r) => r.label);
+
+            const { data: currentLabels } = await github.rest.issues.listLabelsOnIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const currentLabelNames = currentLabels.map((l) => l.name);
+
+            // Add matching labels not yet present
+            for (const label of labelsToAdd) {
+              if (!currentLabelNames.includes(label)) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  labels: [label],
+                });
+              }
+            }
+
+            // Remove managed labels that no longer match (sync behavior)
+            for (const label of allManagedLabels) {
+              if (!labelsToAdd.includes(label) && currentLabelNames.includes(label)) {
+                await github.rest.issues.removeLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  name: label,
+                });
+              }
+            }
