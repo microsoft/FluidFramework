@@ -82,6 +82,7 @@ overrides:
   systeminformation: ^5.31.6
   tar: ^7.5.11
   tmp: ^0.2.6
+  websocket-driver: ^0.7.5
   ws@>=8 <9: ^8.21.0
   ws@>=7 <8: ^7.5.11
 
