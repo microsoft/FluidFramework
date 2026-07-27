@@ -1014,6 +1014,9 @@ importers:
       emoji-picker-element:
         specifier: ^1.26.1
         version: 1.26.1
+      emoji-picker-element-data:
+        specifier: ^1.8.0
+        version: 1.8.0
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
@@ -22591,6 +22594,9 @@ packages:
     resolution: {integrity: sha512-DeWwawk6r5yR9jFgnDKYt4sLS0LmHJJi3ZOnb5/JdbYwj3nW+FxQnHIjhBKz8YLC7oRNPVM9NQ47I3CVx34eqQ==}
     engines: {node: '>=12'}
 
+  emoji-picker-element-data@1.8.0:
+    resolution: {integrity: sha512-VfRuRJNEDLS1JKlNS4olaqhjX5S1nnZ+ZHG73b/dV8QeZyi0yPruTPEE72EmF6XO3k/9hj3lybMIYMOYXb/57A==}
+
   emoji-picker-element@1.26.1:
     resolution: {integrity: sha512-XgQ9s2JdmworiqLfJC7eGbzQHGv8yb8U9XofjeRAnOMYaeLh0MfwVAz9oG1YE2U2WnzU0Pys1axMjYtPKJ7YSg==}
 
@@ -36341,6 +36347,8 @@ snapshots:
   embla-carousel@8.5.1: {}
 
   emittery@0.13.1: {}
+
+  emoji-picker-element-data@1.8.0: {}
 
   emoji-picker-element@1.26.1: {}
 
