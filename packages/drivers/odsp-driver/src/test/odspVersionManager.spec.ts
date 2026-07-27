@@ -32,8 +32,8 @@ interface FakeFetcher extends IOdspFileVersionFetcher {
 }
 
 /**
- * Optional epoch behavior for {@link makeManager}, used by the `validateBaseForReplay` tests.
- * `liveEpoch`/`versionEpochs` back the epoch getters compared by the lineage check.
+ * Optional epoch behavior for {@link makeManager}, used by the lineage-validation tests.
+ * `liveEpoch`/`versionEpochs` back the epoch getters compared by `findBaseForSeq`'s lineage check.
  */
 interface ReplayConfig {
 	readonly liveEpoch?: string;
@@ -44,13 +44,13 @@ interface ReplayConfig {
  * Create a manager backed by in-memory fakes so the selection logic can be tested without ODSP.
  * `versions` is the newest-first list the fake `listFileVersions` returns; `seqByVersion` maps a
  * versionId to the sequence number the fake `resolveSequenceNumber` returns (a missing id makes it
- * throw, modelling a parse failure). `replay` configures the epoch getters used by the
- * `validateBaseForReplay` (lineage) path.
+ * throw, modelling a parse failure). `replay` configures the epoch getters used by `findBaseForSeq`'s
+ * lineage check; it defaults to a single shared epoch so selection tests pass the check by default.
  */
 function makeManager(
 	versions: OdspFileVersionRef[],
 	seqByVersion: Record<string, number>,
-	replay: ReplayConfig = {},
+	replay: ReplayConfig = { liveEpoch: "epoch" },
 ): { manager: OdspVersionManager; fetcher: FakeFetcher; logger: MockLogger } {
 	let listCallCount = 0;
 	const resolved: string[] = [];
@@ -267,21 +267,23 @@ describe("OdspVersionManager", () => {
 		});
 	});
 
-	describe("validateBaseForReplay", () => {
-		const base = {
-			versionId: "40.0",
-			sequenceNumber: 418,
-			lastModifiedDateTime: "2026-01-01T00:00:00Z",
-		};
-
-		it("resolves when the base shares the live document's epoch", async () => {
+	describe("findBaseForSeq: lineage validation of the chosen base", () => {
+		it("returns the base when it shares the live document's epoch", async () => {
 			// @q M-VALIDATE-01
 			const { manager, logger } = makeManager(
 				[ref("tip"), ref("40.0")],
 				{ tip: 460, "40.0": 418 },
 				{ liveEpoch: "epoch-A" },
 			);
-			await manager.validateBaseForReplay(base);
+			const result = await manager.findBaseForSeq(430);
+			assert.deepEqual(result, {
+				kind: "found",
+				base: {
+					versionId: "40.0",
+					sequenceNumber: 418,
+					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
+				},
+			});
 			// The observed epochs are logged for real-traffic verification.
 			logger.assertMatch([
 				{
@@ -294,7 +296,7 @@ describe("OdspVersionManager", () => {
 			]);
 		});
 
-		it("throws when the base version is on a different epoch than the live document", async () => {
+		it("throws when the chosen base is on a different epoch than the live document", async () => {
 			// @q M-VALIDATE-02
 			const { manager } = makeManager(
 				[ref("tip"), ref("40.0")],
@@ -305,7 +307,7 @@ describe("OdspVersionManager", () => {
 				},
 			);
 			await assert.rejects(
-				async () => manager.validateBaseForReplay(base),
+				async () => manager.findBaseForSeq(430),
 				(error: Error) => {
 					assert.match(error.message, /epoch "epoch-old".*epoch "epoch-live"/);
 					assert.equal(
@@ -320,12 +322,15 @@ describe("OdspVersionManager", () => {
 
 		it("throws (fails closed) when an epoch is unknown", async () => {
 			// @q M-VALIDATE-03
-			// No epoch configured -> both getLiveDocumentEpoch and getRecoverableVersionEpoch resolve undefined.
-			const { manager } = makeManager([ref("tip"), ref("40.0")], { tip: 460, "40.0": 418 });
-			await assert.rejects(
-				async () => manager.validateBaseForReplay(base),
-				/Cannot verify.*lineage/,
+			// Both getLiveDocumentEpoch and getRecoverableVersionEpoch resolve undefined.
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				{
+					versionEpochs: {},
+				},
 			);
+			await assert.rejects(async () => manager.findBaseForSeq(430), /Cannot verify.*lineage/);
 		});
 	});
 });

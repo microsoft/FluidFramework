@@ -125,10 +125,6 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			);
 		}
 
-		// Confirm the chosen base shares the live document's epoch (lineage) before building any
-		// services
-		await versionManager.validateBaseForReplay(baseResult.base);
-
 		const recoverableResolvedUrl = await this.resolveFileVersion(
 			resolvedUrl,
 			baseResult.base.versionId,

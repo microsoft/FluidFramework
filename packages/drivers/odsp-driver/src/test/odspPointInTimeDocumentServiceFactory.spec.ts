@@ -81,7 +81,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 
 	/**
 	 * A fake {@link IOdspFileVersionFetcher} for driving a *real* {@link OdspVersionManager} through the
-	 * factory, so the factory's up-front `validateBaseForReplay` - the recoverable-version-epoch vs
+	 * factory, so `findBaseForSeq`'s lineage check - the recoverable-version-epoch vs
 	 * live-document-epoch comparison - runs for real instead of being stubbed out. The timeline is
 	 * tip=seq 10, recoverable version "42.0"=seq 5, so a target of 8 selects "42.0" as the base.
 	 */
@@ -151,7 +151,6 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 					lastModifiedDateTime: "2026-01-01T00:00:00Z",
 				},
 			}),
-			validateBaseForReplay: async (): Promise<void> => {},
 		};
 		stub(internals, "createVersionManager").callsFake((_url, _logger, epochTracker) => {
 			versionManagerEpochTracker = epochTracker;
@@ -226,8 +225,8 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		const internals = factory as unknown as FactoryInternals;
 
 		// A REAL version manager backed by a fake fetcher whose recoverable-version epoch ("epoch-old")
-		// differs from the live document's ("epoch-live"). This is what makes the factory run the actual
-		// recoverable-vs-live comparison in validateBaseForReplay, rather than a stubbed no-op.
+		// differs from the live document's ("epoch-live"). This is what makes findBaseForSeq run the
+		// actual recoverable-vs-live lineage comparison, rather than a stubbed no-op.
 		const realManager = new OdspVersionManager(
 			fakeFetcher({ liveEpoch: "epoch-live", versionEpoch: "epoch-old" }),
 		);
@@ -266,7 +265,7 @@ describe("OdspPointInTimeDocumentServiceFactory lineage guard", () => {
 		const recoverableResolvedUrl = await makeResolvedUrl("42.0");
 		const internals = factory as unknown as FactoryInternals;
 
-		// Same epoch on both sides, so the real validateBaseForReplay (lineage check) passes and the
+		// Same epoch on both sides, so findBaseForSeq's lineage check passes and the
 		// factory proceeds to build the two services.
 		const realManager = new OdspVersionManager(
 			fakeFetcher({ liveEpoch: "epoch-A", versionEpoch: "epoch-A" }),

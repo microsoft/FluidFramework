@@ -100,15 +100,15 @@ export interface IOdspVersionManager {
 	/**
 	 * Given a target sequence number, return the closest version at or before it (`found`), or
 	 * `noBaseVersion` if the target predates the oldest retained version.
+	 *
+	 * @remarks
+	 * A `found` base is guaranteed to share the live document's ODSP epoch (lineage): before returning
+	 * it, the chosen base's epoch is compared with the live document's, and a mismatch (from a version
+	 * restore or download-then-reupload, which renumbers the op stream) throws a non-retryable error
+	 * rather than returning a base that cannot be replayed. Op availability is enforced separately and
+	 * lazily as the loader reads the bridging ops.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
-	/**
-	 * Verify a base version selected by {@link findBaseForSeq} shares the live document's ODSP epoch
-	 * (a version restore or download-then-reupload bumps the epoch and renumbers the op stream, making
-	 * the base a different lineage), throwing if not. Op availability is enforced lazily as the loader
-	 * reads the bridging ops.
-	 */
-	validateBaseForReplay(base: ResolvedVersion): Promise<void>;
 }
 
 /**
@@ -149,17 +149,14 @@ export class OdspVersionManager implements IOdspVersionManager {
 					? sequenceNumber
 					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
-				return { kind: "found", base: { ...version, sequenceNumber } };
+				const base = { ...version, sequenceNumber };
+				// Confirm the chosen base shares the live document's lineage before handing it back, so
+				// a cross-lineage base fails loudly here rather than replaying a renumbered op stream.
+				await this.validateLineageEpoch(base);
+				return { kind: "found", base };
 			}
 		}
 		return { kind: "noBaseVersion", oldestResolvedSeq };
-	}
-
-	public async validateBaseForReplay(base: ResolvedVersion): Promise<void> {
-		// Verify the base shares the live document's lineage (epoch). Op availability is enforced
-		// lazily while the loader reads the bridging ops (see OdspPointInTimeDocumentService's
-		// connectToDeltaStorage), so it is not re-checked up front here.
-		await this.validateLineageEpoch(base);
 	}
 
 	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
