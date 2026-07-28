@@ -29,7 +29,7 @@
 		"build:esnext:crossPackage:bundler": "tsc --project ./tsconfig.crossPackage.bundler.json",
 		"build:esnext:crossPackage:node16": "tsc --project ./tsconfig.crossPackage.node16.json",
 		"build:esnext:main": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
