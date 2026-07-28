@@ -82,7 +82,10 @@ describeCompat(
 			);
 		};
 
-		it("loads at the earliest recoverable version and reflects that early state", async () => {
+		it("loads at the earliest recoverable version and reflects that early state", async function (this: Mocha.Context) {
+			// Several summaries + a load against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
@@ -104,7 +107,10 @@ describeCompat(
 			await assertLoadsToTarget(ctx, earliestSequenceNumber, earliestValue, "earliest");
 		});
 
-		it("is deterministic: loading the same target twice yields identical state", async () => {
+		it("is deterministic: loading the same target twice yields identical state", async function (this: Mocha.Context) {
+			// Multiple summaries + two loads against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
@@ -146,7 +152,10 @@ describeCompat(
 			);
 		});
 
-		it("returns a disconnected, read-only historical view pinned at the target", async () => {
+		it("returns a disconnected, read-only historical view pinned at the target", async function (this: Mocha.Context) {
+			// Multiple summaries + a load against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 

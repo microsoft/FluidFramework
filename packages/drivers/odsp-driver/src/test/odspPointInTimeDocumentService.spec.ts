@@ -41,6 +41,31 @@ function streamFromBatches(batches: number[][]): IStream<ISequencedDocumentMessa
 	};
 }
 
+/** A driver-shaped error carrying the `errorType`/`canRetry` fields the wrapper's catch block inspects. */
+const driverError = (errorType: string, canRetry: boolean): Error =>
+	Object.assign(new Error(`inner read failed: ${errorType}`), { errorType, canRetry });
+
+/**
+ * A scripted inner delta-storage stream that yields each batch in order, then rejects its next
+ * `read()` with `error`. With no batches it rejects on the very first read. Used to exercise the
+ * wrapper's `catch` block, which decides whether to surface a non-retryable `cannotCatchUp` or
+ * rethrow the original error.
+ */
+function streamThatThrows(
+	error: unknown,
+	batches: number[][] = [],
+): IStream<ISequencedDocumentMessage[]> {
+	let index = 0;
+	return {
+		read: async (): Promise<IStreamResult<ISequencedDocumentMessage[]>> => {
+			if (index < batches.length) {
+				return { done: false, value: batches[index++].map(msg) };
+			}
+			throw error;
+		},
+	};
+}
+
 /** Records the (from, to, cachedOnly) each `fetchMessages` was called with, for bounding assertions. */
 interface FetchCall {
 	readonly from: number;
@@ -251,6 +276,92 @@ describe("OdspPointInTimeDocumentService", () => {
 		it("does not enforce when no ops are needed (target at or below the base)", async () => {
 			// from (13) >= bounded (target 12 + 1) means the base already covers the target.
 			assert.deepEqual(await readAll(12, 13, []), []);
+		});
+	});
+
+	describe("connectToDeltaStorage: maps a failed op fetch to the right error", () => {
+		// Drives a stream whose `read()` rejects, so only the wrapper's `catch` block runs. The
+		// wrapper masks the raw failure as a non-retryable `cannotCatchUp` only for a genuine
+		// op-unavailability signal (a non-retryable genericNetworkError while ops are needed); every
+		// other failure is rethrown untouched so retryability and error type are preserved.
+		const readFailing = async (
+			target: number,
+			from: number,
+			error: unknown,
+			options?: { cachedOnly?: boolean; abortSignal?: AbortSignal; batches?: number[][] },
+		): Promise<void> => {
+			const { service } = makeService(
+				target,
+				streamThatThrows(error, options?.batches ?? []),
+			);
+			const deltaStorage = await service.connectToDeltaStorage();
+			const stream = deltaStorage.fetchMessages(
+				from,
+				undefined,
+				options?.abortSignal,
+				options?.cachedOnly,
+			);
+			await drain(stream);
+		};
+
+		it("masks a non-retryable genericNetworkError as non-retryable cannotCatchUp when ops are needed", async () => {
+			await assert.rejects(
+				readFailing(12, 10, driverError(OdspErrorTypes.genericNetworkError, false)),
+				(error: Error & { errorType?: string; canRetry?: boolean }) => {
+					assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
+					assert.equal(error.canRetry, false);
+					assert.match(error.message, /could not be retrieved from delta storage/);
+					return true;
+				},
+			);
+		});
+
+		it("rethrows a retryable error untouched (the delta manager must be allowed to retry)", async () => {
+			const original = driverError(OdspErrorTypes.genericNetworkError, true);
+			await assert.rejects(readFailing(12, 10, original), (error: Error) => {
+				assert.equal(error, original, "the original retryable error must be surfaced as-is");
+				return true;
+			});
+		});
+
+		it("rethrows a non-retryable error of a different type untouched (not masked as cannotCatchUp)", async () => {
+			const original = driverError(OdspErrorTypes.fetchTokenError, false);
+			await assert.rejects(readFailing(12, 10, original), (error: Error) => {
+				assert.equal(error, original, "a non op-availability failure must not be masked");
+				return true;
+			});
+		});
+
+		it("rethrows on a cachedOnly pass (a short cache read is not an op-availability failure)", async () => {
+			const original = driverError(OdspErrorTypes.genericNetworkError, false);
+			await assert.rejects(
+				readFailing(12, 10, original, { cachedOnly: true }),
+				(error: Error) => {
+					assert.equal(error, original);
+					return true;
+				},
+			);
+		});
+
+		it("rethrows when the fetch was aborted (an abort is not a retention failure)", async () => {
+			const original = driverError(OdspErrorTypes.genericNetworkError, false);
+			const abortSignal = { aborted: true } as AbortSignal;
+			await assert.rejects(
+				readFailing(12, 10, original, { abortSignal }),
+				(error: Error) => {
+					assert.equal(error, original);
+					return true;
+				},
+			);
+		});
+
+		it("rethrows when no ops are needed (target at or below the base)", async () => {
+			// from (13) >= bounded (target 12 + 1): no bridging range, so no op-availability masking.
+			const original = driverError(OdspErrorTypes.genericNetworkError, false);
+			await assert.rejects(readFailing(12, 13, original), (error: Error) => {
+				assert.equal(error, original);
+				return true;
+			});
 		});
 	});
 

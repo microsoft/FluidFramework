@@ -32,6 +32,10 @@
 import { strict as assert } from "assert";
 
 import { describeCompat, itExpects } from "@fluid-private/test-version-utils";
+import type {
+	ITelemetryBaseEvent,
+	ITelemetryBaseLogger,
+} from "@fluidframework/core-interfaces";
 
 import { listFileVersions, restoreFileVersion } from "./odspVersionTestApi.js";
 import {
@@ -222,6 +226,92 @@ describeCompat(
 					isOpUnavailableFailure,
 					`expected an ops-unavailable failure (cannotCatchUp) when the target is beyond the ` +
 						`retained ops, but got errorType=${caught.errorType} message=${caught.message}`,
+				);
+			},
+		);
+
+		// A caller can cancel an in-flight point-in-time load via its AbortSignal. The load waits while
+		// the delta manager replays ops toward the target; firing the signal during that replay must
+		// reject the load (and close the container) with a cancellation error rather than hanging or
+		// materializing a container.
+		//
+		// The cancelled load closes its container with the loader's generic cancellation error, so that
+		// ContainerClose is the expected outcome and is declared via itExpects (otherwise the suite's
+		// afterEach would flag it as unexpected).
+		itExpects(
+			"cancels an in-flight point-in-time load when its abort signal fires",
+			[
+				{
+					eventName: "fluid:telemetry:Container:ContainerClose",
+					errorType: "genericError",
+				},
+			],
+			async function (this: Mocha.Context) {
+				this.timeout(120_000);
+
+				const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
+				const { container, documentId, incrementAndSync, snapVersion } = ctx;
+
+				// Intact single-lineage history with a recoverable, non-tip base so the load gets past the
+				// lineage check and reaches the op-replay stage where the abort signal takes effect.
+				await incrementAndSync(2);
+				await snapVersion("base-snap");
+				await incrementAndSync(2);
+				await snapVersion("tip-snap");
+
+				// Target beyond the live tip so the load can never satisfy itself and reach a natural
+				// completion: it stays in the retry/replay loop (each op-availability check is transient
+				// and retryable) until we cancel it. This makes the cancellation - not a race with a
+				// successful load - the deterministic outcome.
+				const beyondTip = container.deltaManager.lastSequenceNumber + 50;
+
+				// Fire the abort the moment the op replay begins. The point-in-time service only fetches
+				// deltas after the loader has installed its abort listener and started catching up, so
+				// aborting on the first GetDeltas telemetry cancels a genuinely in-flight load - never
+				// before the listener exists (an abort event delivered before registration is missed), and
+				// long before the beyond-tip retries would otherwise exhaust into a terminal failure.
+				const abortController = new AbortController();
+				let aborted = false;
+				const abortingLogger: ITelemetryBaseLogger = {
+					send: (event: ITelemetryBaseEvent): void => {
+						if (!aborted && event.eventName.includes("GetDeltas")) {
+							aborted = true;
+							abortController.abort();
+						}
+						suite.provider().logger.send(event);
+					},
+				};
+
+				await assert.rejects(
+					loadPointInTimeContainer(
+						suite.provider(),
+						suite.runtimeFactory(),
+						documentId,
+						beyondTip,
+						abortController.signal,
+						abortingLogger,
+					),
+					(error: Error & { errorType?: string }) => {
+						// The abort rejects the wait with the loader's generic cancellation error and closes
+						// the container (logged as ContainerClose/genericError, declared above). The paused-load
+						// flow then disconnects the container it just closed, and disconnecting a closed
+						// container throws a usageError ("The Container is closed and cannot be disconnected")
+						// that supersedes the cancellation error - so either can surface. Both prove the abort
+						// tore the load down rather than letting it hang or produce a container.
+						const isCancellation =
+							/cancel/i.test(error.message) ||
+							/closed and cannot be disconnected/i.test(error.message);
+						assert(
+							isCancellation,
+							`expected a cancellation-driven failure, got errorType=${error.errorType} message=${error.message}`,
+						);
+						return true;
+					},
+					"a point-in-time load must reject when its abort signal fires mid-replay",
+				);
+				assert(
+					aborted,
+					"the load should have started replaying ops (emitting GetDeltas) before ending",
 				);
 			},
 		);

@@ -67,7 +67,10 @@ describeCompat(
 			);
 		};
 
-		it("loads at the sequence number of a metadata-snapped version (version boundary)", async () => {
+		it("loads at the sequence number of a metadata-snapped version (version boundary)", async function (this: Mocha.Context) {
+			// Multiple summaries + a load against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
@@ -87,7 +90,10 @@ describeCompat(
 			await assertLoadsToTarget(ctx, targetSequenceNumber, expectedValue, "version boundary");
 		});
 
-		it("loads at a mid-stream sequence number by replaying ops from the base", async () => {
+		it("loads at a mid-stream sequence number by replaying ops from the base", async function (this: Mocha.Context) {
+			// Multiple summaries + a load against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
@@ -114,7 +120,10 @@ describeCompat(
 			await assertLoadsToTarget(ctx, postSequenceNumber, postValue, "post");
 		});
 
-		it("loads two distinct targets and reflects each target's own state", async () => {
+		it("loads two distinct targets and reflects each target's own state", async function (this: Mocha.Context) {
+			// Several summaries + two loads against the real service, so raise the timeout accordingly.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, versionApi, incrementAndSync, snapVersion } = ctx;
 
