@@ -214,9 +214,7 @@ function buildIrregularTree(targetCount: number): {
 	return { root, ids };
 }
 
-function createIrregularScenario(
-	nodeCount: number,
-): IndexBenchmarkScenario<string, TreeNode> {
+function createIrregularScenario(nodeCount: number): IndexBenchmarkScenario<string, TreeNode> {
 	return {
 		title: `irregular tree with ${nodeCount} nodes`,
 		setup(): IndexBenchmarkSetup<string, TreeNode> {
