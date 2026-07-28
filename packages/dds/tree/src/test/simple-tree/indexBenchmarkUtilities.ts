@@ -52,15 +52,18 @@ export interface IndexBenchmarkSetup<TKey, TValue> {
 	readonly missingKeys: readonly TKey[];
 
 	/**
-	 * Optional function that mutates the tree (for measuring index update costs).
-	 * Should add a single node to the tree.
+	 * Inserts a node and returns an undo function that removes it.
+	 * Each call must be self-contained so that calling insert then its undo
+	 * leaves the tree in the original state.
 	 */
-	readonly insertNode?: () => void;
+	readonly insertNode?: () => () => void;
 
 	/**
-	 * Optional function that removes a node from the tree (for measuring index update costs on removal).
+	 * Removes a node and returns an undo function that re-inserts it.
+	 * Each call must be self-contained so that calling remove then its undo
+	 * leaves the tree in the original state.
 	 */
-	readonly removeNode?: () => void;
+	readonly removeNode?: () => () => void;
 }
 
 /**
@@ -253,18 +256,24 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 				title: `${indexName}: insert node with index maintenance (${nodeCount} nodes)`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						let running: boolean;
+						const { index, insertNode } = scenario.setup();
+						if (insertNode === undefined) {
+							return;
+						}
+						// Time only the insert; undo between iterations keeps tree at consistent size.
+						let duration: number;
 						do {
-							// Fresh tree per batch so inserts don't accumulate
-							const { index, insertNode } = scenario.setup();
-							if (insertNode === undefined) {
-								return;
+							let elapsed = 0;
+							for (let i = 0; i < state.iterationsPerBatch; i++) {
+								const before = state.timer.now();
+								const undo = insertNode();
+								const after = state.timer.now();
+								elapsed += state.timer.toSeconds(before, after);
+								undo();
 							}
-							running = state.timeBatch(() => {
-								insertNode();
-							});
-							index.dispose();
-						} while (running);
+							duration = elapsed;
+						} while (state.recordBatch(duration));
+						index.dispose();
 					},
 				}),
 			});
@@ -279,18 +288,24 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 				title: `${indexName}: remove node with index maintenance (${nodeCount} nodes)`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						let running: boolean;
+						const { index, removeNode } = scenario.setup();
+						if (removeNode === undefined) {
+							return;
+						}
+						// Time only the remove; undo between iterations keeps tree at consistent size.
+						let duration: number;
 						do {
-							// Fresh tree per batch so removes don't exhaust nodes
-							const { index, removeNode } = scenario.setup();
-							if (removeNode === undefined) {
-								return;
+							let elapsed = 0;
+							for (let i = 0; i < state.iterationsPerBatch; i++) {
+								const before = state.timer.now();
+								const undo = removeNode();
+								const after = state.timer.now();
+								elapsed += state.timer.toSeconds(before, after);
+								undo();
 							}
-							running = state.timeBatch(() => {
-								removeNode();
-							});
-							index.dispose();
-						} while (running);
+							duration = elapsed;
+						} while (state.recordBatch(duration));
+						index.dispose();
 					},
 				}),
 			});
