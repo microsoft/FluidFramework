@@ -9,6 +9,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,12 +18,22 @@ import ejs from "ejs";
 import type { BuildPerfMode } from "./types.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
 
 /**
  * Directory containing the template source files (dashboard.ejs, dashboard.css, dashboard.ts).
  * At runtime the compiled dashboard.js is read from this directory.
  */
 export const TEMPLATES_DIR = path.resolve(__dirname, "templates");
+
+function readPackageAsset(packageName: string, relativePath: string): string {
+	const packageEntryPoint = require.resolve(packageName);
+	const packageRoot = path.resolve(path.dirname(packageEntryPoint), "..");
+	return readFileSync(path.join(packageRoot, relativePath), "utf8").replace(
+		/<\/script/giu,
+		"<\\/script",
+	);
+}
 
 /**
  * Generate a standalone HTML dashboard by rendering the EJS template
@@ -84,10 +95,17 @@ function renderTemplate(templatePath: string, vars: Record<string, unknown>): st
 		.join("\n")
 		.trimEnd();
 	const ejsTemplate = readFileSync(templatePath, "utf8");
+	const chartJsContent = readPackageAsset("chart.js", "dist/chart.umd.js");
+	const dateAdapterContent = readPackageAsset(
+		"chartjs-adapter-date-fns",
+		"dist/chartjs-adapter-date-fns.bundle.min.js",
+	);
 
 	return ejs.render(ejsTemplate, {
 		...vars,
+		chartJsContent,
 		cssContent,
+		dateAdapterContent,
 		jsContent,
 	});
 }
