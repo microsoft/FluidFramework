@@ -117,12 +117,14 @@ export interface IOdspVersionManager {
 export class OdspVersionManager implements IOdspVersionManager {
 	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
 	private readonly seqByVersion = new Map<string, Promise<number>>();
+	private readonly epochByVersion = new Map<string, Promise<string | undefined>>();
 
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
 	public refresh(): void {
 		this.versionsCache = undefined;
 		this.seqByVersion.clear();
+		this.epochByVersion.clear();
 	}
 
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
@@ -154,9 +156,12 @@ export class OdspVersionManager implements IOdspVersionManager {
 	}
 
 	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
+		// The live document's epoch can change (a restore or download-and-reupload bumps it), so it is
+		// always read fresh. A numbered version's snapshot is immutable, so its epoch never changes and
+		// is cached per versionId (see resolveVersionEpoch).
 		const [liveEpoch, baseEpoch] = await Promise.all([
 			this.fetcher.getLiveDocumentEpoch(),
-			this.fetcher.getRecoverableVersionEpoch(base.versionId),
+			this.resolveVersionEpoch(base.versionId),
 		]);
 		if (liveEpoch === undefined || baseEpoch === undefined) {
 			throw new NonRetryableError(
@@ -213,6 +218,19 @@ export class OdspVersionManager implements IOdspVersionManager {
 		if (pending === undefined) {
 			pending = this.fetcher.resolveSequenceNumber(versionId);
 			this.seqByVersion.set(versionId, pending);
+		}
+		return pending;
+	}
+
+	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {
+		// A numbered version's snapshot is immutable, so its epoch never changes: cache the pending
+		// promise (like resolveSeq) so a base revisited across findBaseForSeq calls is not re-fetched,
+		// concurrent callers coalesce, and a refresh() in flight is not clobbered. The live document's
+		// epoch is deliberately NOT cached here - it can change and is always read fresh.
+		let pending = this.epochByVersion.get(versionId);
+		if (pending === undefined) {
+			pending = this.fetcher.getRecoverableVersionEpoch(versionId);
+			this.epochByVersion.set(versionId, pending);
 		}
 		return pending;
 	}

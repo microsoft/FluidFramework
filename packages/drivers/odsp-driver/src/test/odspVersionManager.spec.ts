@@ -28,6 +28,10 @@ interface FakeFetcher extends IOdspFileVersionFetcher {
 	readonly listCalls: () => number;
 	/** Version ids passed to resolveSequenceNumber, in call order. */
 	readonly resolvedIds: () => string[];
+	/** Number of times the live document's epoch was read. */
+	readonly liveEpochCalls: () => number;
+	/** Version ids passed to getRecoverableVersionEpoch, in call order. */
+	readonly versionEpochIds: () => string[];
 }
 
 /**
@@ -55,6 +59,8 @@ function makeManager(
 	const replayConfig: ReplayConfig = replay ?? { liveEpoch: "epoch" };
 	let listCallCount = 0;
 	const resolved: string[] = [];
+	let liveEpochCallCount = 0;
+	const versionEpochResolved: string[] = [];
 	const logger = new MockLogger();
 	const fetcher: FakeFetcher = {
 		listFileVersions: async () => {
@@ -69,13 +75,20 @@ function makeManager(
 			}
 			return seq;
 		},
-		getLiveDocumentEpoch: async () => replayConfig.liveEpoch,
-		getRecoverableVersionEpoch: async (versionId: string) =>
-			replayConfig.versionEpochs
+		getLiveDocumentEpoch: async () => {
+			liveEpochCallCount++;
+			return replayConfig.liveEpoch;
+		},
+		getRecoverableVersionEpoch: async (versionId: string) => {
+			versionEpochResolved.push(versionId);
+			return replayConfig.versionEpochs
 				? replayConfig.versionEpochs[versionId]
-				: replayConfig.liveEpoch,
+				: replayConfig.liveEpoch;
+		},
 		listCalls: () => listCallCount,
 		resolvedIds: () => [...resolved],
+		liveEpochCalls: () => liveEpochCallCount,
+		versionEpochIds: () => [...versionEpochResolved],
 	};
 	return {
 		manager: new OdspVersionManager(fetcher),
@@ -382,6 +395,48 @@ describe("OdspVersionManager", () => {
 					);
 					return true;
 				},
+			);
+		});
+	});
+
+	describe("findBaseForSeq: epoch caching", () => {
+		it("caches a numbered version's epoch but re-reads the live epoch each time", async () => {
+			// @q M-VALIDATE-CACHE-01
+			// A numbered version's snapshot is immutable, so its epoch is read once and cached; the live
+			// document's epoch can change (restore/reupload) and must be read fresh on every check.
+			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
+			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+			const { manager, fetcher } = makeManager(versions, seqs, { liveEpoch: "epoch" });
+
+			await manager.findBaseForSeq(430); // base 40.0
+			await manager.findBaseForSeq(430); // base 40.0 again - epoch should come from cache
+
+			assert.deepEqual(
+				fetcher.versionEpochIds(),
+				["40.0"],
+				"the chosen base's epoch should be fetched once and then served from cache",
+			);
+			assert.equal(
+				fetcher.liveEpochCalls(),
+				2,
+				"the live document's epoch must be re-read on every lineage check (never cached)",
+			);
+		});
+
+		it("re-reads a version's epoch after refresh()", async () => {
+			// @q M-VALIDATE-CACHE-02
+			const versions = [ref("tip"), ref("42.0"), ref("40.0")];
+			const seqs = { tip: 460, "42.0": 448, "40.0": 418 };
+			const { manager, fetcher } = makeManager(versions, seqs, { liveEpoch: "epoch" });
+
+			await manager.findBaseForSeq(430); // base 40.0 - fetches its epoch
+			manager.refresh();
+			await manager.findBaseForSeq(430); // refresh cleared the cache - must re-fetch
+
+			assert.deepEqual(
+				fetcher.versionEpochIds(),
+				["40.0", "40.0"],
+				"refresh should clear the cached version epoch so it is fetched again",
 			);
 		});
 	});
