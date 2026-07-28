@@ -465,24 +465,30 @@ describeCompat(
 				// loads (realizes) the cell, creating its DDS summarizer nodes before refresh. This is exactly
 				// what happens in production - no explicit realize call is needed.
 				const summarizerRuntime = (summarizer as any).runtime as ContainerRuntime;
-				const originalUpload = summarizerRuntime.storage.uploadSummaryWithContext.bind(
-					summarizerRuntime.storage,
-				);
+				// Capture the original method unmodified so we can restore the exact same reference later,
+				// and invoke it via `.call` to preserve its `this` binding.
+				const originalUpload = summarizerRuntime.storage.uploadSummaryWithContext;
 				summarizerRuntime.storage.uploadSummaryWithContext = async (
 					summary: ISummaryTree,
 					context: ISummaryContext,
 				): Promise<string> => {
-					const response = await originalUpload(summary, context);
+					const response = await originalUpload.call(
+						summarizerRuntime.storage,
+						summary,
+						context,
+					);
 					tableDataObject._root.set("newCell", cellDataObject.handle);
 					// `processOutgoing` ensures that the attach op is sequenced by the server before the summarize op.
 					await provider.opProcessingController.processOutgoing(mainContainer);
 					return response;
 				};
 
-				await summarizeNow(summarizer);
-
-				// Restore the upload override before the final summary.
-				summarizerRuntime.storage.uploadSummaryWithContext = originalUpload;
+				try {
+					await summarizeNow(summarizer);
+				} finally {
+					// Restore the original upload before the final summary, even if the summary above throws.
+					summarizerRuntime.storage.uploadSummaryWithContext = originalUpload;
+				}
 
 				// Ideally this summary should NOT reject. But with the current summarizer node behavior it
 				// does: the cell's DDS emits an unresolvable summary handle and the upload fails. We have
