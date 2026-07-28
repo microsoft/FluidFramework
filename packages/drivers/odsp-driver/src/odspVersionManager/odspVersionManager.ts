@@ -13,7 +13,7 @@
 
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { UsageError, type TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion as driverVersion } from "../packageVersion.js";
 
@@ -163,32 +163,20 @@ export class OdspVersionManager implements IOdspVersionManager {
 			this.fetcher.getLiveDocumentEpoch(),
 			this.fetcher.getRecoverableVersionEpoch(base.versionId),
 		]);
-		// Log the observed epochs so real traffic can confirm whether the version-scoped read actually
-		// returns a per-lineage epoch (vs. the file's current epoch). If they always match here, the
-		// op-availability check - not this epoch comparison - is what guards against a cross-lineage base.
-		this.logger?.sendTelemetryEvent({
-			eventName: "PointInTimeBaseLineageEpoch",
-			baseVersionId: base.versionId,
-			baseEpoch,
-			liveEpoch,
-			epochsMatch:
-				baseEpoch !== undefined && liveEpoch !== undefined && baseEpoch === liveEpoch,
-		});
-		// Fail closed when either epoch is unknown: without both we cannot prove the base shares the
-		// live document's lineage, and replaying across lineages silently corrupts the result.
 		if (liveEpoch === undefined || baseEpoch === undefined) {
-			throw new UsageError(
+			throw new NonRetryableError(
 				`Cannot verify that ODSP file version ${base.versionId} shares the live document's ` +
-					`lineage (base epoch: ${baseEpoch ?? "unknown"}, live epoch: ${liveEpoch ?? "unknown"}).`,
+					`lineage: the storage response is missing an epoch (base epoch: ${baseEpoch ?? "unknown"}, ` +
+					`live epoch: ${liveEpoch ?? "unknown"}).`,
+				OdspErrorTypes.incorrectServerResponse,
+				{
+					driverVersion,
+					serverEpoch: liveEpoch,
+					clientEpoch: baseEpoch,
+				},
 			);
 		}
 		if (liveEpoch !== baseEpoch) {
-			// Reuse the driver's canonical epoch-mismatch error (the same errorType the shared
-			// EpochTracker raises when a cross-lineage read is detected - see epochTracker.ts
-			// checkForEpochErrorCore), so the loader sees one consistent, machine-readable errorType
-			// for "the base is on a different lineage than the live document" rather than a generic
-			// UsageError. It is correctly non-retryable: a lineage mismatch never resolves on retry.
-			// clientEpoch is the epoch we hold (the chosen base); serverEpoch is the live document's.
 			throw new NonRetryableError(
 				`ODSP file version ${base.versionId} is on epoch "${baseEpoch}" but the live document is ` +
 					`on epoch "${liveEpoch}". A binary file change (e.g. a version restore or ` +

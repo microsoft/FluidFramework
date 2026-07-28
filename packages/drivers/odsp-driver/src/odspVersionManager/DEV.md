@@ -159,8 +159,7 @@ loader streams the bridging ops (Part V), because the lineage gate is the only c
 before choosing to build the services.
 
 **Lineage (epoch).** It reads the live document's epoch and the chosen base version's epoch and compares
-them, logging the observed pair (`PointInTimeBaseLineageEpoch`) so real traffic can confirm whether the
-version-scoped read returns a per-lineage epoch.
+them.
 
 - **Base and live share an epoch?** Returns the base. `M-VALIDATE-01`
 - **Base on a different epoch than the live document?** Throws, naming both epochs, and reuses the

@@ -274,7 +274,7 @@ describe("OdspVersionManager", () => {
 	describe("findBaseForSeq: lineage validation of the chosen base", () => {
 		it("returns the base when it shares the live document's epoch", async () => {
 			// @q M-VALIDATE-01
-			const { manager, logger } = makeManager(
+			const { manager } = makeManager(
 				[ref("tip"), ref("40.0")],
 				{ tip: 460, "40.0": 418 },
 				{ liveEpoch: "epoch-A" },
@@ -288,16 +288,6 @@ describe("OdspVersionManager", () => {
 					lastModifiedDateTime: "2026-01-01T00:00:00.000Z",
 				},
 			});
-			// The observed epochs are logged for real-traffic verification.
-			logger.assertMatch([
-				{
-					eventName: "PointInTimeBaseLineageEpoch",
-					baseVersionId: "40.0",
-					baseEpoch: "epoch-A",
-					liveEpoch: "epoch-A",
-					epochsMatch: true,
-				},
-			]);
 		});
 
 		it("throws when the chosen base is on a different epoch than the live document", async () => {
@@ -334,7 +324,66 @@ describe("OdspVersionManager", () => {
 					versionEpochs: {},
 				},
 			);
-			await assert.rejects(async () => manager.findBaseForSeq(430), /Cannot verify.*lineage/);
+			await assert.rejects(
+				async () => manager.findBaseForSeq(430),
+				(error: Error) => {
+					assert.match(error.message, /Cannot verify.*lineage/);
+					// A missing epoch header is an unexpected storage response, not caller misuse:
+					// it must surface as incorrectServerResponse (not usageError) and be non-retryable
+					// so the load fails closed rather than replaying across an unverifiable lineage.
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.incorrectServerResponse,
+						"a missing epoch is reported as incorrectServerResponse, not usageError",
+					);
+					assert.equal(
+						(error as Partial<{ canRetry: boolean }>).canRetry,
+						false,
+						"an unverifiable lineage never resolves on retry",
+					);
+					return true;
+				},
+			);
+		});
+
+		it("throws (fails closed) when only the live document's epoch is unknown", async () => {
+			// @q M-VALIDATE-04
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				// liveEpoch omitted (undefined); the base resolves a known epoch.
+				{ versionEpochs: { "40.0": "epoch-old" } },
+			);
+			await assert.rejects(
+				async () => manager.findBaseForSeq(430),
+				(error: Error) => {
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.incorrectServerResponse,
+					);
+					return true;
+				},
+			);
+		});
+
+		it("throws (fails closed) when only the base version's epoch is unknown", async () => {
+			// @q M-VALIDATE-05
+			const { manager } = makeManager(
+				[ref("tip"), ref("40.0")],
+				{ tip: 460, "40.0": 418 },
+				// The live epoch is known but the chosen base's version-scoped read returns undefined.
+				{ liveEpoch: "epoch-live", versionEpochs: {} },
+			);
+			await assert.rejects(
+				async () => manager.findBaseForSeq(430),
+				(error: Error) => {
+					assert.equal(
+						(error as Partial<{ errorType: string }>).errorType,
+						OdspErrorTypes.incorrectServerResponse,
+					);
+					return true;
+				},
+			);
 		});
 	});
 });
