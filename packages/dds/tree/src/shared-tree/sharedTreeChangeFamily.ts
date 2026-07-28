@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
 import {
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
@@ -55,7 +56,11 @@ export class SharedTreeChangeFamily
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
+	public readonly codecs: ICodecFamily<
+		SharedTreeChange,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(

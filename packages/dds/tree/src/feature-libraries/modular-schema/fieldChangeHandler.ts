@@ -63,7 +63,7 @@ export interface FieldChangeHandler<
 			typeof RevisionTagSchema,
 			ChangeEncodingContext
 		>,
-	) => ICodecFamily<TChangeset, FieldChangeEncodingContext>;
+	) => ICodecFamily<TChangeset, FieldChangeEncodingContext, FieldChangeDecodingContext>;
 	readonly editor: TEditor;
 	intoDelta(change: TChangeset, deltaFromChild: ToDelta): FieldChangeDelta;
 	/**
@@ -302,5 +302,14 @@ export interface RebaseRevisionMetadata extends RevisionMetadataSource {
 export interface FieldChangeEncodingContext {
 	readonly baseContext: ChangeEncodingContext;
 	encodeNode(nodeId: NodeId): EncodedNodeChangeset;
+}
+
+/**
+ * Context provided to field change codecs when decoding.
+ * @remarks
+ * The decode-side counterpart of {@link FieldChangeEncodingContext}.
+ */
+export interface FieldChangeDecodingContext {
+	readonly baseContext: ChangeEncodingContext;
 	decodeNode(encodedNode: EncodedNodeChangeset): NodeId;
 }

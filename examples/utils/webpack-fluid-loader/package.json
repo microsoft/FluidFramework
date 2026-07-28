@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/webpack-fluid-loader",
-	"version": "2.113.0",
+	"version": "2.114.0",
 	"private": true,
 	"description": "Fluid object loader for webpack-dev-server",
 	"homepage": "https://fluidframework.com",
@@ -25,9 +25,6 @@
 		}
 	},
 	"main": "lib/index.js",
-	"browser": {
-		"moniker": "@fluidframework/server-services-client/dist/generateNames.js"
-	},
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
@@ -108,7 +105,7 @@
 		"source-map-loader": "^5.0.0",
 		"ts-loader": "^9.5.1",
 		"uuid": "^11.1.0",
-		"webpack-dev-server": "~4.15.2"
+		"webpack-dev-server": "~5.2.6"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",

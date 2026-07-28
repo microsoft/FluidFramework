@@ -1083,8 +1083,8 @@ const testedFamilies = new WeakSet<ICodecFamily<unknown, unknown>>();
  * Tracks tested versions and registers an after hook to validate that all supported
  * versions in the codec family have corresponding tests.
  */
-function registerValidationHook<TDecoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
+function registerValidationHook<TDecoded, TEncodeContext, TDecodeContext>(
+	family: ICodecFamily<TDecoded, TEncodeContext, TDecodeContext>,
 	versions: readonly FormatVersion[],
 ): void {
 	let tested = testedVersionsByFamily.get(family);
@@ -1130,17 +1130,22 @@ function registerValidationHook<TDecoded, TContext>(
  * Maybe generalize test cases to each have an optional encoded and optional decoded form (require at least one), for example via:
  * `{name: string, encoded?: JsonCompatibleReadOnly, decoded?: TDecoded}`.
  */
-export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
-	family: ICodecFamily<TDecoded, TContext>,
-	encodingTestData: EncodingTestData<TDecoded, TEncoded, TContext>,
+export function makeEncodingTestSuite<
+	TDecoded,
+	TEncoded,
+	TEncodeContext,
+	TDecodeContext = TEncodeContext,
+>(
+	family: ICodecFamily<TDecoded, TEncodeContext, TDecodeContext>,
+	encodingTestData: EncodingTestData<TDecoded, TEncoded, TEncodeContext & TDecodeContext>,
 	assertEquivalent: (a: TDecoded, b: TDecoded) => void = assertDeepEqual,
 	supportedVersions?: FormatVersion[],
 ): void {
-	// Type cast away the conditional type: if TContext is void, indexing off the end of this will get undefined which works, making this safe.
+	// Type cast away the conditional type: if the context is void, indexing off the end of this will get undefined which works, making this safe.
 	const successes = encodingTestData.successes as [
 		name: string,
 		data: TDecoded,
-		context: TContext,
+		context: TEncodeContext & TDecodeContext,
 	][];
 	const supportedVersionsToTest = supportedVersions ?? [...family.getSupportedFormats()];
 	registerValidationHook(family, supportedVersionsToTest);
@@ -1182,9 +1187,8 @@ export function makeEncodingTestSuite<TDecoded, TEncoded, TContext>(
 				describe("rejects malformed data", () => {
 					for (const [name, encodedData, context] of failureCases) {
 						it(name, () => {
-							assert.throws(() =>
-								jsonCodec.decode(encodedData as JsonCompatible, context as TContext),
-							);
+							assert(context !== undefined);
+							assert.throws(() => jsonCodec.decode(encodedData as JsonCompatible, context));
 						});
 					}
 				});
