@@ -26,10 +26,10 @@ import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointIn
 // eslint-disable-next-line import-x/no-internal-modules -- test targets the point-in-time driver directly
 import { OdspPointInTimeDocumentServiceFactory } from "../pointInTimeDriver/odspPointInTimeDocumentServiceFactory.js";
 import type { BaseForSeq, IOdspVersionManager } from "../odspVersionManager/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- test drives a real OdspVersionManager through the factory
 import {
 	OdspVersionManager,
 	type IOdspFileVersionFetcher,
+	// eslint-disable-next-line import-x/no-internal-modules -- test drives a real OdspVersionManager through the factory
 } from "../odspVersionManager/odspVersionManager.js";
 
 /**

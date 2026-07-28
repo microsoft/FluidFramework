@@ -13,7 +13,6 @@
 
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgVersion as driverVersion } from "../packageVersion.js";
 
@@ -119,10 +118,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
 	private readonly seqByVersion = new Map<string, Promise<number>>();
 
-	public constructor(
-		private readonly fetcher: IOdspFileVersionFetcher,
-		private readonly logger?: TelemetryLoggerExt,
-	) {}
+	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
 	public refresh(): void {
 		this.versionsCache = undefined;
@@ -228,5 +224,5 @@ export class OdspVersionManager implements IOdspVersionManager {
 export function createOdspVersionManager(
 	props: OdspFileVersionFetcherProps,
 ): IOdspVersionManager {
-	return new OdspVersionManager(createOdspFileVersionFetcher(props), props.logger);
+	return new OdspVersionManager(createOdspFileVersionFetcher(props));
 }

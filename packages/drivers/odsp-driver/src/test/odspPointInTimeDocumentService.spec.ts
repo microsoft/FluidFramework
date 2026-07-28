@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import { strict as assert } from "node:assert";
 
 import type {
@@ -17,9 +18,8 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 
-/* eslint-disable import-x/no-internal-modules */
+// eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
-/* eslint-enable import-x/no-internal-modules */
 
 /** Minimal sequenced message: only the sequence number matters to the wrapper's logic. */
 const msg = (sequenceNumber: number): ISequencedDocumentMessage =>
@@ -197,11 +197,14 @@ describe("OdspPointInTimeDocumentService", () => {
 		};
 
 		const assertCannotCatchUp = async (promise: Promise<unknown>): Promise<void> => {
-			await assert.rejects(promise, (error: Error & { errorType?: string; canRetry?: boolean }) => {
-				assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
-				assert.equal(error.canRetry, false, "an unavailable-ops failure is non-retryable");
-				return true;
-			});
+			await assert.rejects(
+				promise,
+				(error: Error & { errorType?: string; canRetry?: boolean }) => {
+					assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
+					assert.equal(error.canRetry, false, "an unavailable-ops failure is non-retryable");
+					return true;
+				},
+			);
 		};
 
 		it("passes the ops through when the full required range [from, target] is served", async () => {
@@ -254,10 +257,7 @@ describe("OdspPointInTimeDocumentService", () => {
 
 		it("refuses connectToDeltaStream (the service is storage-only)", async () => {
 			const { service } = makeService(100, streamFromBatches([]));
-			await assert.rejects(
-				service.connectToDeltaStream({} as IClient),
-				/storage-only/,
-			);
+			await assert.rejects(service.connectToDeltaStream({} as IClient), /storage-only/);
 		});
 
 		it("forwards metadataUpdate events from the live document service", () => {

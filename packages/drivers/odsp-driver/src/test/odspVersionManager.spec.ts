@@ -6,15 +6,14 @@
 import { strict as assert } from "node:assert";
 
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-import { MockLogger, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import { MockLogger } from "@fluidframework/telemetry-utils/internal";
 
-/* eslint-disable import-x/no-internal-modules */
 import {
 	OdspVersionManager,
 	type OdspFileVersionRef,
 	type IOdspFileVersionFetcher,
+	// eslint-disable-next-line import-x/no-internal-modules
 } from "../odspVersionManager/odspVersionManager.js";
-/* eslint-enable import-x/no-internal-modules */
 
 /**
  * Build an {@link OdspFileVersionRef} with the given label. Timestamp/size are irrelevant to the
@@ -79,7 +78,7 @@ function makeManager(
 		resolvedIds: () => [...resolved],
 	};
 	return {
-		manager: new OdspVersionManager(fetcher, createChildLogger({ logger })),
+		manager: new OdspVersionManager(fetcher),
 		fetcher,
 		logger,
 	};
