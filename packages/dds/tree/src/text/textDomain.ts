@@ -34,6 +34,29 @@ import type {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports, import-x/no-duplicates
 import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 
+/**
+ * Enables expensive debug assertions for formatted text.
+ */
+let enableTextExpensiveDebugAsserts = false;
+
+/**
+ * Enables or disables expensive debug assertions for formatted text.
+ * @remarks
+ * These should remain disabled except when testing implementation details of this code.
+ */
+export function setEnableExpensiveDebugAsserts(value: boolean): void {
+	enableTextExpensiveDebugAsserts = value;
+}
+
+/**
+ * Runs `condition` as a {@link debugAssert} only when {@link enableTextExpensiveDebugAsserts} is enabled.
+ * @remarks
+ * Like all {@link debugAssert}s, this is compiled out of production builds, so `condition` is never evaluated there.
+ */
+export function expensiveInternalValidationAssert(condition: () => true | string): void {
+	debugAssert(() => !enableTextExpensiveDebugAsserts || condition());
+}
+
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
@@ -120,9 +143,9 @@ class TextNode
 
 	public charactersCopy(): string[] {
 		const result = this.content.charactersCopy();
-		debugAssert(
+		expensiveInternalValidationAssert(
 			() =>
-				compareArrays(result, this.charactersCopy_reference()) ||
+				compareArrays(result, this.#charactersCopy_reference()) ||
 				"invalid charactersCopy optimizations",
 		);
 		return result;
@@ -130,8 +153,8 @@ class TextNode
 
 	public fullString(): string {
 		const result = this.content.fullString();
-		debugAssert(
-			() => result === this.fullString_reference() || "invalid fullString optimizations",
+		expensiveInternalValidationAssert(
+			() => result === this.#fullString_reference() || "invalid fullString optimizations",
 		);
 		return result;
 	}
@@ -139,14 +162,14 @@ class TextNode
 	/**
 	 * Unoptimized trivially correct implementation of fullString.
 	 */
-	public fullString_reference(): string {
+	#fullString_reference(): string {
 		return this.content.join("");
 	}
 
 	/**
 	 * Unoptimized trivially correct implementation of charactersCopy.
 	 */
-	public charactersCopy_reference(): string[] {
+	#charactersCopy_reference(): string[] {
 		return [...this.content];
 	}
 

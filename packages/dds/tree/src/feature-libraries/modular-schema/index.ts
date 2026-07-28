@@ -34,6 +34,7 @@ export {
 	type FieldChangeHandler,
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldChangeRebaser,
 	type FieldEditor,
 	type NestedChangesIndices,

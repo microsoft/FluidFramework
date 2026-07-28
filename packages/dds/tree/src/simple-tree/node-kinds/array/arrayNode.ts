@@ -158,6 +158,11 @@ export interface TreeArrayNode<
 	 * Removes the item at the specified location.
 	 * @param index - The index at which to remove the item.
 	 * @throws Throws if `index` is not in the range [0, `array.length`).
+	 * @remarks
+	 * The item to remove is determined when this method is called, not when the resulting edit is sequenced.
+	 * This means that, once the edit is sequenced, the item being removed may no longer be at `index`,
+	 * and may in fact no longer be in this array at all (for example, if a concurrent edit moved it to another array).
+	 * This operation removes that item from wherever it then resides.
 	 */
 	removeAt(index: number): void;
 
@@ -534,12 +539,22 @@ export interface TreeArrayNodeAlpha<
 	/**
 	 * Removes the last item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 * @remarks
+	 * Equivalent to `removeAt(array.length - 1)`, additionally returning the removed item:
+	 * see {@link (TreeArrayNode:interface).removeAt} for details, including merge semantics with concurrent edits.
+	 * In particular, the item removed is the one that is last at the time this method is called,
+	 * not the one that is last at the time the resulting edit is sequenced.
 	 */
 	pop(): T | undefined;
 
 	/**
 	 * Removes the first item from the array and returns it.
 	 * @returns The removed item, or `undefined` if the array is empty (in which case the array is not modified).
+	 * @remarks
+	 * Equivalent to `removeAt(0)`, additionally returning the removed item:
+	 * see {@link (TreeArrayNode:interface).removeAt} for details, including merge semantics with concurrent edits.
+	 * In particular, the item removed is the one that is first at the time this method is called,
+	 * not the one that is first at the time the resulting edit is sequenced.
 	 */
 	shift(): T | undefined;
 
@@ -550,8 +565,10 @@ export interface TreeArrayNodeAlpha<
 	 * @remarks
 	 * Unlike `Array.prototype.unshift`, this method does not return the new length of the array.
 	 *
-	 * Equivalent to `insertAt(0, ...value)`:
-	 * see {@link (TreeArrayNode:interface).insertAt} for details, including merge semantics with concurrent edits.
+	 * All items inserted by a single call to this method are inserted consecutively.
+	 * The order of the inserted items relative to other concurrently inserted items is fully specified:
+	 * Concurrently unshifting `[A, B]` and `[X, Y]` will yield `[A, B, X, Y]` if the edit unshifting `[A, B]`
+	 * is sequenced after the edit unshifting `[X, Y]`.
 	 */
 	unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 
@@ -563,6 +580,8 @@ export interface TreeArrayNodeAlpha<
 	 * Must be a non-negative integer no greater than the number of items from `start` to the end of the array.
 	 * @param items - The item(s) to insert at `start`.
 	 * @returns An array containing the item(s) that were removed.
+	 * @remarks
+	 * See {@link (TreeArrayNode:interface).insertAt} for the merge semantics of the inserted items.
 	 */
 	splice(
 		start: number,

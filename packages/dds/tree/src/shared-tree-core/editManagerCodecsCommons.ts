@@ -39,6 +39,17 @@ export interface EditManagerEncodingContext {
 	 * but it is carried explicitly so downstream codecs can read it.
 	 */
 	readonly isSummary: boolean;
+}
+
+/**
+ * Context required for decoding the {@link EditManager}'s {@link SummaryData}.
+ * @remarks
+ * Unlike {@link EditManagerEncodingContext}, this carries {@link IdentifierHealingConfig} (used only
+ * on decode) and omits `schema` (only consulted when encoding).
+ */
+export interface EditManagerDecodingContext {
+	readonly idCompressor: IIdCompressor;
+	readonly isSummary: boolean;
 	/** See {@link IdentifierHealingConfig}. */
 	readonly healing?: IdentifierHealingConfig;
 }
@@ -192,7 +203,7 @@ export function decodeSharedBranch<TChangeset>(
 		ChangeEncodingContext
 	>,
 	json: EncodedSharedBranch<TChangeset>,
-	context: EditManagerEncodingContext,
+	context: EditManagerDecodingContext,
 	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
 	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.

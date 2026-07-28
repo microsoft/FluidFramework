@@ -302,6 +302,9 @@ export const contentSchemaSymbol: unique symbol;
 // @alpha
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
+// @alpha
+export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
+
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -331,12 +334,45 @@ export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey e
 // @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
+// @alpha @sealed
+export interface DataStoreContext extends SharedObjectCreator {
+}
+
+// @alpha @sealed
+export interface DataStoreCreator {
+    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+}
+
+// @alpha @input
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<T>>, Promise<DataStoreKind<TAll>>>;
+
+// @alpha @sealed
+export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
+}
+
+// @alpha @input
+export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, context: DataStoreContext): Promise<TRoot>;
+    readonly registry: SharedObjectRegistry;
+    readonly type: string;
+    view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
+}
+
+// @alpha @input
+export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
+
 // @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
 
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
+
+// @alpha
+export function defineDataStore<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
+// @alpha
+export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
 // @alpha
 export interface DirtyTreeMap {
@@ -522,6 +558,23 @@ export const FluidClientVersion: {
     readonly v2_74: "2.74.0";
     readonly v2_80: "2.80.0";
 };
+
+// @alpha @sealed
+export interface FluidContainer<TData = unknown> extends DataStoreCreator, ErasedBaseType<readonly ["FluidContainer", TData]> {
+    close(): void;
+    readonly data: TData;
+    readonly id?: string | undefined;
+}
+
+// @alpha @sealed
+export interface FluidContainerAttached<TData = unknown> extends FluidContainer<TData> {
+    readonly id: string;
+}
+
+// @alpha @sealed
+export interface FluidContainerWithService<TData = unknown> extends FluidContainer<TData> {
+    attach(): Promise<FluidContainerAttached<TData>>;
+}
 
 // @beta @sealed
 export interface FluidIterable<T> {
@@ -999,6 +1052,9 @@ TSchema
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
+// @alpha
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -1273,6 +1329,9 @@ export interface LogLevelConst {
     readonly verbose: 10;
 }
 
+// @alpha
+export function lookupInRegistry<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1312,6 +1371,9 @@ export type MemberChangedListener<M extends IMember> = (clientId: string, member
 
 // @alpha @deprecated
 export const minimize: TransactionPostProcessor;
+
+// @alpha @input
+export type MinimumVersionForCollaboration = `2.${bigint}.0`;
 
 // @public
 export type Myself<M extends IMember = IMember> = M & {
@@ -1474,6 +1536,15 @@ export type RecordNodeSchema<TName extends string = string, T extends ImplicitAl
 export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
+
+// @alpha @input
+export type Registry<T> = (type: string) => T;
+
+// @alpha @sealed @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
 
 // @alpha @sealed
 export interface RemoteChangeMetadata extends CommitMetadata {
@@ -1722,13 +1793,50 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha @sealed
+export interface ServiceClient {
+    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+    createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
+    loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
+}
+
+// @alpha @input
+export interface ServiceOptions {
+    // (undocumented)
+    readonly minVersionForCollaboration: MinimumVersionForCollaboration;
+}
+
+// @alpha @sealed
+export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
+    createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+}
+
+// @alpha @input
+export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
+// @alpha @sealed
+export interface SharedObjectKindAlpha<out TSharedObject = unknown> extends SharedObjectKind<TSharedObject>, SharedObjectKey<TSharedObject> {
+}
+
+// @alpha @input
+export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKindAlpha<IFluidLoadable>>>;
+
+// @alpha
+export function sharedObjectRegistryFromIterable(entries: Iterable<SharedObjectKindAlpha<IFluidLoadable> | {
+    type: string;
+    kind: () => Promise<SharedObjectKindAlpha<IFluidLoadable>>;
+}>): SharedObjectRegistry;
+
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @alpha
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
@@ -2352,6 +2460,15 @@ export interface TreeContextAlpha {
     runTransaction(transaction: () => void, params?: RunTransactionParamsAlpha): TransactionVoidResult;
     runTransactionAsync<TValue>(transaction: () => Promise<WithValue<TValue>>, params?: RunTransactionParamsAlpha): Promise<TransactionValueResult<TValue, TValue>>;
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
+}
+
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
+    readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
 }
 
 // @beta @input
