@@ -73,7 +73,7 @@ export class DefaultChangeFamily
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 	): DefaultEditBuilder {
 		return new DefaultEditBuilder(
-			this,
+			this.modularFamily.rebaser,
 			mintRevisionTag,
 			changeReceiver,
 			this.modularFamily.codecOptions,
@@ -194,13 +194,13 @@ export class DefaultEditBuilder implements ChangeFamilyEditor, IDefaultEditBuild
 	private readonly modularBuilder: ModularEditBuilder;
 
 	public constructor(
-		family: ChangeFamily<ChangeFamilyEditor, DefaultChangeset>,
+		rebaser: ChangeRebaser<DefaultChangeset>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<DefaultChangeset>) => void,
 		codecOptions: CodecWriteOptions,
 	) {
 		this.modularBuilder = new ModularEditBuilder(
-			family,
+			rebaser,
 			fieldKinds,
 			changeReceiver,
 			codecOptions,

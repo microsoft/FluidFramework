@@ -44,8 +44,7 @@ const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
-const family = defaultChangeFamily;
+const rebaser = new DefaultChangeFamily(failCodecFamily, codecOptions).rebaser;
 
 const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
@@ -136,7 +135,7 @@ function initializeEditableForest(data?: JsonableTree): {
 		testIdCompressor,
 	);
 	const builder = new DefaultEditBuilder(
-		family,
+		rebaser,
 		mintRevisionTag,
 		(taggedChange) => {
 			changes.push(taggedChange);
