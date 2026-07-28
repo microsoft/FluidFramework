@@ -494,8 +494,17 @@ describeCompat(
 				// does: the cell's DDS emits an unresolvable summary handle and the upload fails. We have
 				// decided not to fix this - when it happens the summarizer restarts and the issue fixes
 				// itself on the fresh summarizer - so this test asserts the current (rejecting) behavior.
+				//
+				// The cell's DDS emits a summary handle pointing to a path that the storage service cannot
+				// resolve against the parent snapshot. On the local test driver this surfaces as a
+				// TypeError while writing the summary tree ("... reading 'trees'"); in production it is a
+				// 404 "fluidElementNotFound".
 				await provider.ensureSynchronized();
-				await assert.rejects(async () => summarizeNow(summarizer));
+				await assert.rejects(
+					async () => summarizeNow(summarizer),
+					/Cannot read properties of undefined \(reading 'trees'\)/,
+					"Summary upload should fail with an unresolvable summary handle error",
+				);
 			},
 		);
 	},
