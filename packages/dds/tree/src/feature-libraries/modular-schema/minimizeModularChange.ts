@@ -13,16 +13,16 @@ import {
 	type ChangeAtomId,
 	type ChangeAtomIdRangeMap,
 	type FieldKindIdentifier,
+	type IEditableForest,
 	type RevisionTagCodec,
 	type TreeChunk,
 } from "../../core/index.js";
-import { brand, Breakable, type Mutable, type RangeQueryResult } from "../../util/index.js";
+import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
 	newChangeAtomIdBTree,
 	type ChangeAtomIdBTree,
 } from "../changeAtomIdBTree.js";
-import { buildForest } from "../object-forest/index.js";
 import { CrossFieldTarget } from "./crossFieldQueries.js";
 import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 
@@ -58,6 +58,7 @@ import { filterEdits, getChangeHandler, nodeChangeFromId } from "./modularChange
 export function minimizeModularChangeset(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	forestFactory: () => IEditableForest,
 ): ModularChangeset {
 	const outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 	const builtNodeIds = getBuiltNodeIds(change, fieldKinds);
@@ -143,7 +144,7 @@ export function minimizeModularChangeset(
 
 	const changeForBuilds = filterEdits(change, filterEditsForBuildChange);
 	const deltaForBuilds = intoDelta(makeAnonChange(changeForBuilds), fieldKinds);
-	const forest = buildForest(new Breakable("squash"));
+	const forest = forestFactory();
 	const detachedFieldIndex = makeDetachedFieldIndex(
 		undefined,
 		undefined as unknown as RevisionTagCodec,
@@ -152,13 +153,12 @@ export function minimizeModularChangeset(
 
 	visitDelta(deltaForBuilds, forest.acquireVisitor(), detachedFieldIndex, undefined);
 	const squashedBuilds = newChangeAtomIdBTree<TreeChunk>();
-	const cursor = forest.allocateCursor();
+	const cursor = forest.getCursorAboveDetachedFields();
 	for (const entry of detachedFieldIndex.entries()) {
 		cursor.enterField(detachedFieldIndex.toFieldKey(entry.root));
 		const chunk = forest.chunkField(cursor);
 		cursor.exitField();
 	}
-	cursor.free();
 
 	const filterEditsForResidualChange = (
 		fieldChange: FieldChange,

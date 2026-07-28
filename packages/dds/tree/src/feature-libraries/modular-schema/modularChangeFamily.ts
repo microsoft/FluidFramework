@@ -47,12 +47,6 @@ import {
 	type RevisionReplacer,
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
-	type ChangeAtomIdRangeMap,
-	makeChangeAtomId,
-	newChangeAtomIdRangeMap,
-	visitDelta,
-	makeDetachedFieldIndex,
-	type RevisionTagCodec,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -61,7 +55,6 @@ import {
 	brand,
 	idAllocatorFromMaxId,
 	idAllocatorFromState,
-	type RangeQueryResult,
 	getOrCreate,
 	mergeTupleBTrees,
 	type TupleBTree,
@@ -70,7 +63,6 @@ import {
 	newTupleBTree,
 	compareStrings,
 	createTupleComparator,
-	Breakable,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -80,9 +72,8 @@ import {
 } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
-import { CrossFieldTarget } from "./crossFieldQueries.js";
+import type { CrossFieldTarget } from "./crossFieldQueries.js";
 import {
-	EditFilterStatus,
 	type FieldChangeHandler,
 	NodeAttachState,
 	type RebaseRevisionMetadata,
@@ -118,7 +109,7 @@ import {
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
+import { pruneFieldMap } from "./prune.js";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -787,7 +778,7 @@ export class ModularChangeFamily
 		);
 
 		const rebased = makeModularChangeset({
-			fieldChanges: this.pruneFieldMap(rebasedFields, rebasedNodes),
+			fieldChanges: pruneFieldMap(rebasedFields, rebasedNodes, this.fieldKinds),
 			nodeChanges: rebasedNodes,
 			nodeToParent: crossFieldTable.rebasedNodeToParent,
 			nodeAliases: change.nodeAliases,
@@ -1228,54 +1219,6 @@ export class ModularChangeFamily
 
 		setInChangeAtomIdMap(crossFieldTable.baseToRebasedNodeId, baseId, newId);
 		return rebasedChange;
-	}
-
-	private pruneFieldMap(
-		changeset: FieldChangeMap | undefined,
-		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
-	): FieldChangeMap | undefined {
-		if (changeset === undefined) {
-			return undefined;
-		}
-
-		const prunedChangeset: FieldChangeMap = new Map();
-		for (const [field, fieldChange] of changeset) {
-			const handler = getChangeHandler(this.fieldKinds, fieldChange.fieldKind);
-
-			const prunedFieldChangeset = handler.rebaser.prune(fieldChange.change, (nodeId) =>
-				this.pruneNodeChange(nodeId, nodeMap),
-			);
-
-			if (!handler.isEmpty(prunedFieldChangeset)) {
-				prunedChangeset.set(field, { ...fieldChange, change: brand(prunedFieldChangeset) });
-			}
-		}
-
-		return prunedChangeset.size > 0 ? prunedChangeset : undefined;
-	}
-
-	private pruneNodeChange(
-		nodeId: NodeId,
-		nodeMap: ChangeAtomIdBTree<NodeChangeset>,
-	): NodeId | undefined {
-		const changeset = nodeChangeFromId(nodeMap, nodeId);
-		const prunedFields =
-			changeset.fieldChanges === undefined
-				? undefined
-				: this.pruneFieldMap(changeset.fieldChanges, nodeMap);
-
-		const prunedChange = { ...changeset, fieldChanges: prunedFields };
-		if (prunedChange.fieldChanges === undefined) {
-			delete prunedChange.fieldChanges;
-		}
-
-		if (isEmptyNodeChangeset(prunedChange)) {
-			nodeMap.delete([nodeId.revision, nodeId.localId]);
-			return undefined;
-		} else {
-			setInChangeAtomIdMap(nodeMap, nodeId, prunedChange);
-			return nodeId;
-		}
 	}
 
 	public getRevisions(change: ModularChangeset): Set<RevisionTag | undefined> {
@@ -1887,14 +1830,6 @@ export function rebaseRevisionMetadataFromInfo(
 		getRevisionToRebase: () => revisionToRebase,
 		getBaseRevisions,
 	};
-}
-
-function isEmptyNodeChangeset(change: NodeChangeset): boolean {
-	return (
-		change.fieldChanges === undefined &&
-		change.nodeExistsConstraint === undefined &&
-		change.nodeExistsConstraintOnRevert === undefined
-	);
 }
 
 interface RebaseTable extends CrossFieldTable<FieldChange> {
