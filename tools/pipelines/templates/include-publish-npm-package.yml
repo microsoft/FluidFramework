@@ -56,6 +56,7 @@ stages:
       # Environment should match the condition for publish_npm_internal_dev
       environment: package-build-feed
       pool: ${{ parameters.pool }}
+      tagName: ${{ parameters.tagName }}
 
 # Only add a stage to publish packages to the dev feed for release groups, which have separate lists of packages to
 # publish to each feed. Non-release-group builds (for an independent package) only need to publish to the build feed.
@@ -90,7 +91,6 @@ stages:
       environment: package-npmjs-feed
       pool: ${{ parameters.pool }}
       customEndPoint: npmjs
-      tagName: ${{ parameters.tagName }}
 
 # Only upload release manifest files for runs in the internal project (i.e. CI runs, not PR runs), for the main, test, and release branches, and
 # for builds of release groups that currently publish manifests.
