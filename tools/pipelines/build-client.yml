@@ -109,6 +109,7 @@ trigger:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -177,6 +178,7 @@ pr:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml

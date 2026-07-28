@@ -48,6 +48,7 @@ trigger:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -72,6 +73,7 @@ pr:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
@@ -98,6 +100,7 @@ extends:
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: ${{ parameters.releaseKind }}
+    publishOverride: ${{ parameters.publishOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     dockerBuildBumpsVersion: true
     # Root-only install: gitrest has native deps that don't install in CI; the real build runs in Docker.
