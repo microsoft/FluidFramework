@@ -564,6 +564,7 @@ declare type old_as_current_for_Interface_LogLevelConst = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Interface_LogLevelConst": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_LogLevelConst = requireAssignableTo<TypeOnly<current.LogLevelConst>, TypeOnly<old.LogLevelConst>>
 
 /*
@@ -942,4 +943,5 @@ declare type current_as_old_for_Variable_IFluidLoadable = requireAssignableTo<Ty
  * typeValidation.broken:
  * "Variable_LogLevel": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Variable_LogLevel = requireAssignableTo<TypeOnly<typeof current.LogLevel>, TypeOnly<typeof old.LogLevel>>
