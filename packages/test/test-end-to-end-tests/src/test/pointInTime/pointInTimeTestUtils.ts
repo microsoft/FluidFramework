@@ -21,7 +21,7 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import { loadContainerToSequenceNumber } from "@fluidframework/container-loader/internal";
 import type { ISummarizer } from "@fluidframework/container-runtime/internal";
-import type { IFluidHandle } from "@fluidframework/core-interfaces";
+import type { IFluidHandle, ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import type { ISharedCounter } from "@fluidframework/counter/internal";
 import {
 	type ITestObjectProvider,
@@ -132,6 +132,9 @@ export async function createAttachedPointInTimeContainer(
 /**
  * Load a read-only container materialized at `loadToSequenceNumber`, using the ODSP point-in-time
  * document-service factory. The driver must be the ODSP test driver.
+ *
+ * `logger` overrides the telemetry sink passed to the load (defaults to `provider.logger`); tests use
+ * it to observe load-progress events - e.g. to fire an {@link AbortSignal} once the op replay begins.
  */
 export async function loadPointInTimeContainer(
 	provider: ITestObjectProvider,
@@ -139,6 +142,7 @@ export async function loadPointInTimeContainer(
 	documentId: string,
 	loadToSequenceNumber: number,
 	signal?: AbortSignal,
+	logger?: ITelemetryBaseLogger,
 ): Promise<IContainer> {
 	assert(provider.driver.type === "odsp", "Point-in-time load requires the odsp driver");
 	const odspDriver = provider.driver as OdspTestDriver;
@@ -151,7 +155,7 @@ export async function loadPointInTimeContainer(
 		documentServiceFactory,
 		request: { url },
 		loadToSequenceNumber,
-		logger: provider.logger,
+		logger: logger ?? provider.logger,
 		signal,
 	});
 }
