@@ -15,7 +15,11 @@ import {
 	type TreeChunk,
 } from "../../core/index.js";
 import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
-import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import {
 	CrossFieldTarget,
 	getFirstFromCrossFieldMap,
@@ -324,4 +328,13 @@ function updateConstraintsForNode(
 			fieldKinds,
 		);
 	}
+}
+
+export function nodeChangeFromId(
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	id: NodeId,
+): NodeChangeset {
+	const node = getFromChangeAtomIdMap(nodes, id);
+	assert(node !== undefined, 0x9ca /* Unknown node ID */);
+	return node;
 }
