@@ -599,9 +599,9 @@ export namespace FormattedTextAsTree {
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
 	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
 	 *
-	 * Rather than referring to this type, use the the instance type of the subclass of the schema from {@link FormattedTextAsTree.createSchema}.
+	 * Rather than referring to this type, use the instance type of the subclass of the schema from {@link FormattedTextAsTree.createSchema}.
 	 * When a generic interface is required, use {@link FormattedTextAsTree.FormattedTextMembers}.
-	 * The generic type parameterization of this interface is is not stable, and simply an implementation detail of {@link FormattedTextAsTree.FormattedTextMembers}.
+	 * The generic type parameterization of this interface is not stable, and is simply an implementation detail of {@link FormattedTextAsTree.FormattedTextMembers}.
 	 *
 	 * @privateRemarks
 	 * Maybe Merge/combine this with `FormattedTextMembers`.
