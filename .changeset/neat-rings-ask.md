@@ -5,7 +5,7 @@
 ---
 Add clear method to TreeMapNodeAlpha
 
-`TreeMapNodeAlpha` now has a `clear` method, further aligning it with JavaScript's built-in Map API. It removes all elements from the map.
+[`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has a `clear` method, further aligning it with JavaScript's built-in Map API. It removes all elements from the map.
 
 The merge semantics of `clear` are loosely specified: either of the following may occur:
 
