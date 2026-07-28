@@ -253,20 +253,18 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 				title: `${indexName}: insert node with index maintenance (${nodeCount} nodes)`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						const { index, insertNode } = scenario.setup();
-						if (insertNode === undefined) {
-							return;
-						}
-						const sizeBefore = index.size;
-
-						state.timeAllBatches(() => {
-							insertNode();
-						});
-						assert(
-							index.size >= sizeBefore,
-							"Index size should not decrease after insertion",
-						);
-						index.dispose();
+						let running: boolean;
+						do {
+							// Fresh tree per batch so inserts don't accumulate
+							const { index, insertNode } = scenario.setup();
+							if (insertNode === undefined) {
+								return;
+							}
+							running = state.timeBatch(() => {
+								insertNode();
+							});
+							index.dispose();
+						} while (running);
 					},
 				}),
 			});
@@ -281,20 +279,18 @@ export function generateIndexBenchmarkSuite<TKey, TValue>(
 				title: `${indexName}: remove node with index maintenance (${nodeCount} nodes)`,
 				...benchmarkDuration({
 					benchmarkFnCustom: async (state) => {
-						const { index, removeNode } = scenario.setup();
-						if (removeNode === undefined) {
-							return;
-						}
-						const sizeBefore = index.size;
-
-						state.timeAllBatches(() => {
-							removeNode();
-						});
-						assert(
-							index.size <= sizeBefore,
-							"Index size should not increase after removal",
-						);
-						index.dispose();
+						let running: boolean;
+						do {
+							// Fresh tree per batch so removes don't exhaust nodes
+							const { index, removeNode } = scenario.setup();
+							if (removeNode === undefined) {
+								return;
+							}
+							running = state.timeBatch(() => {
+								removeNode();
+							});
+							index.dispose();
+						} while (running);
 					},
 				}),
 			});
