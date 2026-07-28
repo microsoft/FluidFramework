@@ -149,8 +149,7 @@ export class OdspVersionManager implements IOdspVersionManager {
 					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
 				const base = { ...version, sequenceNumber };
-				// Confirm the chosen base shares the live document's lineage before handing it back, so
-				// a cross-lineage base fails loudly here rather than replaying a renumbered op stream.
+				// Confirm the chosen base shares the live document's lineage before handing it back
 				await this.validateLineageEpoch(base);
 				return { kind: "found", base };
 			}
