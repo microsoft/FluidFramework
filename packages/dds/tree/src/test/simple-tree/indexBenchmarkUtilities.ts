@@ -14,7 +14,6 @@ import {
 } from "@fluid-tools/benchmark";
 
 import type { TreeIndex } from "../../feature-libraries/index.js";
-import type { ImplicitFieldSchema, TreeNode, TreeView } from "../../simple-tree/index.js";
 
 /**
  * Configuration for a single index benchmark scenario.
