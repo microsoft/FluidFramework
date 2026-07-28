@@ -3,6 +3,8 @@
  * Licensed under the MIT License.
  */
 
+import { strict as assert } from "node:assert";
+
 import {
 	SchemaFactory,
 	TreeViewConfiguration,
@@ -97,7 +99,7 @@ function createWideScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 				},
 				removeNode: () => {
 					const lastIndex = view.root.children.length - 1;
-					const removedId = view.root.children[lastIndex]!.id;
+					const removedId = view.root.children[lastIndex].id;
 					view.root.children.removeAt(lastIndex);
 					return () => {
 						view.root.children.insertAtEnd(new WideChild({ id: removedId }));
@@ -111,9 +113,9 @@ function createWideScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 // ── Deep (tall) scenario ──
 
 function buildDeepChain(depth: number, ids: string[]): DeepNode {
-	let current = new DeepNode({ id: ids[depth - 1]! });
+	let current = new DeepNode({ id: ids[depth - 1] });
 	for (let i = depth - 2; i >= 0; i--) {
-		current = new DeepNode({ id: ids[i]!, child: current });
+		current = new DeepNode({ id: ids[i], child: current });
 	}
 	return current;
 }
@@ -162,7 +164,9 @@ function createDeepScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 					while (parent.child?.child !== undefined) {
 						parent = parent.child;
 					}
-					const removedId = parent.child!.id;
+					const child = parent.child;
+					assert(child !== undefined, "parent.child should exist after loop");
+					const removedId = child.id;
 					parent.child = undefined;
 					return () => {
 						parent.child = new DeepNode({ id: removedId });
@@ -246,7 +250,7 @@ function createIrregularScenario(nodeCount: number): IndexBenchmarkScenario<stri
 				},
 				removeNode: () => {
 					const lastIndex = view.root.children.length - 1;
-					const removed = view.root.children[lastIndex]!;
+					const removed = view.root.children[lastIndex];
 					const removedId = removed.id;
 					view.root.children.removeAt(lastIndex);
 					return () => {
