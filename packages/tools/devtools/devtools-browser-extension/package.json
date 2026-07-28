@@ -17,7 +17,7 @@
 		"build-and-test": "npm run build && npm run test",
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.json",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
 		"build:webpack": "fluid-build . --task webpack",

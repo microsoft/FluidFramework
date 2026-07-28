@@ -5430,6 +5430,9 @@ importers:
       c8:
         specifier: ^10.1.3
         version: 10.1.3
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -6551,6 +6554,9 @@ importers:
       chai:
         specifier: ^4.5.0
         version: 4.5.0
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -6796,6 +6802,9 @@ importers:
       chai:
         specifier: ^4.5.0
         version: 4.5.0
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
@@ -15615,6 +15624,9 @@ importers:
       c8:
         specifier: ^10.1.3
         version: 10.1.3
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       copyfiles:
         specifier: ^2.4.1
         version: 2.4.1
