@@ -125,7 +125,9 @@ export namespace FormattedTextAsTree {
 			})
 			implements Members<FormatSchema, ExtraAtomsSchema>
 		{
-			public defaultFormat: TreeFieldFromImplicitField<FormatSchema> = defaultFormat;
+			// This can get modified, so give each node its own clone.
+			public defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
+				TreeBeta.clone(defaultFormat);
 
 			public insertAt(index: number, additionalCharacters: string): void {
 				this.content.insertAt(
