@@ -73,11 +73,15 @@ describeCompat(
 				await incrementAndSync(2);
 				await snapVersion("v3");
 
-				// Capture the id of the newest snapped version right after snapping it: reading the list
-				// now makes this robust to any extra service-created versions - index 0 is always the
-				// version the preceding metadata PATCH just snapped, i.e. the newest recoverable version.
-				const newest = (await listFileVersions(versionApi))[0];
-				assert(newest !== undefined, "expected at least one snapped version to exist");
+				// The newest *recoverable* version is index 1, not index 0. Index 0 is the live
+				// document's own tip: the driver never treats it as a recoverable base (findBaseForSeq
+				// skips it via `versions.slice(1)`), and the service will not perform a disruptive 204
+				// restore of the head onto itself (that is a no-op, so restoreFileVersion returns false).
+				// Index 1 is the newest version below the tip - a genuine previous version whose restore
+				// rewrites the head and bumps the epoch.
+				const versions = await listFileVersions(versionApi);
+				const newest = versions[1];
+				assert(newest !== undefined, "expected a recoverable (non-tip) version to exist");
 
 				// Target the pre-restore tip, reachable only by replaying the pre-restore op stream.
 				const targetSequenceNumber = container.deltaManager.lastSequenceNumber;

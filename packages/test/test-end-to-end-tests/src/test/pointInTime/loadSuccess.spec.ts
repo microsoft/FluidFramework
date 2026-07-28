@@ -183,7 +183,12 @@ describeCompat(
 			assert.strictEqual(loaded.closed, false, "historical view should be open, not closed");
 		});
 
-		it("replays correctly across a deep history to an early target", async () => {
+		it("replays correctly across a deep history to an early target", async function (this: Mocha.Context) {
+			// Eight forced summaries against the real service. summarizeNow bounds each summarySubmitted
+			// wait by the current test timeout, so the default (~20s) is too small for this deep history
+			// and a later summary times out; raise it to match the other heavy real-service cases.
+			this.timeout(120_000);
+
 			const ctx = await createPointInTimeTestContext(suite, apis, { withSummarizer: true });
 			const { container, dataObject, incrementAndSync, snapVersion } = ctx;
 
