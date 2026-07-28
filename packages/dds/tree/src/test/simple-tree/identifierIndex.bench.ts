@@ -89,14 +89,19 @@ function createWideScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 				existingKeys,
 				missingKeys,
 				insertNode: () => {
-					view.root.children.insertAtEnd(
-						new WideChild({ id: makeId("wide", insertCounter++) }),
-					);
+					const id = makeId("wide", insertCounter++);
+					view.root.children.insertAtEnd(new WideChild({ id }));
+					return () => {
+						view.root.children.removeAt(view.root.children.length - 1);
+					};
 				},
 				removeNode: () => {
-					if (view.root.children.length > 0) {
-						view.root.children.removeAt(view.root.children.length - 1);
-					}
+					const lastIndex = view.root.children.length - 1;
+					const removedId = view.root.children[lastIndex]!.id;
+					view.root.children.removeAt(lastIndex);
+					return () => {
+						view.root.children.insertAtEnd(new WideChild({ id: removedId }));
+					};
 				},
 			};
 		},
@@ -128,7 +133,6 @@ function createDeepScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 			const missingKeys = Array.from({ length: 10 }, (_, i) => `miss-${i}`);
 
 			let insertCounter = nodeCount;
-			// Walk to the deepest node for insert/remove operations
 			const findDeepest = (): DeepNode => {
 				let node = view.root;
 				while (node.child !== undefined) {
@@ -143,20 +147,26 @@ function createDeepScenario(nodeCount: number): IndexBenchmarkScenario<string, T
 				missingKeys,
 				insertNode: () => {
 					const deepest = findDeepest();
-					deepest.child = new DeepNode({ id: makeId("deep", insertCounter++) });
+					const id = makeId("deep", insertCounter++);
+					deepest.child = new DeepNode({ id });
+					return () => {
+						deepest.child = undefined;
+					};
 				},
 				removeNode: () => {
-					const deepest = findDeepest();
-					// Remove the deepest node by clearing its parent's child
-					// Walk to parent-of-deepest instead
-					let node = view.root;
-					if (node.child === undefined) {
-						return;
+					// Walk to parent-of-deepest and remove the leaf
+					let parent = view.root;
+					if (parent.child === undefined) {
+						return () => {};
 					}
-					while (node.child?.child !== undefined) {
-						node = node.child;
+					while (parent.child?.child !== undefined) {
+						parent = parent.child;
 					}
-					node.child = undefined;
+					const removedId = parent.child!.id;
+					parent.child = undefined;
+					return () => {
+						parent.child = new DeepNode({ id: removedId });
+					};
 				},
 			};
 		},
@@ -225,17 +235,30 @@ function createIrregularScenario(
 				existingKeys: ids,
 				missingKeys,
 				insertNode: () => {
+					const id = makeId("irreg", insertCounter++);
 					view.root.children.insertAtEnd(
 						new IrregularNode({
-							id: makeId("irreg", insertCounter++),
+							id,
 							children: new IrregularChildren([]),
 						}),
 					);
+					return () => {
+						view.root.children.removeAt(view.root.children.length - 1);
+					};
 				},
 				removeNode: () => {
-					if (view.root.children.length > 0) {
-						view.root.children.removeAt(view.root.children.length - 1);
-					}
+					const lastIndex = view.root.children.length - 1;
+					const removed = view.root.children[lastIndex]!;
+					const removedId = removed.id;
+					view.root.children.removeAt(lastIndex);
+					return () => {
+						view.root.children.insertAtEnd(
+							new IrregularNode({
+								id: removedId,
+								children: new IrregularChildren([]),
+							}),
+						);
+					};
 				},
 			};
 		},
