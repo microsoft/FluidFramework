@@ -169,6 +169,11 @@ them.
 - **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
   `M-VALIDATE-03`
 
+A numbered version's snapshot is immutable, so its epoch is read once and cached per versionId; the
+live document's epoch can change (a restore or download-and-reupload bumps it) and is therefore read
+fresh on every lineage check, never cached. `refresh()` clears the cached version epochs alongside the
+version list and resolved sequence numbers. `M-VALIDATE-CACHE-01`, `M-VALIDATE-CACHE-02`
+
 **Op availability.** This is _not_ re-checked up front. Op retention trims a contiguous _prefix_ from
 the oldest end of the stream, and op sequence numbers are contiguous by construction, so instead of a
 separate walk the driver validates availability lazily, riding the ops the loader actually reads. The

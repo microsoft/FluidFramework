@@ -4,7 +4,11 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { NonRetryableError, canRetryOnError } from "@fluidframework/driver-utils/internal";
+import {
+	NonRetryableError,
+	RetryableError,
+	canRetryOnError,
+} from "@fluidframework/driver-utils/internal";
 import type {
 	IClient,
 	IDocumentDeltaConnection,
@@ -33,6 +37,12 @@ import { pkgVersion as driverVersion } from "../packageVersion.js";
  * stream instead of opening a live socket, and forces the container read-only. The delta manager
  * still catches up from the snapshot's sequence number through delta storage, which is exactly the
  * bounded replay we want. As a result no live delta-stream connection is ever established.
+ *
+ * Op availability is validated lazily, as the loader reads the bridge ops from delta storage
+ * ({@link OdspPointInTimeDocumentService.connectToDeltaStorage}). A missing low end (ops trimmed by
+ * retention) is a permanent, non-retryable failure; a missing high end (the target's ops sequenced
+ * but not yet flushed to delta storage) is transient and retryable, so a load requested right after
+ * a change settles once the ops land.
  *
  * @internal
  */
@@ -88,6 +98,8 @@ export class OdspPointInTimeDocumentService
 				// Op retention trims a contiguous prefix from the oldest end, and Fluid op sequence
 				// numbers are contiguous by construction, so the bridge [from, bounded) is intact iff
 				// its lowest op (`from`) is still served and the stream reaches its top (`bounded - 1`).
+				// The two ways it can be incomplete are fundamentally different failures, so they are
+				// reported with different retryability (see the throws below).
 				const opsNeeded = from < bounded;
 				let firstSeq: number | undefined;
 				let maxSeq = from - 1;
@@ -135,17 +147,35 @@ export class OdspPointInTimeDocumentService
 							result.done &&
 							opsNeeded &&
 							cachedOnly !== true &&
-							abortSignal?.aborted !== true &&
-							(firstSeq !== from || maxSeq < bounded - 1)
+							abortSignal?.aborted !== true
 						) {
-							throw new NonRetryableError(
-								`Cannot materialize sequence number ${targetSequenceNumber}: the ops needed to ` +
-									`replay the base snapshot are unavailable. Required ops [${from}, ${bounded - 1}] ` +
-									`but delta storage served [${firstSeq ?? "none"}, ${maxSeq}] (trimmed by op ` +
-									`retention or target beyond the live document's tip).`,
-								OdspErrorTypes.cannotCatchUp,
-								{ driverVersion },
-							);
+							// Bottom missing: the bridge's lowest op (`from`) is no longer served, so delta
+							// storage starts above it (`firstSeq > from`). Retention trimmed those ops off
+							// the oldest end - they are permanently gone and no retry can recover them.
+							if (firstSeq !== undefined && firstSeq > from) {
+								throw new NonRetryableError(
+									`Cannot materialize sequence number ${targetSequenceNumber}: the ops needed to ` +
+										`replay the base snapshot were trimmed by op retention. Required ops from ` +
+										`${from} but delta storage's oldest served op is ${firstSeq}.`,
+									OdspErrorTypes.cannotCatchUp,
+									{ driverVersion },
+								);
+							}
+							// Top not reached: the low end is intact but the stream stopped before the
+							// target's op (`bounded - 1`). This is transient - those ops have been sequenced
+							// on the live document but are not yet flushed to (or visible from) delta storage,
+							// the common "load a version right after the change" race - so a retry can succeed
+							// once they land. A target legitimately beyond the live tip lands here too and will
+							// keep retrying until the loader's own bounds give up.
+							if (maxSeq < bounded - 1) {
+								throw new RetryableError(
+									`Cannot yet materialize sequence number ${targetSequenceNumber}: delta storage ` +
+										`has only caught up to ${maxSeq} of the required ops [${from}, ${bounded - 1}]. ` +
+										`The remaining ops are sequenced but not yet flushed to delta storage; retrying.`,
+									OdspErrorTypes.cannotCatchUp,
+									{ driverVersion },
+								);
+							}
 						}
 						return result;
 					},

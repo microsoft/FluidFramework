@@ -26,7 +26,47 @@ import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser
 import { getApiRoot } from "../odspUrlHelper.js";
 import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
 
-import type { OdspFileVersionRef, IOdspFileVersionFetcher } from "./odspVersionManager.js";
+/**
+ * A single ODSP file version, as listed by the file's version history.
+ */
+export interface OdspFileVersionRef {
+	/**
+	 * The version's label (e.g. `"42.0"`), used to address the version when fetching it.
+	 */
+	readonly versionId: string;
+	/**
+	 * Last-modified timestamp of this version, ISO-8601.
+	 */
+	readonly lastModifiedDateTime: string;
+}
+
+/**
+ * Provides a file's versions and resolves each version's Fluid sequence number. Injected into
+ * the version manager so the selection logic does not depend on how versions are fetched.
+ */
+export interface IOdspFileVersionFetcher {
+	/**
+	 * Enumerate the file's versions, newest-first.
+	 */
+	listFileVersions(): Promise<OdspFileVersionRef[]>;
+	/**
+	 * Resolve a single version's Fluid sequence number. Throws on failure rather than returning a
+	 * wrong value.
+	 */
+	resolveSequenceNumber(versionId: string): Promise<number>;
+	/**
+	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined`. Epoch identifies
+	 * the file's binary lineage and changes on a version restore or download-then-reupload; compared
+	 * with {@link IOdspFileVersionFetcher.getRecoverableVersionEpoch} to confirm a base is on the live
+	 * document's lineage.
+	 */
+	getLiveDocumentEpoch(): Promise<string | undefined>;
+	/**
+	 * Read the ODSP epoch of a specific file version, or `undefined`. See
+	 * {@link IOdspFileVersionFetcher.getLiveDocumentEpoch}.
+	 */
+	getRecoverableVersionEpoch(versionId: string): Promise<string | undefined>;
+}
 
 /**
  * Raw shape of a OneDrive/SharePoint driveItem version (an entry in the `/versions` response).

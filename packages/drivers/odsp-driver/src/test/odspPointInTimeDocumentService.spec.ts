@@ -196,12 +196,21 @@ describe("OdspPointInTimeDocumentService", () => {
 			return drain(stream);
 		};
 
-		const assertCannotCatchUp = async (promise: Promise<unknown>): Promise<void> => {
+		const assertCannotCatchUp = async (
+			promise: Promise<unknown>,
+			expectedCanRetry: boolean,
+		): Promise<void> => {
 			await assert.rejects(
 				promise,
 				(error: Error & { errorType?: string; canRetry?: boolean }) => {
 					assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
-					assert.equal(error.canRetry, false, "an unavailable-ops failure is non-retryable");
+					assert.equal(
+						error.canRetry,
+						expectedCanRetry,
+						expectedCanRetry
+							? "ops not yet flushed to delta storage is a transient, retryable failure"
+							: "ops trimmed by retention is a permanent, non-retryable failure",
+					);
 					return true;
 				},
 			);
@@ -215,16 +224,19 @@ describe("OdspPointInTimeDocumentService", () => {
 			assert.deepEqual(await readAll(12, 10, [[10], [11], [12]]), [10, 11, 12]);
 		});
 
-		it("throws cannotCatchUp when the low end (`from`) was trimmed", async () => {
-			await assertCannotCatchUp(readAll(12, 10, [[11, 12]]));
+		it("throws non-retryable cannotCatchUp when the low end (`from`) was trimmed by retention", async () => {
+			// Stream starts above `from` (10): the oldest ops are permanently gone.
+			await assertCannotCatchUp(readAll(12, 10, [[11, 12]]), false);
 		});
 
-		it("throws cannotCatchUp when the stream stops short of the target", async () => {
-			await assertCannotCatchUp(readAll(12, 10, [[10, 11]]));
+		it("throws retryable cannotCatchUp when the stream stops short of the target", async () => {
+			// Low end intact but the top ops are sequenced yet not flushed to delta storage - transient.
+			await assertCannotCatchUp(readAll(12, 10, [[10, 11]]), true);
 		});
 
-		it("throws cannotCatchUp when no ops are served at all", async () => {
-			await assertCannotCatchUp(readAll(12, 10, []));
+		it("throws retryable cannotCatchUp when no ops are served at all", async () => {
+			// Nothing flushed yet (delta storage lagging the live document) - transient.
+			await assertCannotCatchUp(readAll(12, 10, []), true);
 		});
 
 		it("does not enforce on a cachedOnly pass that legitimately ends short", async () => {
