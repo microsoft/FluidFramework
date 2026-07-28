@@ -157,13 +157,20 @@ describeCompat(
 				// Accept the driver's canonical `cannotCatchUp` (the bounded delta-storage wrapper's
 				// intended conversion) as well as the underlying non-retryable ops-fetch failure it wraps
 				// ("Failed to retrieve ops from storage (Too Many Retries)"), since against the real
-				// service either can surface. Any other error is a genuine failure and is reported with
-				// its real errorType/message so the cause is visible instead of an opaque assertion.
+				// service either can surface. The paused-load flow closes the container with the real
+				// ops-unavailable error and then, in its `finally`, calls `disconnect()` on the now-closed
+				// container - which throws `usageError` ("The Container is closed and cannot be
+				// disconnected") that masks the original error. Accept that masking signature too, since it
+				// only occurs after the container was closed by the genuine ops-unavailable failure. Any
+				// other error is a genuine failure and is reported with its real errorType/message so the
+				// cause is visible instead of an opaque assertion.
 				const isOpUnavailableFailure =
 					caught.errorType === "cannotCatchUp" ||
 					/cannotcatchup|materialize/i.test(caught.message) ||
 					(caught.errorType === "genericNetworkError" &&
-						/failed to retrieve ops|too many retries/i.test(caught.message));
+						/failed to retrieve ops|too many retries/i.test(caught.message)) ||
+					(caught.errorType === "usageError" &&
+						/closed and cannot be disconnected/i.test(caught.message));
 				assert(
 					isOpUnavailableFailure,
 					`expected an ops-unavailable failure (cannotCatchUp) when the target is beyond the ` +
