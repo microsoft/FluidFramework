@@ -191,6 +191,12 @@ export class TreeShape {
 	}
 
 	public equals(other: TreeShape): boolean {
+		// Shapes are commonly shared (e.g. all chunks from one chunker reference the same instance), so
+		// short-circuit on reference identity to avoid the full structural walk in the common case.
+		if (this === other) {
+			return true;
+		}
+
 		// TODO: either dedupe instances and/or store a collision resistant hash for fast compare.
 
 		if (
