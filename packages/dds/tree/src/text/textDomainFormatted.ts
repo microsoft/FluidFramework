@@ -45,7 +45,7 @@ import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/i
 
 import {
 	charactersFromString,
-	enableTextExpensiveDebugAsserts,
+	expensiveInternalValidationAssert,
 	processCharactersChangedDelta,
 	type TextAsTree,
 } from "./textDomain.js";
@@ -141,10 +141,9 @@ export namespace FormattedTextAsTree {
 
 			public charactersCopy(): string[] {
 				const result = this.content.charactersCopy();
-				debugAssert(
+				expensiveInternalValidationAssert(
 					() =>
-						(enableTextExpensiveDebugAsserts &&
-							compareArrays(result, this.#charactersCopy_reference())) ||
+						compareArrays(result, this.#charactersCopy_reference()) ||
 						"invalid charactersCopy optimizations",
 				);
 				return result;
@@ -156,10 +155,8 @@ export namespace FormattedTextAsTree {
 
 			public fullString(): string {
 				const result = this.content.fullString();
-				debugAssert(
-					() =>
-						(enableTextExpensiveDebugAsserts && result === this.#fullString_reference()) ||
-						"invalid fullString optimizations",
+				expensiveInternalValidationAssert(
+					() => result === this.#fullString_reference() || "invalid fullString optimizations",
 				);
 				return result;
 			}

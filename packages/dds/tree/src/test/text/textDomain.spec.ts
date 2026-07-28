@@ -37,7 +37,18 @@ describe("textDomain", () => {
 		>();
 	});
 
-	it("basic use", () => {
+	it("@Smoke basic use", () => {
+		const text = TextAsTree.Tree.fromString("hello");
+		assert.equal(text.fullString(), "hello");
+		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
+		text.insertAt(5, " world");
+		assert.equal(text.fullString(), "hello world");
+		text.removeRange(0, 6);
+		assert.equal(text.fullString(), "world");
+	});
+
+	it("basic use without expensive DebugAsserts", () => {
+		setEnableExpensiveDebugAsserts(false);
 		const text = TextAsTree.Tree.fromString("hello");
 		assert.equal(text.fullString(), "hello");
 		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);

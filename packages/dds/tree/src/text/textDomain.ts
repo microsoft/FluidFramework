@@ -48,6 +48,10 @@ export function setEnableExpensiveDebugAsserts(value: boolean): void {
 	enableTextExpensiveDebugAsserts = value;
 }
 
+export function expensiveInternalValidationAssert(condition: () => true | string): void {
+	debugAssert(() => !enableTextExpensiveDebugAsserts || condition());
+}
+
 const sf = new SchemaFactoryAlpha("com.fluidframework.text");
 
 class TextNode
@@ -134,10 +138,9 @@ class TextNode
 
 	public charactersCopy(): string[] {
 		const result = this.content.charactersCopy();
-		debugAssert(
+		expensiveInternalValidationAssert(
 			() =>
-				(enableTextExpensiveDebugAsserts &&
-					compareArrays(result, this.#charactersCopy_reference())) ||
+				compareArrays(result, this.#charactersCopy_reference()) ||
 				"invalid charactersCopy optimizations",
 		);
 		return result;
@@ -145,10 +148,8 @@ class TextNode
 
 	public fullString(): string {
 		const result = this.content.fullString();
-		debugAssert(
-			() =>
-				(enableTextExpensiveDebugAsserts && result === this.#fullString_reference()) ||
-				"invalid fullString optimizations",
+		expensiveInternalValidationAssert(
+			() => result === this.#fullString_reference() || "invalid fullString optimizations",
 		);
 		return result;
 	}
