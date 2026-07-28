@@ -1146,14 +1146,12 @@ describe("ArrayNode", () => {
 			assert.equal(anchor.index, 2);
 		});
 
-		// With delta-based tracking the anchor stays in the gap the removed item occupied rather than
-		// jumping to the end of the array.
 		it("removed item", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			array.removeAt(1);
 			// The item originally at the anchor point is gone; the anchor rests between the surviving
-			// neighbors (now [1, 3]) instead of jumping to the end.
+			// neighbors (now [1, 3]).
 			assert.equal(anchor.index, 1);
 			anchor.dispose();
 		});
@@ -1177,11 +1175,12 @@ describe("ArrayNode", () => {
 			anchor.dispose();
 		});
 
-		it("collapses to the start when a removed range straddles the anchor", () => {
+		it("collapses to the removal start when the removed range contains the anchor's position", () => {
 			const array = init(CustomizableNumberArray, [10, 20, 30, 40, 50]);
 			const anchor = createArrayInsertionAnchor(array, 3); // gap between 30 and 40
 			array.removeRange(1, 4); // remove 20, 30, 40 -> [10, 50]
-			// The anchor's gap was inside the removed span, so it collapses to the start of the removal.
+			// The anchor's position (the gap between 30 and 40) was in the middle of the removed range, so
+			// it collapses to where that range started.
 			assert.equal(anchor.index, 1); // between 10 and 50
 			anchor.dispose();
 		});

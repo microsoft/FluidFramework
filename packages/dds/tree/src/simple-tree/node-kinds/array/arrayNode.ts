@@ -1496,7 +1496,8 @@ export interface ArrayPlaceAnchor {
 	 * Stop tracking this anchor and release any resources it holds.
 	 * @remarks
 	 * Call this when the anchor is no longer needed (for example when a tracked cursor position is discarded).
-	 * Reading {@link ArrayPlaceAnchor.index} after disposal throws. Calling `dispose` more than once has no effect.
+	 * Interacting with an anchor (including reading its properties) after it has been disposed is invalid and will throw.
+	 * Calling `dispose` more than once has no effect.
 	 */
 	dispose(): void;
 }
@@ -1548,8 +1549,8 @@ export function createArrayInsertionAnchor(
 	node: TreeArrayNode,
 	currentIndex: number,
 ): ArrayPlaceAnchor {
-	// Validate the caller-provided index rather than silently correcting it: an out-of-range or non-integer
-	// index is a usage error. An index equal to the array length is valid (it points just past the last child).
+	// An out-of-range or non-integer index is a usage error. An index equal to the array length is valid
+	// (it points just past the last child).
 	const field = getInnerNode(node).getBoxed(EmptyKey);
 	validateIndex(currentIndex, field, "createArrayInsertionAnchor", /* allowOnePastEnd */ true);
 	let trackedIndex = currentIndex;
@@ -1597,15 +1598,13 @@ export function createArrayInsertionAnchor(
  * removed around it. Each mark is a removal (`detach`), an insertion (`attach`), or a retain (neither); a mark may
  * carry both `detach` and `attach`, which is handled as a removal followed by an insertion. The per-mark behavior is
  * commented inline below.
- *
- * This mirrors the cursor-tracking accounting used for text selections.
  */
 function adjustIndexForArrayDelta(index: number, marks: readonly DeltaMark[]): number {
 	let readPosition = 0;
 	let newIndex = index;
 	for (const mark of marks) {
-		// A removal consumes pre-edit content: if it lies before the anchor it pulls the anchor left, and if it
-		// straddles the anchor the anchor collapses to the start of the removed span (rather than jumping away).
+		// A removal consumes pre-edit content: if it lies entirely before the anchor it pulls the anchor left,
+		// and if it contains the anchor's position the anchor collapses to the start of the removed span.
 		if (mark.detach !== undefined) {
 			const removeEnd = readPosition + mark.count;
 			if (removeEnd <= index) {
