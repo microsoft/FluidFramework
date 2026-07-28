@@ -31,4 +31,4 @@ For example, for the 2.113.0 release:
 - Next version on main after branch cut: **2.114.0**
 - Scheduled date: **07/27/26**
 
-Note that the "main" Ver can jump non-sequentially (e.g., 2.116.0 -> 3.0.0) at designated breaking-change releases.
+Note that the "main" Ver can jump non-sequentially (e.g., 3.7.0 -> 3.10.0) at designated breaking-change releases.
