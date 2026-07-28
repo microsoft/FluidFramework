@@ -236,7 +236,7 @@ export namespace FormattedTextAsTree {
 						}
 
 						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-						// Note that since this used field schema, `undefined` can pass through this if allowed by the schema.
+						// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
 						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
 							| TreeNode
 							| TreeValue;
@@ -618,7 +618,7 @@ export namespace FormattedTextAsTree {
 		 * This is not persisted in the tree, and observation of it is not tracked by the tree observation tracking.
 		 * @privateRemarks
 		 * Opt this into observation tracking.
-		 * TODO: This being an mutable instance property is not required, and might not be the best API design choice.
+		 * TODO: This being a mutable instance property is not required, and might not be the best API design choice.
 		 */
 		defaultFormat: TFormatTree;
 
