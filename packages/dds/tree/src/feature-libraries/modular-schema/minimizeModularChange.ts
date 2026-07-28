@@ -3,9 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { FieldKindIdentifier } from "../../core/index.js";
-
-import type { FlexFieldKind } from "./fieldKind.js";
+import type { ModularChangeFamily } from "./modularChangeFamily.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
 /**
@@ -26,7 +24,7 @@ import type { ModularChangeset } from "./modularChangeTypes.js";
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	changeFamily: ModularChangeFamily,
 ): ModularChangeset {
 	// TODO: Actually minimize the change. For now this is a no-op that returns the change unchanged.
 	return change;

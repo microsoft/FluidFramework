@@ -822,19 +822,23 @@ describe("SharedTreeCore", () => {
 });
 
 /** Makes an arbitrary change to the given tree */
-function changeTree<TChange, TEditor extends DefaultEditBuilder>(
-	tree: SharedTreeCore<TEditor, TChange>,
-): void {
+function changeTree<
+	TChange,
+	TEditor extends DefaultEditBuilder,
+	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+>(tree: SharedTreeCore<TEditor, TChange, TChangeFamily>): void {
 	const field = tree.getEditor().sequenceField({ parent: undefined, field: rootFieldKey });
 	field.insert(0, chunkFromJsonableTrees([{ type: brand("Node"), value: 42 }]));
 }
 
 /** Returns the length of the trunk branch in the given tree. Acquired via unholy cast; use for glass-box tests only. */
-function getTrunkLength<TEditor extends ChangeFamilyEditor, TChange>(
-	tree: SharedTreeCore<TEditor, TChange>,
-): number {
+function getTrunkLength<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+>(tree: SharedTreeCore<TEditor, TChange, TChangeFamily>): number {
 	const { editManager } = tree as unknown as {
-		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
+		editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange, never>>;
 	};
 	assert(
 		editManager !== undefined,

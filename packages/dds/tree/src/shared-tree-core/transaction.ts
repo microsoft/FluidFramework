@@ -15,6 +15,7 @@ import {
 	mintCommit,
 	rebaseBranch,
 	tagChange,
+	type ChangeFamily,
 	type ChangeFamilyEditor,
 	type GraphCommit,
 	type RevisionTag,
@@ -263,7 +264,7 @@ export enum ChangeProcessorApplicability {
  * (see the conversion helpers in the `shared-tree` layer) so that its internal
  * change representation does not leak into the public API.
  */
-export interface ChangeProcessor<TChange> {
+export interface ChangeProcessor<TProcessChange> {
 	/**
 	 * Informs what context it should be invoked for.
 	 */
@@ -271,13 +272,13 @@ export interface ChangeProcessor<TChange> {
 	/**
 	 * Processes the given change, returning a change with the same observable effect.
 	 */
-	readonly processChange: (change: TChange) => TChange;
+	readonly processChange: TProcessChange;
 }
 
 /**
  * Options for {@link Transactor.start | starting} a transaction.
  */
-export interface SquashingTransactionOptions<TChange> {
+export interface SquashingTransactionOptions<TChange, TChangeFamily> {
 	/**
 	 * An optional {@link ChangeProcessor} applied to the squashed change produced when a transaction that was started
 	 * with this option is committed.
@@ -288,7 +289,9 @@ export interface SquashingTransactionOptions<TChange> {
 	 * How often the processor is invoked across nested transactions is governed by its
 	 * {@link ChangeProcessor.applicability | applicability}.
 	 */
-	readonly postProcessor?: ChangeProcessor<TChange>;
+	readonly postProcessor?: ChangeProcessor<
+		(change: TChange, changeFamily: TChangeFamily) => TChange
+	>;
 }
 
 /**
@@ -300,8 +303,9 @@ export interface SquashingTransactionOptions<TChange> {
 export class SquashingTransactionStack<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-> extends TransactionStack<SquashingTransactionOptions<TChange>> {
-	#transactionBranch?: SharedTreeBranch<TEditor, TChange>;
+	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+> extends TransactionStack<SquashingTransactionOptions<TChange, TChangeFamily>> {
+	#transactionBranch?: SharedTreeBranch<TEditor, TChange, TChangeFamily>;
 
 	/**
 	 * An editor for whichever branch is currently the {@link SquashingTransactionStack.activeBranch | active branch}.
@@ -317,7 +321,7 @@ export class SquashingTransactionStack<
 	/**
 	 * Get the "active branch" for this transactor - either the transaction branch if a transaction is in progress, or the original branch otherwise.
 	 */
-	public get activeBranch(): SharedTreeBranch<TEditor, TChange> {
+	public get activeBranch(): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
 		return this.#transactionBranch ?? this.branch;
 	}
 
@@ -326,10 +330,12 @@ export class SquashingTransactionStack<
 	 * @remarks When the active branch changes, the listeners for these events will automatically be transferred to the new active branch.
 	 * In contrast, binding an event to the {@link SquashingTransactionStack.activeBranch | active branch} directly will not automatically transfer the listener when the active branch changes.
 	 */
-	public get activeBranchEvents(): Listenable<SharedTreeBranchEvents<TEditor, TChange>> {
+	public get activeBranchEvents(): Listenable<
+		SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>
+	> {
 		const off = (
-			eventName: keyof SharedTreeBranchEvents<TEditor, TChange>,
-			listener: SharedTreeBranchEvents<TEditor, TChange>[typeof eventName],
+			eventName: keyof SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>,
+			listener: SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>[typeof eventName],
 		): void => {
 			this.activeBranch.events.off(eventName, listener);
 			const listeners = this.#activeBranchEvents.get(eventName);
@@ -349,9 +355,13 @@ export class SquashingTransactionStack<
 		};
 	}
 	readonly #activeBranchEvents = new Map<
-		keyof SharedTreeBranchEvents<TEditor, TChange>,
+		keyof SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>,
 		Set<
-			SharedTreeBranchEvents<TEditor, TChange>[keyof SharedTreeBranchEvents<TEditor, TChange>]
+			SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>[keyof SharedTreeBranchEvents<
+				TEditor,
+				TChange,
+				TChangeFamily
+			>]
 		>
 	>();
 
@@ -365,20 +375,27 @@ export class SquashingTransactionStack<
 	 * options rather than baked into this stack, so different transactions may supply different post-processors (or none).
 	 */
 	public constructor(
-		public readonly branch: SharedTreeBranch<TEditor, TChange>,
+		public readonly branch: SharedTreeBranch<TEditor, TChange, TChangeFamily>,
 		mintRevisionTag: () => RevisionTag,
 		onPush?: () => OnPopWithViewUpdate<TChange> | void,
 	) {
 		// A stack of the post-processors to apply when each in-progress transaction commits, ordered from outermost to
 		// innermost. Each in-progress transaction contributes exactly one entry: either the processor to apply when it
 		// commits, or `undefined` when none should be applied.
-		const postProcessorStack: (ChangeProcessor<TChange> | undefined)[] = [];
+		const postProcessorStack: (
+			| ChangeProcessor<(change: TChange, changeFamily: TChangeFamily) => TChange>
+			| undefined
+		)[] = [];
 		// Determines the entry to push for a transaction that was started with the given `requested` processor (if any).
 		// A processor with "outermost" applicability that is already active in an enclosing transaction resolves to
 		// `undefined` so that it is only applied once (at the outermost transaction that supplied it).
 		const resolvePostProcessor = (
-			requested: ChangeProcessor<TChange> | undefined,
-		): ChangeProcessor<TChange> | undefined => {
+			requested:
+				| ChangeProcessor<(change: TChange, changeFamily: TChangeFamily) => TChange>
+				| undefined,
+		):
+			| ChangeProcessor<(change: TChange, changeFamily: TChangeFamily) => TChange>
+			| undefined => {
 			if (
 				requested?.applicability === ChangeProcessorApplicability.IfOutermost &&
 				postProcessorStack.includes(requested)
@@ -391,12 +408,13 @@ export class SquashingTransactionStack<
 		super(
 			// Invoked when an outer transaction starts
 			(
-				startOptions?: SquashingTransactionOptions<TChange>,
-			): Callbacks<SquashingTransactionOptions<TChange>> => {
+				startOptions?: SquashingTransactionOptions<TChange, TChangeFamily>,
+			): Callbacks<SquashingTransactionOptions<TChange, TChangeFamily>> => {
 				postProcessorStack.push(resolvePostProcessor(startOptions?.postProcessor));
 				// Keep track of the commit that each transaction was on when it started
 				const startHead = this.activeBranch.getHead();
-				const rebaser = this.branch.changeFamily.rebaser;
+				const changeFamily = this.branch.changeFamily;
+				const rebaser = changeFamily.rebaser;
 				const outerOnPop = onPush?.();
 				let transactionRevision: RevisionTag | undefined;
 				const transactionBranch = this.branch.fork(
@@ -462,7 +480,9 @@ export class SquashingTransactionStack<
 								// Apply this transaction's post-processor (if any) to the squashed change (for example, to
 								// "minimize" it so that it contains no extraneous information).
 								const change =
-									postProcessor === undefined ? squash : postProcessor.processChange(squash);
+									postProcessor === undefined
+										? squash
+										: changeFamily.buildProcessor(postProcessor.processChange)(squash);
 
 								if (change !== squash) {
 									// The post-processor produced a change that differs from the
@@ -524,9 +544,9 @@ export class SquashingTransactionStack<
 					outerOnPop?.(result, viewUpdate);
 				};
 				// Invoked when a nested transaction begins
-				const onNestedTransactionPush: OnPush<SquashingTransactionOptions<TChange>> = (
-					nestedStartOptions,
-				) => {
+				const onNestedTransactionPush: OnPush<
+					SquashingTransactionOptions<TChange, TChangeFamily>
+				> = (nestedStartOptions) => {
 					postProcessorStack.push(resolvePostProcessor(nestedStartOptions?.postProcessor));
 					const nestedStartHead = this.activeBranch.getHead();
 					const nestedOuterOnPop = onPush?.();
@@ -558,7 +578,9 @@ export class SquashingTransactionStack<
 												0xd07 /* Expected transaction revision in the presence of transaction steps */,
 											);
 											const squash = rebaser.compose(nestedSteps);
-											const processedSquash = nestedPostProcessor.processChange(squash);
+											const processedSquash = changeFamily.buildProcessor(
+												nestedPostProcessor.processChange,
+											)(squash);
 											// Roll back the transaction branch to the nested start head and apply the
 											// processed change if it differs from the original change.
 											if (processedSquash !== squash) {
@@ -586,7 +608,7 @@ export class SquashingTransactionStack<
 
 	/** Updates the transaction branch (and therefore the active branch) and rebinds the branch events. */
 	private setTransactionBranch(
-		transactionBranch: SharedTreeBranch<TEditor, TChange> | undefined,
+		transactionBranch: SharedTreeBranch<TEditor, TChange, TChangeFamily> | undefined,
 	): void {
 		const oldActiveBranch = this.activeBranch;
 		this.#transactionBranch = transactionBranch;

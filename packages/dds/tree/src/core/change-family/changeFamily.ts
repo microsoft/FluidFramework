@@ -10,7 +10,15 @@ import type { SchemaAndPolicy } from "../../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
-export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
+export interface ChangeFamily<
+	TEditor extends ChangeFamilyEditor,
+	TChange,
+	// Typically may be a concrete ChangeFamily implementation such as
+	// ChangeFamilyFoo implements ChangeFamily<EditorFoo, ChangeFoo, ChangeFamilyFoo>
+	// to provide all details and helpers that processFn for ChangeFoo
+	// may require, but there is no requirement to follow that pattern.
+	TContext,
+> {
 	buildEditor(
 		mintRevisionTag: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<TChange>) => void,
@@ -18,6 +26,10 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 
 	readonly rebaser: ChangeRebaser<TChange>;
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
+
+	buildProcessor(
+		processFn: (change: TChange, context: TContext) => TChange,
+	): (change: TChange) => TChange;
 }
 
 export interface ChangeEncodingContext {

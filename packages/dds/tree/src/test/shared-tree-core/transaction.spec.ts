@@ -30,6 +30,14 @@ import {
 import { brand } from "../../util/index.js";
 import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../utils.js";
 
+/**
+ * The internal {@link ChangeProcessor} context type for the default change family:
+ * a function that receives the change and its owning change family and returns a change.
+ */
+type DefaultChangeProcessor = ChangeProcessor<
+	(change: DefaultChangeset, changeFamily: DefaultChangeFamily) => DefaultChangeset
+>;
+
 describe("TransactionStacks", () => {
 	it("emit an event after starting a transaction", () => {
 		const transaction = new TransactionStack();
@@ -370,17 +378,21 @@ describe("SquashingTransactionStacks", () => {
 		 * records the changes it receives (and returns them unchanged).
 		 */
 		function createWithSpyProcessor(applicability: ChangeProcessorApplicability): {
-			transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
+			transaction: SquashingTransactionStack<
+				DefaultEditBuilder,
+				DefaultChangeset,
+				DefaultChangeFamily
+			>;
 			branch: DefaultBranch;
 			/** A post-processor to pass via the transaction options. */
-			postProcessor: ChangeProcessor<DefaultChangeset>;
+			postProcessor: DefaultChangeProcessor;
 			/** The changes passed to the post-processor, in invocation order. */
 			received: DefaultChangeset[];
 		} {
 			const branch = createBranch();
 			const received: DefaultChangeset[] = [];
 			const transaction = new SquashingTransactionStack(branch, mintRevisionTag);
-			const postProcessor: ChangeProcessor<DefaultChangeset> = {
+			const postProcessor: DefaultChangeProcessor = {
 				applicability,
 				processChange: (change) => {
 					received.push(change);
@@ -398,7 +410,7 @@ describe("SquashingTransactionStacks", () => {
 			applicability: ChangeProcessorApplicability,
 			received: { processor: string; change: DefaultChangeset }[],
 			label: string,
-		): ChangeProcessor<DefaultChangeset> {
+		): DefaultChangeProcessor {
 			return {
 				applicability,
 				processChange: (change) => {
@@ -731,7 +743,7 @@ describe("SquashingTransactionStacks", () => {
 			const branch = createBranch();
 			// A post-processor that replaces the squashed change with an empty change.
 			const replacement = defaultChangeFamily.rebaser.compose([]);
-			const postProcessor: ChangeProcessor<DefaultChangeset> = {
+			const postProcessor: DefaultChangeProcessor = {
 				applicability: ChangeProcessorApplicability.IfOutermost,
 				processChange: () => replacement,
 			};
@@ -749,7 +761,11 @@ describe("SquashingTransactionStacks", () => {
 		});
 	});
 
-	type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+	type DefaultBranch = SharedTreeBranch<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeFamily
+	>;
 	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 		jsonValidator: FormatValidatorBasic,
 		minVersionForCollab: FluidClientVersion.v2_0,

@@ -68,17 +68,16 @@ function minVersionToEditManagerSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset>
+export class EditManagerSummarizer<
+		TChangeset,
+		TChangeFamily extends ChangeFamily<ChangeFamilyEditor, TChangeset, TChangeFamily>,
+	>
 	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
 	public static readonly key = "EditManager";
 	public constructor(
-		private readonly editManager: EditManager<
-			ChangeFamilyEditor,
-			TChangeset,
-			ChangeFamily<ChangeFamilyEditor, TChangeset>
-		>,
+		private readonly editManager: EditManager<ChangeFamilyEditor, TChangeset, TChangeFamily>,
 		private readonly codec: IJsonCodec<
 			SummaryData<TChangeset>,
 			JsonCompatibleReadOnly,

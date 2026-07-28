@@ -50,7 +50,7 @@ export type DefaultChangeset = ModularChangeset;
  * @sealed
  */
 export class DefaultChangeFamily
-	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset>
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeFamily>
 {
 	private readonly modularFamily: ModularChangeFamily;
 
@@ -82,6 +82,17 @@ export class DefaultChangeFamily
 			mintRevisionTag,
 			changeReceiver,
 			this.modularFamily.codecOptions,
+		);
+	}
+
+	public buildProcessor(
+		processFn: (
+			change: DefaultChangeset,
+			changeFamily: DefaultChangeFamily,
+		) => DefaultChangeset,
+	): (change: DefaultChangeset) => DefaultChangeset {
+		return this.modularFamily.buildProcessor((change, changeFamily) =>
+			processFn(change, this),
 		);
 	}
 }

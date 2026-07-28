@@ -33,7 +33,11 @@ const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 	minVersionForCollab: FluidClientVersion.v2_0,
 });
 
-type DefaultBranch = SharedTreeBranch<DefaultEditBuilder, DefaultChangeset>;
+type DefaultBranch = SharedTreeBranch<
+	DefaultEditBuilder,
+	DefaultChangeset,
+	DefaultChangeFamily
+>;
 
 describe("Branches", () => {
 	/** The tag used for the "origin commit" (the commit that all other commits share as a common ancestor) */

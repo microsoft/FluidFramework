@@ -962,7 +962,7 @@ describe("SharedTree", () => {
 			editManager?: EditManager<
 				ChangeFamilyEditor,
 				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
+				ChangeFamily<ChangeFamilyEditor, unknown, never>
 			>;
 		};
 	}

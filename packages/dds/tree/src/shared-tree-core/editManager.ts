@@ -74,11 +74,14 @@ const maxRebaseStatsAggregationCount = 1000;
 export class EditManager<
 	TEditor extends ChangeFamilyEditor,
 	TChangeset,
-	TChangeFamily extends ChangeFamily<TEditor, TChangeset>,
+	TChangeFamily extends ChangeFamily<TEditor, TChangeset, TChangeFamily>,
 > {
 	private readonly _events = createEmitter<BranchTrimmingEvents>();
 
-	private readonly sharedBranches = new Map<BranchId, SharedBranch<TEditor, TChangeset>>();
+	private readonly sharedBranches = new Map<
+		BranchId,
+		SharedBranch<TEditor, TChangeset, TChangeFamily>
+	>();
 
 	/**
 	 * Tracks where on the trunk of the main branch all registered branches are based.
@@ -90,7 +93,7 @@ export class EditManager<
 	 */
 	private readonly trunkBranches = new BTree<
 		SequenceId,
-		Set<SharedTreeBranch<TEditor, TChangeset>>
+		Set<SharedTreeBranch<TEditor, TChangeset, TChangeFamily>>
 	>(undefined, sequenceIdComparator);
 
 	/**
@@ -121,7 +124,7 @@ export class EditManager<
 	 * @param retainHistory - when `true`, trunk commits are never trimmed/evicted.
 	 */
 	public constructor(
-		public readonly changeFamily: TChangeFamily,
+		public readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeFamily>,
 		public readonly localSessionId: SessionId,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly onSharedBranchCreated?: (branchId: BranchId) => void,
@@ -155,7 +158,9 @@ export class EditManager<
 		this.createAndAddSharedBranch("main", "main", undefined, undefined, mainTrunk);
 	}
 
-	public getLocalBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChangeset> {
+	public getLocalBranch(
+		branchId: BranchId,
+	): SharedTreeBranch<TEditor, TChangeset, TChangeFamily> {
 		return this.getSharedBranch(branchId).localBranch;
 	}
 
@@ -163,7 +168,9 @@ export class EditManager<
 		return this.getSharedBranch(branchId).branchName;
 	}
 
-	private getSharedBranch(branchId: BranchId): SharedBranch<TEditor, TChangeset> {
+	private getSharedBranch(
+		branchId: BranchId,
+	): SharedBranch<TEditor, TChangeset, TChangeFamily> {
 		const branch = this.sharedBranches.get(branchId);
 		if (branch === undefined) {
 			throw new UsageError("No shared branch with such ID");
@@ -180,7 +187,7 @@ export class EditManager<
 	 * TODO#AB6925: Maintain the divergence point between each branch and the trunk so that we don't have to recompute
 	 * it so often.
 	 */
-	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset>): void {
+	private registerBranch(branch: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>): void {
 		this.trackBranch(branch);
 		// Whenever the branch is rebased, update our record of its base trunk commit
 		const offBeforeRebase = branch.events.on("beforeChange", (args) => {
@@ -204,7 +211,7 @@ export class EditManager<
 		});
 	}
 
-	private trackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
+	private trackBranch(b: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>): void {
 		const main = this.getSharedBranch("main");
 		const trunkCommit =
 			findCommonAncestor(main.trunk.getHead(), b.getHead()) ??
@@ -216,7 +223,7 @@ export class EditManager<
 		branches.add(b);
 	}
 
-	private untrackBranch(b: SharedTreeBranch<TEditor, TChangeset>): void {
+	private untrackBranch(b: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>): void {
 		const main = this.getSharedBranch("main");
 		const trunkCommit =
 			findCommonAncestor(main.trunk.getHead(), b.getHead()) ??
@@ -498,9 +505,9 @@ export class EditManager<
 		branchId: BranchId,
 		branchName: string | undefined,
 		sessionId: SessionId | undefined,
-		parent: SharedBranch<TEditor, TChangeset> | undefined,
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SharedBranch<TEditor, TChangeset> {
+		parent: SharedBranch<TEditor, TChangeset, TChangeFamily> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>,
+	): SharedBranch<TEditor, TChangeset, TChangeFamily> {
 		const sharedBranch = this.createSharedBranch(
 			branchId,
 			branchName,
@@ -514,7 +521,7 @@ export class EditManager<
 
 	private addSharedBranch(
 		branchId: BranchId,
-		branch: SharedBranch<TEditor, TChangeset>,
+		branch: SharedBranch<TEditor, TChangeset, TChangeFamily>,
 	): void {
 		assert(
 			!this.sharedBranches.has(branchId),
@@ -537,9 +544,9 @@ export class EditManager<
 		branchId: BranchId,
 		branchName: string | undefined,
 		sessionId: SessionId | undefined,
-		parent: SharedBranch<TEditor, TChangeset> | undefined,
-		branch: SharedTreeBranch<TEditor, TChangeset>,
-	): SharedBranch<TEditor, TChangeset> {
+		parent: SharedBranch<TEditor, TChangeset, TChangeFamily> | undefined,
+		branch: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>,
+	): SharedBranch<TEditor, TChangeset, TChangeFamily> {
 		const sharedBranch = new SharedBranch(
 			parent,
 			branch,
@@ -675,19 +682,25 @@ function getPathFromBase<TCommit extends { parent?: TCommit }>(
 	return path;
 }
 
-class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
+class SharedBranch<
+	TEditor extends ChangeFamilyEditor,
+	TChangeset,
+	TChangeFamily extends ChangeFamily<TEditor, TChangeset, TChangeFamily>,
+> {
 	/**
 	 * This branch holds the changes made by this client which have not yet been confirmed as sequenced changes.
 	 */
-	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset>;
+	public readonly localBranch: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>;
 
 	/**
 	 * Branches are maintained to represent the local change list that the issuing client had
 	 * at the time of submitting the latest known edit on the branch.
 	 * This means the head commit of each branch is always in its original (non-rebased) form.
 	 */
-	private readonly peerLocalBranches: Map<SessionId, SharedTreeBranch<TEditor, TChangeset>> =
-		new Map();
+	private readonly peerLocalBranches: Map<
+		SessionId,
+		SharedTreeBranch<TEditor, TChangeset, TChangeFamily>
+	> = new Map();
 
 	/**
 	 * A map from a sequence id to the commit which has that sequence id.
@@ -714,13 +727,13 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	>();
 
 	public constructor(
-		public readonly parentBranch: SharedBranch<TEditor, TChangeset> | undefined,
-		public readonly trunk: SharedTreeBranch<TEditor, TChangeset>,
+		public readonly parentBranch: SharedBranch<TEditor, TChangeset, TChangeFamily> | undefined,
+		public readonly trunk: SharedTreeBranch<TEditor, TChangeset, TChangeFamily>,
 		private readonly id: BranchId,
 		public readonly branchName: string | undefined,
 		private readonly sessionId: SessionId | undefined,
 		baseCommitSequenceId: SequenceId,
-		private readonly changeFamily: ChangeFamily<TEditor, TChangeset>,
+		private readonly changeFamily: ChangeFamily<TEditor, TChangeset, TChangeFamily>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		branchTrimmer: Listenable<BranchTrimmingEvents>,
 		telemetryEventBatcher: TelemetryEventBatcher<keyof RebaseStatsWithDuration> | undefined,
@@ -837,7 +850,7 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 	public rebasePeer(
 		sessionId: SessionId,
 		referenceSequenceNumber: SeqNumber,
-	): SharedTreeBranch<TEditor, TChangeset> {
+	): SharedTreeBranch<TEditor, TChangeset, TChangeFamily> {
 		const [, baseRevisionInTrunk] = this.getClosestTrunkCommit(referenceSequenceNumber);
 		const peerLocalBranch = getOrCreate(
 			this.peerLocalBranches,
@@ -848,7 +861,9 @@ class SharedBranch<TEditor extends ChangeFamilyEditor, TChangeset> {
 		return peerLocalBranch;
 	}
 
-	public getPeerBranchOrTrunk(sessionId: SessionId): SharedTreeBranch<TEditor, TChangeset> {
+	public getPeerBranchOrTrunk(
+		sessionId: SessionId,
+	): SharedTreeBranch<TEditor, TChangeset, TChangeFamily> {
 		return this.peerLocalBranches.get(sessionId) ?? this.trunk;
 	}
 

@@ -49,7 +49,7 @@ import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
  */
 export class SharedTreeChangeFamily
 	implements
-		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
 		ChangeRebaser<SharedTreeChange>
 {
 	public static readonly emptyChange: SharedTreeChange = {
@@ -61,7 +61,7 @@ export class SharedTreeChangeFamily
 		ChangeEncodingContext,
 		ChangeDecodingContext
 	>;
-	private readonly modularChangeFamily: ModularChangeFamily;
+	public readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
@@ -97,6 +97,15 @@ export class SharedTreeChangeFamily
 			mintRevisionTag,
 			changeReceiver,
 		);
+	}
+
+	public buildProcessor(
+		processFn: (
+			change: SharedTreeChange,
+			changeFamily: SharedTreeChangeFamily,
+		) => SharedTreeChange,
+	): (change: SharedTreeChange) => SharedTreeChange {
+		return (change: SharedTreeChange) => processFn(change, this);
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {

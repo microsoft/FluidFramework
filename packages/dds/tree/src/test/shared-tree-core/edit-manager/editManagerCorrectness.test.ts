@@ -15,6 +15,7 @@ import type {
 	SharedTreeBranch,
 } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
+import type { TestChangeFamily } from "../../testChange.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -896,7 +897,7 @@ function applyLocalCommit(
 	manager: EditManager<
 		ChangeFamilyEditor,
 		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
+		ChangeFamily<ChangeFamilyEditor, TestChange, never>
 	>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
@@ -905,7 +906,7 @@ function applyLocalCommit(
 }
 
 function applyBranchCommit(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -935,7 +936,7 @@ function peerCommit(
 }
 
 function trackTrimmed(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
 	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {

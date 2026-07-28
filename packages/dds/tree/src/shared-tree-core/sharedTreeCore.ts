@@ -95,12 +95,19 @@ export interface EnrichmentConfig<TChange> {
  * Generic shared tree, which needs to be configured with indexes, field kinds and other configuration.
  */
 @breakingClass
-export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
+export class SharedTreeCore<
+		TEditor extends ChangeFamilyEditor,
+		TChange,
+		TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+	>
 	extends VersionedSummarizer<SharedTreeSummaryFormatVersion>
 	implements WithBreakable, Summarizable
 {
-	private readonly editManager: EditManager<TEditor, TChange, ChangeFamily<TEditor, TChange>>;
-	private readonly summarizables: readonly [EditManagerSummarizer<TChange>, ...Summarizable[]];
+	private readonly editManager: EditManager<TEditor, TChange, TChangeFamily>;
+	private readonly summarizables: readonly [
+		EditManagerSummarizer<TChange, TChangeFamily>,
+		...Summarizable[],
+	];
 	/**
 	 * The sequence number that this instance is at.
 	 * This number is artificial in that it is made up by this instance as opposed to being provided by the runtime.
@@ -147,7 +154,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
-		protected readonly changeFamily: ChangeFamily<TEditor, TChange>,
+		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeFamily>,
 		options: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
@@ -519,7 +526,7 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		}
 	}
 
-	public getLocalBranch(): SharedTreeBranch<TEditor, TChange> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
 		return this.editManager.getLocalBranch("main");
 	}
 
@@ -545,7 +552,9 @@ export class SharedTreeCore<TEditor extends ChangeFamilyEditor, TChange>
 		this.editManager.addNewBranch(branchId, branchName);
 	}
 
-	public getSharedBranch(branchId: BranchId): SharedTreeBranch<TEditor, TChange> {
+	public getSharedBranch(
+		branchId: BranchId,
+	): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
 		return this.editManager.getLocalBranch(branchId);
 	}
 

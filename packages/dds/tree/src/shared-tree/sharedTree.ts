@@ -174,7 +174,7 @@ export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFlu
  */
 @breakingClass
 export class SharedTreeKernel
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>
 	implements SharedKernel
 {
 	public readonly checkout: TreeCheckout;
@@ -436,7 +436,11 @@ export class SharedTreeKernel
 
 	public override applyStashedOp(
 		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+			SharedTreeCore<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeFamily
+			>["applyStashedOp"]
 		>
 	): void {
 		for (const checkout of this.checkouts.values()) {

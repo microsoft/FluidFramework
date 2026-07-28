@@ -320,7 +320,7 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 	public intentions: number[] = [];
 }
 
-export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
+export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange, never>;
 
 const rootKey: FieldKey = brand("root");
 
@@ -340,7 +340,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 
 export function testChangeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<ChangeFamilyEditor, TestChange> {
+): ChangeFamily<ChangeFamilyEditor, TestChange, never> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		codecs: TestChange.codecs,
@@ -348,6 +348,9 @@ export function testChangeFamilyFactory(
 			enterTransaction: () => assert.fail("Unexpected edit"),
 			exitTransaction: () => assert.fail("Unexpected edit"),
 		}),
+		buildProcessor: (): never => {
+			assert.fail("Unexpected buildProcessor call");
+		},
 	};
 	return family;
 }

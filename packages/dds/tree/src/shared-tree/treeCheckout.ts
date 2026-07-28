@@ -210,7 +210,9 @@ export interface CheckoutEvents {
 /**
  * A collection of functions for managing transactions on a {@link ITreeCheckout}.
  */
-export type TreeTransactor = Transactor<SquashingTransactionOptions<SharedTreeChange>>;
+export type TreeTransactor = Transactor<
+	SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeFamily>
+>;
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -305,8 +307,12 @@ export function createTreeCheckout(
 	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
 	args?: {
-		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
-		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
+		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>;
+		changeFamily?: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeFamily
+		>;
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
@@ -501,7 +507,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private readonly revertibleCommitBranches = new Map<
 		RevisionTag,
-		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>
 	>();
 
 	/**
@@ -514,10 +520,14 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
 		public readonly isSharedBranch: boolean,
-		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		private readonly changeFamily: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeFamily
+		>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		private readonly mintRevisionTag: () => RevisionTag,
@@ -660,8 +670,12 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private createTransactionStack(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
+	): SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeFamily
+	> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
@@ -1187,7 +1201,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
 	 * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
 	 */
-	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
+	#transaction: SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeFamily
+	>;
 
 	@throwIfBroken
 	public fork(): TreeCheckout {
@@ -1221,7 +1239,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public switchBranch(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
@@ -1648,7 +1666,11 @@ export class TreeCheckout implements ITreeCheckout {
 		return enriched;
 	}
 
-	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+	public get mainBranch(): SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeFamily
+	> {
 		return this.#transaction.branch;
 	}
 
