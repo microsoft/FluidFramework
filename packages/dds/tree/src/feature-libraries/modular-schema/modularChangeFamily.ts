@@ -50,6 +50,9 @@ import {
 	type ChangeAtomIdRangeMap,
 	makeChangeAtomId,
 	newChangeAtomIdRangeMap,
+	visitDelta,
+	makeDetachedFieldIndex,
+	type RevisionTagCodec,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -67,6 +70,7 @@ import {
 	newTupleBTree,
 	compareStrings,
 	createTupleComparator,
+	Breakable,
 } from "../../util/index.js";
 import {
 	getFromChangeAtomIdMap,
@@ -76,7 +80,7 @@ import {
 } from "../changeAtomIdBTree.js";
 import type { TreeChunk } from "../chunked-forest/index.js";
 
-import type { CrossFieldTarget } from "./crossFieldQueries.js";
+import { CrossFieldTarget } from "./crossFieldQueries.js";
 import {
 	EditFilterStatus,
 	type FieldChangeHandler,
@@ -107,11 +111,14 @@ import {
 	makeModularChangeset,
 	newConstraintState,
 	newCrossFieldTable,
+	nodeChangeFromId,
+	removeAllEditsFilter,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
 } from "./modularChangeUtils.js";
 import { invertModularChange } from "./invert.js";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 /**
  * Implementation of ChangeFamily which delegates work in a given field to the appropriate FieldKind
@@ -1483,14 +1490,6 @@ export class ModularChangeFamily
 	}
 }
 
-function removeAllEditsFilter(
-	_id: ChangeAtomId,
-	count: number,
-	_endpointId?: ChangeAtomId,
-): RangeQueryResult<EditFilterStatus> {
-	return { value: EditFilterStatus.Remove, length: count };
-}
-
 function replaceCrossFieldKeyTableRevisions(
 	table: CrossFieldKeyTable,
 	replacer: RevisionReplacer,
@@ -2548,12 +2547,6 @@ function rebasedNodeIdFromBaseNodeId(table: RebaseTable, baseId: NodeId): NodeId
 	return getFromChangeAtomIdMap(table.baseToRebasedNodeId, baseId) ?? baseId;
 }
 
-function nodeChangeFromId(nodes: ChangeAtomIdBTree<NodeChangeset>, id: NodeId): NodeChangeset {
-	const node = getFromChangeAtomIdMap(nodes, id);
-	assert(node !== undefined, 0x9ca /* Unknown node ID */);
-	return node;
-}
-
 function fieldIdFromFieldIdKey([revision, localId, field]: FieldIdKey): FieldId {
 	const nodeId = localId === undefined ? undefined : { revision, localId };
 	return { nodeId, field };
@@ -2659,121 +2652,3 @@ const compareFieldIdKeys = createTupleComparator([
 	comparePartialChangesetLocalIds,
 	compareStrings<FieldKey>,
 ]);
-
-function getBuiltNodeIds(
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): ChangeAtomIdBTree<boolean> {
-	const builtNodeIds = newChangeAtomIdBTree<boolean>();
-
-	const buildIds = newChangeAtomIdRangeMap<boolean>();
-	if (change.builds !== undefined) {
-		for (const [rootId, chunk] of change.builds.entries()) {
-			buildIds.set(makeChangeAtomId(rootId[1], rootId[0]), chunk.topLevelLength, true);
-		}
-	}
-
-	addBuiltNodeIdsForFields(
-		false,
-		change.fieldChanges,
-		change.nodeChanges,
-		buildIds,
-		fieldKinds,
-		builtNodeIds,
-	);
-	return builtNodeIds;
-}
-
-function addBuiltNodeIdsForFields(
-	parentIsBuilt: boolean,
-	fields: FieldChangeMap,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	buildIds: ChangeAtomIdRangeMap<boolean>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-	builtNodeIds: ChangeAtomIdBTree<boolean>,
-): void {
-	for (const fieldChange of fields.values()) {
-		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
-			fieldChange.change,
-		);
-
-		for (const [nodeId, inputId, _outputId] of children) {
-			const isPartOfBuild =
-				parentIsBuilt ||
-				(inputId !== undefined && buildIds.getFirst(inputId, 1).value === true);
-
-			if (isPartOfBuild) {
-				builtNodeIds.set([nodeId.revision, nodeId.localId], true);
-			}
-
-			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				addBuiltNodeIdsForFields(
-					isPartOfBuild,
-					nodeChangeset.fieldChanges,
-					nodes,
-					buildIds,
-					fieldKinds,
-					builtNodeIds,
-				);
-			}
-		}
-	}
-}
-
-function getOutputNodeAttachStates(
-	family: ModularChangeFamily,
-	change: ModularChangeset,
-): ChangeAtomIdBTree<NodeAttachState> {
-	const inverse = family.invert(makeAnonChange(change), true, "root");
-	return getInputNodeAttachStates(inverse, family.fieldKinds);
-}
-
-function getInputNodeAttachStates(
-	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-): ChangeAtomIdBTree<NodeAttachState> {
-	const nodeAttachStates = newChangeAtomIdBTree<NodeAttachState>();
-	addInputNodeAttachStatesForFields(
-		NodeAttachState.Attached,
-		change.fieldChanges,
-		change.nodeChanges,
-		fieldKinds,
-		nodeAttachStates,
-	);
-	return nodeAttachStates;
-}
-
-function addInputNodeAttachStatesForFields(
-	parentState: NodeAttachState,
-	fields: FieldChangeMap,
-	nodes: ChangeAtomIdBTree<NodeChangeset>,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
-	nodeAttachStates: ChangeAtomIdBTree<NodeAttachState>,
-): void {
-	for (const fieldChange of fields.values()) {
-		const children = getChangeHandler(fieldKinds, fieldChange.fieldKind).getNestedChanges(
-			fieldChange.change,
-		);
-
-		for (const [nodeId, inputId, _outputId] of children) {
-			const attachState =
-				parentState === NodeAttachState.Attached && inputId === undefined
-					? NodeAttachState.Attached
-					: NodeAttachState.Detached;
-
-			nodeAttachStates.set([nodeId.revision, nodeId.localId], attachState);
-
-			const nodeChangeset = nodeChangeFromId(nodes, nodeId);
-			if (nodeChangeset.fieldChanges !== undefined) {
-				addInputNodeAttachStatesForFields(
-					attachState,
-					nodeChangeset.fieldChanges,
-					nodes,
-					fieldKinds,
-					nodeAttachStates,
-				);
-			}
-		}
-	}
-}

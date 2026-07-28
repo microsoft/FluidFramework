@@ -5,7 +5,9 @@
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import {
+	makeChangeAtomId,
 	newChangeAtomIdRangeMap,
+	type ChangeAtomId,
 	type ChangesetLocalId,
 	type FieldKey,
 	type FieldKindIdentifier,
@@ -15,7 +17,11 @@ import {
 	type TreeChunk,
 } from "../../core/index.js";
 import { brand, type Mutable, type RangeQueryResult } from "../../util/index.js";
-import { newChangeAtomIdBTree, type ChangeAtomIdBTree } from "../changeAtomIdBTree.js";
+import {
+	getFromChangeAtomIdMap,
+	newChangeAtomIdBTree,
+	type ChangeAtomIdBTree,
+} from "../changeAtomIdBTree.js";
 import {
 	CrossFieldTarget,
 	getFirstFromCrossFieldMap,
@@ -24,7 +30,7 @@ import {
 	type CrossFieldMap,
 } from "./crossFieldQueries.js";
 import type { FieldChangeHandler } from "./fieldChangeHandler.js";
-import { NodeAttachState } from "./fieldChangeHandler.js";
+import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
 import {
@@ -324,4 +330,60 @@ function updateConstraintsForNode(
 			fieldKinds,
 		);
 	}
+}
+
+export function nodeChangeFromId(
+	nodes: ChangeAtomIdBTree<NodeChangeset>,
+	id: NodeId,
+): NodeChangeset {
+	const node = getFromChangeAtomIdMap(nodes, id);
+	assert(node !== undefined, 0x9ca /* Unknown node ID */);
+	return node;
+}
+
+export function removeAllEditsFilter(
+	_id: ChangeAtomId,
+	count: number,
+	_endpointId?: ChangeAtomId,
+): RangeQueryResult<EditFilterStatus> {
+	return { value: EditFilterStatus.Remove, length: count };
+}
+
+export function filterEdits(
+	change: ModularChangeset,
+	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+): ModularChangeset {
+	const fieldChanges = filterFieldMapEdits(change.fieldChanges, undefined, filterFieldEdits);
+
+	const nodeChanges: ChangeAtomIdBTree<NodeChangeset> = brand(
+		change.nodeChanges.mapValues((v, k) =>
+			filterNodeEdits(makeChangeAtomId(k[1], k[0]), v, filterFieldEdits),
+		),
+	);
+
+	return { ...change, fieldChanges, nodeChanges };
+}
+
+function filterFieldMapEdits(
+	change: FieldChangeMap,
+	nodeId: NodeId | undefined,
+	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+): FieldChangeMap {
+	return new Map(
+		Array.from(change.entries(), ([key, value]) => [key, filterFieldEdits(value, nodeId)]),
+	);
+}
+
+function filterNodeEdits(
+	nodeId: NodeId,
+	change: NodeChangeset,
+	filterFieldEdits: (fieldChange: FieldChange, nodeId: NodeId | undefined) => FieldChange,
+): NodeChangeset {
+	if (change.fieldChanges === undefined) {
+		return change;
+	}
+	return {
+		...change,
+		fieldChanges: filterFieldMapEdits(change.fieldChanges, nodeId, filterFieldEdits),
+	};
 }
