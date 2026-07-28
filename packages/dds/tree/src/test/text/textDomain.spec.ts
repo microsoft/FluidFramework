@@ -11,12 +11,17 @@ import {
 	TreeViewConfiguration,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
-import { setEnableExpensiveDebugAsserts, TextAsTree } from "../../text/textDomain.js";
+import {
+	expensiveInternalValidationAssert,
+	setEnableExpensiveDebugAsserts,
+	TextAsTree,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+} from "../../text/textDomain.js";
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
 
 describe("textDomain", () => {
 	beforeEach(() => {
@@ -37,25 +42,28 @@ describe("textDomain", () => {
 		>();
 	});
 
-	it("@Smoke basic use", () => {
-		const text = TextAsTree.Tree.fromString("hello");
-		assert.equal(text.fullString(), "hello");
-		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
-		text.insertAt(5, " world");
-		assert.equal(text.fullString(), "hello world");
-		text.removeRange(0, 6);
-		assert.equal(text.fullString(), "world");
-	});
+	for (const expensiveAsserts of [false, true]) {
+		it(`@Smoke basic use with${expensiveAsserts ? "" : "out"} expensive asserts`, () => {
+			setEnableExpensiveDebugAsserts(expensiveAsserts);
+			const text = TextAsTree.Tree.fromString("hello");
+			assert.equal(text.fullString(), "hello");
+			assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
+			text.insertAt(5, " world");
+			assert.equal(text.fullString(), "hello world");
+			text.removeRange(0, 6);
+			assert.equal(text.fullString(), "world");
+		});
+	}
 
-	it("basic use without expensive DebugAsserts", () => {
+	it("@Smoke expensiveInternalValidationAssert", () => {
+		if (nonProductionConditionalsIncluded()) {
+			assert.throws(() => expensiveInternalValidationAssert(() => "fail"), /fail/);
+		} else {
+			expensiveInternalValidationAssert(() => "fail");
+		}
 		setEnableExpensiveDebugAsserts(false);
-		const text = TextAsTree.Tree.fromString("hello");
-		assert.equal(text.fullString(), "hello");
-		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
-		text.insertAt(5, " world");
-		assert.equal(text.fullString(), "hello world");
-		text.removeRange(0, 6);
-		assert.equal(text.fullString(), "world");
+		// Disabled, so should not throw.
+		expensiveInternalValidationAssert(() => "error");
 	});
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
