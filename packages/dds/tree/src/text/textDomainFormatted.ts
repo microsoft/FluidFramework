@@ -689,7 +689,7 @@ export namespace FormattedTextAsTree {
 		 * @remarks
 		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
 		 *
-		 * This is typically used to normalize formatting, like resetting formatting or a range to default settings.
+		 * This is typically used to normalize formatting, like resetting the formatting of a range to default settings.
 		 * @privateRemarks
 		 * See notes on {@link FormattedTextAsTree.Members.formatRange} for future optimization opportunities.
 		 */

@@ -222,6 +222,21 @@ describe("textDomainFormatted", () => {
 				],
 			);
 		});
+
+		it("replaces an object format with a non-object node format", () => {
+			// Unlike formatRange, reformat replaces the whole format, so it supports non-object (leaf) formats.
+			const text = UnionFormatText.fromString("ab");
+			text.reformat(0, 2, 5);
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => atom.format),
+				[5, 5],
+			);
+			text.reformat(0, 2, 6);
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom) => atom.format),
+				[6, 6],
+			);
+		});
 	});
 
 	it("insertWithFormattingAt", () => {

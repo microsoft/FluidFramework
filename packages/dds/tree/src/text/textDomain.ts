@@ -37,7 +37,7 @@ import type { NodeKind, TreeNodeSchema } from "../simple-tree/index.js";
 /**
  * Enables expensive debug assertions for formatted text.
  */
-export let enableTextExpensiveDebugAsserts = false;
+let enableTextExpensiveDebugAsserts = false;
 
 /**
  * Enables or disables expensive debug assertions for formatted text.
@@ -48,6 +48,11 @@ export function setEnableExpensiveDebugAsserts(value: boolean): void {
 	enableTextExpensiveDebugAsserts = value;
 }
 
+/**
+ * Runs `condition` as a {@link debugAssert} only when {@link enableTextExpensiveDebugAsserts} is enabled.
+ * @remarks
+ * Like all {@link debugAssert}s, this is compiled out of production builds, so `condition` is never evaluated there.
+ */
 export function expensiveInternalValidationAssert(condition: () => true | string): void {
 	debugAssert(() => !enableTextExpensiveDebugAsserts || condition());
 }
