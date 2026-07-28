@@ -191,9 +191,9 @@ export interface IdentifierHealingConfig {
  * not instrumented here: the thrown exception is expected to surface via the application's own error
  * telemetry, and should never be silently swallowed.
  *
- * @param id - The op-space compressed id to decode.
- * @param idCompressor - The ID compressor used to normalize the id.
- * @param healing - Heal-on-decode configuration. Presence enables healing of non-final ids.
+ * @param id - The op-space compressed ID to decode.
+ * @param idCompressor - The ID compressor used to normalize the ID.
+ * @param healing - Heal-on-decode configuration. Presence enables healing of non-final IDs.
  */
 export function forceDecodeEncodedIdWithoutSession(
 	id: OpSpaceCompressedId,

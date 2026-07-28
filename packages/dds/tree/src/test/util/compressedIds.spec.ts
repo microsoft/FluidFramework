@@ -267,7 +267,7 @@ describe("compressedIds", () => {
 				);
 			});
 
-			it("does not log when the id is resolvable", () => {
+			it("does not log when the ID is resolvable", () => {
 				const compressedId = testIdCompressor.generateCompressedId();
 				const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
 				const logger = new MockLogger();
