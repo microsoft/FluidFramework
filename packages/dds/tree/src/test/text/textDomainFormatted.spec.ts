@@ -80,6 +80,22 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "world");
 	});
 
+	it("fromString applies the provided format", () => {
+		const format = {
+			bold: true,
+			italic: true,
+			underline: true,
+			size: 24,
+			font: "Times New Roman",
+		};
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab", format);
+
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => ({ ...atom.format })),
+			[format, format],
+		);
+	});
+
 	describe("formatRange", () => {
 		it("basic use", () => {
 			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
