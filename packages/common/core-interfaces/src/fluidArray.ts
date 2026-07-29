@@ -343,7 +343,7 @@ export interface FluidReadonlyArray<T> {
 	flat<A, D extends number = 1>(this: A, depth?: D): FlatArray<A, D>[];
 
 	/**
-	 * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/unscopables | Symbol.unscopables}
+	 * See {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/unscopables | Symbol.unscopables}
 	 */
 	readonly [Symbol.unscopables]: {
 		// Typing inherited from ReadonlyArray to ensure structural compatibility.
