@@ -382,6 +382,31 @@ export interface ServiceClient {
 	): Promise<FluidContainerWithService<T>>;
 
 	/**
+	 * A short hand for {@link ServiceClient.(createContainer:1)} followed by {@link FluidContainerWithService.attach}.
+	 * @remarks
+	 * Due to current implementation limitations making container creation async and service specific,
+	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
+	 * This provides a convenient way to create and attach a container in a single step.
+	 * @privateRemarks
+	 * TODO: We should fix ergonomics issues that make this helpful,
+	 * then remove (or deprecate) this method in favor of `service.attach(createContainer(root))` as a better orthogonalized API.
+	 * See private remarks on {@link ServiceClient.(createContainer:1)}.
+	 */
+	createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+
+	/**
+	 * A short hand for {@link ServiceClient.(createContainer:2)} followed by {@link FluidContainerWithService.attach}.
+	 * @remarks
+	 * Due to current implementation limitations making container creation async and service specific,
+	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
+	 * This provides a convenient way to create and attach a container in a single step.
+	 */
+	createAttachedContainer<T>(
+		root: DataStoreKey<T>,
+		registry: DataStoreRegistry,
+	): Promise<FluidContainerAttached<T>>;
+
+	/**
 	 * Loads an existing container from the service.
 	 * @typeParam T - The type of the container's root data store.
 	 * @param id - The unique identifier of the container to load.
