@@ -180,6 +180,22 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 * even if some of those elements were not yet in the map when the edit was authored.
 	 */
 	clear(): void;
+	/**
+	 * Returns the value at `key`, first inserting `defaultValue` if this map has no entry for `key`.
+	 *
+	 * @param key - The key of the element to return or insert at.
+	 * @param defaultValue - The value to insert if `key` has no entry. May not be `undefined`.
+	 * @returns The existing value at `key`, or the newly inserted `defaultValue`.
+	 *
+	 * @remarks
+	 * The merge semantics of this operation are loosely specified:
+	 * the check for insertion may happen either at edit authoring time only,
+	 * or at both edit authoring time and sequencing time, yielding different outcomes.
+	 */
+	getOrInsert(
+		key: string,
+		defaultValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
@@ -260,6 +276,20 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 
 		this.editor(key).set(mapTree, field.length === 0);
 		return this;
+	}
+	public getOrInsert(
+		key: string,
+		defaultValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): TreeNodeFromImplicitAllowedTypes<T> {
+		if (!this.has(key)) {
+			if (defaultValue === undefined) {
+				throw new UsageError(
+					"Cannot insert `undefined` via getOrInsert: use set to remove an entry.",
+				);
+			}
+			this.set(key, defaultValue);
+		}
+		return this.get(key);
 	}
 	public get size(): number {
 		return count(this.innerNode.keys());

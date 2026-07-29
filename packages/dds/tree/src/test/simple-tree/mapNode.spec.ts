@@ -4,7 +4,7 @@
  */
 
 import { strict as assert } from "node:assert";
-
+import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { asAlpha } from "../../api.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
@@ -242,6 +242,32 @@ describeHydration(
 			// Clear an already empty map
 			map.clear();
 			assert.equal(map.size, 0);
+		});
+
+		it("getOrInsert", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof schemaFactory.string>(root.map);
+			// Existing key: returns the existing value without overwriting.
+			assert.equal(map.getOrInsert("foo", "42"), "Hello");
+			assert.equal(map.get("foo"), "Hello");
+			// Absent key: inserts and returns the default.
+			assert.equal(map.getOrInsert("baz", "42"), "42");
+			assert.equal(map.get("baz"), "42");
+			// Inserting undefined is invalid.
+			assert.throws(
+				() => map.getOrInsert("x", undefined as never),
+				validateUsageError(/Cannot insert `undefined` via getOrInsert/),
+			);
+			assert.equal(map.has("x"), false);
+		});
+
+		it("getOrInsert object identity", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha<typeof object>(root.objectMap);
+			const o = new object({ content: 42 });
+			// The inserted node is the one returned and readable at the key, and is not replaced by a second call.
+			assert.equal(map.getOrInsert("foo", o), o);
+			assert.equal(map.getOrInsert("foo", new object({ content: 43 })), o);
 		});
 	},
 	() => {
