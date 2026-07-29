@@ -283,9 +283,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	): TreeNodeFromImplicitAllowedTypes<T> {
 		if (!this.has(key)) {
 			if (defaultValue === undefined) {
-				throw new UsageError(
-					"Cannot insert `undefined` via getOrInsert.",
-				);
+				throw new UsageError("Cannot insert `undefined` via getOrInsert.");
 			}
 			this.set(key, defaultValue);
 		}
