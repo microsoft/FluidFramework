@@ -134,6 +134,7 @@ export interface FluidReadonlyArray<T> {
     reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
     slice(start?: number, end?: number): T[];
     some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+    // (undocumented)
     toLocaleString(): string;
     toString(): string;
     values(): FluidIterableIterator<T>;
