@@ -170,7 +170,7 @@ describe("End to end chunked encoding", () => {
 			{ jsonValidator: FormatValidatorBasic },
 		);
 		const dummyEditor = new DefaultEditBuilder(
-			new DefaultChangeFamily(codec, options),
+			new DefaultChangeFamily(codec, options).rebaser,
 			mintRevisionTag,
 			changeReceiver,
 			options,

@@ -17,7 +17,7 @@ export interface ChangeFamily<TEditor extends ChangeFamilyEditor, TChange> {
 	): TEditor;
 
 	readonly rebaser: ChangeRebaser<TChange>;
-	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext>;
+	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 }
 
 export interface ChangeEncodingContext {
@@ -36,18 +36,29 @@ export interface ChangeEncodingContext {
 	 * (possibly broken) attach-summary blob, never when applying ops.
 	 */
 	readonly isSummary: boolean;
+}
+
+/**
+ * Context provided to change codecs when decoding.
+ * @remarks
+ * The same as {@link ChangeEncodingContext} except that it omits `schema` (only consulted when
+ * *encoding*, for schema-aware compression) and adds `healing` (only consulted when *decoding*, to
+ * recover unresolvable identifiers from a summary blob).
+ */
+export type ChangeDecodingContext = Omit<ChangeEncodingContext, "schema"> & {
 	/**
 	 * Heal-on-decode workaround configuration. See {@link IdentifierHealingConfig}.
 	 * Only takes effect when `isSummary` is also `true`.
 	 */
 	readonly healing?: IdentifierHealingConfig;
-}
+};
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<
 	TChange,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 export interface ChangeFamilyEditor {
