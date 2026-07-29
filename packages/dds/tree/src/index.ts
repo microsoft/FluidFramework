@@ -78,6 +78,7 @@ export {
 	type TreeIdentifierUtils,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
@@ -98,6 +99,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -333,6 +335,8 @@ export {
 	type ErasedNode,
 	type ErasedSchemaSubclassable,
 	type SnapshotSchemaCompatibilityOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
 	type WithValue,
@@ -340,6 +344,7 @@ export {
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -417,3 +422,6 @@ export {
 } from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
 export { Component } from "./componentApi.js";
+
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";

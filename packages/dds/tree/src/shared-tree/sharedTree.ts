@@ -219,13 +219,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options.shouldEncodeIncrementally,
 		);
-		const revisionTagCodec = new RevisionTagCodec(idCompressor);
-		const removedRoots = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-			options,
-		);
+		const removedRoots = makeDetachedFieldIndex("repair");
 		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
@@ -257,7 +251,6 @@ export class SharedTreeKernel
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			encoderContext,
 			decoderContext,
 			options,
@@ -265,9 +258,12 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
 			removedRoots,
-			options.minVersionForCollab,
+			revisionTagCodec,
+			idCompressor,
+			options,
 		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
@@ -336,6 +332,7 @@ export class SharedTreeKernel
 			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
+			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
 			kernel: this,
 		};
@@ -639,6 +636,20 @@ export interface SharedTreeOptions
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+
+	/**
+	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
+	 * the collaboration window.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
+	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
+	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
+	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -771,6 +782,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
+	retainHistory: false,
 };
 
 /**

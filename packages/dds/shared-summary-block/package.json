@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/shared-summary-block",
-	"version": "2.112.0",
+	"version": "2.114.0",
 	"description": "A DDS that does not generate ops but is part of summary",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -60,7 +60,7 @@
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",

@@ -88,6 +88,7 @@ export {
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,

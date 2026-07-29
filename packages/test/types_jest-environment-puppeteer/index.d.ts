@@ -8,12 +8,13 @@
 // jest-environment-puppeteer with the added globals.
 // See https://github.com/argos-ci/jest-puppeteer/issues/568.
 
+import type { Browser, BrowserContext, Page } from "puppeteer";
 import type { JestPuppeteerGlobal } from "jest-environment-puppeteer";
 
 declare global {
-	const browser: JestPuppeteerGlobal["browser"];
-	const context: JestPuppeteerGlobal["context"];
-	const page: JestPuppeteerGlobal["page"];
+	const browser: Browser;
+	const context: BrowserContext;
+	const page: Page;
 	const jestPuppeteer: JestPuppeteerGlobal["jestPuppeteer"];
 }
 

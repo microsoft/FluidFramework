@@ -83,6 +83,7 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type DetachedFieldSummaryData,
 	type ReadOnlyDetachedFieldIndex,
 	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
@@ -164,6 +165,7 @@ export {
 	type ChangeFamily,
 	type ChangeFamilyCodec,
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamilyEditor,
 	EditBuilder,
 } from "./change-family/index.js";

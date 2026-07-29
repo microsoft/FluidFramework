@@ -35,6 +35,10 @@ parameters:
     - default
     - skip
     - force
+- name: allowPublishingToNpmjs
+  displayName: Allow publishing to npmjs.org
+  type: boolean
+  default: false
 - name: interdependencyRange
   displayName: Range to use for interdependencies (only affects releases) (default = ~)
   type: string
@@ -193,6 +197,7 @@ extends:
   template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
+    allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}

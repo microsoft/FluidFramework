@@ -17,7 +17,7 @@ import type {
 import type { JsonCompatibleReadOnlyObject } from "../util/index.js";
 
 import { decodeBranchId, encodeBranchId } from "./branchIdCodec.js";
-import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatVSharedBranches.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -68,6 +68,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 					return {
 						originatorId: message.sessionId,
 						branchId: encodeBranchId(context.idCompressor, message.branchId),
+						branchName: message.branchName,
 						version,
 					};
 				}
@@ -78,13 +79,14 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		},
 		decode: (
 			encoded: Message & JsonCompatibleReadOnlyObject & Versioned,
-			context: MessageEncodingContext,
+			context: MessageDecodingContext,
 		): DecodedMessage<TChangeset> => {
 			const {
 				revision: encodedRevision,
 				originatorId,
 				changeset,
 				branchId: encodedBranchId,
+				branchName: encodedBranchName,
 			} = encoded;
 
 			const changeContext: ChangeEncodingContext = {
@@ -97,7 +99,12 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 			const branchId = decodeBranchId(context.idCompressor, encodedBranchId, changeContext);
 
 			if (changeset === undefined) {
-				return { type: "branch", sessionId: originatorId, branchId };
+				return {
+					type: "branch",
+					sessionId: originatorId,
+					branchId,
+					branchName: encodedBranchName,
+				};
 			}
 
 			assert(encodedRevision !== undefined, 0xc6a /* Commit messages must have a revision */);

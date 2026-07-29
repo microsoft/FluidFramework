@@ -35,8 +35,11 @@ Part 1 is built in three components:
 - **Component A — the version manager**: choose which file version to load or replay from. **This
   folder is Component A**, and this document is mostly about it.
 - **Component B — the recomposed driver**: load the chosen version and replay ops forward to the exact
-  target. Not built yet.
-- **Component C — the loader hookup**: expose Component B through the container loader. Not built yet.
+  target. **Built** in `../pointInTimeDriver/` (`OdspPointInTimeDocumentServiceFactory` /
+  `OdspPointInTimeDocumentService`) — see [Part V](#part-v--components-b--c-as-built).
+- **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
+  `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
+  [Part V](#part-v--components-b--c-as-built).
 
 ## Part I — Foundations
 
@@ -79,10 +82,13 @@ driver's normal (`application/json` or `application/ms-fluid`) framing. The driv
 parser reads it, and the sequence number is `trees[0].sequenceNumber`. `blobs=2` inlines blob contents
 so the parser has everything it needs.
 
-### What is deliberately not built here?
+### What is deliberately not built in *this folder*?
 
-Loading the base and replaying ops to the exact target (Component B), the loader hookup (Component C),
-and any test against a live ODSP file. See [Part IV](#part-iv--directional).
+Components B and C now exist, but elsewhere: the recomposed driver in `../pointInTimeDriver/` and the
+loader hookup in `@fluidframework/container-loader` (see
+[Part V](#part-v--components-b--c-as-built)). This folder (Component A) still owns only base selection.
+Not built anywhere yet: bridging a trimmed op range via an intermediate snapshot, and a test against a
+live ODSP file. See [Part IV](#part-iv--directional).
 
 ## Part II — The Version Manager
 
@@ -215,25 +221,13 @@ comparison. It also allows locating a version by time when no sequence number is
 
 
 
-### Should there be a component that loads the base and replays ops to the exact target? (Component B)
+### How would Component B bridge a *trimmed* op range between snapshots?
 
-The manager only chooses the base. Materializing the document at an arbitrary target requires loading
-that version read-only and replaying the ops between the base and the target — sourcing later ops from
-the live op stream when the historical range has been trimmed.
-
-Where would it live? In **this package**. Loading a historical file version is a storage-layer concern:
-it needs the version-scoped snapshot fetch, the epoch tracker, and authentication — all internal to this
-driver — and it consumes the version manager directly. A generic wrapping driver that only replays ops
-over an inner document service (the pattern `@fluidframework/replay-driver` uses) cannot reach the
-version-scoped base fetch, so the recomposition belongs beside `OdspDocumentService` /
-`OdspDocumentServiceFactory` rather than in a separate package. Because it consumes the version manager
-in-package, the version manager itself needs no exported surface; only the recomposed factory is exposed
-(defaulting to an internal entry point) for the loader hookup to construct.
-
-A base is only needed when the live document's own snapshot no longer covers the target; when it does,
-loading paused at the target from the live snapshot suffices, and no historical version is loaded.
-
-### How would Component B reach a target between snapshots, and handle trimmed ops?
+Component B is built (see [Part V](#part-v--components-b--c-as-built)), but the version it ships makes
+one simplifying assumption: it loads a single base file version and replays the ops in `(base, target]`
+from the **live** document's delta storage. That assumption holds only while those ops are still
+retained. Bridging a *trimmed* range by starting from a newer intermediate snapshot is the part that is
+not built yet — the rest of this answer is its design.
 
 A snapshot already contains the full accumulated state at its sequence number — every op at or below it
 is baked in. So to reach a target `T`, Component B loads the closest base snapshot (`seq ≤ T`) and
@@ -259,12 +253,6 @@ baked into a snapshot, used when a snapshot is loaded, not an indicator of which
 retains. Op availability is determined by asking the op stream for the range, not by a version's minimum
 sequence number.
 
-### Should this be exposed through the container loader? (Component C)
-
-Once Component B exists, a thin combining layer would construct the recomposed factory together with a
-standard loader, letting callers request "load at sequence number N" directly. It depends only on
-Component B's exposed factory, never on the version manager.
-
 ### Should there be an end-to-end test against a real ODSP file?
 
 The fetcher is covered by stubbed-`fetch` integration tests, but not against a live file (which needs
@@ -275,3 +263,87 @@ tenant credentials). An end-to-end test would exercise the real endpoints.
 The `/content` download also contains a version's snapshot, but wrapped in a container framing the
 snapshot parser does not read directly. If the version-scoped snapshot endpoint is ever unavailable,
 unwrapping `/content` could be a fallback path.
+
+## Part V — Components B & C, as built
+
+Component A (this folder) only selects the base. Components B and C — which materialize the document at
+the target and expose it through the loader — are now built, in other files. They carry no catechism
+code IDs here because their are no tests at the moment; these are
+conceptual answers in the spirit of [Part I](#part-i--foundations). The one still-directional gap is
+bridging a *trimmed* op range via an intermediate snapshot (see
+[Part IV](#part-iv--directional)); everything below is what ships today.
+
+### Component B — how does the recomposed driver materialize the target?
+
+`OdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`) extends
+`OdspDocumentServiceFactoryCore` and adds `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
+
+1. Build a version manager (Component A) and call `findBaseForSeq(target)`. A `noBaseVersion` result
+   becomes a `UsageError` naming the target and the oldest resolved sequence number.
+2. Resolve the chosen file version into a version-scoped resolved URL, then create two ordinary ODSP
+   document services: a **recoverable** one bound to that base version (its storage is the base
+   snapshot) and a **live** one (its delta storage supplies the ops to replay).
+3. Return an `OdspPointInTimeDocumentService` composing the two.
+
+It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)
+because loading a historical file version is a storage-layer concern: it needs the version-scoped
+snapshot fetch, the epoch tracker, and authentication — all internal to this driver — and it consumes
+the version manager in-package, so the manager itself needs no exported surface.
+
+### Component B — which `IDocumentService` method drives the replay?
+
+`OdspPointInTimeDocumentService` is read-only and advertises the `storageOnly` document-service policy.
+Its three `IDocumentService` methods:
+
+- `connectToStorage` → the recoverable (base-version) service's storage: the base snapshot.
+- `connectToDeltaStorage` → wraps the **live** service's delta storage and clamps every
+  **`fetchMessages(from, to, …)`** call to an exclusive upper bound of `targetSequenceNumber + 1`, so no
+  op past the target is ever fetched. **`fetchMessages` is the method that drives the bounded replay.**
+- `connectToDeltaStream` → throws: under `storageOnly` the connection manager synthesizes a frozen,
+  read-only delta stream instead of opening a live socket, so this is never called under normal flow.
+
+The `storageOnly` policy is the key mechanism: it forces the container read-only and reuses the loader's
+existing "frozen" delta stream, and the delta manager then catches up from the base snapshot's sequence
+number through delta storage — the bounded `fetchMessages` replay — up to and including the target op.
+
+### Component B — what request does the bounded `fetchMessages` actually make?
+
+The point-in-time service builds no URL of its own: `connectToDeltaStorage` wraps the **live** service's
+delta storage and only clamps the `to` argument (`Math.min(to, targetSequenceNumber + 1)`). Everything
+below is the ordinary ODSP delta path (`OdspDeltaStorageWithCache` → `OdspDeltaStorageService`), just
+range-constrained by that clamp.
+
+`OdspDeltaStorageWithCache.fetchMessages` is a **paged stream**, not a single request: via `requestOps`
+it walks the requested `[from, to)` in batches, checking three sources in order — ops bundled with the
+base snapshot, then the cache, then network storage — so the clamp guarantees no page is ever requested
+past the target.
+
+The network leg (`OdspDeltaStorageService.get`) is where the request is constructed:
+
+- **URL** (`buildUrl`): `${deltaStorageUrl}?ump=1&filter=` + `encodeURIComponent("sequenceNumber ge {from} and sequenceNumber le {to - 1}")`.
+  `deltaStorageUrl` is `.../drives/{driveId}/items/{itemId}/opStream`. Because `from` is inclusive and
+  `to` exclusive, the filter is `ge {from} and le {to - 1}`; with the clamped `to = target + 1` the
+  effective server bound is `sequenceNumber le target` — the target op is included, nothing beyond it.
+- **Method & body**: despite fetching ops it issues a **`POST`** carrying `X-HTTP-Method-Override: GET`,
+  encoded as `multipart/form-data` (the `ump=1` "unified multipart" framing). The auth token rides in the
+  form body (`Authorization: {authHeader}` / `_post: 1`), not a header.
+- **Plumbing**: the call goes through the `epochTracker` (epoch/consistency checks) and
+  `getWithRetryForTokenRefresh` (one token-refresh retry), with a 30s `AbortController` timeout as a
+  hang mitigation.
+
+So the target bound flows `target + 1` → `Math.min` clamp → stream page `to` → `le {to - 1}` filter,
+and the `opStream` endpoint is queried for exactly `[from, target]`.
+
+### Component C — how is this exposed through the loader?
+
+`loadContainerToSequenceNumber` (in `@fluidframework/container-loader`):
+
+1. Validates `loadToSequenceNumber` is a non-negative integer (`UsageError` otherwise).
+2. Detects the point-in-time capability with `asPointInTimeCapableFactory`, which checks the passed
+   `documentServiceFactory` exposes `createPointInTimeDocumentService`. A plain factory is a
+   `UsageError` — the caller must pass `OdspPointInTimeDocumentServiceFactory` directly, with no wrapping.
+3. Wraps it in a `PointInTimeDocumentServiceFactory` adapter so the container's normal
+   `createDocumentService(resolvedUrl)` routes to `createPointInTimeDocumentService(resolvedUrl, target)`.
+   (`createContainer` throws — the adapter is load-only.)
+4. Delegates to `loadContainerPaused(...)` with inbound/outbound processing paused, returning a
+   disconnected, read-only historical view of the container at the target sequence number.

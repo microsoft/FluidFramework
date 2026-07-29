@@ -14,11 +14,11 @@ import {
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
 import { MockStorage, validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 
-import { FluidClientVersion } from "../../codec/index.js";
+import { FluidClientVersion, FormatValidatorNoOp } from "../../codec/index.js";
 import {
 	DetachedFieldIndex,
 	DetachedFieldIndexFormatVersion,
-	type ForestRootId,
+	makeDetachedFieldIndex,
 } from "../../core/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { FormatV1 } from "../../core/tree/detachedFieldIndexFormatV1.js";
@@ -32,7 +32,7 @@ import {
 	summarizablesMetadataKey,
 	type SharedTreeSummarizableMetadata,
 } from "../../shared-tree-core/index.js";
-import { brand, type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
+import { brand } from "../../util/index.js";
 import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 function createDetachedFieldIndexSummarizer(options?: {
@@ -41,15 +41,15 @@ function createDetachedFieldIndexSummarizer(options?: {
 	summarizer: DetachedFieldIndexSummarizer;
 	index: DetachedFieldIndex;
 } {
-	const index = new DetachedFieldIndex(
-		"test",
-		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	const index = makeDetachedFieldIndex();
 	const summarizer = new DetachedFieldIndexSummarizer(
 		index,
-		options?.minVersionForCollab ?? FluidClientVersion.v2_74,
+		testRevisionTagCodec,
+		testIdCompressor,
+		{
+			jsonValidator: FormatValidatorNoOp,
+			minVersionForCollab: options?.minVersionForCollab ?? FluidClientVersion.v2_74,
+		},
 	);
 	return { summarizer, index };
 }
