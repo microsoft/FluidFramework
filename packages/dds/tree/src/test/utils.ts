@@ -885,7 +885,7 @@ function createCheckoutWithContent(
 		testIdCompressor,
 		args?.shouldEncodeIncrementally ?? defaultIncrementalEncodingPolicy,
 	);
-	initializeForest(forest, fieldCursor, testRevisionTagCodec, testIdCompressor);
+	initializeForest(forest, fieldCursor);
 
 	const logger = createMockLoggerExt();
 	const checkout = createTreeCheckout(
@@ -1312,8 +1312,7 @@ export function applyTestDelta(
 		rootDelta,
 		revision,
 		deltaProcessor,
-		detachedFieldIndex ??
-			makeDetachedFieldIndex(undefined, testRevisionTagCodec, testIdCompressor),
+		detachedFieldIndex ?? makeDetachedFieldIndex(),
 	);
 }
 

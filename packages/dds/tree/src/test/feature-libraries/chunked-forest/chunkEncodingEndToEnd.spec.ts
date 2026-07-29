@@ -202,7 +202,6 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			checkout.forest,
-			revisionTagCodec,
 			context,
 			decodeContext,
 			options,
@@ -239,7 +238,6 @@ describe("End to end chunked encoding", () => {
 
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			context,
 			decodeContext,
 			options,
@@ -276,7 +274,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,
@@ -304,7 +301,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,
@@ -327,7 +323,6 @@ describe("End to end chunked encoding", () => {
 
 			const forestSummarizer = new ForestSummarizer(
 				checkout.forest,
-				new RevisionTagCodec(testIdCompressor),
 				encoderContext,
 				decoderContext,
 				options,

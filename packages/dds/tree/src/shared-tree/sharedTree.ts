@@ -219,13 +219,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options.shouldEncodeIncrementally,
 		);
-		const revisionTagCodec = new RevisionTagCodec(idCompressor);
-		const removedRoots = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-			options,
-		);
+		const removedRoots = makeDetachedFieldIndex("repair");
 		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
@@ -257,7 +251,6 @@ export class SharedTreeKernel
 		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			encoderContext,
 			decoderContext,
 			options,
@@ -265,9 +258,12 @@ export class SharedTreeKernel
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
 			removedRoots,
-			options.minVersionForCollab,
+			revisionTagCodec,
+			idCompressor,
+			options,
 		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
