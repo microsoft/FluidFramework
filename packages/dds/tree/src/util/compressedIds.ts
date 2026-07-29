@@ -261,9 +261,13 @@ export interface IdDecoderOptionsWithOriginator {
  */
 export class IdDecodingContext {
 	/**
-	 * Used internally to prevent the use of this decoder in incremental chunks if it has a session id (which would be wrong in those chunks).
+	 * Whether this context resolves identifiers using an originator session id.
+	 * @remarks
+	 * Consulted by {@link FieldBatchDecodingContext} to prevent using an originator-based
+	 * decoder in incremental chunks (which may come from other sessions, making such a
+	 * decoder wrong there).
 	 */
-	protected readonly hasOriginatorSessionId: boolean;
+	public readonly hasOriginatorSessionId: boolean;
 
 	/**
 	 * Compressor which can decompress session-space identifiers from {@link resolveEncodedId} as needed.

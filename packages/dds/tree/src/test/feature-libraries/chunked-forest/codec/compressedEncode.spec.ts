@@ -86,7 +86,11 @@ import {
 	jsonableTreeFromFieldCursor,
 	fieldBatchCodecBuilder,
 } from "../../../../feature-libraries/index.js";
-import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
+import {
+	type JsonCompatibleReadOnly,
+	IdDecodingContext,
+	brand,
+} from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
 import { makeTestFieldBatchContexts, testIdCompressor } from "../../../utils.js";
@@ -126,7 +130,9 @@ function makeFieldBatchCodec(
 					fieldBatchContext: FieldBatchDecodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
-					return decode(data, fieldBatchContext).map((chunk) => chunk.cursor());
+					return decode(data, fieldBatchContext.idDecodingContext).map((chunk) =>
+						chunk.cursor(),
+					);
 				},
 				schema: format,
 			},
@@ -206,7 +212,7 @@ describe("compressedEncode", () => {
 				const decoded = readValue(
 					stream,
 					shape,
-					FieldBatchDecodingContext.forOp({
+					new IdDecodingContext({
 						idCompressor: testIdCompressor,
 						originatorId: testIdCompressor.localSessionId,
 					}),
