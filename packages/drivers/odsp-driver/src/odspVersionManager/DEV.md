@@ -142,7 +142,10 @@ finds.
 
 ### What happens when a version cannot be resolved?
 
-The failure propagates; it is never swallowed into a wrong base. `M-ERR-01`
+The failure propagates; it is never swallowed into a wrong base. `M-ERR-01` A future tolerant scan
+could instead *skip* a permanently-unreadable single version (deleted, gone, or too big) and keep
+searching older candidates, while still propagating transient failures — see
+[Part IV](#should-an-unresolvable-single-version-be-skipped-rather-than-failing-the-whole-scan).
 
 ### What does `listVersions` return?
 
@@ -337,6 +340,83 @@ The `/content` download also contains a version's snapshot, but wrapped in a con
 snapshot parser does not read directly. If the version-scoped snapshot endpoint is ever unavailable,
 unwrapping `/content` could be a fallback path.
 
+### Should an unresolvable single version be skipped rather than failing the whole scan?
+
+Today, if resolving one candidate's sequence number throws, the failure propagates and the entire
+`findBaseForSeq` fails (the current behavior, `M-ERR-01`). But a single version can be individually
+unreadable while older versions are perfectly good bases: it may have aged out and been deleted
+(`fileNotFoundOrAccessDeniedError`, 404/410), or its snapshot may exceed the host size limit
+(`snapshotTooBig`). One bad version in the middle of the history then poisons a load that a slightly
+older base would have satisfied.
+
+The directional behavior is a **skip-and-continue** scan: on a *per-version* not-found / gone /
+too-big failure, drop that candidate and keep scanning toward older versions, only reporting
+`noBaseVersion` if every candidate is exhausted. The distinction matters — a *transient* failure
+(throttling, offline, timeout; see the next question) must still propagate/retry rather than being
+silently skipped, because skipping it could hide a usable-but-momentarily-unreachable base and pick a
+needlessly older one. So the skip set is deliberately narrow: only failures that mean "this specific
+version is permanently not a usable base" are swallowed.
+
+### Should base selection retry transient ODSP errors, the way a normal load does?
+
+The reads that pick a base (version enumeration, per-version sequence resolution, and the epoch reads)
+run once inside `createPointInTimeDocumentService`, wrapped only by `getWithRetryForTokenRefresh` —
+which retries **auth/token** failures but nothing else. A retryable ODSP error raised during selection
+therefore fails the whole point-in-time load, even though the normal snapshot/op paths would have
+retried it: `throttlingError` (429), a coherency-409 re-thrown as throttling
+(`epochTracker.ts:484-487`), `offlineError`, `fetchFailure`, and `fetchTimeout` are all retryable but
+are not retried here.
+
+The directional behavior is to run base selection under the same retry/backoff discipline as a normal
+load, so a transient 429 or blip during enumeration or resolution backs off and retries instead of
+surfacing as a hard load failure. This pairs with the skip-and-continue question above: *permanent*
+per-version failures are skipped, *transient* ones are retried — only an exhausted retry becomes a real
+error.
+
+### Should the epoch reads go through the rate limiter and location-redirect handling?
+
+`readEpoch` (`getLiveDocumentEpoch` / `getRecoverableVersionEpoch`) deliberately uses the raw
+`fetchArray` helper instead of `epochTracker.fetch`, because the whole point is to *compare* two
+epochs and the shared `EpochTracker` would pin the first epoch and reject the second (see
+[Part III](#how-does-it-read-a-versions-or-the-live-documents-lineage-epoch)). Bypassing the tracker is
+correct for that reason, but it also bypasses two unrelated services the tracker path provides:
+
+- the **rate limiter** (`RateLimiter(24)`, `epochTracker.ts:119`) that bounds in-flight requests — so
+  epoch reads are unthrottled and can *contribute* to a 429 rather than queueing behind it; and
+- the **location-redirect handling** in `fetchCore` that, on a `fileNotFoundOrAccessDeniedError`
+  carrying a `redirectLocation` (a geo/site move), patches the resolved URL and retries — so an epoch
+  read against a moved file simply fails, while the version-list and sequence reads (which *do* go
+  through the tracker) would have followed the move.
+
+The directional fix is an epoch-read path that keeps the "don't pin the epoch" property but still
+rate-limits and follows location redirects — e.g. a tracker mode that skips only the epoch-pinning
+step. Until then, epoch reads are the least resilient reads in the selection path.
+
+### How stale can the up-front lineage check be, and what makes it safe?
+
+The `findBaseForSeq` epoch comparison samples the live document's epoch at one instant. A version
+restore (or download-then-reupload) that lands *after* that sample but *before* the recoverable and
+live document services actually read their snapshot/ops would make the sampled result stale. This is
+**not** a correctness hole: the up-front check is advisory, and the shared `EpochTracker` threaded
+through both services is authoritative — it pins the first epoch it sees on the real snapshot/op reads
+and throws `fileOverwrittenInStorage` on any later divergence (see
+[Part V](#part-v--components-b--c-as-built)). The only observable effect of the race is *which* layer
+reports the cross-lineage load and with what timing; both report the same non-retryable error type.
+Worth stating explicitly so a future change does not mistake the up-front comparison for the real
+guard and drop the shared tracker.
+
+### Should the op-availability high-boundary retry be bounded independently of the caller?
+
+When the target is beyond the live document's tip, the delta-storage wrapper keeps returning the
+retryable `cannotCatchUp` error (the "top not reached" branch in
+[Part V](#part-v--components-b--c-as-built)), on the theory that the missing ops are sequenced but not
+yet flushed and a retry will soon succeed. That is right for the common "load a version right after the
+change" race, but a target that is *permanently* beyond the tip retries until something else stops it.
+The only stop today is the caller-supplied `AbortSignal` on `loadContainerToSequenceNumber`, which is
+**optional** — with no signal, a permanently-unreachable target retries indefinitely. The directional
+behavior is an internal bound/deadline (a max wait or attempt count) that gives up on its own, so a
+missing signal cannot turn a bad target into an unbounded retry loop.
+
 ## Part V — Components B & C, as built
 
 Component A (this folder) only selects the base. Components B and C — which materialize the document at
@@ -464,3 +544,46 @@ and the `opStream` endpoint is queried for exactly `[from, target]`.
    (`createContainer` throws — the adapter is load-only.)
 4. Delegates to `loadContainerPaused(...)` with inbound/outbound processing paused, returning a
    disconnected, read-only historical view of the container at the target sequence number.
+
+### Component C — does the loader correctly handle an already-closed container on the error/abort path? (known gap)
+
+Not today. `loadContainerPaused` (in `@fluidframework/container-loader`, `src/loadPaused.ts`) awaits the
+op-wait promise and then, in a `.finally`, unconditionally calls `container.disconnect()`:
+
+```ts
+await promise
+  .catch((error) => {
+    container.close(error); // closes the container on abort / external close
+    throw error;
+  })
+  .finally(() => {
+    container.disconnect(); // ← throws if the container is already closed
+    ...
+  });
+```
+
+On **every** failure path the container is already closed by the time `.finally` runs:
+
+- **Abort**: the `abort` listener rejects with `"Canceled due to cancellation request."`, the `.catch`
+  calls `container.close(error)`, then `.finally` runs.
+- **External close**: the `closed` listener rejects with the close error, the `.catch` calls
+  `container.close(error)`, then `.finally` runs.
+
+`Container.disconnect()` **throws** `UsageError("The Container is closed and cannot be disconnected")`
+when `this.closed` (see `container-loader/src/container.ts`, `disconnect()`). Because that throw happens
+inside `.finally`, it **supersedes the real rejection** — the caller observes the misleading
+"cannot be disconnected" `UsageError` instead of the true cancellation / close cause. Only the happy path
+(target reached, container still open) disconnects cleanly; the abort/close paths — the ones where a
+correct error signal matters most — surface the wrong error.
+
+`IContainer` already exposes `closed` (`container-definitions/src/loader.ts`), so the fix is a one-line
+guard in the `.finally`:
+
+```ts
+if (!container.closed) {
+  container.disconnect();
+}
+```
+
+With the guard, the genuine abort/close error propagates unchanged, and a point-in-time abort test can
+assert the real cancellation cause rather than tolerating both messages.

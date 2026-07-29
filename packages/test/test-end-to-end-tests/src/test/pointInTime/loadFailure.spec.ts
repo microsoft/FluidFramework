@@ -238,6 +238,16 @@ describeCompat(
 		// The cancelled load closes its container with the loader's generic cancellation error, so that
 		// ContainerClose is the expected outcome and is declared via itExpects (otherwise the suite's
 		// afterEach would flag it as unexpected).
+		//
+		// The beyond-tip target used below to keep the load pending also makes the delta-storage layer
+		// emit the same ops-unavailable telemetry as the beyond-tip test - OdspDriver:GetDeltas_Error
+		// ("Too Many Retries") and DeltaManager:GetDeltas_Exception - as a byproduct while the abort
+		// tears the load down. Because the loader's abort signal does not propagate into the op-fetch
+		// layer, that fetch races the abort-driven container close, so those two error events may or may
+		// not fire before the close - they can't be declared as (required, ordered) itExpects events.
+		// They are not the behavior under test (the cancellation is), so the abortingLogger below
+		// downgrades them from error to generic before the tracker sees them, keeping the suite's
+		// unexpected-error check focused on genuinely unexpected errors.
 		itExpects(
 			"cancels an in-flight point-in-time load when its abort signal fires",
 			[
@@ -277,6 +287,28 @@ describeCompat(
 						if (!aborted && event.eventName.includes("GetDeltas")) {
 							aborted = true;
 							abortController.abort();
+						}
+						// The beyond-tip target keeps the load pending by making the delta-storage layer fail
+						// to fetch the (non-existent) ops, which emits OdspDriver:GetDeltas_Error ("Too Many
+						// Retries") and DeltaManager:GetDeltas_Exception. These are byproducts of how the load
+						// is held open, not the cancellation under test, and race the abort-driven container
+						// close. Downgrade them from error to generic before the tracker sees them - but only
+						// when the message is the expected ops-unavailable failure (the same signatures the
+						// beyond-tip test asserts). That firing is exactly the pending-load mechanism working;
+						// any OTHER GetDeltas error stays error-category so a genuinely unexpected failure is
+						// not masked and still fails the suite's unexpected-error check.
+						if (
+							event.category === "error" &&
+							(event.eventName.endsWith("GetDeltas_Error") ||
+								event.eventName.endsWith("GetDeltas_Exception"))
+						) {
+							const message = `${event.error ?? ""}`;
+							const isExpectedOpsUnavailable =
+								/failed to retrieve ops|too many retries/i.test(message) ||
+								/cannotcatchup|materialize/i.test(message);
+							if (isExpectedOpsUnavailable) {
+								event.category = "generic";
+							}
 						}
 						suite.provider().logger.send(event);
 					},
