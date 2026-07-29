@@ -290,10 +290,7 @@ describe("OdspPointInTimeDocumentService", () => {
 			error: unknown,
 			options?: { cachedOnly?: boolean; abortSignal?: AbortSignal; batches?: number[][] },
 		): Promise<void> => {
-			const { service } = makeService(
-				target,
-				streamThatThrows(error, options?.batches ?? []),
-			);
+			const { service } = makeService(target, streamThatThrows(error, options?.batches ?? []));
 			const deltaStorage = await service.connectToDeltaStorage();
 			const stream = deltaStorage.fetchMessages(
 				from,
@@ -346,13 +343,10 @@ describe("OdspPointInTimeDocumentService", () => {
 		it("rethrows when the fetch was aborted (an abort is not a retention failure)", async () => {
 			const original = driverError(OdspErrorTypes.genericNetworkError, false);
 			const abortSignal = { aborted: true } as AbortSignal;
-			await assert.rejects(
-				readFailing(12, 10, original, { abortSignal }),
-				(error: Error) => {
-					assert.equal(error, original);
-					return true;
-				},
-			);
+			await assert.rejects(readFailing(12, 10, original, { abortSignal }), (error: Error) => {
+				assert.equal(error, original);
+				return true;
+			});
 		});
 
 		it("rethrows when no ops are needed (target at or below the base)", async () => {

@@ -302,7 +302,7 @@ describeCompat(
 							(event.eventName.endsWith("GetDeltas_Error") ||
 								event.eventName.endsWith("GetDeltas_Exception"))
 						) {
-							const message = `${event.error ?? ""}`;
+							const message = typeof event.error === "string" ? event.error : "";
 							const isExpectedOpsUnavailable =
 								/failed to retrieve ops|too many retries/i.test(message) ||
 								/cannotcatchup|materialize/i.test(message);
