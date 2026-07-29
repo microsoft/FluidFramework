@@ -67,23 +67,11 @@ export function getNestedChanges(change: Changeset): NestedChangesInfo {
 
 	for (const mark of change) {
 		if (mark.changes !== undefined) {
-			output.push([mark.changes, mark.cellId, getOutputRootId(mark)]);
+			const detachId = isDetach(mark) ? getDetachedNodeId(mark) : undefined;
+			output.push([mark.changes, mark.cellId, detachId]);
 		}
 	}
 	return output;
-}
-
-function getOutputRootId(mark: Mark): ChangeAtomId | undefined {
-	if (mark.type === "MoveOut" && mark.finalEndpoint !== undefined) {
-		return mark.finalEndpoint;
-	}
-	if (isAttach(mark)) {
-		return undefined;
-	}
-	if (isDetach(mark)) {
-		return getDetachedNodeId(mark);
-	}
-	return mark.cellId;
 }
 
 export function isNewAttach(mark: Mark, revision?: RevisionTag): boolean {

@@ -25,8 +25,15 @@ import type { CrossFieldKeyRange, NodeId } from "./modularChangeTypes.js";
 
 export type NestedChangesInfo = [
 	NodeId,
-	inputDetachId: ChangeAtomId | undefined,
-	outputDetachId: ChangeAtomId | undefined,
+	/**
+	 * The root ID for this node in the input context of the changeset.
+	 * Undefined if the node was attached in the input context.
+	 */
+	inputRootId: ChangeAtomId | undefined,
+	/**
+	 * The ID this changeset detaches this node with.
+	 */
+	detachId: ChangeAtomId | undefined,
 ][];
 
 /**

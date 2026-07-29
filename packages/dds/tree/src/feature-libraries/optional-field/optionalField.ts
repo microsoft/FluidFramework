@@ -742,35 +742,10 @@ function getNestedChanges(change: OptionalChangeset): NestedChangesInfo {
 	// True iff the content of the field changes in some way
 	const detachId = change.valueReplace?.dst;
 
-	// The node that is moved into the field (if any).
-	const nodeMovedIntoField = change.valueReplace?.src;
-
-	const inputToOutputDetachId = getBidirectionalMaps(change.moves).srcToDst;
-
-	const getOutputDetachId = (
-		inputDetachId: ChangeAtomId | undefined,
-	): ChangeAtomId | undefined => {
-		if (inputDetachId === undefined) {
-			return detachId;
-		}
-		if (areEqualRegisterIdsOpt(inputDetachId, nodeMovedIntoField)) {
-			// This node is reattached by this change.
-			return undefined;
-		}
-
-		return (
-			tryGetFromNestedMap(
-				inputToOutputDetachId,
-				inputDetachId.revision,
-				inputDetachId.localId,
-			) ?? inputDetachId
-		);
-	};
-
 	return change.childChanges.map(([register, nodeId]) => {
 		// The node is attached in the input context iif register is self.
 		const inputDetachId = register === "self" ? undefined : register;
-		return [nodeId, inputDetachId, getOutputDetachId(inputDetachId)];
+		return [nodeId, inputDetachId, register === "self" ? detachId : undefined];
 	});
 }
 
