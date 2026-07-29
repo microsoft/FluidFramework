@@ -53,7 +53,7 @@ The command will:
 
 Follow the tool's interactive prompts. The user will need to queue the ADO build manually — this cannot be automated.
 
-**Note:** The ADO pipeline has an `allowPublishingToNpmjs` parameter (default `false`) that controls whether packages are published to the public npmjs.org registry. Ask the user whether public npm publishing should happen for this release, and if so, remind them to set this parameter to `true` when queuing the build. Git tag creation and the GitHub Release happen regardless of this parameter's value.
+**Note:** The ADO pipeline has an `allowPublishingToNpmjs` parameter (default `false`) that controls whether packages are published to the public npmjs.org registry. Ask the user whether public npm publishing should happen for this release, and if so, remind them to set this parameter to `true` when queuing the build. Git tag creation and the GitHub Release happen regardless of this parameter's value. Default behaviour for a new minor release: `allowPublishingToNpmjs` should be set to `true` — new minors should be published to npmjs.org. Follow up patch should be only published internally.
 
 **Autonomous mode:** After running `flub release`, report:
 
