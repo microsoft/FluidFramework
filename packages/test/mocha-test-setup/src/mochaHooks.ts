@@ -4,7 +4,7 @@
  */
 
 import type { ITelemetryBufferedLogger } from "@fluid-internal/test-driver-definitions";
-import type { ITelemetryBaseEvent } from "@fluidframework/core-interfaces";
+import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfaces";
 import * as mochaModule from "mocha";
 
 import { pkgName } from "./packageVersion.js";
@@ -31,7 +31,7 @@ const _global: any = global;
 class FluidTestRunLogger implements ITelemetryBufferedLogger {
 	private currentTestName: string | undefined;
 
-	send(event: ITelemetryBaseEvent): void {
+	send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		// TODO: Remove when issue #7061 is resolved.
 		// Don't log this event as we generate too much.
 		if (event.eventName === "fluid:telemetry:RouterliciousDriver:readBlob_end") {
@@ -42,13 +42,16 @@ class FluidTestRunLogger implements ITelemetryBufferedLogger {
 			event.testName = this.currentTestName;
 		}
 		event.testVariant = testVariant;
-		this.parentLogger.send({
-			...event,
-			// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
-			// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
-			hostName: envLoggerProps?.hostName ?? pkgName,
-			testEnvProps: JSON.stringify(envLoggerProps),
-		});
+		this.parentLogger.send(
+			{
+				...event,
+				// Setting hostname to pkgName is the behavior we had for a long time, so keeping it just in case.
+				// But prefer a value set through FLUID_LOGGER_PROPS if it exists.
+				hostName: envLoggerProps?.hostName ?? pkgName,
+				testEnvProps: JSON.stringify(envLoggerProps),
+			},
+			logLevel,
+		);
 	}
 	async flush(): Promise<void> {
 		return this.parentLogger.flush();
@@ -147,22 +150,28 @@ export const mochaHooks = {
 		}
 		testLogger.setCurrentTest(testTitle);
 
-		testLogger.send({
-			category: "generic",
-			eventName: "fluid:telemetry:Test_start",
-		});
+		testLogger.send(
+			{
+				category: "generic",
+				eventName: "fluid:telemetry:Test_start",
+			},
+			LogLevel.essential,
+		);
 	},
 	afterEach(this: Mocha.Context) {
 		ensureTestRunLoggerIsInitialized(testLogger);
-		testLogger.send({
-			category: "generic",
-			eventName: "fluid:telemetry:Test_end",
-			state: this.currentTest?.state,
-			duration: this.currentTest?.duration,
-			timedOut: this.currentTest?.timedOut,
-			error: this.currentTest?.err?.message,
-			stack: this.currentTest?.err?.stack,
-		});
+		testLogger.send(
+			{
+				category: "generic",
+				eventName: "fluid:telemetry:Test_end",
+				state: this.currentTest?.state,
+				duration: this.currentTest?.duration,
+				timedOut: this.currentTest?.timedOut,
+				error: this.currentTest?.err?.message,
+				stack: this.currentTest?.err?.stack,
+			},
+			LogLevel.essential,
+		);
 
 		// Restore console output now that the current test is done running.
 		console.log = log;

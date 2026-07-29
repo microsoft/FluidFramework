@@ -20,6 +20,7 @@ import {
 	IRequestHeader,
 	ITelemetryBaseLogger,
 	ITelemetryBaseProperties,
+	LogLevel,
 	TelemetryBaseEventPropertyType,
 } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
@@ -637,11 +638,14 @@ export class TestObjectProvider implements ITestObjectProvider {
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
-		this.logger.send({
-			category: "generic",
-			eventName: "DocumentIdUpdated",
-			...getUrlTelemetryProps(resolvedUrl),
-		});
+		this.logger.send(
+			{
+				category: "generic",
+				eventName: "DocumentIdUpdated",
+				...getUrlTelemetryProps(resolvedUrl),
+			},
+			LogLevel.essential,
+		);
 	}
 
 	/**
@@ -1025,11 +1029,14 @@ export class TestObjectProviderWithVersionedLoad implements ITestObjectProvider 
 	 */
 	public updateDocumentId(resolvedUrl: IResolvedUrl | undefined): void {
 		this._documentIdStrategy.update(resolvedUrl);
-		this.logger.send({
-			category: "generic",
-			eventName: "DocumentIdUpdated",
-			...getUrlTelemetryProps(resolvedUrl),
-		});
+		this.logger.send(
+			{
+				category: "generic",
+				eventName: "DocumentIdUpdated",
+				...getUrlTelemetryProps(resolvedUrl),
+			},
+			LogLevel.essential,
+		);
 	}
 
 	/**
