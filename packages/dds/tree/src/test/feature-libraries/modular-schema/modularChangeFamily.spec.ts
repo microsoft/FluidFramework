@@ -66,6 +66,7 @@ import type {
 	EncodedNodeChangeset,
 	FieldChangeDelta,
 	FieldChangeEncodingContext,
+	FieldChangeDecodingContext,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
@@ -116,7 +117,7 @@ const singleNodeRebaser: FieldChangeRebaser<SingleNodeChangeset> = {
 			? undefined
 			: composeChild(change1, change2),
 	invert: (change) => change,
-	mute: (change: SingleNodeChangeset) => change,
+	filterEdits: (change: SingleNodeChangeset) => change,
 	rebase: (change, base, rebaseChild) => rebaseChild(change, base),
 	prune: (change, pruneChild) => (change === undefined ? undefined : pruneChild(change)),
 	replaceRevisions: (change, replacer) =>
@@ -136,7 +137,8 @@ const singleNodeCodec: IJsonCodec<
 	SingleNodeChangeset,
 	EncodedNodeChangeset | "",
 	EncodedNodeChangeset | "",
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > = {
 	encode: (change, context) => {
 		return change === undefined ? emptyEncodedChange : context.encodeNode(change);

@@ -36,6 +36,14 @@ export interface MessageEncodingContext {
 }
 
 /**
+ * Context required for decoding a message. Unlike {@link MessageEncodingContext}, no schema is
+ * needed: message decoding is schema-agnostic.
+ */
+export interface MessageDecodingContext {
+	idCompressor: IIdCompressor;
+}
+
+/**
  * Codec name used to identify the message codec, see {@link makeMessageCodecBuilder}.
  */
 export const messageCodecName = "Message";
@@ -65,14 +73,16 @@ export function makeMessageCodecBuilder<TChangeset>(): VersionDispatchingCodecBu
 	DecodedMessage<TChangeset>,
 	MessageEncodingContext,
 	MessageFormatVersion | undefined,
-	typeof messageCodecName
+	typeof messageCodecName,
+	MessageDecodingContext
 > {
 	// See MessageFormatVersion and its members for documentation on what changed in each version.
 	const versions: CodecVersion<
 		DecodedMessage<TChangeset>,
 		MessageEncodingContext,
 		MessageFormatVersion | undefined,
-		MessageCodecBuilderOptions<TChangeset>
+		MessageCodecBuilderOptions<TChangeset>,
+		MessageDecodingContext
 	>[] = [
 		// The "undefined" wire format (no version field) is discontinued.
 		makeDiscontinuedCodecAndSchema(undefined, "2.73.0"),
