@@ -8,7 +8,11 @@ import {
 	type ITelemetryBaseLogger,
 	isTelemetryOptInEnabled,
 } from "@fluid-internal/devtools-view";
-import type { Tagged, TelemetryBaseEventPropertyType } from "@fluidframework/core-interfaces";
+import type {
+	LogLevel,
+	Tagged,
+	TelemetryBaseEventPropertyType,
+} from "@fluidframework/core-interfaces";
 import { AppInsightsCore, type IExtendedConfiguration } from "@microsoft/1ds-core-js";
 import {
 	type IChannelConfiguration,
@@ -148,7 +152,7 @@ export class OneDSLogger implements ITelemetryBaseLogger {
 	/**
 	 * {@inheritDoc @fluidframework/core-interfaces#ITelemetryBaseLogger.send}
 	 */
-	public send(event: ITelemetryBaseEvent): void {
+	public send(event: ITelemetryBaseEvent, _logLevel: LogLevel): void {
 		const optIn = isTelemetryOptInEnabled();
 
 		// Clear localStorage and reset identifiers if the user opts out

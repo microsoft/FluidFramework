@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryBaseLogger } from '@fluidframework/core-interfaces';
+import { ITelemetryBaseLogger, LogLevel } from '@fluidframework/core-interfaces';
 
 import { assertNotUndefined, fail } from './Common.js';
 import { PlaceValidationResult, RangeValidationResultKind } from './EditUtilities.js';
@@ -21,10 +21,13 @@ import { EditStatus } from './persisted-types/index.js';
 export function useFailedSequencedEditTelemetry(tree: SharedTree): { disable: () => void } {
 	function onEdit({ wasLocal, logger, outcome }: SequencedEditAppliedEventArguments): void {
 		if (wasLocal && outcome.status !== EditStatus.Applied) {
-			logger.send({
-				category: 'generic',
-				eventName: outcome.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
-			});
+			logger.send(
+				{
+					category: 'generic',
+					eventName: outcome.status === EditStatus.Malformed ? 'MalformedSharedTreeEdit' : 'InvalidSharedTreeEdit',
+				},
+				LogLevel.essential
+			);
 		}
 	}
 	tree.on(SharedTreeEvent.SequencedEditApplied, onEdit);
@@ -433,15 +436,18 @@ export class SharedTreeMergeHealthTelemetryHeartbeat {
 		for (const [tree, { tally, logger }] of this.treeData) {
 			if (logger && tally.editCount > 0) {
 				// Note: all this data is for sequenced edits that were originally produced by the local client.
-				logger.send({
-					category: 'Heartbeat',
-					eventName: 'EditMergeHealth',
-					...tally,
-					// The counts of occurrences for a given path length.
-					// '1:2' means two occurrences of length one.
-					// Overwrites `tally.pathLengths` which is incompatible with ITelemetryBaseEvent.
-					pathLengths: pathLengthsCounts(tally.pathLengths),
-				});
+				logger.send(
+					{
+						category: 'Heartbeat',
+						eventName: 'EditMergeHealth',
+						...tally,
+						// The counts of occurrences for a given path length.
+						// '1:2' means two occurrences of length one.
+						// Overwrites `tally.pathLengths` which is incompatible with ITelemetryBaseEvent.
+						pathLengths: pathLengthsCounts(tally.pathLengths),
+					},
+					LogLevel.essential
+				);
 				this.resetTreeData(tree);
 			}
 		}

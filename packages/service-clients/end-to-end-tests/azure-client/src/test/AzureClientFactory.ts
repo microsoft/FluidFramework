@@ -18,7 +18,7 @@ import {
 	type ITelemetryBaseLogger as ITelemetryBaseLoggerLegacy,
 } from "@fluidframework/azure-client-legacy";
 import type { IRuntimeFactory } from "@fluidframework/container-definitions/legacy";
-import type { IConfigProviderBase } from "@fluidframework/core-interfaces";
+import { type IConfigProviderBase, LogLevel } from "@fluidframework/core-interfaces";
 import { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema } from "@fluidframework/fluid-static";
 import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions";
@@ -173,10 +173,20 @@ export function createAzureClientLegacy(
 		if (!logger && !testLogger) {
 			return undefined;
 		}
-		if (logger && testLogger) {
-			return createMultiSinkLogger({ loggers: [logger, testLogger] });
-		}
-		return logger ?? testLogger;
+		const currentLogger =
+			logger && testLogger
+				? createMultiSinkLogger({ loggers: [logger, testLogger] })
+				: (logger ?? testLogger);
+		return currentLogger === undefined
+			? undefined
+			: {
+					send: (event): void => {
+						currentLogger.send(
+							event as Parameters<typeof currentLogger.send>[0],
+							LogLevel.essential,
+						);
+					},
+				};
 	};
 	return new AzureClientLegacy({
 		connection: connectionProps,
