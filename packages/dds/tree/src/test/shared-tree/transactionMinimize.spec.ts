@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
+import { SchemaFactory, TreeArrayNode, TreeViewConfiguration } from "@fluidframework/tree";
 import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
 import type {
 	InsertableField,
@@ -101,8 +101,9 @@ class Box extends sf.objectRecursive("Box", {
 const OptionalBox = sf.optional(Box);
 const BoxArray = sf.array("BoxArray", Box);
 
-class Pallet extends sf.object("Pallet", {
+class Pallet extends sf.objectRecursive("Pallet", {
 	boxes: BoxArray,
+	subpallets: sf.optionalRecursive([() => PalletArray]),
 }) {}
 const PalletArray = sf.array("PalletArray", Pallet);
 
@@ -1261,6 +1262,50 @@ const parallelObjectScenarios = {
 		unminimizedBuildExpectations: { builds: 1, tops: 1 },
 		expectSurvivingMarker: false,
 	} as const,
+
+	["1. insert new Pallet with subpallet 2. move exisiting Pallet under new subpallet 3. move new subpallet under existing 4. remove inserted new_Pallet"]:
+		{
+			schema: PalletArray,
+			initialContent: () => [
+				new Pallet({
+					boxes: [new Box({ value: "top-1⌚" })],
+					subpallets: [new Pallet({ boxes: [new Box({ value: "sub-C-2⌚" })] })],
+				}),
+				new Pallet({
+					boxes: [new Box({ value: "top-D-3⌚" })],
+					subpallets: [new Pallet({ boxes: [new Box({ value: "sub-4⌚" })] })],
+				}),
+			],
+			apply: (root) => {
+				const [topPallet0, topPallet1_D] = root;
+
+				const subPallet5_B_children = new PalletArray([]);
+				const subPallet5_B = new Pallet({
+					boxes: [new Box({ value: "sub-B-5❤️" })],
+					subpallets: subPallet5_B_children,
+				});
+				const topPallet2_A_children = new PalletArray([subPallet5_B]);
+				const topPallet2_A = new Pallet({
+					boxes: [new Box({ value: "top-A-6☠️" })],
+					subpallets: topPallet2_A_children,
+				});
+
+				// 1. Insert tree with root A and child B - single build for topPallet2_A and its boxes and subpallets
+				root.insertAtEnd(topPallet2_A);
+
+				assert.ok(topPallet0.subpallets);
+				assert.ok(topPallet1_D.subpallets);
+
+				// 2. Move C under B
+				subPallet5_B_children.moveRangeToIndex(0, 0, 1, topPallet0.subpallets);
+				// 3. Move B under D
+				topPallet1_D.subpallets.moveRangeToIndex(0, 0, 1, topPallet2_A_children);
+				// 4. Remove A
+				root.removeAt(2);
+			},
+			unminimizedBuildExpectations: { builds: 1, tops: 1 },
+			expectSurvivingMarker: true,
+		} as const,
 } as const satisfies Record<string, PalletArrayScenario>;
 // #endregion
 
