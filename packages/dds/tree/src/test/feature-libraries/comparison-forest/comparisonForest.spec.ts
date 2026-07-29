@@ -22,7 +22,6 @@ import { testForest } from "../../forestTestSuite.js";
 import { initializeForest } from "../../feature-libraries/index.js";
 import { fieldJsonCursor } from "../../json/index.js";
 import { jsonSequenceRootSchema } from "../../sequenceRootUtils.js";
-import { testIdCompressor, testRevisionTagCodec } from "../../utils.js";
 
 describe("ComparisonForest", () => {
 	// Run the whole forest test suite against a ComparisonForest whose main forest is a ChunkedForest
@@ -48,18 +47,8 @@ describe("ComparisonForest", () => {
 				makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
 			);
 			const reference = buildForest(new Breakable("reference"), schema);
-			initializeForest(
-				main,
-				fieldJsonCursor([1, 2, 3]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
-			initializeForest(
-				reference,
-				fieldJsonCursor([1, 2, 3]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
+			initializeForest(main, fieldJsonCursor([1, 2, 3]));
+			initializeForest(reference, fieldJsonCursor([1, 2, 3]));
 
 			assertForestsEqual(main, reference);
 		});
@@ -68,18 +57,8 @@ describe("ComparisonForest", () => {
 			const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
 			const main = buildForest(new Breakable("main"), schema);
 			const reference = buildForest(new Breakable("reference"), schema);
-			initializeForest(
-				main,
-				fieldJsonCursor([1, 2, 3]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
-			initializeForest(
-				reference,
-				fieldJsonCursor([1, 2, 4]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
+			initializeForest(main, fieldJsonCursor([1, 2, 3]));
+			initializeForest(reference, fieldJsonCursor([1, 2, 4]));
 
 			assert.throws(
 				() => assertForestsEqual(main, reference),
@@ -100,12 +79,7 @@ describe("ComparisonForest", () => {
 
 		// Applying a delta (via initializeForest) exercises the ComparisonForest visitor, which applies to
 		// both forests and asserts they remain equal when the visitor is freed.
-		initializeForest(
-			forest,
-			fieldJsonCursor([1, 2, 3]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, fieldJsonCursor([1, 2, 3]));
 
 		assert.equal(forest.isEmpty, false);
 		assert.equal(main.isEmpty, false);
@@ -121,7 +95,7 @@ describe("ComparisonForest", () => {
 		const reference = buildForest(new Breakable("reference"), schema);
 		const forest = new ComparisonForest(main, reference);
 
-		initializeForest(main, fieldJsonCursor([1, 2, 3]), testRevisionTagCodec, testIdCompressor);
+		initializeForest(main, fieldJsonCursor([1, 2, 3]));
 
 		assert.throws(
 			() => forest.acquireVisitor(),
