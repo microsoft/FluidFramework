@@ -65,21 +65,21 @@ These steps will not work for snapshot testing.
 
 It should look like this:
 
-![Test](../_assets/contributing/test.PNG)
+![Test](_assets/test.png)
 
 Not like this:
 
-![Italic Test](../_assets/contributing/test-italic.PNG)
+![Italic Test](_assets/test-italic.png)
 
 1. Now, navigate to the Test tool on the left pane:
-   ![Italic Test](../_assets/contributing/debug-test.PNG)
+   ![Italic Test](_assets/debug-test.png)
 
 2. From the drop-down menu at the top, select `Debug Current Test` and click on the Play button
 
 3. This will start running the test and you should be able to see the results in the `Debug Console` on the built-in `Terminal`.
 
 4. (Optional but recommended) You can also set breakpoints in-line in your code, both within the test file and any code it uses. Simply click on the area to the left of the line beginning and you will see the breakpoint show up as a red dot. On running the test, the code should now pause processing anytime it reaches these breakpoints.
-   ![Breakpoint](../_assets/contributing/breakpoint.PNG)
+   ![Breakpoint](_assets/breakpoint.png)
 
 ## In this section
 

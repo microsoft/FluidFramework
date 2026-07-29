@@ -28,7 +28,7 @@ This will automatically install all dependency packages, and then build & compil
 
 When it has successfully finished, your output will look similar to this
 
-![First Build](../_assets/contributing/first-build.PNG)
+![First Build](_assets/first-build.png)
 
 The first time you run these commands, they will take some time as it is downloading all of the dependencies and setting up symlinks for the local packages to be able to use them.
 Any subsequent runs should be much faster.

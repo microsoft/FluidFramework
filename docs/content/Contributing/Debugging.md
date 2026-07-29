@@ -11,19 +11,19 @@ To do so,
 1. Run the Fluid object you are looking to test using these [steps](./Client.md). If you are looking to test a dependency package, e.g., `@fluidframeworks/aqueduct`, you can also view its code when running a Fluid object package that depends on it, e.g., `@fluidframeworks/clicker`. To debug and test a dependency package in isolation, see this [section](./Testing.md) on testing.
 
 2. After opening the Fluid object in the browser using `npm run start`, right click on the browser page and click on `Inspect` to open the DevTools. You should see something similar to this, in the case of `Clicker`
-   ![Debug Client](../_assets/contributing/debug-client.PNG)
+   ![Debug Client](_assets/debug-client.png)
 
 3. From here, you can navigate through your visual HTML elements in `Elements` and all of your source code in `Sources`.
 
 4. To set up breakpoints in your code, navigate to `Sources` and press `Ctrl+P` or `Cmd+P` to open the search bar. Here, just type in name of the file you want to debug. Let's do `clicker/index.tsx`.
-   ![Debug Search](../_assets/contributing/debug-search.PNG)
+   ![Debug Search](_assets/debug-search.png)
    We can see that the search tool is really exhaustive and does most of the file path completion for us as we type. Just be careful to pick your `.tsx` & `.ts` files, and not the `.js` compiled versions, as the line-numbers and syntax on the `.js` files will not match your source code.
 
 5. Clicking on this, we can now see our `Clicker` source code and set any breakpoints.
-   ![Debug File](../_assets/contributing/debug-file.PNG)
+   ![Debug File](_assets/debug-file.png)
 
 6. Now, simply refresh your page and you will see that the breakpoints will start being hit.
-   ![Debug File](../_assets/contributing/breakpoint-debug.PNG)
+   ![Debug File](_assets/breakpoint-debug.png)
 
 You can also similarly search for any dependency packages that `Clicker` requires and be able to set up breakpoints there as well.
 From here, just step through your code using the debug tools and investigate the variable states to search for issues.
@@ -37,7 +37,7 @@ If you are more interested in monitoring network traffic to see what is happenin
 1. Install [Fiddler](http://fiddler2.com)
 2. On the right panel select `Filters`
 
-![Fiddler](../_assets/contributing/fiddler.png)
+![Fiddler](_assets/fiddler.png)
 
 1. Select `Use Filters`
 2. Select `Show only the following Hosts` from the second dropdown

@@ -58,12 +58,12 @@ Please follow the [Editing the Repo steps](./Repo-Basics.md#editing-the-repo) if
 
 1. Navigate to the [Pull Requests](https://github.com/microsoft/FluidFramework/pulls) tab in the official GitHub repo. Here, click "New Pull Request" and you will see this.
 
-![Pre-PR](../_assets/contributing/pre-PR.PNG)
+![Pre-PR](_assets/pre-PR.png)
 
 Here, you will need to click on "compare across forks" to start seeing the branches on your fork.
 Select your fork in "Head repository" and your branch in "compare" for the source:
 
-![Setup-PR](../_assets/contributing/setup-PR.PNG)
+![Setup-PR](_assets/setup-PR.png)
 
 1. Now you can simply click "Create Pull Request" to start the review process. Alternatively, you can also create a "Draft Pull Request" if the branch is still a work-in-progress.
 
@@ -76,7 +76,7 @@ The following filter is a useful tool for actively seeking out pull requests whi
 is:pr is:open  -is:draft review:required status:success
 ```
 
-![PR-Filter](../_assets/contributing/PR-filter.PNG)
+![PR-Filter](_assets/PR-filter.png)
 
 ## Pull Request Reviewer Guidelines
 

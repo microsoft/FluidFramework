@@ -36,7 +36,7 @@ npm i -g
 tinylicious
 ```
 
-You should see the following output that says that the server is running on port 3000 ![Tinylicious](../_assets/contributing/tinylicious.PNG)
+You should see the following output that says that the server is running on port 3000 ![Tinylicious](_assets/tinylicious.png)
 
 1. Now, we can run Fluid objects against this server. We will use `Clicker` as an example. Navigate to the `Clicker` directory and start the Fluid object using the `start:tinylicious` command
 
@@ -100,7 +100,7 @@ This will download and build the image that is deployed, and run it locally.
 
 1. Go to Docker settings and allocate at least 4 cores and 4GB Memory.
 
-![Docker Setup](../_assets/contributing/docker.png)
+![Docker Setup](_assets/docker.png)
 
 1. Navigate to the repo root. And run `npm run start:docker` (No need to build)
 

@@ -22,7 +22,7 @@ We will establish upstream hooks later on to allow you to pull updates from the 
 Please go to the [repo](https://github.com/microsoft/FluidFramework) and click "Fork".
 Then choose your personal account.
 
-![Fork](../_assets/contributing/fork.png)
+![Fork](_assets/fork.png)
 
 Awesome!
 Now you should be on a page with a URL that looks like "<https://github.com/{YOUR-USER-NAME}/FluidFramework>".
@@ -127,7 +127,7 @@ Any subsequent pushes only need a `git push`
 
 1. With the branch now available on your remote fork, we can go to the official repo [website](https://github.com/microsoft/FluidFramework) and you should see a prompt requesting you to make a Pull Request
 
-![PR](../_assets/contributing/PR.PNG)
+![PR](_assets/PR.png)
 
 Go ahead and click "Compare and Pull Request".
 
@@ -136,12 +136,12 @@ This will automatically select the official repository's `main` branch as the ta
 Alternatively, you can also navigate to [Pull Requests](https://github.com/microsoft/FluidFramework/pulls).
 Here, click "New Pull Request" and you will see this.
 
-![Pre-PR](../_assets/contributing/pre-PR.PNG)
+![Pre-PR](_assets/pre-PR.png)
 
 Here, you will need to click on "compare across forks" to start seeing the branches on your fork.
 Select your fork in "Head repository" and your branch in "compare" for the source:
 
-![Setup-PR](../_assets/contributing/setup-PR.PNG)
+![Setup-PR](_assets/setup-PR.png)
 
 1. Now you can simply click "Create Pull Request" to start the review process. Alternatively, you can also create a "Draft Pull Request" if the branch is still a work-in-progress.
 

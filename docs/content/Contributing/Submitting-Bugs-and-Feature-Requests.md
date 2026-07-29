@@ -56,7 +56,7 @@ To create a new issue,
 
 1. Open the [New Issue](https://github.com/microsoft/FluidFramework/issues/new/choose) page and pick the type of issue you are going to be creating.
 
-![New Issue](../_assets/contributing/issue.PNG)
+![New Issue](_assets/issue.png)
 
 - **Bug report** - For reporting a defect in the Fluid Framework codebase. Use this to report an issue that is causing the code to
     - throw an unhandled error
@@ -70,7 +70,7 @@ To create a new issue,
 
 1. Once you select a format, you will see a new issue draft that is pre-filled using a template for the type of issue that you picked. For example, on creating a bug report, we see
 
-![New Issue Template](../_assets/contributing/new-issue-temp.PNG)
+![New Issue Template](_assets/new-issue-temp.png)
 
 - **Description** - Use this space to add detail to your issue. Each issue type has a template pre-populated to help you fill in the necessary information.
 

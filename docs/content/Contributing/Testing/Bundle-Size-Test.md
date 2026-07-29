@@ -3,7 +3,7 @@
 For client packages, we run bundle size analysis on PRs to ensure changes don't inadvertently grow the webpack bundle size that developers ship.
 When a PR affects the measured client packages, a sticky **"Bundle size comparison"** comment is posted (and kept up to date) on the PR summarizing the change.
 
-![Example message of bundle size comparison in PR](../../_assets/contributing/bundle-size-comparison.png)
+![Example message of bundle size comparison in PR](../_assets/bundle-size-comparison.png)
 
 Some increase in bundle size can be reasonable depending on the change.
 It's up to the PR authors and reviewers to assess and agree on whether the increase is acceptable.

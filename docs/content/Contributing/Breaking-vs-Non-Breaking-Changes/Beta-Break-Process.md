@@ -22,13 +22,13 @@ _ONLY_ if the API deprecation does not have an issue per [API Deprecation](../AP
 
 1. Add sub-issue
 
-    ![Use "Create sub-issue" button at bottom of description](../../_assets/contributing/create-sub-issue.png)
+    ![Use "Create sub-issue" button at bottom of description](../_assets/create-sub-issue.png)
 
 1. Use `Breaking Change` template
 
     Note: you should only be here if the deprecation has already been published.
 
-    ![Under "Templates and forms" select "Breaking Change"](../../_assets/contributing/breaking-change-template.png)
+    ![Under "Templates and forms" select "Breaking Change"](../_assets/breaking-change-template.png)
 
     1. Use information in the existing release notes (or pending changeset of deprecation) to fill out the issue. Focus on conveying the change to customers.
     1. Set Assignee to whomever is expected to complete the work (ideally also a good contact for any questions)

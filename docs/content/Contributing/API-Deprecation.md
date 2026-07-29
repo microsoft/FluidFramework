@@ -41,7 +41,7 @@ When you deprecate a public or beta (including legacy) API:
 For public client API, issue should be created as sub-issue of next major breaking changes issue, currently [Client 4.0 Breaking Changes](https://github.com/microsoft/FluidFramework/issues/27453).
 For beta (including legacy) client APIs, find parent issue using table in [Beta Break Process](./Breaking-vs-Non-Breaking-Changes/Beta-Break-Process.md).
 
-![Use "Create sub-issue" button at bottom of description](../_assets/contributing/create-sub-issue.png)
+![Use "Create sub-issue" button at bottom of description](_assets/create-sub-issue.png)
 
 Use the "**Deprecated API**" template and fill in each of the categories listed in the template.
 Additionally, remember to assign the issue to whoever will own the cleanup of the API.
