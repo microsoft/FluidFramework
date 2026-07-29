@@ -9,6 +9,7 @@ import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 import type { IJsonCodec } from "../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	EncodedRevisionTag,
 	RevisionTag,
 	SchemaAndPolicy,
@@ -98,7 +99,7 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		ChangeEncodingContext
 	>,
 	commit: T,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 ) {
 	const revision = revisionTagCodec.decode(commit.revision, {
 		originatorId: commit.sessionId,
