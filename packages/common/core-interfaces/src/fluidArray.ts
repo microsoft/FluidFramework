@@ -216,7 +216,8 @@ export interface FluidReadonlyArray<T> {
 	): T[];
 
 	/**
-	 * Calls the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * Executes the provided callback function on each element of the array, in order, passing in the return value from the calculation on the preceding element.
+	 * The final result of running the reducer across all elements of the array is a single value.
 	 * @param callbackfn - A function that accepts up to four arguments.
 	 */
 	reduce(
@@ -229,7 +230,8 @@ export interface FluidReadonlyArray<T> {
 	): T;
 
 	/**
-	 * Calls the specified callback function for all the elements in an array. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * Executes the provided callback function on each element of the array, in order, passing in the return value from the calculation on the preceding element.
+	 * The final result of running the reducer across all elements of the array is a single value.
 	 * @param callbackfn - A function that accepts up to four arguments.
 	 * @param initialValue - Used as the initial value to start the accumulation.
 	 */
@@ -244,7 +246,8 @@ export interface FluidReadonlyArray<T> {
 	): U;
 
 	/**
-	 * Calls the specified callback function for all the elements in an array, in descending order. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * Executes the provided callback function on each element of the array, in descending order, passing in the return value from the calculation on the preceding element.
+	 * The final result of running the reducer across all elements of the array is a single value.
 	 * @param callbackfn - A function that accepts up to four arguments.
 	 */
 	reduceRight(
@@ -257,7 +260,8 @@ export interface FluidReadonlyArray<T> {
 	): T;
 
 	/**
-	 * Calls the specified callback function for all the elements in an array, in descending order. The return value of the callback function is the accumulated result, and is provided as an argument in the next call to the callback function.
+	 * Executes the provided callback function on each element of the array, in descending order, passing in the return value from the calculation on the preceding element.
+	 * The final result of running the reducer across all elements of the array is a single value.
 	 * @param callbackfn - A function that accepts up to four arguments.
 	 * @param initialValue - Used as the initial value to start the accumulation.
 	 */
