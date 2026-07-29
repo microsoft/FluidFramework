@@ -1242,11 +1242,11 @@ export function makeDiscontinuedEncodingTestSuite(
  * convenience, but is otherwise unused.
  * @returns a change receiver function and a function that will return all changes received
  */
-export function testChangeReceiver<TChange, TContext = unknown>(
-	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange, TContext>,
+export function testChangeReceiver<TChange, TChangeProcessingContext>(
+	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>,
 ): [
 	changeReceiver: Parameters<
-		ChangeFamily<ChangeFamilyEditor, TChange, TContext>["buildEditor"]
+		ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>["buildEditor"]
 	>[1],
 	getChanges: () => readonly TChange[],
 ] {

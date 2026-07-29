@@ -18,7 +18,7 @@ export type ProcessChangeFn<TChange, TChangeProcessingContext> =
 export interface ChangeFamily<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-	// For simplicity may be a concrete ChangeFamily implementation such as
+	// For simplicity, may be a concrete ChangeFamily implementation such as
 	// ChangeFamilyFoo implements ChangeFamily<EditorFoo, ChangeFoo, ChangeFamilyFoo>
 	// to provide all details and helpers that processFn for ChangeFoo
 	// may require, but there is no requirement to follow that pattern.
