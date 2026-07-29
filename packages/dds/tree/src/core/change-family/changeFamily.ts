@@ -10,6 +10,11 @@ import type { SchemaAndPolicy } from "../../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../../util/index.js";
 import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.js";
 
+export type ProcessChangeFn<TChange, TChangeProcessingContext> =
+	TChangeProcessingContext extends never
+		? (change: TChange) => TChange
+		: (change: TChange, context: TChangeProcessingContext) => TChange;
+
 export interface ChangeFamily<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
@@ -17,7 +22,7 @@ export interface ChangeFamily<
 	// ChangeFamilyFoo implements ChangeFamily<EditorFoo, ChangeFoo, ChangeFamilyFoo>
 	// to provide all details and helpers that processFn for ChangeFoo
 	// may require, but there is no requirement to follow that pattern.
-	TChangeProcessingContext,
+	TChangeProcessingContext = never,
 > {
 	buildEditor(
 		mintRevisionTag: () => RevisionTag,
@@ -28,7 +33,7 @@ export interface ChangeFamily<
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 
 	buildProcessor(
-		processFn: (change: TChange, context: TChangeProcessingContext) => TChange,
+		processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
 	): (change: TChange) => TChange;
 }
 

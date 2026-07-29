@@ -36,7 +36,8 @@ import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../uti
  * a function that receives the change and its owning change family and returns a change.
  */
 type DefaultChangeProcessor = ChangeProcessor<
-	(change: DefaultChangeset, context: DefaultChangeProcessingContext) => DefaultChangeset
+	DefaultChangeset,
+	DefaultChangeProcessingContext
 >;
 
 describe("TransactionStacks", () => {

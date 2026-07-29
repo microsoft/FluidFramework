@@ -19,6 +19,7 @@ import {
 	type RevisionTagCodec,
 	type TaggedChange,
 	mapTaggedChange,
+	type ProcessChangeFn,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -104,10 +105,7 @@ export class SharedTreeChangeFamily
 	}
 
 	public buildProcessor(
-		processFn: (
-			change: SharedTreeChange,
-			context: SharedTreeChangeProcessingContext,
-		) => SharedTreeChange,
+		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
 	): (change: SharedTreeChange) => SharedTreeChange {
 		return (change: SharedTreeChange) =>
 			processFn(change, {

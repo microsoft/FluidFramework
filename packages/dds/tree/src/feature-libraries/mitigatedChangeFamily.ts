@@ -7,6 +7,7 @@ import type {
 	ChangeFamily,
 	ChangeFamilyEditor,
 	ChangeRebaser,
+	ProcessChangeFn,
 	RevisionMetadataSource,
 	RevisionReplacer,
 	RevisionTag,
@@ -46,7 +47,7 @@ export function makeMitigatedChangeFamily<
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
 		buildProcessor: (
-			processFn: (change: TChange, context: TChangeProcessingContext) => TChange,
+			processFn: ProcessChangeFn<TChange, TChangeProcessingContext>,
 		): ((change: TChange) => TChange) => {
 			const unmitigatedProcessor = unmitigatedChangeFamily.buildProcessor(processFn);
 			return (change: TChange): TChange => {

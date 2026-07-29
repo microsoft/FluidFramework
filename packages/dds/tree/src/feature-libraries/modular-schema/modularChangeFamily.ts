@@ -48,6 +48,7 @@ import {
 	type RevisionReplacer,
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
+	type ProcessChangeFn,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -135,7 +136,7 @@ export class ModularChangeFamily
 	}
 
 	public buildProcessor(
-		processFn: (change: ModularChangeset, context: ModularChangeFamily) => ModularChangeset,
+		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
 	): (change: ModularChangeset) => ModularChangeset {
 		return (change: ModularChangeset) => processFn(change, this);
 	}

@@ -25,7 +25,7 @@ export function testChangeEditManagerFactory(options: {
 	autoDiscardRevertibles?: boolean;
 }): {
 	manager: TestEditManager;
-	family: ChangeFamily<ChangeFamilyEditor, TestChange, never>;
+	family: ChangeFamily<ChangeFamilyEditor, TestChange>;
 } {
 	const family = testChangeFamilyFactory(options.rebaser);
 	const manager = editManagerFactory(family, {
@@ -36,14 +36,14 @@ export function testChangeEditManagerFactory(options: {
 }
 
 export function editManagerFactory<TChange = TestChange>(
-	family: ChangeFamily<ChangeFamilyEditor, TChange, unknown>,
+	family: ChangeFamily<ChangeFamilyEditor, TChange>,
 	options: {
 		sessionId?: SessionId;
 	} = {},
-): EditManager<ChangeFamilyEditor, TChange, never> {
+): EditManager<ChangeFamilyEditor, TChange> {
 	const genId = () => testIdCompressor.generateCompressedId();
-	const manager = new EditManager<ChangeFamilyEditor, TChange, never>(
-		family as ChangeFamily<ChangeFamilyEditor, TChange, never>,
+	const manager = new EditManager<ChangeFamilyEditor, TChange>(
+		family,
 		options.sessionId ?? ("0" as SessionId),
 		genId,
 	);

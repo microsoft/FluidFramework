@@ -25,6 +25,7 @@ import {
 	type UpPath,
 	compareFieldUpPaths,
 	topDownPath,
+	type ProcessChangeFn,
 } from "../../core/index.js";
 import { brand } from "../../util/index.js";
 import {
@@ -88,10 +89,7 @@ export class DefaultChangeFamily
 	}
 
 	public buildProcessor(
-		processFn: (
-			change: DefaultChangeset,
-			context: DefaultChangeProcessingContext,
-		) => DefaultChangeset,
+		processFn: ProcessChangeFn<DefaultChangeset, DefaultChangeProcessingContext>,
 	): (change: DefaultChangeset) => DefaultChangeset {
 		return this.modularFamily.buildProcessor(processFn);
 	}

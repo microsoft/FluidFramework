@@ -320,7 +320,7 @@ export class TestAnchorSet extends AnchorSet implements AnchorRebaseData {
 	public intentions: number[] = [];
 }
 
-export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange, never>;
+export type TestChangeFamily = ChangeFamily<ChangeFamilyEditor, TestChange>;
 
 const rootKey: FieldKey = brand("root");
 
@@ -340,7 +340,7 @@ export function asDelta(intentions: number[]): DeltaRoot {
 
 export function testChangeFamilyFactory(
 	rebaser?: ChangeRebaser<TestChange>,
-): ChangeFamily<ChangeFamilyEditor, TestChange, never> {
+): ChangeFamily<ChangeFamilyEditor, TestChange> {
 	const family = {
 		rebaser: rebaser ?? new TestChangeRebaser(),
 		codecs: TestChange.codecs,

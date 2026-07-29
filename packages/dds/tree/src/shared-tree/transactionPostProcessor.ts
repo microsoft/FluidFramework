@@ -15,7 +15,8 @@ import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
  * @remarks This is the (non-type-erased) form used internally to apply a transaction's post-processor.
  */
 export type TransactionPostProcessorInternal = ChangeProcessor<
-	(change: SharedTreeChange, context: SharedTreeChangeProcessingContext) => SharedTreeChange
+	SharedTreeChange,
+	SharedTreeChangeProcessingContext
 >;
 
 /**

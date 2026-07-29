@@ -17,6 +17,7 @@ import {
 	tagChange,
 	type ChangeFamilyEditor,
 	type GraphCommit,
+	type ProcessChangeFn,
 	type RevisionTag,
 } from "../core/index.js";
 import { getLast, getOrCreate } from "../util/index.js";
@@ -263,7 +264,7 @@ export enum ChangeProcessorApplicability {
  * (see the conversion helpers in the `shared-tree` layer) so that its internal
  * change representation does not leak into the public API.
  */
-export interface ChangeProcessor<TProcessChange> {
+export interface ChangeProcessor<TChange, TChangeProcessingContext> {
 	/**
 	 * Informs what context it should be invoked for.
 	 */
@@ -271,7 +272,7 @@ export interface ChangeProcessor<TProcessChange> {
 	/**
 	 * Processes the given change, returning a change with the same observable effect.
 	 */
-	readonly processChange: TProcessChange;
+	readonly processChange: ProcessChangeFn<TChange, TChangeProcessingContext>;
 }
 
 /**
@@ -288,9 +289,7 @@ export interface SquashingTransactionOptions<TChange, TChangeProcessingContext> 
 	 * How often the processor is invoked across nested transactions is governed by its
 	 * {@link ChangeProcessor.applicability | applicability}.
 	 */
-	readonly postProcessor?: ChangeProcessor<
-		(change: TChange, context: TChangeProcessingContext) => TChange
-	>;
+	readonly postProcessor?: ChangeProcessor<TChange, TChangeProcessingContext>;
 }
 
 /**
@@ -386,19 +385,15 @@ export class SquashingTransactionStack<
 		// innermost. Each in-progress transaction contributes exactly one entry: either the processor to apply when it
 		// commits, or `undefined` when none should be applied.
 		const postProcessorStack: (
-			| ChangeProcessor<(change: TChange, changeFamily: TChangeProcessingContext) => TChange>
+			| ChangeProcessor<TChange, TChangeProcessingContext>
 			| undefined
 		)[] = [];
 		// Determines the entry to push for a transaction that was started with the given `requested` processor (if any).
 		// A processor with "outermost" applicability that is already active in an enclosing transaction resolves to
 		// `undefined` so that it is only applied once (at the outermost transaction that supplied it).
 		const resolvePostProcessor = (
-			requested:
-				| ChangeProcessor<(change: TChange, changeFamily: TChangeProcessingContext) => TChange>
-				| undefined,
-		):
-			| ChangeProcessor<(change: TChange, changeFamily: TChangeProcessingContext) => TChange>
-			| undefined => {
+			requested: ChangeProcessor<TChange, TChangeProcessingContext> | undefined,
+		): ChangeProcessor<TChange, TChangeProcessingContext> | undefined => {
 			if (
 				requested?.applicability === ChangeProcessorApplicability.IfOutermost &&
 				postProcessorStack.includes(requested)
