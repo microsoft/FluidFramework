@@ -5,10 +5,6 @@ parameters:
 - name: publishOverride
   type: string
 
-- name: publishNpm
-  type: boolean
-  default: true
-
 steps:
 - task: Bash@3
   displayName: Generate publish metadata
@@ -17,7 +13,6 @@ steps:
     VERSION: $(SetVersion.version)
     RELEASE: $(release)
     PUBLISH_OVERRIDE: ${{ parameters.publishOverride }}
-    PUBLISH_NPM: ${{ parameters.publishNpm }}
     IS_LATEST: $(SetVersion.isLatest)
   inputs:
     targetType: inline
@@ -40,16 +35,12 @@ steps:
       esac
 
       case "$PUBLISH_OVERRIDE" in
-        default|force|skip) publishOverride="$PUBLISH_OVERRIDE" ;;
+        default|force|skip) ;;
         *)
           echo "##vso[task.logissue type=error]Invalid publishOverride value '$PUBLISH_OVERRIDE'"
           exit 1
           ;;
       esac
-
-      if [ "${PUBLISH_NPM,,}" != "true" ]; then
-        publishOverride=skip
-      fi
 
       case "${IS_LATEST:-}" in
         ""|'$(SetVersion.isLatest)'|false|False) isLatest=false ;;
@@ -64,7 +55,7 @@ steps:
         --argjson schemaVersion 1 \
         --arg version "$VERSION" \
         --arg release "$release" \
-        --arg publishOverride "$publishOverride" \
+        --arg publishOverride "$PUBLISH_OVERRIDE" \
         --argjson isLatest "$isLatest" \
         '{
           schemaVersion: $schemaVersion,
