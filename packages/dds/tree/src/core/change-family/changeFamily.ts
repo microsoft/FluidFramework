@@ -13,11 +13,11 @@ import type { ChangeRebaser, RevisionTag, TaggedChange } from "../rebase/index.j
 export interface ChangeFamily<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-	// Typically may be a concrete ChangeFamily implementation such as
+	// For simplicity may be a concrete ChangeFamily implementation such as
 	// ChangeFamilyFoo implements ChangeFamily<EditorFoo, ChangeFoo, ChangeFamilyFoo>
 	// to provide all details and helpers that processFn for ChangeFoo
 	// may require, but there is no requirement to follow that pattern.
-	TContext,
+	TChangeProcessingContext,
 > {
 	buildEditor(
 		mintRevisionTag: () => RevisionTag,
@@ -28,7 +28,7 @@ export interface ChangeFamily<
 	readonly codecs: ICodecFamily<TChange, ChangeEncodingContext, ChangeDecodingContext>;
 
 	buildProcessor(
-		processFn: (change: TChange, context: TContext) => TChange,
+		processFn: (change: TChange, context: TChangeProcessingContext) => TChange,
 	): (change: TChange) => TChange;
 }
 

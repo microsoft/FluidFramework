@@ -15,6 +15,7 @@ import {
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
@@ -35,7 +36,7 @@ import { chunkFromJsonableTrees, failCodecFamily, mintRevisionTag } from "../uti
  * a function that receives the change and its owning change family and returns a change.
  */
 type DefaultChangeProcessor = ChangeProcessor<
-	(change: DefaultChangeset, changeFamily: DefaultChangeFamily) => DefaultChangeset
+	(change: DefaultChangeset, context: DefaultChangeProcessingContext) => DefaultChangeset
 >;
 
 describe("TransactionStacks", () => {
@@ -381,7 +382,7 @@ describe("SquashingTransactionStacks", () => {
 			transaction: SquashingTransactionStack<
 				DefaultEditBuilder,
 				DefaultChangeset,
-				DefaultChangeFamily
+				DefaultChangeProcessingContext
 			>;
 			branch: DefaultBranch;
 			/** A post-processor to pass via the transaction options. */
@@ -764,7 +765,7 @@ describe("SquashingTransactionStacks", () => {
 	type DefaultBranch = SharedTreeBranch<
 		DefaultEditBuilder,
 		DefaultChangeset,
-		DefaultChangeFamily
+		DefaultChangeProcessingContext
 	>;
 	const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 		jsonValidator: FormatValidatorBasic,

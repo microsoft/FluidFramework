@@ -135,10 +135,7 @@ export class ModularChangeFamily
 	}
 
 	public buildProcessor(
-		processFn: (
-			change: ModularChangeset,
-			changeFamily: ModularChangeFamily,
-		) => ModularChangeset,
+		processFn: (change: ModularChangeset, context: ModularChangeFamily) => ModularChangeset,
 	): (change: ModularChangeset) => ModularChangeset {
 		return (change: ModularChangeset) => processFn(change, this);
 	}

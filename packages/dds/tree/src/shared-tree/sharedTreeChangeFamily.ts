@@ -42,6 +42,10 @@ import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
+export interface SharedTreeChangeProcessingContext {
+	modularChangeFamily: ModularChangeFamily;
+}
+
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
  *
@@ -49,7 +53,7 @@ import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
  */
 export class SharedTreeChangeFamily
 	implements
-		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
+		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeProcessingContext>,
 		ChangeRebaser<SharedTreeChange>
 {
 	public static readonly emptyChange: SharedTreeChange = {
@@ -61,7 +65,7 @@ export class SharedTreeChangeFamily
 		ChangeEncodingContext,
 		ChangeDecodingContext
 	>;
-	public readonly modularChangeFamily: ModularChangeFamily;
+	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
 		revisionTagCodec: RevisionTagCodec,
@@ -102,10 +106,13 @@ export class SharedTreeChangeFamily
 	public buildProcessor(
 		processFn: (
 			change: SharedTreeChange,
-			changeFamily: SharedTreeChangeFamily,
+			context: SharedTreeChangeProcessingContext,
 		) => SharedTreeChange,
 	): (change: SharedTreeChange) => SharedTreeChange {
-		return (change: SharedTreeChange) => processFn(change, this);
+		return (change: SharedTreeChange) =>
+			processFn(change, {
+				modularChangeFamily: this.modularChangeFamily,
+			});
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {

@@ -30,12 +30,12 @@ import type {
 export function makeMitigatedChangeFamily<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+	TChangeProcessingContext,
 >(
-	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange, TChangeFamily>,
+	unmitigatedChangeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 	fallbackChange: TChange,
 	onError: (error: unknown) => void,
-): ChangeFamily<TEditor, TChange, TChangeFamily> {
+): ChangeFamily<TEditor, TChange, TChangeProcessingContext> {
 	return {
 		buildEditor: (
 			mintRevisionTag: () => RevisionTag,
@@ -46,7 +46,7 @@ export function makeMitigatedChangeFamily<
 		rebaser: makeMitigatedRebaser(unmitigatedChangeFamily.rebaser, fallbackChange, onError),
 		codecs: unmitigatedChangeFamily.codecs,
 		buildProcessor: (
-			processFn: (change: TChange, changeFamily: TChangeFamily) => TChange,
+			processFn: (change: TChange, context: TChangeProcessingContext) => TChange,
 		): ((change: TChange) => TChange) => {
 			const unmitigatedProcessor = unmitigatedChangeFamily.buildProcessor(processFn);
 			return (change: TChange): TChange => {

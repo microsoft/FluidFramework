@@ -64,7 +64,7 @@ export type SharedTreeBranchChange<TChange> =
 export interface SharedTreeBranchEvents<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+	TChangeProcessingContext,
 > extends BranchTrimmingEvents {
 	/**
 	 * Fired just before the head of this branch changes.
@@ -82,7 +82,7 @@ export interface SharedTreeBranchEvents<
 	 * Fired when this branch forks
 	 * @param fork - the new branch that forked off of this branch
 	 */
-	fork(fork: SharedTreeBranch<TEditor, TChange, TChangeFamily>): void;
+	fork(fork: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>): void;
 
 	/**
 	 * Fired after this branch is disposed
@@ -113,11 +113,13 @@ export interface BranchTrimmingEvents {
 export class SharedTreeBranch<
 	TEditor extends ChangeFamilyEditor,
 	TChange,
-	TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+	TChangeProcessingContext,
 > {
-	readonly #events = createEmitter<SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>>();
-	public readonly events: Listenable<SharedTreeBranchEvents<TEditor, TChange, TChangeFamily>> =
-		this.#events;
+	readonly #events =
+		createEmitter<SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>>();
+	public readonly events: Listenable<
+		SharedTreeBranchEvents<TEditor, TChange, TChangeProcessingContext>
+	> = this.#events;
 	public readonly editor: TEditor;
 	private disposed = false;
 	private readonly unsubscribeBranchTrimmer?: () => void;
@@ -131,7 +133,7 @@ export class SharedTreeBranch<
 	 */
 	public constructor(
 		private head: GraphCommit<TChange>,
-		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeFamily>,
+		public readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly branchTrimmer?: Listenable<BranchTrimmingEvents>,
 		private readonly telemetryEventBatcher?: TelemetryEventBatcher<
@@ -202,7 +204,7 @@ export class SharedTreeBranch<
 	public fork(
 		commit: GraphCommit<TChange> = this.head,
 		mintRevisionTag: () => RevisionTag = this.mintRevisionTag,
-	): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		this.assertNotDisposed();
 		const fork = new SharedTreeBranch(
 			commit,
@@ -223,7 +225,7 @@ export class SharedTreeBranch<
 	 * @returns the result of the rebase or undefined if nothing changed
 	 */
 	public rebaseOnto(
-		branch: SharedTreeBranch<TEditor, TChange, TChangeFamily>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = branch.getHead(),
 	): void {
 		this.assertNotDisposed();
@@ -299,7 +301,7 @@ export class SharedTreeBranch<
 	 * @returns the commits that were added to this branch by the merge, or undefined if nothing changed
 	 */
 	public merge(
-		branch: SharedTreeBranch<TEditor, TChange, TChangeFamily>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 	): { sourceCommits: GraphCommit<TChange>[] } | undefined {
 		this.assertNotDisposed();
 		branch.assertNotDisposed();
@@ -336,8 +338,8 @@ export class SharedTreeBranch<
 
 	/** Rebase `branchHead` onto `onto`, but return undefined if nothing changed */
 	private rebaseBranch(
-		branch: SharedTreeBranch<TEditor, TChange, TChangeFamily>,
-		onto: SharedTreeBranch<TEditor, TChange, TChangeFamily>,
+		branch: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
+		onto: SharedTreeBranch<TEditor, TChange, TChangeProcessingContext>,
 		upTo = onto.getHead(),
 	): BranchRebaseResult<TChange> | undefined {
 		const { head } = branch;

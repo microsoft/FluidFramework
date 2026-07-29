@@ -16,6 +16,7 @@ import {
 } from "../../core/index.js";
 import {
 	DefaultChangeFamily,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 } from "../../feature-libraries/index.js";
@@ -36,7 +37,7 @@ const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, {
 type DefaultBranch = SharedTreeBranch<
 	DefaultEditBuilder,
 	DefaultChangeset,
-	DefaultChangeFamily
+	DefaultChangeProcessingContext
 >;
 
 describe("Branches", () => {

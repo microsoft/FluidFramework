@@ -894,11 +894,7 @@ export function testCorrectness(): void {
 }
 
 function applyLocalCommit(
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange, never>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {

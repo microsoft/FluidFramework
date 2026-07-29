@@ -26,7 +26,7 @@ const arg2: any = "arg2";
 const arg3: any = "arg3";
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, never> = {
+const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,
@@ -69,7 +69,7 @@ const throwingFamily: ChangeFamily<ChangeFamilyEditor, string, never> = {
 		};
 	},
 };
-const returningFamily: ChangeFamily<ChangeFamilyEditor, string, never> = {
+const returningFamily: ChangeFamily<ChangeFamilyEditor, string, unknown> = {
 	buildEditor: (
 		mintRevisionTagArg: () => RevisionTag,
 		changeReceiver: (change: TaggedChange<string>) => void,

@@ -44,13 +44,15 @@ import { fieldKinds } from "./defaultFieldKinds.js";
 
 export type DefaultChangeset = ModularChangeset;
 
+export type DefaultChangeProcessingContext = ModularChangeFamily;
+
 /**
  * Implementation of {@link ChangeFamily} based on the default set of supported field kinds.
  *
  * @sealed
  */
 export class DefaultChangeFamily
-	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeFamily>
+	implements ChangeFamily<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>
 {
 	private readonly modularFamily: ModularChangeFamily;
 
@@ -88,12 +90,10 @@ export class DefaultChangeFamily
 	public buildProcessor(
 		processFn: (
 			change: DefaultChangeset,
-			changeFamily: DefaultChangeFamily,
+			context: DefaultChangeProcessingContext,
 		) => DefaultChangeset,
 	): (change: DefaultChangeset) => DefaultChangeset {
-		return this.modularFamily.buildProcessor((change, changeFamily) =>
-			processFn(change, this),
-		);
+		return this.modularFamily.buildProcessor(processFn);
 	}
 }
 

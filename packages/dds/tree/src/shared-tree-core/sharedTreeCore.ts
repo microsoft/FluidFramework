@@ -98,14 +98,14 @@ export interface EnrichmentConfig<TChange> {
 export class SharedTreeCore<
 		TEditor extends ChangeFamilyEditor,
 		TChange,
-		TChangeFamily extends ChangeFamily<TEditor, TChange, TChangeFamily>,
+		TChangeProcessingContext,
 	>
 	extends VersionedSummarizer<SharedTreeSummaryFormatVersion>
 	implements WithBreakable, Summarizable
 {
-	private readonly editManager: EditManager<TEditor, TChange, TChangeFamily>;
+	private readonly editManager: EditManager<TEditor, TChange, TChangeProcessingContext>;
 	private readonly summarizables: readonly [
-		EditManagerSummarizer<TChange, TChangeFamily>,
+		EditManagerSummarizer<TChange, TChangeProcessingContext>,
 		...Summarizable[],
 	];
 	/**
@@ -154,7 +154,7 @@ export class SharedTreeCore<
 		public readonly submitLocalMessage: (content: unknown, localOpMetadata?: unknown) => void,
 		logger: ITelemetryBaseLogger | undefined,
 		summarizables: readonly Summarizable[],
-		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeFamily>,
+		protected readonly changeFamily: ChangeFamily<TEditor, TChange, TChangeProcessingContext>,
 		options: SharedTreeCoreOptionsInternal,
 		changeFormatVersionForEditManager: DependentFormatVersion<EditManagerFormatVersion>,
 		changeFormatVersionForMessage: DependentFormatVersion<MessageFormatVersion>,
@@ -526,7 +526,7 @@ export class SharedTreeCore<
 		}
 	}
 
-	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
+	public getLocalBranch(): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch("main");
 	}
 
@@ -554,7 +554,7 @@ export class SharedTreeCore<
 
 	public getSharedBranch(
 		branchId: BranchId,
-	): SharedTreeBranch<TEditor, TChange, TChangeFamily> {
+	): SharedTreeBranch<TEditor, TChange, TChangeProcessingContext> {
 		return this.editManager.getLocalBranch(branchId);
 	}
 

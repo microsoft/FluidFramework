@@ -41,7 +41,7 @@ import {
 // eslint-disable-next-line import-x/no-internal-modules
 import { SchematizingSimpleTreeView } from "../../shared-tree/schematizingTreeView.js";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { SharedTreeChangeFamily } from "../../shared-tree/sharedTreeChangeFamily.js";
+import type { SharedTreeChangeProcessingContext } from "../../shared-tree/sharedTreeChangeFamily.js";
 import {
 	getInnerNode,
 	SchemaFactory,
@@ -888,7 +888,10 @@ describe("sharedTreeView", () => {
 			};
 			const originalStart = transactor.start.bind(transactor);
 			transactor.start = (
-				options?: SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeFamily>,
+				options?: SquashingTransactionOptions<
+					SharedTreeChange,
+					SharedTreeChangeProcessingContext
+				>,
 			): void => {
 				result.postProcessors.push(options?.postProcessor);
 				originalStart(options);

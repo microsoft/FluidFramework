@@ -12,7 +12,7 @@ import type { TransactionPostProcessor } from "../simple-tree/index.js";
 import { mapDataChanges } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { createTransactionPostProcessor } from "./transactionPostProcessor.js";
-import type { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 
 /**
  * "Minimizes" a {@link SharedTreeChange} so that it contains no extraneous
@@ -29,7 +29,7 @@ import type { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
  */
 function minimizeSharedTreeChange(
 	change: SharedTreeChange,
-	changeFamily: SharedTreeChangeFamily,
+	context: SharedTreeChangeProcessingContext,
 ): SharedTreeChange {
 	const countOfDataChanges = change.changes.filter(
 		(innerChange) => innerChange.type === "data",
@@ -40,7 +40,7 @@ function minimizeSharedTreeChange(
 		);
 	}
 	return mapDataChanges(change, (dataChange) =>
-		minimizeModularChangeset(dataChange, changeFamily.modularChangeFamily),
+		minimizeModularChangeset(dataChange, context.modularChangeFamily),
 	);
 }
 

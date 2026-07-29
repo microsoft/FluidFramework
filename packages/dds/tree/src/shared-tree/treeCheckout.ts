@@ -114,6 +114,7 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -211,7 +212,7 @@ export interface CheckoutEvents {
  * A collection of functions for managing transactions on a {@link ITreeCheckout}.
  */
 export type TreeTransactor = Transactor<
-	SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeFamily>
+	SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeProcessingContext>
 >;
 
 /**
@@ -307,11 +308,15 @@ export function createTreeCheckout(
 	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
 	args?: {
-		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>;
+		branch?: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>;
 		changeFamily?: ChangeFamily<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
-			SharedTreeChangeFamily
+			SharedTreeChangeProcessingContext
 		>;
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
@@ -507,7 +512,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private readonly revertibleCommitBranches = new Map<
 		RevisionTag,
-		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>
+		SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>
 	>();
 
 	/**
@@ -520,13 +529,17 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
 		public readonly isSharedBranch: boolean,
 		private readonly changeFamily: ChangeFamily<
 			SharedTreeEditBuilder,
 			SharedTreeChange,
-			SharedTreeChangeFamily
+			SharedTreeChangeProcessingContext
 		>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
@@ -670,11 +683,15 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private createTransactionStack(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 	): SquashingTransactionStack<
 		SharedTreeEditBuilder,
 		SharedTreeChange,
-		SharedTreeChangeFamily
+		SharedTreeChangeProcessingContext
 	> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
@@ -1204,7 +1221,7 @@ export class TreeCheckout implements ITreeCheckout {
 	#transaction: SquashingTransactionStack<
 		SharedTreeEditBuilder,
 		SharedTreeChange,
-		SharedTreeChangeFamily
+		SharedTreeChangeProcessingContext
 	>;
 
 	@throwIfBroken
@@ -1239,7 +1256,11 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public switchBranch(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeFamily>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
@@ -1669,7 +1690,7 @@ export class TreeCheckout implements ITreeCheckout {
 	public get mainBranch(): SharedTreeBranch<
 		SharedTreeEditBuilder,
 		SharedTreeChange,
-		SharedTreeChangeFamily
+		SharedTreeChangeProcessingContext
 	> {
 		return this.#transaction.branch;
 	}
