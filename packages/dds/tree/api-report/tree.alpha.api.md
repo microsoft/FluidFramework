@@ -1951,6 +1951,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 // @alpha @sealed
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
     clear(): void;
+    getOrInsert(key: string, defaultValue: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 // @public @sealed
