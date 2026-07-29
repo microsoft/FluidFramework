@@ -40,7 +40,8 @@ export interface FluidReadonlyArray<T> {
 	toString(): string;
 
 	/**
-	 * Returns a string representation of an array. The elements are converted to string using their toLocaleString methods.
+	 * @remarks
+	 * Returns a string representation of an array. The elements are converted to string using their `toLocaleString` methods.
 	 */
 	toLocaleString(): string;
 
