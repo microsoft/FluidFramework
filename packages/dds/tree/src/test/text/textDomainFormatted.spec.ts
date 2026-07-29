@@ -63,11 +63,36 @@ describe("textDomainFormatted", () => {
 		setEnableExpensiveDebugAsserts(false);
 	});
 
-	it("compatibility", () => {
+	it("compatibility-minimal", () => {
+		const scopingFactory = new SchemaFactoryBeta("minimal");
+		const currentViewSchema = new TreeViewConfiguration({
+			schema: FormattedTextAsTree.createSchema(scopingFactory, SchemaFactory.null, [], null),
+		});
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.114.0", "formattedText-minimal");
+	});
+
+	it("compatibility-basic", () => {
+		const scopingFactory = new SchemaFactoryBeta("basic");
+		class Format extends scopingFactory.object("Format", { bold: SchemaFactory.boolean }) {}
+		class Atom
+			extends scopingFactory.object("Atom", {})
+			implements FormattedTextAsTree.TextAtom
+		{
+			public readonly content: string = "x";
+		}
+		const currentViewSchema = new TreeViewConfiguration({
+			schema: FormattedTextAsTree.createSchema(scopingFactory, Format, [Atom], {
+				bold: false,
+			}),
+		});
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.114.0", "formattedText-simple");
+	});
+
+	it("compatibility-default", () => {
 		const currentViewSchema = new TreeViewConfiguration({
 			schema: FormattedTextAsTreeDefault.Tree,
 		});
-		testSchemaCompatibilitySnapshots(currentViewSchema, "2.111.0", "formattedText");
+		testSchemaCompatibilitySnapshots(currentViewSchema, "2.114.0", "formattedText-default");
 	});
 
 	it("@Smoke basic unformatted use", () => {
@@ -78,6 +103,22 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
+	});
+
+	it("fromString applies the provided format", () => {
+		const format = {
+			bold: true,
+			italic: true,
+			underline: true,
+			size: 24,
+			font: "Times New Roman",
+		};
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab", format);
+
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => ({ ...atom.format })),
+			[format, format],
+		);
 	});
 
 	describe("formatRange", () => {
