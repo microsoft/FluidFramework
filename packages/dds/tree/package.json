@@ -193,6 +193,7 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
 		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.111.0",
