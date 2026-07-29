@@ -45,6 +45,7 @@ import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/i
 
 import {
 	charactersFromString,
+	expensiveInternalValidationAssert,
 	processCharactersChangedDelta,
 	type TextAsTree,
 } from "./textDomain.js";
@@ -80,7 +81,24 @@ const formatKey: FieldKey = brand("format");
  */
 export namespace FormattedTextAsTree {
 	/**
-	 * Factory for formatted text schema as a function of the formatting and the embedded object (atom) types.
+	 * Creates a schema for a formatted text node, parameterized by the formatting and the embedded object (atom) types.
+	 *
+	 * @param inputSchemaFactory - The {@link SchemaFactoryBeta} used to scope the generated schema.
+	 * The generated types are scoped under `com.fluidframework.text.formatted<TUserScope>`, where `TUserScope` is the scope of this factory.
+	 * This scope is used to distinguish different usages of `createSchema` from each-other, and must be kept the same between versions for nodes to remain compatible.
+	 * It must be different to distinguish different formatted text schema within the same document.
+	 * @param formatSchema - Schema describing the formatting associated with each atom of text.
+	 * Use an {@link NodeKind.Object|Object node} to support {@link FormattedTextAsTree.Members.formatRange}.
+	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedTextAsTree.StringTextAtom}.
+	 * Use this to embed richer content (for example line breaks or inline objects) alongside plain characters.
+	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
+	 * (for example {@link TextAsTree.Members.insertAt} and {@link FormattedTextAsTree.Statics.fromString} when no explicit format is provided).
+	 * This is the initial value used for {@link FormattedTextAsTree.Members.defaultFormat}, but it can be reassigned on a per instance basis if desired.
+	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedTextAsTree.Members} and whose statics implement {@link FormattedTextAsTree.Statics}.
+	 * @remarks
+	 * See {@link FormattedTextAsTreeDefault} for a default parameterization of this factory.
+	 * @privateRemarks
+	 * TODO: The choice to always include the built-in `StringTextAtom` is a design decision that should be re-evaluated before stabilizing.
 	 */
 	export function createSchema<
 		const TUserScope extends string,
@@ -97,14 +115,19 @@ export namespace FormattedTextAsTree {
 		const atoms = [StringTextAtom, ...extraAtoms] as const;
 
 		const sf = createFormattedScopedFactory(inputSchemaFactory);
+
+		const defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
+			TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
+
 		class TextNode
 			extends sf.object("Text", {
 				content: SchemaFactory.required([() => StringArray], { key: EmptyKey }),
 			})
-			implements FormattedTextMembers<FormatSchema, ExtraAtomsSchema>
+			implements Members<FormatSchema, ExtraAtomsSchema>
 		{
+			// This can get modified, so give each node its own clone.
 			public defaultFormat: TreeFieldFromImplicitField<FormatSchema> =
-				TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable);
+				TreeBeta.clone(defaultFormat);
 
 			public insertAt(index: number, additionalCharacters: string): void {
 				this.content.insertAt(
@@ -123,9 +146,9 @@ export namespace FormattedTextAsTree {
 
 			public charactersCopy(): string[] {
 				const result = this.content.charactersCopy();
-				debugAssert(
+				expensiveInternalValidationAssert(
 					() =>
-						compareArrays(result, this.charactersCopy_reference()) ||
+						compareArrays(result, this.#charactersCopy_reference()) ||
 						"invalid charactersCopy optimizations",
 				);
 				return result;
@@ -137,8 +160,8 @@ export namespace FormattedTextAsTree {
 
 			public fullString(): string {
 				const result = this.content.fullString();
-				debugAssert(
-					() => result === this.fullString_reference() || "invalid fullString optimizations",
+				expensiveInternalValidationAssert(
+					() => result === this.#fullString_reference() || "invalid fullString optimizations",
 				);
 				return result;
 			}
@@ -146,31 +169,32 @@ export namespace FormattedTextAsTree {
 			/**
 			 * A non-optimized reference implementation of fullString.
 			 */
-			public fullString_reference(): string {
+			#fullString_reference(): string {
 				return [...this.characters()].join("");
 			}
 
 			/**
 			 * Unoptimized trivially correct implementation of charactersCopy.
 			 */
-			public charactersCopy_reference(): string[] {
+			#charactersCopy_reference(): string[] {
 				return [...this.characters()];
 			}
 
 			public static fromString(
 				value: string,
-				format?: TreeFieldFromImplicitField<FormatSchema>,
+				format?: InsertableTreeFieldFromImplicitField<FormatSchema>,
 			): TextNode {
+				const formatNode =
+					format === undefined
+						? defaultFormat
+						: TreeBeta.create<FormatSchema>(formatSchema, format);
 				// Use `this` rather than `TextNode` so the more derived schema class is constructed when using this as a static on a subclass.
 				return new this({
 					content: [
 						// Constructing an ArrayNode from an iterator is supported, so creating an array from the iterable of characters seems like it's not necessary here,
 						// but to reduce the risk of incorrect data interpretation, we actually ban this in the special case where the iterable is a string directly, which is the case here.
 						// Thus the array construction here is necessary to avoid a runtime error.
-						...textAtomsFromString(
-							value,
-							format ?? TreeBeta.create<FormatSchema>(formatSchema, defaultFormatInsertable),
-						),
+						...textAtomsFromString(value, formatNode),
 					],
 				});
 			}
@@ -190,21 +214,79 @@ export namespace FormattedTextAsTree {
 				end: number | undefined,
 				format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
 			): void {
-				const formatStart = start ?? 0;
-				validateIndex(formatStart, this.content, "FormattedTextAsTree.formatRange", true);
-
-				const formatEnd = Math.min(this.content.length, end ?? this.content.length);
-				validateIndexRange(
-					formatStart,
-					formatEnd,
-					this.content,
-					"FormattedTextAsTree.formatRange",
-				);
-
-				const fieldFormats = Object.entries(format) as [
+				const fieldFormatsRaw = Object.entries(format) as [
 					keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
 					unknown,
 				][];
+				const fieldFormats = fieldFormatsRaw.map(([key, value]) => {
+					// Object.entries should only return string keyed enumerable own properties.
+					// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
+					assert(
+						typeof key === "string",
+						0xcc8 /* Object.entries returned a non-string key. */,
+					);
+					return [key, value] as const;
+				});
+				this.#editRange(start, end, "FormattedTextAsTree.formatRange", (atom) => {
+					const formatNode: TreeNode | TreeValue = atom.format;
+					const atomFormatSchema = TreeStatic.schema(formatNode);
+					if (!isObjectNodeSchema(atomFormatSchema)) {
+						throw new UsageError(
+							"formatRange currently only supports object nodes for the format.",
+						);
+					}
+					for (const [key, value] of fieldFormats) {
+						const field = atomFormatSchema.fields.get(key);
+						if (field === undefined) {
+							throw new UsageError(`Unknown format key: ${key}`);
+						}
+
+						// Ensures that if the input is a node, it is cloned before being inserted into the tree.
+						// Note that since this uses field schema, `undefined` can pass through this if allowed by the schema.
+						const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
+							| TreeNode
+							| TreeValue;
+
+						(
+							formatNode as unknown as Record<
+								keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+								TreeNode | TreeValue
+							>
+						)[key] = clonedValue;
+					}
+				});
+			}
+
+			public reformat(
+				start: number | undefined,
+				end: number | undefined,
+				format: TreeFieldFromImplicitField<FormatSchema> = this.defaultFormat,
+			): void {
+				const node = TreeBeta.create<FormatSchema>(formatSchema, format as never);
+				this.#editRange(start, end, "FormattedTextAsTree.reformat", (atom) => {
+					const formatNode: TreeFieldFromImplicitField<FormatSchema> = TreeBeta.clone(node);
+					// Generics can't prove TreeFieldFromImplicitField is valid as TreeNodeFromImplicitAllowedTypes, so we have to cast:
+					atom.format = formatNode as TreeNodeFromImplicitAllowedTypes<FormatSchema>;
+				});
+			}
+
+			/**
+			 * Map an edit over a range of atoms, validating the range and running the edits in a transaction.
+			 * @remarks
+			 * This is not exposed in the API since this approach will have to be replaced when formatting is optimized,
+			 * so we don't want users to directly depend on this un-optimizable layer.
+			 */
+			#editRange(
+				start: number | undefined,
+				end: number | undefined,
+				method: string,
+				edit: (atom: StringAtom) => void,
+			): void {
+				const formatStart = start ?? 0;
+				validateIndex(formatStart, this.content, method, true);
+
+				const formatEnd = Math.min(this.content.length, end ?? this.content.length);
+				validateIndexRange(formatStart, formatEnd, this.content, method);
 
 				TreeAlpha.context(this).runTransaction(() => {
 					for (let i = formatStart; i < formatEnd; i++) {
@@ -214,39 +296,7 @@ export namespace FormattedTextAsTree {
 							atom !== undefined,
 							0xd08 /* Index out of bounds while formatting text range. */,
 						);
-						const formatNode: TreeNode | TreeValue = atom.format;
-						const atomFormatSchema = TreeStatic.schema(formatNode);
-						if (!isObjectNodeSchema(atomFormatSchema)) {
-							// TODO: redesign this API to work with all allowed FormatSchema types.
-							throw new UsageError(
-								"formatRange currently only supports object nodes for the format.",
-							);
-						}
-						for (const [key, value] of fieldFormats) {
-							// Object.entries should only return string keyed enumerable own properties.
-							// The TypeScript typing does not account for this, and thus this assertion is necessary for this code to compile.
-							assert(
-								typeof key === "string",
-								0xcc8 /* Object.entries returned a non-string key. */,
-							);
-
-							const field = atomFormatSchema.fields.get(key);
-							if (field === undefined) {
-								throw new UsageError(`Unknown format key: ${key}`);
-							}
-
-							// Ensures that if the input is a node, it is cloned before being inserted into the tree.
-							const clonedValue = TreeBeta.clone(TreeBeta.create(field, value as never)) as
-								| TreeNode
-								| TreeValue;
-
-							(
-								formatNode as unknown as Record<
-									keyof TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-									TreeNode | TreeValue
-								>
-							)[key] = clonedValue;
-						}
+						edit(atom);
 					}
 				});
 			}
@@ -466,13 +516,19 @@ export namespace FormattedTextAsTree {
 		 * @remarks
 		 * See {@link FormattedTextAsTree.Members} for the API.
 		 * See {@link FormattedTextAsTree.Statics} for static APIs on this Schema, including construction.
+		 * @privateRemarks
+		 * eraseSchemaDetailsSubclassable risks user's defining subclass members which collide with internals.
+		 * Ideally we would generate private members for non-public properties, but TypeScript does not support this.
+		 * It is up to the user of eraseSchemaDetailsSubclassable to manage this risk.
+		 *
+		 * TODO: there is at least one collision prone member to worry about here: `content`.
 		 */
 		const Tree = eraseSchemaDetailsSubclassable<
-			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
-			Statics<Tree>
+			Members<FormatSchema, ExtraAtomsSchema>,
+			Statics<Tree, FormatSchema>
 		>()(TextNode);
 		type Tree = ErasedNode<
-			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			Members<FormatSchema, ExtraAtomsSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
 		>;
 
@@ -502,6 +558,7 @@ export namespace FormattedTextAsTree {
 
 	/**
 	 * Unit in the string representing a single character.
+	 * @sealed
 	 * @internal
 	 */
 	export class StringTextAtom
@@ -522,15 +579,19 @@ export namespace FormattedTextAsTree {
 		implements TextAtom {}
 
 	/**
-	 * Statics for text nodes.
+	 * Statics for formatted text nodes.
+	 * @sealed
 	 * @internal
 	 */
-	export interface Statics<TTree> {
+	export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
 		/**
 		 * Construct a node of `this` schema from a string, where each character (as defined by iterating over the string) becomes a single character in the text node.
 		 * @remarks This combines pairs of utf-16 surrogate code units into single characters as appropriate.
 		 */
-		fromString(value: string): TTree;
+		fromString(
+			value: string,
+			format?: InsertableTreeFieldFromImplicitField<FormatSchema>,
+		): TTree;
 	}
 
 	/**
@@ -548,29 +609,41 @@ export namespace FormattedTextAsTree {
 	 *
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
 	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
+	 * @sealed
 	 * @internal
 	 */
-	export interface Members<TFormatTree, TPartialFormat, TFormattedAtom, TFormattedInsert>
-		extends TextAsTree.Members {
+	export interface Members<
+		FormatSchema extends ImplicitAllowedTypes,
+		ExtraAtomsSchema extends readonly LazyItem<
+			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
+		>[],
+	> extends TextAsTree.Members {
 		/**
 		 * Format to use by default for text inserted with non-formatted APIs.
 		 * @remarks
 		 * This is not persisted in the tree, and observation of it is not tracked by the tree observation tracking.
 		 * @privateRemarks
 		 * Opt this into observation tracking.
+		 * TODO: This being a mutable instance property is not required, and might not be the best API design choice.
 		 */
-		defaultFormat: TFormatTree;
+		defaultFormat: TreeFieldFromImplicitField<FormatSchema>;
 
 		/**
 		 * Gets an array type view of the characters currently in the text.
 		 * @remarks
 		 * This iterator matches the behavior of {@link (TreeArrayNode:interface)} with respect to edits during iteration.
+		 *
+		 * For more efficient access, use {@link FormattedTextAsTree.Members.getUniformRun} and {@link FormattedTextAsTree.Members.getString} to access ranges of characters
+		 * to avoid having to inspect the formatting on every atom.
 		 * @privateRemarks
 		 * Currently this is implemented by a node and changes with the text over time.
 		 * We might not want to leak a node like this in the API.
 		 * Providing a way to index and iterate separately might be better.
 		 */
-		charactersWithFormatting(): readonly TFormattedAtom[];
+		charactersWithFormatting(): readonly FormattedAtom<
+			TreeNodeFromImplicitAllowedTypes<FormatSchema>,
+			TreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
+		>[];
 
 		/**
 		 * Insert a range of characters into the string based on character index.
@@ -587,7 +660,12 @@ export namespace FormattedTextAsTree {
 		 */
 		insertWithFormattingAt(
 			index: number,
-			additionalCharacters: Iterable<TFormattedInsert>,
+			additionalCharacters: Iterable<
+				FormattedAtomInsertable<
+					InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>,
+					InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
+				>
+			>,
 		): void;
 
 		/**
@@ -595,13 +673,44 @@ export namespace FormattedTextAsTree {
 		 * @param startIndex - The starting index (inclusive) of the range to format.
 		 * @param endIndex - The ending index (exclusive) of the range to format.
 		 * @param format - The formatting to apply to the specified range.
+		 * For each atom, every property of `format` will be cloned and assigned to the atom's format's corresponding subtree, overwriting any existing values for those properties.
+		 * All enumerable own properties of `format` will be applied, including those with `undefined` values.
 		 * @remarks
 		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
+		 * This edits existing formatting subtrees on each atom, and only works when those atoms are object nodes.
+		 *
+		 * This is typically used to set some formatting property, like `bold` on a range of text without impacting other formatting properties.
+		 * @privateRemarks
+		 * This API is designed such that it can be optimized and improved in the future in a few different ways:
+		 * 1. TODO: It can be optimized to use lower level APIs directly, bypassing the overhead of the public API surface.
+		 * 2. TODO: A lower level editing API could be introduced and used to more efficiently express the edit (for example a bulk edit based on path, or a way to reuse the inserted content in multiple places instead of having to clone it before making the edit).
+		 * 3. TODO: Optimize the encoding of such edits, either with a dedicated format for range edits like this and/or encoding optimizations that can compress such edits over ranges to O(1) space.
+		 * 4. TODO: Preserve the range editing semantics through the whole stack to allow for better merge behavior, and make optimizations easier.
 		 */
 		formatRange(
 			startIndex: number | undefined,
 			endIndex: number | undefined,
-			format: TPartialFormat,
+			format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
+		): void;
+
+		/**
+		 * Replace formatting of a range of characters based on character index.
+		 * @param startIndex - The starting index (inclusive) of the range to format.
+		 * @param endIndex - The ending index (exclusive) of the range to format.
+		 * @param format - The formatting to replace the formatting of the indicated range with.
+		 * For each atom, `format` will be cloned and assigned to the atom's format, overwriting any existing formatting.
+		 * If not specified the {@link FormattedTextAsTree.Members.defaultFormat} will be used.
+		 * @remarks
+		 * The start and end behave the same as in {@link (TreeArrayNode:interface).removeRange}.
+		 *
+		 * This is typically used to normalize formatting, like resetting the formatting of a range to default settings.
+		 * @privateRemarks
+		 * See notes on {@link FormattedTextAsTree.Members.formatRange} for future optimization opportunities.
+		 */
+		reformat(
+			startIndex?: number | undefined,
+			endIndex?: number | undefined,
+			format?: TreeFieldFromImplicitField<FormatSchema>,
 		): void;
 
 		/**
@@ -641,6 +750,7 @@ export namespace FormattedTextAsTree {
 
 	/**
 	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
+	 * @input
 	 * @internal
 	 */
 	export interface FormattedAtomInsertable<TFormat, TContent> {
@@ -672,32 +782,8 @@ export namespace FormattedTextAsTree {
 	> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
 
 	/**
-	 * Helper for configuring {@link FormattedTextAsTree.Members}.
-	 * @privateRemarks
-	 * Eventually this should probably be inlined into `FormattedTextAsTree.Members` or made a system type in a system namespace.
-	 * The approach should be evaluated after settling on a redesign of the `formatRange` API as that will impact what the type parameters are.
-	 * @internal
-	 */
-	export type FormattedTextMembers<
-		FormatSchema extends ImplicitAllowedTypes,
-		ExtraAtomsSchema extends readonly LazyItem<
-			TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>
-		>[],
-	> = Members<
-		TreeFieldFromImplicitField<FormatSchema>,
-		Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>,
-		FormattedAtom<
-			TreeNodeFromImplicitAllowedTypes<FormatSchema>,
-			TreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
-		>,
-		FormattedAtomInsertable<
-			InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>,
-			InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms<ExtraAtomsSchema>>
-		>
-	>;
-
-	/**
 	 * A generic type for a formatted text schema.
+	 * @sealed
 	 * @internal
 	 */
 	export type FormattedTextSchema<
@@ -708,12 +794,13 @@ export namespace FormattedTextAsTree {
 		>[],
 	> = Statics<
 		ErasedNode<
-			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			Members<FormatSchema, ExtraAtomsSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
-		>
+		>,
+		FormatSchema
 	> &
 		ErasedSchemaSubclassable<
-			FormattedTextMembers<FormatSchema, ExtraAtomsSchema>,
+			Members<FormatSchema, ExtraAtomsSchema>,
 			FormattedTextSchemaIdentifier<TUserScope>
 		>;
 }

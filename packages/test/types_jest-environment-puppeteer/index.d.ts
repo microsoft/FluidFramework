@@ -9,7 +9,6 @@
 // See https://github.com/argos-ci/jest-puppeteer/issues/568.
 
 import type { Browser, BrowserContext, Page } from "puppeteer";
-
 import type { JestPuppeteerGlobal } from "jest-environment-puppeteer";
 
 declare global {

@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
+  axios@>=1 <1.16: 1.16.0
   brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
   http-proxy-middleware@>=2 <3: ^2.0.10
@@ -13,12 +14,14 @@ overrides:
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
   uuid@>=7 <12: ^11.1.1
+  websocket-driver: ^0.7.5
   ws@>=8 <9: ^8.21.0
   ws@>=7 <8: ^7.5.11
   fast-uri: ^3.1.2
   tmp: ^0.2.6
   form-data@>=4 <5: ^4.0.6
   '@azure/identity': ^4.13.0
+  '@nevware21/ts-utils': ^0.14.0
   '@types/react': ^18.3.12
   diff@>=5 <6: ^5.2.2
   js-yaml@<4: ^3.14.2
@@ -1721,9 +1724,8 @@ packages:
   '@nevware21/ts-async@0.5.4':
     resolution: {integrity: sha512-IBTyj29GwGlxfzXw2NPnzty+w0Adx61Eze1/lknH/XIVdxtF9UnOpk76tnrHXWa6j84a1RR9hsOcHQPFv9qJjA==}
 
-  '@nevware21/ts-utils@0.11.6':
-    resolution: {integrity: sha512-OUUJTh3fnaUSzg9DEHgv3d7jC+DnPL65mIO7RaR+jWve7+MmcgIvF79gY97DPQ4frH+IpNR78YAYd/dW4gK3kg==}
-    deprecated: Critical CVE-2026-46681 fixed in v0.14.0
+  '@nevware21/ts-utils@0.14.0':
+    resolution: {integrity: sha512-WoeqTIXQ8WPhl+lD2NbMHoAQ4sJl0n7EoRoDmVJui//Usg512enl9q1fdbVobuZt3omnxnmVsDrNIvPBvFgddQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2939,8 +2941,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.13.6:
-    resolution: {integrity: sha512-ChTCHMouEe2kn713WHbQGcuYrr6fXTBiu460OTwWrWob16g1bXn4vtz07Ope7ewMozJAnEquLk5lWQWtBig9DQ==}
+  axios@1.16.0:
+    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   babel-loader@9.2.1:
     resolution: {integrity: sha512-fqe8naHt46e0yIdkjUZYqddSXfej3AHajX+CSO5X7oy0EmPc6o5Xh+RClNoHjnieWz9AW4kZxW9yyFMhVB1QLA==}
@@ -4600,8 +4602,8 @@ packages:
   flatted@3.4.2:
     resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
 
-  follow-redirects@1.15.11:
-    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
+  follow-redirects@1.16.0:
+    resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -7217,8 +7219,9 @@ packages:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
 
-  proxy-from-env@1.1.0:
-    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
+  proxy-from-env@2.1.0:
+    resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
+    engines: {node: '>=10'}
 
   ps-tree@1.2.0:
     resolution: {integrity: sha512-0VnamPPYHl4uaU/nSFeZZpR21QAWRz+sRv4iW9+v/GS/J5U5iZB5BNN6J0RMoOvdx2gWM2+ZFMIm58q24e4UYA==}
@@ -8651,8 +8654,8 @@ packages:
     peerDependencies:
       webpack: 3 || 4 || 5
 
-  websocket-driver@0.7.4:
-    resolution: {integrity: sha512-b17KeDIQVjvb0ssuSDF2cYXSg2iztliJ4B9WdsuB6J952qCPKmnVq4DyW5motImXHDC1cBT/1UezrJVsKw5zjg==}
+  websocket-driver@0.7.5:
+    resolution: {integrity: sha512-ZL2+3c7kMBdIRCMz6l8jQMHyGVxj+UL+xVk74Ombiciboca8rHa15L86B19E5oh1pL9Ii/uj54gtsIrZGMo6zA==}
     engines: {node: '>=0.8.0'}
 
   websocket-extensions@0.1.4:
@@ -11411,7 +11414,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-cfgsync-js@3.3.4(tslib@2.8.1)':
@@ -11421,7 +11424,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-channel-js@3.3.4(tslib@2.8.1)':
@@ -11431,7 +11434,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-common@3.3.4(tslib@2.8.1)':
@@ -11439,7 +11442,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-core-js@3.3.4(tslib@2.8.1)':
@@ -11447,7 +11450,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-dependencies-js@3.3.4(tslib@2.8.1)':
@@ -11457,7 +11460,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-properties-js@3.3.4(tslib@2.8.1)':
@@ -11466,7 +11469,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-react-js@17.3.4(history@4.10.1)(react@18.3.1)(tslib@2.8.1)':
@@ -11475,14 +11478,14 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       history: 4.10.1
       react: 18.3.1
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-shims@3.0.1':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
   '@microsoft/applicationinsights-web@3.3.4(tslib@2.8.1)':
     dependencies:
@@ -11496,12 +11499,12 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/dynamicproto-js@2.0.3':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
   '@microsoft/tsdoc-config@0.17.1':
     dependencies:
@@ -11521,9 +11524,9 @@ snapshots:
 
   '@nevware21/ts-async@0.5.4':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
-  '@nevware21/ts-utils@0.11.6': {}
+  '@nevware21/ts-utils@0.14.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -12940,11 +12943,11 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios@1.13.6(debug@4.3.7):
+  axios@1.16.0(debug@4.3.7):
     dependencies:
-      follow-redirects: 1.15.11(debug@4.3.7)
+      follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
-      proxy-from-env: 1.1.0
+      proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
 
@@ -14892,7 +14895,7 @@ snapshots:
 
   faye-websocket@0.11.4:
     dependencies:
-      websocket-driver: 0.7.4
+      websocket-driver: 0.7.5
 
   fd-slicer@1.1.0:
     dependencies:
@@ -14998,7 +15001,7 @@ snapshots:
 
   flatted@3.4.2: {}
 
-  follow-redirects@1.15.11(debug@4.3.7):
+  follow-redirects@1.16.0(debug@4.3.7):
     optionalDependencies:
       debug: 4.3.7
 
@@ -18113,7 +18116,7 @@ snapshots:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
 
-  proxy-from-env@1.1.0: {}
+  proxy-from-env@2.1.0: {}
 
   ps-tree@1.2.0:
     dependencies:
@@ -18973,7 +18976,7 @@ snapshots:
     dependencies:
       faye-websocket: 0.11.4
       uuid: 11.1.1
-      websocket-driver: 0.7.4
+      websocket-driver: 0.7.5
 
   sort-css-media-queries@2.2.0: {}
 
@@ -19831,7 +19834,7 @@ snapshots:
 
   wait-on@7.2.0(debug@4.3.7):
     dependencies:
-      axios: 1.13.6(debug@4.3.7)
+      axios: 1.16.0(debug@4.3.7)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -19841,7 +19844,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
-      axios: 1.13.6(debug@4.3.7)
+      axios: 1.16.0(debug@4.3.7)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -19991,7 +19994,7 @@ snapshots:
       webpack: 5.96.1
       wrap-ansi: 7.0.0
 
-  websocket-driver@0.7.4:
+  websocket-driver@0.7.5:
     dependencies:
       http-parser-js: 0.5.8
       safe-buffer: 5.2.1
