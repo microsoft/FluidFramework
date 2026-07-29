@@ -21,7 +21,7 @@ class MockLogger extends TelemetryLogger implements TelemetryLoggerExt {
 		super();
 	}
 
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		if (event.category === "error") {
 			++this.errorsLogged;
 		}

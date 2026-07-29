@@ -19,7 +19,7 @@ import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 class TestTelemetryLogger extends TelemetryLogger {
 	public events: ITelemetryBaseEvent[] = [];
 	public logLevels: (LogLevel | undefined)[] = [];
-	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+	public send(event: ITelemetryBaseEvent, logLevel: LogLevel): void {
 		this.events.push(this.prepareEvent(event));
 		this.logLevels.push(logLevel);
 	}
@@ -57,7 +57,7 @@ describe("TelemetryLogger", () => {
 		it("send", () => {
 			for (const props of propertyCases) {
 				const logger = new TestTelemetryLogger("namespace", props);
-				logger.send({ category: "anything", eventName: "whatever" });
+				logger.send({ category: "anything", eventName: "whatever" }, LogLevel.essential);
 				assert.strictEqual(logger.events.length, 1);
 				const event = logger.events[0];
 				assert.strictEqual(event.category, "anything");
