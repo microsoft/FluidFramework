@@ -112,4 +112,20 @@ describe("ComparisonForest", () => {
 		assert.equal(reference.isEmpty, false);
 		assertForestsEqual(main, reference);
 	});
+
+	it("detects differences introduced through an underlying forest", () => {
+		const schema = new TreeStoredSchemaRepository(jsonSequenceRootSchema);
+		const main = buildChunkedForest(
+			makeTreeChunker(schema, defaultSchemaPolicy, defaultIncrementalEncodingPolicy),
+		);
+		const reference = buildForest(new Breakable("reference"), schema);
+		const forest = new ComparisonForest(main, reference);
+
+		initializeForest(main, fieldJsonCursor([1, 2, 3]), testRevisionTagCodec, testIdCompressor);
+
+		assert.throws(
+			() => forest.acquireVisitor(),
+			validateAssertionError(/Forests are not equal/),
+		);
+	});
 });

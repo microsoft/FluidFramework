@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, fail } from "@fluidframework/core-utils/internal";
+import { assert, fail, oob } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -166,8 +166,8 @@ function treesEqual(a: JsonableTree, b: JsonableTree): boolean {
 			return false;
 		}
 		for (const [index, aChild] of aField.entries()) {
-			const bChild = bField[index];
-			if (bChild === undefined || !treesEqual(aChild, bChild)) {
+			const bChild = bField[index] ?? oob();
+			if (!treesEqual(aChild, bChild)) {
 				return false;
 			}
 		}

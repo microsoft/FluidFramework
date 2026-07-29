@@ -53,7 +53,13 @@ export class ComparisonForest implements IEditableForest {
 	public constructor(
 		public readonly main: IEditableForest,
 		public readonly reference: IEditableForest,
-	) {}
+	) {
+		this.assertValid();
+	}
+
+	private assertValid(): void {
+		assertForestsEqual(this.main, this.reference);
+	}
 
 	public get events(): Listenable<ForestEvents> {
 		return this.main.events;
@@ -68,6 +74,7 @@ export class ComparisonForest implements IEditableForest {
 	}
 
 	public clone(schema: TreeStoredSchemaSubscription, breaker?: Breakable): ComparisonForest {
+		this.assertValid();
 		return new ComparisonForest(
 			this.main.clone(schema, breaker),
 			this.reference.clone(schema, breaker),
@@ -119,13 +126,14 @@ export class ComparisonForest implements IEditableForest {
 	}
 
 	public acquireVisitor(): DeltaVisitor {
+		this.assertValid();
 		const main = this.main;
 		const reference = this.reference;
 		const mainVisitor = main.acquireVisitor();
 		const referenceVisitor = reference.acquireVisitor();
 		// A visitor which does nothing except assert the two forests match once the delta has been fully applied to both.
 		const comparisonVisitor = createAnnouncedVisitor({
-			free: () => assertForestsEqual(main, reference),
+			free: () => this.assertValid(),
 		});
 		return combineVisitors([mainVisitor, referenceVisitor, comparisonVisitor]);
 	}
