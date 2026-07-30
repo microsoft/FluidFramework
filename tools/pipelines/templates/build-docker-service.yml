@@ -483,12 +483,9 @@ extends:
                   # Keep schema version 1 until ff_publishing accepts version 2. Its current validator ignores
                   # unknown fields, so this optional ownership declaration is independently mergeable.
                   schemaVersion: 1
-                  emitPublishedByProducer: true
-                  # The producer owns its npm publication bundle: internal test/build/dev feeds are active.
-                  # Public npmjs.org is intentionally disabled by allowPublishingToNpmjs's false default.
-                  publishedByProducerNpm: true
-                  # Checkpoint 1 keeps the legacy official Docker publication stage active.
-                  publishedByProducerDocker: true
+                  emitPublishAsPartOfBuild: true
+                  # Checkpoint 1 keeps the legacy npm and official Docker publication stages active.
+                  publishAsPartOfBuild: true
                 # A docker-only release publishes no npm packages.
                 ${{ if eq(parameters.releaseKind, 'docker') }}:
                   publishOverride: skip

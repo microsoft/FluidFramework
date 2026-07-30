@@ -7,13 +7,10 @@ parameters:
 - name: schemaVersion
   type: number
   default: 1
-- name: emitPublishedByProducer
+- name: emitPublishAsPartOfBuild
   type: boolean
   default: false
-- name: publishedByProducerNpm
-  type: boolean
-  default: false
-- name: publishedByProducerDocker
+- name: publishAsPartOfBuild
   type: boolean
   default: false
 
@@ -27,9 +24,8 @@ steps:
     PUBLISH_OVERRIDE: ${{ parameters.publishOverride }}
     IS_LATEST: $(SetVersion.isLatest)
     SCHEMA_VERSION: ${{ parameters.schemaVersion }}
-    EMIT_PUBLISHED_BY_PRODUCER: ${{ parameters.emitPublishedByProducer }}
-    PUBLISHED_BY_PRODUCER_NPM: ${{ parameters.publishedByProducerNpm }}
-    PUBLISHED_BY_PRODUCER_DOCKER: ${{ parameters.publishedByProducerDocker }}
+    EMIT_PUBLISH_AS_PART_OF_BUILD: ${{ parameters.emitPublishAsPartOfBuild }}
+    PUBLISH_AS_PART_OF_BUILD: ${{ parameters.publishAsPartOfBuild }}
   inputs:
     targetType: inline
     workingDirectory: $(Build.ArtifactStagingDirectory)/pack
@@ -67,16 +63,15 @@ steps:
           ;;
       esac
 
-      publishedByProducerNpm=false
-      publishedByProducerDocker=false
+      publishAsPartOfBuild=false
 
       case "$SCHEMA_VERSION" in
         1)
-          case "$EMIT_PUBLISHED_BY_PRODUCER" in
-            true|True) emitPublishedByProducer=true ;;
-            false|False) emitPublishedByProducer=false ;;
+          case "$EMIT_PUBLISH_AS_PART_OF_BUILD" in
+            true|True) emitPublishAsPartOfBuild=true ;;
+            false|False) emitPublishAsPartOfBuild=false ;;
             *)
-              echo "##vso[task.logissue type=error]Invalid emitPublishedByProducer value '$EMIT_PUBLISHED_BY_PRODUCER'"
+              echo "##vso[task.logissue type=error]Invalid emitPublishAsPartOfBuild value '$EMIT_PUBLISH_AS_PART_OF_BUILD'"
               exit 1
               ;;
           esac
@@ -86,7 +81,7 @@ steps:
             echo "##vso[task.logissue type=error]Invalid version '$VERSION' for publish metadata schema version 2"
             exit 1
           fi
-          emitPublishedByProducer=true
+          emitPublishAsPartOfBuild=true
           ;;
         *)
           echo "##vso[task.logissue type=error]Unsupported publish metadata schema version '$SCHEMA_VERSION'"
@@ -94,21 +89,12 @@ steps:
           ;;
       esac
 
-      if [ "$emitPublishedByProducer" = "true" ]; then
-        case "$PUBLISHED_BY_PRODUCER_NPM" in
-          true|True) publishedByProducerNpm=true ;;
-          false|False) publishedByProducerNpm=false ;;
+      if [ "$emitPublishAsPartOfBuild" = "true" ]; then
+        case "$PUBLISH_AS_PART_OF_BUILD" in
+          true|True) publishAsPartOfBuild=true ;;
+          false|False) publishAsPartOfBuild=false ;;
           *)
-            echo "##vso[task.logissue type=error]Invalid publishedByProducer.npm value '$PUBLISHED_BY_PRODUCER_NPM'"
-            exit 1
-            ;;
-        esac
-
-        case "$PUBLISHED_BY_PRODUCER_DOCKER" in
-          true|True) publishedByProducerDocker=true ;;
-          false|False) publishedByProducerDocker=false ;;
-          *)
-            echo "##vso[task.logissue type=error]Invalid publishedByProducer.docker value '$PUBLISHED_BY_PRODUCER_DOCKER'"
+            echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '$PUBLISH_AS_PART_OF_BUILD'"
             exit 1
             ;;
         esac
@@ -120,20 +106,16 @@ steps:
         --arg release "$release" \
         --arg publishOverride "$PUBLISH_OVERRIDE" \
         --argjson isLatest "$isLatest" \
-        --argjson emitPublishedByProducer "$emitPublishedByProducer" \
-        --argjson publishedByProducerNpm "$publishedByProducerNpm" \
-        --argjson publishedByProducerDocker "$publishedByProducerDocker" \
+        --argjson emitPublishAsPartOfBuild "$emitPublishAsPartOfBuild" \
+        --argjson publishAsPartOfBuild "$publishAsPartOfBuild" \
         '{
           schemaVersion: $schemaVersion,
           version: $version,
           release: $release,
           publishOverride: $publishOverride,
           isLatest: $isLatest
-        } + if $emitPublishedByProducer then {
-          publishedByProducer: {
-            npm: $publishedByProducerNpm,
-            docker: $publishedByProducerDocker
-          }
+        } + if $emitPublishAsPartOfBuild then {
+          publishAsPartOfBuild: $publishAsPartOfBuild
         } else {} end' > publish-metadata.json
 
       echo "Generated publish-metadata.json:"
