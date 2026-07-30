@@ -27,9 +27,9 @@ export const LayerCompatibilityPolicyWindowMonths = {
 	 */
 	DriverLoader: 12,
 	/**
-	 * Loader is compatible with Driver versions up to 3 months (or generations) older.
+	 * Loader is compatible with Driver versions up to 12 months (or generations) older.
 	 */
-	LoaderDriver: 3,
+	LoaderDriver: 12,
 	/**
 	 * Runtime is compatible with Loader versions up to 12 months (or generations) older.
 	 */

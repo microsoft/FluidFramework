@@ -10,14 +10,17 @@ import {
 	isCodeCoverageCriteriaPassed,
 } from "../../codeCoverage/compareCodeCoverage.js";
 import { getCommentForCodeCoverageDiff } from "../../codeCoverage/getCommentForCodeCoverage.js";
-import type { IAzureDevopsBuildCoverageConstants } from "../../library/azureDevops/constants.js";
+import {
+	fluidframeworkAdoOrgUrl,
+	type IAzureDevopsBuildCoverageConstants,
+} from "../../library/azureDevops/constants.js";
+import { BaseCommand } from "../../library/commands/base.js";
 import {
 	createOrUpdateCommentOnPr,
 	type GitHubProps,
 	getChangedFilePaths,
 	getCommentBody,
 } from "../../library/githubRest.js";
-import { BaseCommand } from "../../library/index.js";
 
 // Unique identifier for the comment made on the PR. This is used to identify the comment
 // and update it based on a new build.
@@ -78,7 +81,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 
 		const artifactNamePrefix = "Code Coverage Report";
 		const codeCoverageConstantsForBaseline: IAzureDevopsBuildCoverageConstants = {
-			orgUrl: "https://dev.azure.com/fluidframework",
+			orgUrl: fluidframeworkAdoOrgUrl,
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdBaseline,
 			artifactName: artifactNamePrefix,
@@ -87,7 +90,7 @@ export default class ReportCodeCoverageCommand extends BaseCommand<
 		};
 
 		const codeCoverageConstantsForPR: IAzureDevopsBuildCoverageConstants = {
-			orgUrl: "https://dev.azure.com/fluidframework",
+			orgUrl: fluidframeworkAdoOrgUrl,
 			projectName: "public",
 			ciBuildDefinitionId: flags.adoCIBuildDefinitionIdPR,
 			artifactName: artifactNamePrefix,

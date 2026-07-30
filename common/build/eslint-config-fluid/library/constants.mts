@@ -21,7 +21,7 @@ import type { Linter } from "eslint";
  *
  * @remarks
  * All `@fluid-` scopes could probably allow `/**` as entrypoint structuring rules do
- * NOT apply. Currently there are no known uses of structured imports from these scopes;
+ * NOT apply. Currently only known uses of structured imports are from -internal scope;
  * so, no broad allowances are stated.
  */
 export const permittedImports = [
@@ -32,6 +32,9 @@ export const permittedImports = [
 
 	// Experimental package APIs and exports are unknown, so allow any imports from them.
 	"@fluid-experimental/**",
+
+	// Internal packages may structure their exports arbitrarily, so allow any imports from them.
+	"@fluid-internal/**",
 
 	// Allow imports from sibling and ancestral sibling directories,
 	// but not from cousin directories. Parent is allowed but only

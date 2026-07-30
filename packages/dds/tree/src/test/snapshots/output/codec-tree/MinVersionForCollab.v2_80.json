@@ -49,14 +49,8 @@
               ]
             },
             {
-              "name": "SchemaChange",
-              "version": 1,
-              "children": [
-                {
-                  "name": "Schema",
-                  "version": 2
-                }
-              ]
+              "name": "Schema",
+              "version": 2
             }
           ]
         }
@@ -97,14 +91,8 @@
               ]
             },
             {
-              "name": "SchemaChange",
-              "version": 1,
-              "children": [
-                {
-                  "name": "Schema",
-                  "version": 2
-                }
-              ]
+              "name": "Schema",
+              "version": 2
             }
           ]
         }

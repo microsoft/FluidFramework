@@ -47,7 +47,7 @@ steps:
     WORK_FOLDER: $(Agent.TempDirectory)/stageTimingAndResult
   inputs:
     targetType: 'inline'
-    workingDirectory: $(Build.SourcesDirectory)
+    workingDirectory: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)
     script: |
       set -eu -o pipefail
 

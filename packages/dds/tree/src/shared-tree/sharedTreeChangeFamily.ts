@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
 import {
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
@@ -55,7 +56,11 @@ export class SharedTreeChangeFamily
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
+	public readonly codecs: ICodecFamily<
+		SharedTreeChange,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
@@ -168,6 +173,7 @@ export class SharedTreeChangeFamily
 		change: TaggedChange<SharedTreeChange>,
 		over: TaggedChange<SharedTreeChange>,
 		revisionMetadata: RevisionMetadataSource,
+		ignoreNoChangeViolation?: boolean,
 	): SharedTreeChange {
 		if (change.change.changes.length === 0 || over.change.changes.length === 0) {
 			return change.change;
@@ -204,6 +210,7 @@ export class SharedTreeChangeFamily
 						mapTaggedChange(change, dataChangeIntention.innerChange),
 						mapTaggedChange(over, dataChangeOver.innerChange),
 						revisionMetadata,
+						ignoreNoChangeViolation,
 					),
 				},
 			],
@@ -243,7 +250,13 @@ export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
 
-function mapDataChanges(
+/**
+ * Applies a mapping function to all data changes within a {@link SharedTreeChange}.
+ * @param change - The change to map over.
+ * @param map - The mapping function to apply to each data change.
+ * @returns A new {@link SharedTreeChange} with the mapped data changes.
+ */
+export function mapDataChanges(
 	change: SharedTreeChange,
 	map: (change: ModularChangeset) => ModularChangeset,
 ): SharedTreeChange {

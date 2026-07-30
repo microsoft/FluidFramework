@@ -98,6 +98,18 @@ describe("SchemaFactory Recursive methods", () => {
 				allowUnused<requireAssignableTo<typeof arrayOfAnnotated, typeof fieldArray>>();
 			}
 		});
+
+		describe("stagedOptionalRecursive", () => {
+			const field = SchemaFactoryAlpha.stagedOptional(SchemaFactoryAlpha.number);
+
+			const fieldRecursive = SchemaFactoryAlpha.stagedOptionalRecursive(
+				SchemaFactoryAlpha.number,
+			);
+
+			{
+				allowUnused<requireTrue<areSafelyAssignable<typeof field, typeof fieldRecursive>>>();
+			}
+		});
 	});
 
 	describe("objectRecursive", () => {
@@ -1050,7 +1062,6 @@ describe("SchemaFactory Recursive methods", () => {
 				// Check constructor
 				type TBuild = NodeBuilderData<typeof RecordRecursive>;
 				type _check2 = requireAssignableTo<RecordRecursive, TBuild>;
-				// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 				type _check3 = requireAssignableTo<{}, TBuild>;
 				type _check4 = requireAssignableTo<{ a: RecordRecursive }, TBuild>;
 				type _check5 = requireAssignableTo<Record<string, TInsert>, TBuild>;
@@ -1175,7 +1186,31 @@ describe("SchemaFactory Recursive methods", () => {
 			>();
 		});
 
-		it("minimal use: already staged", () => {
+		it("multiple types", () => {
+			const types = SchemaFactoryAlpha.typesRecursive([
+				SchemaFactoryAlpha.number,
+				SchemaFactoryAlpha.string,
+			]);
+
+			allowUnused<requireAssignableTo<typeof types, ImplicitAllowedTypes>>();
+			allowUnused<requireAssignableTo<typeof types, AllowedTypes>>();
+
+			allowUnused<
+				requireTrue<
+					areSafelyAssignable<
+						typeof types,
+						AllowedTypesFull<
+							readonly [
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.number>,
+								AnnotatedAllowedType<typeof SchemaFactoryAlpha.string>,
+							]
+						>
+					>
+				>
+			>();
+		});
+
+		it("minimal use: already annotated", () => {
 			const ref = {
 				type: () => SchemaFactoryAlpha.number,
 				metadata: {},
@@ -1196,6 +1231,59 @@ describe("SchemaFactory Recursive methods", () => {
 			>();
 		});
 
+		it("unannotated not actually recursive", () => {
+			const factory = new SchemaFactoryAlpha("");
+
+			//  one type
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.number]);
+				class Recursive extends factory.arrayRecursive("Recursive", types) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+				const node2 = new Recursive([2]);
+				const popped = node2[0];
+				// Current compiler settings for tests don't include undefined here, but adding it if required by compiler is valid.
+				type _check2 = requireTrue<areSafelyAssignable<typeof popped, number>>;
+
+				type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+					typeof types
+				>;
+				allowUnused<requireAssignableTo<number, Insertable>>();
+			}
+
+			//  more than one type, end to end
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
+				class Recursive extends factory.arrayRecursive("Recursive", types) {}
+
+				allowUnused<ValidateRecursiveSchema<typeof Recursive>>();
+
+				const node = new Recursive([]);
+				const node2 = new Recursive([2, "2"]);
+				const popped = node2[0];
+				// Current compiler settings for tests don't include undefined here, but adding it if required by compiler is valid.
+				allowUnused<requireTrue<areSafelyAssignable<typeof popped, string | number>>>();
+			}
+
+			//  more than one type, minimal
+			{
+				const types = SchemaFactoryAlpha.typesRecursive([factory.string, factory.number]);
+				const schema = factory.arrayRecursive("Recursive", types);
+				type Builder = ConstructorParameters<typeof schema>[0];
+				allowUnused<requireAssignableTo<number[], Builder>>();
+
+				// The bug which these various more than one type tests detected turned out to be in System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe
+				// See its unit tests for more details.
+				type Insertable = System_Unsafe.InsertableTreeNodeFromImplicitAllowedTypesUnsafe<
+					typeof types
+				>;
+				allowUnused<requireAssignableTo<number, Insertable>>();
+				allowUnused<requireAssignableTo<string, Insertable>>();
+			}
+		});
+
 		it("recursive unannotated", () => {
 			const factory = new SchemaFactoryAlpha("");
 
@@ -1205,11 +1293,32 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 			}
 
+			// No "types" wrapper, more than one type
+			{
+				class Recursive extends factory.arrayRecursive("Recursive", [
+					factory.string,
+					() => Recursive,
+				]) {}
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+			}
+
 			//  "types" wrapper
 			{
 				class Recursive extends factory.arrayRecursive(
 					"Recursive",
 					SchemaFactoryAlpha.typesRecursive([() => Recursive]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			//  "types" wrapper, more than one type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([factory.string, () => Recursive]),
 				) {}
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
@@ -1231,10 +1340,41 @@ describe("SchemaFactory Recursive methods", () => {
 				type _check = ValidateRecursiveSchema<typeof Recursive>;
 			}
 
+			// Valid
 			{
 				class Recursive extends factory.arrayRecursive(
 					"Recursive",
 					SchemaFactoryAlpha.typesRecursive([{ type: () => Recursive, metadata: {} }]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			// Valid with second type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([
+						factory.string,
+						{ type: () => Recursive, metadata: {} },
+					]),
+				) {}
+
+				type _check = ValidateRecursiveSchema<typeof Recursive>;
+
+				const node = new Recursive([]);
+			}
+
+			// Valid with second annotated type
+			{
+				class Recursive extends factory.arrayRecursive(
+					"Recursive",
+					SchemaFactoryAlpha.typesRecursive([
+						{ type: () => factory.string, metadata: {} },
+						{ type: () => Recursive, metadata: {} },
+					]),
 				) {}
 
 				type _check = ValidateRecursiveSchema<typeof Recursive>;

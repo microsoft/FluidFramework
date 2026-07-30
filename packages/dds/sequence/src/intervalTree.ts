@@ -3,15 +3,15 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IRBAugmentation,
 	IRBMatcher,
 	RBNode,
 	RBNodeActions,
-	RedBlackTree,
 } from "@fluidframework/merge-tree/internal";
+import { RedBlackTree } from "@fluidframework/merge-tree/internal";
 
-import { ISerializableInterval } from "./intervals/index.js";
+import type { ISerializableInterval } from "./intervals/index.js";
 
 export interface AugmentedIntervalNode {
 	minmax: ISerializableInterval;

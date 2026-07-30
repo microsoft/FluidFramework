@@ -23,5 +23,11 @@
 		{
 			"path": "../..",
 		},
+		{
+			"path": "../../tsconfig.crossPackage.node16.json",
+		},
+		{
+			"path": "../../tsconfig.crossPackage.bundler.json",
+		},
 	],
 }

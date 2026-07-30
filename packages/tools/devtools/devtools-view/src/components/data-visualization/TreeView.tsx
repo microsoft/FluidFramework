@@ -4,7 +4,7 @@
  */
 
 import type { HasContainerKey, VisualTreeNode } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
@@ -21,7 +21,7 @@ export interface TreeViewProps
 /**
  * Render data with type VisualNodeKind.TreeNode and render its children.
  */
-export function TreeView(props: TreeViewProps): React.ReactElement {
+export function TreeView(props: TreeViewProps): ReactElement {
 	const { containerKey, label, node } = props;
 	const metadata = JSON.stringify(node.metadata);
 

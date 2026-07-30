@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { BrandedType } from "@fluidframework/core-interfaces/internal";
+import type { BrandedType } from "@fluidframework/core-interfaces";
 
 import { createInstanceOf } from "./testUtils.js";
 import type { BrandedString } from "./testValues.js";
@@ -13,8 +13,6 @@ import {
 	brandedObject,
 	brandedObjectWithString,
 } from "./testValues.js";
-
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports -- incorrect rule: misunderstands `declare`d types.
 
 function parameterAcceptedAs<T>(_t: T): void {
 	// Do nothing.  Used to verify type compatibility.

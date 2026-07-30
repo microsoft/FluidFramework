@@ -14,7 +14,6 @@ import { Coordinate } from "@fluid-example/multiview-coordinate-model";
 import { BaseContainerRuntimeFactory } from "@fluidframework/aqueduct/legacy";
 import type { IContainerRuntime } from "@fluidframework/container-runtime-definitions/legacy";
 import type { FluidObject } from "@fluidframework/core-interfaces";
-import * as React from "react";
 
 import { DefaultView } from "./defaultView.js";
 
@@ -72,7 +71,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					containerRuntime,
 					constellationComponentName,
 				);
-				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-disable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 				const view = (
 					<DefaultView
 						simpleCoordinate={simpleCoordinate}
@@ -93,7 +92,7 @@ export class CoordinateContainerRuntimeFactory extends BaseContainerRuntimeFacto
 					getDefaultDataObject: async (): Promise<FluidObject> => ({}),
 					getMountableDefaultView,
 				};
-				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/explicit-function-return-type */
+				/* eslint-enable @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment */
 			},
 		});
 	}

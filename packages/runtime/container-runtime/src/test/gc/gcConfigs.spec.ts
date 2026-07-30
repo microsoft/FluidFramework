@@ -120,12 +120,12 @@ describe("Garbage Collection configurations", () => {
 			updateTombstonedRoutes: (tombstoneRoutes: string[]) => {},
 			getNodeType,
 			getCurrentReferenceTimestampMs: () => Date.now(),
-			closeFn,
 		};
 
 		return GarbageCollector.create({
 			...createParams,
 			runtime: gcRuntime,
+			closeFn,
 			gcOptions: createParams.gcOptions ?? {},
 			baseSnapshot: createParams.baseSnapshot,
 			baseLogger: createChildLogger({ logger: mc.logger }),

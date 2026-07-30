@@ -6,7 +6,7 @@
 /**
  * Recommended ESLint rules.
  *
- * This module contains rules that extend the minimal-deprecated configuration.
+ * This module contains rules that extend the base configuration.
  * The recommended config adds stricter type safety rules, unicorn/recommended overrides,
  * and enables rules that were disabled at lower levels. This is the standard config
  * for most Fluid Framework packages.
@@ -175,6 +175,13 @@ export const recommendedRules = {
 	 */
 	"@typescript-eslint/no-unsafe-return": "error",
 
+	/**
+	 * Requires eslint-disable comments to include a description explaining why the rule is being disabled.
+	 *
+	 * Docs: {@link https://eslint-community.github.io/eslint-plugin-eslint-comments/rules/require-description.html}
+	 */
+	"@eslint-community/eslint-comments/require-description": "warn",
+
 	// #region eslint-plugin-jsdoc rules
 
 	/**
@@ -182,6 +189,8 @@ export const recommendedRules = {
 	 * See <https://github.com/gajus/eslint-plugin-jsdoc#user-content-eslint-plugin-jsdoc-rules-require-description>
 	 */
 	"jsdoc/require-description": ["error", { checkConstructors: false }],
+
+	// #endregion
 
 	/**
 	 * Requires that type-only exports be done using `export type`. Being explicit allows the TypeScript
@@ -204,6 +213,4 @@ export const recommendedRules = {
 	 * @see {@link https://typescript-eslint.io/rules/consistent-type-imports/}
 	 */
 	"@typescript-eslint/consistent-type-imports": ["error", { fixStyle: "separate-type-imports" }],
-
-	// #endregion
 } as const satisfies Linter.RulesRecord;

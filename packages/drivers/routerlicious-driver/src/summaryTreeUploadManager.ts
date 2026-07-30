@@ -5,13 +5,16 @@
 
 import { IsoBuffer, Uint8ArrayToString, gitHashFile } from "@fluid-internal/client-utils";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import { ISummaryTree, SummaryObject, SummaryType } from "@fluidframework/driver-definitions";
-import type { IGitCreateTreeEntry } from "@fluidframework/driver-definitions/internal";
-import { ISnapshotTreeEx } from "@fluidframework/driver-definitions/internal";
+import type { ISummaryTree, SummaryObject } from "@fluidframework/driver-definitions";
+import { SummaryType } from "@fluidframework/driver-definitions";
+import type {
+	IGitCreateTreeEntry,
+	ISnapshotTreeEx,
+} from "@fluidframework/driver-definitions/internal";
 import { getGitMode, getGitType } from "@fluidframework/driver-utils/internal";
-import { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
+import type { IWholeSummaryPayloadType } from "@fluidframework/server-services-client";
 
-import { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
+import type { IGitManager, ISummaryUploadManager } from "./storageContracts.js";
 
 /**
  * Recursively writes summary tree as individual summary blobs.
@@ -67,7 +70,7 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 			}
 			case SummaryType.Handle: {
 				if (previousFullSnapshot === undefined) {
-					throw Error("Parent summary does not exist to reference by handle.");
+					throw new Error("Parent summary does not exist to reference by handle.");
 				}
 				return this.getIdFromPath(object.handleType, object.handle, previousFullSnapshot);
 			}
@@ -78,8 +81,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 				return object.id;
 			}
 
-			default:
+			default: {
 				unreachableCase(object, `Unknown type: ${(object as any).type}`);
+			}
 		}
 	}
 
@@ -142,8 +146,9 @@ export class SummaryTreeUploadManager implements ISummaryUploadManager {
 					);
 					return tryId;
 				}
-				default:
-					throw Error(`Unexpected handle summary object type: "${handleType}".`);
+				default: {
+					throw new Error(`Unexpected handle summary object type: "${handleType}".`);
+				}
 			}
 		}
 		return this.getIdFromPathCore(handleType, path.slice(1), previousSnapshot.trees[key]);

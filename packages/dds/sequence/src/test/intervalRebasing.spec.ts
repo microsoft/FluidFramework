@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { Side } from "@fluidframework/merge-tree/internal";
 import { useStrictPartialLengthChecks } from "@fluidframework/merge-tree/internal/test";

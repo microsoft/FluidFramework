@@ -208,12 +208,12 @@ export class TestClientLogger {
 
 	private addNewLogLine(): void {
 		if (this.incrementalLog) {
-			while (this.roundLogLines.length > 0) {
-				const logLine = this.roundLogLines.shift();
-				if (logLine?.some((c) => c.trim().length > 0)) {
+			for (const logLine of this.roundLogLines) {
+				if (logLine.some((c) => c.trim().length > 0)) {
 					console.log(logLine.map((v, i) => v.padEnd(this.paddings[i])).join(" | "));
 				}
 			}
+			this.roundLogLines.length = 0;
 		}
 		this.ackedLine = [];
 		this.localLine = [];
@@ -350,7 +350,7 @@ export class TestClientLogger {
 	 *
 	 * @privateRemarks
 	 * This function is a dominating bottleneck in operation runner tests, as they log multiple client states per operation performed.
-	 * This takes more than 50% of the overall test time, so some inner-loop elements of this favor performance over readability/safety
+	 * This takes about 28% of the overall test time, so some inner-loop elements of this favor performance over readability/safety
 	 * (e.g. precomputing removed string representations, casting to the more internal segment interfaces to view insertion/removal info
 	 * rather than import typeguards, etc.)
 	 */

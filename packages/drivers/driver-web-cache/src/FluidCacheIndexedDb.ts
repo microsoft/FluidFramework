@@ -3,9 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
-import { DBSchema, DeleteDBCallbacks, IDBPDatabase, deleteDB, openDB } from "idb";
+import type { DBSchema, DeleteDBCallbacks, IDBPDatabase } from "idb";
+import { deleteDB, openDB } from "idb";
 
 import { FluidCacheErrorEvent } from "./fluidCacheTelemetry.js";
 
@@ -23,7 +24,7 @@ export const oldVersionNameMapping: Partial<{ [key: number]: string }> = {
 	2: "diverStorage.V2",
 };
 
-export function getFluidCacheIndexedDbInstance(
+export async function getFluidCacheIndexedDbInstance(
 	logger?: ITelemetryBaseLogger,
 ): Promise<IDBPDatabase<FluidCacheDBSchema>> {
 	return new Promise((resolve, reject) => {
@@ -73,7 +74,7 @@ export function getFluidCacheIndexedDbInstance(
  * @remarks Warning this can throw an error in Firefox incognito, where accessing storage is prohibited.
  * @legacy @beta
  */
-export function deleteFluidCacheIndexDbInstance(
+export async function deleteFluidCacheIndexDbInstance(
 	deleteDBCallbacks?: DeleteDBCallbacks,
 ): Promise<void> {
 	return deleteDB(FluidDriverCacheDBName, deleteDBCallbacks);

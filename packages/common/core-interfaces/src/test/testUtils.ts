@@ -170,13 +170,19 @@ export function exposeFromOpaqueJson<
 type RevealOpaqueJsonDeserialized<
 	T,
 	TAncestorTypes extends unknown[] | "unlimited recursion",
-> = T extends OpaqueJsonDeserialized<infer U>
-	? JsonDeserialized<U>
-	: TAncestorTypes extends unknown[]
-		? InternalUtilityTypes.IfExactTypeInTuple<T, TAncestorTypes, true, "no match"> extends true
-			? T
-			: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], [...TAncestorTypes, T]> }
-		: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes> };
+> =
+	T extends OpaqueJsonDeserialized<infer U>
+		? JsonDeserialized<U>
+		: TAncestorTypes extends unknown[]
+			? InternalUtilityTypes.IfExactTypeInTuple<
+					T,
+					TAncestorTypes,
+					true,
+					"no match"
+				> extends true
+				? T
+				: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], [...TAncestorTypes, T]> }
+			: { [Key in keyof T]: RevealOpaqueJsonDeserialized<T[Key], TAncestorTypes> };
 
 /**
  * No-runtime-effect helper to reveal the JSON type from a value's opaque JSON

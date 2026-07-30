@@ -42,10 +42,12 @@
                             {
                               "schema": {
                                 "new": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {
                                     "com.fluidframework.leaf.number": {
-                                      "leaf": 0
+                                      "kind": {
+                                        "leaf": 0
+                                      }
                                     }
                                   },
                                   "root": {
@@ -56,7 +58,7 @@
                                   }
                                 },
                                 "old": {
-                                  "version": 1,
+                                  "version": 2,
                                   "nodes": {},
                                   "root": {
                                     "kind": "Forbidden",

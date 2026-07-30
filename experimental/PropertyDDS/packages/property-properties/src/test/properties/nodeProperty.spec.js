@@ -1786,7 +1786,7 @@ describe("NodeProperty", function () {
 		});
 
 		afterEach(function () {
-			PathHelper.getPathCoverage.restore();
+			getPathCoverageSpy.restore();
 		});
 
 		after(function () {});

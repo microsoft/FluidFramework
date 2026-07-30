@@ -5,7 +5,7 @@
 
 import chalk from "picocolors";
 
-import { commonOptions } from "../fluidBuild/commonOptions";
+import { commonOptions } from "../fluidBuild/commonOptions.js";
 
 /**
  * A function that logs an Error or error message.

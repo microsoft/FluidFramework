@@ -68,8 +68,8 @@ export function makeValueCodec<Schema extends TSchema, TContext>(
 	return withSchemaValidation(
 		schema,
 		{
-			encode: (x: Static<Schema>) => x as unknown as JsonCompatibleReadOnly,
-			decode: (x: JsonCompatibleReadOnly) => x as unknown as Static<Schema>,
+			encode: (x: Static<Schema>) => x as JsonCompatibleReadOnly,
+			decode: (x: JsonCompatibleReadOnly) => x as Static<Schema>,
 		},
 		validator,
 	);

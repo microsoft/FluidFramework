@@ -79,7 +79,7 @@ export type {
 // #region Scoped exports
 
 // This pattern is required to scope the utilities in a way that API-Extractor supports.
-/* eslint-disable import/order, unicorn/prefer-export-from */
+/* eslint-disable import-x/order, unicorn/prefer-export-from */
 
 // Export `ApiItem`-related utilities
 import * as ApiItemUtilities from "./ApiItemUtilitiesModule.js";
@@ -119,7 +119,7 @@ export {
 	MarkdownRenderer,
 };
 
-/* eslint-enable import/order, unicorn/prefer-export-from */
+/* eslint-enable import-x/order, unicorn/prefer-export-from */
 
 // #endregion
 

@@ -191,13 +191,10 @@ export type PopUnion<
  * This implementation is inspired to those, but slightly different in implementation.
  * @system @beta
  */
-export type UnionToTuple<
-	Union,
-	A extends unknown[] = [],
-	First = PopUnion<Union>,
-> = IsUnion<Union> extends true
-	? UnionToTuple<Exclude<Union, First>, [First, ...A]>
-	: [Union, ...A];
+export type UnionToTuple<Union, A extends unknown[] = [], First = PopUnion<Union>> =
+	IsUnion<Union> extends true
+		? UnionToTuple<Exclude<Union, First>, [First, ...A]>
+		: [Union, ...A];
 
 /**
  * This is unsafe, meaning that the returned value might not match its type.

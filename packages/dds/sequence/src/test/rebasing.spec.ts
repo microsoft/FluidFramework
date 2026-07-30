@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IMergeTreeInsertMsg } from "@fluidframework/merge-tree/internal";
@@ -18,7 +18,7 @@ import {
 import { SharedStringFactory, type SharedString } from "../sequenceFactory.js";
 import { SharedStringClass } from "../sharedString.js";
 
-[
+for (const testConfig of [
 	{
 		options: {
 			flushMode: FlushMode.Immediate,
@@ -32,7 +32,7 @@ import { SharedStringClass } from "../sharedString.js";
 		},
 		name: "FlushMode TurnBased with grouped batching",
 	},
-].forEach((testConfig) => {
+]) {
 	describe(`Rebasing - ${testConfig.name}`, () => {
 		let containerRuntimeFactory: MockContainerRuntimeFactory;
 		let containerRuntime1: MockContainerRuntime;
@@ -112,4 +112,4 @@ import { SharedStringClass } from "../sharedString.js";
 			);
 		});
 	});
-});
+}

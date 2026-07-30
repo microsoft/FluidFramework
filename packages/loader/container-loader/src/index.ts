@@ -7,11 +7,16 @@ export { ConnectionState } from "./connectionState.js";
 export { type ContainerAlpha, waitContainerToCatchUp, asLegacyAlpha } from "./container.js";
 export { createFrozenDocumentServiceFactory } from "./frozenServices.js";
 export {
+	captureFullContainerState,
 	createDetachedContainer,
 	loadExistingContainer,
 	rehydrateDetachedContainer,
 	loadFrozenContainerFromPendingState,
 	loadSummarizerContainerAndMakeSummary,
+	type ICaptureFullContainerStateProps,
+	type IContainerDriverServices,
+	type IContainerHostProps,
+	type IContainerLoadDriverProps,
 	type ICreateAndLoadContainerProps,
 	type ICreateDetachedContainerProps,
 	type ILoadExistingContainerProps,
@@ -39,6 +44,10 @@ export {
 } from "./loaderLayerCompatState.js";
 export { loadContainerPaused } from "./loadPaused.js";
 export {
+	loadContainerToSequenceNumber,
+	type ILoadContainerToSequenceNumberProps,
+} from "./loadContainerToSequenceNumber.js";
+export {
 	isLocationRedirectionError,
 	resolveWithLocationRedirectionHandling,
 } from "./location-redirection-utilities/index.js";
@@ -55,3 +64,8 @@ export type {
 	QuorumProposalsSnapshot,
 } from "./protocol/index.js";
 export { PendingLocalStateStore } from "./pendingLocalStateStore.js";
+export {
+	extractBlobAttachReferences,
+	wireFormatConstants,
+	type IBlobAttachReference,
+} from "./captureReferencedContents.js";

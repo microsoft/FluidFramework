@@ -12,24 +12,22 @@ import {
 	DiscriminatedUnionDispatcher,
 	type FormatVersion,
 	type ICodecFamily,
-	type ICodecOptions,
 	type IJsonCodec,
 	makeCodecFamily,
 	withSchemaValidation,
 } from "../codec/index.js";
-import {
-	type ChangeEncodingContext,
-	SchemaFormatVersion,
-	type TreeStoredSchema,
+import type {
+	ChangeEncodingContext,
+	ChangeDecodingContext,
+	TreeStoredSchema,
 } from "../core/index.js";
 import {
 	ModularChangeFormatVersion,
 	type ModularChangeset,
-	type SchemaChange,
 	defaultSchemaPolicy,
 	getCodecTreeForModularChangeFormat,
-	getCodecTreeForSchemaChangeFormat,
-	makeSchemaChangeCodecs,
+	makeSchemaChangeCodec,
+	schemaCodecBuilder,
 } from "../feature-libraries/index.js";
 import {
 	strictEnum,
@@ -45,10 +43,13 @@ import {
 import type { SharedTreeChange, SharedTreeInnerChange } from "./sharedTreeChangeTypes.js";
 
 export function makeSharedTreeChangeCodecFamily(
-	modularChangeCodecFamily: ICodecFamily<ModularChangeset, ChangeEncodingContext>,
+	modularChangeCodecFamily: ICodecFamily<
+		ModularChangeset,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>,
 	options: CodecWriteOptions,
-): ICodecFamily<SharedTreeChange, ChangeEncodingContext> {
-	const schemaChangeCodecs = makeSchemaChangeCodecs(options);
+): ICodecFamily<SharedTreeChange, ChangeEncodingContext, ChangeDecodingContext> {
 	const versions: [
 		FormatVersion,
 		IJsonCodec<
@@ -57,22 +58,15 @@ export function makeSharedTreeChangeCodecFamily(
 			EncodedSharedTreeChange,
 			ChangeEncodingContext
 		>,
-	][] = [...dependenciesForChangeFormat.entries()].map(
-		([format, { modularChange, schemaChange }]) => [
-			format,
-			makeSharedTreeChangeCodec(
-				modularChangeCodecFamily.resolve(modularChange),
-				schemaChangeCodecs.resolve(schemaChange),
-				options,
-			),
-		],
-	);
+	][] = [...dependenciesForChangeFormat.entries()].map(([format, { modularChange }]) => [
+		format,
+		makeSharedTreeChangeCodec(modularChangeCodecFamily.resolve(modularChange), options),
+	]);
 	return makeCodecFamily(versions);
 }
 
 interface ChangeFormatDependencies {
 	readonly modularChange: ModularChangeFormatVersion;
-	readonly schemaChange: SchemaFormatVersion;
 }
 
 /**
@@ -107,6 +101,8 @@ export type SharedTreeChangeFormatVersion = Values<typeof SharedTreeChangeFormat
  * This is an arbitrary mapping that is injected in the SharedTree change codec.
  * Once an entry is defined and used in production, it cannot be changed.
  * This is because the format for the dependent formats are not explicitly versioned.
+ * @remarks
+ * SchemaFormatVersion (used by SchemaChangeFormat) is not included here since it is explicitly versioned.
  */
 export const dependenciesForChangeFormat = new Map<
 	SharedTreeChangeFormatVersion,
@@ -114,15 +110,21 @@ export const dependenciesForChangeFormat = new Map<
 >([
 	[
 		SharedTreeChangeFormatVersion.v3,
-		{ modularChange: ModularChangeFormatVersion.v3, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v3,
+		},
 	],
 	[
 		SharedTreeChangeFormatVersion.v4,
-		{ modularChange: ModularChangeFormatVersion.v4, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v4,
+		},
 	],
 	[
 		SharedTreeChangeFormatVersion.v5,
-		{ modularChange: ModularChangeFormatVersion.v5, schemaChange: SchemaFormatVersion.v1 },
+		{
+			modularChange: ModularChangeFormatVersion.v5,
+		},
 	],
 ]);
 
@@ -130,14 +132,14 @@ export function getCodecTreeForChangeFormat(
 	version: SharedTreeChangeFormatVersion,
 	clientVersion: MinimumVersionForCollab,
 ): CodecTree {
-	const { modularChange, schemaChange } =
+	const { modularChange } =
 		dependenciesForChangeFormat.get(version) ?? fail(0xc78 /* Unknown change format */);
 	return {
 		name: "SharedTreeChange",
 		version,
 		children: [
 			getCodecTreeForModularChangeFormat(modularChange),
-			getCodecTreeForSchemaChangeFormat(schemaChange, clientVersion),
+			schemaCodecBuilder.getCodecTree(clientVersion),
 		],
 	};
 }
@@ -149,14 +151,14 @@ function makeSharedTreeChangeCodec(
 		JsonCompatibleReadOnly,
 		ChangeEncodingContext
 	>,
-	schemaChangeCodec: IJsonCodec<SchemaChange>,
-	codecOptions: ICodecOptions,
+	codecOptions: CodecWriteOptions,
 ): IJsonCodec<
 	SharedTreeChange,
 	EncodedSharedTreeChange,
 	EncodedSharedTreeChange,
 	ChangeEncodingContext
 > {
+	const schemaChangeCodec = makeSchemaChangeCodec(codecOptions);
 	const decoderLibrary = new DiscriminatedUnionDispatcher<
 		EncodedSharedTreeInnerChange,
 		[context: ChangeEncodingContext],
@@ -177,7 +179,7 @@ function makeSharedTreeChangeCodec(
 	});
 
 	return withSchemaValidation(
-		EncodedSharedTreeChange,
+		EncodedSharedTreeChange(schemaChangeCodec.encodedSchema),
 		{
 			encode: (change, context) => {
 				const changes: EncodedSharedTreeInnerChange[] = [];
@@ -200,6 +202,7 @@ function makeSharedTreeChangeCodec(
 								schema: schemaAndPolicy,
 								idCompressor: context.idCompressor,
 								revision: context.revision,
+								isSummary: context.isSummary,
 							}),
 						});
 					} else if (decodedChange.type === "schema") {

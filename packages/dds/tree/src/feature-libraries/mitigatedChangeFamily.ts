@@ -73,8 +73,11 @@ export function makeMitigatedRebaser<TChange>(
 			change: TaggedChange<TChange>,
 			over: TaggedChange<TChange>,
 			revisionMetadata: RevisionMetadataSource,
+			ignoreNoChangeViolation?: boolean,
 		): TChange => {
-			return withFallback(() => unmitigatedRebaser.rebase(change, over, revisionMetadata));
+			return withFallback(() =>
+				unmitigatedRebaser.rebase(change, over, revisionMetadata, ignoreNoChangeViolation),
+			);
 		},
 		getRevisions: (change: TChange): Set<RevisionTag | undefined> => {
 			try {

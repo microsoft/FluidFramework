@@ -21,6 +21,9 @@ import { pkgVersion } from "./packageVersion.js";
  * @deprecated Use `SharedMatrix.getFactory` instead.
  */
 export class SharedMatrixFactory implements IChannelFactory<ISharedMatrix> {
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "sharedmatrix";
 	public static Type = "https://graph.microsoft.com/types/sharedmatrix";
 
 	public static readonly Attributes: IChannelAttributes = {

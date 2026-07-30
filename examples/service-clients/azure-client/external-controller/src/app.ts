@@ -5,9 +5,9 @@
 
 import { AzureClient, type AzureContainerServices } from "@fluidframework/azure-client";
 import { createDevtoolsLogger, initializeDevtools } from "@fluidframework/devtools/beta";
-import { getPresence } from "@fluidframework/presence/beta";
 import { createChildLogger } from "@fluidframework/telemetry-utils/legacy";
 import type { IFluidContainer } from "fluid-framework";
+import { getPresence } from "fluid-framework";
 
 import { DiceRollerController, type DieValue } from "./controller.js";
 import {
@@ -44,7 +44,10 @@ async function start(): Promise<void> {
 	if (createNew) {
 		// The client will create a new detached container using the schema
 		// A detached container will enable the app to modify the container before attaching it to the client
-		({ container, services } = await client.createContainer(diceRollerContainerSchema, "2"));
+		({ container, services } = await client.createContainer(
+			diceRollerContainerSchema,
+			"2.0.0",
+		));
 		// const map1 = container.initialObjects.map1 as ISharedMap;
 		// map1.set("diceValue", 1);
 		// const map2 = container.initialObjects.map1 as ISharedMap;
@@ -63,7 +66,11 @@ async function start(): Promise<void> {
 		id = location.hash.slice(1);
 		// Use the unique container ID to fetch the container created earlier.  It will already be connected to the
 		// collaboration session.
-		({ container, services } = await client.getContainer(id, diceRollerContainerSchema, "2"));
+		({ container, services } = await client.getContainer(
+			id,
+			diceRollerContainerSchema,
+			"2.0.0",
+		));
 		appModel = loadAppFromExistingContainer(container);
 	}
 

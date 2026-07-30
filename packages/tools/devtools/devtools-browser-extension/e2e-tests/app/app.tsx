@@ -14,7 +14,7 @@ import {
 	createDevtoolsLogger,
 	initializeDevtools,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { StrictMode } from "react";
 import ReactDOM from "react-dom";
 
 import {
@@ -65,13 +65,13 @@ async function createContainerAndRenderInElement(): Promise<ICollaborativeTextAp
 
 	// Render it
 	ReactDOM.render(
-		<React.StrictMode>
+		<StrictMode>
 			<div className="text-area" id="text-area-id">
 				<CollaborativeTextArea
 					sharedStringHelper={new SharedStringHelper(model.collaborativeText.text)}
 				/>
 			</div>
-		</React.StrictMode>,
+		</StrictMode>,
 		document.querySelector("#content"),
 		() => {
 			console.log("App rendered!");

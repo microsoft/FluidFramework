@@ -17,6 +17,7 @@ import {
 	anchorSlot,
 	type AnchorEvents,
 	type AnchorNode,
+	type DeltaMark,
 	type FieldKey,
 	type TreeValue,
 } from "../../core/index.js";
@@ -119,14 +120,16 @@ export class TreeNodeKernel {
 	#hydrationState: HydrationState;
 
 	/**
-	 * Events registered before hydration.
+	 * Handler for events listeners registered with the kernel.
+	 *
 	 * @remarks
-	 * Since these are usually not used, they are allocated lazily as an optimization.
-	 * The laziness also avoids extra forwarding overhead for events from this kernel's anchor node and also avoids registering for events that are unneeded.
-	 * This means optimizations like skipping processing data in subtrees where no subtreeChanged events are subscribed to would be able to work,
-	 * since the kernel does not unconditionally subscribe to those events (like a design which simply forwards all events would).
+	 * Supports event buffering via {@link withBufferedEvents}.
+	 *
+	 * Allocated lazily on first access to {@link TreeNodeKernel.events}.
+	 * We expect the majority of nodes to never have event listeners registered, so
+	 * deferring construction avoids per-kernel allocations.
 	 */
-	readonly #eventBuffer: KernelEventBuffer;
+	#eventBuffer: KernelEventBuffer | undefined;
 
 	/**
 	 * Create a TreeNodeKernel which can be looked up with {@link getKernel}.
@@ -156,12 +159,9 @@ export class TreeNodeKernel {
 			this.#hydrationState = {
 				innerNode,
 			};
-
-			this.#eventBuffer = new KernelEventBuffer(innerNode.events);
 		} else {
 			// Hydrated case
 			this.#hydrationState = this.createHydratedState(innerNode);
-			this.#eventBuffer = new KernelEventBuffer(innerNode.anchorNode.events);
 		}
 	}
 
@@ -189,8 +189,10 @@ export class TreeNodeKernel {
 
 		this.#hydrationState = this.createHydratedState(inner);
 
-		// Lazily migrate existing event listeners to the anchor node
-		this.#eventBuffer.migrateEventSource(inner.anchorNode.events);
+		// Lazily migrate existing event listeners to the anchor node.
+		// If no one ever subscribed to this kernel's events, the buffer was never allocated
+		// and there is nothing to migrate.
+		this.#eventBuffer?.migrateEventSource(inner.anchorNode.events);
 	}
 
 	private createHydratedState(innerNode: HydratedFlexTreeNode): HydratedState {
@@ -232,6 +234,14 @@ export class TreeNodeKernel {
 	}
 
 	public get events(): Listenable<KernelEvents> {
+		assert(!this.disposed, 0xcfa /* Cannot register events on a disposed node */);
+		// Allocate the buffer on first access. See {@link TreeNodeKernel.#eventBuffer} for rationale.
+		if (this.#eventBuffer === undefined) {
+			const eventSource = isHydrated(this.#hydrationState)
+				? this.#hydrationState.innerNode.anchorNode.events
+				: this.#hydrationState.innerNode.events;
+			this.#eventBuffer = new KernelEventBuffer(eventSource);
+		}
 		return this.#eventBuffer;
 	}
 
@@ -243,7 +253,7 @@ export class TreeNodeKernel {
 				off();
 			}
 		}
-		this.#eventBuffer.dispose();
+		this.#eventBuffer?.dispose();
 		// TODO: go to the context and remove myself from withAnchors
 	}
 
@@ -322,33 +332,52 @@ export function withBufferedTreeEvents(callback: () => void): void {
 		callback();
 	} else {
 		bufferTreeEvents = true;
+		const toFlush: KernelEventBuffer[] = [];
 		try {
 			callback();
 		} finally {
 			bufferTreeEvents = false;
-			flushEventsEmitter.emit("flush");
+			// Snapshot-and-clear before flushing to safely handle reentrant `withBufferedTreeEvents`
+			// calls made by listeners that fire during `buffer.flush()` below:
+			// - Iterating an array means a reentrant call's `clear()` cannot truncate our loop
+			//   and cause buffers later in `activeBuffers` to be skipped (and their events dropped).
+			// - Clearing up front means the reentrant call starts from an empty set, so its own
+			//   finally block only flushes what it buffered - not a re-flush of our remaining buffers.
+			toFlush.push(...activeBuffers);
+			activeBuffers.clear();
+		}
+
+		// Don't flush/emit events in the case of an error
+		for (const buffer of toFlush) {
+			buffer.flush();
 		}
 	}
 }
 
 /**
- * Event emitter to notify subscribers when tree events buffered due to {@link withBufferedTreeEvents} should be flushed.
+ * Set of {@link KernelEventBuffer}s that have accumulated buffered events during the current
+ * {@link withBufferedTreeEvents} window and therefore need to be flushed when it ends.
+ *
+ * @remarks
+ * The set should be empty whenever no buffering window is in progress.
  */
-const flushEventsEmitter = createEmitter<{
-	flush: () => void;
-}>();
+const activeBuffers: Set<KernelEventBuffer> = new Set();
+
+/**
+ * Test-only accessor for the current size of {@link activeBuffers}.
+ * @remarks Only exported for testing purposes. Not intended for any other use.
+ */
+export function TEST_activeBufferCount(): number {
+	return activeBuffers.size;
+}
 
 /**
  * Event emitter for {@link TreeNodeKernel}, which optionally buffers events based on {@link bufferTreeEvents}.
- * @remarks Listens to {@link flushEventsEmitter} to know when to flush any buffered events.
+ * @remarks When buffering is active, this adds itself to {@link activeBuffers} so that
+ * {@link withBufferedTreeEvents} can flush it at the end of the buffering window.
  */
 class KernelEventBuffer implements Listenable<KernelEvents> {
 	#disposed: boolean = false;
-
-	/**
-	 * Listen to {@link flushEventsEmitter} to know when to flush buffered events.
-	 */
-	readonly #disposeOnFlushListener = flushEventsEmitter.on("flush", this.flush.bind(this));
 
 	readonly #events = createEmitter<KernelEvents>();
 
@@ -361,6 +390,20 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	 * containing the accumulated set of changed fields.
 	 */
 	readonly #childrenChangedBuffer: Set<FieldKey> = new Set();
+
+	/**
+	 * Buffer of field marks accumulated since events were paused.
+	 * Emitted alongside the buffered changed-fields set when flushed.
+	 */
+	readonly #fieldMarksBuffer: Map<FieldKey, readonly DeltaMark[]> = new Map();
+
+	/**
+	 * Fields whose marks have been permanently invalidated within the current buffer window due to
+	 * two or more separate delta batches touching the same field.
+	 * Once a key is in this set it must never be re-added to the marks buffer, even if
+	 * a third (or later) batch arrives for that field.
+	 */
+	readonly #invalidatedFieldMarkKeys: Set<FieldKey> = new Set();
 
 	/**
 	 * Whether or not the subtree has changed since events were paused.
@@ -399,8 +442,10 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		this.#eventSource = newSource;
 
 		if (this.#events.hasListeners("childrenChangedAfterBatch")) {
-			const off = this.#eventSource.on("childrenChangedAfterBatch", ({ changedFields }) =>
-				this.#emit("childrenChangedAfterBatch", { changedFields }),
+			const off = this.#eventSource.on(
+				"childrenChangedAfterBatch",
+				({ changedFields, fieldMarks }) =>
+					this.#emit("childrenChangedAfterBatch", { changedFields, fieldMarks }),
 			);
 			this.#disposeSourceListeners.set("childrenChangedAfterBatch", off);
 		}
@@ -413,6 +458,8 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 	}
 
 	public on(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): Off {
+		this.#assertNotDisposed();
+
 		// Lazily bind event listeners to the source.
 		// If we do not have any existing listeners for this event, then we need to bind to the source.
 		if (!this.#events.hasListeners(eventName)) {
@@ -421,12 +468,18 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 				0xc4f /* Should not have a dispose function without listeners */,
 			);
 
-			const off = this.#eventSource.on(eventName, (args) => this.#emit(eventName, args));
+			const off: Off =
+				eventName === "childrenChangedAfterBatch"
+					? this.#eventSource.on(eventName, (args) => this.#emit(eventName, args))
+					: this.#eventSource.on(eventName, () => this.#emit(eventName));
 			this.#disposeSourceListeners.set(eventName, off);
 		}
 
 		this.#events.on(eventName, listener);
-		return () => this.off(eventName, listener);
+		// Return a bound method instead of an arrow closure. A bound function captures
+		// (target, thisArg, ...boundArgs) in a fixed shape that V8 can optimize more
+		// uniformly than a closure that captures its lexical context.
+		return this.off.bind(this, eventName, listener);
 	}
 
 	public off(eventName: keyof KernelEvents, listener: KernelEvents[typeof eventName]): void {
@@ -444,13 +497,14 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		eventName: keyof KernelEvents,
 		arg?: {
 			changedFields: ReadonlySet<FieldKey>;
+			fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>;
 		},
 	): void {
 		this.#assertNotDisposed();
 		switch (eventName) {
 			case "childrenChangedAfterBatch": {
-				assert(arg !== undefined, 0xc50 /* childrenChangedAfterBatch should have arg */);
-				return this.#handleChildrenChangedAfterBatch(arg.changedFields);
+				assert(arg !== undefined, 0xcea /* childrenChangedAfterBatch requires arg */);
+				return this.#handleChildrenChangedAfterBatch(arg.changedFields, arg.fieldMarks);
 			}
 			case "subtreeChangedAfterBatch": {
 				return this.#handleSubtreeChangedAfterBatch();
@@ -461,18 +515,40 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		}
 	}
 
-	#handleChildrenChangedAfterBatch(changedFields: ReadonlySet<FieldKey>): void {
+	#handleChildrenChangedAfterBatch(
+		changedFields: ReadonlySet<FieldKey>,
+		fieldMarks: ReadonlyMap<FieldKey, readonly DeltaMark[]>,
+	): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			for (const fieldKey of changedFields) {
 				this.#childrenChangedBuffer.add(fieldKey);
 			}
+			for (const [key, marks] of fieldMarks) {
+				if (this.#invalidatedFieldMarkKeys.has(key)) {
+					// Already permanently invalidated by an earlier collision; ignore this batch too.
+					// TODO: Once the eventing stack is rewritten to walk the composed delta at flush
+					// time, this collision path will be unreachable and can be removed entirely.
+					continue;
+				}
+				if (this.#fieldMarksBuffer.has(key)) {
+					// A second batch of marks arrived for the same field before the buffer was flushed.
+					// We have no delta composition logic, so permanently invalidate this field so that
+					// any further batches are also discarded rather than incorrectly surfaced.
+					this.#fieldMarksBuffer.delete(key);
+					this.#invalidatedFieldMarkKeys.add(key);
+				} else {
+					this.#fieldMarksBuffer.set(key, marks);
+				}
+			}
 		} else {
-			this.#events.emit("childrenChangedAfterBatch", { changedFields });
+			this.#events.emit("childrenChangedAfterBatch", { changedFields, fieldMarks });
 		}
 	}
 
 	#handleSubtreeChangedAfterBatch(): void {
 		if (bufferTreeEvents) {
+			activeBuffers.add(this);
 			this.#subTreeChangedBuffer = true;
 		} else {
 			this.#events.emit("subtreeChangedAfterBatch");
@@ -488,8 +564,11 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 		if (this.#childrenChangedBuffer.size > 0) {
 			this.#events.emit("childrenChangedAfterBatch", {
 				changedFields: this.#childrenChangedBuffer,
+				fieldMarks: this.#fieldMarksBuffer,
 			});
 			this.#childrenChangedBuffer.clear();
+			this.#fieldMarksBuffer.clear();
+			this.#invalidatedFieldMarkKeys.clear();
 		}
 
 		if (this.#subTreeChangedBuffer) {
@@ -507,18 +586,23 @@ class KernelEventBuffer implements Listenable<KernelEvents> {
 			return;
 		}
 
-		assert(
-			this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer,
-			0xc52 /* Buffered kernel events should have been flushed before disposing. */,
+		debugAssert(
+			() =>
+				(this.#childrenChangedBuffer.size === 0 && !this.#subTreeChangedBuffer) ||
+				"Buffered kernel events should have been flushed before disposing.",
+		);
+		debugAssert(
+			() => !activeBuffers.has(this) || "Disposed buffer should not be in activeBuffers.",
 		);
 
-		this.#disposeOnFlushListener();
 		for (const off of this.#disposeSourceListeners.values()) {
 			off();
 		}
 		this.#disposeSourceListeners.clear();
 
 		this.#childrenChangedBuffer.clear();
+		this.#fieldMarksBuffer.clear();
+		this.#invalidatedFieldMarkKeys.clear();
 		this.#subTreeChangedBuffer = false;
 
 		this.#disposed = true;

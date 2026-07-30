@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
@@ -350,8 +350,8 @@ describe("SharedString", () => {
 
 		it("replace zero range", async () => {
 			sharedString.insertText(0, "123");
-			sharedString.replaceText(1, 1, "\u00e4\u00c4");
-			assert.equal(sharedString.getText(), "1\u00e4\u00c423", "Could not replace zero range");
+			sharedString.replaceText(1, 1, "\u00E4\u00C4");
+			assert.equal(sharedString.getText(), "1\u00E4\u00C423", "Could not replace zero range");
 		});
 
 		it("replace negative range", async () => {
@@ -886,9 +886,8 @@ describe("SharedString", () => {
 
 		it("annotate", () => {
 			sharedString.insertText(0, "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined)),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), undefined));
 
 			const revertibles: MergeTreeDeltaRevertible[] = [];
 			sharedString.on("sequenceDelta", (event) =>
@@ -899,23 +898,20 @@ describe("SharedString", () => {
 				sharedString.annotateRange(i, i + 1, { test: i });
 			}
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }));
 
 			// undo all annotates
 			revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), {})),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), {}));
 
 			// redo all annotates
 			revertMergeTreeDeltaRevertibles(sharedString, revertibles.splice(0));
 			assert.equal(sharedString.getText(), "hello world");
-			Array.from({ length: sharedString.getLength() }).forEach((_, i) =>
-				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i })),
-			);
+			for (const [i, _] of Array.from({ length: sharedString.getLength() }).entries())
+				assert(matchProperties(sharedString.getPropertiesAtPosition(i), { test: i }));
 		});
 	});
 });

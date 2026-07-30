@@ -26,8 +26,8 @@ resources:
 variables:
 - template: /tools/pipelines/templates/include-vars-telemetry-generator.yml@self
 - group: prague-key-vault
-- name: testPackage
-  value: "@fluid-internal/test-service-load"
+- name: testPackageDirectory
+  value: packages/test/test-service-load
   readonly: true
 - name: pipelineIdentifierForTelemetry
   value: 'RealStressService'
@@ -45,8 +45,9 @@ stages:
       stageDisplayName: Stress tests - Odsp
       odspTenantType: prod
       poolBuild: Large-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:odsp
       skipTestResultPublishing: true
@@ -62,8 +63,9 @@ stages:
       stageDisplayName: Stress tests - Odspdf
       odspTenantType: dogfood
       poolBuild: Large-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:odspdf
       skipTestResultPublishing: true
@@ -78,8 +80,9 @@ stages:
       stageId: stress_tests_tinylicious
       stageDisplayName: Stress tests - tinylicious
       poolBuild: Large-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:t9s
       skipTestResultPublishing: true
@@ -97,8 +100,9 @@ stages:
       stageId: stress_tests_frs
       stageDisplayName: Stress tests - AFR
       poolBuild: Large-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:frs
       lockBehavior: sequential
@@ -117,8 +121,9 @@ stages:
       stageId: stress_tests_frs_canary
       stageDisplayName: Stress tests - AFR canary
       poolBuild: Large-eastus2
-      testPackage: ${{ variables.testPackage }}
+      testPackageDirectory: ${{ variables.testPackageDirectory }}
       artifactBuildId: $(resources.pipeline.client.runID)
+      fluidFrameworkSourceVersion: $(resources.pipeline.client.sourceCommit)
       timeoutInMinutes: 120
       testCommand: start:frs:canary
       lockBehavior: sequential

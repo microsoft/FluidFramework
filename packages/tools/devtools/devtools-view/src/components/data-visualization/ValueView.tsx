@@ -4,7 +4,7 @@
  */
 
 import type { ValueNodeBase } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeHeader } from "./TreeHeader.js";
@@ -18,7 +18,7 @@ export type ValueViewProps = DataVisualizationTreeProps<ValueNodeBase>;
 /**
  * Render data with type VisualNodeKind.ValueNode and render its children.
  */
-export function ValueView(props: ValueViewProps): React.ReactElement {
+export function ValueView(props: ValueViewProps): ReactElement {
 	const { label, node } = props;
 
 	const metadata = JSON.stringify(node.metadata);

@@ -15,26 +15,26 @@
  *
  * @packageDocumentation
  */
-export { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
+export type { SequenceOptions } from "./intervalCollectionMapInterfaces.js";
 export {
-	IInterval,
+	type IInterval,
 	IntervalOpType,
 	IntervalType,
-	ISerializedInterval,
-	SequenceInterval,
-	SerializedIntervalDelta,
+	type ISerializedInterval,
+	type SequenceInterval,
+	type SerializedIntervalDelta,
 	IntervalStickiness,
 } from "./intervals/index.js";
-export {
+export type {
 	DeserializeCallback,
 	ISequenceIntervalCollection,
 	ISequenceIntervalCollectionEvents,
 } from "./intervalCollection.js";
 export {
-	SequenceIntervalIndex,
-	SequenceIntervalIndexes,
-	ISequenceOverlappingIntervalsIndex,
-	IEndpointIndex,
+	type SequenceIntervalIndex,
+	type SequenceIntervalIndexes,
+	type ISequenceOverlappingIntervalsIndex,
+	type IEndpointIndex,
 	createOverlappingIntervalsIndex,
 	createEndpointIndex,
 } from "./intervalIndex/index.js";
@@ -45,16 +45,16 @@ export {
 	appendIntervalPropertyChangedToRevertibles,
 	appendSharedStringDeltaToRevertibles,
 	discardSharedStringRevertibles,
-	IntervalRevertible,
+	type IntervalRevertible,
 	revertSharedStringRevertibles,
-	SharedStringRevertible,
+	type SharedStringRevertible,
 } from "./revertibles.js";
 export {
-	ISharedSegmentSequenceEvents,
+	type ISharedSegmentSequenceEvents,
 	SharedSegmentSequence,
-	ISharedSegmentSequence,
+	type ISharedSegmentSequence,
 } from "./sequence.js";
-export {
+export type {
 	ISequenceDeltaRange,
 	SequenceDeltaEvent,
 	SequenceEvent,
@@ -63,28 +63,28 @@ export {
 export { SharedString } from "./sequenceFactory.js";
 export {
 	getTextAndMarkers,
-	ISharedString,
-	SharedStringSegment,
+	type ISharedString,
+	type SharedStringSegment,
 	SharedStringClass,
 } from "./sharedString.js";
-export { IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
+export { type IJSONRunSegment, SharedSequence, SubSequence } from "./sharedSequence.js";
 
 export {
-	ISegment,
+	type ISegment,
 	Marker,
 	BaseSegment,
-	ReferencePosition,
+	type ReferencePosition,
 	ReferenceType,
-	PropertySet,
-	MapLike,
+	type PropertySet,
+	type MapLike,
 	TextSegment,
 	MergeTreeDeltaType,
 	reservedMarkerIdKey,
 	reservedTileLabelsKey,
 	reservedRangeLabelsKey,
 	TrackingGroup,
-	LocalReferencePosition,
+	type LocalReferencePosition,
 	Side,
-	InteriorSequencePlace,
-	SequencePlace,
+	type InteriorSequencePlace,
+	type SequencePlace,
 } from "@fluidframework/merge-tree/internal";

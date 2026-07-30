@@ -473,6 +473,7 @@ function handleNodeChanges(
 	moveEffects: MoveEffectTable,
 ): NodeId | undefined {
 	if (newMark.changes !== undefined) {
+		moveEffects.onMoveIn(newMark.changes);
 		const baseSource = getMoveIn(baseMark);
 
 		// TODO: Make sure composeChild is not called twice on the node changes.
@@ -589,10 +590,6 @@ export class ComposeQueue {
 	private dequeueBase(length: number = Number.POSITIVE_INFINITY): ComposeMarks {
 		const baseMark = this.baseMarks.dequeueUpTo(length);
 		const movedChanges = getMovedChangesFromMark(this.moveEffects, baseMark);
-		if (movedChanges !== undefined) {
-			this.moveEffects.onMoveIn(movedChanges);
-		}
-
 		const newMark = createNoopMark(baseMark.count, movedChanges, getOutputCellId(baseMark));
 		return { baseMark, newMark };
 	}

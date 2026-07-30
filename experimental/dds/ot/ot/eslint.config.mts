@@ -4,8 +4,22 @@
  */
 
 import type { Linter } from "eslint";
-import { minimalDeprecated } from "../../../../common/build/eslint-config-fluid/flat.mts";
+import { recommended } from "@fluidframework/eslint-config-fluid/flat.mts";
 
-const config: Linter.Config[] = [...minimalDeprecated];
+const config: Linter.Config[] = [
+	...recommended,
+	{
+		rules: {
+			"@typescript-eslint/consistent-type-imports": "off",
+			"unicorn/no-array-reduce": "off",
+			"unicorn/no-negated-condition": "off",
+			"unicorn/no-zero-fractions": "off",
+			"unicorn/prefer-math-trunc": "off",
+			"unicorn/prefer-node-protocol": "off",
+			"unicorn/prefer-string-slice": "off",
+			"unicorn/switch-case-braces": "off",
+		},
+	},
+];
 
 export default config;

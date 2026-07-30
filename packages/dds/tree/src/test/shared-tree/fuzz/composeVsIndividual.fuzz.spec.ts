@@ -147,7 +147,7 @@ describe("Fuzz - composed vs individual changes", () => {
 			forkedView.currentSchema =
 				treeSchema ?? assert.fail("nodeSchema should not be undefined");
 			initialState.branch = forkedView;
-			initialState.branch.checkout.transaction.start(false);
+			initialState.branch.checkout.transaction.start();
 			initialState.transactionViews?.delete(initialState.clients[0].channel);
 			const transactionViews = new Map();
 

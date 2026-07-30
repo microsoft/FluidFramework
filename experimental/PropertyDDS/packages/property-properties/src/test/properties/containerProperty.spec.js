@@ -230,7 +230,7 @@ describe("ContainerProperty", function () {
 
 			expect(() => {
 				instance.remove("num");
-			}).to.throw(MSG.CANNOT_REMOVE_NONE_OPTIONAL_PROP + "num");
+			}).to.throw(MSG.CANNOT_REMOVE_NON_OPTIONAL_PROP + "num");
 		});
 	});
 });

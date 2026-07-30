@@ -10,7 +10,6 @@ import type { FluidObject, IErrorBase } from "@fluidframework/core-interfaces";
 import type {
 	IChannel,
 	IFluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha,
 } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import type {
@@ -23,6 +22,11 @@ import type {
 	MinimumVersionForCollab,
 } from "@fluidframework/runtime-definitions/internal";
 import {
+	isFluidError,
+	MockLogger,
+	TelemetryDataTag,
+} from "@fluidframework/telemetry-utils/internal";
+import {
 	MockFluidDataStoreContext,
 	validateAssertionError,
 } from "@fluidframework/test-runtime-utils/internal";
@@ -31,6 +35,7 @@ import sinon from "sinon";
 import {
 	DataStoreMessageType,
 	FluidDataStoreRuntime,
+	LegacyTypeAwareRegistry,
 	type ISharedObjectRegistry,
 } from "../dataStoreRuntime.js";
 
@@ -40,7 +45,7 @@ type Patch<T, U> = Omit<T, keyof U> & U;
 // testing purposes. The patching is in no way type safe and is not recommended.
 type FluidDataStoreRuntime_ForTesting = Patch<
 	FluidDataStoreRuntime,
-	IFluidDataStoreRuntimeAlpha & {
+	IFluidDataStoreRuntime & {
 		contexts: Map<unknown, unknown>;
 		submit(type: DataStoreMessageType, content: unknown, localOpMetadata?: unknown): void;
 	}
@@ -68,6 +73,7 @@ describe("FluidDataStoreRuntime Tests", () => {
 		// back-compat 0.38 - DataStoreRuntime looks in container runtime for certain properties that are unavailable
 		// in the data store context.
 		dataStoreContext.containerRuntime = {} as unknown as IContainerRuntimeBase;
+		dataStoreContext.packagePath = [];
 		sharedObjectRegistry = {
 			get(type: string) {
 				return {
@@ -225,6 +231,81 @@ describe("FluidDataStoreRuntime Tests", () => {
 			(await dataStoreRuntime.entryPoint?.get()) === myObj,
 			"entryPoint was not initialized",
 		);
+	});
+
+	describe("entryPoint initialization failure", () => {
+		it("entryPoint provider is not invoked until entryPoint is consumed", () => {
+			let invoked = false;
+			createRuntime(dataStoreContext, sharedObjectRegistry, async () => {
+				invoked = true;
+				return {};
+			});
+			assert.strictEqual(
+				invoked,
+				false,
+				"entryPoint provider should not run during construction",
+			);
+		});
+
+		it("rejected entryPoint provider is wrapped and logged", async () => {
+			const mockLogger = new MockLogger();
+			const contextWithMockLogger = new MockFluidDataStoreContext(
+				"testDataStoreId",
+				false,
+				mockLogger.toTelemetryLogger(),
+			);
+			contextWithMockLogger.containerRuntime = {} as unknown as IContainerRuntimeBase;
+			contextWithMockLogger.packagePath = ["pkgA", "pkgB"];
+			const dataStoreRuntime = createRuntime(
+				contextWithMockLogger,
+				sharedObjectRegistry,
+				async () => {
+					throw new Error("entryPoint failed");
+				},
+			);
+			await assert.rejects(
+				async () => dataStoreRuntime.entryPoint.get(),
+				(error: IErrorBase) => {
+					assert.strictEqual(
+						error.errorType,
+						ContainerErrorTypes.dataProcessingError,
+						"thrown error should be a DataProcessingError",
+					);
+					assert(isFluidError(error), "thrown error should be a Fluid error");
+					const props = error.getTelemetryProperties();
+					assert.deepStrictEqual(
+						props.dataStoreId,
+						{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged dataStoreId",
+					);
+					assert.deepStrictEqual(
+						props.dataStorePackagePath,
+						{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+						"error should carry tagged dataStorePackagePath",
+					);
+					return true;
+				},
+			);
+			const failureEvent = mockLogger.events.find(
+				(event) =>
+					typeof event.eventName === "string" &&
+					event.eventName.endsWith("EntryPointInitializationFailure"),
+			);
+			assert(
+				failureEvent !== undefined,
+				"EntryPointInitializationFailure event should have been logged",
+			);
+			assert.deepStrictEqual(
+				failureEvent.dataStoreId,
+				{ value: "testDataStoreId", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged dataStoreId",
+			);
+			assert.deepStrictEqual(
+				failureEvent.dataStorePackagePath,
+				{ value: "pkgA/pkgB", tag: TelemetryDataTag.CodeArtifact },
+				"event should include tagged dataStorePackagePath",
+			);
+		});
 	});
 });
 
@@ -438,6 +519,102 @@ describe("FluidDataStoreRuntime.isDirty tracking", () => {
 		);
 
 		assert.strictEqual(runtime.isDirty, false, "Runtime should be clean after rollback");
+	});
+});
+
+describe("LegacyTypeAwareRegistry", () => {
+	/**
+	 * Returns a simple registry backed by a plain-object map.
+	 * Each value is used as the `type` property on the returned stub factory,
+	 * which is sufficient for asserting which factory was found.
+	 */
+	function makeBaseRegistry(entries: Record<string, string>): ISharedObjectRegistry {
+		return {
+			get(name) {
+				const type = entries[name];
+				if (type === undefined) return undefined;
+				return {
+					type,
+					attributes: { type, snapshotFormatVersion: "0" },
+					create: () => {
+						throw new Error("not implemented");
+					},
+					load: async () => {
+						throw new Error("not implemented");
+					},
+				};
+			},
+		};
+	}
+
+	// The expected decoded value of legacyTypeUrlPrefix.
+	const prefix = "https://graph.microsoft.com/types/";
+
+	it("returns factory when name matches directly", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+		assert.strictEqual(r.get("map")?.type, "map");
+	});
+
+	it("returns undefined for a completely unknown name", () => {
+		const r = new LegacyTypeAwareRegistry(makeBaseRegistry({}));
+		assert.strictEqual(r.get("unknownType"), undefined);
+	});
+
+	describe("back-compat: old URL in document, new short name in registry", () => {
+		it("strips the URL prefix and finds the factory by path segment", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get(`${prefix}map`)?.type, "map");
+		});
+
+		it("returns undefined when the path segment is also unregistered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get(`${prefix}unknown`), undefined);
+		});
+
+		it("works for a multi-word path segment (e.g. consensus-queue)", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ "consensus-queue": "cq" }));
+			assert.strictEqual(r.get(`${prefix}consensus-queue`)?.type, "cq");
+		});
+	});
+
+	describe("temporary compat: new short name in document, old URL in registry", () => {
+		it("prepends the URL prefix and finds the factory", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(r.get("map")?.type, "map-url");
+		});
+
+		it("returns undefined when neither the short name nor the prefixed form is registered", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ other: "other" }));
+			assert.strictEqual(r.get("unknownType"), undefined);
+		});
+	});
+
+	describe("reverse-proxy compat: mangled graph.microsoft URL in document", () => {
+		it("extracts the final path segment and finds the factory by short name", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map",
+			);
+		});
+
+		it("extracts the final path segment and finds the factory by legacy URL", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ [`${prefix}map`]: "map-url" }));
+			assert.strictEqual(
+				r.get("https://graph.microsoft.proxy.contoso.com/types/map")?.type,
+				"map-url",
+			);
+		});
+
+		it("returns undefined for a URL that does not contain 'graph.microsoft'", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://otherdds.contoso.com/types/map"), undefined);
+		});
+
+		it("returns undefined for a URL whose final path segment is empty", () => {
+			const r = new LegacyTypeAwareRegistry(makeBaseRegistry({ map: "map" }));
+			assert.strictEqual(r.get("https://graph.microsoft.proxy.contoso.com/"), undefined);
+		});
 	});
 });
 

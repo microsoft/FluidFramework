@@ -3,6 +3,9 @@
  * Licensed under the MIT License.
  */
 
+// For the time being, if exports are changed, additional files under entrypoints need updated.
+// Run `pnpm generate:entrypoint-sources` to update them.
+
 export {
 	ValueSchema,
 	type Revertible,
@@ -12,6 +15,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevertibleFactory,
 	type RevertibleAlphaFactory,
 	type RevertibleAlpha,
@@ -53,7 +58,6 @@ export {
 	TreeStatus,
 	TreeCompressionStrategy,
 	type TreeIndex,
-	type TreeIndexKey,
 	type TreeIndexNodes,
 	type IncrementalEncodingPolicy,
 } from "./feature-libraries/index.js";
@@ -67,9 +71,6 @@ export {
 	Tree,
 	type RunTransaction,
 	type ForestOptions,
-	getBranch,
-	type BranchableTree,
-	type TreeBranchFork,
 	independentInitializedView,
 	type ViewContent,
 	TreeAlpha,
@@ -77,16 +78,19 @@ export {
 	type TreeIdentifierUtils,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,
 	ForestTypeOptimized,
 	ForestTypeExpensiveDebug,
 	ForestTypeReference,
+	minimize,
 } from "./shared-tree/index.js";
 
 export {
 	TreeArrayNode,
+	type TreeArrayNodeAlpha,
 	type Unhydrated,
 	IterableTreeArrayContent,
 	TreeNode,
@@ -95,6 +99,7 @@ export {
 	type TreeNodeSchema,
 	TreeViewConfiguration,
 	type ITreeViewConfiguration,
+	type ITreeViewConfigurationAlpha,
 	type ITreeConfigurationOptions,
 	type TreeView,
 	type TreeViewEvents,
@@ -109,6 +114,7 @@ export {
 	type TreeChangeEvents,
 	type NodeFromSchema,
 	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type InsertableTreeNodeFromImplicitAllowedTypes,
 	type TreeLeafValue,
 	FieldKind,
@@ -121,6 +127,7 @@ export {
 	NodeKind,
 	type TreeObjectNode,
 	ObjectNodeSchema,
+	type ObjectNodeSchemaWorkaround,
 	type TreeNodeFromImplicitAllowedTypes,
 	type TreeNodeSchemaClass,
 	type SchemaCompatibilityStatus,
@@ -129,7 +136,17 @@ export {
 	normalizeFieldSchema,
 	type InternalTreeNode,
 	type WithType,
+	type ArrayNodeDeltaOp,
+	type ArrayNodeInsertOp,
+	type ArrayNodeRemoveOp,
+	type ArrayNodeRetainOp,
+	type ArrayNodeTreeChangedDeltaOp,
+	type ArrayNodeTreeChangedRetainOp,
 	type NodeChangedData,
+	type NodeChangedDataAlpha,
+	type NodeChangedDataDelta,
+	type NodeChangedDataProperties,
+	type NodeChangedDataTreeDelta,
 	type SchemaUpgrade,
 	contentSchemaSymbol,
 	// Types not really intended for public use, but used in links.
@@ -143,6 +160,8 @@ export {
 	type AllowedTypes,
 	type System_Unsafe,
 	type FieldSchemaAlphaUnsafe,
+	type FieldHasDefaultAlphaUnsafe,
+	type InsertableObjectFromSchemaRecordAlphaUnsafe,
 	type ArrayNodeCustomizableSchemaUnsafe,
 	type MapNodeCustomizableSchemaUnsafe,
 	type TreeRecordNodeUnsafe,
@@ -160,13 +179,13 @@ export {
 	type ValidateRecursiveSchema,
 	type FixRecursiveArraySchema,
 	// Index APIs
-	type SimpleTreeIndex,
 	type IdentifierIndex,
-	createSimpleTreeIndex,
+	createTreeIndex,
 	createIdentifierIndex,
 	type DirtyTreeStatus,
 	trackDirtyNodes,
 	type DirtyTreeMap,
+	type TreeIndexKey,
 	// experimental @alpha APIs:
 	adaptEnum,
 	enumFromStrings,
@@ -191,9 +210,14 @@ export {
 	type AllowedTypesFull,
 	type AllowedTypesFullFromMixed,
 	type SchemaType,
+	type SchemaStaticsAlpha,
+	type NodeProvider,
+	type InsertableObjectFromSchemaRecordAlpha,
+	type FieldHasDefaultAlpha,
 	// Beta APIs
 	TreeBeta,
 	type TreeChangeEventsBeta,
+	type TreeChangeEventsAlpha,
 	// Other
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
@@ -252,17 +276,21 @@ export {
 	type NodeSchemaMetadata,
 	type SchemaStatics,
 	type ITreeAlpha,
+	type NoChangeConstraint,
+	type NodeInDocumentConstraint,
+	type RunTransactionParamsAlpha,
+	type RunTransactionParamsBeta,
+	type TransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusBeta,
 	type TransactionConstraint,
 	type TransactionConstraintAlpha,
-	type NodeInDocumentConstraint,
-	type NoChangeConstraint,
-	type RunTransactionParams,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type TransactionResultSuccess,
+	type TransactionPostProcessor,
 	type TransactionResultFailed,
+	type TransactionResultSuccess,
+	type TransactionValueResult,
+	type TransactionVoidResult,
+	type VoidTransactionCallbackStatusAlpha,
+	type VoidTransactionCallbackStatusBeta,
 	rollback,
 	generateSchemaFromSimpleSchema,
 	evaluateLazySchema,
@@ -273,6 +301,7 @@ export {
 	allowUnused,
 	type LeafSchema,
 	type ArrayNodeCustomizableSchema,
+	type ArrayNodeCustomizableSchemaAlpha,
 	type ArrayNodePojoEmulationSchema,
 	ArrayNodeSchema,
 	type MapNodeCustomizableSchema,
@@ -296,18 +325,26 @@ export {
 	exportCompatibilitySchemaSnapshot,
 	importCompatibilitySchemaSnapshot,
 	checkCompatibility,
-	checkSchemaCompatibilitySnapshots,
+	snapshotSchemaCompatibility,
 	type SnapshotFileSystem,
 	incrementalSummaryHint,
 	incrementalEncodingPolicyForAllowedTypes,
 	eraseSchemaDetails,
 	eraseSchemaDetailsSubclassable,
-	type SchemaCompatibilitySnapshotsOptions,
+	type ErasedSchema,
+	type ErasedNode,
+	type ErasedSchemaSubclassable,
+	type SnapshotSchemaCompatibilityOptions,
+	StagedSchemaUpgradePolicy,
+	type StagedSchemaUpgradePolicyFactory,
 	type ArrayPlaceAnchor,
 	createArrayInsertionAnchor,
+	type WithValue,
+	type TreeContextAlpha,
 } from "./simple-tree/index.js";
 export {
 	SharedTree,
+	SharedTreeAlpha,
 	configuredSharedTree,
 	configuredSharedTreeAlpha,
 	configuredSharedTreeBeta,
@@ -356,6 +393,12 @@ import * as InternalTypes from "./internalTypes.js";
 /**
  * Contains types used by the API, but which serve mechanical purposes and do not represent semantic concepts.
  * They are used internally to implement API aspects, but are not intended for use by external consumers.
+ *
+ * @public
+ * @system
+ *
+ * @privateRemarks These TS-Docs are not recognized by API-Extractor, but the
+ * support level tag is recognized by flub entrypoint generation.
  */
 // eslint-disable-next-line unicorn/prefer-export-from -- fixing requires `export * as` (breaks API-Extractor)
 export { InternalTypes };
@@ -370,5 +413,15 @@ export { FluidSerializableAsTree } from "./serializableDomainSchema.js";
 export { TableSchema, type System_TableSchema } from "./tableSchema.js";
 export { asAlpha, asBeta } from "./api.js";
 
-export { TextAsTree, FormattedTextAsTree } from "./text/index.js";
+export {
+	TextAsTree,
+	FormattedTextAsTree,
+	FormattedTextAsTreeDefault,
+	codePointCount,
+	utf16LengthForCodePoints,
+} from "./text/index.js";
 export { ExtensibleUnionNode } from "./extensibleUnionNode.js";
+export { Component } from "./componentApi.js";
+
+export { defineTreeDataStore, instantiateTreeFirstTime } from "./treeDataStore.js";
+export type { TreeDataStoreOptions } from "./treeDataStore.js";

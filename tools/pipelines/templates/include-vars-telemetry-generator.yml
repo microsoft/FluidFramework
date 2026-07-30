@@ -4,26 +4,25 @@
 # Common variables for pipelines that want to use the telemetry-generator tool
 
 variables:
-# Where to install the telemetry-generator tool. Chosen so it won't interfere with any other installed packages.
-# Note: telemetry-generator is not installed by default in any pipeline. In order for this variable to be of any use,
-# it should be passed to the include-telemetry-setup.yml template as the 'pathForTelemetryGeneratorInstall' parameter.
-# Then it can be used when running telemetry-generator.
-- name: pathToTelemetryGenerator
-  value: $(Agent.TempDirectory)/telemetry-generator
-  readonly: true
-
-# Path where the handlers for telemetry-generator are located. Convenient because every call to the tool needs to
-# provide this as an absolute path.
-- name: pathToTelemetryGeneratorHandlers
-  value: $(pathToTelemetryGenerator)/node_modules/@ff-internal/telemetry-generator/dist/handlers
-  readonly: true
+# ADO changes the value of Build.SourcesDirectory depending on whether 1 vs. many repositories are checked out.
+# Using 's' is consistent with the behavior when multiple repositories are checked out and allows for more
+# consistent build scripts. See this documentation for more details:
+# https://learn.microsoft.com/en-us/azure/devops/pipelines/repos/multi-repo-checkout?view=azure-devops#checkout-path
+# A relative path is required in some places (like "checkout" steps). To get the absolute path, concatenate it
+# with the predefined variable "Pipeline.Workspace", e.g.: '$(Pipeline.Workspace)/${{ variables.FluidFrameworkDirectory }}'
+- name: consistentSourcesDirectory
+  value: 's'
+- name: FluidFrameworkDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/FluidFramework'
+- name: FFPipelineHostDirectory
+  value: '${{ variables.consistentSourcesDirectory }}/ff_pipeline_host'
 
 # Same semantics as above two variables, but for pipelines that use the new ff_pipeline_host repository setup
 # for shared internal dependencies.
 - name: pathToTelemetryGeneratorNew
-  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator
+  value: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@ff-internal/telemetry-generator
   readonly: true
 
 - name: pathToTelemetryGeneratorHandlersNew
-  value: $(Build.SourcesDirectory)/node_modules/@ff-internal/telemetry-generator/dist/handlers
+  value: $(Pipeline.Workspace)/$(FFPipelineHostDirectory)/node_modules/@ff-internal/telemetry-generator/dist/handlers
   readonly: true

@@ -173,7 +173,7 @@ describe("StringProperty", function () {
 		});
 
 		it("Should report dirtiness correctly when introducing a modification in certain order", function () {
-			testString = PropertyFactory.create("String");
+			var testString = PropertyFactory.create("String");
 			let newValue = "test";
 			const node = PropertyFactory.create("NodeProperty");
 			node.insert("stringProp", testString);
@@ -716,10 +716,11 @@ describe("StringProperty", function () {
 				if (in_isCollection && changeSet2.modify) {
 					changeSet2 = changeSet2.modify;
 				}
-				combinedChangeSet = combinedChangeSet.getSerializedChangeSet();
-				if (in_isCollection && combinedChangeSet.insert) {
-					combinedChangeSet = combinedChangeSet.insert;
-				}
+				var combinedSerialized = combinedChangeSet.getSerializedChangeSet();
+				combinedChangeSet =
+					in_isCollection && combinedSerialized.insert
+						? combinedSerialized.insert
+						: combinedSerialized;
 				in_options.checkResult(conflicts, changeSet2, combinedChangeSet);
 			}
 		};

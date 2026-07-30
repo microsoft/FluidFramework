@@ -23,7 +23,9 @@ USAGE
 
 FLAGS
   -n, --normalize
-      Removes any unrecognized data from "typeValidation" in the package.json and adds any missing default settings.
+      Normalizes type test configuration in package.json. Removes unrecognized data from "typeValidation" and adds any
+      missing default settings. Also updates the "typetests:gen" script: adds or replaces it when type tests are enabled,
+      or removes it when disabled.
 
   -p, --previous
       Use the version immediately before the current version.

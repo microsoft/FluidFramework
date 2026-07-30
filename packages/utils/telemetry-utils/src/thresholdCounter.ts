@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { TelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Utility counter which will send event only if the provided value is above a configured threshold.
@@ -13,7 +13,7 @@ import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
 export class ThresholdCounter {
 	public constructor(
 		private readonly threshold: number,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private thresholdMultiple = threshold,
 	) {}
 

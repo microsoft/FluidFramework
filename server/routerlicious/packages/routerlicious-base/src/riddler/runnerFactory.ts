@@ -146,21 +146,43 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 			// Skip creating anything with credentials - we assume this is external to us and something we can't
 			// or don't want to automatically create (i.e. GitHub)
 			if (!tenant.storage.credentials) {
-				try {
-					const storageUrl = config.get("storage:storageUrl");
-					await getOrCreateRepository(
-						storageUrl,
-						tenant.storage.owner,
-						tenant.storage.repository,
-					);
-				} catch (err) {
-					// This is okay to fail since the repos are alreay created in production.
-					winston.error(`Error creating repos`);
-					Lumberjack.error(
-						`Error creating repos`,
-						{ [BaseTelemetryProperties.tenantId]: tenant._id },
-						err,
-					);
+				// Retry repo creation because gitrest may not be ready yet when riddler starts.
+				// If gitrest is unavailable, getOrCreateRepository throws ECONNREFUSED. Without
+				// retries, the error is swallowed and repos are never created, causing all
+				// subsequent operations to fail with "Repo does not exist".
+				const maxAttempts = 5;
+				const retryDelayMs = 2000;
+				for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+					try {
+						const storageUrl = config.get("storage:storageUrl");
+						await getOrCreateRepository(
+							storageUrl,
+							tenant.storage.owner,
+							tenant.storage.repository,
+						);
+						break;
+					} catch (err: unknown) {
+						const isConnectionRefusedError =
+							err instanceof Error && "code" in err && err.code === "ECONNREFUSED";
+						if (isConnectionRefusedError && attempt < maxAttempts) {
+							winston.info(
+								`Error creating repos, retrying in ${retryDelayMs}ms (attempt ${attempt}/${maxAttempts})`,
+							);
+							await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+						} else {
+							// Production (e.g. AFR) doesn't hit this path because tenantConfig
+							// is empty. This repo creation is only used in local/test environments.
+							winston.error(
+								`Error creating repos after ${attempt} attempts, giving up`,
+							);
+							Lumberjack.error(
+								`Error creating repos`,
+								{ [BaseTelemetryProperties.tenantId]: tenant._id },
+								err,
+							);
+							break;
+						}
+					}
 				}
 			}
 		});

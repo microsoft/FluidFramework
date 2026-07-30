@@ -13,6 +13,7 @@ import { newGenericChangeset } from "../../../feature-libraries/modular-schema/g
 import {
 	type FieldChangeDelta,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type NodeId,
 	type RebaseRevisionMetadata,
 	genericChangeHandler,
@@ -204,6 +205,7 @@ describe("GenericField", () => {
 	describe("Encoding", () => {
 		const baseContext = {
 			originatorId: "session1" as SessionId,
+			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
 		};
@@ -211,7 +213,7 @@ describe("GenericField", () => {
 		const encodingTestData: EncodingTestData<
 			GenericChangeset,
 			unknown,
-			FieldChangeEncodingContext
+			FieldChangeEncodingContext & FieldChangeDecodingContext
 		> = {
 			successes: [
 				[

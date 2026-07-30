@@ -47,10 +47,10 @@ describe("IntervalCollection no reconnect fuzz testing", () => {
 
 	const options = {
 		...defaultFuzzOptions,
-		reconnectProbability: 0.0,
+		reconnectProbability: 0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
-			clientAddProbability: 0.0,
+			clientAddProbability: 0,
 		},
 	} as const;
 
@@ -74,10 +74,10 @@ describe("IntervalCollection fuzz testing with rebased batches", () => {
 		// but any additional fixes necessary are tracked by AB#31001.
 		// These cases should be somewhat rare in practice and the issue occurs at resubmission time, meaning they don't
 		// result in data corruption, just data loss.
-		reconnectProbability: 0.0,
+		reconnectProbability: 0,
 		clientJoinOptions: {
 			maxNumberOfClients: 3,
-			clientAddProbability: 0.0,
+			clientAddProbability: 0,
 		},
 		rebaseProbability: 0.2,
 		containerRuntimeOptions: {

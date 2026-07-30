@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-/* globals isBrowser, assert */
+/* globals isBrowser, assert, expect (and `chai.should()` has been called) */
 
 /**
  * @fileoverview In this file, we will test the functions of a BaseProperty object
@@ -12,10 +12,7 @@
 
 const { ChangeSet } = require("@fluid-experimental/property-changeset");
 const { MSG } = require("@fluid-experimental/property-common").constants;
-const {
-	DeterministicRandomGenerator,
-	HashCalculator,
-} = require("@fluid-experimental/property-common");
+const { DeterministicRandomGenerator } = require("@fluid-experimental/property-common");
 
 _ = require("lodash");
 const { PropertyFactory } = require("../..");
@@ -23,7 +20,6 @@ const { BaseProperty } = require("../..");
 const deepCopy = _.cloneDeep;
 const { PATH_TOKENS } = BaseProperty;
 
-var OurArrayTestTemplate;
 var arrayProp;
 var testFailed = false;
 var changeSet2;
@@ -656,7 +652,7 @@ describe("ArrayProperty", function () {
 
 		it(".setValues and .getValues should work for primitive arrays", function () {
 			// tests for getValues on typed arrays fail but only on PhantomJS.
-			if (isBrowser && window.top.callPhantom) {
+			if (isBrowser && /** @type {any} */ (window.top).callPhantom) {
 				this.skip();
 			}
 			var MyArrayProp = PropertyFactory.create("autodesk.test:test.dynamicArray-1.0.0")
@@ -1201,21 +1197,21 @@ describe("ArrayProperty", function () {
 			testArrayOperation(values, { insert: [[0, values]] });
 
 			// Overwriting with a different array
-			var values = ["test3"];
+			values = ["test3"];
 			testArrayOperation(values, { insert: [[0, values]] });
 
 			// A second deserialization to the same array should preserve the changeset
-			var values = ["test3"];
+			values = ["test3"];
 			testArrayOperation(values, { insert: [[0, values]] });
 
 			// Now we clean the array and overwrite
 			testArray.cleanDirty();
-			var values = ["test1", "test2"];
+			values = ["test1", "test2"];
 			testArrayOperation(values, { insert: [[0, values]], remove: [[0, 1]] });
 
 			// A second deserialization to the same array
 			testArray.cleanDirty();
-			var values = ["test1", "test2"];
+			values = ["test1", "test2"];
 			if (primitiveProperty) {
 				// should report no change for primitive properties
 				testArrayOperation(values, {});
@@ -1226,12 +1222,12 @@ describe("ArrayProperty", function () {
 
 			// Creating an empty array
 			testArray.cleanDirty();
-			var values = [];
+			values = [];
 			testArrayOperation(values, { remove: [[0, 2]] });
 
 			// A second serialization to an empty array should report no change
 			testArray.cleanDirty();
-			var values = [];
+			values = [];
 			testArrayOperation(values, {});
 		};
 
@@ -1250,7 +1246,7 @@ describe("ArrayProperty", function () {
 				expect(
 					stringArray.serialize({
 						dirtyOnly: true,
-						dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS.DIRTY_CHANGE,
+						dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
 					}),
 				).to.deep.equal(expectedChangeSet);
 			};
@@ -1301,7 +1297,7 @@ describe("ArrayProperty", function () {
 				expect(
 					testArray.serialize({
 						dirtyOnly: true,
-						dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS.DIRTY_CHANGE,
+						dirtinessType: BaseProperty.MODIFIED_STATE_FLAGS.DIRTY,
 					}),
 				).to.deep.equal(expectedChangeSet);
 			};

@@ -4,7 +4,6 @@
  */
 
 import { assert, fail } from "@fluidframework/core-utils/internal";
-import { isStableId } from "@fluidframework/id-compressor/internal";
 
 import {
 	type FieldKey,
@@ -24,7 +23,12 @@ import {
 	type NodeEncoder,
 	encodeValue,
 } from "./compressedEncode.js";
-import type { EncodedChunkShape, EncodedFieldShape, EncodedValueShape } from "./format.js";
+import {
+	SpecialField,
+	type EncodedChunkShape,
+	type EncodedFieldShape,
+	type EncodedValueShape,
+} from "./format/index.js";
 
 /**
  * Encodes a node with the {@link EncodedNodeShape} shape.
@@ -65,14 +69,9 @@ export class NodeShapeBasedEncoder extends Shape<EncodedChunkShape> implements N
 	}
 
 	private getValueToEncode(cursor: ITreeCursorSynchronous, context: EncoderContext): Value {
-		if (this.value === 0) {
+		if (this.value === SpecialField.Identifier) {
 			assert(typeof cursor.value === "string", 0x9aa /* identifier must be type string */);
-			if (isStableId(cursor.value)) {
-				const sessionSpaceCompressedId = context.idCompressor.tryRecompress(cursor.value);
-				if (sessionSpaceCompressedId !== undefined) {
-					return context.idCompressor.normalizeToOpSpace(sessionSpaceCompressedId);
-				}
-			}
+			return context.encodePossiblyCompressedId(cursor.value);
 		}
 		return cursor.value;
 	}

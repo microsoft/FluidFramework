@@ -3,11 +3,11 @@
 	"compilerOptions": {
 		"strict": false,
 		"allowJs": true,
-		"checkJs": false,
+		"checkJs": true,
 
 		"rootDir": "./",
 		"outDir": "../../dist/test",
-		"types": ["node", "mocha"],
+		"types": ["node", "mocha", "chai", "sinon"],
 		"declaration": false,
 		"declarationMap": false,
 	},

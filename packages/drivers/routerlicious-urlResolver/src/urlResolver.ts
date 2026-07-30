@@ -3,18 +3,18 @@
  * Licensed under the MIT License.
  */
 
-import { IRequest } from "@fluidframework/core-interfaces";
+import type { IRequest } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IUser } from "@fluidframework/driver-definitions";
-import { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { IResolvedUrl, IUrlResolver } from "@fluidframework/driver-definitions/internal";
 
-import { Provider } from "./nconf.cjs";
+import type { Provider } from "./nconf.cjs";
 
-const r11sServers = [
+const r11sServers = new Set([
 	"www.wu2-ppe.prague.office-int.com",
 	"www.wu2.prague.office-int.com",
 	"www.eu.prague.office-int.com",
-];
+]);
 
 /**
  * @internal
@@ -45,7 +45,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		// If we don't have a valid server or a prescriptive config, we cannot resolve the URL
 		if (
 			!(
-				r11sServers.includes(server) ||
+				r11sServers.has(server) ||
 				(server === "localhost" && reqUrl.port === "3000") ||
 				this.config
 			)
@@ -74,7 +74,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 		const isLocalHost = server === "localhost";
 		const isInternalRequest = server.includes("gateway"); // e.g. gateway:3000 || fierce-dog-gateway:3000
 
-		const serverSuffix = isLocalHost ? `${server}:3003` : server.substring(4);
+		const serverSuffix = isLocalHost ? `${server}:3003` : server.slice(4);
 
 		let fluidUrl =
 			"https://" +
@@ -151,7 +151,7 @@ export class RouterliciousUrlResolver implements IUrlResolver {
 
 		let url = relativeUrl;
 		if (url.startsWith("/")) {
-			url = url.substr(1);
+			url = url.slice(1);
 		}
 
 		return `${this.hostUrl}/${encodeURIComponent(tenantId)}/${encodeURIComponent(

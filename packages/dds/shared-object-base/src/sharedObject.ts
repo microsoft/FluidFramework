@@ -25,6 +25,7 @@ import type {
 import type {
 	IDocumentMessage,
 	ISequencedDocumentMessage,
+	RegistryKey,
 } from "@fluidframework/driver-definitions/internal";
 import {
 	type IExperimentalIncrementalSummaryContext,
@@ -41,7 +42,6 @@ import {
 	type TelemetryContext,
 } from "@fluidframework/runtime-utils/internal";
 import {
-	type ITelemetryLoggerExt,
 	DataProcessingError,
 	EventEmitterWithErrorHandling,
 	type MonitoringContext,
@@ -52,7 +52,11 @@ import {
 	type ICustomData,
 	type IFluidErrorBase,
 	LoggingError,
+	UsageError,
+	extractTelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
+// eslint-disable-next-line import-x/no-internal-modules -- Needed to avoid specialized /internal ITelemetryLoggerExt
+import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/legacy";
 import { v4 as uuid } from "uuid";
 
 import { GCHandleVisitor } from "./gcHandleVisitor.js";
@@ -162,7 +166,7 @@ export abstract class SharedObjectCore<
 
 		this.handle = new SharedObjectHandle(this, id, runtime);
 
-		this.logger = createChildLogger({
+		const internalLogger = createChildLogger({
 			logger: runtime.logger,
 			properties: {
 				all: {
@@ -173,7 +177,8 @@ export abstract class SharedObjectCore<
 				},
 			},
 		});
-		this.mc = loggerToMonitoringContext(this.logger);
+		this.logger = internalLogger;
+		this.mc = loggerToMonitoringContext(internalLogger);
 
 		const { opProcessingHelper, callbacksHelper } = this.setUpSampledTelemetryHelpers();
 		this.opProcessingHelper = opProcessingHelper;
@@ -206,7 +211,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsOpProcessing",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.OpProcessingTelemetrySampling") ?? 1000,
 			true,
 			new Map<string, ITelemetryBaseProperties>([
@@ -219,7 +224,7 @@ export abstract class SharedObjectCore<
 				eventName: "ddsEventCallbacks",
 				category: "performance",
 			},
-			this.logger,
+			extractTelemetryLoggerExt(this.logger),
 			this.mc.config.getNumber("Fluid.SharedObject.DdsCallbacksTelemetrySampling") ?? 1000,
 			true,
 		);
@@ -396,28 +401,24 @@ export abstract class SharedObjectCore<
 		return;
 	}
 
-	/* eslint-disable jsdoc/check-indentation */
 	/**
-	 * Derived classes must override this to do custom processing on a 'bunch' of remote messages.
+	 * Apply a 'bunch' of sequenced ops to this shared object.
 	 * @remarks
-	 * A 'bunch' is a group of messages that have the following properties:
-	 * - They are all part of the same grouped batch, which entails:
-	 *   - They are contiguous in sequencing order.
-	 *   - They are all from the same client.
-	 *   - They are all based on the same reference sequence number.
-	 *   - They are not interleaved with messages from other clients.
-	 * - They are not interleaved with messages from other DDS in the container.
-	 * Derived classes should override this if they need to do custom processing on a 'bunch' of remote messages.
-	 * @param messageCollection - The collection of messages to process.
+	 * See {@link @fluidframework/runtime-definitions#IRuntimeMessageCollection} for what a "bunch" is.
 	 *
+	 * These ops have been sequenced by the service and now have a finalized ordering.
+	 * They may be local or remote ops, but they cannot be ops that are still pending acknowledgement from the service.
+	 *
+	 * @param messageCollection - The 'bunch' of sequenced ops to apply to this shared object.
+	 * @privateRemarks
+	 * TODO:Performance: AB#59783: Allowing this to process more messages at once (more than the current definition of 'bunch') could improve performance of clients which fall behind,
+	 * which is one of the most important performance sensitive scenarios.
 	 */
-	/* eslint-enable jsdoc/check-indentation */
 	protected abstract processMessagesCore(messagesCollection: IRuntimeMessageCollection): void;
 
 	/**
 	 * Called when the object has disconnected from the delta stream.
 	 */
-
 	protected abstract onDisconnect(): void;
 
 	/**
@@ -987,6 +988,31 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 }
 
 /**
+ * A {@link @fluidframework/driver-definitions#RegistryKey} for a {@link SharedObjectKind}.
+ * @remarks
+ * This is implemented by {@link SharedObjectKind}, but alternative implementations can be used if needed.
+ *
+ * If you want lazy loading and need a key that does not eagerly load the {@link SharedObjectKind}, an alternative {@link SharedObjectKey} can be implemented.
+ * @privateRemarks
+ * TODO: A built in common pattern for the lazy key case should be provided.
+ * TODO: things probably break if "adapt" does anything except throw or return the result from the input promise.
+ * @input
+ * @alpha
+ */
+export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
+
+/**
+ * A {@link SharedObjectKind} that also implements {@link SharedObjectKey}.
+ * @privateRemarks
+ * All concrete shared object kinds (produced by {@link createSharedObjectKind}) implement this interface.
+ * @sealed
+ * @alpha
+ */
+export interface SharedObjectKindAlpha<out TSharedObject = unknown>
+	extends SharedObjectKind<TSharedObject>,
+		SharedObjectKey<TSharedObject> {}
+
+/**
  * Utility for creating ISharedObjectKind instances.
  * @remarks
  * This takes in a class which implements IChannelFactory,
@@ -998,8 +1024,23 @@ export interface SharedObjectKind<out TSharedObject = unknown>
 export function createSharedObjectKind<TSharedObject>(
 	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
 ): ISharedObjectKind<TSharedObject> & SharedObjectKind<TSharedObject> {
+	return createSharedObjectKindAlpha(factory);
+}
+
+/**
+ * Utility for creating ISharedObjectKind instances.
+ * @remarks
+ * This takes in a class which implements IChannelFactory,
+ * and uses it to return a single value which is intended to be used as the API entry point for the corresponding shared object type.
+ * The returned value implements {@link ISharedObjectKind} for use in the encapsulated API, as well as the type erased {@link SharedObjectKind} used by the declarative API.
+ * See {@link @fluidframework/fluid-static#ContainerSchema} for how this is used in the declarative API.
+ * @internal
+ */
+export function createSharedObjectKindAlpha<TSharedObject>(
+	factory: (new () => IChannelFactory<TSharedObject>) & { readonly Type: string },
+): ISharedObjectKind<TSharedObject> & SharedObjectKindAlpha<TSharedObject> {
 	const result: ISharedObjectKind<TSharedObject> &
-		Omit<SharedObjectKind<TSharedObject>, "brand"> = {
+		Omit<SharedObjectKindAlpha<TSharedObject>, "brand"> = {
 		getFactory(): IChannelFactory<TSharedObject> {
 			return new factory();
 		},
@@ -1011,9 +1052,25 @@ export function createSharedObjectKind<TSharedObject>(
 		is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject {
 			return isChannel(value) && value.attributes.type === factory.Type;
 		},
+
+		type: factory.Type,
+
+		adapt: (value: SharedObjectKindAlpha): SharedObjectKindAlpha<TSharedObject> => {
+			if (value === resultFinal) {
+				return resultFinal;
+			}
+			if (value.type === result.type) {
+				throw new UsageError(`Conflicting SharedObjectKinds with same type: ${result.type}`);
+			}
+			throw new UsageError(
+				`Mismatched SharedObjectKind type. Expected: ${result.type}, got: ${value.type}`,
+			);
+		},
 	};
 
-	return result as typeof result & SharedObjectKind<TSharedObject>;
+	const resultFinal = result as typeof result & SharedObjectKindAlpha<TSharedObject>;
+
+	return resultFinal;
 }
 
 function isChannel(loadable: IFluidLoadable): loadable is IChannel {

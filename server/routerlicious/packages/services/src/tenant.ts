@@ -14,6 +14,8 @@ import {
 	parseToken,
 	isNetworkError,
 	NetworkError,
+	type GitManagerConfigDecorator,
+	type IGitManagerConfig,
 } from "@fluidframework/server-services-client";
 import * as core from "@fluidframework/server-services-core";
 import type { IInvalidTokenError } from "@fluidframework/server-services-core";
@@ -153,10 +155,18 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		tenantId: string,
 		documentId: string,
 		includeDisabledTenant = false,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<core.ITenant> {
 		const [details, gitManager] = await Promise.all([
 			this.getTenantConfig(tenantId, includeDisabledTenant),
-			this.getTenantGitManager(tenantId, documentId, undefined, includeDisabledTenant),
+			this.getTenantGitManager(
+				tenantId,
+				documentId,
+				undefined,
+				includeDisabledTenant,
+				false,
+				configDecorator,
+			),
 		]);
 
 		const tenant = new Tenant(details, gitManager);
@@ -164,12 +174,80 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 		return tenant;
 	}
 
+	/**
+	 * Gets a GitManager instance for a specific tenant and document.
+	 *
+	 * @param tenantId - The tenant identifier
+	 * @param documentId - The document identifier
+	 * @param storageName - Optional storage name for routing
+	 * @param includeDisabledTenant - Whether to include disabled tenants
+	 * @param isEphemeralContainer - Whether this is for an ephemeral container
+	 * @param configDecorator - Optional decorator to customize the GitManager configuration
+	 * (Security: Critical functions are protected from override)
+	 *
+	 * @example Basic usage:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(tenantId, documentId);
+	 * ```
+	 *
+	 * @example With custom headers:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(
+	 *   tenantId,
+	 *   documentId,
+	 *   undefined,
+	 *   false,
+	 *   false,
+	 *   GitManagerConfigDecorators.withCustom({
+	 *     defaultHeaders: {
+	 *       'X-Custom-Header': 'custom-value',
+	 *       'X-Request-ID': requestId,
+	 *     }
+	 *   })
+	 * );
+	 * ```
+	 *
+	 * @example With custom metrics and query params:
+	 * ```typescript
+	 * const gitManager = await tenantManager.getTenantGitManager(
+	 *   tenantId, documentId, undefined, false, false,
+	 *   GitManagerConfigDecorators.withCustom({
+	 *     defaultQueryString: { version: '2.0' },
+	 *     logHttpMetrics: (props) => {
+	 *       console.log('Custom HTTP metrics:', props);
+	 *       // Your custom logging logic here
+	 *     },
+	 *   })
+	 * );
+	 * ```
+	 *
+	 * @example Custom decorator for specific tenant needs:
+	 * ```typescript
+	 * const customDecorator = GitManagerConfigDecorators.withCustom((config, context) => ({
+	 *   defaultHeaders: {
+	 *     'X-Tenant-ID': context.tenantId,        // ✅ Safe custom header
+	 *     'X-Document-ID': context.documentId,    // ✅ Safe custom header
+	 *     'X-Storage-Name': context.storageName || 'default', // ✅ Safe custom header
+	 *   },
+	 *   maxBodyLength: context.isEphemeralContainer ? 100 * 1024 : 1000 * 1024, // ✅ Safe override
+	 *   // refreshTokenIfNeeded: customRefresh, // ❌ This would be ignored for security
+	 * }));
+	 *
+	 * // Or even simpler for static overrides:
+	 * const simpleDecorator = GitManagerConfigDecorators.withCustom({
+	 *   maxBodyLength: 2000 * 1024,                          // ✅ Safe limit
+	 *   defaultQueryString: { version: '2.0', source: 'custom' }, // ✅ Safe params
+	 *   logHttpMetrics: customMetricsLogger,                 // ✅ Safe (with validation)
+	 * });
+	 * ```
+	 */
 	public async getTenantGitManager(
 		tenantId: string,
 		documentId: string,
 		storageName?: string,
 		includeDisabledTenant = false,
 		isEphemeralContainer = false,
+		configDecorator?: GitManagerConfigDecorator,
 	): Promise<IGitManager> {
 		const lumberProperties = {
 			...getLumberBaseProperties(documentId, tenantId),
@@ -182,6 +260,9 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 			lumberProperties /* telemetryProperties */,
 		);
 
+		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+
+		// Create default configuration
 		const defaultQueryString = {};
 		const getDefaultHeaders = () => {
 			const credentials: ICredentials = {
@@ -240,22 +321,45 @@ export class TenantManager implements core.ITenantManager, core.ITenantConfigMan
 				}
 			}
 		};
-		const defaultHeaders = getDefaultHeaders();
-		const baseUrl = `${this.internalHistorianUrl}/repos/${encodeURIComponent(tenantId)}`;
+
+		// Create default configuration
+		let config: IGitManagerConfig = {
+			defaultQueryString,
+			defaultHeaders: getDefaultHeaders(),
+			getDefaultHeaders,
+			refreshTokenIfNeeded,
+			getCorrelationId: () => getGlobalTelemetryContext().getProperties().correlationId,
+			getTelemetryProperties: () => getGlobalTelemetryContext().getProperties(),
+			logHttpMetrics,
+			getServiceName: () => getGlobalTelemetryContext().getProperties().serviceName ?? "",
+		};
+
+		// Apply decorator if provided
+		if (configDecorator) {
+			config = configDecorator(config, {
+				tenantId,
+				documentId,
+				storageName,
+				isEphemeralContainer,
+				accessToken,
+				baseUrl,
+			});
+		}
+
 		const tenantRestWrapper = new BasicRestWrapper(
 			baseUrl,
-			defaultQueryString,
+			config.defaultQueryString,
+			config.maxBodyLength,
+			config.maxContentLength,
+			config.defaultHeaders,
 			undefined,
-			undefined,
-			defaultHeaders,
-			undefined,
-			undefined,
-			getDefaultHeaders,
-			() => getGlobalTelemetryContext().getProperties().correlationId,
-			() => getGlobalTelemetryContext().getProperties(),
-			refreshTokenIfNeeded,
-			logHttpMetrics,
-			() => getGlobalTelemetryContext().getProperties().serviceName ?? "" /* serviceName */,
+			config.refreshDefaultQueryString,
+			config.refreshDefaultHeaders ?? config.getDefaultHeaders,
+			config.getCorrelationId,
+			config.getTelemetryProperties,
+			config.refreshTokenIfNeeded,
+			config.logHttpMetrics,
+			config.getServiceName,
 		);
 		const historian = new Historian(baseUrl, true, false, tenantRestWrapper);
 		const gitManager = new GitManager(historian);

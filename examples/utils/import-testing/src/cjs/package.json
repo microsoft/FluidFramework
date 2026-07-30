@@ -1,0 +1,6 @@
+{
+	"type": "commonjs",
+	"exports": {
+		"./crossPackageSchema/node16": "./crossPackage/node16/schemaDefinitions.js"
+	}
+}

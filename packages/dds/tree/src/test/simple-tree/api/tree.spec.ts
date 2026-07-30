@@ -9,6 +9,7 @@ import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import { validateUsageError } from "@fluidframework/test-runtime-utils/internal";
 import { MockFluidDataStoreRuntime } from "@fluidframework/test-runtime-utils/internal";
 
+import type { Revertible } from "../../../core/index.js";
 import { Tree } from "../../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { UnhydratedFlexTreeNode } from "../../../simple-tree/core/index.js";
@@ -23,10 +24,15 @@ import {
 	SchemaFactory,
 	TreeViewConfiguration,
 	unhydratedFlexTreeFromInsertable,
+	type ImplicitFieldSchema,
+	type TreeView,
+	type TreeViewAlpha,
+	type TreeViewBeta,
 } from "../../../simple-tree/index.js";
 import { SharedTree } from "../../../treeFactory.js";
-import type { JsonCompatibleReadOnly } from "../../../util/index.js";
-import { getView } from "../../utils.js";
+import type { JsonCompatibleReadOnly, requireAssignableTo } from "../../../util/index.js";
+import { getView, StringArray } from "../../utils.js";
+import { getViewForForkedBranch } from "../utils.js";
 
 const schema = new SchemaFactory("com.example");
 
@@ -35,6 +41,21 @@ class NodeList extends schema.array("NoteList", schema.string) {}
 class Canvas extends schema.object("Canvas", { stuff: [NodeMap, NodeList] }) {}
 
 const factory = SharedTree.getFactory();
+
+// Type tests
+{
+	// TreeViewBeta should be assignable to TreeView
+	type _checkBetaAssignableToPublic = requireAssignableTo<
+		TreeViewBeta<ImplicitFieldSchema>,
+		TreeView<ImplicitFieldSchema>
+	>;
+
+	// TreeViewAlpha should be assignable to TreeViewBeta
+	type _checkAlphaAssignableToBeta = requireAssignableTo<
+		TreeViewAlpha<ImplicitFieldSchema>,
+		TreeViewBeta<ImplicitFieldSchema>
+	>;
+}
 
 describe("simple-tree tree", () => {
 	it("ListRoot", () => {
@@ -98,7 +119,10 @@ describe("simple-tree tree", () => {
 
 		it("invalid default - initialize", () => {
 			const view = getView(config);
-			assert.throws(() => view.initialize({}), validateUsageError(/Field_NodeTypeNotAllowed/));
+			assert.throws(
+				() => view.initialize({}),
+				validateUsageError(/is not allowed in this field/),
+			);
 		});
 
 		it("invalid default - insert", () => {
@@ -111,7 +135,7 @@ describe("simple-tree tree", () => {
 				() => {
 					view.root = newNode;
 				},
-				validateUsageError(/Field_NodeTypeNotAllowed/),
+				validateUsageError(/is not allowed in this field/),
 			);
 		});
 	});
@@ -335,6 +359,158 @@ describe("simple-tree tree", () => {
 			assert.throws(() => {
 				viewA.applyChange({ invalid: "bogus" });
 			}, /cannot apply change.*invalid.*format/i);
+		});
+
+		it("can be undone", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let revertible: Revertible | undefined;
+			viewA.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				revertible = metadata.getRevertible();
+			});
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			assert(change !== undefined);
+			viewA.applyChange(change);
+			assert(revertible !== undefined);
+			revertible.revert();
+			assert.equal(viewA.root, 3);
+		});
+
+		it("can apply alongside a transaction", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			viewA.runTransaction(() => {
+				assert(change !== undefined);
+				viewA.applyChange(change);
+			});
+			assert.equal(viewA.root, 4);
+		});
+
+		it("apply before transactions", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			let change: JsonCompatibleReadOnly | undefined;
+			viewB.events.on("changed", (metadata) => {
+				assert(metadata.isLocal);
+				change = metadata.getChange();
+			});
+
+			viewB.root = 4;
+			viewA.runTransaction(() => {
+				viewA.root = 5;
+				assert(change !== undefined);
+				// Even though the serialized change (= 4) is applied _after_ the transaction change (= 5),
+				// it is considered a change external to the transaction and so will be applied before the transaction changes,
+				// as is the general policy for external changes applied during a transaction.
+				viewA.applyChange(change);
+			});
+			assert.equal(viewA.root, 5);
+		});
+	});
+
+	describe("computeNetChangeIfRebasedOnto", () => {
+		const scenarios = [
+			{ editSource: false, editTarget: false },
+			{ editSource: true, editTarget: false },
+			{ editSource: false, editTarget: true },
+			{ editSource: true, editTarget: true },
+		];
+		for (const { editSource, editTarget } of scenarios) {
+			it(`when source branch is ${editSource ? "edited" : "not edited"} and target branch is ${
+				editTarget ? "edited" : "not edited"
+			}`, () => {
+				const config = new TreeViewConfiguration({ schema: StringArray });
+				const targetView = getView(config);
+				targetView.initialize([]);
+				const sourceView = targetView.fork();
+
+				if (editSource) {
+					sourceView.root.insertAtEnd("source edit");
+				}
+				if (editTarget) {
+					targetView.root.insertAtEnd("target edit");
+				}
+				const rebasedView = getViewForForkedBranch(sourceView).forkView;
+				const appliedView = getViewForForkedBranch(sourceView).forkView;
+
+				rebasedView.rebaseOnto(targetView);
+
+				// Validating the output of `computeNetChangeIfRebasedOnto` directly would make the test brittle since the internals of the format are implementation details.
+				// Instead, we apply the net change to the applied view and then compare the resulting state to the rebased view to ensure they are equivalent.
+				const netChange = appliedView.computeNetChangeIfRebasedOnto(targetView);
+				if (netChange !== undefined) {
+					appliedView.applyChange(netChange);
+				}
+
+				assert.deepEqual([...appliedView.root], [...rebasedView.root]);
+			});
+		}
+	});
+
+	describe("isMissingEditsFrom", () => {
+		it("returns false when the branches are equivalent", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			assert.equal(viewA.isMissingEditsFrom(viewB), false);
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns false when only 'this' branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewB.isMissingEditsFrom(viewA), false);
+		});
+
+		it("returns true when only the other branch is ahead", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+		});
+
+		it("returns true when both branches are diverged", () => {
+			const config = new TreeViewConfiguration({ schema: schema.number });
+			const viewA = getView(config);
+			viewA.initialize(3);
+			const viewB = viewA.fork();
+
+			viewA.root = 4;
+			viewB.root = 4;
+			assert.equal(viewA.isMissingEditsFrom(viewB), true);
+			assert.equal(viewB.isMissingEditsFrom(viewA), true);
 		});
 	});
 });

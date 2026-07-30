@@ -5,7 +5,7 @@
 
 import { MonoRepo, type Package } from "@fluidframework/build-tools";
 import execa from "execa";
-import { ResetMode } from "simple-git";
+
 import {
 	checkPackagesCompatLayerGeneration,
 	DEFAULT_GENERATION_DIR,
@@ -82,7 +82,7 @@ export interface CheckResultFailure {
  * The results of a {@link CheckFunction}. If a CheckResult is `true`, then the check succeeded. Otherwise the result is
  * a {@link CheckResultFailure}.
  */
-type CheckResult = CheckResultFailure | undefined;
+export type CheckResult = CheckResultFailure | undefined;
 
 /**
  * Checks that there are no local changes in the local repository. This failure is fatal to ensure changes aren't lost.
@@ -97,10 +97,8 @@ export const CheckNoLocalChanges: CheckFunction = async (
 	const status = await gitRepo.gitClient.status();
 	if (!status.isClean()) {
 		return {
-			message:
-				"There are some local changes. The branch should be clean. Stopping further checks to ensure changes aren't lost. Stash your changes and try again.",
+			message: "There are some local changes. The branch should be clean.",
 			fixCommand: "git stash",
-			fatal: true,
 		};
 	}
 };
@@ -230,17 +228,18 @@ export const CheckNoUntaggedAsserts: CheckFunction = async (
 	// policy-check is scoped to the path that it's run in. Since we have multiple folders at the root that represent
 	// the client release group, we can't easily scope it to just the client. Thus, we always run it at the root just
 	// like we do in CI.
-	await execa("npm", ["run", "policy-check:asserts"], {
-		cwd: context.root,
-	});
+	const result = await execa(
+		"npm",
+		["exec", "flub", "--", "generate", "assertTags", "--all", "--requireTagged"],
+		{
+			cwd: context.root,
+			reject: false,
+		},
+	);
 
-	// check for policy check violation
-	const gitRepo = await context.getGitRepository();
-	const afterPolicyCheckStatus = await gitRepo.gitClient.status();
-	if (!afterPolicyCheckStatus.isClean()) {
-		await gitRepo.gitClient.reset(ResetMode.HARD);
+	if (result.exitCode !== 0) {
 		return {
-			message: "Found some untagged asserts. These should be tagged before release.",
+			message: `Assert tagging reported:\n${result.stdout}\n${result.stderr}\nAll asserts must be tagged before release.`,
 			fixCommand: "pnpm run policy-check:asserts",
 		};
 	}

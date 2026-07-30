@@ -1,5 +1,24 @@
 # Guidance for FluidFramework maintainers and contributors
 
+## Git Hooks (hk)
+
+This repo uses [hk](https://hk.jdx.dev/) to manage git hooks. Hooks are configured in `hk.pkl` at the repo root. Currently, a pre-commit hook runs `biome format` on staged files and auto-stages the formatted results.
+
+Git hooks are **opt-in**. To install them locally:
+
+```shell
+hk install
+```
+
+This sets up the hooks defined in `hk.pkl` to run automatically on commit. You can also run checks manually:
+
+```shell
+hk check  # verify formatting without modifying files
+hk fix    # auto-format files in place
+```
+
+hk requires the [pkl](https://pkl-lang.org/) CLI. Both hk and pkl can be installed via [mise](https://mise.jdx.dev/).
+
 ## Dependencies
 
 This document tracks dependencies that cannot be upgraded to their latest major versions due to technical limitations.
@@ -132,12 +151,24 @@ All workspace `pnpm-workspace.yaml` files include security-hardening settings to
 
 | Setting | Value | Purpose |
 |---------|-------|---------|
-| `minimumReleaseAge` | 1440 | Block packages published less than 24 hours ago |
+| `minimumReleaseAge` | 0 | See "Why `minimumReleaseAge` 0" |
 | `resolutionMode` | highest | Use highest matching version (see explanation below) |
 | `blockExoticSubdeps` | true | Block transitive deps from using git/tarball sources |
 | `trustPolicy` | no-downgrade | Fail if package trust/verification level decreases |
+| `trustPolicyExclude` | [] | Packages excluded from `trustPolicy` enforcement (see note below) |
 | `strictDepBuilds` | true | Require explicit approval for dependency build scripts |
 
+### Why `minimumReleaseAge` 0
+
+The default value for this setting is 1440 (1 day).
+The azure artifact feeds that are used by internal developers and our PR/CI pipelines already have similar built-in protections against recently released packages.
+Specifically, these feeds quaratine recently released packages based on risk profile (on the order of 1 to 7 days, where packages with install-time scripts are quaratined for longer).
+
+Unfortunately, artifact feeds do not preserve package publish time when ingesting a package from npmjs upstream.
+Rather, they record when the package was first added to the downstream artifact feed.
+Therefore using a nonzero value here may arbitrarily block internal developers from installing a package until an additional delay period after they first try to install it.
+
+This does not solve the issue that users of the public registry can make changes which can get through CI and merge but include dependencies internal developers cannot install: such cases are expected to be uncommon and for now will require case by case handling to avoid or fix.
 ### Why `resolutionMode: highest` instead of `time-based`
 
 We would prefer to use `resolutionMode: time-based` to avoid pulling in the newest packages from npm. This delays ingestion of newly published packages, which helps avoid supply chain attacks.
@@ -151,7 +182,13 @@ However, with `resolutionMode: time-based`, the "anchor" time for a transitive d
 
 This behavior is desired. However, pnpm does NOT attempt downward resolution to find a version that works (e.g., 1.0.0). Instead, it throws an error with no automatic fallback.
 
-With `resolutionMode: highest`, we still get protection from `minimumReleaseAge: 1440`, which blocks any package published within the last 24 hours. This provides supply chain protection without the transitive dependency resolution issues.
+With `resolutionMode: highest`, Microsoft devs and infrastructure still get protection from installing packages via internal artifacts feeds.
+
+### Trust Policy Exclusions (`trustPolicyExclude`)
+
+`trustPolicyExclude` lists packages that are exempt from `trustPolicy: no-downgrade` enforcement. This is needed for packages that are known to be safe but were published at a date after another version of the same package (including later major versions) that had better provenance information — causing pnpm to incorrectly treat the newer version as a trust downgrade.
+
+**This list must be reviewed carefully before adding any entry.** Only add a package here after confirming it is safe and understanding why its publication order triggers the policy.
 
 ### Build Script Approval (`strictDepBuilds`)
 
@@ -161,3 +198,36 @@ When `strictDepBuilds: true`, pnpm requires explicit approval before running bui
 - **Sub-workspaces with own lockfiles**: Both `pnpm.onlyBuiltDependencies` in the workspace's `package.json` AND `onlyBuiltDependencies` in the workspace's `pnpm-workspace.yaml` (due to [pnpm bug #9082](https://github.com/pnpm/pnpm/issues/9082))
 
 To approve a new package's build scripts, add it to the appropriate `onlyBuiltDependencies` list(s).
+
+## Claude Sandboxing Configuration
+
+The default configuration of the codespace Docker container is not compatible with [Claude sandboxing](https://code.claude.com/docs/en/sandboxing).
+There are multiple settings that need to be tweaked in both the container and Claude.
+
+### Container security flags ([`devcontainer.json`](.devcontainer/ai-agent/devcontainer.json) `runArgs`)
+
+Claude's sandbox uses [bubblewrap (bwrap)](https://github.com/containers/bubblewrap) to isolate processes in a user namespace with restricted mount/filesystem access. bwrap requires three capabilities that Docker containers don't grant by default:
+
+| Flag | Why bwrap needs it |
+|------|--------------------|
+| `--security-opt apparmor=unconfined` | Docker's default AppArmor profile blocks `mount` and `pivot_root` syscalls that bwrap uses to build its mount namespace. |
+| `--cap-add SYS_ADMIN` | bwrap needs `CAP_SYS_ADMIN` to create new mount namespaces and perform bind mounts inside them. |
+| `--security-opt seccomp=unconfined` | Docker's default seccomp profile blocks `unshare`, `pivot_root`, and some `mount` calls. bwrap needs all three. |
+
+### Root mount propagation ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+
+bwrap bind-mounts host paths into its sandbox namespace. For these mounts to propagate correctly, the root mount (`/`) must be marked as **shared**. Docker defaults to **private** propagation, which causes bwrap mounts to silently fail. The `postStartCommand` runs:
+
+```shell
+sudo mount --make-rshared /
+```
+
+This recursively marks all mount points as shared, allowing bwrap's bind mounts to work.
+
+### Sandbox TMPDIR ([`postStartCommand`](.devcontainer/ai-agent/devcontainer.json))
+
+Claude Code sets `TMPDIR=/tmp/claude` inside the sandbox, but doesn't create the directory itself. The sandbox allowlist permits writes to `/tmp/claude`, and the weaker sandbox bind-mounts the real `/tmp` into the namespace, so the directory just needs to exist on the host. Without it, any tool that resolves `TMPDIR` on startup (pnpm, node, etc.) crashes with `ENOENT`. The `postStartCommand` runs `mkdir -p /tmp/claude` to pre-create it. This is a workaround for a Claude Code bug ([anthropics/claude-code#21654](https://github.com/anthropics/claude-code/issues/21654)).
+
+### `enableWeakerNestedSandbox` ([Claude settings](.claude/settings.json))
+
+Even with the above flags, Docker still blocks mounting a fresh `/proc` filesystem inside a user namespace — a kernel-level restriction that `CAP_SYS_ADMIN` and AppArmor changes cannot override. Claude's full-strength sandbox requires this `/proc` mount. The `enableWeakerNestedSandbox` setting tells Claude to use a weaker sandbox variant that skips the `/proc` mount while still providing filesystem isolation via bwrap.

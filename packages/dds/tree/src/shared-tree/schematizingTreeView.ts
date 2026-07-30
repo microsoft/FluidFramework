@@ -9,7 +9,7 @@ import type {
 	IEmitter,
 	Listenable,
 } from "@fluidframework/core-interfaces/internal";
-import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import { anchorSlot, rootFieldKey } from "../core/index.js";
@@ -17,13 +17,13 @@ import {
 	type NodeIdentifierManager,
 	defaultSchemaPolicy,
 	cursorForMapTreeField,
-	TreeStatus,
 	Context,
 	combineChunks,
 	type FlexTreeOptionalField,
 	type FlexTreeUnknownUnboxed,
 	FieldKinds,
 	type FlexTreeRequiredField,
+	allowsRepoSuperset,
 } from "../feature-libraries/index.js";
 import {
 	type ImplicitFieldSchema,
@@ -33,24 +33,21 @@ import {
 	tryGetTreeNodeForField,
 	setField,
 	normalizeFieldSchema,
-	SchemaCompatibilityTester,
+	checkSchemaCompatibility,
 	type InsertableContent,
+	type StagedSchemaUpgradePolicy,
 	type TreeViewConfiguration,
 	type TreeViewAlpha,
 	type InsertableField,
 	type ReadableField,
 	type ReadSchema,
 	type UnsafeUnknownSchema,
-	type TreeBranch,
 	type TreeBranchEvents,
-	getInnerNode,
-	getKernel,
-	type VoidTransactionCallbackStatus,
-	type TransactionCallbackStatus,
-	type TransactionResult,
-	type TransactionResultExt,
-	type RunTransactionParams,
-	type TransactionConstraintAlpha,
+	type VoidTransactionCallbackStatusAlpha,
+	type TransactionCallbackStatusAlpha,
+	type TransactionVoidResult,
+	type TransactionValueResult,
+	type RunTransactionParamsAlpha,
 	HydratedContext,
 	SimpleContextSlot,
 	areImplicitFieldSchemaEqual,
@@ -62,6 +59,7 @@ import {
 	toInitialSchema,
 	toUpgradeSchema,
 	type TreeBranchAlpha,
+	type TreeSchema,
 } from "../simple-tree/index.js";
 import {
 	type Breakable,
@@ -72,7 +70,7 @@ import {
 } from "../util/index.js";
 
 import { canInitialize, initialize, initializerFromChunk } from "./schematizeTree.js";
-import type { ITreeCheckout, TreeCheckout } from "./treeCheckout.js";
+import type { TreeCheckout } from "./treeCheckout.js";
 
 /**
  * Creating multiple tree views from the same checkout is not supported. This slot is used to detect if one already
@@ -103,7 +101,14 @@ export class SchematizingSimpleTreeView<
 		IEmitter<TreeViewEvents & TreeBranchEvents> &
 		HasListeners<TreeViewEvents & TreeBranchEvents> = createEmitter();
 
-	private readonly viewSchema: SchemaCompatibilityTester;
+	/**
+	 * The schema for this view, captured at construction time for compatibility checking.
+	 */
+	private readonly viewSchema: TreeSchema;
+	/**
+	 * Stored-schema generation policy from the view configuration, frozen at construction time.
+	 */
+	private readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 
 	/**
 	 * Events to unregister upon flex-tree view disposal.
@@ -146,9 +151,18 @@ export class SchematizingSimpleTreeView<
 
 		this.rootFieldSchema = normalizeFieldSchema(config.schema);
 
-		const configAlpha = new TreeViewConfigurationAlpha({ schema: config.schema });
+		const stagedUpgradePolicy =
+			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
+		const configAlpha = new TreeViewConfigurationAlpha({
+			schema: config.schema,
+			enableSchemaValidation: config.enableSchemaValidation,
+			preventAmbiguity: config.preventAmbiguity,
+			stagedUpgradePolicy,
+		});
+		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
 
-		this.viewSchema = new SchemaCompatibilityTester(configAlpha);
+		// Store viewSchema directly from the configuration (TreeViewConfigurationAlpha implements TreeSchema)
+		this.viewSchema = configAlpha;
 		// This must be initialized before `update` can be called.
 		this.currentCompatibility = {
 			canView: false,
@@ -164,6 +178,10 @@ export class SchematizingSimpleTreeView<
 				this.events.emit("commitApplied", data, getRevertible);
 			}),
 		);
+	}
+
+	public isBranch(): this is TreeBranchAlpha {
+		return true;
 	}
 
 	public applyChange(change: JsonCompatibleReadOnly): void {
@@ -189,7 +207,7 @@ export class SchematizingSimpleTreeView<
 		}
 
 		this.runSchemaEdit(() => {
-			const schema = toInitialSchema(this.config.schema);
+			const schema = toInitialSchema(this.config.schema, this.stagedUpgradePolicy);
 			// This has to be the contextless version, since when "initialize" is called (right after this),
 			// it will do a schema change which would dispose of the current context (see inside `update`).
 			// Thus using the current context (if any) would hydrate nodes then
@@ -247,19 +265,18 @@ export class SchematizingSimpleTreeView<
 	public upgradeSchema(): void {
 		this.ensureUndisposed();
 
-		const compatibility = this.compatibility;
-		if (compatibility.isEquivalent) {
+		const newSchema = toUpgradeSchema(this.viewSchema.root, this.stagedUpgradePolicy);
+		const storedSchema = this.checkout.storedSchema.clone();
+		if (!allowsRepoSuperset(defaultSchemaPolicy, storedSchema, newSchema)) {
+			throw new UsageError(
+				"Existing stored schema cannot be upgraded to the requested schema (see TreeView.compatibility.canUpgrade).",
+			);
+		}
+		if (allowsRepoSuperset(defaultSchemaPolicy, newSchema, storedSchema)) {
 			// No-op
 			return;
 		}
 
-		if (!compatibility.canUpgrade) {
-			throw new UsageError(
-				"Existing stored schema cannot be upgraded (see TreeView.compatibility.canUpgrade).",
-			);
-		}
-
-		const newSchema = toUpgradeSchema(this.viewSchema.viewSchema.root);
 		this.runSchemaEdit(() => this.checkout.updateSchema(newSchema));
 	}
 
@@ -272,107 +289,56 @@ export class SchematizingSimpleTreeView<
 		return this.flexTreeContext;
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
 	public runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransaction}
-	 */
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 	public runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
 	public runTransaction<TSuccessValue, TFailureValue>(
 		transaction: () =>
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.mountTransaction(params, false);
-		const transactionCallbackStatus = transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params);
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult {
+		this.ensureUndisposed();
+		return this.checkout.runTransaction(transaction, params);
 	}
 
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
-	 */
 	public runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
-	/**
-	 * {@inheritDoc @fluidframework/shared-tree#TreeViewAlpha.runTransactionAsync}
-	 */
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
 	public runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 	public async runTransactionAsync<TSuccessValue, TFailureValue>(
 		transaction: () => Promise<
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
+			| TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>
+			| VoidTransactionCallbackStatusAlpha
 			| void
 		>,
-		params: RunTransactionParams | undefined,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult> {
-		this.mountTransaction(params, true);
-		const transactionCallbackStatus = await transaction();
-		return this.unmountTransaction(transactionCallbackStatus, params);
-	}
-
-	private mountTransaction(params: RunTransactionParams | undefined, isAsync: boolean): void {
+		params: RunTransactionParamsAlpha | undefined,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue> | TransactionVoidResult> {
 		this.ensureUndisposed();
-		const { checkout } = this;
-
-		checkout.transaction.start(isAsync);
-
-		// Validate preconditions before running the transaction callback.
-		addConstraintsToTransaction(
-			checkout,
-			false /* constraintsOnRevert */,
-			params?.preconditions,
-		);
-	}
-
-	private unmountTransaction<TSuccessValue, TFailureValue>(
-		transactionCallbackStatus:
-			| TransactionCallbackStatus<TSuccessValue, TFailureValue>
-			| VoidTransactionCallbackStatus
-			| void,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue> | TransactionResult {
-		this.ensureUndisposed();
-		const { checkout } = this;
-		const rollback = transactionCallbackStatus?.rollback;
-		const value = (
-			transactionCallbackStatus as TransactionCallbackStatus<TSuccessValue, TFailureValue>
-		)?.value;
-
-		if (rollback === true) {
-			checkout.transaction.abort();
-			return value === undefined
-				? { success: false }
-				: { success: false, value: value as TFailureValue };
+		if (this.checkout.transaction.size > 0) {
+			// breaker.break() sets brokenBy synchronously before throwing.
+			// A plain `throw` inside an async function would be captured as a rejected Promise
+			// before @breakingClass could set brokenBy. By setting it here first, the
+			// subsequent call to unmountTransaction (also @breakingClass-wrapped) will see the
+			// broken state and throw synchronously, propagating out of the outer runTransaction
+			// to its caller.
+			this.breaker.break(
+				new UsageError(
+					"An asynchronous transaction cannot be started while another transaction is already in progress.",
+				),
+			);
 		}
-
-		// Validate preconditions on revert after running the transaction callback and was successful.
-		addConstraintsToTransaction(
-			checkout,
-			true /* constraintsOnRevert */,
-			transactionCallbackStatus?.preconditionsOnRevert,
-		);
-
-		checkout.runWithTransactionLabel(() => {
-			checkout.transaction.commit();
-		}, params?.label);
-		return value === undefined
-			? { success: true }
-			: { success: true, value: value as TSuccessValue };
+		return this.checkout.runTransactionAsync(transaction, params);
 	}
 
 	private ensureUndisposed(): void {
@@ -399,12 +365,8 @@ export class SchematizingSimpleTreeView<
 	private update(): void {
 		this.disposeFlexView();
 
-		const compatibility = this.viewSchema.checkCompatibility(this.checkout.storedSchema);
-
-		this.currentCompatibility = {
-			...compatibility,
-			canInitialize: canInitialize(this.checkout),
-		};
+		const compatibility = this.computeCompatibility();
+		this.currentCompatibility = compatibility;
 
 		const anchors = this.checkout.forest.anchors;
 		const slots = anchors.slots;
@@ -473,6 +435,18 @@ export class SchematizingSimpleTreeView<
 			this.events.emit("schemaChanged");
 			this.events.emit("rootChanged");
 		}
+	}
+
+	private computeCompatibility(): SchemaCompatibilityStatus {
+		const compatibility = checkSchemaCompatibility(
+			this.viewSchema,
+			this.checkout.storedSchema,
+			this.stagedUpgradePolicy,
+		);
+		return {
+			...compatibility,
+			canInitialize: canInitialize(this.checkout),
+		};
 	}
 
 	private runSchemaEdit(edit: () => void): void {
@@ -570,77 +544,26 @@ export class SchematizingSimpleTreeView<
 
 	public fork(): ReturnType<TreeBranchAlpha["fork"]> &
 		SchematizingSimpleTreeView<TRootSchema> {
-		return this.checkout.branch().viewWith(this.config);
+		return this.checkout.fork().viewWith(this.config);
 	}
 
 	public merge(context: TreeBranchAlpha, disposeMerged = true): void {
-		this.checkout.merge(getCheckout(context), disposeMerged);
+		this.checkout.merge(context, disposeMerged);
 	}
 
 	public rebaseOnto(context: TreeBranchAlpha): void {
-		getCheckout(context).rebase(this.checkout);
+		this.checkout.rebaseOnto(context);
+	}
+
+	public isMissingEditsFrom(context: TreeBranchAlpha): boolean {
+		return this.checkout.isMissingEditsFrom(context);
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		context: TreeBranchAlpha,
+	): JsonCompatibleReadOnly | undefined {
+		return this.checkout.computeNetChangeIfRebasedOnto(context);
 	}
 
 	// #endregion Branching
-}
-
-/**
- * Get the {@link TreeCheckout} associated with a given {@link TreeBranch}.
- * @remarks Currently, all contexts are also {@link SchematizingSimpleTreeView}s.
- * Other checkout implementations (e.g. not associated with a view) may be supported in the future.
- */
-export function getCheckout(context: TreeBranch): TreeCheckout {
-	if (context instanceof SchematizingSimpleTreeView) {
-		return context.checkout;
-	}
-	throw new UsageError("Unsupported context implementation");
-}
-
-/**
- * Adds constraints to a `checkout`'s pending transaction.
- *
- * @param checkout - The checkout's who's transaction will have the constraints added to it.
- * @param constraintsOnRevert - If true, use {@link ISharedTreeEditor.addNodeExistsConstraintOnRevert}.
- * @param constraints - The constraints to add to the transaction.
- *
- * @see {@link RunTransactionParams.preconditions}.
- */
-export function addConstraintsToTransaction(
-	checkout: ITreeCheckout,
-	constraintsOnRevert: boolean,
-	constraints: readonly TransactionConstraintAlpha[] = [],
-): void {
-	for (const constraint of constraints) {
-		const constraintType = constraint.type;
-		switch (constraintType) {
-			case "nodeInDocument": {
-				const node = getInnerNode(constraint.node);
-				const nodeStatus = getKernel(constraint.node).getStatus();
-				if (nodeStatus !== TreeStatus.InDocument) {
-					const revertText = constraintsOnRevert ? " on revert" : "";
-					throw new UsageError(
-						`Attempted to add a "nodeInDocument" constraint${revertText}, but the node is not currently in the document. Node status: ${nodeStatus}`,
-					);
-				}
-				assert(node.isHydrated(), 0xbc2 /* In document node must be hydrated. */);
-				if (constraintsOnRevert) {
-					checkout.editor.addNodeExistsConstraintOnRevert(node.anchorNode);
-				} else {
-					checkout.editor.addNodeExistsConstraint(node.anchorNode);
-				}
-				break;
-			}
-			case "noChange": {
-				if (constraintsOnRevert) {
-					checkout.editor.addNoChangeConstraintOnRevert();
-				} else {
-					checkout.editor.addNoChangeConstraint();
-				}
-				break;
-			}
-			default: {
-				unreachableCase(constraintType);
-			}
-		}
-	}
 }

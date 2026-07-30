@@ -14,6 +14,14 @@ export class DirectoryFactory implements IChannelFactory<ISharedDirectory> {
     get type(): string;
 }
 
+// @beta @sealed @legacy
+export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set" | "forEach"> {
+    clear(): void;
+    delete(key: K): boolean;
+    forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
+    forEach(callbackfn: (value: V, key: K, map: Map<K, V>) => void, thisArg?: any): void;
+}
+
 // @beta @deprecated @legacy
 export interface ICreateInfo {
     ccIds: string[];
@@ -32,6 +40,10 @@ export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryE
     hasSubDirectory(subdirName: string): boolean;
     set<T = unknown>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
+}
+
+// @beta @sealed @legacy
+export interface IDirectoryBeta extends Omit<IDirectory, Exclude<keyof Map<string, unknown>, "get" | "set">>, FluidMapLegacy<string, any> {
 }
 
 // @beta @deprecated @legacy
@@ -89,6 +101,10 @@ export interface ISharedDirectoryEvents extends ISharedObjectEvents {
 export interface ISharedMap extends ISharedObject<ISharedMapEvents>, Map<string, any> {
     get<T = any>(key: string): T | undefined;
     set<T = unknown>(key: string, value: T): this;
+}
+
+// @beta @sealed @legacy
+export interface ISharedMapBeta extends Omit<ISharedMap, Exclude<keyof Map<string, unknown>, "get" | "set">>, FluidMapLegacy<string, any> {
 }
 
 // @beta @sealed @legacy

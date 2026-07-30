@@ -1,0 +1,446 @@
+/*!
+ * Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+ * Licensed under the MIT License.
+ */
+
+import type {
+	AttendeeId,
+	ClientConnectionId,
+	PresenceWithNotifications,
+	StateSchemaValidator,
+} from "@fluid-internal/presence-definitions";
+import type { InboundExtensionMessage } from "@fluidframework/container-runtime-definitions/internal";
+import type {
+	InternalCoreInterfacesUtilityTypes,
+	JsonDeserialized,
+} from "@fluidframework/core-interfaces/internal";
+import type { EventAndErrorTrackingLogger } from "@fluidframework/test-utils/internal";
+import { getUnexpectedLogErrorException } from "@fluidframework/test-utils/internal";
+import { spy } from "sinon";
+import type { SinonFakeTimers } from "sinon";
+
+import type {
+	InboundClientJoinMessage,
+	InboundDatastoreUpdateMessage,
+	OutboundClientJoinMessage,
+	SignalMessages,
+	SystemWorkspaceDatastore,
+} from "@fluid-internal/presence-runtime/internal/protocol";
+import {
+	broadcastJoinResponseDelaysMs,
+	createPresenceManager,
+} from "@fluid-internal/presence-runtime/internal/test";
+
+import type { MockEphemeralRuntime } from "./mockEphemeralRuntime.js";
+import { initialLocalClientConnectionId } from "./mockEphemeralRuntime.js";
+
+/**
+ * Use to compile-time assert types of two variables are identical.
+ */
+export function assertIdenticalTypes<T, U>(
+	_actual: T & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+	_expected: U & InternalCoreInterfacesUtilityTypes.IfSameType<T, U>,
+): InternalCoreInterfacesUtilityTypes.IfSameType<T, U> {
+	return undefined as InternalCoreInterfacesUtilityTypes.IfSameType<T, U>;
+}
+
+/**
+ * Creates a non-viable (`undefined`) instance of type T to be used for type checking.
+ */
+export function createInstanceOf<T>(): T {
+	return undefined as T;
+}
+
+type SpecificAttendeeId<T extends string> = string extends T
+	? never
+	: Exclude<T & AttendeeId, never>;
+
+/**
+ * Forms {@link AttendeeId} for a specific attendee
+ */
+export function createSpecificAttendeeId<const T extends string>(
+	id: T,
+): SpecificAttendeeId<T> {
+	return id as SpecificAttendeeId<T>;
+}
+
+/**
+ * Mock {@link AttendeeId}.
+ */
+export const attendeeId1 = createSpecificAttendeeId("attendeeId-1");
+/**
+ * Mock {@link ClientConnectionId}.
+ */
+export const connectionId1 = "client1" as const satisfies ClientConnectionId;
+/**
+ * Mock {@link AttendeeId} for the local client in tests.
+ */
+export const localAttendeeId = createSpecificAttendeeId("localAttendeeId");
+
+/**
+ * Generates expected inbound join signal for a client that was initialized while connected.
+ */
+export function generateBasicClientJoin(
+	fixedTime: number,
+	{
+		attendeeId = localAttendeeId,
+		clientConnectionId = initialLocalClientConnectionId,
+		updateProviders = ["client0", "client1", "client3"],
+		connectionOrder = 0,
+		averageLatency = 0,
+		priorClientToSessionId = {},
+	}: {
+		attendeeId?: string;
+		clientConnectionId?: ClientConnectionId;
+		updateProviders?: string[];
+		connectionOrder?: number;
+		averageLatency?: number;
+		priorClientToSessionId?: SystemWorkspaceDatastore["clientToSessionId"];
+	},
+): InboundClientJoinMessage {
+	return {
+		type: "Pres:ClientJoin",
+		content: {
+			"avgLatency": averageLatency,
+			"data": {
+				"system:presence": {
+					"clientToSessionId": {
+						...priorClientToSessionId,
+						[clientConnectionId]: {
+							"rev": connectionOrder,
+							"timestamp": fixedTime,
+							"value": attendeeId as AttendeeId,
+						},
+					},
+				},
+			},
+			"sendTimestamp": fixedTime,
+			updateProviders,
+		},
+		clientId: clientConnectionId,
+	};
+}
+
+/**
+ * Function signature for sending a signal to the presence manager.
+ */
+export type ProcessSignalFunction = ReturnType<typeof createPresenceManager>["processSignal"];
+
+/**
+ * Expected shape of Presence signals
+ */
+export type InboundPresenceSignalMessage = InboundExtensionMessage<SignalMessages>;
+
+/**
+ * Creates a processSignal wrapper function for a presence manager.
+ */
+function createProcessSignal(
+	presence: ReturnType<typeof createPresenceManager>,
+): ProcessSignalFunction {
+	return (
+		addressChain: string[],
+		signalMessage: InboundPresenceSignalMessage,
+		local: boolean,
+	): void => {
+		// Pass on to presence manager, but first clone the message to avoid
+		// possibility of Presence mutating the original message which often
+		// contains reference to general (shared) test data.
+		// Additionally JSON.parse(JSON.stringify(signalMessage)) is used to
+		// ensure only regular JSON-serializable data is passed to Presence.
+		// In production environment, the message is always extracted from
+		// the network and Presence can safely mutate it.
+		presence.processSignal(
+			addressChain,
+			// eslint-disable-next-line unicorn/prefer-structured-clone -- not structural clone, but filters to JSON-serializable data
+			JSON.parse(JSON.stringify(signalMessage)) as InboundPresenceSignalMessage,
+			local,
+		);
+	};
+}
+
+/**
+ * Calculates update providers based on current audience members.
+ */
+function calculateUpdateProviders(
+	runtime: MockEphemeralRuntime,
+	clientConnectionId: ClientConnectionId,
+): ClientConnectionId[] {
+	// This logic needs to be kept in sync with datastore manager.
+	// From PresenceDatastoreManager.getAudienceInformation:
+	const members = runtime.audience.getMembers();
+	members.delete(clientConnectionId);
+	const all = new Set<ClientConnectionId>();
+	const writers = new Set<ClientConnectionId>();
+	for (const [id, client] of members) {
+		if (client.details.capabilities.interactive) {
+			all.add(id);
+			if (client.mode === "write") {
+				writers.add(id);
+			}
+		}
+	}
+	// From PresenceDatastoreManager.joinSession:
+	const updateProviders = [...(writers.size > 0 ? writers : all)];
+	if (updateProviders.length > 3) {
+		updateProviders.length = 3;
+	}
+	return updateProviders;
+}
+
+/**
+ * Prepares the expected client join signal and calculates update providers.
+ */
+function prepareExpectedClientJoin(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+): {
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>;
+	updateProviders: ClientConnectionId[];
+} {
+	const updateProviders = calculateUpdateProviders(runtime, clientConnectionId);
+
+	const expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">> = generateBasicClientJoin(clock.now, {
+		attendeeId,
+		clientConnectionId,
+		updateProviders,
+	});
+	delete expectedClientJoin.clientId;
+	runtime.signalsExpected.push([expectedClientJoin]);
+
+	return { expectedClientJoin, updateProviders };
+}
+
+/**
+ * Processes the local join signal and sends a fake join response.
+ */
+function processJoinSignalAndResponse(
+	processSignal: ProcessSignalFunction,
+	expectedClientJoin: OutboundClientJoinMessage &
+		Partial<Pick<InboundClientJoinMessage, "clientId">>,
+	clientConnectionId: ClientConnectionId,
+	updateProviders: ClientConnectionId[],
+	clock: Omit<SinonFakeTimers, "restore">,
+	latency: number,
+): void {
+	// Pass a little time (to mimic reality)
+	clock.tick(latency);
+
+	// Return the [local] join signal
+	processSignal([], { ...expectedClientJoin, clientId: clientConnectionId }, true);
+
+	if (updateProviders.length > 0) {
+		// Pass time (to mimic likely response)
+		clock.tick(broadcastJoinResponseDelaysMs.namedResponder + 20);
+
+		// Send a fake join response
+		// There are no other attendees in the session (not realistic) but this
+		// convinces the presence manager that it now has full knowledge, which
+		// enables it to respond to other's join requests accurately.
+		processSignal(
+			[],
+			{
+				type: "Pres:DatastoreUpdate",
+				content: {
+					...expectedClientJoin.content,
+					isComplete: true,
+					joinResponseFor: [clientConnectionId],
+				},
+				clientId: updateProviders[0],
+			} satisfies InboundDatastoreUpdateMessage,
+			false,
+		);
+	}
+}
+
+/**
+ * The simulated local average latency used in test helpers.
+ */
+const localAvgLatency = 10;
+
+/**
+ * Creates presence manager for testing.
+ */
+function createPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: ReturnType<typeof createPresenceManager>;
+	processSignal: ProcessSignalFunction;
+} {
+	logger.registerExpectedEvent({ eventName: "Presence:PresenceInstantiated" });
+
+	const presence = createPresenceManager(runtime, attendeeId as AttendeeId);
+	const processSignal = createProcessSignal(presence);
+
+	// Validate expectations post initialization to make sure logger
+	// and runtime are left in a clean expectation state.
+	const logErrors = getUnexpectedLogErrorException(logger);
+	if (logErrors) {
+		throw logErrors;
+	}
+
+	return { presence, processSignal };
+}
+
+/**
+ * Prepares an instance of presence as it would be if initialized while connected.
+ *
+ * @param runtime - the mock runtime
+ * @param attendeeId - the client session id given to presence
+ * @param clientConnectionId - the client connection id
+ * @param clock - the fake timer.
+ * @param logger - logger to track telemetry events
+ */
+export function prepareConnectedPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+	localAvgLatency: number;
+} {
+	// Set runtime to connected state
+	runtime.clientId = clientConnectionId;
+	runtime.joined = true;
+
+	const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+		runtime,
+		attendeeId,
+		clientConnectionId,
+		clock,
+	);
+
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
+	runtime.assertAllSignalsSubmitted();
+
+	processJoinSignalAndResponse(
+		processSignal,
+		expectedClientJoin,
+		clientConnectionId,
+		updateProviders,
+		clock,
+		localAvgLatency,
+	);
+
+	return {
+		presence,
+		processSignal,
+		localAvgLatency,
+	};
+}
+
+/**
+ * Prepares an instance of presence in a disconnected state.
+ *
+ * @remarks
+ * Use this helper when you need to test events that occur during the initial
+ * connection, such as `attendeeConnected` for the local client.
+ *
+ * @param runtime - the mock runtime
+ * @param attendeeId - the client session id given to presence
+ * @param clientConnectionId - the client connection id to use when connecting
+ * @param clock - the fake timer
+ * @param logger - logger to track telemetry events
+ */
+export function prepareDisconnectedPresence(
+	runtime: MockEphemeralRuntime,
+	attendeeId: string,
+	clientConnectionId: ClientConnectionId,
+	clock: Omit<SinonFakeTimers, "restore">,
+	logger: EventAndErrorTrackingLogger,
+): {
+	presence: PresenceWithNotifications;
+	processSignal: ProcessSignalFunction;
+	/**
+	 * Connects presence using the client connection id provided to prepareDisconnectedPresence.
+	 */
+	connect: () => void;
+	/**
+	 * The simulated local average latency used by connect.
+	 */
+	localAvgLatency: number;
+} {
+	// Ensure runtime is in disconnected state
+	runtime.clientId = undefined;
+	runtime.joined = false;
+
+	// Remove client connection id from audience if present
+	if (runtime.audience.getMember(clientConnectionId) !== undefined) {
+		runtime.removeMember(clientConnectionId);
+	}
+
+	const { presence, processSignal } = createPresence(runtime, attendeeId, logger);
+
+	const connect = (): void => {
+		const { expectedClientJoin, updateProviders } = prepareExpectedClientJoin(
+			runtime,
+			attendeeId,
+			clientConnectionId,
+			clock,
+		);
+
+		// Simulate connection
+		runtime.connect(clientConnectionId, undefined);
+
+		// Validate signal was submitted
+		runtime.assertAllSignalsSubmitted();
+
+		processJoinSignalAndResponse(
+			processSignal,
+			expectedClientJoin,
+			clientConnectionId,
+			updateProviders,
+			clock,
+			localAvgLatency,
+		);
+	};
+
+	return {
+		presence,
+		processSignal,
+		connect,
+		localAvgLatency,
+	};
+}
+
+/**
+ * Asserts that all expected telemetry and signals were sent.
+ */
+export function assertFinalExpectations(
+	runtime: MockEphemeralRuntime,
+	logger: EventAndErrorTrackingLogger,
+): void {
+	// Make sure all expected events were logged and there are no unexpected errors.
+	const logErrors = getUnexpectedLogErrorException(logger);
+	if (logErrors) {
+		throw logErrors;
+	}
+	// Make sure all expected signals were sent.
+	runtime.assertAllSignalsSubmitted();
+}
+
+/**
+ * A null validator (one that does nothing) for a given type T. It simply casts the value to
+ * `JsonDeserialized<T>`.
+ */
+const nullValidator = <T extends object>(data: unknown): JsonDeserialized<T> => {
+	return data as JsonDeserialized<T>;
+};
+
+/**
+ * Creates a spied validator for test purposes.
+ *
+ * @param validatorFunction - A {@link StateSchemaValidator} to wrap in a spy.
+ */
+export const createSpiedValidator = <T extends object>(
+	validatorFunction: StateSchemaValidator<T> = nullValidator<T>,
+	// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/explicit-function-return-type
+) => spy(validatorFunction) satisfies StateSchemaValidator<T>;

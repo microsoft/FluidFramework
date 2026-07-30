@@ -40,7 +40,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 		rebase: rebaseGenericChange,
 		prune: pruneGenericChange,
 		replaceRevisions,
-		mute: (change: GenericChangeset): GenericChangeset => change,
+		filterEdits: (change: GenericChangeset): GenericChangeset => change,
 	},
 	codecsFactory: makeGenericChangeCodec,
 	editor: {
@@ -97,7 +97,6 @@ function rebaseGenericChange(
 	const rebased: GenericChangeset = new BTree();
 	let nextIndex = 0;
 
-	// eslint-disable-next-line no-constant-condition
 	while (true) {
 		const newEntry = change.getPairOrNextHigher(nextIndex);
 		const baseEntry = over.getPairOrNextHigher(nextIndex);

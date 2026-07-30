@@ -6,16 +6,16 @@
 import { assert } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
 
-import type { IJsonCodec } from "../../codec/index.js";
+import type { JsonCodecPart } from "../../codec/index.js";
 import type { ChangeEncodingContext } from "../change-family/index.js";
 
-import type { EncodedRevisionTag, RevisionTag } from "./types.js";
+import { RevisionTagSchema, type EncodedRevisionTag, type RevisionTag } from "./types.js";
 
 export class RevisionTagCodec
-	implements
-		IJsonCodec<RevisionTag, EncodedRevisionTag, EncodedRevisionTag, ChangeEncodingContext>
+	implements JsonCodecPart<RevisionTag, typeof RevisionTagSchema, ChangeEncodingContext>
 {
 	public localSessionId: SessionId;
+	public readonly encodedSchema = RevisionTagSchema;
 
 	public constructor(private readonly idCompressor: IIdCompressor) {
 		this.localSessionId = idCompressor.localSessionId;

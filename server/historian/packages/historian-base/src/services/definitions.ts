@@ -3,7 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { ITenantConfig, ITenantCustomData } from "@fluidframework/server-services-core";
+import type {
+	IDocumentManager,
+	IStorageNameRetriever,
+	ITenantConfig,
+	ITenantCustomData,
+} from "@fluidframework/server-services-core";
+import type { Query } from "express-serve-static-core";
+import type * as nconf from "nconf";
 
 /**
  * Interface for a git object cache
@@ -23,6 +30,24 @@ export interface ICache {
 	 * Deletes a cache key/value pair. Returns true if the key was deleted, and false if it does not exist.
 	 */
 	delete(key: string): Promise<boolean>;
+}
+
+export interface ICreateGitServiceArgs {
+	config: nconf.Provider;
+	tenantId: string;
+	authorization: string | undefined;
+	tenantService: ITenantService;
+	storageNameRetriever?: IStorageNameRetriever;
+	documentManager: IDocumentManager;
+	cache?: ICache;
+	initialUpload?: boolean;
+	storageName?: string;
+	allowDisabledTenant?: boolean;
+	isEphemeralContainer?: boolean;
+	ephemeralDocumentTTLSec?: number; // 24 hours
+	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever;
+	postEphemeralContainerChecker?: IPostEphemeralContainerChecker;
+	query?: Query;
 }
 
 export interface ITenantService {
@@ -105,4 +130,13 @@ export interface IOauthAccessInfo {
  */
 export interface ISimplifiedCustomDataRetriever {
 	get(customData: ITenantCustomData): string;
+}
+
+export interface IPostEphemeralContainerChecker {
+	postEphemeralContainerCheck: (
+		tenantId: string,
+		documentId: string,
+		isEphemeral: boolean,
+		createArgs: ICreateGitServiceArgs,
+	) => Promise<boolean>;
 }

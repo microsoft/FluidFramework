@@ -5,6 +5,7 @@
 
 import { Spinner } from "@fluentui/react-components";
 import {
+	CloseDataVisualization,
 	DataVisualization,
 	type FluidObjectNode,
 	GetDataVisualization,
@@ -14,7 +15,7 @@ import {
 	type InboundHandlers,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../../MessageRelayContext.js";
 
@@ -33,13 +34,13 @@ export interface FluidHandleViewProps extends HasContainerKey, HasFluidObjectId,
 /**
  * Render data with type VisualNodeKind.FluidHandleNode and render its children.
  */
-export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement {
+export function FluidHandleView(props: FluidHandleViewProps): ReactElement {
 	const { containerKey, fluidObjectId, label } = props;
 	const messageRelay = useMessageRelay();
 
-	const [visualTree, setVisualTree] = React.useState<FluidObjectNode | undefined>();
+	const [visualTree, setVisualTree] = useState<FluidObjectNode | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound message related to Data View.
 		 */
@@ -70,6 +71,8 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		messageRelay.on("message", messageHandler);
 
 		// POST Request for FluidObjectNode.
+		// This also registers our interest in the object, so the devtools will broadcast automatic updates for it
+		// until we send the corresponding CloseDataVisualization message below.
 		messageRelay.postMessage(
 			GetDataVisualization.createMessage({
 				containerKey,
@@ -80,6 +83,15 @@ export function FluidHandleView(props: FluidHandleViewProps): React.ReactElement
 		// Callback to clean up our message handlers.
 		return (): void => {
 			messageRelay.off("message", messageHandler);
+
+			// Signal that we are no longer displaying this object, so the devtools can stop broadcasting updates for
+			// it once no other consumers remain interested.
+			messageRelay.postMessage(
+				CloseDataVisualization.createMessage({
+					containerKey,
+					fluidObjectId,
+				}),
+			);
 		};
 	}, [containerKey, fluidObjectId, messageRelay]);
 

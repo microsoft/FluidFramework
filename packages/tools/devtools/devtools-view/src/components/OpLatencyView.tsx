@@ -20,7 +20,7 @@ import {
 	TelemetryEvent,
 	handleIncomingMessage,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import { useMessageRelay } from "../MessageRelayContext.js";
 
@@ -60,12 +60,12 @@ const useStyles = makeStyles({
  * Page that shows op latency metrics.
  * @remarks TODO: Once Op Latency data is available from {@link messageRelay}, the op latency data should be passed into the graph instead of this test data set.
  */
-export function OpLatencyView(): React.ReactElement {
+export function OpLatencyView(): ReactElement {
 	const styles = useStyles();
 
 	const messageRelay = useMessageRelay();
 	const [durationOutboundBatchingData, setDurationOutboundBatchingData] =
-		React.useState<GraphDataSet>({
+		useState<GraphDataSet>({
 			graphType: "line",
 			schema: {
 				displayName: "Duration Outbound",
@@ -75,7 +75,7 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [durationNetworkData, setDurationNetworkData] = React.useState<GraphDataSet>({
+	const [durationNetworkData, setDurationNetworkData] = useState<GraphDataSet>({
 		graphType: "line",
 		schema: {
 			displayName: "Duration Network",
@@ -86,7 +86,7 @@ export function OpLatencyView(): React.ReactElement {
 		data: [],
 	});
 	const [durationInboundToProcessingData, setDurationInboundToProcessingData] =
-		React.useState<GraphDataSet>({
+		useState<GraphDataSet>({
 			graphType: "line",
 			schema: {
 				displayName: "Duration Inbound",
@@ -96,9 +96,9 @@ export function OpLatencyView(): React.ReactElement {
 			},
 			data: [],
 		});
-	const [unsampledTelemetry, setUnsampledTelemetry] = React.useState<boolean>(false);
+	const [unsampledTelemetry, setUnsampledTelemetry] = useState<boolean>(false);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		// Handler for incoming messages
 		const inboundMessageHandlers: InboundHandlers = {
 			[DevtoolsFeatures.MessageType]: async (untypedMessage) => {
@@ -140,7 +140,7 @@ export function OpLatencyView(): React.ReactElement {
 		messageRelay.postMessage(toggleMessage);
 	};
 
-	React.useEffect(() => {
+	useEffect(() => {
 		/**
 		 * Handlers for inbound messages.
 		 */

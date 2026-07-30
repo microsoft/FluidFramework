@@ -80,13 +80,13 @@ describe("Runtime batching", () => {
 
 	beforeEach(async () => {
 		mockDeltaManager = new MockDeltaManager();
-		containerRuntime = await ContainerRuntime.loadRuntime2({
+		({ runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
 			context: getMockContext(mockDeltaManager) as IContainerContext,
 			registry: new FluidDataStoreRegistry([]),
 			existing: false,
 			runtimeOptions: {},
 			provideEntryPoint: mockProvideEntryPoint,
-		});
+		}));
 	});
 
 	afterEach(() => {

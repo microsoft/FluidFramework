@@ -15,8 +15,6 @@ import {
 	type UpPath,
 	applyDelta,
 	makeDetachedFieldIndex,
-	mapCursorField,
-	moveToDetachedField,
 	rootFieldKey,
 } from "../../../core/index.js";
 import {
@@ -25,7 +23,7 @@ import {
 	DefaultEditBuilder,
 	cursorForJsonableTreeField,
 	intoDelta,
-	jsonableTreeFromCursor,
+	jsonableTreeFromForest,
 } from "../../../feature-libraries/index.js";
 import { FluidClientVersion, FormatValidatorBasic } from "../../../index.js";
 import { JsonAsTree } from "../../../jsonDomainSchema.js";
@@ -37,8 +35,6 @@ import {
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
 } from "../../utils.js";
 import { initializeForest } from "../initializeForest.js";
 
@@ -46,8 +42,7 @@ const codecOptions = {
 	jsonValidator: FormatValidatorBasic,
 	minVersionForCollab: FluidClientVersion.v2_0,
 };
-const defaultChangeFamily = new DefaultChangeFamily(failCodecFamily, codecOptions);
-const family = defaultChangeFamily;
+const rebaser = new DefaultChangeFamily(failCodecFamily, codecOptions).rebaser;
 
 const rootKey = rootFieldKey;
 const fooKey = brand<FieldKey>("foo");
@@ -123,22 +118,13 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
-		initializeForest(
-			forest,
-			cursorForJsonableTreeField([data]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, cursorForJsonableTreeField([data]));
 	}
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(
-		undefined,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(
-		family,
+		rebaser,
 		mintRevisionTag,
 		(taggedChange) => {
 			changes.push(taggedChange);
@@ -160,10 +146,7 @@ function expectForest(
 	actual: IForestSubscription,
 	expected: JsonableTree | JsonableTree[],
 ): void {
-	const reader = actual.allocateCursor();
-	moveToDetachedField(actual, reader);
-	const copy = mapCursorField(reader, jsonableTreeFromCursor);
-	reader.free();
+	const copy = jsonableTreeFromForest(actual);
 	const expectedArray = Array.isArray(expected) ? expected : [expected];
 	assert.deepEqual(copy, expectedArray);
 }
@@ -447,7 +430,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: fooKey }, 4);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -475,7 +458,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: fooKey }, 0);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -503,7 +486,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 2, { parent: root, field: fooKey }, 2);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -532,7 +515,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 1, 3, { parent: root, field: barKey }, 1);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -580,7 +563,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_foo1, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -640,7 +623,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_foo0, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -702,7 +685,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_bar0, field: barKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -714,6 +697,56 @@ describe("DefaultEditBuilder", () => {
 							},
 						},
 					],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from field to a nested field under a sibling field of the same parent", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+					bar: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								bar: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				{ parent: root_bar0, field: barKey },
+				1,
+			);
+			const treeView = jsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [{ type: brand(numberSchema.identifier), value: 0 }],
 					bar: [
 						{
 							type: brand(JsonAsTree.JsonObject.identifier),
@@ -758,7 +791,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root, field: fooKey },
 				0,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -804,7 +837,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root, field: fooKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -818,6 +851,111 @@ describe("DefaultEditBuilder", () => {
 						{ type: brand(numberSchema.identifier), value: 1 },
 						{ type: brand(numberSchema.identifier), value: 2 },
 						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from before an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+					],
+				},
+			});
+			builder.move(
+				// Path to root.foo.
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				// Path to root.foo[4].foo, which is after the moved nodes in their original location.
+				{
+					parent: {
+						parent: root,
+						parentField: fooKey,
+						parentIndex: 4,
+					},
+					field: fooKey,
+				},
+				1,
+			);
+			const treeView = jsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{ type: brand(numberSchema.identifier), value: 0 },
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
+					],
+				},
+			};
+			assert.deepEqual(treeView, [expected]);
+		});
+
+		it("Can move nodes from after an ancestor of the destination field", () => {
+			const { builder, forest } = initializeEditableForest({
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [{ type: brand(numberSchema.identifier), value: 0 }],
+							},
+						},
+						{ type: brand(numberSchema.identifier), value: 1 },
+						{ type: brand(numberSchema.identifier), value: 2 },
+						{ type: brand(numberSchema.identifier), value: 3 },
+					],
+				},
+			});
+			builder.move(
+				// Path to root.foo.
+				{ parent: root, field: fooKey },
+				1,
+				3,
+				// Path to root.foo[0].foo, which is before the moved nodes in their original location.
+				{ parent: root_foo0, field: fooKey },
+				1,
+			);
+			const treeView = jsonableTreeFromForest(forest);
+			const expected: JsonableTree = {
+				type: brand(JsonAsTree.JsonObject.identifier),
+				fields: {
+					foo: [
+						{
+							type: brand(JsonAsTree.JsonObject.identifier),
+							fields: {
+								foo: [
+									{ type: brand(numberSchema.identifier), value: 0 },
+									{ type: brand(numberSchema.identifier), value: 1 },
+									{ type: brand(numberSchema.identifier), value: 2 },
+									{ type: brand(numberSchema.identifier), value: 3 },
+								],
+							},
+						},
 					],
 				},
 			};
@@ -845,7 +983,7 @@ describe("DefaultEditBuilder", () => {
 					0,
 				),
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			assert.deepEqual(treeView, [statingState]);
 		});
 
@@ -897,7 +1035,7 @@ describe("DefaultEditBuilder", () => {
 				{ parent: root_bar0_bar0, field: barKey },
 				1,
 			);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -954,7 +1092,7 @@ describe("DefaultEditBuilder", () => {
 				},
 			});
 			builder.move({ parent: root, field: fooKey }, 0, 3, { parent: root, field: barKey }, 1);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.JsonObject.identifier),
 				fields: {
@@ -975,7 +1113,7 @@ describe("DefaultEditBuilder", () => {
 			});
 			const sequencePath = { parent: root, field: EmptyKey };
 			builder.move(sequencePath, 0, 0, sequencePath, 0);
-			const treeView = toJsonableTreeFromForest(forest);
+			const treeView = jsonableTreeFromForest(forest);
 			const expected: JsonableTree = {
 				type: brand(JsonAsTree.Array.identifier),
 			};
@@ -983,11 +1121,3 @@ describe("DefaultEditBuilder", () => {
 		});
 	});
 });
-
-function toJsonableTreeFromForest(forest: IForestSubscription): JsonableTree[] {
-	const readCursor = forest.allocateCursor();
-	moveToDetachedField(forest, readCursor);
-	const jsonable = mapCursorField(readCursor, jsonableTreeFromCursor);
-	readCursor.free();
-	return jsonable;
-}

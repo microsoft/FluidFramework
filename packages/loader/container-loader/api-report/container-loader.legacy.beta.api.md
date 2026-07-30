@@ -39,21 +39,34 @@ export interface ICodeDetailsLoader extends Partial<IProvideFluidCodeDetailsComp
 }
 
 // @beta @legacy
-export interface ICreateAndLoadContainerProps {
-    readonly allowReconnect?: boolean | undefined;
-    readonly clientDetailsOverride?: IClientDetails | undefined;
-    readonly codeLoader: ICodeDetailsLoader_2;
-    readonly configProvider?: IConfigProviderBase | undefined;
+export interface IContainerDriverServices {
     readonly documentServiceFactory: IDocumentServiceFactory;
-    readonly logger?: ITelemetryBaseLogger | undefined;
-    readonly options?: IContainerPolicies | undefined;
-    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
-    readonly scope?: FluidObject | undefined;
     readonly urlResolver: IUrlResolver;
 }
 
 // @beta @legacy
-export interface ICreateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IContainerHostProps {
+    readonly allowReconnect?: boolean | undefined;
+    readonly clientDetailsOverride?: IClientDetails | undefined;
+    readonly codeLoader: ICodeDetailsLoader_2;
+    readonly configProvider?: IConfigProviderBase | undefined;
+    readonly logger?: ITelemetryBaseLogger | undefined;
+    readonly options?: IContainerPolicies | undefined;
+    readonly protocolHandlerBuilder?: ProtocolHandlerBuilder | undefined;
+    readonly scope?: FluidObject | undefined;
+}
+
+// @beta @legacy
+export interface IContainerLoadDriverProps extends IContainerDriverServices {
+    readonly request: IRequest;
+}
+
+// @beta @deprecated @legacy
+export interface ICreateAndLoadContainerProps extends IContainerHostProps, IContainerDriverServices {
+}
+
+// @beta @legacy
+export interface ICreateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly codeDetails: IFluidCodeDetails;
 }
 
@@ -87,7 +100,7 @@ export interface ILoaderServices {
 }
 
 // @beta @legacy
-export interface ILoadExistingContainerProps extends ICreateAndLoadContainerProps {
+export interface ILoadExistingContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly pendingLocalState?: string | undefined;
     readonly request: IRequest;
 }
@@ -119,7 +132,7 @@ export interface IQuorumSnapshot {
 }
 
 // @beta @legacy
-export interface IRehydrateDetachedContainerProps extends ICreateAndLoadContainerProps {
+export interface IRehydrateDetachedContainerProps extends IContainerHostProps, IContainerDriverServices {
     readonly serializedState: string;
 }
 

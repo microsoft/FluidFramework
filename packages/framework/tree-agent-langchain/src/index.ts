@@ -9,4 +9,4 @@
  * @packageDocumentation
  */
 
-export { createLangchainChatModel } from "./chatModel.js";
+export { createLangchainChatModel, createLegacyLangchainChatModel } from "./chatModel.js";

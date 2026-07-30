@@ -11,7 +11,7 @@ import {
 	ReferenceType,
 	TextSegment,
 } from "@fluidframework/sequence/legacy";
-import React, { useEffect, useRef } from "react";
+import { type FC, useEffect, useRef } from "react";
 import SimpleMDE from "simplemde";
 
 import { SmdeDataObject } from "./smde.js";
@@ -44,7 +44,9 @@ class SmdeView {
 	}
 
 	private setupEditor(): void {
-		const smde = new SimpleMDE({ element: this.textArea });
+		// SimpleMDE's spell checker (codemirror-spell-checker) downloads its dictionaries from a
+		// public CDN at runtime, so it is disabled here.
+		const smde = new SimpleMDE({ element: this.textArea, spellChecker: false });
 		this.smde = smde;
 
 		const { parallelText } = getTextAndMarkers(this.smdeDataObject.text, "pg");
@@ -136,7 +138,7 @@ export interface ISmdeReactViewProps {
 /**
  * A React view that may be applied to an SmdeDataObject to render it and allow editing.
  */
-export const SmdeReactView: React.FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
+export const SmdeReactView: FC<ISmdeReactViewProps> = (props: ISmdeReactViewProps) => {
 	const { smdeDataObject } = props;
 	const htmlView = useRef<SmdeView>(new SmdeView(smdeDataObject));
 	const divRef = useRef<HTMLDivElement>(null);

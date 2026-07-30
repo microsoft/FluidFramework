@@ -83,6 +83,7 @@ export {
 	CursorMarker,
 	isCursor,
 	DetachedFieldIndex,
+	type DetachedFieldSummaryData,
 	type ReadOnlyDetachedFieldIndex,
 	type DetachedFieldIndexCheckpoint,
 	type ForestRootId,
@@ -106,6 +107,10 @@ export {
 	type ChunkedCursor,
 	DetachedFieldIndexFormatVersion,
 	detachedFieldIndexCodecBuilder,
+	areDetachedNodeIdsEqual,
+	deltaFieldMapHasVisibleChanges,
+	deltaFieldChangesHaveVisibleChanges,
+	forEachNodeSubsequence,
 } from "./tree/index.js";
 
 export {
@@ -160,6 +165,7 @@ export {
 	type ChangeFamily,
 	type ChangeFamilyCodec,
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamilyEditor,
 	EditBuilder,
 } from "./change-family/index.js";
@@ -178,6 +184,8 @@ export {
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
+	type LabelTree,
+	type TransactionLabels,
 	type RevisionTag,
 	RevisionTagSchema,
 	RevisionTagCodec,
@@ -218,12 +226,6 @@ export {
 	diffHistories,
 	type RevisionReplacer,
 } from "./rebase/index.js";
-
-export {
-	type Adapters,
-	AdaptedViewSchema,
-	type TreeAdapter,
-} from "./schema-view/index.js";
 
 export {
 	type Revertible,

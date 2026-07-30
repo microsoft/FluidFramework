@@ -3,11 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import { spawnSync } from "child_process";
-import fs from "fs";
-import os from "os";
-import path from "path";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
+/**
+ * Package metadata returned by `pnpm recursive list --json`.
+ */
 export interface PackageInfo {
 	name: string;
 	version: string;
@@ -25,26 +28,58 @@ export function getPackageInfo(): PackageInfo[] {
 			// shell:true is required for Windows without a resolved path to pnpm.
 			shell: true,
 		});
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		const info: PackageInfo[] = JSON.parse(child.stdout);
-		if (!Array.isArray(info)) {
-			// eslint-disable-next-line unicorn/prefer-type-error
+
+		// spawnSync reports a failure to even launch the process (e.g. pnpm not on PATH) via `error`.
+		if (child.error !== undefined) {
+			throw new Error(`Failed to run "pnpm recursive list": ${child.error.message}`);
+		}
+
+		// A non-zero exit (or termination by a signal) means pnpm itself failed. Surface its status and
+		// stderr instead of blindly parsing the (likely empty) stdout, which would otherwise throw an
+		// opaque "Unexpected end of JSON input" that hides the real cause.
+		if (child.status !== 0) {
+			const reason = child.signal === null ? `code ${child.status}` : `signal ${child.signal}`;
+			throw new Error(`"pnpm recursive list" exited with ${reason}.\nstderr:\n${child.stderr}`);
+		}
+
+		const stdout = child.stdout?.trim() ?? "";
+		if (stdout === "") {
 			throw new Error(
-				`stdin input was not package array. Spawn result: ${JSON.stringify(child)}`,
+				`"pnpm recursive list" produced no output on stdout.\nstderr:\n${child.stderr}`,
 			);
 		}
-		return info;
+
+		let info: unknown;
+		try {
+			info = JSON.parse(stdout);
+		} catch (parseError) {
+			throw new Error(
+				`Failed to parse "pnpm recursive list" output as JSON: ${
+					(parseError as Error).message
+				}\nstdout:\n${stdout}\nstderr:\n${child.stderr}`,
+			);
+		}
+
+		if (!Array.isArray(info)) {
+			// eslint-disable-next-line unicorn/prefer-type-error
+			throw new Error(`Expected a package array from "pnpm recursive list", got: ${stdout}`);
+		}
+
+		return info as PackageInfo[];
 	} catch (error) {
 		console.error(error);
 		process.exit(-1);
 	}
 }
 
+/**
+ * Writes package-to-port mappings to a temp file for tests to consume.
+ */
 export function writePortMapFile(initialPort: number): void {
 	const info: PackageInfo[] = getPackageInfo();
 
 	// Assign a unique port to each package
-	const portMap: { [pkgName: string]: number } = {};
+	const portMap: Record<string, number> = {};
 	let port = initialPort;
 	for (const pkg of info) {
 		if (pkg.name === undefined) {

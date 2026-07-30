@@ -12,7 +12,6 @@ import { ConnectionState } from "@fluidframework/container-loader";
 import {
 	IContainerCreateProps,
 	IContainerLoadProps,
-	// eslint-disable-next-line import-x/no-internal-modules
 } from "@fluidframework/container-loader/internal/test/container";
 import { assert } from "@fluidframework/core-utils/internal";
 import {
@@ -228,7 +227,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		const resumed = this.resumeProcessing(...containers);
 
 		let waitingSequenceNumberSynchronized: string | undefined;
-		// eslint-disable-next-line no-constant-condition
+
 		while (true) {
 			// yield a turn to allow side effect of resuming or the ops we just processed execute before we check
 			await new Promise<void>((resolve) => {
@@ -515,7 +514,7 @@ export class LoaderContainerTracker implements IOpProcessingController {
 		for (const container of containersToApply) {
 			const record = this.containers.get(container);
 			if (record !== undefined && !record.paused) {
-				// eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
+				// eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- intentional behavior
 				if (record.pauseP === undefined) {
 					record.pauseP = this.pauseContainer(container, record);
 				}

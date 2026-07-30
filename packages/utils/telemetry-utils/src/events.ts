@@ -5,7 +5,7 @@
 
 import type { EventEmitter } from "@fluid-internal/client-utils";
 
-import type { ITelemetryLoggerExt } from "./telemetryTypes.js";
+import type { TelemetryLoggerExt } from "./telemetryTypes.js";
 
 /**
  * Note: The contents of this file really don't belong in this package, as they are only intended for internal use.
@@ -28,7 +28,7 @@ export const disconnectedEventName = "disconnected";
  */
 export function safeRaiseEvent(
 	emitter: EventEmitter,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	event: string,
 	...args: unknown[]
 ): void {
@@ -50,7 +50,7 @@ export function safeRaiseEvent(
  * @internal
  */
 export function raiseConnectedEvent(
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	emitter: EventEmitter,
 	connected: boolean,
 	clientId?: string,

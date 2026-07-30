@@ -4,25 +4,25 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { IDisposable } from "@fluidframework/core-interfaces";
+import type { IDisposable } from "@fluidframework/core-interfaces";
 import { delay } from "@fluidframework/core-utils/internal";
-import { ConnectionMode } from "@fluidframework/driver-definitions";
-import {
+import type { ConnectionMode } from "@fluidframework/driver-definitions";
+import type {
+	IClientConfiguration,
+	IConnected,
 	IDocumentDeltaConnection,
 	IDocumentDeltaConnectionEvents,
 	IDocumentDeltaStorageService,
-	IDocumentService,
-	IClientConfiguration,
-	IConnected,
 	IDocumentMessage,
+	IDocumentService,
+	ISequencedDocumentMessage,
 	ISignalClient,
+	ISignalMessage,
+	ISnapshotTree,
 	ITokenClaims,
 	IVersion,
-	ScopeType,
-	ISequencedDocumentMessage,
-	ISignalMessage,
-	type ISnapshotTree,
 } from "@fluidframework/driver-definitions/internal";
+import { ScopeType } from "@fluidframework/driver-definitions/internal";
 
 import { ReplayController } from "./replayController.js";
 
@@ -232,8 +232,8 @@ export class ReplayDocumentDeltaConnection
 		user: {
 			id: "",
 		},
-		iat: Math.round(new Date().getTime() / 1000),
-		exp: Math.round(new Date().getTime() / 1000) + 60 * 60, // 1 hour expiration
+		iat: Math.round(Date.now() / 1000),
+		exp: Math.round(Date.now() / 1000) + 60 * 60, // 1 hour expiration
 		ver: "1.0",
 	};
 

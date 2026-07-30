@@ -789,6 +789,31 @@ describe("ApiItem to Documentation transformation tests", () => {
 		expect(result).deep.equals(expected);
 	});
 
+	it("transformApiModel returns model document when the model has no packages", () => {
+		const apiModel = new ApiModel();
+		const config = createConfig({}, apiModel);
+
+		const result = transformApiModel(config);
+
+		expect(result).to.have.length(1);
+		expect(result[0].apiItem).to.equal(apiModel);
+	});
+
+	it("transformApiModel returns model document when all packages are filtered out via exclude", () => {
+		const model = generateModel("test-variable.json");
+		const config = createConfig(
+			{
+				exclude: (apiItem) => apiItem.kind === ApiItemKind.Package,
+			},
+			model,
+		);
+
+		const result = transformApiModel(config);
+
+		expect(result).to.have.length(1);
+		expect(result[0].apiItem).to.equal(model);
+	});
+
 	it("Transform a Model with multiple entry-points", () => {
 		const model = generateModel("multiple-entry-points.json");
 		const config = createConfig({}, model);

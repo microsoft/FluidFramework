@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
-import { ISession } from "@fluidframework/server-services-client";
+import type { IResolvedUrl } from "@fluidframework/driver-definitions/internal";
+import type { ISession } from "@fluidframework/server-services-client";
 
 /**
  * Assume documentId is at end of url path.
@@ -13,7 +13,7 @@ import { ISession } from "@fluidframework/server-services-client";
  * TODO: Ideally we would be able to regenerate the resolvedUrl, rather than patching the current one.
  */
 export const replaceDocumentIdInPath = (urlPath: string, documentId: string): string =>
-	urlPath.split("/").slice(0, -1).concat([documentId]).join("/");
+	[...urlPath.split("/").slice(0, -1), documentId].join("/");
 
 export const getDiscoveredFluidResolvedUrl = (
 	resolvedUrl: IResolvedUrl,

@@ -62,8 +62,14 @@ module.exports = (env) => {
 			}),
 			new Dotenv({
 				systemvars: true,
+				// Suppress missing .env warning in CI; keep it locally so devs know to copy .env.template.
+				silent: Boolean(process.env.CI || process.env.TF_BUILD),
 			}),
 		],
+		// This is an example app — disable webpack's default 244 KiB asset/entrypoint size warnings to keep webpack output cleaner (we don't need to address this for a sample app)
+		performance: {
+			hints: false,
+		},
 		mode: production ? "production" : "development",
 		devtool: production ? "source-map" : "inline-source-map",
 	};

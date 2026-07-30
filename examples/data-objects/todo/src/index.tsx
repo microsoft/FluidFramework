@@ -4,7 +4,6 @@
  */
 
 import { ContainerViewRuntimeFactory } from "@fluid-example/example-utils";
-import React from "react";
 
 import { TodoListDataObject, TodoListView } from "./Todo/index.js";
 

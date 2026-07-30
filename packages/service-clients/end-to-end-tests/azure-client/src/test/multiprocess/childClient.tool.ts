@@ -14,24 +14,24 @@ import {
 } from "@fluidframework/azure-client";
 import { AttachState } from "@fluidframework/container-definitions";
 import { ConnectionState } from "@fluidframework/container-loader";
-import type { ITelemetryBaseLogger } from "@fluidframework/core-interfaces";
-import { LogLevel } from "@fluidframework/core-interfaces";
+import type { ITelemetryBaseLogger, LogLevel } from "@fluidframework/core-interfaces";
 import type { ScopeType } from "@fluidframework/driver-definitions/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
+import { getPresence } from "@fluidframework/fluid-static";
 import {
-	getPresence,
 	type Attendee,
 	type Presence,
 	StateFactory,
 	type LatestRaw,
 	type LatestMapRaw,
 	type StatesWorkspace,
-} from "@fluidframework/presence/beta";
+} from "@fluidframework/presence";
 import { InsecureTokenProvider } from "@fluidframework/test-runtime-utils/internal";
 import { timeoutPromise } from "@fluidframework/test-utils/internal";
 
 import { createAzureTokenProvider } from "../AzureTokenFactory.js";
 import { TestDataObject } from "../TestDataObject.js";
+import { currentVersion } from "../utils.js";
 
 import type {
 	MessageFromChild as MessageToParent,
@@ -74,7 +74,10 @@ function telemetryEventInterestLevel(eventName: string): "none" | "basic" | "det
 	return "none";
 }
 
-function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
+function selectiveVerboseLog(
+	event: ITelemetryBaseEvent,
+	logLevel: LogLevel | undefined,
+): void {
 	const interest = telemetryEventInterestLevel(event.eventName);
 	if (interest === "none") {
 		return;
@@ -86,7 +89,7 @@ function selectiveVerboseLog(event: ITelemetryBaseEvent, logLevel?: LogLevel): v
 	if (interest === "details") {
 		content.details = event.details;
 	}
-	log(`[${logLevel ?? LogLevel.default}]`, content);
+	log(`[${logLevel ?? "unspecified"}]`, content);
 }
 
 /**
@@ -143,10 +146,14 @@ const getOrCreateContainer = async (params: {
 	});
 	let services: AzureContainerServices;
 	if (containerId === undefined) {
-		({ container, services } = await client.createContainer(containerSchema, "2"));
+		({ container, services } = await client.createContainer(containerSchema, currentVersion));
 		containerId = await container.attach();
 	} else {
-		({ container, services } = await client.getContainer(containerId, containerSchema, "2"));
+		({ container, services } = await client.getContainer(
+			containerId,
+			containerSchema,
+			currentVersion,
+		));
 	}
 	container.on("disconnected", onDisconnected);
 
@@ -220,9 +227,13 @@ function isStringOrNumberRecord(value: unknown): value is Record<string, string 
 // - Fallout: Until the above is addressed, keep the casts in place and document new usages accordingly.
 // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
 type WorkspaceSchema = {
-	latest?: ReturnType<typeof StateFactory.latest<{ value: string }>>;
+	latest?: ReturnType<typeof StateFactory.latest<{ value: string }, "latest">>;
 	latestMap?: ReturnType<
-		typeof StateFactory.latestMap<{ value: Record<string, string | number> }, string>
+		typeof StateFactory.latestMap<
+			{ value: Record<string, string | number> },
+			string,
+			"latestMap"
+		>
 	>;
 };
 const WorkspaceSchema: WorkspaceSchema = {};
@@ -316,10 +327,7 @@ class MessageHandler {
 		);
 
 		if (latest && !workspace.states.latest) {
-			workspace.add(
-				"latest",
-				StateFactory.latest<{ value: string }>({ local: { value: "initial" } }),
-			);
+			workspace.add("latest", StateFactory.latest({ local: { value: "initial" } }));
 			// Cast required due to optional keys in WorkspaceSchema
 			// TODO: AB#47518
 			const latestState = workspace.states.latest as LatestRaw<{ value: string }>;

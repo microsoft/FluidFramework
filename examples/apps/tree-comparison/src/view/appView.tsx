@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import type { FC } from "react";
 
 import type { IInventoryListAppModel } from "../modelInterfaces.js";
 
@@ -17,7 +17,7 @@ export interface IInventoryListAppViewProps {
  * The InventoryListAppView is the top-level app view.  It is made to pair with an InventoryListAppModel and
  * render its contents appropriately.
  */
-export const InventoryListAppView: React.FC<IInventoryListAppViewProps> = ({
+export const InventoryListAppView: FC<IInventoryListAppViewProps> = ({
 	model,
 }: IInventoryListAppViewProps) => {
 	return (

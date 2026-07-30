@@ -39,7 +39,7 @@ import {
 	treeNodeApi as Tree,
 	TreeViewConfiguration,
 	type TreeArrayNode,
-	type TreeMapNode,
+	type TreeMapNodeAlpha,
 	type TreeView,
 	typeSchemaSymbol,
 	type NodeFromSchema,
@@ -76,7 +76,6 @@ import { hydrate } from "../utils.js";
 	class NodeMap extends schema.map("Notes", Note) {}
 	class NodeList extends schema.array("Notes", Note) {}
 
-	// eslint-disable-next-line no-inner-declarations
 	function f(n: NodeMap): void {
 		const item = n.get("x");
 	}
@@ -1440,8 +1439,6 @@ describe("schemaFactory", () => {
 		type _check3 = requireTrue<areSafelyAssignable<typeof inferred2, "test.blah.scoped">>;
 	});
 
-	// TODO: AB#44317: The error messages for rejecting insertions which would put a document out of schema due to staged types are poor, and should be improved.
-	// Many tests here include coverage for these errors.
 	describe("staged", () => {
 		const schemaFactory = new SchemaFactoryAlpha("staged tests");
 
@@ -1508,9 +1505,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testObject;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testObject;
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1522,9 +1524,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.foo = "test";
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 		});
 
@@ -1625,9 +1632,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testMap;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testMap;
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1639,9 +1651,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({});
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.set("foo", "test");
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.set("foo", "test");
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 		});
 
@@ -1672,9 +1689,14 @@ describe("schemaFactory", () => {
 				});
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({ foo: 3 });
-				assert.throws(() => {
-					view.root = testRecord;
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root = testRecord;
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 
 			it("can't be set", () => {
@@ -1686,9 +1708,14 @@ describe("schemaFactory", () => {
 				const view = provider.trees[0].viewWith(config);
 				view.initialize({});
 				provider.synchronizeMessages();
-				assert.throws(() => {
-					view.root.foo = "test";
-				}, validateUsageError("Tree does not conform to schema: Field_NodeTypeNotAllowed"));
+				assert.throws(
+					() => {
+						view.root.foo = "test";
+					},
+					validateUsageError(
+						/Tree does not conform to schema. A node of type .* is not allowed in this field./,
+					),
+				);
 			});
 		});
 
@@ -1850,7 +1877,7 @@ function getKeys(node: TreeNode): string[] | number[] {
 			return keys;
 		}
 		case NodeKind.Map: {
-			return [...(node as TreeMapNode).keys()];
+			return [...(node as TreeMapNodeAlpha).keys()];
 		}
 		case NodeKind.Object: {
 			return Object.keys(node);

@@ -14,7 +14,7 @@ import {
 	useFakeTimers,
 } from "sinon";
 
-import { type IPromiseTimerResult, PromiseTimer, Timer } from "../..";
+import { type IPromiseTimerResult, PromiseTimer, Timer } from "../../indexNode.js";
 
 const flushPromises = async (): Promise<void> =>
 	new Promise((resolve) => process.nextTick(resolve));

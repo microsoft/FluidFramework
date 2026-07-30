@@ -7,7 +7,6 @@ import { unreachableCase } from "@fluidframework/core-utils/internal";
 import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import {
-	AnchorSet,
 	type DeltaDetachedNodeId,
 	type DetachedFieldIndex,
 	type IEditableForest,
@@ -118,7 +117,7 @@ export class SharedTreeChangeEnricher {
 		if (this.owned === undefined) {
 			this.onForkState?.();
 			this.owned = {
-				forest: this.borrowed.forest.clone(this.schema, new AnchorSet()),
+				forest: this.borrowed.forest.clone(this.schema),
 				removedRoots: this.borrowed.removedRoots.clone(),
 			};
 		}

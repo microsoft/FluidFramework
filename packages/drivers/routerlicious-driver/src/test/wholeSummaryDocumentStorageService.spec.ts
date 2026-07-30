@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { ISummaryTree, SummaryType } from "@fluidframework/driver-definitions";
 import { createChildLogger } from "@fluidframework/telemetry-utils/internal";
@@ -98,13 +98,9 @@ const expectedSummary: ISummaryTree = {
 						rootDOId: {
 							tree: {},
 							type: 1,
-							unreferenced: undefined,
-							groupId: undefined,
 						},
 					},
 					type: 1,
-					unreferenced: undefined,
-					groupId: undefined,
 				},
 				".metadata": {
 					content:
@@ -113,8 +109,6 @@ const expectedSummary: ISummaryTree = {
 				},
 			},
 			type: 1,
-			unreferenced: undefined,
-			groupId: undefined,
 		},
 		".protocol": {
 			tree: {
@@ -129,13 +123,9 @@ const expectedSummary: ISummaryTree = {
 				},
 			},
 			type: 1,
-			unreferenced: undefined,
-			groupId: undefined,
 		},
 	},
 	type: 1,
-	unreferenced: undefined,
-	groupId: undefined,
 };
 
 class MockGitManager {

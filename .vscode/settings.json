@@ -4,9 +4,16 @@
 			"mode": "auto",
 		},
 	],
+	"js/ts.tsdk.path": "node_modules/typescript/lib",
 	"typescript.tsdk": "node_modules/typescript/lib",
 
 	// We prefer to use type-only imports, so we want the autoimporter to do that by default.
+	"js/ts.preferences.preferTypeOnlyAutoImports": true,
+	"js/ts.preferences.autoImportFileExcludePatterns": [
+		// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
+		"**/node_modules/**/@fluid*/*-previous",
+		"**/node_modules/**/@fluid*/*-previous/*",
+	],
 	"typescript.preferences.preferTypeOnlyAutoImports": true,
 	"typescript.preferences.autoImportFileExcludePatterns": [
 		// Avoid suggesting autoimports for the 'previous' version packages which are used for typetesting.
@@ -16,6 +23,7 @@
 
 	// Autodetecting tasks on a repo this size makes 'Tasks: Run Build Task' unusably slow.
 	// (See https://github.com/Microsoft/vscode/issues/34387)
+	"js/ts.tsc.autoDetect": "off",
 	"typescript.tsc.autoDetect": "off",
 	"npm.autoDetect": "off",
 
@@ -56,6 +64,7 @@
 		"privateremarks",
 		"pseudorandomly",
 		"reconnections",
+		"revertibles",
 		"Routerlicious",
 		"runtimes",
 		"snapshotlegacy",

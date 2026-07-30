@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree } from "@fluidframework/driver-definitions";
+import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IGitBlob,
 	IGitCommitDetails,
@@ -12,14 +12,14 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IWholeSummaryPayload,
 	IWholeSummaryPayloadType,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 
-import { IWholeFlatSnapshot } from "./contracts.js";
-import { IR11sResponse } from "./restWrapper.js";
+import type { IWholeFlatSnapshot } from "./contracts.js";
+import type { IR11sResponse } from "./restWrapper.js";
 
 /**
  * Interface to a generic Git provider

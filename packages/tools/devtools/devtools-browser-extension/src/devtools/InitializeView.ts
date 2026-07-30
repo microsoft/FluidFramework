@@ -4,7 +4,7 @@
  */
 
 import { DevtoolsPanel } from "@fluid-internal/devtools-view";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { BackgroundConnection } from "../BackgroundConnection.js";
@@ -29,7 +29,7 @@ export async function initializeDevtoolsView(target: HTMLElement): Promise<void>
 
 	const logger = new OneDSLogger();
 	ReactDOM.render(
-		React.createElement(DevtoolsPanel, {
+		createElement(DevtoolsPanel, {
 			messageRelay: connection,
 			usageTelemetryLogger: logger,
 			unloadCallback: () => {

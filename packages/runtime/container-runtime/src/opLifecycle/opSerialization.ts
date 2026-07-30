@@ -40,16 +40,18 @@ export function serializeOp(
 		| EmptyGroupedBatch
 		| LocalContainerRuntimeMessage
 		| LocalContainerRuntimeMessage[],
-): string {
-	return JSON.stringify(
-		toSerialize,
-		// replacer:
-		(key, value: unknown) => {
-			// If 'value' is an IFluidHandle return its encoded form.
-			if (isFluidHandle(value)) {
-				return encodeHandleForSerialization(toFluidHandleInternal(value));
-			}
-			return value;
-		},
-	);
+): { content: string } {
+	return {
+		content: JSON.stringify(
+			toSerialize,
+			// replacer:
+			(key, value: unknown) => {
+				// If 'value' is an IFluidHandle return its encoded form.
+				if (isFluidHandle(value)) {
+					return encodeHandleForSerialization(toFluidHandleInternal(value));
+				}
+				return value;
+			},
+		),
+	};
 }

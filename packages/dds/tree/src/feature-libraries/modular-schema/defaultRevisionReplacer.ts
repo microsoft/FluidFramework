@@ -60,14 +60,13 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 				const prior = this.updatedLocalIds.getFirst(remainderStart, remainderCount);
 				if (prior.value === undefined) {
 					const defaultOutputId = continuingOutputId ?? remainderStart.localId;
-					const newLocalId =
-						this.localIds.getAll(defaultOutputId, prior.length).length > 0
-							? // Some of the IDs in this range have already been used in the scope of the updated revision.
-								// We need to allocate new local IDs.
-								brand<ChangesetLocalId>(this.maxSeen + 1)
-							: // This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
-								// We reuse it as is to minimize the number of IDs that need to be updated.
-								defaultOutputId;
+					const newLocalId = this.areAllUnallocated(defaultOutputId, prior.length)
+						? // This change atom ID uses a local ID that has not yet been used in the scope of the updated revision.
+							// We reuse it as is to minimize the number of IDs that need to be updated.
+							defaultOutputId
+						: // Some of the IDs in this range have already been used in the scope of the updated revision.
+							// We need to allocate new local IDs.
+							brand<ChangesetLocalId>(this.maxSeen + 1);
 
 					this.maxSeen = brand(Math.max(this.maxSeen, newLocalId + prior.length - 1));
 					this.localIds.set(newLocalId, prior.length, true);
@@ -92,5 +91,14 @@ export class DefaultRevisionReplacer implements RevisionReplacer {
 			return updated;
 		}
 		return id;
+	}
+
+	private areAllUnallocated(id: ChangesetLocalId, count: number): boolean {
+		for (const entry of this.localIds.getAll(id, count)) {
+			if (entry.value !== undefined) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

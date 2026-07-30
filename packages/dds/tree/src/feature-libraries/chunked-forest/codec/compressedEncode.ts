@@ -18,7 +18,13 @@ import {
 	type Value,
 	forEachNode,
 } from "../../../core/index.js";
-import { getOrCreate } from "../../../util/index.js";
+import {
+	EncodedIdType,
+	encodePossiblyCompressedId,
+	getOrCreate,
+	type EncodedId,
+	type IdEncodingContext,
+} from "../../../util/index.js";
 
 import type { Counter, DeduplicationTable } from "./chunkCodecUtilities.js";
 import {
@@ -26,17 +32,21 @@ import {
 	Shape as ShapeGeneric,
 	updateShapesAndIdentifiersEncoding,
 } from "./chunkEncodingGeneric.js";
-import type { IncrementalEncoder } from "./codecs.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by doc comments
+import type { FieldBatchEncodingContext, IncrementalEncoder } from "./codecs.js";
 import type { FieldBatch } from "./fieldBatch.js";
 import {
 	type EncodedAnyShape,
+	type EncodedChunkShapeV1,
 	type EncodedChunkShape,
-	type EncodedFieldBatch,
+	type EncodedChunkShapeV2,
+	type EncodedFieldBatchV1OrV2,
 	type EncodedNestedArrayShape,
 	type EncodedValueShape,
-	FieldBatchFormatVersion,
+	type FieldBatchFormatVersion,
 	SpecialField,
-} from "./format.js";
+	supportsIncrementalEncoding,
+} from "./format/index.js";
 
 /**
  * Encode data from `FieldBatch` into an `EncodedFieldBatch`.
@@ -48,7 +58,7 @@ import {
 export function compressedEncode(
 	fieldBatch: FieldBatch,
 	context: EncoderContext,
-): EncodedFieldBatch {
+): EncodedFieldBatchV1OrV2 {
 	const batchBuffer: BufferFormat[] = [];
 
 	// Populate buffer, including shape and identifier references
@@ -172,7 +182,7 @@ export class AnyShape extends ShapeGeneric<EncodedChunkShape> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		const encodedAnyShape: EncodedAnyShape = 0;
 		return { d: encodedAnyShape };
 	}
@@ -328,7 +338,7 @@ export class InlineArrayEncoder
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV1 {
 		return {
 			b: {
 				length: this.length,
@@ -422,11 +432,11 @@ export class NestedArrayEncoder implements FieldEncoder {
 /**
  * Encodes the shape for an incremental chunk as {@link EncodedIncrementalChunkShape} shape.
  */
-export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShape> {
+export class IncrementalChunkShape extends ShapeGeneric<EncodedChunkShapeV2> {
 	public encodeShape(
 		identifiers: DeduplicationTable<string>,
 		shapes: DeduplicationTable<Shape>,
-	): EncodedChunkShape {
+	): EncodedChunkShapeV2 {
 		return {
 			e: 0 /* EncodedIncrementalChunkShape */,
 		};
@@ -459,7 +469,7 @@ export const incrementalFieldEncoder: FieldEncoder = {
 			0xc88 /* incremental encoder must be defined to use incrementalFieldEncoder */,
 		);
 		assert(
-			context.version >= FieldBatchFormatVersion.v2,
+			supportsIncrementalEncoding(context.version),
 			0xca1 /* Unsupported FieldBatchFormatVersion for incremental encoding; must be v2 or higher */,
 		);
 
@@ -516,7 +526,9 @@ export function encodeValue(
  * - Singletons defined in a static scope.
  * - Cached in this object for future reuse such that all equivalent Shapes are deduplicated.
  */
-export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
+export class EncoderContext
+	implements NodeEncodeBuilder, FieldEncodeBuilder, IdEncodingContext
+{
 	private readonly nodeEncodersFromSchema: Map<TreeNodeSchemaIdentifier, NodeEncoder> =
 		new Map();
 	private readonly nestedArrayEncoders: Map<NodeEncoder, NestedArrayEncoder> = new Map();
@@ -524,7 +536,7 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		private readonly nodeEncoderFromPolicy: NodeEncoderPolicy,
 		private readonly fieldEncoderFromPolicy: FieldEncoderPolicy,
 		public readonly fieldShapes: ReadonlyMap<FieldKindIdentifier, FieldKindData>,
-		public readonly idCompressor: IIdCompressor,
+		private readonly idCompressor: IIdCompressor,
 		/**
 		 * To be used to encode incremental chunks, if any.
 		 * @remarks
@@ -532,7 +544,31 @@ export class EncoderContext implements NodeEncodeBuilder, FieldEncodeBuilder {
 		 */
 		public readonly incrementalEncoder: IncrementalEncoder | undefined,
 		public readonly version: FieldBatchFormatVersion,
-	) {}
+		/**
+		 * See {@link FieldBatchEncodingContext.isSummary}.
+		 */
+		public readonly isSummary: boolean,
+	) {
+		// Currently we never include originator-dependent identifiers in summaries
+		// (there was a bug which violated this for attach-summaries: it has been fixed, see `IdentifierHealingConfig`).
+		// If that ever changes (to allow better compressed attach summaries), we need to take special care with incremental summaries.
+		// This assert guards against data corruption leaking in via missing session information in incremental summaries,
+		// protecting from bugs of potential future optimizations to attach summaries applied to non-attach summaries.
+		// Incremental summaries should have no need for originator-dependent identifiers,
+		// as they can't be attach summaries which are the only ones which should ever have non-final ids.
+		assert(
+			isSummary || incrementalEncoder === undefined,
+			0xd0d /* incrementalEncoder cannot be used when encoding originator-dependent identifiers */,
+		);
+	}
+
+	public encodePossiblyCompressedId(id: string): string | EncodedId<EncodedIdType> {
+		return encodePossiblyCompressedId(
+			id,
+			this.idCompressor,
+			this.isSummary ? EncodedIdType.Originatorless : EncodedIdType.OriginatorDependent,
+		);
+	}
 
 	public nodeEncoderFromSchema(schemaName: TreeNodeSchemaIdentifier): NodeEncoder {
 		return getOrCreate(this.nodeEncodersFromSchema, schemaName, () =>

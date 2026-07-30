@@ -4,7 +4,7 @@
  */
 
 import path from "node:path";
-import type { Package } from "./npmPackage";
+import type { Package } from "./npmPackage.js";
 
 /**
  * Given a package, returns the name that should be used for the previous version of the package to generate type tests.

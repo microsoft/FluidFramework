@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { BackgroundConnection } from "../BackgroundConnection.js";
@@ -69,5 +69,5 @@ export async function initializePopupView(target: HTMLElement, tabId: number): P
 	document.body.style.backgroundColor = prefersDarkScheme ? "#242424" : "#ffffff";
 	document.body.style.color = prefersDarkScheme ? "#ffffff" : "#242424";
 
-	ReactDOM.render(React.createElement(PopupView, { backgroundServiceConnection }), target);
+	ReactDOM.render(createElement(PopupView, { backgroundServiceConnection }), target);
 }

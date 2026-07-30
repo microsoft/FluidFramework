@@ -27,7 +27,7 @@ import {
 import { disposeSymbol, getOrCreate } from "../../util/index.js";
 import { TreeStatus } from "../flex-tree/index.js";
 
-import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
+import type { TreeIndex, TreeIndexNodes } from "./types.js";
 
 /**
  * A function that gets the value to index a node on, must be pure and functional.
@@ -40,7 +40,7 @@ import type { TreeIndex, TreeIndexKey, TreeIndexNodes } from "./types.js";
  * but returns the cursor to the state it was in before being passed to the function. It should also not be disposed by this function
  * and must be disposed elsewhere.
  */
-export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCursor) => TKey;
+export type KeyFinder<TKey> = (tree: ITreeSubscriptionCursor) => TKey;
 
 /**
  * An index from some arbitrary keys to anchor nodes. Keys can be anything that is a {@link TreeValue}.
@@ -50,9 +50,8 @@ export type KeyFinder<TKey extends TreeIndexKey> = (tree: ITreeSubscriptionCurso
  * Detached nodes are stored in the index but filtered out when any public facing apis are called. This means that
  * calling {@link keys} will not include any keys that are stored in the index but only map to detached nodes.
  */
-export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
-	implements TreeIndex<TKey, TValue>
-{
+export class AnchorTreeIndex<TKey, TValue> implements TreeIndex<TKey, TValue> {
+	public readonly [Symbol.toStringTag] = "AnchorTreeIndex";
 	public disposed = false;
 	/**
 	 * Caches {@link KeyFinder}s for each schema definition. If a schema maps to null, it does not
@@ -62,6 +61,8 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	private readonly keyFinders = new Map<TreeNodeSchemaIdentifier, KeyFinder<TKey> | null>();
 	/**
 	 * The actual index from keys to anchor nodes.
+	 * @remarks
+	 * Should not store empty values (and thus values should be a valid {@link TreeIndexNodes}).
 	 */
 	private readonly keyToNodes = new Map<TKey, AnchorNode[]>();
 	/**
@@ -273,7 +274,11 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 	public *allEntries(): IterableIterator<[TKey, TValue]> {
 		this.checkNotDisposed();
 		for (const [key, nodes] of this.keyToNodes.entries()) {
-			const value = this.getValue(nodes as unknown as TreeIndexNodes<AnchorNode>);
+			assert(
+				hasElement(nodes),
+				0xce9 /* expected at least one node for each key in the index */,
+			);
+			const value = this.getValue(nodes);
 			if (value !== undefined) {
 				yield [key, value];
 			}
@@ -422,13 +427,15 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			indexedNodes !== undefined,
 			0xa90 /* destroyed anchor node should be tracked by index */,
 		);
-		const index = indexedNodes.indexOf(anchorNode);
-		assert(index !== -1, 0xa91 /* destroyed anchor node should be tracked by index */);
 		const newNodes = filterNodes(indexedNodes, (n) => n !== anchorNode);
-		if (newNodes !== undefined && newNodes.length > 0) {
-			this.keyToNodes.set(key, newNodes);
-		} else {
+		if (newNodes === undefined) {
 			this.keyToNodes.delete(key);
+		} else {
+			assert(
+				newNodes.length < indexedNodes.length,
+				0xa91 /* destroyed anchor node should be tracked by index */,
+			);
+			this.keyToNodes.set(key, newNodes);
 		}
 		this.nodeToKey.delete(anchorNode);
 		assert(
@@ -446,7 +453,7 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 			return nodeStatus === TreeStatus.InDocument;
 		});
 
-		if (attachedNodes !== undefined && hasElement(attachedNodes)) {
+		if (attachedNodes !== undefined) {
 			return this.getValue(attachedNodes);
 		}
 	}
@@ -458,11 +465,13 @@ export class AnchorTreeIndex<TKey extends TreeIndexKey, TValue>
 function filterNodes(
 	anchorNodes: readonly AnchorNode[] | undefined,
 	filter: (node: AnchorNode) => boolean,
-): AnchorNode[] | undefined {
+): (AnchorNode[] & TreeIndexNodes<AnchorNode>) | undefined {
 	if (anchorNodes !== undefined) {
-		return anchorNodes.filter(filter);
+		const filtered = anchorNodes.filter(filter);
+		if (hasElement(filtered)) {
+			return filtered;
+		}
 	}
-
 	return undefined;
 }
 

@@ -19,7 +19,7 @@ import { BrandedType } from "./brandedType.js";
  * be read.
  *
  * @sealed
- * @beta
+ * @public
  */
 export declare class OpaqueJsonDeserialized<
 	T,
@@ -59,7 +59,7 @@ export declare class OpaqueJsonDeserialized<
  * when "instance" will be forwarded along.
  *
  * @sealed
- * @beta
+ * @public
  */
 export declare class OpaqueJsonSerializable<
 	T,

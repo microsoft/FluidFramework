@@ -4,6 +4,9 @@
 
 ```ts
 
+// @beta
+export function onAssertionFailure(handler: (error: Error) => void): () => void;
+
 // (No @packageDocumentation comment for this package)
 
 ```

@@ -8,7 +8,7 @@ import { DataObject, DataObjectFactory } from "@fluidframework/aqueduct/legacy";
 import { IEvent, IFluidHandle } from "@fluidframework/core-interfaces";
 import { SharedCounter } from "@fluidframework/counter/legacy";
 import { TaskManager } from "@fluidframework/task-manager/legacy";
-import React from "react";
+import { Component } from "react";
 
 import { ClickerAgent } from "./agent.js";
 
@@ -105,8 +105,7 @@ export interface ClickerState {
 	value: number;
 }
 
-/* eslint-disable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
-export class ClickerReactView extends React.Component<ClickerProps, ClickerState> {
+export class ClickerReactView extends Component<ClickerProps, ClickerState> {
 	constructor(props: ClickerProps) {
 		super(props);
 
@@ -138,7 +137,6 @@ export class ClickerReactView extends React.Component<ClickerProps, ClickerState
 		);
 	}
 }
-/* eslint-enable react/prop-types -- TypeScript interfaces provide compile-time prop validation */
 
 // ----- FACTORY SETUP -----
 

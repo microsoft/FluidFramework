@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { IUser } from "@fluidframework/driver-definitions";
-import { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
+import type { IUser } from "@fluidframework/driver-definitions";
+import type { ITokenClaims, ScopeType } from "@fluidframework/driver-definitions/internal";
 import { KJUR as jsrsasign } from "jsrsasign";
 import { v4 as uuid } from "uuid";
 
@@ -28,7 +28,7 @@ export function generateToken(
 	}
 
 	// Current time in seconds
-	const now = Math.round(new Date().getTime() / 1000);
+	const now = Math.round(Date.now() / 1000);
 
 	const claims: ITokenClaims = {
 		documentId,
@@ -52,7 +52,7 @@ export function generateToken(
 export function generateUser(): IUser {
 	const userId = uuid();
 	const match = /^([\da-f]{8})-([\da-f]{4})/.exec(userId);
-	const userName = match !== null ? match[0] : userId; // Just use the first two segments of the (fake) userId as a fake name.
+	const userName = match === null ? userId : match[0]; // Just use the first two segments of the (fake) userId as a fake name.
 
 	const randomUser = {
 		id: userId,

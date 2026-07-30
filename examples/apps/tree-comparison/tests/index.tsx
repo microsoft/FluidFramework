@@ -5,7 +5,7 @@
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
 
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { InventoryListContainerRuntimeFactory } from "../src/model/index.js";
@@ -52,12 +52,12 @@ export async function createContainerAndRenderInElement(
 
 	const render = (model: IInventoryListAppModel): void => {
 		ReactDOM.unmountComponentAtNode(appDiv);
-		ReactDOM.render(React.createElement(InventoryListAppView, { model }), appDiv);
+		ReactDOM.render(createElement(InventoryListAppView, { model }), appDiv);
 
 		// The DebugView is just for demo purposes, to manually control code proposal and inspect the state.
 		ReactDOM.unmountComponentAtNode(debugDiv);
 		ReactDOM.render(
-			React.createElement(DebugView, {
+			createElement(DebugView, {
 				model,
 			}),
 			debugDiv,

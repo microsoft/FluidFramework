@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { AttachState } from "@fluidframework/container-definitions";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -103,7 +103,7 @@ describe("IntervalCollection snapshotting", () => {
 		// It manifested in later failures demonstrated by the "enable operations on reload" suite.
 		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
 		const collection = sharedString.getIntervalCollection("test");
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals.length, 1);
 		const interval = intervals[0] ?? assert.fail();
 		/* eslint-disable no-bitwise */
@@ -117,7 +117,7 @@ describe("IntervalCollection snapshotting", () => {
 	it("start stickiness is persisted", async () => {
 		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
 		const collection = sharedString.getIntervalCollection("start-sticky");
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals.length, 1);
 		const interval = intervals[0] ?? assert.fail();
 		assert.equal(interval.stickiness, IntervalStickiness.START);
@@ -128,7 +128,7 @@ describe("IntervalCollection snapshotting", () => {
 	it("end stickiness is stored as undefined", async () => {
 		const sharedString = await loadSharedString(containerRuntimeFactory, "1", summary);
 		const collection = sharedString.getIntervalCollection("end-sticky");
-		const intervals = Array.from(collection);
+		const intervals = [...collection];
 		assert.equal(intervals.length, 1);
 		const interval = intervals[0] ?? assert.fail();
 		assert.equal(interval.stickiness, IntervalStickiness.END);
@@ -165,7 +165,7 @@ describe("IntervalCollection snapshotting", () => {
 			collection = sharedString.getIntervalCollection("test");
 			collection2 = sharedString2.getIntervalCollection("test");
 			containerRuntimeFactory.processAllMessages();
-			const intervals = Array.from(collection);
+			const intervals = [...collection];
 			assert.equal(intervals.length, 1);
 			const interval = intervals[0] ?? assert.fail("collection should have interval");
 			id = interval.getIntervalId() ?? assert.fail("interval should have id");
@@ -181,10 +181,10 @@ describe("IntervalCollection snapshotting", () => {
 
 		it("reloaded interval can be deleted", async () => {
 			collection.removeIntervalById(id);
-			assert.equal(Array.from(collection).length, 0);
-			assert.equal(Array.from(collection2).length, 1);
+			assert.equal([...collection].length, 0);
+			assert.equal([...collection2].length, 1);
 			containerRuntimeFactory.processAllMessages();
-			assert.equal(Array.from(collection2).length, 0);
+			assert.equal([...collection2].length, 0);
 		});
 
 		it("new interval can be added after reload", async () => {

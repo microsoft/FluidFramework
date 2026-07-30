@@ -3,8 +3,6 @@
  * Licensed under the MIT License.
  */
 
-import fetch from "isomorphic-fetch";
-
 import { type IOdspAuthRequestInfo, authRequestWithRetry } from "./odspAuth.js";
 
 // eslint-disable-next-line jsdoc/require-description -- TODO: Add documentation

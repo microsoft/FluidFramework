@@ -10,7 +10,7 @@ import { type ITelemetryBaseEvent, LogLevel } from "@fluidframework/core-interfa
 import { assert } from "@fluidframework/core-utils/internal";
 import {
 	createChildLogger,
-	type ITelemetryLoggerExt,
+	type TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import { pkgName, pkgVersion } from "./packageVersion.js";
@@ -45,7 +45,7 @@ export const createLogger = async (
 		runId: number | undefined;
 	},
 ): Promise<{
-	logger: ITelemetryLoggerExt;
+	logger: TelemetryLoggerExt;
 	flush: () => Promise<void>;
 }> => {
 	const baseLogger = await createInjectedLoggerIfExists();

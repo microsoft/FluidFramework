@@ -5,8 +5,8 @@
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
-import { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
-import {
+import type { IClient, ISummaryTree } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentDeltaConnection,
 	IDocumentDeltaStorageService,
 	IDocumentService,
@@ -19,7 +19,7 @@ import {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { buildSnapshotTree } from "@fluidframework/driver-utils/internal";
-import { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import { EmptyDeltaStorageService } from "./emptyDeltaStorageService.js";
 import { ReadDocumentStorageServiceBase } from "./replayController.js";
@@ -176,7 +176,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 
 	public async createDocumentService(
 		fileURL: IResolvedUrl,
-		logger?: ITelemetryLoggerExt,
+		logger?: TelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		return new StaticStorageDocumentService(fileURL, this.storage);
@@ -186,7 +186,7 @@ export class StaticStorageDocumentServiceFactory implements IDocumentServiceFact
 	public async createContainer(
 		createNewSummary: ISummaryTree,
 		resolvedUrl: IResolvedUrl,
-		logger: ITelemetryLoggerExt,
+		logger: TelemetryLoggerExt,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
 		throw new Error("Not implemented");

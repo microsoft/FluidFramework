@@ -44,6 +44,7 @@ export type {
 	IDocumentStaticProperties,
 	IDocumentStorage,
 	IScribe,
+	IAdditionalQueryParams,
 } from "./document";
 export type { IDocumentManager } from "./documentManager";
 export { EmptyTaskMessageSender } from "./emptyTaskMessageSender";

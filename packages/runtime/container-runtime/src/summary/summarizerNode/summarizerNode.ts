@@ -31,7 +31,7 @@ import {
 } from "@fluidframework/telemetry-utils/internal";
 import type {
 	ITelemetryErrorEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 } from "@fluidframework/telemetry-utils/internal";
 
 import type {
@@ -90,7 +90,7 @@ export class SummarizerNode implements IRootSummarizerNode {
 	private wipSummarizeCalled: boolean = false;
 	private wipSkipRecursion = false;
 
-	protected readonly logger: ITelemetryLoggerExt;
+	protected readonly logger: TelemetryLoggerExt;
 
 	/**
 	 * Do not call constructor directly.
@@ -104,7 +104,6 @@ export class SummarizerNode implements IRootSummarizerNode {
 		 * Encoded handle or path to the node
 		 */
 		private readonly _summaryHandleId: string,
-		// eslint-disable-next-line @typescript-eslint/prefer-readonly
 		private _changeSequenceNumber: number,
 		/**
 		 * Summary reference sequence number, i.e. last sequence number seen when last successful summary was created
@@ -571,13 +570,15 @@ export class SummarizerNode implements IRootSummarizerNode {
 		const parentLastSummaryReferenceSequenceNumber = this._lastSummaryReferenceSequenceNumber;
 		switch (createParam.type) {
 			case CreateSummarizerNodeSource.FromAttach: {
-				if (
-					parentLastSummaryReferenceSequenceNumber !== undefined &&
-					createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber
-				) {
-					// Prioritize latest summary if it was after this node was attached.
-					childLastSummaryReferenceSequenceNumber = parentLastSummaryReferenceSequenceNumber;
-				}
+				// `parentLastSummaryReferenceSequenceNumber` is the latest sequence number processed in the last
+				// successful summary. So, for `createParam.sequenceNumber <= parentLastSummaryReferenceSequenceNumber`
+				// to be true, the attach message would have to have been sequenced before the last summary and somehow
+				// not be part of that summary, which is not possible.
+				assert(
+					parentLastSummaryReferenceSequenceNumber === undefined ||
+						createParam.sequenceNumber > parentLastSummaryReferenceSequenceNumber,
+					0xd0f /* Attach sequence number should be greater than the parent's last summary reference sequence number */,
+				);
 				changeSequenceNumber = createParam.sequenceNumber;
 				break;
 			}
@@ -665,7 +666,7 @@ export class SummarizerNode implements IRootSummarizerNode {
  * @param config - Configure behavior of summarizer node
  */
 export const createRootSummarizerNode = (
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 	summarizeInternalFn: SummarizeInternalFn,
 	changeSequenceNumber: number,
 	referenceSequenceNumber: number | undefined,

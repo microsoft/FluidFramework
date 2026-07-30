@@ -5,7 +5,7 @@
 
 import { readFile } from "node:fs/promises";
 import registerDebug from "debug";
-import type { Package } from "../common/npmPackage";
+import type { Package } from "../common/npmPackage.js";
 
 const traceDepCheck = registerDebug("fluid-build:depCheck");
 

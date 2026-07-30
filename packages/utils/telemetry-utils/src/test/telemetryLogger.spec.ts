@@ -6,6 +6,7 @@
 import { strict as assert } from "node:assert";
 
 import type { ITelemetryBaseEvent, Tagged } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 
 import {
 	type ITelemetryLoggerPropertyBag,
@@ -17,8 +18,10 @@ import type { TelemetryEventPropertyTypeExt } from "../telemetryTypes.js";
 
 class TestTelemetryLogger extends TelemetryLogger {
 	public events: ITelemetryBaseEvent[] = [];
-	public send(event: ITelemetryBaseEvent): void {
+	public logLevels: (LogLevel | undefined)[] = [];
+	public send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void {
 		this.events.push(this.prepareEvent(event));
+		this.logLevels.push(logLevel);
 	}
 }
 
@@ -195,6 +198,58 @@ describe("TelemetryLogger", () => {
 					}`,
 				);
 			}
+		});
+	});
+
+	describe("logLevel forwarding", () => {
+		it("`sendTelemetryEvent` without logLevel forwards LogLevel.essential", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendTelemetryEvent({ eventName: "noLevel" });
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+		});
+
+		it("`sendTelemetryEvent` with explicit LogLevel.info forwards LogLevel.info", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendTelemetryEvent({ eventName: "infoLevel" }, undefined, LogLevel.info);
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.info]);
+		});
+
+		it("`sendTelemetryEvent` with category 'error' forwards LogLevel.essential even when info is requested", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendTelemetryEvent(
+				{ eventName: "errorEvent", category: "error" },
+				undefined,
+				LogLevel.info,
+			);
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+		});
+
+		it("`sendPerformanceEvent` without logLevel forwards LogLevel.essential", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendPerformanceEvent({ eventName: "perfNoLevel" });
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+		});
+
+		it("`sendPerformanceEvent` with explicit LogLevel.info forwards LogLevel.info", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendPerformanceEvent({ eventName: "perfInfo" }, undefined, LogLevel.info);
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.info]);
+		});
+
+		it("`sendPerformanceEvent` with category 'error' forwards LogLevel.essential even when info is requested", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendPerformanceEvent(
+				{ eventName: "perfError", category: "error" },
+				undefined,
+				LogLevel.info,
+			);
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
+		});
+
+		it("`sendErrorEvent` forwards LogLevel.essential", () => {
+			const logger = new TestTelemetryLogger();
+			logger.sendErrorEvent({ eventName: "errEvent" });
+			assert.deepStrictEqual(logger.logLevels, [LogLevel.essential]);
 		});
 	});
 });

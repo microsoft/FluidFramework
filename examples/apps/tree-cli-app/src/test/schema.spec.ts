@@ -6,7 +6,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { checkSchemaCompatibilitySnapshots } from "@fluidframework/tree/alpha";
+import { snapshotSchemaCompatibility } from "@fluidframework/tree/beta";
 
 import { config } from "../schema.js";
 
@@ -22,15 +22,15 @@ describe("schema", () => {
 		);
 		// This app does not actually support a stable document format, so the versions used here are arbitrary.
 		// Despite this, testing the schema for compatibility issues is a useful example of how apps should do this,
-		// and testing the checkSchemaCompatibilitySnapshots API.
+		// and testing the snapshotSchemaCompatibility API.
 		// This app has a dummy legacy version 1.0.0 schema so it can include a compatibility test for upgrading an old schema.
-		checkSchemaCompatibilitySnapshots({
+		snapshotSchemaCompatibility({
 			snapshotDirectory,
 			fileSystem: { ...fs, ...path },
 			version: "2.0.0",
 			schema: config,
 			minVersionForCollaboration: "2.0.0",
-			mode: regenerateSnapshots ? "update" : "test",
+			mode: regenerateSnapshots ? "update" : "assert",
 		});
 	});
 });

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import * as React from "react";
+import type { ReactElement } from "react";
 
 export interface ICounterProps {
 	title: string;
@@ -20,7 +20,7 @@ export const Counter = ({
 	count,
 	onIncrement,
 	onDecrement,
-}: ICounterProps): React.ReactElement => (
+}: ICounterProps): ReactElement => (
 	<div className="counter">
 		<h2>{title}</h2>
 		<div className="counter_spinner">

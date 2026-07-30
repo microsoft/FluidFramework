@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "assert";
+import { strict as assert } from "node:assert";
 
 import { IChannelServices } from "@fluidframework/datastore-definitions/internal";
 import { ISummaryTree } from "@fluidframework/driver-definitions";
@@ -23,9 +23,10 @@ function applyOperations(
 ) {
 	const lenMod = sharedString.getLength() % 4;
 	switch (lenMod) {
-		case 0:
+		case 0: {
 			sharedString.insertText(0, content);
 			break;
+		}
 
 		case 1: {
 			const pos = Math.floor(sharedString.getLength() / lenMod);
@@ -39,8 +40,9 @@ function applyOperations(
 			sharedString.removeText(pos, pos + 1);
 			// fall through to insert after remove
 		}
-		default:
+		default: {
 			sharedString.insertText(sharedString.getLength(), content);
+		}
 	}
 }
 

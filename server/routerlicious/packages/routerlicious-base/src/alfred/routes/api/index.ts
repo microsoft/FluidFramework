@@ -91,6 +91,7 @@ export function create(
 		revokedTokenChecker,
 		collaborationSessionEventEmitter,
 		fluidAccessTokenGenerator,
+		redisCacheForGetSession,
 		denyList,
 	);
 

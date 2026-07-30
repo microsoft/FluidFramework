@@ -3,8 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
-import {
+import type { ISummaryTree, ISummaryHandle } from "@fluidframework/driver-definitions";
+import type {
 	IDocumentStorageService,
 	ISummaryContext,
 	IVersion,

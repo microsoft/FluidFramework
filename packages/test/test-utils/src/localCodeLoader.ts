@@ -45,7 +45,6 @@ export type fluidEntryPoint = SupportedExportInterfaces | IFluidModule;
  */
 export type Factory = IFluidDataStoreFactory & Partial<IProvideFluidDataStoreRegistry>;
 
-// eslint-disable-next-line jsdoc/require-description -- TODO: add documentation
 /**
  * @internal
  */

@@ -84,6 +84,7 @@ export type { EnforceTypeCheckTests } from "./typeCheckTests.js";
  * See: {@link https://dev.azure.com/intentional/intent/_wiki/wikis/NP%20Platform/7146/Nominal-vs-Structural-Types}
  * @sealed @public
  */
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intentionally empty; used as a nominal type brand.
 export interface MakeNominal {}
 
 /**

@@ -3,11 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import type { IIdCompressor } from "@fluidframework/id-compressor";
-
-import type { CodecWriteOptions } from "../../codec/index.js";
 import { type IdAllocator, idAllocatorFromMaxId } from "../../util/index.js";
-import type { RevisionTag, RevisionTagCodec } from "../rebase/index.js";
+import type { RevisionTag } from "../rebase/index.js";
 import type { FieldKey } from "../schema-stored/index.js";
 
 import type { ITreeCursorSynchronous } from "./cursor.js";
@@ -17,19 +14,8 @@ import type { ForestRootId } from "./detachedFieldIndexTypes.js";
 import type { PlaceIndex, Range } from "./pathTree.js";
 import { type DeltaVisitor, visitDelta } from "./visitDelta.js";
 
-export function makeDetachedFieldIndex(
-	prefix: string = "Temp",
-	revisionTagCodec: RevisionTagCodec,
-	idCompressor: IIdCompressor,
-	options?: CodecWriteOptions,
-): DetachedFieldIndex {
-	return new DetachedFieldIndex(
-		prefix,
-		idAllocatorFromMaxId() as IdAllocator<ForestRootId>,
-		revisionTagCodec,
-		idCompressor,
-		options,
-	);
+export function makeDetachedFieldIndex(prefix: string = "Temp"): DetachedFieldIndex {
+	return new DetachedFieldIndex(prefix, idAllocatorFromMaxId() as IdAllocator<ForestRootId>);
 }
 
 export function applyDelta(
@@ -147,6 +133,11 @@ export function combineVisitors(visitors: readonly CombinableVisitor[]): Combine
 		exitField: (...args) => {
 			for (const v of allVisitors) {
 				v.exitField(...args);
+			}
+		},
+		fieldMarks: (marks) => {
+			for (const v of allVisitors) {
+				v.fieldMarks?.(marks);
 			}
 		},
 	};

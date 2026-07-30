@@ -4,7 +4,7 @@
  * To regenerate: pnpm tsx scripts/generate-flat-eslint-configs.ts --typescript
  */
 import type { Linter } from "eslint";
-import { strict } from "../../common/build/eslint-config-fluid/flat.mts";
+import { strict } from "@fluidframework/eslint-config-fluid/flat.mts";
 
 const config: Linter.Config[] = [
 	...strict,
@@ -23,13 +23,13 @@ const config: Linter.Config[] = [
 			],
 			"unicorn/prefer-module": "off",
 			"unicorn/prefer-negative-index": "off",
-			"import/no-nodejs-modules": "off",
+			"import-x/no-nodejs-modules": "off",
 		},
 	},
 	{
 		files: ["src/**/test/**"],
 		rules: {
-			"import/no-extraneous-dependencies": [
+			"import-x/no-extraneous-dependencies": [
 				"error",
 				{
 					"devDependencies": true,

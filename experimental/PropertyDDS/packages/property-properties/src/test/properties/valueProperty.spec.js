@@ -46,7 +46,12 @@ describe("ValueProperty", function () {
 			var vp;
 			var error;
 			try {
-				vp = new ValueProperty({ id: "goodId" });
+				vp =
+					// @ts-expect-error - test violates @protected constructor of ValueProperty
+					new ValueProperty(
+						// in_params does not match ValueProperty typing, but that appears to be incorrect
+						{ id: "goodId" },
+					);
 			} catch (e) {
 				error = e;
 			} finally {

@@ -5,14 +5,15 @@
 
 import { performanceNow } from "@fluid-internal/client-utils";
 import type { IDisposable, ITelemetryBaseProperties } from "@fluidframework/core-interfaces";
+import { LogLevel } from "@fluidframework/core-interfaces";
 import { assert } from "@fluidframework/core-utils/internal";
 
 import { roundToDecimalPlaces } from "./mathTools.js";
 import type {
 	ITelemetryGenericEventExt,
-	ITelemetryLoggerExt,
+	TelemetryLoggerExt,
 	ITelemetryPerformanceEventExt,
-} from "./telemetryTypes.js";
+} from "./telemetryTypesUndeprecated.js";
 
 /**
  * @privateRemarks
@@ -124,6 +125,9 @@ export type MeasureReturnType<TMeasureReturn, TCustomMetrics> = TCustomMetrics e
  * of the specified code block.
  * See the documentation of the `includeAggregateMetrics` parameter for additional details that can be included.
  *
+ * Telemetry events emitted by this class (both at the sample threshold and on dispose) are sent with
+ * {@link @fluidframework/core-interfaces#LogLevelConst.info | LogLevel.info}.
+ *
  * @typeParam TMeasurementReturn - The return type (in a vacuum) of the code block that will be measured, ignoring
  * any custom metric data that might be required by this class. E.g., the code might just return a boolean.
  * @typeParam TCustomMetrics - A type that contains the custom properties that will be used by an instance of this class
@@ -163,7 +167,7 @@ export class SampledTelemetryHelper<
 	 */
 	public constructor(
 		private readonly eventBase: ITelemetryGenericEventExt,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly sampleThreshold: number,
 		private readonly includeAggregateMetrics: boolean = false,
 		private readonly perBucketProperties = new Map<string, ITelemetryBaseProperties>(),
@@ -293,7 +297,11 @@ export class SampledTelemetryHelper<
 				...processedCustomData,
 			};
 
-			this.logger.sendPerformanceEvent(telemetryEvent);
+			this.logger.sendPerformanceEvent(
+				telemetryEvent,
+				undefined, // error
+				LogLevel.info,
+			);
 			this.measurementsMap.delete(bucket);
 		}
 	}

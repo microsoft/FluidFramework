@@ -10,7 +10,6 @@ import {
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
-import React from "react";
 
 import { MessageRelayContext } from "../MessageRelayContext.js";
 import { TelemetryView } from "../components/index.js";

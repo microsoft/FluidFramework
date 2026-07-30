@@ -7,7 +7,7 @@
 
 const packageDir = __dirname;
 
-const getFluidTestMochaConfig = require("@fluid-private/test-version-utils/mocharc-common");
+const { getFluidTestMochaConfig } = require("@fluid-internal/mocha-test-setup/mocharc-common");
 const config = getFluidTestMochaConfig(packageDir);
 config["node-option"].push("experimental-loader=esm-loader-css");
 // TODO: figure out why this package needs the --exit flag, tests might not be cleaning up correctly after themselves

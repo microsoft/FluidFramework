@@ -15,3 +15,8 @@ const testDataPath = path.resolve(_dirname, "../../../build-infrastructure/src/t
  * Absolute path to the test repo.
  */
 export const testRepoRoot = path.join(testDataPath, "testRepo");
+
+/**
+ * Absolute path to the catalog test repo (used for pnpm catalog resolution tests).
+ */
+export const testRepoCatalogRoot = path.join(testDataPath, "testRepoCatalog");

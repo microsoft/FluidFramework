@@ -49,10 +49,21 @@ import {
 	// // eslint-disable-next-line unused-imports/no-unused-imports
 	// InternalTypes,
 } from "@fluidframework/tree";
-import { eraseSchemaDetails, SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
-import type { FixRecursiveArraySchema, ObjectNodeSchema } from "@fluidframework/tree/alpha";
+import {
+	eraseSchemaDetails,
+	eraseSchemaDetailsSubclassable,
+	SchemaFactoryAlpha,
+	TreeBeta,
+} from "@fluidframework/tree/alpha";
+import type {
+	ErasedSchema,
+	ErasedNode,
+	ErasedSchemaSubclassable,
+	FixRecursiveArraySchema,
+	ObjectNodeSchema,
+} from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import type { requireAssignableTo, TreeNode, WithType } from "@fluidframework/tree/internal";
+import type { requireAssignableTo, TreeNodeSchema } from "@fluidframework/tree/internal";
 
 // Due to limitation of the TypeScript compiler, errors like the following can be produced when exporting types from another package:
 // error TS2742: The inferred type of 'Inventory' cannot be named without a reference to '../node_modules/@fluidframework/tree/lib/internalTypes.js'. This is likely not portable. A type annotation is necessary.
@@ -179,5 +190,42 @@ export interface SquareSchema {
 }
 
 // Does not leak SquareInternal or PrivateSchema types into API.
-export const Square = eraseSchemaDetails<Square, SquareSchema>()(SquareInternal);
-export type Square = SquareNode & TreeNode & WithType<"com.example.Demo">;
+export const Square: SquareSchema & ErasedSchema<Square> = eraseSchemaDetails<
+	Square,
+	SquareSchema
+>()(SquareInternal);
+export type Square = ErasedNode<SquareNode, "com.example.Demo">;
+
+class SquareInternal2
+	extends schema.object("Demo", { hidden: schema.number })
+	implements SquareNode
+{
+	public get area(): number {
+		return this.hidden * this.hidden;
+	}
+
+	public static create<TThis extends TreeNodeSchema>(
+		this: TThis,
+		sideLength: number,
+	): NodeFromSchema<TThis> {
+		const instance = TreeBeta.create(this as unknown as typeof SquareInternal2, {
+			hidden: sideLength,
+		}) as unknown as NodeFromSchema<TThis>;
+		return instance;
+	}
+}
+
+export interface SquareSchemaSubclassable {
+	create<TThis extends TreeNodeSchema>(this: TThis, sideLength: number): NodeFromSchema<TThis>;
+}
+
+export const SquareSubclassable: SquareSchemaSubclassable &
+	ErasedSchemaSubclassable<SquareNode, "com.example.Demo"> = eraseSchemaDetailsSubclassable<
+	Square,
+	SquareSchemaSubclassable
+>()(SquareInternal2);
+
+export const SquareSubclassable2 = eraseSchemaDetailsSubclassable<
+	Square,
+	SquareSchemaSubclassable
+>()(SquareInternal2);

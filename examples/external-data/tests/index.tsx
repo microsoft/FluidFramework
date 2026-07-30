@@ -4,8 +4,7 @@
  */
 
 import { SessionStorageModelLoader, StaticCodeLoader } from "@fluid-example/example-utils";
-import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 
 import { BaseDocumentContainerRuntimeFactory } from "../src/model/index.js";
 import type { IAppModel, ITaskList } from "../src/model-interface/index.js";
@@ -70,7 +69,7 @@ export async function createContainerAndRenderInElement(
 	const leaderID = model.baseDocument.getLeader();
 
 	// Render it
-	ReactDOM.render(
+	createRoot(element).render(
 		<TaskListView
 			taskList={taskList}
 			claimLeadership={(): void => {
@@ -79,7 +78,6 @@ export async function createContainerAndRenderInElement(
 			clientID={clientID}
 			leaderID={leaderID}
 		/>,
-		element,
 	);
 
 	// Setting "fluidStarted" is just for our test automation

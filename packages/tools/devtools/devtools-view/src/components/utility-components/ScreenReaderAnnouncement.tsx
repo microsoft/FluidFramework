@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import React from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 /**
  * {@link ScreenReaderAnnouncement} input props.
@@ -20,7 +20,7 @@ export interface ScreenReaderAnnouncementProps {
  * Visually hidden styles that keep content accessible to screen readers.
  * This follows the standard "sr-only" pattern for accessibility.
  */
-const visuallyHiddenStyles: React.CSSProperties = {
+const visuallyHiddenStyles: CSSProperties = {
 	position: "absolute",
 	width: "1px",
 	height: "1px",
@@ -62,7 +62,7 @@ const visuallyHiddenStyles: React.CSSProperties = {
  */
 export function ScreenReaderAnnouncement({
 	message,
-}: ScreenReaderAnnouncementProps): React.ReactElement {
+}: ScreenReaderAnnouncementProps): ReactElement {
 	return (
 		<div role="status" aria-live="polite" aria-atomic="true" style={visuallyHiddenStyles}>
 			{message}

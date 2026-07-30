@@ -15,7 +15,7 @@ import { IContainerRuntime } from "@fluidframework/container-runtime-definitions
 import { FluidObject } from "@fluidframework/core-interfaces";
 import { IFluidDataStoreFactory } from "@fluidframework/runtime-definitions/legacy";
 import { RuntimeFactoryHelper } from "@fluidframework/runtime-utils/legacy";
-import React from "react";
+import { createElement } from "react";
 
 import { CodeMirrorComponent, SmdeFactory } from "./codeMirror.js";
 import { CodeMirrorReactView } from "./codeMirrorView.js";
@@ -54,7 +54,7 @@ class CodeMirrorFactory extends RuntimeFactoryHelper {
 					defaultComponentId,
 				);
 
-				const view = React.createElement(CodeMirrorReactView, {
+				const view = createElement(CodeMirrorReactView, {
 					text: codeMirror.text,
 					presenceManager: codeMirror.presenceManager,
 				}) as unknown as IFluidMountableView;

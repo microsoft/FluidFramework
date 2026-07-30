@@ -14,6 +14,7 @@ import * as historianApp from "../app";
 import { RestGitService } from "../services";
 import { TestTenantService, TestCache, TestDocumentManager } from "./utils";
 import { Constants } from "../utils";
+import { createRouteContext } from "../routes/utils";
 import {
 	generateToken,
 	getAuthorizationTokenFromCredentials,
@@ -1278,5 +1279,69 @@ describe("routes", () => {
 				});
 			});
 		});
+	});
+});
+
+describe("createRouteContext", () => {
+	const testMaxTokenLifetimeSec = 999;
+	let testProvider: nconf.Provider;
+	let throttlers: Map<string, TestThrottler>;
+
+	beforeEach(() => {
+		testProvider = new nconf.Provider({}).defaults({
+			maxTokenLifetimeSec: testMaxTokenLifetimeSec,
+		});
+		throttlers = new Map<string, TestThrottler>();
+		throttlers.set(Constants.generalRestCallThrottleIdPrefix, new TestThrottler(10));
+	});
+
+	it("returns a truthy router", () => {
+		const ctx = createRouteContext(testProvider, throttlers);
+		assert.strictEqual(typeof ctx.router, "function");
+		assert.ok(typeof ctx.router.get === "function");
+	});
+
+	it("returns the configured maxTokenLifetimeSec", () => {
+		const ctx = createRouteContext(testProvider, throttlers);
+		assert.strictEqual(ctx.maxTokenLifetimeSec, testMaxTokenLifetimeSec);
+	});
+
+	it("tenantThrottleOptions.throttleIdSuffix equals Constants.historianRestThrottleIdSuffix", () => {
+		const ctx = createRouteContext(testProvider, throttlers);
+		assert.strictEqual(
+			ctx.tenantThrottleOptions.throttleIdSuffix,
+			Constants.historianRestThrottleIdSuffix,
+		);
+	});
+
+	it("tenantThrottleOptions.throttleIdPrefix returns req.params.tenantId", () => {
+		const ctx = createRouteContext(testProvider, throttlers);
+		const mockReq = { params: { tenantId: "myTenant" } } as any;
+		assert.strictEqual(
+			typeof ctx.tenantThrottleOptions.throttleIdPrefix === "function"
+				? ctx.tenantThrottleOptions.throttleIdPrefix(mockReq)
+				: undefined,
+			"myTenant",
+		);
+	});
+
+	it("restTenantGeneralThrottler is the throttler from the map", () => {
+		const throttler = new TestThrottler(10);
+		const localThrottlers = new Map<string, TestThrottler>();
+		localThrottlers.set(Constants.generalRestCallThrottleIdPrefix, throttler);
+		const ctx = createRouteContext(testProvider, localThrottlers);
+		assert.strictEqual(ctx.restTenantGeneralThrottler, throttler);
+	});
+
+	it("restTenantGeneralThrottler is undefined when key is absent from map", () => {
+		const emptyThrottlers = new Map<string, TestThrottler>();
+		const ctx = createRouteContext(testProvider, emptyThrottlers);
+		assert.strictEqual(ctx.restTenantGeneralThrottler, undefined);
+	});
+
+	it("maxTokenLifetimeSec is undefined when config key is absent", () => {
+		const providerWithoutKey = new nconf.Provider({}).defaults({});
+		const ctx = createRouteContext(providerWithoutKey, throttlers);
+		assert.strictEqual(ctx.maxTokenLifetimeSec, undefined);
 	});
 });

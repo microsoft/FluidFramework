@@ -11,12 +11,15 @@ import type {
 	RevertibleAlphaFactory,
 	RevertibleFactory,
 } from "../../core/index.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+import type { TreeStatus } from "../../feature-libraries/index.js";
 import type {
-	// This is referenced by doc comments.
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars, unused-imports/no-unused-imports -- This is referenced by doc comments.
 	TreeAlpha,
 } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
+import type { Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -30,11 +33,15 @@ import type { UnsafeUnknownSchema } from "../unsafeUnknownSchema.js";
 
 import type { TreeViewConfiguration } from "./configuration.js";
 import type {
-	RunTransactionParams,
-	TransactionCallbackStatus,
-	TransactionResult,
-	TransactionResultExt,
-	VoidTransactionCallbackStatus,
+	RunTransactionParamsAlpha,
+	RunTransactionParamsBeta,
+	TransactionCallbackStatusAlpha,
+	TransactionCallbackStatusBeta,
+	TransactionVoidResult,
+	TransactionValueResult,
+	VoidTransactionCallbackStatusAlpha,
+	VoidTransactionCallbackStatusBeta,
+	WithValue,
 } from "./transactionTypes.js";
 import type { VerboseTree } from "./verboseTree.js";
 
@@ -105,8 +112,20 @@ export interface ITreeAlpha extends ITree {
 	/**
 	 * Creates a fork of the current state of the main branch.
 	 * This new branch will be shared with and editable by all clients.
+	 * @param name - Optional name for the new branch.
+	 * This name is not guaranteed to be unique.
+	 * (Maximum {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/length | length}: 1024)
+	 * @returns The ID of the new branch, which can be used to {@link ITreeAlpha.viewSharedBranchWith | view} the branch.
 	 */
-	createSharedBranch(): string;
+	createSharedBranch(name?: string): string;
+
+	/**
+	 * Retrieves the name, if any, of the shared branch with the given ID.
+	 * @param branchId - The ID of the shared branch to retrieve the name of.
+	 * @returns The name of the shared branch, or `undefined` if the branch has no assigned name.
+	 * @throws if the branch with the given ID does not exist.
+	 */
+	getSharedBranchName(branchId: string): string | undefined;
 
 	/**
 	 * Returns a list of all shared branches that currently exist on this tree.
@@ -129,6 +148,8 @@ export interface ITreeAlpha extends ITree {
  * @remarks A `TreeBranch` allows for the {@link TreeBranch.fork | creation of branches} and for those branches to later be {@link TreeBranch.merge | merged}.
  *
  * The branch associated directly with the {@link ITree | SharedTree} is the "main" branch, and all other branches fork (directly or transitively) from that main branch.
+ *
+ * See {@link TreeBranchAlpha} for additional APIs that are in an earlier stage of development.
  * @sealed @beta
  */
 export interface TreeBranch extends IDisposable {
@@ -176,6 +197,95 @@ export interface TreeBranch extends IDisposable {
 }
 
 /**
+ * Provides additional APIs that may be used to interact with a tree node or a tree node's SharedTree.
+ * @alpha
+ */
+export interface TreeContextAlpha {
+	/**
+	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
+	 * @param transaction - A callback run during the transaction to perform user-supplied operations.
+	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 * @param params - Optional {@link RunTransactionParamsAlpha | parameters} for the transaction.
+	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 *
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
+	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
+	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
+	 *
+	 * Using a transaction has the following additional consequences:
+	 *
+	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
+	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * `runTransaction` may be invoked on the context of a {@link TreeStatus.InDocument | hydrated } or {@link Unhydrated | unhydrated } node.
+	 * Use {@link TreeContextAlpha.isBranch | isBranch() } to check whether this context is associated with a branch and gain {@link TreeBranchAlpha.(runTransaction:1) | access to more transaction capabilities} if so.
+	 */
+	runTransaction<TValue>(
+		transaction: () => WithValue<TValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TValue, TValue>;
+
+	/**
+	 * An overload of {@link TreeContextAlpha.(runTransaction:1) | runTransaction } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
+	 */
+	runTransaction(
+		transaction: () => void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
+
+	/**
+	 * An asynchronous version of {@link TreeContextAlpha.(runTransaction:1) | runTransaction}.
+	 * @remarks
+	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
+	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
+	 *
+	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
+	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
+	 *
+	 * An asynchronous transaction may not be started while any other transaction is in progress in this context.
+	 */
+	runTransactionAsync<TValue>(
+		transaction: () => Promise<WithValue<TValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TValue, TValue>>;
+
+	/**
+	 * An overload of {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
+	 *
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
+	 */
+	runTransactionAsync(
+		transaction: () => Promise<void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
+
+	/**
+	 * True if this context is associated with a {@link TreeBranchAlpha | branch} and false if it is associated with an {@link Unhydrated | unhydrated } node.
+	 * @remarks If this returns true, the context can be safely inferred or cast to {@link TreeBranchAlpha} to access additional branch-specific APIs.
+	 * @example
+	 * ```typescript
+	 * const context = tree.context(someNode);
+	 * if (context.isBranch()) {
+	 *   assert(context.hasRootSchema(MySchema)) // `hasRootSchema` is a method on TreeBranchAlpha, so this is only accessible if `context` is a branch context.
+	 *   context.root.foo = "bar"; // Edit the root of the SharedTree that `someNode` belongs to.
+	 * }
+	 * ```
+	 */
+	isBranch(): this is TreeBranchAlpha;
+}
+
+/**
  * {@link TreeBranch} with alpha-level APIs.
  * @remarks
  * The `TreeBranch` for a specific {@link TreeNode} may be acquired by calling `TreeAlpha.branch`.
@@ -183,7 +293,7 @@ export interface TreeBranch extends IDisposable {
  * A branch does not necessarily know the schema of its SharedTree - to convert a branch to a {@link TreeViewAlpha | view with a schema}, use {@link TreeBranchAlpha.hasRootSchema | hasRootSchema()}.
  * @sealed @alpha
  */
-export interface TreeBranchAlpha extends TreeBranch {
+export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
 	/**
 	 * Events for the branch
 	 */
@@ -211,161 +321,49 @@ export interface TreeBranchAlpha extends TreeBranch {
 	fork(): TreeBranchAlpha;
 
 	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
-	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
-	 * abort the transaction and discard any changes it made so far.
-	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
-	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
-	 *
+	 * {@link TreeContextAlpha.(runTransaction:1) | Run a transaction} on a branch of the SharedTree.
+	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusAlpha | value or rollback signal}.
 	 * @remarks
-	 * This API will throw an error if the constraints are not met or something unexpected happens.
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 *
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
-	 * - If a label is provided in the params, only the label for the outermost transaction will be used. All other labels will be ignored.
+	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
 	 */
 	runTransaction<TSuccessValue, TFailureValue>(
-		transaction: () => TransactionCallbackStatus<TSuccessValue, TFailureValue>,
-		params?: RunTransactionParams,
-	): TransactionResultExt<TSuccessValue, TFailureValue>;
-	/**
-	 * Run a synchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction. It may return the following:
-	 *
-	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
-	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
-	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 *
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
-	 * transaction was successful or not.
-	 *
-	 * @remarks
-	 * This API will throw an error if the constraints are not met or something unexpected happens.
-	 * All of the changes in the transaction are applied synchronously and therefore no other changes (either from this client or from a remote client) can be interleaved with those changes.
-	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
-	 * However, using a transaction has the following additional consequences:
-	 *
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransaction` or `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
-	 */
-	runTransaction(
-		transaction: () => VoidTransactionCallbackStatus | void,
-		params?: RunTransactionParams,
-	): TransactionResult;
+		transaction: () => TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>,
+		params?: RunTransactionParamsAlpha,
+	): TransactionValueResult<TSuccessValue, TFailureValue>;
 
 	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction.
-	 * It should return a promise that resolves to a status object of {@link TransactionCallbackStatus | TransactionCallbackStatus } type.
-	 * It includes a "rollback" property which may be returned as true at any point during the transaction. This will
-	 * abort the transaction and discard any changes it made so far.
-	 * "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a result object of {@link TransactionResultExt | TransactionResultExt} type. It includes the following:
+	 * An overload of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction } which does not return a value.
 	 *
-	 * - A "success" flag indicating whether the transaction was successful or not.
-	 * - The success or failure value as returned by the transaction function.
-	 *
-	 * The promise will reject if the constraints are not met or something unexpected happens.
-	 *
-	 * @remarks
-	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
-	 * These other changes will be not be reflected on the branch until after this transaction completes,
-	 * at which point the transaction changes will be applied after these other changes.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransaction} for an example of how to do this.
 	 */
-	runTransactionAsync<TSuccessValue, TFailureValue>(
-		transaction: () => Promise<TransactionCallbackStatus<TSuccessValue, TFailureValue>>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResultExt<TSuccessValue, TFailureValue>>;
+	runTransaction(
+		transaction: () => VoidTransactionCallbackStatusAlpha | void,
+		params?: RunTransactionParamsAlpha,
+	): TransactionVoidResult;
+
 	/**
-	 * Run an asynchronous transaction which applies one or more edits to the tree as a single atomic unit.
-	 * @param transaction - The function to run as the body of the transaction. It must return a promise that can resolve to any of the following:
+	 * An asynchronous version of {@link TreeBranchAlpha.(runTransaction:1) | runTransaction}.
+	 * @remarks See {@link TreeContextAlpha.(runTransactionAsync:1) | runTransactionAsync} for additional information about asynchronous transactions.
+	 */
+
+	runTransactionAsync<TSuccessValue, TFailureValue>(
+		transaction: () => Promise<TransactionCallbackStatusAlpha<TSuccessValue, TFailureValue>>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionValueResult<TSuccessValue, TFailureValue>>;
+
+	/**
+	 * An overload of {@link TreeBranchAlpha.(runTransactionAsync:1) | runTransactionAsync } which does not return a value.
 	 *
-	 * - Nothing to indicate that the body of the transaction has successfully run.
-	 * - A status object of {@link VoidTransactionCallbackStatus | VoidTransactionCallbackStatus } type. It includes a "rollback" property which
-	 * may be returned as true at any point during the transaction. This will abort the transaction and discard any changes it made so
-	 * far. "rollback" can be set to false or left undefined to indicate that the body of the transaction has successfully run.
-	 *
-	 * @param params - The optional parameters for the transaction. It includes the constraints that will be checked before the transaction begins.
-	 * @returns A promise that resolves to a result object of {@link TransactionResult | TransactionResult} type. It includes a "success" flag indicating whether the
-	 * transaction was successful or not. The promise will reject if the constraints are not met or something unexpected happens.
-	 *
-	 * @remarks
-	 * As with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - All of the changes in the transaction are treated as a unit, therefore no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
-	 * - If reverted (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
-	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
-	 *
-	 * Unlike with synchronous transactions, using an asynchronous transaction has the following consequences:
-	 * - It is possible that other changes (either from this client by merging a branch or from a remote client) may be applied to the branch while this transaction is in progress.
-	 * These other changes will be not be reflected on the branch until after this transaction completes,
-	 * at which point the transaction changes will be applied after these other changes.
-	 *
-	 * Local change events will be emitted for each change as the transaction is being applied.
-	 * If the transaction is rolled back, a corresponding change event will also be emitted for the rollback.
-	 *
-	 * Nested transactions:
-	 * This API can be called from within the transaction callback of another `runTransactionAsync` call. That will have slightly different behavior:
-	 *
-	 * - If the inner transaction fails, only the inner transaction will be rolled back and the outer transaction will continue.
-	 * - Constraints will apply to the outermost transaction. Constraints are applied per commit and there will be one commit generated
-	 * for the outermost transaction which includes all inner transactions.
-	 * - Undo will undo the outermost transaction and all inner transactions.
+	 * @privateRemarks
+	 * TODO: Consider updating these methods to avoid the need for overloads.
+	 * See {@link TreeViewBeta.runTransactionAsync} for an example of how to do this.
 	 */
 	runTransactionAsync(
-		transaction: () => Promise<VoidTransactionCallbackStatus | void>,
-		params?: RunTransactionParams,
-	): Promise<TransactionResult>;
+		transaction: () => Promise<VoidTransactionCallbackStatusAlpha | void>,
+		params?: RunTransactionParamsAlpha,
+	): Promise<TransactionVoidResult>;
 
 	/**
 	 * Apply a serialized change to this branch.
@@ -379,6 +377,27 @@ export interface TreeBranchAlpha extends TreeBranch {
 	 * Update the tests and docs to match when that is done.
 	 */
 	applyChange(change: JsonCompatibleReadOnly): void;
+
+	/**
+	 * Determines if there are changes on the given branch that are not present on this branch.
+	 * @param branch - The branch to compare to.
+	 *
+	 * The new edits, if any, can be applied to this branch by {@link TreeBranch.rebaseOnto | rebasing this branch onto the given branch}
+	 * or by {@link TreeBranch.merge | merging the given branch into this branch}.
+	 *
+	 * @throws UsageError if the branches are unrelated.
+	 */
+	isMissingEditsFrom(branch: TreeBranch): boolean;
+
+	/**
+	 * Computes the net change that would result if this branch were {@link TreeBranch.rebaseOnto | rebased onto} the given branch.
+	 * Note that this method does not actually perform the rebase and therefore has no effect on this branch.
+	 *
+	 * @param branch - The branch that would be rebased onto.
+	 * @returns The net change that would result if this branch were rebased onto the given branch,
+	 * or `undefined` if rebasing would have no impact.
+	 */
+	computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
 }
 
 /**
@@ -390,6 +409,8 @@ export interface TreeBranchAlpha extends TreeBranch {
  *
  * Application authors are encouraged to read {@link https://github.com/microsoft/FluidFramework/blob/main/packages/dds/tree/docs/user-facing/schema-evolution.md | schema-evolution.md}
  * and choose a schema compatibility policy that aligns with their application's needs.
+ *
+ * See also {@link TreeViewAlpha}, {@link TreeViewBeta} and {@link TreeBranch} for additional APIs that are in earlier stages of development.
  *
  * @privateRemarks
  * From an API design perspective, `upgradeSchema` could be merged into `viewWith` and/or `viewWith` could return errors explicitly on incompatible documents.
@@ -423,9 +444,9 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Description of the current compatibility status between the view schema and stored schema.
 	 * @remarks
-	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status changes.
+	 * {@link TreeViewEvents.schemaChanged} is fired when the compatibility status of the document's stored schema changes.
 	 * See {@link https://fluidframework.com/docs/data-structures/tree/schema-evolution/ | schema-evolution} for more guidance on how to change schema while maintaining compatibility.
-	 * Use {@link checkSchemaCompatibilitySnapshots} to write tests to validate that this compatibility behaves as desired across schema changes.
+	 * Use {@link snapshotSchemaCompatibility} to write tests to validate that this compatibility behaves as desired across schema changes.
 	 */
 	readonly compatibility: SchemaCompatibilityStatus;
 
@@ -438,6 +459,44 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	 *
 	 * It is an error to call this when {@link SchemaCompatibilityStatus.canUpgrade} is false.
 	 * {@link SchemaCompatibilityStatus.canUpgrade} being true does not mean that an upgrade is required, nor that an upgrade will have any effect.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the target stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * `upgradeSchema` to throw a `UsageError` because the requested target would narrow the stored schema.
+	 *
+	 * @example Enabling a staged allowed type for documents, selected by a feature flag
+	 *
+	 * ```typescript
+	 * const sf = new SchemaFactoryBeta("my-app");
+	 *
+	 * class TaskItem extends sf.object("TaskItem", { title: sf.string }) {}
+	 * class ChecklistItem extends sf.object("ChecklistItem", { text: sf.string }) {}
+	 *
+	 * // `staged` wraps ChecklistItem so it can be enabled at runtime.
+	 * const stagedChecklist = SchemaFactoryBeta.staged(ChecklistItem);
+	 * const checklistUpgrade = stagedChecklist.metadata.stagedSchemaUpgrade;
+	 *
+	 * class AppSchema extends sf.object("AppSchema", {
+	 *   items: sf.array([TaskItem, stagedChecklist]),
+	 * }) {}
+	 *
+	 * // Feature flag controls whether the upgrade is enabled for this session.
+	 * const policy = featureFlags.enableChecklist
+	 *   ? StagedSchemaUpgradePolicy.enabledStagedUpgrades(checklistUpgrade)
+	 *   : undefined;
+	 *
+	 * const view = tree.viewWith(
+	 *   new TreeViewConfigurationAlpha({ schema: AppSchema, stagedUpgradePolicy: policy }),
+	 * );
+	 *
+	 * if (view.compatibility.canUpgrade) {
+	 *   // Writes the staged type into the document's stored schema.
+	 *   view.upgradeSchema();
+	 * }
+	 * ```
+	 *
 	 * @privateRemarks
 	 * In the future, more upgrade options could be provided here.
 	 * Some options that could be added:
@@ -455,7 +514,11 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 	/**
 	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
 	 *
+	 * @remarks
 	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * When using {@link TreeViewConfigurationAlpha} with a {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy},
+	 * staged schema upgrades matching the configured policy are included in the initial stored schema.
 	 *
 	 * Applications should typically call this function before attaching a `SharedTree`.
 	 * @param content - The content to initialize the tree with.
@@ -474,17 +537,111 @@ export interface TreeView<in out TSchema extends ImplicitFieldSchema> extends ID
 }
 
 /**
+ * {@link TreeView} with additional beta APIs.
+ * @sealed @beta
+ */
+export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
+	extends TreeView<TSchema>,
+		TreeBranch {
+	// Override the base branch method to return a typed view rather than merely a branch.
+	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
+
+	/**
+	 * Run a synchronous transaction which groups sequential edits to the tree into a single atomic edit if possible.
+	 *
+	 * @param transaction - The function to run as the body of the transaction, which may optionally return a {@link TransactionCallbackStatusBeta | value or rollback signal}.
+	 * It may optionally return a {@link WithValue | value }, which will be returned by the `runTransaction` call.
+	 *
+	 * @param params - Optional {@link RunTransactionParamsBeta | parameters} for the transaction.
+	 *
+	 * @returns A {@link TransactionValueResult | value } indicating whether or not the transaction succeeded, and containing the value returned by `transaction`.
+	 *
+	 * @remarks
+	 * All of the changes in the transaction are applied synchronously and therefore no other changes from a remote client can be interleaved with those changes.
+	 * Note that this is guaranteed by Fluid for any sequence of changes that are submitted synchronously, whether in a transaction or not.
+	 *
+	 * {@link (TreeBeta:interface).on | Change events } will be emitted for changed nodes on this client _as each edit happens_, just as they would be if the changes were made outside of a transaction.
+	 * Any other/future clients or contexts will process the transaction "squashed", i.e. they will apply its changes all at once, emitting only a single event per node (even if that node was edited multiple times in the transaction).
+	 * Edits to the tree are not permitted within these event callbacks, therefore no other local changes from this client will be interleaved with the changes in this transaction.
+	 *
+	 * Using a transaction has the following additional consequences:
+	 *
+	 * - If {@link Revertible | reverted } (e.g. via an "undo" operation), all the changes in the transaction are reverted together.
+	 * Only the "outermost" transaction commits a change to the synchronized tree state and therefore only the outermost transaction can be reverted.
+	 * If a transaction is started and completed while another transaction is already in progress, then the inner transaction will be reverted together with the outer transaction.
+	 * - The internal data representation of a transaction with many changes is generally smaller and more efficient than that of the changes when separate.
+	 *
+	 * If the transaction is rolled back, a corresponding {@link TreeBranchEvents.changed | `changed`} event will also be emitted for the rollback.
+	 */
+	runTransaction<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => TOut,
+		params?: RunTransactionParamsBeta,
+	): TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+		? TransactionValueResult<TSuccessValue, TFailureValue>
+		: TransactionVoidResult;
+
+	/**
+	 * An asynchronous version of {@link TreeViewBeta.runTransaction | runTransaction}.
+	 *
+	 * @remarks
+	 * As with synchronous transactions, all of the changes in an asynchronous transaction are treated as a unit.
+	 * Therefore, no other changes (either from this client or from a remote client) can be interleaved with the transaction changes.
+	 *
+	 * Unlike with synchronous transactions, it is possible that other changes (e.g. from a remote client) may be applied to the branch while this transaction is in progress.
+	 * Those other changes will be not be reflected on the branch until after this transaction completes, at which point the transaction changes will be applied after those other changes.
+	 *
+	 * An asynchronous transaction may not be started while any other transaction is in progress in this view.
+	 */
+	runTransactionAsync<
+		TOut extends
+			| TransactionCallbackStatusBeta<unknown, unknown>
+			| VoidTransactionCallbackStatusBeta
+			| void,
+	>(
+		transaction: () => Promise<TOut>,
+		params?: RunTransactionParamsBeta,
+	): Promise<
+		TOut extends TransactionCallbackStatusBeta<infer TSuccessValue, infer TFailureValue>
+			? TransactionValueResult<TSuccessValue, TFailureValue>
+			: TransactionVoidResult
+	>;
+}
+
+/**
  * {@link TreeView} with proposed changes to the schema aware typing to allow use with `UnsafeUnknownSchema`.
  * @sealed @alpha
  */
 export interface TreeViewAlpha<
 	in out TSchema extends ImplicitFieldSchema | UnsafeUnknownSchema,
-> extends Omit<TreeViewBeta<ReadSchema<TSchema>>, "root" | "initialize" | "fork">,
+> extends Omit<
+			TreeViewBeta<ReadSchema<TSchema>>,
+			"root" | "initialize" | "fork" | "runTransaction" | "runTransactionAsync"
+		>,
 		TreeBranchAlpha {
 	get root(): ReadableField<TSchema>;
 
 	set root(newRoot: InsertableField<TSchema>);
 
+	/**
+	 * Initialize the tree, setting the stored schema to match this view's schema and setting the tree content.
+	 *
+	 * @remarks
+	 * Only valid to call when this view's {@link SchemaCompatibilityStatus.canInitialize} is true.
+	 *
+	 * Enables staged schema upgrades declared by {@link ITreeViewConfigurationAlpha.stagedUpgradePolicy} when generating the initial stored schema.
+	 * Once a staged schema upgrade has been enabled in a document's stored schema, loading that document
+	 * with a view that does not include equivalent staged members in its construction-time policy will cause
+	 * a subsequent `upgradeSchema` call to throw a `UsageError` because the stored schema already contains
+	 * the upgraded members and the new target would narrow it.
+	 *
+	 * Applications should typically call this function before attaching a `SharedTree`.
+	 * @param content - The content to initialize the tree with.
+	 */
 	initialize(content: InsertableField<TSchema>): void;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
@@ -494,22 +651,14 @@ export interface TreeViewAlpha<
 }
 
 /**
- * {@link TreeView} with additional beta APIs.
- * @sealed @beta
- */
-export interface TreeViewBeta<in out TSchema extends ImplicitFieldSchema>
-	extends TreeView<TSchema>,
-		TreeBranch {
-	// Override the base branch method to return a typed view rather than merely a branch.
-	fork(): ReturnType<TreeBranch["fork"]> & TreeViewBeta<TSchema>;
-}
-
-/**
  * Information about a view schema's compatibility with the document's stored schema.
  *
+ * @see
  * See SharedTree's README for more information about choosing a compatibility policy.
+ *
  * @privateRemarks
- * See {@link SchemaCompatibilityTester} for the implementation of this compatibility checking.
+ * See {@link checkSchemaCompatibility} for the implementation of this compatibility checking.
+ *
  * @sealed @public
  */
 export interface SchemaCompatibilityStatus {
@@ -598,7 +747,7 @@ export interface SchemaCompatibilityStatus {
  * Events for {@link TreeBranch}.
  * @sealed @alpha
  */
-export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> {
+export interface TreeBranchEvents {
 	/**
 	 * Fired when a change is made to the branch. Includes data about the change that is made which listeners
 	 * can use to filter on changes they care about (e.g. local vs. remote changes).
@@ -608,29 +757,12 @@ export interface TreeBranchEvents extends Omit<TreeViewEvents, "commitApplied"> 
 	 * this change is not revertible.
 	 */
 	changed(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
-
-	/**
-	 * Fired when:
-	 *
-	 * - a local commit is applied outside of a transaction
-	 *
-	 * - a local transaction is committed
-	 *
-	 * The event is not fired when:
-	 *
-	 * - a local commit is applied within a transaction
-	 *
-	 * - a remote commit is applied
-	 *
-	 * @param data - information about the commit that was applied
-	 * @param getRevertible - a function provided that allows users to get a revertible for the commit that was applied. If not provided,
-	 * this commit is not revertible.
-	 */
-	commitApplied(data: ChangeMetadata, getRevertible?: RevertibleAlphaFactory): void;
 }
 
 /**
  * Events for {@link TreeView}.
+ * @remarks
+ * See {@link TreeBranchEvents} for more events related to the underlying branch of the SharedTree.
  * @sealed @public
  */
 export interface TreeViewEvents {

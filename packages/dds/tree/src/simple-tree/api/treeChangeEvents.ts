@@ -6,6 +6,9 @@
 /**
  * A collection of events that can be emitted by a {@link TreeNode}.
  *
+ * @remarks
+ * Access these events via the {@link (Tree:variable)}'s {@link TreeNodeApi.on} method.
+ *
  * @privateRemarks
  * TODO: add a way to subscribe to a specific field (for nodeChanged and treeChanged).
  * Probably have object node and map node specific APIs for this.
@@ -33,7 +36,7 @@ export interface TreeChangeEvents {
 	 *
 	 * - Object nodes define a change as being when the value of one of its properties changes (i.e., the property's value is set, including when set to `undefined`).
 	 *
-	 * - Array nodes define a change as when an element is added, removed, moved or replaced.
+	 * - Array nodes define a change as when an element is added, removed, moved, or replaced.
 	 *
 	 * - Map nodes define a change as when an entry is added, updated, or removed.
 	 *

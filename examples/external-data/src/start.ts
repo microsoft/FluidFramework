@@ -4,7 +4,7 @@
  */
 
 import { StaticCodeLoader, TinyliciousModelLoader } from "@fluid-example/example-utils";
-import React from "react";
+import { createElement } from "react";
 import ReactDOM from "react-dom";
 
 import { BaseDocumentContainerRuntimeFactory } from "./model/index.js";
@@ -22,14 +22,14 @@ const updateTabForId = (id: string): void => {
 const render = (model: IAppModel, showExternalServerView: boolean): void => {
 	const appDiv = document.querySelector("#app") as HTMLDivElement;
 	ReactDOM.unmountComponentAtNode(appDiv);
-	ReactDOM.render(React.createElement(AppView, { model }), appDiv);
+	ReactDOM.render(createElement(AppView, { model }), appDiv);
 
 	// The DebugView is just for demo purposes, to offer manual controls and inspectability for things that normally
 	// would be some external system or arbitrarily occurring.
 	if (showExternalServerView) {
 		const debugDiv = document.querySelector("#debug") as HTMLDivElement;
 		ReactDOM.unmountComponentAtNode(debugDiv);
-		ReactDOM.render(React.createElement(DebugView), debugDiv);
+		ReactDOM.render(createElement(DebugView), debugDiv);
 	}
 };
 

@@ -37,6 +37,7 @@ export interface ContainerRuntimeOptions {
     readonly chunkSizeInBytes: number;
     readonly compressionOptions: ICompressionRuntimeOptions;
     readonly createBlobPayloadPending: true | undefined;
+    readonly disableSchemaUpgrade: boolean;
     // @deprecated
     readonly enableGroupedBatching: boolean;
     readonly enableRuntimeIdCompressor: IdCompressorMode;
@@ -45,6 +46,7 @@ export interface ContainerRuntimeOptions {
     readonly gcOptions: IGCRuntimeOptions;
     readonly loadSequenceNumberVerification: "close" | "log" | "bypass";
     readonly maxBatchSizeInBytes: number;
+    readonly stagingModeAutoFlushThreshold: number;
     // (undocumented)
     readonly summaryOptions: ISummaryRuntimeOptions;
 }

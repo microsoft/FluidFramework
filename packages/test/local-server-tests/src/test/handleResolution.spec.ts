@@ -21,7 +21,7 @@ import {
 	type ITestFluidObject,
 } from "@fluidframework/test-utils/internal";
 
-import { createLoader } from "../utils";
+import { createLoader } from "./utils.js";
 
 /**
  * Creates a non-root data object and validates that it is not visible from the root of the container.

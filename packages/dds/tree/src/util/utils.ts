@@ -4,7 +4,8 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import { Type, type TUnsafe } from "@sinclair/typebox";
+import * as Type from "@sinclair/typebox";
+import type { TUnsafe } from "@sinclair/typebox";
 
 /**
  * Subset of Map interface.
@@ -43,8 +44,6 @@ export type Populated<T> = {
 export function asMutable<T>(readonly: T): Mutable<T> {
 	return readonly as Mutable<T>;
 }
-
-export { default as clone } from "@ungap/structured-clone";
 
 /**
  * Checks whether or not the given object is a `readonly` array.
@@ -191,24 +190,6 @@ export function compareSets<T>({
 		}
 	}
 	return true;
-}
-
-/**
- * Sets the value at `key` in map to value if not already present.
- * Returns the value at `key` after setting it.
- * This is equivalent to a get or default that adds the default to the map.
- */
-export function getOrAddInMap<Key, Value>(
-	map: MapGetSet<Key, Value>,
-	key: Key,
-	value: Value,
-): Value {
-	const currentValue = map.get(key);
-	if (currentValue !== undefined) {
-		return currentValue;
-	}
-	map.set(key, value);
-	return value;
 }
 
 /**

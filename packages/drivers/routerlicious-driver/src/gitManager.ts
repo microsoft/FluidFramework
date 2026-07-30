@@ -11,14 +11,14 @@ import type {
 	IGitCreateTreeParams,
 	IGitTree,
 } from "@fluidframework/driver-definitions/internal";
-import {
+import type {
 	IWholeSummaryPayload,
 	IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 
-import { IWholeFlatSnapshot } from "./contracts.js";
-import { IR11sResponse } from "./restWrapper.js";
-import { IGitManager, IHistorian } from "./storageContracts.js";
+import type { IWholeFlatSnapshot } from "./contracts.js";
+import type { IR11sResponse } from "./restWrapper.js";
+import type { IGitManager, IHistorian } from "./storageContracts.js";
 
 export class GitManager implements IGitManager {
 	constructor(private readonly historian: IHistorian) {}

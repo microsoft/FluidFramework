@@ -9,7 +9,6 @@ export {
 	type SharedTreeOptions,
 	type SharedTreeOptionsBeta,
 	SharedTreeKernel,
-	getBranch,
 	type ForestType,
 	type SharedTreeContentSnapshot,
 	type SharedTreeFormatOptions,
@@ -31,9 +30,7 @@ export {
 	TreeCheckout,
 	type ITreeCheckout,
 	type CheckoutEvents,
-	type ITreeCheckoutFork,
-	type BranchableTree,
-	type TreeBranchFork,
+	type TreeTransactor,
 } from "./treeCheckout.js";
 
 export { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
@@ -45,6 +42,8 @@ export type {
 	ISchemaEditor,
 	SharedTreeEditBuilder,
 } from "./sharedTreeEditBuilder.js";
+
+export { minimize } from "./transactionMinimize.js";
 
 export { Tree } from "./tree.js";
 export type { RunTransaction } from "./tree.js";
@@ -60,6 +59,7 @@ export {
 	type ViewContent,
 	independentView,
 	type IndependentViewOptions,
+	type IndependentViewTelemetryOptions,
 	createIndependentTreeBeta,
 	createIndependentTreeAlpha,
 	type CreateIndependentTreeAlphaOptions,

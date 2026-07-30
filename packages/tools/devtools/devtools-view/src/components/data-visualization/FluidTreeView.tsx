@@ -7,7 +7,7 @@ import type {
 	FluidObjectTreeNode,
 	HasContainerKey,
 } from "@fluidframework/devtools-core/internal";
-import React from "react";
+import type { ReactElement } from "react";
 
 import type { DataVisualizationTreeProps } from "./CommonInterfaces.js";
 import { TreeDataView } from "./TreeDataView.js";
@@ -24,7 +24,7 @@ export interface FluidTreeViewProps
 /**
  * Render data with type VisualNodeKind.FluidTreeNode and render its children.
  */
-export function FluidTreeView(props: FluidTreeViewProps): React.ReactElement {
+export function FluidTreeView(props: FluidTreeViewProps): ReactElement {
 	const { containerKey, label, node } = props;
 
 	const childNodes = Object.entries(node.children).map(([key, fluidObject]) => (

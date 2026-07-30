@@ -1010,7 +1010,14 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 
 					return signalMessage;
 				} else {
-					const isNewClient = this.clientSeqManager.upsertClient(
+					if (this.clientSeqManager.has(clientJoinMessage.clientId)) {
+						// Return if the client has already been added due to a prior join message.
+						// Do not call upsertClient here, as it would reset the client's
+						// clientSequenceNumber to 0, corrupting duplicate detection state.
+						return;
+					}
+
+					this.clientSeqManager.upsertClient(
 						clientJoinMessage.clientId,
 						0,
 						this.minimumSequenceNumber,
@@ -1020,10 +1027,6 @@ export class DeliLambda extends TypedEventEmitter<IDeliLambdaEvents> implements 
 						false,
 						message.operation.serverMetadata,
 					);
-					if (!isNewClient) {
-						// Return if the client has already been added due to a prior join message.
-						return;
-					}
 				}
 			}
 		}

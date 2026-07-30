@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IChannelFactory,
 	IFluidDataStoreRuntime,
@@ -13,11 +13,13 @@ import { Marker, TextSegment } from "@fluidframework/merge-tree/internal";
 import { createSharedObjectKind } from "@fluidframework/shared-object-base/internal";
 
 import { pkgVersion } from "./packageVersion.js";
-import { SharedStringClass, SharedStringSegment, type ISharedString } from "./sharedString.js";
+import type { ISharedString, SharedStringSegment } from "./sharedString.js";
+import { SharedStringClass } from "./sharedString.js";
 
 export class SharedStringFactory implements IChannelFactory<ISharedString> {
-	// TODO rename back to https://graph.microsoft.com/types/mergeTree/string once paparazzi is able to dynamically
-	// load code (UPDATE: paparazzi is gone... anything to do here?)
+	// New type string, to be activated once the migration has been fully shipped dark and is safe to flip.
+	// See LegacyTypeAwareRegistry in packages/runtime/datastore/src/dataStoreRuntime.ts.
+	// public static Type = "mergeTree";
 	public static Type = "https://graph.microsoft.com/types/mergeTree";
 
 	public static readonly Attributes: IChannelAttributes = {

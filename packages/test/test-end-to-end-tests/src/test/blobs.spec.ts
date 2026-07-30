@@ -103,8 +103,16 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 		"FullCompat",
 		(getTestObjectProvider, apis) => {
 			const { SharedString } = apis.dds;
-			const testContainerConfig = makeTestContainerConfig(
+			// In cross-client compat, the loading client may be a different version than the creating
+			// client. Use ddsForLoading so loadTestContainer reconstructs DDS factories from the
+			// correct version. (Outside cross-client compat it matches apis.dds.)
+			const ddsForLoading = apis.ddsForLoading;
+			const createContainerConfig = makeTestContainerConfig(
 				[["sharedString", SharedString.getFactory()]],
+				createBlobPayloadPending,
+			);
+			const loadContainerConfig = makeTestContainerConfig(
+				[["sharedString", ddsForLoading.SharedString.getFactory()]],
 				createBlobPayloadPending,
 			);
 
@@ -121,7 +129,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			});
 
 			it("attach sends an op", async function () {
-				const container = await provider.makeTestContainer(testContainerConfig);
+				const container = await provider.makeTestContainer(createContainerConfig);
 
 				const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 
@@ -153,14 +161,14 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				}
 				const testString = "this is a test string";
 				const testKey = "a blob";
-				const container1 = await provider.makeTestContainer(testContainerConfig);
+				const container1 = await provider.makeTestContainer(createContainerConfig);
 
 				const dataStore1 = await getContainerEntryPointBackCompat<ITestDataObject>(container1);
 
 				const blob = await dataStore1._runtime.uploadBlob(stringToBuffer(testString, "utf-8"));
 				dataStore1._root.set(testKey, blob);
 
-				const container2 = await provider.loadTestContainer(testContainerConfig);
+				const container2 = await provider.loadTestContainer(loadContainerConfig);
 				const dataStore2 = await getContainerEntryPointBackCompat<ITestDataObject>(container2);
 
 				await provider.ensureSynchronized();
@@ -175,8 +183,8 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				if (provider.type === "TestObjectProviderWithVersionedLoad") {
 					this.skip();
 				}
-				const container1 = await provider.makeTestContainer(testContainerConfig);
-				const container2 = await provider.loadTestContainer(testContainerConfig);
+				const container1 = await provider.makeTestContainer(createContainerConfig);
+				const container2 = await provider.loadTestContainer(loadContainerConfig);
 				const testString = "this is a test string";
 				// setup
 				{
@@ -222,7 +230,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 				for (const container of [
 					container1,
 					container2,
-					await provider.loadTestContainer(testContainerConfig),
+					await provider.loadTestContainer(loadContainerConfig),
 				]) {
 					const dataStore2 =
 						await getContainerEntryPointBackCompat<ITestDataObject>(container);
@@ -238,7 +246,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 			});
 
 			it("correctly handles simultaneous identical blob upload on one container", async () => {
-				const container = await provider.makeTestContainer(testContainerConfig);
+				const container = await provider.makeTestContainer(createContainerConfig);
 				const dataStore = await getContainerEntryPointBackCompat<ITestDataObject>(container);
 				const blob = stringToBuffer("some different yet still random text", "utf-8");
 
@@ -264,7 +272,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					}
 
 					const runtimeOptions: IContainerRuntimeOptionsInternal = {
-						...testContainerConfig.runtimeOptions,
+						...createContainerConfig.runtimeOptions,
 						compressionOptions: {
 							minimumBatchSizeInBytes: enableGroupedBatching ? 1 : Number.POSITIVE_INFINITY,
 							compressionAlgorithm: CompressionAlgorithms.lz4,
@@ -273,7 +281,7 @@ for (const createBlobPayloadPending of [undefined, true] as const) {
 					};
 
 					const container = await provider.makeTestContainer({
-						...testContainerConfig,
+						...createContainerConfig,
 						runtimeOptions,
 					});
 
@@ -583,7 +591,7 @@ function serializationTests({
 					loaderProps: {
 						documentServiceFactory,
 						configProvider: createTestConfigProvider({
-							"Fluid.Container.RetryOnAttachFailure": true,
+							"Fluid.Container.DisableCloseOnAttachFailure": true,
 						}),
 					},
 				});

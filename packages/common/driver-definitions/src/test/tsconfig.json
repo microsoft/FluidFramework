@@ -1,0 +1,16 @@
+{
+	"extends": "../../../../../common/build/build-common/tsconfig.test.node16.json",
+	"include": ["./**/*"],
+	"compilerOptions": {
+		"noImplicitAny": true,
+		"noImplicitOverride": true,
+		"rootDir": "./",
+		"outDir": "../../lib/test",
+		"types": [],
+	},
+	"references": [
+		{
+			"path": "../..",
+		},
+	],
+}

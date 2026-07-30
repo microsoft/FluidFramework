@@ -705,8 +705,8 @@ describe("CustomArrayProperty", function () {
 									// Modify entries in the array
 									var rangeStart = generator.irandom(testArray.original.length);
 									var rangeLength = generator.irandom(testArray.original.length - rangeStart);
-									for (var j = rangeStart; j < rangeStart + rangeLength; j++) {
-										testArray.original.get(j)._properties.stringProperty.value += "modified";
+									for (var k = rangeStart; k < rangeStart + rangeLength; k++) {
+										testArray.original.get(k)._properties.stringProperty.value += "modified";
 									}
 
 									modifiedEntries += rangeLength;

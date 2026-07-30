@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { assert, oob, fail } from "@fluidframework/core-utils/internal";
+import { assert, oob, fail, debugAssert } from "@fluidframework/core-utils/internal";
 
 import {
 	CursorLocationType,
@@ -166,10 +166,19 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		if (this.nestedCursor !== undefined) {
 			return this.nestedCursor.mode;
 		}
-		// Compute the number of nodes deep the current depth is.
-		// We want the floor of the result, which can computed using a bitwise shift assuming the depth is less than 2^31, which seems safe.
-		// eslint-disable-next-line no-bitwise
-		const halfHeight = (this.siblingStack.length + 1) >> 1;
+		this.assertChunkStacksMatchNodeDepth();
+		return this.siblingStack.length % 2 === 0
+			? CursorLocationType.Fields
+			: CursorLocationType.Nodes;
+	}
+
+	/**
+	 * Asserts that the node-only stacks (`indexOfChunkStack` and `indexWithinChunkStack`) are in sync with `siblingStack`.
+	 * Since `siblingStack` interleaves field and node levels while the node-only stacks are pushed/popped only on node-level transitions,
+	 * their length should always equal the number of node levels traversed.
+	 */
+	private assertChunkStacksMatchNodeDepth(): void {
+		const halfHeight = this.getNodeOnlyHeightFromHeight();
 		assert(
 			this.indexOfChunkStack.length === halfHeight,
 			0x51c /* unexpected indexOfChunkStack */,
@@ -178,9 +187,6 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.indexWithinChunkStack.length === halfHeight,
 			0x51d /* unexpected indexWithinChunkStack */,
 		);
-		return this.siblingStack.length % 2 === 0
-			? CursorLocationType.Fields
-			: CursorLocationType.Nodes;
 	}
 
 	public getFieldKey(): FieldKey {
@@ -203,9 +209,32 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		return this.indexStack[height] ?? oob();
 	}
 
-	private getStackedNode(height: number): BasicChunk {
-		const index = this.getStackedNodeIndex(height);
-		return (this.siblingStack[height] as readonly TreeChunk[])[index] as BasicChunk;
+	private getStackedChunkIndex(height: number): number {
+		assert(height % 2 === 1, 0xcf3 /* must be node height */);
+		assert(height >= 0, 0xcf4 /* must not be above root */);
+		return this.indexOfChunkStack[this.getNodeOnlyHeightFromHeight(height)] ?? oob();
+	}
+
+	private getStackedChunk(height: number): BasicChunk {
+		const index = this.getStackedChunkIndex(height);
+		const chunk = (this.siblingStack[height] as readonly TreeChunk[])[index];
+		debugAssert(() => chunk instanceof BasicChunk || "only basic chunks are expected");
+		return chunk as BasicChunk;
+	}
+
+	/**
+	 * Converts a {@link height}, which contains field and node levels, into the corresponding depth/index
+	 * for the node-only stacks ({@link indexOfChunkStack} and {@link indexWithinChunkStack}), which are
+	 * only pushed on node-level transitions.
+	 *
+	 * @param height - A depth in {@link siblingStack} to convert. Defaults to {@link siblingStack}'s
+	 * current length, which gives the current depth of the node-only stacks.
+	 * @returns `floor(height / 2)` — the number of node levels at or below the given stack height.
+	 */
+	private getNodeOnlyHeightFromHeight(height: number = this.siblingStack.length): number {
+		// The bitwise shift computes the floor, which is valid assuming the depth is less than 2^31, which seems safe.
+		// eslint-disable-next-line no-bitwise
+		return height >> 1;
 	}
 
 	public getFieldLength(): number {
@@ -322,6 +351,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		assert(this.mode === CursorLocationType.Nodes, 0x528 /* must be in nodes mode */);
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
+		// Save the chunk array position of the current node. When siblings contain
+		// multi node chunks, the flat node index diverges from the array position,
+		// so getField needs this to locate the parent in the sibling array.
+		this.indexOfChunkStack.push(this.indexOfChunk);
+		this.indexWithinChunkStack.push(this.indexWithinChunk);
 
 		// For fields, siblings are only used for key lookup and
 		// nextField and which has arbitrary iteration order,
@@ -330,6 +364,7 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		// at the cost of an allocation here.
 		this.index = 0;
 		this.siblings = [key];
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	public nextField(): boolean {
@@ -355,8 +390,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
+		this.indexOfChunkStack.push(this.indexOfChunk);
+		this.indexWithinChunkStack.push(this.indexWithinChunk);
 		this.index = 0;
 		this.siblings = [...fields.keys()]; // TODO: avoid this copy
+		this.assertChunkStacksMatchNodeDepth();
 		return true;
 	}
 
@@ -422,12 +460,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		}
 		this.siblingStack.push(this.siblings);
 		this.indexStack.push(this.index);
-		this.indexOfChunkStack.push(this.indexOfChunk);
-		this.indexWithinChunkStack.push(this.indexWithinChunk);
 		this.index = 0;
 		this.siblings = siblings;
 		this.indexOfChunk = 0;
 		this.indexWithinChunk = 0;
+		this.assertChunkStacksMatchNodeDepth();
 		this.initNestedCursor();
 		return true;
 	}
@@ -486,6 +523,12 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xaf0 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xaf1 /* Unexpected indexStack.length */);
+		this.indexOfChunk =
+			this.indexOfChunkStack.pop() ?? fail(0xcf5 /* Unexpected indexOfChunkStack.length */);
+		this.indexWithinChunk =
+			this.indexWithinChunkStack.pop() ??
+			fail(0xcf6 /* Unexpected indexWithinChunkStack.length */);
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	public exitNode(): void {
@@ -502,18 +545,27 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 		this.siblings =
 			this.siblingStack.pop() ?? fail(0xaf2 /* Unexpected siblingStack.length */);
 		this.index = this.indexStack.pop() ?? fail(0xaf3 /* Unexpected indexStack.length */);
-		this.indexOfChunk =
-			this.indexOfChunkStack.pop() ?? fail(0xaf4 /* Unexpected indexOfChunkStack.length */);
-		this.indexWithinChunk =
-			this.indexWithinChunkStack.pop() ??
-			fail(0xaf5 /* Unexpected indexWithinChunkStack.length */);
+		// At the Fields level these aren't semantically used, but reset for consistent state
+		// (so a fully-iterated cursor matches a fresh cursor at the same logical position).
+		this.indexOfChunk = 0;
+		this.indexWithinChunk = 0;
+		this.assertChunkStacksMatchNodeDepth();
 	}
 
 	private getNode(): BasicChunk {
 		assert(this.mode === CursorLocationType.Nodes, 0x52f /* can only get node when in node */);
-		return (this.siblings as TreeChunk[])[this.index] as BasicChunk;
+		const chunk = (this.siblings as TreeChunk[])[this.indexOfChunk];
+		debugAssert(() => chunk instanceof BasicChunk || "only basic chunks are expected");
+		return chunk as BasicChunk;
 	}
 
+	/**
+	 * Resolves the chunks that make up the field the cursor is currently in. At the root, this is
+	 * {@link root} directly. Otherwise, the cursor must be in {@link CursorLocationType.Fields} mode,
+	 * and the result is looked up on the parent node using the current field key.
+	 *
+	 * @returns The chunks that make up the field the cursor is currently in.
+	 */
 	private getField(): readonly TreeChunk[] {
 		if (this.siblingStack.length === 0) {
 			return this.root;
@@ -522,7 +574,11 @@ export class BasicChunkCursor extends SynchronousCursor implements ChunkedCursor
 			this.mode === CursorLocationType.Fields,
 			0x530 /* can only get field when in fields */,
 		);
-		const parent = this.getStackedNode(this.indexStack.length - 1);
+		// The parent node is the `BasicChunk` in the node array at the top of
+		// `siblingStack` while we are in `CursorLocationType.Fields` mode. We need the parent
+		// since a field's chunks are stored on the parent node's `BasicChunk.fields` map, not on
+		// the cursor itself.
+		const parent = this.getStackedChunk(this.siblingStack.length - 1);
 		const key: FieldKey = this.getFieldKey();
 		const field = parent.fields.get(key) ?? [];
 		return field;

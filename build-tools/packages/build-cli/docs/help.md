@@ -23,4 +23,4 @@ DESCRIPTION
   Display help for flub.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.36/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.43/src/commands/help.ts)_

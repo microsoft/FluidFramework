@@ -57,8 +57,6 @@ describeCompat(
 			let crash = false;
 			let crash2 = false;
 			if (provider.type === "TestObjectProviderWithVersionedLoad") {
-				assert(apis.containerRuntime !== undefined);
-				assert(apis.containerRuntimeForLoading !== undefined);
 				// 1st container is defined by apis.containerRuntime, 2nd and 3rd are defined by apis.containerRuntimeForLoading.
 				// If first container is running 1.3, then it does not understand neither compression or document schema ops,
 				// and thus it will see either of those.
@@ -311,7 +309,6 @@ describeCompat(
 		it.skip("sends a warning telemetry event for clients less than minVersionForCollab", async function () {
 			const releaseMinVersionForCollabWarningAdded = "2.43.0";
 			if (
-				apis.containerRuntimeForLoading === undefined ||
 				semverGt(
 					releaseMinVersionForCollabWarningAdded,
 					apis.containerRuntimeForLoading.version,

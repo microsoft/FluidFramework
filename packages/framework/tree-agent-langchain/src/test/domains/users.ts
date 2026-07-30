@@ -4,13 +4,13 @@
  */
 
 import { SchemaFactoryAlpha } from "@fluidframework/tree/alpha";
+import { typeFactory as tf } from "@fluidframework/tree-agent/alpha";
 import {
 	buildFunc,
 	exposeMethodsSymbol,
 	type ExposedMethods,
 	type IExposedMethods,
-	typeFactory as tf,
-} from "@fluidframework/tree-agent/alpha";
+} from "@fluidframework/type-factory/alpha";
 
 // eslint-disable-next-line @eslint-community/eslint-comments/disable-enable-pair
 /* eslint-disable jsdoc/require-jsdoc */
@@ -56,7 +56,7 @@ export class User
 	implements IExposedMethods
 {
 	public static [exposeMethodsSymbol](methods: ExposedMethods): void {
-		methods.expose(
+		methods.exposeMethod(
 			User,
 			"setDisplayName",
 			buildFunc({

@@ -16,6 +16,7 @@ import type {
  * @privateRemarks
  * WeakRef should be added when lib is updated to ES2021 or later.
  *
+ * @public
  * @system
  */
 export type DeepReadonlySupportedGenericsDefault =
@@ -28,7 +29,7 @@ export type DeepReadonlySupportedGenericsDefault =
 /**
  * Options for {@link DeepReadonly}.
  *
- * @beta
+ * @public
  */
 export interface DeepReadonlyOptions {
 	/**
@@ -57,7 +58,7 @@ export interface DeepReadonlyOptions {
  * {@link DeepReadonlySupportedGenericsDefault} for generics that have
  * immutability applied to generic type by default.
  *
- * @beta
+ * @public
  */
 export type DeepReadonly<
 	T,

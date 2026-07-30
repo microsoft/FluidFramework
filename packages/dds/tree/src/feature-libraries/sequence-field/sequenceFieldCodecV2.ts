@@ -10,18 +10,21 @@ import {
 	DiscriminatedUnionDispatcher,
 	type DiscriminatedUnionLibrary,
 	type IJsonCodec,
+	type JsonCodecPart,
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import { type JsonCompatibleReadOnly, type Mutable, brand } from "../../util/index.js";
 import { makeChangeAtomIdCodec } from "../changeAtomIdCodec.js";
 import {
 	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV2.js";
@@ -43,10 +46,9 @@ import {
 import { isNoopMark, normalizeCellRename } from "./utils.js";
 
 export function makeV2CodecHelpers(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): SequenceCodecHelpers<MarkEffect, Encoded.MarkEffect> {
@@ -261,17 +263,17 @@ export function makeV2CodecHelpers(
 }
 
 export function makeV2Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
 	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	const { markEffectCodec, changeAtomIdCodec } = makeV2CodecHelpers(revisionTagCodec);
 	/**
@@ -305,7 +307,7 @@ export function makeV2Codec(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): Changeset => {
 			const marks: Changeset = [];
 			for (const mark of changeset) {

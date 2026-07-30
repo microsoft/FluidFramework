@@ -3,7 +3,15 @@
  * Licensed under the MIT License.
  */
 
+// Warning: this module has load side effect of patching Mocha's timeout handling.
+// See globalThis.getMochaModule use below.
+
 import { assert, Deferred } from "@fluidframework/core-utils/internal";
+// Note that "@types/mocha" is only a devDependency of this package.
+// None of the mocha types are exposed through exports and thus it's reasonable
+// to leave mocha as a devDependency only. Further, the underlying code is only
+// used when @fluid-internal/mocha-test-setup is used and that package dictates
+// a mocha version.
 import type * as Mocha from "mocha";
 
 const timeBuffer = 15; // leave 15 ms leeway for finish processing

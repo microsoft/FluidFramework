@@ -8,5 +8,7 @@
 const getFluidTestMochaConfig = require("@fluid-internal/mocha-test-setup/mocharc-common");
 
 const config = getFluidTestMochaConfig(__dirname);
-config.timeout = 20000;
+// The build tests can be slow, especially on CI sometimes.
+// 10-13 seconds is normal for them, but sometimes they take over 20 seconds.
+config.timeout = 50000;
 module.exports = config;

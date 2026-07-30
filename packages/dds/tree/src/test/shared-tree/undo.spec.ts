@@ -103,7 +103,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start(false);
+			actedOn.transaction.start();
 			const listField = actedOn.editor.sequenceField({
 				parent: listNode,
 				field: brand(""),
@@ -124,7 +124,7 @@ const testCases: {
 				parentIndex: 0,
 			};
 
-			actedOn.transaction.start(false);
+			actedOn.transaction.start();
 			actedOn.editor.move({ parent: listNode, field: brand("") }, 0, 1, rootField, 1);
 			remove(actedOn, 0, 1);
 			actedOn.transaction.commit();
@@ -229,7 +229,7 @@ describe("Undo and redo", () => {
 			const itFn = skip ? it.skip : it;
 			itFn(`${name} (act on fork undo on fork - ${attachStr})`, () => {
 				const view = createCheckout(initialState, attached);
-				const fork = view.branch();
+				const fork = view.fork();
 
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 				edit(fork, view);
@@ -256,7 +256,7 @@ describe("Undo and redo", () => {
 			// TODO: unskip once forking revertibles is supported
 			it.skip(`${name} (act on view undo on fork - ${attachStr})`, () => {
 				const view = createCheckout(initialState, attached);
-				const fork = view.branch();
+				const fork = view.fork();
 
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(fork.events);
 				edit(view, fork);
@@ -282,7 +282,7 @@ describe("Undo and redo", () => {
 
 			itFn(`${name} (act on view undo on view - ${attachStr})`, () => {
 				const view = createCheckout(initialState, attached);
-				const fork = view.branch();
+				const fork = view.fork();
 
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(view, fork);
@@ -309,7 +309,7 @@ describe("Undo and redo", () => {
 			// TODO: unskip once forking revertibles is supported
 			it.skip(`${name} (act on fork undo on view - ${attachStr})`, () => {
 				const view = createCheckout(initialState, attached);
-				const fork = view.branch();
+				const fork = view.fork();
 
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(view.events);
 				edit(fork, view);
@@ -335,7 +335,7 @@ describe("Undo and redo", () => {
 
 			it(`${name} multiple times (${attachStr})`, () => {
 				const tree = createCheckout(initialState, attached);
-				const fork = tree.branch();
+				const fork = tree.fork();
 
 				const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 				edit(tree, fork);
@@ -364,7 +364,7 @@ describe("Undo and redo", () => {
 
 		it(`can undo before and after rebasing a branch (${attachStr})`, () => {
 			const tree1 = createCheckout([0, 0, 0], attached);
-			const tree2 = tree1.branch();
+			const tree2 = tree1.fork();
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree2.events);
 			tree1.editor.sequenceField(rootField).insert(3, chunkFromJsonTrees([1]));
@@ -389,7 +389,7 @@ describe("Undo and redo", () => {
 			tree1.editor.sequenceField(rootField).remove(0, 1);
 			tree1.editor.sequenceField(rootField).remove(1, 1);
 
-			const tree2 = tree1.branch();
+			const tree2 = tree1.fork();
 			const { undoStack: undoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
 				tree2.events,
 			);
@@ -414,7 +414,7 @@ describe("Undo and redo", () => {
 			undoStack1.pop()?.revert();
 			undoStack1.pop()?.revert();
 
-			const tree2 = tree1.branch();
+			const tree2 = tree1.fork();
 			const { redoStack: redoStack2, unsubscribe: unsubscribe2 } = createTestUndoRedoStacks(
 				tree2.events,
 			);
@@ -431,7 +431,7 @@ describe("Undo and redo", () => {
 			const tree = createCheckout(["A", "B"], attached);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-			tree.transaction.start(false);
+			tree.transaction.start();
 			tree.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.editor.sequenceField(rootField).remove(0, 1);
 			tree.transaction.commit();
@@ -448,7 +448,7 @@ describe("Undo and redo", () => {
 			const tree = createCheckout(["A", "B"], attached);
 
 			const { undoStack, redoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
-			const branch = tree.branch();
+			const branch = tree.fork();
 			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			branch.editor.sequenceField(rootField).remove(0, 1);
 			tree.merge(branch);
@@ -470,7 +470,7 @@ describe("Undo and redo", () => {
 
 			const { undoStack, unsubscribe } = createTestUndoRedoStacks(tree.events);
 
-			const branch = tree.branch();
+			const branch = tree.fork();
 
 			branch.editor.sequenceField(rootField).insert(2, chunkFromJsonTrees(["C"]));
 			tree.merge(branch, false);

@@ -20,7 +20,6 @@ import {
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	forEachField,
@@ -41,18 +40,13 @@ import {
 import { chunkFieldSingle, defaultChunkPolicy } from "../chunked-forest/chunkTree.js";
 import {
 	defaultIncrementalEncodingPolicy,
-	type FieldBatchCodec,
+	type FieldBatchDecodingContext,
 	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../chunked-forest/index.js";
 import { TreeCompressionStrategy } from "../treeCompressionUtils.js";
 
-import {
-	clientVersionToForestFormatVersion,
-	type ForestCodec,
-	makeForestSummarizerCodec,
-} from "./codec.js";
-import { ForestFormatVersion } from "./formatCommon.js";
+import { forestCodecBuilder, type ForestCodec } from "./codec.js";
 import {
 	ForestIncrementalSummaryBehavior,
 	ForestIncrementalSummaryBuilder,
@@ -84,9 +78,8 @@ export class ForestSummarizer
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly revisionTagCodec: RevisionTagCodec,
-		fieldBatchCodec: FieldBatchCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
+		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
 		private readonly idCompressor: IIdCompressor,
 		initialSequenceNumber: number,
@@ -99,11 +92,8 @@ export class ForestSummarizer
 			true /* supportPreVersioningFormat */,
 		);
 
-		this.codec = makeForestSummarizerCodec(options, fieldBatchCodec);
+		this.codec = forestCodecBuilder.build(options);
 
-		const forestFormatWriteVersion = clientVersionToForestFormatVersion(
-			options.minVersionForCollab,
-		);
 		const summaryFormatWriteVersion = minVersionToForestSummaryFormatVersion(
 			options.minVersionForCollab,
 		);
@@ -111,9 +101,10 @@ export class ForestSummarizer
 			summaryFormatWriteVersion,
 		);
 
-		// Incremental summary is supported from ForestFormatVersion.v2 and ForestSummaryFormatVersion.v3 onwards.
+		// Incremental summary is supported in ForestSummaryFormatVersion.v3 onwards.
+		// Note that even in versions that support it, it is possible that the
+		// FieldBatchCodec will not use incremental encoding (for example if using its v1 formats which does not support it).
 		const enableIncrementalSummary =
-			forestFormatWriteVersion >= ForestFormatVersion.v2 &&
 			summaryFormatWriteVersion >= ForestSummaryFormatVersion.v3 &&
 			encoderContext.encodeType === TreeCompressionStrategy.CompressedIncremental;
 		this.incrementalSummaryBuilder = new ForestIncrementalSummaryBuilder(
@@ -169,7 +160,7 @@ export class ForestSummarizer
 		});
 		const encoderContext: FieldBatchEncodingContext = {
 			...this.encoderContext,
-			incrementalEncoderDecoder:
+			incrementalEncoder:
 				incrementalSummaryBehavior === ForestIncrementalSummaryBehavior.Incremental
 					? this.incrementalSummaryBuilder
 					: undefined,
@@ -221,10 +212,7 @@ export class ForestSummarizer
 				parse,
 				// TODO: this type cast assumes there are no handles, which should probably be enforced at runtime or the need for this cast should be removed altogether.
 			)) as JsonCompatibleReadOnly,
-			{
-				...this.encoderContext,
-				incrementalEncoderDecoder: this.incrementalSummaryBuilder,
-			},
+			this.decoderContext.withIncrementalDecoder(this.incrementalSummaryBuilder),
 		);
 		const allocator = idAllocatorFromMaxId();
 		const fieldChanges: [FieldKey, DeltaFieldChanges][] = [];
@@ -250,7 +238,7 @@ export class ForestSummarizer
 			{ build, fields: new Map(fieldChanges) },
 			undefined,
 			this.forest,
-			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+			makeDetachedFieldIndex("init"),
 		);
 	}
 }

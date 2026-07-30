@@ -14,8 +14,7 @@ import {
 	type DeduplicationTable,
 	jsonMinimizingFilter,
 } from "./chunkCodecUtilities.js";
-import type { FieldBatchFormatVersion } from "./format.js";
-import type { EncodedFieldBatchGeneric } from "./formatGeneric.js";
+import type { FieldBatchFormatVersion, EncodedFieldBatchGeneric } from "./format/index.js";
 
 /**
  * An identifier which can be compressed using {@link Counter}.

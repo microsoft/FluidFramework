@@ -4,6 +4,9 @@
 
 ```ts
 
+// @public @input
+export type MinimumVersionForCollab = `${1 | 2}.${bigint}.${bigint}` | `${1 | 2}.${bigint}.${bigint}-${string}`;
+
 // (No @packageDocumentation comment for this package)
 
 ```

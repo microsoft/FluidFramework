@@ -9,7 +9,7 @@ import { SharedCounter } from "@fluidframework/counter/legacy";
 import type { ContainerSchema, IFluidContainer } from "@fluidframework/fluid-static";
 import { type ISharedMap, SharedMap } from "@fluidframework/map/legacy";
 import { SharedString } from "@fluidframework/sequence/legacy";
-import React from "react";
+import { type ReactElement, useEffect, useState } from "react";
 
 import {
 	type ContainerInfo,
@@ -79,8 +79,8 @@ async function populateRootMap(container: IFluidContainer): Promise<void> {
  * Initializes the Fluid Container and displays app view once it is ready.
  * @internal
  */
-export function App(): React.ReactElement {
-	const [containerInfo, setContainerInfo] = React.useState<ContainerInfo | undefined>();
+export function App(): ReactElement {
+	const [containerInfo, setContainerInfo] = useState<ContainerInfo | undefined>();
 
 	const getSharedFluidData = async (): Promise<ContainerInfo> => {
 		const containerId = getContainerIdFromLocation(window.location);
@@ -90,7 +90,7 @@ export function App(): React.ReactElement {
 	};
 
 	// Get the Fluid Data data on app startup and store in the state
-	React.useEffect(() => {
+	useEffect(() => {
 		getSharedFluidData().then(
 			(data) => {
 				if (getContainerIdFromLocation(window.location) !== data.containerId) {
@@ -129,7 +129,7 @@ interface AppViewProps {
  *
  * @remarks Valid to display once the container has been created / loaded.
  */
-function AppView(props: AppViewProps): React.ReactElement {
+function AppView(props: AppViewProps): ReactElement {
 	const { containerInfo } = props;
 	const { container, containerId } = containerInfo;
 
@@ -168,12 +168,12 @@ interface TextViewProps {
 	sharedTextHandle: IFluidHandle<SharedString>;
 }
 
-function TextView(props: TextViewProps): React.ReactElement {
+function TextView(props: TextViewProps): ReactElement {
 	const { sharedTextHandle } = props;
 
-	const [sharedText, setSharedText] = React.useState<SharedString | undefined>();
+	const [sharedText, setSharedText] = useState<SharedString | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		sharedTextHandle.get().then(setSharedText, (error) => {
 			console.error(`Error encountered loading SharedString: "${error}".`);
 			throw error;
@@ -193,12 +193,12 @@ interface CounterViewProps {
 	sharedCounterHandle: IFluidHandle<SharedCounter>;
 }
 
-function CounterView(props: CounterViewProps): React.ReactElement {
+function CounterView(props: CounterViewProps): ReactElement {
 	const { sharedCounterHandle } = props;
 
-	const [sharedCounter, setSharedCounter] = React.useState<SharedCounter | undefined>();
+	const [sharedCounter, setSharedCounter] = useState<SharedCounter | undefined>();
 
-	React.useEffect(() => {
+	useEffect(() => {
 		sharedCounterHandle.get().then(setSharedCounter, (error) => {
 			console.error(`Error encountered loading SharedCounter: "${error}".`);
 			throw error;
@@ -224,12 +224,12 @@ export interface CounterWidgetProps {
  * Backed by a {@link @fluidframework/counter#SharedCounter}.
  * Affords simple incrementing and decrementing via buttons.
  */
-export function CounterWidget(props: CounterWidgetProps): React.ReactElement {
+export function CounterWidget(props: CounterWidgetProps): ReactElement {
 	const { counter } = props;
 
-	const [counterValue, setCounterValue] = React.useState<number>(counter.value);
+	const [counterValue, setCounterValue] = useState<number>(counter.value);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		counter.on("incremented", () => {
 			setCounterValue(counter.value);
 		});

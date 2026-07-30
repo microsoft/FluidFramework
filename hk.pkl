@@ -1,0 +1,24 @@
+amends "package://github.com/jdx/hk/releases/download/v1.36.0/hk@1.36.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.36.0/hk@1.36.0#/Builtins.pkl"
+
+local formatters = new Mapping<String, Step> {
+    ["biome-format"] = (Builtins.biome) {
+        check = "biome check --no-errors-on-unmatched {{ files }}"
+        fix = "biome check --write --no-errors-on-unmatched {{ files }}"
+    }
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps = formatters
+    }
+    ["fix"] {
+        fix = true
+        steps = formatters
+    }
+    ["check"] {
+        steps = formatters
+    }
+}

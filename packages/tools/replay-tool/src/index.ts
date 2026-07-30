@@ -7,6 +7,7 @@ export {
 	compareWithReferenceSnapshot,
 	getNormalizedFileSnapshot,
 	loadContainer,
+	normalizePackageVersions,
 	uploadSummary,
 } from "./helpers.js";
 export { ReplayArgs } from "./replayArgs.js";

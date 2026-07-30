@@ -7,15 +7,14 @@ import { AttachState } from "@fluidframework/container-definitions";
 import type { FluidObject } from "@fluidframework/core-interfaces";
 import type { IFluidHandleInternal } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase } from "@fluidframework/core-utils/internal";
-import {
-	type AliasResult,
-	type IDataStore,
-	type IFluidDataStoreChannel,
-	asLegacyAlpha,
+import type {
+	AliasResult,
+	IDataStore,
+	IFluidDataStoreChannel,
 } from "@fluidframework/runtime-definitions/internal";
 import {
-	type ITelemetryLoggerExt,
 	TelemetryDataTag,
+	type TelemetryLoggerExt,
 	UsageError,
 } from "@fluidframework/telemetry-utils/internal";
 
@@ -59,7 +58,7 @@ export const channelToDataStore = (
 	fluidDataStoreChannel: IFluidDataStoreChannel,
 	internalId: string,
 	channelCollection: ChannelCollection,
-	logger: ITelemetryLoggerExt,
+	logger: TelemetryLoggerExt,
 ): IDataStore => new DataStore(fluidDataStoreChannel, internalId, channelCollection, logger);
 
 enum AliasState {
@@ -81,7 +80,7 @@ class DataStore implements IDataStore {
 		if (alias.includes("/")) {
 			throw new UsageError(`The alias cannot contain slashes: '${alias}'`);
 		}
-		if (asLegacyAlpha(this.parentContext.containerRuntime).inStagingMode === true) {
+		if (this.parentContext.containerRuntime.inStagingMode === true) {
 			throw new UsageError("Cannot set aliases while in staging mode");
 		}
 
@@ -195,7 +194,7 @@ class DataStore implements IDataStore {
 		private readonly fluidDataStoreChannel: IFluidDataStoreChannel,
 		private readonly internalId: string,
 		private readonly channelCollection: ChannelCollection,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private readonly parentContext = channelCollection.parentContext,
 	) {
 		this.pendingAliases = channelCollection.pendingAliases;

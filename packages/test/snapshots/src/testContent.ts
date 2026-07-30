@@ -3,12 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import fs from "fs";
-import nodePath from "path";
+import fs from "node:fs";
+import nodePath from "node:path";
 
 import * as Mocha from "mocha";
-
-import { _dirname } from "./dirname.cjs";
 
 export interface TestContent {
 	exists: boolean;
@@ -16,7 +14,8 @@ export interface TestContent {
 }
 
 // Determine relative file locations
-export function getTestContent(subPath?: string): TestContent {
+export function getTestContent(subPath: string): TestContent {
+	// Relative to the package root
 	let path = nodePath.join("content", subPath);
 	if (fs.existsSync(path)) {
 		return {
@@ -25,7 +24,7 @@ export function getTestContent(subPath?: string): TestContent {
 		};
 	}
 	// Relative to this generated js file being executed
-	path = nodePath.join(_dirname, "..", path);
+	path = nodePath.join(import.meta.dirname, "..", path);
 	if (fs.existsSync(path)) {
 		return {
 			exists: true,

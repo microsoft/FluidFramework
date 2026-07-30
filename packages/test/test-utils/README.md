@@ -2,6 +2,8 @@
 
 This package contains utilities for writing end-to-end tests in Fluid Framework. It helps in the creation of a simple hosting application to test Fluid objects and other functionalities of the system.
 
+Internal note: Currently, it also has a load side-effect when loaded under mocha where `@fluid-internal/mocha-test-setup` is used. The side-effect will attempt to inject an error 15ms before a test case would otherwise timeout.
+
 <!-- AUTO-GENERATED-CONTENT:START (LIBRARY_README_HEADER:devDependency=TRUE) -->
 
 <!-- prettier-ignore-start -->
@@ -235,7 +237,7 @@ When making such a request please include if the configuration already works (an
 
 ### Supported Runtimes
 
--   NodeJs ^20.10.0 except that we will drop support for it [when NodeJs 20 loses its upstream support on 2026-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS (22) at least 1 year before 20 is end-of-life. This same policy applies to NodeJS 22 when it is end of life (2027-04-30).
+-   NodeJs ^22.22.2 except that we will drop support for it [when NodeJs 22 loses its upstream support on 2027-04-30](https://github.com/nodejs/release#release-schedule), and will support a newer LTS version of NodeJS at least 1 year before 22 is end-of-life.
     -   Running Fluid in a Node.js environment with the `--no-experimental-fetch` flag is not supported.
 -   Modern browsers supporting the es2022 standard library: in response to asks we can add explicit support for using babel to polyfill to target specific standards or runtimes (meaning we can avoid/remove use of things that don't polyfill robustly, but otherwise target modern standards).
 

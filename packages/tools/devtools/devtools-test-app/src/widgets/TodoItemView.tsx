@@ -11,7 +11,7 @@ import {
 } from "@fluid-example/example-utils";
 import { useTree } from "@fluidframework/react/internal";
 import type { SharedString } from "@fluidframework/sequence/internal";
-import React from "react";
+import { type ChangeEvent, type FC, useEffect, useState } from "react";
 
 import type { TodoItem } from "../Schema.js";
 
@@ -63,19 +63,17 @@ interface TodoItemViewProps {
  * Todo Item that will be stored in the {@link TodoListView} tree.
  * Contains a title, description and a checkbox to mark it as completed.
  */
-export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
+export const TodoItemView: FC<TodoItemViewProps> = (props: TodoItemViewProps) => {
 	const { todoItemModel, className } = props;
 	const styles = useStyles();
 
-	const [itemTitle, setItemTitle] = React.useState<SharedString | undefined>(undefined);
-	const [itemDescription, setItemDescription] = React.useState<SharedString | undefined>(
-		undefined,
-	);
-	const [detailsVisible, setDetailsVisible] = React.useState<boolean>(false);
+	const [itemTitle, setItemTitle] = useState<SharedString | undefined>(undefined);
+	const [itemDescription, setItemDescription] = useState<SharedString | undefined>(undefined);
+	const [detailsVisible, setDetailsVisible] = useState<boolean>(false);
 
 	useTree(todoItemModel);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		todoItemModel.title
 			.get()
 			.then((text) => {
@@ -86,7 +84,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 			});
 	}, [todoItemModel.title]);
 
-	React.useEffect(() => {
+	useEffect(() => {
 		todoItemModel.description
 			.get()
 			.then((text) => {
@@ -97,7 +95,7 @@ export const TodoItemView: React.FC<TodoItemViewProps> = (props: TodoItemViewPro
 			});
 	}, [todoItemModel.description]);
 
-	const checkChangedHandler = (e: React.ChangeEvent<HTMLInputElement>): void => {
+	const checkChangedHandler = (e: ChangeEvent<HTMLInputElement>): void => {
 		todoItemModel.completed = e.target.checked;
 	};
 

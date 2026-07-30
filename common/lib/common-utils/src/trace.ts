@@ -3,13 +3,13 @@
  * Licensed under the MIT License.
  */
 
-import { performance } from "./indexNode";
+import { performance } from "./performanceIsomorphic.js";
 
 /**
  * Helper class for tracing performance of events
  * Time measurements are in milliseconds as a floating point with a decimal
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export class Trace {
@@ -38,7 +38,7 @@ export class Trace {
 /**
  * Event in a performance trace including time elapsed.
  *
- * @deprecated Moved to the `@fluidframework-internal/client-utils` package.
+ * @deprecated Moved to the `@fluid-internal/client-utils` package.
  * @internal
  */
 export interface ITraceEvent {

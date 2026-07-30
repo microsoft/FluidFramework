@@ -235,7 +235,7 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			decompressed = originalBlob;
 		} else if (algorithm === SummaryCompressionAlgorithm.LZ4) {
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-assignment
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 			decompressed = decompress(originalBlob) as ArrayBufferLike;
 		} else {
 			throw new Error(`Unknown Algorithm ${algorithm}`);
@@ -360,7 +360,10 @@ export class DocumentStorageServiceCompressionAdapter extends DocumentStorageSer
 			}
 		}
 		for (const key of Object.keys(snapshot.trees)) {
-			const value = snapshot[key] as ISnapshotTree;
+			// snapshot.trees[key], not snapshot[key]: ISnapshotTree subtrees live in the `trees`
+			// map, not as direct properties on the snapshot object. Using snapshot[key] always
+			// returns undefined, silently preventing any recursion into subtrees.
+			const value = snapshot.trees[key];
 			if (value !== undefined) {
 				const found = this.hasCompressionMarkup(value);
 				if (found) {

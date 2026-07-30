@@ -54,7 +54,7 @@ export interface IUrlResolver {
 }
 
 /**
- * Information that can be returned by a lightweight, seperately exported driver function. Used to preanalyze a URL
+ * Information that can be returned by a lightweight, separately exported driver function. Used to preanalyze a URL
  * for driver compatibility and preload information.
  * @legacy @beta
  */
@@ -98,6 +98,6 @@ declare module "@fluidframework/core-interfaces" {
 	 * For example, caller can use this to pass on various loader options in the container
 	 * load request.
 	 */
-	// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-empty-interface
+	// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 	export interface IRequestHeader extends Partial<IDriverHeader> {}
 }

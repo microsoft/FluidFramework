@@ -3,21 +3,19 @@
  * Licensed under the MIT License.
  */
 
-import {
+import type {
 	IChannelAttributes,
 	IFluidDataStoreRuntime,
 } from "@fluidframework/datastore-definitions/internal";
-import {
+import type {
 	IMergeTreeTextHelper,
 	IRelativePosition,
 	ISegment,
 	ISegmentAction,
-	Marker,
 	PropertySet,
 	ReferenceType,
-	TextSegment,
-	refHasTileLabel,
 } from "@fluidframework/merge-tree/internal";
+import { Marker, TextSegment, refHasTileLabel } from "@fluidframework/merge-tree/internal";
 
 import { SharedSegmentSequence, type ISharedSegmentSequence } from "./sequence.js";
 import { SharedStringFactory } from "./sequenceFactory.js";

@@ -15,7 +15,7 @@ import type {
 } from "./interfaces.js";
 
 /**
- * The `OldestClientObserver` is a utility inspect if the local client is the oldest amongst connected clients (in
+ * The `OldestClientObserver` is a utility to inspect if the local client is the oldest amongst connected clients (in
  * terms of when they connected) and watch for changes.
  *
  * It is still experimental and under development.  Please do try it out, but expect breaking changes in the future.

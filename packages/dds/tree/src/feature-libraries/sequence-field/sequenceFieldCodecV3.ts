@@ -5,16 +5,21 @@
 
 import type { TAnySchema } from "@sinclair/typebox";
 
-import { DiscriminatedUnionDispatcher, type IJsonCodec } from "../../codec/index.js";
+import {
+	DiscriminatedUnionDispatcher,
+	type IJsonCodec,
+	type JsonCodecPart,
+} from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
-	EncodedRevisionTag,
 	RevisionTag,
+	RevisionTagSchema,
 } from "../../core/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 import {
 	EncodedNodeChangeset,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 } from "../modular-schema/index.js";
 
 import { Changeset as ChangesetSchema, type Encoded } from "./formatV3.js";
@@ -23,17 +28,17 @@ import type { Changeset, Mark, MarkEffect, Rename } from "./types.js";
 import { isNoopMark } from "./utils.js";
 
 export function makeV3Codec(
-	revisionTagCodec: IJsonCodec<
+	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
-		EncodedRevisionTag,
-		EncodedRevisionTag,
+		typeof RevisionTagSchema,
 		ChangeEncodingContext
 	>,
 ): IJsonCodec<
 	Changeset,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldChangeEncodingContext
+	FieldChangeEncodingContext,
+	FieldChangeDecodingContext
 > {
 	const {
 		changeAtomIdCodec: atomIdCodec,
@@ -112,7 +117,7 @@ export function makeV3Codec(
 		},
 		decode: (
 			changeset: Encoded.Changeset<NodeChangeSchema>,
-			context: FieldChangeEncodingContext,
+			context: FieldChangeDecodingContext,
 		): Changeset => {
 			const marks: Changeset = [];
 			for (const mark of changeset) {

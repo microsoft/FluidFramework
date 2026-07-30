@@ -80,7 +80,7 @@ jobs:
 
       - name: Upload artifact
         # release notes: https://github.com/actions/upload-artifact/releases/tag/v5.0.0
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # ratchet:actions/upload-artifact@v5
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # ratchet:actions/upload-artifact@v7
         with:
           name: release-branch-pr-metadata
           path: ./artifacts

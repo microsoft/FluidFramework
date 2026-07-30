@@ -48,11 +48,6 @@ import type {
 	IPendingMessage,
 } from "../../pendingStateManager.js";
 
-function typeFromBatchedOp(message: LocalBatchMessage): string {
-	assert(message.runtimeOp !== undefined, "PRECONDITION: runtimeOp is undefined");
-	return message.runtimeOp.type;
-}
-
 // Make a mock op with distinguishable contents
 function op(data: string): LocalContainerRuntimeMessage {
 	// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -194,7 +189,9 @@ describe("Outbox", () => {
 		batchMarker: boolean | undefined = undefined,
 	): IBatchMessage => ({
 		contents:
-			message.runtimeOp === undefined ? message.contents : serializeOp(message.runtimeOp),
+			message.runtimeOp === undefined
+				? message.contents
+				: serializeOp(message.runtimeOp).content,
 		metadata:
 			batchMarker === undefined
 				? message.metadata
@@ -243,7 +240,7 @@ describe("Outbox", () => {
 		chunkSizeInBytes?: number;
 		opGroupingConfig?: OpGroupingManagerConfig;
 		immediateMode?: boolean;
-		flushPartialBatches?: boolean;
+		generateIdAllocationOp?: () => LocalBatchMessage | undefined;
 	}) => {
 		const { submitFn, submitBatchFn, deltaManager } = params.context;
 
@@ -262,7 +259,6 @@ describe("Outbox", () => {
 			config: {
 				maxBatchSizeInBytes: params.maxBatchSize ?? maxBatchSizeInBytes,
 				compressionOptions: params.compressionOptions ?? DefaultCompressionOptions,
-				flushPartialBatches: params.flushPartialBatches ?? false,
 			},
 			logger: mockLogger,
 			groupingManager: new OpGroupingManager(
@@ -276,6 +272,7 @@ describe("Outbox", () => {
 				state.opsResubmitted++;
 			},
 			opReentrancy: () => state.isReentrant,
+			generateIdAllocationOp: params.generateIdAllocationOp ?? (() => undefined),
 		});
 	};
 
@@ -330,38 +327,51 @@ describe("Outbox", () => {
 	});
 
 	it("Sending batches", () => {
-		const outbox = getOutbox({ context: getMockContext() });
+		const idAllocMessage = createMessage(ContainerMessageType.IdAllocation, "idAlloc");
+		let idAllocReturned = false;
+		const outbox = getOutbox({
+			context: getMockContext(),
+			// JIT callback: return an ID alloc op on the first call, then undefined
+			generateIdAllocationOp: () => {
+				if (!idAllocReturned) {
+					idAllocReturned = true;
+					return idAllocMessage;
+				}
+				return undefined;
+			},
+		});
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.IdAllocation, "3"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "5"),
 		];
 
-		// Flush 1
+		// Flush 1 — JIT ID alloc op is prepended to the first non-empty batch (blobAttach is empty, so main batch)
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submitIdAllocation(messages[3]);
 		outbox.flush();
 
-		// Flush 2
-		outbox.submit(messages[4]);
+		// Flush 2 — no more ID alloc ops
+		outbox.submit(messages[2]);
 		outbox.flush();
 
 		// Not Flushed
-		outbox.submit(messages[5]);
+		outbox.submit(messages[3]);
 
-		assert.equal(state.opsSubmitted, messages.length - 1); // -1 for the non-flushed message
+		assert.equal(state.opsSubmitted, 4); // 2 main + idAlloc from flush 1, 1 main from flush 2
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
 			[
-				[toSubmittedMessage(messages[2], true), toSubmittedMessage(messages[3], false)],
-				[toSubmittedMessage(messages[0], true), toSubmittedMessage(messages[1], false)],
-				[toSubmittedMessage(messages[4])], // The last message was not batched
+				// Flush 1 (Main) — idAlloc prepended
+				[
+					toSubmittedMessage(idAllocMessage, true),
+					toSubmittedMessage(messages[0]),
+					toSubmittedMessage(messages[1], false),
+				],
+				// Flush 2 (Main)
+				[toSubmittedMessage(messages[2])],
 			],
 			"Submitted batches are incorrect",
 		);
@@ -369,14 +379,12 @@ describe("Outbox", () => {
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
-			[messages[3], 1],
-			// Flush 1 (Main)
-			[messages[0], 3],
-			[messages[1], 3],
+			// Flush 1 (Main with prepended idAlloc)
+			[idAllocMessage, 1],
+			[messages[0], 1],
+			[messages[1], 1],
 			// Flush 2 (Main)
-			[messages[4], 5],
+			[messages[2], 4],
 		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
@@ -428,8 +436,7 @@ describe("Outbox", () => {
 				groupedBatchingEnabled: false,
 			},
 		});
-		// Flush 1 - resubmit multi-message batch including ID Allocation
-		outbox.submitIdAllocation(createMessage(ContainerMessageType.IdAllocation, "0")); // Separate batch, batch ID not used
+		// Flush 1 - resubmit multi-message batch
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "1"));
 		outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "2"));
 		outbox.flush({ batchId: "batchId-A", staged: false });
@@ -454,7 +461,6 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages.map((m) => m.metadata?.batchId)),
 			[
-				[undefined], // Flush 1 - ID Allocation (no batch ID used)
 				["batchId-A", undefined], // Flush 1 - Main
 				["batchId-B"], // Flush 2 - Main
 				["batchId-C", undefined], // Flush 3 - Blob Attach
@@ -466,7 +472,6 @@ describe("Outbox", () => {
 		assert.deepEqual(
 			state.pendingOpContents.map(({ opMetadata }) => asBatchMetadata(opMetadata)?.batchId),
 			[
-				undefined, // ID Allocation (no batch ID used)
 				"batchId-A",
 				undefined, // second message in batch
 				"batchId-B",
@@ -519,37 +524,33 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "4"),
 		];
 
 		// Flush 1
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submit(messages[3]);
+		outbox.submit(messages[2]);
 		outbox.flush();
 
 		// Flush 2
-		outbox.submit(messages[4]);
+		outbox.submit(messages[3]);
 		outbox.flush();
 
 		assert.equal(state.opsSubmitted, messages.length);
 		assert.equal(state.batchesSubmitted.length, 0);
 		assert.deepEqual(state.individualOpsSubmitted.length, messages.length);
-		assert.equal(state.deltaManagerFlushCalls, 3);
+		assert.equal(state.deltaManagerFlushCalls, 2);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
 			// Flush 1 (Main)
-			[messages[0], 2],
-			[messages[1], 2],
-			[messages[3], 2],
+			[messages[0], 1],
+			[messages[1], 1],
+			[messages[2], 1],
 			// Flush 2 (Main)
-			[messages[4], 5],
+			[messages[3], 4],
 		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
@@ -578,45 +579,39 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submit(messages[3]);
+		outbox.submit(messages[2]);
 
 		outbox.flush();
 
-		const groupedMessages = opGroupingManager.groupBatch(
-			toOutboundBatch([messages[0], messages[1], messages[3]]),
-		);
+		const groupedMessages = opGroupingManager.groupBatch(toOutboundBatch(messages));
 
-		// Submits 2 ops, one for the id allocation and one for the grouped batch
-		assert.equal(state.opsSubmitted, 2);
-		assert.equal(state.batchesSubmitted.length, 2);
+		// Submits 1 grouped batch
+		assert.equal(state.opsSubmitted, 1);
+		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.deepEqual(
 			state.batchesCompressed,
-			[toOutboundBatch([messages[2]]), groupedMessages],
+			[groupedMessages],
 			"Compressed batches don't match expected",
 		);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(groupedMessages.messages[0])]],
 			"Submitted batches don't match expected",
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
 			// Flush 1 (Main)
-			[messages[0], 2],
-			[messages[1], 2],
-			[messages[3], 2],
+			[messages[0], 1],
+			[messages[1], 1],
+			[messages[2], 1],
 		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
@@ -647,35 +642,27 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submit(messages[3]);
+		outbox.submit(messages[2]);
 
 		outbox.flush();
 
-		assert.equal(
-			state.opsSubmitted,
-			2,
-			"Expected 2 ops to be submitted, on ID Allocation and one for the grouped batch",
-		);
-		assert.equal(state.batchesSubmitted.length, 2);
+		assert.equal(state.opsSubmitted, 1, "Expected 1 op to be submitted for the grouped batch");
+		assert.equal(state.batchesSubmitted.length, 1);
 		assert.equal(state.individualOpsSubmitted.length, 0);
 		assert.equal(state.deltaManagerFlushCalls, 0);
 		assert.deepEqual(state.batchesCompressed, []);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
 			// Flush 1 (Main)
-			[messages[0], 2],
-			[messages[1], 2],
-			[messages[3], 2],
+			[messages[0], 1],
+			[messages[1], 1],
+			[messages[2], 1],
 		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
@@ -745,39 +732,30 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submit(messages[3]);
+		outbox.submit(messages[2]);
 
 		outbox.flush();
 
-		const groupedMessages = opGroupingManager.groupBatch(
-			toOutboundBatch([messages[0], messages[1], messages[3]]),
-		);
+		const groupedMessages = opGroupingManager.groupBatch(toOutboundBatch(messages));
 
-		assert.deepEqual(state.batchesCompressed, [
-			toOutboundBatch([messages[2]]),
-			groupedMessages,
-		]);
-		assert.deepEqual(state.batchesSplit, [toOutboundBatch([messages[2]]), groupedMessages]);
+		assert.deepEqual(state.batchesCompressed, [groupedMessages]);
+		assert.deepEqual(state.batchesSplit, [groupedMessages]);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(groupedMessages.messages[0])]],
 		);
 
 		// Note the expected CSN here is fixed to the batch's starting CSN
 		const expectedMessageOrderWithCsn = [
-			// Flush 1 (ID Allocation)
-			[messages[2], 1],
 			// Flush 1 (Main)
-			[messages[0], 2],
-			[messages[1], 2],
-			[messages[3], 2],
+			[messages[0], 1],
+			[messages[1], 1],
+			[messages[2], 1],
 		] as const;
 		assert.deepEqual(
 			state.pendingOpContents,
@@ -809,29 +787,22 @@ describe("Outbox", () => {
 		const messages = [
 			createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
 			createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-			createMessage(ContainerMessageType.IdAllocation, "2"),
-			createMessage(ContainerMessageType.FluidDataStoreOp, "3"),
+			createMessage(ContainerMessageType.FluidDataStoreOp, "2"),
 		];
 
 		outbox.submit(messages[0]);
 		outbox.submit(messages[1]);
-		outbox.submitIdAllocation(messages[2]);
-		outbox.submit(messages[3]);
+		outbox.submit(messages[2]);
 
 		outbox.flush();
 
-		const groupedMessages = opGroupingManager.groupBatch(
-			toOutboundBatch([messages[0], messages[1], messages[3]]),
-		);
+		const groupedMessages = opGroupingManager.groupBatch(toOutboundBatch(messages));
 
-		assert.deepEqual(state.batchesCompressed, [
-			toOutboundBatch([messages[2]]),
-			groupedMessages,
-		]);
+		assert.deepEqual(state.batchesCompressed, [groupedMessages]);
 		assert.deepEqual(state.batchesSplit, []);
 		assert.deepEqual(
 			state.batchesSubmitted.map((x) => x.messages),
-			[[toSubmittedMessage(messages[2])], [toSubmittedMessage(groupedMessages.messages[0])]],
+			[[toSubmittedMessage(groupedMessages.messages[0])]],
 		);
 	});
 
@@ -856,147 +827,6 @@ describe("Outbox", () => {
 			() => outbox.submit(messages[1]),
 			"Since we incremented referenceSequenceNumber to 1, this should throw",
 		);
-	});
-
-	it("Splits the batch when an out of order message is detected (if partial flushing is enabled)", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-			flushPartialBatches: true,
-		});
-		const messages = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-		];
-
-		currentSeqNumbers.referenceSequenceNumber = 1;
-
-		outbox.submit(messages[0]);
-		outbox.submit(messages[1]);
-		outbox.flush();
-
-		assert.equal(state.opsSubmitted, messages.length);
-		assert.equal(state.individualOpsSubmitted.length, 0);
-		assert.equal(state.batchesSubmitted.length, 2);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.messages),
-			[[toSubmittedMessage(messages[0])], [toSubmittedMessage(messages[1])]],
-		);
-		assert.deepEqual(
-			state.batchesSubmitted.map((x) => x.referenceSequenceNumber),
-			[0, 1],
-		);
-		assert.equal(state.deltaManagerFlushCalls, 0);
-		const rawMessagesInFlushOrder = [messages[0], messages[1]];
-		assert.deepEqual(
-			state.pendingOpContents,
-			rawMessagesInFlushOrder.map((message, i) => ({
-				runtimeOp: message.runtimeOp,
-				referenceSequenceNumber: message.referenceSequenceNumber,
-				localOpMetadata: message.localOpMetadata,
-				opMetadata: message.metadata,
-				batchStartCsn: i + 1, // Each message should have been in its own batch. CSN starts at 1.
-			})),
-		);
-
-		mockLogger.assertMatch([
-			{
-				eventName: "Outbox:ReferenceSequenceNumberMismatch",
-			},
-		]);
-	});
-
-	for (const messages of [
-		[
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 1,
-			},
-		],
-		[
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.IdAllocation, "0"),
-				referenceSequenceNumber: 1,
-			},
-		],
-	] as LocalBatchMessage[][]) {
-		it("Flushes all batches when an out of order message is detected in either flow (if partial flushing is enabled)", () => {
-			const outbox = getOutbox({
-				context: getMockContext(),
-				flushPartialBatches: true,
-			});
-			for (const message of messages) {
-				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-				if (typeFromBatchedOp(message) === ContainerMessageType.IdAllocation) {
-					outbox.submitIdAllocation(message);
-				} else {
-					outbox.submit(message);
-				}
-			}
-
-			assert.equal(state.opsSubmitted, messages.length - 1);
-			assert.equal(state.individualOpsSubmitted.length, 0);
-			assert.equal(state.batchesSubmitted.length, 1);
-			assert.deepEqual(
-				state.batchesSubmitted.map((x) => x.messages),
-				[[toSubmittedMessage(messages[0]), toSubmittedMessage(messages[1])]],
-			);
-
-			mockLogger.assertMatch([
-				{
-					eventName: "Outbox:ReferenceSequenceNumberMismatch",
-				},
-			]);
-		});
-	}
-
-	it("Does not throw when an out of order message is detected (if partial flushing is enabled)", () => {
-		const outbox = getOutbox({
-			context: getMockContext(),
-			flushPartialBatches: true,
-		});
-		const messages: LocalBatchMessage[] = [
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "0"),
-				referenceSequenceNumber: 0,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 1,
-			},
-			{
-				...createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
-				referenceSequenceNumber: 2,
-			},
-		];
-
-		assert.doesNotThrow(() => {
-			for (const message of messages) {
-				currentSeqNumbers.referenceSequenceNumber = message.referenceSequenceNumber;
-				outbox.submit(message);
-			}
-		}, "Shouldn't throw if partial flushing is enabled");
 	});
 
 	it("Log at most 3 reference sequence number mismatch events", () => {
@@ -1141,7 +971,7 @@ describe("Outbox", () => {
 			validateCounts(0, 0, 0);
 		});
 
-		it("batch has reentrant ops, but grouped batching is off", () => {
+		it("batch has reentrant ops, but grouped batching is off: rebase still happens", () => {
 			const outbox = getOutbox({
 				context: getMockContext(),
 				opGroupingConfig: {
@@ -1154,12 +984,14 @@ describe("Outbox", () => {
 				createMessage(ContainerMessageType.FluidDataStoreOp, "1"),
 			];
 
+			state.isReentrant = true;
 			outbox.submit(messages[0]);
 			outbox.submit(messages[1]);
+			state.isReentrant = false;
 
 			outbox.flush();
 
-			validateCounts(2, 1, 0);
+			validateCounts(0, 0, 2);
 		});
 
 		it("batch has reentrant ops", () => {
@@ -1202,6 +1034,71 @@ describe("Outbox", () => {
 			outbox.flush();
 
 			validateCounts(0, 0, 1);
+		});
+
+		it("reentrant blobAttach ops trigger rebase", () => {
+			// blobAttach batch has disableGroupedBatching:true, but reentrant ops must still rebase
+			// (previously, the disableGroupedBatching flag suppressed rebase for blobAttach)
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.BlobAttach, "0"),
+				createMessage(ContainerMessageType.BlobAttach, "1"),
+			];
+
+			state.isReentrant = true;
+			outbox.submitBlobAttach(messages[0]);
+			outbox.submitBlobAttach(messages[1]);
+			state.isReentrant = false;
+
+			outbox.flush();
+
+			validateCounts(0, 0, 2);
+		});
+
+		it("non-reentrant blobAttach ops do not trigger rebase", () => {
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			const messages = [
+				createMessage(ContainerMessageType.BlobAttach, "0"),
+				createMessage(ContainerMessageType.BlobAttach, "1"),
+			];
+
+			outbox.submitBlobAttach(messages[0]);
+			outbox.submitBlobAttach(messages[1]);
+
+			outbox.flush();
+
+			validateCounts(2, 1, 0);
+		});
+
+		it("throws when resubmitting a batch that has reentrant ops", () => {
+			// Resubmitting (flush with batchId) a batch that contains reentrant ops is not supported
+			const outbox = getOutbox({
+				context: getMockContext(),
+				opGroupingConfig: {
+					groupedBatchingEnabled: true,
+				},
+			});
+
+			state.isReentrant = true;
+			outbox.submit(createMessage(ContainerMessageType.FluidDataStoreOp, "0"));
+			state.isReentrant = false;
+
+			assert.throws(
+				() => outbox.flush({ batchId: "batchId", staged: false }),
+				(e: Error) => e.message === "0xcf2",
+			);
 		});
 
 		it("should group the batch", () => {
@@ -1339,21 +1236,24 @@ describe("Outbox", () => {
 			);
 		});
 
-		it("returns false when only idAllocationBatch has ops", () => {
-			const outbox = getOutbox({ context: getMockContext() });
-			const idAllocationOp: LocalBatchMessage = {
-				runtimeOp: {
-					type: ContainerMessageType.IdAllocation,
-				} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
-				referenceSequenceNumber: 1,
-				metadata: undefined,
-				localOpMetadata: {},
-			};
-			outbox.submitIdAllocation(idAllocationOp);
+		it("returns false when only JIT ID allocation ops would be generated", () => {
+			// With JIT ID allocation, pending IDs are tracked by the compressor, not the outbox.
+			// The outbox has no queued messages, so containsUserChanges should be false.
+			const outbox = getOutbox({
+				context: getMockContext(),
+				generateIdAllocationOp: () => ({
+					runtimeOp: {
+						type: ContainerMessageType.IdAllocation,
+					} satisfies Partial<LocalContainerRuntimeMessage> as LocalContainerRuntimeMessage,
+					referenceSequenceNumber: 1,
+					metadata: undefined,
+					localOpMetadata: {},
+				}),
+			});
 			assert.equal(
 				outbox.containsUserChanges(),
 				false,
-				"Should be false when only idAllocationBatch has ops",
+				"Should be false when no messages are queued (JIT ID alloc is not queued)",
 			);
 		});
 	});

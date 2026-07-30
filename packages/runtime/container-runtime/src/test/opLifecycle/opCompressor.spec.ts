@@ -41,7 +41,7 @@ describe("OpCompressor", () => {
 		referenceSequenceNumber: messages[0].referenceSequenceNumber,
 	});
 	const createMessage = (contents: string) => ({
-		metadata: { flag: true },
+		metadata: { flag: true, groupedOpCount: 7 },
 		type: ContainerMessageType.FluidDataStoreOp,
 		contents,
 		referenceSequenceNumber: 0,
@@ -63,6 +63,7 @@ describe("OpCompressor", () => {
 				assert.strictEqual(compressedBatch.messages.length, batch.messages.length);
 				assert.strictEqual(compressedBatch.messages[0].compression, "lz4");
 				assert.strictEqual(compressedBatch.messages[0].metadata?.flag, true);
+				assert.strictEqual(compressedBatch.messages[0].metadata?.groupedOpCount, 7);
 			}).timeout(3000);
 		}
 	});

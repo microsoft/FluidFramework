@@ -24,7 +24,7 @@ import type {
 	IVersion,
 } from "@fluidframework/driver-definitions/internal";
 import { isInstanceOfISnapshot, UsageError } from "@fluidframework/driver-utils/internal";
-import type { ITelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
+import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 
 import type { MemoryDetachedBlobStorage } from "./memoryBlobStorage.js";
 import { ProtocolTreeStorageService } from "./protocolTreeDocumentStorageService.js";
@@ -36,10 +36,29 @@ import type {
 import { convertSnapshotInfoToSnapshot } from "./utils.js";
 
 /**
- * Stringified blobs from a summary/snapshot tree.
+ * Stringified blobs from a summary/snapshot tree, keyed by blob id.
+ * Values are **UTF-8-encoded** — this is the right encoding for JSON or
+ * other text the runtime authors and consumes through this map. For
+ * arbitrary binary payloads (e.g. attachment blob contents), use
+ * {@link IBase64BlobContents} instead; a UTF-8 round-trip silently
+ * corrupts non-UTF-8 byte sequences with replacement characters.
  * @internal
  */
 export interface ISerializableBlobContents {
+	[id: string]: string;
+}
+
+/**
+ * Stringified blobs inlined in a summary/snapshot tree, keyed by blob id.
+ * Values are **base64-encoded** raw bytes. Used for attachment-blob
+ * payloads, which may carry arbitrary binary data (images, encrypted
+ * blobs, etc.). Mirrors the encoding used by the runtime's own
+ * pending-blob serializer in `BlobManager`. Structurally identical to
+ * {@link ISerializableBlobContents}; the two types exist to keep the
+ * encoding contract visible at every call site.
+ * @internal
+ */
+export interface IBase64BlobContents {
 	[id: string]: string;
 }
 
@@ -88,7 +107,7 @@ export class ContainerStorageAdapter
 	 */
 	public constructor(
 		detachedBlobStorage: MemoryDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 		private loadingGroupIdSnapshotsFromPendingState:
 			| Record<string, SerializedSnapshotInfo>
 			| undefined,
@@ -104,7 +123,7 @@ export class ContainerStorageAdapter
 		this.disposed = true;
 	}
 
-	public connectToService(service: IDocumentService): void {
+	public connectToService(service: IDocumentService, maxRetries?: number): void {
 		if (!(this._storageService instanceof BlobOnlyStorage)) {
 			return;
 		}
@@ -113,6 +132,7 @@ export class ContainerStorageAdapter
 		const retriableStorage = (this._storageService = new RetriableDocumentStorageService(
 			storageServiceP,
 			this.logger,
+			maxRetries,
 		));
 
 		// A storage service wrapper which intercept calls to uploadSummaryWithContext and ensure they include
@@ -256,7 +276,7 @@ export class ContainerStorageAdapter
 class BlobOnlyStorage implements IDocumentStorageService {
 	constructor(
 		private readonly detachedStorage: MemoryDetachedBlobStorage | undefined,
-		private readonly logger: ITelemetryLoggerExt,
+		private readonly logger: TelemetryLoggerExt,
 	) {}
 
 	public async createBlob(content: ArrayBufferLike): Promise<ICreateBlobResponse> {
