@@ -347,3 +347,57 @@ export function updateRefreshers(
 		}
 	});
 }
+
+/**
+ * The status of a {@link SharedTreeChange} with respect to its constraints.
+ */
+export enum ConstraintStatus {
+	/**
+	 * All constraints are satisfied.
+	 */
+	Satisfied,
+	/**
+	 * At least one implicit constraint has been violated.
+	 * Implicit constraints are those that are automatically enforced by SharedTree on all changes.
+	 *
+	 * Such a violation typically arises in one of two scenarios:
+	 * 1. A schema change conflicts with a concurrent data or schema that was sequenced before it.
+	 * 2. A data change conflicts with a concurrent schema change that was sequenced before it.
+	 */
+	ImplicitViolation,
+	/**
+	 * At least one explicit constraint has been violated.
+	 * Explicit constraints are those that are explicitly added
+	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
+	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
+	 */
+	ExplicitViolation,
+}
+
+/**
+ * Gets the constraint status of a shared tree change.
+ * @param change - The shared tree change to evaluate.
+ * @returns The constraint status of the change.
+ */
+export function getConstraintStatus(change: SharedTreeChange): ConstraintStatus {
+	if (change.changes.length === 0) {
+		// The SharedTreeChange format (both in memory and over the wire) has no way to convey implicit constraint violation.
+		// Instead, the current rebase implementation in SharedTreeChangeFamily produces an empty change.
+		// This is not ideal because there is no guarantee that an empty change didn't just start out that way.
+		// There is currently only one way to generate an empty change that isn't a result of an implicit constraint violation:
+		// when the SharedTreeChangeFamily is wrapped in makeMitigatedChangeFamily, an empty change is produced when an error occurs.
+		// This is unlikely to cause problems for this logic for two reasons:
+		// 1. Such an error will put SharedTree into a broken state, halting further operations.
+		// 2. It is reasonable to treat a changeset whose production triggered an error as having violated the implicit constraints in our code.
+		return ConstraintStatus.ImplicitViolation;
+	}
+	if (
+		change.changes.some(
+			({ type, innerChange }) =>
+				type === "data" && (innerChange.constraintViolationCount ?? 0) > 0,
+		)
+	) {
+		return ConstraintStatus.ExplicitViolation;
+	}
+	return ConstraintStatus.Satisfied;
+}
