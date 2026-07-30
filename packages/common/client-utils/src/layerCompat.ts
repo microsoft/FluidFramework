@@ -120,10 +120,34 @@ export const defaultLayerCompatDetails: ILayerCompatDetails = {
 };
 
 /**
- * The requirements that a layer needs another layer to support for them to be compatible.
  * @internal
  */
-export interface ILayerCompatSupportRequirements {
+export const ILayerCompatSupportRequirements: keyof IProvideLayerCompatSupportRequirements =
+	"ILayerCompatSupportRequirements";
+
+/**
+ * @internal
+ */
+export interface IProvideLayerCompatSupportRequirements {
+	readonly ILayerCompatSupportRequirements: ILayerCompatSupportRequirements;
+}
+
+/**
+ * The requirements that a layer needs another layer to support for them to be compatible.
+ *
+ * @remarks
+ * A layer can also publish its requirements across a boundary as a `FluidObject` (via
+ * {@link IProvideLayerCompatSupportRequirements}) for the case where the layer on the other side of the boundary
+ * cannot run the compatibility validation itself. Most boundaries are validated by both layers because each holds
+ * a reference to the other (e.g. the Loader and the Runtime). The Driver / Loader boundary is asymmetric: the
+ * Loader holds a reference to the Driver, but the Driver has no reference to the Loader and so cannot validate it.
+ * To still validate in both directions, the Driver publishes its requirements for the Loader and the Loader
+ * validates itself against them on the Driver's behalf.
+ *
+ * @internal
+ */
+export interface ILayerCompatSupportRequirements
+	extends Partial<IProvideLayerCompatSupportRequirements> {
 	/**
 	 * The minimum supported generation the other layer needs to be at.
 	 */

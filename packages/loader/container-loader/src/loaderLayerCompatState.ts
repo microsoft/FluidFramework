@@ -5,6 +5,7 @@
 
 import {
 	generation,
+	defaultLayerCompatDetails,
 	LayerCompatibilityPolicyWindowMonths,
 	type ILayerCompatDetails,
 	type ILayerCompatSupportRequirements,
@@ -40,6 +41,18 @@ export const loaderCompatDetailsForRuntime: ILayerCompatDetails = {
 	...loaderCoreCompatDetails,
 	/**
 	 * The features supported by the Loader layer across the Loader / Runtime boundary.
+	 */
+	supportedFeatures: new Set<string>(),
+};
+
+/**
+ * Loader's compatibility details that is validated against the Driver layer's requirements.
+ * @internal
+ */
+export const loaderCompatDetailsForDriver: ILayerCompatDetails = {
+	...loaderCoreCompatDetails,
+	/**
+	 * The features supported by the Loader layer across the Loader / Driver boundary.
 	 */
 	supportedFeatures: new Set<string>(),
 };
@@ -117,9 +130,47 @@ export function validateDriverCompatibility(
 	validateLayerCompatibility(
 		"loader",
 		"driver",
-		loaderCompatDetailsForRuntime,
+		loaderCompatDetailsForDriver,
 		driverSupportRequirementsForLoader,
 		maybeDriverCompatDetails,
+		disposeFn,
+		mc,
+	);
+}
+
+/**
+ * Validates that the Loader layer is compatible with the Driver.
+ *
+ * @remarks
+ * This is the reverse of {@link validateDriverCompatibility} and is intentionally a separate function because it
+ * does not follow the standard layer-validation pattern. Normally each layer validates the layer it holds a
+ * reference to - the Loader validates the Driver, the Runtime validates the Loader, and so on. The Driver, however,
+ * has no reference to the Loader and therefore cannot run this validation itself. To still enforce compatibility in
+ * both directions across the Driver / Loader boundary, the Driver publishes the requirements it has for the Loader
+ * (via ILayerCompatSupportRequirements) and the Loader validates itself against them here, on the Driver's behalf.
+ *
+ * @param maybeDriverCompatDetails - The Driver's compatibility details, used only to attribute the version /
+ * generation of the Driver in telemetry if the Loader is found to be incompatible.
+ * @param maybeDriverCompatRequirements - The requirements the Driver has for the Loader. Older Drivers may not
+ * publish these, in which case there is nothing to validate in this direction.
+ *
+ * @internal
+ */
+export function validateLoaderCompatibilityWithDriver(
+	maybeDriverCompatDetails: ILayerCompatDetails | undefined,
+	maybeDriverCompatRequirements: ILayerCompatSupportRequirements | undefined,
+	disposeFn: (error?: ICriticalContainerError) => void,
+	mc: MonitoringContext,
+): void {
+	if (maybeDriverCompatRequirements === undefined) {
+		return;
+	}
+	validateLayerCompatibility(
+		"driver",
+		"loader",
+		maybeDriverCompatDetails ?? defaultLayerCompatDetails,
+		maybeDriverCompatRequirements,
+		loaderCompatDetailsForDriver,
 		disposeFn,
 		mc,
 	);
