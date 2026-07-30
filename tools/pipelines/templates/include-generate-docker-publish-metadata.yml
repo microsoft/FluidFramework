@@ -8,7 +8,6 @@ steps:
     CANDIDATE_IMAGE: $(containerTag)
     SOURCE_REPOSITORY: $(buildContainerName)
     SOURCE_TAG: $(containerTagSuffix)
-    SOURCE_BUILD_ID: $(Build.BuildId)
     VERSION: $(SetVersion.version)
   inputs:
     targetType: inline
@@ -23,11 +22,6 @@ steps:
 
       if ! [[ "$SOURCE_TAG" =~ ^0\.0\.[0-9]+$ ]]; then
         echo "##vso[task.logissue type=error]Invalid Docker source tag '$SOURCE_TAG'"
-        exit 1
-      fi
-
-      if ! [[ "$SOURCE_BUILD_ID" =~ ^[0-9]+$ ]]; then
-        echo "##vso[task.logissue type=error]Invalid Docker source build ID '$SOURCE_BUILD_ID'"
         exit 1
       fi
 
@@ -60,19 +54,16 @@ steps:
       fi
 
       jq -n \
-        --argjson schemaVersion 1 \
         --arg sourceRepository "$SOURCE_REPOSITORY" \
         --arg sourceTag "$SOURCE_TAG" \
         --arg digest "$digest" \
         --arg version "$VERSION" \
-        --arg sourceBuildId "$SOURCE_BUILD_ID" \
         '{
-          schemaVersion: $schemaVersion,
+          schemaVersion: 1,
           sourceRepository: $sourceRepository,
           sourceTag: $sourceTag,
           digest: $digest,
-          version: $version,
-          sourceBuildId: $sourceBuildId
+          version: $version
         }' > docker-publish-metadata.json
 
       jq -e '
@@ -80,8 +71,7 @@ steps:
         (.sourceRepository | test("^(build|test)/[a-z0-9][a-z0-9._/-]*[a-z0-9]$")) and
         (.sourceTag | test("^0\\.0\\.[0-9]+$")) and
         (.digest | test("^sha256:[0-9a-f]{64}$")) and
-        (.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$")) and
-        (.sourceBuildId | test("^[0-9]+$"))
+        (.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$"))
       ' docker-publish-metadata.json >/dev/null
 
       echo "Generated docker-publish-metadata.json:"

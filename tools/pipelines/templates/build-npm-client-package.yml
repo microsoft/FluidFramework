@@ -75,6 +75,10 @@ parameters:
 - name: publishOverride
   type: string
 
+- name: publishAsPartOfBuild
+  type: boolean
+  default: true
+
 - name: releaseBuildOverride
   type: string
 
@@ -416,6 +420,7 @@ extends:
                   - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
                     parameters:
                       publishOverride: ${{ parameters.publishOverride }}
+                      publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
 
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.

@@ -4,15 +4,8 @@
 parameters:
 - name: publishOverride
   type: string
-- name: schemaVersion
-  type: number
-  default: 1
-- name: emitPublishAsPartOfBuild
-  type: boolean
-  default: false
 - name: publishAsPartOfBuild
   type: boolean
-  default: false
 
 steps:
 - task: Bash@3
@@ -23,8 +16,6 @@ steps:
     RELEASE: $(release)
     PUBLISH_OVERRIDE: ${{ parameters.publishOverride }}
     IS_LATEST: $(SetVersion.isLatest)
-    SCHEMA_VERSION: ${{ parameters.schemaVersion }}
-    EMIT_PUBLISH_AS_PART_OF_BUILD: ${{ parameters.emitPublishAsPartOfBuild }}
     PUBLISH_AS_PART_OF_BUILD: ${{ parameters.publishAsPartOfBuild }}
   inputs:
     targetType: inline
@@ -63,60 +54,29 @@ steps:
           ;;
       esac
 
-      publishAsPartOfBuild=false
-
-      case "$SCHEMA_VERSION" in
-        1)
-          case "$EMIT_PUBLISH_AS_PART_OF_BUILD" in
-            true|True) emitPublishAsPartOfBuild=true ;;
-            false|False) emitPublishAsPartOfBuild=false ;;
-            *)
-              echo "##vso[task.logissue type=error]Invalid emitPublishAsPartOfBuild value '$EMIT_PUBLISH_AS_PART_OF_BUILD'"
-              exit 1
-              ;;
-          esac
-          ;;
-        2)
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
-            echo "##vso[task.logissue type=error]Invalid version '$VERSION' for publish metadata schema version 2"
-            exit 1
-          fi
-          emitPublishAsPartOfBuild=true
-          ;;
+      case "$PUBLISH_AS_PART_OF_BUILD" in
+        true|True) publishAsPartOfBuild=true ;;
+        false|False) publishAsPartOfBuild=false ;;
         *)
-          echo "##vso[task.logissue type=error]Unsupported publish metadata schema version '$SCHEMA_VERSION'"
+          echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '$PUBLISH_AS_PART_OF_BUILD'"
           exit 1
           ;;
       esac
 
-      if [ "$emitPublishAsPartOfBuild" = "true" ]; then
-        case "$PUBLISH_AS_PART_OF_BUILD" in
-          true|True) publishAsPartOfBuild=true ;;
-          false|False) publishAsPartOfBuild=false ;;
-          *)
-            echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '$PUBLISH_AS_PART_OF_BUILD'"
-            exit 1
-            ;;
-        esac
-      fi
-
       jq -n \
-        --argjson schemaVersion "$SCHEMA_VERSION" \
         --arg version "$VERSION" \
         --arg release "$release" \
         --arg publishOverride "$PUBLISH_OVERRIDE" \
         --argjson isLatest "$isLatest" \
-        --argjson emitPublishAsPartOfBuild "$emitPublishAsPartOfBuild" \
         --argjson publishAsPartOfBuild "$publishAsPartOfBuild" \
         '{
-          schemaVersion: $schemaVersion,
+          schemaVersion: 1,
           version: $version,
           release: $release,
           publishOverride: $publishOverride,
-          isLatest: $isLatest
-        } + if $emitPublishAsPartOfBuild then {
+          isLatest: $isLatest,
           publishAsPartOfBuild: $publishAsPartOfBuild
-        } else {} end' > publish-metadata.json
+        }' > publish-metadata.json
 
       echo "Generated publish-metadata.json:"
       cat publish-metadata.json
