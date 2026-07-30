@@ -537,16 +537,6 @@ function areEqualRegisterIds(id1: RegisterId, id2: RegisterId): boolean {
 	return id1 === "self" || id2 === "self" ? id1 === id2 : areEqualChangeAtomIds(id1, id2);
 }
 
-function areEqualRegisterIdsOpt(
-	id1: RegisterId | undefined,
-	id2: RegisterId | undefined,
-): boolean {
-	if (id1 === undefined || id2 === undefined) {
-		return id1 === id2;
-	}
-	return areEqualRegisterIds(id1, id2);
-}
-
 function getBidirectionalMaps(moves: OptionalChangeset["moves"]): {
 	srcToDst: ChangeAtomIdMap<ChangeAtomId>;
 	dstToSrc: ChangeAtomIdMap<ChangeAtomId>;
