@@ -11,7 +11,7 @@ import { Tree } from "../../shared-tree/index.js";
 import { isTreeNode } from "../../simple-tree/core/index.js";
 import { SchemaFactory, type NodeFromSchema } from "../../simple-tree/index.js";
 
-import { describeHydration } from "./utils.js";
+import { describeHydration, hydrate } from "./utils.js";
 
 const schemaFactory = new SchemaFactory("Test");
 
@@ -281,3 +281,48 @@ describeHydration(
 		});
 	},
 );
+
+describe("MapNode unsupported method errors", () => {
+	const MapString = schemaFactory.map(schemaFactory.string);
+
+	it("throws descriptive TypeError for methods on Map.prototype not on MapNode", () => {
+		const node = hydrate(MapString, new Map([["a", "hello"]]));
+
+		// Temporarily add a fake method to Map.prototype to simulate a future addition.
+		const fakeMethodName = "__testFakeMapMethod__";
+		(Map.prototype as unknown as Record<string, unknown>)[fakeMethodName] = function () {
+			return "should not reach here";
+		};
+		try {
+			const method = (node as unknown as Record<string, unknown>)[fakeMethodName] as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof method, "function");
+			assert.throws(
+				() => method.call(node),
+				(error: Error) =>
+					error instanceof TypeError &&
+					error.message.includes(fakeMethodName) &&
+					error.message.includes("MapNode"),
+			);
+		} finally {
+			// eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+			delete (Map.prototype as unknown as Record<string, unknown>)[fakeMethodName];
+		}
+	});
+
+	it("does not interfere with existing MapNode methods", () => {
+		const node = hydrate(
+			MapString,
+			new Map([
+				["a", "hello"],
+				["b", "world"],
+			]),
+		);
+
+		assert.equal(node.get("a"), "hello");
+		assert.equal(node.has("b"), true);
+		assert.equal(node.size, 2);
+		assert.deepEqual([...node.keys()], ["a", "b"]);
+	});
+});

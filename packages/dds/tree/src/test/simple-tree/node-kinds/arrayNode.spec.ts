@@ -1428,8 +1428,70 @@ describe("ArrayNode", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
 			const anchor = createArrayInsertionAnchor(array, 1);
 			array.removeAt(1);
-			// It's good to test that this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
+			// It's good to test this still gives a valid index and does not crash, but ideally this would anchor to the range between items rather than jumping to the end.
 			assert.equal(anchor.index, 2);
+		});
+	});
+
+	describeHydration("unsupported Array.prototype methods", (init) => {
+		it("throws descriptive TypeError for copyWithin", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			const copyWithin = (array as unknown as Record<string, unknown>).copyWithin as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof copyWithin, "function");
+			assert.throws(
+				() => copyWithin.call(array, 0, 1),
+				(error: Error) => error instanceof TypeError && error.message.includes("copyWithin"),
+			);
+		});
+
+		it("throws descriptive TypeError for fill", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			const fill = (array as unknown as Record<string, unknown>).fill as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof fill, "function");
+			assert.throws(
+				() => fill.call(array, 0),
+				(error: Error) => error instanceof TypeError && error.message.includes("fill"),
+			);
+		});
+
+		it("throws descriptive TypeError for reverse", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			const reverse = (array as unknown as Record<string, unknown>).reverse as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof reverse, "function");
+			assert.throws(
+				() => reverse.call(array),
+				(error: Error) => error instanceof TypeError && error.message.includes("reverse"),
+			);
+		});
+
+		it("throws descriptive TypeError for sort", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			const sort = (array as unknown as Record<string, unknown>).sort as (
+				...args: unknown[]
+			) => unknown;
+			assert.equal(typeof sort, "function");
+			assert.throws(
+				() => sort.call(array),
+				(error: Error) => error instanceof TypeError && error.message.includes("sort"),
+			);
+		});
+
+		it("includes suggestion to use ArrayNode API", () => {
+			const array = init(PojoEmulationNumberArray, [1, 2, 3]);
+			const fill = (array as unknown as Record<string, unknown>).fill as (
+				...args: unknown[]
+			) => unknown;
+			assert.throws(
+				() => fill.call(array, 0),
+				(error: Error) =>
+					error instanceof TypeError && error.message.includes("ArrayNode API"),
+			);
 		});
 	});
 });
