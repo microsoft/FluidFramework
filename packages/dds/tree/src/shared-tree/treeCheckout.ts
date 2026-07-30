@@ -546,11 +546,7 @@ export class TreeCheckout implements ITreeCheckout {
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-		),
+		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
 		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),

@@ -53,28 +53,22 @@ export interface ChangeEncodingContext {
 	 * (possibly broken) attach-summary blob, never when applying ops.
 	 */
 	readonly isSummary: boolean;
-	/**
-	 * Heal-on-decode workaround configuration. See {@link IdentifierHealingConfig}.
-	 * Only takes effect when `isSummary` is also `true`.
-	 */
-	readonly healing?: IdentifierHealingConfig;
 }
 
 /**
  * Context provided to change codecs when decoding.
  * @remarks
- * The same as {@link ChangeEncodingContext} except that it omits `schema`: that field is only
- * consulted when *encoding* (for schema-aware compression), whereas decoding relies on the
- * self-describing encoded format and never reads it. Keeping decode-irrelevant fields off this
- * type documents the decode-side contract and lets the two contexts diverge further in the future.
- *
- * @privateRemarks
- * `healing` is only meaningful on the decode side, but it is retained on {@link ChangeEncodingContext}
- * (rather than moved here) because the EditManager and Message codecs still use a single
- * `ChangeEncodingContext` for both encode and decode; moving it would require splitting those codecs
- * first.
+ * The same as {@link ChangeEncodingContext} except that it omits `schema` (only consulted when
+ * *encoding*, for schema-aware compression) and adds `healing` (only consulted when *decoding*, to
+ * recover unresolvable identifiers from a summary blob).
  */
-export type ChangeDecodingContext = Omit<ChangeEncodingContext, "schema">;
+export type ChangeDecodingContext = Omit<ChangeEncodingContext, "schema"> & {
+	/**
+	 * Heal-on-decode workaround configuration. See {@link IdentifierHealingConfig}.
+	 * Only takes effect when `isSummary` is also `true`.
+	 */
+	readonly healing?: IdentifierHealingConfig;
+};
 
 export type ChangeFamilyCodec<TChange> = IJsonCodec<
 	TChange,

@@ -3,4 +3,4 @@
  * Licensed under the MIT License.
  */
 
-export { baseTreeModel, comparisonForestTreeModel } from "./baseModel.js";
+export { ComparisonForest } from "./comparisonForest.js";
