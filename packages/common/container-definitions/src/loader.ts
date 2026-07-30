@@ -760,6 +760,7 @@ export interface ILoaderHeader {
 	[LoaderHeader.clientDetails]: IClientDetails;
 	[LoaderHeader.loadMode]: IContainerLoadMode;
 	[LoaderHeader.reconnect]: boolean;
+	[LoaderHeader.sequenceNumber]: number;
 	[LoaderHeader.version]: string | undefined;
 }
 

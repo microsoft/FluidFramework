@@ -5,6 +5,7 @@
 
 import {
 	type IContainer,
+	type IContainerLoadMode,
 	type IFluidCodeDetails,
 	type IFluidModule,
 	type IHostLoader,
@@ -46,6 +47,10 @@ import {
 	getAttachedContainerStateFromSerializedContainer,
 	tryParseCompatibleResolvedUrl,
 } from "./utils.js";
+
+type IContainerLoadModeWithSequenceNumber = Omit<IContainerLoadMode, "opsBeforeReturn"> & {
+	readonly opsBeforeReturn?: IContainerLoadMode["opsBeforeReturn"] | "sequenceNumber";
+};
 
 function ensureResolvedUrlDefined(
 	resolved: IResolvedUrl | undefined,
@@ -358,13 +363,36 @@ export class Loader implements IHostLoader {
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState?: IPendingContainerState,
 	): Promise<Container> {
+		const requestHeaders = request.headers as Partial<Record<string, unknown>> | undefined;
+		const requestedLoadToSequenceNumber = requestHeaders?.[LoaderHeader.sequenceNumber];
+		const requestedVersion = requestHeaders?.[LoaderHeader.version];
+		const loadMode = requestHeaders?.[LoaderHeader.loadMode] as
+			| IContainerLoadModeWithSequenceNumber
+			| undefined;
+		const opsBeforeReturn = loadMode?.opsBeforeReturn;
+		let loadToSequenceNumber: number | undefined;
+		if (opsBeforeReturn === "sequenceNumber") {
+			if (
+				typeof requestedLoadToSequenceNumber !== "number" ||
+				!Number.isInteger(requestedLoadToSequenceNumber) ||
+				requestedLoadToSequenceNumber < 0
+			) {
+				throw new Error("sequenceNumber must be set to a non-negative integer");
+			}
+			if (loadMode?.deltaConnection !== "none") {
+				throw new Error('deltaConnection must be set to "none"');
+			}
+			loadToSequenceNumber = requestedLoadToSequenceNumber;
+		} else if (requestedLoadToSequenceNumber !== undefined) {
+			throw new Error('opsBeforeReturn must be set to "sequenceNumber"');
+		}
+
 		return Container.load(
 			{
 				resolvedUrl,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				version: request.headers?.[LoaderHeader.version] ?? undefined,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-				loadMode: request.headers?.[LoaderHeader.loadMode],
+				version: typeof requestedVersion === "string" ? requestedVersion : undefined,
+				loadMode: loadMode as IContainerLoadMode | undefined,
+				loadToSequenceNumber,
 				pendingLocalState,
 			},
 			{

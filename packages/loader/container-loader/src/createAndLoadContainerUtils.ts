@@ -4,6 +4,7 @@
  */
 
 import type {
+	IContainerLoadMode,
 	IContainer,
 	ICodeDetailsLoader,
 	IFluidCodeDetails,
@@ -14,6 +15,7 @@ import type {
 	FluidObject,
 	IConfigProviderBase,
 	IRequest,
+	IRequestHeader,
 	ITelemetryBaseLogger,
 } from "@fluidframework/core-interfaces";
 import type { AllOrNone } from "@fluidframework/core-interfaces/internal";
@@ -222,6 +224,24 @@ export interface ILoadExistingContainerProps
 }
 
 /**
+ * Props used to load a container to a point in document history.
+ * @legacy @alpha
+ */
+export interface ILoadContainerToSequenceNumberProps
+	extends IContainerHostProps,
+		IContainerDriverServices {
+	/**
+	 * The request to resolve the container.
+	 */
+	readonly request: IRequest;
+
+	/**
+	 * Sequence number the loader should materialize before returning the container.
+	 */
+	readonly loadToSequenceNumber: number;
+}
+
+/**
  * Props used to load summarizer container.
  * @legacy @alpha
  */
@@ -304,6 +324,37 @@ export async function loadExistingContainer(
 		loadExistingContainerProps.request,
 		loadExistingContainerProps.pendingLocalState,
 	);
+}
+
+/**
+ * Loads a container to a point in document history.
+ * @param loadContainerToSequenceNumberProps - Services and properties necessary for loading the container.
+ * @remarks The returned container is paused at the requested sequence number and should be treated as a read-only historical view.
+ * @legacy @alpha
+ */
+export async function loadContainerToSequenceNumber(
+	loadContainerToSequenceNumberProps: ILoadContainerToSequenceNumberProps,
+): Promise<IContainer> {
+	const requestHeaders = loadContainerToSequenceNumberProps.request.headers as
+		| Partial<Record<string, unknown>>
+		| undefined;
+	const loadMode = requestHeaders?.[LoaderHeader.loadMode] as
+		| Partial<IContainerLoadMode>
+		| undefined;
+	const headers: IRequestHeader = {
+		...requestHeaders,
+		[LoaderHeader.sequenceNumber]: loadContainerToSequenceNumberProps.loadToSequenceNumber,
+		[LoaderHeader.loadMode]: {
+			...loadMode,
+			opsBeforeReturn: "sequenceNumber",
+			deltaConnection: "none",
+		},
+	};
+	const request: IRequest = {
+		...loadContainerToSequenceNumberProps.request,
+		headers,
+	};
+	return loadExistingContainer({ ...loadContainerToSequenceNumberProps, request });
 }
 
 /**

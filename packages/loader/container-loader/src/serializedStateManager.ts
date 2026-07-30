@@ -17,6 +17,7 @@ import {
 	type IDocumentStorageService,
 	type IResolvedUrl,
 	type ISnapshot,
+	type ISnapshotFetchOptionsAlpha,
 	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
@@ -257,6 +258,7 @@ export class SerializedStateManager implements IDisposable {
 	public async fetchSnapshot(
 		specifiedVersion: string | undefined,
 		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<{
 		snapshot: ISnapshot | ISnapshotTree;
 		version: IVersion | undefined;
@@ -269,6 +271,7 @@ export class SerializedStateManager implements IDisposable {
 				this.storageAdapter,
 				this.supportGetSnapshotApi(),
 				specifiedVersion,
+				loadToSequenceNumber,
 			);
 			const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(snapshot);
 			const attributes = await getDocumentAttributes(this.storageAdapter, baseSnapshotTree);
@@ -561,9 +564,15 @@ async function getSnapshot(
 	>,
 	supportGetSnapshotApi: boolean,
 	specifiedVersion: string | undefined,
+	loadToSequenceNumber: number | undefined = undefined,
 ): Promise<{ snapshot: ISnapshot | ISnapshotTree; version?: IVersion }> {
+	if (loadToSequenceNumber !== undefined && !supportGetSnapshotApi) {
+		throw new UsageError(
+			"Historical point-in-time loads are not supported by this document storage service",
+		);
+	}
 	const { snapshot, version } = supportGetSnapshotApi
-		? await fetchISnapshot(mc, storageAdapter, specifiedVersion)
+		? await fetchISnapshot(mc, storageAdapter, specifiedVersion, loadToSequenceNumber)
 		: await fetchISnapshotTree(mc, storageAdapter, specifiedVersion);
 	assert(snapshot !== undefined, 0x8e4 /* Snapshot should exist */);
 	return { snapshot, version };
@@ -581,8 +590,13 @@ export async function fetchISnapshot(
 	mc: MonitoringContext,
 	storageAdapter: Pick<IDocumentStorageService, "getSnapshot">,
 	specifiedVersion: string | undefined,
+	loadToSequenceNumber: number | undefined = undefined,
 ): Promise<{ snapshot?: ISnapshot; version?: IVersion }> {
-	const snapshot = await storageAdapter.getSnapshot?.({ versionId: specifiedVersion });
+	const snapshotFetchOptions: ISnapshotFetchOptionsAlpha = {
+		versionId: specifiedVersion,
+		loadToSequenceNumber,
+	};
+	const snapshot = await storageAdapter.getSnapshot?.(snapshotFetchOptions);
 	const version: IVersion | undefined =
 		snapshot?.snapshotTree.id === undefined
 			? undefined

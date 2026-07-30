@@ -62,8 +62,10 @@ import {
 	type ICommittedProposal,
 	type IDocumentAttributes,
 	type IDocumentMessage,
+	type IPointInTimeMaterializationTarget,
 	type IQuorumProposals,
 	type ISequencedProposal,
+	type PointInTimeMaterializationAvailability,
 	type ISnapshotTree,
 	type ISummaryContent,
 	type IVersion,
@@ -189,6 +191,11 @@ export interface IContainerLoadProps {
 	 * Loads the Container in paused state if true, unpaused otherwise.
 	 */
 	readonly loadMode?: IContainerLoadMode;
+
+	/**
+	 * Sequence number the loader should materialize before returning the container.
+	 */
+	readonly loadToSequenceNumber?: number;
 
 	/**
 	 * The pending state serialized from a previous container instance
@@ -325,7 +332,8 @@ export class Container
 		loadProps: IContainerLoadProps,
 		createProps: IContainerCreateProps,
 	): Promise<Container> {
-		const { version, pendingLocalState, loadMode, resolvedUrl } = loadProps;
+		const { version, pendingLocalState, loadMode, resolvedUrl, loadToSequenceNumber } =
+			loadProps;
 
 		const container = new Container(createProps, loadProps);
 
@@ -349,7 +357,7 @@ export class Container
 					container.on("closed", onClosed);
 
 					container
-						.load(version, mode, resolvedUrl, pendingLocalState)
+						.load(version, mode, resolvedUrl, pendingLocalState, loadToSequenceNumber)
 						.finally(() => {
 							container.removeListener("closed", onClosed);
 						})
@@ -425,6 +433,7 @@ export class Container
 	// If false, container gets closed on loss of connection.
 	private readonly _canReconnect: boolean;
 	private readonly clientDetailsOverride: IClientDetails | undefined;
+	private readonly isHistoricalLoad: boolean;
 	private readonly urlResolver: IUrlResolver;
 	private readonly serviceFactory: IDocumentServiceFactory;
 	private readonly codeLoader: ICodeDetailsLoader;
@@ -720,7 +729,7 @@ export class Container
 
 	constructor(
 		createProps: IContainerCreateProps,
-		loadProps?: Pick<IContainerLoadProps, "pendingLocalState">,
+		loadProps?: Pick<IContainerLoadProps, "loadToSequenceNumber" | "pendingLocalState">,
 	) {
 		super((name, error) => {
 			this.mc.logger.sendErrorEvent(
@@ -758,6 +767,7 @@ export class Container
 		const pendingLocalState = loadProps?.pendingLocalState;
 
 		this._canReconnect = canReconnect ?? true;
+		this.isHistoricalLoad = loadProps?.loadToSequenceNumber !== undefined;
 		this.clientDetailsOverride = clientDetailsOverride;
 		this.urlResolver = urlResolver;
 		this.serviceFactory = documentServiceFactory;
@@ -1154,6 +1164,10 @@ export class Container
 			throw new UsageError(
 				"Pending state cannot be retried if the container is closed or disposed",
 			);
+		} else if (this.isHistoricalLoad) {
+			throw new UsageError(
+				"Pending state cannot be captured from a historical point-in-time container",
+			);
 		}
 		assert(
 			this.attachmentData.state === AttachState.Attached,
@@ -1356,6 +1370,8 @@ export class Container
 			throw new UsageError(`The Container is closed and cannot be connected`);
 		} else if (this.attachState !== AttachState.Attached) {
 			throw new UsageError(`The Container is not attached and cannot be connected`);
+		} else if (this.isHistoricalLoad) {
+			throw new UsageError("Historical point-in-time containers cannot be connected");
 		} else if (!this.connected) {
 			// Note: no need to fetch ops as we do it preemptively as part of DeltaManager.attachOpHandler().
 			// If there is gap, we will learn about it once connected, but the gap should be small (if any),
@@ -1585,6 +1601,7 @@ export class Container
 		loadMode: IContainerLoadMode,
 		resolvedUrl: IResolvedUrl,
 		pendingLocalState: IPendingContainerState | undefined,
+		loadToSequenceNumber: number | undefined,
 	): Promise<{
 		sequenceNumber: number;
 		version: string | undefined;
@@ -1629,7 +1646,11 @@ export class Container
 			snapshot: baseSnapshot,
 			version,
 			attributes,
-		} = await this.serializedStateManager.fetchSnapshot(specifiedVersion, pendingLocalState);
+		} = await this.serializedStateManager.fetchSnapshot(
+			specifiedVersion,
+			pendingLocalState,
+			loadToSequenceNumber,
+		);
 		const baseSnapshotTree: ISnapshotTree | undefined = getSnapshotTree(baseSnapshot);
 		this._loadedFromVersion = version;
 
@@ -1638,10 +1659,19 @@ export class Container
 			pendingLocalState?.savedOps[pendingLocalState.savedOps.length - 1]?.sequenceNumber ??
 			attributes.sequenceNumber;
 		let opsBeforeReturnP: Promise<void> | undefined;
+		const opsBeforeReturn = loadMode.opsBeforeReturn as
+			| IContainerLoadMode["opsBeforeReturn"]
+			| "sequenceNumber";
+		const pauseContainer = (): void => {
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this._deltaManager.inbound.pause();
+			// eslint-disable-next-line @typescript-eslint/no-floating-promises
+			this._deltaManager.outbound.pause();
+		};
 
 		// Attach op handlers to finish initialization and be able to start processing ops
 		// Kick off any ops fetching if required.
-		switch (loadMode.opsBeforeReturn) {
+		switch (opsBeforeReturn) {
 			case undefined: {
 				// Start prefetch, but not set opsBeforeReturnP - boot is not blocked by it!
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
@@ -1650,6 +1680,70 @@ export class Container
 					loadMode.deltaConnection === "none" ? "none" : "all",
 					lastProcessedSequenceNumber,
 				);
+				break;
+			}
+			case "sequenceNumber": {
+				assert(loadToSequenceNumber !== undefined, "loadToSequenceNumber should be defined");
+				if (lastProcessedSequenceNumber > loadToSequenceNumber) {
+					throw new GenericError(
+						"Cannot satisfy request to load the container at the specified sequence number. Most recent snapshot is newer than the specified sequence number.",
+					);
+				}
+
+				let targetReached = false;
+				let targetReachedHandler: ((message: ISequencedDocumentMessage) => void) | undefined;
+				let targetReachedCloseHandler: ((error?: ICriticalContainerError) => void) | undefined;
+				const removeTargetReachedHandlers = (): void => {
+					if (targetReachedHandler !== undefined) {
+						this.off("op", targetReachedHandler);
+					}
+					if (targetReachedCloseHandler !== undefined) {
+						this.off("closed", targetReachedCloseHandler);
+					}
+				};
+				const markTargetReached = (): void => {
+					targetReached = true;
+					pauseContainer();
+					removeTargetReachedHandlers();
+				};
+				if (lastProcessedSequenceNumber === loadToSequenceNumber) {
+					markTargetReached();
+				}
+				const targetReachedP = new Promise<void>((resolve, reject) => {
+					if (targetReached) {
+						resolve();
+						return;
+					}
+					targetReachedCloseHandler = (error?: ICriticalContainerError): void => {
+						reject(
+							normalizeError(
+								error ??
+									new GenericError(
+										"Container closed before reaching the requested historical sequence number.",
+									),
+							),
+						);
+					};
+					targetReachedHandler = (message: ISequencedDocumentMessage): void => {
+						if (message.sequenceNumber >= loadToSequenceNumber) {
+							markTargetReached();
+							resolve();
+						}
+					};
+					this.on("op", targetReachedHandler);
+					this.on("closed", targetReachedCloseHandler);
+				});
+				opsBeforeReturnP = Promise.all([
+					this.attachDeltaManagerOpHandler(
+						attributes,
+						"sequenceNumber",
+						lastProcessedSequenceNumber,
+						loadToSequenceNumber,
+					),
+					targetReachedP,
+				])
+					.then(() => {})
+					.finally(removeTargetReachedHandlers);
 				break;
 			}
 			case "cached":
@@ -1662,7 +1756,7 @@ export class Container
 				break;
 			}
 			default: {
-				unreachableCase(loadMode.opsBeforeReturn);
+				unreachableCase(opsBeforeReturn);
 			}
 		}
 
@@ -1722,6 +1816,10 @@ export class Container
 					{ eventName: "WaitOpProcessing" },
 					async () => this._deltaManager.inbound.waitTillProcessingDone(),
 				);
+
+				if (opsBeforeReturn === "sequenceNumber") {
+					this.forceReadonly(true);
+				}
 
 				// eslint-disable-next-line @typescript-eslint/no-floating-promises
 				this._deltaManager.inbound.pause();
@@ -2101,8 +2199,9 @@ export class Container
 
 	private async attachDeltaManagerOpHandler(
 		attributes: IDocumentAttributes,
-		prefetchType?: "cached" | "all" | "none",
+		prefetchType?: "sequenceNumber" | "cached" | "all" | "none",
 		lastProcessedSequenceNumber?: number,
+		loadToSequenceNumber: number | undefined = undefined,
 	): Promise<void> {
 		return this._deltaManager.attachOpHandler(
 			attributes.minimumSequenceNumber /* minimumSequenceNumber */,
@@ -2115,6 +2214,7 @@ export class Container
 			} /* handler to process incoming delta messages */,
 			prefetchType,
 			lastProcessedSequenceNumber,
+			loadToSequenceNumber,
 		);
 	}
 
@@ -2652,4 +2752,29 @@ export interface ContainerAlpha extends IContainer {
  */
 export function asLegacyAlpha(base: IContainer): ContainerAlpha {
 	return base as ContainerAlpha;
+}
+
+/**
+ * Checks whether a point in document history can currently be materialized.
+ * @remarks
+ * This optional probe is intended for hosts that want to explain historical load failures before attempting a load.
+ * If the underlying driver cannot answer, implementations should return `notAvailable` rather than claiming
+ * the point is unavailable for a specific reason.
+ * @legacy @alpha
+ */
+export async function canMaterializePointInTime(
+	container: IContainer,
+	target: IPointInTimeMaterializationTarget,
+): Promise<PointInTimeMaterializationAvailability> {
+	if (!(container instanceof Container)) {
+		return {
+			status: "notAvailable",
+			message:
+				"Point-in-time materialization checks require a container-loader Container instance.",
+		};
+	}
+
+	return (
+		container as unknown as { readonly storageAdapter: ContainerStorageAdapter }
+	).storageAdapter.canMaterializePointInTime(target);
 }

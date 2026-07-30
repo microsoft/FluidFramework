@@ -21,11 +21,14 @@ import type {
 } from "@fluidframework/container-definitions/internal";
 import type { IClient } from "@fluidframework/driver-definitions";
 import type {
+	IDocumentService,
 	IDocumentServiceFactory,
+	IDocumentStorageService,
 	IResolvedUrl,
 	IDocumentMessage,
 	ISequencedDocumentMessage,
 } from "@fluidframework/driver-definitions/internal";
+import { SummaryType } from "@fluidframework/driver-definitions/internal";
 import {
 	GenericError,
 	MockLogger,
@@ -34,7 +37,7 @@ import {
 
 import { Audience } from "../audience.js";
 import { ConnectionState } from "../connectionState.js";
-import { Container, waitContainerToCatchUp } from "../container.js";
+import { Container, canMaterializePointInTime, waitContainerToCatchUp } from "../container.js";
 import { ProtocolHandler } from "../protocol.js";
 
 import { AbsentProperty, failProxy, failSometimeProxy } from "./failProxy.js";
@@ -206,6 +209,56 @@ describe("Container close/dispose telemetry", () => {
 });
 
 describe("Container", () => {
+	describe("canMaterializePointInTime", () => {
+		it("returns notAvailable when the storage driver does not support the alpha probe", async () => {
+			const mockLogger = new MockLogger();
+			const container = createTestContainer(mockLogger);
+			const storage: IDocumentStorageService = {
+				policies: {},
+				createBlob: async () => ({ id: "blob" }),
+				downloadSummary: async () => ({ tree: {}, type: SummaryType.Tree }),
+				// eslint-disable-next-line unicorn/no-null
+				getSnapshotTree: async () => null,
+				getVersions: async () => [],
+				readBlob: async () => new ArrayBuffer(0),
+				uploadSummaryWithContext: async () => "summary",
+			};
+			const service = failSometimeProxy<IDocumentService>({
+				policies: {},
+				resolvedUrl: {
+					id: "can-materialize-test-id",
+					endpoints: {},
+					tokens: {},
+					type: "fluid",
+					url: "fluid://can-materialize-test-id",
+				},
+				connectToDeltaStorage: async () => {
+					throw new Error("not used in this test");
+				},
+				connectToDeltaStream: async () => new Promise(() => {}),
+				connectToStorage: async () => storage,
+				dispose: () => {},
+				off: (): IDocumentService => service,
+				on: (): IDocumentService => service,
+				once: (): IDocumentService => service,
+			});
+
+			(
+				container as unknown as {
+					storageAdapter: { connectToService(service: IDocumentService): void };
+				}
+			).storageAdapter.connectToService(service);
+
+			assert.deepStrictEqual(
+				await canMaterializePointInTime(container, { sequenceNumber: 123 }),
+				{
+					status: "notAvailable",
+					message: "Storage driver does not support point-in-time materialization checks.",
+				},
+			);
+		});
+	});
+
 	describe("waitContainerToCatchUp", () => {
 		it("Closed Container fails", async () => {
 			const mockContainer = new MockContainer();

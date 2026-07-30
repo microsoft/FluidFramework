@@ -17,6 +17,7 @@ import {
 	type IResolvedUrl,
 	type ISnapshot,
 	type ISnapshotFetchOptions,
+	type ISnapshotFetchOptionsAlpha,
 	type IDocumentAttributes,
 	type ISnapshotTree,
 	type IVersion,
@@ -85,6 +86,7 @@ const eventEmitter = new EventEmitter();
 
 class MockStorageAdapter implements ISerializedStateManagerDocumentStorageService {
 	public readonly blobs = new Map<string, ArrayBufferLike>();
+	public readonly snapshotFetchOptions: (ISnapshotFetchOptions | undefined)[] = [];
 	private snapshot: ISnapshotTree;
 
 	constructor(pls: SnapshotWithBlobs = pendingLocalState) {
@@ -105,9 +107,14 @@ class MockStorageAdapter implements ISerializedStateManagerDocumentStorageServic
 	}
 
 	public async getSnapshot(
-		_snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
+		snapshotFetchOptions?: ISnapshotFetchOptions | undefined,
 	): Promise<ISnapshot> {
-		throw new Error("Method not implemented.");
+		this.snapshotFetchOptions.push(snapshotFetchOptions);
+		return {
+			...initialSnapshot,
+			blobContents: new Map(this.blobs),
+			snapshotTree: this.snapshot,
+		};
 	}
 	public async getSnapshotTree(
 		_version?: IVersion | undefined,
@@ -309,6 +316,71 @@ describe("serializedStateManager", () => {
 			const attributes = getAttributesFromPendingState(parsed);
 			assert.strictEqual(attributes.sequenceNumber, 0);
 			assert.strictEqual(attributes.minimumSequenceNumber, 0);
+		});
+
+		it("passes historical load target to getSnapshot options", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => true,
+			);
+
+			await serializedStateManager.fetchSnapshot("snapshotVersion", undefined, 123);
+
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 1);
+			assert.deepStrictEqual(storageAdapter.snapshotFetchOptions[0], {
+				versionId: "snapshotVersion",
+				loadToSequenceNumber: 123,
+			});
+		});
+
+		it("rejects historical load target when getSnapshot API is unsupported", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => false,
+			);
+
+			await assert.rejects(
+				serializedStateManager.fetchSnapshot("snapshotVersion", undefined, 123),
+				/Historical point-in-time loads are not supported by this document storage service/u,
+			);
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 0);
+		});
+
+		it("does not pass historical load target to storage when loading from pending local state", async () => {
+			const storageAdapter = new MockStorageAdapter();
+			const serializedStateManager = new SerializedStateManager(
+				enableOfflineSnapshotRefresh(logger),
+				storageAdapter,
+				true,
+				eventEmitter,
+				() => false,
+				() => true,
+			);
+
+			const { snapshot, attributes } = await serializedStateManager.fetchSnapshot(
+				undefined,
+				pendingLocalState,
+				123,
+			);
+
+			assert.strictEqual(storageAdapter.snapshotFetchOptions.length, 1);
+			assert.strictEqual(
+				(storageAdapter.snapshotFetchOptions[0] as ISnapshotFetchOptionsAlpha | undefined)
+					?.loadToSequenceNumber,
+				undefined,
+			);
+			assert.strictEqual(attributes.sequenceNumber, 0);
+			assert.strictEqual(getSnapshotTree(snapshot)?.id, snapshotTree.id);
 		});
 
 		it("get pending state again before getting latest snapshot", async () => {

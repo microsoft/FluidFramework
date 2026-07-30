@@ -7,6 +7,7 @@ import type { IDisposable } from "@fluidframework/core-interfaces";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
 	IDocumentStorageService,
+	IPointInTimeMaterializationStorageService,
 	ISummaryContext,
 	IDocumentStorageServicePolicies,
 } from "@fluidframework/driver-definitions/internal";
@@ -27,8 +28,12 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 		private readonly addProtocolSummaryIfMissing: (summaryTree: ISummaryTree) => ISummaryTree,
 		private readonly shouldSummarizeProtocolTree: () => boolean,
 	) {
+		const pointInTimeStorageService =
+			internalStorageService as Partial<IPointInTimeMaterializationStorageService>;
 		this.getSnapshotTree = internalStorageService.getSnapshotTree.bind(internalStorageService);
 		this.getSnapshot = internalStorageService.getSnapshot?.bind(internalStorageService);
+		this.canMaterializePointInTime =
+			pointInTimeStorageService.canMaterializePointInTime?.bind(internalStorageService);
 		this.getVersions = internalStorageService.getVersions.bind(internalStorageService);
 		this.createBlob = internalStorageService.createBlob.bind(internalStorageService);
 		this.readBlob = internalStorageService.readBlob.bind(internalStorageService);
@@ -44,6 +49,9 @@ export class ProtocolTreeStorageService implements IDocumentStorageService, IDis
 
 	getSnapshotTree: IDocumentStorageService["getSnapshotTree"];
 	getSnapshot: IDocumentStorageService["getSnapshot"];
+	canMaterializePointInTime:
+		| IPointInTimeMaterializationStorageService["canMaterializePointInTime"]
+		| undefined;
 	getVersions: IDocumentStorageService["getVersions"];
 	createBlob: IDocumentStorageService["createBlob"];
 	readBlob: IDocumentStorageService["readBlob"];

@@ -141,6 +141,58 @@ export interface IDocumentStorageServicePolicies {
 }
 
 /**
+ * Point in document history that a caller wants to materialize.
+ * @legacy @alpha
+ */
+export interface IPointInTimeMaterializationTarget {
+	/**
+	 * The sequence number the caller wants the loaded container to reach.
+	 */
+	readonly sequenceNumber: number;
+
+	/**
+	 * Scenario in which this API is called. This can be recorded by the driver or service for debugging.
+	 */
+	readonly scenarioName?: string;
+}
+
+/**
+ * Result of checking whether a point in document history can currently be materialized.
+ * @remarks
+ * This is an availability probe, not a load operation. A successful result means the implementation found enough
+ * evidence to believe the requested point can be loaded. Individual drivers may support only part of the check.
+ * @legacy @alpha
+ */
+export type PointInTimeMaterializationAvailability =
+	| {
+			/** A usable base snapshot exists for the requested point. */
+			readonly status: "materializable";
+			/** Sequence number of the base snapshot the implementation would use, if known. */
+			readonly baseSnapshotSequenceNumber?: number;
+	  }
+	| {
+			/** No usable base snapshot or version is available at or before the requested point. */
+			readonly status: "missingBaseVersion";
+			readonly message?: string;
+	  }
+	| {
+			/** The caller could not access the document or its history. */
+			readonly status: "permissionOrAccessDenied";
+			readonly message?: string;
+	  }
+	| {
+			/** Availability could not be determined because the probe is not available. */
+			readonly status: "notAvailable";
+			readonly message?: string;
+	  }
+	| {
+			/** A base snapshot exists, but required trailing ops are unavailable. */
+			readonly status: "missingOps";
+			readonly baseSnapshotSequenceNumber?: number;
+			readonly message?: string;
+	  };
+
+/**
  * Interface to provide access to snapshots saved for a shared object
  * @legacy @beta
  */
@@ -532,4 +584,35 @@ export interface ISnapshotFetchOptions {
 	 * network and cache or specify FetchSource.noCache to just fetch from network.
 	 */
 	fetchSource?: FetchSource;
+}
+
+/**
+ * Alpha snapshot fetch options for historical loading.
+ * @legacy @alpha
+ */
+export interface ISnapshotFetchOptionsAlpha extends ISnapshotFetchOptions {
+	/**
+	 * Sequence number the loader should materialize before returning the container.
+	 */
+	loadToSequenceNumber?: number;
+}
+
+/**
+ * Storage capability for point-in-time materialization probes.
+ * @remarks
+ * This capability is intentionally separate from {@link IDocumentStorageService} because point-in-time materialization
+ * is a specialized historical-load flow that most drivers are not expected to support.
+ * @legacy @alpha
+ */
+export interface IPointInTimeMaterializationStorageService {
+	/**
+	 * Checks whether a point in document history can currently be materialized.
+	 * @remarks
+	 * This probe lets a host ask for availability before attempting a historical load. A driver may support only part of
+	 * the check. For example, a storage service may be able to determine base snapshot availability before a delta
+	 * storage retention probe exists.
+	 */
+	canMaterializePointInTime(
+		target: IPointInTimeMaterializationTarget,
+	): Promise<PointInTimeMaterializationAvailability>;
 }
