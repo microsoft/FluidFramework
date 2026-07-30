@@ -434,6 +434,13 @@ describe("textEditor", () => {
 
 						it("deletes bold text and removes <strong> tag", () => {
 							const { tree: text } = createFormattedTreeView();
+							text.insertAt(0, "BOLD", {
+								bold: true,
+								italic: false,
+								underline: false,
+								size: 12,
+								font: "Arial",
+							});
 							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
