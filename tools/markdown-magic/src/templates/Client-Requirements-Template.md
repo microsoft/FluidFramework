@@ -14,10 +14,11 @@ When making such a request please include if the configuration already works (an
 
 # Supported Tools
 
--   TypeScript 5.4:
+-   [TypeScript 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0):
     -   All [`strict`](https://www.typescriptlang.org/tsconfig) options are supported.
+    -   Build targets (`lib`, `target`) must specify `ES2022` or later.
     -   [`strictNullChecks`](https://www.typescriptlang.org/tsconfig) is required.
-    -   [Configuration options deprecated in 5.0](https://github.com/microsoft/TypeScript/issues/51909) are not supported.
+    -   [Configuration options deprecated in 6.0](https://typescriptdocs.com/release-notes/TypeScript%206.0#breaking-changes-and-deprecations-in-typescript-6-0) are not supported.
     -   `exactOptionalPropertyTypes` is currently not fully supported.
         If used, narrowing members of Fluid Framework types types using `in`, `Reflect.has`, `Object.hasOwn` or `Object.prototype.hasOwnProperty` should be avoided as they may incorrectly exclude `undefined` from the possible values in some cases.
 -   [webpack](https://webpack.js.org/) 5
@@ -32,11 +33,6 @@ Node10 resolution is not supported as it does not support Fluid Framework's API 
 # Module Formats
 
 -   ES Modules:
-    ES Modules are the preferred way to consume our client packages (including in NodeJs) and consuming our client packages from ES Modules is fully supported.
+    ES Modules are the required way to consume our client packages (including in NodeJs).
 -   CommonJs:
-    Consuming our client packages as CommonJs is supported only in NodeJS and only for the cases listed below.
-    This is done to accommodate some workflows without good ES Module support.
-    If you have a workflow you would like included in this list, file an issue.
-    Once this list of workflows motivating CommonJS support is empty, we may drop support for CommonJS one year after notice of the change is posted here.
-
-    -   Testing with Jest (which lacks [stable ESM support](https://jestjs.io/docs/ecmascript-modules) due to [unstable APIs in NodeJs](https://github.com/nodejs/node/issues/37648))
+    CommonJs is no longer officially supported as of version 3.0.
