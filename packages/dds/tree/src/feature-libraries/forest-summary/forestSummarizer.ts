@@ -20,7 +20,6 @@ import {
 	type IEditableForest,
 	type ITreeCursorSynchronous,
 	type ITreeSubscriptionCursor,
-	type RevisionTagCodec,
 	TreeNavigationResult,
 	applyDelta,
 	forEachField,
@@ -79,7 +78,6 @@ export class ForestSummarizer
 	 */
 	public constructor(
 		private readonly forest: IEditableForest,
-		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly encoderContext: FieldBatchEncodingContext,
 		private readonly decoderContext: FieldBatchDecodingContext,
 		options: CodecWriteOptions,
@@ -240,7 +238,7 @@ export class ForestSummarizer
 			{ build, fields: new Map(fieldChanges) },
 			undefined,
 			this.forest,
-			makeDetachedFieldIndex("init", this.revisionTagCodec, this.idCompressor),
+			makeDetachedFieldIndex("init"),
 		);
 	}
 }

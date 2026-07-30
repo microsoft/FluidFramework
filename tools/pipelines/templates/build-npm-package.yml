@@ -454,6 +454,10 @@ extends:
                       workingDirectory: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
                       filePath: $(Pipeline.Workspace)/$(FluidFrameworkDirectory)/scripts/pack-packages.sh
 
+                  - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+                    parameters:
+                      publishOverride: ${{ parameters.publishOverride }}
+
                   # At this point we want to publish the artifact with npm-packed packages, and the one with test files,
                   # but as part of 1ES migration that's now part of templateContext.outputs below.
 

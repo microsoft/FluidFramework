@@ -4,17 +4,10 @@
  */
 
 import { assert } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor } from "@fluidframework/id-compressor";
 
 import type { CodecAndSchema, IJsonCodec } from "../codec/index.js";
-import type {
-	ChangeEncodingContext,
-	EncodedRevisionTag,
-	RevisionTag,
-	SchemaAndPolicy,
-} from "../core/index.js";
+import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
 import {
-	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
 	JsonCompatibleReadOnlySchema,
@@ -23,17 +16,14 @@ import {
 
 import type { BranchId } from "./branch.js";
 import type { SharedBranchSummaryData, SummaryData } from "./editManager.js";
-import { decodeSharedBranch, encodeSharedBranch } from "./editManagerCodecsCommons.js";
+import {
+	decodeSharedBranch,
+	encodeSharedBranch,
+	type EditManagerDecodingContext,
+	type EditManagerEncodingContext,
+} from "./editManagerCodecsCommons.js";
 import type { EncodedSharedBranch } from "./editManagerFormatCommons.js";
 import { EncodedEditManager } from "./editManagerFormatVSharedBranches.js";
-
-export interface EditManagerEncodingContext {
-	idCompressor: IIdCompressor;
-	readonly schema?: SchemaAndPolicy;
-	readonly isSummary: boolean;
-	/** See {@link IdentifierHealingConfig}. */
-	readonly healing?: IdentifierHealingConfig;
-}
 
 export function makeSharedBranchesCodecWithVersion<TChangeset>(
 	changeCodec: IJsonCodec<
@@ -49,10 +39,18 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		ChangeEncodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
-): CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> {
+): CodecAndSchema<
+	SummaryData<TChangeset>,
+	EditManagerEncodingContext,
+	EditManagerDecodingContext
+> {
 	const schema = EncodedEditManager(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 
-	const codec: CodecAndSchema<SummaryData<TChangeset>, EditManagerEncodingContext> = {
+	const codec: CodecAndSchema<
+		SummaryData<TChangeset>,
+		EditManagerEncodingContext,
+		EditManagerDecodingContext
+	> = {
 		schema,
 		encode: (data: SummaryData<TChangeset>, context: EditManagerEncodingContext) => {
 			const mainBranch = encodeSharedBranch(
@@ -90,7 +88,7 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		},
 		decode: (
 			json: EncodedEditManager<TChangeset> & JsonCompatibleReadOnlyObject,
-			context: EditManagerEncodingContext,
+			context: EditManagerDecodingContext,
 		): SummaryData<TChangeset> => {
 			const mainBranch = decodeSharedBranch(
 				changeCodec,

@@ -12,7 +12,7 @@ import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -35,7 +35,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
@@ -46,6 +45,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	ComparisonForest,
 	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
@@ -127,7 +127,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -959,11 +959,7 @@ describe("SharedTree", () => {
 	// If we do then this test should be updated to use that code path.
 	interface EditManagerKludge {
 		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
+			editManager?: EditManager<ChangeFamilyEditor, unknown>;
 		};
 	}
 
@@ -2486,7 +2482,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2495,8 +2491,10 @@ describe("SharedTree", () => {
 				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
-			assert(forest instanceof ObjectForest);
-			assert.equal(forest.additionalAsserts, true);
+			assert(forest instanceof ComparisonForest);
+			assert(forest.main instanceof ChunkedForest);
+			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {
@@ -2753,7 +2751,7 @@ describe("SharedTree", () => {
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);

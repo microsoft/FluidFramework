@@ -1660,6 +1660,9 @@ export const mixinRequestHandler = (
  * Or undefined not to add anything to summary.
  * @param Base - base class, inherits from FluidDataStoreRuntime
  * @legacy @beta
+ * @deprecated This API is deprecated and will be removed in a future release. There is no replacement for it.
+ * @privateRemarks
+ * This should not be removed until all consumers are migrated off using it. See AB#78575.
  */
 export const mixinSummaryHandler = (
 	handler: (

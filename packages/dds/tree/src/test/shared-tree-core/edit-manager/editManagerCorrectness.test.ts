@@ -8,13 +8,14 @@ import { strict as assert } from "node:assert";
 import { describeStress, StressMode } from "@fluid-private/stochastic-test-utils";
 import type { SessionId } from "@fluidframework/id-compressor";
 
-import type { ChangeFamily, ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
+import type { ChangeFamilyEditor, RevisionTag } from "../../../core/index.js";
 import type {
 	Commit,
 	EditManager,
 	SharedTreeBranch,
 } from "../../../shared-tree-core/index.js";
 import { brand, makeArray } from "../../../util/index.js";
+import type { TestChangeFamily } from "../../testChange.js";
 import { NoOpChangeRebaser, TestChange } from "../../testChange.js";
 import { mintRevisionTag } from "../../utils.js";
 
@@ -893,11 +894,7 @@ export function testCorrectness(): void {
 }
 
 function applyLocalCommit(
-	manager: EditManager<
-		ChangeFamilyEditor,
-		TestChange,
-		ChangeFamily<ChangeFamilyEditor, TestChange>
-	>,
+	manager: EditManager<ChangeFamilyEditor, TestChange>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -905,7 +902,7 @@ function applyLocalCommit(
 }
 
 function applyBranchCommit(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 	inputContext: readonly number[] = [],
 	intention: number | number[] = [],
 ): Commit<TestChange> {
@@ -935,7 +932,7 @@ function peerCommit(
 }
 
 function trackTrimmed(
-	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange>,
+	branch: SharedTreeBranch<ChangeFamilyEditor, TestChange, TestChangeFamily>,
 ): ReadonlySet<RevisionTag> {
 	const trimmedCommits = new Set<RevisionTag>();
 	branch.events.on("ancestryTrimmed", (trimmedRevisions) => {
