@@ -137,6 +137,7 @@ export {
 
 export {
 	FieldKinds,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,

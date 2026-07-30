@@ -19,6 +19,7 @@ import {
 	type RevisionTagCodec,
 	type TaggedChange,
 	mapTaggedChange,
+	type ProcessChangeFn,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -42,6 +43,10 @@ import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
+export interface SharedTreeChangeProcessingContext {
+	modularChangeFamily: ModularChangeFamily;
+}
+
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
  *
@@ -49,7 +54,7 @@ import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
  */
 export class SharedTreeChangeFamily
 	implements
-		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeProcessingContext>,
 		ChangeRebaser<SharedTreeChange>
 {
 	public static readonly emptyChange: SharedTreeChange = {
@@ -97,6 +102,15 @@ export class SharedTreeChangeFamily
 			mintRevisionTag,
 			changeReceiver,
 		);
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
+	): (change: SharedTreeChange) => SharedTreeChange {
+		return (change: SharedTreeChange) =>
+			processFn(change, {
+				modularChangeFamily: this.modularChangeFamily,
+			});
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {

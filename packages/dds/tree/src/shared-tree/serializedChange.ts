@@ -48,7 +48,7 @@ function isSerializedChangeV1(value: unknown): value is SerializedChange {
 
 function encodeSerializedChangeV1(
 	idCompressor: IIdCompressor,
-	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	change: SharedTreeChange,
 	changeRevision: RevisionTag,
 	contextRevision?: RevisionTag,
@@ -73,7 +73,7 @@ function encodeSerializedChangeV1(
 
 function decodeSerializedChangeV1(
 	idCompressor: IIdCompressor,
-	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+	changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, unknown>,
 	serializedChange: JsonCompatibleReadOnly,
 ): TaggedChange<SharedTreeChange> {
 	if (!isSerializedChangeV1(serializedChange)) {

@@ -106,6 +106,7 @@ import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -175,7 +176,11 @@ export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFlu
  */
 @breakingClass
 export class SharedTreeKernel
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	extends SharedTreeCore<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>
 	implements SharedKernel
 {
 	public readonly checkout: TreeCheckout;
@@ -433,7 +438,11 @@ export class SharedTreeKernel
 
 	public override applyStashedOp(
 		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+			SharedTreeCore<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>["applyStashedOp"]
 		>
 	): void {
 		for (const checkout of this.checkouts.values()) {

@@ -35,7 +35,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
@@ -960,11 +959,7 @@ describe("SharedTree", () => {
 	// If we do then this test should be updated to use that code path.
 	interface EditManagerKludge {
 		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
+			editManager?: EditManager<ChangeFamilyEditor, unknown>;
 		};
 	}
 

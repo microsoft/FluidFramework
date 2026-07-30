@@ -48,6 +48,7 @@ import {
 	type RevisionReplacer,
 	comparePartialRevisions,
 	comparePartialChangesetLocalIds,
+	type ProcessChangeFn,
 } from "../../core/index.js";
 import {
 	type IdAllocationState,
@@ -111,7 +112,7 @@ import {
  */
 export class ModularChangeFamily
 	implements
-		ChangeFamily<ModularEditBuilder, ModularChangeset>,
+		ChangeFamily<ModularEditBuilder, ModularChangeset, ModularChangeFamily>,
 		ChangeRebaser<ModularChangeset>
 {
 	public static readonly emptyChange: ModularChangeset = makeModularChangeset();
@@ -132,6 +133,12 @@ export class ModularChangeFamily
 
 	public get rebaser(): ChangeRebaser<ModularChangeset> {
 		return this;
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<ModularChangeset, ModularChangeFamily>,
+	): (change: ModularChangeset) => ModularChangeset {
+		return (change: ModularChangeset) => processFn(change, this);
 	}
 
 	/**
