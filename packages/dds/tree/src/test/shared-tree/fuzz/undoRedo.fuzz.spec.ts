@@ -22,6 +22,7 @@ import {
 	type UpPath,
 	type Value,
 } from "../../../core/index.js";
+import { ForestTypeExpensiveDebug } from "../../../shared-tree/index.js";
 import {
 	SharedTreeTestFactory,
 	toJsonableTree,
@@ -77,7 +78,9 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert sequenced commits last-to-first",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+				forest: ForestTypeExpensiveDebug,
+			}),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
@@ -169,7 +172,9 @@ describe("Fuzz - revert", () => {
 			DDSFuzzTestState<SharedTreeTestFactory>
 		> = {
 			workloadName: "revert unsequenced commits first-to-last",
-			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState)),
+			factory: new SharedTreeTestFactory(createOnCreate(populatedInitialState), undefined, {
+				forest: ForestTypeExpensiveDebug,
+			}),
 			generatorFactory,
 			reducer: fuzzReducer,
 			validateConsistency: validateFuzzTreeConsistency,
