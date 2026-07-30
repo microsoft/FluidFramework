@@ -1,9 +1,10 @@
 ---
 "@fluidframework/core-interfaces": minor
 "fluid-framework": minor
-"__section": core
+"__section": feature
 ---
+Promote Fluid container type interfaces to public
 
-Promote FluidIterable, FluidIterableIterator, FluidReadonlyMap, and FluidMap to @public
-
-These sealed interfaces provide TypeScript-version-independent alternatives to the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, and `Map` types. They were previously `@beta` and are now promoted to `@public` so they can be used in public API surfaces.
+`FluidIterable`, `FluidIterableIterator`, `FluidReadonlyMap`, `FluidMap`, and `FluidReadonlyArray` are promoted from `@beta` to `@public`.
+These sealed interfaces provide equivalents of the built-in `Iterable`, `IterableIterator`, `ReadonlyMap`, `Map`, and `ReadonlyArray` types that are independent of TypeScript [`lib`](https://www.typescriptlang.org/tsconfig/#lib).
+They can now be used in public API surfaces.
