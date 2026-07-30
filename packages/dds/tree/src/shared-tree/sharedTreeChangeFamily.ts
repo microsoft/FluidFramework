@@ -358,15 +358,17 @@ export enum ConstraintStatus {
 	Satisfied,
 	/**
 	 * At least one implicit constraint has been violated.
+	 * @remarks
 	 * Implicit constraints are those that are automatically enforced by SharedTree on all changes.
 	 *
 	 * Such a violation typically arises in one of two scenarios:
-	 * 1. A schema change conflicts with a concurrent data or schema that was sequenced before it.
+	 * 1. A schema change conflicts with a concurrent data or schema change that was sequenced before it.
 	 * 2. A data change conflicts with a concurrent schema change that was sequenced before it.
 	 */
 	ImplicitViolation,
 	/**
 	 * At least one explicit constraint has been violated.
+	 * @remarks
 	 * Explicit constraints are those that are explicitly added
 	 * through {@link RunTransactionParamsAlpha.preconditions | preconditions}
 	 * or {@link TransactionCallbackStatusAlpha.preconditionsOnRevert | preconditionsOnRevert}.
