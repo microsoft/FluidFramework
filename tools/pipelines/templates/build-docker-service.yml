@@ -625,7 +625,7 @@ extends:
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
           - ${{ if eq(parameters.emitDockerPublishMetadata, true) }}:
-            - template: /tools/pipelines/templates/include-generate-docker-publish-metadata.yml@self
+            - template: /tools/pipelines/templates/include-add-docker-image-digest.yml@self
 
         - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.

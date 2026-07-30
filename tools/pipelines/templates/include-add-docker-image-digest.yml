@@ -3,7 +3,7 @@
 
 steps:
 - task: Bash@3
-  displayName: Generate Docker publish metadata
+  displayName: Add Docker image digest to publish metadata
   env:
     CANDIDATE_IMAGE: $(containerTag)
   inputs:
@@ -29,12 +29,13 @@ steps:
         exit 1
       fi
 
-      jq -n \
-        --arg digest "$digest" \
-        '{
-          schemaVersion: 1,
-          digest: $digest
-        }' > docker-publish-metadata.json
+      metadataFile=publish-metadata.json
+      if [ ! -f "$metadataFile" ]; then
+        echo "##vso[task.logissue type=error]$metadataFile was not generated before the Docker candidate push"
+        exit 1
+      fi
 
-      echo "Generated docker-publish-metadata.json:"
-      cat docker-publish-metadata.json
+      jq --arg digest "$digest" '. + {dockerImageDigest: $digest}' "$metadataFile" > "$metadataFile.tmp"
+      mv "$metadataFile.tmp" "$metadataFile"
+
+      echo "Added Docker image digest to publish-metadata.json"

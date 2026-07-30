@@ -48,7 +48,7 @@ trigger:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
-    - tools/pipelines/templates/include-generate-docker-publish-metadata.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -74,7 +74,7 @@ pr:
     - server/gitrest
     - tools/pipelines/server-gitrest.yml
     - tools/pipelines/templates/build-docker-service.yml
-    - tools/pipelines/templates/include-generate-docker-publish-metadata.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
