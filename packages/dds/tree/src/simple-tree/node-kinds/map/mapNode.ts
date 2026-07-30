@@ -181,20 +181,61 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 */
 	clear(): void;
 	/**
-	 * Returns the value at `key`, first inserting `defaultValue` if this map has no entry for `key`.
+	 * Returns the value at `key`, first inserting `fallbackValue` if this map has no entry for `key`.
 	 *
 	 * @param key - The key of the element to return or insert at.
-	 * @param defaultValue - The value to insert if `key` has no entry. May not be `undefined`.
-	 * @returns The existing value at `key`, or the newly inserted `defaultValue`.
+	 * @param fallbackValue - The value to insert if `key` has no entry.
+	 * @returns The existing value at `key`, or the newly inserted `fallbackValue`.
 	 *
 	 * @remarks
-	 * The merge semantics of this operation are loosely specified:
-	 * the check for insertion may happen either at edit authoring time only,
-	 * or at both edit authoring time and sequencing time, yielding different outcomes.
+	 * The check for the presence of an existing entry with the given `key` is performed at the time the edit is authored.
+	 * This has implications for the merge semantics of this operation:
+	 *
+	 * - If no entry is present for `key` at authoring time, thus leading to an insert,
+	 * while a peer concurrently inserts a value for the same `key`,
+	 * then the two inserts will race and the one that is sequenced second will overwrite the value inserted by the one
+	 * that is sequenced first.
+	 *
+	 * - If an entry is present for `key` at authoring time, thus leading to no insert,
+	 * while a peer concurrently deletes the entry for `key`,
+	 * then the map will end up with no entry for `key` no matter how the two edits are sequenced.
+	 *
+	 * - If an entry is present for `key` at authoring time, thus leading to no insert,
+	 * while a peer concurrently inserts a new entry for `key`,
+	 * then the map will end up with the entry set by the peer no matter how the two edits are sequenced.
+	 *
+	 * These last two points mean that, upon sequencing of an edit made with this API,
+	 * there is no guarantee that the entry for the given key will be the current one (if any) or the fallback one.
+	 * If such a guarantee is important, then consider using constraints to ensure the edit only applies when appropriate.
+	 *
+	 * This API is not equivalent to the following alternative:
+	 *
+	 * ```typescript
+	 * map.set(key, map.get(key) ?? fallbackValue);
+	 * ```
+	 *
+	 * They differ in the following ways:
+	 *
+	 * - This API treats entries containing `null` values as populated.
+	 * By contrast, the above alternative's usage of `??` means that a `null` entry is treated as equivalent to a missing entry.
+	 *
+	 * - This API only inserts/sets the entry for the given `key` when there is no current one.
+	 * By contrast, the above alternative always performs an insert.
+	 * That insert will throw an error for non-leaf types (objects, maps, arrays, and records) in cases where the entry
+	 * is already populated, because inserting a node that was already inserted is not supported.
+	 * It will always succeed for leaf types (number, string, boolean, null, and handle) since a new node is created
+	 * from the value.
+	 * Note that even in the cases where it does not throw,
+	 * the `set` operation has the potential to overwrite entries that are concurrently inserted even when the map had
+	 * an entry for `key`, which is not the case with this API.
+	 *
+	 * Avoid using this API to write a default value into the document when the application could instead return that
+	 * default when reading a missing entry, which is much less costly.
+	 * A more appropriate use of this API is when the value to be optionally inserted varies with the key.
 	 */
 	getOrInsert(
 		key: string,
-		defaultValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+		fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
 	): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
@@ -279,14 +320,13 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 	}
 	public getOrInsert(
 		key: string,
-		defaultValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
+		fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
 	): TreeNodeFromImplicitAllowedTypes<T> {
-		if (!this.has(key)) {
-			if (defaultValue === undefined) {
-				throw new UsageError("Cannot insert `undefined` via getOrInsert.");
-			}
-			this.set(key, defaultValue);
+		const existing = this.get(key);
+		if (existing !== undefined) {
+			return existing;
 		}
+		this.set(key, fallbackValue);
 		return this.get(key);
 	}
 	public get size(): number {
