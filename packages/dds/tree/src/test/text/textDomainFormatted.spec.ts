@@ -26,6 +26,7 @@ import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextAsTreeDefault } from "../../text/index.js";
+import { oneFromIterable } from "../../util/index.js";
 
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
 
@@ -103,6 +104,30 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
+	});
+
+	it("default formatting", () => {
+		class Custom extends FormattedTextAsTree.createSchema(
+			new SchemaFactoryBeta("test.formatted.custom"),
+			[SchemaFactory.null, SchemaFactory.number],
+			[],
+			5,
+		) {}
+		{
+			const text = Custom.fromString("x");
+			const atom = oneFromIterable(text.charactersWithFormatting()) ?? assert.fail();
+			assert.equal(atom.format, 5);
+			atom.format = 4;
+			assert.equal(atom.format, 4);
+			text.reformat();
+			assert.equal(atom.format, 5);
+			text.insertAt(1, "y", null); // Ensure this overrides default correctly, even when null.
+			text.insertAt(2, "z"); // Uses default
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom2) => atom2.format),
+				[5, null, 5],
+			);
+		}
 	});
 
 	it("fromString applies the provided format", () => {
