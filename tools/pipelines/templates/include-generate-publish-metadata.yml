@@ -4,8 +4,15 @@
 parameters:
 - name: publishOverride
   type: string
+
+# Indicates who owns the publish step for this build:
+#   true  - publishing happens as part of this build pipeline's own publish stages (current behavior).
+#   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+#           and publish-metadata.json produced here.
+# This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
 - name: publishAsPartOfBuild
   type: boolean
+  default: true
 
 steps:
 - task: Bash@3
@@ -54,23 +61,26 @@ steps:
           ;;
       esac
 
-      case "$PUBLISH_AS_PART_OF_BUILD" in
-        true|True) publishAsPartOfBuild=true ;;
+      # Unlike the other fields there is no safe fallback here: guessing wrong either
+      # double-publishes or drops the release entirely, so require an explicit boolean.
+      case "${PUBLISH_AS_PART_OF_BUILD:-}" in
         false|False) publishAsPartOfBuild=false ;;
+        true|True) publishAsPartOfBuild=true ;;
         *)
-          echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '$PUBLISH_AS_PART_OF_BUILD'"
+          echo "##vso[task.logissue type=error]Invalid publishAsPartOfBuild value '${PUBLISH_AS_PART_OF_BUILD:-}'"
           exit 1
           ;;
       esac
 
       jq -n \
+        --argjson schemaVersion 1 \
         --arg version "$VERSION" \
         --arg release "$release" \
         --arg publishOverride "$PUBLISH_OVERRIDE" \
         --argjson isLatest "$isLatest" \
         --argjson publishAsPartOfBuild "$publishAsPartOfBuild" \
         '{
-          schemaVersion: 1,
+          schemaVersion: $schemaVersion,
           version: $version,
           release: $release,
           publishOverride: $publishOverride,

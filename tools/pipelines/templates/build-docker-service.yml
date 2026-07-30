@@ -140,8 +140,8 @@ parameters:
     type: boolean
     default: false
 
-  # Whether to emit the Docker publishing handoff contract in the pack artifact.
-  - name: emitDockerPublishMetadata
+  # Whether to append the pushed Docker candidate's digest to publish-metadata.json.
+  - name: emitDockerImageDigest
     type: boolean
     default: false
 
@@ -259,7 +259,7 @@ extends:
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
                 installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
-                emitDockerPublishMetadata=${{ parameters.emitDockerPublishMetadata }}
+                emitDockerImageDigest=${{ parameters.emitDockerImageDigest }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -624,7 +624,7 @@ extends:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
 
-          - ${{ if eq(parameters.emitDockerPublishMetadata, true) }}:
+          - ${{ if eq(parameters.emitDockerImageDigest, true) }}:
             - template: /tools/pipelines/templates/include-add-docker-image-digest.yml@self
 
         - ${{ if eq(parameters.installPackages, true) }}:

@@ -12,6 +12,7 @@ export {
 } from "./defaultFieldKinds.js";
 
 export {
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,

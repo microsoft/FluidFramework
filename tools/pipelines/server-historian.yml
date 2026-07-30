@@ -106,7 +106,7 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/historian
     containerName: fluidframework/routerlicious/historian
     dockerBuildBumpsVersion: true
-    emitDockerPublishMetadata: true
+    emitDockerImageDigest: true
     # Root-only install: historian has native deps that don't install in CI; the real build runs in Docker.
     # Root deps are still needed for the version-setting step.
     installWorkspaceRootOnly: true

@@ -75,10 +75,6 @@ parameters:
 - name: publishOverride
   type: string
 
-- name: publishAsPartOfBuild
-  type: boolean
-  default: true
-
 - name: releaseBuildOverride
   type: string
 
@@ -123,6 +119,15 @@ parameters:
 - name: allowPublishingToNpmjs
   type: boolean
   default: false
+
+# Indicates who owns the publish step for this build:
+#   true  - publishing happens as part of this build pipeline's own publish stages (current behavior).
+#   false - publishing is delegated to the dedicated publish pipeline, which consumes the packed tarballs
+#           and publish-metadata.json produced here.
+# This is recorded in publish-metadata.json so the publish pipeline can tell which runs it owns.
+- name: publishAsPartOfBuild
+  type: boolean
+  default: true
 
 # Indicates if tests should be run with code coverage analysis.
 - name: testCoverage
