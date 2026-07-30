@@ -12,7 +12,7 @@ The merge semantics of `clear` are loosely specified. Either of the following ma
 - `clear` may remove all elements that were in the map when the edit was authored, even if some of those elements have since been moved elsewhere in the tree (in which case they are removed from their new location).
 - `clear` may remove all elements that are in the map when the edit is sequenced, even if some of those elements were not yet in the map when the edit was authored.
 
-`getOrInsert` returns the value at a key, first inserting a fallback value if the map has no entry for that key. The check for an existing entry is performed when the edit is authored, which affects merge outcomes: a concurrent insert by a peer can overwrite a value inserted this way, and when no insert occurs, a concurrent delete or insert by a peer determines the final state of the entry.
+`getOrInsert` returns the value at a key, first inserting a fallback value if the map has no entry for that key.
 
 These methods are available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
 

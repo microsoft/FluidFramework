@@ -327,7 +327,7 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			return existing;
 		}
 		this.set(key, fallbackValue);
-		return this.get(key);
+		return fallbackValue as TreeNodeFromImplicitAllowedTypes<T>;
 	}
 	public get size(): number {
 		return count(this.innerNode.keys());
