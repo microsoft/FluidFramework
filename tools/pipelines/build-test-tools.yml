@@ -84,6 +84,7 @@ extends:
   parameters:
     publish: ${{ variables.publish }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: true
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/tools/test-tools
