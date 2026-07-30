@@ -45,12 +45,14 @@ import {
 } from "../core/index.js";
 import {
 	DetachedFieldIndexSummarizer,
+	FieldBatchDecodingContext,
 	FieldKinds,
 	ForestSummarizer,
 	SchemaSummarizer,
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
+	ComparisonForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
@@ -58,6 +60,7 @@ import {
 	jsonableTreeFromFieldCursor,
 	makeMitigatedChangeFamily,
 	makeTreeChunker,
+	type FieldBatchEncodingContext,
 	type IncrementalEncodingPolicy,
 } from "../feature-libraries/index.js";
 import { schemaCodecBuilder } from "../feature-libraries/index.js";
@@ -103,6 +106,7 @@ import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -172,7 +176,11 @@ export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFlu
  */
 @breakingClass
 export class SharedTreeKernel
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	extends SharedTreeCore<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>
 	implements SharedKernel
 {
 	public readonly checkout: TreeCheckout;
@@ -217,13 +225,7 @@ export class SharedTreeKernel
 			idCompressor,
 			options.shouldEncodeIncrementally,
 		);
-		const revisionTagCodec = new RevisionTagCodec(idCompressor);
-		const removedRoots = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-			options,
-		);
+		const removedRoots = makeDetachedFieldIndex("repair");
 		const schemaCodec = schemaCodecBuilder.build(options);
 		const schemaSummarizer = new SchemaSummarizer(
 			schema,
@@ -235,32 +237,39 @@ export class SharedTreeKernel
 		);
 		const fieldBatchCodec = fieldBatchCodecBuilder.build(options);
 
-		const encoderContext = {
+		const encoderContext: FieldBatchEncodingContext = {
 			schema: {
 				schema,
 				policy: defaultSchemaPolicy,
 			},
 			encodeType: options.treeEncodeType,
-			originatorId: idCompressor.localSessionId,
 			idCompressor,
 			// ForestSummarizer is the only consumer of this context, and it
 			// only invokes the codec in summary encode / load paths.
 			isSummary: true,
-			healUnresolvableIdentifiersOnDecode: options.healUnresolvableIdentifiersOnDecode,
-			sharedObjectId: sharedObject.id,
 		};
+		const decoderContext = FieldBatchDecodingContext.forSummary({
+			idCompressor,
+			healing:
+				options.healUnresolvableIdentifiersOnDecode === true
+					? { sharedObjectId: sharedObject.id }
+					: undefined,
+		});
 		const forestSummarizer = new ForestSummarizer(
 			forest,
-			revisionTagCodec,
 			encoderContext,
+			decoderContext,
 			options,
 			idCompressor,
 			initialSequenceNumber,
 			options.shouldEncodeIncrementally,
 		);
+		const revisionTagCodec = new RevisionTagCodec(idCompressor);
 		const removedRootsSummarizer = new DetachedFieldIndexSummarizer(
 			removedRoots,
-			options.minVersionForCollab,
+			revisionTagCodec,
+			idCompressor,
+			options,
 		);
 		const innerChangeFamily = new SharedTreeChangeFamily(
 			revisionTagCodec,
@@ -329,6 +338,7 @@ export class SharedTreeKernel
 			viewWith: this.viewWith.bind(this),
 			viewSharedBranchWith: this.viewBranchWith.bind(this),
 			createSharedBranch: this.createSharedBranch.bind(this),
+			getSharedBranchName: this.getSharedBranchName.bind(this),
 			getSharedBranchIds: this.getSharedBranchIds.bind(this),
 			kernel: this,
 		};
@@ -428,7 +438,11 @@ export class SharedTreeKernel
 
 	public override applyStashedOp(
 		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+			SharedTreeCore<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>["applyStashedOp"]
 		>
 	): void {
 		for (const checkout of this.checkouts.values()) {
@@ -603,6 +617,11 @@ export interface SharedTreeOptionsBeta extends ForestOptions, Partial<CodecWrite
 	 * "Unresolvable" in the public-facing remarks corresponds to non-finalized short IDs persisted without
 	 * any corresponding context for their originating session. See id-compressor internal documentation
 	 * for more details.
+	 *
+	 * Internally this boolean is translated into {@link IdentifierHealingConfig} once the shared-object
+	 * id is known (in `SharedTreeCore`'s constructor) and threaded through the codec contexts as a
+	 * single `healing?` field from there on. The presence/absence of that config is the heal-on/heal-off
+	 * discriminator inside the codec layer.
 	 */
 	readonly healUnresolvableIdentifiersOnDecode?: boolean;
 }
@@ -627,6 +646,20 @@ export interface SharedTreeOptions
 	 * See {@link IncrementalEncodingPolicy}.
 	 */
 	shouldEncodeIncrementally?: IncrementalEncodingPolicy;
+
+	/**
+	 * When `true`, prevents trunk commits from being trimmed/evicted, even after they fall outside
+	 * the collaboration window.
+	 *
+	 * @defaultValue `false`
+	 *
+	 * @remarks
+	 * By default, SharedTree evicts trunk commits once all peers have acknowledged them (i.e. once they
+	 * are outside the collaboration window), and they are not otherwise retained (e.g. by revertibles or
+	 * local branches), to bound memory usage. Enabling this flag retains the full trunk history for the
+	 * lifetime of the client, which increases memory usage over time and should be used with care.
+	 */
+	readonly retainHistory?: boolean;
 }
 
 export interface SharedTreeOptionsInternal
@@ -712,12 +745,26 @@ export const ForestTypeOptimized = toForestType(
  * Includes validation with scales poorly.
  * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
  * @privateRemarks
- * The "ObjectForest" forest type with expensive asserts for debugging.
+ * A {@link ComparisonForest} which uses the "ChunkedForest" forest type as its main forest and validates every delta
+ * against a reference "ObjectForest" (with expensive asserts enabled for schema validation).
+ * This exercises the optimized forest while asserting that its contents stay consistent with the reference implementation.
  * @beta
  */
 export const ForestTypeExpensiveDebug = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription) =>
-		buildForest(breaker, schema, undefined, true),
+	(
+		breaker: Breakable,
+		schema: TreeStoredSchemaSubscription,
+		idCompressor: IIdCompressor,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy,
+	) =>
+		new ComparisonForest(
+			buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
+				undefined,
+				idCompressor,
+			),
+			buildForest(breaker, schema, undefined, true),
+		),
 );
 
 type ForestFactory = (
@@ -759,6 +806,7 @@ export const defaultSharedTreeOptions: Required<SharedTreeOptionsInternal> = {
 	healUnresolvableIdentifiersOnDecode: false,
 	writeVersionOverrides: new Map(),
 	allowPossiblyIncompatibleWriteVersionOverrides: false,
+	retainHistory: false,
 };
 
 /**

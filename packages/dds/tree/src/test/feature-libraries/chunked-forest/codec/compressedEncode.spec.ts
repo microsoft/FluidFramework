@@ -72,9 +72,10 @@ import {
 	NodeShapeBasedEncoder,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../../feature-libraries/chunked-forest/codec/nodeEncoder.js";
-import type {
-	FieldBatch,
-	FieldBatchEncodingContext,
+import {
+	FieldBatchDecodingContext,
+	type FieldBatch,
+	type FieldBatchEncodingContext,
 } from "../../../../feature-libraries/index.js";
 import {
 	TreeCompressionStrategy,
@@ -88,7 +89,7 @@ import {
 import { type JsonCompatibleReadOnly, brand } from "../../../../util/index.js";
 import { testTrees as schemalessTestTrees } from "../../../cursorTestSuite.js";
 import { takeJsonSnapshot, useSnapshotDirectory } from "../../../snapshots/index.js";
-import { testIdCompressor } from "../../../utils.js";
+import { makeTestFieldBatchContexts, testIdCompressor } from "../../../utils.js";
 
 import { checkFieldEncode, checkNodeEncode } from "./checkEncode.js";
 
@@ -106,7 +107,8 @@ function makeFieldBatchCodec(
 	FieldBatch,
 	JsonCompatibleReadOnly,
 	JsonCompatibleReadOnly,
-	FieldBatchEncodingContext
+	FieldBatchEncodingContext,
+	FieldBatchDecodingContext
 > {
 	const builder = VersionDispatchingCodecBuilder.build("TestCompressedFieldBatch", [
 		{
@@ -121,14 +123,10 @@ function makeFieldBatchCodec(
 				},
 				decode: (
 					data: EncodedFieldBatchV1OrV2,
-					fieldBatchContext: FieldBatchEncodingContext,
+					fieldBatchContext: FieldBatchDecodingContext,
 				): FieldBatch => {
 					// TODO: consider checking data is in schema.
-					return decode(data, {
-						idCompressor: fieldBatchContext.idCompressor,
-						originatorId: fieldBatchContext.originatorId,
-						isSummary: false,
-					}).map((chunk) => chunk.cursor());
+					return decode(data, fieldBatchContext).map((chunk) => chunk.cursor());
 				},
 				schema: format,
 			},
@@ -167,18 +165,11 @@ describe("compressedEncode", () => {
 						[EncodedFieldBatchV1, EncodedFieldBatchV2][version - 1],
 						version,
 					);
-					const result = codec.encode(input, {
+					const { encode, decode: decodeContext } = makeTestFieldBatchContexts({
 						encodeType: TreeCompressionStrategy.Compressed,
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-						isSummary: false,
 					});
-					const decoded = codec.decode(result, {
-						encodeType: TreeCompressionStrategy.Compressed,
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-						isSummary: false,
-					});
+					const result = codec.encode(input, encode);
+					const decoded = codec.decode(result, decodeContext);
 					const decodedJson = decoded.map(jsonableTreeFromFieldCursor);
 					assert.deepEqual([[jsonable]], decodedJson);
 
@@ -212,11 +203,14 @@ describe("compressedEncode", () => {
 				const processed = updateShapesAndIdentifiersEncoding(fieldBatchVersion, [buffer]);
 				assert(processed.data.length === 1);
 				const stream = { data: processed.data[0], offset: 0 };
-				const decoded = readValue(stream, shape, {
-					idCompressor: testIdCompressor,
-					originatorId: testIdCompressor.localSessionId,
-					isSummary: false,
-				});
+				const decoded = readValue(
+					stream,
+					shape,
+					FieldBatchDecodingContext.forOp({
+						idCompressor: testIdCompressor,
+						originatorId: testIdCompressor.localSessionId,
+					}),
+				);
 				assert(stream.offset === stream.data.length);
 				assert.deepEqual(decoded, value);
 			});
@@ -492,7 +486,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				fieldBatchVersion,
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(incrementalFieldEncoder, context, []);
@@ -514,7 +508,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder(referenceIds),
 				fieldBatchVersion,
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			const buffer = checkFieldEncode(
@@ -559,7 +553,7 @@ describe("compressedEncode", () => {
 				testIdCompressor,
 				createMockIncrementalEncoder([]),
 				brand(FieldBatchFormatVersion.v1),
-				false /* isSummary */,
+				true /* isSummary */,
 			);
 
 			assert.throws(

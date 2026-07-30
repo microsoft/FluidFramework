@@ -7,7 +7,24 @@
 // See https://www.typescriptlang.org/docs/handbook/intro-to-js-ts.html#ts-check
 // @ts-check
 
+/**
+ * Dependencies for type-checking (and emitting js) for the production (non-test) portion of a package.
+ */
 const tscDependsOn = ["^tsc", "^api", "build:genver", "ts2esm"];
+
+/**
+ * Dependencies for the "eslint" (and "eslint:fix") tasks.
+ *
+ * eslint does type-aware linting driven by the TypeScript *sources* (via projectService),
+ * so it must resolve the same imported types that tsc does.
+ * For production (non-test code), this is handled by reusing {@link {@link tscDependsOn}}.
+ *
+ * To handle test code we also depend on code generation which is either linted or used by tests.
+ *
+ * We specifically avoid depending on this package's test compilation: it is unnecessary
+ * and would slow down building individual packages by starting lint much later.
+ */
+const eslintDependsOn = [...tscDependsOn, "typetests:gen", "api"];
 
 // release group packages; while ** is supported, it is very slow, so these entries capture all the levels we
 // have packages at today. Once we can upgrade to a later version of
@@ -23,7 +40,7 @@ const releaseGroupPackageJsonGlobs = [
  * The settings in this file configure the Fluid build tools, such as fluid-build and flub. Some settings apply to the
  * whole repo, while others apply only to the client release group.
  *
- * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/common/fluidTaskDefinitions.ts
+ * See https://github.com/microsoft/FluidFramework/blob/main/build-tools/packages/build-tools/src/fluidBuild/fluidTaskDefinitions.ts
  * for details on the task and dependency definition format.
  *
  * @type {import("@fluidframework/build-tools").IFluidBuildConfig & import("@fluid-tools/build-cli").FlubConfig}
@@ -80,7 +97,14 @@ module.exports = {
 			script: false,
 		},
 		"lint": {
-			dependsOn: ["eslint", "good-fences", "depcruise", "check:exports", "check:release-tags"],
+			dependsOn: [
+				"check:inexactOptionalPropertyTypes",
+				"eslint",
+				"good-fences",
+				"depcruise",
+				"check:exports",
+				"check:release-tags",
+			],
 			script: false,
 		},
 		"checks": {
@@ -145,11 +169,12 @@ module.exports = {
 		"build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:current": ["api-extractor:esnext", "build:esnext"],
 		"ci:build:api-reports:legacy": ["api-extractor:esnext", "build:esnext"],
-		// With most packages in client building ESM first, there is ideally just "build:esnext" dependency.
+		// With most packages in client building ESM first, there is ideally just "build:esnext" and "api-extractor:esnext" dependencies.
 		// The package's local 'api-extractor.json' may use the entrypoint from either CJS or ESM,
-		// therefore we need to require both before running api-extractor.
-		"build:docs": ["tsc", "build:esnext"],
-		"ci:build:docs": ["tsc", "build:esnext"],
+		// therefore we need to require both before running api-extractor until other packages are
+		// updated to use ESM entrypoints or customize their build configs.
+		"build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
+		"ci:build:docs": ["tsc", "build:esnext", "api-extractor:esnext"],
 		"build:readme": {
 			dependsOn: ["compile"],
 			script: true,
@@ -165,6 +190,7 @@ module.exports = {
 		// therefore we need to require both before running api-extractor.
 		"check:release-tags": ["tsc", "build:esnext"],
 		"check:are-the-types-wrong": ["tsc", "build:esnext", "api"],
+		"check:inexactOptionalPropertyTypes": ["^build:esnext", "^api-extractor:esnext"],
 		"check:format": {
 			dependencies: [],
 			script: true,
@@ -175,10 +201,8 @@ module.exports = {
 		},
 		"check:biome": [],
 		"check:prettier": [],
-		// ADO #7297: Review why the direct dependency on 'build:esm:test' is necessary.
-		//            Should 'compile' be enough?  compile -> build:test -> build:test:esm
-		"eslint": ["compile", "build:test:esm"],
-		"eslint:fix": ["compile", "build:test:esm"],
+		"eslint": eslintDependsOn,
+		"eslint:fix": eslintDependsOn,
 		"good-fences": [],
 		"format:biome": [],
 		"format:prettier": [],

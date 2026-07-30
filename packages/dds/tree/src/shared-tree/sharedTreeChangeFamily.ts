@@ -9,6 +9,7 @@ import type { IIdCompressor } from "@fluidframework/id-compressor";
 import type { CodecWriteOptions, ICodecFamily } from "../codec/index.js";
 import {
 	type ChangeEncodingContext,
+	type ChangeDecodingContext,
 	type ChangeFamily,
 	type ChangeRebaser,
 	type DeltaDetachedNodeId,
@@ -18,6 +19,7 @@ import {
 	type RevisionTagCodec,
 	type TaggedChange,
 	mapTaggedChange,
+	type ProcessChangeFn,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -41,6 +43,10 @@ import { makeSharedTreeChangeCodecFamily } from "./sharedTreeChangeCodecs.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 
+export interface SharedTreeChangeProcessingContext {
+	modularChangeFamily: ModularChangeFamily;
+}
+
 /**
  * Implementation of {@link ChangeFamily} that combines edits to fields and schema changes.
  *
@@ -48,14 +54,18 @@ import { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
  */
 export class SharedTreeChangeFamily
 	implements
-		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		ChangeFamily<SharedTreeEditBuilder, SharedTreeChange, SharedTreeChangeProcessingContext>,
 		ChangeRebaser<SharedTreeChange>
 {
 	public static readonly emptyChange: SharedTreeChange = {
 		changes: [],
 	};
 
-	public readonly codecs: ICodecFamily<SharedTreeChange, ChangeEncodingContext>;
+	public readonly codecs: ICodecFamily<
+		SharedTreeChange,
+		ChangeEncodingContext,
+		ChangeDecodingContext
+	>;
 	private readonly modularChangeFamily: ModularChangeFamily;
 
 	public constructor(
@@ -92,6 +102,15 @@ export class SharedTreeChangeFamily
 			mintRevisionTag,
 			changeReceiver,
 		);
+	}
+
+	public buildProcessor(
+		processFn: ProcessChangeFn<SharedTreeChange, SharedTreeChangeProcessingContext>,
+	): (change: SharedTreeChange) => SharedTreeChange {
+		return (change: SharedTreeChange) =>
+			processFn(change, {
+				modularChangeFamily: this.modularChangeFamily,
+			});
 	}
 
 	public compose(changes: TaggedChange<SharedTreeChange>[]): SharedTreeChange {
@@ -245,7 +264,13 @@ export function hasSchemaChange(change: SharedTreeChange): boolean {
 	return change.changes.some((innerChange) => innerChange.type === "schema");
 }
 
-function mapDataChanges(
+/**
+ * Applies a mapping function to all data changes within a {@link SharedTreeChange}.
+ * @param change - The change to map over.
+ * @param map - The mapping function to apply to each data change.
+ * @returns A new {@link SharedTreeChange} with the mapped data changes.
+ */
+export function mapDataChanges(
 	change: SharedTreeChange,
 	map: (change: ModularChangeset) => ModularChangeset,
 ): SharedTreeChange {

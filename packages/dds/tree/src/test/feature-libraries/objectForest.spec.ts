@@ -22,7 +22,6 @@ import { SchemaFactory, toInitialSchema } from "../../simple-tree/index.js";
 import { Breakable, type JsonCompatible, brand } from "../../util/index.js";
 import { testForest } from "../forestTestSuite.js";
 import { fieldJsonCursor } from "../json/index.js";
-import { testIdCompressor, testRevisionTagCodec } from "../utils.js";
 
 import { initializeForest } from "./initializeForest.js";
 
@@ -52,12 +51,7 @@ describe("object-forest", () => {
 	describe("Throws an error for invalid edits", () => {
 		it("attaching content into the detached field it is being transferred from", () => {
 			const forest = buildForest(new Breakable("test"));
-			initializeForest(
-				forest,
-				fieldJsonCursor([content]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
+			initializeForest(forest, fieldJsonCursor([content]));
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -70,12 +64,7 @@ describe("object-forest", () => {
 
 		it("detaching content from the detached field it is being transferred to", () => {
 			const forest = buildForest(new Breakable("test"));
-			initializeForest(
-				forest,
-				fieldJsonCursor([content]),
-				testRevisionTagCodec,
-				testIdCompressor,
-			);
+			initializeForest(forest, fieldJsonCursor([content]));
 			const visitor = forest.acquireVisitor();
 			visitor.enterField(rootFieldKey);
 			assert.throws(
@@ -91,12 +80,7 @@ describe("object-forest", () => {
 
 	it("moveCursorToPath with an undefined path points to dummy node above detachedFields.", () => {
 		const forest = buildForest(new Breakable("test"));
-		initializeForest(
-			forest,
-			fieldJsonCursor([[1, 2]]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, fieldJsonCursor([[1, 2]]));
 		const cursor = forest.allocateCursor();
 		forest.moveCursorToPath(undefined, cursor);
 		assert.deepEqual(cursor.fieldIndex, cursorForMapTreeNode(forest.roots).fieldIndex);
@@ -104,12 +88,7 @@ describe("object-forest", () => {
 
 	it("uses cursor sources in errors", () => {
 		const forest = buildForest(new Breakable("test"));
-		initializeForest(
-			forest,
-			fieldJsonCursor([content]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, fieldJsonCursor([content]));
 		const named = forest.allocateCursor("named");
 		moveToDetachedField(forest, named);
 		const forkOfNamed = named.fork();
@@ -154,12 +133,7 @@ describe("object-forest", () => {
 		assert.throws(
 			() =>
 				// Adds something to field which allows nothing: should error.
-				initializeForest(
-					forest,
-					fieldJsonCursor(["root"]),
-					testRevisionTagCodec,
-					testIdCompressor,
-				),
+				initializeForest(forest, fieldJsonCursor(["root"])),
 			validateUsageError(/Tree does not conform to schema/),
 		);
 	});

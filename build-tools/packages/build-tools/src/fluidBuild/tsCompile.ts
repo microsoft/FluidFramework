@@ -158,7 +158,9 @@ export function tsCompile(
 				tscUtils.convertOptionPaths(commandLine.options, cwd, path.resolve),
 			),
 			host,
-			projectReferences: commandLine.projectReferences,
+			...(commandLine.projectReferences === undefined
+				? {}
+				: { projectReferences: commandLine.projectReferences }),
 		};
 		const program = incremental
 			? baseTs.createIncrementalProgram(param)

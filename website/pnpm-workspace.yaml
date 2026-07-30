@@ -14,11 +14,10 @@ allowBuilds:
   core-js-pure: true
   keytar: true
   linkcheck-bin: true
-  typesense-instantsearch-adapter: true
   unrs-resolver: true
 
 # Supply chain security settings - see /DEV.md for documentation
-minimumReleaseAge: 1440
+minimumReleaseAge: 0
 resolutionMode: highest
 blockExoticSubdeps: true
 trustPolicy: no-downgrade
@@ -60,10 +59,43 @@ updateNotifier: false
 
 # Security and compatibility overrides.
 overrides:
+  # Resolve known security vulnerabilities in transitive dependencies.
+  "@babel/core@>=7 <8": ^7.29.6
+  # Resolve known axios vulnerabilities (CVE-2026-44486, CVE-2026-44487, CVE-2026-44492).
+  axios@>=1 <1.16: 1.16.0
+  brace-expansion@>=1 <2: ^1.1.13
+  brace-expansion@>=2 <3: ^2.0.3
+  http-proxy-middleware@>=2 <3: ^2.0.10
+  keyv@>=4 <5: ^5.5.3
+  launch-editor@>=2 <3: ^2.14.1
+  on-headers@>=1 <2: ^1.1.0
+  uuid@>=7 <12: ^11.1.1
+
+  # Resolve a known security vulnerability (CVE-2026-54466).
+  websocket-driver: ^0.7.5
+
+  # Resolve a known security vulnerability.
+  ws@>=8 <9: ^8.21.0
+
+  # Resolve a known security vulnerability.
+  ws@>=7 <8: ^7.5.11
+
+  # Resolve a known security vulnerability.
+  fast-uri: ^3.1.2
+
+  # Resolve a known security vulnerability (no patched 0.0.x/0.1.x release; move to the 0.2.x line).
+  tmp: ^0.2.6
+
+  # Resolve a known security vulnerability.
+  form-data@>=4 <5: ^4.0.6
+
   # @azure/identity: overridden to ^4.13.0 to pull a patched @azure/msal-browser
   # (no patched 3.x exists). Transitive dep of @azure/static-web-apps-cli; ^4.13.0
   # is API-compatible within the ^4.3.0 range it declares.
   '@azure/identity': ^4.13.0
+  # @nevware21/ts-utils: overridden to ^0.14.0 to resolve a prototype pollution
+  # vulnerability (CVE-2026-46681); no patched release exists below 0.14.0.
+  '@nevware21/ts-utils': ^0.14.0
   # @types/react: pinned to v18 to prevent pnpm re-resolution from pulling in v19,
   # which is incompatible with the React 18 docs site.
   '@types/react': ^18.3.12
@@ -86,9 +118,9 @@ overrides:
   # node-forge: overridden to ^1.4.0 to resolve known security vulnerabilities.
   node-forge: ^1.4.0
   # qs: overridden to ^6.15.0 to resolve a known vulnerability in older versions.
-  qs: ^6.15.0
-  # simple-git: overridden to ^3.32.3 to resolve a CG alert.
-  simple-git: ^3.32.3
+  qs: ^6.15.2
+  # simple-git: overridden to resolve a known security vulnerability.
+  simple-git: ^3.36.0
   # validator: overridden to ^13.15.0 to resolve a known vulnerability in older
   # versions (transitive via swagger-tools).
   validator: ^13.15.0

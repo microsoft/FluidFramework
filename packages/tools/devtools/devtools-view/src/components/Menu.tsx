@@ -36,7 +36,6 @@ import type {
 } from "@fluidframework/devtools-core/internal";
 import {
 	ContainerStateChange,
-	DataVisualization,
 	GetContainerList,
 	GetContainerState,
 	handleIncomingMessage,
@@ -369,15 +368,11 @@ export interface MenuItemProps {
 	onClick: (event: unknown) => void;
 	text: string;
 	isActive: boolean;
+
 	/**
 	 * Icon to display next to the container name based on its state.
 	 */
 	readonly stateIcon: ReactElement | undefined;
-
-	/**
-	 * Whether the container or container runtime has recent changes.
-	 */
-	readonly hasChanges: boolean;
 
 	/**
 	 * Callback function when the remove button is clicked.
@@ -486,10 +481,6 @@ const useMenuItemStyles = makeStyles({
 			backgroundColor: tokens.colorPaletteRedBackground1,
 		},
 	},
-	hasChanges: {
-		backgroundColor: tokens.colorPaletteYellowBackground1,
-		boxShadow: `0 0 10px ${tokens.colorPaletteYellowForeground1}`,
-	},
 	menuItemContainer: {
 		display: "flex",
 		alignItems: "center",
@@ -504,7 +495,7 @@ const useMenuItemStyles = makeStyles({
  * Generic component for a menu item (under a section).
  */
 export function MenuItem(props: MenuItemProps): ReactElement {
-	const { isActive, onClick, text, stateIcon, hasChanges, onRemove } = props;
+	const { isActive, onClick, text, stateIcon, onRemove } = props;
 
 	const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
 		if (event.key === "Enter" || event.key === " ") {
@@ -515,11 +506,7 @@ export function MenuItem(props: MenuItemProps): ReactElement {
 	const styles = useMenuItemStyles();
 	const baseStyle = isActive ? styles.active : styles.inactive;
 
-	const style = mergeClasses(
-		styles.root,
-		baseStyle,
-		hasChanges ? styles.hasChanges : undefined,
-	);
+	const style = mergeClasses(styles.root, baseStyle);
 
 	return (
 		<div className={styles.itemContent}>
@@ -742,10 +729,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): ReactElement 
 	const [containerStates, setContainerStates] = useState<
 		Map<ContainerKey, ContainerStateMetadata>
 	>(new Map());
-	const [containersWithChanges, setContainersWithChanges] = useState<Set<string>>(new Set());
-	const [changeIndicatorTimers, setChangeIndicatorTimers] = useState<
-		Map<string, ReturnType<typeof setTimeout>>
-	>(new Map());
 
 	useEffect(() => {
 		if (containers === undefined) {
@@ -762,30 +745,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): ReactElement 
 				});
 				return true;
 			},
-			[DataVisualization.MessageType]: async (untypedMessage) => {
-				const message = untypedMessage as DataVisualization.Message;
-				const containerKey = message.data.containerKey;
-
-				if (message.data.reason === DataVisualization.UpdateReason.DataChanged) {
-					const existingTimer = changeIndicatorTimers.get(containerKey);
-					if (existingTimer !== undefined) clearTimeout(existingTimer);
-
-					setContainersWithChanges(new Set([containerKey]));
-
-					const timer = setTimeout(() => {
-						setContainersWithChanges(
-							(prev) => new Set([...prev].filter((key) => key !== containerKey)),
-						);
-						setChangeIndicatorTimers(
-							(prev) => new Map([...prev].filter(([key]) => key !== containerKey)),
-						);
-					}, 1000);
-
-					setChangeIndicatorTimers((prev) => new Map(prev).set(containerKey, timer));
-				}
-
-				return true;
-			},
 		};
 		function messageHandler(message: Partial<ISourcedDevtoolsMessage>): void {
 			handleIncomingMessage(message, inboundMessageHandlers, {
@@ -798,11 +757,8 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): ReactElement 
 		}
 		return (): void => {
 			messageRelay.off("message", messageHandler);
-			for (const timer of changeIndicatorTimers.values()) {
-				clearTimeout(timer);
-			}
 		};
-	}, [changeIndicatorTimers, containers, messageRelay]);
+	}, [containers, messageRelay]);
 
 	let containerSectionInnerView: ReactElement;
 	if (containers === undefined) {
@@ -877,7 +833,6 @@ function ContainersMenuSection(props: ContainersMenuSectionProps): ReactElement 
 							onClick={(event): void => {
 								selectContainer(`${containerKey}`);
 							}}
-							hasChanges={containersWithChanges.has(containerKey)}
 							onRemove={onRemoveContainer ? () => onRemoveContainer(containerKey) : () => {}}
 						/>
 					);
@@ -985,7 +940,6 @@ export function Menu(props: MenuProps): ReactElement {
 					text="Events"
 					onClick={onTelemetryClicked}
 					stateIcon={undefined}
-					hasChanges={false}
 					onRemove={undefined}
 				/>
 			</MenuSection>,

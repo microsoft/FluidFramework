@@ -17,7 +17,7 @@ import {
 	JsonCompatibleReadOnlySchema,
 } from "../util/index.js";
 
-import type { MessageEncodingContext } from "./messageCodecs.js";
+import type { MessageDecodingContext, MessageEncodingContext } from "./messageCodecs.js";
 import type { MessageFormatVersion } from "./messageFormat.js";
 import { Message } from "./messageFormatV1ToV4.js";
 import type { DecodedMessage } from "./messageTypes.js";
@@ -36,7 +36,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		| typeof MessageFormatVersion.v3
 		| typeof MessageFormatVersion.v4
 		| typeof MessageFormatVersion.v6,
-): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext> {
+): CodecAndSchema<DecodedMessage<TChangeset>, MessageEncodingContext, MessageDecodingContext> {
 	const schema = Message(changeCodec.encodedSchema ?? JsonCompatibleReadOnlySchema);
 	return {
 		schema,
@@ -70,7 +70,7 @@ export function makeV1ToV4CodecWithVersion<TChangeset>(
 		},
 		decode: (
 			encoded: Message & JsonCompatibleReadOnlyObject & Versioned,
-			context: MessageEncodingContext,
+			context: MessageDecodingContext,
 		): DecodedMessage<TChangeset> => {
 			const { revision: encodedRevision, originatorId, changeset } = encoded;
 

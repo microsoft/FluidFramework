@@ -35,6 +35,7 @@
 		"build:test": "tsc --project ./src/test/tsconfig.json",
 		"check:biome": "biome check .",
 		"check:format": "npm run check:biome",
+		"check:inexactOptionalPropertyTypes": "tsc --project ./tsconfig.inexactOptionalPropertyTypes.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib oclif.manifest.json \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"clean:manifest": "rimraf --glob oclif.manifest.json",
@@ -102,6 +103,13 @@
 	},
 	"engines": {
 		"node": ">=22.22.2"
+	},
+	"fluidBuild": {
+		"tasks": {
+			"check:inexactOptionalPropertyTypes": [
+				"^tsc"
+			]
+		}
 	},
 	"oclif": {
 		"bin": "fluv",

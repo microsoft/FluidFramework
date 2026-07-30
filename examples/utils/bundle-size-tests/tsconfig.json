@@ -4,6 +4,6 @@
 		"outDir": "./lib",
 		"exactOptionalPropertyTypes": false,
 	},
-	"include": ["src/**/*"],
+	"include": ["src/**/*", "scenarios/*/src/**/*"],
 	"exclude": ["src/test/**/*"],
 }
