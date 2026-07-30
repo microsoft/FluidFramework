@@ -140,6 +140,11 @@ parameters:
     type: boolean
     default: false
 
+  # Whether to emit the Docker publishing handoff contract in the pack artifact.
+  - name: emitDockerPublishMetadata
+    type: boolean
+    default: false
+
 trigger: none
 
 resources:
@@ -250,6 +255,7 @@ extends:
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
                 installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
+                emitDockerPublishMetadata=${{ parameters.emitDockerPublishMetadata }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -473,6 +479,16 @@ extends:
 
             - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
               parameters:
+                ${{ if eq(parameters.emitDockerPublishMetadata, true) }}:
+                  # Keep schema version 1 until ff_publishing accepts version 2. Its current validator ignores
+                  # unknown fields, so this optional ownership declaration is independently mergeable.
+                  schemaVersion: 1
+                  emitPublishedByProducer: true
+                  # The producer owns its npm publication bundle: internal test/build/dev feeds are active.
+                  # Public npmjs.org is intentionally disabled by allowPublishingToNpmjs's false default.
+                  publishedByProducerNpm: true
+                  # Checkpoint 1 keeps the legacy official Docker publication stage active.
+                  publishedByProducerDocker: true
                 # A docker-only release publishes no npm packages.
                 ${{ if eq(parameters.releaseKind, 'docker') }}:
                   publishOverride: skip
@@ -612,6 +628,9 @@ extends:
             inputs:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
+
+          - ${{ if eq(parameters.emitDockerPublishMetadata, true) }}:
+            - template: /tools/pipelines/templates/include-generate-docker-publish-metadata.yml@self
 
         - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.

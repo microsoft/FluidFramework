@@ -1,0 +1,88 @@
+# Copyright (c) Microsoft Corporation and contributors. All rights reserved.
+# Licensed under the MIT License.
+
+steps:
+- task: Bash@3
+  displayName: Generate Docker publish metadata
+  env:
+    CANDIDATE_IMAGE: $(containerTag)
+    SOURCE_REPOSITORY: $(buildContainerName)
+    SOURCE_TAG: $(containerTagSuffix)
+    SOURCE_BUILD_ID: $(Build.BuildId)
+    VERSION: $(SetVersion.version)
+  inputs:
+    targetType: inline
+    workingDirectory: $(Build.ArtifactStagingDirectory)/pack
+    script: |
+      set -eu -o pipefail
+
+      if ! [[ "$SOURCE_REPOSITORY" =~ ^(build|test)/[a-z0-9][a-z0-9._/-]*[a-z0-9]$ ]]; then
+        echo "##vso[task.logissue type=error]Invalid Docker source repository '$SOURCE_REPOSITORY'"
+        exit 1
+      fi
+
+      if ! [[ "$SOURCE_TAG" =~ ^0\.0\.[0-9]+$ ]]; then
+        echo "##vso[task.logissue type=error]Invalid Docker source tag '$SOURCE_TAG'"
+        exit 1
+      fi
+
+      if ! [[ "$SOURCE_BUILD_ID" =~ ^[0-9]+$ ]]; then
+        echo "##vso[task.logissue type=error]Invalid Docker source build ID '$SOURCE_BUILD_ID'"
+        exit 1
+      fi
+
+      if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
+        echo "##vso[task.logissue type=error]Invalid Docker package version '$VERSION'"
+        exit 1
+      fi
+
+      expectedImageSuffix="/${SOURCE_REPOSITORY}:${SOURCE_TAG}"
+      if [[ "$CANDIDATE_IMAGE" != *"$expectedImageSuffix" ]]; then
+        echo "##vso[task.logissue type=error]Docker candidate image does not match the resolved source repository and tag"
+        exit 1
+      fi
+
+      digest=
+      for attempt in 1 2 3 4 5; do
+        inspection="$(docker buildx imagetools inspect "$CANDIDATE_IMAGE" 2>/dev/null)" || true
+        digest="$(printf '%s\n' "$inspection" | awk '$1 == "Digest:" { print $2; exit }')"
+        if [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+          break
+        fi
+        if [ "$attempt" -lt 5 ]; then
+          sleep 5
+        fi
+      done
+
+      if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+        echo "##vso[task.logissue type=error]Unable to resolve a valid digest for the pushed Docker candidate"
+        exit 1
+      fi
+
+      jq -n \
+        --argjson schemaVersion 1 \
+        --arg sourceRepository "$SOURCE_REPOSITORY" \
+        --arg sourceTag "$SOURCE_TAG" \
+        --arg digest "$digest" \
+        --arg version "$VERSION" \
+        --arg sourceBuildId "$SOURCE_BUILD_ID" \
+        '{
+          schemaVersion: $schemaVersion,
+          sourceRepository: $sourceRepository,
+          sourceTag: $sourceTag,
+          digest: $digest,
+          version: $version,
+          sourceBuildId: $sourceBuildId
+        }' > docker-publish-metadata.json
+
+      jq -e '
+        .schemaVersion == 1 and
+        (.sourceRepository | test("^(build|test)/[a-z0-9][a-z0-9._/-]*[a-z0-9]$")) and
+        (.sourceTag | test("^0\\.0\\.[0-9]+$")) and
+        (.digest | test("^sha256:[0-9a-f]{64}$")) and
+        (.version | test("^[0-9]+\\.[0-9]+\\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$")) and
+        (.sourceBuildId | test("^[0-9]+$"))
+      ' docker-publish-metadata.json >/dev/null
+
+      echo "Generated docker-publish-metadata.json:"
+      cat docker-publish-metadata.json

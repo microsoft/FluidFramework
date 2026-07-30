@@ -4,6 +4,18 @@
 parameters:
 - name: publishOverride
   type: string
+- name: schemaVersion
+  type: number
+  default: 1
+- name: emitPublishedByProducer
+  type: boolean
+  default: false
+- name: publishedByProducerNpm
+  type: boolean
+  default: false
+- name: publishedByProducerDocker
+  type: boolean
+  default: false
 
 steps:
 - task: Bash@3
@@ -14,6 +26,10 @@ steps:
     RELEASE: $(release)
     PUBLISH_OVERRIDE: ${{ parameters.publishOverride }}
     IS_LATEST: $(SetVersion.isLatest)
+    SCHEMA_VERSION: ${{ parameters.schemaVersion }}
+    EMIT_PUBLISHED_BY_PRODUCER: ${{ parameters.emitPublishedByProducer }}
+    PUBLISHED_BY_PRODUCER_NPM: ${{ parameters.publishedByProducerNpm }}
+    PUBLISHED_BY_PRODUCER_DOCKER: ${{ parameters.publishedByProducerDocker }}
   inputs:
     targetType: inline
     workingDirectory: $(Build.ArtifactStagingDirectory)/pack
@@ -51,19 +67,74 @@ steps:
           ;;
       esac
 
+      publishedByProducerNpm=false
+      publishedByProducerDocker=false
+
+      case "$SCHEMA_VERSION" in
+        1)
+          case "$EMIT_PUBLISHED_BY_PRODUCER" in
+            true|True) emitPublishedByProducer=true ;;
+            false|False) emitPublishedByProducer=false ;;
+            *)
+              echo "##vso[task.logissue type=error]Invalid emitPublishedByProducer value '$EMIT_PUBLISHED_BY_PRODUCER'"
+              exit 1
+              ;;
+          esac
+          ;;
+        2)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?(\+[0-9A-Za-z]+([.-][0-9A-Za-z]+)*)?$ ]]; then
+            echo "##vso[task.logissue type=error]Invalid version '$VERSION' for publish metadata schema version 2"
+            exit 1
+          fi
+          emitPublishedByProducer=true
+          ;;
+        *)
+          echo "##vso[task.logissue type=error]Unsupported publish metadata schema version '$SCHEMA_VERSION'"
+          exit 1
+          ;;
+      esac
+
+      if [ "$emitPublishedByProducer" = "true" ]; then
+        case "$PUBLISHED_BY_PRODUCER_NPM" in
+          true|True) publishedByProducerNpm=true ;;
+          false|False) publishedByProducerNpm=false ;;
+          *)
+            echo "##vso[task.logissue type=error]Invalid publishedByProducer.npm value '$PUBLISHED_BY_PRODUCER_NPM'"
+            exit 1
+            ;;
+        esac
+
+        case "$PUBLISHED_BY_PRODUCER_DOCKER" in
+          true|True) publishedByProducerDocker=true ;;
+          false|False) publishedByProducerDocker=false ;;
+          *)
+            echo "##vso[task.logissue type=error]Invalid publishedByProducer.docker value '$PUBLISHED_BY_PRODUCER_DOCKER'"
+            exit 1
+            ;;
+        esac
+      fi
+
       jq -n \
-        --argjson schemaVersion 1 \
+        --argjson schemaVersion "$SCHEMA_VERSION" \
         --arg version "$VERSION" \
         --arg release "$release" \
         --arg publishOverride "$PUBLISH_OVERRIDE" \
         --argjson isLatest "$isLatest" \
+        --argjson emitPublishedByProducer "$emitPublishedByProducer" \
+        --argjson publishedByProducerNpm "$publishedByProducerNpm" \
+        --argjson publishedByProducerDocker "$publishedByProducerDocker" \
         '{
           schemaVersion: $schemaVersion,
           version: $version,
           release: $release,
           publishOverride: $publishOverride,
           isLatest: $isLatest
-        }' > publish-metadata.json
+        } + if $emitPublishedByProducer then {
+          publishedByProducer: {
+            npm: $publishedByProducerNpm,
+            docker: $publishedByProducerDocker
+          }
+        } else {} end' > publish-metadata.json
 
       echo "Generated publish-metadata.json:"
       cat publish-metadata.json
