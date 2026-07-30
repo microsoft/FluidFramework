@@ -20,7 +20,7 @@ import type { ModularChangeset } from "./modularChangeTypes.js";
  * future change.
  *
  * @param change - The change to minimize.
- * @param fieldKinds - The field kinds to delegate to when computing the change's delta.
+ * @param changeFamily - The change family used to compute the change's delta and identify built nodes.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
