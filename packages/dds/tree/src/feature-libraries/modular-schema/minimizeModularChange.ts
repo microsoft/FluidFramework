@@ -11,7 +11,6 @@ import type {
 	ChangeAtomIdRangeMap,
 	DeltaFieldMap,
 	DeltaRoot,
-	FieldKindIdentifier,
 } from "../../core/index.js";
 import {
 	makeAnonChange,
@@ -21,8 +20,8 @@ import {
 } from "../../core/index.js";
 import { brand, setInNestedMap } from "../../util/index.js";
 
-import type { FlexFieldKind } from "./fieldKind.js";
 import { computeMinimizedBuilds } from "./minimizeBuilds.js";
+import type { ModularChangeFamily } from "./modularChangeFamily.js";
 import { intoDelta } from "./modularChangeFamily.js";
 import type { ModularChangeset } from "./modularChangeTypes.js";
 
@@ -172,11 +171,11 @@ function collectAttachedNodeIds(
  * The result applies to produce the same document as the input change.
  *
  * @param change - The change to minimize. Not mutated by this function.
- * @param fieldKinds - The field kinds to delegate to when computing the change's delta.
+ * @param changeFamily - The change family used to compute the change's delta and identify built nodes.
  */
 export function minimizeModularChangeset(
 	change: ModularChangeset,
-	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
+	changeFamily: ModularChangeFamily,
 	testOnlyArg_DisableBuildMinification: boolean = true,
 ): ModularChangeset {
 	const builds = change.builds;
@@ -186,7 +185,7 @@ export function minimizeModularChangeset(
 
 	assert(change.destroys === undefined, "No destroys expected in change to be minimized");
 
-	const delta = intoDelta(makeAnonChange(change), fieldKinds);
+	const delta = intoDelta(makeAnonChange(change), changeFamily.fieldKinds);
 	const globalById = indexGlobalById(delta);
 
 	// Compute the set of detached node IDs whose content ends up attached in the resulting document. Content built by

@@ -20,11 +20,7 @@ import { JsonStringify } from "@fluidframework/core-interfaces/internal";
 // Additional imports used for direct ModularChangeset.builds inspection
 // supplementing testing prior to full minimization implementation.
 import type { ModularChangeset } from "../../feature-libraries/index.js";
-import {
-	fieldKinds,
-	mapTreeFromCursor,
-	minimizeModularChangeset,
-} from "../../feature-libraries/index.js";
+import { mapTreeFromCursor, minimizeModularChangeset } from "../../feature-libraries/index.js";
 import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules -- internal details to be removed once minimization is fully implemented
 import { mapDataChanges } from "../../shared-tree/sharedTreeChangeFamily.js";
@@ -2463,11 +2459,11 @@ describe("transaction minimize post-processor", () => {
 
 		const postProcessor = createTransactionPostProcessor({
 			applicability: ChangeProcessorApplicability.IfOutermost,
-			processChange: (change) =>
+			processChange: (change, context) =>
 				mapDataChanges(change, (dataChange) => {
 					const minimized = minimizeModularChangeset(
 						dataChange,
-						fieldKinds,
+						context.modularChangeFamily,
 						/* testOnlyArg_DisableBuildMinification */ false,
 					);
 
