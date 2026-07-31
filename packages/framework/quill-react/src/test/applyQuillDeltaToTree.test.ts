@@ -5,7 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
-import { TreeViewConfiguration } from "@fluidframework/tree";
+import { Tree, TreeViewConfiguration } from "@fluidframework/tree";
 import {
 	independentView,
 	FormattedTextAsTreeDefault,
@@ -134,11 +134,10 @@ describe("applyQuillDeltaToTree", () => {
 
 	it("clears line formatting (case 4: line atom -> plain newline)", () => {
 		const tree = lineAtomTree("h1");
-		// Quill emits header: null when clearing line formatting.
-		// eslint-disable-next-line unicorn/no-null
+		// eslint-disable-next-line unicorn/no-null -- Quill emits header: null when clearing line formatting.
 		applyQuillDeltaToTree(tree, new Delta().retain(1, { header: null }));
 		const atom = tree.charactersWithFormatting()[0]?.content;
-		assert(atom instanceof FormattedTextAsTree.StringTextAtom);
+		assert(Tree.is(atom, FormattedTextAsTree.StringTextAtom));
 		assert.equal(tree.fullString(), "\n");
 	});
 
