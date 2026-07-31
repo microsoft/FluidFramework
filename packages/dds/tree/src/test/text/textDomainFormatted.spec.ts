@@ -20,6 +20,7 @@ import { setEnableExpensiveDebugAsserts } from "../../text/textDomain.js";
 import type { TextAsTree } from "../../text/textDomain.js";
 import {
 	FormattedTextAsTree,
+	StringTextAtomNode,
 	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 } from "../../text/textDomainFormatted.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
@@ -146,6 +147,34 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
+	describe("StringTextAtom", () => {
+		it("fromCharacter creates one atom", () => {
+			assert.equal(FormattedTextAsTree.StringTextAtom.fromCharacter("a").content, "a");
+			assert.equal(FormattedTextAsTree.StringTextAtom.fromCharacter("😀").content, "😀");
+		});
+
+		it("fromCharacter rejects values which are not one character", () => {
+			assert.throws(
+				() => FormattedTextAsTree.StringTextAtom.fromCharacter(""),
+				validateUsageError(/exactly one Unicode character/),
+			);
+			assert.throws(
+				() => FormattedTextAsTree.StringTextAtom.fromCharacter("ab"),
+				validateUsageError(/exactly one Unicode character/),
+			);
+		});
+
+		it("fromString creates one atom per character", () => {
+			const atoms = FormattedTextAsTree.StringTextAtom.fromString("a😀b");
+			assert.deepEqual(
+				atoms.map((atom) => atom.content),
+				["a", "😀", "b"],
+			);
+			const empty = FormattedTextAsTree.StringTextAtom.fromString("");
+			assert.deepEqual(empty, []);
+		});
+	});
+
 	describe("formatRange", () => {
 		it("basic use", () => {
 			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
@@ -185,7 +214,9 @@ describe("textDomainFormatted", () => {
 		it("throws when an atom's format is a non-object node", () => {
 			const text = UnionFormatText.fromString("b");
 			// Prepend an atom whose format is a non-object (number) node.
-			text.insertWithFormattingAt(0, [{ content: { content: "a" }, format: 5 }]);
+			text.insertWithFormattingAt(0, [
+				{ content: FormattedTextAsTree.StringTextAtom.fromCharacter("a"), format: 5 },
+			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
 				validateUsageError(/formatRange currently only supports object nodes for the format./),
@@ -195,7 +226,9 @@ describe("textDomainFormatted", () => {
 		it("throws when a non-object node format occurs in the middle of a range", () => {
 			const text = UnionFormatText.fromString("ac");
 			// Insert an atom with a non-object (number) format between the two object-formatted atoms.
-			text.insertWithFormattingAt(1, [{ content: { content: "b" }, format: 5 }]);
+			text.insertWithFormattingAt(1, [
+				{ content: FormattedTextAsTree.StringTextAtom.fromCharacter("b"), format: 5 },
+			]);
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
@@ -308,7 +341,7 @@ describe("textDomainFormatted", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
 			{
-				content: { content: "c" },
+				content: FormattedTextAsTree.StringTextAtom.fromCharacter("c"),
 				format: {
 					bold: false,
 					italic: true,
@@ -364,7 +397,7 @@ describe("textDomainFormatted", () => {
 					tag: FormattedTextAsTreeDefault.LineTag("h1"),
 					indent: 0,
 				}),
-				new FormattedTextAsTree.StringTextAtom({ content: "c" }),
+				FormattedTextAsTree.StringTextAtom.fromCharacter("c"),
 			],
 			{
 				bold: true,
@@ -724,7 +757,7 @@ describe("textDomainFormatted", () => {
 			it("edit character text", () => {
 				const [text, log] = setupObservations();
 				const char = text.charactersWithFormatting()[2].content;
-				assert(char instanceof FormattedTextAsTree.StringTextAtom);
+				assert(char instanceof StringTextAtomNode);
 				char.content = "X";
 				checkLog(log, ["fullString", "characters", "charactersCopy"], overInvalidated);
 			});
