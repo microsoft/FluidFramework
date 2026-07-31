@@ -155,9 +155,6 @@ parameters:
     type: boolean
     default: false
 
-  - name: publishAsPartOfBuild
-    type: boolean
-
 trigger: none
 
 resources:
@@ -508,7 +505,6 @@ extends:
 
             - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
               parameters:
-                publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
                 # A docker-only release publishes no npm packages.
                 ${{ if eq(parameters.releaseKind, 'docker') }}:
                   publishOverride: skip

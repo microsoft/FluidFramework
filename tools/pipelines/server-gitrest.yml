@@ -101,7 +101,6 @@ extends:
     shouldPushDockerImage: ${{ variables.pushImage }}
     shouldReleaseDockerImage: ${{ variables.releaseImage }}
     shouldPublishNpmPackages: ${{ variables.publish }}
-    publishAsPartOfBuild: true
     releaseKind: ${{ parameters.releaseKind }}
     publishOverride: ${{ parameters.publishOverride }}
     publishAsPartOfBuild: true
