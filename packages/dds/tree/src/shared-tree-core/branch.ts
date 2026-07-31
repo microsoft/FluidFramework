@@ -199,7 +199,7 @@ export class SharedTreeBranch<
 
 	/**
 	 * Notifies the branch that a commit has been sequenced by the sequencing service.
-	 * @param commit - the commit that was sequenced
+	 * @param commit - The commit that was sequenced
 	 */
 	public commitWasSequenced(commit: GraphCommit<TChange>): void {
 		this.#events.emit("commitSequenced", commit);

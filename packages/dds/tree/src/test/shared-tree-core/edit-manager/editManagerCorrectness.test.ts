@@ -1072,7 +1072,7 @@ export function testCorrectness(): void {
 				emittedOnFork.push(commit);
 			});
 
-			// note: the fork is created before this commit is applied, so it will have commit B yet
+			// note: the fork is created before this commit is applied, so it will not have commit B yet
 			applyLocalCommit(manager);
 			const localCommitB = main.getHead();
 
