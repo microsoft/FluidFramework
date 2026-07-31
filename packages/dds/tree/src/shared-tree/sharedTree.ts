@@ -7,7 +7,7 @@ import type { ErasedType, IFluidLoadable } from "@fluidframework/core-interfaces
 import { assert, fail } from "@fluidframework/core-utils/internal";
 import type { IChannelStorageService } from "@fluidframework/datastore-definitions/internal";
 import type { IIdCompressor, StableId } from "@fluidframework/id-compressor";
-import type { MinimumVersionForCollab } from "@fluidframework/runtime-definitions/internal";
+import type { OldestSupportedClientVersion } from "@fluidframework/runtime-definitions/internal";
 import type {
 	IChannelView,
 	IFluidSerializer,
@@ -546,14 +546,16 @@ export const changeFormatVersionForMessage = DependentFormatVersion.fromPairs<
 	[MessageFormatVersion.v6, SharedTreeChangeFormatVersion.v5],
 ]);
 
-function getCodecTreeForEditManagerFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForEditManagerFormat(
+	clientVersion: OldestSupportedClientVersion,
+): CodecTree {
 	const editManagerVersion = makeEditManagerCodecBuilder().getCodecTree(clientVersion).version;
 	const change = changeFormatVersionForEditManager.lookup(editManagerVersion);
 	const changeCodecTree = getCodecTreeForChangeFormat(change, clientVersion);
 	return getCodecTreeForEditManagerFormatWithChange(clientVersion, changeCodecTree);
 }
 
-function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): CodecTree {
+function getCodecTreeForMessageFormat(clientVersion: OldestSupportedClientVersion): CodecTree {
 	const messageVersion = makeMessageCodecBuilder().getCodecTree(clientVersion).version;
 	assert(
 		messageVersion !== undefined,
@@ -565,7 +567,7 @@ function getCodecTreeForMessageFormat(clientVersion: MinimumVersionForCollab): C
 }
 
 export function getCodecTreeForSharedTreeFormat(
-	clientVersion: MinimumVersionForCollab,
+	clientVersion: OldestSupportedClientVersion,
 ): CodecTree {
 	const children: CodecTree[] = [];
 	children.push(forestCodecBuilder.getCodecTree(clientVersion));

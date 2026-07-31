@@ -128,7 +128,7 @@ export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T> {
  *
  * The higher the version specified, the more features and optimizations will be enabled. *
  * @privateRemarks
- * This is similar to, and a subset of, the `MinimumVersionForCollab` type in `@fluidframework/runtime-definitions`.
+ * This is similar to, and a subset of, the `OldestSupportedClientVersion` type in `@fluidframework/runtime-definitions`.
  * This differs in that:
  * - This avoids the shorthand "collab" to instead align with our preferred whole word naming convention.
  * - This is `alpha` instead of `public`.

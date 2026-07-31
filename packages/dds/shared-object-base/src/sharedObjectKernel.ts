@@ -21,7 +21,7 @@ import type {
 	ITelemetryContext,
 	IExperimentalIncrementalSummaryContext,
 	IRuntimeMessageCollection,
-	MinimumVersionForCollab,
+	OldestSupportedClientVersion,
 } from "@fluidframework/runtime-definitions/internal";
 import type { TelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
 import { extractTelemetryLoggerExt } from "@fluidframework/telemetry-utils/internal";
@@ -139,7 +139,7 @@ class SharedObjectFromKernel<
 		// at the cost of less compile-time enforcement. For example, if the runtime did not implement `minVersionForCollab` and the
 		// member was still optional (e.g., during the deprecation window where backwards-compatibility is maintained), the compiler
 		// would emit an error.
-		const minVersionForCollab: MinimumVersionForCollab | undefined = (
+		const minVersionForCollab: OldestSupportedClientVersion | undefined = (
 			runtime as IFluidDataStoreRuntimeInternalConfig
 		).minVersionForCollab;
 
@@ -310,7 +310,7 @@ export interface KernelArgs {
 	 * compatible set of feature flags and formats can be enabled in the SharedObject implementation.
 	 * See {@link @fluidframework/container-runtime#LoadContainerRuntimeParams.minVersionForCollab} for more details.
 	 */
-	readonly minVersionForCollab: MinimumVersionForCollab;
+	readonly minVersionForCollab: OldestSupportedClientVersion;
 }
 
 /**
