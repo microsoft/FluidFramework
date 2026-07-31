@@ -18,15 +18,15 @@ This example follows the external-views pattern: the container code establishes 
 
 ## ClaimResult overview
 
-`ClaimResult<T>` is a discriminated union returned by `trySetClaim`:
+`ClaimResult` is a discriminated union returned by `trySetClaim`:
 
 | Status | Meaning | Available fields |
 |--------|---------|-----------------|
-| `"Accepted"` | Claim accepted synchronously (only in detached mode) | `currentValue: T` |
-| `"AlreadyClaimed"` | Another client already claimed this key | `currentValue: T \| undefined` |
-| `"Pending"` | Op is in-flight awaiting server confirmation | `promise: Promise<ClaimConfirmation<T>>` |
+| `"Accepted"` | Claim accepted synchronously (only in detached mode) | _(none)_ |
+| `"AlreadyClaimed"` | Another client already claimed this key | _(none)_ |
+| `"Pending"` | Op is in-flight awaiting server confirmation | `promise: Promise<ClaimConfirmation>` |
 
-In a connected container, `trySetClaim` returns `"Pending"`; awaiting the promise yields a `ClaimConfirmation<T>` whose status is `"Accepted"`, `"AlreadyClaimed"`, or `"Aborted"`. `ClaimsDataObject.trySetClaim(key)` collapses that lifecycle into a simple `boolean` (whether this client won) for the view to consume. On `"AlreadyClaimed"` the data object resolves the winning key's handle (via the Claims DDS) to read and report the winner's owner.
+In a connected container, `trySetClaim` returns `"Pending"`; awaiting the promise yields a `ClaimConfirmation` whose status is `"Accepted"`, `"AlreadyClaimed"`, or `"Aborted"`. `ClaimsDataObject.trySetClaim(key)` collapses that lifecycle into a simple `boolean` (whether this client won) for the view to consume. On `"AlreadyClaimed"` the data object resolves the winning key's handle (via the Claims DDS, using `claims.get(key)`) to read and report the winner's owner.
 
 <!-- AUTO-GENERATED-CONTENT:START (EXAMPLE_APP_README_HEADER:usesTinylicious=TRUE) -->
 
