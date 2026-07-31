@@ -10,6 +10,7 @@ import request from "supertest";
 import * as nconf from "nconf";
 import { TestThrottler } from "@fluidframework/server-test-utils";
 import { Lumberjack, TestEngine1 } from "@fluidframework/server-services-telemetry";
+import { configureGlobalTelemetryContext } from "@fluidframework/server-services-utils";
 import * as historianApp from "../app";
 import { RestGitService } from "../services";
 import { TestTenantService, TestCache, TestDocumentManager } from "./utils";
@@ -1279,6 +1280,185 @@ describe("routes", () => {
 				});
 			});
 		});
+	});
+});
+
+describe("summary ownership routes", () => {
+	const sandbox = sinon.createSandbox();
+	const authorization = getAuthorizationTokenFromCredentials({
+		user: tenantId,
+		password: generateToken(tenantId, documentId, tenantKey, [
+			ScopeType.DocRead,
+			ScopeType.DocWrite,
+			ScopeType.SummaryWrite,
+		]),
+	});
+	const activeDocument = {
+		version: "1.0",
+		createTime: Date.now(),
+		documentId,
+		tenantId,
+		session: {
+			ordererUrl: "http://orderer",
+			deltaStreamUrl: "http://delta",
+			historianUrl: "http://historian",
+			isSessionAlive: false,
+			isSessionActive: false,
+		},
+		scribe: "",
+		deli: "",
+		storageName: "document-storage",
+		isEphemeralContainer: false,
+	};
+	let documentManager: TestDocumentManager;
+	let cache: TestCache;
+	let superTest: request.SuperTest<request.Test>;
+
+	beforeEach(() => {
+		configureGlobalTelemetryContext();
+		documentManager = new TestDocumentManager();
+		cache = new TestCache();
+		const throttlers = new Map<string, TestThrottler>([
+			[Constants.generalRestCallThrottleIdPrefix, new TestThrottler(1000)],
+			[Constants.createSummaryThrottleIdPrefix, new TestThrottler(1000)],
+			[Constants.getSummaryThrottleIdPrefix, new TestThrottler(1000)],
+		]);
+		const clusterThrottlers = new Map<string, TestThrottler>([
+			[Constants.createSummaryThrottleIdPrefix, new TestThrottler(1000)],
+			[Constants.getSummaryThrottleIdPrefix, new TestThrottler(1000)],
+		]);
+		superTest = request(
+			historianApp.create(
+				defaultProvider,
+				defaultTenantService,
+				undefined,
+				throttlers,
+				clusterThrottlers,
+				documentManager,
+				new StartupCheck(),
+				cache,
+				undefined,
+				undefined,
+				24 * 60 * 60,
+			),
+		);
+	});
+
+	afterEach(() => sandbox.restore());
+
+	it("denies attacker tenant latest and SHA before cache or GitRest", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			tenantId: "victim-tenant",
+		});
+		const cacheGet = sandbox.spy(cache, "get");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
+		const getTenant = sandbox.spy(defaultTenantService, "getTenant");
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.expect(404);
+
+		sinon.assert.calledTwice(readDocument);
+		sinon.assert.notCalled(cacheGet);
+		sinon.assert.notCalled(getSummary);
+		sinon.assert.notCalled(getTenant);
+	});
+
+	it("allows same-tenant latest and SHA after fresh validation", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const info = sandbox.spy(Lumberjack, "info");
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.set("x-correlation-id", "summary-ownership-correlation")
+			.expect(200);
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.set("x-correlation-id", "summary-ownership-correlation")
+			.expect(200);
+
+		assert.deepStrictEqual(getSummary.firstCall.args, ["latest", true]);
+		assert.deepStrictEqual(getSummary.secondCall.args, [sha, true]);
+		assert.ok(readDocument.firstCall.calledBefore(getSummary.firstCall));
+		assert.ok(readDocument.secondCall.calledBefore(getSummary.secondCall));
+		sinon.assert.calledWithMatch(
+			info,
+			"HistorianSummaryDocumentOwnershipValidation",
+			sinon.match({
+				correlationId: "summary-ownership-correlation",
+				tenantId,
+				documentId,
+				operation: "get",
+				routeType: "latest",
+				outcome: "allowed",
+			}),
+		);
+		sinon.assert.calledWithMatch(
+			info,
+			"HistorianSummaryDocumentOwnershipValidation",
+			sinon.match({
+				correlationId: "summary-ownership-correlation",
+				tenantId,
+				documentId,
+				operation: "get",
+				routeType: "sha",
+				outcome: "allowed",
+			}),
+		);
+	});
+
+	it("cannot serve cached latest after scheduled deletion", async () => {
+		await cache.set(`${tenantId}:${documentId}:summary:container`, {
+			id: "cached-victim-summary",
+			trees: [],
+			blobs: [],
+		});
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
+		});
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+
+		sinon.assert.notCalled(getSummary);
+	});
+
+	it("requires ownership before hard or soft DELETE reaches cache invalidation or GitRest", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(null);
+		const cacheDelete = sandbox.spy(cache, "delete");
+		const deleteSummary = sandbox.stub(RestGitService.prototype, "deleteSummary");
+
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "false")
+			.expect(404);
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(404);
+
+		sinon.assert.calledTwice(readDocument);
+		sinon.assert.notCalled(cacheDelete);
+		sinon.assert.notCalled(deleteSummary);
 	});
 });
 

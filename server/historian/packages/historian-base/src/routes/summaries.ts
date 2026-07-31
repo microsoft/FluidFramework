@@ -4,10 +4,11 @@
  */
 
 import { ScopeType } from "@fluidframework/protocol-definitions";
-import type {
-	IWholeFlatSummary,
-	IWholeSummaryPayload,
-	IWriteSummaryResponse,
+import {
+	LatestSummaryId,
+	type IWholeFlatSummary,
+	type IWholeSummaryPayload,
+	type IWriteSummaryResponse,
 } from "@fluidframework/server-services-client";
 import type {
 	IStorageNameRetriever,
@@ -33,6 +34,7 @@ import type {
 	ITenantService,
 	ISimplifiedCustomDataRetriever,
 	IPostEphemeralContainerChecker,
+	RestGitService,
 } from "../services";
 import { parseToken, Constants } from "../utils";
 
@@ -96,6 +98,41 @@ export function create(
 		Constants.getSummaryThrottleIdPrefix,
 	);
 
+	async function createProtectedSummaryService(
+		tenantId: string,
+		authorization: string | undefined,
+		operation: utils.SummaryOperation,
+		routeType: utils.SummaryRouteType,
+		allowDisabledTenant = false,
+		query?: Query,
+	): Promise<RestGitService> {
+		const document = await utils.validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager,
+			operation,
+			routeType,
+			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+		});
+		return utils.createGitServiceFromValidatedDocument(
+			{
+				config,
+				tenantId,
+				authorization,
+				tenantService,
+				storageNameRetriever,
+				documentManager,
+				cache,
+				allowDisabledTenant,
+				ephemeralDocumentTTLSec,
+				simplifiedCustomDataRetriever,
+				postEphemeralContainerChecker,
+				query,
+			},
+			document,
+		);
+	}
+
 	async function getSummary(
 		tenantId: string,
 		authorization: string | undefined,
@@ -103,18 +140,15 @@ export function create(
 		useCache: boolean,
 		query?: Query,
 	): Promise<IWholeFlatSummary> {
-		const service = await utils.createGitService({
-			config,
+		const routeType: utils.SummaryRouteType = sha === LatestSummaryId ? "latest" : "sha";
+		const service = await createProtectedSummaryService(
 			tenantId,
 			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			ephemeralDocumentTTLSec,
-			postEphemeralContainerChecker,
+			"get",
+			routeType,
+			false,
 			query,
-		});
+		);
 		return service.getSummary(sha, useCache);
 	}
 
@@ -152,17 +186,13 @@ export function create(
 		authorization: string | undefined,
 		softDelete: boolean,
 	): Promise<boolean[]> {
-		const service = await utils.createGitService({
-			config,
+		const service = await createProtectedSummaryService(
 			tenantId,
 			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			allowDisabledTenant: true,
-			ephemeralDocumentTTLSec,
-		});
+			"delete",
+			"notApplicable",
+			true,
+		);
 		const deletionPs = [service.deleteSummary(softDelete)];
 		if (!softDelete) {
 			const token = parseToken(tenantId, authorization);
