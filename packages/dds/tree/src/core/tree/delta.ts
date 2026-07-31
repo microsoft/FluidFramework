@@ -67,7 +67,7 @@ import type { TreeChunk } from "./chunk.js";
  */
 
 /**
- * Represents the change made to a document.
+ * A change made to a document.
  * Immutable, therefore safe to retain for async processing.
  */
 export interface Root<TTrees = ProtoNodes> {
@@ -122,21 +122,23 @@ export interface Root<TTrees = ProtoNodes> {
 export type ProtoNodes = TreeChunk;
 
 /**
- * Represents a change to a contiguous range of a field (including deeply via {@link Mark.fields} to recurse).
+ * Represents a change to a contiguous range of a field,
+ * including nested changes described by {@link Mark.fields}.
  *
  * @remarks
  * See {@link FieldChanges} for how these marks are applied to a field.
  *
  * The presence of {@link Mark.attach} and {@link Mark.detach} determines the kind of change:
  *
- * - Retain: Neither `attach` nor `detach`: retains `count` existing nodes.
- * If count is 1, `fields` may describe nested changes to the retained node.
- * - Detach: `detach` only: removes `count` existing nodes.
- * If count is 1, `fields` may describe nested changes to the detached node.
- * - Attach:`attach` only: inserts `count` new nodes.
+ * - Retain (neither `attach` nor `detach` are set): retains `count` existing nodes.
+ * When `count` is `1`, `fields` may describe nested changes to the retained node.
+ * - Detach (`detach` only): removes `count` existing nodes.
+ * When `count` is `1`, `fields` may describe nested changes to the detached node.
+ * - Attach (`attach` only): inserts `count` new nodes.
  * `fields` must be undefined.
- * - Replace: `attach` and `detach`: replaces `count` existing nodes with `count` attached nodes.
- * If count is 1, `fields` may describe nested changes to the detached node.
+ * - Replace (both `attach` and `detach`): replaces `count` existing nodes with `count` attached
+ * nodes.
+ * When `count` is `1`, `fields` may describe nested changes to the detached node.
  */
 export interface Mark {
 	/**
@@ -146,24 +148,24 @@ export interface Mark {
 	 * @remarks
 	 * The size of the attached content is never inferred from what is attached: it must be exactly `count`.
 	 * This means that a single mark can represent replacing a run of `count` nodes with `count` new nodes,
-	 * but cannot be used to replace a run on one length with a different length: such edits must use multiple marks.
+	 * but cannot replace a run of one length with a run of another length.
+	 * Such edits require multiple marks.
 	 *
-	 * Must be a positive integer: marks with count 0 are a no-op and should omitted from the {@link FieldChanges}.
+	 * Must be a positive integer.
+	 * Marks with a count of `0` are no-ops and should be omitted from {@link FieldChanges}.
 	 */
 	readonly count: number;
 
 	/**
 	 * Nested changes to pre-existing content.
 	 * @remarks
-	 * Applied before `detach` is processed: if detach is set, this modified the detached node.
-	 * If detach is not set, this modifies the retained node.
+	 * If {@link Mark.detach} is set, these changes apply to the node being detached.
+	 * Otherwise, they apply to the retained node.
 	 *
-	 * Can only be set when this `Mark` applies to exactly 1 pre-existing node to modify.
-	 * Therefore must be `undefined` if:
+	 * May only be set when this mark applies to exactly one pre-existing node.
+	 * Therefore, `fields` must be undefined if:
 	 * - {@link Mark.attach} is set and {@link Mark.detach} is not: in this case there are no pre-existing nodes.
 	 * - {@link Mark.count} is not 1: in this case there is not exactly one node to modify.
-	 *
-	 * Must be undefined when {@link Mark.attach} is set and {@link Mark.detach} is not.
 	 */
 	readonly fields?: FieldMap;
 
@@ -182,16 +184,16 @@ export interface Mark {
  * A globally unique ID for a node in a detached field.
  */
 export interface DetachedNodeId {
-	/** Revision in which the ID was allocated. */
+	/** Revision in which the ID was allocated, if applicable. */
 	readonly major?: RevisionTag;
-	/** ID within {@link DetachedNodeId.major}. */
+	/** Identifier within the scope of {@link DetachedNodeId.major}. */
 	readonly minor: number;
 }
 
 export type FieldMap = ReadonlyMap<FieldKey, FieldChanges>;
 
 /**
- * Represents changes made to a detached node
+ * Changes made to a detached node.
  */
 export interface DetachedNodeChanges {
 	/** ID of the detached node to modify. */
@@ -201,7 +203,7 @@ export interface DetachedNodeChanges {
 }
 
 /**
- * Represents the creation of detached nodes.
+ * The creation of detached nodes.
  *
  * Tree creation is idempotent: if a tree with the same ID already exists,
  * then this build is ignored in favor of the existing tree.
@@ -214,7 +216,7 @@ export interface DetachedNodeBuild<TTrees = ProtoNodes> {
 }
 
 /**
- * Represents the destruction of detached nodes
+ * The destruction of detached nodes.
  */
 export interface DetachedNodeDestruction {
 	/** ID of the first detached node to destroy. */
@@ -224,7 +226,7 @@ export interface DetachedNodeDestruction {
 }
 
 /**
- * Represents a detached node being assigned a new `DetachedNodeId`.
+ * A detached node being assigned a new `DetachedNodeId`.
  */
 export interface DetachedNodeRename {
 	/** Number of consecutively identified nodes to rename. */
@@ -239,15 +241,13 @@ export interface FieldChanges {
 	/**
 	 * A list of changes to the nodes in the field.
 	 * @remarks
-	 * This includes both changes to which nodes are in the field,
-	 * as well as modifications to the nodes themselves (via changes to what nodes are in their fields recursively).
+	 * This includes changes to the field's nodes and nested changes to those nodes' fields.
 	 *
-	 * The index in the field where each mark applies, is not represented explicitly.
-	 * The changes are instead applied in order, advancing the index based on the kind of {@link Mark} and its {@link Mark.count} property.
+	 * The index at which each mark applies is implicit. Marks are applied in order, advancing the
+	 * index according to the kind of {@link Mark} and its {@link Mark.count}.
 	 *
-	 * As this is a description of the field's changes, not its content:
-	 * all untouched nodes after the last change are implicitly retained,
-	 * equivalent to a final trailing retain mark with the relevant count.
+	 * Because this describes changes rather than content, untouched nodes after the final mark are
+	 * implicitly retained. This is equivalent to a trailing retain mark with the relevant count.
 	 */
 	readonly marks: readonly Mark[];
 }
