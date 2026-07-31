@@ -26,6 +26,15 @@ allowBuilds:
 
 blockExoticSubdeps: true
 
+# Shortens peer-dependency identifiers in the lockfile from fully-nested paths to flat name@version keys.
+# Example:
+#   before: eslint-config-prettier 10.1.8(eslint@9.39.1(jiti@2.6.1)(supports-color@10.2.2))
+#   after:  eslint-config-prettier 10.1.8(eslint@9.39.1)
+# The nested peers of `eslint@9.39.1` still live on eslint's own lockfile entry; they're just not
+# re-encoded into every consumer's identifier. Smaller lockfile, same resolved graph.
+# See https://pnpm.io/settings#dedupepeers
+dedupePeers: true
+
 catalogs:
   # Build-tools packages
   buildTools:
