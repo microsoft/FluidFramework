@@ -576,12 +576,12 @@ export interface FluidContainerWithService<TData = unknown> extends FluidContain
     attach(): Promise<FluidContainerAttached<TData>>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -592,7 +592,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -607,7 +607,7 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @beta @sealed
+// @public @sealed
 export interface FluidReadonlyArray<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
     readonly [Symbol.unscopables]: {
@@ -650,7 +650,7 @@ export interface FluidReadonlyArray<T> {
     values(): FluidIterableIterator<T>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
