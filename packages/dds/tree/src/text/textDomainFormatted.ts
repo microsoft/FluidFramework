@@ -86,10 +86,10 @@ export class StringTextAtomNode
 		 * The underlying text content of this atom.
 		 * @remarks
 		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
-		 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
+		 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
 		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
 		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
-		 * Instead atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+		 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
 		 * @privateRemarks
 		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
 		 */
@@ -639,7 +639,7 @@ export namespace FormattedTextAsTree {
 		/**
 		 * Formatting which is applied to the content.
 		 * @remarks
-		 * Can be reassigned of deeply mutated to edit the formatting of the content.
+		 * Can be reassigned or deeply mutated to edit the formatting of the content.
 		 */
 		format: TFormat;
 	}
@@ -647,7 +647,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Portion of a string.
 	 * @remarks
-	 * Additional kinds text atoms (also known as embedded objects) which can occur inside a string can implement this.
+	 * Additional kinds of text atoms (also known as embedded objects) which can occur inside a string can implement this.
 	 * The schema for them can then be provided to {@link FormattedTextAsTree.createSchema}.
 	 * @internal
 	 */
@@ -661,10 +661,10 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Static factory functions for {@link FormattedTextAsTree.(StringTextAtom:variable)}.
 	 * @privateRemarks
-	 * We type erase StringTextAtom and only provide these static factories for construction
+	 * We type-erase `StringTextAtom` and only provide these static factories for construction
 	 * to reduce the chance of someone accidentally creating a text atom for a string other than a single unicode code point.
-	 * Other strings should work, but our intention is to provide no type safe API which can produce them, so an application can take their lack of existence as an invariant if they want.
-	 * It is still however possible to produce them, like export/import round trips with editing in the middle of the process, of collaboration with an equivalent schema which doesn't enforce this invariant.
+	 * Other strings should work, but our intention is to provide no type-safe API which can produce them, so an application can take their lack of existence as an invariant if they want.
+	 * It is still however possible to produce them, like export/import round trips with editing in the middle of the process, or collaboration with an equivalent schema which doesn't enforce this invariant.
 	 * @sealed
 	 * @internal
 	 */
