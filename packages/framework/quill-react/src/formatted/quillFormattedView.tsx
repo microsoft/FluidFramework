@@ -105,6 +105,18 @@ function createLineAtom(
 	};
 }
 
+function lineAtomToQuillAttributes(
+	lineAtom: FormattedTextAsTreeDefault.StringLineAtom,
+): Record<string, unknown> {
+	const attributes: Record<string, unknown> = {
+		...lineTagToQuillAttributes[lineAtom.tag.value],
+	};
+	if (lineAtom.indent) {
+		attributes.indent = lineAtom.indent;
+	}
+	return attributes;
+}
+
 /**
  * Convert {@link TextAsTree.TextOp}s from `onContentChanged` into Quill delta ops
  * that can be applied via `Quill.updateContents()`.
@@ -134,7 +146,7 @@ function contentOpsToQuillDelta(
 	const quillOps: QuillDeltaOp[] = [];
 	// treePos: atom index in the post-edit tree. Advances for retain and insert, not remove.
 	let treePos = 0;
-	// quillPos: UTF-16 index in preEditContent. Advances for retain and remove, not insert.
+	// quillPos: UTF-16 index in preEditContent. Advances when existing Quill content is consumed.
 	let quillPos = 0;
 	// Cache the atoms array so we don't pay tree-traversal cost on every index read.
 	const atoms = root.charactersWithFormatting();
@@ -198,17 +210,10 @@ function contentOpsToQuillDelta(
 
 				if (atom.content instanceof FormattedTextAsTreeDefault.StringLineAtom) {
 					// Line atom: insert newline with line tag attributes.
-					const attributes: Record<string, unknown> = {};
-					const lineTag = atom.content.tag.value;
-					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
-					if (atom.content.indent) {
-						attributes.indent = atom.content.indent;
-					}
-					const quillOp: QuillDeltaOp = { insert: "\n" };
-					if (Object.keys(attributes).length > 0) {
-						quillOp.attributes = attributes;
-					}
-					quillOps.push(quillOp);
+					quillOps.push({
+						insert: "\n",
+						attributes: lineAtomToQuillAttributes(atom.content),
+					});
 					i++;
 				} else {
 					// Text atom: group consecutive atoms with the same formatting.
@@ -224,7 +229,6 @@ function contentOpsToQuillDelta(
 				}
 			}
 			treePos = insertEnd;
-			// quillPos does not advance: inserts are new content not in preEditContent.
 		} else {
 			// remove: atoms are gone from the tree; use preEditContent to get UTF-16 width.
 			const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
@@ -232,6 +236,18 @@ function contentOpsToQuillDelta(
 			quillPos += utf16Count;
 			// treePos does not advance — removed atoms are not in the new tree.
 		}
+	}
+
+	const remainingQuillContent = preEditContent.slice(quillPos);
+	if (remainingQuillContent.length > 0) {
+		assert(
+			remainingQuillContent === "\n",
+			"Expected only Quill's mandatory terminal newline to remain",
+		);
+		quillOps.push({ delete: 1 });
+	}
+	if (!root.fullString().endsWith("\n")) {
+		quillOps.push({ insert: "\n" });
 	}
 
 	return quillOps;

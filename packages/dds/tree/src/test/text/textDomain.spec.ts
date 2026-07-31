@@ -121,6 +121,7 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "xy" },
+				{ type: "retain", count: 1 },
 			]);
 		});
 
@@ -139,6 +140,7 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
@@ -159,10 +161,12 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 			assert.deepEqual(received[1], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "XY" },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
@@ -178,7 +182,10 @@ describe("textDomain", () => {
 			});
 			text.insertAt(0, "X");
 			assert.equal(received.length, 1);
-			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+			assert.deepEqual(received[0], [
+				{ type: "insert", text: "X" },
+				{ type: "retain", count: 3 },
+			]);
 		});
 
 		it("fires for insert at end", () => {

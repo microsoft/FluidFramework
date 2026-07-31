@@ -15,6 +15,7 @@ import {
 } from "@fluidframework/tree/internal";
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
+import Quill from "quill";
 import DeltaPackage from "quill-delta";
 
 import {
@@ -89,6 +90,39 @@ describe("textEditor", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
 					const ViewComponent = QuillMainView;
+
+					it("keeps remote editor DOM in sync after a user edit", () => {
+						const text = TextAsTree.Tree.fromString("");
+						const root = toPropTreeNode(text);
+						const rendered = render(
+							<>
+								<ViewComponent root={root} />
+								<ViewComponent root={root} />
+							</>,
+							{ reactStrictMode },
+						);
+						const sourceContainer =
+							rendered.container.querySelector<HTMLElement>(".ql-container");
+						const editors = rendered.container.querySelectorAll<HTMLElement>(".ql-editor");
+						const sourceEditor = editors[0];
+						const remoteEditor = editors[1];
+						assert.ok(
+							sourceContainer !== null &&
+								sourceEditor !== undefined &&
+								remoteEditor !== undefined,
+						);
+						const source = Quill.find(sourceContainer) as Quill;
+
+						source.setText("Hello", "user");
+
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						source.setText("Hello\nWorld", "user");
+
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p><p>World</p>");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+					});
 
 					it("renders MainView with editor container", () => {
 						const text = TextAsTree.Tree.fromString("");
@@ -260,6 +294,39 @@ describe("textEditor", () => {
 		describe("dom tests", () => {
 			for (const reactStrictMode of [false, true]) {
 				describe(`StrictMode: ${reactStrictMode}`, () => {
+					it("keeps remote editor DOM in sync after a user edit", () => {
+						const { tree } = createFormattedTreeView();
+						const root = toPropTreeNode(tree);
+						const rendered = render(
+							<>
+								<FormattedMainView root={root} />
+								<FormattedMainView root={root} />
+							</>,
+							{ reactStrictMode },
+						);
+						const sourceContainer =
+							rendered.container.querySelector<HTMLElement>(".ql-container");
+						const editors = rendered.container.querySelectorAll<HTMLElement>(".ql-editor");
+						const sourceEditor = editors[0];
+						const remoteEditor = editors[1];
+						assert.ok(
+							sourceContainer !== null &&
+								sourceEditor !== undefined &&
+								remoteEditor !== undefined,
+						);
+						const source = Quill.find(sourceContainer) as Quill;
+
+						source.setText("Hello", "user");
+
+						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						source.formatLine(0, source.getLength(), "list", "bullet", "user");
+
+						assert.match(sourceEditor.innerHTML, /^<ol>/);
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+					});
+
 					it("renders FormattedMainView with editor container", () => {
 						const { tree } = createFormattedTreeView();
 						const content = <FormattedMainView root={toPropTreeNode(tree)} />;
