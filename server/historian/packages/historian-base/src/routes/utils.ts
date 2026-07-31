@@ -9,12 +9,14 @@ import {
 	runWithRetry,
 	type IStorageNameRetriever,
 	type IRevokedTokenChecker,
+	type IDocument,
 	type IDocumentManager,
 	type IThrottler,
 	type IDenyList,
 } from "@fluidframework/server-services-core";
 import { containsPathTraversal, handleResponse } from "@fluidframework/server-services-shared";
 import {
+	BaseTelemetryProperties,
 	Lumberjack,
 	getGlobalTelemetryContext,
 	getLumberBaseProperties,
@@ -56,8 +58,26 @@ export type CommonRouteParams = [
 	simplifiedCustomDataRetriever?: ISimplifiedCustomDataRetriever,
 ];
 
-function getEphemeralContainerCacheKey(documentId: string): string {
-	return `isEphemeralContainer:${documentId}`;
+export type SummaryOperation = "get" | "post" | "delete";
+export type SummaryRouteType = "latest" | "sha" | "notApplicable";
+type SummaryOwnershipOutcome =
+	| "allowed"
+	| "notFound"
+	| "identityMismatch"
+	| "scheduledDeletion"
+	| "dependencyError";
+
+export interface IValidateSummaryDocumentArgs {
+	tenantId: string;
+	authorization: string | undefined;
+	documentManager: IDocumentManager;
+	operation: SummaryOperation;
+	routeType: SummaryRouteType;
+	ephemeralDocumentTTLSec: number;
+}
+
+function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
+	return `isEphemeralContainer:${encodeURIComponent(tenantId)}:${encodeURIComponent(documentId)}`;
 }
 
 async function updateIsEphemeralCache(
@@ -73,7 +93,7 @@ async function updateIsEphemeralCache(
 		});
 		return;
 	}
-	const isEphemeralKey: string = getEphemeralContainerCacheKey(documentId);
+	const isEphemeralKey = getEphemeralContainerCacheKey(tenantId, documentId);
 	Lumberjack.info(
 		`Setting cache for ${isEphemeralKey} to ${isEphemeral}.`,
 		getLumberBaseProperties(documentId, tenantId),
@@ -104,7 +124,7 @@ async function getDocumentCachedEphemeralProperties(
 		});
 		return undefined;
 	}
-	const isEphemeralKey: string = getEphemeralContainerCacheKey(documentId);
+	const isEphemeralKey = getEphemeralContainerCacheKey(tenantId, documentId);
 	try {
 		const cachedIsEphemeral = await runWithRetry(
 			async () => cache?.get(isEphemeralKey) /* api */,
@@ -240,7 +260,140 @@ async function checkAndCacheIsEphemeral({
 	return staticPropsIsEphemeral;
 }
 
+const ownershipEventName = "HistorianSummaryDocumentOwnershipValidation";
+const documentUnavailableMessage = "Document is deleted and cannot be accessed.";
+
+function getTokenDocumentId(tenantId: string, authorization: string | undefined): string {
+	if (!authorization) {
+		throw new NetworkError(403, "Authorization header is missing.");
+	}
+	const token = parseToken(tenantId, authorization);
+	if (!token) {
+		throw new NetworkError(403, "Authorization token is missing.");
+	}
+	const documentId = (decode(token) as ITokenClaims).documentId;
+	if (containsPathTraversal(documentId)) {
+		throw new NetworkError(400, `Invalid document id: ${documentId}`);
+	}
+	return documentId;
+}
+
+function logOwnershipOutcome(
+	tenantId: string,
+	documentId: string,
+	operation: SummaryOperation,
+	routeType: SummaryRouteType,
+	outcome: SummaryOwnershipOutcome,
+	error?: unknown,
+): void {
+	const properties = {
+		[BaseTelemetryProperties.tenantId]: tenantId,
+		[BaseTelemetryProperties.documentId]: documentId,
+		[BaseTelemetryProperties.correlationId]:
+			getGlobalTelemetryContext().getProperties().correlationId,
+		operation,
+		routeType,
+		outcome,
+		...(error === undefined
+			? {}
+			: {
+					dependencyStatus: error instanceof NetworkError ? error.code : undefined,
+					dependencyErrorType: error instanceof Error ? error.name : typeof error,
+			  }),
+	};
+	if (error === undefined) {
+		Lumberjack.info(ownershipEventName, properties);
+	} else {
+		Lumberjack.error(ownershipEventName, properties);
+	}
+}
+
+function denyDocumentAccess(
+	tenantId: string,
+	documentId: string,
+	operation: SummaryOperation,
+	routeType: SummaryRouteType,
+	outcome: Exclude<SummaryOwnershipOutcome, "allowed" | "dependencyError">,
+): never {
+	logOwnershipOutcome(tenantId, documentId, operation, routeType, outcome);
+	throw new NetworkError(404, documentUnavailableMessage);
+}
+
+export async function validateSummaryDocument({
+	tenantId,
+	authorization,
+	documentManager,
+	operation,
+	routeType,
+	ephemeralDocumentTTLSec,
+}: IValidateSummaryDocumentArgs): Promise<IDocument> {
+	const documentId = getTokenDocumentId(tenantId, authorization);
+	let document: IDocument | null;
+	try {
+		document = await runWithRetry(
+			async () => documentManager.readDocument(tenantId, documentId),
+			"utils.validateSummaryDocument.readDocument",
+			3,
+			1000,
+			getLumberBaseProperties(documentId, tenantId),
+		);
+	} catch (error) {
+		if (error instanceof NetworkError && error.code === 404) {
+			return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+		}
+		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		throw error;
+	}
+
+	if (!document) {
+		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+	}
+	if (
+		typeof document.tenantId !== "string" ||
+		typeof document.documentId !== "string" ||
+		!Number.isFinite(document.createTime) ||
+		(document.scheduledDeletionTime !== undefined &&
+			typeof document.scheduledDeletionTime !== "string") ||
+		(document.isEphemeralContainer !== undefined &&
+			typeof document.isEphemeralContainer !== "boolean") ||
+		(document.storageName !== undefined && typeof document.storageName !== "string")
+	) {
+		const error = new NetworkError(502, "Invalid document response from Alfred.");
+		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		throw error;
+	}
+	if (document.tenantId !== tenantId || document.documentId !== documentId) {
+		return denyDocumentAccess(tenantId, documentId, operation, routeType, "identityMismatch");
+	}
+	if (document.scheduledDeletionTime !== undefined) {
+		return denyDocumentAccess(tenantId, documentId, operation, routeType, "scheduledDeletion");
+	}
+	if (
+		document.isEphemeralContainer === true &&
+		Date.now() > document.createTime + ephemeralDocumentTTLSec * 1000
+	) {
+		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
+	}
+
+	logOwnershipOutcome(tenantId, documentId, operation, routeType, "allowed");
+	return document;
+}
+
+export async function createGitServiceFromValidatedDocument(
+	createArgs: ICreateGitServiceArgs,
+	document: IDocument,
+): Promise<RestGitService> {
+	return createGitServiceCore(createArgs, document);
+}
+
 export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
+	return createGitServiceCore(createArgs);
+}
+
+async function createGitServiceCore(
+	createArgs: ICreateGitServiceArgs,
+	validatedDocument?: IDocument,
+): Promise<RestGitService> {
 	const {
 		config,
 		tenantId,
@@ -256,20 +409,13 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		ephemeralDocumentTTLSec,
 		simplifiedCustomDataRetriever,
 		postEphemeralContainerChecker,
-	} = { ...createArgs };
-	if (!authorization) {
-		throw new NetworkError(403, "Authorization header is missing.");
-	}
+	} = createArgs;
+	const documentId = getTokenDocumentId(tenantId, authorization);
 	const token = parseToken(tenantId, authorization);
 	if (!token) {
 		throw new NetworkError(403, "Authorization token is missing.");
 	}
-	const decoded = decode(token) as ITokenClaims;
-	const documentId = decoded.documentId;
-	if (containsPathTraversal(documentId)) {
-		// Prevent attempted directory traversal.
-		throw new NetworkError(400, `Invalid document id: ${documentId}`);
-	}
+
 	const details = await tenantService.getTenant(tenantId, token, allowDisabledTenant ?? false);
 	const customData: ITenantCustomDataExternal = details.customData;
 	const simplifiedCustomData = simplifiedCustomDataRetriever?.get(customData);
@@ -279,16 +425,22 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	const isEphemeral: boolean = ignoreEphemeralFlag
-		? false
-		: await checkAndCacheIsEphemeral({
-				documentId,
-				tenantId,
-				documentManager,
-				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60, // default: 24 hours
-				isEphemeralContainerOverride: isEphemeralContainer,
-				cache,
-		  });
+	const isEphemeral =
+		validatedDocument !== undefined
+			? validatedDocument.isEphemeralContainer ?? false
+			: ignoreEphemeralFlag
+			? false
+			: await checkAndCacheIsEphemeral({
+					documentId,
+					tenantId,
+					documentManager,
+					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+					isEphemeralContainerOverride: isEphemeralContainer,
+					cache,
+			  });
+	if (validatedDocument !== undefined && !ignoreEphemeralFlag) {
+		await updateIsEphemeralCache(documentId, tenantId, isEphemeral, cache);
+	}
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
@@ -304,10 +456,12 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 	}
 
 	const calculatedStorageName =
-		initialUpload && storageName
+		validatedDocument !== undefined
+			? validatedDocument.storageName ?? customData?.storageName
+			: initialUpload && storageName
 			? storageName
 			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
-	const service = new RestGitService(
+	return new RestGitService(
 		details.storage,
 		writeToExternalStorage,
 		tenantId,
@@ -319,7 +473,6 @@ export async function createGitService(createArgs: ICreateGitServiceArgs): Promi
 		maxCacheableSummarySize,
 		simplifiedCustomData,
 	);
-	return service;
 }
 
 /**
