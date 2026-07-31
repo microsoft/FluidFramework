@@ -22,6 +22,7 @@ import {
 	TreeArrayNode,
 	TreeBeta,
 	createCustomizedFluidFrameworkScopedFactory,
+	eraseSchemaDetails,
 	isObjectNodeSchema,
 	eraseSchemaDetailsSubclassable,
 } from "../simple-tree/index.js";
@@ -41,7 +42,13 @@ import type {
 	ErasedNode,
 	SchemaFactoryBeta,
 } from "../simple-tree/index.js";
-import { brand, mapIterable, validateIndex, validateIndexRange } from "../util/index.js";
+import {
+	brand,
+	mapIterable,
+	oneFromIterable,
+	validateIndex,
+	validateIndexRange,
+} from "../util/index.js";
 
 import {
 	charactersFromString,
@@ -69,6 +76,44 @@ const sfStatic = new SchemaFactoryAlpha("com.fluidframework.text.formatted");
 const formatKey: FieldKey = brand("format");
 
 /**
+ * Atom in the string containing a single character.
+ * @privateRemarks
+ * This is outside the namespace so it can be exported for testing, but not package exported.
+ */
+export class StringTextAtomNode
+	extends sfStatic.object("StringTextAtom", {
+		/**
+		 * The underlying text content of this atom.
+		 * @remarks
+		 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
+		 * Longer strings are still valid. For example, users might store whole grapheme clusters here, or even longer sections of text.
+		 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
+		 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
+		 * Instead, atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
+		 * @privateRemarks
+		 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
+		 */
+		content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
+	})
+	implements FormattedTextAsTree.TextAtom
+{
+	public static fromCharacter(value: string): StringTextAtomNode {
+		const character = oneFromIterable(charactersFromString(value));
+		if (character === undefined) {
+			throw new UsageError("value must contain exactly one Unicode character.");
+		}
+		return new StringTextAtomNode({ content: character });
+	}
+
+	public static fromString(value: string): StringTextAtomNode[] {
+		return Array.from(
+			charactersFromString(value),
+			(character) => new StringTextAtomNode({ content: character }),
+		);
+	}
+}
+
+/**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
  * @remarks
  * This is generic over formatting an embedded object/atom types.
@@ -89,7 +134,7 @@ export namespace FormattedTextAsTree {
 	 * It must be different to distinguish different formatted text schema within the same document.
 	 * @param formatSchema - Schema describing the formatting associated with each atom of text.
 	 * Use an {@link NodeKind.Object|Object node} to support {@link FormattedTextAsTree.Members.formatRange}.
-	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedTextAsTree.StringTextAtom}.
+	 * @param extraAtoms - Additional atom schema to allow as text content beyond the built-in {@link FormattedTextAsTree.(StringTextAtom:variable)}.
 	 * Use this to embed richer content (for example line breaks or inline objects) alongside plain characters.
 	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
 	 * (for example {@link FormattedTextAsTree.Members.insertAt} and {@link FormattedTextAsTree.Statics.fromString} when no explicit format is provided).
@@ -97,7 +142,7 @@ export namespace FormattedTextAsTree {
 	 * @remarks
 	 * See {@link FormattedTextAsTreeDefault} for a default parameterization of this factory.
 	 * @privateRemarks
-	 * TODO: The choice to always include the built-in `StringTextAtom` is a design decision that should be re-evaluated before stabilizing.
+	 * TODO: The choice to always include the built-in {@link FormattedTextAsTree.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
 	export function createSchema<
 		const TUserScope extends string,
@@ -374,12 +419,9 @@ export namespace FormattedTextAsTree {
 		function stringTextAtomsFromString(
 			value: string,
 		): Iterable<StringTextAtom & TextAtomNode> {
-			return mapIterable(
-				charactersFromString(value),
-				// TypeScript can't prove in this Generic context that StringTextAtom is assignable to TextAtomNode, so we have to cast.
-				// Since TextAtomSchemas unconditionally includes StringTextAtom, this cast is safe.
-				(char) => new StringTextAtom({ content: char }) as StringTextAtom & TextAtomNode,
-			);
+			// TypeScript can't prove in this Generic context that StringTextAtom is assignable to TextAtomNode, so we have to cast.
+			// Since TextAtomSchemas unconditionally includes StringTextAtom, this cast is safe.
+			return StringTextAtom.fromString(value) as (StringTextAtom & TextAtomNode)[];
 		}
 
 		function stringAtomsFromTextAtoms(
@@ -583,16 +625,30 @@ export namespace FormattedTextAsTree {
 
 	/**
 	 * Portion of a string with formatting.
+	 * @privateRemarks
+	 * This is implemented {@link StringAtom}, but we avoid leaking the fact this is a TreeNode in the API surface to
+	 * preserve more future flexibility.
 	 * @sealed
 	 * @internal
 	 */
 	export interface FormattedAtom<TFormat, TText> {
+		/**
+		 * Content which is formatted.
+		 */
 		readonly content: TText;
+		/**
+		 * Formatting which is applied to the content.
+		 * @remarks
+		 * Can be reassigned or deeply mutated to edit the formatting of the content.
+		 */
 		format: TFormat;
 	}
 
 	/**
 	 * Portion of a string.
+	 * @remarks
+	 * Additional kinds of text atoms (also known as embedded objects) which can occur inside a string can implement this.
+	 * The schema for them can then be provided to {@link FormattedTextAsTree.createSchema}.
 	 * @internal
 	 */
 	export interface TextAtom {
@@ -603,26 +659,46 @@ export namespace FormattedTextAsTree {
 	}
 
 	/**
-	 * Unit in the string representing a single character.
+	 * Static factory functions for {@link FormattedTextAsTree.(StringTextAtom:variable)}.
+	 * @privateRemarks
+	 * We type-erase `StringTextAtom` and only provide these static factories for construction
+	 * to reduce the chance of someone accidentally creating a text atom for a string other than a single unicode code point.
+	 * Other strings should work, but our intention is to provide no type-safe API which can produce them, so an application can take their lack of existence as an invariant if they want.
+	 * It is still however possible to produce them, like export/import round trips with editing in the middle of the process, or collaboration with an equivalent schema which doesn't enforce this invariant.
 	 * @sealed
 	 * @internal
 	 */
-	export class StringTextAtom
-		extends sfStatic.object("StringTextAtom", {
-			/**
-			 * The underlying text content of this atom.
-			 * @remarks
-			 * This is typically a single Unicode code point, and thus may contain multiple UTF-16 surrogate pair code units.
-			 * Using longer strings is still valid. For example, so users might store whole grapheme clusters here, or even longer sections of text.
-			 * Anything combined into a single atom will be treated atomically, and can not be partially selected or formatted.
-			 * Using larger atoms and splitting them as needed is NOT a recommended approach, since this will result in poor merge behavior for concurrent edits.
-			 * Instead atoms should always be the smallest unit of text which will be independently selected, moved or formatted.
-			 * @privateRemarks
-			 * This content logically represents the whole atom's content, so using {@link EmptyKey} makes sense to help indicate that.
-			 */
-			content: SchemaFactory.required([SchemaFactory.string], { key: EmptyKey }),
-		})
-		implements TextAtom {}
+	export interface StringTextAtomStatics {
+		/**
+		 * Creates an atom from exactly one Unicode code point.
+		 * @throws A {@link @fluidframework/telemetry-utils#UsageError} if `value` does not contain exactly one Unicode code character.
+		 */
+		fromCharacter(value: string): StringTextAtom;
+
+		/**
+		 * Creates one atom for each Unicode code point in `value`.
+		 */
+		fromString(value: string): StringTextAtom[];
+	}
+
+	/**
+	 * Schema for a {@link FormattedTextAsTree.(StringTextAtom:variable)} node.
+	 * @sealed
+	 * @internal
+	 */
+	export const StringTextAtom = eraseSchemaDetails<TextAtom, StringTextAtomStatics>()(
+		StringTextAtomNode,
+	);
+
+	/**
+	 * Node for the {@link FormattedTextAsTree.(StringTextAtom:variable)} schema.
+	 * @sealed
+	 * @internal
+	 */
+	export type StringTextAtom = ErasedNode<
+		TextAtom,
+		"com.fluidframework.text.formatted.StringTextAtom"
+	>;
 
 	/**
 	 * Statics for formatted text nodes.
