@@ -648,9 +648,9 @@ extends:
       - ${{ if eq(parameters.telemetry, true) }}:
         - template: /tools/pipelines/templates/upload-telemetry/include-stage-upload-telemetry.yml@self
           parameters:
-            dependsOn:
-              - build
-              - ${{ if and(eq(parameters.publish, true), eq(parameters.publishAsPartOfBuild, true)) }}:
+            ${{ if and(eq(parameters.publish, true), eq(parameters.publishAsPartOfBuild, true)) }}:
+              dependsOn:
+                - build
                 # Note: the publish stages are created in include-publish-npm-package.yml. We need to match the ids exactly.
                 - publish_npm_internal_test
                 - publish_npm_internal_build
@@ -662,6 +662,10 @@ extends:
                 # 'condition:', and update this bit to always depend on publish_npm_internal_dev, since it will always exist.
                 - ${{ if eq(parameters.isReleaseGroup, true) }}:
                   - publish_npm_internal_dev
+            ${{ else }}:
+              # Delegated publishing has no publish stages to depend on, but build telemetry is still required for alerting.
+              dependsOn:
+                - build
             telemetryDescription: 'stage_timing'
             telemetry_upload_steps:
               - template: /tools/pipelines/templates/upload-telemetry/include-steps-upload-stage-timing.yml@self
