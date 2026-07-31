@@ -61,10 +61,11 @@
 		"build:api-reports:browser:legacy": "api-extractor run --local --config api-extractor/api-extractor-report-browser.legacy.json",
 		"build:api-reports:node:current": "npm run ci:build:api-reports:node:current",
 		"build:api-reports:node:legacy": "npm run ci:build:api-reports:node:legacy",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model-browser.json",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:exports:browser": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.browser. --mainEntrypoint ./src/indexBrowser.ts --outDir ./lib",
 		"build:exports:node": "flub generate entrypoints --outFileLegacyBeta legacy --outFilePrefix {@unscopedPackageName}.node. --mainEntrypoint ./src/indexNode.ts --outDir ./lib",
 		"build:test": "concurrently npm:build:test:mocha npm:build:test:playwright npm:build:test:types",
@@ -106,7 +107,6 @@
 		"test:mocha:cjs": "cross-env FLUID_TEST_MODULE_SYSTEM=CJS \"MOCHA_SPEC=dist/test/mocha/**/*.spec.*js\" mocha",
 		"test:mocha:esm": "cross-env \"MOCHA_SPEC=lib/test/mocha/**/*.spec.*js\" mocha",
 		"test:playwright": "playwright test",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../common/build/build-common/src/cjs/package.json ./dist",
 		"typetests:gen": "flub generate typetests --dir . -v"
 	},
 	"c8": {
@@ -174,7 +174,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"eslint": [
-				"build:esnext"
+				"build:esm"
 			],
 			"build:api-reports:browser:current": [
 				"build:exports:browser"
@@ -189,28 +189,28 @@
 				"build:api-reports:browser:legacy"
 			],
 			"build:exports:browser": [
-				"build:esnext"
+				"build:esm"
 			],
 			"build:exports:node": [
-				"build:esnext"
+				"build:esm"
 			],
 			"build:test:mocha:cjs": [
-				"tsc"
+				"build:cjs"
 			],
 			"build:test:mocha:esm": [
-				"build:esnext"
+				"build:esm"
 			],
 			"build:test:types": [
-				"build:esnext"
+				"build:esm"
 			],
 			"check:exports:bundle-release-tags": [
 				"build:exports:browser"
 			],
 			"check:exports:cjs:indexBrowser": [
-				"tsc"
+				"build:cjs"
 			],
 			"check:exports:cjs:indexNode": [
-				"tsc"
+				"build:cjs"
 			],
 			"check:exports:esm:browser:current": [
 				"build:exports:browser"
@@ -219,7 +219,7 @@
 				"build:exports:browser"
 			],
 			"check:exports:esm:indexBrowser": [
-				"build:esnext"
+				"build:esm"
 			],
 			"check:exports:esm:indexNode": [
 				"build:exports:node"
