@@ -1460,6 +1460,68 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(cacheDelete);
 		sinon.assert.notCalled(deleteSummary);
 	});
+
+	it("requires ownership for non-initial POST and ignores caller routing metadata", async () => {
+		sandbox.stub(documentManager, "readDocument").resolves(null);
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "false" })
+			.set("Authorization", authorization)
+			.set("StorageName", "attacker-storage")
+			.set(Constants.IsEphemeralContainer, "true")
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(404);
+
+		sinon.assert.notCalled(createSummary);
+	});
+
+	it("requires ownership for POST when initial is omitted", async () => {
+		sandbox.stub(documentManager, "readDocument").resolves(null);
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(404);
+
+		sinon.assert.notCalled(createSummary);
+	});
+
+	it("preserves the POST-only initial exemption and emits structured telemetry", async () => {
+		const readDocument = sandbox.spy(documentManager, "readDocument");
+		const info = sandbox.spy(Lumberjack, "info");
+		const createSummary = sandbox
+			.stub(RestGitService.prototype, "createSummary")
+			.resolves({ id: sha });
+
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.set("x-correlation-id", "initial-exemption-correlation")
+			.set("StorageName", "initial-storage")
+			.set(Constants.IsEphemeralContainer, "true")
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+
+		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnce(createSummary);
+		sinon.assert.calledWithMatch(
+			info,
+			"HistorianInitialSummaryUploadExemption",
+			sinon.match({
+				correlationId: "initial-exemption-correlation",
+				tenantId,
+				documentId,
+				operation: "post",
+				routeType: "notApplicable",
+				outcome: "exempted",
+			}),
+		);
+	});
 });
 
 describe("createRouteContext", () => {

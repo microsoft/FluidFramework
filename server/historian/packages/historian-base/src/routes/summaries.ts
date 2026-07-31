@@ -18,7 +18,11 @@ import type {
 	IDenyList,
 } from "@fluidframework/server-services-core";
 import { validateRequestParams } from "@fluidframework/server-services-shared";
-import { BaseTelemetryProperties, Lumberjack } from "@fluidframework/server-services-telemetry";
+import {
+	BaseTelemetryProperties,
+	getGlobalTelemetryContext,
+	Lumberjack,
+} from "@fluidframework/server-services-telemetry";
 import {
 	denyListMiddleware,
 	type IThrottleMiddlewareOptions,
@@ -36,7 +40,7 @@ import type {
 	IPostEphemeralContainerChecker,
 	RestGitService,
 } from "../services";
-import { parseToken, Constants } from "../utils";
+import { parseToken, Constants, getDocumentIdFromRequest } from "../utils";
 
 import * as utils from "./utils";
 
@@ -159,25 +163,48 @@ export function create(
 		initial?: boolean,
 		storageName?: string,
 		isEphemeralContainer?: boolean,
-		ignoreEphemeralFlag?: boolean,
 		query?: Query,
 	): Promise<IWriteSummaryResponse> {
-		const service = await utils.createGitService({
-			config,
-			tenantId,
-			authorization,
-			tenantService,
-			storageNameRetriever,
-			documentManager,
-			cache,
-			initialUpload: initial,
-			storageName,
-			isEphemeralContainer,
-			ephemeralDocumentTTLSec,
-			simplifiedCustomDataRetriever,
-			postEphemeralContainerChecker,
-			query,
-		});
+		let service: RestGitService;
+		if (initial === true) {
+			Lumberjack.info("HistorianInitialSummaryUploadExemption", {
+				[BaseTelemetryProperties.correlationId]:
+					getGlobalTelemetryContext().getProperties().correlationId,
+				[BaseTelemetryProperties.tenantId]: tenantId,
+				[BaseTelemetryProperties.documentId]: getDocumentIdFromRequest(
+					tenantId,
+					authorization,
+				),
+				operation: "post",
+				routeType: "notApplicable",
+				outcome: "exempted",
+			});
+			service = await utils.createGitService({
+				config,
+				tenantId,
+				authorization,
+				tenantService,
+				storageNameRetriever,
+				documentManager,
+				cache,
+				initialUpload: true,
+				storageName,
+				isEphemeralContainer,
+				ephemeralDocumentTTLSec,
+				simplifiedCustomDataRetriever,
+				postEphemeralContainerChecker,
+				query,
+			});
+		} else {
+			service = await createProtectedSummaryService(
+				tenantId,
+				authorization,
+				"post",
+				"notApplicable",
+				false,
+				query,
+			);
+		}
 		return service.createSummary(params, initial);
 	}
 
@@ -282,7 +309,6 @@ export function create(
 				initial,
 				request.get("StorageName"),
 				isEphemeralContainer,
-				ignoreIsEphemeralFlag,
 				request.query,
 			);
 
