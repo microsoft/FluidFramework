@@ -104,6 +104,7 @@ extends:
     publishAsPartOfBuild: true
     releaseKind: ${{ parameters.releaseKind }}
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: true
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     dockerBuildBumpsVersion: true
     emitDockerImageDigest: true
