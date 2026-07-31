@@ -141,7 +141,12 @@ module.exports = {
 		"ts2esm": [],
 		"tsc": ["^tsc", "^build:entrypoints:cjs", "^api", "build:genver", "ts2esm"],
 		"place:cjs:package-stub": [], // no cross-package deps needed (without definition default is [^*])
-		"build:esnext": ["^build:esnext", "^api-extractor:esnext", "build:genver"],
+		"build:esnext": [
+			"^build:esnext",
+			"^build:entrypoints:esm",
+			"^api-extractor:esnext",
+			"build:genver",
+		],
 		"build:entrypoints": {
 			dependsOn: [
 				"build:entrypoints:esm",
