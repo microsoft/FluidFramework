@@ -19,6 +19,7 @@ import { createRouteContext } from "../routes/utils";
 import {
 	generateToken,
 	getAuthorizationTokenFromCredentials,
+	NetworkError,
 } from "@fluidframework/server-services-client";
 import { ScopeType } from "@fluidframework/protocol-definitions";
 import { StartupCheck } from "@fluidframework/server-services-shared";
@@ -1521,6 +1522,97 @@ describe("summary ownership routes", () => {
 				outcome: "exempted",
 			}),
 		);
+	});
+
+	it("creates no positive attacker mappings after ownership denial", async () => {
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			tenantId: "victim-tenant",
+		});
+		const cacheSet = sandbox.spy(cache, "set");
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(404);
+
+		sinon.assert.notCalled(cacheSet);
+	});
+
+	it("fails closed when Alfred is unavailable", async () => {
+		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new NetworkError(503, "Alfred unavailable"));
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary");
+		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
+			while (readDocument.callCount < expectedCallCount) {
+				await new Promise<void>((resolve) => {
+					setImmediate(resolve);
+				});
+			}
+		};
+
+		const responsePromise = superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(503)
+			.then();
+		await waitForCallCount(1);
+		await clock.tickAsync(1000);
+		await waitForCallCount(2);
+		await clock.tickAsync(2000);
+		await waitForCallCount(3);
+		await clock.tickAsync(4000);
+		await waitForCallCount(4);
+		await clock.tickAsync(8000);
+		await responsePromise;
+
+		sinon.assert.notCalled(getSummary);
+	});
+
+	it("validates ownership before GET, POST, and DELETE service calls", async () => {
+		const events: string[] = [];
+		sandbox.stub(documentManager, "readDocument").callsFake(async () => {
+			events.push("readDocument");
+			return activeDocument;
+		});
+		sandbox.stub(RestGitService.prototype, "getSummary").callsFake(async () => {
+			events.push("getSummary");
+			return { id: sha, trees: [], blobs: [] };
+		});
+		sandbox.stub(RestGitService.prototype, "createSummary").callsFake(async () => {
+			events.push("createSummary");
+			return { id: sha };
+		});
+		sandbox.stub(RestGitService.prototype, "deleteSummary").callsFake(async () => {
+			events.push("deleteSummary");
+			return true;
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/${sha}`)
+			.set("Authorization", authorization)
+			.expect(200);
+		await superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(201);
+		await superTest
+			.delete(`/repos/${tenantId}/git/summaries`)
+			.set("Authorization", authorization)
+			.set("Soft-Delete", "true")
+			.expect(200);
+
+		assert.deepStrictEqual(events, [
+			"readDocument",
+			"getSummary",
+			"readDocument",
+			"createSummary",
+			"readDocument",
+			"deleteSummary",
+		]);
 	});
 });
 

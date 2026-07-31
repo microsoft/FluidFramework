@@ -16,7 +16,11 @@ import { Lumberjack } from "@fluidframework/server-services-telemetry";
 import * as nconf from "nconf";
 import * as sinon from "sinon";
 
-import { createGitServiceFromValidatedDocument, validateSummaryDocument } from "../routes/utils";
+import {
+	createGitService,
+	createGitServiceFromValidatedDocument,
+	validateSummaryDocument,
+} from "../routes/utils";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
 
 const tenantId = "tenant/a";
@@ -326,5 +330,83 @@ describe("summary ownership", function () {
 				outcome: "allowed",
 			}),
 		);
+	});
+
+	it("does not collide ephemeral cache entries for duplicate document IDs", async () => {
+		const cache = new TestCache();
+		const cacheSet = sandbox.spy(cache, "set");
+		const config = new nconf.Provider({}).defaults({
+			ignoreEphemeralFlag: false,
+			storageUrl: "http://localhost",
+		});
+		const documentManager = new TestDocumentManager();
+		const currentDocumentId = "shared:id";
+
+		for (const currentTenantId of ["tenant-a", "tenant-b"]) {
+			const currentAuthorization = getAuthorizationTokenFromCredentials({
+				user: currentTenantId,
+				password: generateToken(currentTenantId, currentDocumentId, "tenant-key", [
+					ScopeType.DocRead,
+				]),
+			});
+			await createGitServiceFromValidatedDocument(
+				{
+					config,
+					tenantId: currentTenantId,
+					authorization: currentAuthorization,
+					tenantService: new TestTenantService(),
+					documentManager,
+					cache,
+					ephemeralDocumentTTLSec: 24 * 60 * 60,
+				},
+				{
+					...activeDocument,
+					documentId: currentDocumentId,
+					tenantId: currentTenantId,
+					isEphemeralContainer: currentTenantId === "tenant-b",
+				},
+			);
+		}
+
+		sinon.assert.calledWithExactly(
+			cacheSet,
+			"isEphemeralContainer:tenant-a:shared%3Aid",
+			false,
+		);
+		sinon.assert.calledWithExactly(cacheSet, "isEphemeralContainer:tenant-b:shared%3Aid", true);
+	});
+
+	it("never reads the legacy document-only ephemeral key", async () => {
+		const cache = new TestCache();
+		await cache.set("isEphemeralContainer:shared:id", true);
+		const cacheGet = sandbox.spy(cache, "get");
+		const documentManager = new TestDocumentManager();
+		sandbox.stub(documentManager, "readStaticProperties").resolves({
+			...activeDocument,
+			tenantId: "tenant-a",
+			documentId: "shared:id",
+			isEphemeralContainer: false,
+		});
+		const currentAuthorization = getAuthorizationTokenFromCredentials({
+			user: "tenant-a",
+			password: generateToken("tenant-a", "shared:id", "tenant-key", [ScopeType.DocRead]),
+		});
+		const config = new nconf.Provider({}).defaults({
+			ignoreEphemeralFlag: false,
+			storageUrl: "http://localhost",
+		});
+
+		await createGitService({
+			config,
+			tenantId: "tenant-a",
+			authorization: currentAuthorization,
+			tenantService: new TestTenantService(),
+			documentManager,
+			cache,
+			ephemeralDocumentTTLSec: 24 * 60 * 60,
+		});
+
+		sinon.assert.calledWith(cacheGet, "isEphemeralContainer:tenant-a:shared%3Aid");
+		assert.strictEqual(cacheGet.calledWith("isEphemeralContainer:shared:id"), false);
 	});
 });
