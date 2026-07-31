@@ -26,6 +26,7 @@ import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextAsTreeDefault } from "../../text/index.js";
+import { oneFromIterable } from "../../util/index.js";
 
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
 
@@ -103,6 +104,30 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "hello world");
 		text.removeRange(0, 6);
 		assert.equal(text.fullString(), "world");
+	});
+
+	it("default formatting", () => {
+		class Custom extends FormattedTextAsTree.createSchema(
+			new SchemaFactoryBeta("test.formatted.custom"),
+			[SchemaFactory.null, SchemaFactory.number],
+			[],
+			5,
+		) {}
+		{
+			const text = Custom.fromString("x");
+			const atom = oneFromIterable(text.charactersWithFormatting()) ?? assert.fail();
+			assert.equal(atom.format, 5);
+			atom.format = 4;
+			assert.equal(atom.format, 4);
+			text.reformat();
+			assert.equal(atom.format, 5);
+			text.insertAt(1, "y", null); // Ensure this overrides default correctly, even when null.
+			text.insertAt(2, "z"); // Uses default
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom2) => atom2.format),
+				[5, null, 5],
+			);
+		}
 	});
 
 	it("fromString applies the provided format", () => {
@@ -243,9 +268,6 @@ describe("textDomainFormatted", () => {
 		it("uses the default format when no format is provided", () => {
 			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 			text.formatRange(0, 5, { bold: true, italic: true });
-			// Customize the default format so we can distinguish it from a fresh default.
-			text.defaultFormat.underline = true;
-			// Reformat a sub-range without providing a format: the default format should be used.
 			text.reformat(1, 4);
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
@@ -253,13 +275,15 @@ describe("textDomainFormatted", () => {
 					atom.format.bold,
 					atom.format.italic,
 					atom.format.underline,
+					atom.format.size,
+					atom.format.font,
 				]),
 				[
-					["h", true, true, false],
-					["e", false, false, true],
-					["l", false, false, true],
-					["l", false, false, true],
-					["o", true, true, false],
+					["h", true, true, false, 12, "Arial"],
+					["e", false, false, false, 12, "Arial"],
+					["l", false, false, false, 12, "Arial"],
+					["l", false, false, false, 12, "Arial"],
+					["o", true, true, false, 12, "Arial"],
 				],
 			);
 		});
@@ -283,7 +307,16 @@ describe("textDomainFormatted", () => {
 	it("insertWithFormattingAt", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
-			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
+			{
+				content: { content: "c" },
+				format: {
+					bold: false,
+					italic: true,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				},
+			},
 		]);
 		assert.equal(text.fullString(), "acb");
 		assert.deepEqual(
@@ -299,10 +332,15 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
-	it("defaultFormat", () => {
+	it("insertAt applies the provided format", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
-		text.defaultFormat.underline = true;
-		text.insertAt(2, "cd");
+		text.insertAt(2, "cd", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
@@ -317,12 +355,49 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
+	it("insertAt accepts text atoms", () => {
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
+		text.insertAt(
+			1,
+			[
+				new FormattedTextAsTreeDefault.StringLineAtom({
+					tag: FormattedTextAsTreeDefault.LineTag("h1"),
+					indent: 0,
+				}),
+				new FormattedTextAsTree.StringTextAtom({ content: "c" }),
+			],
+			{
+				bold: true,
+				italic: false,
+				underline: false,
+				size: 12,
+				font: "Arial",
+			},
+		);
+
+		assert.equal(text.fullString(), "a\ncb");
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => atom.format.bold),
+			[false, true, true, false],
+		);
+	});
+
 	it("getUniformRun", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
-		text.defaultFormat.underline = true;
-		text.insertAt(3, "de");
-		text.defaultFormat.italic = true;
-		text.insertAt(5, "f");
+		text.insertAt(3, "de", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
+		text.insertAt(5, "f", {
+			bold: false,
+			italic: true,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		assert.equal(text.getUniformRun(0, 5), 3);
 		assert.equal(text.getUniformRun(0), 3);
 		assert.equal(text.getUniformRun(3, 5), 2);
@@ -333,10 +408,20 @@ describe("textDomainFormatted", () => {
 
 	it("getString with getUniformRun", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
-		text.defaultFormat.underline = true;
-		text.insertAt(3, "de");
-		text.defaultFormat.italic = true;
-		text.insertAt(5, "f");
+		text.insertAt(3, "de", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
+		text.insertAt(5, "f", {
+			bold: false,
+			italic: true,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		let index = 0;
 		let currentRun = text.getUniformRun(index, text.characterCount());
 		assert.equal(text.getString(index, index + currentRun), "abc");
