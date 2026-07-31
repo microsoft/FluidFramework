@@ -63,15 +63,15 @@ export class ClaimsDataObject
 	private internalClaims: IClaims<DirectoryHandle> | undefined;
 
 	/**
-	 * Resolved owner of each winning claim, keyed by claim key.
+	 * Resolved backing directory of each winning claim, keyed by claim key.
 	 *
 	 * @remarks
 	 * Claim values are handles, which resolve asynchronously, but the view reads owners
-	 * synchronously while rendering. A winning directory's owner is written once and never
-	 * changes, so this map memoizes the resolved owner string — letting {@link getOwner} stay
-	 * synchronous without holding onto (or subscribing to) the backing directory.
+	 * synchronously while rendering. This map memoizes the resolved directory — the same
+	 * shared object a customer would typically retain — so {@link getOwner} can consult it
+	 * synchronously and read live, rather than caching a copied-out value.
 	 */
-	private readonly resolvedOwners = new Map<string, string>();
+	private readonly resolvedDirectories = new Map<string, ISharedDirectory>();
 
 	private get claims(): IClaims<DirectoryHandle> {
 		if (this.internalClaims === undefined) {
@@ -81,7 +81,7 @@ export class ClaimsDataObject
 	}
 
 	public getOwner(key: string): string | undefined {
-		return this.resolvedOwners.get(key);
+		return this.resolvedDirectories.get(key)?.get<string>(ownerKey);
 	}
 
 	/**
@@ -159,9 +159,9 @@ export class ClaimsDataObject
 	}
 
 	/**
-	 * Resolves a key's winning handle to its backing directory, memoizes the owner (once), and
-	 * notifies the view. The owner is written once at creation and never changes, so there is no
-	 * need to retain or subscribe to the directory itself.
+	 * Resolves a key's winning handle to its backing directory, memoizes the directory, and
+	 * notifies the view. The resolved directory is the shared object a customer would retain,
+	 * so {@link getOwner} can read from it live.
 	 */
 	private resolve(key: string): void {
 		const handle = this.claims.get(key);
@@ -171,9 +171,8 @@ export class ClaimsDataObject
 		handle
 			.get()
 			.then((directory) => {
-				const owner = directory.get<string>(ownerKey);
-				if (owner !== undefined && this.resolvedOwners.get(key) !== owner) {
-					this.resolvedOwners.set(key, owner);
+				if (!this.resolvedDirectories.has(key)) {
+					this.resolvedDirectories.set(key, directory);
 					this.emit("claimsChanged");
 				}
 			})
