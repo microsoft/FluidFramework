@@ -170,6 +170,8 @@ describe("textDomainFormatted", () => {
 				atoms.map((atom) => atom.content),
 				["a", "😀", "b"],
 			);
+			const empty = FormattedTextAsTree.StringTextAtom.fromString("");
+			assert.deepEqual(empty, []);
 		});
 	});
 
