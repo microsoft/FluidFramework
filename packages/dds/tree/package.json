@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/tree",
-	"version": "2.113.0",
+	"version": "2.114.0",
 	"description": "Distributed tree",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -93,7 +93,7 @@
 		"build:entrypoints:node10": "flub generate node10Entrypoints",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./src/test/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./src/test/tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack . --exclude-entrypoints ./internal/test",
@@ -162,7 +162,6 @@
 	},
 	"dependencies": {
 		"@fluid-internal/client-utils": "workspace:~",
-		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/core-utils": "workspace:~",
 		"@fluidframework/datastore-definitions": "workspace:~",
@@ -192,10 +191,12 @@
 		"@fluidframework/build-tools": "catalog:buildTools",
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/container-loader": "workspace:~",
+		"@fluidframework/container-runtime": "workspace:~",
 		"@fluidframework/eslint-config-fluid": "catalog:eslint",
+		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/test-runtime-utils": "workspace:~",
 		"@fluidframework/test-utils": "workspace:~",
-		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.111.0",
+		"@fluidframework/tree-previous": "npm:@fluidframework/tree@2.112.0",
 		"@microsoft/api-extractor": "7.58.1",
 		"@types/diff": "^3.5.1",
 		"@types/easy-table": "^0.0.32",

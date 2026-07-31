@@ -35,6 +35,10 @@ parameters:
     - default
     - skip
     - force
+- name: allowPublishingToNpmjs
+  displayName: Allow publishing to npmjs.org
+  type: boolean
+  default: false
 - name: interdependencyRange
   displayName: Range to use for interdependencies (only affects releases) (default = ~)
   type: string
@@ -105,6 +109,7 @@ trigger:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -173,6 +178,7 @@ pr:
     - tools/markdown-magic/*
     - tools/pipelines/build-client.yml
     - tools/pipelines/templates/build-npm-client-package.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-build-lint.yml
     - tools/pipelines/templates/include-policy-check.yml
     - tools/pipelines/templates/include-set-package-version.yml
@@ -193,6 +199,10 @@ extends:
   template: /tools/pipelines/templates/build-npm-client-package.yml@self
   parameters:
     publish: ${{ variables.publish }}
+    allowPublishingToNpmjs: ${{ parameters.allowPublishingToNpmjs }}
+    # Client still publishes from this pipeline. Flip to false to hand publishing over to the
+    # dedicated publish pipeline.
+    publishAsPartOfBuild: true
     publishOverride: ${{ parameters.publishOverride }}
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     packageTypesOverride: ${{ parameters.packageTypesOverride }}
