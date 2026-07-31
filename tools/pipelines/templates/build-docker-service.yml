@@ -662,14 +662,14 @@ extends:
     # This is also true if the releaseKind is 'npm' (meaning we only want to publish the npm packages).
     # But if the releaseKind is 'docker' (meaning we only want to publish the docker images, not the npm packages),
     # then those steps should tag the repo.
-    - ${{ if and(eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
+    - ${{ if and(eq(parameters.publishAsPartOfBuild, true), eq(parameters.shouldPublishNpmPackages, true), ne(parameters.releaseKind, 'docker')) }}:
       - template: /tools/pipelines/templates/include-publish-npm-package.yml@self
         parameters:
           tagName: ${{ parameters.tagName }}
           isReleaseGroup: ${{ parameters.isReleaseGroup }}
           buildDirectory: ${{ parameters.buildDirectory }}
 
-    - ${{ if eq(parameters.shouldReleaseDockerImage, true) }}:
+    - ${{ if and(eq(parameters.publishAsPartOfBuild, true), eq(parameters.shouldReleaseDockerImage, true)) }}:
       - stage: publish_docker_official
         dependsOn: build
         displayName: Publish Official Docker Image
