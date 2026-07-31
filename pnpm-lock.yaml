@@ -374,7 +374,7 @@ importers:
         version: 29.7.0(@types/node@22.19.17)(supports-color@10.2.2)(ts-node@10.9.2)
       jest-environment-puppeteer:
         specifier: ^10.1.3
-        version: 10.1.4(debug@4.4.3)(supports-color@10.2.2)(typescript@5.4.5)
+        version: 10.1.4(debug@4.4.3)(supports-color@8.1.1)(typescript@5.4.5)
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
@@ -6584,8 +6584,8 @@ importers:
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       nock:
         specifier: ^13.3.3
-      rimraf:
         version: 13.5.6(supports-color@8.1.1)
+      rimraf:
         specifier: ^6.1.3
         version: 6.1.3
       sinon:
@@ -12142,7 +12142,7 @@ importers:
         version: 18.3.15
       '@types/react-19':
         specifier: npm:@types/react@~19.2.0
-        version: '@types/react@19.2.18'
+        version: '@types/react@19.2.17'
       '@types/react-dom':
         specifier: ~18.3.1
         version: 18.3.3(@types/react@18.3.15)
@@ -12838,8 +12838,8 @@ importers:
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
       debug:
-        version: 4.4.3(supports-color@8.1.1)
         specifier: ^4.3.4
+        version: 4.4.3(supports-color@8.1.1)
       double-ended-queue:
         specifier: ^2.1.0-0
         version: 2.1.0-0
@@ -15737,8 +15737,8 @@ importers:
         specifier: ^1.0.0
         version: 1.0.3
       debug:
-        version: 4.4.3(supports-color@8.1.1)
         specifier: ^4.3.4
+        version: 4.4.3(supports-color@8.1.1)
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
@@ -17283,8 +17283,8 @@ importers:
         version: link:../../common/driver-definitions
       debug:
         specifier: ^4.3.4
-      uuid:
         version: 4.4.3(supports-color@8.1.1)
+      uuid:
         specifier: ^11.1.1
         version: 11.1.1
     devDependencies:
@@ -17379,8 +17379,8 @@ importers:
         specifier: ^0.3.1
         version: 0.3.2
       debug:
-        version: 4.4.3(supports-color@8.1.1)
         specifier: ^4.3.4
+        version: 4.4.3(supports-color@8.1.1)
       proper-lockfile:
         specifier: ^4.1.2
         version: 4.1.2
@@ -17504,8 +17504,8 @@ packages:
 
   '@anthropic-ai/sdk@0.90.0':
     resolution: {integrity: sha512-MzZtPabJF1b0FTDl6Z6H5ljphPwACLGP13lu8MTiB8jXaW/YXlpOp+Po2cVou3MPM5+f5toyLnul9whKCy7fBg==}
-    peerDependencies:
     hasBin: true
+    peerDependencies:
       zod: ^3.25.0 || ^4.0.0
     peerDependenciesMeta:
       zod:
@@ -20646,8 +20646,8 @@ packages:
   '@types/react@18.3.15':
     resolution: {integrity: sha512-XQzbwkCwrsabawgWsvDDwsDTRuH1sf6Uj1fnFYoG03ZXfT54/aBvlylKR9ix70pXAtTn8dFzj358zVcZN4m83w==}
 
-  '@types/react@19.2.18':
-    resolution: {integrity: sha512-AnzbBERsrLKtk2XSfTbYRLjQPdy116Sty4q+T+Bp3IC4l6jNBvreVPAHmpq9qhXQM7CXZPjLVmGMw9sy+hxQ3w==}
+  '@types/react@19.2.17':
+    resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
 
   '@types/recharts@1.8.29':
     resolution: {integrity: sha512-ulKklaVsnFIIhTQsQw226TnOibrddW1qUQNFVhoQEyY1Z7FRQrNecFCGt7msRuJseudzE9czVawZb17dK/aPXw==}
@@ -26519,6 +26519,7 @@ packages:
 
   react-grid-layout@1.5.1:
     resolution: {integrity: sha512-4Fr+kKMk0+m1HL/BWfHxi/lRuaOmDNNKQDcu7m12+NEYcen20wIuZFo789u3qWCyvUsNUxCiyf0eKq4WiJSNYw==}
+    deprecated: 'Ships stray files that were never in the repo: an ip_fetcher binary and its curl-sample source (1.5.0-1.5.3), plus a yarn-error.log containing local paths (1.5.3). Upgrade to 1.5.4, which is byte-identical apart from removing them. See https://github.com/react-grid-layout/react-grid-layout/issues/2269'
     peerDependencies:
       react: '>= 16.3.0'
       react-dom: '>= 16.3.0'
@@ -32336,7 +32337,7 @@ snapshots:
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.17.0
@@ -34374,7 +34375,7 @@ snapshots:
     dependencies:
       debug: 4.3.7(supports-color@10.2.2)
       notepack.io: 3.0.1
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       uid2: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -34829,7 +34830,7 @@ snapshots:
       '@types/prop-types': 15.7.14
       csstype: 3.1.3
 
-  '@types/react@19.2.18':
+  '@types/react@19.2.17':
     dependencies:
       csstype: 3.2.3
 
@@ -38591,6 +38592,14 @@ snapshots:
     dependencies:
       find-file-up: 0.1.3
 
+  find-process@1.4.7(supports-color@10.2.2):
+    dependencies:
+      chalk: 4.1.2
+      commander: 5.1.0
+      debug: 4.4.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
   find-process@1.4.7(supports-color@8.1.1):
     dependencies:
       chalk: 4.1.2
@@ -39971,6 +39980,19 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
+      find-process: 1.4.7(supports-color@10.2.2)
+      prompts: 2.4.2
+      spawnd: 10.1.4
+      tree-kill: 1.2.2
+      wait-on: 8.0.1(debug@4.4.3)(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  jest-dev-server@10.1.4(debug@4.4.3)(supports-color@8.1.1):
+    dependencies:
+      chalk: 4.1.2
+      cwd: 0.10.0
       find-process: 1.4.7(supports-color@8.1.1)
       prompts: 2.4.2
       spawnd: 10.1.4
@@ -40029,6 +40051,18 @@ snapshots:
       cosmiconfig: 8.3.6(typescript@5.4.5)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.4(debug@4.4.3)(supports-color@10.2.2)
+      jest-environment-node: 29.7.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+      - typescript
+
+  jest-environment-puppeteer@10.1.4(debug@4.4.3)(supports-color@8.1.1)(typescript@5.4.5):
+    dependencies:
+      chalk: 4.1.2
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      deepmerge: 4.3.1
+      jest-dev-server: 10.1.4(debug@4.4.3)(supports-color@8.1.1)
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -43697,15 +43731,6 @@ snapshots:
   socket.io-adapter@2.5.6(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  socket.io-adapter@2.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
