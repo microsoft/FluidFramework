@@ -5,6 +5,7 @@
 
 import { strict as assert } from "node:assert";
 
+import { asAlpha } from "../../api.js";
 import { Tree } from "../../shared-tree/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { isTreeNode } from "../../simple-tree/core/index.js";
@@ -229,6 +230,18 @@ describeHydration(
 			// Delete non-present value
 			root.map.delete("baz");
 			assert.equal(root.map.size, 1);
+		});
+
+		it("clear", () => {
+			const root = init(schema, initialTree);
+			const map = asAlpha(root.map);
+			assert.equal(map.size, 2);
+			map.clear();
+			assert.equal(map.size, 0);
+
+			// Clear an already empty map
+			map.clear();
+			assert.equal(map.size, 0);
 		});
 	},
 	() => {

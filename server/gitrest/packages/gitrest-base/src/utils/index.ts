@@ -50,6 +50,7 @@ export {
 	getRepoPath,
 	getRequestPathCategory,
 	getSoftDeletedMarkerPath,
+	isInvalidRepoPathComponent,
 	logAndThrowApiError,
 	parseStorageRoutingId,
 	persistLatestFullSummaryInStorage,

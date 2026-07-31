@@ -31,6 +31,8 @@ import {
 	FieldBatchFormatVersion,
 } from "../../feature-libraries/index.js";
 import {
+	ConstraintStatus,
+	getConstraintStatus,
 	SharedTreeChangeFamily,
 	updateRefreshers,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -77,11 +79,13 @@ defaultEditor.exitTransaction();
 defaultEditor.valueField(rootField).set(chunkFromJsonTrees(["Y"]));
 defaultEditor.sequenceField(rootField).remove(0, 1);
 defaultEditor.move(rootField, 0, 1, rootField, 0);
+defaultEditor.addNoChangeConstraint();
 
 const dataChange1 = dataChanges[0];
 const dataChange2 = dataChanges[1];
 const dataChange3 = dataChanges[2];
 const dataChange4 = dataChanges[3];
+const constraint = dataChanges[4];
 // This rebased change now refers to an ID introduced in dataChange3
 const rebasedDataChange4 = modularFamily.rebaser.rebase(
 	makeAnonChange(dataChange4),
@@ -94,6 +98,9 @@ const stDataChange1: SharedTreeChange = {
 };
 const stDataChange2: SharedTreeChange = {
 	changes: [{ type: "data", innerChange: dataChange2 }],
+};
+const stConstraint: SharedTreeChange = {
+	changes: [{ type: "data", innerChange: constraint }],
 };
 const emptySchema: TreeStoredSchema = {
 	nodeSchema: new Map(),
@@ -463,6 +470,62 @@ describe("SharedTreeChangeFamily", () => {
 				new DefaultRevisionReplacer(newRevision, sharedTreeFamily.getRevisions(input)),
 			);
 			checkConsistency(updated);
+		});
+	});
+	describe("getConstraintStatus", () => {
+		it("returns Satisfied for a change that has no constraint violations", () => {
+			const status = getConstraintStatus(stDataChange1);
+			assert.equal(status, ConstraintStatus.Satisfied);
+		});
+		it("returns ExplicitViolation for a change that has explicit constraint violations", () => {
+			const hasViolatedExplicitConstraint = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(stConstraint),
+				makeAnonChange(stDataChange1),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const status = getConstraintStatus(hasViolatedExplicitConstraint);
+			assert.equal(status, ConstraintStatus.ExplicitViolation);
+		});
+		it("returns ImplicitViolation for a data change rebased over a schema change", () => {
+			const dataOverSchema = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(stDataChange1),
+				makeAnonChange(stSchemaChange),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const status = getConstraintStatus(dataOverSchema);
+			assert.equal(status, ConstraintStatus.ImplicitViolation);
+		});
+		it("returns ImplicitViolation for a schema change rebased over a data change", () => {
+			const schemaOverData = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(stSchemaChange),
+				makeAnonChange(stDataChange1),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const status = getConstraintStatus(schemaOverData);
+			assert.equal(status, ConstraintStatus.ImplicitViolation);
+		});
+		it("returns ImplicitViolation for a schema change rebased over a schema change", () => {
+			const schemaOverSchema = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(stSchemaChange),
+				makeAnonChange(stSchemaChange),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const status = getConstraintStatus(schemaOverSchema);
+			assert.equal(status, ConstraintStatus.ImplicitViolation);
+		});
+		it("returns ImplicitViolation for a data change with a violated constraint that is rebased over a schema change", () => {
+			const hasViolatedExplicitConstraint = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(stConstraint),
+				makeAnonChange(stDataChange1),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const hasBothKindsOfViolations = sharedTreeFamily.rebaser.rebase(
+				makeAnonChange(hasViolatedExplicitConstraint),
+				makeAnonChange(stSchemaChange),
+				revisionMetadataSourceFromInfo([]),
+			);
+			const status = getConstraintStatus(hasBothKindsOfViolations);
+			assert.equal(status, ConstraintStatus.ImplicitViolation);
 		});
 	});
 });

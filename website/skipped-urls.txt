@@ -33,3 +33,6 @@ https://foo-my.sharepoint.com*
 
 # Docusaurus infra
 http://localhost:3000/assets/css/styles.*.css
+
+# Generated Pagefind assets are verified separately in the deployment pipeline.
+http://localhost:3000/pagefind/*
