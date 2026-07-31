@@ -1242,10 +1242,12 @@ export function makeDiscontinuedEncodingTestSuite(
  * convenience, but is otherwise unused.
  * @returns a change receiver function and a function that will return all changes received
  */
-export function testChangeReceiver<TChange>(
-	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange>,
+export function testChangeReceiver<TChange, TChangeProcessingContext>(
+	_changeFamily?: ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>,
 ): [
-	changeReceiver: Parameters<ChangeFamily<ChangeFamilyEditor, TChange>["buildEditor"]>[1],
+	changeReceiver: Parameters<
+		ChangeFamily<ChangeFamilyEditor, TChange, TChangeProcessingContext>["buildEditor"]
+	>[1],
 	getChanges: () => readonly TChange[],
 ] {
 	const changes: TChange[] = [];
