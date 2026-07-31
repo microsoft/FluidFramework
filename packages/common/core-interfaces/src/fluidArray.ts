@@ -15,7 +15,7 @@ import type { FluidIterableIterator } from "./fluidMap.js";
  * but it may lack some of the newer APIs (such as ES2023+ methods like `at()`, `findLast()`, `toReversed()`, etc.),
  * and might express the type slightly differently from how TypeScript does in its `ReadonlyArray` type.
  *
- * @sealed @beta
+ * @sealed @public
  */
 export interface FluidReadonlyArray<T> {
 	/**
