@@ -82,6 +82,16 @@ export interface SharedTreeBranchEvents<TEditor extends ChangeFamilyEditor, TCha
 	fork(fork: SharedTreeBranch<TEditor, TChange>): void;
 
 	/**
+	 * Fired when a commit is ordered by the sequencing service.
+	 *
+	 * @remarks
+	 * Once a commit is sequenced, the following guarantees hold:
+	 * 1. The changes carried by the commit have been persisted and other peers are able to see them.
+	 * 2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+	 */
+	commitSequenced(commit: GraphCommit<TChange>): void;
+
+	/**
 	 * Fired after this branch is disposed
 	 */
 	dispose(): void;
@@ -175,6 +185,14 @@ export class SharedTreeBranch<TEditor extends ChangeFamilyEditor, TChange> {
 		this.#events.emit("beforeChange", changeEvent);
 		this.head = newHead;
 		this.#events.emit("afterChange", changeEvent);
+	}
+
+	/**
+	 * Notifies the branch that a commit has been sequenced by the sequencing service.
+	 * @param commit - the commit that was sequenced
+	 */
+	public commitWasSequenced(commit: GraphCommit<TChange>): void {
+		this.#events.emit("commitSequenced", commit);
 	}
 
 	/**

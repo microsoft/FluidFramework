@@ -587,6 +587,7 @@ export class EditManager<
 			sequenceId: SequenceId,
 			previousSequenceId: SequenceId,
 		): void => {
+			branch.localBranch.commitWasSequenced(commit);
 			// Next, we need to update the sequence IDs that our local branches (user's branches, not peer branches) are associated with.
 			// In particular, if a local branch is based on the previous trunk head (the branch's first ancestor in the trunk is the commit that was the head before we pushed the new commit)
 			// and also branches off of the local branch (it has an ancestor that is part of the local branch), it needs to have its sequence number advanced to be that of the new trunk head.
@@ -604,6 +605,7 @@ export class EditManager<
 					if (findAncestor(forkedBranch.getHead(), (c) => c === commit) !== undefined) {
 						newBranches.add(forkedBranch);
 						currentBranches.delete(forkedBranch);
+						forkedBranch.commitWasSequenced(commit);
 					}
 				}
 				// Clean up our trunk branches map by removing any empty sets.
