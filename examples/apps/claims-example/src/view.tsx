@@ -19,7 +19,7 @@ export const ClaimsView: FC<IClaimsViewProps> = ({ claimsDataObject }: IClaimsVi
 	const [status, setStatus] = useState<string>("");
 	// Keys with a claim currently in flight. The Claims DDS throws if a second claim is started
 	// for a key while the first is still pending, so we disable the button until it settles.
-	const [claiming, setClaiming] = useState<ReadonlySet<string>>(() => new Set());
+	const [claiming, setClaiming] = useState<ReadonlySet<string>>(new Set());
 
 	useEffect(() => {
 		const onClaimsChanged = (): void => forceUpdate({});
