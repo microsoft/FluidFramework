@@ -12,6 +12,8 @@ export {
 	CommitKind,
 	RevertibleStatus,
 	type CommitMetadata,
+	CommitOutcome,
+	type LocalChangeEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
