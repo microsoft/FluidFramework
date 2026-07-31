@@ -62,7 +62,7 @@ import {
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
 	rebaseBranch,
-	type LocalChangeEvents,
+	type LocalCommitEvents,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -516,7 +516,7 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private readonly localCommitEventEmitters = new Map<
 		RevisionTag,
-		IEmitter<LocalChangeEvents>
+		IEmitter<LocalCommitEvents>
 	>();
 
 	/**
@@ -839,7 +839,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 				let withinEventContext = true;
 
-				const events = createEmitter<LocalChangeEvents>();
+				const events = createEmitter<LocalCommitEvents>();
 				this.localCommitEventEmitters.set(commit.revision, events);
 				const metadata: ChangeMetadata = {
 					kind,

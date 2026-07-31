@@ -1354,18 +1354,18 @@ export type Listeners<T extends object> = {
 };
 
 // @alpha @sealed
-export interface LocalChangeEvents {
-    settled(outcome: CommitOutcome): void;
-}
-
-// @alpha @sealed
 export interface LocalChangeMetadata extends CommitMetadata {
-    readonly events: Listenable<LocalChangeEvents>;
+    readonly events: Listenable<LocalCommitEvents>;
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
+}
+
+// @alpha @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
 }
 
 // @public

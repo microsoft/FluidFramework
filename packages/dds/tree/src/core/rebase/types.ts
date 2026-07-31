@@ -276,14 +276,14 @@ export interface LocalChangeMetadata extends CommitMetadata {
 	/**
 	 * Events related to a local change that has been applied.
 	 */
-	readonly events: Listenable<LocalChangeEvents>;
+	readonly events: Listenable<LocalCommitEvents>;
 }
 
 /**
- * Events related to a local change that has been applied.
+ * Events related to a local commit that has been applied.
  * @sealed @alpha
  */
-export interface LocalChangeEvents {
+export interface LocalCommitEvents {
 	/**
 	 * Fired once a commit has been ordered by the sequencing service.
 	 * @param outcome - information about what changes from the commit were applied or not

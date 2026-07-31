@@ -229,7 +229,7 @@ export {
 	JsonStringKeyPatternProperties, 
 	JsonTreeSchema, 
 	LabelTree, 
-	LocalChangeEvents, 
+	LocalCommitEvents, 
 	LocalChangeMetadata, 
 	MapNodeCustomizableSchema, 
 	MapNodeCustomizableSchemaUnsafe, 

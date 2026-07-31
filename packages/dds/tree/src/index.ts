@@ -13,7 +13,7 @@ export {
 	RevertibleStatus,
 	type CommitMetadata,
 	CommitOutcome,
-	type LocalChangeEvents,
+	type LocalCommitEvents,
 	type LocalChangeMetadata,
 	type RemoteChangeMetadata,
 	type ChangeMetadata,
