@@ -95,7 +95,7 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:test:esm": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext",
 				"build:genver"
 			]

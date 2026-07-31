@@ -125,7 +125,7 @@
 		"tasks": {
 			"eslint": [
 				"^build:esnext",
-				"^api-extractor:esnext"
+				"^build:entrypoints:esm"
 			]
 		}
 	},

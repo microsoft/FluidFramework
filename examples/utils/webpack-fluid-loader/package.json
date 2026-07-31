@@ -143,7 +143,7 @@
 				"webpack"
 			],
 			"webpack": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			]
 		}
