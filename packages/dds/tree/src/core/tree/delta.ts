@@ -122,7 +122,7 @@ export interface Root<TTrees = ProtoNodes> {
 export type ProtoNodes = TreeChunk;
 
 /**
- * Represents a change to a contiguous range of a field,
+ * A change to a contiguous range of a field,
  * including nested changes described by {@link Mark.fields}.
  *
  * @remarks
