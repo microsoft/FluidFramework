@@ -96,7 +96,7 @@
 		"tasks": {
 			"build:test:esm": [
 				"^build:entrypoints:esm",
-				"^build:esnext",
+				"^build:esm",
 				"build:genver"
 			]
 		}

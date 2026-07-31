@@ -14,8 +14,9 @@
 	"type": "module",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "npm run build:test:esm",
 		"build:test:esm": "npm run build:test:mocha && npm run build:test:jest",
 		"build:test:jest": "tsc --project ./test/tsconfig.json",
@@ -49,7 +50,6 @@
 		"test:mocha": "npm run test:mocha:esm",
 		"test:mocha:esm": "mocha",
 		"test:verbose": "npm run test:mocha && npm run test:jest:verbose",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack --env production",
 		"webpack:dev": "webpack --env development"
 	},
@@ -132,12 +132,12 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:test:jest": [
-				"build:esnext",
-				"^build:esnext"
+				"build:esm",
+				"^build:esm"
 			],
 			"build:test:mocha": [
-				"build:esnext",
-				"^build:esnext"
+				"build:esm",
+				"^build:esm"
 			]
 		},
 		"version": 1

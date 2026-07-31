@@ -15,8 +15,9 @@
 	"scripts": {
 		"build": "fluid-build . --task build",
 		"build-and-test": "npm run build && npm run test",
+		"build:cjs": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"build:compile": "fluid-build . --task compile",
-		"build:esnext": "tsc --project ./tsconfig.json",
+		"build:esm": "tsc --project ./tsconfig.json",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./e2e-tests/tsconfig.cjs.json",
 		"build:test:esm": "tsc --project ./e2e-tests/tsconfig.json",
@@ -46,7 +47,6 @@
 		"test:mocha:verbose": "cross-env FLUID_TEST_VERBOSE=1 npm run mocha -- --verbose",
 		"test:unit": "npm run test:mocha",
 		"test:verbose": "concurrently npm:test:mocha:verbose npm:test:jest:verbose",
-		"tsc": "fluid-tsc commonjs --project ./tsconfig.cjs.json && copyfiles -f ../../../../common/build/build-common/src/cjs/package.json ./dist",
 		"webpack": "webpack",
 		"webpack:dev": "webpack --env development"
 	},
