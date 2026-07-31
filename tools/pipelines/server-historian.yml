@@ -48,6 +48,7 @@ trigger:
     - server/historian
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -73,6 +74,7 @@ pr:
     - server/historian
     - tools/pipelines/server-historian.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
     - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-set-package-version.yml
     - tools/pipelines/templates/include-vars.yml
@@ -105,6 +107,7 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/historian
     containerName: fluidframework/routerlicious/historian
     dockerBuildBumpsVersion: true
+    emitDockerImageDigest: true
     # Root-only install: historian has native deps that don't install in CI; the real build runs in Docker.
     # Root deps are still needed for the version-setting step.
     installWorkspaceRootOnly: true
