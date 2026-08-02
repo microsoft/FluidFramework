@@ -5,7 +5,7 @@
 	"compilerOptions": {
 		"rootDir": "./src",
 		"outDir": "./lib",
-		"types": ["node"],
+		"types": ["mocha", "node"],
 		"exactOptionalPropertyTypes": false,
 	},
 }
