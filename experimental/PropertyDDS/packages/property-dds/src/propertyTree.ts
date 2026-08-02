@@ -13,7 +13,11 @@ import {
 	NodeProperty,
 	PropertyFactory,
 } from "@fluid-experimental/property-properties";
-import { IsoBuffer, bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
+import {
+	Uint8ArrayToString,
+	bufferToString,
+	stringToBuffer,
+} from "@fluid-internal/client-utils";
 import { AttachState } from "@fluidframework/container-definitions";
 import {
 	IChannelAttributes,
@@ -119,8 +123,8 @@ export interface ISharedPropertyTreeEncDec {
 		decode: (IPropertyTreeMessage) => IPropertyTreeMessage;
 	};
 	summaryEncoder: {
-		encode: (ISnapshotSummary) => IsoBuffer;
-		decode: (IsoBuffer) => ISnapshotSummary;
+		encode: (ISnapshotSummary) => Uint8Array;
+		decode: (Uint8Array) => ISnapshotSummary;
 	};
 }
 
@@ -551,8 +555,8 @@ export class SharedPropertyTree extends SharedObject {
 	 * @param blob - The binary representation of the blob.
 	 * @returns The encoded representation of the blob.
 	 */
-	private encodeSummaryBlob(blob: ArrayBuffer): any {
-		return bufferToString(blob, "base64");
+	private encodeSummaryBlob(blob: Uint8Array): string {
+		return Uint8ArrayToString(blob, "base64");
 	}
 
 	/**

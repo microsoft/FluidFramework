@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type {
 	ISnapshot,
@@ -63,7 +64,10 @@ function readBlobSection(node: NodeTypes): {
 		) {
 			// "id": <node name>
 			// "data": <blob>
-			blobContents.set(blob.getString(1), blob.getBlob(3).arrayBuffer);
+			blobContents.set(
+				blob.getString(1),
+				Uint8ArrayToArrayBuffer(new Uint8Array(blob.getBlob(3).arrayBuffer)),
+			);
 		} else {
 			/**
 			 * More generalized workflow
@@ -72,7 +76,7 @@ function readBlobSection(node: NodeTypes): {
 			const records = getNodeProps(blob);
 			assertBlobCoreInstance(records.data, "data should be of BlobCore type");
 			const id = getStringInstance(records.id, "blob id should be string");
-			blobContents.set(id, records.data.arrayBuffer);
+			blobContents.set(id, Uint8ArrayToArrayBuffer(new Uint8Array(records.data.arrayBuffer)));
 		}
 	}
 	return { blobContents, slowBlobStructureCount };

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { IsoBuffer } from '@fluid-internal/client-utils';
+import { stringToBuffer } from '@fluid-internal/client-utils';
 import {
 	AcceptanceCondition,
 	AsyncGenerator,
@@ -330,7 +330,7 @@ const makeEditGenerator = (
 			if (random.bool()) {
 				return random.string(4);
 			}
-			const handle = await dataStoreRuntime.uploadBlob(IsoBuffer.from(random.string(10)));
+			const handle = await dataStoreRuntime.uploadBlob(stringToBuffer(random.string(10), 'utf8'));
 			return { blob: handle };
 		};
 
