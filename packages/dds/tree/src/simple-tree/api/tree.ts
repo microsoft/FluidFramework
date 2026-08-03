@@ -19,7 +19,7 @@ import type {
 } from "../../shared-tree/index.js";
 import type { JsonCompatibleReadOnly } from "../../util/index.js";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- This is referenced by doc comments.
-import type { Unhydrated } from "../core/index.js";
+import type { SchemaUpgrade, Unhydrated } from "../core/index.js";
 import type {
 	ImplicitFieldSchema,
 	InsertableField,
@@ -643,6 +643,15 @@ export interface TreeViewAlpha<
 	 * @param content - The content to initialize the tree with.
 	 */
 	initialize(content: InsertableField<TSchema>): void;
+
+	/**
+	 * Returns true iff at least one location guarded by the provided staged `upgrade` token
+	 * is already enabled in the document's stored schema.
+	 * @remarks
+	 * This API is used for rollout safety checks.
+	 * It derives results from this view schema and the current stored schema.
+	 */
+	isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean;
 
 	readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
 

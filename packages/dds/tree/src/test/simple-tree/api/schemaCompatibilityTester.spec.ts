@@ -16,6 +16,7 @@ import { checkSchemaCompatibility } from "../../../simple-tree/api/schemaCompati
 import {
 	type ImplicitFieldSchema,
 	type SchemaCompatibilityStatus,
+	type SchemaUpgrade,
 	TreeViewConfigurationAlpha,
 	toUpgradeSchema,
 } from "../../../simple-tree/index.js";
@@ -30,11 +31,16 @@ const factory = new SchemaFactoryAlpha("");
 
 function expectCompatibility(
 	{ view, stored }: { view: ImplicitFieldSchema; stored: TreeStoredSchema },
-	expected: ReturnType<typeof checkSchemaCompatibility>,
+	expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+		enabledUpgrades?: ReadonlySet<SchemaUpgrade>;
+	},
 ) {
 	const viewSchema = new TreeViewConfigurationAlpha({ schema: view });
 	const compatibility = checkSchemaCompatibility(viewSchema, stored);
-	assert.deepEqual(compatibility, expected);
+	assert.deepEqual(compatibility, {
+		enabledUpgrades: new Set(),
+		...expected,
+	});
 
 	// This does not include staged allowed types.
 	const viewStored = toUpgradeSchema(view);
@@ -501,11 +507,12 @@ describe("checkSchemaCompatibility", () => {
 			});
 
 			it("clients with staged schema allow viewing but not upgrading after upgrade", () => {
+				const stagedString = SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string);
+				const upgrade = stagedString.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+
 				class Compatible1 extends factory.object("MyType", {
-					foo: SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(SchemaFactoryAlpha.string),
-					]),
+					foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.number, stagedString]),
 				}) {}
 
 				class Compatible2 extends factory.object("MyType", {
@@ -514,7 +521,7 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: true, canUpgrade: false, isEquivalent: false },
+					{ canView: true, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Set([upgrade]) },
 				);
 			});
 
@@ -545,11 +552,12 @@ describe("checkSchemaCompatibility", () => {
 					bar: SchemaFactoryAlpha.number,
 				}) {}
 
+				const stagedDeep = SchemaFactoryAlpha.staged(Deep1);
+				const upgrade = stagedDeep.metadata.stagedSchemaUpgrade;
+				assert(upgrade !== undefined);
+
 				class Compatible1 extends factory.object("MyType", {
-					foo: SchemaFactoryAlpha.types([
-						SchemaFactoryAlpha.number,
-						SchemaFactoryAlpha.staged(Deep1),
-					]),
+					foo: SchemaFactoryAlpha.types([SchemaFactoryAlpha.number, stagedDeep]),
 				}) {}
 
 				class Compatible2 extends factory.object("MyType", {
@@ -558,7 +566,7 @@ describe("checkSchemaCompatibility", () => {
 
 				expectCompatibility(
 					{ view: Compatible1, stored: toUpgradeSchema(Compatible2) },
-					{ canView: false, canUpgrade: false, isEquivalent: false },
+					{ canView: false, canUpgrade: false, isEquivalent: false, enabledUpgrades: new Set([upgrade]) },
 				);
 			});
 		});

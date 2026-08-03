@@ -20,8 +20,10 @@ import {
 import {
 	checkSchemaCompatibility,
 	extractPersistedSchema,
+	findEnabledUpgrades,
 	SchemaFactoryAlpha,
 	schemaStatics,
+	type SchemaUpgrade,
 	StagedSchemaUpgradePolicy,
 	toUpgradeSchema,
 	TreeViewConfiguration,
@@ -305,11 +307,13 @@ describe("staged allowed type upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof baseSchema | typeof schemaWithStagedType | typeof fullyMigratedSchema,
-			expected: ReturnType<typeof checkSchemaCompatibility>,
+			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+				enabledUpgrades?: ReadonlySet<SchemaUpgrade>;
+			},
 		): void => {
 			assert.deepEqual(
 				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				expected,
+				{ enabledUpgrades: new Set(), ...expected },
 			);
 		};
 
@@ -363,6 +367,33 @@ describe("staged allowed type upgrade", () => {
 			canUpgrade: true,
 			isEquivalent: true,
 		});
+	});
+
+	it("can query staged allowed type upgrade enablement", () => {
+		const before = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: baseSchema,
+			}),
+		);
+		before.initialize(5);
+		assert.equal(before.isStagedUpgradeEnabled(stringUpgrade), false);
+
+		const during = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: schemaWithStagedType,
+			}),
+		);
+		during.initialize(5);
+		assert.equal(during.isStagedUpgradeEnabled(stringUpgrade), false);
+
+		const enabled = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: schemaWithStagedType,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(stringUpgrade),
+			}),
+		);
+		enabled.initialize("test");
+		assert.equal(enabled.isStagedUpgradeEnabled(stringUpgrade), true);
 	});
 });
 
@@ -428,6 +459,33 @@ describe("staged optional upgrade", () => {
 		assert.deepEqual(viewStaged3.root, undefined);
 	});
 
+	it("can query staged optional upgrade enablement", () => {
+		const before = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: requiredSchema,
+			}),
+		);
+		before.initialize(5);
+		assert.equal(before.isStagedUpgradeEnabled(optionalUpgrade), false);
+
+		const during = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: stagedOptionalSchema,
+			}),
+		);
+		during.initialize(5);
+		assert.equal(during.isStagedUpgradeEnabled(optionalUpgrade), false);
+
+		const enabled = independentView(
+			new TreeViewConfigurationAlpha({
+				schema: stagedOptionalSchema,
+				stagedUpgradePolicy: StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
+			}),
+		);
+		enabled.initialize(undefined);
+		assert.equal(enabled.isStagedUpgradeEnabled(optionalUpgrade), true);
+	});
+
 	it("supports removing the staged optional marker after full migration", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
@@ -456,7 +514,7 @@ describe("staged optional upgrade", () => {
 		assert.equal(viewOptional.root, undefined);
 	});
 
-	it("throws when a view without upgrades tries to upgradeSchema on a document already upgraded by another view", () => {
+	it("a view without upgrades can upgradeSchema on a document already upgraded by another view due to auto-include", () => {
 		const provider = new TestTreeProviderLite(3);
 		const [treeRequired, treeStaged, treeOptional] = provider.trees;
 
@@ -477,15 +535,13 @@ describe("staged optional upgrade", () => {
 		viewStaged.dispose();
 		provider.synchronizeMessages();
 
-		// A new view without the upgrade token cannot upgrade further — the stored schema already has the upgrade
-		// and the new target (without the token) would narrow it.
+		// A new view without the explicit upgrade token can still upgradeSchema — the stored schema
+		// already has the upgrade applied and auto-include detects it.
 		const viewStagedNarrow = treeOptional.viewWith(
 			new TreeViewConfigurationAlpha({ schema: stagedOptionalSchema }),
 		);
-		assert.throws(
-			() => viewStagedNarrow.upgradeSchema(),
-			/cannot be upgraded to the requested schema/,
-		);
+		// Should not throw — auto-include preserves the already-applied upgrade
+		viewStagedNarrow.upgradeSchema();
 	});
 
 	it("checks compatibility through staged optional rollout", () => {
@@ -499,11 +555,13 @@ describe("staged optional upgrade", () => {
 
 		const expectCompatibility = (
 			schema: typeof requiredSchema | typeof stagedOptionalSchema | typeof optionalSchema,
-			expected: ReturnType<typeof checkSchemaCompatibility>,
+			expected: Omit<ReturnType<typeof checkSchemaCompatibility>, "enabledUpgrades"> & {
+				enabledUpgrades?: ReadonlySet<SchemaUpgrade>;
+			},
 		): void => {
 			assert.deepEqual(
 				checkSchemaCompatibility(new TreeViewConfigurationAlpha({ schema }), stored),
-				expected,
+				{ enabledUpgrades: new Set(), ...expected },
 			);
 		};
 
@@ -552,6 +610,7 @@ describe("staged optional upgrade", () => {
 			canView: true,
 			canUpgrade: false,
 			isEquivalent: false,
+			enabledUpgrades: new Set([optionalUpgrade]),
 		});
 
 		// requiredSchema is no longer compatible with optional stored schema.
@@ -617,5 +676,181 @@ describe("staged optional upgrade", () => {
 
 		const omittedChild = new NodeB({ value: 4 });
 		assert(omittedChild instanceof NodeB);
+	});
+});
+
+describe("findEnabledUpgrades", () => {
+	const sf = new SchemaFactoryAlpha("findEnabledUpgradesTest");
+
+	it("returns empty set when no upgrades are enabled", () => {
+		const baseSchema = sf.optional([sf.number]);
+
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(baseSchema).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		const config = new TreeViewConfigurationAlpha({ schema: baseSchema });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 0);
+	});
+
+	it("detects enabled staged allowed type upgrade", () => {
+		const stagedStr = sf.staged(sf.string);
+		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		const schemaWithStaged = sf.optional(sf.types([sf.number, stagedStr]));
+
+		// Stored schema includes string (simulating the upgrade has been applied)
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(
+			stored.tryUpdateRootFieldSchema(
+				toUpgradeSchema(
+					schemaWithStaged,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+				).rootFieldSchema,
+			),
+		);
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaWithStaged });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 1);
+		assert(result.has(upgrade));
+	});
+
+	it("does not include upgrades that have not been applied", () => {
+		const stagedStr = sf.staged(sf.string);
+		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		const schemaWithStaged = sf.optional(sf.types([sf.number, stagedStr]));
+
+		// Stored schema only has number (upgrade not applied)
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(stored.tryUpdateRootFieldSchema(toUpgradeSchema(schemaWithStaged).rootFieldSchema));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaWithStaged });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 0);
+	});
+
+	it("detects enabled staged optional upgrade", () => {
+		const stagedField = sf.stagedOptional(sf.number);
+		const optionalUpgrade = stagedField.isStagedOptional;
+		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
+
+		class ObjStaged extends sf.objectAlpha("Obj", {
+			value: stagedField,
+		}) {}
+
+		const schemaStaged = sf.required(ObjStaged);
+
+		// Stored schema has the field as optional (upgrade applied)
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				schemaStaged,
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(optionalUpgrade),
+			),
+		);
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 1);
+		assert(result.has(optionalUpgrade));
+	});
+
+	it("does not detect staged optional when stored field is still required", () => {
+		const stagedField = sf.stagedOptional(sf.number);
+		const optionalUpgrade = stagedField.isStagedOptional;
+		assert(optionalUpgrade !== false && optionalUpgrade !== undefined);
+
+		class ObjStaged extends sf.objectAlpha("Obj2", {
+			value: stagedField,
+		}) {}
+
+		const schemaStaged = sf.required(ObjStaged);
+
+		// Stored schema has field as required (upgrade NOT applied)
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(schemaStaged),
+		);
+
+		const config = new TreeViewConfigurationAlpha({ schema: schemaStaged });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 0);
+	});
+
+	it("returns multiple upgrades when several are enabled", () => {
+		const stagedStr = sf.staged(sf.string);
+		const stagedBool = sf.staged(sf.boolean);
+		const upgradeStr = stagedStr.metadata.stagedSchemaUpgrade;
+		const upgradeBool = stagedBool.metadata.stagedSchemaUpgrade;
+		assert(upgradeStr !== undefined);
+		assert(upgradeBool !== undefined);
+
+		const schema = sf.optional(sf.types([sf.number, stagedStr, stagedBool]));
+
+		// Stored schema includes both string and boolean
+		const stored = new TestSchemaRepository(defaultSchemaPolicy);
+		assert(
+			stored.tryUpdateRootFieldSchema(
+				toUpgradeSchema(
+					schema,
+					StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgradeStr, upgradeBool),
+				).rootFieldSchema,
+			),
+		);
+		assert(stored.tryUpdateTreeSchema(schemaStatics.number));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.string));
+		assert(stored.tryUpdateTreeSchema(schemaStatics.boolean));
+
+		const config = new TreeViewConfigurationAlpha({ schema });
+		const result = findEnabledUpgrades(config, stored);
+		assert.equal(result.size, 2);
+		assert(result.has(upgradeStr));
+		assert(result.has(upgradeBool));
+	});
+
+	it("counts an upgrade as enabled if it's enabled in at least one location", () => {
+		// Flow:
+		// 1. Add staged type in fieldA
+		// 2. Enable the staged type (stored schema includes string in fieldA)
+		// 3. Add staged type in fieldB (stored schema does NOT yet include string in fieldB)
+		const sfLocal = new SchemaFactoryAlpha("enabledInOneLocation");
+		const stagedStr = sfLocal.staged(sfLocal.string);
+		const upgrade = stagedStr.metadata.stagedSchemaUpgrade;
+		assert(upgrade !== undefined);
+
+		// Step 1-2: Schema with staged type only in fieldA, upgrade enabled
+		class ObjV1 extends sfLocal.objectAlpha("Obj", {
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
+			fieldB: sfLocal.optional([sfLocal.number]),
+		}) {}
+
+		// Stored schema reflects v1 with the upgrade enabled (fieldA includes string)
+		const stored = new TestSchemaRepository(
+			defaultSchemaPolicy,
+			toUpgradeSchema(
+				sfLocal.required(ObjV1),
+				StagedSchemaUpgradePolicy.enabledStagedUpgrades(upgrade),
+			),
+		);
+
+		// Step 3: New schema adds staged type to fieldB as well
+		class ObjV2 extends sfLocal.objectAlpha("Obj", {
+			fieldA: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
+			fieldB: sfLocal.optional(sfLocal.types([sfLocal.number, stagedStr])),
+		}) {}
+
+		const config = new TreeViewConfigurationAlpha({ schema: sfLocal.required(ObjV2) });
+		const result = findEnabledUpgrades(config, stored);
+		// The upgrade is detected as enabled (fieldA has it in stored schema)
+		assert.equal(result.size, 1);
+		assert(result.has(upgrade));
 	});
 });

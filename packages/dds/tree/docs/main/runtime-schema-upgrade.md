@@ -46,9 +46,8 @@ The general production rollout process is:
 4. New documents initialized while the control is enabled include the same staged schema upgrades from the start.
 5. If an issue is found, disable the feature-rollout control.
    Callers stop constructing views with the relevant entries for documents that have not yet been upgraded and newly initialized documents do not include those staged schema members.
-   Note: this selective rollback plan is currently difficult in practice.
-   If a document has already enabled a staged upgrade, later calling `upgradeSchema` from a view configured without that token throws a `UsageError` because the request would narrow stored schema.
-   In most deployments it is hard to target only documents that have not already been upgraded, so this step is not generally feasible as written.
+   For documents that have already been upgraded, `initialize` and `upgradeSchema` automatically include the upgrade in the effective policy, so no manual intervention is needed.
+   The `isStagedUpgradeEnabled` method can be used to check whether an upgrade has been applied if the application needs to observe this state.
 
 Documents upgraded before the rollback continue to support the upgraded schema because their stored schema has already changed.
 Documents created after the rollback do not include that upgrade unless the flag is enabled again.
@@ -206,3 +205,91 @@ Clients should not need their local feature flag to be enabled in order to read 
 
 The `upgrades` property names are not persisted.
 Compatibility depends on the schema and the `SchemaUpgrade` values, not on the application-specific flag names used at call sites.
+
+## Query If an Upgrade is Enabled
+
+The core question is, given a `SchemaUpgrade`, is it enabled in this document's stored schema?
+A `SchemaUpgrade` is considered enabled when, for at least one location where it is used in view schema, the result of the upgrade exists in the corresponding stored schema location.
+
+This allows applications to check whether a staged upgrade has already been applied to a document's stored schema, which is necessary for rollback safety during runtime schema upgrades: if a particular upgrade needs to be rolled back, the ideal situation is that a feature flag is turned off to control this. However, documents that have already been upgraded cannot be downgraded. This means that for all existing documents, the app must check if the rolled back upgrade has already been enabled and if it has, the upgrade must be included in the list of enabled upgrades even if its controlling feature flag is turned off.
+
+Recommended API shape:
+
+```typescript
+// On TreeViewAlpha:
+isStagedUpgradeEnabled(upgrade: SchemaUpgrade): boolean
+```
+
+Boolean meaning:
+
+- `true`: at least one staged member guarded by that specific `SchemaUpgrade` is present in stored schema.
+	- the decision to define true as being at least one location rather than all of them is due to the usage of this api for guarding against downgrades during rollout, if any staged member has already been upgraded, it must be continued to be upgraded, if the user does not wish for this to happen, they should use a different `SchemaUpgrade` for any members that should not be upgraded as a result
+- `false`: otherwise.
+
+Important constraints:
+
+- This query requires both view schema and stored schema context.
+- It cannot be answered from stored schema alone because guarded locations are discovered from staged annotations in view schema.
+- Other upgrade tokens are irrelevant to the result for the queried token.
+
+### Implementation
+
+The implementation uses `findEnabledUpgrades(viewSchema, storedSchema)` which computes the full `Set<SchemaUpgrade>` of all enabled upgrades in a single pass.
+This walks view schema definitions paired with their stored schema counterparts (the same "parallel walk" pattern used by `getDiscrepanciesInAllowedContent` for compatibility checking).
+
+The set is computed during `checkSchemaCompatibility` and cached on the `SchematizingSimpleTreeView`.
+`isStagedUpgradeEnabled` queries the cached set, making it an O(1) lookup.
+The cache is invalidated and recomputed whenever stored schema changes trigger a compatibility recheck.
+
+Additionally, `initialize` and `upgradeSchema` automatically include all already-enabled upgrades in the effective upgrade policy.
+This ensures that schema operations never regress upgrades that have already been applied to the stored schema — even if the caller's `stagedUpgradePolicy` does not explicitly include them.
+The effective policy is the union of the configured `stagedUpgradePolicy` and the cached set of enabled upgrades.
+
+Conceptually, the algorithm is:
+
+1. Find all staged members in view schema guarded by the queried token.
+2. If none exist, return `false`.
+3. Check whether guarded members are present in stored schema at their corresponding locations.
+4. Return `true` if at least one guarded member is present.
+
+### Why Derivation Instead of Persisted Upgrade State
+
+We are choosing derivation (compute from view schema + stored schema at query time) over persisting explicit "enabled upgrades" metadata.
+
+Reasons:
+
+- Derivation avoids introducing a second source of truth beyond the schema shape that is already authoritative.
+- It avoids persisted-format and migration complexity for this feature.
+- It keeps behavior aligned with existing compatibility logic, which already reasons from view and stored schema.
+
+Persisted upgrade-state metadata would require a stable cross-client identity for each schema upgrade.
+Current `SchemaUpgrade` values are runtime tokens and are not directly suitable as persisted identifiers across versions/clients.
+Supporting persistence would therefore require introducing and versioning a durable upgrade ID scheme, plus synchronization rules to keep IDs and schema shape consistent.
+
+Given current goals, the derivation approach is simpler and lower risk. The implementation caches the derived set of enabled upgrades alongside the compatibility status, so the query is an O(1) set lookup after initial computation.
+
+### Query Scenarios and Decisions
+
+This section defines required query behavior for important edge cases.
+
+1. One `SchemaUpgrade` token used in multiple locations.
+
+- Scenario: the same token guards staged members at more than one schema location.
+- Decision: query returns `true` if any guarded location is enabled.
+- Rationale: this API is used to prevent downgrade/narrowing during rollback. If any guarded location has already been upgraded in stored schema, callers must continue including that token in enabled upgrades.
+- Practical implication: a mixed state (some guarded locations present, others absent) still returns `true`.
+
+2. Upgrade becomes enabled via code change (staging removed).
+
+- Scenario: a later code version removes staging wrappers, so there is no longer a `SchemaUpgrade` token in that version to reference.
+- Observation: in that code version, callers cannot invoke `isStagedUpgradeEnabled(...)` for that former token because no token value is available.
+- Decision: this is acceptable and expected behavior; no extra API is required for this case.
+- Rationale: the main value of the query API is during runtime-flag rollout/rollback while staging still exists, especially to avoid breaking documents upgraded before rollback.
+
+3. Querying a token absent from the current view schema.
+
+- Scenario: caller provides a token not present in staged annotations of the current view schema.
+- Decision: return `false`.
+- Rationale: without any guarded members in the current view schema, there is no basis to conclude that the queried upgrade is enabled.
+
+Given these decisions, this API is intentionally scoped to rollout windows where staged tokens are still represented in code.

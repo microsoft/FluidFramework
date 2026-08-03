@@ -10,6 +10,7 @@ import { toUpgradeSchema } from "../toStoredSchema.js";
 import type { TreeSchema } from "../treeSchema.js";
 
 import { getDiscrepanciesInAllowedContent } from "./discrepancies.js";
+import { findEnabledUpgrades } from "./stagedUpgradeQuery.js";
 import type { SchemaCompatibilityStatus } from "./tree.js";
 
 /**
@@ -29,7 +30,9 @@ export function checkSchemaCompatibility(
 	viewSchema: TreeSchema,
 	stored: TreeStoredSchema,
 	stagedSchemaUpgrades?: Iterable<SchemaUpgrade> | StagedSchemaUpgradePolicy,
-): Omit<SchemaCompatibilityStatus, "canInitialize"> {
+): Omit<SchemaCompatibilityStatus, "canInitialize"> & {
+	enabledUpgrades: ReadonlySet<SchemaUpgrade>;
+} {
 	// The public API surface assumes defaultSchemaPolicy
 	const policy = defaultSchemaPolicy;
 
@@ -53,9 +56,17 @@ export function checkSchemaCompatibility(
 	const isEquivalent =
 		canView && canUpgrade && allowsRepoSuperset(policy, wouldUpgradeTo, stored);
 
+	// This results in a second walk of the view/stored schema pairs
+	// (the first being getDiscrepanciesInAllowedContent above).
+	// Both walks traverse the same structure but collect different information — discrepancies vs enabled upgrade tokens.
+	// TODO: refactor the walk logic so that a single traversal can be shared between
+	// getDiscrepanciesInAllowedContent and findEnabledUpgrades to avoid the redundant iteration.
+	const enabledUpgrades = findEnabledUpgrades(viewSchema, stored);
+
 	return {
 		canView,
 		canUpgrade,
 		isEquivalent,
+		enabledUpgrades,
 	};
 }

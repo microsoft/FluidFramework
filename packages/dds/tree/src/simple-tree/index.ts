@@ -137,6 +137,7 @@ export {
 	type TreeSchemaEncodingOptions,
 	getJsonSchema,
 	getSimpleSchema,
+	findEnabledUpgrades,
 	type VerboseTreeNode,
 	type TreeEncodingOptions,
 	type VerboseTree,
