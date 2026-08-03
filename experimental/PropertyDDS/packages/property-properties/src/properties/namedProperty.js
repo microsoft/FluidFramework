@@ -7,8 +7,8 @@
  * @fileoverview Definition of the named property class
  */
 
-const { BaseProperty } = require("./baseProperty");
-const { ContainerProperty } = require("./containerProperty");
+import { BaseProperty } from "./baseProperty.js";
+import { ContainerProperty } from "./containerProperty.js";
 
 /**
  * A NamedProperty has a URN which uniquely identifies the property object. This makes it possible to store it in a

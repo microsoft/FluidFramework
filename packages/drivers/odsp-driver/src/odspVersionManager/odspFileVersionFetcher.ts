@@ -12,6 +12,8 @@
  *   or the live document's ODSP epoch (`x-fluid-epoch`) to compare their lineage.
  */
 
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 import type {
 	IOdspUrlParts,
 	InstrumentedStorageTokenFetcher,
@@ -25,6 +27,7 @@ import { getHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 import { getApiRoot } from "../odspUrlHelper.js";
 import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
+import { pkgVersion as driverVersion } from "../packageVersion.js";
 
 /**
  * A single ODSP file version, as listed by the file's version history.
@@ -137,10 +140,8 @@ export function createOdspFileVersionFetcher(
 
 	const resolveSequenceNumber = async (versionId: string): Promise<number> =>
 		getWithRetryForTokenRefresh(async (options) => {
-			// A file version's sequence number lives inside that version's snapshot, so fetch the snapshot
-			// from the version-scoped endpoint. `blobs=2` inlines blob contents so the `.protocol/attributes`
-			// blob (which carries the sequence number) is included; `deltas=1` is intentionally omitted, as
-			// it would bundle the op stream and its op-level sequence numbers.
+			// The sequence number lives in the version snapshot's `.protocol/attributes` blob, so fetch the
+			// version-scoped snapshot with `blobs=2` to inline it. No op stream needed.
 			const url = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}/versions/${encodeURIComponent(
 				versionId,
 			)}/opStream/snapshots/trees/latest?blobs=2`;
@@ -150,10 +151,8 @@ export function createOdspFileVersionFetcher(
 				"FileVersionSnapshot",
 			);
 			const headers = getHeadersWithAuth(token);
-			// The server can return the snapshot in one of two equivalent framings: verbose JSON, or
-			// "ms-fluid" — ODSP's compact binary encoding of the same snapshot. Advertise both, and pin the
-			// binary format version (as the driver's own snapshot fetch does) so the server cannot hand back
-			// a binary version this code's parser does not understand.
+			// The snapshot comes back as JSON or "ms-fluid" (ODSP's compact binary form). Accept both and
+			// pin the binary version (as the driver's snapshot fetch does) so the parser can read it.
 			headers.accept = `application/json, application/ms-fluid; v=${currentReadVersion}`;
 			const response = await epochTracker.fetch(url, { method, headers }, "treesLatest");
 			const contentType = response.headers.get("content-type") ?? "";
@@ -163,15 +162,34 @@ export function createOdspFileVersionFetcher(
 				const snapshotJson = (await response.content.json()) as IOdspSnapshot;
 				sequenceNumber =
 					convertOdspSnapshotToSnapshotTreeAndBlobs(snapshotJson).sequenceNumber;
-			} else {
+			} else if (contentType.includes("application/ms-fluid")) {
 				// ms-fluid framing: the compact binary form; read it with the driver's compact-snapshot parser.
 				const bytes = new Uint8Array(await response.content.arrayBuffer());
 				sequenceNumber = parseCompactSnapshotResponse(bytes, logger).sequenceNumber;
+			} else {
+				// Neither framing (e.g. an HTML error page). Throw the driver's typed bad-response error
+				// (like fetchSnapshot.ts): canRetry=false stops the loader re-driving, while the
+				// incorrectServerResponse errorType still earns one wire-retry from getWithRetryForTokenRefresh.
+				throw new NonRetryableError(
+					`ODSP file version ${versionId} snapshot returned an unexpected content-type`,
+					OdspErrorTypes.incorrectServerResponse,
+					{ driverVersion, contentType, accept: headers.accept },
+				);
 			}
-			// A version's snapshot must carry a sequence number; a missing one is surfaced as an error
-			// naming the version, rather than returning a wrong value.
-			if (sequenceNumber === undefined) {
-				throw new Error(`ODSP file version ${versionId} snapshot is missing a sequenceNumber`);
+			// The sequence number must be a non-negative integer; a missing or malformed one throws the same
+			// typed error as above rather than feeding a wrong value into base selection.
+			if (
+				!(
+					typeof sequenceNumber === "number" &&
+					Number.isInteger(sequenceNumber) &&
+					sequenceNumber >= 0
+				)
+			) {
+				throw new NonRetryableError(
+					`ODSP file version ${versionId} snapshot has a missing or invalid sequenceNumber (${String(sequenceNumber)})`,
+					OdspErrorTypes.incorrectServerResponse,
+					{ driverVersion, contentType, accept: headers.accept },
+				);
 			}
 			return sequenceNumber;
 		});

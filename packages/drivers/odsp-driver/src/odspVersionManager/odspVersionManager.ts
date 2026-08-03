@@ -11,6 +11,7 @@
  * how versions are enumerated and resolved (real ODSP, a test double, or an alternative backend).
  */
 
+import { PromiseCache } from "@fluidframework/core-utils/internal";
 import { NonRetryableError } from "@fluidframework/driver-utils/internal";
 import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 
@@ -42,9 +43,11 @@ export interface ResolvedVersion extends OdspFileVersionRef {
  * Result of resolving the base version for a target sequence number.
  *
  * @remarks
- * There is intentionally no `targetIsLive` case: when the target is at/after the newest recoverable
- * version, the greatest version with `seq <= target` IS that newest version, so it is a normal
- * `found`. A consumer may separately choose to load the live file when the target is near the head.
+ * The tip (newest) version is excluded from base selection, so when the target is at or after the head
+ * the base is the newest *sealed* version with `seq <= target` (a normal `found`); if the file's only
+ * version is the tip, the result is `noBaseVersion`. The wired consumer surfaces `noBaseVersion` as a
+ * `UsageError`; loading the live file for a near-head target is a possible future consumer choice, not
+ * current behavior.
  */
 export type BaseForSeq =
 	| {
@@ -53,7 +56,10 @@ export type BaseForSeq =
 			readonly base: ResolvedVersion;
 	  }
 	| {
-			/** No recoverable version has `sequenceNumber <= target` (target predates retained history). */
+			/**
+			 * No sealed version has `sequenceNumber <= target` — the target predates retained history, or
+			 * the only version is the excluded tip.
+			 */
 			readonly kind: "noBaseVersion";
 			/** The oldest sequence number that was resolved while searching, if any. */
 			readonly oldestResolvedSeq?: number;
@@ -77,34 +83,33 @@ export interface IOdspVersionManager {
 }
 
 /**
- * Default {@link IOdspVersionManager}. Caches the version list and resolved sequence numbers. The
+ * Default {@link IOdspVersionManager}. Caches resolved sequence numbers (which never change); the version
+ * list is re-enumerated on each query rather than cached, since new versions are cut over time. The
  * resolution strategy (eager, newest-to-oldest, stopping at the first usable base) is hidden behind
  * {@link findBaseForSeq} and can change without affecting callers.
  */
+// Exported only so the same-package tests can construct it with a fake IOdspFileVersionFetcher.
+// Deliberately kept out of the folder barrel and the package public index, so it is not public API.
 export class OdspVersionManager implements IOdspVersionManager {
-	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
-	private readonly seqByVersion = new Map<string, Promise<number>>();
-	private readonly epochByVersion = new Map<string, Promise<string | undefined>>();
+	// Sealed versions' sequence numbers, memoized so each is resolved at most once per manager instance
+	// (a sealed version's number is fixed once the version exists).
+	private readonly seqCache = new PromiseCache<string, number>();
+	// Sealed versions' ODSP epochs, memoized like their sequence numbers. The live document's epoch is NOT
+	// cached — it can change (restore/reupload), so validateLineageEpoch always reads it fresh.
+	private readonly epochCache = new PromiseCache<string, string | undefined>();
 
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
-	public refresh(): void {
-		this.versionsCache = undefined;
-		this.seqByVersion.clear();
-		this.epochByVersion.clear();
-	}
-
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
-		// Recoverable base candidates = every version except the tip (index 0 ≈ the live document).
-		const versions = await this.getVersions();
+		// Re-enumerate the list each call (it changes as new versions are cut).
+		const versions = await this.fetcher.listFileVersions();
+
+		// Start past the tip (index 0): the newest version's sequence number can still advance until a newer
+		// version is cut, so it is treated as the live head rather than a stable base. Scan the remaining
+		// (sealed) versions newest-first and return the first with sequence number <= target — the closest
+		// base — or noBaseVersion, reporting the oldest sequence number seen.
 		const candidates = versions.slice(1);
 
-		// Versions are listed newest-first, and version order is expected to track sequence number, so
-		// the first candidate whose seq is at or before the target is taken as the closest base. Because
-		// any base at or before the target replays forward to the same state, this early stop is an
-		// optimization, not a correctness requirement: if version order and sequence order ever diverge,
-		// a base that is valid but not strictly the closest may be chosen.
-		// Scanning newest-first also yields the newest of versions sharing a sequence number (dedup).
 		let oldestResolvedSeq: number | undefined;
 		for (const version of candidates) {
 			const sequenceNumber = await this.resolveSeq(version.versionId);
@@ -160,46 +165,36 @@ export class OdspVersionManager implements IOdspVersionManager {
 	}
 
 	public async listVersions(): Promise<ResolvedVersion[]> {
-		const versions = await this.getVersions();
-		// Resolution order does not matter here, so resolve concurrently; the newest-first array order is
+		const versions = await this.fetcher.listFileVersions();
+		// Resolution order does not matter, so resolve concurrently; the newest-first array order is
 		// preserved by Promise.all regardless of completion order.
 		return Promise.all(
-			versions.map(async (version) => ({
+			versions.map(async (version, index) => ({
 				...version,
-				sequenceNumber: await this.resolveSeq(version.versionId),
+				// Resolve the tip (index 0) fresh each call, since its sequence number can still change;
+				// sealed versions come from the cache.
+				sequenceNumber:
+					index === 0
+						? await this.fetcher.resolveSequenceNumber(version.versionId)
+						: await this.resolveSeq(version.versionId),
 			})),
 		);
 	}
 
-	private async getVersions(): Promise<OdspFileVersionRef[]> {
-		// Cache the pending promise, not the awaited value, so concurrent callers share one fetch and a
-		// refresh() that runs while the fetch is in flight is not overwritten when the fetch settles.
-		this.versionsCache ??= this.fetcher.listFileVersions();
-		return this.versionsCache;
-	}
-
 	private async resolveSeq(versionId: string): Promise<number> {
-		// Cache the pending promise (a version's sequence number never changes) so concurrent callers
-		// coalesce and a refresh() is not clobbered by a fetch that was already in flight.
-		let pending = this.seqByVersion.get(versionId);
-		if (pending === undefined) {
-			pending = this.fetcher.resolveSequenceNumber(versionId);
-			this.seqByVersion.set(versionId, pending);
-		}
-		return pending;
+		// Cached indefinitely (a sealed version's number is fixed); concurrent calls coalesce and a failed
+		// resolution is evicted so a later call retries.
+		return this.seqCache.addOrGet(versionId, async () =>
+			this.fetcher.resolveSequenceNumber(versionId),
+		);
 	}
 
 	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {
-		// A numbered version's snapshot is immutable, so its epoch never changes: cache the pending
-		// promise (like resolveSeq) so a base revisited across findBaseForSeq calls is not re-fetched,
-		// concurrent callers coalesce, and a refresh() in flight is not clobbered. The live document's
-		// epoch is deliberately NOT cached here - it can change and is always read fresh.
-		let pending = this.epochByVersion.get(versionId);
-		if (pending === undefined) {
-			pending = this.fetcher.getRecoverableVersionEpoch(versionId);
-			this.epochByVersion.set(versionId, pending);
-		}
-		return pending;
+		// Cached like resolveSeq (a sealed version's epoch is fixed). The live document's epoch is read
+		// fresh instead (see validateLineageEpoch).
+		return this.epochCache.addOrGet(versionId, async () =>
+			this.fetcher.getRecoverableVersionEpoch(versionId),
+		);
 	}
 }
 
