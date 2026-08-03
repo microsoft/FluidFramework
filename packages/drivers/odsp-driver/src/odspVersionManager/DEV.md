@@ -82,6 +82,17 @@ driver's normal (`application/json` or `application/ms-fluid`) framing. The driv
 parser reads it, and the sequence number is `trees[0].sequenceNumber`. `blobs=2` inlines blob contents
 so the parser has everything it needs.
 
+### Can a base be replayed across a version restore (a lineage change)?
+
+No. Replay is only correct while the base version and the live document share one continuous,
+monotonically-numbered op stream. ODSP's **epoch** identifies that lineage: a version restore (or a
+download-then-reupload) bumps the epoch and renumbers the op stream. A base captured before such a
+boundary is on a different lineage than the live document, so replaying the live ops in `(base, target]`
+on top of it would silently corrupt the result. A chosen base must therefore be proven to share the live
+document's epoch — and to still have its bridging ops retained — before it is used. The lineage proof is
+folded into `findBaseForSeq` (see [Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)),
+backed by a structural epoch guard in [Part V](#part-v--components-b--c-as-built).
+
 ### What is deliberately not built in *this folder*?
 
 Components B and C now exist, but elsewhere: the recomposed driver in `../pointInTimeDriver/` and the
@@ -137,6 +148,44 @@ The failure propagates; it is never swallowed into a wrong base. `M-ERR-01`
 
 Every version with its resolved sequence number, newest-first. `M-LIST-01`
 
+### How does it verify a chosen base can be replayed to the target?
+
+`findBaseForSeq` both *picks* the closest version and *proves* it can be used: before returning a
+`found` base it checks that base shares the live document's lineage, so a cross-lineage base fails as a
+clear non-retryable error before any document service is built instead of a corrupt or stalled load.
+There is no separate public validation step — the lineage check is folded into selection so a caller
+cannot obtain an unvalidated base. Op availability is _not_ checked here — it is enforced by the
+delta-storage stack as the loader streams the bridging ops (Part V), because the lineage gate is the
+only check that must run before choosing to build the services.
+
+**Lineage (epoch).** It reads the live document's epoch and the chosen base version's epoch and compares
+them.
+
+- **Base and live share an epoch?** Returns the base. `M-VALIDATE-01`
+- **Base on a different epoch than the live document?** Throws, naming both epochs, and reuses the
+  driver's canonical `fileOverwrittenInStorage` epoch-mismatch error (the same `errorType` the shared
+  `EpochTracker` raises) rather than a generic `UsageError`, so the loader sees one machine-readable,
+  non-retryable error for a cross-lineage base. `M-VALIDATE-02`
+- **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
+  `M-VALIDATE-03`
+
+A numbered version's snapshot is immutable, so its epoch is read once and cached per versionId; the
+live document's epoch can change (a restore or download-and-reupload bumps it) and is therefore read
+fresh on every lineage check, never cached. `refresh()` clears the cached version epochs alongside the
+version list and resolved sequence numbers. `M-VALIDATE-CACHE-01`, `M-VALIDATE-CACHE-02`
+
+**Op availability.** This is _not_ re-checked up front, and Component B adds no check of its own. Op
+retention trims a contiguous _prefix_ from the oldest end of the stream, and op sequence numbers are
+contiguous by construction, so the ordinary delta-storage stack already enforces exactly what a replay
+needs: `validateMessages` (strict) discards any fetched batch that does not begin at the requested
+`from`, and `requestOps`/`ParallelRequests` keep requesting until the whole bounded range has been
+delivered, asserting contiguity as they dispatch. A bounded stream that reaches `done` has therefore
+necessarily served the full bridge; a range that never materializes fails the fetch instead (the delta
+stack polls, then throws its non-retryable "Failed to retrieve ops from storage (Too Many Retries)"
+error). The `OdspPointInTimeDocumentService` delta-storage wrapper (Part V) only bounds every fetch at
+the target. Because the wrapper rides the live document's delta storage, the creation snapshot's ops
+are already merged in for free.
+
 ## Part III — The File-Version Fetcher
 
 `createOdspFileVersionFetcher` is the real `IOdspFileVersionFetcher`, talking to ODSP. Its behaviors
@@ -170,6 +219,30 @@ field yields an empty list rather than an error. `F-LIST-03`
   and retries the request once. `F-ERROR-04`
 - **An authentication failure while resolving?** Likewise, it refreshes the token and retries once.
   `F-ERROR-02`
+
+### How does it read a version's or the live document's lineage (epoch)?
+
+The ODSP `x-fluid-epoch` header identifies the file's binary lineage. It is read with the raw fetch
+helper — deliberately **not** `epochTracker.fetch`, whose whole job is to pin the first epoch and reject
+a divergent one, which would make comparing two epochs impossible — and the response body is consumed and
+discarded, keeping only the header.
+
+- **The live document's epoch?** From the unversioned live snapshot endpoint (`blobs=0`), never a
+  versioned URL. `F-EPOCH-01`
+- **A specific version's epoch?** From that version's snapshot endpoint
+  (`.../versions/{label}/opStream/snapshots/trees/latest?blobs=0`). `F-EPOCH-02`
+- **The server sends no epoch header?** Returns `undefined` rather than throwing; the caller fails closed
+  on an unknown epoch. `F-EPOCH-03`
+
+### How does it verify a base shares the live document's lineage?
+
+Versions carry their own ODSP epoch (`x-fluid-epoch`). `getLiveDocumentEpoch` and
+`getRecoverableVersionEpoch(versionId)` read that header from the live and version-scoped snapshot
+endpoints (`...?blobs=0`, metadata only). The version manager compares the two; a mismatch means a
+restore or download-then-reupload renumbered the op stream, so the base is a different lineage.
+
+Op availability is deliberately _not_ fetched here — it is enforced by the delta-storage stack against
+the ops the loader reads (see Part V), which also gives the creation snapshot's ops for free.
 
 ## Part IV — Directional
 
@@ -226,8 +299,12 @@ comparison. It also allows locating a version by time when no sequence number is
 Component B is built (see [Part V](#part-v--components-b--c-as-built)), but the version it ships makes
 one simplifying assumption: it loads a single base file version and replays the ops in `(base, target]`
 from the **live** document's delta storage. That assumption holds only while those ops are still
-retained. Bridging a *trimmed* range by starting from a newer intermediate snapshot is the part that is
-not built yet — the rest of this answer is its design.
+retained — and a base whose bridging ops have been trimmed is still **detected**, by the ordinary
+delta-storage stack as the loader reads them: it discards any batch that does not start at the
+requested op and keeps requesting the remainder, so the fetch fails
+(see [Part V](#part-v--components-b--c-as-built)) rather than replaying a truncated range. What is
+still not built is **recovering** from that case: bridging a trimmed range by starting from a newer
+intermediate snapshot is the part that is not built yet — the rest of this answer is its design.
 
 A snapshot already contains the full accumulated state at its sequence number — every op at or below it
 is baked in. So to reach a target `T`, Component B loads the closest base snapshot (`seq ≤ T`) and
@@ -250,8 +327,8 @@ practice because snapshots are written frequently relative to the op-retention w
 
 Note that `minimumSequenceNumber` is not the signal for any of this: it is the collaboration-window floor
 baked into a snapshot, used when a snapshot is loaded, not an indicator of which ops the op stream still
-retains. Op availability is determined by asking the op stream for the range, not by a version's minimum
-sequence number.
+retains. Op availability is determined by what the delta stream actually serves for the range, not by a
+version's minimum sequence number.
 
 ### Should there be an end-to-end test against a real ODSP file?
 
@@ -268,27 +345,67 @@ unwrapping `/content` could be a fallback path.
 
 Component A (this folder) only selects the base. Components B and C — which materialize the document at
 the target and expose it through the loader — are now built, in other files. They carry no catechism
-code IDs here because their are no tests at the moment; these are
-conceptual answers in the spirit of [Part I](#part-i--foundations). The one still-directional gap is
-bridging a *trimmed* op range via an intermediate snapshot (see
-[Part IV](#part-iv--directional)); everything below is what ships today.
+code IDs here (those index Component A's suite); Component B's lineage guard is covered by
+`../test/odspPointInTimeDocumentServiceFactory.spec.ts` — both the structural shared-`EpochTracker`
+wiring and the up-front recoverable-vs-live epoch comparison (a mismatch fails the load before any
+service is built; a matching epoch proceeds to create both services) — and its bounded `fetchMessages`
+clamp (an unbounded, past-target, or before-target `to`, plus op pass-through) by
+`../test/odspPointInTimeDocumentService.spec.ts`; the rest are conceptual answers in the spirit of
+[Part I](#part-i--foundations). The one still-directional gap is bridging a
+*trimmed* op range via an intermediate snapshot (see [Part IV](#part-iv--directional)); everything below
+is what ships today.
 
 ### Component B — how does the recomposed driver materialize the target?
 
 `OdspPointInTimeDocumentServiceFactory` (in `../pointInTimeDriver/`) extends
 `OdspDocumentServiceFactoryCore` and adds `createPointInTimeDocumentService(resolvedUrl, targetSequenceNumber)`:
 
-1. Build a version manager (Component A) and call `findBaseForSeq(target)`. A `noBaseVersion` result
-   becomes a `UsageError` naming the target and the oldest resolved sequence number.
+1. Build a version manager (Component A), sharing the single `EpochTracker` described below, and call
+   `findBaseForSeq(target)`. It picks the closest version *and* proves that base shares the live
+   document's epoch before returning it (see
+   [Part II](#how-does-it-verify-a-chosen-base-can-be-replayed-to-the-target)); a cross-lineage base
+   throws the non-retryable `fileOverwrittenInStorage` error. A `noBaseVersion` result becomes a
+   `UsageError` naming the target and the oldest resolved sequence number.
 2. Resolve the chosen file version into a version-scoped resolved URL, then create two ordinary ODSP
    document services: a **recoverable** one bound to that base version (its storage is the base
-   snapshot) and a **live** one (its delta storage supplies the ops to replay).
+   snapshot) and a **live** one (its delta storage supplies the ops to replay). Both are created via
+   `createDocumentServiceCore` with a **single shared** `EpochTracker` (the same one the version
+   manager reads through) — this is the structural lineage guard; see the next question.
 3. Return an `OdspPointInTimeDocumentService` composing the two.
 
 It lives in this package rather than a generic wrapping driver (e.g. `@fluidframework/replay-driver`)
 because loading a historical file version is a storage-layer concern: it needs the version-scoped
 snapshot fetch, the epoch tracker, and authentication — all internal to this driver — and it consumes
 the version manager in-package, so the manager itself needs no exported surface.
+
+### Component B — what stops replay across a lineage boundary (a restore)?
+
+Replay only produces a correct result while the base version and the live document are on the **same
+lineage** — one continuous, monotonically-numbered op stream. ODSP's **epoch** is exactly that lineage
+id: a version restore (or download-then-reupload) bumps the epoch and renumbers the op stream
+(`epochTracker.ts:82-89`). If the base file version predates such a boundary, its snapshot is from the
+old lineage while the live ops in `(base, target]` are from the new one, so replaying them would
+silently corrupt the materialized state (see [Part I / can a base replay across a lineage change?](#can-a-base-be-replayed-across-a-version-restore-a-lineage-change)).
+
+The guard has **two layers**. **Up front**, `findBaseForSeq` validates the chosen base's lineage before
+returning it (and thus before `createPointInTimeDocumentService` builds any service): it reads the base
+version's epoch and the live document's epoch and, if they differ, rejects the load with the driver's
+canonical `fileOverwrittenInStorage` epoch-mismatch error — the *same* `errorType` the shared
+`EpochTracker` raises structurally — so both layers surface one consistent, non-retryable error for a
+cross-lineage base. This up-front comparison is
+exercised end-to-end at the factory: `test/odspPointInTimeDocumentServiceFactory.spec.ts` drives a real
+version manager whose recoverable-version epoch differs from the live document's and asserts the load is
+rejected *before* any service is created (with a matching-epoch companion that proceeds to build both).
+**Structurally**, it then
+threads one `EpochTracker` through every read — the version-history reads that pick the base, the
+recoverable base snapshot, and the live op stream — by passing a single shared `ICacheAndTracker` to
+`createDocumentServiceCore` for both services. An `EpochTracker` pins itself to the first epoch it sees
+and throws `fileOverwrittenInStorage` ("Epoch mismatch") on any later divergence
+(`epochTracker.ts:130-132, 496-511`), so even a lineage change that slips past the up-front check is
+caught as reads happen and the load fails loudly instead of returning a wrong document. A fresh
+`NonPersistentCache` backs that shared tracker so this read-only historical load stays isolated from the
+factory's cache — a base version's snapshot can never leak into a normal live load. (The structural
+guard — shared-tracker threading and divergent-epoch rejection — is verified by the same spec.)
 
 ### Component B — which `IDocumentService` method drives the replay?
 
@@ -298,7 +415,11 @@ Its three `IDocumentService` methods:
 - `connectToStorage` → the recoverable (base-version) service's storage: the base snapshot.
 - `connectToDeltaStorage` → wraps the **live** service's delta storage and clamps every
   **`fetchMessages(from, to, …)`** call to an exclusive upper bound of `targetSequenceNumber + 1`, so no
-  op past the target is ever fetched. **`fetchMessages` is the method that drives the bounded replay.**
+  op past the target is ever fetched. The clamp is all it does: op availability is already enforced
+  beneath it by the delta-storage stack, which discards any batch not starting at the requested `from`
+  and keeps requesting until the bounded range is fully delivered — so a stream that completes has
+  necessarily served the whole bridge, and one that cannot fails the fetch.
+  **`fetchMessages` is the method that drives the bounded replay.**
 - `connectToDeltaStream` → throws: under `storageOnly` the connection manager synthesizes a frozen,
   read-only delta stream instead of opening a live socket, so this is never called under normal flow.
 

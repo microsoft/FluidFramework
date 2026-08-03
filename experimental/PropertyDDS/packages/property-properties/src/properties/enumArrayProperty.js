@@ -3,12 +3,14 @@
  * Licensed under the MIT License.
  */
 
-const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { BaseDataArray } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { constants } from "@fluid-experimental/property-common";
+import { BaseDataArray } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { ValueArrayProperty } = require("./valueArrayProperty");
+import { ValueArrayProperty } from "./valueArrayProperty.js";
+
+const { MSG } = constants;
 
 /**
  * This class is a specialized version of the ArrayProperty for enums.

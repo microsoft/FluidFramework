@@ -11,24 +11,22 @@
  * how versions are enumerated and resolved (real ODSP, a test double, or an alternative backend).
  */
 
+import { NonRetryableError } from "@fluidframework/driver-utils/internal";
+import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
+
+import { pkgVersion as driverVersion } from "../packageVersion.js";
+
 import {
 	createOdspFileVersionFetcher,
 	type OdspFileVersionFetcherProps,
+	type OdspFileVersionRef,
+	type IOdspFileVersionFetcher,
 } from "./odspFileVersionFetcher.js";
 
-/**
- * A single ODSP file version, as listed by the file's version history.
- */
-export interface OdspFileVersionRef {
-	/**
-	 * The version's label (e.g. `"42.0"`), used to address the version when fetching it.
-	 */
-	readonly versionId: string;
-	/**
-	 * Last-modified timestamp of this version, ISO-8601.
-	 */
-	readonly lastModifiedDateTime: string;
-}
+// Re-exported so consumers (and this module's own index) can keep importing these fetcher-owned
+// types from the version manager. The definitions live in odspFileVersionFetcher.ts so that file
+// does not depend on this one, avoiding a circular dependency between the two modules.
+export type { OdspFileVersionRef, IOdspFileVersionFetcher } from "./odspFileVersionFetcher.js";
 
 /**
  * An ODSP file version together with its resolved Fluid sequence number.
@@ -62,28 +60,18 @@ export type BaseForSeq =
 	  };
 
 /**
- * Provides a file's versions and resolves each version's Fluid sequence number. Injected into
- * the version manager so the selection logic does not depend on how versions are fetched.
- */
-export interface IOdspFileVersionFetcher {
-	/**
-	 * Enumerate the file's versions, newest-first.
-	 */
-	listFileVersions(): Promise<OdspFileVersionRef[]>;
-	/**
-	 * Resolve a single version's Fluid sequence number. Throws on failure rather than returning a
-	 * wrong value.
-	 */
-	resolveSequenceNumber(versionId: string): Promise<number>;
-}
-
-/**
  * Selects the file version to use as the base for loading or replaying to a target sequence number.
  */
 export interface IOdspVersionManager {
 	/**
 	 * Given a target sequence number, return the closest version at or before it (`found`), or
 	 * `noBaseVersion` if the target predates the oldest retained version.
+	 *
+	 * @remarks
+	 * A `found` base is guaranteed to share the live document's ODSP epoch (lineage): before returning
+	 * it, the chosen base's epoch is compared with the live document's, and a mismatch throws a non-retryable error
+	 * rather than returning a base that cannot be replayed. Op availability is enforced separately and
+	 * lazily as the loader reads the bridging ops.
 	 */
 	findBaseForSeq(target: number): Promise<BaseForSeq>;
 }
@@ -96,12 +84,14 @@ export interface IOdspVersionManager {
 export class OdspVersionManager implements IOdspVersionManager {
 	private versionsCache: Promise<OdspFileVersionRef[]> | undefined;
 	private readonly seqByVersion = new Map<string, Promise<number>>();
+	private readonly epochByVersion = new Map<string, Promise<string | undefined>>();
 
 	public constructor(private readonly fetcher: IOdspFileVersionFetcher) {}
 
 	public refresh(): void {
 		this.versionsCache = undefined;
 		this.seqByVersion.clear();
+		this.epochByVersion.clear();
 	}
 
 	public async findBaseForSeq(target: number): Promise<BaseForSeq> {
@@ -123,10 +113,50 @@ export class OdspVersionManager implements IOdspVersionManager {
 					? sequenceNumber
 					: Math.min(oldestResolvedSeq, sequenceNumber);
 			if (sequenceNumber <= target) {
-				return { kind: "found", base: { ...version, sequenceNumber } };
+				const base = { ...version, sequenceNumber };
+				// Confirm the chosen base shares the live document's lineage before handing it back
+				await this.validateLineageEpoch(base);
+				return { kind: "found", base };
 			}
 		}
 		return { kind: "noBaseVersion", oldestResolvedSeq };
+	}
+
+	private async validateLineageEpoch(base: ResolvedVersion): Promise<void> {
+		// The live document's epoch can change (a restore or download-and-reupload bumps it), so it is
+		// always read fresh. A numbered version's snapshot is immutable, so its epoch never changes and
+		// is cached per versionId (see resolveVersionEpoch).
+		const [liveEpoch, baseEpoch] = await Promise.all([
+			this.fetcher.getLiveDocumentEpoch(),
+			this.resolveVersionEpoch(base.versionId),
+		]);
+		if (liveEpoch === undefined || baseEpoch === undefined) {
+			throw new NonRetryableError(
+				`Cannot verify that ODSP file version ${base.versionId} shares the live document's ` +
+					`lineage: the storage response is missing an epoch (base epoch: ${baseEpoch ?? "unknown"}, ` +
+					`live epoch: ${liveEpoch ?? "unknown"}).`,
+				OdspErrorTypes.incorrectServerResponse,
+				{
+					driverVersion,
+					serverEpoch: liveEpoch,
+					clientEpoch: baseEpoch,
+				},
+			);
+		}
+		if (liveEpoch !== baseEpoch) {
+			throw new NonRetryableError(
+				`ODSP file version ${base.versionId} is on epoch "${baseEpoch}" but the live document is ` +
+					`on epoch "${liveEpoch}". A binary file change (e.g. a version restore or ` +
+					`download-and-reupload) renumbered the op stream, so ops cannot be replayed from this ` +
+					`base onto the live document.`,
+				OdspErrorTypes.fileOverwrittenInStorage,
+				{
+					driverVersion,
+					serverEpoch: liveEpoch,
+					clientEpoch: baseEpoch,
+				},
+			);
+		}
 	}
 
 	public async listVersions(): Promise<ResolvedVersion[]> {
@@ -155,6 +185,19 @@ export class OdspVersionManager implements IOdspVersionManager {
 		if (pending === undefined) {
 			pending = this.fetcher.resolveSequenceNumber(versionId);
 			this.seqByVersion.set(versionId, pending);
+		}
+		return pending;
+	}
+
+	private async resolveVersionEpoch(versionId: string): Promise<string | undefined> {
+		// A numbered version's snapshot is immutable, so its epoch never changes: cache the pending
+		// promise (like resolveSeq) so a base revisited across findBaseForSeq calls is not re-fetched,
+		// concurrent callers coalesce, and a refresh() in flight is not clobbered. The live document's
+		// epoch is deliberately NOT cached here - it can change and is always read fresh.
+		let pending = this.epochByVersion.get(versionId);
+		if (pending === undefined) {
+			pending = this.fetcher.getRecoverableVersionEpoch(versionId);
+			this.epochByVersion.set(versionId, pending);
 		}
 		return pending;
 	}

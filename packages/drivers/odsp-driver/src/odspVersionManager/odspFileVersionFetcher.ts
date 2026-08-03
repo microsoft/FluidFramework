@@ -8,6 +8,8 @@
  * - GET /_api/v2.1/.../versions -- enumerate the file's versions.
  * - GET /_api/v2.1/.../versions/{label}/opStream/snapshots/trees/latest?blobs=2 -- fetch a version's
  *   snapshot and read its sequence number, parsed with the driver's snapshot parser.
+ * - GET /_api/v2.1/.../[versions/{label}/]opStream/snapshots/trees/latest?blobs=0 -- read a version's
+ *   or the live document's ODSP epoch (`x-fluid-epoch`) to compare their lineage.
  */
 
 import type {
@@ -22,9 +24,49 @@ import type { EpochTracker } from "../epochTracker.js";
 import { getHeadersWithAuth } from "../getUrlAndHeadersWithAuth.js";
 import { convertOdspSnapshotToSnapshotTreeAndBlobs } from "../odspSnapshotParser.js";
 import { getApiRoot } from "../odspUrlHelper.js";
-import { getWithRetryForTokenRefresh } from "../odspUtils.js";
+import { fetchArray, getWithRetryForTokenRefresh } from "../odspUtils.js";
 
-import type { OdspFileVersionRef, IOdspFileVersionFetcher } from "./odspVersionManager.js";
+/**
+ * A single ODSP file version, as listed by the file's version history.
+ */
+export interface OdspFileVersionRef {
+	/**
+	 * The version's label (e.g. `"42.0"`), used to address the version when fetching it.
+	 */
+	readonly versionId: string;
+	/**
+	 * Last-modified timestamp of this version, ISO-8601.
+	 */
+	readonly lastModifiedDateTime: string;
+}
+
+/**
+ * Provides a file's versions and resolves each version's Fluid sequence number. Injected into
+ * the version manager so the selection logic does not depend on how versions are fetched.
+ */
+export interface IOdspFileVersionFetcher {
+	/**
+	 * Enumerate the file's versions, newest-first.
+	 */
+	listFileVersions(): Promise<OdspFileVersionRef[]>;
+	/**
+	 * Resolve a single version's Fluid sequence number. Throws on failure rather than returning a
+	 * wrong value.
+	 */
+	resolveSequenceNumber(versionId: string): Promise<number>;
+	/**
+	 * Read the live document's current ODSP epoch (`x-fluid-epoch`), or `undefined`. Epoch identifies
+	 * the file's binary lineage and changes on a version restore or download-then-reupload; compared
+	 * with {@link IOdspFileVersionFetcher.getRecoverableVersionEpoch} to confirm a base is on the live
+	 * document's lineage.
+	 */
+	getLiveDocumentEpoch(): Promise<string | undefined>;
+	/**
+	 * Read the ODSP epoch of a specific file version, or `undefined`. See
+	 * {@link IOdspFileVersionFetcher.getLiveDocumentEpoch}.
+	 */
+	getRecoverableVersionEpoch(versionId: string): Promise<string | undefined>;
+}
 
 /**
  * Raw shape of a OneDrive/SharePoint driveItem version (an entry in the `/versions` response).
@@ -134,5 +176,40 @@ export function createOdspFileVersionFetcher(
 			return sequenceNumber;
 		});
 
-	return { listFileVersions, resolveSequenceNumber };
+	const itemRoot = `${getApiRoot(new URL(siteUrl))}/drives/${driveId}/items/${itemId}`;
+
+	// Reads the `x-fluid-epoch` header from `url`. Deliberately uses the raw fetch helper instead of
+	// `epochTracker.fetch`: the whole point is to COMPARE the base version's epoch against the live
+	// document's epoch, but the shared EpochTracker pins to the first epoch it sees and throws on the
+	// second (divergent) read - so it could never yield two epochs to compare. `fetchArray` also lets
+	// the body (JSON or ms-fluid binary) be consumed and discarded; only the header is needed.
+	const readEpoch = async (url: string, scenarioName: string): Promise<string | undefined> =>
+		getWithRetryForTokenRefresh(async (options) => {
+			const method = "GET";
+			const token = await getAuthHeader(
+				{ ...options, request: { url, method } },
+				scenarioName,
+			);
+			const headers = getHeadersWithAuth(token);
+			const response = await fetchArray(url, { method, headers });
+			return response.headers.get("x-fluid-epoch") ?? undefined;
+		});
+
+	const getLiveDocumentEpoch = async (): Promise<string | undefined> =>
+		// The (unversioned) live snapshot endpoint is a current-file read, so its epoch is the live
+		// document's epoch. `blobs=0` keeps the response to the tree metadata.
+		readEpoch(`${itemRoot}/opStream/snapshots/trees/latest?blobs=0`, "LiveEpoch");
+
+	const getRecoverableVersionEpoch = async (versionId: string): Promise<string | undefined> =>
+		readEpoch(
+			`${itemRoot}/versions/${encodeURIComponent(versionId)}/opStream/snapshots/trees/latest?blobs=0`,
+			"FileVersionEpoch",
+		);
+
+	return {
+		listFileVersions,
+		resolveSequenceNumber,
+		getLiveDocumentEpoch,
+		getRecoverableVersionEpoch,
+	};
 }
