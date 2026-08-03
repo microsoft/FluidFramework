@@ -371,6 +371,11 @@ export enum CommitOutcome {
 	 *
 	 * Applications typically choose to treat this outcome as equivalent to {@link CommitOutcome.FullyDropped | FullyDropped}
 	 * and, when reattempting the change, generate a different copy of the new content if any.
+	 *
+	 * @privateRemarks
+	 * New content is preserved so that subsequent commits that reference it without having to carry their own copies of it.
+	 * This can become expensive: one extra copy per subsequent commit, included in both in cases where we know the prior commit was dropped and in cases where we don't yet know.
+	 * We could instead drop all subsequent commits that reference the new content, but that would create a greater risk of data loss.
 	 */
 	NewContentOnly,
 }
