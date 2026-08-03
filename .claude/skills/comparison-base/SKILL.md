@@ -40,10 +40,11 @@ Do not rely on bare `gh pr view` or an unqualified branch name. These are ambigu
 For a matching PR, set:
 
 - `$TARGET_SOURCE` to its base repository clone URL
+- `$TARGET_REPOSITORY` to its normalized `owner/repository` name
 - `$TARGET_BRANCH` to its base branch
 - `$PR_URL` to its HTML URL
 
-If no PR exists, inspect fetch remotes and select one whose normalized URL points to `https://github.com/microsoft/FluidFramework` (accept SSH or HTTPS and an optional `.git` suffix). Set `$TARGET_SOURCE` to that remote and `$TARGET_BRANCH` to `main`. If no such remote exists, use `https://github.com/microsoft/FluidFramework.git` directly.
+If no PR exists, inspect fetch remotes and select one whose normalized URL points to `https://github.com/microsoft/FluidFramework` (accept SSH or HTTPS and an optional `.git` suffix). Set `$TARGET_SOURCE` to that remote, `$TARGET_REPOSITORY` to `microsoft/FluidFramework`, and `$TARGET_BRANCH` to `main`. If no such remote exists, use `https://github.com/microsoft/FluidFramework.git` directly as `$TARGET_SOURCE` and set the other values the same way.
 
 Fetch the target branch into a dedicated ref so stale or unrelated tracking branches cannot affect the result:
 
@@ -107,7 +108,7 @@ Return these values to the caller:
 
 - `$REVIEW_REF`, `$REVIEW_OID`, and `$IS_LOCAL_REVIEW`
 - `$REVIEW_FETCH_SOURCE`, `$REVIEW_REPOSITORY`, and `$REVIEW_HEAD_BRANCH`, when a published review identity was resolved
-- `$TARGET_SOURCE`, `$TARGET_BRANCH`, and `$TARGET_REF`
+- `$TARGET_SOURCE`, `$TARGET_REPOSITORY`, `$TARGET_BRANCH`, and `$TARGET_REF`
 - `$BASE_COMMIT`
 - `$REVIEW_COMMITS` and `$TARGET_COMMITS`
 - `$PR_URL`, if a PR was found

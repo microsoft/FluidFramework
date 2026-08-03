@@ -16,8 +16,11 @@ Read `.claude/skills/comparison-base/SKILL.md` and execute it with `HEAD` as `$R
 Compare the selected base with the working tree, not just `HEAD`, because this skill is often called immediately after API reports have been regenerated and those edits may be uncommitted:
 
 ```bash
-git diff "$BASE_COMMIT" -- '**/api-report/**/*.md'
+git diff "$BASE_COMMIT" -- ':(glob)**/api-report/*.md'
+git ls-files --others --exclude-standard -- ':(glob)**/api-report/*.md'
 ```
+
+Treat the union of both command outputs as the changed API reports. For each untracked report, read the full file as a new API surface because it has no Git diff until staged.
 
 Build a summary table and present it to the user:
 
