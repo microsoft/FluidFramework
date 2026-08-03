@@ -786,7 +786,9 @@ export class TreeCheckout implements ITreeCheckout {
 				unreachableCase(constraintStatus);
 			}
 		}
-		emitter.emit("settled", outcome);
+		this.emitChangedLocked(() => {
+			emitter.emit("settled", outcome);
+		}, "a commit settled event callback");
 		// No more events will be emitted for this commit, so we can remove the emitter from the map.
 		this.localCommitEventEmitters.delete(commit.revision);
 	};
@@ -893,8 +895,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * Shared by both the local and remote `changed` emission paths in {@link TreeCheckout.onAfterBranchChange}.
 	 * The `try`/`finally` ensures the lock is released even if a listener throws.
 	 */
-	private emitChangedLocked(emit: () => void): void {
-		this.editLock.lock();
+	private emitChangedLocked(
+		emit: () => void,
+		reason: string = "a change event callback",
+	): void {
+		this.editLock.lock(reason);
 		try {
 			emit();
 		} finally {
@@ -910,7 +915,7 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private readonly onAfterChange = (event: SharedTreeBranchChange<SharedTreeChange>): void => {
-		this.editLock.lock();
+		this.editLock.lock("a change event callback");
 		this.#events.emit("beforeBatch", event);
 		if (event.change !== undefined) {
 			const revision =
@@ -1758,7 +1763,13 @@ class EditLock {
 	 * @remarks Edits will throw an error if the lock is currently locked.
 	 */
 	public readonly editor: ISharedTreeEditor;
-	private locked = false;
+	/**
+	 * The current status of the lock.
+	 * The `reason` string will be included in the error message if an attempt is made to edit the tree while the lock is held.
+	 */
+	private status:
+		| { readonly isLocked: false }
+		| { readonly isLocked: true; readonly reason: string } = { isLocked: false };
 
 	/**
 	 * @param editor - an editor which will be used to create a new editor that is monitored to determine if any changes are happening to the tree.
@@ -1822,14 +1833,15 @@ class EditLock {
 
 	/**
 	 * Prevent further changes from being made to {@link EditLock.editor} until {@link EditLock.unlock} is called.
+	 * @param reason - A string describing why the lock is being acquired. This will be included in the error message if an attempt is made to edit while the lock is held.
 	 * @remarks May only be called when the lock is not already locked.
 	 */
-	public lock(): void {
-		if (this.locked) {
+	public lock(reason: string): void {
+		if (this.status.isLocked) {
 			debugger;
 		}
-		assert(!this.locked, 0xaa7 /* Checkout has already been locked */);
-		this.locked = true;
+		assert(!this.status.isLocked, 0xaa7 /* Checkout has already been locked */);
+		this.status = { isLocked: true, reason };
 	}
 
 	/**
@@ -1838,8 +1850,8 @@ class EditLock {
 	 * This must start with a capital letter, as it shows up as the first part of the error message and we want it to look nice.
 	 */
 	public checkUnlocked<T extends string>(action: T extends Capitalize<T> ? T : never): void {
-		if (this.locked) {
-			throw new UsageError(`${action} is forbidden during a change event callback`);
+		if (this.status.isLocked) {
+			throw new UsageError(`${action} is forbidden during ${this.status.reason}`);
 		}
 	}
 
@@ -1848,8 +1860,8 @@ class EditLock {
 	 * @remarks May only be called when the lock is currently locked.
 	 */
 	public unlock(): void {
-		assert(this.locked, 0xaa8 /* Checkout has not been locked */);
-		this.locked = false;
+		assert(this.status.isLocked, 0xaa8 /* Checkout has not been locked */);
+		this.status = { isLocked: false };
 	}
 }
 

@@ -2188,6 +2188,120 @@ describe("SharedTree", () => {
 				// Cleanup
 				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
 			});
+			it("a new edit cannot be submitted synchronously during the settled event callback", () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(config));
+
+				const outcomesOnB: CommitOutcome[] = [];
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewB.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									outcomesOnB.push(outcome);
+									assert.throws(
+										() => viewB.root.insertAtStart("B came second"),
+										validateUsageError(
+											"Editing the tree is forbidden during a commit settled event callback",
+										),
+									);
+								}),
+							);
+						}
+					}),
+				);
+
+				// Create conflicting transactions so B's local edit settles with NewContentOnly.
+				viewA.runTransaction(() => {
+					viewA.root.insertAt(0, "A Won");
+				});
+				viewB.runTransaction(
+					() => {
+						viewB.root.insertAt(0, "B Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				assert.deepEqual(outcomesOnB, [CommitOutcome.NewContentOnly]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
+			it("a new edit can be submitted asynchronously in response to the event", async () => {
+				// Setup
+				const provider = new TestTreeProviderLite(2);
+				const treeA = provider.trees[0];
+				const treeB = provider.trees[1];
+				const config = new TreeViewConfiguration({
+					schema: StringArray,
+					enableSchemaValidation,
+				});
+				const viewA = asAlpha(treeA.viewWith(config));
+				viewA.initialize([]);
+				provider.synchronizeMessages();
+
+				const viewB = asAlpha(treeB.viewWith(config));
+
+				let promise: Promise<void>;
+				const unsubscribeCallbacks = new Set<() => void>();
+				unsubscribeCallbacks.add(
+					viewB.events.on("changed", (metadata) => {
+						if (metadata.isLocal) {
+							unsubscribeCallbacks.add(
+								metadata.events.on("settled", (outcome) => {
+									if (outcome !== CommitOutcome.FullyApplied) {
+										promise = new Promise<void>((resolve) => {
+											setTimeout(() => {
+												viewB.root.insertAtEnd("B came second");
+												resolve();
+											});
+										});
+									}
+								}),
+							);
+						}
+					}),
+				);
+
+				// Create conflicting transactions so B's local edit settles with NewContentOnly.
+				viewA.runTransaction(() => {
+					viewA.root.insertAt(0, "A Won");
+				});
+				viewB.runTransaction(
+					() => {
+						viewB.root.insertAt(0, "B Won");
+					},
+					{ preconditions: [{ type: "noChange" }] },
+				);
+
+				// Act
+				provider.synchronizeMessages();
+
+				// Verify
+				// eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- this a check to ensure that the promise is set
+				assert(promise! !== undefined, "Expected promise to be set");
+				await promise;
+				assert.deepEqual([...viewB.root], ["A Won", "B came second"]);
+
+				// Cleanup
+				for (const unsubscribe of unsubscribeCallbacks) unsubscribe();
+			});
 		});
 	});
 
