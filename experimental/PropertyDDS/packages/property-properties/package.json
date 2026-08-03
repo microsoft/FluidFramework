@@ -13,7 +13,7 @@
 	"type": "commonjs",
 	"exports": {
 		".": {
-			"types": "./src/index.d.ts",
+			"types": "./src/api.ts",
 			"import": "./lib/index.js",
 			"default": "./dist/index.js"
 		}
@@ -24,7 +24,7 @@
 	"files": [
 		"dist/**/*",
 		"lib/**/*",
-		"src/index.d.ts"
+		"src/api.ts"
 	],
 	"scripts": {
 		"build": "fluid-build . --task build",
