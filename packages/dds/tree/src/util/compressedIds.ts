@@ -212,7 +212,11 @@ export function forceDecodeEncodedIdWithoutSession(
 				category: "generic",
 				eventName: "HealUnresolvableIdentifierOnDecode",
 			},
-			LogLevel.info,
+			// This telemetry should be very low-volume (and possibly never happen at all),
+			// as should only occur when loading documents that were corrupted by a now fixed bug and have not been re-summarized since healing was added.
+			// It is useful for monitoring and diagnosing for this to be reported in the same cases in which the error case would be reported,
+			// which is the essential level.
+			LogLevel.essential,
 		);
 		return healed;
 	}
