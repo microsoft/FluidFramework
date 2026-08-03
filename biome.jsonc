@@ -77,11 +77,6 @@
 			// tree entrypoint files are generated and may not conform to formatting rules
 			"!**/packages/dds/tree/src/entrypoints/*.ts",
 
-			// Biome can't be configured to understand that package sources use module syntax.
-			// Biome reports: Illegal use of an import declaration outside of a module
-			// To check/format, temporarily set "type": "module" in package.json.
-			"!**/experimental/PropertyDDS/packages/property-properties/src/**/*.js",
-
 			// Generated type-tests
 			"!**/*.generated.ts",
 
