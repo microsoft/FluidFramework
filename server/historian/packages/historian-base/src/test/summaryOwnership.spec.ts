@@ -19,6 +19,7 @@ import * as sinon from "sinon";
 import {
 	createGitService,
 	createGitServiceFromValidatedDocument,
+	validateInitialSummaryUpload,
 	validateSummaryDocument,
 } from "../routes/utils";
 import { TestCache, TestDocumentManager, TestTenantService } from "./utils";
@@ -71,6 +72,150 @@ describe("summary ownership", function () {
 
 		assert.strictEqual(result, activeDocument);
 		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+	});
+
+	describe("initial summary bootstrap", () => {
+		it("permits bootstrap when the fresh Alfred lookup returns null", async () => {
+			const documentManager = new TestDocumentManager();
+			const readDocument = sandbox.stub(documentManager, "readDocument").resolves(null);
+			const info = sandbox.spy(Lumberjack, "info");
+
+			await validateInitialSummaryUpload({
+				tenantId,
+				authorization,
+				documentManager,
+			});
+
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+			sinon.assert.calledWithMatch(
+				info,
+				"HistorianSummaryDocumentOwnershipValidation",
+				sinon.match({
+					tenantId,
+					documentId,
+					operation: "post",
+					routeType: "notApplicable",
+					outcome: "allowed",
+				}),
+			);
+		});
+
+		it("permits bootstrap when Alfred returns a direct 404", async () => {
+			const clock = sandbox.useFakeTimers();
+			const documentManager = new TestDocumentManager();
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.rejects(new NetworkError(404, "Alfred document not found"));
+			const info = sandbox.spy(Lumberjack, "info");
+
+			const validation = validateInitialSummaryUpload({
+				tenantId,
+				authorization,
+				documentManager,
+			});
+			await clock.runAllAsync();
+			await validation;
+
+			sinon.assert.callCount(readDocument, 4);
+			sinon.assert.calledWithMatch(
+				info,
+				"HistorianSummaryDocumentOwnershipValidation",
+				sinon.match({ operation: "post", outcome: "allowed" }),
+			);
+		});
+
+		for (const testCase of [
+			{ name: "active", document: activeDocument },
+			{
+				name: "scheduled-for-deletion",
+				document: {
+					...activeDocument,
+					scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
+				},
+			},
+		]) {
+			it(`rejects an ${testCase.name} document as an initial replay`, async () => {
+				const documentManager = new TestDocumentManager();
+				sandbox.stub(documentManager, "readDocument").resolves(testCase.document);
+				const info = sandbox.spy(Lumberjack, "info");
+
+				await assert.rejects(
+					validateInitialSummaryUpload({
+						tenantId,
+						authorization,
+						documentManager,
+					}),
+					(error: unknown) =>
+						error instanceof NetworkError &&
+						error.code === 404 &&
+						error.message === "Document is deleted and cannot be accessed.",
+				);
+				sinon.assert.calledWithMatch(
+					info,
+					"HistorianSummaryDocumentOwnershipValidation",
+					sinon.match({
+						operation: "post",
+						routeType: "notApplicable",
+						outcome: "initialReplay",
+					}),
+				);
+			});
+		}
+
+		it("propagates Alfred dependency failures", async () => {
+			const clock = sandbox.useFakeTimers();
+			const dependencyError = new NetworkError(503, "Alfred unavailable");
+			const documentManager = new TestDocumentManager();
+			sandbox.stub(documentManager, "readDocument").rejects(dependencyError);
+			const logError = sandbox.spy(Lumberjack, "error");
+
+			const rejection = assert.rejects(
+				validateInitialSummaryUpload({
+					tenantId,
+					authorization,
+					documentManager,
+				}),
+				(error) => error === dependencyError,
+			);
+			await clock.runAllAsync();
+			await rejection;
+
+			sinon.assert.calledWithMatch(
+				logError,
+				"HistorianSummaryDocumentOwnershipValidation",
+				sinon.match({
+					operation: "post",
+					outcome: "dependencyError",
+					dependencyStatus: 503,
+				}),
+			);
+		});
+
+		it("rejects a malformed successful Alfred response as a dependency error", async () => {
+			const documentManager = new TestDocumentManager();
+			sandbox.stub(documentManager, "readDocument").resolves({
+				...activeDocument,
+				createTime: Number.NaN,
+			});
+			const logError = sandbox.spy(Lumberjack, "error");
+
+			await assert.rejects(
+				validateInitialSummaryUpload({
+					tenantId,
+					authorization,
+					documentManager,
+				}),
+				(error: unknown) =>
+					error instanceof NetworkError &&
+					error.code === 502 &&
+					error.message === "Invalid document response from Alfred.",
+			);
+			sinon.assert.calledWithMatch(
+				logError,
+				"HistorianSummaryDocumentOwnershipValidation",
+				sinon.match({ operation: "post", outcome: "dependencyError" }),
+			);
+		});
 	});
 
 	for (const testCase of [

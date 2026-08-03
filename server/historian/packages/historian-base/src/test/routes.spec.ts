@@ -1491,12 +1491,19 @@ describe("summary ownership routes", () => {
 		sinon.assert.notCalled(createSummary);
 	});
 
-	it("preserves the POST-only initial exemption and emits structured telemetry", async () => {
-		const readDocument = sandbox.spy(documentManager, "readDocument");
+	it("permits initial upload only after a fresh missing-document result", async () => {
+		const events: string[] = [];
+		const readDocument = sandbox.stub(documentManager, "readDocument").callsFake(async () => {
+			events.push("readDocument");
+			return null;
+		});
 		const info = sandbox.spy(Lumberjack, "info");
 		const createSummary = sandbox
 			.stub(RestGitService.prototype, "createSummary")
-			.resolves({ id: sha });
+			.callsFake(async () => {
+				events.push("createSummary");
+				return { id: sha };
+			});
 
 		await superTest
 			.post(`/repos/${tenantId}/git/summaries`)
@@ -1508,8 +1515,9 @@ describe("summary ownership routes", () => {
 			.send({ type: "container", trees: [], blobs: [] })
 			.expect(201);
 
-		sinon.assert.notCalled(readDocument);
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
 		sinon.assert.calledOnce(createSummary);
+		assert.deepStrictEqual(events, ["readDocument", "createSummary"]);
 		sinon.assert.calledWithMatch(
 			info,
 			"HistorianInitialSummaryUploadExemption",
@@ -1522,6 +1530,71 @@ describe("summary ownership routes", () => {
 				outcome: "exempted",
 			}),
 		);
+	});
+
+	for (const testCase of [
+		{ name: "active", document: activeDocument },
+		{
+			name: "scheduled-for-deletion",
+			document: {
+				...activeDocument,
+				scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
+			},
+		},
+	]) {
+		it(`rejects initial replay for an ${testCase.name} document before storage`, async () => {
+			const readDocument = sandbox
+				.stub(documentManager, "readDocument")
+				.resolves(testCase.document);
+			const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+			const getTenant = sandbox.spy(defaultTenantService, "getTenant");
+
+			await superTest
+				.post(`/repos/${tenantId}/git/summaries`)
+				.query({ initial: "true" })
+				.set("Authorization", authorization)
+				.set("StorageName", "initial-storage")
+				.send({ type: "container", trees: [], blobs: [] })
+				.expect(404);
+
+			sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+			sinon.assert.notCalled(createSummary);
+			sinon.assert.notCalled(getTenant);
+		});
+	}
+
+	it("fails initial upload closed when Alfred is unavailable", async () => {
+		const clock = sandbox.useFakeTimers({ toFake: ["setTimeout"] });
+		const readDocument = sandbox
+			.stub(documentManager, "readDocument")
+			.rejects(new NetworkError(503, "Alfred unavailable"));
+		const createSummary = sandbox.stub(RestGitService.prototype, "createSummary");
+		const waitForCallCount = async (expectedCallCount: number): Promise<void> => {
+			while (readDocument.callCount < expectedCallCount) {
+				await new Promise<void>((resolve) => {
+					setImmediate(resolve);
+				});
+			}
+		};
+
+		const responsePromise = superTest
+			.post(`/repos/${tenantId}/git/summaries`)
+			.query({ initial: "true" })
+			.set("Authorization", authorization)
+			.send({ type: "container", trees: [], blobs: [] })
+			.expect(503)
+			.then();
+		await waitForCallCount(1);
+		await clock.tickAsync(1000);
+		await waitForCallCount(2);
+		await clock.tickAsync(2000);
+		await waitForCallCount(3);
+		await clock.tickAsync(4000);
+		await waitForCallCount(4);
+		await clock.tickAsync(8000);
+		await responsePromise;
+
+		sinon.assert.notCalled(createSummary);
 	});
 
 	it("creates no positive attacker mappings after ownership denial", async () => {

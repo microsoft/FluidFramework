@@ -65,7 +65,14 @@ type SummaryOwnershipOutcome =
 	| "notFound"
 	| "identityMismatch"
 	| "scheduledDeletion"
+	| "initialReplay"
 	| "dependencyError";
+
+export interface IValidateInitialSummaryUploadArgs {
+	tenantId: string;
+	authorization: string | undefined;
+	documentManager: IDocumentManager;
+}
 
 export interface IValidateSummaryDocumentArgs {
 	tenantId: string;
@@ -319,6 +326,71 @@ function denyDocumentAccess(
 	throw new NetworkError(404, documentUnavailableMessage);
 }
 
+function validateAlfredDocumentResponse(
+	document: IDocument | null | undefined,
+	tenantId: string,
+	documentId: string,
+	operation: SummaryOperation,
+	routeType: SummaryRouteType,
+): void {
+	if (
+		typeof document !== "object" ||
+		document === null ||
+		typeof document.tenantId !== "string" ||
+		typeof document.documentId !== "string" ||
+		!Number.isFinite(document.createTime) ||
+		(document.scheduledDeletionTime !== undefined &&
+			typeof document.scheduledDeletionTime !== "string") ||
+		(document.isEphemeralContainer !== undefined &&
+			typeof document.isEphemeralContainer !== "boolean") ||
+		(document.storageName !== undefined && typeof document.storageName !== "string")
+	) {
+		const error = new NetworkError(502, "Invalid document response from Alfred.");
+		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
+		throw error;
+	}
+}
+
+export async function validateInitialSummaryUpload({
+	tenantId,
+	authorization,
+	documentManager,
+}: IValidateInitialSummaryUploadArgs): Promise<void> {
+	const documentId = getTokenDocumentId(tenantId, authorization);
+	let document: IDocument | null;
+	try {
+		document = await runWithRetry(
+			async () => documentManager.readDocument(tenantId, documentId),
+			"utils.validateInitialSummaryUpload.readDocument",
+			3,
+			1000,
+			getLumberBaseProperties(documentId, tenantId),
+		);
+	} catch (error) {
+		if (error instanceof NetworkError && error.code === 404) {
+			logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
+			return;
+		}
+		logOwnershipOutcome(
+			tenantId,
+			documentId,
+			"post",
+			"notApplicable",
+			"dependencyError",
+			error,
+		);
+		throw error;
+	}
+
+	if (document === null) {
+		logOwnershipOutcome(tenantId, documentId, "post", "notApplicable", "allowed");
+		return;
+	}
+
+	validateAlfredDocumentResponse(document, tenantId, documentId, "post", "notApplicable");
+	return denyDocumentAccess(tenantId, documentId, "post", "notApplicable", "initialReplay");
+}
+
 export async function validateSummaryDocument({
 	tenantId,
 	authorization,
@@ -345,23 +417,10 @@ export async function validateSummaryDocument({
 		throw error;
 	}
 
-	if (!document) {
+	if (document === null) {
 		return denyDocumentAccess(tenantId, documentId, operation, routeType, "notFound");
 	}
-	if (
-		typeof document.tenantId !== "string" ||
-		typeof document.documentId !== "string" ||
-		!Number.isFinite(document.createTime) ||
-		(document.scheduledDeletionTime !== undefined &&
-			typeof document.scheduledDeletionTime !== "string") ||
-		(document.isEphemeralContainer !== undefined &&
-			typeof document.isEphemeralContainer !== "boolean") ||
-		(document.storageName !== undefined && typeof document.storageName !== "string")
-	) {
-		const error = new NetworkError(502, "Invalid document response from Alfred.");
-		logOwnershipOutcome(tenantId, documentId, operation, routeType, "dependencyError", error);
-		throw error;
-	}
+	validateAlfredDocumentResponse(document, tenantId, documentId, operation, routeType);
 	if (document.tenantId !== tenantId || document.documentId !== documentId) {
 		return denyDocumentAccess(tenantId, documentId, operation, routeType, "identityMismatch");
 	}
