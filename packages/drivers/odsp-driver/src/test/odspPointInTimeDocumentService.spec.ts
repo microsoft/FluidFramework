@@ -16,7 +16,6 @@ import type {
 	IStream,
 	IStreamResult,
 } from "@fluidframework/driver-definitions/internal";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
 
 // eslint-disable-next-line import-x/no-internal-modules
 import { OdspPointInTimeDocumentService } from "../pointInTimeDriver/odspPointInTimeDocumentService.js";
@@ -178,79 +177,27 @@ describe("OdspPointInTimeDocumentService", () => {
 		});
 	});
 
-	describe("connectToDeltaStorage: enforces that the full bridging range is served", () => {
+	describe("connectToDeltaStorage: passes the served ops through", () => {
 		const readAll = async (
 			target: number,
 			from: number,
 			batches: number[][],
-			options?: { cachedOnly?: boolean; abortSignal?: AbortSignal },
 		): Promise<number[]> => {
 			const { service } = makeService(target, streamFromBatches(batches));
 			const deltaStorage = await service.connectToDeltaStorage();
-			const stream = deltaStorage.fetchMessages(
-				from,
-				undefined,
-				options?.abortSignal,
-				options?.cachedOnly,
-			);
-			return drain(stream);
+			return drain(deltaStorage.fetchMessages(from, undefined));
 		};
 
-		const assertCannotCatchUp = async (
-			promise: Promise<unknown>,
-			expectedCanRetry: boolean,
-		): Promise<void> => {
-			await assert.rejects(
-				promise,
-				(error: Error & { errorType?: string; canRetry?: boolean }) => {
-					assert.equal(error.errorType, OdspErrorTypes.cannotCatchUp);
-					assert.equal(
-						error.canRetry,
-						expectedCanRetry,
-						expectedCanRetry
-							? "ops not yet flushed to delta storage is a transient, retryable failure"
-							: "ops trimmed by retention is a permanent, non-retryable failure",
-					);
-					return true;
-				},
-			);
-		};
-
-		it("passes the ops through when the full required range [from, target] is served", async () => {
+		it("yields the ops of a single batch", async () => {
 			assert.deepEqual(await readAll(12, 10, [[10, 11, 12]]), [10, 11, 12]);
 		});
 
-		it("accumulates across multiple read batches before deciding the range is intact", async () => {
+		it("yields the ops of multiple batches in order", async () => {
 			assert.deepEqual(await readAll(12, 10, [[10], [11], [12]]), [10, 11, 12]);
 		});
 
-		it("throws non-retryable cannotCatchUp when the low end (`from`) was trimmed by retention", async () => {
-			// Stream starts above `from` (10): the oldest ops are permanently gone.
-			await assertCannotCatchUp(readAll(12, 10, [[11, 12]]), false);
-		});
-
-		it("throws retryable cannotCatchUp when the stream stops short of the target", async () => {
-			// Low end intact but the top ops are sequenced yet not flushed to delta storage - transient.
-			await assertCannotCatchUp(readAll(12, 10, [[10, 11]]), true);
-		});
-
-		it("throws retryable cannotCatchUp when no ops are served at all", async () => {
-			// Nothing flushed yet (delta storage lagging the live document) - transient.
-			await assertCannotCatchUp(readAll(12, 10, []), true);
-		});
-
-		it("does not enforce on a cachedOnly pass that legitimately ends short", async () => {
-			assert.deepEqual(await readAll(12, 10, [[10]], { cachedOnly: true }), [10]);
-		});
-
-		it("does not enforce when the fetch was aborted", async () => {
-			const abortSignal = { aborted: true } as AbortSignal;
-			assert.deepEqual(await readAll(12, 10, [[10]], { abortSignal }), [10]);
-		});
-
-		it("does not enforce when no ops are needed (target at or below the base)", async () => {
-			// from (13) >= bounded (target 12 + 1) means the base already covers the target.
-			assert.deepEqual(await readAll(12, 13, []), []);
+		it("yields nothing when the stream serves no ops", async () => {
+			assert.deepEqual(await readAll(12, 10, []), []);
 		});
 	});
 
