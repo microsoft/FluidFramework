@@ -1,6 +1,6 @@
 ---
 name: api-changes
-description: Use when customer-facing API changes were made — i.e., API report .md files differ from main. Guides through release tag assignment, API Council review requirements, breaking change classification, deprecation process, and changeset guidance. Triggered automatically by ci-readiness-check when api-report diffs are detected.
+description: Use when customer-facing API changes were made — i.e., API report .md files differ from the branch's resolved comparison base. Guides through release tag assignment, API Council review requirements, breaking change classification, deprecation process, and changeset guidance. Triggered automatically by ci-readiness-check when api-report diffs are detected.
 ---
 
 <required>
@@ -11,8 +11,12 @@ Before doing any work, create one task/todo item per applicable step using your 
 
 ## Step 1: Identify what changed
 
+Read `.claude/skills/comparison-base/SKILL.md` and execute it with `HEAD` as `$REVIEW_REF`. This is required; use the target and comparison commit it resolves.
+
+Compare the selected base with the working tree, not just `HEAD`, because this skill is often called immediately after API reports have been regenerated and those edits may be uncommitted:
+
 ```bash
-git diff $(git merge-base HEAD origin/main)...HEAD -- '**/api-report/**/*.md'
+git diff "$BASE_COMMIT" -- '**/api-report/**/*.md'
 ```
 
 Build a summary table and present it to the user:
