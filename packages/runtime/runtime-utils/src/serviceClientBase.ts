@@ -157,7 +157,10 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 			throw new UsageError("Container attach already in progress");
 		}
 
-		assert(this.container.attachState === AttachState.Detached, "Container not detached");
+		assert(
+			this.container.attachState === AttachState.Detached,
+			0xd15 /* Container not detached */,
+		);
 		this.startedAttach = true;
 
 		// TODO: support setting where attach can fail, and leave the container in a valid (non-closed) state.
@@ -167,7 +170,7 @@ export abstract class ServiceContainerBase<TData, TOptions = unknown>
 		// This type cast is needed to work around the fact that TypeScript assumes the "attach" methods can't modify "attachState".
 		assert(
 			this.container.attachState === (AttachState.Attached as AttachState),
-			"Container failed to attach",
+			0xd16 /* Container failed to attach */,
 		);
 		this.id = this.getContainerId();
 		return this as typeof this & { id: string };
