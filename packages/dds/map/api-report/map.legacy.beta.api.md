@@ -29,25 +29,17 @@ export interface ICreateInfo {
 }
 
 // @public @sealed @legacy
-export interface IDirectory extends Omit<Map<string, any>, "entries" | "getOrInsert" | "getOrInsertComputed" | "keys" | "set" | "values" | typeof Symbol.iterator>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
-    // (undocumented)
-    [Symbol.iterator](): IterableIterator<[string, any]>;
+export interface IDirectory extends Map<string, any>, IEventProvider<IDirectoryEvents>, Partial<IDisposable> {
     readonly absolutePath: string;
     countSubDirectory?(): number;
     createSubDirectory(subdirName: string): IDirectory;
     deleteSubDirectory(subdirName: string): boolean;
-    // (undocumented)
-    entries(): IterableIterator<[string, any]>;
     get<T = any>(key: string): T | undefined;
     getSubDirectory(subdirName: string): IDirectory | undefined;
     getWorkingDirectory(relativePath: string): IDirectory | undefined;
     hasSubDirectory(subdirName: string): boolean;
-    // (undocumented)
-    keys(): IterableIterator<string>;
     set<T = unknown>(key: string, value: T): this;
     subdirectories(): IterableIterator<[string, IDirectory]>;
-    // (undocumented)
-    values(): IterableIterator<any>;
 }
 
 // @beta @sealed @legacy

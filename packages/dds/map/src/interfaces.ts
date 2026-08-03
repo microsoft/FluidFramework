@@ -44,28 +44,11 @@ export interface IValueChanged {
  * @public
  */
 export interface IDirectory
-	extends Omit<
-			// TODO: Use `unknown` instead (breaking change).
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			Map<string, any>,
-			| "entries"
-			| "getOrInsert"
-			| "getOrInsertComputed"
-			| "keys"
-			| "set"
-			| "values"
-			| typeof Symbol.iterator
-		>,
+	// TODO: Use `unknown` instead (breaking change).
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	extends Map<string, any>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Symbol.iterator](): IterableIterator<[string, any]>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	entries(): IterableIterator<[string, any]>;
-	keys(): IterableIterator<string>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	values(): IterableIterator<any>;
-
 	/**
 	 * The absolute path of the directory.
 	 */
