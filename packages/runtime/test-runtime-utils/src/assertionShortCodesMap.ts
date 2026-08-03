@@ -1538,10 +1538,8 @@ export const shortCodeMap = {
 	"0xb1b": "missing kind",
 	"0xb1c": "missing field kind",
 	"0xb1d": "missing field kind",
-	"0xb1e": "Should not decode nodes during field encoding",
 	"0xb1f": "Encoded change didn't pass schema validation.",
 	"0xb20": "Encoded change didn't pass schema validation.",
-	"0xb21": "Should not encode nodes during field decoding",
 	"0xb22": "Should not compose two undefined nodes",
 	"0xb23": "Should not compose two undefined nodes",
 	"0xb24": "Unknown node ID",
@@ -1951,5 +1949,13 @@ export const shortCodeMap = {
 	"0xd0c": "withIncrementalDecoder can only be called on contexts without an originator session ID",
 	"0xd0d": "incrementalEncoder cannot be used when encoding originator-dependent identifiers",
 	"0xd0e": "Cannot remove detach without also removing attach",
-	"0xd0f": "Attach sequence number should be greater than the parent's last summary reference sequence number"
+	"0xd0f": "Attach sequence number should be greater than the parent's last summary reference sequence number",
+	"0xd10": "Forests are not equal",
+	"0xd11": "Cannot create or load containers on a closed EphemeralService",
+	"0xd12": "Root data store kind must be provided for new containers",
+	"0xd13": "Should be able to set alias on new data store",
+	"0xd14": "id should be defined when loading a container",
+	"0xd15": "Container not detached",
+	"0xd16": "Container failed to attach",
+	"0xd17": "Registry must be a function"
 };

@@ -208,12 +208,41 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 
 	it("resolveSequenceNumber throws (does not return a wrong value) when the snapshot has no sequence number", async () => {
 		// @q F-RESOLVE-02
+		// The typed incorrectServerResponse error is retried once by getWithRetryForTokenRefresh, so two
+		// responses are stubbed; the retry hits the same missing-seq snapshot and the error propagates.
 		await assert.rejects(
 			async () =>
-				withFetch([await createResponse(jsonHeaders, snapshotMissingSeq, 200)], async () =>
-					fetcher.resolveSequenceNumber("42.0"),
+				withFetch(
+					[
+						await createResponse(jsonHeaders, snapshotMissingSeq, 200),
+						await createResponse(jsonHeaders, snapshotMissingSeq, 200),
+					],
+					async () => fetcher.resolveSequenceNumber("42.0"),
 				),
 			/42\.0/,
+		);
+	});
+
+	it("resolveSequenceNumber throws when the snapshot's sequence number is not a valid integer", async () => {
+		// @q F-RESOLVE-06
+		// A present-but-malformed sequence number must be rejected, not coerced into base selection. A
+		// non-integer number reaches the validation (the parser passes numbers through); incorrectServerResponse
+		// is retried once, so two responses are stubbed.
+		const snapshotBadSeq = {
+			id: "id",
+			trees: [{ entries: [{ path: "path", type: "tree" }], id: "id", sequenceNumber: 3.5 }],
+			blobs: [],
+		} as unknown as IOdspSnapshot;
+		await assert.rejects(
+			async () =>
+				withFetch(
+					[
+						await createResponse(jsonHeaders, snapshotBadSeq, 200),
+						await createResponse(jsonHeaders, snapshotBadSeq, 200),
+					],
+					async () => fetcher.resolveSequenceNumber("42.0"),
+				),
+			/invalid sequenceNumber/,
 		);
 	});
 
@@ -224,6 +253,35 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 			async () => fetcher.resolveSequenceNumber("42.0"),
 		);
 		assert.equal(result, 448);
+	});
+
+	it("resolveSequenceNumber rejects on an unexpected content-type instead of mis-parsing", async () => {
+		// @q F-RESOLVE-04
+		// The typed incorrectServerResponse error is retried once by getWithRetryForTokenRefresh, so two
+		// responses are stubbed; the retry hits the same content-type and the error propagates.
+		await assert.rejects(
+			async () =>
+				withFetch(
+					[
+						await createResponse({ "content-type": "text/html" }, "<html></html>", 200),
+						await createResponse({ "content-type": "text/html" }, "<html></html>", 200),
+					],
+					async () => fetcher.resolveSequenceNumber("42.0"),
+				),
+			/unexpected content-type/,
+		);
+	});
+
+	it("resolveSequenceNumber percent-encodes the version label in the snapshot URL", async () => {
+		// @q F-RESOLVE-05
+		const { urls } = await withFetch(
+			[await createResponse(jsonHeaders, snapshotWithSeq(448), 200)],
+			async () => fetcher.resolveSequenceNumber("42 0#draft"),
+		);
+		assert.ok(
+			urls[0]?.includes("/versions/42%200%23draft/opStream/"),
+			`expected the label to be percent-encoded, got ${urls[0]}`,
+		);
 	});
 
 	it("listFileVersions surfaces a non-success response as an error", async () => {
@@ -266,6 +324,50 @@ describe("OdspFileVersionFetcher (integration, stubbed fetch)", () => {
 		await assert.rejects(async () =>
 			withFetch([await notFound()], async () => fetcher.resolveSequenceNumber("42.0")),
 		);
+	});
+
+	const epochHeaders = (epoch: string): { [key: string]: string } => ({
+		...jsonHeaders,
+		"x-fluid-epoch": epoch,
+	});
+
+	it("getLiveDocumentEpoch reads x-fluid-epoch from the live snapshot endpoint", async () => {
+		// @q F-EPOCH-01
+		const { result, urls } = await withFetch(
+			[await createResponse(epochHeaders("epoch-live"), new Uint8Array(0), 200)],
+			async () => fetcher.getLiveDocumentEpoch(),
+		);
+		assert.equal(result, "epoch-live");
+		assert.ok(
+			urls[0]?.includes(`/drives/${driveId}/items/${itemId}/opStream/snapshots/trees/latest`),
+			`expected the live snapshot URL, got ${urls[0]}`,
+		);
+		assert.ok(
+			!urls[0]?.includes("/versions/"),
+			"the live epoch must not be read from a versioned URL",
+		);
+	});
+
+	it("getRecoverableVersionEpoch reads x-fluid-epoch from the versioned snapshot endpoint", async () => {
+		// @q F-EPOCH-02
+		const { result, urls } = await withFetch(
+			[await createResponse(epochHeaders("epoch-old"), new Uint8Array(0), 200)],
+			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+		);
+		assert.equal(result, "epoch-old");
+		assert.ok(
+			urls[0]?.includes(`/versions/40.0/opStream/snapshots/trees/latest`),
+			`expected the versioned snapshot URL, got ${urls[0]}`,
+		);
+	});
+
+	it("getRecoverableVersionEpoch returns undefined when the server sends no epoch header", async () => {
+		// @q F-EPOCH-03
+		const { result } = await withFetch(
+			[await createResponse(jsonHeaders, new Uint8Array(0), 200)],
+			async () => fetcher.getRecoverableVersionEpoch("40.0"),
+		);
+		assert.equal(result, undefined);
 	});
 
 	it("listFileVersions refreshes the token and retries after an auth failure", async () => {
