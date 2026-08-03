@@ -22,7 +22,11 @@ import {
 	type JsonCompatibleReadOnlyObject,
 	type RestrictiveStringRecord,
 } from "../../../util/index.js";
-import type { NodeSchemaOptionsAlpha } from "../../api/index.js";
+import type {
+	NodeSchemaOptionsAlpha,
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Referenced by TSDoc {@link} in this file.
+	RunTransactionParamsAlpha,
+} from "../../api/index.js";
 import {
 	CompatibilityLevel,
 	getKernel,
@@ -50,6 +54,7 @@ import {
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
 	AnnotatedAllowedTypesInternal,
+	getOrCreateNodeFromInnerNode,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
@@ -185,30 +190,32 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 	 *
 	 * @param key - The key of the element to return or insert at.
 	 * @param fallbackValue - The value to insert if `key` has no entry.
-	 * @returns The existing value at `key`, or the newly inserted `fallbackValue`.
+	 * @returns The value at `key`, which may be the provided `fallbackValue`
+	 * if the map had no previous entry for `key`.
 	 *
 	 * @remarks
 	 * The check for the presence of an existing entry with the given `key` is performed at the time the edit is authored.
 	 * This has implications for the merge semantics of this operation:
 	 *
-	 * - If no entry is present for `key` at authoring time, thus leading to an insert,
+	 * - If no entry is present for `key` at authoring time (thus leading to an insert)
 	 * while a peer concurrently inserts a value for the same `key`,
 	 * then the two inserts will race and the one that is sequenced second will overwrite the value inserted by the one
 	 * that is sequenced first.
 	 *
-	 * - If an entry is present for `key` at authoring time, thus leading to no insert,
+	 * - If an entry is present for `key` at authoring time (thus leading to no insert)
 	 * while a peer concurrently deletes the entry for `key`,
 	 * then the map will end up with no entry for `key` no matter how the two edits are sequenced.
 	 *
-	 * - If an entry is present for `key` at authoring time, thus leading to no insert,
+	 * - If an entry is present for `key` at authoring time (thus leading to no insert)
 	 * while a peer concurrently inserts a new entry for `key`,
 	 * then the map will end up with the entry set by the peer no matter how the two edits are sequenced.
 	 *
 	 * These last two points mean that, upon sequencing of an edit made with this API,
 	 * there is no guarantee that the entry for the given key will be the current one (if any) or the fallback one.
-	 * If such a guarantee is important, then consider using constraints to ensure the edit only applies when appropriate.
+	 * If such a guarantee is important, then consider using {@link RunTransactionParamsAlpha.preconditions}
+	 * to ensure the edit only applies when appropriate.
 	 *
-	 * This API is not equivalent to the following alternative:
+	 * This API is **not** equivalent to the following alternative:
 	 *
 	 * ```typescript
 	 * map.set(key, map.get(key) ?? fallbackValue);
@@ -326,8 +333,14 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		if (existing !== undefined) {
 			return existing;
 		}
-		this.set(key, fallbackValue);
-		return fallbackValue as TreeNodeFromImplicitAllowedTypes<T>;
+		const kernel = getKernel(this);
+		const flexNode = unhydratedFlexTreeFromInsertable(
+			fallbackValue as InsertableContent,
+			kernel.schema.info as ImplicitAllowedTypes,
+		);
+		const node = getOrCreateNodeFromInnerNode(flexNode) as TreeNodeFromImplicitAllowedTypes<T>;
+		this.set(key, node as InsertableTreeNodeFromImplicitAllowedTypes<T>);
+		return node;
 	}
 	public get size(): number {
 		return count(this.innerNode.keys());
