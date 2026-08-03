@@ -58,6 +58,7 @@ export interface IContainerContextConfig
 				| "supportedFeatures"
 				| "id"
 				| "snapshotWithContents"
+				| "fetchOps"
 			>
 		>
 	> {
@@ -72,6 +73,8 @@ export interface IContainerContextConfig
 	readonly taggedLogger: TelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
 	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
+	// This "overrides" IContainerContext.fetchOps to keep it optional (hosts may not provide op reading).
+	readonly fetchOps: IContainerContext["fetchOps"];
 }
 
 /**
@@ -79,8 +82,8 @@ export interface IContainerContextConfig
  */
 export class ContainerContext
 	implements
-		Required<Omit<IContainerContext, "snapshotWithContents">>,
-		Pick<IContainerContext, "snapshotWithContents">,
+		Required<Omit<IContainerContext, "snapshotWithContents" | "fetchOps">>,
+		Pick<IContainerContext, "snapshotWithContents" | "fetchOps">,
 		IProvideLayerCompatDetails
 {
 	/**
@@ -130,6 +133,7 @@ export class ContainerContext
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
 	) => void;
+	public readonly fetchOps: IContainerContext["fetchOps"];
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
@@ -189,6 +193,7 @@ export class ContainerContext
 		this.submitSummaryFn = config.submitSummaryFn;
 		this.submitBatchFn = config.submitBatchFn;
 		this.submitSignalFn = config.submitSignalFn;
+		this.fetchOps = config.fetchOps;
 		this.disposeFn = config.disposeFn;
 		this.closeFn = config.closeFn;
 		this.updateDirtyContainerState = config.updateDirtyContainerState;

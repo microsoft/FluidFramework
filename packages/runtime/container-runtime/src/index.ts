@@ -124,6 +124,10 @@ export {
 } from "./summary/index.js";
 export { type IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export {
+	type IVersionMarkResolver,
+	type ResolveResult,
+} from "./versionMarks/index.js";
+export {
 	runtimeCoreCompatDetails,
 	runtimeCompatDetailsForLoader,
 	runtimeCompatDetailsForDataStore,

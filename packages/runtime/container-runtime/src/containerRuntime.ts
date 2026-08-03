@@ -270,6 +270,11 @@ import {
 	validateLoaderCompatibility,
 } from "./runtimeLayerCompatState.js";
 import { SignalTelemetryManager } from "./signalTelemetryProcessing.js";
+import {
+	VersionMarkResolver,
+	type IVersionMarkResolver,
+	inboundVersionMarkUpdate,
+} from "./versionMarks/index.js";
 // These types are imported as types here because they are present in summaryDelayLoadedModule, which is loaded dynamically when required.
 import {
 	aliasBlobName,
@@ -1541,11 +1546,17 @@ export class ContainerRuntime
 	private readonly blobManager: BlobManager;
 	private readonly pendingStateManager: PendingStateManager;
 	private readonly duplicateBatchDetector: DuplicateBatchDetector | undefined;
+	/**
+	 * Host-facing version mark resolver.
+	 */
+	public readonly versionMarkResolver: IVersionMarkResolver;
+	private readonly versionMarkResolverInternal: VersionMarkResolver;
 	private readonly outbox: Outbox;
 	private readonly garbageCollector: IGarbageCollector;
 
 	private readonly channelCollection: ChannelCollection;
 	private readonly remoteMessageProcessor: RemoteMessageProcessor;
+	private versionMarkInboundBatchId: string | undefined;
 
 	/**
 	 * The last message processed at the time of the last summary.
@@ -1879,6 +1890,18 @@ export class ContainerRuntime
 				},
 			},
 		);
+		const fetchOps = context.fetchOps;
+		this.versionMarkResolverInternal = new VersionMarkResolver({
+			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
+			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
+			getCurrentPendingBatchId: () =>
+				this.pendingStateManager.getMostRecentPendingBatchId(),
+			// Wire the container-provided op reader (if any) so resolution can read historical ops.
+			getHistoricalOpReader: fetchOps
+				? () => ({ fetchMessages: fetchOps })
+				: undefined,
+		});
+		this.versionMarkResolver = this.versionMarkResolverInternal;
 
 		let outerDeltaManager: IDeltaManagerFull = this.innerDeltaManager;
 		this.useDeltaManagerOpsProxy =
@@ -3287,6 +3310,20 @@ export class ContainerRuntime
 					}
 				}
 			}
+
+			// Record the version-mark point for a completed batch (its last op's sequence number),
+			// carrying the batch id across a piecemeal batch's messages.
+			const versionMarkUpdate = inboundVersionMarkUpdate(
+				inboundResult,
+				this.versionMarkInboundBatchId,
+			);
+			if (versionMarkUpdate.sequenced !== undefined) {
+				this.versionMarkResolverInternal.processInboundBatch(
+					versionMarkUpdate.sequenced.batchId,
+					versionMarkUpdate.sequenced.sequenceNumber,
+				);
+			}
+			this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
 
 			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
 			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.

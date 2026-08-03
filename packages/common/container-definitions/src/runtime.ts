@@ -26,6 +26,7 @@ import type {
 	ISnapshotFetchOptions,
 	FetchSource,
 	IDocumentStorageServicePolicies,
+	IStream,
 } from "@fluidframework/driver-definitions/internal";
 
 import type { IAudience } from "./audience.js";
@@ -399,6 +400,19 @@ export interface IContainerContext {
 		referenceSequenceNumber?: number,
 	) => number;
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
+	/**
+	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
+	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
+	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
+	 * early. Optional: absent means the runtime has no historical-op read.
+	 *
+	 * @internal
+	 */
+	readonly fetchOps?: (
+		from: number,
+		to?: number,
+		abortSignal?: AbortSignal,
+	) => Promise<IStream<ISequencedDocumentMessage[]>>;
 	/**
 	 * Initiate disposing of the container due to a critical error.
 	 * @param error - The critical error that caused the container to dispose.
