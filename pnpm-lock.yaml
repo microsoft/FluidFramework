@@ -6661,6 +6661,9 @@ importers:
       chai:
         specifier: ^4.5.0
         version: 4.5.0
+      concurrently:
+        specifier: ^10.0.3
+        version: 10.0.3
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
