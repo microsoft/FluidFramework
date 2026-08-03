@@ -70,7 +70,6 @@ import {
 	fieldCursorFromInsertable,
 	makeTestFieldBatchContexts,
 	testIdCompressor,
-	testRevisionTagCodec,
 	type TreeStoredContentStrict,
 } from "../../utils.js";
 
@@ -111,7 +110,6 @@ function createForestSummarizer(args: {
 		checkout,
 		forestSummarizer: new ForestSummarizer(
 			checkout.forest,
-			testRevisionTagCodec,
 			encoderContext,
 			decoderContext,
 			options,

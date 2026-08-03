@@ -132,20 +132,12 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			cacheAndTracker,
 			clientIsSummarizer,
 		);
-		// If creating the live service fails, dispose the already-created recoverable service so it
-		// doesn't leak, since ownership hasn't yet been transferred to OdspPointInTimeDocumentService.
-		let liveDocumentService: IDocumentService;
-		try {
-			liveDocumentService = await this.createDocumentServiceCore(
-				resolvedUrl,
-				odspLogger,
-				cacheAndTracker,
-				clientIsSummarizer,
-			);
-		} catch (error) {
-			recoverableDocumentService.dispose();
-			throw error;
-		}
+		const liveDocumentService = await this.createDocumentServiceCore(
+			resolvedUrl,
+			odspLogger,
+			cacheAndTracker,
+			clientIsSummarizer,
+		);
 		return new OdspPointInTimeDocumentService(
 			recoverableResolvedUrl,
 			recoverableDocumentService,

@@ -9,4 +9,7 @@ This documentation is aimed at developers working in this repository, and covers
 
 ## Contents
 
+- [Contributing](./Contributing.md)
 - [Guidelines](./Guidelines.md)
+- [Development Environment](./Development-Environment.md)
+- [Architecture](./Architecture.md)

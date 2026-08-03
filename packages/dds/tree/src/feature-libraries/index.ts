@@ -27,6 +27,7 @@ export {
 	type MinimalFieldMap,
 } from "./mapTreeCursor.js";
 export { buildForest } from "./object-forest/index.js";
+export { ComparisonForest } from "./comparison-forest/index.js";
 export {
 	SchemaSummarizer,
 	schemaCodecBuilder,
@@ -45,6 +46,8 @@ export {
 	jsonableTreeFromCursor,
 	jsonableTreeFromFieldCursor,
 	jsonableTreeFromForest,
+	forestsEqual,
+	assertForestsEqual,
 } from "./treeTextCursor.js";
 export {
 	buildNodeComparator,
@@ -88,6 +91,7 @@ export {
 	updateRefreshers,
 	type NodeId,
 	type FieldChangeEncodingContext,
+	type FieldChangeDecodingContext,
 	type FieldKindConfiguration,
 	type FieldKindConfigurationEntry,
 	isNeverTree,
@@ -133,6 +137,7 @@ export {
 
 export {
 	FieldKinds,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	DefaultChangeFamily,
 	DefaultEditBuilder,
