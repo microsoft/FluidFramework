@@ -105,12 +105,16 @@ function createLineAtom(
 	};
 }
 
+/**
+ * Convert a line atom's tag and indentation to Quill block attributes.
+ */
 function lineAtomToQuillAttributes(
 	lineAtom: FormattedTextAsTreeDefault.StringLineAtom,
 ): Record<string, unknown> {
 	const attributes: Record<string, unknown> = {
 		...lineTagToQuillAttributes[lineAtom.tag.value],
 	};
+	// Omitting an indentation of zero uses Quill's default unindented representation.
 	if (lineAtom.indent) {
 		attributes.indent = lineAtom.indent;
 	}

@@ -116,11 +116,17 @@ describe("textEditor", () => {
 						source.setText("Hello", "user");
 
 						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						// Check that the editors have the same content: they should be kept in sync
 						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
 
 						source.setText("Hello\nWorld", "user");
 
+						// Check the edit did not cause the views to de-sync.
 						assert.equal(sourceEditor.innerHTML, "<p>Hello</p><p>World</p>");
+						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
+
+						// Check a trailing new line also does not cause de-sync.
+						source.setText("Hello\nWorld\n", "user");
 						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
 					});
 
@@ -319,11 +325,18 @@ describe("textEditor", () => {
 						source.setText("Hello", "user");
 
 						assert.equal(sourceEditor.innerHTML, "<p>Hello</p>");
+						// Check that the editors have the same content: they should be kept in sync
 						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
 
+						// Do a formatting operation which adds a line atom to the end of the string.
+						// This hits an edge case in the quill integration since quill requires such a trailing line end,
+						// so our integration replaces its extra one it had to add to support will with the real one added by this change.
 						source.formatLine(0, source.getLength(), "list", "bullet", "user");
-
+						// Check the the above format operation added the expected list item.
 						assert.match(sourceEditor.innerHTML, /^<ol>/);
+
+						// Check that the editors have the same content, ensuring they didn't get out of sync.
+						// This validates, among other things, that the fix for handling of the trailing new line doesn't regress.
 						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
 					});
 

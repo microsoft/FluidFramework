@@ -423,6 +423,12 @@ export function deltaMarksToArrayOpsWithRetain<TRetain extends ArrayNodeRetainOp
 	return ops;
 }
 
+/**
+ * Returns the length of the `EmptyKey` field under the provided node kernel.
+ * @remarks
+ * Use this with the kernel of an array node to get the current length of the array.
+ * This is the same as `.length` on the array node, but is usable without having to get (and possible create) the node and narrow to the proper type to access that.
+ */
 function getArrayLength(arrayNodeKernel: TreeNodeKernel): number {
 	return arrayNodeKernel.getInnerNode().getBoxed(EmptyKey).length;
 }
