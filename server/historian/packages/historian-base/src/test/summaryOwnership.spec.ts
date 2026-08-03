@@ -303,6 +303,51 @@ describe("summary ownership", function () {
 		);
 	});
 
+	it("skips ephemeral expiry when ignoreEphemeralFlag is enabled", async () => {
+		const documentManager = new TestDocumentManager();
+		const expiredEphemeralDocument = {
+			...activeDocument,
+			createTime: 0,
+			isEphemeralContainer: true,
+		};
+		sandbox.stub(documentManager, "readDocument").resolves(expiredEphemeralDocument);
+
+		const result = await validateSummaryDocument({
+			tenantId,
+			authorization,
+			documentManager,
+			operation: "get",
+			routeType: "latest",
+			ephemeralDocumentTTLSec: 1,
+			ignoreEphemeralFlag: true,
+		});
+
+		assert.strictEqual(result, expiredEphemeralDocument);
+	});
+
+	it("still rejects scheduled deletion when ignoreEphemeralFlag is enabled", async () => {
+		const documentManager = new TestDocumentManager();
+		sandbox.stub(documentManager, "readDocument").resolves({
+			...activeDocument,
+			createTime: 0,
+			isEphemeralContainer: true,
+			scheduledDeletionTime: "2026-07-31T18:00:00.000Z",
+		});
+
+		await assert.rejects(
+			validateSummaryDocument({
+				tenantId,
+				authorization,
+				documentManager,
+				operation: "get",
+				routeType: "latest",
+				ephemeralDocumentTTLSec: 1,
+				ignoreEphemeralFlag: true,
+			}),
+			(error: unknown) => error instanceof NetworkError && error.code === 404,
+		);
+	});
+
 	for (const testCase of [
 		{ name: "network failure", error: new Error("socket reset"), status: undefined },
 		{
@@ -448,6 +493,48 @@ describe("summary ownership", function () {
 			"isEphemeralContainer:tenant%2Fa:shared%3Aid",
 			false,
 		);
+	});
+
+	it("treats a validated ephemeral document as durable when the flag is ignored", async () => {
+		const cache = new TestCache();
+		const cacheSet = sandbox.spy(cache, "set");
+		const documentManager = new TestDocumentManager();
+		const postEphemeralContainerCheck = sandbox
+			.stub()
+			.callsFake(
+				async (
+					_currentTenantId: string,
+					_currentDocumentId: string,
+					isEphemeral: boolean,
+				) => isEphemeral,
+			);
+		const config = new nconf.Provider({}).defaults({
+			ignoreEphemeralFlag: true,
+			storageUrl: "http://localhost",
+		});
+
+		await createGitServiceFromValidatedDocument(
+			{
+				config,
+				tenantId,
+				authorization,
+				tenantService: new TestTenantService(),
+				documentManager,
+				cache,
+				ephemeralDocumentTTLSec: 24 * 60 * 60,
+				postEphemeralContainerChecker: { postEphemeralContainerCheck },
+			},
+			{ ...activeDocument, isEphemeralContainer: true },
+		);
+
+		sinon.assert.calledOnceWithMatch(
+			postEphemeralContainerCheck,
+			tenantId,
+			documentId,
+			false,
+			sinon.match.object,
+		);
+		sinon.assert.notCalled(cacheSet);
 	});
 
 	it("emits structured allowed ownership telemetry", async () => {

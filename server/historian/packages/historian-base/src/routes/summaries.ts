@@ -117,6 +117,7 @@ export function create(
 			operation,
 			routeType,
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 		});
 		return utils.createGitServiceFromValidatedDocument(
 			{

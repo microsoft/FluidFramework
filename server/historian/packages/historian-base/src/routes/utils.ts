@@ -81,6 +81,7 @@ export interface IValidateSummaryDocumentArgs {
 	operation: SummaryOperation;
 	routeType: SummaryRouteType;
 	ephemeralDocumentTTLSec: number;
+	ignoreEphemeralFlag?: boolean;
 }
 
 function getEphemeralContainerCacheKey(tenantId: string, documentId: string): string {
@@ -398,6 +399,7 @@ export async function validateSummaryDocument({
 	operation,
 	routeType,
 	ephemeralDocumentTTLSec,
+	ignoreEphemeralFlag = false,
 }: IValidateSummaryDocumentArgs): Promise<IDocument> {
 	const documentId = getTokenDocumentId(tenantId, authorization);
 	let document: IDocument | null;
@@ -428,6 +430,7 @@ export async function validateSummaryDocument({
 		return denyDocumentAccess(tenantId, documentId, operation, routeType, "scheduledDeletion");
 	}
 	if (
+		!ignoreEphemeralFlag &&
 		document.isEphemeralContainer === true &&
 		Date.now() > document.createTime + ephemeralDocumentTTLSec * 1000
 	) {
@@ -484,19 +487,18 @@ async function createGitServiceCore(
 	const maxCacheableSummarySize: number =
 		config.get("restGitService:maxCacheableSummarySize") ?? 1_000_000_000; // default: 1gb
 
-	const isEphemeral =
-		validatedDocument !== undefined
-			? validatedDocument.isEphemeralContainer ?? false
-			: ignoreEphemeralFlag
-			? false
-			: await checkAndCacheIsEphemeral({
-					documentId,
-					tenantId,
-					documentManager,
-					ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
-					isEphemeralContainerOverride: isEphemeralContainer,
-					cache,
-			  });
+	const isEphemeral = ignoreEphemeralFlag
+		? false
+		: validatedDocument !== undefined
+		? validatedDocument.isEphemeralContainer ?? false
+		: await checkAndCacheIsEphemeral({
+				documentId,
+				tenantId,
+				documentManager,
+				ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
+				isEphemeralContainerOverride: isEphemeralContainer,
+				cache,
+		  });
 	if (validatedDocument !== undefined && !ignoreEphemeralFlag) {
 		await updateIsEphemeralCache(documentId, tenantId, isEphemeral, cache);
 	}
