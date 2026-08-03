@@ -154,9 +154,9 @@ Every version with its resolved sequence number, newest-first. `M-LIST-01`
 `found` base it checks that base shares the live document's lineage, so a cross-lineage base fails as a
 clear non-retryable error before any document service is built instead of a corrupt or stalled load.
 There is no separate public validation step — the lineage check is folded into selection so a caller
-cannot obtain an unvalidated base. Op availability is _not_ checked here — it is enforced lazily as the
-loader streams the bridging ops (Part V), because the lineage gate is the only check that must run
-before choosing to build the services.
+cannot obtain an unvalidated base. Op availability is _not_ checked here — it is enforced by the
+delta-storage stack as the loader streams the bridging ops (Part V), because the lineage gate is the
+only check that must run before choosing to build the services.
 
 **Lineage (epoch).** It reads the live document's epoch and the chosen base version's epoch and compares
 them.
@@ -174,14 +174,17 @@ live document's epoch can change (a restore or download-and-reupload bumps it) a
 fresh on every lineage check, never cached. `refresh()` clears the cached version epochs alongside the
 version list and resolved sequence numbers. `M-VALIDATE-CACHE-01`, `M-VALIDATE-CACHE-02`
 
-**Op availability.** This is _not_ re-checked up front. Op retention trims a contiguous _prefix_ from
-the oldest end of the stream, and op sequence numbers are contiguous by construction, so instead of a
-separate walk the driver validates availability lazily, riding the ops the loader actually reads. The
-`OdspPointInTimeDocumentService` delta-storage wrapper (Part V) bounds every fetch at the target and,
-on a complete non-cached pass, requires the served ops to start at the first needed op (`from`) and
-reach the target — the low boundary catches a trimmed prefix, the high boundary catches a target
-beyond the live tip. Both raise the non-retryable `cannotCatchUp` error. Because the wrapper rides the
-live document's delta storage, the creation snapshot's ops are already merged in for free.
+**Op availability.** This is _not_ re-checked up front, and Component B adds no check of its own. Op
+retention trims a contiguous _prefix_ from the oldest end of the stream, and op sequence numbers are
+contiguous by construction, so the ordinary delta-storage stack already enforces exactly what a replay
+needs: `validateMessages` (strict) discards any fetched batch that does not begin at the requested
+`from`, and `requestOps`/`ParallelRequests` keep requesting until the whole bounded range has been
+delivered, asserting contiguity as they dispatch. A bounded stream that reaches `done` has therefore
+necessarily served the full bridge; a range that never materializes fails the fetch instead (the delta
+stack polls, then throws its non-retryable "Failed to retrieve ops from storage (Too Many Retries)"
+error). The `OdspPointInTimeDocumentService` delta-storage wrapper (Part V) only bounds every fetch at
+the target. Because the wrapper rides the live document's delta storage, the creation snapshot's ops
+are already merged in for free.
 
 ## Part III — The File-Version Fetcher
 
@@ -238,8 +241,8 @@ Versions carry their own ODSP epoch (`x-fluid-epoch`). `getLiveDocumentEpoch` an
 endpoints (`...?blobs=0`, metadata only). The version manager compares the two; a mismatch means a
 restore or download-then-reupload renumbered the op stream, so the base is a different lineage.
 
-Op availability is deliberately _not_ fetched here — it is enforced lazily against the ops the loader
-reads (see Part V), which also gives the creation snapshot's ops for free.
+Op availability is deliberately _not_ fetched here — it is enforced by the delta-storage stack against
+the ops the loader reads (see Part V), which also gives the creation snapshot's ops for free.
 
 ## Part IV — Directional
 
@@ -296,8 +299,9 @@ comparison. It also allows locating a version by time when no sequence number is
 Component B is built (see [Part V](#part-v--components-b--c-as-built)), but the version it ships makes
 one simplifying assumption: it loads a single base file version and replays the ops in `(base, target]`
 from the **live** document's delta storage. That assumption holds only while those ops are still
-retained — and a base whose bridging ops have been trimmed is now **detected** as the loader reads
-them: the delta-storage wrapper fails the load with a non-retryable `cannotCatchUp` error
+retained — and a base whose bridging ops have been trimmed is still **detected**, by the ordinary
+delta-storage stack as the loader reads them: it discards any batch that does not start at the
+requested op and keeps requesting the remainder, so the fetch fails
 (see [Part V](#part-v--components-b--c-as-built)) rather than replaying a truncated range. What is
 still not built is **recovering** from that case: bridging a trimmed range by starting from a newer
 intermediate snapshot is the part that is not built yet — the rest of this answer is its design.
@@ -344,8 +348,8 @@ the target and expose it through the loader — are now built, in other files. T
 code IDs here (those index Component A's suite); Component B's lineage guard is covered by
 `../test/odspPointInTimeDocumentServiceFactory.spec.ts` — both the structural shared-`EpochTracker`
 wiring and the up-front recoverable-vs-live epoch comparison (a mismatch fails the load before any
-service is built; a matching epoch proceeds to create both services) — and its lazy op-availability
-validation (low/high boundary, `cachedOnly`/aborted skips) by
+service is built; a matching epoch proceeds to create both services) — and its bounded `fetchMessages`
+clamp (an unbounded, past-target, or before-target `to`, plus op pass-through) by
 `../test/odspPointInTimeDocumentService.spec.ts`; the rest are conceptual answers in the spirit of
 [Part I](#part-i--foundations). The one still-directional gap is bridging a
 *trimmed* op range via an intermediate snapshot (see [Part IV](#part-iv--directional)); everything below
@@ -411,10 +415,10 @@ Its three `IDocumentService` methods:
 - `connectToStorage` → the recoverable (base-version) service's storage: the base snapshot.
 - `connectToDeltaStorage` → wraps the **live** service's delta storage and clamps every
   **`fetchMessages(from, to, …)`** call to an exclusive upper bound of `targetSequenceNumber + 1`, so no
-  op past the target is ever fetched. It also **validates op availability while streaming**: on a
-  complete, non-cached, non-aborted pass it requires the served ops to start at the first needed op
-  (`from`) and reach the target (`to - 1`), throwing the non-retryable `cannotCatchUp` error otherwise —
-  the low boundary catches a retention-trimmed prefix, the high boundary a target beyond the live tip.
+  op past the target is ever fetched. The clamp is all it does: op availability is already enforced
+  beneath it by the delta-storage stack, which discards any batch not starting at the requested `from`
+  and keeps requesting until the bounded range is fully delivered — so a stream that completes has
+  necessarily served the whole bridge, and one that cannot fails the fetch.
   **`fetchMessages` is the method that drives the bounded replay.**
 - `connectToDeltaStream` → throws: under `storageOnly` the connection manager synthesizes a frozen,
   read-only delta stream instead of opening a live socket, so this is never called under normal flow.

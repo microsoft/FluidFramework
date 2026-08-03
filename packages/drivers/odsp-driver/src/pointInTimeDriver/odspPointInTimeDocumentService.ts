@@ -4,7 +4,6 @@
  */
 
 import { TypedEventEmitter } from "@fluid-internal/client-utils";
-import { NonRetryableError, RetryableError } from "@fluidframework/driver-utils/internal";
 import type {
 	IClient,
 	IDocumentDeltaConnection,
@@ -15,9 +14,6 @@ import type {
 	IDocumentStorageService,
 	IResolvedUrl,
 } from "@fluidframework/driver-definitions/internal";
-import { OdspErrorTypes } from "@fluidframework/odsp-driver-definitions/internal";
-
-import { pkgVersion as driverVersion } from "../packageVersion.js";
 
 /**
  * A read-only document service that materializes a document at a target sequence number by combining
@@ -34,11 +30,10 @@ import { pkgVersion as driverVersion } from "../packageVersion.js";
  * still catches up from the snapshot's sequence number through delta storage, which is exactly the
  * bounded replay we want. As a result no live delta-stream connection is ever established.
  *
- * Op availability is validated lazily, as the loader reads the bridge ops from delta storage
- * ({@link OdspPointInTimeDocumentService.connectToDeltaStorage}). A missing low end (ops trimmed by
- * retention) is a permanent, non-retryable failure; a missing high end (the target's ops sequenced
- * but not yet flushed to delta storage) is transient and retryable, so a load requested right after
- * a change settles once the ops land.
+ * Op availability is enforced by the delta storage stack itself: it validates that fetched batches
+ * are contiguous from the requested start, keeps requesting until the bounded range is fully
+ * delivered, and fails the fetch if the ops never materialize. So a stream that completes has
+ * necessarily served the whole bridge, and no additional checks are needed here.
  *
  * @internal
  */
@@ -76,77 +71,15 @@ export class OdspPointInTimeDocumentService
 		const liveDeltaStorage = await this.liveDocumentService.connectToDeltaStorage();
 		// The exclusive upper bound needed to include the target op itself.
 		const boundedTo = this.targetSequenceNumber + 1;
-		const targetSequenceNumber = this.targetSequenceNumber;
 		return {
-			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) => {
-				const bounded = to === undefined ? boundedTo : Math.min(to, boundedTo);
-				const inner = liveDeltaStorage.fetchMessages(
+			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) =>
+				liveDeltaStorage.fetchMessages(
 					from,
-					bounded,
+					to === undefined ? boundedTo : Math.min(to, boundedTo),
 					abortSignal,
 					cachedOnly,
 					fetchReason,
-				);
-				// Validate op availability by observing the ops the loader actually reads, rather than
-				// a separate up-front walk. The live delta storage already merges the creation
-				// snapshot's ops, so this sees exactly the ops a replay can apply.
-				//
-				// Op retention trims a contiguous prefix from the oldest end, and Fluid op sequence
-				// numbers are contiguous by construction, so the bridge [from, bounded) is intact iff
-				// its lowest op (`from`) is still served and the stream reaches its top (`bounded - 1`).
-				// The two ways it can be incomplete are fundamentally different failures, so they are
-				// reported with different retryability (see the throws below).
-				const opsNeeded = from < bounded;
-				let firstSeq: number | undefined;
-				let maxSeq = from - 1;
-				return {
-					read: async () => {
-						const result = await inner.read();
-						if (!result.done && result.value.length > 0) {
-							firstSeq ??= result.value[0].sequenceNumber;
-							maxSeq = result.value[result.value.length - 1].sequenceNumber;
-						}
-						// Only enforce on a complete, non-cached, non-aborted pass: a cachedOnly pass
-						// legitimately ends short (it only drains local cache), and an abort is not a
-						// retention failure.
-						if (
-							result.done &&
-							opsNeeded &&
-							cachedOnly !== true &&
-							abortSignal?.aborted !== true
-						) {
-							// Bottom missing: the bridge's lowest op (`from`) is no longer served, so delta
-							// storage starts above it (`firstSeq > from`). Retention trimmed those ops off
-							// the oldest end - they are permanently gone and no retry can recover them.
-							if (firstSeq !== undefined && firstSeq > from) {
-								throw new NonRetryableError(
-									`Cannot materialize sequence number ${targetSequenceNumber}: the ops needed to ` +
-										`replay the base snapshot were trimmed by op retention. Required ops from ` +
-										`${from} but delta storage's oldest served op is ${firstSeq}.`,
-									OdspErrorTypes.cannotCatchUp,
-									{ driverVersion },
-								);
-							}
-							// Top not reached: the low end is intact but the stream stopped before the
-							// target's op (`bounded - 1`). This is transient - those ops have been sequenced
-							// on the live document but are not yet flushed to (or visible from) delta storage,
-							// the common "load a version right after the change" race - so a retry can succeed
-							// once they land. A target legitimately beyond the live tip lands here too and will
-							// keep retrying until the loader's own bounds give up.
-							if (maxSeq < bounded - 1) {
-								throw new RetryableError(
-									`Cannot yet materialize sequence number ${targetSequenceNumber}: delta storage ` +
-										`has only caught up to ${maxSeq} of the required ops [${from}, ${bounded - 1}]. ` +
-										`The remaining ops are sequenced but not yet flushed to delta storage; retrying.`,
-									OdspErrorTypes.cannotCatchUp,
-									{ driverVersion },
-								);
-							}
-						}
-						return result;
-					},
-				};
-			},
+				),
 		};
 	}
 
