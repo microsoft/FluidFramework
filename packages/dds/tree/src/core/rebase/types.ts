@@ -292,6 +292,9 @@ export interface LocalCommitEvents {
 	 * Once a commit is sequenced, the following guarantees hold:
 	 * 1. The changes carried by the commit have been persisted and other peers are able to see them.
 	 * 2. There can be no more concurrent changes sequenced before this commit, which means this commit has reached its settled form.
+	 *
+	 * This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
+	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
 	 */
 	settled(outcome: CommitOutcome): void;
 }

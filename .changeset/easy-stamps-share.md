@@ -13,3 +13,6 @@ Once a commit is sequenced, the following guarantees hold:
 
 The `"settled"` event provides details about the outcome of applying this settled form.
 This can be used by an application to determine whether any constraints associated with the commits were violated.
+
+This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
+It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
