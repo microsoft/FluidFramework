@@ -242,15 +242,22 @@ function contentOpsToQuillDelta(
 		}
 	}
 
+	// Fixup required new line: quill requires one at the end, so we add an extra if needed.
+	// This simple deletes the old one if there was one, then adds a new one if needed.
+	// Such an approach was deemed slightly simpler and less error prone than reusing one if preexisting,
+	// since it avoids any potential for the extra new line to accidentally be reused when it has formatting applied.
 	const remainingQuillContent = preEditContent.slice(quillPos);
 	if (remainingQuillContent.length > 0) {
 		assert(
 			remainingQuillContent === "\n",
 			"Expected only Quill's mandatory terminal newline to remain",
 		);
+		// Delete the extra new line which is required by quill.
 		quillOps.push({ delete: 1 });
 	}
+
 	if (!root.fullString().endsWith("\n")) {
+		// If needed add the extra new line which is required by quill.
 		quillOps.push({ insert: "\n" });
 	}
 
