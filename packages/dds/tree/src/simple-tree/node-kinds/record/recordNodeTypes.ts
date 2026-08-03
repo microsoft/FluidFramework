@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces/internal";
 import type { RestrictiveStringRecord } from "../../../util/index.js";
 import { NodeKind } from "../../core/index.js";
 import type {
@@ -50,7 +51,7 @@ export interface TreeRecordNode<
 	/**
 	 * Allows the record's entries to be iterated over, including in contexts like `for...of` loops.
 	 */
-	[Symbol.iterator](): IterableIterator<
+	[Symbol.iterator](): FluidIterableIterator<
 		[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 	>;
 }

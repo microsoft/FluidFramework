@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidReadonlyMap } from "@fluidframework/core-interfaces/internal";
 import type {
 	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
@@ -20,7 +21,7 @@ import type {
 
 type MapInlined = System_Unsafe.ReadonlyMapInlined<string, typeof numberSchema>;
 
-type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, number>>>;
+type _check = requireAssignableTo<MapInlined, FluidReadonlyMap<string, number>>;
 
 // UnannotateAllowedTypeUnsafe
 {
