@@ -4,6 +4,10 @@
  */
 
 import type {
+	FluidIterableIterator,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
+import type {
 	IsUnion,
 	RestrictiveStringRecord,
 	UnionToIntersection,
@@ -350,34 +354,35 @@ export namespace System_Unsafe {
 	 */
 	export interface ReadonlyMapInlined<K, T extends ImplicitAllowedTypesUnsafe> {
 		/** Returns an iterable of entries in the map. */
-		[Symbol.iterator](): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+		[Symbol.iterator](): FluidIterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
 
 		/**
 		 * Returns an iterable of key, value pairs for every entry in the map.
 		 */
-		entries(): IterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
+		entries(): FluidIterableIterator<[K, TreeNodeFromImplicitAllowedTypesUnsafe<T>]>;
 
 		/**
 		 * Returns an iterable of keys in the map
 		 */
-		keys(): IterableIterator<K>;
+		keys(): FluidIterableIterator<K>;
 
 		/**
 		 * Returns an iterable of values in the map
 		 */
-		values(): IterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
+		values(): FluidIterableIterator<TreeNodeFromImplicitAllowedTypesUnsafe<T>>;
 
 		forEach(
 			callbackfn: (
 				value: TreeNodeFromImplicitAllowedTypesUnsafe<T>,
 				key: K,
-				map: ReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
+				map: FluidReadonlyMap<K, TreeNodeFromImplicitAllowedTypesUnsafe<T>>,
 			) => void,
 			thisArg?: any,
 		): void;
 		get(key: K): TreeNodeFromImplicitAllowedTypesUnsafe<T> | undefined;
 		has(key: K): boolean;
 		readonly size: number;
+		readonly [Symbol.toStringTag]: string;
 	}
 
 	/**

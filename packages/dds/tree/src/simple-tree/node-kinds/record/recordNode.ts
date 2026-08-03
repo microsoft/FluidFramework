@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import type { FluidIterableIterator } from "@fluidframework/core-interfaces/internal";
 import { assert, Lazy } from "@fluidframework/core-utils/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -378,7 +379,7 @@ export function recordSchema<
 			return Schema.constructorCached?.constructor as unknown as Output;
 		}
 
-		public [Symbol.iterator](): IterableIterator<
+		public [Symbol.iterator](): FluidIterableIterator<
 			[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]
 		> {
 			return recordIterator(this);
@@ -412,7 +413,7 @@ export function recordSchema<
 
 function* recordIterator<TAllowedTypes extends ImplicitAllowedTypes>(
 	record: TreeRecordNode<TAllowedTypes>,
-): IterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
+): FluidIterableIterator<[string, TreeNodeFromImplicitAllowedTypes<TAllowedTypes>]> {
 	for (const [key, value] of Object.entries(record)) {
 		yield [key, value];
 	}
