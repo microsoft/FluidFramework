@@ -9,8 +9,9 @@ appears as a `// @q <id>` tag on the matching test.
 
 ID format: `<area>-<topic>-<nn>`. Area is `M` (the version manager — [Part II](#part-ii--the-version-manager))
 or `F` (the file-version fetcher — [Part III](#part-iii--the-file-version-fetcher)). Topic is a short
-mnemonic (e.g. `SELECT`, `RESOLVE`). `nn` is a zero-padded counter. IDs are append-only: existing IDs
-never renumber, so links stay stable across edits.
+mnemonic (e.g. `SELECT`, `RESOLVE`). `nn` is a zero-padded counter assigned the lowest number available
+within its `<area>-<topic>` group. When a scenario is removed, the remaining IDs in that group are
+renumbered to close the gap, so the numbering stays compact with no reserved or retired IDs.
 
 The contract:
 
@@ -40,6 +41,38 @@ Part 1 is built in three components:
 - **Component C — the loader hookup**: expose Component B through the container loader. **Built** in
   `@fluidframework/container-loader` (`loadContainerToSequenceNumber`) — see
   [Part V](#part-v--components-b--c-as-built).
+
+### Vocabulary (the overloaded terms)
+
+Several words describe "the saved state of a document" at different layers, which is a frequent source of
+confusion. Everything is built from two primitives — **ops** and the **state** they produce — and the rest
+is either a bundle of ops or a saved snapshot of state.
+
+- **Op**: a single change, globally ordered by a **sequence number**. The full history *is* the ordered
+  ops; the document is those ops replayed.
+- **Summary**: the Fluid **runtime**'s serialized tree of current state. A summarizer client *produces* a
+  summary and proposes it via a `summarize` → `summaryAck` op handshake. ("Summary" = the act/content the
+  client generates.)
+- **Snapshot**: the stored, fetchable form of a summary (tree + blobs, carrying a `sequenceNumber`). To
+  load, you fetch a snapshot and replay ops forward. Note two different snapshot lists exist: the driver's
+  *Fluid* snapshot list (`getVersions`) is **not** the ODSP file-version history — a different address
+  space.
+- **ODSP file version**: an entry in the file's version history (driveItem `/versions`, labels like
+  `"42.0"`). ODSP surfaces stored snapshots as recoverable version rows, with a retention cap and dedup.
+  **This is what Component A selects over.**
+- **op stream / `opStream`**: overloaded. As a concept, the ordered op log. As a URL segment, a path prefix
+  under which *both* snapshots (`.../opStream/snapshots/...`) and raw ops (`.../opStream?filter=...`) live.
+- **delta storage**: the durable REST op log (`OdspDeltaStorageService`), which fetches raw ops by
+  sequence-number range and is retention-limited. Distinct from —
+- **trailing / bundled ops**: a small tail of ops baked *inside* a snapshot (up to `latestSequenceNumber`),
+  returned with the snapshot for free — not a separate fetch.
+- **sequence number** = an op's global order index (a snapshot's is the op its tree is current through);
+  **latestSequenceNumber** = the last bundled trailing op; **minimumSequenceNumber (MSN)** = the
+  collaboration-window floor (seq all connected clients have acked) — **not** a retention/trimming signal.
+
+Chain of custody for one saved state: a **summarizer** writes a **summary** → stored as a **snapshot** →
+surfaced by ODSP as a **file version**. Same state, three names because three layers own it.
+
 
 ## Part I — Foundations
 
@@ -108,45 +141,60 @@ these behaviors are tested with an in-memory fake.
 
 ### Which version does `findBaseForSeq` pick for a target sequence number?
 
-The list is newest-first, and the tip (index 0, the live document) is not a base candidate. Among the
-remaining versions, the answer is the closest one at or before the target — the greatest sequence number
-at or before the target when version order tracks sequence order, which an early-stop newest-first scan
-finds.
+The list is newest-first, and the tip (index 0, the newest version) is excluded: it is the one version
+whose sequence number is not yet static, so it cannot be a stable base. Among the remaining (sealed)
+versions the answer is the closest one at or before the target — the greatest sequence number at or before
+the target when version order tracks sequence order, which an early-stop newest-first scan finds.
 
 - **Target between two versions?** The closer, older one. `M-SELECT-01`
 - **Target equal to a version?** That version, an exact match (zero ops to replay). `M-SELECT-02`
-- **Target newer than every version?** The newest recoverable version. `M-SELECT-03`
+- **Target newer than every sealed version?** The newest sealed version. `M-SELECT-03`
 - **Target older than every version?** `noBaseVersion`, reporting the oldest sequence number seen.
   `M-SELECT-04`
 
-### How does it handle duplicate versions and the tip?
+### How does it handle the tip, duplicate versions, and empty history?
 
+- **The tip (index 0)?** Never treated as a base; its sequence number is never even resolved. `M-TIP-01`
+- **Only the tip exists?** `noBaseVersion` — the sole version is excluded as a base. The wired consumer
+  (the point-in-time document service factory) surfaces this as a `UsageError`; loading the live document
+  for a near-head target is a possible future consumer choice, not current behavior. `M-TIP-02`
 - **Two versions share a sequence number?** Return the newest label (a metadata-only re-save leaves the
   sequence number unchanged; the newest is closest to the head). `M-DEDUP-01`
-- **The tip (index 0)?** Never treated as a base; its sequence number is never even resolved.
-  `M-TIP-01`
-- **Only the tip exists?** `noBaseVersion`. `M-TIP-02`
 - **No versions at all?** `noBaseVersion`. `M-EMPTY-01`
 
-### What work does it avoid?
+### What work does it avoid when scanning?
 
-- **Resolving more versions than needed?** It stops at the first version at or before the target and
-  does not resolve older ones. `M-STOP-01`
-- **Re-fetching across calls?** The version list and each resolved sequence number are cached.
-  `M-CACHE-01`
-- **Stale caches?** `refresh()` drops both the version list and the resolved sequence numbers, so the
-  next query re-enumerates and re-resolves. `M-CACHE-02`
-- **A `refresh()` while a fetch is still in flight?** The cache holds the pending fetch rather than its
-  eventual value, so a fetch that started before the refresh cannot write its now-stale result back over
-  the cleared cache; the next query re-fetches. `M-CACHE-03`
+- **Resolving more versions than needed?** It stops at the first version at or before the target and does
+  not resolve older ones. `M-STOP-01`
+
+### What is cached, and what is re-fetched?
+
+Resolved sequence numbers are memoized; the version list is not. A sealed version's sequence number never
+changes, so once resolved it is reused for the manager's lifetime rather than re-fetched. The version
+list, by contrast, changes as new versions are cut, so it is **re-enumerated on every query**. This
+mirrors how Page History (`host-page-history`) works: its `PageHistoryVersionManager` pulls the ODSP
+version list fresh on each navigation (`refreshVersions()`), caching only the expensive loaded *content* —
+not the list. Page History's `#getOdspVersions` likewise dedups and drops the tip (`slice(1)`), the same
+two rules applied here.
+
+The manager is short-lived — the point-in-time document service factory creates one per load and calls
+`findBaseForSeq` once, then drops it — so the memoization caches never grow large and need no eviction.
+
+- **Re-resolving a sequence number across calls?** Each version's number is memoized, so a later query
+  reuses it rather than re-fetching. `M-CACHE-01`
+- **A version-list fetch that fails?** It propagates rather than being read as empty; the list is
+  re-enumerated on the next call. `M-CACHE-02`
 
 ### What happens when a version cannot be resolved?
 
-The failure propagates; it is never swallowed into a wrong base. `M-ERR-01`
+The failure propagates; it is never swallowed into a wrong base. `M-ERR-01` A failed resolution is not
+cached, so a later call re-attempts it rather than replaying the cached rejection. `M-ERR-02`
 
 ### What does `listVersions` return?
 
-Every version with its resolved sequence number, newest-first. `M-LIST-01`
+Every version with its resolved sequence number, newest-first. `M-LIST-01` The tip's number is resolved
+fresh on every call (never cached, since it is not yet stable), while sealed versions are served from the
+cache. `M-LIST-02`
 
 ### How does it verify a chosen base can be replayed to the target?
 
@@ -169,10 +217,9 @@ them.
 - **Either epoch unknown?** Fails closed — without both epochs the shared-lineage claim cannot be proven.
   `M-VALIDATE-03`
 
-A numbered version's snapshot is immutable, so its epoch is read once and cached per versionId; the
+A numbered version's snapshot is immutable, so its epoch is read once and memoized per versionId; the
 live document's epoch can change (a restore or download-and-reupload bumps it) and is therefore read
-fresh on every lineage check, never cached. `refresh()` clears the cached version epochs alongside the
-version list and resolved sequence numbers. `M-VALIDATE-CACHE-01`, `M-VALIDATE-CACHE-02`
+fresh on every lineage check, never cached. `M-VALIDATE-CACHE-01`
 
 **Op availability.** This is _not_ re-checked up front, and Component B adds no check of its own. Op
 retention trims a contiguous _prefix_ from the oldest end of the stream, and op sequence numbers are
@@ -206,8 +253,14 @@ field yields an empty list rather than an error. `F-LIST-03`
   parses the response, and returns `trees[0].sequenceNumber`. `F-RESOLVE-01`
 - **A snapshot with no sequence number?** It throws, naming the version, rather than returning a wrong
   value. `F-RESOLVE-02`
+- **A snapshot whose sequence number is present but not a valid non-negative integer?** It throws rather
+  than coercing a wrong value into base selection. `F-RESOLVE-06`
 - **A binary (`application/ms-fluid`) snapshot?** It reads it with the driver's compact-snapshot parser
   and returns the same sequence number the JSON path would. `F-RESOLVE-03`
+- **An unexpected content-type (e.g. an HTML error page)?** It throws rather than mis-parsing the body as
+  a compact snapshot. `F-RESOLVE-04`
+- **A version label with characters that need escaping?** The label is percent-encoded into the snapshot
+  URL. `F-RESOLVE-05`
 
 ### How does it handle request failures?
 
@@ -306,24 +359,48 @@ requested op and keeps requesting the remainder, so the fetch fails
 still not built is **recovering** from that case: bridging a trimmed range by starting from a newer
 intermediate snapshot is the part that is not built yet — the rest of this answer is its design.
 
-A snapshot already contains the full accumulated state at its sequence number — every op at or below it
-is baked in. So to reach a target `T`, Component B loads the closest base snapshot (`seq ≤ T`) and
-replays only the ops in `(base, T]` on top of it. Those ops come from the op stream (delta storage), and
-may also be bundled with a snapshot (the `deltas=1` query parameter, deliberately omitted here because
-the manager only needs the sequence number, not the ops).
+A snapshot already contains the full accumulated state at its sequence number — the tree *is* the
+materialized state at `sequenceNumber`, with every earlier op baked in (nothing is replayed to *reach*
+the snapshot). So to reach a target `T`, Component B loads the closest base snapshot (`seq ≤ T`) and
+replays only the ops in `(base, T]` on top of it.
 
-Ops in the op stream are retained for a window and can be trimmed. The resolution is not to fetch the
-trimmed ops from somewhere else — it is to **start from a newer snapshot that already absorbed them**. If
-the ops just after the base are gone but another snapshot exists later in `(base, T]`, that snapshot's
-state already includes the trimmed ops, so Component B starts there and replays only the retained tail.
-Trimmed ops are never re-fetched; a later snapshot makes them unnecessary.
+Those ops come from two distinct pools:
+
+1. **The snapshot's own bundled ops.** Every stored snapshot carries a frozen tail of the ops *after* its
+   base — a `deltas` section the summarizer writes into the snapshot itself (`writeOpsSection` in
+   `compactSnapshotWriter.ts`), surfaced by the parser as `ISnapshot.ops` with `latestSequenceNumber` = the
+   last such op (`odspSnapshotParser.ts`). This tail is intrinsic to the snapshot object: the version-scoped
+   snapshot endpoint returns it whether or not `deltas=1` is asked, and its first op is always `base + 1`
+   (`fetchSnapshot.ts` asserts `ops[0].sequenceNumber - 1 === sequenceNumber`). So `(base, latestSequenceNumber]`
+   is available for free, no extra fetch.
+2. **The standalone op log.** Anything beyond `latestSequenceNumber` is fetched from ODSP **delta storage** —
+   `OdspDeltaStorageService.get(from, to)`, which issues
+   `.../opStream?ump=1&filter=sequenceNumber ge {from} and sequenceNumber le {to-1}` (`odspDeltaStorageService.ts`;
+   URL built from `getUrlBase`/`getDeltaStorageUrl` in `odspDriverUrlResolver.ts`). This is the same op-fetch
+   path the container's DeltaManager uses.
+
+Ops in the standalone op log are retained for a window (time-based, best-effort ~7 days measured from each
+version's date — confirmed with the ODSP storage team, who reduced it from ~30 days earlier this year) and
+can be trimmed. There is no field that advertises the earliest retained op; a gap is
+discovered by asking the op stream for the range and getting a short result (delta storage assumes the
+server returns all ops it has in the requested range). The resolution is not to fetch the trimmed ops from
+somewhere else — it is to **start from a newer snapshot that already absorbed them**. If the ops just after
+the base are gone but another snapshot exists later in `(base, T]`, that snapshot's state already includes
+the trimmed ops, so Component B starts there and replays only the retained tail. Trimmed ops are never
+re-fetched; a later snapshot makes them unnecessary.
 
 The target is only unreachable when all of the following hold: the nearest snapshot at or before `T` is
 old, the ops between it and `T` have been trimmed, and no snapshot falls anywhere in between to bridge
 the gap. In that case the exact state at `T` cannot be reconstructed, and Component B reports it
 (for example, a `missing ops` / not-materializable outcome) rather than returning a wrong state — a
-consumer may still choose to fall back to the nearest reachable state at or before `T`. This is rare in
-practice because snapshots are written frequently relative to the op-retention window.
+consumer may still choose to fall back to the nearest reachable state at or before `T`.
+
+Put precisely, the exactly-recoverable targets are **every snapshot (they are durable, not op-retention-bound),
+plus any target whose replay ops `(base, T]` still fall within the op-retention window**. A target older than
+retention that lands *between* snapshots — no snapshot on it, and its ops trimmed — is not exactly
+reconstructable: ops cannot be un-applied, so overshooting to a later snapshot does not help. This is rare in
+practice because snapshots are written frequently relative to the op-retention window, but it is a real limit,
+not a bug — so the honest behavior is to report the nearest reachable point rather than a wrong state.
 
 Note that `minimumSequenceNumber` is not the signal for any of this: it is the collaboration-window floor
 baked into a snapshot, used when a snapshot is loaded, not an indicator of which ops the op stream still
