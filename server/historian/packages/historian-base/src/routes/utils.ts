@@ -441,21 +441,7 @@ export async function validateSummaryDocument({
 	return document;
 }
 
-export async function createGitServiceFromValidatedDocument(
-	createArgs: ICreateGitServiceArgs,
-	document: IDocument,
-): Promise<RestGitService> {
-	return createGitServiceCore(createArgs, document);
-}
-
 export async function createGitService(createArgs: ICreateGitServiceArgs): Promise<RestGitService> {
-	return createGitServiceCore(createArgs);
-}
-
-async function createGitServiceCore(
-	createArgs: ICreateGitServiceArgs,
-	validatedDocument?: IDocument,
-): Promise<RestGitService> {
 	const {
 		config,
 		tenantId,
@@ -489,8 +475,6 @@ async function createGitServiceCore(
 
 	const isEphemeral = ignoreEphemeralFlag
 		? false
-		: validatedDocument !== undefined
-		? validatedDocument.isEphemeralContainer ?? false
 		: await checkAndCacheIsEphemeral({
 				documentId,
 				tenantId,
@@ -499,9 +483,6 @@ async function createGitServiceCore(
 				isEphemeralContainerOverride: isEphemeralContainer,
 				cache,
 		  });
-	if (validatedDocument !== undefined && !ignoreEphemeralFlag) {
-		await updateIsEphemeralCache(documentId, tenantId, isEphemeral, cache);
-	}
 	if (isEphemeral) {
 		Lumberjack.info(`Document is ephemeral.`, getLumberBaseProperties(documentId, tenantId));
 	}
@@ -517,9 +498,7 @@ async function createGitServiceCore(
 	}
 
 	const calculatedStorageName =
-		validatedDocument !== undefined
-			? validatedDocument.storageName ?? customData?.storageName
-			: initialUpload && storageName
+		initialUpload && storageName
 			? storageName
 			: (await storageNameRetriever?.get(tenantId, documentId)) ?? customData?.storageName;
 	return new RestGitService(

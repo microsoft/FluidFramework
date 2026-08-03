@@ -18,7 +18,6 @@ import * as sinon from "sinon";
 
 import {
 	createGitService,
-	createGitServiceFromValidatedDocument,
 	validateInitialSummaryUpload,
 	validateSummaryDocument,
 } from "../routes/utils";
@@ -462,40 +461,7 @@ describe("summary ownership", function () {
 		);
 	});
 
-	it("uses validated document properties without reading positive caches", async () => {
-		const cache = new TestCache();
-		const cacheGet = sandbox.spy(cache, "get");
-		const cacheSet = sandbox.spy(cache, "set");
-		const documentManager = new TestDocumentManager();
-		const readStaticProperties = sandbox.spy(documentManager, "readStaticProperties");
-		const config = new nconf.Provider({}).defaults({
-			ignoreEphemeralFlag: false,
-			storageUrl: "http://localhost",
-		});
-
-		await createGitServiceFromValidatedDocument(
-			{
-				config,
-				tenantId,
-				authorization,
-				tenantService: new TestTenantService(),
-				documentManager,
-				cache,
-				ephemeralDocumentTTLSec: 24 * 60 * 60,
-			},
-			activeDocument,
-		);
-
-		sinon.assert.notCalled(cacheGet);
-		sinon.assert.notCalled(readStaticProperties);
-		sinon.assert.calledWithExactly(
-			cacheSet,
-			"isEphemeralContainer:tenant%2Fa:shared%3Aid",
-			false,
-		);
-	});
-
-	it("treats a validated ephemeral document as durable when the flag is ignored", async () => {
+	it("treats an ephemeral document as durable when the flag is ignored", async () => {
 		const cache = new TestCache();
 		const cacheSet = sandbox.spy(cache, "set");
 		const documentManager = new TestDocumentManager();
@@ -513,19 +479,16 @@ describe("summary ownership", function () {
 			storageUrl: "http://localhost",
 		});
 
-		await createGitServiceFromValidatedDocument(
-			{
-				config,
-				tenantId,
-				authorization,
-				tenantService: new TestTenantService(),
-				documentManager,
-				cache,
-				ephemeralDocumentTTLSec: 24 * 60 * 60,
-				postEphemeralContainerChecker: { postEphemeralContainerCheck },
-			},
-			{ ...activeDocument, isEphemeralContainer: true },
-		);
+		await createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService: new TestTenantService(),
+			documentManager,
+			cache,
+			ephemeralDocumentTTLSec: 24 * 60 * 60,
+			postEphemeralContainerChecker: { postEphemeralContainerCheck },
+		});
 
 		sinon.assert.calledOnceWithMatch(
 			postEphemeralContainerCheck,
@@ -573,6 +536,14 @@ describe("summary ownership", function () {
 		});
 		const documentManager = new TestDocumentManager();
 		const currentDocumentId = "shared:id";
+		sandbox
+			.stub(documentManager, "readStaticProperties")
+			.callsFake(async (currentTenantId: string) => ({
+				...activeDocument,
+				documentId: currentDocumentId,
+				tenantId: currentTenantId,
+				isEphemeralContainer: currentTenantId === "tenant-b",
+			}));
 
 		for (const currentTenantId of ["tenant-a", "tenant-b"]) {
 			const currentAuthorization = getAuthorizationTokenFromCredentials({
@@ -581,23 +552,15 @@ describe("summary ownership", function () {
 					ScopeType.DocRead,
 				]),
 			});
-			await createGitServiceFromValidatedDocument(
-				{
-					config,
-					tenantId: currentTenantId,
-					authorization: currentAuthorization,
-					tenantService: new TestTenantService(),
-					documentManager,
-					cache,
-					ephemeralDocumentTTLSec: 24 * 60 * 60,
-				},
-				{
-					...activeDocument,
-					documentId: currentDocumentId,
-					tenantId: currentTenantId,
-					isEphemeralContainer: currentTenantId === "tenant-b",
-				},
-			);
+			await createGitService({
+				config,
+				tenantId: currentTenantId,
+				authorization: currentAuthorization,
+				tenantService: new TestTenantService(),
+				documentManager,
+				cache,
+				ephemeralDocumentTTLSec: 24 * 60 * 60,
+			});
 		}
 
 		sinon.assert.calledWithExactly(

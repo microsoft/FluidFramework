@@ -1313,12 +1313,18 @@ describe("summary ownership routes", () => {
 	};
 	let documentManager: TestDocumentManager;
 	let cache: TestCache;
+	let readStaticProperties: sinon.SinonStub;
+	let storageNameRetrieverGet: sinon.SinonStub;
 	let superTest: request.SuperTest<request.Test>;
 
 	beforeEach(() => {
 		configureGlobalTelemetryContext();
 		documentManager = new TestDocumentManager();
 		cache = new TestCache();
+		readStaticProperties = sandbox
+			.stub(documentManager, "readStaticProperties")
+			.resolves(activeDocument);
+		storageNameRetrieverGet = sandbox.stub().resolves("legacy-storage");
 		const throttlers = new Map<string, TestThrottler>([
 			[Constants.generalRestCallThrottleIdPrefix, new TestThrottler(1000)],
 			[Constants.createSummaryThrottleIdPrefix, new TestThrottler(1000)],
@@ -1332,7 +1338,7 @@ describe("summary ownership routes", () => {
 			historianApp.create(
 				defaultProvider,
 				defaultTenantService,
-				undefined,
+				{ get: storageNameRetrieverGet },
 				throttlers,
 				clusterThrottlers,
 				documentManager,
@@ -1419,6 +1425,26 @@ describe("summary ownership routes", () => {
 				outcome: "allowed",
 			}),
 		);
+	});
+
+	it("preserves legacy storage routing after fresh validation", async () => {
+		const readDocument = sandbox.stub(documentManager, "readDocument").resolves(activeDocument);
+		const getSummary = sandbox.stub(RestGitService.prototype, "getSummary").resolves({
+			id: sha,
+			trees: [],
+			blobs: [],
+		});
+
+		await superTest
+			.get(`/repos/${tenantId}/git/summaries/latest`)
+			.set("Authorization", authorization)
+			.expect(200);
+
+		sinon.assert.calledOnceWithExactly(readDocument, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(readStaticProperties, tenantId, documentId);
+		sinon.assert.calledOnceWithExactly(storageNameRetrieverGet, tenantId, documentId);
+		assert.ok(readDocument.calledBefore(readStaticProperties));
+		assert.ok(readStaticProperties.calledBefore(getSummary));
 	});
 
 	it("cannot serve cached latest after scheduled deletion", async () => {

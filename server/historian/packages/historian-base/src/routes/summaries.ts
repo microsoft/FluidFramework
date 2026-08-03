@@ -110,7 +110,7 @@ export function create(
 		allowDisabledTenant = false,
 		query?: Query,
 	): Promise<RestGitService> {
-		const document = await utils.validateSummaryDocument({
+		await utils.validateSummaryDocument({
 			tenantId,
 			authorization,
 			documentManager,
@@ -119,23 +119,20 @@ export function create(
 			ephemeralDocumentTTLSec: ephemeralDocumentTTLSec ?? 24 * 60 * 60,
 			ignoreEphemeralFlag: ignoreIsEphemeralFlag,
 		});
-		return utils.createGitServiceFromValidatedDocument(
-			{
-				config,
-				tenantId,
-				authorization,
-				tenantService,
-				storageNameRetriever,
-				documentManager,
-				cache,
-				allowDisabledTenant,
-				ephemeralDocumentTTLSec,
-				simplifiedCustomDataRetriever,
-				postEphemeralContainerChecker,
-				query,
-			},
-			document,
-		);
+		return utils.createGitService({
+			config,
+			tenantId,
+			authorization,
+			tenantService,
+			storageNameRetriever,
+			documentManager,
+			cache,
+			allowDisabledTenant,
+			ephemeralDocumentTTLSec,
+			simplifiedCustomDataRetriever,
+			postEphemeralContainerChecker,
+			query,
+		});
 	}
 
 	async function getSummary(
