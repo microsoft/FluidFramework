@@ -95,7 +95,7 @@ function testDecode(
 	expectedTree: JsonableTree[][],
 	identifierFilter: CounterFilter<string>,
 	version: FieldBatchFormatVersion,
-	idCompressor?: IIdCompressor,
+	idCompressor: IIdCompressor = testIdCompressor,
 	incrementalDecoder?: IncrementalDecoder,
 ): EncodedFieldBatchV1OrV2 {
 	const chunk = updateShapesAndIdentifiersEncoding(
@@ -106,18 +106,17 @@ function testDecode(
 
 	// TODO: check chunk matches schema
 
+	// This assumes the encoded data was encoded using the same localSessionId of the current session.
+	// This is ok for these tests which comply with this, but would be very bad to assume in any real use-case.
+	const context = new IdDecodingContext({
+		idCompressor,
+		originatorId: idCompressor.localSessionId,
+	});
 	// Check decode
 	const result = decode(
 		chunk,
-		idCompressor === undefined
-			? new IdDecodingContext({
-					idCompressor: testIdCompressor,
-					originatorId: testIdCompressor.localSessionId,
-				})
-			: new IdDecodingContext({
-					idCompressor,
-					originatorId: idCompressor.localSessionId,
-				}),
+
+		context,
 		incrementalDecoder,
 	);
 	assertChunkCursorBatchEquals(result, expectedTree);
@@ -144,19 +143,7 @@ function testDecode(
 		// can't check this due to undefined fields
 		// assert.deepEqual(parsed, chunk);
 		// Instead check that it works properly:
-		const parsedResult = decode(
-			parsed,
-			idCompressor === undefined
-				? new IdDecodingContext({
-						idCompressor: testIdCompressor,
-						originatorId: testIdCompressor.localSessionId,
-					})
-				: new IdDecodingContext({
-						idCompressor,
-						originatorId: idCompressor.localSessionId,
-					}),
-			incrementalDecoder,
-		);
+		const parsedResult = decode(parsed, context, incrementalDecoder);
 		assert.deepEqual(parsedResult, result);
 	}
 

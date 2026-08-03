@@ -261,7 +261,7 @@ export interface IdDecoderOptionsWithOriginator {
  */
 export class IdDecodingContext {
 	/**
-	 * Whether this context resolves identifiers using an originator session id.
+	 * Whether this context resolves identifiers using an originator session ID.
 	 * @remarks
 	 * Consulted by {@link FieldBatchDecodingContext} to prevent using an originator-based
 	 * decoder in incremental chunks (which may come from other sessions, making such a
