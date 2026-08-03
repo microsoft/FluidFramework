@@ -150,6 +150,11 @@ parameters:
     type: boolean
     default: false
 
+  # Whether to append the pushed Docker candidate's digest to publish-metadata.json.
+  - name: emitDockerImageDigest
+    type: boolean
+    default: false
+
 trigger: none
 
 resources:
@@ -260,6 +265,7 @@ extends:
                 isReleaseGroup=${{ parameters.isReleaseGroup }}
                 installPackages=${{ parameters.installPackages }}
                 installWorkspaceRootOnly=${{ parameters.installWorkspaceRootOnly }}
+                emitDockerImageDigest=${{ parameters.emitDockerImageDigest }}
                 releaseKind=${{ parameters.releaseKind }}
                 setVersion=${{ parameters.setVersion }}
                 shouldPublishNpmPackages=${{ parameters.shouldPublishNpmPackages }}
@@ -375,6 +381,22 @@ extends:
                 set -eu -o pipefail
                 echo "$(containerTagSuffix)"
                 echo "##vso[task.setvariable variable=version;isOutput=true]$(containerTagSuffix)"
+
+        # GitSSH has no npm package or base image stage, but its downstream Docker publisher still consumes
+        # the common pack artifact and publish metadata contract.
+        - ${{ if and(eq(parameters.tagName, 'gitssh'), eq(parameters.emitDockerImageDigest, true)) }}:
+          - task: Bash@3
+            displayName: Create publish artifact directory
+            inputs:
+              targetType: inline
+              script: |
+                set -eu -o pipefail
+                mkdir -p $(hostPathToPackArtifact)
+
+          - template: /tools/pipelines/templates/include-generate-publish-metadata.yml@self
+            parameters:
+              publishOverride: ${{ parameters.publishOverride }}
+              publishAsPartOfBuild: ${{ parameters.publishAsPartOfBuild }}
 
         - task: Bash@3
           name: DockerBuildArgs
@@ -623,6 +645,9 @@ extends:
             inputs:
               localImage: $(containerTag)
               remoteImage: $(ComputeFinalTagList.FinalTagList)
+
+          - ${{ if eq(parameters.emitDockerImageDigest, true) }}:
+            - template: /tools/pipelines/templates/include-add-docker-image-digest.yml@self
 
         - ${{ if eq(parameters.installPackages, true) }}:
           # Prune the pnpm store before it's cached. This removes any deps that are not used by the current build.

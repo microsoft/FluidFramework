@@ -1,5 +1,9 @@
 # @fluidframework/azure-service-utils
 
+## 2.114.0
+
+Dependency updates only.
+
 ## 2.113.0
 
 Dependency updates only.
