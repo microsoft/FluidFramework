@@ -16,6 +16,7 @@ import type {
 } from "../core/index.js";
 import {
 	mapIterable,
+	IdDecodingContext,
 	type IdentifierHealingConfig,
 	type JsonCompatibleReadOnly,
 	type Mutable,
@@ -61,13 +62,15 @@ function encodeCommit<TChangeset, T extends Commit<TChangeset>>(
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	commit: T,
 	context: ChangeEncodingContext,
@@ -90,23 +93,20 @@ function decodeCommit<TChangeset, T extends EncodedCommit<JsonCompatibleReadOnly
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	commit: T,
 	context: ChangeDecodingContext,
 ) {
-	const revision = revisionTagCodec.decode(commit.revision, {
-		originatorId: commit.sessionId,
-		idCompressor: context.idCompressor,
-		revision: undefined,
-		isSummary: context.isSummary,
-	});
+	const revision = revisionTagCodec.decode(commit.revision, context);
 
 	return {
 		...commit,
@@ -120,13 +120,15 @@ export function encodeSharedBranch<TChangeset>(
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	data: SharedBranchSummaryData<TChangeset>,
 	context: EditManagerEncodingContext,
@@ -195,55 +197,61 @@ export function decodeSharedBranch<TChangeset>(
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	json: EncodedSharedBranch<TChangeset>,
 	context: EditManagerDecodingContext,
 	originatorId: SessionId | undefined,
 ): SharedBranchSummaryData<TChangeset> {
+	// Forest identifiers in a summary can reference multiple sessions, so they are resolved
+	// originatorlessly (heal-aware). Revision tags belong to a single commit, so each is resolved
+	// with that commit's originator session. See the TODO on ChangeDecodingContext.
+	const forestIdDecodingContext = new IdDecodingContext({
+		idCompressor: context.idCompressor,
+		healing: context.healing,
+	});
+	const makeChangeContext = (commitOriginatorId: SessionId): ChangeDecodingContext => ({
+		revision: undefined,
+		idCompressor: context.idCompressor,
+		idDecodingContext: new IdDecodingContext({
+			idCompressor: context.idCompressor,
+			originatorId: commitOriginatorId,
+		}),
+		forestIdDecodingContext,
+	});
 	// TODO: sort out EncodedCommit vs Commit, and make this type check without type assertion.
 	const trunk = json.trunk as readonly (EncodedCommit<JsonCompatibleReadOnly> & SequenceId)[];
 	const data: Mutable<SharedBranchSummaryData<TChangeset>> = {
 		trunk: trunk.map(
 			(commit): SequencedCommit<TChangeset> =>
 				// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
-				decodeCommit(changeCodec, revisionTagCodec, commit, {
-					originatorId: commit.sessionId,
-					idCompressor: context.idCompressor,
-					revision: undefined,
-					isSummary: context.isSummary,
-					healing: context.healing,
-				}),
+				decodeCommit(
+					changeCodec,
+					revisionTagCodec,
+					commit,
+					makeChangeContext(commit.sessionId),
+				),
 		),
 		peerLocalBranches: new Map(
 			mapIterable(json.peers, ([sessionId, branch]) => [
 				sessionId,
 				{
-					base: revisionTagCodec.decode(branch.base, {
-						originatorId: sessionId,
-						idCompressor: context.idCompressor,
-						revision: undefined,
-						isSummary: context.isSummary,
-					}),
+					base: revisionTagCodec.decode(branch.base, makeChangeContext(sessionId)),
 					commits: branch.commits.map((commit) =>
 						// TODO: sort out EncodedCommit vs Commit, and make this type check without `as`.
 						decodeCommit(
 							changeCodec,
 							revisionTagCodec,
 							commit as EncodedCommit<JsonCompatibleReadOnly>,
-							{
-								originatorId: commit.sessionId,
-								idCompressor: context.idCompressor,
-								revision: undefined,
-								isSummary: context.isSummary,
-								healing: context.healing,
-							},
+							makeChangeContext(commit.sessionId),
 						),
 					),
 				},
@@ -271,12 +279,7 @@ export function decodeSharedBranch<TChangeset>(
 			originatorId !== undefined,
 			0xc64 /* Cannot decode branch base without originatorId */,
 		);
-		data.base = revisionTagCodec.decode(json.base, {
-			originatorId,
-			idCompressor: context.idCompressor,
-			revision: undefined,
-			isSummary: context.isSummary,
-		});
+		data.base = revisionTagCodec.decode(json.base, makeChangeContext(originatorId));
 	}
 	return data;
 }

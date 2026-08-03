@@ -40,7 +40,8 @@ export function makeModularChangeCodecV2(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	fieldsCodec: FieldBatchCodec,
 	codecOptions: ICodecOptions,

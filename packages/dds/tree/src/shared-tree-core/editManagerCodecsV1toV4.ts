@@ -4,7 +4,12 @@
  */
 
 import type { CodecAndSchema, IJsonCodec, Versioned } from "../codec/index.js";
-import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import type {
+	ChangeDecodingContext,
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
@@ -33,13 +38,15 @@ export function makeV1toV4andV6CodecWithVersion<TChangeset>(
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
 ): CodecAndSchema<

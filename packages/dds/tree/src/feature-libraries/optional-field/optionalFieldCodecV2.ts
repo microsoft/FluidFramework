@@ -9,6 +9,7 @@ import type { IJsonCodec, JsonCodecPart } from "../../codec/index.js";
 import type {
 	RevisionTagSchema,
 	ChangeAtomId,
+	ChangeDecodingContext,
 	ChangeEncodingContext,
 	RevisionTag,
 } from "../../core/index.js";
@@ -28,9 +29,15 @@ function makeRegisterIdCodec(
 	changeAtomIdCodec: JsonCodecPart<
 		ChangeAtomId,
 		typeof EncodedChangeAtomId,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
-): JsonCodecPart<RegisterId, typeof EncodedRegisterId, ChangeEncodingContext> {
+): JsonCodecPart<
+	RegisterId,
+	typeof EncodedRegisterId,
+	ChangeEncodingContext,
+	ChangeDecodingContext
+> {
 	return {
 		encode: (registerId: RegisterId, context: ChangeEncodingContext) => {
 			if (registerId === "self") {
@@ -38,7 +45,7 @@ function makeRegisterIdCodec(
 			}
 			return changeAtomIdCodec.encode(registerId, context);
 		},
-		decode: (registerId: EncodedRegisterId, context: ChangeEncodingContext) => {
+		decode: (registerId: EncodedRegisterId, context: ChangeDecodingContext) => {
 			if (registerId === null) {
 				return "self";
 			}
@@ -52,7 +59,8 @@ export function makeOptionalFieldCodec(
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 ): IJsonCodec<
 	OptionalChangeset,

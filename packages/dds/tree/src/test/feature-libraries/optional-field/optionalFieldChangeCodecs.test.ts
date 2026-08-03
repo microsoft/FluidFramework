@@ -21,7 +21,7 @@ import {
 	makeOptionalFieldCodecFamily,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/optional-field/optionalFieldCodecs.js";
-import { brand } from "../../../util/index.js";
+import { brand, IdDecodingContext } from "../../../util/index.js";
 import { TestChange } from "../../testChange.js";
 import { TestNodeId } from "../../testNodeId.js";
 import {
@@ -83,6 +83,14 @@ export function testCodecs(): void {
 			isSummary: false,
 			revision: undefined,
 			idCompressor: testIdCompressor,
+			idDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: "session1" as SessionId,
+			}),
+			forestIdDecodingContext: new IdDecodingContext({
+				idCompressor: testIdCompressor,
+				originatorId: "session1" as SessionId,
+			}),
 		};
 		const context: FieldChangeEncodingContext & FieldChangeDecodingContext = {
 			baseContext,

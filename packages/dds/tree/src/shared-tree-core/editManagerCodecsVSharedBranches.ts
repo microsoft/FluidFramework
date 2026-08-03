@@ -6,7 +6,12 @@
 import { assert } from "@fluidframework/core-utils/internal";
 
 import type { CodecAndSchema, IJsonCodec } from "../codec/index.js";
-import type { ChangeEncodingContext, EncodedRevisionTag, RevisionTag } from "../core/index.js";
+import type {
+	ChangeDecodingContext,
+	ChangeEncodingContext,
+	EncodedRevisionTag,
+	RevisionTag,
+} from "../core/index.js";
 import {
 	type JsonCompatibleReadOnly,
 	type JsonCompatibleReadOnlyObject,
@@ -30,13 +35,15 @@ export function makeSharedBranchesCodecWithVersion<TChangeset>(
 		TChangeset,
 		JsonCompatibleReadOnly,
 		JsonCompatibleReadOnly,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	revisionTagCodec: IJsonCodec<
 		RevisionTag,
 		EncodedRevisionTag,
 		EncodedRevisionTag,
-		ChangeEncodingContext
+		ChangeEncodingContext,
+		ChangeDecodingContext
 	>,
 	version: EncodedEditManager<TChangeset>["version"],
 ): CodecAndSchema<
