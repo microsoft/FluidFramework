@@ -66,7 +66,11 @@ export interface TreeChangeEvents {
 	 * node, or when the node has to be updated due to resolution of a merge conflict
 	 * (for example a previously applied local change might be undone, then reapplied differently or not at all).
 	 *
-	 * TODO: define and document event ordering (ex: bottom up, with nodeChanged before treeChange on each level).
+	 * Event ordering: events fire bottom-up through the tree hierarchy.
+	 * At each level, `nodeChanged` fires before `treeChanged`.
+	 * For example, if a leaf node's property changes, the leaf's `nodeChanged` fires first,
+	 * then the leaf's `treeChanged`, then each ancestor's `treeChanged` going up to the root.
+	 * See `treeChangeEventOrdering.spec.ts` for comprehensive ordering tests.
 	 */
 	nodeChanged(unstable?: unknown): void;
 
