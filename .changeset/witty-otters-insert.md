@@ -3,13 +3,13 @@
 "@fluidframework/tree": minor
 "__section": tree
 ---
-Add getOrInsert method to TreeMapNodeAlpha
+Add getOrInsert and getOrInsertComputed methods to TreeMapNodeAlpha
 
-[`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has a `getOrInsert` method, further aligning it with JavaScript's built-in Map API. It returns the value at a key, first inserting a fallback value if the map has no entry for that key.
+[`TreeMapNodeAlpha`](https://fluidframework.com/docs/api/fluid-framework/treemapnodealpha-interface) now has `getOrInsert` and `getOrInsertComputed` methods, further aligning it with JavaScript's built-in Map API. Both return the value at a key, first inserting a value if the map has no entry for that key: `getOrInsert` takes the fallback value directly, while `getOrInsertComputed` takes a callback which is only invoked (with the key) when an insert is needed, which is preferable when producing the fallback value is expensive.
 
 When the fallback value is inserted and is not already a [`TreeNode`](https://fluidframework.com/docs/api/fluid-framework/treenode-class), the inserted and returned value is the result of implicitly constructing a node from it.
 
-This method is available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
+These methods are available on `TreeMapNodeAlpha`, which can be obtained from an existing `TreeMapNode` via `asAlpha`, or by declaring the schema with `SchemaFactoryAlpha`'s `mapAlpha`.
 
 ```typescript
 const schemaFactory = new SchemaFactoryAlpha("example");
@@ -25,5 +25,8 @@ const inventory = new Inventory(
 inventory.getOrInsert("apples", 10); // 5 (existing value returned, not overwritten)
 inventory.getOrInsert("oranges", 10); // 10 (inserted and returned)
 
-inventory.size; // 3
+inventory.getOrInsertComputed("pears", () => computeRestockAmount()); // 3 (existing value returned, callback not invoked)
+inventory.getOrInsertComputed("plums", () => computeRestockAmount()); // inserts and returns the computed value
+
+inventory.size; // 4
 ```
