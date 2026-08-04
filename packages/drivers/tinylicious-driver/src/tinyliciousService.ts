@@ -45,12 +45,14 @@ import {
  */
 export interface TinyliciousServiceOptions extends ServiceOptions {
 	/**
-	 * The port tinylicious is listening on. Defaults to 7070.
+	 * An optional override for the port Tinylicious is listening on.
+	 * @remarks Overrides any port included in {@link TinyliciousServiceOptions.endpoint}.
 	 */
 	readonly port?: number;
 	/**
-	 * The endpoint tinylicious is listening on. Defaults to "http://localhost".
+	 * The full endpoint URL Tinylicious is listening on.
 	 * In GitHub Codespaces, use the forwarded URL for the tinylicious port.
+	 * @defaultValue `http://localhost:7070`
 	 */
 	readonly endpoint?: string;
 }
@@ -62,6 +64,9 @@ export interface TinyliciousServiceOptions extends ServiceOptions {
  * Requires a tinylicious server to be running (e.g. `pnpm tinylicious`).
  * Unlike {@link @fluidframework/local-driver#startEphemeralService}, this client persists containers
  * and supports real multi-process collaboration.
+ *
+ * @param options - Tinylicious connection and collaboration options.
+ * @returns A client for creating and loading Tinylicious-backed containers.
  *
  * @alpha
  */

@@ -48,6 +48,48 @@ describe("Insecure Url Resolver Test", () => {
 		assert.strictEqual(resolvedUrl.url, expectedResolvedUrl, "resolved url is wrong");
 	});
 
+	it("Should preserve a port included in a custom endpoint", async () => {
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			undefined,
+			"https://fluidframework.com:1234",
+		);
+
+		const resolvedUrl = await customResolver.resolve({ url: documentId });
+
+		assert.strictEqual(
+			resolvedUrl.url,
+			`https://fluidframework.com:1234/tinylicious/${documentId}`,
+		);
+	});
+
+	it("Should use the standard HTTPS port for a forwarded endpoint", async () => {
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			undefined,
+			"https://codespace-7070.app.github.dev",
+		);
+
+		const resolvedUrl = await customResolver.resolve({ url: documentId });
+
+		assert.strictEqual(
+			resolvedUrl.url,
+			`https://codespace-7070.app.github.dev/tinylicious/${documentId}`,
+		);
+	});
+
+	it("Should allow an explicit port to override the endpoint port", async () => {
+		const customResolver = new InsecureTinyliciousUrlResolver(
+			4321,
+			"https://fluidframework.com:1234",
+		);
+
+		const resolvedUrl = await customResolver.resolve({ url: documentId });
+
+		assert.strictEqual(
+			resolvedUrl.url,
+			`https://fluidframework.com:4321/tinylicious/${documentId}`,
+		);
+	});
+
 	it("Should resolve url with data object ids", async () => {
 		const path = "dataObject1/dataObject2";
 		const testRequest: IRequest = {
