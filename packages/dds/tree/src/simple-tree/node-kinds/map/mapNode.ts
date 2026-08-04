@@ -54,7 +54,6 @@ import {
 	type FlexContent,
 	type TreeNodeSchemaPrivateData,
 	AnnotatedAllowedTypesInternal,
-	getOrCreateNodeFromInnerNode,
 } from "../../core/index.js";
 import { getTreeNodeSchemaInitializedData } from "../../createContext.js";
 import { createFieldSchema, FieldKind } from "../../fieldSchema.js";
@@ -333,14 +332,8 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 		if (existing !== undefined) {
 			return existing;
 		}
-		const kernel = getKernel(this);
-		const flexNode = unhydratedFlexTreeFromInsertable(
-			fallbackValue as InsertableContent,
-			kernel.schema.info as ImplicitAllowedTypes,
-		);
-		const node = getOrCreateNodeFromInnerNode(flexNode) as TreeNodeFromImplicitAllowedTypes<T>;
-		this.set(key, node as InsertableTreeNodeFromImplicitAllowedTypes<T>);
-		return node;
+		this.set(key, fallbackValue);
+		return this.get(key);
 	}
 	public get size(): number {
 		return count(this.innerNode.keys());
