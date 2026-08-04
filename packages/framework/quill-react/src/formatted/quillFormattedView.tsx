@@ -243,7 +243,7 @@ function contentOpsToQuillDelta(
 	}
 
 	// Fixup required new line: quill requires one at the end, so we add an extra if needed.
-	// This simple deletes the old one if there was one, then adds a new one if needed.
+	// This simply deletes the old one if there was one, then adds a new one if needed.
 	// Such an approach was deemed slightly simpler and less error prone than reusing one if preexisting,
 	// since it avoids any potential for the extra new line to accidentally be reused when it has formatting applied.
 	const remainingQuillContent = preEditContent.slice(quillPos);
