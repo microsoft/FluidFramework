@@ -14,6 +14,12 @@ export class BrandedType<out Brand> {
 // @public
 export type ConfigTypes = string | number | boolean | number[] | string[] | boolean[] | undefined;
 
+// @beta @sealed @system
+export abstract class ErasedBaseType<out Name = unknown> {
+    protected constructor();
+    protected abstract brand(dummy: never): Name;
+}
+
 // @public @sealed
 export abstract class ErasedType<out Name = unknown> {
     static [Symbol.hasInstance](value: never): value is never;
