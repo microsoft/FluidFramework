@@ -1,5 +1,6 @@
 ---
 "@fluidframework/tree": minor
+"fluid-framework": minor
 "__section": tree
 ---
 Promote FormattedTextAsTree APIs to alpha
