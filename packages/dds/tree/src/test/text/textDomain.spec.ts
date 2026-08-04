@@ -6,12 +6,13 @@
 import { strict as assert } from "node:assert";
 
 import type { FieldKey, IForestSubscription, TreeChunk } from "../../core/index.js";
+import { ComparisonForest } from "../../feature-libraries/index.js";
 import {
 	UniformChunk,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/uniformChunk.js";
 import {
-	ForestTypeOptimized,
+	ForestTypeExpensiveDebug,
 	TreeAlpha,
 	createIndependentTreeAlpha,
 } from "../../shared-tree/index.js";
@@ -69,21 +70,25 @@ function tallyUniformChunks(forest: IForestSubscription): {
  * `checkout` exposes the `IForestSubscription`. This is an intentional internal coupling — the public
  * API hides the forest — but this test needs it to inspect chunk storage.
  */
-function forestFromView(view: object): IForestSubscription {
-	return (view as { readonly checkout: { readonly forest: IForestSubscription } }).checkout
+function forestFromView(view: object): ComparisonForest {
+	return (view as { readonly checkout: { readonly forest: ComparisonForest } }).checkout
 		.forest;
 }
 
-/** Builds an empty text document backed by the optimized (chunked) forest, exposing its forest. */
+/**
+ * Builds an empty text document backed by a comparison forest and exposes its main chunked forest.
+ * Every edit is checked against the reference object forest before the chunk storage is inspected.
+ */
 function buildChunkedTextDocument(): {
 	readonly root: TextAsTree.Tree;
 	readonly forest: IForestSubscription;
 } {
-	const view = createIndependentTreeAlpha({ forest: ForestTypeOptimized }).viewWith(
+	const view = createIndependentTreeAlpha({ forest: ForestTypeExpensiveDebug }).viewWith(
 		new TreeViewConfiguration({ schema: TextAsTree.Tree }),
 	);
 	view.initialize(TextAsTree.Tree.fromString(""));
-	return { root: view.root, forest: forestFromView(view) };
+	const forest = forestFromView(view);
+	return { root: view.root, forest: forest.main };
 }
 
 describe("textDomain", () => {
@@ -321,10 +326,9 @@ describe("textDomain", () => {
 		});
 	});
 
-	// Regression test for the attach/detach coalescing in the chunked forest. Typing characters one at a
-	// time attaches each as its own chunk; `coalesceUniformChunks` merges the same-shape neighbors back
-	// together so the field stays batched into a small number of multi-node UniformChunks instead of
-	// fragmenting into one chunk per character.
+	// Regression test for the attach/detach coalescing in the chunked forest. The comparison forest
+	// validates every edit against the reference object forest, then the chunked main forest is
+	// inspected to ensure same-shape neighbors were batched instead of remaining one chunk per character.
 	describe("chunked forest storage", () => {
 		it("batches typed characters into multi-node chunks", () => {
 			const size = 1000;
