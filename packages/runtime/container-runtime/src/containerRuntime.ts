@@ -22,6 +22,7 @@ import type {
 import { AttachState } from "@fluidframework/container-definitions";
 import type {
 	IContainerContext,
+	IContainerContextInternal,
 	IGetPendingLocalStateProps,
 	IRuntime,
 	IDeltaManager,
@@ -1890,15 +1891,49 @@ export class ContainerRuntime
 				},
 			},
 		);
-		const fetchOps = context.fetchOps;
+		// fetchOps is an internal-only capability the loader injects (IContainerContextInternal), not part
+		// of the public IContainerContext contract, so narrow to read it.
+		const fetchOps = (context as IContainerContextInternal).fetchOps;
 		this.versionMarkResolverInternal = new VersionMarkResolver({
 			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
-			getCurrentPendingBatchId: () =>
-				this.pendingStateManager.getMostRecentPendingBatchId(),
+			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
 			// Wire the container-provided op reader (if any) so resolution can read historical ops.
-			getHistoricalOpReader: fetchOps
-				? () => ({ fetchMessages: fetchOps })
+			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
+			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
+			// chunked batch's batchId (only restored after reassembly) is observed by the history scan too.
+			createHistoricalOpUnpacker: fetchOps
+				? () => {
+						// A fresh processor per scan: it holds chunk-reassembly state, so it must not share
+						// the live inbound processor's state. submit/size args are unused on the read path.
+						const scanProcessor = new RemoteMessageProcessor(
+							new OpSplitter(
+								[],
+								submitBatchFn,
+								runtimeOptions.chunkSizeInBytes,
+								runtimeOptions.maxBatchSizeInBytes,
+								this.mc.logger,
+							),
+							new OpDecompressor(this.mc.logger),
+							new OpGroupingManager(
+								{ groupedBatchingEnabled: this.groupedBatchingEnabled },
+								this.mc.logger,
+							),
+						);
+						return (op) => {
+							// Mirror the live path: only modern runtime-envelope ops (type Operation, with a
+							// client id) carry batches; skip system/server ops.
+							if (op.type !== MessageType.Operation || typeof op.clientId !== "string") {
+								return undefined;
+							}
+							const messageCopy = { ...op };
+							ensureContentsDeserialized(messageCopy);
+							return scanProcessor.process(
+								messageCopy,
+								getSingleUseLegacyLogCallback(this.mc.logger, messageCopy.type),
+							);
+						};
+					}
 				: undefined,
 		});
 		this.versionMarkResolver = this.versionMarkResolverInternal;
@@ -3311,8 +3346,20 @@ export class ContainerRuntime
 				}
 			}
 
-			// Record the version-mark point for a completed batch (its last op's sequence number),
-			// carrying the batch id across a piecemeal batch's messages.
+			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
+			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
+			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
+			let messagesWithPendingState: {
+				message: ISequencedDocumentMessage;
+				localOpMetadata?: unknown;
+			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
+
+			// Record the version-mark point for a completed batch (its last op's sequence number), carrying
+			// the batch id across a piecemeal batch's messages. This runs only AFTER processInboundMessages
+			// has validated the batch: that call throws (fork detection / pending-content mismatch) for a
+			// batch that must be rejected. processInboundBatch synchronously notifies listeners, which an
+			// app uses to promote a mark in an external store - an irreversible side effect - so it must not
+			// fire for a batch validation is about to reject.
 			const versionMarkUpdate = inboundVersionMarkUpdate(
 				inboundResult,
 				this.versionMarkInboundBatchId,
@@ -3324,14 +3371,6 @@ export class ContainerRuntime
 				);
 			}
 			this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
-
-			// Reach out to PendingStateManager, either to zip localOpMetadata into the *local* message list,
-			// or to check to ensure the *remote* messages don't match the batchId of a pending local batch.
-			// This latter case would indicate that the container has forked - two copies are trying to persist the same local changes.
-			let messagesWithPendingState: {
-				message: ISequencedDocumentMessage;
-				localOpMetadata?: unknown;
-			}[] = this.pendingStateManager.processInboundMessages(inboundResult, local);
 
 			if (inboundResult.type !== "fullBatch") {
 				assert(

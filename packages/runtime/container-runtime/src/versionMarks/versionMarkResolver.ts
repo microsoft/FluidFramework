@@ -3,10 +3,14 @@
  * Licensed under the MIT License.
  */
 
-import type { ISequencedDocumentMessage, IStream } from "@fluidframework/driver-definitions/internal";
+import type {
+	ISequencedDocumentMessage,
+	IStream,
+} from "@fluidframework/driver-definitions/internal";
 
-import { asBatchMetadata } from "../metadata.js";
-import { generateBatchId } from "../opLifecycle/index.js";
+import type { InboundMessageResult } from "../opLifecycle/index.js";
+
+import { inboundVersionMarkUpdate } from "./inboundBatch.js";
 
 /**
  * Reads sequenced ops in `[from, to)` from delta storage, injected by the container so the runtime stays
@@ -63,6 +67,16 @@ export interface VersionMarkResolverRuntimeHooks {
 	 * Injected by the container, backed by delta storage. When absent, unknown batchIds resolve as `pending`.
 	 */
 	readonly getHistoricalOpReader?: () => IHistoricalOpReader | undefined;
+	/**
+	 * Creates a per-scan op unpacker that mirrors the live inbound path (chunk reassembly, ungroup,
+	 * decompress), so the history scan observes the same restored `batchId` — in particular for chunked
+	 * batches, whose id is stripped from the final chunk's wire metadata and restored only after
+	 * reassembly. A fresh unpacker is created per scan since it holds reassembly state. When absent, the
+	 * history scan cannot identify batches and reports `pending`/`unresolvable`.
+	 */
+	readonly createHistoricalOpUnpacker?: () => (
+		op: ISequencedDocumentMessage,
+	) => InboundMessageResult | undefined;
 }
 
 /**
@@ -73,7 +87,9 @@ export interface VersionMarkResolverRuntimeHooks {
  */
 export class VersionMarkResolver implements IVersionMarkResolver {
 	private readonly sequenceNumberByBatchId = new Map<string, number>();
-	private readonly batchListeners = new Set<(batchId: string, sequenceNumber: number) => void>();
+	private readonly batchListeners = new Set<
+		(batchId: string, sequenceNumber: number) => void
+	>();
 
 	public constructor(private readonly hooks: VersionMarkResolverRuntimeHooks) {}
 
@@ -85,7 +101,10 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		return this.hooks.getCurrentSequenceNumber();
 	}
 
-	public async resolve(batchId: string, referenceSequenceNumber: number): Promise<ResolveResult> {
+	public async resolve(
+		batchId: string,
+		referenceSequenceNumber: number,
+	): Promise<ResolveResult> {
 		// Fast path: batch sequenced live this session.
 		const sequenceNumber = this.sessionSequenceFor(batchId);
 		if (sequenceNumber !== undefined) {
@@ -103,8 +122,11 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 
 	/**
 	 * Scans sequenced ops from `referenceSequenceNumber` forward for `batchId`, returning its last op's
-	 * sequence number when found and aborting the fetch once found or exhausted. On a miss, {@link classifyMiss}
-	 * distinguishes `pending` (not sequenced yet) from `unresolvable` (ops trimmed). See DEV.md.
+	 * sequence number when found and aborting the fetch once found or exhausted. Each op is routed through
+	 * the same unpack pipeline the live inbound path uses (chunk reassembly, ungroup, decompress) and
+	 * {@link inboundVersionMarkUpdate} derives its batch identity, so chunked batches resolve here too. On a
+	 * miss, {@link classifyMiss} distinguishes `pending` (not sequenced yet) from `unresolvable` (ops
+	 * trimmed). See DEV.md.
 	 */
 	private async resolveFromHistory(
 		reader: IHistoricalOpReader,
@@ -112,11 +134,12 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 		referenceSequenceNumber: number,
 	): Promise<ResolveResult> {
 		const from = referenceSequenceNumber + 1;
+		const unpack = this.hooks.createHistoricalOpUnpacker?.();
 		const abortController = new AbortController();
 		try {
 			const stream = await reader.fetchMessages(from, undefined, abortController.signal);
-			let inTargetBatch = false;
 			let firstScannedSequenceNumber: number | undefined;
+			let carriedBatchId: string | undefined;
 			while (true) {
 				const result = await stream.read();
 				if (result.done) {
@@ -124,26 +147,17 @@ export class VersionMarkResolver implements IVersionMarkResolver {
 				}
 				for (const op of result.value) {
 					firstScannedSequenceNumber ??= op.sequenceNumber;
-					const metadata = asBatchMetadata(op.metadata);
-					if (!inTargetBatch) {
-						// A batch's identity comes from its first op.
-						const opBatchId =
-							metadata?.batchId ??
-							(typeof op.clientId === "string"
-								? generateBatchId(op.clientId, op.clientSequenceNumber)
-								: undefined);
-						if (opBatchId !== batchId) {
-							continue;
-						}
-						// Single-op batch (no `batch` flag) resolves to this op.
-						if (metadata?.batch !== true) {
-							return { status: "resolved", sequenceNumber: op.sequenceNumber };
-						}
-						inTargetBatch = true;
+					// undefined = a system op, or an incomplete chunk awaiting later fragments.
+					const inboundResult = unpack?.(op);
+					if (inboundResult === undefined) {
+						continue;
 					}
-					// Last op of the matched batch is the resolved point.
-					if (inTargetBatch && metadata?.batch === false) {
-						return { status: "resolved", sequenceNumber: op.sequenceNumber };
+					// Derive batch identity exactly as the live inbound path does, carrying the id across a
+					// piecemeal batch's messages.
+					const update = inboundVersionMarkUpdate(inboundResult, carriedBatchId);
+					carriedBatchId = update.carriedBatchId;
+					if (update.sequenced?.batchId === batchId) {
+						return { status: "resolved", sequenceNumber: update.sequenced.sequenceNumber };
 					}
 				}
 			}

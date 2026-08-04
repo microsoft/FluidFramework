@@ -64,7 +64,10 @@ describe("inboundVersionMarkUpdate", () => {
 		});
 
 		it("falls back to the batch-start key message for an empty batch", () => {
-			const result = inboundVersionMarkUpdate(fullBatch(batchStart("b_[3]", 42), []), undefined);
+			const result = inboundVersionMarkUpdate(
+				fullBatch(batchStart("b_[3]", 42), []),
+				undefined,
+			);
 			assert.deepEqual(result, {
 				sequenced: { batchId: "b_[3]", sequenceNumber: 42 },
 				carriedBatchId: undefined,
@@ -72,7 +75,10 @@ describe("inboundVersionMarkUpdate", () => {
 		});
 
 		it("derives the batch id from clientId + batchStartCsn when none is explicit", () => {
-			const result = inboundVersionMarkUpdate(fullBatch(batchStart(undefined, 0), [7]), undefined);
+			const result = inboundVersionMarkUpdate(
+				fullBatch(batchStart(undefined, 0), [7]),
+				undefined,
+			);
 			assert.deepEqual(result, {
 				sequenced: { batchId: generateBatchId("client", 3), sequenceNumber: 7 },
 				carriedBatchId: undefined,
@@ -109,7 +115,10 @@ describe("inboundVersionMarkUpdate", () => {
 			);
 			assert.equal(start.sequenced, undefined);
 
-			const mid = inboundVersionMarkUpdate(nextBatchMessage(31, undefined), start.carriedBatchId);
+			const mid = inboundVersionMarkUpdate(
+				nextBatchMessage(31, undefined),
+				start.carriedBatchId,
+			);
 			assert.equal(mid.sequenced, undefined);
 
 			const end = inboundVersionMarkUpdate(nextBatchMessage(32, true), mid.carriedBatchId);

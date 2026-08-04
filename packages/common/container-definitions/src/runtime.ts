@@ -401,19 +401,6 @@ export interface IContainerContext {
 	) => number;
 	readonly submitSignalFn: (contents: unknown, targetClientId?: string) => void;
 	/**
-	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
-	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
-	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
-	 * early. Optional: absent means the runtime has no historical-op read.
-	 *
-	 * @internal
-	 */
-	readonly fetchOps?: (
-		from: number,
-		to?: number,
-		abortSignal?: AbortSignal,
-	) => Promise<IStream<ISequencedDocumentMessage[]>>;
-	/**
 	 * Initiate disposing of the container due to a critical error.
 	 * @param error - The critical error that caused the container to dispose.
 	 * @remarks
@@ -494,6 +481,26 @@ export interface IContainerContext {
 	 * This contains all parts of a snapshot like blobContents, ops etc.
 	 */
 	readonly snapshotWithContents?: ISnapshot;
+}
+
+/**
+ * Internal extension of {@link IContainerContext} for capabilities the loader injects into the runtime
+ * that are not part of the public container/runtime contract.
+ *
+ * @internal
+ */
+export interface IContainerContextInternal extends IContainerContext {
+	/**
+	 * Reads a range of sequenced ops from delta storage, the read counterpart of `submitFn`. The container
+	 * owns delta storage and injects this so the runtime can pull historical ops (e.g. to resolve a batch
+	 * identity to a sequence number). `abortSignal` cancels an in-flight fetch when the runtime stops reading
+	 * early. Optional: absent means the runtime has no historical-op read.
+	 */
+	readonly fetchOps?: (
+		from: number,
+		to?: number,
+		abortSignal?: AbortSignal,
+	) => Promise<IStream<ISequencedDocumentMessage[]>>;
 }
 
 /**
