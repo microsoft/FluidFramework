@@ -30,6 +30,11 @@ import type {
  * still catches up from the snapshot's sequence number through delta storage, which is exactly the
  * bounded replay we want. As a result no live delta-stream connection is ever established.
  *
+ * Op availability is enforced by the delta storage stack itself: it validates that fetched batches
+ * are contiguous from the requested start, keeps requesting until the bounded range is fully
+ * delivered, and fails the fetch if the ops never materialize. So a stream that completes has
+ * necessarily served the whole bridge, and no additional checks are needed here.
+ *
  * @internal
  */
 export class OdspPointInTimeDocumentService
@@ -67,15 +72,14 @@ export class OdspPointInTimeDocumentService
 		// The exclusive upper bound needed to include the target op itself.
 		const boundedTo = this.targetSequenceNumber + 1;
 		return {
-			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) => {
-				return liveDeltaStorage.fetchMessages(
+			fetchMessages: (from, to, abortSignal, cachedOnly, fetchReason) =>
+				liveDeltaStorage.fetchMessages(
 					from,
 					to === undefined ? boundedTo : Math.min(to, boundedTo),
 					abortSignal,
 					cachedOnly,
 					fetchReason,
-				);
-			},
+				),
 		};
 	}
 

@@ -1,6 +1,6 @@
 {
 	"name": "@fluidframework/matrix",
-	"version": "2.114.0",
+	"version": "2.115.0",
 	"description": "Distributed matrix",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -59,9 +59,6 @@
 	"main": "lib/index.js",
 	"types": "lib/public.d.ts",
 	"scripts": {
-		"api": "fluid-build . --task api",
-		"api-extractor:commonjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
-		"api-extractor:esnext": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha --parentProcess",
 		"bench:legacy": "cd bench && node --expose-gc -r ts-node/register src/index.ts",
 		"bench:profile": "cd bench && node -r ts-node/register --prof --logfile=profile.log --no-logfile-per-isolate src/index.ts --runInBand && node --prof-process profile.log > profile.txt && rimraf profile.log && echo See results in bench/profile.txt",
@@ -72,6 +69,9 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
+		"build:entrypoints": "fluid-build . --task build:entrypoints",
+		"build:entrypoints:cjs": "flub generate entrypoints --resolutionConditions require --outFileLegacyBeta legacy --outDir ./dist",
+		"build:entrypoints:esm": "flub generate entrypoints --outFileLegacyBeta legacy --outDir ./lib --node10TypeCompat",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",

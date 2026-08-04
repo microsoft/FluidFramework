@@ -21,7 +21,7 @@ jobs:
     # does not have a way to set labels at creation either), so skipping based on labels does not work.
     steps:
       # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
-      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # ratchet:actions/labeler@v6
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
         if: "github.event.pull_request.title != 'Automation: main-next integrate'"
         with:
           configuration-path: ".github/labeler-areas.yml"
@@ -36,7 +36,7 @@ jobs:
     name: Label changeset-required
     steps:
       # release notes: https://github.com/actions/labeler/releases/tag/v6.0.1
-      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # ratchet:actions/labeler@v6
+      - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
         with:
           configuration-path: ".github/labeler-changesets.yml"
           repo-token: "${{ github.token }}"
@@ -48,6 +48,6 @@ jobs:
     name: Label base branches and external contributors
     steps:
       # release notes: https://github.com/srvaroa/labeler/releases/tag/v1.13.0
-      - uses: srvaroa/labeler@bf262763a8a8e191f5847873aecc0f29df84f957 # ratchet:srvaroa/labeler@v1.14.0
+      - uses: srvaroa/labeler@bf262763a8a8e191f5847873aecc0f29df84f957 # v1.14.0
         env:
           GITHUB_TOKEN: "${{ github.token }}"
