@@ -1,28 +1,29 @@
 ---
-"fluid-framework": minor
-"@fluidframework/tree": minor
 "@fluidframework/azure-client": minor
 "@fluidframework/odsp-client": minor
 "@fluidframework/tinylicious-driver": minor
 "@fluidframework/presence": minor
-"@fluidframework/runtime-utils": minor
 "@fluidframework/devtools": minor
 "__section": feature
 ---
-Introduce a unified `ServiceClient` API for creating and loading Fluid containers
+Add integrations for the unified ServiceClient API
 
-A new `@alpha` API provides a single, service-agnostic way to create and load Fluid containers, as a cleaner alternative to the existing `fluid-static` (declarative) and `aqueduct` (encapsulated) models.
+New `@alpha` factories provide `ServiceClient` implementations for Tinylicious, Azure Fluid Relay, and ODSP:
 
-A `ServiceClient` is obtained from a per-service factory and exposes `createContainer` and `loadContainer`. Container contents are described by a `DataStoreKind` rather than a container schema; `defineTreeDataStore` (from `fluid-framework` / `@fluidframework/tree`) builds one from a `SharedTree` view configuration, and `defineDataStore` builds one from any root shared object.
+- `createTinyliciousServiceClient` from `@fluidframework/tinylicious-driver`
+- `createAzureServiceClient` from `@fluidframework/azure-client`
+- `createOdspServiceClient` from `@fluidframework/odsp-client`
 
-Factories are provided for each service:
+Each factory accepts service-specific connection options and a minimum collaboration version.
+Azure Fluid Relay and ODSP also accept a telemetry logger and config provider.
+The ID returned by `attach` can be passed directly to `loadContainer`;
+for ODSP this is the service-assigned item ID.
+Tinylicious accepts a complete endpoint URL, with an optional explicit port override.
 
-- `createTinyliciousServiceClient` (`@fluidframework/tinylicious-driver`)
-- `createAzureServiceClient` (`@fluidframework/azure-client`)
-- `createOdspServiceClient` (`@fluidframework/odsp-client`)
-- `startEphemeralService` (`@fluidframework/local-driver`, in-memory, for tests)
+Two additional `@alpha` integrations support containers created through `ServiceClient`:
 
-Supporting integration is also exposed: `getPresenceFromContainer` (`@fluidframework/presence`), `getContainerAudience` (`@fluidframework/runtime-utils`), and `initializeFluidDevtools` (`@fluidframework/devtools`) for use with `ServiceClient`-created containers.
+- `getPresenceFromContainer` from `@fluidframework/presence` provides access to Presence.
+- `initializeFluidDevtools` from `@fluidframework/devtools` initializes Devtools and accepts the new `FluidDevtoolsProps` and `FluidContainerDevtoolsProps` types.
 
 ```typescript
 import { defineTreeDataStore } from "fluid-framework/alpha";
@@ -43,5 +44,3 @@ const view = attached.data; // the root TreeView
 
 const loaded = await service.loadContainer(attached.id, appKind);
 ```
-
-This API is exposed as `@alpha`: it makes no long-term commitments and is expected to be refined through in-repo use in tests and examples before any promotion.
