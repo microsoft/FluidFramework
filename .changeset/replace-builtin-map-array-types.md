@@ -7,7 +7,7 @@
 "fluid-framework": minor
 "__section": breaking
 ---
-Fluid container APIs remain compatible across TypeScript library versions
+Fluid container APIs use Fluid-owned container types
 
 Fluid container APIs now use Fluid's own sealed container and iterator interfaces instead of TypeScript's built-in `ReadonlyArray`, `ReadonlyMap`, `Map`, `Iterator`, and `IterableIterator` types.
 This insulates consumers from breaking changes in TypeScript's standard library that would otherwise propagate as unintended API breaks.
