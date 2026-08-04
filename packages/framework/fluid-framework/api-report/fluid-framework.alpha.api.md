@@ -705,6 +705,56 @@ export const ForestTypeOptimized: ForestType;
 // @beta
 export const ForestTypeReference: ForestType;
 
+// @alpha
+export namespace FormattedTextAsTree {
+    export function createSchema<const TUserScope extends string, const FormatSchema extends ImplicitAllowedTypes, const ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]>(inputSchemaFactory: SchemaFactoryBeta<TUserScope>, formatSchema: FormatSchema, extraAtoms: ExtraAtomsSchema, defaultFormatInsertable: InsertableTreeFieldFromImplicitField<FormatSchema>): FormattedTextSchema<TUserScope, FormatSchema, ExtraAtomsSchema>;
+    // @sealed
+    export interface FormattedAtom<TFormat, TText> {
+        readonly content: TText;
+        format: TFormat;
+    }
+    // @input
+    export interface FormattedAtomInsertable<TFormat, TContent> {
+        // (undocumented)
+        readonly content: TContent;
+        // (undocumented)
+        readonly format: TFormat;
+    }
+    // @sealed
+    export type FormattedTextSchema<TUserScope extends string, FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = Statics<ErasedNode<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>, FormatSchema> & ErasedSchemaSubclassable<Members<FormatSchema, ExtraAtomsSchema>, FormattedTextSchemaIdentifier<TUserScope>>;
+    const // @sealed
+    StringTextAtom: StringTextAtomStatics & TreeNodeSchema<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, TextAtom & TreeNode & WithType<"com.fluidframework.text.formatted.StringTextAtom", NodeKind, unknown>, never, false>;
+    export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<`com.fluidframework.text.formatted<${TUserScope}>`, "Text">;
+    // @sealed
+    export interface Members<FormatSchema extends ImplicitAllowedTypes, ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> extends TextAsTree.Members {
+        charactersWithFormatting(): readonly FormattedAtom<TreeNodeFromImplicitAllowedTypes<FormatSchema>, TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>[];
+        formatRange(startIndex: number | undefined, endIndex: number | undefined, format: Partial<TreeNodeFromImplicitAllowedTypes<FormatSchema>>): void;
+        getString(startIndex: number, endIndex?: number): string;
+        getUniformRun(startIndex: number, endIndex?: number): number;
+        // @override
+        insertAt(index: number, additionalCharacters: string | Iterable<TreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+        insertWithFormattingAt(index: number, additionalCharacters: Iterable<FormattedAtomInsertable<InsertableTreeNodeFromImplicitAllowedTypes<FormatSchema>, InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas<ExtraAtomsSchema>>>>): void;
+        onContentChanged(callback: (ops: readonly TextAsTree.TextOp[] | undefined) => void): () => void;
+        reformat(startIndex?: number | undefined, endIndex?: number | undefined, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): void;
+    }
+    // @sealed
+    export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
+        fromString(value: string, format?: InsertableTreeFieldFromImplicitField<FormatSchema>): TTree;
+    }
+    // @sealed
+    export type StringTextAtom = ErasedNode<TextAtom, "com.fluidframework.text.formatted.StringTextAtom">;
+    // @sealed
+    export interface StringTextAtomStatics {
+        fromCharacter(value: string): StringTextAtom;
+        fromString(value: string): StringTextAtom[];
+    }
+    export interface TextAtom {
+        readonly content: string;
+    }
+    // @sealed
+    export type TextAtomSchemas<ExtraAtomsSchema extends readonly LazyItem<TreeNodeSchema<string, NodeKind, TextAtom & TreeNode>>[]> = readonly [typeof StringTextAtom, ...ExtraAtomsSchema];
+}
+
 // @alpha @sealed
 export interface FormatValidator extends ErasedType<"FormatValidator"> {
 }
