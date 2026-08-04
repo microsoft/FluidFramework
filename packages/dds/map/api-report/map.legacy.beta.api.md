@@ -44,10 +44,6 @@ export interface IDirectory extends FluidMap<string, any>, IEventProvider<IDirec
     subdirectories(): FluidIterableIterator<[string, IDirectory]>;
 }
 
-// @beta @sealed @legacy
-export interface IDirectoryBeta extends Omit<IDirectory, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>, FluidMapLegacy<string, any> {
-}
-
 // @beta @deprecated @legacy
 export interface IDirectoryDataObject {
     ci?: ICreateInfo;
