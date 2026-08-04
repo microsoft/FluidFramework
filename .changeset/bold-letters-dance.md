@@ -4,7 +4,7 @@
 ---
 Promote FormattedTextAsTree APIs to alpha
 
-The `FormattedTextAsTree` namespace is now available from the `@fluidframework/tree/alpha` entrypoint.
+The [`FormattedTextAsTree`](https://fluidframework.com/docs/api/fluid-framework/formattedtextastree-namespace) namespace is now available from the `@fluidframework/tree/alpha` entrypoint.
 It provides a generic, collaborative rich-text domain built on SharedTree, parameterized by the formatting you want to associate with each unit of text and by any extra "atom" (embedded object) types you want to allow alongside plain characters.
 
 Use `FormattedTextAsTree.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
