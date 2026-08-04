@@ -512,6 +512,7 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1, formattingChanged: false },
 				{ type: "insert", text: "xy" },
+				{ type: "retain", count: 1, formattingChanged: false },
 			]);
 		});
 
@@ -527,7 +528,10 @@ describe("textDomainFormatted", () => {
 			});
 			text.insertAt(0, "X");
 			assert.equal(received.length, 1);
-			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+			assert.deepEqual(received[0], [
+				{ type: "insert", text: "X" },
+				{ type: "retain", count: 3, formattingChanged: false },
+			]);
 		});
 
 		it("fires for insert at end", () => {
@@ -563,6 +567,7 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1, formattingChanged: false },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2, formattingChanged: false },
 			]);
 		});
 
@@ -598,10 +603,12 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1, formattingChanged: false },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2, formattingChanged: false },
 			]);
 			assert.deepEqual(received[1], [
 				{ type: "retain", count: 1, formattingChanged: false },
 				{ type: "insert", text: "XY" },
+				{ type: "retain", count: 2, formattingChanged: false },
 			]);
 		});
 
@@ -624,10 +631,12 @@ describe("textDomainFormatted", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1, formattingChanged: false },
 				{ type: "retain", count: 1, formattingChanged: true },
+				{ type: "retain", count: 3, formattingChanged: false },
 			]);
 			assert.deepEqual(received[1], [
 				{ type: "retain", count: 2, formattingChanged: false },
 				{ type: "retain", count: 1, formattingChanged: true },
+				{ type: "retain", count: 2, formattingChanged: false },
 			]);
 		});
 

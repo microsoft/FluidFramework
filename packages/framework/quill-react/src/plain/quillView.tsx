@@ -112,13 +112,14 @@ const TextEditorView: FC<MainViewPropsInner> = ({ root, undoRedo, editLabel }) =
 		const handleTextChange = (_delta: unknown, _oldDelta: unknown, source: string): void => {
 			if (source !== "user") return;
 			runGuarded(isUpdatingRef, () => {
+				const text = quill.getText(0, quill.getLength() - 1);
 				const context = TreeAlpha.context(root);
 				if (context.isBranch()) {
-					context.runTransaction(() => syncTextToTree(root, quill.getText()), {
+					context.runTransaction(() => syncTextToTree(root, text), {
 						label: editLabelRef.current,
 					});
 				} else {
-					syncTextToTree(root, quill.getText());
+					syncTextToTree(root, text);
 				}
 			});
 		};
