@@ -28,13 +28,13 @@ const defaultFormat = {
  * A default parameterization of the generic {@link FormattedTextAsTree} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * @remarks
  * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedTextAsTree}.
- * @alpha
+ * @internal
  */
 export namespace FormattedTextAsTreeDefault {
 	/**
 	 * Portion of a string with formatting.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type FormattedAtom = FormattedTextAsTree.FormattedAtom<
 		CharacterFormat,
@@ -44,7 +44,7 @@ export namespace FormattedTextAsTreeDefault {
 	/**
 	 * Formatting options for characters.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export class CharacterFormat extends sf.object("CharacterFormat", {
 		bold: SchemaFactory.boolean,
@@ -58,7 +58,7 @@ export namespace FormattedTextAsTreeDefault {
 
 	/**
 	 * Tag with which a line in text can be formatted from HTML.
-	 * @alpha
+	 * @internal
 	 */
 	export const LineTag = enumFromStrings(sf.scopedFactory("lineTag"), [
 		"h1",
@@ -76,7 +76,7 @@ export namespace FormattedTextAsTreeDefault {
 	/**
 	 * {@inheritdoc FormattedTextAsTreeDefault.(LineTag:variable)}
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type LineTag = TreeNodeFromImplicitAllowedTypes<typeof LineTag.schema>;
 
@@ -90,7 +90,7 @@ export namespace FormattedTextAsTreeDefault {
 	 * which is applies to the line before the line break.
 	 * Any tagged line can be indented independently.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export class StringLineAtom extends sf.object("StringLineAtom", {
 		tag: LineTag.schema,
@@ -102,7 +102,7 @@ export namespace FormattedTextAsTreeDefault {
 	/**
 	 * Types of "atoms" that make up the text.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export const StringAtomContent = [
 		FormattedTextAsTree.StringTextAtom,
@@ -111,14 +111,14 @@ export namespace FormattedTextAsTreeDefault {
 	/**
 	 * {@inheritdoc FormattedTextAsTreeDefault.(StringAtomContent:variable)}
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
 
 	/**
 	 * Statics for text nodes.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type Statics<TTree = Tree> = FormattedTextAsTree.Statics<
 		TTree,
@@ -128,7 +128,7 @@ export namespace FormattedTextAsTreeDefault {
 	/**
 	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type FormattedAtomInsertable = FormattedTextAsTree.FormattedAtom<
 		InsertableTreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>,
@@ -140,7 +140,7 @@ export namespace FormattedTextAsTreeDefault {
 	 * @privateRemarks
 	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export type TextAtomSchemas = FormattedTextAsTree.TextAtomSchemas<[typeof StringLineAtom]>;
 
@@ -148,7 +148,7 @@ export namespace FormattedTextAsTreeDefault {
 	 * The schema produced using {@link FormattedTextAsTree.createSchema} with hard-coded assumptions
 	 * about what kind of embedded content and what kind of formatting is supported.
 	 * @sealed
-	 * @alpha
+	 * @internal
 	 */
 	export class Tree extends FormattedTextAsTree.createSchema(
 		sf,

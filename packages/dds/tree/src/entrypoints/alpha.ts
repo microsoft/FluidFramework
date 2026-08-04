@@ -198,7 +198,6 @@ export {
 	FormatValidatorNoOp, 
 	FormatVersion, 
 	FormattedTextAsTree, 
-	FormattedTextAsTreeDefault, 
 	HandleConverter, 
 	ICodecOptions, 
 	ITreeAlpha, 
