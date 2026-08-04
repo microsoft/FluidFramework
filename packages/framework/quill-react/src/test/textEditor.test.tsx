@@ -328,11 +328,11 @@ describe("textEditor", () => {
 						// Check that the editors have the same content: they should be kept in sync
 						assert.equal(remoteEditor.innerHTML, sourceEditor.innerHTML);
 
-						// Do a formatting operation which adds a line atom to the end of the string.
-						// This hits an edge case in the quill integration since quill requires such a trailing line end,
-						// so our integration replaces its extra one it had to add to support will with the real one added by this change.
+						// Do a formatting operation that adds a line atom to the end of the string.
+						// This hits an edge case in the Quill integration because Quill requires a trailing newline,
+						// so our integration replaces its synthetic newline with the real line atom added by this change.
 						source.formatLine(0, source.getLength(), "list", "bullet", "user");
-						// Check the the above format operation added the expected list item.
+						// Check that the above format operation added the expected list item.
 						assert.match(sourceEditor.innerHTML, /^<ol>/);
 
 						// Check that the editors have the same content, ensuring they didn't get out of sync.

@@ -299,7 +299,7 @@ export function applyQuillDeltaToTree(
 			if (op.retain !== undefined) {
 				// The docs for retain imply this is always a number, but the type definitions allow a record here.
 				// It is unknown why the type definitions allow a record as they have no doc comments.
-				// For now this assert seems to be passing, so we just assume its always a number.
+				// For now this assert seems to be passing, so we just assume it's always a number.
 				assert(
 					typeof op.retain === "number",
 					0xcdf /* Expected retain count to be a number */,
