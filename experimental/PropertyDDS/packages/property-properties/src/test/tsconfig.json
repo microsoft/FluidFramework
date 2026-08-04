@@ -2,6 +2,9 @@
 	"extends": "../../../../../../common/build/build-common/tsconfig.test.node16.json",
 	"include": ["./**/*"],
 	"compilerOptions": {
+		// PropertyDDS relies on legacy class field semantics (useDefineForClassFields: false),
+		// so pin the target below ES2022, where TypeScript would enable it by default.
+		"target": "ES2021",
 		"strict": false,
 		"allowJs": true,
 		"checkJs": true,
