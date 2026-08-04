@@ -33,9 +33,10 @@ export interface IDocumentManager {
 	): Promise<IDocumentStaticProperties | undefined>;
 
 	/**
-	 * Deletes the static cache for the specified document
+	 * Deletes the static cache for the specified tenant/document identity.
 	 *
+	 * @param tenantId - Tenant that owns the document
 	 * @param documentId - Document to delete from static cache
 	 */
-	purgeStaticCache(documentId: string): Promise<void>;
+	purgeStaticCache(tenantId: string, documentId: string): Promise<void>;
 }
