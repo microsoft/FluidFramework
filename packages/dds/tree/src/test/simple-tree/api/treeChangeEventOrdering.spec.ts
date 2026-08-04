@@ -156,17 +156,14 @@ describe("Tree change event ordering", () => {
 				root.ownProp = "world";
 			});
 
-			// At each level: nodeChanged fires before treeChanged.
-			for (const prefix of ["child", "parent"]) {
-				const ncIdx = log.indexOf(`${prefix}:nodeChanged`);
-				const tcIdx = log.indexOf(`${prefix}:treeChanged`);
-				if (ncIdx !== -1 && tcIdx !== -1) {
-					assert(
-						ncIdx < tcIdx,
-						`${prefix}: nodeChanged (index ${ncIdx}) should fire before treeChanged (index ${tcIdx})`,
-					);
-				}
-			}
+			// Bottom-up ordering: child events first, then parent events.
+			// Within each node: nodeChanged fires before treeChanged.
+			assert.deepEqual(log, [
+				"child:nodeChanged",
+				"child:treeChanged",
+				"parent:nodeChanged",
+				"parent:treeChanged",
+			]);
 		});
 
 		it("three-level deep hierarchy: events propagate bottom-up", () => {
