@@ -58,7 +58,10 @@ export function inboundVersionMarkUpdate(
 		carriedBatchId !== undefined
 	) {
 		return {
-			sequenced: { batchId: carriedBatchId, sequenceNumber: inboundResult.nextMessage.sequenceNumber },
+			sequenced: {
+				batchId: carriedBatchId,
+				sequenceNumber: inboundResult.nextMessage.sequenceNumber,
+			},
 			carriedBatchId: undefined,
 		};
 	}

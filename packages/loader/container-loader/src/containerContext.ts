@@ -15,6 +15,7 @@ import type {
 import type {
 	IBatchMessage,
 	IContainerContext,
+	IContainerContextInternal,
 	ILoader,
 	ILoaderOptions,
 	IDeltaManager,
@@ -58,7 +59,6 @@ export interface IContainerContextConfig
 				| "supportedFeatures"
 				| "id"
 				| "snapshotWithContents"
-				| "fetchOps"
 			>
 		>
 	> {
@@ -73,8 +73,9 @@ export interface IContainerContextConfig
 	readonly taggedLogger: TelemetryLoggerExt;
 	// This "overrides" IContainerContext.snapshotWithContents to be required but allow `undefined`.
 	readonly snapshotWithContents: IContainerContext["snapshotWithContents"] | undefined;
-	// This "overrides" IContainerContext.fetchOps to keep it optional (hosts may not provide op reading).
-	readonly fetchOps: IContainerContext["fetchOps"];
+	// fetchOps is an internal-only capability (IContainerContextInternal), not part of the public
+	// IContainerContext contract. Optional: hosts may not provide op reading.
+	readonly fetchOps: IContainerContextInternal["fetchOps"];
 }
 
 /**
@@ -82,8 +83,9 @@ export interface IContainerContextConfig
  */
 export class ContainerContext
 	implements
-		Required<Omit<IContainerContext, "snapshotWithContents" | "fetchOps">>,
-		Pick<IContainerContext, "snapshotWithContents" | "fetchOps">,
+		Required<Omit<IContainerContext, "snapshotWithContents">>,
+		Pick<IContainerContext, "snapshotWithContents">,
+		Pick<IContainerContextInternal, "fetchOps">,
 		IProvideLayerCompatDetails
 {
 	/**
@@ -133,7 +135,7 @@ export class ContainerContext
 		content: unknown | ISignalEnvelope,
 		targetClientId?: string,
 	) => void;
-	public readonly fetchOps: IContainerContext["fetchOps"];
+	public readonly fetchOps: IContainerContextInternal["fetchOps"];
 	public readonly disposeFn: (error?: ICriticalContainerError) => void;
 	public readonly closeFn: (error?: ICriticalContainerError) => void;
 	public readonly updateDirtyContainerState: (dirty: boolean) => void;
