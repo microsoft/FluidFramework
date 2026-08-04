@@ -3,12 +3,8 @@
  * Licensed under the MIT License.
  */
 
-import { createAzureServiceClient } from "@fluidframework/azure-client/alpha";
 import { toPropTreeNode } from "@fluidframework/react/alpha";
-import {
-	InsecureTinyliciousTokenProvider,
-	createTinyliciousServiceClient,
-} from "@fluidframework/tinylicious-driver/alpha";
+import { createTinyliciousServiceClient } from "@fluidframework/tinylicious-driver/alpha";
 import { startEphemeralService } from "@fluidframework/local-driver/alpha";
 import type {
 	DataStoreKind,
@@ -34,16 +30,6 @@ const serviceOptions = {
  */
 function getExampleServiceClient(options: ServiceOptions): ServiceClient {
 	switch (process.env.FLUID_CLIENT) {
-		case "azure": {
-			return createAzureServiceClient({
-				...options,
-				connection: {
-					type: "local",
-					endpoint: "http://localhost:7071",
-					tokenProvider: new InsecureTinyliciousTokenProvider(),
-				},
-			});
-		}
 		case "tinylicious": {
 			return createTinyliciousServiceClient(options);
 		}

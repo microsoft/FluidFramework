@@ -2659,9 +2659,6 @@ importers:
 
   examples/data-objects/inventory-app:
     dependencies:
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver

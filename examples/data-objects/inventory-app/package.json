@@ -29,7 +29,6 @@
 		"lint:fix": "fluid-build . --task eslint:fix --task format",
 		"prepack": "npm run webpack",
 		"start": "npm run start:tinylicious",
-		"start:azure": "start-server-and-test \"npx @fluidframework/azure-local-service\" 7071 \"webpack serve --config webpack.config.cjs --env FLUID_CLIENT=azure\"",
 		"start:tinylicious": "start-server-and-test tinylicious 7070 \"webpack serve --config webpack.config.cjs\"",
 		"test": "npm run test:mocha",
 		"test:mocha": "npm run test:mocha:esm",
@@ -38,7 +37,6 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluidframework/azure-client": "workspace:~",
 		"@fluidframework/local-driver": "workspace:~",
 		"@fluidframework/react": "workspace:~",
 		"@fluidframework/tinylicious-driver": "workspace:~",
