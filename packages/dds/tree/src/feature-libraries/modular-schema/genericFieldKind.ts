@@ -59,7 +59,7 @@ export const genericChangeHandler: FieldChangeHandler<GenericChangeset> = {
 			}
 			const childDelta = deltaFromChild(nodeChange);
 			if (childDelta.size > 0) {
-				markList.push({ count: 1, fields: deltaFromChild(nodeChange) });
+				markList.push({ count: 1, fields: childDelta });
 			}
 			nodeIndex += 1;
 		}
