@@ -208,14 +208,14 @@ export function DevtoolsView(props: DevtoolsViewProps): ReactElement {
 							{modalVisible && (
 								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
-							<_DevtoolsView supportedFeatures={{}} />
+							<DevtoolsViewInternal supportedFeatures={{}} />
 						</>
 					) : (
 						<>
 							{modalVisible && (
 								<TelemetryConsentModal onClose={(): void => setModalVisible(false)} />
 							)}
-							<_DevtoolsView supportedFeatures={supportedFeatures} />
+							<DevtoolsViewInternal supportedFeatures={supportedFeatures} />
 						</>
 					)}
 				</FluentProvider>
@@ -224,7 +224,7 @@ export function DevtoolsView(props: DevtoolsViewProps): ReactElement {
 	);
 }
 
-interface _DevtoolsViewProps {
+interface DevtoolsViewInternalProps {
 	/**
 	 * Set of features supported by the Devtools.
 	 */
@@ -234,7 +234,7 @@ interface _DevtoolsViewProps {
 /**
  * Internal {@link DevtoolsView}, displayed once the supported feature set has been acquired from the webpage.
  */
-function _DevtoolsView(props: _DevtoolsViewProps): ReactElement {
+function DevtoolsViewInternal(props: DevtoolsViewInternalProps): ReactElement {
 	const { supportedFeatures } = props;
 
 	const [containers, setContainers] = useState<ContainerKey[] | undefined>();

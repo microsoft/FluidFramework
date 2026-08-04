@@ -166,7 +166,21 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes>
 	extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>,
 		TreeNode,
-		Pick<TreeMapNode<T>, "set" | "delete"> {}
+		Pick<TreeMapNode<T>, "set" | "delete"> {
+	/**
+	 * Removes all elements from the map.
+	 * @remarks
+	 * The merge semantics of this operation are loosely specified. Either of the following may occur:
+	 *
+	 * - `clear` may remove all elements that were in the map when the edit was authored,
+	 * even if some of those elements have since been moved elsewhere in the tree
+	 * (in which case they are removed from their new location).
+	 *
+	 * - `clear` may remove all elements that are in the map when the edit is sequenced,
+	 * even if some of those elements were not yet in the map when the edit was authored.
+	 */
+	clear(): void;
+}
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
 // This is not ideal, but no alternatives are possible.
@@ -265,7 +279,15 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			callbackFn.call(thisArg, node, field.key, this);
 		}
 	}
-	// TODO: add `clear` once we have established merge semantics for it.
+	public clear(): void {
+		const node = this.innerNode;
+		const transaction = node.isHydrated() ? node.context.checkout.transaction : undefined;
+		transaction?.start();
+		for (const key of [...node.keys()]) {
+			this.delete(key);
+		}
+		transaction?.commit();
+	}
 }
 
 /**

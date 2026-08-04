@@ -9,10 +9,10 @@
  * @fileoverview
  * In this file, we will test the map property object described in /src/properties/mapProperty.js
  */
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
+import { ChangeSet } from "@fluid-experimental/property-changeset";
 
-const { PropertyFactory } = require("../..");
-const { BaseProperty } = require("../..");
+import { PropertyFactory } from "../../index.js";
+import { BaseProperty } from "../../index.js";
 
 describe("ValueMapProperty", function () {
 	var myNode, Uint32Map;

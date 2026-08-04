@@ -348,10 +348,7 @@ export function applyQuillDeltaToTree(
 					root.insertWithFormattingAt(cpPos, [createLineAtom(lineTag, indent)]);
 				} else {
 					// Insert: add new text with formatting at current position
-					root.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat(
-						quillAttributesToFormat(op.attributes),
-					);
-					root.insertAt(cpPos, op.insert);
+					root.insertAt(cpPos, op.insert, quillAttributesToFormat(op.attributes));
 				}
 				// Update content to reflect insertion
 				content = content.slice(0, utf16Pos) + op.insert + content.slice(utf16Pos);

@@ -51,6 +51,7 @@ import {
 import { FormatValidatorBasic } from "../../external-utilities/index.js";
 import {
 	DefaultChangeFamily,
+	type DefaultChangeProcessingContext,
 	type DefaultChangeset,
 	type DefaultEditBuilder,
 	type ModularChangeFormatVersion,
@@ -98,7 +99,7 @@ export function createTree<TIndexes extends readonly Summarizable[]>(options: {
 	indexes: TIndexes;
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>;
 	codecOptions?: CodecWriteOptions;
-}): SharedTreeCore<DefaultEditBuilder, DefaultChangeset> {
+}): SharedTreeCore<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext> {
 	const { indexes, enrichmentConfig, codecOptions } = options;
 	// This could use TestSharedTreeCore then return its kernel instead of using these mocks, but that would depend on far more code than needed (including other mocks).
 
@@ -210,7 +211,10 @@ function createTreeInner(
 	codecOptions: CodecWriteOptions = testCodecOptions,
 	enrichmentConfig?: EnrichmentConfig<DefaultChangeset>,
 	editor?: () => DefaultEditBuilder,
-): [SharedTreeCore<DefaultEditBuilder, DefaultChangeset>, DefaultChangeFamily] {
+): [
+	SharedTreeCore<DefaultEditBuilder, DefaultChangeset, DefaultChangeProcessingContext>,
+	DefaultChangeFamily,
+] {
 	const changeFamily = makeTestDefaultChangeFamily({ idCompressor, chunkCompressionStrategy });
 	return [
 		new SharedTreeCore(
@@ -261,7 +265,11 @@ class NoOpChangeEnricher<TChange> implements ChangeEnricher<TChange> {
  * Once the above is done for all users, this class should be removed.
  */
 export class TestSharedTreeCore extends SharedObject {
-	public readonly kernel: SharedTreeCore<DefaultEditBuilder, DefaultChangeset>;
+	public readonly kernel: SharedTreeCore<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeProcessingContext
+	>;
 
 	private static readonly attributes: IChannelAttributes = {
 		type: "TestSharedTreeCore",
@@ -269,7 +277,11 @@ export class TestSharedTreeCore extends SharedObject {
 		packageVersion: "0.0.0",
 	};
 
-	public readonly transaction: SquashingTransactionStack<DefaultEditBuilder, DefaultChangeset>;
+	public readonly transaction: SquashingTransactionStack<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeProcessingContext
+	>;
 	private readonly changeFamily: DefaultChangeFamily;
 
 	public constructor(
@@ -326,17 +338,33 @@ export class TestSharedTreeCore extends SharedObject {
 	}
 
 	protected override applyStashedOp(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["applyStashedOp"]>
+		...args: Parameters<
+			SharedTreeCore<
+				DefaultEditBuilder,
+				DefaultChangeset,
+				DefaultChangeProcessingContext
+			>["applyStashedOp"]
+		>
 	): void {
 		this.kernel.applyStashedOp(...args);
 	}
 
-	public getLocalBranch(): SharedTreeBranch<DefaultEditBuilder, DefaultChangeset> {
+	public getLocalBranch(): SharedTreeBranch<
+		DefaultEditBuilder,
+		DefaultChangeset,
+		DefaultChangeProcessingContext
+	> {
 		return this.kernel.getLocalBranch();
 	}
 
 	protected override reSubmitCore(
-		...args: Parameters<SharedTreeCore<DefaultEditBuilder, DefaultChangeset>["reSubmitCore"]>
+		...args: Parameters<
+			SharedTreeCore<
+				DefaultEditBuilder,
+				DefaultChangeset,
+				DefaultChangeProcessingContext
+			>["reSubmitCore"]
+		>
 	): void {
 		this.kernel.reSubmitCore(...args);
 	}

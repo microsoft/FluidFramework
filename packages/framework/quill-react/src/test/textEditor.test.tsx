@@ -418,14 +418,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("strong"), "Initially: no <strong>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "BOLD", {
 								bold: true,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "BOLD");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("strong");
@@ -435,16 +434,14 @@ describe("textEditor", () => {
 
 						it("deletes bold text and removes <strong> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "BOLD", {
 								bold: true,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "BOLD");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -482,14 +479,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("em"), "Initially: no <em>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "ITAL", {
 								bold: false,
 								italic: true,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "ITAL");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("em");
@@ -499,16 +495,14 @@ describe("textEditor", () => {
 
 						it("deletes italic text and removes <em> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "ITAL", {
 								bold: false,
 								italic: true,
 								underline: false,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "ITAL");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -543,14 +537,13 @@ describe("textEditor", () => {
 
 							assert.ok(!rendered.container.querySelector("u"), "Initially: no <u>");
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "UNDER", {
 								bold: false,
 								italic: false,
 								underline: true,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(2, "UNDER");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector("u");
@@ -560,16 +553,14 @@ describe("textEditor", () => {
 
 						it("deletes underlined text and removes <u> tag", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "UNDER", {
 								bold: false,
 								italic: false,
 								underline: true,
 								size: 12,
 								font: "Arial",
 							});
-							text.insertAt(0, "UNDER");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(5, "plain");
+							text.insertAt(5, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -607,14 +598,13 @@ describe("textEditor", () => {
 								"Initially: no .ql-size-huge",
 							);
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "HUGE", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 24,
 								font: "Arial",
 							});
-							text.insertAt(2, "HUGE");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector(".ql-size-huge");
@@ -624,16 +614,14 @@ describe("textEditor", () => {
 
 						it("deletes huge size text and removes .ql-size-huge", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "HUGE", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 24,
 								font: "Arial",
 							});
-							text.insertAt(0, "HUGE");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });
@@ -677,14 +665,13 @@ describe("textEditor", () => {
 								"Initially: no .ql-font-monospace",
 							);
 
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(2, "MONO", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "monospace",
 							});
-							text.insertAt(2, "MONO");
 
 							rendered.rerender(content);
 							const el = rendered.container.querySelector(".ql-font-monospace");
@@ -694,16 +681,14 @@ describe("textEditor", () => {
 
 						it("deletes monospace font text and removes .ql-font-monospace", () => {
 							const { tree: text } = createFormattedTreeView();
-							text.defaultFormat = new FormattedTextAsTreeDefault.CharacterFormat({
+							text.insertAt(0, "MONO", {
 								bold: false,
 								italic: false,
 								underline: false,
 								size: 12,
 								font: "monospace",
 							});
-							text.insertAt(0, "MONO");
-							text.defaultFormat = createPlainFormat();
-							text.insertAt(4, "plain");
+							text.insertAt(4, "plain", createPlainFormat());
 
 							const content = <FormattedMainView root={toPropTreeNode(text)} />;
 							const rendered = render(content, { reactStrictMode });

@@ -7,10 +7,12 @@
  * @fileoverview Declaration of the PropertyTemplateWrapper module.
  * PropertyTemplateWrapper is used to wrap a property template and perform internal optimizations.
  */
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
+import _ from "lodash";
 
-const { ContainerProperty } = require("./properties/containerProperty");
+// eslint-disable-next-line unused-imports/no-unused-imports -- preserving imports as-is during migration to module format
+import { ContainerProperty } from "./properties/containerProperty.js";
 
 const reservedTypesWithoutTemplates = {
 	BaseProperty: true,

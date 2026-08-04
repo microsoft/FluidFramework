@@ -35,8 +35,6 @@ import {
 	chunkFromJsonableTrees,
 	failCodecFamily,
 	mintRevisionTag,
-	testIdCompressor,
-	testRevisionTagCodec,
 } from "../../utils.js";
 import { initializeForest } from "../initializeForest.js";
 
@@ -120,20 +118,11 @@ function initializeEditableForest(data?: JsonableTree): {
 } {
 	const forest = buildTestForest({ additionalAsserts: true });
 	if (data !== undefined) {
-		initializeForest(
-			forest,
-			cursorForJsonableTreeField([data]),
-			testRevisionTagCodec,
-			testIdCompressor,
-		);
+		initializeForest(forest, cursorForJsonableTreeField([data]));
 	}
 	const changes: TaggedChange<DefaultChangeset>[] = [];
 	const deltas: DeltaRoot[] = [];
-	const detachedFieldIndex = makeDetachedFieldIndex(
-		undefined,
-		testRevisionTagCodec,
-		testIdCompressor,
-	);
+	const detachedFieldIndex = makeDetachedFieldIndex();
 	const builder = new DefaultEditBuilder(
 		rebaser,
 		mintRevisionTag,

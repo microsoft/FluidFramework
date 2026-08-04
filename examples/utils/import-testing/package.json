@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-example/import-testing",
-	"version": "2.114.0",
+	"version": "2.115.0",
 	"private": true,
 	"description": "import-testing",
 	"homepage": "https://fluidframework.com",
@@ -80,15 +80,15 @@
 	"fluidBuild": {
 		"tasks": {
 			"build:esnext:crossPackage:bundler": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			],
 			"build:esnext:crossPackage:node16": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			],
 			"build:esnext:main": [
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"^build:esnext"
 			],
 			"build:test:cjs": [
@@ -101,11 +101,11 @@
 				"build:esnext:main"
 			],
 			"tsc:crossPackage:node16": [
-				"^api-extractor:commonjs",
+				"^build:entrypoints:cjs",
 				"^tsc"
 			],
 			"tsc:main": [
-				"^api-extractor:commonjs",
+				"^build:entrypoints:cjs",
 				"^tsc"
 			]
 		}

@@ -38,6 +38,8 @@ trigger:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-publish-docker-service-steps.yml
@@ -56,6 +58,8 @@ pr:
     - server/gitssh
     - tools/pipelines/server-gitssh.yml
     - tools/pipelines/templates/build-docker-service.yml
+    - tools/pipelines/templates/include-add-docker-image-digest.yml
+    - tools/pipelines/templates/include-generate-publish-metadata.yml
     - tools/pipelines/templates/include-vars.yml
     - tools/pipelines/templates/include-install-pnpm.yml
     - tools/pipelines/templates/include-use-node-version.yml
@@ -83,7 +87,10 @@ extends:
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/gitssh
     containerName: fluidframework/routerlicious/gitssh
     setVersion: false
+    emitDockerImageDigest: true
+    pack: true
     # No package.json; disable package-manager setup.
     installPackages: false
     enableDockerImagePull: false
     tagName: gitssh
+    publishAsPartOfBuild: true

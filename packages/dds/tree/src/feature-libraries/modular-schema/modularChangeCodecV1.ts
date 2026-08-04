@@ -16,6 +16,7 @@ import {
 } from "../../codec/index.js";
 import type {
 	ChangeEncodingContext,
+	ChangeDecodingContext,
 	ChangesetLocalId,
 	EncodedRevisionTag,
 	FieldKey,
@@ -75,7 +76,8 @@ type ModularChangeCodec = IJsonCodec<
 	ModularChangeset,
 	EncodedModularChangesetV1,
 	EncodedModularChangesetV1,
-	ChangeEncodingContext
+	ChangeEncodingContext,
+	ChangeDecodingContext
 >;
 
 type FieldCodec = IJsonCodec<
@@ -183,7 +185,7 @@ export function decodeFieldChangesFromJson(
 	encodedChange: EncodedFieldChangeMap,
 	parentId: NodeId | undefined,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -253,7 +255,7 @@ export function decodeNodeChangesetFromJson(
 	encodedChange: EncodedNodeChangeset,
 	id: NodeId,
 	decoded: ModularChangeset,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	idAllocator: IdAllocator,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: FieldChangesetCodecs,
@@ -338,7 +340,7 @@ export function encodeDetachedNodes(
 
 export function decodeDetachedNodes(
 	encoded: EncodedBuilds | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -431,7 +433,7 @@ export function encodeRevisionInfos(
 
 export function decodeRevisionInfos(
 	revisions: readonly EncodedRevisionInfo[] | undefined,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	revisionTagCodec: JsonCodecPart<
 		RevisionTag,
 		typeof RevisionTagSchema,
@@ -510,7 +512,7 @@ export function encodeChange(
 
 export function decodeChange(
 	encodedChange: EncodedModularChangesetV1,
-	context: ChangeEncodingContext,
+	context: ChangeDecodingContext,
 	fieldKinds: FieldKindConfiguration,
 	fieldChangesetCodecs: Map<
 		FieldKindIdentifier,
