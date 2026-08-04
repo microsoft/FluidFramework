@@ -96,6 +96,11 @@ function filterMark(
 		}
 		case "Remove":
 		case "MoveOut": {
+			if (mark.cellId !== undefined && mark.type === "Remove") {
+				// This mark represents a root rename, but does not truly detach any nodes.
+				return preserveOtherEdits ? mark : omitMarkEffect(mark);
+			}
+
 			const detachId = getDetachedNodeId(mark);
 			const endpoint = mark.type === "MoveOut" ? mark.finalEndpoint : undefined;
 			const result = filterDetach(detachId, mark.count, endpoint);
