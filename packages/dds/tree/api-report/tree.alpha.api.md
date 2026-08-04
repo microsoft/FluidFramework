@@ -1009,6 +1009,42 @@ export type Off = Off_2;
 // @alpha
 export function persistedToSimpleSchema(persisted: JsonCompatible, options: ICodecOptions): SimpleTreeSchema;
 
+// @alpha
+export namespace PlainText {
+    // @sealed
+    export interface Members {
+        characterCount(): number;
+        characters(): Iterable<string>;
+        charactersCopy(): string[];
+        fullString(): string;
+        insertAt(index: number, additionalCharacters: string): void;
+        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
+        removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
+    }
+    export interface Statics {
+        fromString(value: string): Tree;
+    }
+    // @sealed
+    export interface TextInsertOp {
+        readonly text: string;
+        readonly type: "insert";
+    }
+    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
+    // @sealed
+    export interface TextRemoveOp {
+        readonly count: number;
+        readonly type: "remove";
+    }
+    // @sealed
+    export interface TextRetainOp {
+        readonly count: number;
+        readonly formattingChanged?: boolean;
+        readonly type: "retain";
+    }
+    const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
+    export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
+}
+
 // @beta @system
 export type PopUnion<Union, AsOverloadedFunction = UnionToIntersection<Union extends unknown ? (f: Union) => void : never>> = AsOverloadedFunction extends (a: infer First) => void ? First : never;
 
@@ -1661,42 +1697,6 @@ export namespace TableSchema {
         readonly columns?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TColumn>> | undefined;
         readonly rows?: Iterable<InsertableTreeNodeFromImplicitAllowedTypes<TRow>> | undefined;
     }
-}
-
-// @alpha
-export namespace TextAsTree {
-    // @sealed
-    export interface Members {
-        characterCount(): number;
-        characters(): Iterable<string>;
-        charactersCopy(): string[];
-        fullString(): string;
-        insertAt(index: number, additionalCharacters: string): void;
-        onCharactersChanged(callback: (ops: readonly TextOp[] | undefined) => void): () => void;
-        removeRange(startIndex: number | undefined, endIndex: number | undefined): void;
-    }
-    export interface Statics {
-        fromString(value: string): Tree;
-    }
-    // @sealed
-    export interface TextInsertOp {
-        readonly text: string;
-        readonly type: "insert";
-    }
-    export type TextOp = TextRetainOp | TextInsertOp | TextRemoveOp;
-    // @sealed
-    export interface TextRemoveOp {
-        readonly count: number;
-        readonly type: "remove";
-    }
-    // @sealed
-    export interface TextRetainOp {
-        readonly count: number;
-        readonly formattingChanged?: boolean;
-        readonly type: "retain";
-    }
-    const Tree: Statics & TreeNodeSchema<"com.fluidframework.text.Text", NodeKind, Members & TreeNode & WithType<"com.fluidframework.text.Text", NodeKind, unknown>, never, false>;
-    export type Tree = Members & TreeNode & WithType<"com.fluidframework.text.Text">;
 }
 
 // @alpha

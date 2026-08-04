@@ -5,7 +5,7 @@
 
 export { QuillMainView, type QuillMainViewProps } from "./plain/index.js";
 export {
-	FormattedTextAsTree,
+	FormattedText,
 	FormattedMainView,
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,

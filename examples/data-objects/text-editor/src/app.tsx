@@ -45,7 +45,7 @@ import {
 	type TreeViewAlpha,
 } from "@fluidframework/tree/alpha";
 // eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/internal";
+import { FormattedTextDefault, PlainText } from "@fluidframework/tree/internal";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
@@ -78,8 +78,8 @@ const sf = new SchemaFactoryAlpha("com.fluidframework.example.text-editor");
 export class TextEditorRoot extends sf.objectAlpha("TextEditorRoot", {
 	// Opt both the plain and formatted text into incremental summarization by marking the
 	// fields above their text nodes with incrementalSummaryHint.
-	plainText: sf.types([TextAsTree.Tree], { custom: { [incrementalSummaryHint]: true } }),
-	formattedText: sf.types([FormattedTextAsTreeDefault.Tree], {
+	plainText: sf.types([PlainText.Tree], { custom: { [incrementalSummaryHint]: true } }),
+	formattedText: sf.types([FormattedTextDefault.Tree], {
 		custom: { [incrementalSummaryHint]: true },
 	}),
 }) {}
@@ -183,8 +183,8 @@ const devtoolsContainerProps = (user: UserView): ContainerDevtoolsProps => ({
  */
 export function createInitialRoot(text = ""): TextEditorRoot {
 	return new TextEditorRoot({
-		plainText: TextAsTree.Tree.fromString(text),
-		formattedText: FormattedTextAsTreeDefault.Tree.fromString(text),
+		plainText: PlainText.Tree.fromString(text),
+		formattedText: FormattedTextDefault.Tree.fromString(text),
 	});
 }
 

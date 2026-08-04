@@ -14,7 +14,7 @@ import {
 import {
 	expensiveInternalValidationAssert,
 	setEnableExpensiveDebugAsserts,
-	TextAsTree,
+	PlainText,
 	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 } from "../../text/textDomain.js";
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
@@ -32,20 +32,20 @@ describe("textDomain", () => {
 	});
 
 	it("compatibility", () => {
-		const currentViewSchema = new TreeViewConfiguration({ schema: TextAsTree.Tree });
+		const currentViewSchema = new TreeViewConfiguration({ schema: PlainText.Tree });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "text");
 	});
 
 	it("validate node type", () => {
 		allowUnused<
-			requireTrue<areSafelyAssignable<NodeFromSchema<typeof TextAsTree.Tree>, TextAsTree.Tree>>
+			requireTrue<areSafelyAssignable<NodeFromSchema<typeof PlainText.Tree>, PlainText.Tree>>
 		>();
 	});
 
 	for (const expensiveAsserts of [false, true]) {
 		it(`@Smoke basic use with${expensiveAsserts ? "" : "out"} expensive asserts`, () => {
 			setEnableExpensiveDebugAsserts(expensiveAsserts);
-			const text = TextAsTree.Tree.fromString("hello");
+			const text = PlainText.Tree.fromString("hello");
 			assert.equal(text.fullString(), "hello");
 			assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
 			text.insertAt(5, " world");
@@ -72,7 +72,7 @@ describe("textDomain", () => {
 		// Text has debug asserts which can add observations, so ensure tracking works with and without production build emulation.
 		suitesWithAndWithoutProduction((emulateProduction) => {
 			it("content observation", () => {
-				const text = TextAsTree.Tree.fromString("hello");
+				const text = PlainText.Tree.fromString("hello");
 				if (hydrated) {
 					hydrateNode(text);
 				}
@@ -107,11 +107,11 @@ describe("textDomain", () => {
 
 	describeHydration("onCharactersChanged", (_init, hydrated) => {
 		it("fires with insert ops when characters are added", () => {
-			const text = TextAsTree.Tree.fromString("ab");
+			const text = PlainText.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -126,11 +126,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires with remove ops when characters are deleted", () => {
-			const text = TextAsTree.Tree.fromString("abcde");
+			const text = PlainText.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -145,11 +145,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires with insert and remove ops for a replace", () => {
-			const text = TextAsTree.Tree.fromString("abcde");
+			const text = PlainText.Tree.fromString("abcde");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -171,11 +171,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires for insert at start", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -189,11 +189,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires for insert at end", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -207,11 +207,11 @@ describe("textDomain", () => {
 		});
 
 		it("fires for remove all", () => {
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			if (hydrated) {
 				hydrateNode(text);
 			}
-			const received: (readonly TextAsTree.TextOp[])[] = [];
+			const received: (readonly PlainText.TextOp[])[] = [];
 			text.onCharactersChanged((ops) => {
 				assert(ops !== undefined, "expected delta ops, got undefined");
 				received.push(ops);
@@ -226,7 +226,7 @@ describe("textDomain", () => {
 		// the unhydrated event path), so we only assert the hydrated behavior here.
 		it("does not fire for an empty insert (hydrated)", () => {
 			if (!hydrated) return;
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onCharactersChanged(() => {
@@ -238,7 +238,7 @@ describe("textDomain", () => {
 
 		it("does not fire for an empty remove (hydrated)", () => {
 			if (!hydrated) return;
-			const text = TextAsTree.Tree.fromString("abc");
+			const text = PlainText.Tree.fromString("abc");
 			hydrateNode(text);
 			let callCount = 0;
 			text.onCharactersChanged(() => {
@@ -249,7 +249,7 @@ describe("textDomain", () => {
 		});
 
 		it("cleanup function unsubscribes the callback", () => {
-			const text = TextAsTree.Tree.fromString("ab");
+			const text = PlainText.Tree.fromString("ab");
 			if (hydrated) {
 				hydrateNode(text);
 			}
