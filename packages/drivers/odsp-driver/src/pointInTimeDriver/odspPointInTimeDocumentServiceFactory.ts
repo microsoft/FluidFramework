@@ -11,13 +11,18 @@ import type {
 } from "@fluidframework/driver-definitions/internal";
 import type {
 	HostStoragePolicy,
+	IOdspResolvedUrl,
 	IOdspUrlParts,
 	OdspResourceTokenFetchOptions,
 	TokenFetcher,
 } from "@fluidframework/odsp-driver-definitions/internal";
-import { UsageError, createChildLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	UsageError,
+	createChildLogger,
+	type TelemetryLoggerExt,
+} from "@fluidframework/telemetry-utils/internal";
 
-import { createOdspCacheAndTracker } from "../epochTracker.js";
+import { createOdspCacheAndTracker, type EpochTracker } from "../epochTracker.js";
 import { NonPersistentCache } from "../odspCache.js";
 import { OdspDocumentServiceFactoryCore } from "../odspDocumentServiceFactoryCore.js";
 import { OdspDriverUrlResolver } from "../odspDriverUrlResolver.js";
@@ -73,10 +78,36 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 		logger?: ITelemetryBaseLogger,
 		clientIsSummarizer?: boolean,
 	): Promise<IDocumentService> {
-		const versionManager = await this.createVersionManager(
-			resolvedUrl,
-			logger,
+		const odspLogger = createOdspLogger(logger);
+		const extLogger = createChildLogger({ logger: odspLogger });
+		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+
+		// Build ONE cache-and-tracker and thread its EpochTracker through every read this method
+		// makes: the version-history reads that pick the base, the recoverable base snapshot, and the
+		// live op stream. This shared tracker IS the lineage guard.
+		//
+		// ODSP stamps each response with the file's epoch; an EpochTracker instance pins itself to the
+		// first epoch it sees and throws on any later divergence (see setEpoch / checkForEpochError in
+		// epochTracker.ts).
+		//
+		// A fresh NonPersistentCache keeps this read-only historical load isolated from the factory's
+		// shared cache, so a base file version's snapshot can never leak into a normal live load.
+		const cacheAndTracker = createOdspCacheAndTracker(
+			this.persistedCache,
+			new NonPersistentCache(),
+			{
+				resolvedUrl: odspResolvedUrl,
+				docId: odspResolvedUrl.hashedDocumentId,
+				fileVersion: odspResolvedUrl.fileVersion,
+			},
+			extLogger,
 			clientIsSummarizer,
+		);
+
+		const versionManager = this.createVersionManager(
+			odspResolvedUrl,
+			extLogger,
+			cacheAndTracker.epochTracker,
 		);
 		const baseResult = await versionManager.findBaseForSeq(targetSequenceNumber);
 		if (baseResult.kind === "noBaseVersion") {
@@ -93,14 +124,18 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 			resolvedUrl,
 			baseResult.base.versionId,
 		);
-		const recoverableDocumentService = await this.createDocumentService(
+		// Both services are created via createDocumentServiceCore with the shared cacheAndTracker, so
+		// their reads validate against the same epoch - see the lineage-guard note above.
+		const recoverableDocumentService = await this.createDocumentServiceCore(
 			recoverableResolvedUrl,
-			logger,
+			odspLogger,
+			cacheAndTracker,
 			clientIsSummarizer,
 		);
-		const liveDocumentService = await this.createDocumentService(
+		const liveDocumentService = await this.createDocumentServiceCore(
 			resolvedUrl,
-			logger,
+			odspLogger,
+			cacheAndTracker,
 			clientIsSummarizer,
 		);
 		return new OdspPointInTimeDocumentService(
@@ -116,49 +151,32 @@ export class OdspPointInTimeDocumentServiceFactory extends OdspDocumentServiceFa
 	 * versions and resolves the closest version at or before a target sequence number.
 	 *
 	 * @remarks
-	 * This wires up the plumbing the version manager needs to talk to ODSP: it resolves the URL to
-	 * its ODSP parts (site/drive/item), creates a scoped child logger, an epoch tracker (from a fresh
-	 * NonPersistentCache, since only the tracker is needed for consistency checks), and an
-	 * instrumented storage-token/auth-header fetcher. The resulting manager is used by
-	 * {@link OdspPointInTimeDocumentServiceFactory.createPointInTimeDocumentService} to pick the base
-	 * snapshot for point-in-time loading.
+	 * The caller passes in the shared {@link EpochTracker} so the version-history reads validate
+	 * against the same epoch as the recoverable and live document services - this is the lineage
+	 * guard described in {@link OdspPointInTimeDocumentServiceFactory.createPointInTimeDocumentService}.
+	 * The manager itself only needs the URL parts and an instrumented storage-token/auth-header
+	 * fetcher wired to that tracker.
 	 */
-	private async createVersionManager(
-		resolvedUrl: IResolvedUrl,
-		logger?: ITelemetryBaseLogger,
-		clientIsSummarizer?: boolean,
-	): Promise<IOdspVersionManager> {
-		const odspLogger = createOdspLogger(logger);
-		const extLogger = createChildLogger({ logger: odspLogger });
-		const odspResolvedUrl = getOdspResolvedUrl(resolvedUrl);
+	private createVersionManager(
+		odspResolvedUrl: IOdspResolvedUrl,
+		logger: TelemetryLoggerExt,
+		epochTracker: EpochTracker,
+	): IOdspVersionManager {
 		const urlParts: IOdspUrlParts = {
 			siteUrl: odspResolvedUrl.siteUrl,
 			driveId: odspResolvedUrl.driveId,
 			itemId: odspResolvedUrl.itemId,
 		};
-		// Only the epochTracker from the returned cacheAndTracker is used below, so a fresh
-		// NonPersistentCache is sufficient here.
-		const cacheAndTracker = createOdspCacheAndTracker(
-			this.persistedCache,
-			new NonPersistentCache(),
-			{
-				resolvedUrl: odspResolvedUrl,
-				docId: odspResolvedUrl.hashedDocumentId,
-				fileVersion: odspResolvedUrl.fileVersion,
-			},
-			extLogger,
-			clientIsSummarizer,
-		);
 		const getAuthHeader = toInstrumentedOdspStorageTokenFetcher(
-			extLogger,
+			logger,
 			urlParts,
 			this.getStorageTokenForVersions,
 		);
 		return createOdspVersionManager({
 			urlParts,
 			getAuthHeader,
-			epochTracker: cacheAndTracker.epochTracker,
-			logger: extLogger,
+			epochTracker,
+			logger,
 		});
 	}
 

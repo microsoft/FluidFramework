@@ -71,7 +71,7 @@ export function normalizeRegistry<T>(
 	if (DataStoreKindImplementation.guard(input)) {
 		return async () => input;
 	}
-	assert(typeof input === "function", "Registry must be a function");
+	assert(typeof input === "function", 0xd17 /* Registry must be a function */);
 	return input;
 }
 

@@ -362,7 +362,10 @@ class EphemeralServiceImplementation
 	 * @remarks Internal helper for {@link EphemeralServiceContainer}; not part of the public {@link EphemeralService} API.
 	 */
 	public getDocumentServiceFactory(): LocalDocumentServiceFactory {
-		assert(!this.closed, "Cannot create or load containers on a closed EphemeralService");
+		assert(
+			!this.closed,
+			0xd11 /* Cannot create or load containers on a closed EphemeralService */,
+		);
 		return this.documentServiceFactory;
 	}
 
@@ -420,11 +423,14 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	if (!parameters.existing) {
 		assert(
 			parameters.newContainerRootType !== undefined,
-			"Root data store kind must be provided for new containers",
+			0xd12 /* Root data store kind must be provided for new containers */,
 		);
 		const dataStore = await runtime.createDataStore(parameters.newContainerRootType);
 		const aliasResult = await dataStore.trySetAlias(rootDataStoreId);
-		assert(aliasResult === "Success", "Should be able to set alias on new data store");
+		assert(
+			aliasResult === "Success",
+			0xd13 /* Should be able to set alias on new data store */,
+		);
 	}
 	return runtime;
 };
@@ -511,7 +517,10 @@ export class EphemeralServiceContainer<TData>
 			(await containerInner.getEntryPoint()) as T,
 			id,
 		);
-		assert(container.id !== undefined, "id should be defined when loading a container");
+		assert(
+			container.id !== undefined,
+			0xd14 /* id should be defined when loading a container */,
+		);
 		return container as typeof container & { id: string };
 	}
 

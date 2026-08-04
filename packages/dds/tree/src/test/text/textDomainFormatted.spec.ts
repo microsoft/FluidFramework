@@ -20,12 +20,14 @@ import { setEnableExpensiveDebugAsserts } from "../../text/textDomain.js";
 import type { TextAsTree } from "../../text/textDomain.js";
 import {
 	FormattedTextAsTree,
+	StringTextAtomNode,
 	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
 } from "../../text/textDomainFormatted.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
 import { FormattedTextAsTreeDefault } from "../../text/index.js";
+import { oneFromIterable } from "../../util/index.js";
 
 // Custom formatted-text schemas used to exercise `formatRange` edge cases which the default schema cannot express.
 
@@ -105,6 +107,30 @@ describe("textDomainFormatted", () => {
 		assert.equal(text.fullString(), "world");
 	});
 
+	it("default formatting", () => {
+		class Custom extends FormattedTextAsTree.createSchema(
+			new SchemaFactoryBeta("test.formatted.custom"),
+			[SchemaFactory.null, SchemaFactory.number],
+			[],
+			5,
+		) {}
+		{
+			const text = Custom.fromString("x");
+			const atom = oneFromIterable(text.charactersWithFormatting()) ?? assert.fail();
+			assert.equal(atom.format, 5);
+			atom.format = 4;
+			assert.equal(atom.format, 4);
+			text.reformat();
+			assert.equal(atom.format, 5);
+			text.insertAt(1, "y", null); // Ensure this overrides default correctly, even when null.
+			text.insertAt(2, "z"); // Uses default
+			assert.deepEqual(
+				[...text.charactersWithFormatting()].map((atom2) => atom2.format),
+				[5, null, 5],
+			);
+		}
+	});
+
 	it("fromString applies the provided format", () => {
 		const format = {
 			bold: true,
@@ -119,6 +145,34 @@ describe("textDomainFormatted", () => {
 			[...text.charactersWithFormatting()].map((atom) => ({ ...atom.format })),
 			[format, format],
 		);
+	});
+
+	describe("StringTextAtom", () => {
+		it("fromCharacter creates one atom", () => {
+			assert.equal(FormattedTextAsTree.StringTextAtom.fromCharacter("a").content, "a");
+			assert.equal(FormattedTextAsTree.StringTextAtom.fromCharacter("😀").content, "😀");
+		});
+
+		it("fromCharacter rejects values which are not one character", () => {
+			assert.throws(
+				() => FormattedTextAsTree.StringTextAtom.fromCharacter(""),
+				validateUsageError(/exactly one Unicode character/),
+			);
+			assert.throws(
+				() => FormattedTextAsTree.StringTextAtom.fromCharacter("ab"),
+				validateUsageError(/exactly one Unicode character/),
+			);
+		});
+
+		it("fromString creates one atom per character", () => {
+			const atoms = FormattedTextAsTree.StringTextAtom.fromString("a😀b");
+			assert.deepEqual(
+				atoms.map((atom) => atom.content),
+				["a", "😀", "b"],
+			);
+			const empty = FormattedTextAsTree.StringTextAtom.fromString("");
+			assert.deepEqual(empty, []);
+		});
 	});
 
 	describe("formatRange", () => {
@@ -160,7 +214,9 @@ describe("textDomainFormatted", () => {
 		it("throws when an atom's format is a non-object node", () => {
 			const text = UnionFormatText.fromString("b");
 			// Prepend an atom whose format is a non-object (number) node.
-			text.insertWithFormattingAt(0, [{ content: { content: "a" }, format: 5 }]);
+			text.insertWithFormattingAt(0, [
+				{ content: FormattedTextAsTree.StringTextAtom.fromCharacter("a"), format: 5 },
+			]);
 			assert.throws(
 				() => text.formatRange(0, 2, { bold: true }),
 				validateUsageError(/formatRange currently only supports object nodes for the format./),
@@ -170,7 +226,9 @@ describe("textDomainFormatted", () => {
 		it("throws when a non-object node format occurs in the middle of a range", () => {
 			const text = UnionFormatText.fromString("ac");
 			// Insert an atom with a non-object (number) format between the two object-formatted atoms.
-			text.insertWithFormattingAt(1, [{ content: { content: "b" }, format: 5 }]);
+			text.insertWithFormattingAt(1, [
+				{ content: FormattedTextAsTree.StringTextAtom.fromCharacter("b"), format: 5 },
+			]);
 			// The range spans object formats at either end with a non-object format in the middle.
 			assert.throws(
 				() => text.formatRange(0, 3, { bold: true }),
@@ -243,9 +301,6 @@ describe("textDomainFormatted", () => {
 		it("uses the default format when no format is provided", () => {
 			const text = FormattedTextAsTreeDefault.Tree.fromString("hello");
 			text.formatRange(0, 5, { bold: true, italic: true });
-			// Customize the default format so we can distinguish it from a fresh default.
-			text.defaultFormat.underline = true;
-			// Reformat a sub-range without providing a format: the default format should be used.
 			text.reformat(1, 4);
 			assert.deepEqual(
 				[...text.charactersWithFormatting()].map((atom) => [
@@ -253,13 +308,15 @@ describe("textDomainFormatted", () => {
 					atom.format.bold,
 					atom.format.italic,
 					atom.format.underline,
+					atom.format.size,
+					atom.format.font,
 				]),
 				[
-					["h", true, true, false],
-					["e", false, false, true],
-					["l", false, false, true],
-					["l", false, false, true],
-					["o", true, true, false],
+					["h", true, true, false, 12, "Arial"],
+					["e", false, false, false, 12, "Arial"],
+					["l", false, false, false, 12, "Arial"],
+					["l", false, false, false, 12, "Arial"],
+					["o", true, true, false, 12, "Arial"],
 				],
 			);
 		});
@@ -283,7 +340,16 @@ describe("textDomainFormatted", () => {
 	it("insertWithFormattingAt", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
 		text.insertWithFormattingAt(1, [
-			{ content: { content: "c" }, format: { ...text.defaultFormat, italic: true } },
+			{
+				content: FormattedTextAsTree.StringTextAtom.fromCharacter("c"),
+				format: {
+					bold: false,
+					italic: true,
+					underline: false,
+					size: 12,
+					font: "Arial",
+				},
+			},
 		]);
 		assert.equal(text.fullString(), "acb");
 		assert.deepEqual(
@@ -299,10 +365,15 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
-	it("defaultFormat", () => {
+	it("insertAt applies the provided format", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
-		text.defaultFormat.underline = true;
-		text.insertAt(2, "cd");
+		text.insertAt(2, "cd", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		assert.deepEqual(
 			[...text.charactersWithFormatting()].map((atom) => [
 				atom.content.content,
@@ -317,12 +388,49 @@ describe("textDomainFormatted", () => {
 		);
 	});
 
+	it("insertAt accepts text atoms", () => {
+		const text = FormattedTextAsTreeDefault.Tree.fromString("ab");
+		text.insertAt(
+			1,
+			[
+				new FormattedTextAsTreeDefault.StringLineAtom({
+					tag: FormattedTextAsTreeDefault.LineTag("h1"),
+					indent: 0,
+				}),
+				FormattedTextAsTree.StringTextAtom.fromCharacter("c"),
+			],
+			{
+				bold: true,
+				italic: false,
+				underline: false,
+				size: 12,
+				font: "Arial",
+			},
+		);
+
+		assert.equal(text.fullString(), "a\ncb");
+		assert.deepEqual(
+			[...text.charactersWithFormatting()].map((atom) => atom.format.bold),
+			[false, true, true, false],
+		);
+	});
+
 	it("getUniformRun", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
-		text.defaultFormat.underline = true;
-		text.insertAt(3, "de");
-		text.defaultFormat.italic = true;
-		text.insertAt(5, "f");
+		text.insertAt(3, "de", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
+		text.insertAt(5, "f", {
+			bold: false,
+			italic: true,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		assert.equal(text.getUniformRun(0, 5), 3);
 		assert.equal(text.getUniformRun(0), 3);
 		assert.equal(text.getUniformRun(3, 5), 2);
@@ -333,10 +441,20 @@ describe("textDomainFormatted", () => {
 
 	it("getString with getUniformRun", () => {
 		const text = FormattedTextAsTreeDefault.Tree.fromString("abc");
-		text.defaultFormat.underline = true;
-		text.insertAt(3, "de");
-		text.defaultFormat.italic = true;
-		text.insertAt(5, "f");
+		text.insertAt(3, "de", {
+			bold: false,
+			italic: false,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
+		text.insertAt(5, "f", {
+			bold: false,
+			italic: true,
+			underline: true,
+			size: 12,
+			font: "Arial",
+		});
 		let index = 0;
 		let currentRun = text.getUniformRun(index, text.characterCount());
 		assert.equal(text.getString(index, index + currentRun), "abc");
@@ -639,7 +757,7 @@ describe("textDomainFormatted", () => {
 			it("edit character text", () => {
 				const [text, log] = setupObservations();
 				const char = text.charactersWithFormatting()[2].content;
-				assert(char instanceof FormattedTextAsTree.StringTextAtom);
+				assert(char instanceof StringTextAtomNode);
 				char.content = "X";
 				checkLog(log, ["fullString", "characters", "charactersCopy"], overInvalidated);
 			});
