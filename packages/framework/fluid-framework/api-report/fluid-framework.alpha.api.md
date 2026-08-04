@@ -1838,6 +1838,8 @@ type ScopedSchemaName<TScope extends string | undefined, TName extends number | 
 
 // @alpha @sealed
 export interface ServiceClient {
+    createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+    createAttachedContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerAttached<T>>;
     createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
     createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
     loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
