@@ -243,6 +243,31 @@ export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllow
 		key: string,
 		fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>,
 	): TreeNodeFromImplicitAllowedTypes<T>;
+
+	/**
+	 * Returns the value at `key`, first inserting the value produced by `callback` if this map has no entry for `key`.
+	 *
+	 * @param key - The key of the element to return or insert at.
+	 * @param callback - Invoked with `key` to produce the value to insert if `key` has no entry.
+	 * Not invoked if an entry is present.
+	 * @returns The value at `key`, which may be the value produced by `callback`
+	 * if the map had no previous entry for `key`.
+	 *
+	 * @remarks
+	 * This API is equivalent to {@link TreeMapNodeAlpha.getOrInsert} except that the fallback value is computed lazily:
+	 * `callback` is only invoked when the map has no entry for `key`.
+	 * Prefer this API over {@link TreeMapNodeAlpha.getOrInsert} when producing the fallback value is expensive.
+	 *
+	 * The check for the presence of an existing entry with the given `key` is performed at the time the edit is authored.
+	 * See {@link TreeMapNodeAlpha.getOrInsert} for the implications this has on the merge semantics of this operation.
+	 *
+	 * If `callback` throws, no edit is made and the error is propagated to the caller.
+	 * If `callback` sets an entry for `key` in this map, that entry is overwritten with the value `callback` returned.
+	 */
+	getOrInsertComputed(
+		key: string,
+		callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 // TreeMapNode is invariant over schema type, so for this handler to work with all schema, the only possible type for the schema is `any`.
@@ -333,6 +358,17 @@ abstract class CustomMapNodeBase<const T extends ImplicitAllowedTypes> extends T
 			return existing;
 		}
 		this.set(key, fallbackValue);
+		return this.get(key);
+	}
+	public getOrInsertComputed(
+		key: string,
+		callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>,
+	): TreeNodeFromImplicitAllowedTypes<T> {
+		const existing = this.get(key);
+		if (existing !== undefined) {
+			return existing;
+		}
+		this.set(key, callback(key));
 		return this.get(key);
 	}
 	public get size(): number {
