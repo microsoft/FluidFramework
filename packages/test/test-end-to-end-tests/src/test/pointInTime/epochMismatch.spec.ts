@@ -4,8 +4,6 @@
  */
 
 /*
- * Point-in-time failure scenarios (real service).
- *
  * A point-in-time load materializes a document at a target sequence number by replaying the live op
  * stream on top of a recoverable base version. That replay is only valid when (a) the base is on the
  * live document's lineage and (b) the bridging ops are still retained. This suite exercises both

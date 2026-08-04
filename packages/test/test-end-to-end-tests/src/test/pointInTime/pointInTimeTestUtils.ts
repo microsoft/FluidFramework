@@ -4,10 +4,16 @@
  */
 
 /*
- * Shared building blocks for the ODSP real-service point-in-time (`loadContainerToSequenceNumber`)
- * test suites: a tiny `DataObject` whose `SharedCounter` drives op generation, container
- * create/attach helpers, and a helper that loads a container to a target sequence number through the
- * ODSP point-in-time document-service factory.
+ * Shared building blocks for the ODSP point-in-time (`loadContainerToSequenceNumber`) test suites: a
+ * tiny `DataObject` whose `SharedCounter` drives op generation, container create/attach helpers, and
+ * a helper that loads a container to a target sequence number through the ODSP point-in-time
+ * document-service factory.
+ *
+ * Tests run against a live ODSP tenant using credentials supplied to the odsp test driver, and not
+ * a mock. Point-in-time load depends on ODSP-specific behavior that no local server emulates:
+ * driveItem version history (which the tests snap via a metadata PATCH) and the storage epoch
+ * (`x-fluid-epoch`) that a version restore bumps. That is why `setupPointInTimeSuite` skips every
+ * non-odsp driver, and why these tests are slow enough to need raised timeouts.
  */
 
 import { strict as assert } from "assert";
@@ -36,7 +42,9 @@ import {
 
 import {
 	createOdspVersionTestApiProps,
+	listFileVersions,
 	triggerVersionViaMetadata,
+	type FileVersion,
 	type OdspVersionTestApiProps,
 } from "./odspVersionTestApi.js";
 
@@ -161,7 +169,8 @@ export async function loadPointInTimeContainer(
 }
 
 /**
- * Create a summarizer client for the point-in-time test container.
+ * Create a summarizer client for the point-in-time test container, returning both the
+ * {@link ISummarizer} and the summarizer's own {@link IContainer} so callers can tear both down.
  *
  * A metadata PATCH (see {@link triggerVersionViaMetadata}) snaps a driveItem version whose snapshot
  * is only the file's *persisted* Fluid state - which advances solely when the runtime writes a
@@ -174,16 +183,16 @@ export async function createPointInTimeSummarizer(
 	provider: ITestObjectProvider,
 	container: IContainer,
 	apis: Pick<CompatApis, "dds" | "dataRuntime" | "containerRuntime">,
-): Promise<ISummarizer> {
+): Promise<{ summarizer: ISummarizer; summarizerContainer: IContainer }> {
 	const dataObjectFactory = buildFactory(apis);
-	const { summarizer } = await createSummarizerFromFactory(
+	const { summarizer, container: summarizerContainer } = await createSummarizerFromFactory(
 		provider,
 		container,
 		dataObjectFactory,
 		undefined /* summaryVersion */,
 		apis.containerRuntime.ContainerRuntimeFactoryWithDefaultDataStore,
 	);
-	return summarizer;
+	return { summarizer, summarizerContainer };
 }
 
 /**
@@ -209,6 +218,12 @@ export interface PointInTimeSuiteFixture {
 	provider(): ITestObjectProvider;
 	/** The point-in-time runtime factory; only valid after the registered `before` hook has run. */
 	runtimeFactory(): IRuntimeFactory;
+	/**
+	 * Register a teardown callback to run in the suite's `afterEach`, before the container tracker is
+	 * reset. Used by {@link createPointInTimeTestContext} to close resources it creates that the
+	 * tracker does not own - notably the summarizer client.
+	 */
+	onCleanup(cleanup: () => void): void;
 }
 
 /**
@@ -222,6 +237,7 @@ export function setupPointInTimeSuite(
 	let provider: ITestObjectProvider | undefined;
 	let runtimeFactory: IRuntimeFactory | undefined;
 	const tracker = new LoaderContainerTracker();
+	const cleanups: (() => void)[] = [];
 
 	before(function () {
 		provider = getTestObjectProvider();
@@ -231,10 +247,25 @@ export function setupPointInTimeSuite(
 		runtimeFactory = createPointInTimeRuntimeFactory(apis);
 	});
 
-	afterEach(() => tracker.reset());
+	afterEach(() => {
+		// Run registered teardown (e.g. closing summarizer clients) before resetting the tracker, so a
+		// summarizer stops summarizing before its container is torn down. Teardown failures must not
+		// mask the test's own result, and one failing cleanup must not skip the rest.
+		for (const cleanup of cleanups.splice(0)) {
+			try {
+				cleanup();
+			} catch (error) {
+				console.error("point-in-time suite cleanup failed", error);
+			}
+		}
+		tracker.reset();
+	});
 
 	return {
 		tracker,
+		onCleanup(cleanup: () => void): void {
+			cleanups.push(cleanup);
+		},
 		provider() {
 			assert(
 				provider !== undefined,
@@ -277,8 +308,12 @@ export interface PointInTimeTestContext {
 	 * summarizer, a summary is forced first so the version captures advanced (non-zero) persisted
 	 * state; otherwise the current persisted state is snapped. `label` is embedded in a unique
 	 * version description.
+	 *
+	 * The PATCH returning HTTP OK only means the metadata update was accepted - it does not by itself
+	 * prove the service snapped a version. So this reads the version history before and after and
+	 * asserts a new entry appeared, then returns that newly created version.
 	 */
-	snapVersion(label: string): Promise<void>;
+	snapVersion(label: string): Promise<FileVersion>;
 }
 
 /**
@@ -305,9 +340,22 @@ export async function createPointInTimeTestContext(
 	);
 	const dataObject = (await container.getEntryPoint()) as IPointInTimeTestObject;
 	const versionApi = createOdspVersionTestApiProps(provider, container);
-	const summarizer = options.withSummarizer
-		? await createPointInTimeSummarizer(provider, container, apis)
-		: undefined;
+	let summarizer: ISummarizer | undefined;
+	if (options.withSummarizer) {
+		const created = await createPointInTimeSummarizer(provider, container, apis);
+		summarizer = created.summarizer;
+		// The summarizer client is not registered with this suite's `tracker`, so `tracker.reset()`
+		// never touches it. `describeCompat`'s own `afterEach` does eventually close its container via
+		// `provider.reset()` (the summarizer's loader is tracked by the provider), but that closes the
+		// container without ever stopping summarization. Close the summarizer explicitly - and first,
+		// so it stops summarizing before its container goes away - matching the `summarizer.close()`
+		// lifecycle used across the other e2e summarizer suites.
+		fixture.onCleanup(() => {
+			created.summarizer.close();
+			created.summarizerContainer.close();
+			created.summarizerContainer.dispose?.();
+		});
+	}
 
 	let snapCount = 0;
 
@@ -324,14 +372,25 @@ export async function createPointInTimeTestContext(
 			}
 			await tracker.ensureSynchronized(container);
 		},
-		async snapVersion(label: string): Promise<void> {
+		async snapVersion(label: string): Promise<FileVersion> {
 			if (summarizer !== undefined) {
 				await summarizePointInTime(summarizer);
 			}
+			const before = await listFileVersions(versionApi);
+			const beforeIds = new Set(before.map((version) => version.id));
 			const snapped = await triggerVersionViaMetadata(versionApi, {
 				description: `${label}-${snapCount++} ${Date.now()}`,
 			});
 			assert.strictEqual(snapped, true, "metadata PATCH should snap a new version");
+
+			const after = await listFileVersions(versionApi);
+			const added = after.filter((version) => !beforeIds.has(version.id));
+			assert(
+				added.length > 0,
+				`snapVersion(${label}): expected a new version in history (before=${before.length}, after=${after.length})`,
+			);
+			// `/versions` is newest-first, so the first added entry is the version just snapped.
+			return added[0];
 		},
 	};
 }
