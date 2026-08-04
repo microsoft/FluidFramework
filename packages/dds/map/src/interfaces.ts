@@ -176,17 +176,6 @@ export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set"
 }
 
 /**
- * Beta version of {@link IDirectory} which uses {@link FluidMapLegacy} for its map-like API.
- *
- * @sealed
- * @legacy @beta
- */
-export interface IDirectoryBeta
-	extends Omit<IDirectory, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		FluidMapLegacy<string, any> {}
-
-/**
  * Events emitted in response to changes to the directory data.
  *
  * @remarks

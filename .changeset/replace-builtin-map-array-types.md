@@ -19,6 +19,7 @@ This insulates consumers from breaking changes in TypeScript's standard library 
 - `TreeArrayNode` and `TreeMapNode` iterator methods now return `FluidIterableIterator` instead of `IterableIterator`
 - `TreeRecordNode[Symbol.iterator]` and `TreeRecordNodeUnsafe[Symbol.iterator]` now return `FluidIterableIterator`
 - `IDirectory` and `ISharedMap` now extend `FluidMap` instead of `Map`
+- `IDirectoryBeta` has been removed; use `IDirectory`, which now provides the Fluid-owned map contract
 - `StateMap.keys()` now returns `FluidIterableIterator` instead of `IterableIterator`
 - `PendingLocalStateStore` iteration methods now return `FluidIterableIterator` instead of built-in iterator types
 

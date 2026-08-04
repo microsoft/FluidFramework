@@ -96,6 +96,7 @@ declare type current_as_old_for_Interface_IDirectory = requireAssignableTo<TypeO
  * typeValidation.broken:
  * "Interface_IDirectoryBeta": {"backCompat": false}
  */
+// @ts-expect-error compatibility expected to be broken
 declare type current_as_old_for_Interface_IDirectoryBeta = requireAssignableTo<TypeOnly<current.IDirectoryBeta>, TypeOnly<old.IDirectoryBeta>>
 
 /*
