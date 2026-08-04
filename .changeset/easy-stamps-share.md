@@ -16,3 +16,46 @@ This can be used by an application to determine whether any constraints associat
 
 This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
 It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
+
+Example:
+
+```typescript
+// Use `asAlpha` API to access the settled event API
+const view = asAlpha(tree.viewWith(config));
+
+// Function to clear all contents of the tree, with a precondition that no changes have occurred.
+const clearAllContents = () => {
+	view.runTransaction(
+		() => {
+			// Remove all contents at the root
+			view.root.removeRange();
+		},
+		{ preconditions: [{ type: "noChange" }] },
+	);
+};
+
+// Register the logic for notifying the user of the outcome and allow them to retry
+ view.events.on("changed", (metadata) => {
+	if (metadata.isLocal) {
+		metadata.events.on("settled", (outcome) => {
+			if (outcome === CommitOutcome.FullyApplied) {
+				alert("Clear operation succeeded.");
+			} else {
+				const shouldTryAgain = confirm(
+					"The contents have changed. Do you still want to clear everything?",
+				);
+				if (shouldTryAgain) {
+					// Try again asynchronously
+					setTimeout(clearAllContents);
+				} else {
+					alert("Clear operation aborted.");
+				}
+			}
+		});
+	}
+});
+
+// First attempt to clear all contents.
+// This will synchronously trigger the changed "event" and register the listener for the settled event.
+clearAllContents();
+```
