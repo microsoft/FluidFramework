@@ -247,12 +247,9 @@ describe("Tree change event ordering", () => {
 			// Replace root - this triggers rootChanged via afterBatch.
 			view.root = new OptionalRoot({ child: { data: 2 } });
 
-			// Verify rootChanged fires.
-			assert(log.includes("rootChanged"), "rootChanged should fire");
-
-			// rootChanged should be the last event since it fires as an afterBatch listener,
-			// while nodeChanged/treeChanged fire during the change application.
-			assert.equal(log[log.length - 1], "rootChanged");
+			// When the root is replaced, the old root node is detached and no longer receives
+			// nodeChanged or treeChanged events. Only rootChanged fires.
+			assert.deepEqual(log, ["rootChanged"]);
 		});
 	});
 
@@ -279,8 +276,9 @@ describe("Tree change event ordering", () => {
 			// Replace root which triggers rootChanged via afterBatch.
 			view.root = new NodeWithProp({ value: 2 });
 
-			// rootChanged fires as afterBatch listener and should be last.
-			assert.equal(log[log.length - 1], "rootChanged");
+			// The old root is detached on replacement, so it receives no node events.
+			// Only rootChanged fires (via afterBatch).
+			assert.deepEqual(log, ["rootChanged"]);
 		});
 	});
 
@@ -322,28 +320,9 @@ describe("Tree change event ordering", () => {
 
 			// After withBufferedTreeEvents completes, buffered node events flush.
 			// rootChanged already fired during the callback (via afterBatch).
-			// This means the ordering is inverted compared to non-buffered:
-			// rootChanged fires before the buffered nodeChanged/treeChanged.
-			if (log.includes("rootChanged")) {
-				const rootChangedIndex = log.indexOf("rootChanged");
-				const bufferedNodeChangedIndex = log.indexOf("buffered:nodeChanged");
-				const bufferedTreeChangedIndex = log.indexOf("buffered:treeChanged");
-
-				// When buffering, rootChanged fires before buffered node events
-				// because rootChanged goes through afterBatch (not KernelEventBuffer).
-				if (bufferedNodeChangedIndex !== -1) {
-					assert(
-						rootChangedIndex < bufferedNodeChangedIndex,
-						"rootChanged should fire before buffered nodeChanged because rootChanged is wired as an afterBatch listener (not buffered by KernelEventBuffer)",
-					);
-				}
-				if (bufferedTreeChangedIndex !== -1) {
-					assert(
-						rootChangedIndex < bufferedTreeChangedIndex,
-						"rootChanged should fire before buffered treeChanged because rootChanged is wired as an afterBatch listener (not buffered by KernelEventBuffer)",
-					);
-				}
-			}
+			// The old root is detached on replacement so buffered node events don't fire for it.
+			// rootChanged is the only event because it fires via afterBatch (unbuffered).
+			assert.deepEqual(log, ["rootChanged"]);
 		});
 
 		it("buffering node events preserves nodeChanged-before-treeChanged order on flush", () => {
@@ -398,16 +377,12 @@ describe("Tree change event ordering", () => {
 			// After flush, nodeChanged fires before treeChanged at each level.
 			// KernelEventBuffer flushes childrenChangedAfterBatch before subtreeChangedAfterBatch
 			// for each buffer individually.
-			for (const prefix of ["child", "parent"]) {
-				const ncIdx = log.indexOf(`${prefix}:nodeChanged`);
-				const tcIdx = log.indexOf(`${prefix}:treeChanged`);
-				if (ncIdx !== -1 && tcIdx !== -1) {
-					assert(
-						ncIdx < tcIdx,
-						`${prefix}: nodeChanged (index ${ncIdx}) should fire before treeChanged (index ${tcIdx})`,
-					);
-				}
-			}
+			assert.deepEqual(log, [
+				"child:nodeChanged",
+				"child:treeChanged",
+				"parent:nodeChanged",
+				"parent:treeChanged",
+			]);
 		});
 
 		it("rootChanged fires before buffered node events are flushed in withBufferedTreeEvents", () => {
@@ -438,17 +413,8 @@ describe("Tree change event ordering", () => {
 			});
 
 			// rootChanged fires via afterBatch inside the callback (not buffered).
-			// Node events are buffered and flush after the callback.
-			// This inverts the normal ordering where node events come first.
-			if (log.includes("rootChanged") && log.includes("node:nodeChanged")) {
-				const rcIdx = log.indexOf("rootChanged");
-				const ncIdx = log.indexOf("node:nodeChanged");
-				assert(
-					rcIdx < ncIdx,
-					`withBufferedTreeEvents inverts ordering: rootChanged (${rcIdx}) fires before buffered nodeChanged (${ncIdx}) ` +
-						`because rootChanged uses afterBatch (unbuffered) while node events go through KernelEventBuffer`,
-				);
-			}
+			// The old root node is detached on replacement, so its buffered events don't fire.
+			assert.deepEqual(log, ["rootChanged"]);
 		});
 	});
 
@@ -501,8 +467,9 @@ describe("Tree change event ordering", () => {
 			});
 
 			// rootChanged should have fired during the callback
-			assert(
-				insideCallbackLog.includes("rootChanged"),
+			assert.deepEqual(
+				insideCallbackLog,
+				["rootChanged"],
 				"rootChanged should fire during the withBufferedTreeEvents callback because it is wired as an afterBatch listener and not buffered by KernelEventBuffer",
 			);
 		});
