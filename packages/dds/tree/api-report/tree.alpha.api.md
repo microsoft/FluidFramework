@@ -2026,7 +2026,7 @@ export interface TreeRecordNode<TAllowedTypes extends ImplicitAllowedTypes = Imp
 // @beta @sealed @system
 export interface TreeRecordNodeUnsafe<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe> extends Record<string, System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>>, TreeNode {
     // (undocumented)
-    [Symbol.iterator](): IterableIterator<[
+    [Symbol.iterator](): FluidIterableIterator<[
     string,
     System_Unsafe.TreeNodeFromImplicitAllowedTypesUnsafe<TAllowedTypes>
     ]>;
