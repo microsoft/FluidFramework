@@ -37,15 +37,15 @@ import {
 	configuredSharedTreeAlpha,
 	FluidClientVersion,
 	ForestTypeOptimized,
+	FormattedTextAsTreeDefault,
 	incrementalEncodingPolicyForAllowedTypes,
 	incrementalSummaryHint,
 	SchemaFactoryAlpha,
+	TextAsTree,
 	TreeCompressionStrategy,
-	TreeViewConfigurationAlpha,
 	type TreeViewAlpha,
+	TreeViewConfigurationAlpha,
 } from "@fluidframework/tree/alpha";
-// eslint-disable-next-line import-x/no-internal-modules
-import { FormattedTextAsTreeDefault, TextAsTree } from "@fluidframework/tree/internal";
 import type { IFluidContainer } from "fluid-framework";
 // eslint-disable-next-line import-x/no-internal-modules, import-x/no-unassigned-import
 import "quill/dist/quill.snow.css";
