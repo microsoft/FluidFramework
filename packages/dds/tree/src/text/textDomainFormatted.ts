@@ -142,9 +142,10 @@ export namespace FormattedTextAsTree {
 	 * @param defaultFormatInsertable - The formatting applied to text inserted via non-formatted APIs
 	 * (for example {@link FormattedTextAsTree.Members.insertAt} and {@link FormattedTextAsTree.Statics.fromString} when no explicit format is provided).
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedTextAsTree.Members} and whose statics implement {@link FormattedTextAsTree.Statics}.
-	 * @remarks
-	 * See {@link FormattedTextAsTreeDefault} for a default parameterization of this factory.
+	 *
 	 * @privateRemarks
+	 * See {@link FormattedTextAsTreeDefault} for a default parameterization of this factory.
+	 *
 	 * TODO: The choice to always include the built-in {@link FormattedTextAsTree.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
 	export function createSchema<
