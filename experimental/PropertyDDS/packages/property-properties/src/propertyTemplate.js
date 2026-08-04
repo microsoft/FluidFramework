@@ -7,10 +7,10 @@
  * @fileoverview Declaration of the PropertyTemplate module.
  * PropertyTemplate is used to describe a static property.
  */
-const { TypeIdHelper } = require("@fluid-experimental/property-changeset");
-const { ConsoleUtils } = require("@fluid-experimental/property-common");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const _ = require("lodash");
+import { TypeIdHelper } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+const { MSG } = constants;
+import _ from "lodash";
 const { cloneDeep: deepCopy } = _;
 
 /**

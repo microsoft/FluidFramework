@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/local-server-stress-tests",
-	"version": "2.114.0",
+	"version": "2.115.0",
 	"private": true,
 	"description": "Stress tests that can only run against the local server",
 	"homepage": "https://fluidframework.com",
@@ -112,7 +112,7 @@
 		"tasks": {
 			"build:test:esm": [
 				"^build:esnext",
-				"^api-extractor:esnext",
+				"^build:entrypoints:esm",
 				"@fluidframework/id-compressor#build:test:esm",
 				"@fluidframework/sequence#build:test:esm",
 				"@fluidframework/map#build:test:esm",

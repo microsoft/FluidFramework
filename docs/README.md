@@ -36,6 +36,17 @@ In other words, there should be no "orphaned" pages: each page is linked (direct
 
 When adding a new page, link to it from the appropriate index page so that it remains discoverable.
 
+### Images and other binary assets
+
+Image and other binary assets are co-located with the documentation that uses them.
+Each level of the hierarchy that needs assets has its own `_assets` subdirectory (for example, [content/Contributing/_assets](./content/Contributing/_assets) holds the images used by the pages under `content/Contributing`).
+
+When adding assets, place them in an `_assets` directory at the appropriate level and reference them with a relative path from the consuming page.
+
+These assets are stored using [Git LFS](https://git-lfs.com/) to keep large binary blobs out of the main repository history.
+The tracked file types are declared in a single [`.gitattributes`](./.gitattributes) at the root of `docs`, which applies to every `_assets` directory in the tree.
+Contributors who add or update assets must have Git LFS installed and initialized (run `git lfs install` once per machine); otherwise commits will store the raw binary contents instead of LFS pointers.
+
 ## Tooling
 
 The `docs` directory is a standalone [pnpm](https://pnpm.io/) workspace with its own tooling for formatting and linting the Markdown content.

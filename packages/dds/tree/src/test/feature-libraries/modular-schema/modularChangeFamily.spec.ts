@@ -70,12 +70,13 @@ import type {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/index.js";
 import {
-	getFieldKind,
 	intoDelta,
 	updateRefreshers,
 	relevantRemovedRoots as relevantDetachedTreesImplementation,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/modularChangeFamily.js";
+// eslint-disable-next-line import-x/no-internal-modules
+import { getChangeHandler } from "../../../feature-libraries/modular-schema/modularChangeUtils.js";
 import {
 	newCrossFieldKeyTable,
 	type CrossFieldKeyTable,
@@ -1607,14 +1608,14 @@ function normalizeChangeset(change: ModularChangeset): ModularChangeset {
 		const normalizedFieldChanges: FieldChangeMap = new Map();
 
 		for (const [field, fieldChange] of fields) {
-			const changeHandler = getFieldKind(fieldKinds, fieldChange.fieldKind).changeHandler;
+			const changeHandler = getChangeHandler(fieldKinds, fieldChange.fieldKind);
 
 			// TODO: This relies on field kinds calling prune child on all changes,
 			// while pruning is supposed to be an optimization which could be skipped.
-			normalizedFieldChanges.set(
-				field,
-				changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges),
-			);
+			normalizedFieldChanges.set(field, {
+				...fieldChange,
+				change: brand(changeHandler.rebaser.prune(fieldChange.change, normalizeNodeChanges)),
+			});
 
 			const crossFieldKeys = changeHandler.getCrossFieldKeys(fieldChange.change);
 			for (const { key, count } of crossFieldKeys) {

@@ -52,6 +52,7 @@ import {
 	TreeCompressionStrategy,
 	buildChunkedForest,
 	buildForest,
+	ComparisonForest,
 	defaultIncrementalEncodingPolicy,
 	defaultSchemaPolicy,
 	fieldBatchCodecBuilder,
@@ -105,6 +106,7 @@ import {
 	getCodecTreeForChangeFormat,
 	SharedTreeChangeFormatVersion,
 } from "./sharedTreeChangeCodecs.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
@@ -174,7 +176,11 @@ export type SharedTreeKernelView = Omit<ITreePrivate, keyof (IChannelView & IFlu
  */
 @breakingClass
 export class SharedTreeKernel
-	extends SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>
+	extends SharedTreeCore<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>
 	implements SharedKernel
 {
 	public readonly checkout: TreeCheckout;
@@ -432,7 +438,11 @@ export class SharedTreeKernel
 
 	public override applyStashedOp(
 		...args: Parameters<
-			SharedTreeCore<SharedTreeEditBuilder, SharedTreeChange>["applyStashedOp"]
+			SharedTreeCore<
+				SharedTreeEditBuilder,
+				SharedTreeChange,
+				SharedTreeChangeProcessingContext
+			>["applyStashedOp"]
 		>
 	): void {
 		for (const checkout of this.checkouts.values()) {
@@ -735,12 +745,26 @@ export const ForestTypeOptimized = toForestType(
  * Includes validation with scales poorly.
  * May be asymptotically slower than {@link ForestTypeReference}, and may perform very badly with larger data sizes.
  * @privateRemarks
- * The "ObjectForest" forest type with expensive asserts for debugging.
+ * A {@link ComparisonForest} which uses the "ChunkedForest" forest type as its main forest and validates every delta
+ * against a reference "ObjectForest" (with expensive asserts enabled for schema validation).
+ * This exercises the optimized forest while asserting that its contents stay consistent with the reference implementation.
  * @beta
  */
 export const ForestTypeExpensiveDebug = toForestType(
-	(breaker: Breakable, schema: TreeStoredSchemaSubscription) =>
-		buildForest(breaker, schema, undefined, true),
+	(
+		breaker: Breakable,
+		schema: TreeStoredSchemaSubscription,
+		idCompressor: IIdCompressor,
+		shouldEncodeIncrementally: IncrementalEncodingPolicy,
+	) =>
+		new ComparisonForest(
+			buildChunkedForest(
+				makeTreeChunker(schema, defaultSchemaPolicy, shouldEncodeIncrementally),
+				undefined,
+				idCompressor,
+			),
+			buildForest(breaker, schema, undefined, true),
+		),
 );
 
 type ForestFactory = (

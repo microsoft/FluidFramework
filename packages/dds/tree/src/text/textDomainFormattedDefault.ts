@@ -132,7 +132,7 @@ export namespace FormattedTextAsTreeDefault {
 	 */
 	export type FormattedAtomInsertable = FormattedTextAsTree.FormattedAtom<
 		InsertableTreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>,
-		InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms>
+		InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas>
 	>;
 
 	/**
@@ -142,9 +142,7 @@ export namespace FormattedTextAsTreeDefault {
 	 * @sealed
 	 * @internal
 	 */
-	export type FormattedTextAtoms = FormattedTextAsTree.FormattedTextAtoms<
-		[typeof StringLineAtom]
-	>;
+	export type TextAtomSchemas = FormattedTextAsTree.TextAtomSchemas<[typeof StringLineAtom]>;
 
 	/**
 	 * The schema produced using {@link FormattedTextAsTree.createSchema} with hard-coded assumptions
