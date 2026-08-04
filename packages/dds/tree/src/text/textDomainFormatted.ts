@@ -115,10 +115,13 @@ export class StringTextAtomNode
 
 /**
  * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
+ *
  * @remarks
  * This is generic over formatting an embedded object/atom types.
- * See {@link FormattedTextAsTreeDefault} for a default parameterization.
+ *
  * @privateRemarks
+ * See {@link FormattedTextAsTreeDefault} for an example parameterization.
+ *
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
  * - Sort out API around overwriting subsets of formatting information.
