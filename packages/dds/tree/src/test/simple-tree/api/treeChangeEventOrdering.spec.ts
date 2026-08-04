@@ -12,6 +12,7 @@ import {
 	type ImplicitFieldSchema,
 	type InsertableField,
 } from "../../../simple-tree/index.js";
+import type { TreeNode } from "../../../simple-tree/index.js";
 import {
 	withBufferedTreeEvents,
 	// eslint-disable-next-line import-x/no-internal-modules
@@ -20,6 +21,20 @@ import { getView } from "../../utils.js";
 import { hydrate } from "../utils.js";
 
 const sf = new SchemaFactory("event-ordering-tests");
+
+/**
+ * Subscribes to nodeChanged and treeChanged on the given node, pushing entries to a log array.
+ * Returns the log so callers can either provide their own (for cross-node ordering) or use the returned one.
+ * @param node - The tree node to subscribe to.
+ * @param log - Optional log array. A new one is created if not provided.
+ * @param prefix - Optional prefix for log entries (e.g. "child" → "child:nodeChanged").
+ */
+function subscribeToNodeEvents(node: TreeNode, log: string[] = [], prefix?: string): string[] {
+	const p = prefix ? `${prefix}:` : "";
+	TreeBeta.on(node, "nodeChanged", () => log.push(`${p}nodeChanged`));
+	TreeBeta.on(node, "treeChanged", () => log.push(`${p}treeChanged`));
+	return log;
+}
 
 /**
  * Creates a hydrated view and returns both the view and root node.
@@ -36,8 +51,6 @@ function createViewWithRoot<const TSchema extends ImplicitFieldSchema>(
 }
 
 describe("Tree change event ordering", () => {
-	// #region Schema definitions shared across tests
-
 	class InnerObject extends sf.object("InnerObject", {
 		value: sf.number,
 	}) {}
@@ -52,8 +65,6 @@ describe("Tree change event ordering", () => {
 		label: sf.string,
 	}) {}
 
-	// #endregion
-
 	describe("single node: nodeChanged fires before treeChanged", () => {
 		it("on property change of a hydrated object node", () => {
 			class SimpleObj extends sf.object("SimpleObj", {
@@ -61,10 +72,7 @@ describe("Tree change event ordering", () => {
 			}) {}
 
 			const node = hydrate(SimpleObj, new SimpleObj({ prop: 1 }));
-			const log: string[] = [];
-
-			TreeBeta.on(node, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(node, "treeChanged", () => log.push("treeChanged"));
+			const log = subscribeToNodeEvents(node);
 
 			node.prop = 2;
 
@@ -78,10 +86,7 @@ describe("Tree change event ordering", () => {
 			}) {}
 
 			const node = hydrate(MultiPropObj, new MultiPropObj({ a: 1, b: "x" }));
-			const log: string[] = [];
-
-			TreeBeta.on(node, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(node, "treeChanged", () => log.push("treeChanged"));
+			const log = subscribeToNodeEvents(node);
 
 			// Batch multiple property changes so they produce a single combined event
 			withBufferedTreeEvents(() => {
@@ -112,13 +117,11 @@ describe("Tree change event ordering", () => {
 			const log: string[] = [];
 
 			// Listen on the child for nodeChanged
-			TreeBeta.on(root.child, "nodeChanged", () => log.push("child:nodeChanged"));
-			TreeBeta.on(root.child, "treeChanged", () => log.push("child:treeChanged"));
+			subscribeToNodeEvents(root.child, log, "child");
 
 			// Listen on the parent for treeChanged (not nodeChanged, since child property change
 			// doesn't constitute a direct change to parent's fields)
-			TreeBeta.on(root, "nodeChanged", () => log.push("parent:nodeChanged"));
-			TreeBeta.on(root, "treeChanged", () => log.push("parent:treeChanged"));
+			subscribeToNodeEvents(root, log, "parent");
 
 			root.child.value = 42;
 
@@ -144,10 +147,8 @@ describe("Tree change event ordering", () => {
 
 			const log: string[] = [];
 
-			TreeBeta.on(root.child, "nodeChanged", () => log.push("child:nodeChanged"));
-			TreeBeta.on(root.child, "treeChanged", () => log.push("child:treeChanged"));
-			TreeBeta.on(root, "nodeChanged", () => log.push("parent:nodeChanged"));
-			TreeBeta.on(root, "treeChanged", () => log.push("parent:treeChanged"));
+			subscribeToNodeEvents(root.child, log, "child");
+			subscribeToNodeEvents(root, log, "parent");
 
 			// Both parent and child change in the same buffered batch
 			withBufferedTreeEvents(() => {
@@ -177,16 +178,13 @@ describe("Tree change event ordering", () => {
 			const log: string[] = [];
 
 			// Leaf node
-			TreeBeta.on(root.nested.child, "nodeChanged", () => log.push("leaf:nodeChanged"));
-			TreeBeta.on(root.nested.child, "treeChanged", () => log.push("leaf:treeChanged"));
+			subscribeToNodeEvents(root.nested.child, log, "leaf");
 
 			// Middle node
-			TreeBeta.on(root.nested, "nodeChanged", () => log.push("mid:nodeChanged"));
-			TreeBeta.on(root.nested, "treeChanged", () => log.push("mid:treeChanged"));
+			subscribeToNodeEvents(root.nested, log, "mid");
 
 			// Root node
-			TreeBeta.on(root, "nodeChanged", () => log.push("root:nodeChanged"));
-			TreeBeta.on(root, "treeChanged", () => log.push("root:treeChanged"));
+			subscribeToNodeEvents(root, log, "root");
 
 			root.nested.child.value = 99;
 
@@ -246,8 +244,7 @@ describe("Tree change event ordering", () => {
 			assert(rootNode !== undefined);
 
 			// Subscribe to node events on the current root
-			TreeBeta.on(rootNode, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(rootNode, "treeChanged", () => log.push("treeChanged"));
+			subscribeToNodeEvents(rootNode, log);
 			view.events.on("rootChanged", () => log.push("rootChanged"));
 
 			// Replace root - this triggers rootChanged via afterBatch.
@@ -279,8 +276,7 @@ describe("Tree change event ordering", () => {
 			const rootNode = view.root;
 			assert(rootNode !== undefined);
 
-			TreeBeta.on(rootNode, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(rootNode, "treeChanged", () => log.push("treeChanged"));
+			subscribeToNodeEvents(rootNode, log);
 			view.events.on("rootChanged", () => log.push("rootChanged"));
 
 			// Replace root which triggers rootChanged via afterBatch.
@@ -360,10 +356,7 @@ describe("Tree change event ordering", () => {
 			}) {}
 
 			const node = hydrate(BufferOrderObj, new BufferOrderObj({ a: 1, b: "hello" }));
-			const log: string[] = [];
-
-			TreeBeta.on(node, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(node, "treeChanged", () => log.push("treeChanged"));
+			const log = subscribeToNodeEvents(node);
 
 			withBufferedTreeEvents(() => {
 				node.a = 2;
@@ -394,10 +387,8 @@ describe("Tree change event ordering", () => {
 
 			const log: string[] = [];
 
-			TreeBeta.on(root.child, "nodeChanged", () => log.push("child:nodeChanged"));
-			TreeBeta.on(root.child, "treeChanged", () => log.push("child:treeChanged"));
-			TreeBeta.on(root, "nodeChanged", () => log.push("parent:nodeChanged"));
-			TreeBeta.on(root, "treeChanged", () => log.push("parent:treeChanged"));
+			subscribeToNodeEvents(root.child, log, "child");
+			subscribeToNodeEvents(root, log, "parent");
 
 			withBufferedTreeEvents(() => {
 				root.child.val = 42;
@@ -442,8 +433,7 @@ describe("Tree change event ordering", () => {
 			view.events.on("rootChanged", () => log.push("rootChanged"));
 
 			// Subscribe to node events on the root node
-			TreeBeta.on(rootNode, "nodeChanged", () => log.push("node:nodeChanged"));
-			TreeBeta.on(rootNode, "treeChanged", () => log.push("node:treeChanged"));
+			subscribeToNodeEvents(rootNode, log, "node");
 
 			withBufferedTreeEvents(() => {
 				// Replace the root — rootChanged fires via afterBatch (not buffered).
@@ -472,10 +462,7 @@ describe("Tree change event ordering", () => {
 			}) {}
 
 			const node = hydrate(BufCheckObj, new BufCheckObj({ val: 1 }));
-			const log: string[] = [];
-
-			TreeBeta.on(node, "nodeChanged", () => log.push("nodeChanged"));
-			TreeBeta.on(node, "treeChanged", () => log.push("treeChanged"));
+			const log = subscribeToNodeEvents(node);
 
 			const insideLog: string[] = [];
 			withBufferedTreeEvents(() => {
