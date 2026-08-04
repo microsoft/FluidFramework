@@ -4,7 +4,6 @@
  */
 
 export {
-	FormattedText,
 	FormattedMainView,
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,

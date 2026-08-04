@@ -5,7 +5,6 @@
 
 export { QuillMainView, type QuillMainViewProps } from "./plain/index.js";
 export {
-	FormattedText,
 	FormattedMainView,
 	type FormattedMainViewProps,
 	type FormattedEditorHandle,

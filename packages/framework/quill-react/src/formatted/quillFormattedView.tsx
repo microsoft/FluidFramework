@@ -12,13 +12,11 @@ import {
 } from "@fluidframework/react/internal";
 import {
 	codePointCount,
-	FormattedText,
 	FormattedTextDefault,
 	type PlainText,
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
-export { FormattedText } from "@fluidframework/tree/internal";
 import Quill, { type EmitterSource } from "quill";
 import DeltaPackage from "quill-delta";
 import {
@@ -265,7 +263,7 @@ function contentOpsToQuillDelta(
 }
 
 /**
- * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link FormattedText.Tree}.
+ * Apply a Quill `Delta` (the editor's outgoing change description) to a {@link @fluidframework/tree#FormattedText.Tree}.
  *
  * @remarks
  * This is the inverse of {@link contentOpsToQuillDelta}: Quill produces a Delta of `retain`/`insert`/`delete`
