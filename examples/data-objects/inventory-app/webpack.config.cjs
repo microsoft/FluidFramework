@@ -3,47 +3,32 @@
  * Licensed under the MIT License.
  */
 
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
+const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const { production } = env;
 	const fluidClient = env?.FLUID_CLIENT ?? "";
+	const config = fluidRoute.commonExampleConfig(__dirname, env);
 
 	return {
-		entry: {
-			main: "./src/index.ts",
-		},
+		...config,
 		resolve: {
-			extensionAlias: {
-				".js": [".ts", ".tsx", ".js"],
-				".cjs": [".cts", ".cjs"],
-				".mjs": [".mts", ".mjs"],
-			},
+			...config.resolve,
 			fallback: {
+				...config.resolve?.fallback,
 				assert: require.resolve("assert/"),
 			},
 		},
 		module: {
-			rules: [
-				{
-					test: /\.tsx?$/,
-					loader: "ts-loader",
-				},
-				{
-					test: /\.[cm]?js$/,
-					use: [require.resolve("source-map-loader")],
-					enforce: "pre",
-				},
-			],
-		},
-		output: {
-			filename: "[name].bundle.js",
-			path: path.resolve(__dirname, "dist"),
+			...config.module,
+			rules: config.module.rules.map((rule) =>
+				rule.enforce === "pre"
+					? { ...rule, exclude: /axios[/\\]dist[/\\]browser[/\\]axios\.cjs$/ }
+					: rule,
+			),
 		},
 		plugins: [
-			new HtmlWebpackPlugin({ template: path.join(__dirname, "src", "index.html") }),
+			...(config.plugins ?? []),
 			new webpack.DefinePlugin({
 				"process.env.FLUID_CLIENT": JSON.stringify(fluidClient),
 			}),
@@ -51,12 +36,8 @@ module.exports = (env) => {
 				process: "process/browser.js",
 			}),
 		],
-		watchOptions: {
-			ignored: "**/node_modules/**",
-		},
-		mode: production ? "production" : "development",
-		devtool: production ? "source-map" : "inline-source-map",
 		devServer: {
+			...config.devServer,
 			port: 8080,
 			open: true,
 		},

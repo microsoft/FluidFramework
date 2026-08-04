@@ -1450,7 +1450,7 @@ importers:
         version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)(supports-color@8.1.1)
+        version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2662,6 +2662,9 @@ importers:
       '@fluidframework/azure-client':
         specifier: workspace:~
         version: link:../../../packages/service-clients/azure-client
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../../packages/drivers/local-driver
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
@@ -2681,6 +2684,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-example/webpack-fluid-loader':
+        specifier: workspace:~
+        version: link:../../utils/webpack-fluid-loader
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -2708,9 +2714,6 @@ importers:
       '@types/react-dom':
         specifier: ^18.3.5
         version: 18.3.7(@types/react@18.3.15)
-      assert:
-        specifier: ^2.0.0
-        version: 2.1.0
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
@@ -2723,9 +2726,6 @@ importers:
       global-jsdom:
         specifier: ^26.0.0
         version: 26.0.0(jsdom@26.1.0)
-      html-webpack-plugin:
-        specifier: ^5.6.0
-        version: 5.6.3(webpack@5.109.0)
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
@@ -2735,24 +2735,15 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
-      process:
-        specifier: ^0.11.10
-        version: 0.11.10
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
-      source-map-loader:
-        specifier: ^5.0.0
-        version: 5.0.0(webpack@5.109.0)
       start-server-and-test:
         specifier: ^2.0.3
         version: 2.0.8(supports-color@10.2.2)
       tinylicious:
         specifier: ^7.0.1
         version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
-      ts-loader:
-        specifier: ^9.5.1
-        version: 9.5.1(typescript@5.4.5)(webpack@5.109.0)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -6587,7 +6578,7 @@ importers:
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       nock:
         specifier: ^13.3.3
-        version: 13.5.6(supports-color@8.1.1)
+        version: 13.5.6(supports-color@10.2.2)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -32361,7 +32352,7 @@ snapshots:
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6)(supports-color@10.2.2)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3(supports-color@10.2.2)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       events: 3.3.0
       express: 4.22.1(supports-color@10.2.2)
       fast-redact: 3.5.0
@@ -32371,7 +32362,7 @@ snapshots:
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.17.0
@@ -34409,7 +34400,7 @@ snapshots:
     dependencies:
       debug: 4.3.7(supports-color@10.2.2)
       notepack.io: 3.0.1
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       uid2: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -34452,7 +34443,7 @@ snapshots:
 
   '@testing-library/dom@10.4.1':
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.7
       '@babel/runtime': 7.29.2
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
@@ -37355,13 +37346,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  detect-port@1.6.1(supports-color@8.1.1):
-    dependencies:
-      address: 1.2.2
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
@@ -37537,10 +37521,10 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  engine.io-client@6.6.4(supports-color@8.1.1):
+  engine.io-client@6.6.4(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       engine.io-parser: 5.2.3
       ws: 8.21.0
       xmlhttprequest-ssl: 2.1.2
@@ -38634,11 +38618,11 @@ snapshots:
     dependencies:
       find-file-up: 0.1.3
 
-  find-process@1.4.7(supports-color@8.1.1):
+  find-process@1.4.7(supports-color@10.2.2):
     dependencies:
       chalk: 4.1.2
       commander: 5.1.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -40014,7 +39998,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
-      find-process: 1.4.7(supports-color@8.1.1)
+      find-process: 1.4.7(supports-color@10.2.2)
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
@@ -41585,14 +41569,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  mocha-multi-reporters@1.5.1(mocha@11.7.5)(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      lodash: 4.18.1
-      mocha: 11.7.5
-    transitivePeerDependencies:
-      - supports-color
-
   mocha@11.7.5:
     dependencies:
       browser-stdout: 1.3.1
@@ -41767,14 +41743,6 @@ snapshots:
   nock@13.5.6(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
-      json-stringify-safe: 5.0.1
-      propagate: 2.0.1
-    transitivePeerDependencies:
-      - supports-color
-
-  nock@13.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:
@@ -43737,20 +43705,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  socket.io-adapter@2.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   socket.io-client@4.8.3(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.4.3(supports-color@8.1.1)
-      engine.io-client: 6.6.4(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
+      engine.io-client: 6.6.4(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
     transitivePeerDependencies:
       - bufferutil
@@ -44439,7 +44398,7 @@ snapshots:
       compression: 1.7.5(supports-color@10.2.2)
       cookie-parser: 1.4.7
       cors: 2.8.5
-      detect-port: 1.6.1(supports-color@8.1.1)
+      detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
       isomorphic-git: 1.27.2
       json-stringify-safe: 5.0.1
