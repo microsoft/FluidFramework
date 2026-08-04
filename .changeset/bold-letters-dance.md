@@ -39,7 +39,7 @@ Once you have a schema, you can construct and edit formatted text:
 const text = RichText.fromString("hello world");
 
 // Append more text with an explicit format.
-text.insertAt(text.characterCount(), " there", { bold: true, italic: false });
+text.insertAt(text.characterCount(), "!", { bold: true, italic: false });
 
 // Bold everything from index 0 up to (but not including) index 5.
 text.formatRange(0, 5, { bold: true });
