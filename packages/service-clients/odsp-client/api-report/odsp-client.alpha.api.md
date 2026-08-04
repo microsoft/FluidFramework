@@ -90,13 +90,9 @@ export interface OdspMember extends IMember {
 
 // @alpha
 export interface OdspServiceOptions {
-    // (undocumented)
     readonly configProvider?: IConfigProviderBase;
-    // (undocumented)
     readonly connection: OdspConnectionConfig;
-    // (undocumented)
     readonly logger?: ITelemetryBaseLogger;
-    // (undocumented)
     readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 

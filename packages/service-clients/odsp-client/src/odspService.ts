@@ -20,6 +20,7 @@ import type {
 	DataStoreRegistry,
 	FluidContainerAttached,
 	FluidContainerWithService,
+	IResolvedUrl,
 	MinimumVersionForCollaboration,
 	Registry,
 	ServiceClient,
@@ -29,6 +30,7 @@ import {
 	OdspDriverUrlResolver,
 	createOdspCreateContainerRequest,
 	createOdspUrl,
+	isOdspResolvedUrl,
 } from "@fluidframework/odsp-driver/internal";
 import type { OdspResourceTokenFetchOptions } from "@fluidframework/odsp-driver-definitions/internal";
 import {
@@ -49,9 +51,13 @@ import type { OdspConnectionConfig, TokenResponse } from "./interfaces.js";
  * @alpha
  */
 export interface OdspServiceOptions {
+	/** Configuration for locating and authenticating with the ODSP service. */
 	readonly connection: OdspConnectionConfig;
+	/** Minimum Fluid Framework version that may collaborate with the container. */
 	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
+	/** Optional logger that receives container telemetry. */
 	readonly logger?: ITelemetryBaseLogger;
+	/** Optional provider for controlling experimental Fluid features. */
 	readonly configProvider?: IConfigProviderBase;
 }
 
@@ -61,6 +67,9 @@ export interface OdspServiceOptions {
  * @remarks
  * Requires a Microsoft 365 tenant with appropriate permissions. Provide a {@link OdspConnectionConfig}
  * with a `tokenProvider` that implements {@link IOdspTokenProvider}.
+ *
+ * @param options - ODSP connection, collaboration, and telemetry options.
+ * @returns A client for creating and loading ODSP-backed containers.
  *
  * @alpha
  */
@@ -105,11 +114,16 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	return runtime;
 };
 
-function makeContainerLoaderOptions(options: OdspServiceOptions): {
+/**
+ * Creates loader options for the ODSP service client.
+ * @internal
+ */
+export function makeContainerLoaderOptions(options: OdspServiceOptions): {
 	urlResolver: OdspDriverUrlResolver;
 	documentServiceFactory: OdspDocumentServiceFactory;
 	clientDetailsOverride: { capabilities: { interactive: boolean } };
 	configProvider: ReturnType<typeof wrapConfigProviderWithDefaults>;
+	logger: ITelemetryBaseLogger | undefined;
 } {
 	const { connection } = options;
 	const documentServiceFactory = new OdspDocumentServiceFactory(
@@ -123,7 +137,19 @@ function makeContainerLoaderOptions(options: OdspServiceOptions): {
 		documentServiceFactory,
 		clientDetailsOverride: { capabilities: { interactive: true } },
 		configProvider: wrapConfigProviderWithDefaults(options.configProvider, {}),
+		logger: options.logger,
 	};
+}
+
+/**
+ * Gets the item ID used to load an ODSP container.
+ * @internal
+ */
+export function getOdspContainerId(resolvedUrl: IResolvedUrl | undefined): string {
+	if (resolvedUrl === undefined || !isOdspResolvedUrl(resolvedUrl)) {
+		throw new Error("ODSP resolved URL unexpectedly missing");
+	}
+	return resolvedUrl.itemId;
 }
 
 /**
@@ -209,6 +235,10 @@ export class OdspServiceContainer<TData>
 		id: string | undefined,
 	) {
 		super(registry, options, container, data, id);
+	}
+
+	protected override getContainerId(): string {
+		return getOdspContainerId(this.container.resolvedUrl);
 	}
 
 	protected createAttachRequest(): IRequest {
