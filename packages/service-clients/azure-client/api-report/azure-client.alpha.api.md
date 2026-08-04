@@ -89,13 +89,9 @@ export interface AzureRemoteConnectionConfig extends AzureConnectionConfig {
 
 // @alpha
 export interface AzureServiceOptions {
-    // (undocumented)
     readonly configProvider?: IConfigProviderBase;
-    // (undocumented)
     readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
-    // (undocumented)
     readonly logger?: ITelemetryBaseLogger;
-    // (undocumented)
     readonly minVersionForCollaboration: MinimumVersionForCollaboration;
 }
 

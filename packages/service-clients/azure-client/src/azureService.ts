@@ -44,9 +44,13 @@ import { isAzureRemoteConnectionConfig } from "./utils.js";
  * @alpha
  */
 export interface AzureServiceOptions {
+	/** Configuration for connecting to Azure Fluid Relay or a local Azure service. */
 	readonly connection: AzureRemoteConnectionConfig | AzureLocalConnectionConfig;
+	/** Minimum Fluid Framework version that may collaborate with the container. */
 	readonly minVersionForCollaboration: MinimumVersionForCollaboration;
+	/** Optional logger that receives container telemetry. */
 	readonly logger?: ITelemetryBaseLogger;
+	/** Optional provider for controlling experimental Fluid features. */
 	readonly configProvider?: IConfigProviderBase;
 }
 
@@ -56,6 +60,9 @@ export interface AzureServiceOptions {
  * @remarks
  * For local development, use `connection.type: "local"` and point to a running
  * `@fluidframework/azure-local-service` instance (default port 7071).
+ *
+ * @param options - Azure Fluid Relay connection, collaboration, and telemetry options.
+ * @returns A client for creating and loading Azure Fluid Relay-backed containers.
  *
  * @alpha
  */
@@ -96,11 +103,16 @@ const containerRuntimeLoader: ContainerRuntimeLoader = async (
 	return runtime;
 };
 
-function makeContainerLoaderOptions(options: AzureServiceOptions): {
+/**
+ * Creates loader options for the Azure service client.
+ * @internal
+ */
+export function makeContainerLoaderOptions(options: AzureServiceOptions): {
 	urlResolver: AzureUrlResolver;
 	documentServiceFactory: RouterliciousDocumentServiceFactory;
 	clientDetailsOverride: { capabilities: { interactive: boolean } };
 	configProvider: ReturnType<typeof wrapConfigProviderWithDefaults>;
+	logger: ITelemetryBaseLogger | undefined;
 } {
 	const { connection } = options;
 	const isRemoteConnection = isAzureRemoteConnectionConfig(connection);
@@ -120,7 +132,16 @@ function makeContainerLoaderOptions(options: AzureServiceOptions): {
 		configProvider: wrapConfigProviderWithDefaults(options.configProvider, {
 			"Fluid.Container.ForceWriteConnection": true,
 		}),
+		logger: options.logger,
 	};
+}
+
+/**
+ * Removes the optional trailing slash from an Azure service endpoint.
+ * @internal
+ */
+export function normalizeAzureEndpoint(endpoint: string): string {
+	return endpoint.replace(/\/$/, "");
 }
 
 /**
@@ -169,8 +190,9 @@ export class AzureServiceContainer<TData>
 		const { minVersionForCollaboration } = options;
 
 		const { connection } = options;
-		const url = new URL(connection.endpoint);
-		url.searchParams.append("storage", encodeURIComponent(connection.endpoint));
+		const endpoint = normalizeAzureEndpoint(connection.endpoint);
+		const url = new URL(endpoint);
+		url.searchParams.append("storage", encodeURIComponent(endpoint));
 		url.searchParams.append("tenantId", encodeURIComponent(getTenantId(connection)));
 		url.searchParams.append("containerId", encodeURIComponent(id));
 
@@ -203,6 +225,9 @@ export class AzureServiceContainer<TData>
 
 	protected createAttachRequest(): IRequest {
 		const { connection } = this.options;
-		return createAzureCreateNewRequest(connection.endpoint, getTenantId(connection));
+		return createAzureCreateNewRequest(
+			normalizeAzureEndpoint(connection.endpoint),
+			getTenantId(connection),
+		);
 	}
 }
