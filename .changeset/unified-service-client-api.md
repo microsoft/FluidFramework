@@ -1,5 +1,4 @@
 ---
-"@fluidframework/azure-client": minor
 "@fluidframework/odsp-client": minor
 "@fluidframework/tinylicious-driver": minor
 "@fluidframework/presence": minor
@@ -8,14 +7,13 @@
 ---
 Add integrations for the unified ServiceClient API
 
-New `@alpha` factories provide `ServiceClient` implementations for Tinylicious, Azure Fluid Relay, and ODSP:
+New `@alpha` factories provide `ServiceClient` implementations for Tinylicious and ODSP:
 
 - `createTinyliciousServiceClient` from `@fluidframework/tinylicious-driver`
-- `createAzureServiceClient` from `@fluidframework/azure-client`
 - `createOdspServiceClient` from `@fluidframework/odsp-client`
 
 Each factory accepts service-specific connection options and a minimum collaboration version.
-Azure Fluid Relay and ODSP also accept a telemetry logger and config provider.
+ODSP also accepts a telemetry logger and config provider.
 The ID returned by `attach` can be passed directly to `loadContainer`;
 for ODSP this is the service-assigned item ID.
 Tinylicious accepts a complete endpoint URL, with an optional explicit port override.
