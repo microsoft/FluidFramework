@@ -67,7 +67,6 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
-	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,

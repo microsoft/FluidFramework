@@ -106,6 +106,22 @@ function createLineAtom(
 }
 
 /**
+ * Convert a line atom's tag and indentation to Quill block attributes.
+ */
+function lineAtomToQuillAttributes(
+	lineAtom: FormattedTextAsTreeDefault.StringLineAtom,
+): Record<string, unknown> {
+	const attributes: Record<string, unknown> = {
+		...lineTagToQuillAttributes[lineAtom.tag.value],
+	};
+	// Omitting an indentation of zero uses Quill's default unindented representation.
+	if (lineAtom.indent) {
+		attributes.indent = lineAtom.indent;
+	}
+	return attributes;
+}
+
+/**
  * Convert {@link TextAsTree.TextOp}s from `onContentChanged` into Quill delta ops
  * that can be applied via `Quill.updateContents()`.
  *
@@ -134,7 +150,7 @@ function contentOpsToQuillDelta(
 	const quillOps: QuillDeltaOp[] = [];
 	// treePos: atom index in the post-edit tree. Advances for retain and insert, not remove.
 	let treePos = 0;
-	// quillPos: UTF-16 index in preEditContent. Advances for retain and remove, not insert.
+	// quillPos: UTF-16 index in preEditContent. Advances when existing Quill content is consumed.
 	let quillPos = 0;
 	// Cache the atoms array so we don't pay tree-traversal cost on every index read.
 	const atoms = root.charactersWithFormatting();
@@ -198,17 +214,10 @@ function contentOpsToQuillDelta(
 
 				if (atom.content instanceof FormattedTextAsTreeDefault.StringLineAtom) {
 					// Line atom: insert newline with line tag attributes.
-					const attributes: Record<string, unknown> = {};
-					const lineTag = atom.content.tag.value;
-					Object.assign(attributes, lineTagToQuillAttributes[lineTag]);
-					if (atom.content.indent) {
-						attributes.indent = atom.content.indent;
-					}
-					const quillOp: QuillDeltaOp = { insert: "\n" };
-					if (Object.keys(attributes).length > 0) {
-						quillOp.attributes = attributes;
-					}
-					quillOps.push(quillOp);
+					quillOps.push({
+						insert: "\n",
+						attributes: lineAtomToQuillAttributes(atom.content),
+					});
 					i++;
 				} else {
 					// Text atom: group consecutive atoms with the same formatting.
@@ -224,7 +233,6 @@ function contentOpsToQuillDelta(
 				}
 			}
 			treePos = insertEnd;
-			// quillPos does not advance: inserts are new content not in preEditContent.
 		} else {
 			// remove: atoms are gone from the tree; use preEditContent to get UTF-16 width.
 			const utf16Count = utf16LengthForCodePoints(preEditContent, quillPos, op.count);
@@ -232,6 +240,25 @@ function contentOpsToQuillDelta(
 			quillPos += utf16Count;
 			// treePos does not advance — removed atoms are not in the new tree.
 		}
+	}
+
+	// Fixup required new line: quill requires one at the end, so we add an extra if needed.
+	// This simply deletes the old one if there was one, then adds a new one if needed.
+	// Such an approach was deemed slightly simpler and less error prone than reusing one if preexisting,
+	// since it avoids any potential for the extra new line to accidentally be reused when it has formatting applied.
+	const remainingQuillContent = preEditContent.slice(quillPos);
+	if (remainingQuillContent.length > 0) {
+		assert(
+			remainingQuillContent === "\n",
+			"Expected only Quill's mandatory terminal newline to remain",
+		);
+		// Delete the extra new line which is required by quill.
+		quillOps.push({ delete: 1 });
+	}
+
+	if (!root.fullString().endsWith("\n")) {
+		// If needed add the extra new line which is required by quill.
+		quillOps.push({ insert: "\n" });
 	}
 
 	return quillOps;
@@ -272,7 +299,7 @@ export function applyQuillDeltaToTree(
 			if (op.retain !== undefined) {
 				// The docs for retain imply this is always a number, but the type definitions allow a record here.
 				// It is unknown why the type definitions allow a record as they have no doc comments.
-				// For now this assert seems to be passing, so we just assume its always a number.
+				// For now this assert seems to be passing, so we just assume it's always a number.
 				assert(
 					typeof op.retain === "number",
 					0xcdf /* Expected retain count to be a number */,
