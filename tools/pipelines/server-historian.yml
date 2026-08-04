@@ -102,7 +102,7 @@ extends:
     shouldPublishNpmPackages: ${{ variables.publish }}
     releaseKind: ${{ parameters.releaseKind }}
     publishOverride: ${{ parameters.publishOverride }}
-    publishAsPartOfBuild: true
+    publishAsPartOfBuild: false
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: ${{ variables.FluidFrameworkDirectory }}/server/historian
     containerName: fluidframework/routerlicious/historian
