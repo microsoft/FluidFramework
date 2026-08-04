@@ -288,7 +288,7 @@ export class LocalDocumentStorageService implements IDocumentStorageService {
 		return tree.groupId;
 	}
 
-	public async readBlob(blobId: string): Promise<ArrayBuffer> {
+	public async readBlob(blobId: string): Promise<ArrayBufferLike> {
 		const blob = await this.manager.getBlob(blobId);
 		this.blobsShaCache.set(blob.sha, "");
 		const bufferContent = stringToBuffer(blob.content, blob.encoding);

@@ -5,7 +5,7 @@
 
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 
-import { Uint8ArrayToString, stringToBuffer } from "@fluid-internal/client-utils";
+import { bufferToString, stringToBuffer } from "@fluid-internal/client-utils";
 import {
 	IChannelAttributes,
 	IChannelFactory,
@@ -39,8 +39,8 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 				encode: (change: IPropertyTreeMessage) => {
 					const changeSetStr = JSON.stringify(change.changeSet);
 					const unzipped = new TextEncoder().encode(changeSetStr);
-					const zipped: Uint8Array = encodeFn(unzipped);
-					const zippedStr = Uint8ArrayToString(zipped, "base64");
+					const zipped: Buffer = encodeFn(unzipped);
+					const zippedStr = bufferToString(zipped, "base64");
 					if (zippedStr.length < changeSetStr.length) {
 						// eslint-disable-next-line @typescript-eslint/dot-notation
 						change["isZipped"] = "1";
@@ -60,10 +60,10 @@ export abstract class CompressedPropertyTreeFactory implements IChannelFactory {
 				},
 			},
 			summaryEncoder: {
-				encode: (snapshotSummary: ISnapshotSummary): Uint8Array => {
+				encode: (snapshotSummary: ISnapshotSummary): Buffer => {
 					const summaryStr = JSON.stringify(snapshotSummary);
 					const unzipped = new TextEncoder().encode(summaryStr);
-					const serializedSummary: Uint8Array = encodeFn(unzipped);
+					const serializedSummary: Buffer = encodeFn(unzipped);
 					return serializedSummary;
 				},
 				decode: (serializedSummary): ISnapshotSummary => {

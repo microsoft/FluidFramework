@@ -5,7 +5,7 @@
 
 import fs from "fs";
 
-import { Uint8ArrayToArrayBuffer, bufferToString } from "@fluid-internal/client-utils";
+import { bufferToString } from "@fluid-internal/client-utils";
 import { assert } from "@fluidframework/core-utils/internal";
 import type { ISummaryTree } from "@fluidframework/driver-definitions";
 import type {
@@ -120,7 +120,7 @@ export class FluidFetchReader
 			const fileName = `${this.path}/${this.versionName}/${sha}`;
 			if (fs.existsSync(fileName)) {
 				const data = fs.readFileSync(fileName);
-				return Uint8ArrayToArrayBuffer(data);
+				return data;
 			}
 		}
 		throw new Error(`Can't find blob ${sha}`);

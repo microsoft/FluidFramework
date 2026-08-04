@@ -5,8 +5,6 @@
 
 import * as base64js from "base64-js";
 
-import { Uint8ArrayToArrayBuffer } from "./bufferShared.js";
-
 /**
  * Converts a Uint8Array to a string of the provided encoding
  * Useful when the array might be an {@link IsoBuffer}.
@@ -165,7 +163,7 @@ export class IsoBuffer extends Uint8Array {
 			case "base64": {
 				const sanitizedString = this.sanitizeBase64(str);
 				const encoded = base64js.toByteArray(sanitizedString);
-				return new IsoBuffer(Uint8ArrayToArrayBuffer(encoded));
+				return new IsoBuffer(encoded.buffer);
 			}
 			case "utf8":
 			// eslint-disable-next-line unicorn/text-encoding-identifier-case -- this value is supported, just discouraged

@@ -137,7 +137,7 @@ class InternalTestStorage implements IDocumentStorageService {
 	}
 	async readBlob(id: string): Promise<ArrayBufferLike> {
 		return id === misotestid
-			? new TextEncoder().encode(abcContent).buffer /* This branch is never used. */
+			? new TextEncoder().encode(abcContent)
 			: getHeaderContent(this._uploadedSummary!);
 	}
 	async uploadSummaryWithContext(
@@ -581,12 +581,9 @@ async function testEncDecBinaryLoop(
 	}
 }
 
-function compareTwoBlobs(
-	blob1: ArrayBufferLike | Uint8Array,
-	blob2: ArrayBufferLike | Uint8Array,
-): boolean {
-	const blob1View = blob1 instanceof Uint8Array ? blob1 : new Uint8Array(blob1);
-	const blob2View = blob2 instanceof Uint8Array ? blob2 : new Uint8Array(blob2);
+function compareTwoBlobs(blob1: ArrayBufferLike, blob2: ArrayBufferLike): boolean {
+	const blob1View = new Uint8Array(blob1);
+	const blob2View = new Uint8Array(blob2);
 	if (blob1View.length !== blob2View.length) {
 		return false;
 	}

@@ -3,7 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import { TypedEventEmitter, Uint8ArrayToArrayBuffer } from "@fluid-internal/client-utils";
+import { TypedEventEmitter } from "@fluid-internal/client-utils";
 import type { IEventProvider, IFluidHandle } from "@fluidframework/core-interfaces";
 import { FluidDataStoreRuntime } from "@fluidframework/datastore/legacy";
 import type {
@@ -45,7 +45,7 @@ class BlobCollection implements IBlobCollection {
 				const newBlob: IBlobRecord = {
 					id: key,
 					// Blobs in Fluid are retrieved as ArrayBuffers, this translates it back to a Blob
-					blob: new Blob([Uint8ArrayToArrayBuffer(new Uint8Array(arrayBuffer))]),
+					blob: new Blob([arrayBuffer]),
 				};
 				this.blobs.push(newBlob);
 				// Sort in case timestamps disagree with map insertion order
