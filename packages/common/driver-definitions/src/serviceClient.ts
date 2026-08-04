@@ -382,7 +382,7 @@ export interface ServiceClient {
 	): Promise<FluidContainerWithService<T>>;
 
 	/**
-	 * A short hand for {@link ServiceClient.(createContainer:1)} followed by {@link FluidContainerWithService.attach}.
+	 * A shorthand for {@link ServiceClient.(createContainer:1)} followed by {@link FluidContainerWithService.attach}.
 	 * @remarks
 	 * Due to current implementation limitations making container creation async and service specific,
 	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
@@ -395,7 +395,7 @@ export interface ServiceClient {
 	createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
 
 	/**
-	 * A short hand for {@link ServiceClient.(createContainer:2)} followed by {@link FluidContainerWithService.attach}.
+	 * A shorthand for {@link ServiceClient.(createContainer:2)} followed by {@link FluidContainerWithService.attach}.
 	 * @remarks
 	 * Due to current implementation limitations making container creation async and service specific,
 	 * creating then attaching one is a bit verbose with two awaits that are messy to include inline.
