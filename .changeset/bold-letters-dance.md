@@ -11,8 +11,9 @@ It provides a generic, collaborative rich-text domain built on SharedTree, param
 Use `FormattedTextAsTree.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
 
 ```typescript
-import { SchemaFactory, SchemaFactoryBeta } from "@fluidframework/tree";
-import { FormattedTextAsTree } from "@fluidframework/tree/alpha";
+import { SchemaFactory} from "fluid-framework";
+import { SchemaFactoryBeta } from "fluid-framework/beta";
+import { FormattedTextAsTree } from "fluid-framework/alpha";
 
 // Note that a beta schema factory is currently required for use with `FormattedTextAsTree`
 const schemaFactory = new SchemaFactoryBeta("com.example.doc");
