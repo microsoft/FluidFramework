@@ -197,6 +197,7 @@ export {
 	FormatValidatorBasic, 
 	FormatValidatorNoOp, 
 	FormatVersion, 
+	FormattedTextAsTree, 
 	HandleConverter, 
 	ICodecOptions, 
 	ITreeAlpha, 
@@ -256,9 +257,9 @@ export {
 	SchemaFactoryAlpha, 
 	SchemaStaticsAlpha, 
 	SchemaType, 
-	SharedTreeAlpha,
-	SharedTreeFormatOptions,
-	SharedTreeOptions,
+	SharedTreeAlpha, 
+	SharedTreeFormatOptions, 
+	SharedTreeOptions, 
 	SimpleAllowedTypeAttributes, 
 	SimpleArrayNodeSchema, 
 	SimpleFieldSchema, 
@@ -309,6 +310,7 @@ export {
 	createArrayInsertionAnchor, 
 	createIndependentTreeAlpha, 
 	decodeSchemaCompatibilitySnapshot, 
+	defineTreeDataStore, 
 	encodeSchemaCompatibilitySnapshot, 
 	eraseSchemaDetails, 
 	eraseSchemaDetailsSubclassable, 
@@ -330,7 +332,6 @@ export {
 	replaceConciseTreeHandles, 
 	replaceHandles, 
 	replaceVerboseTreeHandles, 
-	trackDirtyNodes, 
-	defineTreeDataStore
+	trackDirtyNodes
 	// #endregion
 } from "../index.js";

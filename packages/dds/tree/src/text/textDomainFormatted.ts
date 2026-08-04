@@ -122,7 +122,7 @@ export class StringTextAtomNode
  * TODO:
  * - Add more comprehensive tests for generic parameterizations other than default.
  * - Sort out API around overwriting subsets of formatting information.
- * @internal
+ * @alpha
  */
 export namespace FormattedTextAsTree {
 	/**
@@ -629,7 +629,7 @@ export namespace FormattedTextAsTree {
 	 * This is implemented {@link StringAtom}, but we avoid leaking the fact this is a TreeNode in the API surface to
 	 * preserve more future flexibility.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface FormattedAtom<TFormat, TText> {
 		/**
@@ -649,7 +649,7 @@ export namespace FormattedTextAsTree {
 	 * @remarks
 	 * Additional kinds of text atoms (also known as embedded objects) which can occur inside a string can implement this.
 	 * The schema for them can then be provided to {@link FormattedTextAsTree.createSchema}.
-	 * @internal
+	 * @alpha
 	 */
 	export interface TextAtom {
 		/**
@@ -666,7 +666,7 @@ export namespace FormattedTextAsTree {
 	 * Other strings should work, but our intention is to provide no type-safe API which can produce them, so an application can take their lack of existence as an invariant if they want.
 	 * It is still however possible to produce them, like export/import round trips with editing in the middle of the process, or collaboration with an equivalent schema which doesn't enforce this invariant.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface StringTextAtomStatics {
 		/**
@@ -684,7 +684,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Schema for a {@link FormattedTextAsTree.(StringTextAtom:variable)} node.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export const StringTextAtom = eraseSchemaDetails<TextAtom, StringTextAtomStatics>()(
 		StringTextAtomNode,
@@ -693,7 +693,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Node for the {@link FormattedTextAsTree.(StringTextAtom:variable)} schema.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type StringTextAtom = ErasedNode<
 		TextAtom,
@@ -703,7 +703,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Statics for formatted text nodes.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface Statics<TTree, FormatSchema extends ImplicitAllowedTypes> {
 		/**
@@ -732,7 +732,7 @@ export namespace FormattedTextAsTree {
 	 * @see {@link FormattedTextAsTree.Statics.fromString} for construction.
 	 * @see {@link FormattedTextAsTree.createSchema} for creating schemas whose nodes implement this.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export interface Members<
 		FormatSchema extends ImplicitAllowedTypes,
@@ -879,7 +879,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
 	 * @input
-	 * @internal
+	 * @alpha
 	 */
 	export interface FormattedAtomInsertable<TFormat, TContent> {
 		readonly content: TContent;
@@ -890,7 +890,7 @@ export namespace FormattedTextAsTree {
 	 * Schema identifier for the a generic formatted text schema.
 	 * @privateRemarks
 	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
-	 * @internal
+	 * @alpha
 	 */
 	export type FormattedTextSchemaIdentifier<TUserScope extends string> = ScopedSchemaName<
 		`com.fluidframework.text.formatted<${TUserScope}>`,
@@ -903,7 +903,7 @@ export namespace FormattedTextAsTree {
 	 * This is just schema for the text atom {@link AllowedTypes},
 	 * and does not include the actual formatting (which is higher up in the tree).
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type TextAtomSchemas<
 		ExtraAtomsSchema extends readonly LazyItem<
@@ -914,7 +914,7 @@ export namespace FormattedTextAsTree {
 	/**
 	 * A generic type for a formatted text schema.
 	 * @sealed
-	 * @internal
+	 * @alpha
 	 */
 	export type FormattedTextSchema<
 		TUserScope extends string,
