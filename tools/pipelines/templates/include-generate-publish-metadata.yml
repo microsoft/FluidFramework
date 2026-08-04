@@ -54,7 +54,7 @@ steps:
       esac
 
       case "${IS_LATEST:-}" in
-        ""|'$(SetVersion.isLatest)'|false|False) isLatest=false ;;
+        ""|false|False) isLatest=false ;;
         true|True) isLatest=true ;;
         *)
           echo "##vso[task.logissue type=error]Invalid isLatest value '$IS_LATEST'"
