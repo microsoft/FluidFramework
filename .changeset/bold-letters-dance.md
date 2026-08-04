@@ -50,5 +50,4 @@ for (const atom of text.charactersWithFormatting()) {
 }
 ```
 
-The generic `FormattedTextAsTree` is `@alpha` and subject to change.
-The `FormattedTextAsTreeDefault` convenience parameterization remains `@internal` for now.
+`FormattedTextAsTree` is currently surfaced as an alpha API and is subject to change.
