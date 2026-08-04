@@ -2,9 +2,9 @@
 	"extends": "../../../../common/build/build-common/tsconfig.node16.json",
 	"exclude": ["src/test/**/*"],
 	"compilerOptions": {
-		// PropertyDDS relies on legacy class field semantics (useDefineForClassFields: false),
-		// so pin the target below ES2022, where TypeScript would enable it by default.
-		"target": "ES2021",
+		// PropertyDDS relies on legacy class field semantics, which TypeScript enables by
+		// default at target ES2022+. Keep them by disabling useDefineForClassFields.
+		"useDefineForClassFields": false,
 		"downlevelIteration": true,
 		"noUnusedLocals": false,
 		"outDir": "./lib",
