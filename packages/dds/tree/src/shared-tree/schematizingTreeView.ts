@@ -95,12 +95,12 @@ export class SchematizingSimpleTreeView<
 	private flexTreeContext: Context | undefined;
 
 	/**
-	 * Undefined iff uninitialized or disposed.
+	 * Undefined only when uninitialized or disposed.
 	 */
 	private currentCompatibility: SchemaCompatibilityStatus | undefined;
 	/**
 	 * Cached set of enabled schema upgrades, computed alongside compatibility.
-	 * Undefined iff uninitialized or disposed.
+	 * @remarks `undefined` only when uninitialized or disposed.
 	 */
 	private currentEnabledUpgrades: ReadonlySet<SchemaUpgrade> | undefined;
 	public readonly events: Listenable<TreeViewEvents & TreeBranchEvents> &
@@ -160,9 +160,7 @@ export class SchematizingSimpleTreeView<
 		const stagedUpgradePolicy =
 			config instanceof TreeViewConfigurationAlpha ? config.stagedUpgradePolicy : undefined;
 		const configAlpha = new TreeViewConfigurationAlpha({
-			schema: config.schema,
-			enableSchemaValidation: config.enableSchemaValidation,
-			preventAmbiguity: config.preventAmbiguity,
+			...config,
 			stagedUpgradePolicy,
 		});
 		this.stagedUpgradePolicy = configAlpha.stagedUpgradePolicy;
@@ -470,6 +468,9 @@ export class SchematizingSimpleTreeView<
 		}
 	}
 
+	/**
+	 * Computes the current schema compatibility status and updates the cached enabled upgrades.
+	 */
 	private computeCompatibility(): SchemaCompatibilityStatus {
 		const { enabledUpgrades, ...compatibility } = checkSchemaCompatibility(
 			this.viewSchema,

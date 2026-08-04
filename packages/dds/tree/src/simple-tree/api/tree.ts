@@ -645,8 +645,11 @@ export interface TreeViewAlpha<
 	initialize(content: InsertableField<TSchema>): void;
 
 	/**
-	 * Returns true iff at least one location guarded by the provided staged `upgrade` token
+	 * Checks whether a staged schema upgrade has been applied to the document's stored schema.
+	 *
+	 * @returns `true` if and only if at least one location guarded by the provided staged `upgrade` token
 	 * is already enabled in the document's stored schema.
+	 *
 	 * @remarks
 	 * This API is used for rollout safety checks.
 	 * It derives results from this view schema and the current stored schema.

@@ -209,7 +209,7 @@ Compatibility depends on the schema and the `SchemaUpgrade` values, not on the a
 ## Query If an Upgrade is Enabled
 
 The core question is, given a `SchemaUpgrade`, is it enabled in this document's stored schema?
-A `SchemaUpgrade` is considered enabled when, for at least one location where it is used in view schema, the result of the upgrade exists in the corresponding stored schema location.
+A `SchemaUpgrade` is considered enabled when, for at least one location where it is used in view schema, the result of the upgrade exists in the corresponding stored schema location. The stored schema can end up in a state where not all locations guarded by a given upgrade token have been enabled — for example, if an upgrade is enabled in one field and later the same upgrade token is added to a new field. In this case, `isStagedUpgradeEnabled` returns `true` because the upgrade is already present in at least one location, and the auto-include behavior will automatically include it in `enabledUpgrades`, so the new location will be upgraded on the next `initialize` or `upgradeSchema` call.
 
 This allows applications to check whether a staged upgrade has already been applied to a document's stored schema, which is necessary for rollback safety during runtime schema upgrades: if a particular upgrade needs to be rolled back, the ideal situation is that a feature flag is turned off to control this. However, documents that have already been upgraded cannot be downgraded. This means that for all existing documents, the app must check if the rolled back upgrade has already been enabled and if it has, the upgrade must be included in the list of enabled upgrades even if its controlling feature flag is turned off.
 
@@ -230,7 +230,7 @@ Important constraints:
 
 - This query requires both view schema and stored schema context.
 - It cannot be answered from stored schema alone because guarded locations are discovered from staged annotations in view schema.
-- Other upgrade tokens are irrelevant to the result for the queried token.
+- The result for a queried token depends only on locations guarded by that token; other upgrade tokens do not affect it.
 
 ### Implementation
 
