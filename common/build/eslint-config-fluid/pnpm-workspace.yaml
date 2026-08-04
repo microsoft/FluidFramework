@@ -30,21 +30,26 @@ frozenLockfile: true
 strictPeerDependencies: true
 updateNotifier: false
 
-# Security overrides.
-# - Address vulnerabilities in brace-expansion, chokidar, diff, js-yaml, minimatch,
-#   serialize-javascript, and picomatch.
 overrides:
+  # Uncomment to use the local fluid eslint-plugin while developing the packages together.
+  #"@fluid-internal/eslint-plugin-fluid": "link:../eslint-plugin-fluid"
+
+  # @rushstack/eslint-plugin 0.23.2 pins 8.56.x, which predates TypeScript 6 support.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils": ~8.58.0
+  # eslint-plugin-tsdoc 0.5.2 has the same stale TypeScript ESLint pin.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils": ~8.58.0
+
+  # Security overrides.
   # Resolve known security vulnerabilities in transitive dependencies.
   "@babel/core@>=7 <8": ^7.29.6
+  brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
   brace-expansion@>=5 <6: ^5.0.6
-  diff@>=7 <8: ^8.0.3
-  keyv@>=4 <5: ^5.5.3
-
-  brace-expansion@>=1 <2: ^1.1.13
   chokidar: ^5
   diff@>=5 <6: ^5.2.2
+  diff@>=7 <8: ^8.0.3
   js-yaml: ^4.1.1
+  keyv@>=4 <5: ^5.5.3
   minimatch@>=3 <4: ^3.1.5
   minimatch@>=5 <6: ^5.1.9
   minimatch@>=6 <7: ^6.2.3
