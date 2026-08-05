@@ -1123,7 +1123,7 @@ describe("treeNodeApi", () => {
 					0: 42,
 				});
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 2);
@@ -1166,7 +1166,7 @@ describe("treeNodeApi", () => {
 
 				const tree = viewWithOldSchema.root;
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 1);
@@ -1213,7 +1213,7 @@ describe("treeNodeApi", () => {
 				});
 				const tree = view.root;
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 1);
@@ -1231,7 +1231,7 @@ describe("treeNodeApi", () => {
 				});
 				const tree = view.root;
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 1);
@@ -1307,7 +1307,7 @@ describe("treeNodeApi", () => {
 					bar: "World",
 				});
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 2);
@@ -1326,7 +1326,7 @@ describe("treeNodeApi", () => {
 				});
 				const tree = view.root;
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 1);
@@ -1396,7 +1396,7 @@ describe("treeNodeApi", () => {
 			it("non-empty", () => {
 				const { tree } = initializeArrayTree(["Hello", "World"]);
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 2);
@@ -1413,7 +1413,7 @@ describe("treeNodeApi", () => {
 				view.initialize(["Hello", "World"]);
 				const tree = view.root;
 
-				const children = new Map<string | number, TreeNode | TreeLeafValue>(
+				const children = new Map<string | number | undefined, TreeNode | TreeLeafValue>(
 					TreeAlpha.children(tree),
 				);
 				assert.equal(children.size, 2);
