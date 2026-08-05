@@ -51,6 +51,12 @@ const waitForDataCorruption = async (container: IFluidContainer): Promise<void> 
 		}),
 	);
 
+describe("ADO test report validation", () => {
+	it("surfaces failed Tinylicious tests in Azure DevOps", () => {
+		assert.fail("Intentional failure for validating Azure DevOps test report publication");
+	});
+});
+
 for (const compatibilityMode of ["1.0.0", "2.0.0"] as const) {
 	describe(`TinyliciousClient (compatibilityMode: ${compatibilityMode})`, function () {
 		let tinyliciousClient: TinyliciousClient;
