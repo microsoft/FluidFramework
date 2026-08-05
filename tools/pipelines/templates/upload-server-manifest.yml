@@ -20,6 +20,8 @@ jobs:
     steps:
     - checkout: self
       path: $(FluidFrameworkDirectory)
+      fetchDepth: 1
+      fetchTags: false
     - template: /tools/pipelines/templates/include-use-node-version.yml@self
     - template: /tools/pipelines/templates/include-install-build-tools.yml@self
       parameters:
