@@ -9,4 +9,5 @@ export {
 	type BaseExampleConfigOptions,
 	type ExampleWebpackEnvironment,
 } from "./baseConfig.js";
+export { exampleAppConfig } from "./appConfig.js";
 export { commonExampleConfig, devServerConfig } from "./routes.js";

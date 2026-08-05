@@ -17,6 +17,10 @@ import type { ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 
 /**
+ * This file has some simple example utilities for loading and rendering Fluid containers and data stores.
+ */
+
+/**
  * Default service options used by example applications.
  * @internal
  */
@@ -26,6 +30,11 @@ export const defaultServiceOptions: ServiceOptions = {
 
 /**
  * Configures a service client based on the `fluidClient` URL query parameter.
+ *
+ * @remarks
+ * This helper is designed to work with `exampleAppConfig` from
+ * `@fluid-example/webpack-fluid-loader`, which provides the browser compatibility required by
+ * the ephemeral local-driver service used by default.
  *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
  * @returns A client for the selected service, or the ephemeral service by default.
@@ -57,6 +66,9 @@ export function getExampleServiceClient(
  * @param client - The service client used to load or create the container.
  * @param rootStore - The kind of data store to use as the container root.
  * @returns The loaded or newly attached container.
+ * @remarks
+ * This function assumes its the only thing using the `location.hash`: if your application uses it for anything else,
+ * it should replace use of this function with an appropriate alternative scheme.
  * @internal
  */
 export async function loadExampleContainer<T>(
@@ -81,6 +93,17 @@ export async function loadExampleContainer<T>(
  * @typeParam T - The type of the root data store.
  * @param rootStore - The kind of data store to load as the container root.
  * @returns The root data store.
+ *
+ * @remarks
+ * This utility is intentionally very prescriptive.
+ * It forces a particular way to select the service client and the container ID,
+ * and only handles a single kind of data store at the root level.
+ * Simple examples can use it to help keep our set of examples aligned in how they are setup when those
+ * examples don't need to demonstrate/customize anything this function controls.
+ *
+ * This is a simple wrapper around {@link getExampleServiceClient} and {@link loadExampleContainer}:
+ * see them for details.
+ *
  * @internal
  */
 export async function loadExampleDataStore<T>(rootStore: DataStoreKind<T>): Promise<T> {
