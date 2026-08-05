@@ -1474,11 +1474,11 @@ describe("ArrayNode", () => {
 
 		it("throws on an out-of-range initial index", () => {
 			const array = init(CustomizableNumberArray, [1, 2, 3]);
-			// One past the end is valid (an insertion point after the last child)...
+			// One past the end is valid (an insertion point after the last child).
 			const anchor = createArrayInsertionAnchor(array, 3);
 			assert.equal(anchor.index, 3);
 			anchor.dispose();
-			// ...but beyond that, or negative, is a usage error rather than being silently corrected.
+			// Anything beyond that, or negative, is a usage error.
 			assert.throws(
 				() => createArrayInsertionAnchor(array, 4),
 				validateUsageError(/out of bounds/),
