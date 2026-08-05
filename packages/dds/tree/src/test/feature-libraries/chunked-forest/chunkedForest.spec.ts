@@ -36,7 +36,7 @@ import {
 	defaultSchemaPolicy,
 } from "../../../feature-libraries/index.js";
 import { SchemaFactory, numberSchema, toInitialSchema } from "../../../simple-tree/index.js";
-import { brand } from "../../../util/index.js";
+import { brand, makeArray } from "../../../util/index.js";
 import { testForest } from "../../forestTestSuite.js";
 
 const chunkers: [string, (schema: TreeStoredSchemaSubscription) => IChunker][] = [
@@ -271,6 +271,113 @@ describe("ChunkedForest", () => {
 				}
 			}
 			assert.deepEqual(values, [0, 1, 99, 2, 3, 4]);
+		});
+
+		/**
+		 * Seeds the forest's root field with a sequence of single-shape UniformChunks of the given sizes.
+		 *
+		 * @remarks
+		 * Lets tests position attach/detach boundaries on existing chunk seams and exercise
+		 * `coalesceUniformChunks` without `splitFieldAtIndex` having to bisect first.
+		 */
+		function setupForestWithChunks(
+			chunkSizes: readonly number[],
+		): ReturnType<typeof setupForest> {
+			const forestSchema = new TreeStoredSchemaRepository(
+				toInitialSchema(SchemaFactory.number),
+			);
+			const chunker = makeTreeChunker(
+				forestSchema,
+				defaultSchemaPolicy,
+				defaultIncrementalEncodingPolicy,
+			);
+			const forest = buildChunkedForest(chunker);
+			let nextValue = 0;
+			const chunks: TreeChunk[] = chunkSizes.map(
+				(size) =>
+					new UniformChunk(
+						numberShape.withTopLevelLength(size),
+						makeArray(size, () => nextValue++),
+					),
+			);
+			forest.roots.fields.set(rootFieldKey, chunks);
+			return forest;
+		}
+
+		it("coalesces same-shape neighbors left adjacent by an aligned detach", () => {
+			// Field pre-arranged as three same-shape UniformChunks of sizes 2, 1, 2 so the
+			// detach lands on existing chunk boundaries — splitFieldAtIndex is a no-op and
+			// only coalesceUniformChunks is exercised. After removing the middle single-node
+			// chunk, the two 2-node chunks merge into a single 4-node chunk.
+			const forest = setupForestWithChunks([2, 1, 2]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.detach({ start: 2, end: 3 }, detachedKey, detachedId, false);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const remaining = forest.roots.fields.get(rootFieldKey);
+			assert(remaining !== undefined);
+			assert.equal(remaining.length, 1);
+			assert(remaining[0] instanceof UniformChunk);
+			assert.equal(remaining[0].topLevelLength, 4);
+		});
+
+		it("enterNode resolves the correct chunk in a field with multiple multi-node chunks", () => {
+			// Regression test for a chunk-walk bug in enterNode. Previously, the loop that
+			// walks chunks to find the target index read its `chunk` variable at the top of
+			// the loop body — before `indexOfChunk++` — so the next iteration's condition
+			// check used the prior iteration's chunk. With fields containing multiple
+			// multi-node UniformChunks (as produced by coalesceUniformChunks in steady state),
+			// this caused the loop to overshoot the target chunk.
+			//
+			// Setup: three same-shape UniformChunks of sizes 2, 5, 3 — 10 total nodes.
+			// enterNode(6) targets the 5-node chunk at local position 4 (global indices 2..6
+			// land in that chunk). Pre-fix, the loop steps past the 5-node chunk and lands on
+			// the 3-node chunk with indexWithinChunk = -1, throwing "Array index is out of
+			// bounds" when dereferencing newChunks[-1].
+			const forest = setupForestWithChunks([2, 5, 3]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.enterNode(6);
+			visitor.exitNode(6);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			// enterNode shatters the targeted 5-node UniformChunk into 5 BasicChunks; the
+			// field's chunk count grows from 3 to 7, with the two flanking UniformChunks
+			// left untouched.
+			const result = forest.roots.fields.get(rootFieldKey);
+			assert(result !== undefined);
+			assert.equal(result.length, 7);
+			assert(result[0] instanceof UniformChunk);
+			assert.equal(result[0].topLevelLength, 2);
+			assert(result[6] instanceof UniformChunk);
+			assert.equal(result[6].topLevelLength, 3);
+		});
+
+		it("coalesces an inserted same-shape chunk with its neighbors", () => {
+			// Field pre-arranged as two same-shape 2-node UniformChunks so the attach lands
+			// on the existing seam — splitFieldAtIndex is a no-op. After inserting a
+			// single-node UniformChunk with value 99 at index 2, coalesce merges both seams
+			// into a single 5-node UniformChunk.
+			const forest = setupForestWithChunks([2, 2]);
+			const source = new UniformChunk(numberShape.withTopLevelLength(1), [99]);
+			forest.roots.fields.set(detachedKey, [source]);
+
+			const visitor = forest.acquireVisitor();
+			visitor.enterField(rootFieldKey);
+			visitor.attach(detachedKey, 1, 2);
+			visitor.exitField(rootFieldKey);
+			visitor.free();
+
+			const updated = forest.roots.fields.get(rootFieldKey);
+			assert(updated !== undefined);
+			assert.equal(updated.length, 1);
+			assert(updated[0] instanceof UniformChunk);
+			assert.equal(updated[0].topLevelLength, 5);
 		});
 	});
 });
