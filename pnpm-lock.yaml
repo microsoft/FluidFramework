@@ -2659,15 +2659,12 @@ importers:
 
   examples/data-objects/inventory-app:
     dependencies:
-      '@fluidframework/local-driver':
+      '@fluid-example/example-utils':
         specifier: workspace:~
-        version: link:../../../packages/drivers/local-driver
+        version: link:../../utils/example-utils
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/tinylicious-driver':
-        specifier: workspace:~
-        version: link:../../../packages/drivers/tinylicious-driver
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework

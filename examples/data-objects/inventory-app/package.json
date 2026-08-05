@@ -36,9 +36,8 @@
 		"webpack:dev": "webpack --env development"
 	},
 	"dependencies": {
-		"@fluidframework/local-driver": "workspace:~",
+		"@fluid-example/example-utils": "workspace:~",
 		"@fluidframework/react": "workspace:~",
-		"@fluidframework/tinylicious-driver": "workspace:~",
 		"fluid-framework": "workspace:~",
 		"react": "^18.3.1",
 		"react-dom": "^18.3.1"
