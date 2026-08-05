@@ -52,7 +52,7 @@ overrides:
   '@nevware21/ts-utils': ^0.14.0
   '@types/node': ~22.19.17
   axios@<1: ^0.33.0
-  axios@^1.15.0: 1.18.1
+  axios@^1.15.0: 1.19.0
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
@@ -1450,7 +1450,7 @@ importers:
         version: 11.7.5
       mocha-multi-reporters:
         specifier: ^1.5.1
-        version: 1.5.1(mocha@11.7.5)(supports-color@8.1.1)
+        version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -2665,15 +2665,15 @@ importers:
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/tree':
-        specifier: workspace:~
-        version: link:../../../packages/dds/tree
       fluid-framework:
         specifier: workspace:~
         version: link:../../../packages/framework/fluid-framework
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@biomejs/biome':
         specifier: ~2.4.5
@@ -2695,7 +2695,7 @@ importers:
         version: 13.0.0(@typescript-eslint/utils@8.61.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
       '@testing-library/react':
         specifier: ^16.3.0
-        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.3)(@types/react@18.3.15)(react-dom@18.3.1)(react@18.3.1)
+        version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7)(@types/react@18.3.15)(react-dom@18.3.1)(react@18.3.1)
       '@types/mocha':
         specifier: ^10.0.10
         version: 10.0.10
@@ -2705,6 +2705,9 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.5
+        version: 18.3.7(@types/react@18.3.15)
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
@@ -2729,6 +2732,9 @@ importers:
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
+      tinylicious:
+        specifier: ^7.0.1
+        version: 7.0.1(debug@4.4.3)(supports-color@10.2.2)
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
@@ -3743,21 +3749,15 @@ importers:
 
   examples/data-objects/text-editor:
     dependencies:
-      '@fluid-example/example-utils':
-        specifier: workspace:~
-        version: link:../../utils/example-utils
-      '@fluidframework/azure-client':
-        specifier: workspace:~
-        version: link:../../../packages/service-clients/azure-client
       '@fluidframework/quill-react':
         specifier: workspace:~
         version: link:../../../packages/framework/quill-react
       '@fluidframework/react':
         specifier: workspace:~
         version: link:../../../packages/framework/react
-      '@fluidframework/test-runtime-utils':
+      '@fluidframework/tinylicious-driver':
         specifier: workspace:~
-        version: link:../../../packages/runtime/test-runtime-utils
+        version: link:../../../packages/drivers/tinylicious-driver
       '@fluidframework/tree':
         specifier: workspace:~
         version: link:../../../packages/dds/tree
@@ -3777,9 +3777,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-example/webpack-fluid-loader':
-        specifier: workspace:~
-        version: link:../../utils/webpack-fluid-loader
       '@fluid-internal/mocha-test-setup':
         specifier: workspace:~
         version: link:../../../packages/test/mocha-test-setup
@@ -4366,8 +4363,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4517,8 +4514,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -5365,20 +5362,26 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
       express:
         specifier: ^4.22.1
         version: 4.22.1(supports-color@10.2.2)
+      html-webpack-plugin:
+        specifier: ^5.6.0
+        version: 5.6.3(webpack@5.109.0)
       isomorphic-fetch:
         specifier: ^3.0.0
         version: 3.0.0
       nconf:
         specifier: ^0.12.0
         version: 0.12.1
+      process:
+        specifier: ^0.11.10
+        version: 0.11.10
       sillyname:
         specifier: ^0.1.0
         version: 0.1.0
@@ -5391,6 +5394,9 @@ importers:
       uuid:
         specifier: ^11.1.1
         version: 11.1.1
+      webpack:
+        specifier: ^5.104.1
+        version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)
       webpack-dev-server:
         specifier: ~5.2.6
         version: 5.2.6(debug@4.4.3)(supports-color@10.2.2)(tslib@2.8.1)(webpack-cli@5.1.4)(webpack@5.109.0)
@@ -5461,9 +5467,6 @@ importers:
       typescript:
         specifier: ~5.4.5
         version: 5.4.5
-      webpack:
-        specifier: ^5.104.1
-        version: 5.109.0(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(uglify-js@3.19.3)(webpack-cli@5.1.4)
       webpack-cli:
         specifier: ^5.1.4
         version: 5.1.4(webpack-bundle-analyzer@4.10.2)(webpack-dev-server@5.2.6)(webpack@5.109.0)
@@ -6578,7 +6581,7 @@ importers:
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
       nock:
         specifier: ^13.3.3
-        version: 13.5.6(supports-color@8.1.1)
+        version: 13.5.6(supports-color@10.2.2)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -6725,8 +6728,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -10708,9 +10711,24 @@ importers:
 
   packages/drivers/tinylicious-driver:
     dependencies:
+      '@fluidframework/container-definitions':
+        specifier: workspace:~
+        version: link:../../common/container-definitions
+      '@fluidframework/container-loader':
+        specifier: workspace:~
+        version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
+      '@fluidframework/core-utils':
+        specifier: workspace:~
+        version: link:../../common/core-utils
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
@@ -10720,6 +10738,12 @@ importers:
       '@fluidframework/routerlicious-driver':
         specifier: workspace:~
         version: link:../routerlicious-driver
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
+      '@fluidframework/telemetry-utils':
+        specifier: workspace:~
+        version: link:../../utils/telemetry-utils
       jsrsasign:
         specifier: ^11.1.1
         version: 11.1.1
@@ -11755,9 +11779,6 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
-      '@fluid-internal/mocha-test-setup':
-        specifier: workspace:~
-        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(supports-color@10.2.2)(uglify-js@3.19.3)(webpack-cli@5.1.4)
@@ -11773,6 +11794,9 @@ importers:
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)
+      '@types/node':
+        specifier: ~22.19.17
+        version: 22.19.17
       concurrently:
         specifier: ^10.0.3
         version: 10.0.3
@@ -11876,6 +11900,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -11904,6 +11931,12 @@ importers:
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
+      '@fluidframework/local-driver':
+        specifier: workspace:~
+        version: link:../../drivers/local-driver
+      '@fluidframework/shared-object-base':
+        specifier: workspace:~
+        version: link:../../dds/shared-object-base
       '@fluidframework/test-runtime-utils':
         specifier: workspace:~
         version: link:../../runtime/test-runtime-utils
@@ -14195,6 +14228,12 @@ importers:
       '@fluidframework/container-loader':
         specifier: workspace:~
         version: link:../../loader/container-loader
+      '@fluidframework/container-runtime':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime
+      '@fluidframework/container-runtime-definitions':
+        specifier: workspace:^
+        version: link:../../runtime/container-runtime-definitions
       '@fluidframework/core-interfaces':
         specifier: workspace:~
         version: link:../../common/core-interfaces
@@ -14204,6 +14243,9 @@ importers:
       '@fluidframework/driver-definitions':
         specifier: workspace:~
         version: link:../../common/driver-definitions
+      '@fluidframework/driver-utils':
+        specifier: workspace:~
+        version: link:../../loader/driver-utils
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../framework/fluid-static
@@ -14222,6 +14264,9 @@ importers:
       '@fluidframework/runtime-definitions':
         specifier: workspace:~
         version: link:../../runtime/runtime-definitions
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../runtime/runtime-utils
       '@fluidframework/telemetry-utils':
         specifier: workspace:~
         version: link:../../utils/telemetry-utils
@@ -16060,9 +16105,15 @@ importers:
       '@fluidframework/devtools-core':
         specifier: workspace:~
         version: link:../devtools-core
+      '@fluidframework/driver-definitions':
+        specifier: workspace:~
+        version: link:../../../common/driver-definitions
       '@fluidframework/fluid-static':
         specifier: workspace:~
         version: link:../../../framework/fluid-static
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../runtime/runtime-utils
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -20622,6 +20673,11 @@ packages:
     peerDependencies:
       '@types/react': ^18.0.0
 
+  '@types/react-dom@18.3.7':
+    resolution: {integrity: sha512-MEe3UeoENYVFXzoXEWsvcpg6ZvlrFNlOQ7EOsvhI3CfAXwzPfO8Qwuxd40nepsYKqyyVQnTdEfv68q91yLcKrQ==}
+    peerDependencies:
+      '@types/react': ^18.0.0
+
   '@types/react-grid-layout@1.3.5':
     resolution: {integrity: sha512-WH/po1gcEcoR6y857yAnPGug+ZhkF4PaTUxgAbwfeSH/QOgVSakKHBXoPGad/sEznmkiaK3pqHk+etdWisoeBQ==}
 
@@ -21547,8 +21603,8 @@ packages:
   axios@0.33.0:
     resolution: {integrity: sha512-juz19g7B3UWT9r3+tgRFQf2Bdy6IKDVroiyuVOUrkILVKHpqHL++K1l8ybvfdEP9B/VE72vk8vllbnedVCm/og==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.19.0:
+    resolution: {integrity: sha512-ht/iuYZXEjFxLH/Hkezgd7m6JKlHHXEUSneaDz8uZe1Gj5QZtCnpyDsckvAiEnT89OEbCLmnte4R4sn7P0EKFw==}
 
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -32136,7 +32192,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -32165,7 +32221,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -32251,7 +32307,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
@@ -32290,7 +32346,7 @@ snapshots:
       '@socket.io/redis-adapter': 8.3.0(socket.io-adapter@2.5.6)(supports-color@10.2.2)
       '@socket.io/sticky': 1.0.4
       body-parser: 1.20.3(supports-color@10.2.2)
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       events: 3.3.0
       express: 4.22.1(supports-color@10.2.2)
       fast-redact: 3.5.0
@@ -32300,7 +32356,7 @@ snapshots:
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.17.0
@@ -34338,7 +34394,7 @@ snapshots:
     dependencies:
       debug: 4.3.7(supports-color@10.2.2)
       notepack.io: 3.0.1
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       uid2: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -34381,7 +34437,7 @@ snapshots:
 
   '@testing-library/dom@10.4.1':
     dependencies:
-      '@babel/code-frame': 7.27.1
+      '@babel/code-frame': 7.29.7
       '@babel/runtime': 7.29.2
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
@@ -34411,6 +34467,16 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.15
       '@types/react-dom': 18.3.3(@types/react@18.3.15)
+
+  '@testing-library/react@16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7)(@types/react@18.3.15)(react-dom@18.3.1)(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@testing-library/dom': 10.4.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.15
+      '@types/react-dom': 18.3.7(@types/react@18.3.15)
 
   '@testing-library/user-event@14.5.2(@testing-library/dom@10.4.1)':
     dependencies:
@@ -34781,6 +34847,10 @@ snapshots:
   '@types/range-parser@1.2.7': {}
 
   '@types/react-dom@18.3.3(@types/react@18.3.15)':
+    dependencies:
+      '@types/react': 18.3.15
+
+  '@types/react-dom@18.3.7(@types/react@18.3.15)':
     dependencies:
       '@types/react': 18.3.15
 
@@ -35538,7 +35608,7 @@ snapshots:
 
   '@vvago/vale@3.12.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
-      axios: 1.18.1(debug@4.4.3)(supports-color@8.1.1)
+      axios: 1.19.0(debug@4.4.3)(supports-color@8.1.1)
       rimraf: 5.0.10
       tar: 7.5.11
       unzipper: 0.10.14
@@ -35962,7 +36032,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.18.1(debug@4.3.7)(supports-color@10.2.2):
+  axios@1.19.0(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
@@ -35972,7 +36042,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(debug@4.4.3)(supports-color@10.2.2):
+  axios@1.19.0(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -35982,7 +36052,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(debug@4.4.3)(supports-color@8.1.1):
+  axios@1.19.0(debug@4.4.3)(supports-color@8.1.1):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -37270,13 +37340,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  detect-port@1.6.1(supports-color@8.1.1):
-    dependencies:
-      address: 1.2.2
-      debug: 4.4.3(supports-color@8.1.1)
-    transitivePeerDependencies:
-      - supports-color
-
   devlop@1.1.0:
     dependencies:
       dequal: 2.0.3
@@ -37452,10 +37515,10 @@ snapshots:
     dependencies:
       once: 1.4.0
 
-  engine.io-client@6.6.4(supports-color@8.1.1):
+  engine.io-client@6.6.4(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
       engine.io-parser: 5.2.3
       ws: 8.21.0
       xmlhttprequest-ssl: 2.1.2
@@ -38549,11 +38612,11 @@ snapshots:
     dependencies:
       find-file-up: 0.1.3
 
-  find-process@1.4.7(supports-color@8.1.1):
+  find-process@1.4.7(supports-color@10.2.2):
     dependencies:
       chalk: 4.1.2
       commander: 5.1.0
-      debug: 4.4.3(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
     transitivePeerDependencies:
       - supports-color
 
@@ -39929,7 +39992,7 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
-      find-process: 1.4.7(supports-color@8.1.1)
+      find-process: 1.4.7(supports-color@10.2.2)
       prompts: 2.4.2
       spawnd: 10.1.4
       tree-kill: 1.2.2
@@ -41500,14 +41563,6 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  mocha-multi-reporters@1.5.1(mocha@11.7.5)(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      lodash: 4.18.1
-      mocha: 11.7.5
-    transitivePeerDependencies:
-      - supports-color
-
   mocha@11.7.5:
     dependencies:
       browser-stdout: 1.3.1
@@ -41682,14 +41737,6 @@ snapshots:
   nock@13.5.6(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
-      json-stringify-safe: 5.0.1
-      propagate: 2.0.1
-    transitivePeerDependencies:
-      - supports-color
-
-  nock@13.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
       json-stringify-safe: 5.0.1
       propagate: 2.0.1
     transitivePeerDependencies:
@@ -43652,20 +43699,11 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  socket.io-adapter@2.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
   socket.io-client@4.8.3(supports-color@10.2.2):
     dependencies:
       '@socket.io/component-emitter': 3.1.2
-      debug: 4.4.3(supports-color@8.1.1)
-      engine.io-client: 6.6.4(supports-color@8.1.1)
+      debug: 4.4.3(supports-color@10.2.2)
+      engine.io-client: 6.6.4(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
     transitivePeerDependencies:
       - bufferutil
@@ -44348,13 +44386,13 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.7.5(supports-color@10.2.2)
       cookie-parser: 1.4.7
       cors: 2.8.5
-      detect-port: 1.6.1(supports-color@8.1.1)
+      detect-port: 1.6.1(supports-color@10.2.2)
       express: 4.22.1(supports-color@10.2.2)
       isomorphic-git: 1.27.2
       json-stringify-safe: 5.0.1
@@ -44389,7 +44427,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.7.5(supports-color@10.2.2)
@@ -45067,7 +45105,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -45078,7 +45116,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8

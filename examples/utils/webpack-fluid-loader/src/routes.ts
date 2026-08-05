@@ -21,6 +21,7 @@ import type { Configuration as WebpackConfiguration } from "webpack";
 import type Server from "webpack-dev-server";
 import type { Configuration, ExpressRequestHandler, Middleware } from "webpack-dev-server";
 
+import { baseDevServerConfig, baseExampleConfig } from "./baseConfig.js";
 import { tinyliciousUrls } from "./getUrlResolver.js";
 import { RouteOptions } from "./loader.js";
 
@@ -319,8 +320,10 @@ export function devServerConfig(
 	baseDir: string,
 	env: RouteOptions,
 ): { devServer: Configuration } {
+	const { devServer: baseDevServer } = baseDevServerConfig();
 	return {
 		devServer: {
+			...baseDevServer,
 			static: {
 				directory: path.join(
 					baseDir,
@@ -356,42 +359,14 @@ export function commonExampleConfig(
 	baseDir: string,
 	env: RouteOptions & { production?: boolean },
 ): WebpackConfiguration {
-	const { production } = env;
+	const config = baseExampleConfig(baseDir, env, { html: false });
 	return {
+		...config,
 		...devServerConfig(baseDir, env),
-		entry: {
-			main: "./src/index.ts",
-		},
-		resolve: {
-			extensionAlias: {
-				".js": [".ts", ".tsx", ".js"],
-				".cjs": [".cts", ".cjs"],
-				".mjs": [".mts", ".mjs"],
-			},
-		},
-		module: {
-			rules: [
-				{
-					test: /\.tsx?$/,
-					loader: require.resolve("ts-loader"),
-				},
-				{
-					test: /\.[cm]?js$/,
-					use: [require.resolve("source-map-loader")],
-					enforce: "pre",
-				},
-			],
-		},
 		output: {
-			filename: "[name].bundle.js",
-			path: path.resolve(baseDir, "dist"),
+			...config.output,
 			library: { name: "[name]", type: "umd" },
 		},
-		watchOptions: {
-			ignored: "**/node_modules/**",
-		},
-		mode: production ? "production" : "development",
-		devtool: production ? "source-map" : "inline-source-map",
 	};
 }
 

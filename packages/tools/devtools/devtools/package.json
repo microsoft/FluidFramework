@@ -120,7 +120,9 @@
 		"@fluidframework/container-definitions": "workspace:~",
 		"@fluidframework/core-interfaces": "workspace:~",
 		"@fluidframework/devtools-core": "workspace:~",
-		"@fluidframework/fluid-static": "workspace:~"
+		"@fluidframework/driver-definitions": "workspace:~",
+		"@fluidframework/fluid-static": "workspace:~",
+		"@fluidframework/runtime-utils": "workspace:~"
 	},
 	"devDependencies": {
 		"@arethetypeswrong/cli": "^0.18.2",

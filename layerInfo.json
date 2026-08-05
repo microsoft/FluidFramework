@@ -148,6 +148,7 @@
 					"Framework",
 					"Runtime",
 					"Routerlicious-Driver",
+					"Tinylicious-Driver",
 					"Loader",
 					"Server-Libs",
 					"Test-Utils"
@@ -177,7 +178,7 @@
 			},
 			"Azure-Examples": {
 				"packages": ["@fluid-example/app-integration-external-controller"],
-				"deps": ["UberPackage", "ServiceClients"]
+				"deps": ["UberPackage", "ServiceClients", "Tinylicious-Driver"]
 			}
 		}
 	},
@@ -225,10 +226,20 @@
 			"Routerlicious-Driver": {
 				"packages": [
 					"@fluidframework/routerlicious-driver",
-					"@fluidframework/routerlicious-urlresolver",
-					"@fluidframework/tinylicious-driver"
+					"@fluidframework/routerlicious-urlresolver"
 				],
 				"deps": ["Driver", "Server-Shared-Utils"]
+			},
+			"Tinylicious-Driver": {
+				"packages": ["@fluidframework/tinylicious-driver"],
+				"deps": [
+					"Container-Definitions",
+					"Driver",
+					"Loader",
+					"Routerlicious-Driver",
+					"Runtime",
+					"Server-Shared-Utils"
+				]
 			},
 			"Routerlicious-Server": {
 				"packages": ["@fluidframework/server-routerlicious"],

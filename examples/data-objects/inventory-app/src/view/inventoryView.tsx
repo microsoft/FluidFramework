@@ -138,8 +138,7 @@ export const InventoryViewWithHook: FC<{ root: PropTreeNode<Inventory> }> = ({ r
 			// Note that Array support is built in now, so this can just be:
 			const nodes = [...partsList];
 
-			// React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
-			// eslint-disable-next-line react-hooks/rules-of-hooks
+			// eslint-disable-next-line react-hooks/rules-of-hooks -- React's linter does not allow hooks in callbacks, but it is safe to suppress this for usePropTreeNode since it runs the callback immediately.
 			const removeChild = useCallback(
 				(part: Part) => partsList.removeAt(Tree.key(part) as number),
 				[partsList],
