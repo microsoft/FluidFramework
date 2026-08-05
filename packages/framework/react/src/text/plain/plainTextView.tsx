@@ -4,8 +4,9 @@
  */
 
 import { TreeAlpha, type TextAsTree } from "@fluidframework/tree/internal";
-import { type ChangeEvent, type FC, useCallback, useLayoutEffect, useRef } from "react";
+import { type ChangeEvent, useCallback, useLayoutEffect, useRef } from "react";
 
+import type { FC } from "../../reactTypes.js";
 import { unwrapPropTreeNode, type PropTreeNode } from "../../propNode.js";
 import type { TextEditorProps } from "../textEditorProps.js";
 

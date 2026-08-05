@@ -374,7 +374,7 @@ importers:
         version: 29.7.0(@types/node@22.19.17)(supports-color@10.2.2)(ts-node@10.9.2)
       jest-environment-puppeteer:
         specifier: ^10.1.3
-        version: 10.1.4(debug@4.4.3)(supports-color@10.2.2)(typescript@5.4.5)
+        version: 10.1.4(debug@4.4.3)(supports-color@8.1.1)(typescript@5.4.5)
       jest-junit:
         specifier: ^16.0.0
         version: 16.0.0
@@ -2705,6 +2705,9 @@ importers:
       '@types/react':
         specifier: ^18.3.11
         version: 18.3.15
+      '@types/react-dom':
+        specifier: ^18.3.1
+        version: 18.3.3(@types/react@18.3.15)
       eslint:
         specifier: catalog:eslint
         version: 9.39.1(jiti@2.6.1)(supports-color@10.2.2)
@@ -2726,6 +2729,9 @@ importers:
       mocha:
         specifier: ^11.7.5
         version: 11.7.5
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -12092,11 +12098,8 @@ importers:
         specifier: workspace:~
         version: link:../../dds/tree
       react:
-        specifier: ^18.3.1
+        specifier: ^18.3.1 || ^19.0.0
         version: 18.3.1
-      react-dom:
-        specifier: ^18.3.1
-        version: 18.3.1(react@18.3.1)
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.18.2
@@ -12138,10 +12141,13 @@ importers:
         specifier: ~22.19.17
         version: 22.19.17
       '@types/react':
-        specifier: ^18.3.11
+        specifier: ~18.3.1
         version: 18.3.15
+      '@types/react-19':
+        specifier: npm:@types/react@~19.2.0
+        version: '@types/react@19.2.17'
       '@types/react-dom':
-        specifier: ^18.3.1
+        specifier: ~18.3.1
         version: 18.3.3(@types/react@18.3.15)
       c8:
         specifier: ^10.1.3
@@ -12176,6 +12182,21 @@ importers:
       mocha-multi-reporters:
         specifier: ^1.5.1
         version: 1.5.1(mocha@11.7.5)(supports-color@10.2.2)
+      react-18:
+        specifier: npm:react@^18.3.1
+        version: react@18.3.1
+      react-19:
+        specifier: npm:react@^19.0.0
+        version: react@19.2.8
+      react-dom:
+        specifier: ^18.3.1
+        version: 18.3.1(react@18.3.1)
+      react-dom-18:
+        specifier: npm:react-dom@^18.3.1
+        version: react-dom@18.3.1(react@18.3.1)
+      react-dom-19:
+        specifier: npm:react-dom@^19.0.0
+        version: react-dom@19.2.8(react@18.3.1)
       rimraf:
         specifier: ^6.1.3
         version: 6.1.3
@@ -20628,6 +20649,9 @@ packages:
   '@types/react@18.3.15':
     resolution: {integrity: sha512-XQzbwkCwrsabawgWsvDDwsDTRuH1sf6Uj1fnFYoG03ZXfT54/aBvlylKR9ix70pXAtTn8dFzj358zVcZN4m83w==}
 
+  '@types/react@19.2.17':
+    resolution: {integrity: sha512-MXfmqaVPEVgkBT/aY0aGCkRWWtByiYQXo3xdQ8r5RzuFrPiRn8Gar2tQdXSUQ2GKV3bkXckek89V8wQBY2Q/Aw==}
+
   '@types/recharts@1.8.29':
     resolution: {integrity: sha512-ulKklaVsnFIIhTQsQw226TnOibrddW1qUQNFVhoQEyY1Z7FRQrNecFCGt7msRuJseudzE9czVawZb17dK/aPXw==}
 
@@ -22373,6 +22397,9 @@ packages:
 
   csstype@3.1.3:
     resolution: {integrity: sha512-M1uQkMl8rQK/szD0LNhtqxIPLpimGm8sOBwU7lLnCpSbTyY3yeU1Vc7l4KT5zT4s/yOxHH5O7tIuuLOCnLADRw==}
+
+  csstype@3.2.3:
+    resolution: {integrity: sha512-z1HGKcYy2xA8AGQfwrn0PAy+PB7X/GSj3UVJW9qKyn43xWa+gl5nXmU4qqLMRzWVLFC8KusUX8T/0kCiOYpAIQ==}
 
   culvert@0.1.2:
     resolution: {integrity: sha512-yi1x3EAWKjQTreYWeSd98431AV+IEE0qoDyOoaHJ7KJ21gv6HtBXHVLX74opVSGqcR8/AbjJBHAHpcOy2bj5Gg==}
@@ -26482,6 +26509,11 @@ packages:
     peerDependencies:
       react: ^18.3.1
 
+  react-dom@19.2.8:
+    resolution: {integrity: sha512-rVprimfGBG3DR+Tq0IQG2DT5PxKth1WIGDmj5yPmlzr4YBe7uyE+Du4oVqTDXZSHGGGXRtTJEGSSePyQCMBglQ==}
+    peerDependencies:
+      react: ^19.2.8
+
   react-draggable@4.4.6:
     resolution: {integrity: sha512-LtY5Xw1zTPqHkVmtM3X8MUOxNDOUhv/khTgBgrUvwaS064bwVvxT+q5El0uUFNx5IEPKXuRejr7UqLwBIg5pdw==}
     peerDependencies:
@@ -26490,6 +26522,7 @@ packages:
 
   react-grid-layout@1.5.1:
     resolution: {integrity: sha512-4Fr+kKMk0+m1HL/BWfHxi/lRuaOmDNNKQDcu7m12+NEYcen20wIuZFo789u3qWCyvUsNUxCiyf0eKq4WiJSNYw==}
+    deprecated: 'Ships stray files that were never in the repo: an ip_fetcher binary and its curl-sample source (1.5.0-1.5.3), plus a yarn-error.log containing local paths (1.5.3). Upgrade to 1.5.4, which is byte-identical apart from removing them. See https://github.com/react-grid-layout/react-grid-layout/issues/2269'
     peerDependencies:
       react: '>= 16.3.0'
       react-dom: '>= 16.3.0'
@@ -26540,6 +26573,10 @@ packages:
 
   react@18.3.1:
     resolution: {integrity: sha512-wS+hAgJShR0KhEvPJArfuPVN1+Hz1t0Y6n5jLrGQbkb4urgPE/0Rve+1kMB1v/oWgHgm4WIcV+i7F2pTVj+2iQ==}
+    engines: {node: '>=0.10.0'}
+
+  react@19.2.8:
+    resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
     engines: {node: '>=0.10.0'}
 
   read-cache@1.0.0:
@@ -26894,6 +26931,9 @@ packages:
 
   scheduler@0.23.2:
     resolution: {integrity: sha512-UOShsPwz7NrMUqhR6t0hWjFduvOzbtv7toDH1/hIrfRNIDBnnBWd0CwJTGvTpngVlmwGCdP9/Zl/tVrDqcuYzQ==}
+
+  scheduler@0.27.0:
+    resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
 
   schema-utils@3.3.0:
     resolution: {integrity: sha512-pN/yOAvcC+5rQ5nERGuwrjLlYvLTbCibnZ1I7B1LaiAz9BRBlE9GMgE/eqV30P7aJQUf7Ddimy/RsbYO/GrVGg==}
@@ -32300,7 +32340,7 @@ snapshots:
       notepack.io: 2.3.0
       serialize-error: 8.1.0
       socket.io: 4.8.3(supports-color@10.2.2)
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       socket.io-parser: 4.2.6(supports-color@10.2.2)
       uuid: 11.1.1
       winston: 3.17.0
@@ -34338,7 +34378,7 @@ snapshots:
     dependencies:
       debug: 4.3.7(supports-color@10.2.2)
       notepack.io: 3.0.1
-      socket.io-adapter: 2.5.6(supports-color@8.1.1)
+      socket.io-adapter: 2.5.6(supports-color@10.2.2)
       uid2: 1.0.0
     transitivePeerDependencies:
       - supports-color
@@ -34792,6 +34832,10 @@ snapshots:
     dependencies:
       '@types/prop-types': 15.7.14
       csstype: 3.1.3
+
+  '@types/react@19.2.17':
+    dependencies:
+      csstype: 3.2.3
 
   '@types/recharts@1.8.29':
     dependencies:
@@ -36942,6 +36986,8 @@ snapshots:
 
   csstype@3.1.3: {}
 
+  csstype@3.2.3: {}
+
   culvert@0.1.2: {}
 
   cwd@0.10.0:
@@ -38549,6 +38595,14 @@ snapshots:
     dependencies:
       find-file-up: 0.1.3
 
+  find-process@1.4.7(supports-color@10.2.2):
+    dependencies:
+      chalk: 4.1.2
+      commander: 5.1.0
+      debug: 4.4.3(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - supports-color
+
   find-process@1.4.7(supports-color@8.1.1):
     dependencies:
       chalk: 4.1.2
@@ -39929,6 +39983,19 @@ snapshots:
     dependencies:
       chalk: 4.1.2
       cwd: 0.10.0
+      find-process: 1.4.7(supports-color@10.2.2)
+      prompts: 2.4.2
+      spawnd: 10.1.4
+      tree-kill: 1.2.2
+      wait-on: 8.0.1(debug@4.4.3)(supports-color@10.2.2)
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+
+  jest-dev-server@10.1.4(debug@4.4.3)(supports-color@8.1.1):
+    dependencies:
+      chalk: 4.1.2
+      cwd: 0.10.0
       find-process: 1.4.7(supports-color@8.1.1)
       prompts: 2.4.2
       spawnd: 10.1.4
@@ -39987,6 +40054,18 @@ snapshots:
       cosmiconfig: 8.3.6(typescript@5.4.5)
       deepmerge: 4.3.1
       jest-dev-server: 10.1.4(debug@4.4.3)(supports-color@10.2.2)
+      jest-environment-node: 29.7.0
+    transitivePeerDependencies:
+      - debug
+      - supports-color
+      - typescript
+
+  jest-environment-puppeteer@10.1.4(debug@4.4.3)(supports-color@8.1.1)(typescript@5.4.5):
+    dependencies:
+      chalk: 4.1.2
+      cosmiconfig: 8.3.6(typescript@5.4.5)
+      deepmerge: 4.3.1
+      jest-dev-server: 10.1.4(debug@4.4.3)(supports-color@8.1.1)
       jest-environment-node: 29.7.0
     transitivePeerDependencies:
       - debug
@@ -42779,6 +42858,11 @@ snapshots:
       react: 18.3.1
       scheduler: 0.23.2
 
+  react-dom@19.2.8(react@18.3.1):
+    dependencies:
+      react: 18.3.1
+      scheduler: 0.27.0
+
   react-draggable@4.4.6(react-dom@18.3.1)(react@18.3.1):
     dependencies:
       clsx: 1.2.1
@@ -42851,6 +42935,8 @@ snapshots:
   react@18.3.1:
     dependencies:
       loose-envify: 1.4.0
+
+  react@19.2.8: {}
 
   read-cache@1.0.0:
     dependencies:
@@ -43298,6 +43384,8 @@ snapshots:
     dependencies:
       loose-envify: 1.4.0
 
+  scheduler@0.27.0: {}
+
   schema-utils@3.3.0:
     dependencies:
       '@types/json-schema': 7.0.15
@@ -43646,15 +43734,6 @@ snapshots:
   socket.io-adapter@2.5.6(supports-color@10.2.2):
     dependencies:
       debug: 4.4.3(supports-color@10.2.2)
-      ws: 8.21.0
-    transitivePeerDependencies:
-      - bufferutil
-      - supports-color
-      - utf-8-validate
-
-  socket.io-adapter@2.5.6(supports-color@8.1.1):
-    dependencies:
-      debug: 4.4.3(supports-color@8.1.1)
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil

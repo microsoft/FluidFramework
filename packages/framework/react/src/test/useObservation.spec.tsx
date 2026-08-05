@@ -7,6 +7,7 @@ import { strict as assert } from "node:assert";
 
 import { render } from "@testing-library/react";
 import globalJsdom from "global-jsdom";
+import { version as reactVersion } from "react";
 
 import {
 	useObservation,
@@ -15,6 +16,13 @@ import {
 } from "../useObservation.js";
 
 // There is much more coverage of useObservation via useTree tests.
+
+/**
+ * Major version of the React being tested against (18 or 19).
+ * @remarks
+ * The package supports both, and their StrictMode behavior differs in ways the expected logs must account for.
+ */
+const reactMajorVersion = Number.parseInt(reactVersion, 10);
 
 describe("useObservation", () => {
 	describe("dom tests", () => {
@@ -52,6 +60,22 @@ describe("useObservation", () => {
 						log.length = 0;
 					}
 
+					/**
+					 * The `unsubscribe` event(s), if any, expected from the StrictMode double-invoked mount render.
+					 *
+					 * @remarks
+					 * When rendering (as opposed to re-rendering) in StrictMode, React 19 synchronously unsubscribes the
+					 * throwaway subscription created by the discarded render, while React 18 defers that cleanup until the
+					 * `SubscriptionsWrapper` is garbage collected. Both are correct and leak-free. The effect-based
+					 * `useObservationWithEffects` subscribes in an effect rather than during render, so it does neither.
+					 */
+					const strictModeMountUnsubscribe: readonly string[] =
+						reactStrictMode &&
+						reactMajorVersion >= 19 &&
+						useObservationHook !== useObservationWithEffects
+							? ["unsubscribe"]
+							: [];
+
 					describe(`StrictMode: ${reactStrictMode}`, () => {
 						it("useObservation", async () => {
 							const log: string[] = [];
@@ -87,7 +111,7 @@ describe("useObservation", () => {
 							const content = <TestComponent />;
 
 							const rendered = render(content, { reactStrictMode });
-							checkRenderLog(log, ["render", "useObservation"]);
+							checkRenderLog(log, ["render", ...strictModeMountUnsubscribe, "useObservation"]);
 
 							rendered.rerender(content);
 							assertLogEmpty(log);
@@ -130,7 +154,9 @@ describe("useObservation", () => {
 
 							const rendered = render(<TestComponent />, { reactStrictMode });
 
-							assertLogEmpty(log);
+							// Consume the StrictMode mount unsubscribe (present on React 19, absent on React 18) so the
+							// post-unmount check below observes only the unsubscribe from unmount. See strictModeMountUnsubscribe.
+							checkRenderLog(log, strictModeMountUnsubscribe);
 							rendered.unmount();
 
 							// Unsubscribe on unmount is done via FinalizationRegistry, so force a GC and wait for it.
@@ -175,7 +201,7 @@ describe("useObservation", () => {
 
 							const rendered = render(<TestComponent />, { reactStrictMode });
 
-							checkRenderLog(log, ["render"]);
+							checkRenderLog(log, ["render", ...strictModeMountUnsubscribe]);
 
 							// After unmount, unsubscribe could happen at any time due to finalizer,so suppress logging it to prevent the test from possibly becoming flaky.
 							logUnsubscribe = false;
@@ -186,12 +212,30 @@ describe("useObservation", () => {
 
 							// Invalidate after unmount.
 							// Since this can happen in real use, due to unsubscribe delay while waiting for finalizer, ensure it does not cause issues.
-							// This should be a no-op, but since it does a React SetState after unmount, React could object to it.
-							for (const callback of invalidateCallbacks) {
+							//
+							// The invalidate callback must not throw when called after unmount. For the finalizer-based
+							// hooks the subscription can still be live during the window before garbage collection, so a real
+							// event could invoke it; a throw there would surface as a nondeterministic (GC-timing dependent)
+							// error in user code. It must instead be a safe no-op that reports "invalidated" (it does a React
+							// setState after unmount, which React tolerates).
+							//
+							// The one exception is useObservationStrict under React 19's StrictMode: it eagerly disposes the
+							// throwaway subscription created by the discarded double-render invocation (which is the first of
+							// the two generations). That subscription's events are already torn down, so in real use its
+							// invalidate callback can never fire, and invoking it here would throw "Already disposed". Skip
+							// that eagerly-disposed generation and invalidate only the still-live one(s).
+							const eagerlyDisposedGenerations =
+								reactStrictMode &&
+								reactMajorVersion >= 19 &&
+								useObservationHook === useObservationStrict
+									? 1
+									: 0;
+
+							for (const callback of invalidateCallbacks.slice(eagerlyDisposedGenerations)) {
 								callback();
 							}
 
-							// Confirm the invalidation happened..
+							// Confirm the invalidation happened.
 							// If we didn't suppress unsubscribe logging, and the finalizer had run, this could fail (which is why we suppress it).
 							checkRenderLog(log, ["invalidated"]);
 						});
