@@ -34,10 +34,11 @@ overrides:
   # Uncomment to use the local fluid eslint-plugin while developing the packages together.
   #"@fluid-internal/eslint-plugin-fluid": "link:../eslint-plugin-fluid"
 
-  # @rushstack/eslint-plugin 0.23.2 pins 8.56.x, which predates TypeScript 6 support.
-  "@rushstack/eslint-plugin>@typescript-eslint/utils": ~8.58.0
-  # eslint-plugin-tsdoc 0.5.2 has the same stale TypeScript ESLint pin.
-  "eslint-plugin-tsdoc>@typescript-eslint/utils": ~8.58.0
+  # @typescript-eslint/eslint-utils need to be 5.58 or later for TypeScript 6 support.
+  #   As of 2026-08-05 @rushstack/eslint-plugin (v0.23.2), does not have a version using v8.58 or later.
+  "@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0": ~8.58.0
+  #   As of 2026-08-05 eslint-plugin-tsdoc (v0.5.2), does not have a version using v8.58 or later.
+  "eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0": ~8.58.0
 
   # Security overrides.
   # Resolve known security vulnerabilities in transitive dependencies.
