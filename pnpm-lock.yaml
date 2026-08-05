@@ -13863,6 +13863,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(supports-color@10.2.2)(uglify-js@3.19.3)(webpack-cli@5.1.4)
@@ -14338,6 +14341,9 @@ importers:
       '@biomejs/biome':
         specifier: ~2.4.5
         version: 2.4.5
+      '@fluid-internal/mocha-test-setup':
+        specifier: workspace:~
+        version: link:../../test/mocha-test-setup
       '@fluid-tools/build-cli':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(clean-css@5.3.3)(html-minifier-terser@7.2.0)(postcss@8.5.16)(supports-color@10.2.2)(uglify-js@3.19.3)(webpack-cli@5.1.4)
