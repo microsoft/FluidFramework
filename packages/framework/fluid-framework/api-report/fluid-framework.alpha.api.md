@@ -228,23 +228,26 @@ export function comparePersistedSchema(persisted: JsonCompatible, view: Implicit
 
 // @alpha
 export namespace Component {
-    export function composeComponents<TConfig, TComponent>(allComponents: readonly Factory<TConfig, TComponent>[], lazyConfiguration: (composed: ComposedComponents<TConfig, TComponent>) => TConfig): ComposedComponents<TConfig, TComponent>;
+    export function compose<TComponent>(allComponents: readonly Factory<TComponent>[]): Composed<TComponent>;
+    export function compose<TComponent, TConfig>(allComponents: readonly Factory<TComponent, TConfig>[], lazyConfiguration: (composed: Composed<TComponent, TConfig>) => TConfig): Composed<TComponent, TConfig>;
+    const memoize: <T>(factory: () => T) => (() => T);
     // @sealed
-    export interface ComposedComponents<TConfig, TComponent> {
+    export interface Composed<TComponent, TConfig = ComposedDefault<TComponent>> {
         readonly components: readonly TComponent[];
         readonly config: TConfig;
-        getComponent<TFactory extends Factory<TConfig, TComponent>>(factory: TFactory): ReturnType<TFactory>;
+        getComponent<TFactory extends Factory<TComponent, TConfig>>(factory: TFactory): ReturnType<TFactory>;
         getComposed<TKey extends keyof {
             [Property in keyof TComponent as TComponent[Property] extends LazyArray<unknown> | undefined ? Property : never]: boolean;
         }>(property: TKey): readonly (Exclude<TComponent[TKey], undefined> extends LazyArray<infer U> ? () => U : never)[];
         getConfigured<TConfigurable extends Configurable<TConfig, unknown, TComponent>>(configurable: TConfigurable): ReturnType<TConfigurable["configure"]>;
     }
-    const memoize: <T>(factory: () => T) => (() => T);
+    // @sealed
+    export type ComposedDefault<TComponent> = Composed<TComponent, ComposedDefault<TComponent>>;
     export interface Configurable<TConfigPartial, out TResult, TComponent> {
-        configure(config: TConfigPartial, components: ComposedComponents<TConfigPartial, TComponent>): TResult;
+        configure(config: TConfigPartial, components: Composed<TComponent, TConfigPartial>): TResult;
     }
     // @input
-    export type Factory<TConfig, TComponent> = (lazyConfiguration: () => TConfig) => TComponent;
+    export type Factory<TComponent, TConfig = ComposedDefault<TComponent>> = (lazyConfiguration: () => TConfig) => TComponent;
     export type LazyArray<T> = () => readonly (() => T)[];
 }
 
@@ -300,6 +303,9 @@ export const contentSchemaSymbol: unique symbol;
 // @alpha
 export function createArrayInsertionAnchor(node: TreeArrayNode, currentIndex: number): ArrayPlaceAnchor;
 
+// @alpha
+export function createBasicRegistryKey<T>(type: string): RegistryKey<T, T>;
+
 // @beta
 export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view: TreeView<TSchema>): IdentifierIndex;
 
@@ -307,7 +313,7 @@ export function createIdentifierIndex<TSchema extends ImplicitFieldSchema>(view:
 export function createIndependentTreeAlpha<const TSchema extends ImplicitFieldSchema>(options?: CreateIndependentTreeAlphaOptions): ViewableTree & Pick<ITreeAlpha, "exportVerbose" | "exportSimpleSchema">;
 
 // @alpha
-export type CreateIndependentTreeAlphaOptions = ForestOptions & ((IndependentViewOptions & {
+export type CreateIndependentTreeAlphaOptions = ForestOptions & IndependentViewTelemetryOptions & ((IndependentViewOptions & {
     content?: never;
 }) | (ICodecOptions & {
     content: ViewContent;
@@ -329,12 +335,45 @@ export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey e
 // @beta
 export function createTreeIndex<TFieldSchema extends ImplicitFieldSchema, TKey extends TreeIndexKey, TValue, TSchema extends TreeNodeSchema>(view: TreeView<TFieldSchema>, indexer: Map<TreeNodeSchema, string>, getValue: (nodes: TreeIndexNodes<NodeFromSchema<TSchema>>) => TValue, isKeyValid: (key: TreeIndexKey) => key is TKey, indexableSchema: readonly TSchema[]): TreeIndex<TKey, TValue>;
 
+// @alpha @sealed
+export interface DataStoreContext extends SharedObjectCreator {
+}
+
+// @alpha @sealed
+export interface DataStoreCreator {
+    createDataStore<T>(kind: DataStoreKey<T>): Promise<T>;
+}
+
+// @alpha @input
+export type DataStoreKey<T, TAll = unknown> = RegistryKey<Promise<DataStoreKind<T>>, Promise<DataStoreKind<TAll>>>;
+
+// @alpha @sealed
+export interface DataStoreKind<out T = unknown> extends DataStoreKey<T>, ErasedBaseType<readonly ["DataStoreKind", T]> {
+}
+
+// @alpha @input
+export interface DataStoreOptions<in out TRoot extends IFluidLoadable, out TOutput> {
+    instantiateFirstTime(rootCreator: SharedObjectCreator<TRoot>, context: DataStoreContext): Promise<TRoot>;
+    readonly registry: SharedObjectRegistry;
+    readonly type: string;
+    view(root: TRoot, context: DataStoreContext): Promise<TOutput>;
+}
+
+// @alpha @input
+export type DataStoreRegistry<out T = unknown> = Registry<Promise<DataStoreKind<T>>>;
+
 // @alpha
 export function decodeSchemaCompatibilitySnapshot(encodedSchema: JsonCompatibleReadOnly, validator?: FormatValidator): SimpleTreeSchema;
 
 // @public @sealed @system
 interface DefaultProvider extends ErasedType<"@fluidframework/tree.FieldProvider"> {
 }
+
+// @alpha
+export function defineDataStore<T, TRoot extends IFluidLoadable>(options: DataStoreOptions<TRoot, T>): DataStoreKind<T>;
+
+// @alpha
+export function defineTreeDataStore<const TSchema extends ImplicitFieldSchema>(options: TreeDataStoreOptions<TSchema>): DataStoreKind<TreeView<TSchema>>;
 
 // @alpha
 export interface DirtyTreeMap {
@@ -521,12 +560,29 @@ export const FluidClientVersion: {
     readonly v2_80: "2.80.0";
 };
 
-// @beta @sealed
+// @alpha @sealed
+export interface FluidContainer<TData = unknown> extends DataStoreCreator, ErasedBaseType<readonly ["FluidContainer", TData]> {
+    close(): void;
+    readonly data: TData;
+    readonly id?: string | undefined;
+}
+
+// @alpha @sealed
+export interface FluidContainerAttached<TData = unknown> extends FluidContainer<TData> {
+    readonly id: string;
+}
+
+// @alpha @sealed
+export interface FluidContainerWithService<TData = unknown> extends FluidContainer<TData> {
+    attach(): Promise<FluidContainerAttached<TData>>;
+}
+
+// @public @sealed
 export interface FluidIterable<T> {
     [Symbol.iterator](): FluidIterableIterator<T>;
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidIterableIterator<T> extends FluidIterable<T> {
     next(): {
         value: T;
@@ -537,7 +593,7 @@ export interface FluidIterableIterator<T> extends FluidIterable<T> {
     };
 }
 
-// @beta @sealed
+// @public @sealed
 export interface FluidMap<K, V> extends FluidReadonlyMap<K, V> {
     delete(key: K): void;
     forEach(callbackfn: (value: V, key: K, map: FluidMap<K, V>) => void, thisArg?: any): void;
@@ -552,7 +608,50 @@ export type FluidObject<T = unknown> = {
 // @public
 export type FluidObjectProviderKeys<T, TProp extends keyof T = keyof T> = string extends TProp ? never : number extends TProp ? never : TProp extends keyof Required<T>[TProp] ? Required<T>[TProp] extends Required<Required<T>[TProp]>[TProp] ? TProp : never : never;
 
-// @beta @sealed
+// @public @sealed
+export interface FluidReadonlyArray<T> {
+    [Symbol.iterator](): FluidIterableIterator<T>;
+    readonly [Symbol.unscopables]: {
+        [K in keyof (readonly any[])]?: boolean;
+    };
+    readonly [n: number]: T;
+    at(index: number): T | undefined;
+    concat(...items: ConcatArray<T>[]): T[];
+    concat(...items: (T | ConcatArray<T>)[]): T[];
+    entries(): FluidIterableIterator<[number, T]>;
+    every<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): this is FluidReadonlyArray<S>;
+    every(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+    filter<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: any): S[];
+    filter(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): T[];
+    find<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+    find(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+    findIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+    findLast<S extends T>(predicate: (value: T, index: number, obj: readonly T[]) => value is S, thisArg?: any): S | undefined;
+    findLast(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): T | undefined;
+    findLastIndex(predicate: (value: T, index: number, obj: readonly T[]) => unknown, thisArg?: any): number;
+    flat<A, D extends number = 1>(this: A, depth?: D): FlatArray<A, D>[];
+    flatMap<U, This = undefined>(callback: (this: This, value: T, index: number, array: T[]) => U | readonly U[], thisArg?: This): U[];
+    forEach(callbackfn: (value: T, index: number, array: readonly T[]) => void, thisArg?: any): void;
+    includes(searchElement: T, fromIndex?: number): boolean;
+    indexOf(searchElement: T, fromIndex?: number): number;
+    join(separator?: string): string;
+    keys(): FluidIterableIterator<number>;
+    lastIndexOf(searchElement: T, fromIndex?: number): number;
+    readonly length: number;
+    map<U>(callbackfn: (value: T, index: number, array: readonly T[]) => U, thisArg?: any): U[];
+    reduce(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+    reduce<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+    reduceRight(callbackfn: (previousValue: T, currentValue: T, currentIndex: number, array: readonly T[]) => T): T;
+    reduceRight<U>(callbackfn: (previousValue: U, currentValue: T, currentIndex: number, array: readonly T[]) => U, initialValue: U): U;
+    slice(start?: number, end?: number): T[];
+    some(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: any): boolean;
+    // (undocumented)
+    toLocaleString(): string;
+    toString(): string;
+    values(): FluidIterableIterator<T>;
+}
+
+// @public @sealed
 export interface FluidReadonlyMap<K, V> {
     [Symbol.iterator](): FluidIterableIterator<[K, V]>;
     readonly [Symbol.toStringTag]: string;
@@ -917,14 +1016,19 @@ export function incrementalEncodingPolicyForAllowedTypes(rootSchema: TreeSchema)
 export const incrementalSummaryHint: unique symbol;
 
 // @alpha
-export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions, content: ViewContent): TreeViewAlpha<TSchema>;
+export function independentInitializedView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options: ForestOptions & ICodecOptions & IndependentViewTelemetryOptions, content: ViewContent): TreeViewAlpha<TSchema>;
 
 // @alpha
 export function independentView<const TSchema extends ImplicitFieldSchema>(config: TreeViewConfiguration<TSchema>, options?: IndependentViewOptions): TreeViewAlpha<TSchema>;
 
 // @alpha @input
-export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions> {
+export interface IndependentViewOptions extends ForestOptions, Partial<CodecWriteOptions>, IndependentViewTelemetryOptions {
     idCompressor?: IIdCompressor | undefined;
+}
+
+// @alpha @input
+export interface IndependentViewTelemetryOptions {
+    readonly logger?: ITelemetryBaseLogger | undefined;
 }
 
 // @public
@@ -992,6 +1096,9 @@ TSchema
 // @public
 export type InsertableTypedNode<TSchema extends TreeNodeSchema, T = UnionToIntersection<TSchema>> = (T extends TreeNodeSchema<string, NodeKind, TreeNode | TreeLeafValue, never, true> ? NodeBuilderData<T> : never) | (T extends TreeNodeSchema ? Unhydrated<TreeNode extends NodeFromSchema<T> ? never : NodeFromSchema<T>> : never);
 
+// @alpha
+export function instantiateTreeFirstTime<TSchema extends ImplicitFieldSchema>(rootCreator: SharedObjectCreator, creator: SharedObjectCreator, treeKind: SharedObjectKey<ITree>, options: Pick<TreeDataStoreOptions<TSchema>, "config" | "initializer">): Promise<ITree>;
+
 // @public @sealed
 export interface InternalTreeNode extends ErasedType<"@fluidframework/tree.InternalTreeNode"> {
 }
@@ -1047,6 +1154,20 @@ export type IsListener<TListener> = TListener extends (...args: any[]) => void ?
 export type IsUnion<T, T2 = T> = T extends unknown ? [T2] extends [T] ? false : true : "error";
 
 // @public
+export interface ITelemetryBaseEvent extends ITelemetryBaseProperties {
+    // (undocumented)
+    category: string;
+    // (undocumented)
+    eventName: string;
+}
+
+// @public
+export interface ITelemetryBaseLogger {
+    minLogLevel?: LogLevel | undefined;
+    send(event: ITelemetryBaseEvent, logLevel?: LogLevel): void;
+}
+
+// @public
 export interface ITelemetryBaseProperties {
     [index: string]: TelemetryBaseEventPropertyType | Tagged<TelemetryBaseEventPropertyType>;
 }
@@ -1062,10 +1183,11 @@ export interface ITree extends ViewableTree, IFluidLoadable {
 
 // @alpha @sealed
 export interface ITreeAlpha extends ITree {
-    createSharedBranch(): string;
+    createSharedBranch(name?: string): string;
     exportSimpleSchema(): SimpleTreeSchema;
     exportVerbose(): VerboseTree | undefined;
     getSharedBranchIds(): string[];
+    getSharedBranchName(branchId: string): string | undefined;
     viewSharedBranchWith<TRoot extends ImplicitFieldSchema>(branchId: string, config: TreeViewConfiguration<TRoot>): TreeView<TRoot>;
 }
 
@@ -1078,6 +1200,11 @@ export interface ITreeConfigurationOptions {
 // @public
 export interface ITreeViewConfiguration<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeConfigurationOptions {
     readonly schema: TSchema;
+}
+
+// @alpha
+export interface ITreeViewConfigurationAlpha<TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends ITreeViewConfiguration<TSchema> {
+    readonly stagedUpgradePolicy?: StagedSchemaUpgradePolicy;
 }
 
 // @alpha @sealed
@@ -1229,6 +1356,26 @@ export interface LocalChangeMetadata extends CommitMetadata {
     readonly labels: TransactionLabels;
 }
 
+// @public
+export const LogLevel: LogLevelConst;
+
+// @public
+export type LogLevel = (typeof LogLevel)[keyof typeof LogLevel];
+
+// @public
+export interface LogLevelConst {
+    // @deprecated
+    readonly default: 20;
+    // @deprecated
+    readonly error: 30;
+    readonly essential: 30;
+    readonly info: 20;
+    readonly verbose: 10;
+}
+
+// @alpha
+export function lookupInRegistry<TOut, TIn>(registry: Registry<TIn>, key: RegistryKey<TOut, TIn>): TOut;
+
 // @public @sealed
 export interface MakeNominal {
 }
@@ -1265,6 +1412,12 @@ export const MapNodeSchema: {
 
 // @public
 export type MemberChangedListener<M extends IMember> = (clientId: string, member: M) => void;
+
+// @alpha @deprecated
+export const minimize: TransactionPostProcessor;
+
+// @alpha @input
+export type MinimumVersionForCollaboration = `2.${bigint}.0`;
 
 // @public
 export type Myself<M extends IMember = IMember> = M & {
@@ -1427,6 +1580,15 @@ export type RecordNodeSchema<TName extends string = string, T extends ImplicitAl
 export const RecordNodeSchema: {
     readonly [Symbol.hasInstance]: (value: TreeNodeSchema) => value is RecordNodeSchema<string, ImplicitAllowedTypes, true, unknown>;
 };
+
+// @alpha @input
+export type Registry<T> = (type: string) => T;
+
+// @alpha @sealed @input
+export interface RegistryKey<TOut, TIn = unknown> {
+    adapt(value: TIn): TOut;
+    readonly type: string;
+}
 
 // @alpha @sealed
 export interface RemoteChangeMetadata extends CommitMetadata {
@@ -1675,13 +1837,52 @@ export class SchemaUpgrade {
 // @public @system
 type ScopedSchemaName<TScope extends string | undefined, TName extends number | string> = TScope extends undefined ? `${TName}` : `${TScope}.${TName}`;
 
+// @alpha @sealed
+export interface ServiceClient {
+    createAttachedContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerAttached<T>>;
+    createAttachedContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerAttached<T>>;
+    createContainer<T>(root: DataStoreKind<T>): Promise<FluidContainerWithService<T>>;
+    createContainer<T>(root: DataStoreKey<T>, registry: DataStoreRegistry): Promise<FluidContainerWithService<T>>;
+    loadContainer<T>(id: string, root: DataStoreKind<T> | DataStoreRegistry<T>): Promise<FluidContainerAttached<T>>;
+}
+
+// @alpha @input
+export interface ServiceOptions {
+    // (undocumented)
+    readonly minVersionForCollaboration: MinimumVersionForCollaboration;
+}
+
+// @alpha @sealed
+export interface SharedObjectCreator<TConstraint = IFluidLoadable> {
+    createSharedObject<T extends TConstraint>(kind: SharedObjectKey<T>): Promise<T>;
+}
+
+// @alpha @input
+export type SharedObjectKey<T> = RegistryKey<SharedObjectKindAlpha<T>, SharedObjectKindAlpha>;
+
 // @public @sealed
 export interface SharedObjectKind<out TSharedObject = unknown> extends ErasedType<readonly ["SharedObjectKind", TSharedObject]> {
     is(value: IFluidLoadable): value is IFluidLoadable & TSharedObject;
 }
 
+// @alpha @sealed
+export interface SharedObjectKindAlpha<out TSharedObject = unknown> extends SharedObjectKind<TSharedObject>, SharedObjectKey<TSharedObject> {
+}
+
+// @alpha @input
+export type SharedObjectRegistry = () => Promise<Registry<SharedObjectKindAlpha<IFluidLoadable>>>;
+
+// @alpha
+export function sharedObjectRegistryFromIterable(entries: Iterable<SharedObjectKindAlpha<IFluidLoadable> | {
+    type: string;
+    kind: () => Promise<SharedObjectKindAlpha<IFluidLoadable>>;
+}>): SharedObjectRegistry;
+
 // @public
 export const SharedTree: SharedObjectKind<ITree>;
+
+// @alpha
+export const SharedTreeAlpha: SharedObjectKindAlpha<ITree>;
 
 // @alpha @input
 export interface SharedTreeFormatOptions {
@@ -1691,6 +1892,7 @@ export interface SharedTreeFormatOptions {
 // @alpha @input
 export interface SharedTreeOptions extends SharedTreeOptionsBeta, Partial<CodecWriteOptions>, Partial<SharedTreeFormatOptions> {
     readonly enableSharedBranches?: boolean;
+    readonly retainHistory?: boolean;
     shouldEncodeIncrementally?: IncrementalEncodingPolicy;
 }
 
@@ -1807,6 +2009,22 @@ export interface SnapshotSchemaCompatibilityOptions {
     readonly versionComparer?: (a: string, b: string) => number;
 }
 
+// @alpha @input
+export interface StagedSchemaUpgradePolicy {
+    includeStaged(upgrade: SchemaUpgrade): boolean;
+    includeStagedOptional(upgrade: SchemaUpgrade): boolean;
+}
+
+// @alpha
+export const StagedSchemaUpgradePolicy: StagedSchemaUpgradePolicyFactory;
+
+// @alpha @sealed
+export interface StagedSchemaUpgradePolicyFactory {
+    enabledStagedUpgrades(...upgrades: SchemaUpgrade[]): StagedSchemaUpgradePolicy;
+    readonly permissive: StagedSchemaUpgradePolicy;
+    readonly restrictive: StagedSchemaUpgradePolicy;
+}
+
 // @beta @system
 export namespace System_TableSchema {
     // @sealed @system
@@ -1897,7 +2115,7 @@ export namespace System_Unsafe {
     // @system
     export type InsertableTreeNodeFromAllowedTypesUnsafe<TList extends AllowedTypesUnsafe> = IsUnion<TList> extends true ? never : {
         readonly [Property in keyof TList]: TList[Property] extends LazyItem<infer TSchema extends TreeNodeSchemaUnsafe> ? InsertableTypedNodeUnsafe<TSchema> : never;
-    }[number];
+    }[NumberKeys<TList>];
     // @system
     export type InsertableTreeNodeFromImplicitAllowedTypesUnsafe<TSchema extends ImplicitAllowedTypesUnsafe> = [TSchema] extends [TreeNodeSchemaUnsafe] ? InsertableTypedNodeUnsafe<TSchema> : [TSchema] extends [AllowedTypesUnsafe] ? InsertableTreeNodeFromAllowedTypesUnsafe<TSchema> : never;
     // @system
@@ -2206,7 +2424,14 @@ export const TreeArrayNode: {
 
 // @alpha @sealed
 export interface TreeArrayNodeAlpha<TAllowedTypes extends System_Unsafe.ImplicitAllowedTypesUnsafe = ImplicitAllowedTypes, out T = [TAllowedTypes] extends [ImplicitAllowedTypes] ? TreeNodeFromImplicitAllowedTypes<TAllowedTypes> : TreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>, in TNew = [TAllowedTypes] extends [ImplicitAllowedTypes] ? InsertableTreeNodeFromImplicitAllowedTypes<TAllowedTypes> : InsertableTreeNodeFromImplicitAllowedTypes<ImplicitAllowedTypes>> extends TreeArrayNode<TAllowedTypes, T, TNew> {
+    at(index: number): T | undefined;
+    findLast<S extends T>(predicate: (value: T, index: number, array: readonly T[]) => value is S, thisArg?: unknown): S | undefined;
+    findLast(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: unknown): T | undefined;
+    findLastIndex(predicate: (value: T, index: number, array: readonly T[]) => unknown, thisArg?: unknown): number;
+    pop(): T | undefined;
+    shift(): T | undefined;
     splice(start: number, deleteCount?: number, ...items: readonly (TNew | IterableTreeArrayContent<TNew>)[]): T[];
+    unshift(...value: readonly (TNew | IterableTreeArrayContent<TNew>)[]): void;
 }
 
 // @beta @sealed
@@ -2233,6 +2458,7 @@ export interface TreeBranch extends IDisposable {
 // @alpha @sealed
 export interface TreeBranchAlpha extends TreeBranch, TreeContextAlpha {
     applyChange(change: JsonCompatibleReadOnly): void;
+    computeNetChangeIfRebasedOnto(branch: TreeBranch): JsonCompatibleReadOnly | undefined;
     readonly events: Listenable<TreeBranchEvents>;
     // (undocumented)
     fork(): TreeBranchAlpha;
@@ -2282,6 +2508,15 @@ export interface TreeContextAlpha {
     runTransactionAsync(transaction: () => Promise<void>, params?: RunTransactionParamsAlpha): Promise<TransactionVoidResult>;
 }
 
+// @alpha @input
+export interface TreeDataStoreOptions<TSchema extends ImplicitFieldSchema> extends Pick<DataStoreOptions<never, never>, "type"> {
+    readonly config: TreeViewConfiguration<TSchema>;
+    readonly initializer?: (creator: SharedObjectCreator) => InsertableTreeFieldFromImplicitField<TSchema>;
+    // (undocumented)
+    readonly key?: SharedObjectKey<ITree>;
+    readonly registry?: Iterable<SharedObjectKindAlpha<IFluidLoadable>> | SharedObjectRegistry;
+}
+
 // @beta @input
 export interface TreeEncodingOptions<TKeyOptions = KeyEncodingOptions> {
     readonly keys?: TKeyOptions;
@@ -2325,6 +2560,7 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 
 // @alpha @sealed
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
+    clear(): void;
 }
 
 // @public @sealed
@@ -2438,7 +2674,6 @@ export interface TreeViewAlpha<in out TSchema extends ImplicitFieldSchema | Unsa
     readonly events: Listenable<TreeViewEvents & TreeBranchEvents>;
     // (undocumented)
     fork(): ReturnType<TreeBranch["fork"]> & TreeViewAlpha<TSchema>;
-    // (undocumented)
     initialize(content: InsertableField<TSchema>): void;
     // (undocumented)
     get root(): ReadableField<TSchema>;
@@ -2465,11 +2700,12 @@ export class TreeViewConfiguration<const TSchema extends ImplicitFieldSchema = I
 
 // @alpha @sealed
 export class TreeViewConfigurationAlpha<const TSchema extends ImplicitFieldSchema = ImplicitFieldSchema> extends TreeViewConfiguration<TSchema> implements TreeSchema {
-    constructor(props: ITreeViewConfiguration<TSchema>);
+    constructor(props: ITreeViewConfigurationAlpha<TSchema>);
     // (undocumented)
     readonly definitions: ReadonlyMap<string, SimpleNodeSchema<SchemaType.View> & TreeNodeSchema>;
     // (undocumented)
     readonly root: FieldSchemaAlpha;
+    readonly stagedUpgradePolicy: StagedSchemaUpgradePolicy;
 }
 
 // @public @sealed

@@ -28,7 +28,7 @@ import {
 } from "../../feature-libraries/index.js";
 import {
 	prepareForInsertionContextless,
-	restrictiveStoredSchemaGenerationOptions,
+	StagedSchemaUpgradePolicy,
 	SchemaFactory,
 	stringSchema,
 	toStoredSchema,
@@ -233,7 +233,7 @@ describe("prepareForInsertion", () => {
 						...schemaValidationPolicy,
 						toStoredSchema(
 							[myObjectSchema, schemaFactory.string],
-							restrictiveStoredSchemaGenerationOptions,
+							StagedSchemaUpgradePolicy.restrictive,
 						).rootFieldSchema,
 					);
 				});
@@ -248,7 +248,7 @@ describe("prepareForInsertion", () => {
 								...schemaValidationPolicy,
 								toStoredSchema(
 									[myObjectSchema, schemaFactory.string],
-									restrictiveStoredSchemaGenerationOptions,
+									StagedSchemaUpgradePolicy.restrictive,
 								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
@@ -267,7 +267,7 @@ describe("prepareForInsertion", () => {
 						...schemaValidationPolicy,
 						toStoredSchema(
 							[myObjectSchema, schemaFactory.string],
-							restrictiveStoredSchemaGenerationOptions,
+							StagedSchemaUpgradePolicy.restrictive,
 						).rootFieldSchema,
 					);
 				});
@@ -302,7 +302,7 @@ describe("prepareForInsertion", () => {
 						...schemaValidationPolicy,
 						toStoredSchema(
 							[myMapSchema, schemaFactory.string],
-							restrictiveStoredSchemaGenerationOptions,
+							StagedSchemaUpgradePolicy.restrictive,
 						).rootFieldSchema,
 					);
 				});
@@ -317,7 +317,7 @@ describe("prepareForInsertion", () => {
 								...schemaValidationPolicy,
 								toStoredSchema(
 									[myMapSchema, schemaFactory.string],
-									restrictiveStoredSchemaGenerationOptions,
+									StagedSchemaUpgradePolicy.restrictive,
 								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,
@@ -354,7 +354,7 @@ describe("prepareForInsertion", () => {
 						...schemaValidationPolicy,
 						toStoredSchema(
 							[myArrayNodeSchema, schemaFactory.string],
-							restrictiveStoredSchemaGenerationOptions,
+							StagedSchemaUpgradePolicy.restrictive,
 						).rootFieldSchema,
 					);
 				});
@@ -369,7 +369,7 @@ describe("prepareForInsertion", () => {
 								...schemaValidationPolicy,
 								toStoredSchema(
 									[myArrayNodeSchema, schemaFactory.string],
-									restrictiveStoredSchemaGenerationOptions,
+									StagedSchemaUpgradePolicy.restrictive,
 								).rootFieldSchema,
 							),
 						outOfSchemaExpectedError,

@@ -64,7 +64,7 @@ describe("Schema Evolution Examples", () => {
 	 */
 	it("basic usage", () => {
 		// Compose all the view information together.
-		const viewConfig = new TreeViewConfigurationAlpha({ schema: root });
+		const viewSchema = new TreeViewConfigurationAlpha({ schema: root });
 
 		// Now lets imagine using this application on a new empty document.
 		// TreeStoredSchemaRepository defaults to a state that permits no document states at all.
@@ -74,7 +74,7 @@ describe("Schema Evolution Examples", () => {
 
 		{
 			// When we open this document, we should check it's compatibility with our application:
-			const compat = checkSchemaCompatibility(viewConfig, stored);
+			const compat = checkSchemaCompatibility(viewSchema, stored);
 
 			// Sadly for our application, we did not allow empty roots in our view schema,
 			// nor did we provide an adapter capable of handling empty roots.
@@ -96,9 +96,9 @@ describe("Schema Evolution Examples", () => {
 
 			// This example picks the first approach.
 			// Lets simulate the developers of the app making this change by modifying the view schema:
-			const view2Config = new TreeViewConfigurationAlpha({ schema: tolerantRoot });
+			const viewSchema2 = new TreeViewConfigurationAlpha({ schema: tolerantRoot });
 			// When we open this document, we should check it's compatibility with our application:
-			const compat = checkSchemaCompatibility(view2Config, stored);
+			const compat = checkSchemaCompatibility(viewSchema2, stored);
 
 			// The adjusted view schema can be used read this document, no adapters needed.
 			assert.equal(compat.canUpgrade, true);
@@ -133,7 +133,7 @@ describe("Schema Evolution Examples", () => {
 			// That will cause the document stored schema to change,
 			// which will notify and applications with the document open.
 			// They can recheck their compatibility:
-			const compatNew = checkSchemaCompatibility(view2Config, stored);
+			const compatNew = checkSchemaCompatibility(viewSchema2, stored);
 			const report = [
 				...getDiscrepanciesInAllowedContent(
 					new TreeViewConfigurationAlpha({ schema: tolerantRoot }),
@@ -157,12 +157,12 @@ describe("Schema Evolution Examples", () => {
 			// And canvas is still the same storage wise, but its view schema references the updated positionedCanvasItem2:
 			const canvas2 = builder.array("Canvas", positionedCanvasItem2);
 			// Once again we will simulate reloading the app with different schema by modifying the view schema.
-			const view3Config = new TreeViewConfigurationAlpha({
+			const viewSchema3 = new TreeViewConfigurationAlpha({
 				schema: builder.optional(canvas2),
 			});
 
 			// With this new schema, we can load the document just like before:
-			const compat2 = checkSchemaCompatibility(view3Config, stored);
+			const compat2 = checkSchemaCompatibility(viewSchema3, stored);
 			assert.deepEqual(compat2, { canView: false, canUpgrade: true, isEquivalent: false });
 
 			// This is the same case as above where we can choose to do a schema update if we want:
@@ -170,7 +170,7 @@ describe("Schema Evolution Examples", () => {
 			assert(stored.tryUpdateTreeSchema(counter));
 
 			// And recheck compat:
-			const compat3 = checkSchemaCompatibility(view3Config, stored);
+			const compat3 = checkSchemaCompatibility(viewSchema3, stored);
 			assert.deepEqual(compat3, { canView: true, canUpgrade: true, isEquivalent: true });
 		}
 	});

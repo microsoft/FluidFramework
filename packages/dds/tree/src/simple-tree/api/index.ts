@@ -6,6 +6,7 @@
 export type {
 	ITreeViewConfiguration,
 	ITreeConfigurationOptions,
+	ITreeViewConfigurationAlpha,
 } from "./configuration.js";
 export {
 	TreeViewConfiguration,
@@ -66,7 +67,6 @@ export {
 	createCustomizedFluidFrameworkScopedFactory,
 } from "./schemaCreationUtilities.js";
 export {
-	deltaMarksToArrayOps,
 	getIdentifierFromNode,
 	getPropertyKeyFromStoredKey,
 	getStoredKey,

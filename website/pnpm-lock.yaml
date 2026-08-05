@@ -6,6 +6,7 @@ settings:
 
 overrides:
   '@babel/core@>=7 <8': ^7.29.6
+  axios@>=1 <1.16: 1.16.0
   brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
   http-proxy-middleware@>=2 <3: ^2.0.10
@@ -13,12 +14,14 @@ overrides:
   launch-editor@>=2 <3: ^2.14.1
   on-headers@>=1 <2: ^1.1.0
   uuid@>=7 <12: ^11.1.1
+  websocket-driver: ^0.7.5
   ws@>=8 <9: ^8.21.0
   ws@>=7 <8: ^7.5.11
   fast-uri: ^3.1.2
   tmp: ^0.2.6
   form-data@>=4 <5: ^4.0.6
   '@azure/identity': ^4.13.0
+  '@nevware21/ts-utils': ^0.14.0
   '@types/react': ^18.3.12
   diff@>=5 <6: ^5.2.2
   js-yaml@<4: ^3.14.2
@@ -130,9 +133,6 @@ importers:
       docusaurus-plugin-sass:
         specifier: ^0.2.5
         version: 0.2.5(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(sass@1.81.0)(webpack@5.96.1)
-      docusaurus-theme-search-typesense:
-        specifier: 0.23.1-0
-        version: 0.23.1-0(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(@docusaurus/theme-common@3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(@types/react@19.2.14)(acorn@8.15.0)(algoliasearch@5.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
       dompurify:
         specifier: ^3.2.6
         version: 3.2.6
@@ -166,6 +166,9 @@ importers:
       mdast-util-directive:
         specifier: ^3.1.0
         version: 3.1.0
+      pagefind:
+        specifier: 1.5.2
+        version: 1.5.2
       playwright:
         specifier: ^1.49.0
         version: 1.49.0
@@ -1721,9 +1724,8 @@ packages:
   '@nevware21/ts-async@0.5.4':
     resolution: {integrity: sha512-IBTyj29GwGlxfzXw2NPnzty+w0Adx61Eze1/lknH/XIVdxtF9UnOpk76tnrHXWa6j84a1RR9hsOcHQPFv9qJjA==}
 
-  '@nevware21/ts-utils@0.11.6':
-    resolution: {integrity: sha512-OUUJTh3fnaUSzg9DEHgv3d7jC+DnPL65mIO7RaR+jWve7+MmcgIvF79gY97DPQ4frH+IpNR78YAYd/dW4gK3kg==}
-    deprecated: Critical CVE-2026-46681 fixed in v0.14.0
+  '@nevware21/ts-utils@0.14.0':
+    resolution: {integrity: sha512-WoeqTIXQ8WPhl+lD2NbMHoAQ4sJl0n7EoRoDmVJui//Usg512enl9q1fdbVobuZt3omnxnmVsDrNIvPBvFgddQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1856,6 +1858,41 @@ packages:
   '@parcel/watcher@2.5.6':
     resolution: {integrity: sha512-tmmZ3lQxAe/k/+rNnXQRawJ4NjxO2hqiOLTHvWchtGZULp4RyFeh6aU4XdOYBFe2KE1oShQTv4AblOs2iOrNnQ==}
     engines: {node: '>= 10.0.0'}
+
+  '@pagefind/darwin-arm64@1.5.2':
+    resolution: {integrity: sha512-MXpI+7HsAdPkvJ0gk9xj9g541BCqBZOBbdwj9g6lB5LCj6kSV6nqDSjzcAJwvOsfu0fjwvC8hQU+ecfhp+MpiQ==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@pagefind/darwin-x64@1.5.2':
+    resolution: {integrity: sha512-IojxFWMEJe0RQ7PQ3KXQsPIImNsbpPYpoZ+QUDrL8fAl/O27IX+LVLs74/UzEZy5uA2LD8Nz1AiwKr72vrkZQw==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@pagefind/freebsd-x64@1.5.2':
+    resolution: {integrity: sha512-7EVzo9+0w+2cbe671BtMj10UlNo83I+HrLVLfRxO731svHRJKUfJ/mo05gU14pe9PCfpKNQT8FS3Xc/oDN6pOA==}
+    cpu: [x64]
+    os: [freebsd]
+
+  '@pagefind/linux-arm64@1.5.2':
+    resolution: {integrity: sha512-Ovt9+K35sqzn8H3ZMXGwls4TD/wMJuvRtShHIsmUQREmaxjrDEX7gHckRCrwYJ4XE1H1p6HkLz3wukrAnsfXQw==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@pagefind/linux-x64@1.5.2':
+    resolution: {integrity: sha512-V+tFqHKXhQKq/WqPBD67AFy7scn1/aZID00ws4fSDd+1daSi5UHR9VVlRrOUYKxn3VuFQYRD7lYXdZK1WED1YA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@pagefind/windows-arm64@1.5.2':
+    resolution: {integrity: sha512-hN9Nh90fNW61nNRCW9ZyQrAj/mD0eRvmJ8NlTUzkbuW8kIzGJUi3cxjFkEcMZ5h/8FsKWD/VcouZl4yo1F7B6g==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@pagefind/windows-x64@1.5.2':
+    resolution: {integrity: sha512-Fa2Iyw7kaDRzGMfNYNUXNW2zbL5FQVDgSOcbDHdzBrDEdpqOqg8TcZ68F22ol6NJ9IGzvUdmeyZypLW5dyhqsg==}
+    cpu: [x64]
+    os: [win32]
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -2904,8 +2941,8 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.13.6:
-    resolution: {integrity: sha512-ChTCHMouEe2kn713WHbQGcuYrr6fXTBiu460OTwWrWob16g1bXn4vtz07Ope7ewMozJAnEquLk5lWQWtBig9DQ==}
+  axios@1.16.0:
+    resolution: {integrity: sha512-6hp5CwvTPlN2A31g5dxnwAX0orzM7pmCRDLnZSX772mv8WDqICwFjowHuPs04Mc8deIld1+ejhtaMn5vp6b+1w==}
 
   babel-loader@9.2.1:
     resolution: {integrity: sha512-fqe8naHt46e0yIdkjUZYqddSXfej3AHajX+CSO5X7oy0EmPc6o5Xh+RClNoHjnieWz9AW4kZxW9yyFMhVB1QLA==}
@@ -3960,15 +3997,6 @@ packages:
       '@docusaurus/core': ^2.0.0-beta || ^3.0.0-alpha
       sass: ^1.30.0
 
-  docusaurus-theme-search-typesense@0.23.1-0:
-    resolution: {integrity: sha512-l+gnvapey6UcAzpEodQyGNNqhHkQDCMeoGt9LbXCOiPfC0H6H/80DYd1kwQvGrLpTMVGfRjOIcw8bIZFrhtHGA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@docusaurus/core': ~3.6.0
-      '@docusaurus/theme-common': ~3.6.0
-      react: ^18.0.0
-      react-dom: ^18.0.0
-
   dom-converter@0.2.0:
     resolution: {integrity: sha512-gd3ypIPfOMr9h5jIKq8E3sHOTCjeirnl0WK5ZdS1AW0Odt0b1PaWaHdJ4Qk4klv+YB9aJBS7mESXjFoDQPu6DA==}
 
@@ -4574,8 +4602,8 @@ packages:
   flatted@3.4.2:
     resolution: {integrity: sha512-PjDse7RzhcPkIJwy5t7KPWQSZ9cAbzQXcafsetQoD7sOJRQlGikNbx7yZp2OotDnJyrDcbyRq3Ttb18iYOqkxA==}
 
-  follow-redirects@1.15.11:
-    resolution: {integrity: sha512-deG2P0JfjrTxl50XGCDyfI97ZGVCxIpfKYmfyrQ54n5FO/0gfIES8C/Psl6kWVDolizcaaxZJnTS0QSMxvnsBQ==}
+  follow-redirects@1.16.0:
+    resolution: {integrity: sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -6531,6 +6559,10 @@ packages:
   package-manager-detector@1.4.0:
     resolution: {integrity: sha512-rRZ+pR1Usc+ND9M2NkmCvE/LYJS+8ORVV9X0KuNSY/gFsp7RBHJM/ADh9LYq4Vvfq6QkKrW6/weuh8SMEtN5gw==}
 
+  pagefind@1.5.2:
+    resolution: {integrity: sha512-XTUaK0hXMCu2jszWE584JGQT7y284TmMV9l/HX3rnG5uo3rHI/uHU56XTyyyPFjeWEBxECbAi0CaFDJOONtG0Q==}
+    hasBin: true
+
   param-case@3.0.4:
     resolution: {integrity: sha512-RXlj7zCYokReqWpOPH9oYivUzLYZ5vAPIfEmCTNViosC78F8F0H9y7T7gG2M39ymgutxF5gcFEsyZQSph9Bp3A==}
 
@@ -7187,8 +7219,9 @@ packages:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
 
-  proxy-from-env@1.1.0:
-    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
+  proxy-from-env@2.1.0:
+    resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
+    engines: {node: '>=10'}
 
   ps-tree@1.2.0:
     resolution: {integrity: sha512-0VnamPPYHl4uaU/nSFeZZpR21QAWRz+sRv4iW9+v/GS/J5U5iZB5BNN6J0RMoOvdx2gWM2+ZFMIm58q24e4UYA==}
@@ -8320,41 +8353,6 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typesense-docsearch-css@0.4.1:
-    resolution: {integrity: sha512-mN8K18pfIpCrhzsMAJBzoS7l/YDcC4P3f9vsScenUceXmC8n3FCPldmF10dKDJmK3Lr7aAScQt70jCA5126y2w==}
-
-  typesense-docsearch-react@3.4.1:
-    resolution: {integrity: sha512-d0PQym/B/p5oP+hfdFEOH6goiKa1JLR63bikZSDGq1+jT2FtuwNrdMGVBZZMNFUsXVsJRA8ULHJpsREmfSJmVw==}
-    peerDependencies:
-      '@types/react': ^18.3.12
-      react: '>= 16.8.0 < 19.0.0'
-      react-dom: '>= 16.8.0 < 19.0.0'
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
-  typesense-instantsearch-adapter@2.8.0:
-    resolution: {integrity: sha512-2q4QVpHoUV0ncf1XOqIC0dufOTkFRxQ0mHzg//H3WK02ZYqdNNPCAacZODhQlltl1cNJdTI8Y4uuGVd6fJuGzw==}
-    engines: {node: '>=16'}
-    peerDependencies:
-      '@babel/runtime': ^7.17.2
-
-  typesense-instantsearch-adapter@2.9.0-6:
-    resolution: {integrity: sha512-o+lPtBnrGaHLdw9g2WGJ7V1INRSKUno6T12cAp1jcMS0b9zhdZWtqe+ESlveK0hfAnd+mKeTVauc9oM5Ytafxw==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@babel/runtime': ^7.24.1
-
-  typesense@1.8.2:
-    resolution: {integrity: sha512-aBpePjA99Qvo+OP2pJwMpvga4Jrm1Y2oV5NsrWXBxlqUDNEUCPZBIksPv2Hq0jxQxHhLLyJVbjXjByXsvpCDVA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      '@babel/runtime': ^7.23.2
-
   ufo@1.6.1:
     resolution: {integrity: sha512-9a4/uxlTWJ4+a5i0ooc1rU7C7YOw3wT+UGqdeNNHWnOF9qcMBgLRS+4IYUqbczewFx4mLEig6gawh7X6mFlEkA==}
 
@@ -8656,8 +8654,8 @@ packages:
     peerDependencies:
       webpack: 3 || 4 || 5
 
-  websocket-driver@0.7.4:
-    resolution: {integrity: sha512-b17KeDIQVjvb0ssuSDF2cYXSg2iztliJ4B9WdsuB6J952qCPKmnVq4DyW5motImXHDC1cBT/1UezrJVsKw5zjg==}
+  websocket-driver@0.7.5:
+    resolution: {integrity: sha512-ZL2+3c7kMBdIRCMz6l8jQMHyGVxj+UL+xVk74Ombiciboca8rHa15L86B19E5oh1pL9Ii/uj54gtsIrZGMo6zA==}
     engines: {node: '>=0.8.0'}
 
   websocket-extensions@0.1.4:
@@ -11416,7 +11414,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-cfgsync-js@3.3.4(tslib@2.8.1)':
@@ -11426,7 +11424,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-channel-js@3.3.4(tslib@2.8.1)':
@@ -11436,7 +11434,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-common@3.3.4(tslib@2.8.1)':
@@ -11444,7 +11442,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-core-js@3.3.4(tslib@2.8.1)':
@@ -11452,7 +11450,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-dependencies-js@3.3.4(tslib@2.8.1)':
@@ -11462,7 +11460,7 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-properties-js@3.3.4(tslib@2.8.1)':
@@ -11471,7 +11469,7 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-react-js@17.3.4(history@4.10.1)(react@18.3.1)(tslib@2.8.1)':
@@ -11480,14 +11478,14 @@ snapshots:
       '@microsoft/applicationinsights-core-js': 3.3.4(tslib@2.8.1)
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       history: 4.10.1
       react: 18.3.1
       tslib: 2.8.1
 
   '@microsoft/applicationinsights-shims@3.0.1':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
   '@microsoft/applicationinsights-web@3.3.4(tslib@2.8.1)':
     dependencies:
@@ -11501,12 +11499,12 @@ snapshots:
       '@microsoft/applicationinsights-shims': 3.0.1
       '@microsoft/dynamicproto-js': 2.0.3
       '@nevware21/ts-async': 0.5.4
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
       tslib: 2.8.1
 
   '@microsoft/dynamicproto-js@2.0.3':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
   '@microsoft/tsdoc-config@0.17.1':
     dependencies:
@@ -11526,9 +11524,9 @@ snapshots:
 
   '@nevware21/ts-async@0.5.4':
     dependencies:
-      '@nevware21/ts-utils': 0.11.6
+      '@nevware21/ts-utils': 0.14.0
 
-  '@nevware21/ts-utils@0.11.6': {}
+  '@nevware21/ts-utils@0.14.0': {}
 
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
@@ -11678,6 +11676,27 @@ snapshots:
       '@parcel/watcher-win32-arm64': 2.5.6
       '@parcel/watcher-win32-ia32': 2.5.6
       '@parcel/watcher-win32-x64': 2.5.6
+    optional: true
+
+  '@pagefind/darwin-arm64@1.5.2':
+    optional: true
+
+  '@pagefind/darwin-x64@1.5.2':
+    optional: true
+
+  '@pagefind/freebsd-x64@1.5.2':
+    optional: true
+
+  '@pagefind/linux-arm64@1.5.2':
+    optional: true
+
+  '@pagefind/linux-x64@1.5.2':
+    optional: true
+
+  '@pagefind/windows-arm64@1.5.2':
+    optional: true
+
+  '@pagefind/windows-x64@1.5.2':
     optional: true
 
   '@pkgjs/parseargs@0.11.0':
@@ -12924,11 +12943,11 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.0.0
 
-  axios@1.13.6(debug@4.3.7):
+  axios@1.16.0(debug@4.3.7):
     dependencies:
-      follow-redirects: 1.15.11(debug@4.3.7)
+      follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
-      proxy-from-env: 1.1.0
+      proxy-from-env: 2.1.0
     transitivePeerDependencies:
       - debug
 
@@ -14114,51 +14133,6 @@ snapshots:
       - node-sass
       - webpack
 
-  docusaurus-theme-search-typesense@0.23.1-0(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@docusaurus/core@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4))(@docusaurus/theme-common@3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(@types/react@19.2.14)(acorn@8.15.0)(algoliasearch@5.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4):
-    dependencies:
-      '@docusaurus/core': 3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4)
-      '@docusaurus/logger': 3.6.2
-      '@docusaurus/plugin-content-docs': 3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/theme-common': 3.6.2(@docusaurus/plugin-content-docs@3.6.2(@mdx-js/react@3.1.0(@types/react@19.2.14)(react@18.3.1))(acorn@8.15.0)(eslint@8.57.1(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4))(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/theme-translations': 3.6.2
-      '@docusaurus/utils': 3.6.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      '@docusaurus/utils-validation': 3.6.2(acorn@8.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(typescript@5.5.4)
-      algoliasearch-helper: 3.22.5(algoliasearch@5.15.0)
-      clsx: 2.1.1
-      eta: 2.2.0
-      fs-extra: 11.3.2
-      lodash: 4.18.1
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-      tslib: 2.8.1
-      typesense-docsearch-react: 3.4.1(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@types/react@19.2.14)(algoliasearch@5.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      typesense-instantsearch-adapter: 2.9.0-6(@babel/runtime@7.28.4)
-      utility-types: 3.11.0
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-      - '@babel/runtime'
-      - '@docusaurus/faster'
-      - '@mdx-js/react'
-      - '@parcel/css'
-      - '@rspack/core'
-      - '@swc/core'
-      - '@swc/css'
-      - '@types/react'
-      - acorn
-      - algoliasearch
-      - bufferutil
-      - csso
-      - debug
-      - esbuild
-      - eslint
-      - lightningcss
-      - supports-color
-      - typescript
-      - uglify-js
-      - utf-8-validate
-      - vue-template-compiler
-      - webpack-cli
-
   dom-converter@0.2.0:
     dependencies:
       utila: 0.4.0
@@ -14921,7 +14895,7 @@ snapshots:
 
   faye-websocket@0.11.4:
     dependencies:
-      websocket-driver: 0.7.4
+      websocket-driver: 0.7.5
 
   fd-slicer@1.1.0:
     dependencies:
@@ -15027,7 +15001,7 @@ snapshots:
 
   flatted@3.4.2: {}
 
-  follow-redirects@1.15.11(debug@4.3.7):
+  follow-redirects@1.16.0(debug@4.3.7):
     optionalDependencies:
       debug: 4.3.7
 
@@ -17435,6 +17409,16 @@ snapshots:
 
   package-manager-detector@1.4.0: {}
 
+  pagefind@1.5.2:
+    optionalDependencies:
+      '@pagefind/darwin-arm64': 1.5.2
+      '@pagefind/darwin-x64': 1.5.2
+      '@pagefind/freebsd-x64': 1.5.2
+      '@pagefind/linux-arm64': 1.5.2
+      '@pagefind/linux-x64': 1.5.2
+      '@pagefind/windows-arm64': 1.5.2
+      '@pagefind/windows-x64': 1.5.2
+
   param-case@3.0.4:
     dependencies:
       dot-case: 3.0.4
@@ -18132,7 +18116,7 @@ snapshots:
       forwarded: 0.2.0
       ipaddr.js: 1.9.1
 
-  proxy-from-env@1.1.0: {}
+  proxy-from-env@2.1.0: {}
 
   ps-tree@1.2.0:
     dependencies:
@@ -18992,7 +18976,7 @@ snapshots:
     dependencies:
       faye-websocket: 0.11.4
       uuid: 11.1.1
-      websocket-driver: 0.7.4
+      websocket-driver: 0.7.5
 
   sort-css-media-queries@2.2.0: {}
 
@@ -19539,47 +19523,6 @@ snapshots:
 
   typescript@5.5.4: {}
 
-  typesense-docsearch-css@0.4.1: {}
-
-  typesense-docsearch-react@3.4.1(@algolia/client-search@5.15.0)(@babel/runtime@7.28.4)(@types/react@19.2.14)(algoliasearch@5.15.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
-    dependencies:
-      '@algolia/autocomplete-core': 1.8.2
-      '@algolia/autocomplete-preset-algolia': 1.8.2(@algolia/client-search@5.15.0)(algoliasearch@5.15.0)
-      typesense: 1.8.2(@babel/runtime@7.28.4)
-      typesense-docsearch-css: 0.4.1
-      typesense-instantsearch-adapter: 2.8.0(@babel/runtime@7.28.4)
-    optionalDependencies:
-      '@types/react': 19.2.14
-      react: 18.3.1
-      react-dom: 18.3.1(react@18.3.1)
-    transitivePeerDependencies:
-      - '@algolia/client-search'
-      - '@babel/runtime'
-      - algoliasearch
-      - debug
-
-  typesense-instantsearch-adapter@2.8.0(@babel/runtime@7.28.4):
-    dependencies:
-      '@babel/runtime': 7.28.4
-      typesense: 1.8.2(@babel/runtime@7.28.4)
-    transitivePeerDependencies:
-      - debug
-
-  typesense-instantsearch-adapter@2.9.0-6(@babel/runtime@7.28.4):
-    dependencies:
-      '@babel/runtime': 7.28.4
-      typesense: 1.8.2(@babel/runtime@7.28.4)
-    transitivePeerDependencies:
-      - debug
-
-  typesense@1.8.2(@babel/runtime@7.28.4):
-    dependencies:
-      '@babel/runtime': 7.28.4
-      axios: 1.13.6(debug@4.3.7)
-      loglevel: 1.9.2
-    transitivePeerDependencies:
-      - debug
-
   ufo@1.6.1: {}
 
   uint8array-extras@1.4.0: {}
@@ -19891,7 +19834,7 @@ snapshots:
 
   wait-on@7.2.0(debug@4.3.7):
     dependencies:
-      axios: 1.13.6(debug@4.3.7)
+      axios: 1.16.0(debug@4.3.7)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -19901,7 +19844,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7):
     dependencies:
-      axios: 1.13.6(debug@4.3.7)
+      axios: 1.16.0(debug@4.3.7)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -20051,7 +19994,7 @@ snapshots:
       webpack: 5.96.1
       wrap-ansi: 7.0.0
 
-  websocket-driver@0.7.4:
+  websocket-driver@0.7.5:
     dependencies:
       http-parser-js: 0.5.8
       safe-buffer: 5.2.1

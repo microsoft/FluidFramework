@@ -10,9 +10,10 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,
-	SharedObjectKind,
+	SharedObjectKindAlpha,
 } from "@fluidframework/shared-object-base/internal";
 import {
 	MockContainerRuntimeFactory,
@@ -35,7 +36,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
@@ -46,6 +46,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	ComparisonForest,
 	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
@@ -64,15 +65,8 @@ import {
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
-import {
-	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import {
-	TreeBeta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -89,13 +83,19 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
+import {
+	handleSchema,
+	numberSchema,
+	stringSchema,
+	TreeBeta,
+} from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
+import { defineTreeDataStore } from "../../treeDataStore.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
@@ -127,7 +127,7 @@ const enableSchemaValidation = true;
 const DebugSharedTree = configuredSharedTree({
 	jsonValidator: FormatValidatorBasic,
 	forest: ForestTypeExpensiveDebug,
-}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 
 class MockSharedTreeRuntime extends MockFluidDataStoreRuntime {
 	public constructor() {
@@ -954,6 +954,15 @@ describe("SharedTree", () => {
 		assert.deepEqual([...view2.root], ["A", "B", "C"]);
 	});
 
+	// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
+	// if we'll ever expose some memory stats in which the trunk length would be included.
+	// If we do then this test should be updated to use that code path.
+	interface EditManagerKludge {
+		kernel?: {
+			editManager?: EditManager<ChangeFamilyEditor, unknown>;
+		};
+	}
+
 	it("has bounded memory growth in EditManager", () => {
 		const provider = new TestTreeProviderLite(2);
 		const viewInit = provider.trees[0].viewWith(
@@ -984,18 +993,6 @@ describe("SharedTree", () => {
 		// This synchronization point should ensure that both trees see the edits with the higher ref numbers.
 		provider.synchronizeMessages();
 
-		// It's not clear if we'll ever want to expose the EditManager to ISharedTree consumers or
-		// if we'll ever expose some memory stats in which the trunk length would be included.
-		// If we do then this test should be updated to use that code path.
-		interface EditManagerKludge {
-			kernel?: {
-				editManager?: EditManager<
-					ChangeFamilyEditor,
-					unknown,
-					ChangeFamily<ChangeFamilyEditor, unknown>
-				>;
-			};
-		}
 		const t1 = provider.trees[0] as unknown as EditManagerKludge;
 		const t2 = provider.trees[1] as unknown as EditManagerKludge;
 		assert(
@@ -1004,6 +1001,60 @@ describe("SharedTree", () => {
 		);
 		assert(t1.kernel.editManager.getTrunkChanges("main").length < 10);
 		assert(t2.kernel.editManager.getTrunkChanges("main").length < 10);
+	});
+
+	it("does not evict trunk commits when retainHistory is enabled", () => {
+		const provider = new TestTreeProviderLite(
+			2,
+			configuredSharedTree({
+				jsonValidator: FormatValidatorBasic,
+				retainHistory: true,
+			}).getFactory(),
+		);
+		const viewInit = provider.trees[0].viewWith(
+			new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			}),
+		);
+		viewInit.initialize([]);
+		viewInit.dispose();
+		provider.synchronizeMessages();
+
+		const t1 = provider.trees[0] as unknown as EditManagerKludge;
+		const t2 = provider.trees[1] as unknown as EditManagerKludge;
+		assert(
+			t1.kernel?.editManager !== undefined && t2.kernel?.editManager !== undefined,
+			"EditManager has moved. This test must be updated.",
+		);
+
+		const priorEditCount = t1.kernel.editManager?.getTrunkChanges("main").length;
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, priorEditCount);
+
+		const [view1, view2] = provider.trees.map((t) =>
+			t.viewWith(new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation })),
+		);
+
+		const sequencedEditCount = 10;
+		for (let i = 0; i < sequencedEditCount; ++i) {
+			view1.root.insertAtStart("");
+		}
+
+		provider.synchronizeMessages();
+
+		// These two edits will have ref numbers that correspond to the last of the above edits
+		view1.root.insertAtStart("");
+		view2.root.insertAtStart("");
+
+		// This synchronization point should ensure that both trees see the edits with the higher ref numbers,
+		// and would normally cause the earlier commits to be evicted from the trunk.
+		provider.synchronizeMessages();
+
+		// All of the edits (plus the two additional ones) should still be present on the trunk since
+		// retainHistory prevents trunk commits from ever being trimmed.
+		const expectedCount = priorEditCount + sequencedEditCount + 2;
+		assert.equal(t1.kernel.editManager.getTrunkChanges("main").length, expectedCount);
+		assert.equal(t2.kernel.editManager.getTrunkChanges("main").length, expectedCount);
 	});
 
 	it("can process changes while detached", async () => {
@@ -2003,26 +2054,30 @@ describe("SharedTree", () => {
 	});
 
 	describe("tolerates open async transactions in the face of inbound commits", () => {
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+		const testArrayTree = defineTreeDataStore({
+			type: "testArrayTree",
+			config,
+			initializer: () => ["A", "C", "E"],
+		});
 		it("committed transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2030,31 +2085,26 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
 		});
 
 		it("aborted transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2063,7 +2113,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 		});
@@ -2431,7 +2481,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2440,8 +2490,10 @@ describe("SharedTree", () => {
 				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
-			assert(forest instanceof ObjectForest);
-			assert.equal(forest.additionalAsserts, true);
+			assert(forest instanceof ComparisonForest);
+			assert(forest.main instanceof ChunkedForest);
+			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {
@@ -2698,7 +2750,7 @@ describe("SharedTree", () => {
 		const sharedObject = configuredSharedTree({
 			jsonValidator: FormatValidatorBasic,
 			forest: ForestTypeExpensiveDebug,
-		}) as SharedObjectKind<ISharedTree> & ISharedObjectKind<ISharedTree>;
+		}) as SharedObjectKindAlpha<ISharedTree> & ISharedObjectKind<ISharedTree>;
 		const tree = sharedObject.getFactory().create(runtime, "tree");
 		const runtimeFactory = new MockContainerRuntimeFactory();
 		runtimeFactory.createContainerRuntime(runtime);
@@ -2787,100 +2839,176 @@ describe("SharedTree", () => {
 		assert.deepEqual(tree.exportSimpleSchema(), expected);
 	});
 
-	it("supports multiple shared branches", () => {
-		const provider = new TestTreeProviderLite(
-			2,
-			configuredSharedTree({
-				jsonValidator: FormatValidatorBasic,
-				enableSharedBranches: true,
-			}).getFactory(),
-		);
-		const tree1 = provider.trees[0];
+	describe("Shared Branches", () => {
+		it("supports multiple shared branches", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
 
-		const config = new TreeViewConfiguration({ schema: StringArray, enableSchemaValidation });
-		const mainView1 = tree1.viewWith(config);
-		mainView1.initialize(["A"]);
-		provider.synchronizeMessages();
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize(["A"]);
+			provider.synchronizeMessages();
 
-		assert.deepEqual([...mainView1.root], ["A"]);
-		const tree2 = provider.trees[1];
-		provider.synchronizeMessages();
+			assert.deepEqual([...mainView1.root], ["A"]);
+			const tree2 = provider.trees[1];
+			provider.synchronizeMessages();
 
-		const branchId = tree1.createSharedBranch();
-		const branchView1 = tree1.viewSharedBranchWith(branchId, config);
-		assert.deepEqual([...branchView1.root], ["A"]);
+			const branchId = tree1.createSharedBranch();
+			const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView1.root], ["A"]);
 
-		mainView1.root.insertAtEnd("X");
-		branchView1.root.insertAtEnd("B");
-		assert.deepEqual([...branchView1.root], ["A", "B"]);
-		assert.deepEqual([...mainView1.root], ["A", "X"]);
-		provider.synchronizeMessages();
+			mainView1.root.insertAtEnd("X");
+			branchView1.root.insertAtEnd("B");
+			assert.deepEqual([...branchView1.root], ["A", "B"]);
+			assert.deepEqual([...mainView1.root], ["A", "X"]);
+			provider.synchronizeMessages();
 
-		const branchView2 = tree2.viewSharedBranchWith(branchId, config);
-		assert.deepEqual([...branchView2.root], ["A", "B"]);
+			const branchView2 = tree2.viewSharedBranchWith(branchId, config);
+			assert.deepEqual([...branchView2.root], ["A", "B"]);
 
-		branchView2.root.insertAtEnd("C");
-		assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
-		provider.synchronizeMessages();
+			branchView2.root.insertAtEnd("C");
+			assert.deepEqual([...branchView2.root], ["A", "B", "C"]);
+			provider.synchronizeMessages();
 
-		assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
-		assert.deepEqual([...mainView1.root], ["A", "X"]);
+			assert.deepEqual([...branchView1.root], ["A", "B", "C"]);
+			assert.deepEqual([...mainView1.root], ["A", "X"]);
 
-		const mainView2 = tree2.viewWith(config);
-		assert.deepEqual([...mainView2.root], ["A", "X"]);
-	});
+			const mainView2 = tree2.viewWith(config);
+			assert.deepEqual([...mainView2.root], ["A", "X"]);
+		});
 
-	describe("can load a shared branch from summary", () => {
-		for (const subCase of [
-			"based on a commit in the collab window",
-			"based on a commit outside the collab window",
-		] as const) {
-			it(subCase, async () => {
-				const internalOption = resolveOptions({ enableSharedBranches: true });
-				const provider = await TestTreeProvider.create(
-					1,
-					SummarizeType.onDemand,
-					new SharedTreeTestFactory(() => {}, undefined, internalOption),
-				);
-				const tree1 = provider.trees[0];
-				const config = new TreeViewConfiguration({
-					schema: StringArray,
-					enableSchemaValidation,
-				});
-				const mainView1 = tree1.viewWith(config);
-				mainView1.initialize([]);
-				mainView1.root.insertAtEnd("A");
-				const branchId = tree1.createSharedBranch();
-				mainView1.root.insertAtEnd("B");
-				await provider.ensureSynchronized();
+		it("shared branches can be named on creation", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
 
-				const branchView1 = tree1.viewSharedBranchWith(branchId, config);
-				branchView1.root.insertAtEnd("X");
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize([]);
+			provider.synchronizeMessages();
 
-				await provider.ensureSynchronized();
+			/** A basic name */
+			const name1 = "branch1";
+			/** A name with special characters that need escaping */
+			const name2 = '" \\ \b \f \n \r \t \u00E9';
+			/** A name with special characters that do not need escaping */
+			const name3 = "こんにちは 👋 café © ™ € £ ¥ < > & ' `";
+			const branch1Id = tree1.createSharedBranch(name1);
+			const branch2Id = tree1.createSharedBranch(name2);
+			const branch3Id = tree1.createSharedBranch(name3);
 
-				if (subCase === "based on a commit outside the collab window") {
-					const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
-					while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+			assert.equal(tree1.getSharedBranchName(branch1Id), name1);
+			assert.equal(tree1.getSharedBranchName(branch2Id), name2);
+			assert.equal(tree1.getSharedBranchName(branch3Id), name3);
+
+			provider.synchronizeMessages();
+
+			assert.equal(tree2.getSharedBranchName(branch1Id), name1);
+			assert.equal(tree2.getSharedBranchName(branch2Id), name2);
+			assert.equal(tree2.getSharedBranchName(branch3Id), name3);
+		});
+
+		it("shared branch names cannot exceed a length of 1024", () => {
+			const provider = new TestTreeProviderLite(
+				2,
+				configuredSharedTree({
+					jsonValidator: FormatValidatorBasic,
+					enableSharedBranches: true,
+				}).getFactory(),
+			);
+			const tree1 = provider.trees[0];
+			const tree2 = provider.trees[1];
+
+			const config = new TreeViewConfiguration({
+				schema: StringArray,
+				enableSchemaValidation,
+			});
+			const mainView1 = tree1.viewWith(config);
+			mainView1.initialize([]);
+			provider.synchronizeMessages();
+
+			const validName = "v".repeat(1024);
+			const branch1Id = tree1.createSharedBranch(validName);
+			assert.equal(tree1.getSharedBranchName(branch1Id), validName);
+			provider.synchronizeMessages();
+			assert.equal(tree2.getSharedBranchName(branch1Id), validName);
+
+			const invalidName = "i".repeat(1025);
+			assert.throws(() => tree1.createSharedBranch(invalidName), /Branch name is too long/);
+		});
+
+		describe("can load a shared branch from summary", () => {
+			for (const subCase of [
+				"based on a commit in the collab window",
+				"based on a commit outside the collab window",
+			] as const) {
+				it(subCase, async () => {
+					const internalOption = resolveOptions({ enableSharedBranches: true });
+					const provider = await TestTreeProvider.create(
+						1,
+						SummarizeType.onDemand,
+						new SharedTreeTestFactory(() => {}, undefined, internalOption),
+					);
+					const tree1 = provider.trees[0];
+					const config = new TreeViewConfiguration({
+						schema: StringArray,
+						enableSchemaValidation,
+					});
+					const mainView1 = tree1.viewWith(config);
+					mainView1.initialize([]);
+					mainView1.root.insertAtEnd("A");
+					const branchId = tree1.createSharedBranch("branch");
+					mainView1.root.insertAtEnd("B");
+					await provider.ensureSynchronized();
+
+					const branchView1 = tree1.viewSharedBranchWith(branchId, config);
+					branchView1.root.insertAtEnd("X");
+
+					await provider.ensureSynchronized();
+
+					if (subCase === "based on a commit outside the collab window") {
+						const seqNumber = provider.containers[0].deltaManager.lastSequenceNumber;
+						while (provider.containers[0].deltaManager.minimumSequenceNumber < seqNumber) {
+							mainView1.root.insertAtEnd("C");
+							await provider.ensureSynchronized();
+						}
 						mainView1.root.insertAtEnd("C");
 						await provider.ensureSynchronized();
 					}
-					mainView1.root.insertAtEnd("C");
+
+					const lengthOnMainBranch = mainView1.root.length;
+
+					// The summary created here should include the shared branch
+					await provider.summarize();
 					await provider.ensureSynchronized();
-				}
-
-				const lengthOnMainBranch = mainView1.root.length;
-
-				// The summary created here should include the shared branch
-				await provider.summarize();
-				await provider.ensureSynchronized();
-				const loadingTree = await provider.createTree();
-				const loadingMainView = loadingTree.viewWith(config);
-				assert.equal(loadingMainView.root.length, lengthOnMainBranch);
-				const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
-				assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
-			});
-		}
+					const loadingTree = await provider.createTree();
+					const loadingMainView = loadingTree.viewWith(config);
+					assert.equal(loadingMainView.root.length, lengthOnMainBranch);
+					const loadingBranchView = loadingTree.viewSharedBranchWith(branchId, config);
+					assert.deepEqual([...loadingBranchView.root], ["A", "X"]);
+					// Check that the branch name is preserved in the summary
+					assert.equal(loadingTree.getSharedBranchName(branchId), "branch");
+				});
+			}
+		});
 	});
 
 	it("Can process nested transactions from two different trees", () => {

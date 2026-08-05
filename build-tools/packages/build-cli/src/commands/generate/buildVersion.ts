@@ -160,9 +160,11 @@ export default class GenerateBuildVersionCommand extends BaseCommand<
 		if (flags.tag !== undefined) {
 			const isLatest = getIsLatest(flags.tag, version, tags, shouldIncludeInternalVersions);
 			this.log(`isLatest=${isLatest}`);
-			if (isRelease && isLatest === true) {
-				this.log(generateSetVariableString("isLatest", String(isLatest), { isOutput: true }));
-			}
+			this.log(
+				generateSetVariableString("isLatest", String(isRelease && isLatest), {
+					isOutput: true,
+				}),
+			);
 		}
 	}
 

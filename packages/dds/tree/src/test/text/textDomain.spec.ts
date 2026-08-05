@@ -11,15 +11,26 @@ import {
 	TreeViewConfiguration,
 	type NodeFromSchema,
 } from "../../simple-tree/index.js";
-// Allow importing file being tested
-// eslint-disable-next-line import-x/no-internal-modules
-import { TextAsTree } from "../../text/textDomain.js";
+import {
+	expensiveInternalValidationAssert,
+	setEnableExpensiveDebugAsserts,
+	TextAsTree,
+	// eslint-disable-next-line import-x/no-internal-modules -- Importing code being tested
+} from "../../text/textDomain.js";
 import type { requireTrue, areSafelyAssignable } from "../../util/index.js";
 import { describeHydration, hydrateNode } from "../simple-tree/index.js";
 import { testSchemaCompatibilitySnapshots } from "../snapshots/index.js";
 import { suitesWithAndWithoutProduction } from "../utils.js";
+import { nonProductionConditionalsIncluded } from "@fluidframework/core-utils/internal";
 
 describe("textDomain", () => {
+	beforeEach(() => {
+		setEnableExpensiveDebugAsserts(true);
+	});
+	afterEach(() => {
+		setEnableExpensiveDebugAsserts(false);
+	});
+
 	it("compatibility", () => {
 		const currentViewSchema = new TreeViewConfiguration({ schema: TextAsTree.Tree });
 		testSchemaCompatibilitySnapshots(currentViewSchema, "2.81.0", "text");
@@ -31,14 +42,28 @@ describe("textDomain", () => {
 		>();
 	});
 
-	it("basic use", () => {
-		const text = TextAsTree.Tree.fromString("hello");
-		assert.equal(text.fullString(), "hello");
-		assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
-		text.insertAt(5, " world");
-		assert.equal(text.fullString(), "hello world");
-		text.removeRange(0, 6);
-		assert.equal(text.fullString(), "world");
+	for (const expensiveAsserts of [false, true]) {
+		it(`@Smoke basic use with${expensiveAsserts ? "" : "out"} expensive asserts`, () => {
+			setEnableExpensiveDebugAsserts(expensiveAsserts);
+			const text = TextAsTree.Tree.fromString("hello");
+			assert.equal(text.fullString(), "hello");
+			assert.deepEqual([...text.characters()], ["h", "e", "l", "l", "o"]);
+			text.insertAt(5, " world");
+			assert.equal(text.fullString(), "hello world");
+			text.removeRange(0, 6);
+			assert.equal(text.fullString(), "world");
+		});
+	}
+
+	it("@Smoke expensiveInternalValidationAssert", () => {
+		if (nonProductionConditionalsIncluded()) {
+			assert.throws(() => expensiveInternalValidationAssert(() => "fail"), /fail/);
+		} else {
+			expensiveInternalValidationAssert(() => "fail");
+		}
+		setEnableExpensiveDebugAsserts(false);
+		// Disabled, so should not throw.
+		expensiveInternalValidationAssert(() => "error");
 	});
 
 	// Hydrated and unhydrated trees implement cursors differently which impacts observation tracking, so test both.
@@ -96,6 +121,7 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "xy" },
+				{ type: "retain", count: 1 },
 			]);
 		});
 
@@ -114,6 +140,7 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
@@ -134,10 +161,12 @@ describe("textDomain", () => {
 			assert.deepEqual(received[0], [
 				{ type: "retain", count: 1 },
 				{ type: "remove", count: 2 },
+				{ type: "retain", count: 2 },
 			]);
 			assert.deepEqual(received[1], [
 				{ type: "retain", count: 1 },
 				{ type: "insert", text: "XY" },
+				{ type: "retain", count: 2 },
 			]);
 		});
 
@@ -153,7 +182,10 @@ describe("textDomain", () => {
 			});
 			text.insertAt(0, "X");
 			assert.equal(received.length, 1);
-			assert.deepEqual(received[0], [{ type: "insert", text: "X" }]);
+			assert.deepEqual(received[0], [
+				{ type: "insert", text: "X" },
+				{ type: "retain", count: 3 },
+			]);
 		});
 
 		it("fires for insert at end", () => {

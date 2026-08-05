@@ -30,7 +30,16 @@ export interface Message {
 	 */
 	readonly changeset?: JsonCompatibleReadOnly;
 
+	/**
+	 * Unique ID associated with the branch.
+	 */
 	readonly branchId?: EncodedBranchId;
+
+	/**
+	 * Application-defined name of the branch, if any.
+	 * Not guaranteed to be unique.
+	 */
+	readonly branchName?: string;
 
 	/**
 	 * The version of the message format.
@@ -46,5 +55,6 @@ export const Message = <ChangeSchema extends TSchema>(tChange: ChangeSchema) =>
 		originatorId: SessionIdSchema,
 		changeset: Type.Optional(tChange),
 		branchId: Type.Optional(Type.Number()),
+		branchName: Type.Optional(Type.String()),
 		version: Type.Literal(MessageFormatVersion.vSharedBranches),
 	});

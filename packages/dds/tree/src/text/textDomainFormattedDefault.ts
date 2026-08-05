@@ -3,12 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import {
-	enumFromStrings,
-	SchemaFactory,
-	SchemaFactoryAlpha,
-	SchemaFactoryBeta,
-} from "../simple-tree/index.js";
+import { enumFromStrings, SchemaFactory, SchemaFactoryBeta } from "../simple-tree/index.js";
 import type {
 	TreeNodeFromImplicitAllowedTypes,
 	InsertableTreeNodeFromImplicitAllowedTypes,
@@ -19,7 +14,7 @@ import { FormattedTextAsTree } from "./textDomainFormatted.js";
 /**
  * Schema factory for default formatted text types which are not generic.
  */
-const sf = new SchemaFactoryAlpha("com.fluidframework.text.formatted.default");
+const sf = new SchemaFactoryBeta("com.fluidframework.text.formatted.default");
 
 const defaultFormat = {
 	bold: false,
@@ -30,9 +25,8 @@ const defaultFormat = {
 } as const;
 
 /**
- * A collection of text related types, schema and utilities for working with text beyond the basic {@link SchemaStatics.string}.
+ * A default parameterization of the generic {@link FormattedTextAsTree} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * @remarks
- * This is a default parameterization of the generic {@link FormattedTextAsTree} with hard-coded assumptions about what kind of embedded content and what kind of formatting is supported.
  * It is unlikely this meets the needs of most users, but it can serve as an unstable example of how to use the generic {@link FormattedTextAsTree}.
  * @internal
  */
@@ -49,9 +43,10 @@ export namespace FormattedTextAsTreeDefault {
 
 	/**
 	 * Formatting options for characters.
+	 * @sealed
 	 * @internal
 	 */
-	export class CharacterFormat extends sf.objectAlpha("CharacterFormat", {
+	export class CharacterFormat extends sf.object("CharacterFormat", {
 		bold: SchemaFactory.boolean,
 		italic: SchemaFactory.boolean,
 		underline: SchemaFactory.boolean,
@@ -80,6 +75,7 @@ export namespace FormattedTextAsTreeDefault {
 	]);
 	/**
 	 * {@inheritdoc FormattedTextAsTreeDefault.(LineTag:variable)}
+	 * @sealed
 	 * @internal
 	 */
 	export type LineTag = TreeNodeFromImplicitAllowedTypes<typeof LineTag.schema>;
@@ -93,6 +89,7 @@ export namespace FormattedTextAsTreeDefault {
 	 * The optional indent level mirrors Quill's indent attribute,
 	 * which is applies to the line before the line break.
 	 * Any tagged line can be indented independently.
+	 * @sealed
 	 * @internal
 	 */
 	export class StringLineAtom extends sf.object("StringLineAtom", {
@@ -104,6 +101,7 @@ export namespace FormattedTextAsTreeDefault {
 
 	/**
 	 * Types of "atoms" that make up the text.
+	 * @sealed
 	 * @internal
 	 */
 	export const StringAtomContent = [
@@ -112,37 +110,48 @@ export namespace FormattedTextAsTreeDefault {
 	] as const;
 	/**
 	 * {@inheritdoc FormattedTextAsTreeDefault.(StringAtomContent:variable)}
+	 * @sealed
 	 * @internal
 	 */
 	export type StringAtomContent = TreeNodeFromImplicitAllowedTypes<typeof StringAtomContent>;
 
 	/**
 	 * Statics for text nodes.
+	 * @sealed
 	 * @internal
 	 */
-	export type Statics<TTree = Tree> = FormattedTextAsTree.Statics<TTree>;
+	export type Statics<TTree = Tree> = FormattedTextAsTree.Statics<
+		TTree,
+		typeof CharacterFormat
+	>;
 
 	/**
 	 * Insertable shape for a formatted text atom used by {@link FormattedTextAsTree.Members.insertWithFormattingAt}.
+	 * @sealed
 	 * @internal
 	 */
 	export type FormattedAtomInsertable = FormattedTextAsTree.FormattedAtom<
 		InsertableTreeNodeFromImplicitAllowedTypes<typeof CharacterFormat>,
-		InsertableTreeNodeFromImplicitAllowedTypes<FormattedTextAtoms>
+		InsertableTreeNodeFromImplicitAllowedTypes<TextAtomSchemas>
 	>;
 
 	/**
 	 * Helper for expressing the full set of formatted text atoms for a given schema.
 	 * @privateRemarks
 	 * Eventually this should probably be given a better name and/or made a system type in a system namespace.
+	 * @sealed
 	 * @internal
 	 */
-	export type FormattedTextAtoms = FormattedTextAsTree.FormattedTextAtoms<
-		[typeof StringLineAtom]
-	>;
+	export type TextAtomSchemas = FormattedTextAsTree.TextAtomSchemas<[typeof StringLineAtom]>;
 
+	/**
+	 * The schema produced using {@link FormattedTextAsTree.createSchema} with hard-coded assumptions
+	 * about what kind of embedded content and what kind of formatting is supported.
+	 * @sealed
+	 * @internal
+	 */
 	export class Tree extends FormattedTextAsTree.createSchema(
-		new SchemaFactoryBeta("default"),
+		sf,
 		CharacterFormat,
 		[StringLineAtom],
 		defaultFormat,

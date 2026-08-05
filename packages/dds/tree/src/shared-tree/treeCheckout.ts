@@ -6,8 +6,7 @@
 import { createEmitter } from "@fluid-internal/client-utils";
 import type { IFluidHandle, Listenable } from "@fluidframework/core-interfaces/internal";
 import { assert, unreachableCase, fail } from "@fluidframework/core-utils/internal";
-import type { IIdCompressor, SessionId } from "@fluidframework/id-compressor";
-import { isStableId } from "@fluidframework/id-compressor/internal";
+import type { IIdCompressor } from "@fluidframework/id-compressor";
 import { type TelemetryLoggerExt, UsageError } from "@fluidframework/telemetry-utils/internal";
 
 import {
@@ -52,12 +51,12 @@ import {
 	type ChangeMetadata,
 	type LabelTree,
 	type TransactionLabels,
-	type ChangeEncodingContext,
 	type ReadOnlyDetachedFieldIndex,
 	makeAnonChange,
 	type TaggedChange,
 	deltaFieldMapHasVisibleChanges,
 	findCommonAncestor,
+	rebaseBranch,
 } from "../core/index.js";
 import {
 	type FieldBatchCodec,
@@ -115,10 +114,12 @@ import {
 
 import { SchematizingSimpleTreeView } from "./schematizingTreeView.js";
 import { SharedTreeChangeEnricher } from "./sharedTreeChangeEnricher.js";
+import type { SharedTreeChangeProcessingContext } from "./sharedTreeChangeFamily.js";
 import { SharedTreeChangeFamily, hasSchemaChange } from "./sharedTreeChangeFamily.js";
 import type { SharedTreeChange } from "./sharedTreeChangeTypes.js";
 import type { ISharedTreeEditor, SharedTreeEditBuilder } from "./sharedTreeEditBuilder.js";
 import { extractTransactionChangeProcessor } from "./transactionPostProcessor.js";
+import { SerializedChange } from "./serializedChange.js";
 
 /**
  * Yields all defined (non-`undefined`) labels from a {@link LabelTree}, depth-first.
@@ -210,7 +211,9 @@ export interface CheckoutEvents {
 /**
  * A collection of functions for managing transactions on a {@link ITreeCheckout}.
  */
-export type TreeTransactor = Transactor<SquashingTransactionOptions<SharedTreeChange>>;
+export type TreeTransactor = Transactor<
+	SquashingTransactionOptions<SharedTreeChange, SharedTreeChangeProcessingContext>
+>;
 
 /**
  * Provides a means for interacting with a SharedTree.
@@ -305,8 +308,16 @@ export function createTreeCheckout(
 	mintRevisionTag: () => RevisionTag,
 	revisionTagCodec: RevisionTagCodec,
 	args?: {
-		branch?: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>;
-		changeFamily?: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>;
+		branch?: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>;
+		changeFamily?: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>;
 		schema?: TreeStoredSchemaRepository;
 		forest?: IEditableForest;
 		fieldBatchCodec?: FieldBatchCodec;
@@ -317,7 +328,7 @@ export function createTreeCheckout(
 		codecOptions?: Partial<CodecWriteOptions>;
 	},
 ): TreeCheckout {
-	const breaker = args?.breaker ?? new Breakable("TreeCheckout");
+	const breaker = args?.breaker ?? new Breakable("TreeCheckout", args?.logger);
 	const schema = args?.schema ?? new TreeStoredSchemaRepository();
 	const forest = args?.forest ?? buildForest(breaker, schema);
 	const defaultCodecOptions: CodecWriteOptions = {
@@ -501,7 +512,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	private readonly revertibleCommitBranches = new Map<
 		RevisionTag,
-		SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>
+		SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>
 	>();
 
 	/**
@@ -514,23 +529,28 @@ export class TreeCheckout implements ITreeCheckout {
 	public events: Listenable<CheckoutEvents> = this.#events;
 
 	public constructor(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		/** True if and only if this checkout is for a branch which is persisted and shared with other clients. */
 		public readonly isSharedBranch: boolean,
-		private readonly changeFamily: ChangeFamily<SharedTreeEditBuilder, SharedTreeChange>,
+		private readonly changeFamily: ChangeFamily<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 		public readonly storedSchema: TreeStoredSchemaRepository,
 		public readonly forest: IEditableForest,
 		private readonly mintRevisionTag: () => RevisionTag,
 		private readonly revisionTagCodec: RevisionTagCodec,
 		private readonly idCompressor: IIdCompressor,
-		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex(
-			"repair",
-			revisionTagCodec,
-			idCompressor,
-		),
+		private readonly _removedRoots: DetachedFieldIndex = makeDetachedFieldIndex("repair"),
 		/** Optional logger for telemetry. */
 		private readonly logger?: TelemetryLoggerExt,
-		public readonly breaker: Breakable = new Breakable("TreeCheckout"),
+		public readonly breaker: Breakable = new Breakable("TreeCheckout", logger),
+		public readonly disposeForksAfterTransaction = true,
 	) {
 		this.#transaction = this.createTransactionStack(branch);
 		this.editLock = new EditLock(this.#transaction.activeBranchEditor);
@@ -659,8 +679,16 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	private createTransactionStack(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
-	): SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange> {
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
+	): SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	> {
 		return new SquashingTransactionStack(branch, this.mintRevisionTag, () => {
 			// When each transaction is started, make a restorable checkpoint of the current state of removed roots
 			const restoreRemovedRoots = this._removedRoots.createCheckpoint();
@@ -763,24 +791,16 @@ export class TreeCheckout implements ITreeCheckout {
 					kind,
 					isLocal: true,
 					getChange: () => {
-						const context: ChangeEncodingContext = {
-							idCompressor: this.idCompressor,
-							originatorId: this.idCompressor.localSessionId,
-							revision,
-							isSummary: false,
-						};
-						const encodedChange = this.changeFamily.codecs.resolve(4).encode(change, context);
-
 						assert(
 							commit.parent !== undefined,
 							0xca4 /* Expected applied commit to be parented */,
 						);
-						return {
-							version: 1,
+						return SerializedChange.V1.encode(
+							this.idCompressor,
+							this.changeFamily,
+							change,
 							revision,
-							originatorId: this.idCompressor.localSessionId,
-							change: encodedChange,
-						} satisfies SerializedChange;
+						);
 					},
 					getRevertible: (onDisposed) => getRevertible?.(onDisposed),
 					label: this.labelTreeNode?.label,
@@ -859,24 +879,13 @@ export class TreeCheckout implements ITreeCheckout {
 	 */
 	@throwIfBroken
 	public applySerializedChange(serializedChange: JsonCompatibleReadOnly): void {
-		if (!isSerializedChange(serializedChange)) {
-			throw new UsageError(`Cannot apply change. Invalid serialized change format.`);
-		}
-		const { revision, originatorId, change } = serializedChange;
-		if (originatorId !== this.idCompressor.localSessionId) {
-			throw new UsageError(
-				`Cannot apply change. A serialized changed must be applied to the same SharedTree as it was created from.`,
-			);
-		}
-		const context: ChangeEncodingContext = {
-			idCompressor: this.idCompressor,
-			originatorId: this.idCompressor.localSessionId,
-			revision,
-			isSummary: false,
-		};
-		const decodedChange = this.changeFamily.codecs.resolve(4).decode(change, context);
+		const change = SerializedChange.V1.decode(
+			this.idCompressor,
+			this.changeFamily,
+			serializedChange,
+		);
 		// Apply the change to the branch, but _not_ the `activeBranch` - we do not support squashing serialized commits in a transaction.
-		this.#transaction.branch.apply(tagChange(decodedChange, revision));
+		this.#transaction.branch.apply(change);
 	}
 
 	// #region TreeBranchAlpha
@@ -1205,7 +1214,11 @@ export class TreeCheckout implements ITreeCheckout {
 	 * To avoid updating observers of the view state with intermediate results during a transaction,
 	 * use {@link ITreeCheckout#fork} and {@link ISharedTreeFork#merge}.
 	 */
-	#transaction: SquashingTransactionStack<SharedTreeEditBuilder, SharedTreeChange>;
+	#transaction: SquashingTransactionStack<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	>;
 
 	@throwIfBroken
 	public fork(): TreeCheckout {
@@ -1219,7 +1232,7 @@ export class TreeCheckout implements ITreeCheckout {
 
 		const branch = this.#transaction.activeBranch.fork();
 		const storedSchema = this.storedSchema.clone();
-		const forkBreaker = new Breakable("TreeCheckout");
+		const forkBreaker = new Breakable("TreeCheckout", this.logger);
 		const forest = this.forest.clone(storedSchema, forkBreaker);
 		const checkout = new TreeCheckout(
 			branch,
@@ -1239,7 +1252,11 @@ export class TreeCheckout implements ITreeCheckout {
 	}
 
 	public switchBranch(
-		branch: SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange>,
+		branch: SharedTreeBranch<
+			SharedTreeEditBuilder,
+			SharedTreeChange,
+			SharedTreeChangeProcessingContext
+		>,
 	): void {
 		// TODO: Dispose old branch, if necessary
 		assert(
@@ -1306,6 +1323,30 @@ export class TreeCheckout implements ITreeCheckout {
 			throw new UsageError("Branches do not share a common ancestor.");
 		}
 		return targetPath.length > 0;
+	}
+
+	public computeNetChangeIfRebasedOnto(
+		branch: TreeBranch,
+	): JsonCompatibleReadOnly | undefined {
+		const branchCheckout = getCheckout(branch);
+		const rebased = rebaseBranch(
+			this.mintRevisionTag,
+			this.changeFamily.rebaser,
+			this.#transaction.branch.getHead(),
+			branchCheckout.#transaction.branch.getHead(),
+		);
+
+		if (rebased.sourceChange === undefined) {
+			return undefined;
+		}
+		const revision = this.mintRevisionTag();
+		return SerializedChange.V1.encode(
+			this.idCompressor,
+			this.changeFamily,
+			rebased.sourceChange,
+			revision,
+			undefined,
+		);
 	}
 
 	public merge(branch: TreeBranch): void;
@@ -1642,7 +1683,11 @@ export class TreeCheckout implements ITreeCheckout {
 		return enriched;
 	}
 
-	public get mainBranch(): SharedTreeBranch<SharedTreeEditBuilder, SharedTreeChange> {
+	public get mainBranch(): SharedTreeBranch<
+		SharedTreeEditBuilder,
+		SharedTreeChange,
+		SharedTreeChangeProcessingContext
+	> {
 		return this.#transaction.branch;
 	}
 
@@ -1768,27 +1813,6 @@ function verboseFromCursor(
 		type: reader.type,
 		fields: fields as CustomTreeNode<IFluidHandle>,
 	};
-}
-
-interface SerializedChange {
-	version: 1;
-	revision: RevisionTag;
-	change: JsonCompatibleReadOnly;
-	originatorId: SessionId;
-}
-
-function isSerializedChange(value: unknown): value is SerializedChange {
-	if (typeof value !== "object" || value === null) {
-		return false;
-	}
-	const change = value as Partial<SerializedChange>;
-	return (
-		change.version === 1 &&
-		(change.revision === "root" || typeof change.revision === "number") &&
-		typeof change.originatorId === "string" &&
-		isStableId(change.originatorId) &&
-		change.change !== undefined
-	);
 }
 
 /**

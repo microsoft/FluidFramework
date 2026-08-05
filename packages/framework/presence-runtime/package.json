@@ -1,6 +1,6 @@
 {
 	"name": "@fluid-internal/presence-runtime",
-	"version": "2.112.0",
+	"version": "2.115.0",
 	"description": "Core runtime implementation for Fluid Framework presence",
 	"homepage": "https://fluidframework.com",
 	"repository": {
@@ -67,7 +67,7 @@
 		"build:compile": "fluid-build . --task compile",
 		"build:esnext": "tsc --project ./tsconfig.esm.json",
 		"build:genver": "gen-version",
-		"build:test": "npm run build:test:esm && npm run build:test:cjs",
+		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
 		"build:test:cjs": "fluid-tsc commonjs --project ./tsconfig.test.cjs.json",
 		"build:test:esm": "tsc --project ./tsconfig.test.esm.json",
 		"check:are-the-types-wrong": "attw --pack . --profile node16 --exclude-entrypoints ./internal/protocol ./internal/test ./internal/test-utils",
