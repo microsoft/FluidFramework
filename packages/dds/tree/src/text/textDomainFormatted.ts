@@ -144,7 +144,7 @@ export namespace FormattedText {
 	 * @returns The schema for the formatted text node, whose nodes implement {@link FormattedText.Members} and whose statics implement {@link FormattedText.Statics}.
 	 *
 	 * @privateRemarks
-	 * See {@link FormattedTextDefault} for a default parameterization of this factory.
+	 * See {@link FormattedTextDefault} for an example parameterization of this factory.
 	 *
 	 * TODO: The choice to always include the built-in {@link FormattedText.(StringTextAtom:variable)} is a design decision that should be re-evaluated before stabilizing.
 	 */
