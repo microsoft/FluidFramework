@@ -25,22 +25,21 @@ const serviceOptions = {
 } as const;
 
 /**
- * Configures a service client based on `process.env.FLUID_CLIENT`
+ * Configures a service client based on the `fluidClient` URL query parameter
  * and our defaults used by examples.
  */
 function getExampleServiceClient(options: ServiceOptions): ServiceClient {
-	switch (process.env.FLUID_CLIENT) {
+	const fluidClient = new URLSearchParams(location.search).get("fluidClient") ?? "ephemeral";
+	switch (fluidClient) {
 		case "tinylicious": {
 			return createTinyliciousServiceClient(options);
 		}
 		default: {
 			console.warn(
-				`Unknown FLUID_CLIENT value: ${JSON.stringify(process.env.FLUID_CLIENT)}, falling back to ephemeral service.`,
+				`Unknown fluidClient value: ${JSON.stringify(fluidClient)}, falling back to ephemeral service.`,
 			);
 		}
-		case "":
-		case "ephemeral":
-		case undefined: {
+		case "ephemeral": {
 			return startEphemeralService().newClient(options);
 		}
 	}
@@ -75,7 +74,7 @@ async function loadExampleContainer<T>(
 
 /**
  * A simple opinionated default for loading an example data store as the root of a container configured by the location hash and
- * `process.env.FLUID_CLIENT`.
+ * the `fluidClient` URL query parameter.
  */
 async function loadExampleDataStore<T>(rootStore: DataStoreKind<T>): Promise<T> {
 	const service = getExampleServiceClient(serviceOptions);

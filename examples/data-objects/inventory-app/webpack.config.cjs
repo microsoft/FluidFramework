@@ -7,19 +7,14 @@ const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const fluidClient = env?.FLUID_CLIENT ?? "";
 	const config = fluidRoute.commonExampleConfig(__dirname, env);
 
 	return {
 		...config,
 		plugins: [
 			...(config.plugins ?? []),
-			new webpack.DefinePlugin({
-				"process.env.FLUID_CLIENT": JSON.stringify(fluidClient),
-			}),
-			new webpack.ProvidePlugin({
-				process: "process/browser.js",
-			}),
+			// local-driver transitively loads Node's util package, which reads process.env.NODE_DEBUG.
+			new webpack.ProvidePlugin({ process: "process/browser.js" }),
 		],
 	};
 };
