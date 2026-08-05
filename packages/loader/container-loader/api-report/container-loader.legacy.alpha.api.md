@@ -230,13 +230,13 @@ export interface OnDemandSummaryResults {
 
 // @alpha @legacy
 export class PendingLocalStateStore<TKey> {
-    [Symbol.iterator](): Iterator<[TKey, string]>;
+    [Symbol.iterator](): FluidIterableIterator<[TKey, string]>;
     clear(): void;
     delete(key: TKey): boolean;
-    entries(): Iterator<[TKey, string]>;
+    entries(): FluidIterableIterator<[TKey, string]>;
     get(key: TKey): string | undefined;
     has(key: TKey): boolean;
-    keys(): IterableIterator<TKey>;
+    keys(): FluidIterableIterator<TKey>;
     set(key: TKey, pendingLocalState: string): this;
     get size(): number;
 }

@@ -4,8 +4,13 @@
  */
 
 import type {
+	FluidIterableIterator,
+	FluidReadonlyMap,
+} from "@fluidframework/core-interfaces/internal";
+import type {
 	AnnotatedAllowedTypeUnsafe,
 	System_Unsafe,
+	TreeRecordNodeUnsafe,
 	UnannotateAllowedTypeUnsafe,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../simple-tree/api/typesUnsafe.js";
@@ -20,7 +25,12 @@ import type {
 
 type MapInlined = System_Unsafe.ReadonlyMapInlined<string, typeof numberSchema>;
 
-type _check = requireTrue<areSafelyAssignable<MapInlined, ReadonlyMap<string, number>>>;
+type _check = requireAssignableTo<MapInlined, FluidReadonlyMap<string, number>>;
+
+type _recordNodeUnsafeIterator = requireAssignableTo<
+	ReturnType<TreeRecordNodeUnsafe<typeof numberSchema>[typeof Symbol.iterator]>,
+	FluidIterableIterator<[string, number]>
+>;
 
 // UnannotateAllowedTypeUnsafe
 {

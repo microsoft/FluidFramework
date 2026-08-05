@@ -9,7 +9,10 @@ import type {
 	IEventProvider,
 	IEventThisPlaceHolder,
 } from "@fluidframework/core-interfaces";
-import type { FluidMap } from "@fluidframework/core-interfaces/internal";
+import type {
+	FluidIterableIterator,
+	FluidMap,
+} from "@fluidframework/core-interfaces/internal";
 import type {
 	ISharedObject,
 	ISharedObjectEvents,
@@ -46,7 +49,7 @@ export interface IValueChanged {
 export interface IDirectory
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	extends Map<string, any>,
+	extends FluidMap<string, any>,
 		IEventProvider<IDirectoryEvents>,
 		Partial<IDisposable> {
 	/**
@@ -70,6 +73,18 @@ export interface IDirectory
 	 * @returns The IDirectory itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	/**
+	 * Removes all entries from the directory.
+	 */
+	clear(): void;
+
+	/**
+	 * Removes the specified element from this IDirectory by its key.
+	 * @param key - The key of the element to remove
+	 * @returns `true` if an element existed and has been removed, or `false` if the element does not exist
+	 */
+	delete(key: string): boolean;
 
 	/**
 	 * Get the number of sub directory within the directory.
@@ -110,7 +125,7 @@ export interface IDirectory
 	 * Gets an iterator over the IDirectory children of this IDirectory.
 	 * @returns The IDirectory iterator
 	 */
-	subdirectories(): IterableIterator<[string, IDirectory]>;
+	subdirectories(): FluidIterableIterator<[string, IDirectory]>;
 
 	/**
 	 * Get an IDirectory within the directory, in order to use relative paths from that location.
@@ -159,17 +174,6 @@ export interface FluidMapLegacy<K, V> extends Omit<FluidMap<K, V>, "get" | "set"
 	 */
 	delete(key: K): boolean;
 }
-
-/**
- * Beta version of {@link IDirectory} which uses {@link FluidMapLegacy} for its map-like API.
- *
- * @sealed
- * @legacy @beta
- */
-export interface IDirectoryBeta
-	extends Omit<IDirectory, Exclude<keyof Map<string, unknown>, "get" | "set">>,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		FluidMapLegacy<string, any> {}
 
 /**
  * Events emitted in response to changes to the directory data.
@@ -361,7 +365,7 @@ export interface ISharedDirectory
 	// https://github.com/microsoft/TypeScript/issues/31671
 	// TODO: Use `unknown` instead (breaking change).
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	[Symbol.iterator](): IterableIterator<[string, any]>;
+	[Symbol.iterator](): FluidIterableIterator<[string, any]>;
 	readonly [Symbol.toStringTag]: string;
 }
 
@@ -434,7 +438,7 @@ export interface ISharedMap
 	extends ISharedObject<ISharedMapEvents>,
 		// TODO: Use `unknown` instead (breaking change).
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		Map<string, any> {
+		FluidMap<string, any> {
 	/**
 	 * Retrieves the given key from the map if it exists.
 	 * @param key - Key to retrieve from
@@ -451,6 +455,18 @@ export interface ISharedMap
 	 * @returns The {@link ISharedMap} itself
 	 */
 	set<T = unknown>(key: string, value: T): this;
+
+	/**
+	 * Removes all entries from the map.
+	 */
+	clear(): void;
+
+	/**
+	 * Removes the specified element from this map by its key.
+	 * @param key - The key of the element to remove
+	 * @returns `true` if an element existed and has been removed, or `false` if the element does not exist
+	 */
+	delete(key: string): boolean;
 }
 
 /**
@@ -460,6 +476,6 @@ export interface ISharedMap
  * @legacy @beta
  */
 export interface ISharedMapBeta
-	extends Omit<ISharedMap, Exclude<keyof Map<string, unknown>, "get" | "set">>,
+	extends Omit<ISharedMap, Exclude<keyof FluidMap<string, unknown>, "get" | "set">>,
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		FluidMapLegacy<string, any> {}
