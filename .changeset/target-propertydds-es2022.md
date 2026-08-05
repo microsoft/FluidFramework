@@ -12,4 +12,4 @@ The published JavaScript now uses ES2022 language features (with correspondingly
 All actively supported Node.js versions (18+) and evergreen browsers already meet this requirement.
 
 These packages continue to compile with `useDefineForClassFields` disabled (the pre-ES2022 default), preserving their existing class field semantics.
-No other API or behavioral changes are intended; this only affects the ECMAScript level of the emitted code.
+No API or behavioral changes are intended; this only affects the ECMAScript level of the emitted code.
