@@ -224,6 +224,13 @@ export interface CommitMetadata {
 }
 
 // @alpha
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
+}
+
+// @alpha
 export function comparePersistedSchema(persisted: JsonCompatible, view: ImplicitFieldSchema, options: ICodecOptions): Omit<SchemaCompatibilityStatus, "canInitialize">;
 
 // @alpha
@@ -1349,11 +1356,17 @@ export type Listeners<T extends object> = {
 
 // @alpha @sealed
 export interface LocalChangeMetadata extends CommitMetadata {
+    readonly events: Listenable<LocalCommitEvents>;
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
+}
+
+// @alpha @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
 }
 
 // @public
