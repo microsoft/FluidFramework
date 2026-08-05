@@ -113,12 +113,12 @@ overrides:
   axios@<1: ^0.33.0
 
   # Force vulnerable axios ^1.15.0 requests to a patched release.
-  # 1.18.1 fixes GHSA-gcfj-64vw-6mp9, GHSA-jqh4-m9w3-8hp9, GHSA-mmx7-hfxf-jppx,
+  # 1.19.0 (and 1.18.1) fixes GHSA-gcfj-64vw-6mp9, GHSA-jqh4-m9w3-8hp9, GHSA-mmx7-hfxf-jppx,
   # GHSA-7q8q-rj6j-mhjq, GHSA-mwf2-3pr3-8698, GHSA-f4gw-2p7v-4548, GHSA-xj6q-8x83-jv6g.
   # Kept as an exact pin (not caret) so we don't automatically pick up any future
   # axios release before it has been vetted — see the axios supply-chain compromise
-  # note further down (neverBuiltDependencies).
-  axios@^1.15.0: 1.18.1
+  # note under trustPolicyExclude further down.
+  axios@^1.15.0: 1.19.0
 
   # diff is overridden to patched versions to resolve a known ReDoS vulnerability. diff@3.x and diff@7.x
   # have no fix in their major range so they are bumped to the nearest patched major.

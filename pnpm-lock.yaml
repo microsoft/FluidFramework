@@ -52,7 +52,7 @@ overrides:
   '@nevware21/ts-utils': ^0.14.0
   '@types/node': ~22.19.17
   axios@<1: ^0.33.0
-  axios@^1.15.0: 1.18.1
+  axios@^1.15.0: 1.19.0
   diff@>=3 <4: ^4.0.4
   diff@>=5 <6: ^5.2.2
   diff@>=7 <8: ^8.0.3
@@ -4369,8 +4369,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -4520,8 +4520,8 @@ importers:
         specifier: ^2.0.0
         version: 2.1.0
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       events_pkg:
         specifier: npm:events@^3.1.0
         version: events@3.3.0
@@ -5368,8 +5368,8 @@ importers:
         specifier: workspace:~
         version: link:../../../packages/utils/tool-utils
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -6728,8 +6728,8 @@ importers:
         specifier: workspace:~
         version: link:../../../../packages/dds/shared-object-base
       axios:
-        specifier: 1.18.1
-        version: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+        specifier: 1.19.0
+        version: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer:
         specifier: ^6.0.3
         version: 6.0.3
@@ -21603,8 +21603,8 @@ packages:
   axios@0.33.0:
     resolution: {integrity: sha512-juz19g7B3UWT9r3+tgRFQf2Bdy6IKDVroiyuVOUrkILVKHpqHL++K1l8ybvfdEP9B/VE72vk8vllbnedVCm/og==}
 
-  axios@1.18.1:
-    resolution: {integrity: sha512-3nTvFlvpn9Zu/RkHUqtc7/+al4UpRW5az71ap5zccp6e8RAYEzhMTecX8Dz1wWDYrPpUoB1HAQEGEAEvUr7S9g==}
+  axios@1.19.0:
+    resolution: {integrity: sha512-ht/iuYZXEjFxLH/Hkezgd7m6JKlHHXEUSneaDz8uZe1Gj5QZtCnpyDsckvAiEnT89OEbCLmnte4R4sn7P0EKFw==}
 
   azure-devops-node-api@11.2.0:
     resolution: {integrity: sha512-XdiGPhrpaT5J8wdERRKs5g8E0Zy1pvOYTli7z9E8nmOn3YGp4FhtjhrOyFmX/8veWCwdI69mCHKJw6l+4J/bHA==}
@@ -32192,7 +32192,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -32221,7 +32221,7 @@ snapshots:
       '@types/semver': 7.7.0
       assert: 2.1.0
       async: 3.2.6
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       buffer: 6.0.3
       double-ended-queue: 2.1.0-0
       events: 3.3.0
@@ -32307,7 +32307,7 @@ snapshots:
       '@fluidframework/gitresources': 7.0.1
       '@fluidframework/protocol-base': 7.0.1
       '@fluidframework/protocol-definitions': 3.2.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       crc-32: 1.2.0
       debug: 4.4.3(supports-color@10.2.2)
       json-stringify-safe: 5.0.1
@@ -35608,7 +35608,7 @@ snapshots:
 
   '@vvago/vale@3.12.0(debug@4.4.3)(supports-color@8.1.1)':
     dependencies:
-      axios: 1.18.1(debug@4.4.3)(supports-color@8.1.1)
+      axios: 1.19.0(debug@4.4.3)(supports-color@8.1.1)
       rimraf: 5.0.10
       tar: 7.5.11
       unzipper: 0.10.14
@@ -36032,7 +36032,7 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  axios@1.18.1(debug@4.3.7)(supports-color@10.2.2):
+  axios@1.19.0(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.3.7)
       form-data: 4.0.6
@@ -36042,7 +36042,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(debug@4.4.3)(supports-color@10.2.2):
+  axios@1.19.0(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -36052,7 +36052,7 @@ snapshots:
       - debug
       - supports-color
 
-  axios@1.18.1(debug@4.4.3)(supports-color@8.1.1):
+  axios@1.19.0(debug@4.4.3)(supports-color@8.1.1):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3)
       form-data: 4.0.6
@@ -44386,7 +44386,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.7.5(supports-color@10.2.2)
@@ -44427,7 +44427,7 @@ snapshots:
       '@fluidframework/server-services-utils': 7.0.1(supports-color@10.2.2)
       '@fluidframework/server-test-utils': 7.0.1(supports-color@10.2.2)
       agentkeepalive: 4.6.0
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       body-parser: 1.20.3(supports-color@10.2.2)
       charwise: 3.0.1
       compression: 1.7.5(supports-color@10.2.2)
@@ -45105,7 +45105,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.3.7)(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.3.7)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.3.7)(supports-color@10.2.2)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8
@@ -45116,7 +45116,7 @@ snapshots:
 
   wait-on@8.0.1(debug@4.4.3)(supports-color@10.2.2):
     dependencies:
-      axios: 1.18.1(debug@4.4.3)(supports-color@10.2.2)
+      axios: 1.19.0(debug@4.4.3)(supports-color@10.2.2)
       joi: 17.13.3
       lodash: 4.18.1
       minimist: 1.2.8

@@ -12,14 +12,6 @@ module.exports = (env) => {
 
 	return {
 		...config,
-		module: {
-			...config.module,
-			rules: config.module.rules.map((rule) =>
-				rule.enforce === "pre"
-					? { ...rule, exclude: /axios[/\\]dist[/\\]browser[/\\]axios\.cjs$/ }
-					: rule,
-			),
-		},
 		plugins: [
 			...(config.plugins ?? []),
 			new webpack.DefinePlugin({
