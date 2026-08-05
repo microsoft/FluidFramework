@@ -31,11 +31,15 @@ REVIEW_OID=$(git rev-parse "$REVIEW_REF")
 
 ## Step 1: Resolve the target branch
 
-First determine whether an open PR exists for the review branch. Prefer active PR metadata from the editor's PR integration when available, but verify its head repository and branch match `$REVIEW_REPOSITORY` and `$REVIEW_HEAD_BRANCH` when those values are known. Its published head must also match `$REVIEW_OID` or be an ancestor of a locally-ahead `$REVIEW_REF`.
+Resolve an open PR using the following sources in order, stopping as soon as one source produces exactly one validated match. Do not query later sources after a match is resolved.
 
-Otherwise, query the GitHub commit-to-PR API (`repos/{owner}/{repo}/commits/$REVIEW_OID/pulls`) for each GitHub repository named by configured remotes, including `microsoft/FluidFramework`. Treat HTTP 404 or 422 as no commit candidates and continue; locally-ahead or unpublished commits may not exist in the queried repository. If `$REVIEW_REPOSITORY` and `$REVIEW_HEAD_BRANCH` are known, also query open PRs by that full head repository owner plus branch so locally-ahead commits can resolve their published PR. Read `state`, `base.repo.clone_url`, `base.ref`, `head.repo.full_name`, `head.ref`, `head.sha`, and `html_url` from the REST response. Only accept open PRs whose head repository and branch match the known review identity and whose head SHA matches `$REVIEW_OID` or is its ancestor.
+1. Prefer active PR metadata already available from the editor's PR integration. Verify its head repository and branch match `$REVIEW_REPOSITORY` and `$REVIEW_HEAD_BRANCH` when those values are known. Its published head must also match `$REVIEW_OID` or be an ancestor of a locally-ahead `$REVIEW_REF`.
+2. If no match was resolved and `$REVIEW_REPOSITORY` and `$REVIEW_HEAD_BRANCH` are known, query open PRs by branch. `gh pr list --repo <candidate-base-repository> --state open --head "$REVIEW_HEAD_BRANCH" --json url,state,baseRefName,headRefName,headRefOid,headRepository` is convenient; query GitHub repositories named by configured remotes, including `microsoft/FluidFramework`, one at a time and stop after a validated match. Validate `headRepository.nameWithOwner` against `$REVIEW_REPOSITORY`. This branch query lets a locally-ahead commit resolve its published PR.
+3. If still unresolved, query the GitHub commit-to-PR API (`repos/{owner}/{repo}/commits/$REVIEW_OID/pulls`) for the same candidate repositories, one at a time, and stop after a validated match. Treat HTTP 404 or 422 as no candidates and continue; locally-ahead or unpublished commits may not exist in the queried repository.
 
-Do not rely on bare `gh pr view` or an unqualified branch name. These are ambiguous in fork checkouts. If multiple open PRs match, ask the user which PR to use.
+From any source, read the PR state and URL, base repository and branch, and head repository, branch, and SHA. Only accept open PRs whose head repository and branch match the known review identity and whose head SHA matches `$REVIEW_OID` or is its ancestor.
+
+Do not rely on bare `gh pr view`, bare `gh repo view`, or an unqualified repository context. These are ambiguous in fork checkouts; pass an explicit PR URL or `--repo owner/repository`. If multiple open PRs match, ask the user which PR to use.
 
 For a matching PR, set:
 
@@ -55,30 +59,19 @@ TARGET_REF=refs/comparison/target
 
 ## Step 2: Select the comparison commit
 
-Select the newest commit along the target branch's first-parent history that is an ancestor of `$REVIEW_REF`. Do not use an unconstrained `git merge-base` as the final result: it can select a side-parent commit that was never the target branch's effective state.
+Find all best common ancestors of the target and review refs. Fluid Framework squash-merges branches into `main`, so this normally produces exactly one commit. Use `--all` so Git reports criss-cross or other ambiguous histories instead of selecting an arbitrary best ancestor.
 
 ```bash
-if BASE_COMMIT=$(
-  while read -r commit; do
-    if git merge-base --is-ancestor "$commit" "$REVIEW_REF"; then
-      printf '%s\n' "$commit"
-      exit 0
-    else
-      status=$?
-      if [[ "$status" -ne 1 ]]; then
-        exit "$status"
-      fi
-    fi
-  done < <(git rev-list --first-parent "$TARGET_REF")
-  exit 1
-); then
+if BASE_COMMITS=$(git merge-base --all "$TARGET_REF" "$REVIEW_REF"); then
   BASE_STATUS=0
 else
   BASE_STATUS=$?
 fi
 ```
 
-If `$BASE_STATUS` is greater than 1, report the Git failure instead of treating it as unrelated history. If `$BASE_COMMIT` is empty, check `git rev-parse --is-shallow-repository`. For a shallow repository, deepen the target and review histories from their respective fetch sources and retry; unshallow when practical. Only ask the user for a comparison commit after the repository is confirmed complete or deepening cannot recover the shared history.
+If `$BASE_STATUS` is nonzero, report the Git failure. If `$BASE_COMMITS` is empty, check `git rev-parse --is-shallow-repository`. For a shallow repository, deepen the target and review histories from their respective fetch sources and retry; unshallow when practical. Only ask the user for a comparison commit after the repository is confirmed complete or deepening cannot recover the shared history.
+
+If exactly one commit was returned, set `$BASE_COMMIT` to it. If multiple commits were returned, show each commit's short SHA, date, and subject, explain that Git found multiple equally good common ancestors, and ask the user which one to use.
 
 Verify `$BASE_COMMIT` is non-empty and is an ancestor of both `$TARGET_REF` and `$REVIEW_REF` before continuing.
 
@@ -119,6 +112,7 @@ The caller must use the exact selected `$BASE_COMMIT`; it must not later replace
 ## Edge Cases
 
 - Ambiguous PR or named branch: ask the user which one to use.
+- Multiple best common ancestors: show them and ask the user which one to use.
 - Empty base in a shallow repository: deepen both relevant histories and retry before treating them as unrelated.
 - No shared target-history commit: ask the user for a comparison commit.
 - More than 50 commits on either side: present divergence and ask before proceeding.
