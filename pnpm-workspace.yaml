@@ -38,10 +38,10 @@ dedupePeers: true
 catalogs:
   # Build-tools packages
   buildTools:
-    "@fluid-tools/build-cli": ^0.65.0
-    "@fluid-tools/build-infrastructure": ^0.65.0
-    "@fluid-tools/version-tools": ^0.65.0
-    "@fluidframework/build-tools": ^0.65.0
+    "@fluid-tools/build-cli": ^0.66.0
+    "@fluid-tools/build-infrastructure": ^0.66.0
+    "@fluid-tools/version-tools": ^0.66.0
+    "@fluidframework/build-tools": ^0.66.0
   # eslint and related packages
   eslint:
     "@fluidframework/eslint-config-fluid": "^13.0.0"
