@@ -3,12 +3,23 @@
  * Licensed under the MIT License.
  */
 
-import { strict as assert } from "node:assert";
+import { strict as assert, fail } from "node:assert";
 
 import type { JsonString } from "@fluidframework/core-interfaces/internal";
 import { JsonStringify } from "@fluidframework/core-interfaces/internal";
+import { unreachableCase } from "@fluidframework/core-utils/internal";
 import { SchemaFactory, TreeViewConfiguration } from "@fluidframework/tree";
-import type { ImplicitFieldSchema, ValidateRecursiveSchema } from "@fluidframework/tree";
+import type {
+	ImplicitFieldSchema,
+	InsertableTypedNode,
+	NodeKind,
+	ReadonlyArrayNode,
+	TreeArrayNode,
+	TreeLeafValue,
+	TreeNode,
+	ValidateRecursiveSchema,
+	WithType,
+} from "@fluidframework/tree";
 import type {
 	InsertableField,
 	JsonCompatibleReadOnly,
@@ -17,7 +28,11 @@ import type {
 import { createIndependentTreeAlpha, minimize } from "@fluidframework/tree/alpha";
 
 import { SchematizingSimpleTreeView, SharedTreeChange } from "../../shared-tree/index.js";
+import { allTreeLocations, nodeFlowCensusFromDelta, TreeLocation } from "../getDeltaCensus.js";
 import { TestTreeProviderLite, validateViewConsistency } from "../utils.js";
+import { makeAnonChange } from "../../core/index.js";
+import { hasSingle } from "../../util/index.js";
+import { intoDelta } from "../../feature-libraries/index.js";
 
 /**
  * Reads the change associated with the head commit on the main branch.
@@ -88,6 +103,7 @@ const OptionalBox = sf.optional(Box);
 const BoxArray = sf.array("BoxArray", Box);
 
 class Pallet extends sf.object("Pallet", {
+	id: sf.string,
 	boxes: BoxArray,
 }) {}
 const PalletArray = sf.array("PalletArray", Pallet);
@@ -1111,8 +1127,8 @@ const parallelObjectScenarios = {
 	boxes_inserted_then_some_moved_to_sibling_Pallet_that_is_then_removed: {
 		schema: PalletArray,
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
-			new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0, pallet1] = root;
@@ -1141,8 +1157,8 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
-				new Pallet({ boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "3⌚" }), new Box({ value: "4⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0, pallet1] = root;
@@ -1171,11 +1187,12 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
 				const pallet1 = new Pallet({
+					id: "",
 					boxes: [new Box({ value: "3❤️" }), new Box({ value: "4☠️" })],
 				});
 				root.insertAtEnd(pallet1);
@@ -1204,11 +1221,11 @@ const parallelObjectScenarios = {
 		{
 			schema: PalletArray,
 			initialContent: () => [
-				new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+				new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 			],
 			apply: (root) => {
 				const [pallet0] = root;
-				const pallet1 = new Pallet({ boxes: [] });
+				const pallet1 = new Pallet({ id: "", boxes: [] });
 				root.insertAtEnd(pallet1);
 				pallet1.boxes.insertAtStart(new Box({ value: "3❤️" }), new Box({ value: "4☠️" }));
 				pallet0.boxes.moveRangeToIndex(1, 0, 1, pallet1.boxes);
@@ -1235,11 +1252,11 @@ const parallelObjectScenarios = {
 	boxes_moved_into_new_Pallet_then_new_Pallet_is_then_removed: {
 		schema: PalletArray,
 		initialContent: () => [
-			new Pallet({ boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
+			new Pallet({ id: "", boxes: [new Box({ value: "1⌚" }), new Box({ value: "2⌚" })] }),
 		],
 		apply: (root) => {
 			const [pallet0] = root;
-			const pallet1 = new Pallet({ boxes: [new Box({ value: "3☠️" })] });
+			const pallet1 = new Pallet({ id: "", boxes: [new Box({ value: "3☠️" })] });
 			root.insertAtEnd(pallet1);
 			pallet1.boxes.moveRangeToIndex(1, 0, 1, pallet0.boxes);
 			root.removeAt(1);
@@ -1310,6 +1327,7 @@ function generateDoubleMoveScenarios(
 							if (palletState.initiallyPresent) {
 								content.push(
 									new Pallet({
+										id: "",
 										boxes: [
 											new Box({
 												value: `pal${index}⌚${surviveOrPerishMarker(palletState)}`,
@@ -1345,12 +1363,7 @@ function generateDoubleMoveScenarios(
 									if (index === 0 && !insertMovedAsOwnRoot) {
 										boxes.unshift(movingBox);
 									}
-									root.insertAt(
-										index,
-										new Pallet({
-											boxes,
-										}),
-									);
+									root.insertAt(index, new Pallet({ id: "", boxes }));
 								}
 							}
 
@@ -1393,6 +1406,287 @@ const doubleMoveScenarios = {
 	),
 	remaining_under_destination: generateDoubleMoveScenarios(/* detachMovedAsOwnRoot */ false),
 } as const;
+// #endregion
+
+// #region Generated edit trees scenarios
+
+/**
+ * Generates the combinatorial set of scenarios where a Pallet is edited internally.
+ */
+function generateEditedTreeScenarios(): Record<string, PalletArrayScenario> {
+	const scenarios: Record<string, PalletArrayScenario> = {};
+	const initialContentGenerator = (): Pallet[] => {
+		return [
+			new Pallet({ id: "detachingPallet⌚", boxes: [new Box({})] }),
+			new Pallet({ id: "attachedPallet⌚", boxes: [new Box({})] }),
+		];
+	};
+	function applyIntroAttachEdits(root: TreeArrayNode<typeof Pallet>) {
+		root.insertAtEnd(
+			new Pallet({
+				id: "attachingBuiltPallet🐣❤️",
+				boxes: [new Box({})],
+			}),
+			new Pallet({
+				id: "transientBuiltPallet🐣☠️",
+				boxes: [new Box({})],
+			}),
+		);
+	}
+	function applyOutroDetachEdits(root: TreeArrayNode<typeof Pallet>) {
+		// Remove the detaching Pallet
+		root.removeAt(0);
+		// Remove the built Pallet
+		root.removeAt(-1);
+	}
+	const getPallet = (
+		root: TreeArrayNode<typeof Pallet>,
+		locationOfEditedTree: TreeLocation,
+	): Pallet => {
+		switch (locationOfEditedTree) {
+			case TreeLocation.DetachedPriorRoot:
+			case TreeLocation.UnderAttachingPriorTree:
+			case TreeLocation.UnderDetachedPriorTree: {
+				fail(`TODO: add handling for editing ${locationOfEditedTree} location`);
+			}
+			case TreeLocation.UnderDetachingTree: {
+				return root[0];
+			}
+			case TreeLocation.UnderAttachedTree: {
+				return root[1];
+			}
+			case TreeLocation.UnderAttachingBuiltTree: {
+				return root[2];
+			}
+			case TreeLocation.DetachedBuiltRoot:
+			case TreeLocation.UnderTransientTree: {
+				return root[3];
+			}
+			default: {
+				unreachableCase(locationOfEditedTree);
+			}
+		}
+	};
+	const editLocations = [
+		TreeLocation.UnderAttachedTree,
+		TreeLocation.UnderDetachingTree,
+		TreeLocation.UnderDetachedPriorTree,
+		TreeLocation.UnderTransientTree,
+		TreeLocation.UnderAttachingPriorTree,
+		TreeLocation.UnderAttachingBuiltTree,
+	] as const;
+
+	for (const fieldKind of ["sequence", "optional", "required"] as const) {
+		for (const editLocation of editLocations) {
+			if (
+				editLocation === TreeLocation.UnderAttachingPriorTree ||
+				editLocation === TreeLocation.UnderDetachedPriorTree
+			) {
+				// TODO: cover these cases once editing of prior detached tree is supported.
+				continue;
+			}
+
+			for (const detachDestination of allTreeLocations) {
+				if (
+					detachDestination === TreeLocation.UnderAttachingPriorTree ||
+					detachDestination === TreeLocation.UnderDetachedPriorTree
+				) {
+					// TODO: cover these cases once editing of prior detached tree is supported.
+					continue;
+				}
+
+				if (fieldKind === "optional" && detachDestination.startsWith("Under")) {
+					// TODO: cover these cases once attaching of tree detached from optional field is supported.
+					continue;
+				}
+
+				if (fieldKind === "required") {
+					// Detaching from a required field requires attaching in the field at the same time.
+					// Such cases are handled below.
+					continue;
+				}
+
+				if (
+					(editLocation === TreeLocation.UnderAttachedTree ||
+						editLocation === TreeLocation.UnderDetachingTree) &&
+					detachDestination === TreeLocation.DetachedBuiltRoot
+				) {
+					// This case makes no sense: a tree that starts out under an existing tree cannot end up as a built root.
+					continue;
+				}
+				if (
+					(editLocation === TreeLocation.UnderAttachingBuiltTree ||
+						editLocation === TreeLocation.UnderTransientTree) &&
+					detachDestination === TreeLocation.DetachedPriorRoot
+				) {
+					// This case makes no sense: a tree that starts out under a built tree cannot end up as a built root.
+					continue;
+				}
+
+				const scenarioName = `detach from ${fieldKind} field under ${editLocation} and send detached node to ${detachDestination}`;
+				scenarios[scenarioName] = {
+					schema: PalletArray,
+					initialContent: initialContentGenerator,
+					apply: (root) => {
+						applyIntroAttachEdits(root);
+						const editedPallet = getPallet(root, editLocation);
+						switch (fieldKind) {
+							case "sequence": {
+								switch (detachDestination) {
+									case TreeLocation.DetachedPriorRoot:
+									case TreeLocation.DetachedBuiltRoot: {
+										editedPallet.boxes.removeAt(0);
+										break;
+									}
+									case TreeLocation.UnderAttachedTree:
+									case TreeLocation.UnderDetachingTree:
+									case TreeLocation.UnderAttachingBuiltTree:
+									case TreeLocation.UnderTransientTree: {
+										getPallet(root, detachDestination).boxes.moveToEnd(0, editedPallet.boxes);
+										break;
+									}
+									default: {
+										unreachableCase(detachDestination);
+									}
+								}
+								break;
+							}
+							case "optional": {
+								switch (detachDestination) {
+									case TreeLocation.DetachedPriorRoot:
+									case TreeLocation.DetachedBuiltRoot: {
+										delete editedPallet.boxes[0].value;
+										break;
+									}
+									case TreeLocation.UnderAttachedTree:
+									case TreeLocation.UnderDetachingTree:
+									case TreeLocation.UnderAttachingBuiltTree:
+									case TreeLocation.UnderTransientTree: {
+										fail(`TODO: add handling for destination ${detachDestination}`);
+									}
+									default: {
+										unreachableCase(detachDestination);
+									}
+								}
+								break;
+							}
+							default: {
+								unreachableCase(fieldKind);
+							}
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 1,
+						tops: 2,
+					},
+					expectSurvivingMarker: true,
+				} as const satisfies PalletArrayScenario;
+			}
+
+			for (const attachSource of allTreeLocations) {
+				if (
+					attachSource === TreeLocation.DetachedPriorRoot ||
+					attachSource === TreeLocation.UnderAttachingPriorTree ||
+					attachSource === TreeLocation.UnderDetachedPriorTree
+				) {
+					// TODO: cover these cases once attaching of prior detached tree is supported.
+					continue;
+				}
+
+				if (
+					(fieldKind === "optional" || fieldKind === "required") &&
+					attachSource !== TreeLocation.DetachedBuiltRoot
+				) {
+					// TODO: cover these cases once attaching of detached tree is supported.
+					continue;
+				}
+
+				const scenarioName = `attach node from ${attachSource} in ${fieldKind} field under ${editLocation}`;
+				const extraBuilds = attachSource === TreeLocation.DetachedBuiltRoot ? 1 : 0;
+				scenarios[scenarioName] = {
+					schema: PalletArray,
+					initialContent: initialContentGenerator,
+					apply: (root) => {
+						applyIntroAttachEdits(root);
+						const editedPallet = getPallet(root, editLocation);
+						const palletDestinyMarker = editedPallet.id.at(-1);
+						const newValue = `🐣${palletDestinyMarker}`;
+						switch (fieldKind) {
+							case "sequence": {
+								switch (attachSource) {
+									case TreeLocation.DetachedBuiltRoot: {
+										editedPallet.boxes.insertAtEnd(new Box({ value: newValue }));
+										break;
+									}
+									case TreeLocation.UnderAttachedTree:
+									case TreeLocation.UnderDetachingTree:
+									case TreeLocation.UnderAttachingBuiltTree:
+									case TreeLocation.UnderTransientTree: {
+										editedPallet.boxes.moveToEnd(0, getPallet(root, attachSource).boxes);
+										break;
+									}
+									default: {
+										unreachableCase(attachSource);
+									}
+								}
+								break;
+							}
+							case "optional": {
+								switch (attachSource) {
+									case TreeLocation.DetachedBuiltRoot: {
+										editedPallet.boxes[0].value = newValue;
+										break;
+									}
+									case TreeLocation.UnderAttachedTree:
+									case TreeLocation.UnderDetachingTree:
+									case TreeLocation.UnderAttachingBuiltTree:
+									case TreeLocation.UnderTransientTree: {
+										fail(`TODO: add handling for editing location ${editLocation}`);
+									}
+									default: {
+										unreachableCase(attachSource);
+									}
+								}
+								break;
+							}
+							case "required": {
+								switch (attachSource) {
+									case TreeLocation.DetachedBuiltRoot: {
+										editedPallet.id = newValue;
+										break;
+									}
+									case TreeLocation.UnderAttachedTree:
+									case TreeLocation.UnderDetachingTree:
+									case TreeLocation.UnderAttachingBuiltTree:
+									case TreeLocation.UnderTransientTree: {
+										fail(`TODO: add handling for editing location ${editLocation}`);
+									}
+									default: {
+										unreachableCase(attachSource);
+									}
+								}
+								break;
+							}
+							default: {
+								unreachableCase(fieldKind);
+							}
+						}
+						applyOutroDetachEdits(root);
+					},
+					unminimizedBuildExpectations: {
+						builds: 1 + extraBuilds,
+						tops: 2 + extraBuilds,
+					},
+					expectSurvivingMarker: true,
+				} as const satisfies PalletArrayScenario;
+			}
+		}
+	}
+	return scenarios;
+}
+
+const editedDetachedTreeScenarios = generateEditedTreeScenarios();
 // #endregion
 
 // #region Schema upgrade scenarios
@@ -2367,5 +2661,49 @@ describe("transaction minimize post-processor", () => {
 			// with the first one having been altered.
 			assert.deepEqual(countBuilds(change), { builds: 2, tops: 2 });
 		});
+	});
+
+	describe("minimizes edits to content that ends up detached", () => {
+		const locationsUnderNodesThatEndUpAttached = new Set([
+			TreeLocation.UnderAttachedTree,
+			TreeLocation.UnderAttachingPriorTree,
+			TreeLocation.UnderAttachingBuiltTree,
+		]);
+		const locationsUnderNodesThatEndUpDetached = new Set([
+			TreeLocation.UnderDetachingTree,
+			TreeLocation.UnderDetachedPriorTree,
+			TreeLocation.UnderTransientTree,
+		]);
+		for (const [scenarioName, scenario] of Object.entries(generateEditedTreeScenarios())) {
+			it(scenarioName, () => {
+				const { tree: unminimizedTree } = runScenario(scenario, {
+					doNotMinimize: true,
+				});
+				const { tree: minimizedTree, view: minimizedView } = runScenario(scenario, {
+					validateConsistency: true,
+				});
+				assert.deepEqual(minimizedTree.exportVerbose(), unminimizedTree.exportVerbose());
+				const { changes } = getHeadChange(minimizedView);
+				assert(hasSingle(changes) && changes[0].type === "data");
+				const minimizedDelta = intoDelta(makeAnonChange(changes[0].innerChange));
+				const minimizedNodeFlow = nodeFlowCensusFromDelta(minimizedDelta);
+
+				// No node should be attached under a tree that ends up detached
+				for (const source of allTreeLocations) {
+					for (const destination of locationsUnderNodesThatEndUpDetached) {
+						assert.equal(minimizedNodeFlow[source][destination], 0);
+					}
+				}
+
+				// All nodes detached from a tree that ends up detached must be attached under a tree that ends up attached
+				for (const source of locationsUnderNodesThatEndUpDetached) {
+					for (const destination of allTreeLocations) {
+						if (!locationsUnderNodesThatEndUpAttached.has(destination)) {
+							assert.equal(minimizedNodeFlow[source][destination], 0);
+						}
+					}
+				}
+			});
+		}
 	});
 });
