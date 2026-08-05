@@ -70,7 +70,7 @@ jobs:
       - name: Resolve PR for check SHA
         id: find_pr
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -129,7 +129,7 @@ jobs:
         id: render
         if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUM: ${{ steps.find_pr.outputs.pr_num }}
           HEAD_SHA: ${{ steps.find_pr.outputs.head_sha }}
@@ -158,7 +158,7 @@ jobs:
 
       - if: steps.render.outcome == 'success'
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -184,7 +184,7 @@ jobs:
       - name: Resolve PR for check SHA
         id: find_pr
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -209,7 +209,7 @@ jobs:
 
       - if: steps.find_pr.outputs.pr_num != ''
         # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+        uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ steps.find_pr.outputs.pr_num }}
@@ -234,7 +234,7 @@ jobs:
       - name: Collect affected PRs
         id: collect
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -317,7 +317,7 @@ jobs:
       - name: Collect affected PRs
         id: collect
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const { owner, repo } = context.repo;
@@ -386,17 +386,17 @@ jobs:
       # source so we can build flub. The comparison itself reads only ADO artifacts identified by SHA — no local
       # git state is required.
       # release notes: https://github.com/actions/checkout/releases/tag/v6.0.2
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # ratchet:actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           ref: ${{ matrix.pr.baseRef }}
           fetch-depth: "1"
           persist-credentials: false
 
       # release notes: https://github.com/pnpm/action-setup/releases/tag/v5.0.0
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # ratchet:pnpm/action-setup@v5
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
 
       # release notes: https://github.com/actions/setup-node/releases/tag/v6.3.0
-      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # ratchet:actions/setup-node@v6
+      - uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
           node-version-file: .nvmrc
           cache: "pnpm"
@@ -446,7 +446,7 @@ jobs:
       # friendly per-(kind, side) message.
       - name: Render bundle-size comment body
         # release notes: https://github.com/actions/github-script/releases/tag/v9.0.0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # ratchet:actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         env:
           PR_NUM: ${{ matrix.pr.number }}
           BASE_SHA: ${{ matrix.pr.mergeBase }}
@@ -582,7 +582,7 @@ jobs:
             core.endGroup();
 
       # release notes: https://github.com/marocchino/sticky-pull-request-comment/releases/tag/v3.0.4
-      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # ratchet:marocchino/sticky-pull-request-comment@v3
+      - uses: marocchino/sticky-pull-request-comment@0ea0beb66eb9baf113663a64ec522f60e49231c0 # v3.0.4
         with:
           header: bundle-size-report
           number: ${{ matrix.pr.number }}

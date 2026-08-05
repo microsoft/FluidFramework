@@ -3,19 +3,15 @@
  * Licensed under the MIT License.
  */
 
-/**
- * @fileoverview Definition of the StringProperty class
- */
+import { ChangeSet } from "@fluid-experimental/property-changeset";
+import { ConsoleUtils, constants } from "@fluid-experimental/property-common";
+import _ from "lodash";
 
-const { ChangeSet } = require("@fluid-experimental/property-changeset");
-const { MSG } = require("@fluid-experimental/property-common").constants;
-const { ConsoleUtils } = require("@fluid-experimental/property-common");
-const _ = require("lodash");
+import { ArrayProperty } from "./arrayProperty.js";
+import { BaseProperty } from "./baseProperty.js";
+import { ValueArrayProperty } from "./valueArrayProperty.js";
 
-const { ArrayProperty } = require("./arrayProperty");
-const { BaseProperty } = require("./baseProperty");
-const { ValueArrayProperty } = require("./valueArrayProperty");
-
+const { MSG } = constants;
 var MODIFIED_STATE_FLAGS = BaseProperty.MODIFIED_STATE_FLAGS;
 
 // Some global constant objects that are used to indicate a few special

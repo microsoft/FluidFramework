@@ -15,7 +15,7 @@ import type {
 import type { SummaryTreeBuilder } from "@fluidframework/runtime-utils/internal";
 
 import type { IJsonCodec } from "../codec/index.js";
-import type { ChangeFamily, ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
+import type { ChangeFamilyEditor, SchemaAndPolicy } from "../core/index.js";
 import type { IdentifierHealingConfig, JsonCompatibleReadOnly } from "../util/index.js";
 
 import type { EditManager, SummaryData } from "./editManager.js";
@@ -68,7 +68,7 @@ function minVersionToEditManagerSummaryFormatVersion(
 /**
  * Provides methods for summarizing and loading an `EditManager`
  */
-export class EditManagerSummarizer<TChangeset>
+export class EditManagerSummarizer<TChangeset, TChangeProcessingContext>
 	extends VersionedSummarizer<EditManagerSummaryFormatVersion>
 	implements Summarizable
 {
@@ -77,7 +77,7 @@ export class EditManagerSummarizer<TChangeset>
 		private readonly editManager: EditManager<
 			ChangeFamilyEditor,
 			TChangeset,
-			ChangeFamily<ChangeFamilyEditor, TChangeset>
+			TChangeProcessingContext
 		>,
 		private readonly codec: IJsonCodec<
 			SummaryData<TChangeset>,

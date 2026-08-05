@@ -10,6 +10,7 @@ import type { IContainer } from "@fluidframework/container-definitions/internal"
 import type { IChannel } from "@fluidframework/datastore-definitions/internal";
 import { SummaryType } from "@fluidframework/driver-definitions";
 import { createIdCompressor } from "@fluidframework/id-compressor/internal";
+import { startEphemeralService } from "@fluidframework/local-driver/internal";
 import type {
 	ISharedObjectKind,
 	SharedObjectKindAlpha,
@@ -35,7 +36,6 @@ import {
 	moveToDetachedField,
 	rootFieldKey,
 	storedEmptyFieldSchema,
-	type ChangeFamily,
 	type ChangeFamilyEditor,
 	EmptyKey,
 	ValueSchema,
@@ -46,6 +46,7 @@ import {
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../feature-libraries/chunked-forest/chunkedForest.js";
 import {
+	ComparisonForest,
 	flexTreeSlot,
 	MockNodeIdentifierManager,
 	TreeCompressionStrategy,
@@ -64,15 +65,8 @@ import {
 	Tree,
 	type TreeCheckout,
 } from "../../shared-tree/index.js";
-import {
-	SchematizingSimpleTreeView,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../shared-tree/schematizingTreeView.js";
+import { SchematizingSimpleTreeView } from "../../shared-tree/index.js";
 import type { EditManager } from "../../shared-tree-core/index.js";
-import {
-	TreeBeta,
-	// eslint-disable-next-line import-x/no-internal-modules
-} from "../../simple-tree/api/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import { simpleTreeNodeSlot } from "../../simple-tree/core/treeNodeKernel.js";
 import {
@@ -89,13 +83,19 @@ import {
 	FieldKind,
 	type SimpleLeafNodeSchema,
 } from "../../simple-tree/index.js";
-import { handleSchema, numberSchema, stringSchema } from "../../simple-tree/index.js";
+import {
+	handleSchema,
+	numberSchema,
+	stringSchema,
+	TreeBeta,
+} from "../../simple-tree/index.js";
 import {
 	configuredSharedTree,
 	resolveOptions,
 	SharedTree as SharedTreeKind,
 	type ISharedTree,
 } from "../../treeFactory.js";
+import { defineTreeDataStore } from "../../treeDataStore.js";
 import { brand } from "../../util/index.js";
 // eslint-disable-next-line import-x/no-internal-modules
 import type { TreeSimpleContent } from "../feature-libraries/flex-tree/utils.js";
@@ -959,11 +959,7 @@ describe("SharedTree", () => {
 	// If we do then this test should be updated to use that code path.
 	interface EditManagerKludge {
 		kernel?: {
-			editManager?: EditManager<
-				ChangeFamilyEditor,
-				unknown,
-				ChangeFamily<ChangeFamilyEditor, unknown>
-			>;
+			editManager?: EditManager<ChangeFamilyEditor, unknown>;
 		};
 	}
 
@@ -2058,26 +2054,30 @@ describe("SharedTree", () => {
 	});
 
 	describe("tolerates open async transactions in the face of inbound commits", () => {
+		const config = new TreeViewConfiguration({
+			schema: StringArray,
+			enableSchemaValidation,
+		});
+		const testArrayTree = defineTreeDataStore({
+			type: "testArrayTree",
+			config,
+			initializer: () => ["A", "C", "E"],
+		});
 		it("committed transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2085,31 +2085,26 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "D", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "D", "E"]);
 		});
 
 		it("aborted transaction", async () => {
-			const provider = await TestTreeProvider.create(2);
-			const tree1 = provider.trees[0];
-			const tree2 = provider.trees[1];
-			const config = new TreeViewConfiguration({
-				schema: StringArray,
-				enableSchemaValidation,
-			});
-			const view1 = asAlpha(tree1.viewWith(config));
-			const view2 = tree2.viewWith(config);
-			view1.initialize(["A", "C", "E"]);
-			await provider.ensureSynchronized();
+			const client = startEphemeralService().defaultClient;
+			const container1 = await client.createAttachedContainer(testArrayTree);
+			const container2 = await client.loadContainer(container1.id, testArrayTree);
+			const view1 = asAlpha(container1.data);
+			const view2 = container2.data;
 
 			await view1.runTransactionAsync(async () => {
 				view1.root.insertAt(2, "D");
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 
+				// An edit on view2 while view1 is in an async open transaction
 				view2.root.insertAt(1, "B");
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
-				await provider.ensureSynchronized();
+				await client.service.synchronize();
 
 				assert.deepEqual([...view1.root], ["A", "C", "D", "E"]);
 				assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
@@ -2118,7 +2113,7 @@ describe("SharedTree", () => {
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 
-			await provider.ensureSynchronized();
+			await client.service.synchronize();
 			assert.deepEqual([...view1.root], ["A", "B", "C", "E"]);
 			assert.deepEqual([...view2.root], ["A", "B", "C", "E"]);
 		});
@@ -2486,7 +2481,7 @@ describe("SharedTree", () => {
 			assert.equal(trees[0].kernel.checkout.forest instanceof ChunkedForest, true);
 		});
 
-		it("ForestTypeExpensive uses ObjectForest with additionalAsserts flag set to true", () => {
+		it("ForestTypeExpensive uses a ComparisonForest of ChunkedForest and ObjectForest with additionalAsserts set to true", () => {
 			const { trees } = new TestTreeProviderLite(
 				1,
 				configuredSharedTree({
@@ -2495,8 +2490,10 @@ describe("SharedTree", () => {
 				}).getFactory(),
 			);
 			const forest = trees[0].kernel.checkout.forest;
-			assert(forest instanceof ObjectForest);
-			assert.equal(forest.additionalAsserts, true);
+			assert(forest instanceof ComparisonForest);
+			assert(forest.main instanceof ChunkedForest);
+			assert(forest.reference instanceof ObjectForest);
+			assert.equal(forest.reference.additionalAsserts, true);
 		});
 	});
 	describe("Schema based op encoding", () => {
