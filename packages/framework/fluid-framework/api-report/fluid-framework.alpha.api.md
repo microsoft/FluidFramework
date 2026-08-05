@@ -155,6 +155,7 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 
 // @alpha @sealed
 export interface ArrayPlaceAnchor {
+    dispose(): void;
     get index(): number;
 }
 

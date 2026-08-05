@@ -3,13 +3,12 @@
  * Licensed under the MIT License.
  */
 
+import { clamp } from "@fluidframework/core-utils/internal";
 import {
 	type TextAsTree,
 	TreeAlpha,
 	utf16LengthForCodePoints,
 } from "@fluidframework/tree/internal";
-
-import { clamp } from "../../utilities.js";
 
 /**
  * A text selection or cursor range expressed as UTF-16 code-unit offsets.
