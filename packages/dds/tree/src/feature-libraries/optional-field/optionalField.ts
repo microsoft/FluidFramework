@@ -801,15 +801,15 @@ function filterEdits(
 	},
 ): OptionalChangeset {
 	const filtered: Mutable<OptionalChangeset> = { ...change };
-	if (filtered.valueReplace !== undefined) {
-		if (isReplaceEffectful(filtered.valueReplace)) {
-			const detachId = getEffectfulDst(filtered.valueReplace);
+	if (change.valueReplace !== undefined) {
+		if (isReplaceEffectful(change.valueReplace)) {
+			const detachId = getEffectfulDst(change.valueReplace);
 			const detachResult =
 				detachId === undefined
 					? undefined
 					: options.filterDetach(detachId, 1, undefined).value;
 
-			const attachId = filtered.valueReplace.src;
+			const attachId = change.valueReplace.src;
 			const attachResult =
 				attachId === undefined
 					? undefined
@@ -823,7 +823,8 @@ function filterEdits(
 
 				delete filtered.valueReplace;
 			} else if (attachResult === EditFilterStatus.Remove) {
-				delete filtered.valueReplace.src;
+				filtered.valueReplace = { ...change.valueReplace };
+				delete (filtered.valueReplace as Mutable<Replace>).src;
 			}
 		} else if (!options.preserveOtherEdits) {
 			delete filtered.valueReplace;
