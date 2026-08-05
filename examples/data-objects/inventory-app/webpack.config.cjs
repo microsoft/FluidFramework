@@ -7,7 +7,9 @@ const fluidRoute = require("@fluid-example/webpack-fluid-loader");
 const webpack = require("webpack");
 
 module.exports = (env) => {
-	const config = fluidRoute.commonExampleConfig(__dirname, env);
+	const config = fluidRoute.baseExampleConfig(__dirname, env, {
+		html: { title: "Fluid Inventory" },
+	});
 
 	return {
 		...config,

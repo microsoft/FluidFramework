@@ -27,7 +27,8 @@ You can run this example using the following steps:
 ## Service selection
 
 The app uses an ephemeral in-browser service by default.
-To use Tinylicious, open <http://localhost:8080/new?fluidClient=tinylicious> after starting `tinylicious` and there webpack server.
+To use Tinylicious, start Tinylicious and open
+<http://localhost:8080/?fluidClient=tinylicious> after starting the webpack server.
 
 ## Testing
 

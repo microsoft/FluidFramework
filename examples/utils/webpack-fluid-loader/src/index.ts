@@ -3,4 +3,10 @@
  * Licensed under the MIT License.
  */
 
+export {
+	baseDevServerConfig,
+	baseExampleConfig,
+	type BaseExampleConfigOptions,
+	type ExampleWebpackEnvironment,
+} from "./baseConfig.js";
 export { commonExampleConfig, devServerConfig } from "./routes.js";
