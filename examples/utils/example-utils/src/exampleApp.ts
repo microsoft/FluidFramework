@@ -79,12 +79,10 @@ export async function loadExampleContainer<T>(
 	if (id.length > 0) {
 		return client.loadContainer(id, rootStore);
 	}
-
-	const container = await client.createContainer(rootStore);
-	const attachedContainer = await container.attach();
+	const container = await client.createAttachedContainer(rootStore);
 	// eslint-disable-next-line require-atomic-updates -- this example setup assumes this function controls the location hash.
-	location.hash = attachedContainer.id;
-	return attachedContainer;
+	location.hash = container.id;
+	return container;
 }
 
 /**

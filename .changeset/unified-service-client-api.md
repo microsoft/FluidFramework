@@ -36,9 +36,8 @@ const appKind = defineTreeDataStore({
 const service = createTinyliciousServiceClient({ minVersionForCollaboration: "2.100.0" });
 
 // Create a new document, or load an existing one by id.
-const container = await service.createContainer(appKind);
-const attached = await container.attach();
-const view = attached.data; // the root TreeView
+const container = await service.createAttachedContainer(appKind);
+const view = container.data; // the root TreeView
 
-const loaded = await service.loadContainer(attached.id, appKind);
+const loaded = await service.loadContainer(container.id, appKind);
 ```
