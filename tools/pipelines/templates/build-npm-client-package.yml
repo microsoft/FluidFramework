@@ -841,6 +841,8 @@ extends:
 
                 - task: Npm@1
                   displayName: 'npm run test:copyresults'
+                  # Failed test runs still produce JUnit reports that must be copied for PublishTestResults.
+                  condition: and(succeededOrFailed(), eq(variables['startTest'], 'true'))
                   inputs:
                     command: custom
                     workingDir: '$(Pipeline.Workspace)/${{ parameters.buildDirectory }}'
