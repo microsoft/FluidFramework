@@ -94,5 +94,7 @@ The TypeScript compilation `target` and `lib` for the Fluid Framework client pac
 The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
 All actively supported Node.js versions and evergreen browsers already meet this requirement.
 
-Note that, per our existing [Client Requirements](https://github.com/microsoft/FluidFramework/blob/main/packages/framework/fluid-framework/README.md#minimum-client-requirements), ES2022 was already our minimum supported target.
-No API or behavioral changes are intended; this only affects the ECMAScript level of the emitted code.
+Note that Fluid Framework has not officially supported targets older than ES2022 since before 2.0: this is documented in [ClientRequirements.md](https://github.com/microsoft/FluidFramework/blob/main/ClientRequirements.md) as well as the README for every client package.
+
+It is possible this change could impact users of less up to date JavaScript runtimes.
+Impacted users can use a tool like [babel](https://babeljs.io/) to transpile out unsupported language features.
