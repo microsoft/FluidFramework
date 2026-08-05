@@ -1,0 +1,106 @@
+---
+"@fluid-example/table-document": minor
+"@fluid-experimental/attributor": minor
+"@fluid-experimental/data-object-base": minor
+"@fluid-experimental/data-objects": minor
+"@fluid-experimental/dds-interceptions": minor
+"@fluid-experimental/ink": minor
+"@fluid-experimental/last-edited": minor
+"@fluid-experimental/odsp-end-to-end-tests": minor
+"@fluid-experimental/oldest-client-observer": minor
+"@fluid-experimental/ot": minor
+"@fluid-experimental/pact-map": minor
+"@fluid-experimental/sequence-deprecated": minor
+"@fluid-experimental/sharejs-json1": minor
+"@fluid-experimental/tree": minor
+"@fluid-internal/client-utils": minor
+"@fluid-internal/mocha-test-setup": minor
+"@fluid-internal/presence-definitions": minor
+"@fluid-internal/presence-runtime": minor
+"@fluid-internal/test-driver-definitions": minor
+"@fluid-internal/test-service-load": minor
+"@fluid-private/stochastic-test-utils": minor
+"@fluid-private/test-dds-utils": minor
+"@fluid-private/test-drivers": minor
+"@fluid-private/test-end-to-end-tests": minor
+"@fluid-private/test-loader-utils": minor
+"@fluid-private/test-pairwise-generator": minor
+"@fluid-private/test-version-utils": minor
+"@fluid-tools/fetch-tool": minor
+"@fluidframework/agent-scheduler": minor
+"@fluidframework/app-insights-logger": minor
+"@fluidframework/aqueduct": minor
+"@fluidframework/azure-client": minor
+"@fluidframework/azure-end-to-end-tests": minor
+"@fluidframework/azure-local-service": minor
+"@fluidframework/azure-service-utils": minor
+"@fluidframework/cell": minor
+"@fluidframework/container-definitions": minor
+"@fluidframework/container-loader": minor
+"@fluidframework/container-runtime": minor
+"@fluidframework/container-runtime-definitions": minor
+"@fluidframework/core-interfaces": minor
+"@fluidframework/core-utils": minor
+"@fluidframework/counter": minor
+"@fluidframework/datastore": minor
+"@fluidframework/datastore-definitions": minor
+"@fluidframework/debugger": minor
+"@fluidframework/devtools": minor
+"@fluidframework/devtools-core": minor
+"@fluidframework/driver-base": minor
+"@fluidframework/driver-definitions": minor
+"@fluidframework/driver-utils": minor
+"@fluidframework/driver-web-cache": minor
+"@fluidframework/file-driver": minor
+"@fluidframework/fluid-runner": minor
+"@fluidframework/fluid-static": minor
+"@fluidframework/fluid-telemetry": minor
+"@fluidframework/id-compressor": minor
+"@fluidframework/legacy-dds": minor
+"@fluidframework/local-driver": minor
+"@fluidframework/map": minor
+"@fluidframework/matrix": minor
+"@fluidframework/merge-tree": minor
+"@fluidframework/odsp-client": minor
+"@fluidframework/odsp-doclib-utils": minor
+"@fluidframework/odsp-driver": minor
+"@fluidframework/odsp-driver-definitions": minor
+"@fluidframework/odsp-urlresolver": minor
+"@fluidframework/ordered-collection": minor
+"@fluidframework/presence": minor
+"@fluidframework/quill-react": minor
+"@fluidframework/react": minor
+"@fluidframework/register-collection": minor
+"@fluidframework/replay-driver": minor
+"@fluidframework/request-handler": minor
+"@fluidframework/routerlicious-driver": minor
+"@fluidframework/routerlicious-urlresolver": minor
+"@fluidframework/runtime-definitions": minor
+"@fluidframework/runtime-utils": minor
+"@fluidframework/sequence": minor
+"@fluidframework/shared-object-base": minor
+"@fluidframework/shared-summary-block": minor
+"@fluidframework/synthesize": minor
+"@fluidframework/task-manager": minor
+"@fluidframework/telemetry-utils": minor
+"@fluidframework/test-runtime-utils": minor
+"@fluidframework/test-utils": minor
+"@fluidframework/tinylicious-client": minor
+"@fluidframework/tinylicious-driver": minor
+"@fluidframework/tool-utils": minor
+"@fluidframework/tree": minor
+"@fluidframework/tree-agent": minor
+"@fluidframework/tree-agent-langchain": minor
+"@fluidframework/tree-agent-ses": minor
+"@fluidframework/type-factory": minor
+"@fluidframework/undo-redo": minor
+"fluid-framework": minor
+"__section": other
+---
+Fluid Framework client packages now target ES2022
+
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
+The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
+All actively supported Node.js versions (18+) and evergreen browsers already meet this requirement.
+
+No API or behavioral changes are intended; this only affects the ECMAScript level of the emitted code.
