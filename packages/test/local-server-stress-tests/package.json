@@ -109,13 +109,12 @@
 		"typescript": "~5.4.5"
 	},
 	"comments": [
-		"build:test-dependencies:esm groups dependency test builds required by both the stress test build and eslint because stress tests import their internal test exports, which resolve to generated test output."
+		"build:test-dependencies:esm groups test builds required by both the stress test build and eslint because stress tests import their internal test exports, which resolve to generated test output."
 	],
 	"fluidBuild": {
 		"tasks": {
 			"build:test:esm": [
-				"^build:esnext",
-				"^build:entrypoints:esm",
+				"...",
 				"build:test-dependencies:esm"
 			],
 			"build:test-dependencies:esm": {
