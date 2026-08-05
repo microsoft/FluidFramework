@@ -3,20 +3,27 @@
  * Licensed under the MIT License.
  */
 
-import type { ChangeAtomId } from "../../core/index.js";
-import type { RangeQueryResult } from "../../util/index.js";
-import { EditFilterStatus, type EditFilterFunc } from "../modular-schema/index.js";
+import {
+	EditFilterStatus,
+	type FilterAttachFunc,
+	type FilterDetachFunc,
+} from "../modular-schema/index.js";
 import { MarkListFactory } from "./markListFactory.js";
 import { NoopMarkType, type Changeset, type Mark } from "./types.js";
-import { getDetachedNodeId, getDetachOutputCellId, omitMarkEffect } from "./utils.js";
+import {
+	getDetachedNodeId,
+	getDetachOutputCellId,
+	getOutputCellId,
+	omitMarkEffect,
+} from "./utils.js";
 import { MarkQueueBase } from "./markQueue.js";
-import { unreachableCase } from "@fluidframework/core-utils/internal";
+import { assert, fail, unreachableCase } from "@fluidframework/core-utils/internal";
 
 export function filterEdits(
 	change: Changeset,
 	options: {
-		filterDetach: EditFilterFunc;
-		filterAttach: EditFilterFunc;
+		filterDetach: FilterDetachFunc;
+		filterAttach: FilterAttachFunc;
 		preserveOtherEdits: boolean;
 	},
 ): Changeset {
@@ -38,16 +45,8 @@ export function filterEdits(
 
 function filterMark(
 	mark: Mark,
-	filterDetach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
-	filterAttach: (
-		id: ChangeAtomId,
-		count: number,
-		endpoint?: ChangeAtomId,
-	) => RangeQueryResult<EditFilterStatus>,
+	filterDetach: FilterDetachFunc,
+	filterAttach: FilterAttachFunc,
 	preserveOtherEdits: boolean,
 ): Mark {
 	const type = mark.type;
@@ -59,7 +58,7 @@ function filterMark(
 			}
 
 			const endpoint = mark.type === "MoveIn" ? mark.finalEndpoint : undefined;
-			const result = filterAttach(mark.cellId, mark.count, endpoint);
+			const result = filterAttach(mark.cellId, mark.count, undefined, endpoint);
 
 			let filtered: Mark;
 			switch (result.value) {
@@ -96,14 +95,9 @@ function filterMark(
 		}
 		case "Remove":
 		case "MoveOut": {
-			if (mark.cellId !== undefined && mark.type === "Remove") {
-				// This mark represents a root rename, but does not truly detach any nodes.
-				return preserveOtherEdits ? mark : omitMarkEffect(mark);
-			}
-
 			const detachId = getDetachedNodeId(mark);
 			const endpoint = mark.type === "MoveOut" ? mark.finalEndpoint : undefined;
-			const result = filterDetach(detachId, mark.count, endpoint);
+			const result = filterDetach(detachId, mark.count, mark.cellId, endpoint);
 
 			let filtered: Mark;
 			switch (result.value) {
@@ -136,9 +130,30 @@ function filterMark(
 			}
 			return { ...filtered, count: result.length };
 		}
-		case NoopMarkType:
-		case "Rename":
 		case "AttachAndDetach": {
+			assert(
+				mark.attach.type === "MoveIn",
+				"AttachAndDetach marks in changesets should always represent MoveIn + Remove",
+			);
+
+			if (mark.cellId === undefined) {
+				return preserveOtherEdits ? mark : omitMarkEffect(mark);
+			}
+
+			const result = filterAttach(
+				{ revision: mark.attach.revision, localId: mark.attach.id },
+				mark.count,
+				getOutputCellId(mark),
+				mark.attach.finalEndpoint,
+			);
+
+			const filtered =
+				result.value === EditFilterStatus.Preserve ? mark : omitMarkEffect(mark);
+
+			return { ...filtered, count: result.length };
+		}
+		case NoopMarkType:
+		case "Rename": {
 			return preserveOtherEdits ? mark : omitMarkEffect(mark);
 		}
 		default: {

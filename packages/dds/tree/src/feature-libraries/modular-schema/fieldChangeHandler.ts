@@ -189,16 +189,46 @@ export interface FieldChangeRebaser<TChangeset> {
 	filterEdits(
 		change: TChangeset,
 		options: {
-			filterDetach: EditFilterFunc;
-			filterAttach: EditFilterFunc;
+			filterDetach: FilterDetachFunc;
+			filterAttach: FilterAttachFunc;
 			preserveOtherEdits: boolean;
 		},
 	): TChangeset;
 }
 
-export type EditFilterFunc = (
-	id: ChangeAtomId,
+export type FilterDetachFunc = (
+	/**
+	 * The ID of the detach being queried.
+	 */
+	detachId: ChangeAtomId,
 	count: number,
+
+	/**
+	 * The input-context ID of the nodes being detached, if they are already detached.
+	 */
+	inputRootId: ChangeAtomId | undefined,
+
+	/**
+	 * The ID of the associated attach, if this is part of a move with a different attach ID.
+	 */
+	endpoint?: ChangeAtomId,
+) => RangeQueryResult<EditFilterStatus>;
+
+export type FilterAttachFunc = (
+	/**
+	 * The ID of the attach being queried.
+	 */
+	attachId: ChangeAtomId,
+	count: number,
+
+	/**
+	 * The output-context ID of the nodes being attached, if they are only transiently attached.
+	 */
+	inputRootId: ChangeAtomId | undefined,
+
+	/**
+	 * The ID of the associated detach, if this is part of a move with a different detach ID.
+	 */
 	endpoint?: ChangeAtomId,
 ) => RangeQueryResult<EditFilterStatus>;
 

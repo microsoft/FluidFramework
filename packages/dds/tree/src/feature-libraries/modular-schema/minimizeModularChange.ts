@@ -9,6 +9,7 @@ import {
 	makeChangeAtomId,
 	makeDetachedFieldIndex,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	offsetChangeAtomId,
 	visitDelta,
 	type ChangeAtomId,
@@ -71,9 +72,11 @@ export function minimizeModularChangeset(
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 	forestFactory: () => IEditableForest,
 ): ModularChangeset {
-	const { builtNodeIds } = getNodeInfo(change, fieldKinds);
+	const { builtRootIds, builtNodeIds } = getNodeInfo(change, fieldKinds);
 	const delta = intoDelta(makeAnonChange(change), fieldKinds);
 	const attachedRootIds = collectAttachedRootIds(delta, indexGlobalById(delta));
+	const outputToInputRootId = outputToInputRootIdFromDelta(delta);
+	const outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 
 	function isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
 		return nodeId !== undefined && getFromChangeAtomIdMap(builtNodeIds, nodeId) === true;
@@ -90,6 +93,7 @@ export function minimizeModularChangeset(
 		const filterDetach = (
 			id: ChangeAtomId,
 			count: number,
+			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
 			if (!isNodeIdInBuiltTree(nodeId)) {
@@ -117,6 +121,7 @@ export function minimizeModularChangeset(
 		const filterAttach = (
 			id: ChangeAtomId,
 			count: number,
+			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
 			if (!isNodeIdInBuiltTree(nodeId)) {
@@ -198,41 +203,77 @@ export function minimizeModularChangeset(
 		const filterDetach = (
 			id: ChangeAtomId,
 			count: number,
+			inputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
+			// If `inputId` is defined, this represents the rename of a detached root.
+			// If that detached root is newly built, then we should remove it from the residual change.
+			const isDetachOfBuiltNodeEntry =
+				inputRootId === undefined ? undefined : builtRootIds.getFirst(inputRootId, count);
+
+			const shouldRemove = isNodeIdInBuiltTree(nodeId) || isDetachOfBuiltNodeEntry?.value;
 			return {
-				value: isNodeIdInBuiltTree(nodeId)
-					? EditFilterStatus.Remove
-					: EditFilterStatus.Preserve,
-				length: count,
+				value: shouldRemove ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
+				length: isDetachOfBuiltNodeEntry?.length ?? count,
 			};
 		};
 
 		const filterAttach = (
 			id: ChangeAtomId,
 			count: number,
+			outputRootId: ChangeAtomId | undefined,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> => {
-			const moveEndpointEntry = change.crossFieldKeys.getFirst(
-				{ ...(endpoint ?? id), target: CrossFieldTarget.Source },
-				count,
-			);
+			let countProcessed = count;
+			const moveId = endpoint ?? id;
 
-			if (isNodeIdInBuiltTree(nodeId)) {
+			const moveEndpointEntry = change.crossFieldKeys.getFirst(
+				{ ...moveId, target: CrossFieldTarget.Source },
+				countProcessed,
+			);
+			countProcessed = moveEndpointEntry.length;
+
+			const inputIdEntry = outputToInputRootId.getFirst(moveId, countProcessed);
+			countProcessed = inputIdEntry.length;
+
+			const inputId = inputIdEntry.value ?? moveId;
+			const isMoveOfBuiltRootEntry = builtRootIds.getFirst(inputId, countProcessed);
+			countProcessed = isMoveOfBuiltRootEntry.length;
+
+			const isMoveOfBuiltRoot = isMoveOfBuiltRootEntry?.value ?? false;
+			const isMoveFromBuiltTree =
+				moveEndpointEntry.value !== undefined && isFieldIdInBuiltTree(moveEndpointEntry.value);
+
+			const isMoveOfBuiltNode = isMoveOfBuiltRoot || isMoveFromBuiltTree;
+
+			if (outputRootId !== undefined && isMoveOfBuiltNode) {
+				// The built node is only transiently attached.
+				return { value: EditFilterStatus.Remove, length: countProcessed };
+			}
+
+			if (nodeId !== undefined && isNodeIdInBuiltTree(nodeId)) {
+				const outputAttachState =
+					getFromChangeAtomIdMap(outputAttachStates, nodeId) ??
+					fail("Should have attach state for every node ID");
+
+				if (outputAttachState === NodeAttachState.Detached) {
+					// Edits to unused builds should be removed.
+					return { value: EditFilterStatus.Remove, length: countProcessed };
+				}
+
 				const isMoveFromExistingTree =
-					moveEndpointEntry.value !== undefined &&
-					!isFieldIdInBuiltTree(moveEndpointEntry.value);
+					moveEndpointEntry.value !== undefined && !isMoveFromBuiltTree;
 
 				// Moves of existing content could not be squashed into the build,
 				// so they must remain in the residual change.
 				return {
-					value: isMoveFromExistingTree ? EditFilterStatus.Preserve : EditFilterStatus.Remove,
-					length: moveEndpointEntry.length,
+					value:
+						isMoveFromExistingTree && !isMoveOfBuiltRoot
+							? EditFilterStatus.Preserve
+							: EditFilterStatus.Remove,
+					length: countProcessed,
 				};
 			}
-
-			const isMoveFromBuiltTree =
-				moveEndpointEntry.value !== undefined && isFieldIdInBuiltTree(moveEndpointEntry.value);
 
 			// The detach of the moved node will have already been squashed into the builds,
 			// so we only need to preserve the attach.
@@ -240,7 +281,7 @@ export function minimizeModularChangeset(
 				? EditFilterStatus.PreserveWithoutMove
 				: EditFilterStatus.Preserve;
 
-			return { value: result, length: moveEndpointEntry.length };
+			return { value: result, length: countProcessed };
 		};
 
 		return {
@@ -263,7 +304,7 @@ export function minimizeModularChangeset(
 	return residualChange;
 }
 
-function _getOutputNodeAttachStates(
+function getOutputNodeAttachStates(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): ChangeAtomIdBTree<NodeAttachState> {
@@ -324,6 +365,7 @@ function getNodeInfo(
 	change: ModularChangeset,
 	fieldKinds: ReadonlyMap<FieldKindIdentifier, FlexFieldKind>,
 ): {
+	builtRootIds: ChangeAtomIdRangeMap<true>;
 	builtNodeIds: ChangeAtomIdBTree<true>;
 	/**
 	 * Maps from the input context ID for roots which are already detached,
@@ -331,10 +373,10 @@ function getNodeInfo(
 	 */
 	rootIdToNodeId: ChangeAtomIdBTree<NodeId>;
 } {
-	const buildIds = newChangeAtomIdRangeMap<true>();
+	const builtRootIds = newChangeAtomIdRangeMap<true>();
 	if (change.builds !== undefined) {
 		for (const [rootId, chunk] of change.builds.entries()) {
-			buildIds.set(makeChangeAtomId(rootId[1], rootId[0]), chunk.topLevelLength, true);
+			builtRootIds.set(makeChangeAtomId(rootId[1], rootId[0]), chunk.topLevelLength, true);
 		}
 	}
 
@@ -344,13 +386,13 @@ function getNodeInfo(
 		false,
 		change.fieldChanges,
 		change.nodeChanges,
-		buildIds,
+		builtRootIds,
 		fieldKinds,
 		builtNodeIds,
 		rootIdToNodeId,
 	);
 
-	return { builtNodeIds, rootIdToNodeId };
+	return { builtRootIds, builtNodeIds, rootIdToNodeId };
 }
 
 function addNodeInfoForFields(
@@ -517,4 +559,19 @@ function indexGlobalById(delta: DeltaRoot): ChangeAtomIdMap<DeltaFieldMap> {
 		}
 	}
 	return globalById;
+}
+
+function outputToInputRootIdFromDelta(delta: DeltaRoot): ChangeAtomIdRangeMap<ChangeAtomId> {
+	const outputToInputRootId = newChangeAtomIdTransform();
+	if (delta.rename !== undefined) {
+		for (const { oldId, newId, count } of delta.rename) {
+			outputToInputRootId.set(
+				makeChangeAtomId(brand(newId.minor), newId.major),
+				count,
+				makeChangeAtomId(brand(oldId.minor), oldId.major),
+			);
+		}
+	}
+
+	return outputToInputRootId;
 }

@@ -344,6 +344,7 @@ export function nodeChangeFromId(
 export function removeAllEditsFilter(
 	_id: ChangeAtomId,
 	count: number,
+	_rootId: ChangeAtomId | undefined,
 	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<EditFilterStatus> {
 	return { value: EditFilterStatus.Remove, length: count };

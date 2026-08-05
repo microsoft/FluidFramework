@@ -49,7 +49,8 @@ import {
 	type NestedChangesInfo,
 	type FieldChangeDelta,
 	FlexFieldKind,
-	type EditFilterFunc,
+	type FilterDetachFunc,
+	type FilterAttachFunc,
 } from "../modular-schema/index.js";
 
 import type {
@@ -794,8 +795,8 @@ export const optional: Optional = new FlexFieldKind(
 function filterEdits(
 	change: OptionalChangeset,
 	options: {
-		filterDetach: EditFilterFunc;
-		filterAttach: EditFilterFunc;
+		filterDetach: FilterDetachFunc;
+		filterAttach: FilterAttachFunc;
 		preserveOtherEdits: boolean;
 	},
 ): OptionalChangeset {
@@ -804,11 +805,15 @@ function filterEdits(
 		if (isReplaceEffectful(filtered.valueReplace)) {
 			const detachId = getEffectfulDst(filtered.valueReplace);
 			const detachResult =
-				detachId === undefined ? undefined : options.filterDetach(detachId, 1).value;
+				detachId === undefined
+					? undefined
+					: options.filterDetach(detachId, 1, undefined).value;
 
 			const attachId = filtered.valueReplace.src;
 			const attachResult =
-				attachId === undefined ? undefined : options.filterAttach(attachId, 1).value;
+				attachId === undefined
+					? undefined
+					: options.filterAttach(attachId, 1, undefined).value;
 
 			if (detachResult === EditFilterStatus.Remove) {
 				assert(

@@ -218,6 +218,7 @@ export {
 	isAncestor,
 	type ChangeAtomIdRangeMap,
 	newChangeAtomIdRangeMap,
+	newChangeAtomIdTransform,
 	comparePartialRevisions,
 	compareChangesetLocalIds,
 	comparePartialChangesetLocalIds,
