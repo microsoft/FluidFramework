@@ -231,4 +231,54 @@ describe("SharedMatrix reconnect", () => {
 		assert.deepEqual(extract(matrix1), expected);
 		assert.deepEqual(extract(matrix3), expected);
 	});
+
+	// Regression test for the resubmit path optimized when many pending writes target the
+	// same (row, col). Disconnect, write the same cell N times, reconnect, and assert that
+	// only the final value remains and that both clients converge.
+	it("resubmits N writes to the same cell after reconnect", () => {
+		const containerRuntimeFactory = new MockContainerRuntimeFactoryForReconnection();
+		const dataRuntime1 = new MockFluidDataStoreRuntime();
+		containerRuntimeFactory.createContainerRuntime(dataRuntime1);
+		const dataRuntime2 = new MockFluidDataStoreRuntime();
+		const containerRuntime2 = containerRuntimeFactory.createContainerRuntime(dataRuntime2);
+
+		const matrix1 = matrixFactory.create(dataRuntime1, "A");
+		matrix1.connect({
+			deltaConnection: dataRuntime1.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		const matrix2 = matrixFactory.create(dataRuntime2, "B");
+		matrix2.connect({
+			deltaConnection: dataRuntime2.createDeltaConnection(),
+			objectStorage: new MockStorage(),
+		});
+
+		// Create a 1x1 matrix.
+		matrix1.insertRows(0, 1);
+		matrix1.insertCols(0, 1);
+		containerRuntimeFactory.processAllMessages();
+
+		// Disconnect matrix2, then write the same (row, col) N times. This stages a
+		// large run of pending setCell ops all targeting the same cell, which is the
+		// hot path being optimized by the pending-cell-list change.
+		containerRuntime2.connected = false;
+		const N = 200;
+		for (let i = 0; i < N; i++) {
+			matrix2.setCell(0, 0, i);
+		}
+
+		// While disconnected, matrix2 sees the latest local write and matrix1 sees nothing.
+		assert.deepEqual(extract(matrix1), [[undefined]]);
+		assert.deepEqual(extract(matrix2), [[N - 1]]);
+
+		// Reconnect matrix2 to force the resubmit path to re-emit all N pending writes.
+		containerRuntime2.connected = true;
+		containerRuntimeFactory.processAllMessages();
+
+		// Both clients should converge on the last-written value.
+		const expected = [[N - 1]];
+		assert.deepEqual(extract(matrix1), expected);
+		assert.deepEqual(extract(matrix2), expected);
+	});
 });
