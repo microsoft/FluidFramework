@@ -7,7 +7,11 @@ import { strict as assert } from "node:assert";
 
 import type { OpSpaceCompressedId, SessionId } from "@fluidframework/id-compressor";
 import { createIdCompressor, createSessionId } from "@fluidframework/id-compressor/internal";
-import { MockLogger } from "@fluidframework/telemetry-utils/internal";
+import {
+	createChildLogger,
+	createMockLoggerExt,
+	MockLogger,
+} from "@fluidframework/telemetry-utils/internal";
 import { validateAssertionError } from "@fluidframework/test-runtime-utils/internal";
 
 import {
@@ -257,25 +261,25 @@ describe("compressedIds", () => {
 		describe("telemetry", () => {
 			it("records a recovery event on the heal path via the healing config logger", () => {
 				const { opSpaceId } = makeUnresolvableOpSpaceId();
-				const logger = new MockLogger();
+				const logger = createMockLoggerExt();
 				forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
 					sharedObjectId,
 					logger,
 				});
 				assert(
-					logger.events.some((e) => e.eventName === "HealUnresolvableIdentifierOnDecode"),
+					logger.events().some((e) => e.eventName === "HealUnresolvableIdentifierOnDecode"),
 				);
 			});
 
 			it("does not log when the ID is resolvable", () => {
 				const compressedId = testIdCompressor.generateCompressedId();
 				const opSpaceId = testIdCompressor.normalizeToOpSpace(compressedId);
-				const logger = new MockLogger();
+				const logger = createMockLoggerExt();
 				forceDecodeEncodedIdWithoutSession(opSpaceId, testIdCompressor, {
 					sharedObjectId,
 					logger,
 				});
-				assert.equal(logger.events.length, 0);
+				assert.equal(logger.events().length, 0);
 			});
 		});
 	});
