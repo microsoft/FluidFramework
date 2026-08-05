@@ -295,7 +295,7 @@ export interface LocalCommitEvents {
 	 *
 	 * This event can be used by applications to inform the end user that their changes have been saved (`CommitOutcome.FullyApplied`) or rejected (`CommitOutcome.FullyDropped` and `CommitOutcome.NewContentOnly`).
 	 * It can also be used to queue up a new attempt at making the rejected changes. Note however that new edits must be made outside of the event callback.
-	 * @example
+	 * @example Notifying the user of the outcome and allowing them to retry:
 	 * ```typescript
 	 * // Use `asAlpha` API to access the settled event API
 	 * const view = asAlpha(tree.viewWith(config));
@@ -322,7 +322,7 @@ export interface LocalCommitEvents {
 	 * 					"The contents have changed. Do you still want to clear everything?",
 	 * 				);
 	 * 				if (shouldTryAgain) {
-	 * 					// Try again asynchronously
+	 * 					// It is invalid to make edits during the event callback, so we schedule the retry to occur asynchronously.
 	 * 					setTimeout(clearAllContents);
 	 * 				} else {
 	 * 					alert("Clear operation aborted.");

@@ -45,7 +45,7 @@ const clearAllContents = () => {
 					"The contents have changed. Do you still want to clear everything?",
 				);
 				if (shouldTryAgain) {
-					// Try again asynchronously
+					// It is invalid to make edits during the event callback, so we schedule the retry to occur asynchronously.
 					setTimeout(clearAllContents);
 				} else {
 					alert("Clear operation aborted.");
