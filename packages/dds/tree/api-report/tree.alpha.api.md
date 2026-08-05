@@ -155,6 +155,7 @@ export interface ArrayNodeTreeChangedRetainOp extends ArrayNodeRetainOp {
 
 // @alpha @sealed
 export interface ArrayPlaceAnchor {
+    dispose(): void;
     get index(): number;
 }
 
@@ -213,6 +214,13 @@ export enum CommitKind {
 export interface CommitMetadata {
     readonly isLocal: boolean;
     readonly kind: CommitKind;
+}
+
+// @alpha
+export enum CommitOutcome {
+    FullyApplied = 0,
+    FullyDropped = 1,
+    NewContentOnly = 2
 }
 
 // @alpha
@@ -845,11 +853,17 @@ export type Listeners<T extends object> = Listeners_2<T>;
 
 // @alpha @sealed
 export interface LocalChangeMetadata extends CommitMetadata {
+    readonly events: Listenable_2<LocalCommitEvents>;
     getChange(): JsonCompatibleReadOnly;
     getRevertible(onDisposed?: (revertible: RevertibleAlpha) => void): RevertibleAlpha | undefined;
     readonly isLocal: true;
     readonly label?: unknown;
     readonly labels: TransactionLabels;
+}
+
+// @alpha @sealed
+export interface LocalCommitEvents {
+    settled(outcome: CommitOutcome): void;
 }
 
 // @public @sealed
@@ -1951,6 +1965,8 @@ export interface TreeMapNode<T extends ImplicitAllowedTypes = ImplicitAllowedTyp
 // @alpha @sealed
 export interface TreeMapNodeAlpha<T extends ImplicitAllowedTypes = ImplicitAllowedTypes> extends FluidReadonlyMap<string, TreeNodeFromImplicitAllowedTypes<T>>, TreeNode, Pick<TreeMapNode<T>, "set" | "delete"> {
     clear(): void;
+    getOrInsert(key: string, fallbackValue: InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
+    getOrInsertComputed(key: string, callback: (key: string) => InsertableTreeNodeFromImplicitAllowedTypes<T>): TreeNodeFromImplicitAllowedTypes<T>;
 }
 
 // @public @sealed
