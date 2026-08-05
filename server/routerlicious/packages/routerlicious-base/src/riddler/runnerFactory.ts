@@ -117,7 +117,7 @@ export class RiddlerResourcesFactory implements IResourcesFactory<RiddlerResourc
 
 		const operationsDbMongoManager = new MongoManager(factory);
 		const tenantsCollectionName = config.get("mongo:collectionNames:tenants");
-		const secretManager = new services.SecretManager();
+		const secretManager = customizations?.secretManager ?? new services.SecretManager();
 
 		// Load configs for default tenants
 		let globalDbMongoManager;
