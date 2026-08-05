@@ -10,6 +10,10 @@
 "@fluid-experimental/oldest-client-observer": minor
 "@fluid-experimental/ot": minor
 "@fluid-experimental/pact-map": minor
+"@fluid-experimental/property-changeset": minor
+"@fluid-experimental/property-common": minor
+"@fluid-experimental/property-dds": minor
+"@fluid-experimental/property-properties": minor
 "@fluid-experimental/sequence-deprecated": minor
 "@fluid-experimental/sharejs-json1": minor
 "@fluid-experimental/tree": minor
@@ -97,10 +101,8 @@
 "fluid-framework": minor
 "__section": other
 ---
-Fluid Framework client packages now target ES2022
+Client packages now target ES2022
 
-The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**.
-The published JavaScript now uses ES2022 language features (with correspondingly less down-leveling), so consuming these packages requires a runtime that supports ES2022.
-All actively supported Node.js versions (18+) and evergreen browsers already meet this requirement.
+The TypeScript compilation `target` and `lib` for the Fluid Framework client packages have been raised from ES2021/ES2020 to **ES2022**. The published JavaScript now uses ES2022 language features (with correspondingly less downleveling), so consuming these packages requires a runtime that supports ES2022. All actively supported Node.js versions (18+) and evergreen browsers already meet this requirement.
 
 No API or behavioral changes are intended; this only affects the ECMAScript level of the emitted code.
