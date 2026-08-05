@@ -50,7 +50,7 @@ export interface SynchronizedString {
 }
 
 // @alpha
-export function syncTextToTree(root: TextAsTree.Tree, newText: string): void;
+export function syncTextToTree(root: PlainText.Tree, newText: string): void;
 
 // @alpha @input
 export interface TextSelection {
@@ -107,7 +107,7 @@ export function useTree(subtreeRoot: TreeNode): number;
 export function useTreeObservations<TResult>(trackDuring: () => TResult, options?: ObservationOptions): TResult;
 
 // @alpha
-export function useTreeSynchronizedString(tree: TextAsTree.Tree, initialSelection?: TextSelection): SynchronizedString;
+export function useTreeSynchronizedString(tree: PlainText.Tree, initialSelection?: TextSelection): SynchronizedString;
 
 // @alpha
 export function withMemoizedTreeObservations<TIn>(component: FC<TIn>, options?: ObservationOptions & {

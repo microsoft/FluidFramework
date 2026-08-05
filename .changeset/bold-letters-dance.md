@@ -3,19 +3,19 @@
 "fluid-framework": minor
 "__section": tree
 ---
-Promote FormattedTextAsTree APIs to alpha
+Promote FormattedText APIs to alpha
 
-The [`FormattedTextAsTree`](https://fluidframework.com/docs/api/fluid-framework/formattedtextastree-namespace) namespace is now available from the `@fluidframework/tree/alpha` entrypoint.
+The [`FormattedText`](https://fluidframework.com/docs/api/fluid-framework/formattedtext-namespace) namespace is now available from the `@fluidframework/tree/alpha` entrypoint.
 It provides a generic, collaborative rich-text domain built on SharedTree, parameterized by the formatting you want to associate with each unit of text and by any extra "atom" (embedded object) types you want to allow alongside plain characters.
 
-Use `FormattedTextAsTree.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
+Use `FormattedText.createSchema` to generate a text schema for your chosen formatting, then treat the resulting node like a formatted string.
 
 ```typescript
 import { SchemaFactory} from "fluid-framework";
 import { SchemaFactoryBeta } from "fluid-framework/beta";
-import { FormattedTextAsTree } from "fluid-framework/alpha";
+import { FormattedText } from "fluid-framework/alpha";
 
-// Note that a beta schema factory is currently required for use with `FormattedTextAsTree`
+// Note that a beta schema factory is currently required for use with `FormattedText`
 const schemaFactory = new SchemaFactoryBeta("com.example.doc");
 
 // Describe the formatting associated with each character.
@@ -26,7 +26,7 @@ class CharacterFormat extends schemaFactory.object("CharacterFormat", {
 
 // Generate the formatted-text schema. The last argument is the format applied
 // to text inserted through the non-formatted APIs (for example `fromString`).
-class RichText extends FormattedTextAsTree.createSchema(
+class RichText extends FormattedText.createSchema(
 	schemaFactory,
 	CharacterFormat,
 	[], // No extra embedded atom types.
@@ -52,4 +52,4 @@ for (const atom of text.charactersWithFormatting()) {
 }
 ```
 
-`FormattedTextAsTree` is currently surfaced as an alpha API and is subject to change.
+`FormattedText` is currently surfaced as an alpha API and is subject to change.
