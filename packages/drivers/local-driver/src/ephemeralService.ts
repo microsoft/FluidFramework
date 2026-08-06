@@ -41,9 +41,11 @@ import {
 	type ILocalDeltaConnectionServer,
 } from "@fluidframework/server-local-server";
 import { UsageError } from "@fluidframework/driver-utils/internal";
+import { v4 as uuid } from "uuid";
 
 import { LocalDocumentServiceFactory } from "./localDocumentServiceFactory.js";
 import { createLocalResolverCreateNewRequest, LocalResolver } from "./localResolver.js";
+import { LocalSessionStorageDbFactory } from "./localSessionStorageDb.js";
 import { pkgVersion } from "./packageVersion.js";
 
 /**
@@ -67,6 +69,25 @@ export function startEphemeralService(isDefault = true): EphemeralService {
 		defaultEphemeralService = service;
 	}
 	return service;
+}
+
+/**
+ * Starts a local Fluid service whose documents are persisted in the browser's session storage.
+ *
+ * @remarks
+ * The returned service has the same client and lifecycle API as {@link EphemeralService}, but attached
+ * documents remain available after a page reload within the same browser tab. Closing the service releases
+ * its active resources without clearing those persisted documents.
+ *
+ * This service is only available in browser environments that provide `sessionStorage`.
+ * @returns A local service backed by browser session storage.
+ * @alpha
+ */
+export function startSessionService(): SessionService {
+	if (typeof sessionStorage === "undefined") {
+		throw new UsageError("SessionService requires browser session storage");
+	}
+	return new EphemeralServiceImplementation(new LocalSessionStorageDbFactory());
 }
 
 /**
@@ -219,6 +240,23 @@ export interface EphemeralService extends ErasedBaseType<readonly ["EphemeralSer
 }
 
 /**
+ * A browser-local Fluid service that persists documents in session storage.
+ *
+ * @remarks
+ * This service uses the same clients and lifecycle as {@link EphemeralService}, but its attached documents
+ * remain available after a page reload within the same browser tab.
+ *
+ * Create one with {@link startSessionService}.
+ * @alpha @sealed
+ */
+export interface SessionService extends EphemeralService {
+	/**
+	 * Closes active containers and releases service resources without clearing persisted documents.
+	 */
+	close(): Promise<void>;
+}
+
+/**
  * The {@link defaultEphemeralService} if one has been {@link startEphemeralService|started}.
  */
 let defaultEphemeralService: EphemeralServiceImplementation | undefined;
@@ -234,16 +272,15 @@ class EphemeralServiceImplementation
 	implements EphemeralService
 {
 	// A single server is shared by all containers connected to this service so they can communicate with each other.
-	private readonly server: ILocalDeltaConnectionServer =
-		LocalDeltaConnectionServer.create(
-			// new LocalSessionStorageDbFactory(),
-		);
-	private readonly documentServiceFactory = new LocalDocumentServiceFactory(this.server);
+	private readonly server: ILocalDeltaConnectionServer;
+	private readonly documentServiceFactory: LocalDocumentServiceFactory;
 	private readonly containers = new Set<EphemeralServiceContainer<unknown>>();
 	private closed = false;
 
-	public constructor() {
+	public constructor(databaseFactory?: LocalSessionStorageDbFactory) {
 		super();
+		this.server = LocalDeltaConnectionServer.create(databaseFactory);
+		this.documentServiceFactory = new LocalDocumentServiceFactory(this.server);
 		this.defaultClient = this.newClient();
 	}
 	public newClient(options?: Partial<ServiceOptions>): EphemeralServiceClient {
@@ -448,8 +485,6 @@ const createLoadExistingRequest = (documentId: string): IRequest => {
 	return { url: `http://localhost:3000/${documentId}` };
 };
 
-let documentIdCounter = 0;
-
 /**
  * A Fluid container backed by an ephemeral (in-memory) local service, implementing
  * {@link @fluidframework/driver-definitions#FluidContainerWithService}.
@@ -545,7 +580,6 @@ export class EphemeralServiceContainer<TData>
 	}
 
 	protected createAttachRequest(): IRequest {
-		const documentId = (documentIdCounter++).toString();
-		return createLocalResolverCreateNewRequest(documentId);
+		return createLocalResolverCreateNewRequest(uuid());
 	}
 }

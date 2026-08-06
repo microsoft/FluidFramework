@@ -27,7 +27,9 @@ You can run this example using the following steps:
 ## Service selection
 
 The app uses an ephemeral in-browser service by default.
-To use Tinylicious, start Tinylicious and open
+To retain the container across reloads in the current browser tab, open
+<http://localhost:8080/?fluidClient=session>.
+To use Tinylicious (and thus allow sharing documents between sessions), start Tinylicious and open
 <http://localhost:8080/?fluidClient=tinylicious> after starting the webpack server.
 
 ## Testing

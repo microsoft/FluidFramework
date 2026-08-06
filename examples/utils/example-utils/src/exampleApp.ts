@@ -3,7 +3,10 @@
  * Licensed under the MIT License.
  */
 
-import { startEphemeralService } from "@fluidframework/local-driver/alpha";
+import {
+	startEphemeralService,
+	startSessionService,
+} from "@fluidframework/local-driver/alpha";
 import { createTinyliciousServiceClient } from "@fluidframework/tinylicious-driver/alpha";
 /* eslint-disable import-x/no-internal-modules -- Unified ServiceClient types are not yet available from the public entry point. */
 import type {
@@ -34,7 +37,8 @@ export const defaultServiceOptions: ServiceOptions = {
  * @remarks
  * This helper is designed to work with `exampleAppConfig` from
  * `@fluid-example/webpack-fluid-loader`, which provides the browser compatibility required by
- * the ephemeral local-driver service used by default.
+ * the local-driver services. Set `fluidClient` to `ephemeral`, `session`, or `tinylicious`;
+ * missing and unknown values use the ephemeral service.
  *
  * @param options - Options used to configure the service client. Defaults to {@link defaultServiceOptions}.
  * @returns A client for the selected service, or the ephemeral service by default.
@@ -45,6 +49,9 @@ export function getExampleServiceClient(
 ): ServiceClient {
 	const fluidClient = new URLSearchParams(location.search).get("fluidClient") ?? "ephemeral";
 	switch (fluidClient) {
+		case "session": {
+			return startSessionService().newClient(options);
+		}
 		case "tinylicious": {
 			return createTinyliciousServiceClient(options);
 		}

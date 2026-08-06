@@ -23,8 +23,16 @@ export interface EphemeralServiceClient extends ServiceClient {
 // @alpha
 export function getDefaultEphemeralService(): EphemeralService;
 
+// @alpha @sealed
+export interface SessionService extends EphemeralService {
+    close(): Promise<void>;
+}
+
 // @alpha
 export function startEphemeralService(isDefault?: boolean): EphemeralService;
+
+// @alpha
+export function startSessionService(): SessionService;
 
 // (No @packageDocumentation comment for this package)
 
