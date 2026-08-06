@@ -13,7 +13,7 @@ import { createLocalTableDocument } from "./localServerTestUtils.js";
 describe("TableDocument", () => {
 	let tableDocument: TableDocument;
 	let ensureSynchronized: () => Promise<void>;
-	let dispose: () => Promise<void>;
+	let disposeContainerAndLocalService: () => Promise<void>;
 
 	function makeId(type: string): string {
 		const newId = Math.random().toString(36).substr(2);
@@ -21,9 +21,10 @@ describe("TableDocument", () => {
 	}
 
 	beforeEach(async () => {
-		({ tableDocument, ensureSynchronized, dispose } = await createLocalTableDocument());
+		({ tableDocument, ensureSynchronized, disposeContainerAndLocalService } =
+			await createLocalTableDocument());
 	});
-	afterEach(async () => dispose());
+	afterEach(async () => disposeContainerAndLocalService());
 
 	const extract = (table: TableDocument): TableDocumentItem[][] => {
 		const rows: TableDocumentItem[][] = [];

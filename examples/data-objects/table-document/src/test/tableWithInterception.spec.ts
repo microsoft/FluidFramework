@@ -59,16 +59,16 @@ describe("Table Document with Interception", () => {
 			}
 		}
 
-		let dispose: () => Promise<void>;
+		let disposeContainerAndLocalService: () => Promise<void>;
 		beforeEach(async () => {
-			({ tableDocument, dispose } = await createLocalTableDocument());
+			({ tableDocument, disposeContainerAndLocalService } = await createLocalTableDocument());
 
 			// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
 			componentContext = {
 				containerRuntime: { orderSequentially },
 			} as IFluidDataStoreContext;
 		});
-		afterEach(async () => dispose());
+		afterEach(async () => disposeContainerAndLocalService());
 
 		it("should be able to intercept TableDocument methods by the interception", async () => {
 			const tableDocumentWithInterception = createTableWithInterception(
