@@ -70,6 +70,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     publishOverride: ${{ parameters.publishOverride }}
+    publishAsPartOfBuild: true
     releaseBuildOverride: ${{ parameters.releaseBuildOverride }}
     buildToolsVersionToInstall: ${{ parameters.buildToolsVersionToInstall }}
     buildDirectory: server/tinylicious

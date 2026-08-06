@@ -75,6 +75,7 @@ extends:
   template: templates/build-npm-package.yml
   parameters:
     publish: ${{ variables.publish }}
+    publishAsPartOfBuild: true
     shouldPublish: ${{ variables.shouldPublish }}
     canRelease: ${{ variables.canRelease }}
     componentDetection: ${{ variables.componentDetection }}
