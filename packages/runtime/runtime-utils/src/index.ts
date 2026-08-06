@@ -82,8 +82,9 @@ export type {
 	MinimumMinorSemanticVersion,
 	SemanticVersion,
 } from "./compatibilityBase.js";
-export type { Audience } from "./serviceClientBase.js";
+export type { Audience, ServiceClientLegacyDataStoreFactory } from "./serviceClientBase.js";
 export {
+	adaptLegacyDataStoreFactory,
 	DataStoreKindImplementation,
 	ServiceContainerBase,
 	getContainerAudience,

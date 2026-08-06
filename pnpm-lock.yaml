@@ -3553,18 +3553,15 @@ importers:
       '@fluidframework/build-tools':
         specifier: catalog:buildTools
         version: 0.65.0(@types/node@22.19.17)(supports-color@10.2.2)
-      '@fluidframework/container-loader':
-        specifier: workspace:~
-        version: link:../../../packages/loader/container-loader
       '@fluidframework/eslint-config-fluid':
         specifier: catalog:eslint
         version: 13.0.0(@typescript-eslint/utils@8.61.0)(eslint@9.39.1)(supports-color@10.2.2)(typescript@5.4.5)
       '@fluidframework/local-driver':
         specifier: workspace:~
         version: link:../../../packages/drivers/local-driver
-      '@fluidframework/server-local-server':
-        specifier: ^7.0.1
-        version: 7.0.1(supports-color@10.2.2)
+      '@fluidframework/runtime-utils':
+        specifier: workspace:~
+        version: link:../../../packages/runtime/runtime-utils
       '@microsoft/api-extractor':
         specifier: 7.58.1
         version: 7.58.1(patch_hash=949a26f6cec9ac4e37522f178b8e4982136ccfeb8c6d0835130ef2aa6788f4fa)(@types/node@22.19.17)

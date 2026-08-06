@@ -21,6 +21,7 @@ import type {
 	IFluidDataStoreChannel,
 	IFluidDataStoreContext,
 	IFluidDataStoreFactory,
+	IFluidDataStoreRegistry,
 } from "@fluidframework/runtime-definitions/internal";
 import { UsageError } from "@fluidframework/telemetry-utils/internal";
 
@@ -29,12 +30,45 @@ import { UsageError } from "@fluidframework/telemetry-utils/internal";
  */
 
 /**
+ * A legacy data store factory that can be adapted for use with the `ServiceClient` APIs.
+ *
+ * @remarks
+ * A factory may provide an `IFluidDataStoreRegistry` when data stores created by it can
+ * create or load nested data stores. The adapter preserves this registry so the container
+ * runtime can resolve each segment of a nested data store's package path.
+ *
+ * @legacy @alpha
+ */
+export interface ServiceClientLegacyDataStoreFactory extends IFluidDataStoreFactory {
+	/**
+	 * The registry used to resolve nested data stores created or loaded by this factory's data stores.
+	 *
+	 * @remarks
+	 * This is optional for factories whose data stores do not contain nested data stores.
+	 *
+	 * @privateRemarks
+	 * `FluidDataStoreContext.factoryFromPackagePath` in `@fluidframework/container-runtime`
+	 * reads this property from each `FluidDataStoreRegistryEntry` while traversing a data store's
+	 * package path. Registry entries independently provide `IFluidDataStoreFactory` and
+	 * `IFluidDataStoreRegistry` capabilities, which is why the registry is not part of
+	 * `IFluidDataStoreFactory`. Legacy factory objects commonly serve as both providers, so
+	 * preserving this optional capability affects whether their nested data stores can be loaded.
+	 */
+	readonly IFluidDataStoreRegistry?: IFluidDataStoreRegistry;
+}
+
+type DataStoreKindFactory = Pick<
+	ServiceClientLegacyDataStoreFactory,
+	"type" | "instantiateDataStore" | "createDataStore" | "IFluidDataStoreRegistry"
+>;
+
+/**
  * Implementation of `DataStoreKind`.
  * @internal
  */
 export class DataStoreKindImplementation<T>
 	extends ErasedTypeImplementation<DataStoreKind<T>>
-	implements DataStoreKind<T>, IFluidDataStoreFactory
+	implements DataStoreKind<T>, ServiceClientLegacyDataStoreFactory
 {
 	/**
 	 * Type guard for narrowing unions which contain DataStoreKind<T> to DataStoreKind<T>.
@@ -64,12 +98,7 @@ export class DataStoreKindImplementation<T>
 		readonly runtime: IFluidDataStoreChannel;
 	};
 
-	public constructor(
-		private readonly factory: Pick<
-			DataStoreKindImplementation<T>,
-			"type" | "instantiateDataStore" | "createDataStore"
-		>,
-	) {
+	public constructor(private readonly factory: DataStoreKindFactory) {
 		super();
 		this.type = factory.type;
 		if (factory.createDataStore !== undefined) {
@@ -88,6 +117,10 @@ export class DataStoreKindImplementation<T>
 		return this;
 	}
 
+	public get IFluidDataStoreRegistry(): IFluidDataStoreRegistry | undefined {
+		return this.factory.IFluidDataStoreRegistry;
+	}
+
 	public async adapt(value: Promise<DataStoreKind>): Promise<DataStoreKind<T>> {
 		const input = await value;
 		if (input === this) {
@@ -100,6 +133,25 @@ export class DataStoreKindImplementation<T>
 			`Mismatched DataStoreKind type. Expected: ${this.type}, got: ${input.type}`,
 		);
 	}
+}
+
+/**
+ * Adapts a legacy data store factory for use with the `ServiceClient` APIs.
+ *
+ * @remarks
+ * The returned data store kind delegates creation and loading to `factory` and preserves any
+ * nested data store registry it provides.
+ *
+ * @typeParam T - The API exposed by data stores created by `factory`.
+ * @param factory - The legacy data store factory to adapt.
+ * @returns A data store kind backed by `factory`.
+ *
+ * @legacy @alpha
+ */
+export function adaptLegacyDataStoreFactory<T>(
+	factory: ServiceClientLegacyDataStoreFactory,
+): DataStoreKind<T> {
+	return new DataStoreKindImplementation<T>(factory);
 }
 
 /**
