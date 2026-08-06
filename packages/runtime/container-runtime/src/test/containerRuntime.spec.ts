@@ -567,7 +567,7 @@ describe("Runtime", () => {
 						return 999; // CSN not used in test asserts below
 					};
 
-				const { runtime: containerRuntime } = await ContainerRuntime.loadRuntime2({
+				const containerRuntime = await ContainerRuntime.loadRuntime({
 					context: mockContext as IContainerContext,
 					registry: new FluidDataStoreRegistry([]),
 					existing: false,
@@ -1828,21 +1828,18 @@ describe("Runtime", () => {
 			// A legacy partner team overrides the summarizeInternal method to add custom data to the Summary.
 			// Let's make sure we don't break them inadvertently, while we work to move them to a better pattern.
 			it("Ensure private member is stable to support legacy usage", async () => {
-				const { runtime: containerRuntime_withSummarizeInternal_untyped } =
-					await ContainerRuntime.loadRuntime2({
-						context: getMockContext() as IContainerContext,
-						registry: new FluidDataStoreRegistry([]),
-						existing: false,
-						provideEntryPoint: mockProvideEntryPoint,
-					});
-				const containerRuntime_withSummarizeInternal =
-					containerRuntime_withSummarizeInternal_untyped as unknown as {
-						summarizeInternal(
-							fullTree: boolean,
-							trackState: boolean,
-							telemetryContext?: ITelemetryContext,
-						): Promise<ISummarizeInternalResult>;
-					};
+				const containerRuntime_withSummarizeInternal = (await ContainerRuntime.loadRuntime({
+					context: getMockContext() as IContainerContext,
+					registry: new FluidDataStoreRegistry([]),
+					existing: false,
+					provideEntryPoint: mockProvideEntryPoint,
+				})) as unknown as {
+					summarizeInternal(
+						fullTree: boolean,
+						trackState: boolean,
+						telemetryContext?: ITelemetryContext,
+					): Promise<ISummarizeInternalResult>;
+				};
 
 				assert(
 					typeof containerRuntime_withSummarizeInternal.summarizeInternal === "function",
