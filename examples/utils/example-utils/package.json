@@ -29,6 +29,8 @@
 	"types": "lib/index.d.ts",
 	"scripts": {
 		"build": "fluid-build . --task build",
+		"build:api-reports": "npm run build:api-reports:current",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.json",
@@ -36,6 +38,8 @@
 		"check:biome": "biome check .",
 		"check:exports": "api-extractor run --config ./api-extractor-lint.json",
 		"check:format": "npm run check:biome",
+		"ci:build:api-reports": "npm run ci:build:api-reports:current",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor-report.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp",
 		"eslint": "eslint --quiet --format stylish src",

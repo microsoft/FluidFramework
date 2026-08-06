@@ -29,6 +29,8 @@
 	"scripts": {
 		"bench": "cross-env FLUID_TEST_PERF_MODE=1 mocha",
 		"build": "fluid-build . --task build",
+		"build:api-reports": "concurrently \"npm:build:api-reports:*\"",
+		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
 		"build:esnext": "tsc --project ./tsconfig.esnext.json",
@@ -41,6 +43,8 @@
 		"check:exports:esm:EditLog": "echo AB#8147 skip api-extractor run --config api-extractor/api-extractor-lint-EditLog.esm.json",
 		"check:exports:esm:index": "api-extractor run --config api-extractor/api-extractor-lint-index.esm.json",
 		"check:format": "npm run check:biome",
+		"ci:build:api-reports": "concurrently \"npm:ci:build:api-reports:*\"",
+		"ci:build:api-reports:current": "api-extractor run --config api-extractor/api-extractor-report.json",
 		"ci:build:docs": "api-extractor run",
 		"clean": "rimraf --glob dist lib \"**/*.tsbuildinfo\" \"**/*.build.log\" _api-extractor-temp nyc",
 		"eslint": "eslint --quiet src",

@@ -1,0 +1,18 @@
+{
+	"$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
+	"extends": "<projectFolder>/../../../common/build/build-common/api-extractor-report.esm.current.json",
+	"mainEntryPointFilePath": "<projectFolder>/lib/alpha.d.ts",
+	"apiReport": {
+		"reportVariants": ["public", "beta", "alpha"]
+	},
+	"compiler": {
+		// api-extractor has trouble with Node16 moduleResolution, but Bundler looks okay.
+		"overrideTsconfig": {
+			"$schema": "http://json.schemastore.org/tsconfig",
+			"extends": "./tsconfig.json",
+			"compilerOptions": {
+				"moduleResolution": "Bundler"
+			}
+		}
+	}
+}

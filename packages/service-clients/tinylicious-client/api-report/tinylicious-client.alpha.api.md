@@ -4,7 +4,8 @@
 
 ```ts
 
-export { CompatibilityMode }
+// @public @deprecated
+export type CompatibilityMode = "1" | "2";
 
 // @public @sealed
 export type ITinyliciousAudience = IServiceAudience<TinyliciousMember>;
