@@ -46,7 +46,7 @@ ongoing rebaser/changeset work?
 
 Currently actionable work (Phase 1):
 
-1. An extrinsic range MVP leveraging the "NoChangeConstraint" which can maintain its data invariants. I think we can do this with no currently unreleased features (just needs sufficient min version for collab for the constraint). This will not be robust to AI editing of the data generally, but we can expose methods which are safe for it to use. (Won't work for agents without view schema, but I don't think that's a priority). This will just store index numbers.
+1. An extrinsic range MVP leveraging the "NoChangeConstraint" which can maintain its data invariants. I think we can do this with no currently unreleased features (just needs sufficient min version for collab for the constraint). This will not be robust to AI editing of the data generally, but we can expose methods which are safe for it to use. (Won't work for agents without view schema, but I don't think that's a priority). This will just store index numbers. Share code with sequence to ensure matching behavior.
 2. Schema versioning to allow for schema changes which change the filed kind without strict field kind ordering rules to prevent cycles.
 3. Add Experimental (alpha) field kind: index. Support edits like "if larger than A, add B" (where A is adjusted when rebasing over other edits).
 4. Ensure stabilization and rollout of new field kinds is practical and robust (good errors, no asserts etc.)
@@ -56,6 +56,8 @@ Currently actionable work (Phase 1):
 8. Work through the merge edge cases of planned final design (see below). Validate undo/redo. Determine implications of moves within character and range arrays. Consider cases where range ends can get swapped.
 9. Design a safe rollout process for production apps using text without extrinsic ranges to get extrinsic range support.
 10. Design anchors for presence (Not really part of this work, but has some overlap).
+11. Ensure we have ways to hide fields from AI, not just expose methods to protected invariants.
+12. Write command pattern demo with showing how to have telemetry for failure, and how one could implement retry.
 
 These can all be done in parallel.
 
