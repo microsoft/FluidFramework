@@ -50,6 +50,7 @@ import type {
 } from "./modularChangeTypes.js";
 import { filterEdits, getChangeHandler, nodeChangeFromId } from "./modularChangeUtils.js";
 import { assert, fail } from "@fluidframework/core-utils/internal";
+import { pruneFieldMap } from "./prune.js";
 
 /**
  * "Minimizes" a {@link ModularChangeset} so that it contains no extraneous
@@ -316,6 +317,13 @@ export function minimizeModularChangeset(
 
 	const residualChange = filterEdits(change, filterEditsForResidualChange);
 	(residualChange as Mutable<ModularChangeset>).builds = squashedBuilds;
+	const prunedFields = pruneFieldMap(
+		residualChange.fieldChanges,
+		residualChange.nodeChanges,
+		fieldKinds,
+	);
+
+	(residualChange as Mutable<ModularChangeset>).fieldChanges = prunedFields ?? new Map();
 	return residualChange;
 }
 
