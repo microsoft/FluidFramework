@@ -21,6 +21,7 @@ import type {
 } from "../../../feature-libraries/index.js";
 import type {
 	FieldChangeDelta,
+	FilterAttachResult,
 	NestedChangesInfo,
 	// eslint-disable-next-line import-x/no-internal-modules
 } from "../../../feature-libraries/modular-schema/fieldChangeHandler.js";
@@ -1018,7 +1019,7 @@ describe("optionalField", () => {
 	});
 
 	describe("Filter edits", () => {
-		function preserveAll(
+		function preserveAllDetaches(
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
@@ -1026,12 +1027,28 @@ describe("optionalField", () => {
 			return { length: count, value: EditFilterStatus.Preserve };
 		}
 
-		function removeAll(
+		function preserveAllAttaches(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<FilterAttachResult> {
+			return { length: count, value: { action: EditFilterStatus.Preserve } };
+		}
+
+		function removeAllDetaches(
 			id: ChangeAtomId,
 			count: number,
 			endpoint?: ChangeAtomId,
 		): RangeQueryResult<EditFilterStatus> {
 			return { length: count, value: EditFilterStatus.Remove };
+		}
+
+		function removeAllAttaches(
+			id: ChangeAtomId,
+			count: number,
+			endpoint?: ChangeAtomId,
+		): RangeQueryResult<FilterAttachResult> {
+			return { length: count, value: { action: EditFilterStatus.Remove } };
 		}
 
 		it("can preserve all", () => {
@@ -1043,8 +1060,8 @@ describe("optionalField", () => {
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAll,
-				filterAttach: preserveAll,
+				filterDetach: preserveAllDetaches,
+				filterAttach: preserveAllAttaches,
 				preserveOtherEdits: true,
 			});
 
@@ -1061,8 +1078,8 @@ describe("optionalField", () => {
 			const change = Change.atOnce(changeWithoutRename, Change.move(register0, register1));
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAll,
-				filterAttach: preserveAll,
+				filterDetach: preserveAllDetaches,
+				filterAttach: preserveAllAttaches,
 				preserveOtherEdits: false,
 			});
 
@@ -1079,8 +1096,8 @@ describe("optionalField", () => {
 			const change = Change.atOnce(changeWithoutSet, Change.move(register3, "self"));
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: preserveAll,
-				filterAttach: removeAll,
+				filterDetach: preserveAllDetaches,
+				filterAttach: removeAllAttaches,
 				preserveOtherEdits: true,
 			});
 
@@ -1100,8 +1117,8 @@ describe("optionalField", () => {
 			);
 
 			const filtered = optionalChangeRebaser.filterEdits(change, {
-				filterDetach: removeAll,
-				filterAttach: removeAll,
+				filterDetach: removeAllDetaches,
+				filterAttach: removeAllAttaches,
 				preserveOtherEdits: true,
 			});
 

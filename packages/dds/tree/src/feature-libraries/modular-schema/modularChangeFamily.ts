@@ -104,7 +104,8 @@ import {
 	newCrossFieldTable,
 	nodeChangeFromId,
 	normalizeNodeId,
-	removeAllEditsFilter,
+	removeAllAttachesFilter,
+	removeAllDetachesFilter,
 	revisionInfoFromTaggedChange,
 	updateConstraintsForFields,
 	type CrossFieldTable,
@@ -1425,8 +1426,8 @@ export class ModularChangeFamily
 			fieldKind: change.fieldKind,
 			change: brand(
 				handler.rebaser.filterEdits(change.change, {
-					filterDetach: removeAllEditsFilter,
-					filterAttach: removeAllEditsFilter,
+					filterDetach: removeAllDetachesFilter,
+					filterAttach: removeAllAttachesFilter,
 					preserveOtherEdits: false,
 				}),
 			),

@@ -815,7 +815,7 @@ function filterEdits(
 			const attachResult =
 				attachId === undefined
 					? undefined
-					: options.filterAttach(attachId, 1, undefined).value;
+					: options.filterAttach(attachId, 1, undefined).value.action;
 
 			if (detachResult === EditFilterStatus.Remove) {
 				assert(

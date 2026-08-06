@@ -230,7 +230,23 @@ export type FilterAttachFunc = (
 	 * The ID of the associated detach, if this is part of a move with a different detach ID.
 	 */
 	endpoint?: ChangeAtomId,
-) => RangeQueryResult<EditFilterStatus>;
+) => RangeQueryResult<FilterAttachResult>;
+
+export interface FilterAttachResult {
+	readonly action: EditFilterStatus;
+
+	/**
+	 * When `value` is `EditFilterStatus.PreserveWithoutMove`,
+	 * the filtered change should include a child change with this ID.
+	 */
+	readonly nodeId?: NodeId;
+
+	/**
+	 * When `value` is `EditFilterStatus.PreserveWithoutMove`,
+	 * this ID should be used as the attach ID for the filtered change.
+	 */
+	readonly newAttachId?: ChangeAtomId;
+}
 
 /**
  * Used to describe what should be done with a particular attach or detach during `filterEdits`.

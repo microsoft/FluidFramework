@@ -64,7 +64,7 @@ function filterMark(
 			const result = filterAttach(attachId, mark.count, undefined, endpoint);
 
 			let filtered: Mark;
-			switch (result.value) {
+			switch (result.value.action) {
 				case EditFilterStatus.Preserve: {
 					filtered = mark;
 					break;
@@ -75,7 +75,10 @@ function filterMark(
 					// Insert marks use the cell ID as the attach ID, so we must change the cell ID here.
 					// This could be a problem if there were references to the old cell ID outside this changeset,
 					// but PreserveWithoutMove is only used for transaction minimization, where that is not a problem.
-					const newCellId = endpoint ?? { revision: mark.revision, localId: mark.id };
+					const newCellId = result.value.newAttachId ?? {
+						revision: mark.revision,
+						localId: mark.id,
+					};
 					filtered = {
 						type: "Insert",
 						count: result.length,
@@ -83,6 +86,11 @@ function filterMark(
 						revision: mark.revision,
 						id: mark.id,
 					};
+
+					if (result.value.nodeId !== undefined) {
+						filtered.changes = result.value.nodeId;
+					}
+
 					break;
 				}
 				case EditFilterStatus.Remove: {
@@ -90,7 +98,7 @@ function filterMark(
 					break;
 				}
 				default: {
-					unreachableCase(result.value);
+					unreachableCase(result.value.action);
 				}
 			}
 
@@ -151,7 +159,7 @@ function filterMark(
 			);
 
 			const filtered =
-				result.value === EditFilterStatus.Preserve ? mark : omitMarkEffect(mark);
+				result.value.action === EditFilterStatus.Preserve ? mark : omitMarkEffect(mark);
 
 			return { ...filtered, count: result.length };
 		}

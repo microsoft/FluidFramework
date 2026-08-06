@@ -29,7 +29,7 @@ import {
 	type CrossFieldManager,
 	type CrossFieldMap,
 } from "./crossFieldQueries.js";
-import type { FieldChangeHandler } from "./fieldChangeHandler.js";
+import type { FieldChangeHandler, FilterAttachResult } from "./fieldChangeHandler.js";
 import { EditFilterStatus, NodeAttachState } from "./fieldChangeHandler.js";
 import type { FlexFieldKind } from "./fieldKind.js";
 import { genericFieldKind } from "./genericFieldKind.js";
@@ -341,13 +341,22 @@ export function nodeChangeFromId(
 	return node;
 }
 
-export function removeAllEditsFilter(
+export function removeAllDetachesFilter(
 	_id: ChangeAtomId,
 	count: number,
 	_rootId: ChangeAtomId | undefined,
 	_endpointId?: ChangeAtomId,
 ): RangeQueryResult<EditFilterStatus> {
 	return { value: EditFilterStatus.Remove, length: count };
+}
+
+export function removeAllAttachesFilter(
+	_id: ChangeAtomId,
+	count: number,
+	_rootId: ChangeAtomId | undefined,
+	_endpointId?: ChangeAtomId,
+): RangeQueryResult<FilterAttachResult> {
+	return { value: { action: EditFilterStatus.Remove }, length: count };
 }
 
 export function filterEdits(
