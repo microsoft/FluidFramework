@@ -82,21 +82,11 @@ export interface IIdCompressorCore {
 	/**
 	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
 	 * The range will include all IDs generated via calls to `generateCompressedId` since the last time a
-	 * range was taken (via this method or `takeUnfinalizedCreationRange`).
+	 * range was taken via this method.
 	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
 	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
 	 */
 	takeNextCreationRange(): IdCreationRange;
-
-	/**
-	 * Returns a range of IDs created by this session in a format for sending to the server for finalizing.
-	 * The range will include all unfinalized IDs generated via calls to `generateCompressedId`.
-	 * @returns the range of IDs, which may be empty. This range must be sent to the server for ordering before
-	 * it is finalized. Ranges must be sent to the server in the order that they are taken via calls to this method.
-	 * Note: after finalizing the range returned by this method, finalizing any ranges that had been previously taken
-	 * will result in an error.
-	 */
-	takeUnfinalizedCreationRange(): IdCreationRange;
 
 	/**
 	 * Resets the next creation range to include all unfinalized IDs.
@@ -105,12 +95,11 @@ export interface IIdCompressorCore {
 	 * IMPORTANT: This must only be called if it's CERTAIN that the unfinalized range will never be finalized as-is (e.g. by in-flight ops).
 	 *
 	 * After calling this, the next call to {@link IIdCompressorCore.takeNextCreationRange} will produce a range
-	 * covering all unfinalized IDs (equivalent to what {@link IIdCompressorCore.takeUnfinalizedCreationRange} would
-	 * have returned) plus any IDs generated after this call.
+	 * covering all unfinalized IDs plus any IDs generated after this call.
 	 *
-	 * Unlike {@link IIdCompressorCore.takeUnfinalizedCreationRange}, this method does not produce or return a range,
-	 * and does not advance the internal range counter. It is useful when the caller wants to
-	 * defer the actual range submission to the next natural {@link IIdCompressorCore.takeNextCreationRange} call.
+	 * This method does not produce or return a range, and does not advance the internal range counter.
+	 * It is useful when the caller wants to defer the actual range submission to the next natural
+	 * {@link IIdCompressorCore.takeNextCreationRange} call.
 	 */
 	resetUnfinalizedCreationRange(): void;
 
