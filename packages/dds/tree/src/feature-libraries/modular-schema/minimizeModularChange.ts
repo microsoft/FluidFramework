@@ -78,6 +78,14 @@ export function minimizeModularChangeset(
 	const outputToInputRootId = outputToInputRootIdFromDelta(delta);
 	const outputAttachStates = getOutputNodeAttachStates(change, fieldKinds);
 
+	function isNodeAttachedInOutput(nodeId: NodeId | undefined): boolean {
+		return (
+			nodeId === undefined ||
+			(getFromChangeAtomIdMap(outputAttachStates, nodeId) ??
+				fail("Should have attach state for every node ID")) === NodeAttachState.Attached
+		);
+	}
+
 	function isNodeIdInBuiltTree(nodeId: NodeId | undefined): boolean {
 		return nodeId !== undefined && getFromChangeAtomIdMap(builtNodeIds, nodeId) === true;
 	}
@@ -208,13 +216,16 @@ export function minimizeModularChangeset(
 		): RangeQueryResult<EditFilterStatus> => {
 			// If `inputId` is defined, this represents the rename of a detached root.
 			// If that detached root is newly built, then we should remove it from the residual change.
-			const isDetachOfBuiltNodeEntry =
+			const isDetachOfBuiltRootEntry =
 				inputRootId === undefined ? undefined : builtRootIds.getFirst(inputRootId, count);
 
-			const shouldRemove = isNodeIdInBuiltTree(nodeId) || isDetachOfBuiltNodeEntry?.value;
+			const isDetachOfBuiltNode =
+				isDetachOfBuiltRootEntry?.value ?? isNodeIdInBuiltTree(nodeId);
+
+			const shouldRemove = isDetachOfBuiltNode || !isNodeAttachedInOutput(nodeId);
 			return {
 				value: shouldRemove ? EditFilterStatus.Remove : EditFilterStatus.Preserve,
-				length: isDetachOfBuiltNodeEntry?.length ?? count,
+				length: isDetachOfBuiltRootEntry?.length ?? count,
 			};
 		};
 
