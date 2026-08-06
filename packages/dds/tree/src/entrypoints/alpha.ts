@@ -198,6 +198,7 @@ export {
 	FormatValidatorBasic, 
 	FormatValidatorNoOp, 
 	FormatVersion, 
+	FormattedText, 
 	HandleConverter, 
 	ICodecOptions, 
 	ITreeAlpha, 
