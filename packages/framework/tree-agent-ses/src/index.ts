@@ -4,7 +4,7 @@
  */
 
 /**
- * SES helpers for `@fluidframework/tree-agent`.
+ * Secure ECMAScript (SES) helpers for `@fluidframework/tree-agent`.
  *
  * @packageDocumentation
  */
