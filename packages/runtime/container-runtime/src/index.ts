@@ -126,6 +126,7 @@ export { type IChunkedOp, unpackRuntimeMessage } from "./opLifecycle/index.js";
 export {
 	type IVersionMarkResolver,
 	type ResolveResult,
+	type VersionMarkCapture,
 } from "./versionMarks/index.js";
 export {
 	runtimeCoreCompatDetails,

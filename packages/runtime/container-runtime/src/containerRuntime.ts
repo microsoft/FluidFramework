@@ -1898,6 +1898,13 @@ export class ContainerRuntime
 			getCurrentSequenceNumber: () => this.deltaManager.lastSequenceNumber,
 			getCurrentMinimumSequenceNumber: () => this.deltaManager.minimumSequenceNumber,
 			getCurrentPendingBatchId: () => this.pendingStateManager.getMostRecentPendingBatchId(),
+			logger: createChildLogger({
+				logger: this.baseLogger,
+				namespace: "VersionMarkResolver",
+			}),
+			// Seal the current outbound batch so a just-submitted edit gets a stable batchId in the pending
+			// state before captureVersionMark reads it (a batchId is only assigned when a batch is flushed).
+			flushPendingBatch: () => this.flush(),
 			// Wire the container-provided op reader (if any) so resolution can read historical ops.
 			getHistoricalOpReader: fetchOps ? () => ({ fetchMessages: fetchOps }) : undefined,
 			// Unpack scanned historical ops through the same pipeline the live inbound path uses, so a
@@ -3359,18 +3366,21 @@ export class ContainerRuntime
 			// has validated the batch: that call throws (fork detection / pending-content mismatch) for a
 			// batch that must be rejected. processInboundBatch synchronously notifies listeners, which an
 			// app uses to promote a mark in an external store - an irreversible side effect - so it must not
-			// fire for a batch validation is about to reject.
-			const versionMarkUpdate = inboundVersionMarkUpdate(
-				inboundResult,
-				this.versionMarkInboundBatchId,
-			);
-			if (versionMarkUpdate.sequenced !== undefined) {
-				this.versionMarkResolverInternal.processInboundBatch(
-					versionMarkUpdate.sequenced.batchId,
-					versionMarkUpdate.sequenced.sequenceNumber,
+			// fire for a batch validation is about to reject. Gated on isTracking so a container that never
+			// uses version marks does no per-batch work here (mirrors #22497's DuplicateBatchDetector gating).
+			if (this.versionMarkResolverInternal.isTracking) {
+				const versionMarkUpdate = inboundVersionMarkUpdate(
+					inboundResult,
+					this.versionMarkInboundBatchId,
 				);
+				if (versionMarkUpdate.sequenced !== undefined) {
+					this.versionMarkResolverInternal.processInboundBatch(
+						versionMarkUpdate.sequenced.batchId,
+						versionMarkUpdate.sequenced.sequenceNumber,
+					);
+				}
+				this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
 			}
-			this.versionMarkInboundBatchId = versionMarkUpdate.carriedBatchId;
 
 			if (inboundResult.type !== "fullBatch") {
 				assert(
