@@ -7,6 +7,9 @@ settings:
 overrides:
   '@rushstack/eslint-plugin>@typescript-eslint/utils@<8.58.0': ~8.58.0
   eslint-plugin-tsdoc>@typescript-eslint/utils@<8.58.0: ~8.58.0
+  '@fluid-internal/eslint-plugin-fluid@^0.5.0': ^0.4.1
+  '@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/parser@<8.58.0': ~8.58.0
+  '@fluid-internal/eslint-plugin-fluid@^0.4.1>@typescript-eslint/utils@<8.58.0': ~8.58.0
   '@babel/core@>=7 <8': ^7.29.6
   brace-expansion@>=1 <2: ^1.1.13
   brace-expansion@>=2 <3: ^2.0.3
@@ -41,8 +44,8 @@ importers:
         specifier: ~9.39.2
         version: 9.39.2
       '@fluid-internal/eslint-plugin-fluid':
-        specifier: ^0.5.0
-        version: 0.5.0(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
+        specifier: ^0.4.1
+        version: 0.4.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
       '@rushstack/eslint-plugin':
         specifier: ~0.23.2
         version: 0.23.2(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
@@ -498,8 +501,8 @@ packages:
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@fluid-internal/eslint-plugin-fluid@0.5.0':
-    resolution: {integrity: sha512-Fs+Ksl/BXXl/++YJBZYxlNdN/9UuEPs9ooDfF8XkeRW+BRqwE42zeYanM4cm3fl2OM8201Jykiybcn+Pq1CTiQ==}
+  '@fluid-internal/eslint-plugin-fluid@0.4.1':
+    resolution: {integrity: sha512-JTFmMtNDJ+pR0Z0jvreXgq2GymqcCSD0InclRQfimEJ4KzIwdHCPHCmODlll1FG/Qp852baMYgdKHHD4qqRP/w==}
     peerDependencies:
       eslint: ^8.57.0 || ^9.37.0
 
@@ -2336,7 +2339,7 @@ snapshots:
       '@eslint/core': 0.17.0
       levn: 0.4.1
 
-  '@fluid-internal/eslint-plugin-fluid@0.5.0(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)':
+  '@fluid-internal/eslint-plugin-fluid@0.4.1(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)':
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@typescript-eslint/parser': 8.58.2(eslint@9.39.2(jiti@2.6.1)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
