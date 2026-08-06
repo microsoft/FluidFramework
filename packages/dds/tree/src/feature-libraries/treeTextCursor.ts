@@ -194,6 +194,6 @@ export function forestsEqual(a: IForestSubscription, b: IForestSubscription): bo
  */
 export function assertForestsEqual(a: IForestSubscription, b: IForestSubscription): void {
 	if (!forestsEqual(a, b)) {
-		fail("Forests are not equal");
+		fail(0xd10 /* Forests are not equal */);
 	}
 }

@@ -100,7 +100,6 @@ export {
 	type ArrayNodeRetainOp,
 	type ArrayNodeTreeChangedDeltaOp,
 	type ArrayNodeTreeChangedRetainOp,
-	deltaMarksToArrayOps,
 	type NodeChangedData,
 	type NodeChangedDataAlpha,
 	type NodeChangedDataDelta,
