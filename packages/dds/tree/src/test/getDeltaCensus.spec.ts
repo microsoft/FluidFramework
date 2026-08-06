@@ -26,21 +26,15 @@ const id100 = { minor: 100 };
 
 type PartialCensus = Partial<Record<TreeLocation, Partial<Record<TreeLocation, number>>>>;
 
-function sumCensus(census: PartialCensus): number {
-	let sum = 0;
-	for (const from of allTreeLocations) {
-		for (const to of allTreeLocations) {
-			sum += census[from]?.[to] ?? 0;
-		}
-	}
-	return sum;
-}
-
-function assertPartial(actual: NodeFlowCensus, expected: PartialCensus): void {
+function assertPartial(
+	actual: NodeFlowCensus,
+	expected: PartialCensus,
+	implicitValue: number = 0,
+): void {
 	for (const from of allTreeLocations) {
 		for (const to of allTreeLocations) {
 			const actualCount = actual[from][to];
-			const expectedCount = expected[from]?.[to] ?? 0;
+			const expectedCount = expected[from]?.[to] ?? implicitValue;
 			assert.equal(
 				actualCount,
 				expectedCount,
@@ -87,6 +81,21 @@ const attachNodes0Through10: DeltaFieldMap = new Map([
 
 const detachNodes1Through10: DeltaFieldMap = new Map([
 	[fooKey, { marks: [{ count: 9, detach: id1 }] }],
+	[
+		barKey,
+		{
+			marks: [
+				{
+					count: 1,
+					fields: new Map([[fooKey, { marks: [{ count: 1, detach: id10 }] }]]),
+				},
+			],
+		},
+	],
+]);
+
+const detachNodes0Through10: DeltaFieldMap = new Map([
+	[fooKey, { marks: [{ count: 10, detach: id0 }] }],
 	[
 		barKey,
 		{
@@ -161,6 +170,7 @@ describe("getDeltaCensus", () => {
 			const census = nodeFlowCensusFromDelta(delta);
 			assertPartial(census, {
 				[TreeLocation.DetachedPriorRoot]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
 					[TreeLocation.UnderDetachedPriorTree]: 10,
 				},
 			});
@@ -173,6 +183,9 @@ describe("getDeltaCensus", () => {
 			};
 			const census = nodeFlowCensusFromDelta(delta);
 			assertPartial(census, {
+				[TreeLocation.DetachedBuiltRoot]: {
+					[TreeLocation.DetachedBuiltRoot]: 1,
+				},
 				[TreeLocation.DetachedPriorRoot]: {
 					[TreeLocation.UnderTransientTree]: 10,
 				},
@@ -276,6 +289,9 @@ describe("getDeltaCensus", () => {
 			};
 			const census = nodeFlowCensusFromDelta(delta);
 			assertPartial(census, {
+				[TreeLocation.DetachedPriorRoot]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
 				[TreeLocation.DetachedBuiltRoot]: {
 					[TreeLocation.UnderDetachedPriorTree]: 10,
 				},
@@ -456,6 +472,9 @@ describe("getDeltaCensus", () => {
 			};
 			const census = nodeFlowCensusFromDelta(delta);
 			assertPartial(census, {
+				[TreeLocation.DetachedPriorRoot]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
 				[TreeLocation.UnderAttachedTree]: {
 					[TreeLocation.UnderDetachedPriorTree]: 11,
 				},
@@ -475,6 +494,9 @@ describe("getDeltaCensus", () => {
 			};
 			const census = nodeFlowCensusFromDelta(delta);
 			assertPartial(census, {
+				[TreeLocation.DetachedBuiltRoot]: {
+					[TreeLocation.DetachedBuiltRoot]: 1,
+				},
 				[TreeLocation.UnderAttachedTree]: {
 					[TreeLocation.UnderTransientTree]: 10,
 				},
@@ -530,6 +552,224 @@ describe("getDeltaCensus", () => {
 				},
 				[TreeLocation.UnderAttachedTree]: {
 					[TreeLocation.UnderAttachingBuiltTree]: 11,
+				},
+			});
+		});
+	});
+
+	describe(`counts nodes that go from ${TreeLocation.UnderDetachingTree}`, () => {
+		it(`to ${TreeLocation.DetachedPriorRoot}`, () => {
+			const delta: DeltaRoot = {
+				global: [
+					{
+						id: id100,
+						fields: attachNodes1Through10,
+					},
+				],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{ marks: [{ count: 1, detach: id0, fields: detachNodes1Through10 }] },
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.DetachedPriorRoot]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.DetachedBuiltRoot}`, () => {
+			const delta: DeltaRoot = {
+				build: [{ id: id100, trees: oneTree }],
+				global: [
+					{
+						id: id100,
+						fields: attachNodes1Through10,
+					},
+				],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{ marks: [{ count: 1, detach: id0, fields: detachNodes1Through10 }] },
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.DetachedBuiltRoot]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderAttachedTree}`, () => {
+			const delta: DeltaRoot = {
+				fields: new Map([
+					[
+						rootFieldKey,
+						{
+							marks: [
+								{ count: 1, attach: id0 },
+								{ count: 1, fields: attachNodes1Through10 },
+								{ count: 1, detach: id100, fields: detachNodes0Through10 },
+							],
+						},
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.UnderAttachedTree]: 11,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderDetachingTree}`, () => {
+			const delta: DeltaRoot = {
+				fields: new Map([
+					[
+						rootFieldKey,
+						{
+							marks: [
+								{
+									count: 1,
+									detach: id100,
+									fields: attachNodes1Through10,
+								},
+								{
+									count: 1,
+									detach: id0,
+									fields: detachNodes1Through10,
+								},
+							],
+						},
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 2,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.UnderDetachingTree]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderDetachedPriorTree}`, () => {
+			const delta: DeltaRoot = {
+				global: [{ id: id100, fields: attachNodes0Through10 }],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{ marks: [{ count: 1, detach: id0, fields: detachNodes1Through10 }] },
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.DetachedPriorRoot]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+					[TreeLocation.UnderDetachedPriorTree]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderTransientTree}`, () => {
+			const delta: DeltaRoot = {
+				build: [{ id: id100, trees: oneTree }],
+				global: [{ id: id100, fields: attachNodes1Through10 }],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{ marks: [{ count: 1, detach: id0, fields: detachNodes1Through10 }] },
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.DetachedBuiltRoot]: {
+					[TreeLocation.DetachedBuiltRoot]: 1,
+				},
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+					[TreeLocation.UnderTransientTree]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderAttachingPriorTree}`, () => {
+			const delta: DeltaRoot = {
+				global: [{ id: id100, fields: attachNodes0Through10 }],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{
+							marks: [
+								{ count: 1, attach: id100 },
+								{ count: 1, detach: id0, fields: detachNodes1Through10 },
+							],
+						},
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.DetachedPriorRoot]: {
+					[TreeLocation.UnderAttachedTree]: 1,
+				},
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.UnderAttachingPriorTree]: 10,
+				},
+			});
+		});
+
+		it(`to ${TreeLocation.UnderAttachingBuiltTree}`, () => {
+			const delta: DeltaRoot = {
+				build: [{ id: id100, trees: oneTree }],
+				global: [{ id: id100, fields: attachNodes1Through10 }],
+				fields: new Map([
+					[
+						rootFieldKey,
+						{
+							marks: [
+								{ count: 1, attach: id100 },
+								{ count: 1, detach: id0, fields: detachNodes1Through10 },
+							],
+						},
+					],
+				]),
+			};
+			const census = nodeFlowCensusFromDelta(delta);
+			assertPartial(census, {
+				[TreeLocation.DetachedBuiltRoot]: {
+					[TreeLocation.UnderAttachedTree]: 1,
+				},
+				[TreeLocation.UnderAttachedTree]: {
+					[TreeLocation.DetachedPriorRoot]: 1,
+				},
+				[TreeLocation.UnderDetachingTree]: {
+					[TreeLocation.UnderAttachingBuiltTree]: 10,
 				},
 			});
 		});
