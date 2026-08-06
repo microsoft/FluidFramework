@@ -13,26 +13,75 @@ import {
 	type DetachedFieldIndex,
 } from "../core/index.js";
 
-export enum TreeLocation {
+/**
+ * A type of location for a node to be in either before or after a change.
+ */
+export enum NodeFlowEndpoint {
+	/**
+	 * In a detached field (i.e., not under the document root field).
+	 * Used for newly built nodes only.
+	 */
 	DetachedBuiltRoot = "DetachedBuiltRoot",
+
+	/**
+	 * In a detached field (i.e., not under the document root field).
+	 * Used for already existing nodes only.
+	 */
 	DetachedPriorRoot = "DetachedPriorRoot",
-	UnderAttachedTree = "UnderAttachedTree",
-	UnderDetachingTree = "UnderDetachingTree",
-	UnderTransientTree = "UnderTransientTree",
+
+	/**
+	 * Either directly in the document root field,
+	 * or in a field under an already existing parent that both...
+	 * - is transitively under the document root field before the change
+	 * - is transitively under the document root field after the change
+	 */
+	UnderAttachedPriorTree = "UnderAttachedPriorTree",
+
+	/**
+	 * In a field under an already existing parent that both...
+	 * - is transitively under the document root field before the change
+	 * - is transitively under a detached field after the change
+	 */
+	UnderDetachingPriorTree = "UnderDetachingPriorTree",
+
+	/**
+	 * In a field under a newly built parent that both...
+	 * - is transitively under a detached field before the change
+	 * - is transitively under a detached field after the change
+	 */
+	UnderTransientBuiltTree = "UnderTransientBuiltTree",
+
+	/**
+	 * In a field under an already existing parent that both...
+	 * - is transitively under a detached field before the change
+	 * - is transitively under a detached field after the change
+	 */
 	UnderDetachedPriorTree = "UnderDetachedPriorTree",
-	UnderAttachingPriorTree = "UnderAttachingPriorTree",
+
+	/**
+	 * In a field under a newly built parent that both...
+	 * - is transitively under a detached field before the change
+	 * - is transitively under the document root field after the change
+	 */
 	UnderAttachingBuiltTree = "UnderAttachingBuiltTree",
+
+	/**
+	 * In a field under an already existing parent that both...
+	 * - is transitively under a detached field before the change
+	 * - is transitively under the document root field after the change
+	 */
+	UnderAttachingPriorTree = "UnderAttachingPriorTree",
 }
 
-export const allTreeLocations = [
-	TreeLocation.DetachedBuiltRoot,
-	TreeLocation.DetachedPriorRoot,
-	TreeLocation.UnderAttachedTree,
-	TreeLocation.UnderDetachingTree,
-	TreeLocation.UnderDetachedPriorTree,
-	TreeLocation.UnderTransientTree,
-	TreeLocation.UnderAttachingPriorTree,
-	TreeLocation.UnderAttachingBuiltTree,
+export const allEndpoints = [
+	NodeFlowEndpoint.DetachedBuiltRoot,
+	NodeFlowEndpoint.DetachedPriorRoot,
+	NodeFlowEndpoint.UnderAttachedPriorTree,
+	NodeFlowEndpoint.UnderDetachingPriorTree,
+	NodeFlowEndpoint.UnderTransientBuiltTree,
+	NodeFlowEndpoint.UnderDetachedPriorTree,
+	NodeFlowEndpoint.UnderAttachingBuiltTree,
+	NodeFlowEndpoint.UnderAttachingPriorTree,
 ] as const;
 
 /**
@@ -40,16 +89,16 @@ export const allTreeLocations = [
  *
  * Each entry `census[from][to]` represents the number of nodes that moved from the `from` location to the `to` location.
  */
-export type NodeFlowCensus = Record<TreeLocation, Record<TreeLocation, number>>;
+export type NodeFlowCensus = Record<NodeFlowEndpoint, Record<NodeFlowEndpoint, number>>;
 
 export function makeEmptyCensus(): NodeFlowCensus {
 	const census: Partial<NodeFlowCensus> = {};
-	for (const from of allTreeLocations) {
-		const inner: Partial<Record<TreeLocation, number>> = {};
-		for (const to of allTreeLocations) {
+	for (const from of allEndpoints) {
+		const inner: Partial<Record<NodeFlowEndpoint, number>> = {};
+		for (const to of allEndpoints) {
 			inner[to] = 0;
 		}
-		census[from] = inner as Record<TreeLocation, number>;
+		census[from] = inner as Record<NodeFlowEndpoint, number>;
 	}
 	return census as NodeFlowCensus;
 }
