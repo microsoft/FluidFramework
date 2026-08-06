@@ -89,7 +89,6 @@
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
 		"build:docs": "api-extractor run --local",
-		"build:entrypoints": "fluid-build . --task build:entrypoints",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"build:genver": "gen-version",
 		"build:test": "concurrently npm:build:test:esm npm:build:test:cjs",
@@ -220,13 +219,6 @@
 	},
 	"fluidBuild": {
 		"tasks": {
-			"build:entrypoints": {
-				"dependsOn": [
-					"build:esnext",
-					"tsc"
-				],
-				"script": false
-			},
 			"build:test:cjs": [
 				"...",
 				"@fluidframework/id-compressor#build:test:cjs"
