@@ -3,10 +3,7 @@
  * Licensed under the MIT License.
  */
 
-import type {
-	IReadinessCheck,
-	ISecretManager,
-} from "@fluidframework/server-services-core";
+import type { IReadinessCheck, ISecretManager } from "@fluidframework/server-services-core";
 import type {
 	IRedisClientConnectionManager,
 	ITenantKeyGenerator,
