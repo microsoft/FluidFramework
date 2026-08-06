@@ -32,7 +32,7 @@
 		"build:api-reports:current": "api-extractor run --local --config api-extractor/api-extractor-report.json",
 		"build:commonjs": "fluid-build . --task commonjs",
 		"build:compile": "fluid-build . --task compile",
-		"build:docs": "api-extractor run --local",
+		"build:docs": "api-extractor run --local --config api-extractor/api-extractor-model.json",
 		"build:esnext": "tsc --project ./tsconfig.json",
 		"check:are-the-types-wrong": "attw --pack .",
 		"check:biome": "biome check .",
