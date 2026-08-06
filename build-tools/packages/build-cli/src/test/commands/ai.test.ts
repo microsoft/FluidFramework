@@ -3,6 +3,7 @@
  * Licensed under the MIT License.
  */
 
+import { existsSync } from "node:fs";
 import { expect } from "chai";
 import { describe, it } from "mocha";
 
@@ -12,8 +13,13 @@ import {
 	normalizePromptAnswer,
 	SUPPORTED_ALIASES,
 } from "../../commands/ai.js";
+import { resolveCopilotCliPath } from "../../library/ai/copilotSession.js";
 
 describe("ai command", () => {
+	it("resolves the installed Copilot CLI entry point", () => {
+		expect(existsSync(resolveCopilotCliPath())).to.equal(true);
+	});
+
 	it("allows all supported aliases", () => {
 		const aliasSet = new Set<string>(SUPPORTED_ALIASES);
 		for (const alias of SUPPORTED_ALIASES) {

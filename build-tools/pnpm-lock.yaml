@@ -137,6 +137,9 @@ importers:
       '@fluidframework/build-tools':
         specifier: workspace:~
         version: link:../build-tools
+      '@github/copilot':
+        specifier: ^1.0.43
+        version: 1.0.68
       '@github/copilot-sdk':
         specifier: ^0.2.2
         version: 0.2.2
