@@ -57,8 +57,11 @@ function filterMark(
 				return preserveOtherEdits ? mark : omitMarkEffect(mark);
 			}
 
+			const attachId =
+				mark.type === "MoveIn" ? { revision: mark.revision, localId: mark.id } : mark.cellId;
+
 			const endpoint = mark.type === "MoveIn" ? mark.finalEndpoint : undefined;
-			const result = filterAttach(mark.cellId, mark.count, undefined, endpoint);
+			const result = filterAttach(attachId, mark.count, undefined, endpoint);
 
 			let filtered: Mark;
 			switch (result.value) {

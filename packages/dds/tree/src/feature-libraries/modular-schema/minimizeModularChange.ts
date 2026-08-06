@@ -302,7 +302,7 @@ export function minimizeModularChangeset(
 
 			// The detach of the moved node will have already been squashed into the builds,
 			// so we only need to preserve the attach.
-			const result = isMoveFromBuiltTree
+			const result = isMoveOfBuiltNode
 				? EditFilterStatus.PreserveWithoutMove
 				: EditFilterStatus.Preserve;
 
